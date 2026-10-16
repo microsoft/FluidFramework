@@ -11,14 +11,12 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
-import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
@@ -153,22 +151,8 @@ describe("SharedObjectCore", () => {
 			handle: mockHandle,
 		};
 
-		const serializedMockHandleMatcher = sinon.match(
-			(value: unknown) => isSerializedHandle(value) && value.url === mockHandle.absolutePath,
-			"serialized handle string",
-		);
-
-		function set_submitMessagesWithoutEncodingHandles(value: boolean | undefined): void {
-			(
-				dataStoreRuntime as unknown as {
-					submitMessagesWithoutEncodingHandles?: boolean;
-				} satisfies Partial<IFluidDataStoreRuntimeInternalConfig>
-			).submitMessagesWithoutEncodingHandles = value;
-		}
-
 		beforeEach(() => {
 			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			set_submitMessagesWithoutEncodingHandles(undefined); // Reset config
 
 			submitSpy = sinon.fake();
 
@@ -186,9 +170,7 @@ describe("SharedObjectCore", () => {
 			submitSpy.resetHistory();
 		});
 
-		it("submits handle object when submitMessagesWithoutEncodingHandles is true", () => {
-			set_submitMessagesWithoutEncodingHandles(true);
-
+		it("submits the original message without encoding handles", () => {
 			sharedObject.submitLocalMessage(messageContentWithHandle);
 
 			// Assert submit was called once with the exact object containing the handle object
@@ -198,47 +180,6 @@ describe("SharedObjectCore", () => {
 					undefined /* localOpMetadata */,
 				),
 				"Submit should be called with the exact message content including the handle object",
-			);
-		});
-
-		it("submits stringified handle when submitMessagesWithoutEncodingHandles is false", () => {
-			set_submitMessagesWithoutEncodingHandles(false);
-
-			sharedObject.submitLocalMessage(messageContentWithHandle);
-
-			// Assert submit was called once with an object where 'handle' matches the serialized string pattern
-			assert(
-				submitSpy.calledOnceWith(
-					sinon.match({
-						type: messageContentWithHandle.type,
-						handle: serializedMockHandleMatcher,
-					}),
-					undefined /* localOpMetadata */,
-				),
-				"Submit should be called with message content including a serialized handle string",
-			);
-		});
-
-		it("submits stringified handle when submitMessagesWithoutEncodingHandles is undefined", () => {
-			assert.strictEqual(
-				(dataStoreRuntime as Partial<IFluidDataStoreRuntimeInternalConfig>)
-					.submitMessagesWithoutEncodingHandles,
-				undefined,
-				"Config should be undefined initially",
-			);
-
-			sharedObject.submitLocalMessage(messageContentWithHandle);
-
-			// Assert submit was called once with an object where 'handle' matches the serialized string pattern
-			assert(
-				submitSpy.calledOnceWith(
-					sinon.match({
-						type: messageContentWithHandle.type,
-						handle: serializedMockHandleMatcher, // Use the custom matcher
-					}),
-					undefined /* localOpMetadata */,
-				),
-				"Submit should be called with message content including a serialized handle string (default case)",
 			);
 		});
 	});

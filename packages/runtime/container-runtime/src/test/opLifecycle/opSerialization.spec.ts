@@ -100,7 +100,7 @@ describe("opSerialization", () => {
 
 		it("should replace Fluid handles with their encoded form", () => {
 			const mockHandle = new MockHandle({});
-			Object.assign(mockHandle, { foo: "should not be serialized" });
+			Object.assign(mockHandle, { foo: "should not be serialized", cycle: mockHandle });
 
 			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
