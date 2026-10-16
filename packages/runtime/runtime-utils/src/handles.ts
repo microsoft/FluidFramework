@@ -168,8 +168,11 @@ function hasDataStorePackagePath(
  *
  * @remarks
  * Use this path in telemetry to identify the containing data store package, for example, when a component
- * takes a long time to load. The result is informational only: this lookup does not measure load time or
- * change how the runtime loads objects.
+ * takes a long time to load. The path is diagnostic information; it cannot be used to configure the runtime.
+ * This function does not measure load time. If the data store's snapshot details are not yet available, the
+ * lookup may fetch an omitted snapshot and read its attributes blob. It can therefore take time and affect
+ * the timing of other operations. A completed data store load has already read these details, so a lookup
+ * after loading normally reuses them. Avoid awaiting the lookup on a latency-sensitive load path.
  *
  * The handle must belong to the supplied container runtime's container. This function does not verify that
  * relationship or resolve the handle. It does not check whether a descendant object exists or return a DDS
