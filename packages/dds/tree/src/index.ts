@@ -350,7 +350,10 @@ export {
 	type CodecName,
 	type FormatVersion,
 } from "./codec/index.js";
-export { FormatValidatorBasic } from "./external-utilities/index.js";
+export {
+	FormatValidatorBasic,
+	FormatValidatorInterpreted,
+} from "./external-utilities/index.js";
 
 export type {
 	// Type Testing
@@ -403,7 +406,6 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	PlainText,
 	FormattedText,
-	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

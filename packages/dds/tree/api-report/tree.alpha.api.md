@@ -602,6 +602,9 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {
 export const FormatValidatorBasic: FormatValidator;
 
 // @alpha
+export const FormatValidatorInterpreted: FormatValidator;
+
+// @alpha
 export const FormatValidatorNoOp: FormatValidator;
 
 // @alpha
@@ -1089,6 +1092,7 @@ export namespace PlainText {
         createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
@@ -1999,6 +2003,7 @@ export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
     readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
+    revertTo?(options?: RevertToOptionsAlpha): void;
     readonly revision: CommitRevision;
 }
 

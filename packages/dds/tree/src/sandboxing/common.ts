@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	fluidHandleSymbol,
-	type IFluidHandle,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	TelemetryDataTag,
@@ -22,8 +19,8 @@ import { TypeSystem } from "@sinclair/typebox/system";
 
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
-import { FormatValidatorBasic } from "../external-utilities/index.js";
-import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
+import { FormatValidatorInterpreted } from "../external-utilities/index.js";
+import { type Brand, brandedIntegerType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Kind of failure reported across the sandbox boundary.
@@ -128,17 +125,15 @@ export class SandboxProtocolError extends LoggingError {
 const nonNegativeSafeIntegerOptions = {
 	minimum: 0,
 	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
 } as const;
 
 /** An integer from zero through the largest integer JavaScript can represent exactly. */
-const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
+const NonNegativeSafeInteger = Type.Integer(nonNegativeSafeIntegerOptions);
 
 /** Shared wire bounds for positive safe integers. */
-const PositiveSafeInteger = Type.Number({
+const PositiveSafeInteger = Type.Integer({
 	minimum: 1,
 	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
 });
 
 /**
@@ -146,30 +141,30 @@ const PositiveSafeInteger = Type.Number({
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
-const HandleToken = brandedNumberType<HandleToken>(nonNegativeSafeIntegerOptions);
+const HandleToken = brandedIntegerType<HandleToken>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
  * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
-const BlobRequestId = brandedNumberType<BlobRequestId>(nonNegativeSafeIntegerOptions);
+const BlobRequestId = brandedIntegerType<BlobRequestId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Host branch update and its acknowledgment.
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
-const HostUpdateId = brandedNumberType<HostUpdateId>(nonNegativeSafeIntegerOptions);
+const HostUpdateId = brandedIntegerType<HostUpdateId>(nonNegativeSafeIntegerOptions);
 
 /** Identifies a finalized ID creation range sent from the Host to the Guest. */
 export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
-const HostIdRangeId = brandedNumberType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
+const HostIdRangeId = brandedIntegerType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Guest change and its acknowledgment.
  */
 export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
-const GuestChangeId = brandedNumberType<GuestChangeId>(nonNegativeSafeIntegerOptions);
+const GuestChangeId = brandedIntegerType<GuestChangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
@@ -209,16 +204,6 @@ const EscapedObject = Type.Object(
 	},
 	{ additionalProperties: false },
 );
-
-/**
- * Recognizes local {@link IFluidHandle} values by {@link fluidHandleSymbol}, without accepting cloneable legacy lookalikes.
- * Only trusted token restoration introduces handles into received data.
- */
-export function isLocalHandle(value: unknown): value is IFluidHandle {
-	// TODO: Remove isFluidHandle's legacy string-property fallback (including test-setup dependencies),
-	// then use it here. That fallback accepts ordinary data that can cross structured clone.
-	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
-}
 
 /**
  * Local placeholder that keeps an {@link ArrayBuffer} out of general schema validation.
@@ -275,10 +260,10 @@ const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
 )();
 
 /**
- * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayloadVocabulary} validation.
+ * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
  */
 const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
-	isLocalHandle(value),
+	isFluidHandle(value),
 )();
 /**
  * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
@@ -321,7 +306,7 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
  * It does not inherit the Host SharedTree's configured validator because that validator can be a no-op
  * and is not configured to enforce the sandbox protocol boundary.
  */
-export const sandboxFormatValidator = FormatValidatorBasic;
+export const sandboxFormatValidator = FormatValidatorInterpreted;
 
 /**
  * The sandbox always validates protocol data, including handle and blob messages.
@@ -358,7 +343,7 @@ export function isSerializedHandle(value: unknown): value is SerializedHandle {
 
 /** Runtime schema for revision tags used within one sandbox session. */
 const SessionRevisionTag = Type.Unsafe<RevisionTag>(
-	Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]),
+	Type.Union([Type.Literal("root"), Type.Integer()]),
 );
 
 /** A serialized SharedTree payload validated against the sandbox transport vocabulary. */

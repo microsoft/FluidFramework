@@ -12,7 +12,13 @@
  *
  * - `resolved`: the mark resolved and can be used.
  * - `pending`: the mark has not resolved yet but should be retained because it may become resolvable later.
- * - `unresolvable`: resolution is terminal; stop retrying and leave the mark unresolved.
+ * - `unresolvable`: definitive evidence shows that resolution is terminal; stop retrying and leave the
+ * mark unresolved.
+ *
+ * The current resolver does not infer terminality from a historical scan miss. Empty reads, sequence gaps,
+ * and batches absent from otherwise available history remain `pending` because the batch can still sequence
+ * after disconnection or resubmission. Hosts own retry suppression and expiration policy for long-lived
+ * pending marks.
  *
  * `reason` is an optional, opaque diagnostic string explaining *why* the resolver returned that `kind`. It
  * exists for logging and diagnostics only; hosts must not branch on it. New `reason` values may be added,
@@ -98,7 +104,7 @@ export interface IVersionMarkResolver {
 	 * @param batchId - The stable identity of the pending batch.
 	 * @param sequenceNumberLowerBound - The inclusive lower bound for the historical op search.
 	 * @returns The resolved sequence number and server timestamp, or a result indicating that the batch
-	 * remains pending or can no longer be resolved.
+	 * remains pending. `unresolvable` is reserved for definitive terminal evidence.
 	 */
 	resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
 	/**

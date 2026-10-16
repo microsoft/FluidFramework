@@ -46,7 +46,7 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
@@ -63,7 +63,7 @@ import {
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
-	chunk: EncodedFieldBatchV1OrV2,
+	chunk: EncodedFieldBatchAnyVersion,
 	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {

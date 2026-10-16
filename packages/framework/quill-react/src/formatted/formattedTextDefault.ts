@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { enumFromStrings, SchemaFactory, SchemaFactoryBeta } from "../simple-tree/index.js";
-import type {
-	TreeNodeFromImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../simple-tree/index.js";
-
-import { FormattedText } from "./textDomainFormatted.js";
+import {
+	enumFromStrings,
+	FormattedText,
+	SchemaFactory,
+	SchemaFactoryBeta,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+} from "@fluidframework/tree/alpha";
 
 /**
- * Schema factory for default formatted text types which are not generic.
+ * Schema factory for the formatted text types used by {@link FormattedMainView}.
+ * @remarks
+ * This scope is part of the persisted schema identifiers, so it must not change.
  */
 const sf = new SchemaFactoryBeta("com.fluidframework.text.formatted.default");
 
@@ -25,11 +28,12 @@ const defaultFormat = {
 } as const;
 
 /**
- * A default parameterization of the generic {@link FormattedText} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
+ * A parameterization of the generic {@link @fluidframework/tree#FormattedText} with the formatting and line types that {@link FormattedMainView} supports.
  * @remarks
- * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedText}.
+ * The character formatting and line tags mirror the subset of Quill attributes that the editor maps into the tree.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace -- Namespace groups the schema, matching the tree text domains.
 export namespace FormattedTextDefault {
 	/**
 	 * Portion of a string with formatting.
@@ -84,7 +88,7 @@ export namespace FormattedTextDefault {
 	 * Quill formats line attributes (headers, list, blockquote, etc... ) on the newline character
 	 * and only lines using this atom can have line-specific formatting.
 	 * The optional indent level mirrors Quill's indent attribute,
-	 * which is applies to the line before the line break.
+	 * which applies to the line before the line break.
 	 * Any tagged line can be indented independently.
 	 * @sealed
 	 * @internal
@@ -117,7 +121,7 @@ export namespace FormattedTextDefault {
 	export type Statics<TTree = Tree> = FormattedText.Statics<TTree, typeof CharacterFormat>;
 
 	/**
-	 * Insertable shape for a formatted text atom used by {@link FormattedText.Members.insertWithFormattingAt}.
+	 * Insertable shape for a formatted text atom used by {@link @fluidframework/tree#FormattedText.Members.insertWithFormattingAt}.
 	 * @sealed
 	 * @internal
 	 */
@@ -136,7 +140,7 @@ export namespace FormattedTextDefault {
 	export type TextAtomSchemas = FormattedText.TextAtomSchemas<[typeof StringLineAtom]>;
 
 	/**
-	 * The schema produced using {@link FormattedText.createSchema} with hard-coded assumptions
+	 * The schema produced using {@link @fluidframework/tree#FormattedText.createSchema} with hard-coded assumptions
 	 * about what kind of embedded content and what kind of formatting is supported.
 	 * @sealed
 	 * @internal

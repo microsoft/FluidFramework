@@ -2004,6 +2004,28 @@ describe("sharedTreeView", () => {
 			});
 		});
 
+		it("apply a serialized change", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) =>
+					view.applyChange(view.checkout.serializeCommit(view.checkout.mainBranch.getHead())),
+				error: "Applying a change is forbidden during a change event callback",
+			});
+		});
+
+		it("switch branches", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				error: "Switching branches is forbidden during a change event callback",
+			});
+		});
+
+		it("update the schema", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.updateSchema(view.checkout.storedSchema.clone()),
+				error: "Updating the schema is forbidden during a change event callback",
+			});
+		});
+
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.rebaseOnto(view),
