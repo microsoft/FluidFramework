@@ -242,6 +242,11 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                # Build steps need the current commit, not its ancestry.
+                # Keep tags for duplicate-release checks and isLatest in publish metadata.
+                # See ../README.md#release-tag-checks-in-build-jobs for how to remove the tag dependency.
+                fetchDepth: 1
+                fetchTags: true
 
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
@@ -622,10 +627,16 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                # Full history and tags are retained conservatively, not for an established requirement.
+                # TODO: Validate the coverage job with fetchDepth: 1 and fetchTags: false.
+                # flub report codeCoverage gets changed files and baseline artifacts through service APIs.
+                fetchDepth: 0
+                fetchTags: true
 
               - script: |
+                  set -eu -o pipefail
                   echo "commit: $(COMMIT_SHA)"
-                  git fetch origin $(COMMIT_SHA)
+                  git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
                   git checkout $(COMMIT_SHA)
                 displayName: "Checkout build commit"
 
@@ -793,6 +804,8 @@ extends:
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
+                  fetchDepth: 1
+                  fetchTags: false
 
                 - script: |
                     echo "commit: $(COMMIT_SHA)"
