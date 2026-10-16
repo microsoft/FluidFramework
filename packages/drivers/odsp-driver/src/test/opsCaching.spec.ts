@@ -14,7 +14,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
 import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
-import { type CacheEntry, type ICache, type IMessage, OpsCache } from "../opsCaching.js";
+import { type ICache, type IMessage, OpsCache } from "../opsCaching.js";
 
 export type MyDataInput = IMessage & { data: string };
 
@@ -24,8 +24,11 @@ class MockCache implements ICache {
 
 	public async write(batchNumber: string, data: string): Promise<void> {
 		this.writeCount++;
-		this.data[batchNumber] = JSON.parse(data);
-		for (const op of this.data[batchNumber] as CacheEntry) {
+		const parsedData: unknown = JSON.parse(data);
+		assert(Array.isArray(parsedData), "Cached ops should be an array");
+		const batch: unknown[] = parsedData;
+		this.data[batchNumber] = batch;
+		for (const op of batch) {
 			// JSON.serialize converts undefined to null
 			if (op !== null) {
 				this.opsWritten++;
@@ -34,7 +37,7 @@ class MockCache implements ICache {
 	}
 
 	public async read(batchNumber: string): Promise<string | undefined> {
-		const content = this.data[batchNumber];
+		const content: unknown = this.data[batchNumber];
 		if (content === undefined) {
 			return undefined;
 		}
