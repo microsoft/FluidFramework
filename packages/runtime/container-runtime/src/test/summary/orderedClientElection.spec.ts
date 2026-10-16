@@ -244,7 +244,7 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(3, "c", 4321);
-				mockLogger.matchEvents([
+				mockLogger.assertMatch([
 					{
 						eventName: "InitialElectedClientIneligible",
 						electionSequenceNumber: 4321,
@@ -358,7 +358,7 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(2, undefined, 4321);
-				mockLogger.matchEvents([
+				mockLogger.assertMatch([
 					{
 						eventName: "InitialElectedClientIneligible",
 						electionSequenceNumber: 4321,
@@ -380,7 +380,7 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(3, undefined, 4321);
-				mockLogger.matchEvents([
+				mockLogger.assertMatch([
 					{
 						eventName: "InitialElectedClientNotFound",
 						electionSequenceNumber: 4321,
@@ -537,6 +537,45 @@ describe("Ordered Client Collection", () => {
 		});
 
 		describe("Reset elected client", () => {
+			it("Should reset a younger parent without displacing its active summarizer", () => {
+				addClient("a", 1);
+				addClient("b", 2);
+				addClient("s", 3, false, summarizerClientType);
+				createOrderedClientElection(
+					[],
+					{ electedClientId: "s", electedParentId: "b", electionSequenceNumber: 50 },
+					SummarizerClientElection.isClientEligible,
+				);
+				const summarizer = election.electedClient;
+				const events: {
+					client: ITrackedClient | undefined;
+					sequenceNumber: number;
+					prevClient: ITrackedClient | undefined;
+				}[] = [];
+				election.on("election", (client, sequenceNumber, prevClient) => {
+					events.push({ client, sequenceNumber, prevClient });
+				});
+
+				resetElectedClient(100);
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "s",
+					electedParentId: "a",
+					electionSequenceNumber: 50,
+				});
+				assertEvents(1);
+				assert.deepEqual(events, [
+					{ client: summarizer, sequenceNumber: 100, prevClient: summarizer },
+				]);
+
+				removeClient("s");
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "a",
+					electedParentId: "a",
+					electionSequenceNumber: 101,
+				});
+				assertEvents(2);
+			});
+
 			it("Should not emit elections or change serialized state when repeatedly resetting the elected interactive client", () => {
 				createOrderedClientElection([
 					["a", 1, true],
