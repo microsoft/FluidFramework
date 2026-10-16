@@ -2867,7 +2867,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(tagChange(modularChange, revision));
 	}
 
-	public buildChanges(changes: EditDescription[]): ModularChangeset {
+	public buildChanges(
+		changes: EditDescription[],
+		maxIdOpt?: ChangesetLocalId,
+	): ModularChangeset {
 		const revisions: Set<RevisionTag> = new Set();
 		const changeMaps = changes.map((change) => {
 			revisions.add(change.revision);
@@ -2906,7 +2909,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			revisions: revInfo,
 		};
 
-		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
+		const maxId: ChangesetLocalId = maxIdOpt ?? brand(this.idAllocator.getMaxId());
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}

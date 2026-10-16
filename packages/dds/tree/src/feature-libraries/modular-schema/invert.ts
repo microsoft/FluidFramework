@@ -5,13 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
-	newChangeAtomIdTransform,
 	offsetChangeAtomId,
 	revisionMetadataSourceFromInfo,
 	type ChangeAtomId,
-	type ChangeAtomIdRangeMap,
 	type FieldKindIdentifier,
 	type RevisionInfo,
 	type RevisionMetadataSource,
@@ -19,13 +16,7 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import {
-	brand,
-	idAllocatorFromMaxId,
-	type IdAllocator,
-	type Mutable,
-	type RangeQueryResult,
-} from "../../util/index.js";
+import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	newChangeAtomIdBTree,
 	rangeQueryChangeAtomIdMap,
@@ -46,18 +37,14 @@ import {
 	addNodeRename,
 	areEqualFieldIds,
 	assignRootChange,
-	doesChangeAttachNodes,
 	fieldChangeFromId,
 	firstAttachIdFromDetachId,
 	firstDetachIdFromAttachId,
-	getAttachFieldForDetach,
 	getChangeHandler,
-	getDetachFieldForAttach,
 	getFirstAttachField,
 	getFirstDetachField,
 	getFirstFieldForDetach,
 	getNewRootIdFromOldRootId,
-	getOldRootIdFromNewRootId,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
 	makeCrossFieldKeyTable,
@@ -74,6 +61,8 @@ import {
 	type CrossFieldMap,
 	type InvertNodeManager,
 } from "./crossFieldQueries.js";
+import type { AtomIdAliasAllocator } from "./fieldChangeHandler.js";
+import { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 
 /**
  * @param change - The change to invert.
@@ -112,7 +101,15 @@ export function invertModularChange(
 		});
 	}
 
-	const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
+	const genId = new DefaultAtomIdAliasAllocator();
+	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
+	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
+
+	if (change.change.maxId !== undefined) {
+		for (const { revision } of oldRevInfos) {
+			genId.reserve(revision, change.change.maxId);
+		}
+	}
 
 	const invertedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(
 		change.change.nodeToParent.clone(),
@@ -126,15 +123,15 @@ export function invertModularChange(
 		invertRevision: revisionForInvert,
 		invertedNodeToParent,
 		invalidatedFields: new Set(),
+		genId,
 		invertedRoots: invertRootTable(
 			change.change,
 			invertedNodeToParent,
 			isRollback,
 			revisionForInvert,
+			genId,
 		),
 	};
-	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
-	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
 
 	const invertedFields = invertFieldMap(
 		change.change.fieldChanges,
@@ -220,7 +217,7 @@ function invertFieldMap(
 	changes: FieldChangeMap,
 	parentId: NodeId | undefined,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -259,7 +256,7 @@ function invertNodeChange(
 	change: NodeChangeset,
 	id: NodeId,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -307,6 +304,7 @@ interface InvertTable {
 	invertRevision: RevisionTag;
 	invalidatedFields: Set<FieldChange>;
 	invertedRoots: RootNodeTable;
+	genId: AtomIdAliasAllocator;
 }
 
 interface InvertContext {
@@ -429,7 +427,12 @@ class InvertNodeManagerI implements InvertNodeManager {
 	}
 
 	public getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
-		return getInvertedMoveId(id, this.table.invertRevision, this.table.isRollback);
+		return getInvertedMoveId(
+			id,
+			this.table.invertRevision,
+			this.table.isRollback,
+			this.table.genId,
+		);
 	}
 }
 
@@ -437,8 +440,11 @@ function getInvertedMoveId(
 	id: ChangeAtomId,
 	invertRevision: RevisionTag,
 	isRollback: boolean,
+	genId: AtomIdAliasAllocator,
 ): ChangeAtomId {
-	return isRollback ? id : { revision: invertRevision, localId: id.localId };
+	return isRollback
+		? id
+		: { revision: invertRevision, localId: genId.getAlias(id.revision, id.localId) };
 }
 
 function invertRootTable(
@@ -446,13 +452,14 @@ function invertRootTable(
 	invertedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	isRollback: boolean,
 	revisionForInverse: RevisionTag,
+	genId: AtomIdAliasAllocator,
 ): RootNodeTable {
 	const invertedRoots: RootNodeTable = newRootTable();
 
 	if (isRollback) {
 		invertRenamesForRollback(change, invertedRoots);
 	} else {
-		invertRenamesForRevert(change, revisionForInverse, invertedRoots);
+		invertRenamesForRevert(change, revisionForInverse, invertedRoots, genId);
 	}
 
 	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
@@ -483,7 +490,8 @@ function invertRenamesForRevert(
 	change: ModularChangeset,
 	revisionForInverse: RevisionTag,
 	invertedRoots: RootNodeTable,
-) {
+	genId: AtomIdAliasAllocator,
+): void {
 	for (const {
 		start: crossFieldKey,
 		value: field,
@@ -497,6 +505,7 @@ function invertRenamesForRevert(
 				field,
 				length,
 				invertedRoots,
+				genId,
 			);
 		}
 	}
@@ -512,7 +521,8 @@ function addRenameForAttachInInverse(
 	originalDetachField: FieldId,
 	count: number,
 	invertedRoots: RootNodeTable,
-) {
+	genId: AtomIdAliasAllocator,
+): void {
 	let countProcessed = count;
 	const originalAttachIdEntry = getNewRootIdFromOldRootId(
 		change.rootNodes,
@@ -528,25 +538,8 @@ function addRenameForAttachInInverse(
 	);
 	countProcessed = originalAttachEntry.length;
 
-	const invertedAttachId = getInvertedMoveId(originalDetachId, invertRevision, false);
-	if (originalAttachEntry.value !== undefined) {
-		// The nodes are moved (in both the original and inverse change).
-		// The inverse should have a rename from the inverse's detach ID to the inverse's attach ID,
-		// if they are not the same.
-		const invertedDetachId = getInvertedMoveId(
-			originalAttachIdEntry.value,
-			invertRevision,
-			false,
-		);
-
-		addNodeRename(
-			invertedRoots,
-			invertedDetachId,
-			invertedAttachId,
-			countProcessed,
-			undefined,
-		);
-	} else {
+	const invertedAttachId = getInvertedMoveId(originalDetachId, invertRevision, false, genId);
+	if (originalAttachEntry.value === undefined) {
 		const outputDetachLocationEntry = change.rootNodes.outputDetachLocations.getFirst(
 			originalAttachIdEntry.value,
 			countProcessed,
@@ -564,6 +557,24 @@ function addRenameForAttachInInverse(
 			countProcessed,
 			detachLocation,
 		);
+	} else {
+		// The nodes are moved (in both the original and inverse change).
+		// The inverse should have a rename from the inverse's detach ID to the inverse's attach ID,
+		// if they are not the same.
+		const invertedDetachId = getInvertedMoveId(
+			originalAttachIdEntry.value,
+			invertRevision,
+			false,
+			genId,
+		);
+
+		addNodeRename(
+			invertedRoots,
+			invertedDetachId,
+			invertedAttachId,
+			countProcessed,
+			undefined,
+		);
 	}
 
 	const countRemaining = count - countProcessed;
@@ -575,11 +586,15 @@ function addRenameForAttachInInverse(
 			originalDetachField,
 			countRemaining,
 			invertedRoots,
+			genId,
 		);
 	}
 }
 
-function invertRenamesForRollback(change: ModularChangeset, invertedRoots: RootNodeTable) {
+function invertRenamesForRollback(
+	change: ModularChangeset,
+	invertedRoots: RootNodeTable,
+): void {
 	for (const { start: oldId, value: newId, length } of change.rootNodes.oldToNewId.entries()) {
 		invertRename(change, invertedRoots, oldId, newId, length);
 	}

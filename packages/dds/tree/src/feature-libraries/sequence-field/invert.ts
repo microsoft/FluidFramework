@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
+import type { RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
@@ -149,24 +149,25 @@ function invertInsert(
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		return [
-			invertInsertSegment(mark1, revision, isRollback, entry.value),
+			invertInsertSegment(mark1, revision, manager, isRollback, entry.value),
 			...invertInsert(mark2, revision, manager, isRollback),
 		];
 	}
 
-	return [invertInsertSegment(mark, revision, isRollback, entry.value)];
+	return [invertInsertSegment(mark, revision, manager, isRollback, entry.value)];
 }
 
 function invertInsertSegment(
 	mark: CellMark<Attach>,
 	revision: RevisionTag | undefined,
+	manager: InvertNodeManager,
 	isRollback: boolean,
 	nodeChange: NodeId | undefined,
 ): Mark {
 	const inputId = getInputCellId(mark);
 	assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 
-	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback);
+	const detachId = manager.getInvertedMoveId(getAttachedRootId(mark));
 
 	const removeMark: Mutable<CellMark<Detach>> = {
 		type: "Detach",
@@ -184,21 +185,6 @@ function invertInsertSegment(
 	}
 
 	return removeMark;
-}
-
-function invertAttachId(
-	attachId: ChangeAtomId,
-	revision: RevisionTag | undefined,
-	isRollback: boolean,
-): ChangeAtomId {
-	if (!isRollback) {
-		return {
-			revision,
-			localId: attachId.localId,
-		};
-	}
-
-	return attachId;
 }
 
 function invertNodeChangeOrSkip(

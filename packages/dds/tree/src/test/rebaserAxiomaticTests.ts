@@ -23,9 +23,9 @@ import {
 	type FieldStateTree,
 	type NamedChangeset,
 	generatePossibleSequenceOfEdits,
-	makeIntentionMinter,
 } from "./exhaustiveRebaserUtils.js";
 import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
+import { idAllocatorFromMaxId } from "../util/index.js";
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;
@@ -106,7 +106,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	rebaseOverComposeDescribe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -114,7 +114,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -123,7 +123,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						numberOfEditsToRebaseOver,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
@@ -148,14 +148,14 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 	describe("Composed sandwich rebase over single edit", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const intentionMinter = makeIntentionMinter();
+				const idAllocator = idAllocatorFromMaxId();
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						numberOfEditsToRebase,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -164,7 +164,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const namedSourceEdits of localEdits) {
@@ -214,7 +214,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe("rebaseLeftDistributivity: A ↷ (B ○ C) = (A ↷ B) ↷ C", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -222,7 +222,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -231,7 +231,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						2,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
@@ -255,7 +255,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe.skip("rebaseRightDistributivity: (A ○ B) ↷ C = (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)))", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -263,7 +263,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						2,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -272,7 +272,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [
@@ -299,7 +299,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe("rebaseOverUndoRedoPair: ((A ↷ B) ↷ B⁻¹) ↷ B = A ↷ B", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -307,7 +307,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -316,7 +316,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
@@ -340,7 +340,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe("rebaseOverDoUndoPairIsNoOp: (A ↷ B) ↷ B⁻¹ = A", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -348,7 +348,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				const trunkEdits = [
@@ -357,7 +357,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
@@ -381,7 +381,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe("rebaseOverEmpty: A ↷ ε = A", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -389,7 +389,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"local-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
@@ -405,7 +405,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 
 	describe("rebaseEmpty: ε ↷ A = ε", () => {
 		for (const initialState of initialStates) {
-			const intentionMinter = makeIntentionMinter();
+			const idAllocator = idAllocatorFromMaxId();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const trunkEdits = [
 					...generatePossibleSequenceOfEdits(
@@ -413,7 +413,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 						generateChildStates,
 						1,
 						"trunk-rev-",
-						intentionMinter,
+						idAllocator,
 					),
 				];
 				for (const [{ description: name, changeset: edit }] of trunkEdits) {

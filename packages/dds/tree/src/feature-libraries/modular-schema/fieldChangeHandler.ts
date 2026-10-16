@@ -8,6 +8,7 @@ import type {
 	ChangeAtomId,
 	ChangeAtomIdRangeMap,
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	RevisionMetadataSource,
@@ -120,7 +121,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TChangeset,
 		isRollback: boolean,
-		genId: IdAllocator,
+		genId: AtomIdAliasAllocator,
 		revision: RevisionTag | undefined,
 		nodeManager: InvertNodeManager,
 		revisionMetadata: RevisionMetadataSource,
@@ -423,4 +424,25 @@ export interface FieldChangeDecodingContext {
 	 * This should only be called during decoding.
 	 */
 	generateId(): ChangeAtomId;
+}
+
+/**
+ * Allocates and manages aliases for local IDs within different revisions.
+ */
+export interface AtomIdAliasAllocator extends IdAllocator<ChangesetLocalId> {
+	/**
+	 * Reserves a contiguous block of IDs for the given original revision up to the specified maximum local ID.
+	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent across calls.
+	 */
+	reserve(
+		originalRevision: RevisionTag | undefined,
+		originalMaxLocalId: ChangesetLocalId,
+	): void;
+	/**
+	 * @returns The alias for the given original local ID within the specified revision.
+	 */
+	getAlias(
+		originalRevision: RevisionTag | undefined,
+		originalLocalId: ChangesetLocalId,
+	): ChangesetLocalId;
 }

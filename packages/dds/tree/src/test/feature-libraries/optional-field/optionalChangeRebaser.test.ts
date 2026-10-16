@@ -38,7 +38,7 @@ import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalField.js";
-import { brand, brandConst } from "../../../util/index.js";
+import { brand, brandConst, type IdAllocator } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -115,8 +115,7 @@ const tag1 = mintRevisionTag();
 // 	const inverted = optionalChangeRebaser.invert(
 // 		change.change,
 // 		isRollback,
-// 		idAllocatorFromMaxId(),
-
+// 		new DefaultAtomIdAliasAllocator(),
 // 		revision,
 // 		failInvertManager,
 // 		defaultRevisionMetadataFromChanges([change]),
@@ -231,7 +230,7 @@ function makeChildStateGenerator(
 	return function* forEachRebaseVersions(
 		state: OptionalFieldTestState,
 		tagFromIntention: (intention: number) => RevisionTag,
-		mintIntention: () => number,
+		idAllocator: IdAllocator,
 	): Iterable<OptionalFieldTestState> {
 		for (
 			let rebaseVersion: RebaseVersion = minRebaseVersion;
@@ -242,7 +241,7 @@ function makeChildStateGenerator(
 				rebaseVersion,
 				state,
 				tagFromIntention,
-				mintIntention,
+				idAllocator,
 			);
 		}
 	};
@@ -252,11 +251,11 @@ const generateChildStateForRebaseVersion = function* (
 	rebaseVersion: RebaseVersion,
 	state: OptionalFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
+	idAllocator: IdAllocator,
 ): Iterable<OptionalFieldTestState> {
 	const mintId = (revision: RevisionTag): ChangeAtomId => {
 		return {
-			localId: mintIntention() as ChangesetLocalId,
+			localId: brand(idAllocator.allocate()),
 			revision,
 		};
 	};
@@ -272,7 +271,7 @@ const generateChildStateForRebaseVersion = function* (
 		// Clear Empty Field
 		// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
 		// as a concurrent set operation may populate the field.
-		const intention = mintIntention();
+		const intention = idAllocator.allocate();
 		const revision = tagFromIntention(intention);
 		const detach = mintId(revision);
 		const fieldEdit: FieldEditDescription = {
@@ -282,7 +281,7 @@ const generateChildStateForRebaseVersion = function* (
 			change: brand(optionalFieldEditor.clear(true, detach)),
 			revision,
 		};
-		const modularEdit = editor.buildChanges([fieldEdit]);
+		const modularEdit = editor.buildChanges([fieldEdit], brand(idAllocator.getMaxId()));
 		yield {
 			content: state.content,
 			mostRecentEdit: {
@@ -296,7 +295,7 @@ const generateChildStateForRebaseVersion = function* (
 	} else {
 		// Nested Change in Populated Field
 		{
-			const intention = mintIntention();
+			const intention = idAllocator.allocate();
 			const revision = tagFromIntention(intention);
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
@@ -322,7 +321,10 @@ const generateChildStateForRebaseVersion = function* (
 				change: brand(optionalFieldEditor.clear(true, mintId(revision))),
 				revision,
 			};
-			const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
+			const modularEdit = editor.buildChanges(
+				[fieldEdit, nestedFieldEdit],
+				brand(idAllocator.getMaxId()),
+			);
 			yield {
 				content: state.content,
 				mostRecentEdit: {
@@ -337,7 +339,7 @@ const generateChildStateForRebaseVersion = function* (
 
 		// Clear Populated Field
 		{
-			const intention = mintIntention();
+			const intention = idAllocator.allocate();
 			const revision = tagFromIntention(intention);
 			const detach = mintId(revision);
 			const fieldEdit: FieldEditDescription = {
@@ -347,7 +349,7 @@ const generateChildStateForRebaseVersion = function* (
 				change: brand(optionalFieldEditor.clear(false, detach)),
 				revision,
 			};
-			const modularEdit = editor.buildChanges([fieldEdit]);
+			const modularEdit = editor.buildChanges([fieldEdit], brand(idAllocator.getMaxId()));
 			yield {
 				content: {
 					attached: undefined,
@@ -365,7 +367,7 @@ const generateChildStateForRebaseVersion = function* (
 
 		// Pin node
 		{
-			const intention = mintIntention();
+			const intention = idAllocator.allocate();
 			const revision = tagFromIntention(intention);
 			const [clearId, pinId] = [mintId(revision), mintId(revision)];
 			const fieldEdit: FieldEditDescription = {
@@ -376,7 +378,7 @@ const generateChildStateForRebaseVersion = function* (
 				revision,
 			};
 
-			const modularEdit = editor.buildChanges([fieldEdit]);
+			const modularEdit = editor.buildChanges([fieldEdit], brand(idAllocator.getMaxId()));
 			yield {
 				content: state.content,
 				mostRecentEdit: {
@@ -392,7 +394,7 @@ const generateChildStateForRebaseVersion = function* (
 
 	// Set
 	{
-		const setIntention = mintIntention();
+		const setIntention = idAllocator.allocate();
 		const setRevision = tagFromIntention(setIntention);
 		const [fill, detach] = [mintId(setRevision), mintId(setRevision)];
 		// Using length of the input context guarantees set operations generated at different times also have different
@@ -422,7 +424,7 @@ const generateChildStateForRebaseVersion = function* (
 			detachedNode = { id: detach, value: current };
 			detached.push(detachedNode);
 		}
-		const modularEdit = editor.buildChanges([build, fieldEdit]);
+		const modularEdit = editor.buildChanges([build, fieldEdit], brand(idAllocator.getMaxId()));
 		yield {
 			content: { attached: newContents, detached },
 			mostRecentEdit: {
@@ -440,7 +442,7 @@ const generateChildStateForRebaseVersion = function* (
 
 	// Build
 	if (state.content.detached.length === 0) {
-		const buildIntention = mintIntention();
+		const buildIntention = idAllocator.allocate();
 		const buildRevision = tagFromIntention(buildIntention);
 		const id = mintId(buildRevision);
 		// Using length of the input context guarantees set operations generated at different times also have different
@@ -453,7 +455,7 @@ const generateChildStateForRebaseVersion = function* (
 			buildRevision,
 		);
 		const detached = [...state.content.detached, { id, value: newContents }];
-		const modularEdit = editor.buildChanges([build]);
+		const modularEdit = editor.buildChanges([build], brand(idAllocator.getMaxId()));
 		yield {
 			content: { attached: current, detached },
 			mostRecentEdit: {
@@ -469,7 +471,7 @@ const generateChildStateForRebaseVersion = function* (
 	// Attach
 	if (rebaseVersion >= 2) {
 		for (const node of state.content.detached) {
-			const attachIntention = mintIntention();
+			const attachIntention = idAllocator.allocate();
 			const attachRevision = tagFromIntention(attachIntention);
 			const [attach, detach] = [mintId(attachRevision), mintId(attachRevision)];
 			const rename: GlobalEditDescription = {
@@ -491,7 +493,10 @@ const generateChildStateForRebaseVersion = function* (
 				change: brand(optionalFieldEditor.set(isEmpty, { fill: attach, detach })),
 				revision: attachRevision,
 			};
-			const modularEdit = editor.buildChanges([rename, fieldEdit]);
+			const modularEdit = editor.buildChanges(
+				[rename, fieldEdit],
+				brand(idAllocator.getMaxId()),
+			);
 			const detached = state.content.detached.filter((n) => n !== node);
 			let detachedNode: RootNode | undefined;
 			if (!isEmpty) {
@@ -518,7 +523,7 @@ const generateChildStateForRebaseVersion = function* (
 	// Nested change in detached node
 	if (rebaseVersion >= 2) {
 		for (const node of state.content.detached) {
-			const intention = mintIntention();
+			const intention = idAllocator.allocate();
 			const revision = tagFromIntention(intention);
 			const nestedFieldEdit: FieldEditDescription = {
 				type: "field",
@@ -535,7 +540,10 @@ const generateChildStateForRebaseVersion = function* (
 				change: brand(optionalFieldEditor.clear(true, mintId(revision))),
 				revision,
 			};
-			const modularEdit = editor.buildChanges([nestedFieldEdit]);
+			const modularEdit = editor.buildChanges(
+				[nestedFieldEdit],
+				brand(idAllocator.getMaxId()),
+			);
 			yield {
 				content: state.content,
 				mostRecentEdit: {
@@ -557,7 +565,7 @@ const generateChildStateForRebaseVersion = function* (
 	) {
 		const { detach: priorDetach, attach: priorAttach } =
 			state.mostRecentEdit.meta ?? assert.fail();
-		const undoIntention = mintIntention();
+		const undoIntention = idAllocator.allocate();
 		const undoRevision = tagFromIntention(undoIntention);
 		const modularEdit = defaultFamily.invert(
 			state.mostRecentEdit.changeset,
