@@ -9,7 +9,7 @@ The alpha `TreeLocationResolver.captureGap` method and `kind: "sequence"` captur
 
 ```typescript
 const selection = view.locations.captureGap(view.root.text, 2, { affinity: "after" });
-// selection can be resolved on another client, typically after being sent as a signal using presence APIs.
+// selection can be resolved on another client, typically after being sent using presence APIs.
 const result = otherView.locations.resolve(selection);
 ```
 
