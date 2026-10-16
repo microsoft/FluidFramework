@@ -144,7 +144,9 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 		view.checkout.isSharedBranch && view.checkout.transaction.size === 0,
 		"Schema operations require a root view without a pending transaction",
 	);
-	const { newSchemaFactory } = getStaticsForTree(state.client.channel);
+	const { newSchemaFactory, newTreeViewConfiguration } = getStaticsForTree(
+		state.client.channel,
+	);
 	const newSchema = createFuzzSchema(
 		[...view.checkout.storedSchema.nodeSchema.keys(), `treeFuzz.${operation.contents.type}`],
 		newSchemaFactory,
@@ -156,7 +158,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 	state.clientViews?.delete(state.client.channel);
 
 	const newView = state.client.channel.kernel.checkout.viewWith(
-		new TreeViewConfiguration({ schema: newSchema }),
+		newTreeViewConfiguration({ schema: newSchema }),
 	);
 	newView.upgradeSchema();
 
