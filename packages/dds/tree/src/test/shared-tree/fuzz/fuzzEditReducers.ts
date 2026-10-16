@@ -14,11 +14,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
-import {
-	TreeArrayNode,
-	TreeViewConfiguration,
-	type TreeNode,
-} from "../../../simple-tree/index.js";
+import { TreeArrayNode, type TreeNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";

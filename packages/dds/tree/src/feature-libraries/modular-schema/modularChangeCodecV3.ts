@@ -13,15 +13,14 @@ import {
 	type JsonCodecPart,
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
-import {
-	newChangeAtomIdTransform,
-	type ChangeAtomId,
-	type ChangeAtomIdRangeMap,
-	type ChangeEncodingContext,
-	type FieldKey,
-	type FieldKindIdentifier,
-	type RevisionTag,
-	type RevisionTagSchema,
+import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangeEncodingContext,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import {
 	brand,

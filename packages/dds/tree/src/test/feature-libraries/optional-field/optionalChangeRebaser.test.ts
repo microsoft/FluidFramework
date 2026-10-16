@@ -25,7 +25,6 @@ import {
 } from "../../../feature-libraries/index.js";
 import type {
 	ModularChangeset,
-	NodeId,
 	RebaseVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";

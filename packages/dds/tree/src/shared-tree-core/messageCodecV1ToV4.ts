@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -16,7 +16,6 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	type Mutable,
-	unbrand,
 } from "../util/index.js";
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";

@@ -10,7 +10,7 @@ import {
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
-import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import { brand, type RangeQueryResult } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	EditFilterStatus,

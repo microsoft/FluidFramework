@@ -54,7 +54,6 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
-	areEqualChangeAtomIdOpts,
 	offsetDetachId,
 	type DeltaMark,
 } from "../../core/index.js";
@@ -72,7 +71,6 @@ import {
 	balancedReduce,
 	compareStrings,
 	createTupleComparator,
-	type RangeQueryResultFragment,
 	newTupleBTree,
 	type RangeMapEntry,
 	type RangeQueryResult,
@@ -99,11 +97,8 @@ import {
 	type DetachedNodeEntry,
 	type RebaseNodeManager,
 } from "./crossFieldQueries.js";
-import {
-	type FieldChangeHandler,
-	NodeAttachState,
-	type RebaseRevisionMetadata,
-} from "./fieldChangeHandler.js";
+import type { NodeAttachState } from "./fieldChangeHandler.js";
+import type { FieldChangeHandler, RebaseRevisionMetadata } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
@@ -126,7 +121,6 @@ import {
 } from "./modularChangeTypes.js";
 import {
 	addNodeRename,
-	areEqualFieldIds,
 	assignRootChange,
 	fieldChangeFromId,
 	fieldIdKeyFromFieldId,
@@ -134,7 +128,6 @@ import {
 	firstDetachIdFromAttachId,
 	getChangeHandler,
 	getDetachFieldForAttach,
-	getFieldsForCrossFieldKey,
 	getFirstAttachField,
 	getFirstDetachField,
 	getFirstFieldForAttach,
@@ -2218,14 +2211,6 @@ function removeUnnecessaryDetachLocations(
 	}
 }
 
-function isEmptyNodeChangeset(change: NodeChangeset): boolean {
-	return (
-		change.fieldChanges === undefined &&
-		change.nodeExistsConstraint === undefined &&
-		change.nodeExistsConstraintOnRevert === undefined
-	);
-}
-
 export function getFieldKind(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
@@ -3233,19 +3218,6 @@ function replaceFieldIdRevision(fieldId: FieldId, replacer: RevisionReplacer): F
 	};
 }
 
-/**
- * A rebaseChild callback for fields with no new changes.
- * Asserts that there are no new changes and returns undefined.
- */
-function noNewChangesRebaseChild(
-	child: NodeId | undefined,
-	_baseChild: NodeId | undefined,
-	_stateChange: NodeAttachState | undefined,
-): NodeId | undefined {
-	assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
-	return undefined;
-}
-
 interface ModularChangesetContent {
 	fieldChanges: FieldChangeMap;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
@@ -3547,7 +3519,6 @@ function addPendingCompositionsForRoots(
 /**
  * Updates `composedRoots` and `composedNodeToParent` to reflect root node changes from `change2`.
  * `composedRoots.nodeChanges` is assumed to start with a clone of `change1.rootNodes.nodeChanges`.
- * @returns
  */
 function composeRootNodeChanges(
 	change1: ModularChangeset,

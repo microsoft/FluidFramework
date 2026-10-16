@@ -9,7 +9,6 @@ import { newChangeAtomIdTransform, RevisionTagCodec } from "../../../core/index.
 import { newChangeAtomIdBTree } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
-import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
