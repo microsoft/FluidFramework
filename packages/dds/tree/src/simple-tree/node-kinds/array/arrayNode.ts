@@ -18,7 +18,6 @@ import type {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
-	adjustIndexForArraySplice,
 	brand,
 	validateIndex,
 	validateIndexRange,
@@ -1807,14 +1806,21 @@ function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): n
 		// A removal consumes pre-edit content: if it lies entirely before the anchor it pulls the anchor left,
 		// and if it contains the anchor's position the anchor collapses to the start of the removed span.
 		if (mark.detach !== undefined) {
-			newIndex += adjustIndexForArraySplice(index, readPosition, mark.count, 0) - index;
+			const removeEnd = readPosition + mark.count;
+			if (removeEnd <= index) {
+				newIndex -= mark.count;
+			} else if (readPosition < index) {
+				newIndex -= index - readPosition;
+			}
 			readPosition += mark.count;
 		}
 		if (mark.attach !== undefined) {
 			// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor leaves the
 			// anchor after the new content (insertion-point behavior). Inserted content is new, so it does not
 			// advance the pre-edit read position.
-			newIndex += adjustIndexForArraySplice(index, readPosition, 0, mark.count) - index;
+			if (readPosition <= index) {
+				newIndex += mark.count;
+			}
 		} else if (mark.detach === undefined) {
 			// Retain: existing content that was neither inserted nor removed.
 			readPosition += mark.count;
