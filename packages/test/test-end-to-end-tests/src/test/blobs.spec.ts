@@ -24,6 +24,7 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -35,7 +36,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { wrapObjectAndOverride } from "../mocking.js";
 import { TestPersistedCache } from "../testPersistedCache.js";
 
 import {
