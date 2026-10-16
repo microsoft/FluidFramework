@@ -141,6 +141,10 @@ export type SerializedChangeCodec = IJsonCodec<
 
 /**
  * Gets the newest SharedTree change format supported by a codec family.
+ * TODO:
+ * There is no reliable way to determine the latest supported format from the codec family alone.
+ * A the highest numeric format version may be deprecated, so it may not be desirable to use it as the latest supported format.
+ * Consider using min version for collab instead for selecting the latest supported format.
  */
 function getLatestSharedTreeChangeFormatVersion(
 	supportedFormats: Iterable<FormatVersion>,
