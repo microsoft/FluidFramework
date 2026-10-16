@@ -169,6 +169,45 @@ describe("Ordered Client Collection", () => {
 				assertOrderedEligibleClientIds();
 			});
 
+			it("Should elect parents by join sequence regardless of initial insertion order", () => {
+				createOrderedClientElection([
+					["c", 9, true],
+					["b", 2, true],
+					["a", 1, true],
+				]);
+				assertElectionState(3, "a", 9);
+				assert.equal(election.electedParent?.clientId, "a");
+				assert.equal(election.peekNextElectedClient()?.clientId, "b");
+
+				removeClient("a");
+				assertElectionState(2, "b", 10);
+				assert.equal(election.electedParent?.clientId, "b");
+				assertEvents(1);
+
+				resetElectedClient(100);
+				assertElectionState(2, "b", 10);
+				assert.equal(election.electedParent?.clientId, "b");
+				assertEvents(1);
+			});
+
+			it("Should elect the oldest eligible summarizer regardless of initial insertion order", () => {
+				addClient("a", 1);
+				addClient("newer", 3, false, summarizerClientType);
+				addClient("older", 2, false, summarizerClientType);
+				createOrderedClientElection([], undefined, SummarizerClientElection.isClientEligible);
+				assertElectionState(3, "older", 3);
+				assert.equal(election.electedParent?.clientId, "a");
+
+				removeClient("newer");
+				assertElectionState(2, "older", 3);
+				assertEvents(0);
+
+				removeClient("older");
+				assertElectionState(1, "a", 5);
+				assert.equal(election.electedParent?.clientId, "a");
+				assertEvents(1);
+			});
+
 			it("Should initialize with empty quorum and initial state", () => {
 				createOrderedClientElection(undefined, {
 					electedClientId: undefined,
@@ -498,6 +537,41 @@ describe("Ordered Client Collection", () => {
 		});
 
 		describe("Reset elected client", () => {
+			it("Should not emit elections or change serialized state when repeatedly resetting the elected interactive client", () => {
+				createOrderedClientElection([
+					["a", 1, true],
+					["b", 2, true],
+				]);
+				const initialState = election.serialize();
+				assert.equal(initialState.electedClientId, "a");
+				assert.equal(initialState.electedParentId, "a");
+
+				for (let i = 0; i < 2; i++) {
+					resetElectedClient(100);
+					assert.deepEqual(election.serialize(), initialState);
+					assertEvents(0);
+				}
+			});
+
+			it("Should not emit elections or displace the summarizer when repeatedly resetting its unchanged parent", () => {
+				addClient("a", 1);
+				addClient("s", 2, false, summarizerClientType);
+				createOrderedClientElection(
+					[],
+					{ electedClientId: "s", electedParentId: "a", electionSequenceNumber: 50 },
+					SummarizerClientElection.isClientEligible,
+				);
+				const initialState = election.serialize();
+				assert.equal(initialState.electedClientId, "s");
+				assert.equal(initialState.electedParentId, "a");
+
+				for (let i = 0; i < 2; i++) {
+					resetElectedClient(100);
+					assert.deepEqual(election.serialize(), initialState);
+					assertEvents(0);
+				}
+			});
+
 			it("Should reset to first when ineligible client is elected", () => {
 				createOrderedClientElection(
 					[
