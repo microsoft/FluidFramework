@@ -331,17 +331,19 @@ export namespace FormattedText {
 					);
 				}
 
-				const fieldFormats: readonly (readonly [string, unknown])[] =
+				const fieldFormats: readonly (readonly [string, TreeNode | TreeValue | undefined])[] =
 					typeof format === "object" &&
 					format !== null &&
 					"get" in format &&
 					typeof format.get === "function" &&
 					Symbol.iterator in format
-						? [...(format as Iterable<readonly [string, unknown]>)]
-						: Object.entries(format);
+						? [...(format as Iterable<readonly [string, TreeNode | TreeValue | undefined]>)]
+						: (Object.entries(format) as [string, TreeNode | TreeValue | undefined][]);
 
 				type Operation = (formatNode: TreeNode) => void;
 				const perSchemaOperation = new Map<TreeNodeSchema, Operation>();
+				// Since this runs once per schema (instead of once per character),
+				// perform schema-specific checks here where possible.
 				const buildOperation = (atomFormatSchema: TreeNodeSchema): Operation => {
 					switch (atomFormatSchema.kind) {
 						case NodeKind.Leaf:
@@ -356,22 +358,18 @@ export namespace FormattedText {
 								isMapNodeSchema(atomFormatSchema) || isRecordNodeSchema(atomFormatSchema),
 								"Expected a map or record schema.",
 							);
-							const field = SchemaFactory.optional(atomFormatSchema.info);
-							const createdValues = fieldFormats.map(
-								([key, value]) => [key, TreeBeta.create(field, value as never)] as const,
-							);
 							if (isMapNodeSchema(atomFormatSchema)) {
 								return (formatNode: TreeNode) => {
 									assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a map node.");
-									for (const [key, value] of createdValues) {
-										// TreeBeta.create above validated the value against this map's entry schema.
+									for (const [key, value] of fieldFormats) {
+										// The setter validates the cloned value against this map's entry schema.
 										formatNode.set(key, TreeBeta.clone(value) as never);
 									}
 								};
 							}
 							return (formatNode: TreeNode) => {
 								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a record node.");
-								for (const [key, value] of createdValues) {
+								for (const [key, value] of fieldFormats) {
 									formatNode[key] = TreeBeta.clone(value);
 								}
 							};
@@ -379,27 +377,19 @@ export namespace FormattedText {
 						case NodeKind.Object: {
 							// Narrow the typing to allow easy access to object specific APIs.
 							assert(isObjectNodeSchema(atomFormatSchema), "Expected an object schema.");
-							// Precompute values to assign to each modified field.
-							// Since this runs once per schema (instead of once per character),
-							// we precompute as much as we can here.
-							const createdValues: [string, TreeNode | TreeValue | undefined][] =
-								fieldFormats.map(([key, value]) => {
-									const field = atomFormatSchema.fields.get(key);
-									if (field === undefined) {
-										throw new UsageError(`Unknown format key: ${key}`);
-									}
-
-									// Create validates the type/schema internally, so this cast is safe.
-									const createdValue = TreeBeta.create(field, value as never);
-									return [key, createdValue] as const;
-								});
+							// Check keys explicitly: unknown properties may not invoke a tree field setter.
+							for (const [key] of fieldFormats) {
+								if (!atomFormatSchema.fields.has(key)) {
+									throw new UsageError(`Unknown format key: ${key}`);
+								}
+							}
 
 							// Return the per character operation that will be applied to each with this schema.
 							return (formatNode: TreeNode) => {
-								for (const [key, createdValue] of createdValues) {
+								for (const [key, value] of fieldFormats) {
 									// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-									// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
-									const clonedValue = TreeBeta.clone(createdValue);
+									// `undefined` passes through cloning; the field setter checks whether the schema allows it.
+									const clonedValue = TreeBeta.clone(value);
 									(formatNode as unknown as Record<string, TreeNode | TreeValue | undefined>)[
 										key
 									] = clonedValue;

@@ -9,6 +9,8 @@ Support record and map formatting in formatted text ranges
 Updates preserve entries not included in the update.
 Set an entry to `undefined` to remove it.
 Map formats accept either an object containing entries or a readonly map.
+Node-valued properties and entries are cloned independently for each atom, including when copied from an existing hydrated format.
+This also fixes copying hydrated node-valued properties in object formats.
 
 ```typescript
 text.formatRange(0, 5, { bold: true });

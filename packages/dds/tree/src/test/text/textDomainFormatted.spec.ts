@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import { Tree, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	SchemaFactoryBeta,
@@ -226,6 +226,113 @@ describe("textDomainFormatted", () => {
 	});
 
 	describe("formatRange", () => {
+		for (const kind of ["object", "record", "map"] as const) {
+			describeHydration(`reusing ${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.reuse.${kind}`);
+				/**
+				 * A node-valued formatting property, rather than a leaf, so copying it requires cloning a subtree.
+				 * Its mutable color also lets the test detect aliases between the source and destination atoms.
+				 */
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				/** Exercises the object-field update path with a required child node. */
+				const ObjectFormat = factory.object("ObjectFormat", { detail: Detail });
+				/** Exercises the record-entry update path with node-valued entries. */
+				const RecordFormat = factory.record("RecordFormat", Detail);
+				/** Exercises the map-entry update path, including reading the update through its iterator. */
+				const MapFormat = factory.map("MapFormat", Detail);
+				/** Selects the format kind used by every atom in this test case. */
+				const Format =
+					kind === "object" ? ObjectFormat : kind === "record" ? RecordFormat : MapFormat;
+				/**
+				 * Text with a node-valued default format and no additional atom types.
+				 * The schema allows all three format kinds to share the test setup, but each case uses only the selected kind.
+				 * Explicitly constructing that kind disambiguates the otherwise identical default data.
+				 */
+				class Text extends FormattedText.createSchema(
+					factory,
+					[ObjectFormat, RecordFormat, MapFormat],
+					[],
+					new Format({ detail: new Detail({ color: "red" }) }),
+				) {}
+
+				it("copies an existing atom's node-valued format independently", () => {
+					const text = Text.fromString("abcd");
+					// Hydrate before reading the source format so its Detail is already in the tree when copied.
+					// Hydrating only the destination while supplying a new Detail would not reproduce the bug.
+					// The unhydrated case is a control for copying a child that already has a parent but is not hydrated.
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					const atoms = text.charactersWithFormatting();
+					const originalFormats = atoms.map((atom) => atom.format);
+					// All atoms start with the same color, so value comparisons alone cannot detect a no-op.
+					// Keep the original child identities to verify which subtrees are replaced.
+					const originalDetails = originalFormats.map((format) => {
+						const detail = Tree.is(format, MapFormat) ? format.get("detail") : format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+
+					// Copy the first atom's existing format onto two destinations, leaving the source and last atom untouched.
+					// Clone the hydrated source's children rather than treating them as insertable input to TreeBeta.create.
+					text.formatRange(1, 3, atoms[0].format);
+
+					const details = atoms.map((atom, index) => {
+						// A partial format update must preserve the enclosing format node.
+						assert.equal(atom.format, originalFormats[index]);
+						const detail = Tree.is(atom.format, MapFormat)
+							? atom.format.get("detail")
+							: atom.format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "red", "red", "red"],
+					);
+					assert.equal(new Set(details).size, 4);
+					assert.equal(details[0], originalDetails[0]);
+					assert.equal(details[3], originalDetails[3]);
+					assert.notEqual(details[1], originalDetails[1]);
+					assert.notEqual(details[2], originalDetails[2]);
+
+					// Editing one copy must not affect the source, the other copy, or the atom outside the range.
+					details[1].color = "blue";
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "blue", "red", "red"],
+					);
+				});
+
+				it("rejects values not allowed by the destination schema", () => {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					assert.throws(
+						() =>
+							// @ts-expect-error Testing invalid input.
+							text.formatRange(1, 3, { detail: 42 }),
+						validateUsageError(/incompatible with all of the types allowed by the schema/),
+					);
+				});
+
+				if (kind === "object") {
+					it("rejects unknown object fields", () => {
+						const text = Text.fromString("abcd");
+						if (hydrated) {
+							hydrateNode(text);
+						}
+						assert.throws(
+							() => text.formatRange(1, 3, { unknown: new Detail({ color: "red" }) }),
+							validateUsageError("Unknown format key: unknown"),
+						);
+					});
+				}
+			});
+		}
+
 		for (const kind of ["record", "map"] as const) {
 			describeHydration(`${kind} formats`, (_init, hydrated) => {
 				const factory = new SchemaFactoryBeta(`test.formatted.${kind}`);
