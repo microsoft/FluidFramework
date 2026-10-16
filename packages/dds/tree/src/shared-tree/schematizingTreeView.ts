@@ -697,8 +697,6 @@ export class SchematizingSimpleTreeView<
 			captureNode: (node) => capture({ kind: "node", node }),
 			captureGap: (node, index, options) =>
 				capture({ kind: "sequence", node, index, ...options }),
-			captureTextGap: (node, index, options) =>
-				capture({ kind: "text", node, index, ...options }),
 		};
 	})();
 }

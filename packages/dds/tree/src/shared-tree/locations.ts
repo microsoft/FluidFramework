@@ -201,19 +201,14 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			if (!isTreeNode(location.node)) {
 				throw new UsageError("A captured location requires a SimpleTree node.");
 			}
-			if (
-				location.kind !== "node" &&
-				location.kind !== "sequence" &&
-				location.kind !== "text"
-			) {
+			if (location.kind !== "node" && location.kind !== "sequence") {
 				throw new UsageError("Unrecognized tree location kind.");
 			}
 			let target = location.node;
-			if (location.kind === "text") {
-				if (!isTextLocationNode(location.node)) {
-					throw new UsageError("A text location requires a supported text node.");
-				}
+			let text = false;
+			if (location.kind === "sequence" && isTextLocationNode(location.node)) {
 				target = location.node[textLocationArray];
+				text = true;
 			}
 			const kernel = getKernel(target);
 			if (
@@ -245,7 +240,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						location.affinity !== "after"))
 			) {
 				throw new UsageError(
-					"A sequence or text location requires an array, an in-bounds gap index, and a valid affinity if provided.",
+					"A sequence location requires an array or supported text node, an in-bounds gap index, and a valid affinity if provided.",
 				);
 			}
 			const node: CapturedNodeReference = {
@@ -263,7 +258,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 					location.kind === "node"
 						? { kind: "node", node }
 						: {
-								kind: location.kind,
+								kind: text ? "text" : "sequence",
 								node,
 								index: location.index,
 								affinity: location.affinity ?? "before",
@@ -279,19 +274,11 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	}
 
 	public captureGap(
-		node: TreeArrayNode,
+		node: TreeArrayNode | TextLocationNode,
 		index: number,
 		options?: TreeGapCaptureOptions,
 	): CapturedTreeLocation {
 		return this.capture({ kind: "sequence", node, index, ...options });
-	}
-
-	public captureTextGap(
-		node: TextLocationNode,
-		index: number,
-		options?: TreeGapCaptureOptions,
-	): CapturedTreeLocation {
-		return this.capture({ kind: "text", node, index, ...options });
 	}
 
 	public resolve(capture: CapturedTreeLocation): TreeLocationResolution;

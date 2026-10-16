@@ -23,7 +23,8 @@ export type TextLocationNode = TreeNode & PlainText.Members;
  * @remarks
  * A node location can refer to any SimpleTree {@link TreeNode}, including an entire array.
  * Primitive leaf values do not identify a particular occurrence and are not node locations.
- * Sequence indices count array elements, not UTF-16 units or grapheme clusters unless the schema uses those units.
+ * Sequence indices count array elements or independently editable text atoms,
+ * not UTF-16 units or grapheme clusters unless the schema uses those units.
  * @input @alpha
  */
 export type TreeLocation =
@@ -43,11 +44,15 @@ export type TreeLocation =
 			 */
 			readonly kind: "sequence";
 			/**
-			 * The array node whose elements define the sequence.
+			 * The array or public text node whose elements define the sequence.
+			 * Use "node" instead to select the entire node.
 			 */
-			readonly node: TreeArrayNode;
+			readonly node: TreeArrayNode | TextLocationNode;
 			/**
-			 * A gap index from zero through the array length, inclusive.
+			 * A gap index from zero through the array length or text's `characterCount()`, inclusive.
+			 * Text gaps use the same coordinates as the text editing APIs.
+			 * Plain text normally counts Unicode code points; formatted text counts atoms, including embedded objects.
+			 * There is no implicit UTF-16 or grapheme conversion, and no position inside an atom.
 			 *
 			 * Gaps are the positions at which content can be inserted.
 			 * Sequences of length N have N+1 valid gap indices, ranging from 0 to N inclusive.
@@ -57,25 +62,6 @@ export type TreeLocation =
 			 * @example
 			 * In the sequence ["a", "b", "c"], index 0 refers to the gap before "a", index 1
 			 * refers to the gap between "a" and "b", and so on.
-			 */
-			readonly index: number;
-	  })
-	| (TreeGapCaptureOptions & {
-			/**
-			 * Selects a gap between independently editable text characters or atoms.
-			 * Use "node" instead to select the entire text node.
-			 */
-			readonly kind: "text";
-			/**
-			 * The public text node, not its underlying character array.
-			 */
-			readonly node: TextLocationNode;
-			/**
-			 * A gap index from zero through `node.characterCount()`, inclusive.
-			 * Uses the same coordinates as the text editing APIs.
-			 * Plain text normally counts Unicode code points; formatted text counts atoms, including embedded objects.
-			 * There is no implicit UTF-16 or grapheme conversion, and no position inside an atom.
-			 * Deletion and affinity have the same semantics as sequence gaps.
 			 */
 			readonly index: number;
 	  });
@@ -135,9 +121,9 @@ export interface CapturedTreeLocation
  * Node locations follow node identity through moves; deletion does not select a replacement.
  * Deletion is terminal for a captured node location, even if a later undo restores the node.
  * Sequence locations follow moved content, including into another array.
- * Text locations return the destination's public text node, including when the original text node was deleted.
+ * Captures of text gaps return a "text" location with the destination's public text node, including when the original text node was deleted.
  * If moved text ends up in an array without a supported text owner, resolution returns a sequence location.
- * Sequence captures always return sequence locations, even when the array belongs to a text node.
+ * Captures of array gaps always return "sequence" locations, even when the array belongs to a text node.
  * Results contain the receiving view's local objects; use {@link TreeNodeApi.is} to narrow them to an application schema.
  * @sealed @alpha
  */
@@ -221,8 +207,8 @@ export interface TreeLocationResolver {
 	 * - No transaction may be open, including a transaction that has not made any edits.
 	 * - Calls from change-event callbacks are not supported, including callbacks raised after a batch has been applied.
 	 * - Node locations require SimpleTree nodes; primitive leaf values cannot identify a particular occurrence.
-	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
-	 * Text locations require supported text nodes and count independently editable characters or atoms.
+	 * Sequence locations require array nodes or supported text nodes and count array elements
+	 * or independently editable text characters or atoms, not arbitrary text offsets.
 	 *
 	 * Unsupported view states throw rather than returning undefined.
 	 * Captures are ephemeral and may be unresolvable as retained history is trimmed; they are not persistent anchors.
@@ -252,34 +238,18 @@ export interface TreeLocationResolver {
 	captureNode(node: TreeNode): CapturedTreeLocation;
 
 	/**
-	 * Captures a gap between array elements.
-	 * @param node - The array whose elements define the sequence.
-	 * @param index - A gap index from zero through the array length, inclusive.
+	 * Captures a gap between array elements or independently editable text atoms.
+	 * @param node - The array or supported plain or formatted text node whose elements define the sequence.
+	 * @param index - A gap index from zero through the array length or text's `characterCount()`, inclusive.
 	 * @param options - Affinity and move policy. Defaults to "before" affinity and "follow" move policy.
 	 * @returns A serializable capture.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as {@link TreeLocationResolver.(capture:1)}.
 	 * @remarks
 	 * Equivalent to `capture({ kind: "sequence", node, index, ...options })`, with the same semantics and preconditions.
+	 * Text indices use the same coordinates as the text editing APIs, without implicit UTF-16 or grapheme conversion.
 	 */
 	captureGap(
-		node: TreeArrayNode,
-		index: number,
-		options?: TreeGapCaptureOptions,
-	): CapturedTreeLocation;
-
-	/**
-	 * Captures a gap in a public text node.
-	 * @param node - A supported plain or formatted text node.
-	 * @param index - A gap index from zero through `node.characterCount()`, inclusive.
-	 * @param options - Affinity and move policy. Defaults to "before" affinity and "follow" move policy.
-	 * @returns An independently serializable capture.
-	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as {@link TreeLocationResolver.(capture:1)}.
-	 * @remarks
-	 * Equivalent to `capture({ kind: "text", node, index, ...options })`, with the same semantics and preconditions.
-	 * Indices count independently editable characters or atoms, not UTF-16 units or grapheme clusters.
-	 */
-	captureTextGap(
-		node: TextLocationNode,
+		node: TreeArrayNode | TextLocationNode,
 		index: number,
 		options?: TreeGapCaptureOptions,
 	): CapturedTreeLocation;

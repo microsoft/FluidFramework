@@ -2769,11 +2769,7 @@ export type TreeLocation = {
     readonly node: TreeNode;
 } | (TreeGapCaptureOptions & {
     readonly kind: "sequence";
-    readonly node: TreeArrayNode;
-    readonly index: number;
-}) | (TreeGapCaptureOptions & {
-    readonly kind: "text";
-    readonly node: TextLocationNode;
+    readonly node: TreeArrayNode | TextLocationNode;
     readonly index: number;
 });
 
@@ -2789,9 +2785,8 @@ export type TreeLocationResolution = ResolvedTreeLocation | {
 export interface TreeLocationResolver {
     capture(location: TreeLocation): CapturedTreeLocation;
     capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
-    captureGap(node: TreeArrayNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    captureGap(node: TreeArrayNode | TextLocationNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
     captureNode(node: TreeNode): CapturedTreeLocation;
-    captureTextGap(node: TextLocationNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
     resolve(capture: CapturedTreeLocation): TreeLocationResolution;
     resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
 }

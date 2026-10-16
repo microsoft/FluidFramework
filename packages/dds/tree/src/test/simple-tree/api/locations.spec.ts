@@ -63,6 +63,7 @@ type _CaptureCannotBeConstructed = requireFalse<
 type _ResolvedLocationCannotBeUnavailable = requireFalse<
 	"unavailable" extends ResolvedTreeLocation["status"] ? true : false
 >;
+type _CaptureHasNoTextKind = requireFalse<"text" extends TreeLocation["kind"] ? true : false>;
 
 function capturedData(captured: CapturedTreeLocation): CapturedTreeLocationInternal {
 	return captured as unknown as CapturedTreeLocationInternal;
@@ -1505,7 +1506,7 @@ describe("TreeLocationResolver text", () => {
 					const { views } = setupText("abcd", "xy", jsonValidator);
 					const [sender, receiver] = views;
 					const batch = capture(sender.locations, [
-						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+						{ kind: "sequence", node: sender.root.paragraphs[0].text, index: 2 },
 					]);
 					assert(
 						extractJsonValidator(FormatValidatorBasic)
@@ -1553,7 +1554,7 @@ describe("TreeLocationResolver text", () => {
 				const [sender, receiver] = views;
 				const data = capturedData(
 					capture(sender.locations, [
-						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+						{ kind: "sequence", node: sender.root.paragraphs[0].text, index: 2 },
 					])[0],
 				);
 				const valid = data.location;
@@ -1591,8 +1592,14 @@ describe("TreeLocationResolver text", () => {
 				const [sender, receiver] = views;
 				const source = sender.root.paragraphs[0].text;
 				const batch = capture(sender.locations, [
-					{ kind: "text", node: source, index: 0 },
-					{ kind: "text", node: source, index: 4, affinity: "after", movePolicy: "follow" },
+					{ kind: "sequence", node: source, index: 0 },
+					{
+						kind: "sequence",
+						node: source,
+						index: 4,
+						affinity: "after",
+						movePolicy: "follow",
+					},
 					{ kind: "node", node: source },
 					{ kind: "sequence", node: characters(source), index: 2 },
 				]);
@@ -1614,16 +1621,16 @@ describe("TreeLocationResolver text", () => {
 				]);
 			});
 
-			it("keeps single, array, and text-gap helper captures equivalent and independently serializable", () => {
+			it("keeps single, array, and gap helper captures equivalent and independently serializable", () => {
 				const { views } = setupText();
 				const [sender, receiver] = views;
 				const node = sender.root.paragraphs[0].text;
-				const input = { kind: "text", node, index: 2, affinity: "after" } as const;
+				const input = { kind: "sequence", node, index: 2, affinity: "after" } as const;
 				const single = sender.locations.capture(input);
 				const inputs: readonly TreeLocation[] = [input];
 				const batch: CapturedTreeLocation[] = sender.locations.capture(inputs);
-				const { captureTextGap } = sender.locations;
-				assert.deepEqual(captureTextGap(node, 2, { affinity: "after" }), single);
+				const { captureGap } = sender.locations;
+				assert.deepEqual(captureGap(node, 2, { affinity: "after" }), single);
 				assert.deepEqual(batch, [single]);
 				const transported = JSON.parse(JSON.stringify(single)) as CapturedTreeLocation;
 				const readonlyBatch: readonly CapturedTreeLocation[] = [transported];
@@ -1642,23 +1649,39 @@ describe("TreeLocationResolver text", () => {
 				assert.equal(batch.length, 2);
 				assert.equal(results.length, 2);
 				assert.deepEqual(
-					captureTextGap(node, 0),
-					sender.locations.capture({ kind: "text", node, index: 0 }),
+					captureGap(node, 0),
+					sender.locations.capture({ kind: "sequence", node, index: 0 }),
 				);
-				assert.throws(() => captureTextGap(node, 5), validateUsageError(/in-bounds gap/));
+				assert.throws(() => captureGap(node, 5), validateUsageError(/in-bounds gap/));
 				sender.dispose();
-				assert.throws(() => captureTextGap(node, 0), /disposed TreeView/);
+				assert.throws(() => captureGap(node, 0), /disposed TreeView/);
+			});
+
+			it("rejects the text input kind while resolving sequence inputs on text as text", () => {
+				const { views } = setupText();
+				const [sender, receiver] = views;
+				const node = sender.root.paragraphs[0].text;
+				assert.throws(
+					// @ts-expect-error Text is a result kind, not a capture input kind.
+					() => sender.locations.capture({ kind: "text", node, index: 1 }),
+					validateUsageError(/Unrecognized tree location kind/),
+				);
+				const result = receiver.locations.resolve(sender.locations.captureGap(node, 1));
+				assert.equal(result.status, "resolved");
+				assert.equal(result.location.kind, "text");
+				assert.equal(result.location.node, receiver.root.paragraphs[0].text);
+				assert.equal(result.location.node.fullString(), "abcd");
 			});
 
 			it("resolves text captures mixed with node and sequence captures from different revisions", () => {
 				const { provider, views } = setupText();
 				const [sender, receiver] = views;
 				const node = sender.root.paragraphs[0].text;
-				const oldText = sender.locations.captureTextGap(node, 2);
+				const oldText = sender.locations.captureGap(node, 2);
 				const whole = sender.locations.captureNode(node);
 				sender.root.paragraphs[0].text.insertAt(0, "X");
 				provider.synchronizeMessages();
-				const newText = sender.locations.captureTextGap(node, 4, { affinity: "after" });
+				const newText = sender.locations.captureGap(node, 4, { affinity: "after" });
 				const sequence = sender.locations.captureGap(characters(node), 1);
 				receiver.root.paragraphs[0].text.insertAt(4, "Y");
 				const destination = receiver.root.paragraphs[0].text;
@@ -1682,13 +1705,13 @@ describe("TreeLocationResolver text", () => {
 					const { provider, views } = setupText();
 					const [sender, receiver] = views;
 					const node = receiver.root.paragraphs[0].text;
-					const captured = receiver.locations.captureTextGap(node, 2);
+					const captured = receiver.locations.captureGap(node, 2);
 					let callbacks = 0;
 					const unsubscribe = provider.trees[1].kernel.checkout.events.on(event, () => {
 						callbacks++;
 						for (const operation of [
-							() => receiver.locations.captureTextGap(node, 2),
-							() => receiver.locations.capture({ kind: "text", node, index: 2 }),
+							() => receiver.locations.captureGap(node, 2),
+							() => receiver.locations.capture({ kind: "sequence", node, index: 2 }),
 							() => receiver.locations.resolve(captured),
 							() => receiver.locations.resolve([captured]),
 						]) {
@@ -1712,7 +1735,7 @@ describe("TreeLocationResolver text", () => {
 			it("follows same-text moves through the public editing API", () => {
 				const { views } = setupText();
 				const [sender, receiver] = views;
-				const captured = sender.locations.captureTextGap(sender.root.paragraphs[0].text, 1);
+				const captured = sender.locations.captureGap(sender.root.paragraphs[0].text, 1);
 				const node = receiver.root.paragraphs[0].text;
 				// a|bcd: move [a b] to the end --> cda|b.
 				node.moveRangeToIndex(4, 0, 2);
@@ -1726,8 +1749,13 @@ describe("TreeLocationResolver text", () => {
 				const { views } = setupText("");
 				const [sender, receiver] = views;
 				const batch = capture(sender.locations, [
-					{ kind: "text", node: sender.root.paragraphs[0].text, index: 0 },
-					{ kind: "text", node: sender.root.paragraphs[0].text, index: 0, affinity: "after" },
+					{ kind: "sequence", node: sender.root.paragraphs[0].text, index: 0 },
+					{
+						kind: "sequence",
+						node: sender.root.paragraphs[0].text,
+						index: 0,
+						affinity: "after",
+					},
 				]);
 				const text = receiver.root.paragraphs[0].text;
 				text.insertAt(0, "\u{1F600}e\u0301");
@@ -1745,11 +1773,11 @@ describe("TreeLocationResolver text", () => {
 				const [sender, receiver] = views;
 				const text = sender.root.paragraphs[0].text;
 				const batch = capture(sender.locations, [
-					{ kind: "text", node: text, index: 2, affinity: "after" },
-					{ kind: "text", node: text, index: 3 },
+					{ kind: "sequence", node: text, index: 2, affinity: "after" },
+					{ kind: "sequence", node: text, index: 3 },
 				]);
 				assert.throws(
-					() => sender.locations.capture([{ kind: "text", node: text, index: 4 }]),
+					() => sender.locations.capture([{ kind: "sequence", node: text, index: 4 }]),
 					validateUsageError(/in-bounds gap index/),
 				);
 				const destination = receiver.root.paragraphs[0].text;
@@ -1766,10 +1794,10 @@ describe("TreeLocationResolver text", () => {
 				const [sender, receiver] = views;
 				const source = sender.root.paragraphs[0].text;
 				const batch = capture(sender.locations, [
-					{ kind: "text", node: source, index: 2 },
-					{ kind: "text", node: source, index: 2, affinity: undefined },
-					{ kind: "text", node: source, index: 2, affinity: "before" },
-					{ kind: "text", node: source, index: 2, affinity: "after" },
+					{ kind: "sequence", node: source, index: 2 },
+					{ kind: "sequence", node: source, index: 2, affinity: undefined },
+					{ kind: "sequence", node: source, index: 2, affinity: "before" },
+					{ kind: "sequence", node: source, index: 2, affinity: "after" },
 				]);
 				const text = receiver.root.paragraphs[0].text;
 				text.insertAt(2, "ij");
@@ -1798,7 +1826,7 @@ describe("TreeLocationResolver text", () => {
 					sender.locations,
 					(["before", "after"] as const).flatMap((affinity) =>
 						[1, 2, 3].map((index) => ({
-							kind: "text" as const,
+							kind: "sequence" as const,
 							node: source,
 							index,
 							affinity,
@@ -1832,7 +1860,7 @@ describe("TreeLocationResolver text", () => {
 					const { provider, views } = setupText();
 					const [sender, receiver] = views;
 					const batch = capture(sender.locations, [
-						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+						{ kind: "sequence", node: sender.root.paragraphs[0].text, index: 2 },
 						{ kind: "node", node: sender.root.paragraphs[0].text },
 					]);
 					// source: ab|cd --> empty --> deleted paragraph
@@ -1873,8 +1901,13 @@ describe("TreeLocationResolver text", () => {
 				const { provider, views } = setupText();
 				const [sender, receiver] = views;
 				const batch = capture(sender.locations, [
-					{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
-					{ kind: "text", node: sender.root.paragraphs[0].text, index: 4, affinity: "after" },
+					{ kind: "sequence", node: sender.root.paragraphs[0].text, index: 2 },
+					{
+						kind: "sequence",
+						node: sender.root.paragraphs[0].text,
+						index: 4,
+						affinity: "after",
+					},
 				]);
 				sender.root.paragraphs[0].text.insertAt(0, "R");
 				const remoteRevision = sender.branchHistory.getHead()?.revision;
@@ -1902,25 +1935,25 @@ describe("TreeLocationResolver text", () => {
 				const node = sender.root.paragraphs[0].text;
 				for (const index of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 5]) {
 					assert.throws(
-						() => sender.locations.capture([{ kind: "text", node, index }]),
+						() => sender.locations.capture([{ kind: "sequence", node, index }]),
 						validateUsageError(/in-bounds gap index/),
 					);
 				}
 				assert.throws(
 					() =>
 						sender.locations.capture([
-							{ kind: "text", node, index: 1, affinity: "invalid" as "before" },
+							{ kind: "sequence", node, index: 1, affinity: "invalid" as "before" },
 						]),
 					validateUsageError(/valid affinity/),
 				);
 				assert.throws(
 					() =>
 						sender.locations.capture([
-							{ kind: "text", node, index: 1, movePolicy: "stay" as "follow" },
+							{ kind: "sequence", node, index: 1, movePolicy: "stay" as "follow" },
 						]),
 					validateUsageError(/Only the "follow" move policy/),
 				);
-				const batch = capture(sender.locations, [{ kind: "text", node, index: 1 }]);
+				const batch = capture(sender.locations, [{ kind: "sequence", node, index: 1 }]);
 				const data = capturedData(batch[0]);
 				for (const movePolicy of ["stay", null, 0, {}]) {
 					expectUnavailable(
@@ -1958,9 +1991,9 @@ describe("TreeLocationResolver text", () => {
 		assert.equal(sender.root.fullString(), "a[image]\u{1F600}");
 		assert.equal(sender.root.characterCount(), 3);
 		const batch = capture(sender.locations, [
-			{ kind: "text", node: sender.root, index: 1 },
-			{ kind: "text", node: sender.root, index: 2, affinity: "after" },
-			{ kind: "text", node: sender.root, index: 3 },
+			{ kind: "sequence", node: sender.root, index: 1 },
+			{ kind: "sequence", node: sender.root, index: 2, affinity: "after" },
+			{ kind: "sequence", node: sender.root, index: 3 },
 		]);
 		const expected = [
 			{ kind: "text", node: receiver.root, index: 1, affinity: "before" },
@@ -1993,7 +2026,7 @@ describe("TreeLocationResolver text", () => {
 		provider.synchronizeMessages();
 		const [sender, receiver] = views;
 		const batch = capture(sender.locations, [
-			{ kind: "text", node: sender.root.text, index: 2 },
+			{ kind: "sequence", node: sender.root.text, index: 2 },
 			{ kind: "sequence", node: characters(sender.root.text), index: 2 },
 		]);
 		// text: ab|cd --> ad; ordinary array: xy --> xb|cy.
@@ -2032,7 +2065,7 @@ describe("TreeLocationResolver text", () => {
 		assert.throws(
 			() =>
 				// @ts-expect-error Invalid text input must also be rejected at runtime.
-				view.locations.capture([{ kind: "text", node: view.root, index: 1 }]),
+				view.locations.capture([{ kind: "sequence", node: view.root, index: 1 }]),
 			validateUsageError(/supported text node/),
 		);
 	});
