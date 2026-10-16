@@ -343,20 +343,11 @@ extends:
 
         # Set version
         - ${{ if and(eq(parameters.setVersion, true), eq(parameters.installPackages, true)) }}:
-          - task: Bash@3
-            displayName: Install dependencies
-            retryCountOnTaskFailure: 4
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-              ${{ if eq(parameters.installWorkspaceRootOnly, true) }}:
-                script: |
-                  set -eu -o pipefail
-                  pnpm i --frozen-lockfile --workspace-root
-              ${{ else }}:
-                script: |
-                  set -eu -o pipefail
-                  pnpm i --frozen-lockfile
+          - template: /tools/pipelines/templates/include-install.yml@self
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              installPnpm: false
+              installWorkspaceRootOnly: ${{ parameters.installWorkspaceRootOnly }}
 
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:

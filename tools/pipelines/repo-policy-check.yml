@@ -92,19 +92,11 @@ extends:
           fetchDepth: 1
           fetchTags: false
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
-
-        - task: Bash@3
-          displayName: Install root dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
-            script: |
-              set -eu -o pipefail
-              # We only need to install the root dependencies
-              pnpm install --workspace-root --frozen-lockfile
+            installDependenciesDescription: Install root dependencies
+            installWorkspaceRootOnly: true
 
         - task: Npm@1
           displayName: Policy Check
