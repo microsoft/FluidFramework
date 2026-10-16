@@ -5,13 +5,14 @@
 ---
 Track annotations across array and formatted text edits
 
-The new alpha APIs `ArrayWithExtrinsicRanges` and `FormattedText.createSchemaWithRanges` let you associate application-defined data, such as review comments, with ranges that update as you edit content.
+You can now track ranges with application-defined data, such as review comments, through edits to arrays and [`FormattedText`](https://fluidframework.com/docs/api/tree/formattedtext-namespace).
+The new alpha APIs `ArrayWithExtrinsicRanges` and `FormattedText.createSchemaWithRanges` provide this capability.
 Both expose a live `RangeCollection` through a `ranges` property.
 Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
 
 #### Formatted text
 
-`FormattedText.createSchemaWithRanges` accepts the same arguments as `FormattedText.createSchema`, followed by a schema for range data.
+`FormattedText.createSchemaWithRanges` accepts the same arguments as [`FormattedText.createSchema`](https://fluidframework.com/docs/api/tree/formattedtext-namespace#createschema-function), followed by a schema for range data.
 Existing text editing methods update range endpoints automatically, and formatting does not change them.
 Positions count text atoms, not UTF-16 code units.
 
@@ -50,7 +51,7 @@ text.formatRange(start, end, { bold: true });
 text.getString(start, end); // "world"
 ```
 
-To upgrade existing formatted text, keep the same factory scope, formatting schema, and atom schemas, then open a view using the range-enabled schema and call `view.upgradeSchema()`.
+To upgrade existing formatted text, keep the same factory scope, formatting schema, and atom schemas, then open a view using the range-enabled schema and call [`view.upgradeSchema()`](https://fluidframework.com/docs/api/tree/treeview-interface#upgradeschema-methodsignature).
 The upgrade adds optional range storage without rewriting text or formatting.
 Reading ranges does not create data; the first structural text edit or range edit initializes storage transactionally.
 Old views become incompatible after the upgrade because their writers cannot maintain ranges.
@@ -58,8 +59,8 @@ The original `FormattedText.createSchema` factory is unchanged.
 
 #### Arrays
 
-Use `ArrayWithExtrinsicRanges.createSchema` to create a scoped schema and read its content as a `ReadonlyArrayNode`.
-Edit content with `transactOnContent`, which supplies the mutable array API and maintains ranges across insertions, removals, and moves.
+Use `ArrayWithExtrinsicRanges.createSchema` to create a scoped schema and read its content as a [`ReadonlyArrayNode`](https://fluidframework.com/docs/api/tree/readonlyarraynode-interface).
+Edit content with `transactOnContent`, which supplies the mutable [`TreeArrayNode`](https://fluidframework.com/docs/api/tree/treearraynode-interface) API and maintains ranges across insertions, removals, and moves.
 
 ```typescript
 import {
