@@ -44,6 +44,7 @@ pnpm run typetests:gen
 Re-run `update-compat-versions` now that the newly released version is published to npm. This typically shifts N-1 to the just-released version and slides the back-compat window accordingly:
 
 ```bash
+pnpm exec fluid-build --task build:esm /test-version-utils$
 pnpm run --filter=@fluid-private/test-version-utils update-compat-versions
 ```
 

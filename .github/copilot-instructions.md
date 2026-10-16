@@ -2,6 +2,21 @@
 
 > This file is mirrored in `.claude/CLAUDE.md`. Changes here should be duplicated there, and vice versa.
 
+## Coding Guidelines
+
+Follow the [Coding Guidelines](../docs/content/Guidelines/Coding-Guidelines.md) when writing / modifying code.
+
+## Documentation Guidelines
+
+Follow the [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md) when writing or modifying code or documentation.
+Read and follow the linked guides relevant to the task, including the language-specific guides for source-code documentation.
+These requirements apply to source-code comments and API documentation as well as standalone documentation.
+
+## Changesets
+
+Add a changeset for user-facing changes only if the affected release group uses changesets.
+Before writing or modifying a changeset, read and follow the [Changeset Guidelines](../.changeset/README.md).
+
 ## Asserts
 
 When writing asserts (from `@fluidframework/core-utils`), use a string literal for the error message, not a hex assert code. This applies only to newly added asserts, not existing ones.
@@ -9,6 +24,11 @@ When writing asserts (from `@fluidframework/core-utils`), use a string literal f
 ## API Reports (`*.api.md`)
 
 API report files are **generated artifacts** — never hand-edit them. If they need updating, rebuild and regenerate via `build:api-reports`. If you are working in `@fluidframework/tree` or its aggregator (`fluid-framework`) and encounter unexpected API report diffs, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before attempting to fix them.
+
+## Documentation Style
+
+When writing Markdown and documentation comments, prefer line breaks at semantically significant boundaries, such as the end of a sentence or a meaningful clause.
+Do not wrap prose at an arbitrary fixed column unless syntax, established file style, or readability requires it.
 
 ## Azure DevOps
 

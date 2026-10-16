@@ -125,6 +125,16 @@ export interface BranchTrimmingEvents {
 
 /**
  * A branch of changes that can be applied to a SharedTree.
+ * @remarks
+ * A `SharedTreeBranch` tracks a linear history of commits terminating at a {@link SharedTreeBranch.getHead | head} commit,
+ * and provides an {@link SharedTreeBranch.editor | editor} for {@link SharedTreeBranch.apply | applying} new changes onto that history.
+ *
+ * A branch may be {@link SharedTreeBranch.fork | forked} into a new, independent branch.
+ * Changes applied to one branch do not affect the other until the two are reconciled:
+ * {@link SharedTreeBranch.merge | merging} incorporates another branch's divergent commits into this branch,
+ * while {@link SharedTreeBranch.rebaseOnto | rebasing} replays this branch's divergent commits onto another branch's head.
+ *
+ * See {@link SharedTreeBranchEvents} for events emitted by SharedTreeBranch instances.
  */
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,

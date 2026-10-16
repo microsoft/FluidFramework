@@ -1,5 +1,44 @@
 # @fluidframework/tree
 
+## 3.2.0
+
+### Minor Changes
+
+- createIdentifierIndex handles schemas with multiple identifiers consistently ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
+
+  [`createIdentifierIndex`](https://fluidframework.com/docs/api/tree/#createidentifierindex-function) now indexes a node only when its schema has exactly one [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) field.
+  Schemas with multiple identifier fields are skipped instead of arbitrarily indexing the first identifier field.
+  This avoids field-order-dependent behavior while allowing identifier indexes to be created for trees containing such schemas.
+
+  Identifier indexes now also take advantage of identifier fields being immutable.
+  This avoids unnecessarily re-indexing existing nodes after tree edits while continuing to index newly created nodes and filter detached nodes from index results.
+
+- createTreeIndex now interprets object field selectors as property keys ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
+
+  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) previously interpreted keys returned by [`TreeIndexKeyFieldSelector`](https://fluidframework.com/docs/api/tree/treeindexkeyfieldselector-typealias) as stored keys. This was inconsistent with the Simple Tree schema API and caused indexes to fail when an object field's property key differed from its stored key. Object field selectors are now translated from property keys to stored keys internally. Selectors must return `undefined` for non-object schemas.
+
+## 3.1.0
+
+### Minor Changes
+
+- Fix an infinite loop bug in revertTo ([#28219](https://github.com/microsoft/FluidFramework/pull/28219)) [8c8ca60891d](https://github.com/microsoft/FluidFramework/commit/8c8ca60891da0286a5f4382323a3379369bd3847)
+
+  Fixes a bug in [`UntypedTreeViewAlpha.revertTo`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) which could trigger an infinite loop when called.
+  This bug is not known to cause document corruption.
+
+- Fix a bug in revertTo ([#28202](https://github.com/microsoft/FluidFramework/pull/28202)) [acaed12e86d](https://github.com/microsoft/FluidFramework/commit/acaed12e86dd650cc6274beeb43e15faf8c59cf6)
+
+  Fixes a bug in [`UntypedTreeViewAlpha.revertTo`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) which could trigger assert codes `0x7ce`, `0x8a1`, `0x695`, and possibly others.
+  This bug is not known to cause document corruption.
+
+- Support flexible indexers when creating tree indexes ([#28210](https://github.com/microsoft/FluidFramework/pull/28210)) [3920a9a6665](https://github.com/microsoft/FluidFramework/commit/3920a9a66656594a07d8e985d98732028010d90b)
+
+  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) now accepts the new `TreeIndexKeyFieldSelector` type: either a pure callback or an object with a `get` method. This simplifies the factory to two overloads while continuing to support `Map` and `ReadonlyMap` values.
+
+- Fields defined with `SchemaFactoryAlpha.identifier()` now generate identifiers when omitted ([#28178](https://github.com/microsoft/FluidFramework/pull/28178)) [cf51fdd7e09](https://github.com/microsoft/FluidFramework/commit/cf51fdd7e09bceaf3ce671aa0c47715dea827e3c)
+
+  Fields defined with [`SchemaFactoryAlpha.identifier()`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#identifier-property) now correctly generate identifiers when omitted.
+
 ## 3.0.0
 
 ### Minor Changes

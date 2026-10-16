@@ -186,7 +186,7 @@ export enum AttachState {
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -268,7 +268,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
 
 // @alpha
 export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
@@ -2000,7 +2000,8 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+    readonly logger?: ITelemetryBaseLogger;
+    readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed

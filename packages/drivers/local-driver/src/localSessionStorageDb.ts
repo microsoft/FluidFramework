@@ -8,15 +8,23 @@ import type { ICollection, IDb } from "@fluidframework/server-services-core";
 import type { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
 
+/** Namespace for all session-storage records owned by local-driver. */
+const sessionStorageKeyPrefix = "@fluidframework/local-driver:";
+
 /**
  * A collection for local session storage, where data is stored in the browser
  * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
+	/** Prefix that scopes session-storage records to this collection. */
+	private readonly storageKeyPrefix: string;
+
 	/**
 	 * @param collectionName - data type of the collection, e.g. blobs, deltas, trees, etc.
 	 */
-	constructor(private readonly collectionName: string) {}
+	constructor(collectionName: string) {
+		this.storageKeyPrefix = `${sessionStorageKeyPrefix}${collectionName}-`;
+	}
 
 	public aggregate(pipeline: any, options?: any): any {
 		throw new Error("Method Not Implemented");
@@ -194,14 +202,22 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteOne}
 	 */
 	public async deleteOne(query: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const value = this.findOneInternal(query);
+		if (value !== null) {
+			sessionStorage.removeItem(`${this.storageKeyPrefix}${value._id}`);
+		}
+		return value;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteMany}
 	 */
 	public async deleteMany(query: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const values = await this.find(query, undefined);
+		for (const value of values) {
+			sessionStorage.removeItem(`${this.storageKeyPrefix}${value._id}`);
+		}
+		return values;
 	}
 
 	/**
@@ -219,7 +235,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		for (let i = 0; i < sessionStorage.length; i++) {
 			const key = sessionStorage.key(i);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (key!.startsWith(this.collectionName)) {
+			if (key!.startsWith(this.storageKeyPrefix)) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				values.push(JSON.parse(sessionStorage.getItem(key!)!));
 			}
@@ -240,7 +256,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 				if (!value._id) {
 					value._id = uuid();
 				}
-				sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
+				sessionStorage.setItem(`${this.storageKeyPrefix}${value._id}`, JSON.stringify(value));
 			}
 		}
 	}
@@ -254,7 +270,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	private findOneInternal(query: any): any {
 		if (query._id) {
-			const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
+			const json = sessionStorage.getItem(`${this.storageKeyPrefix}${query._id}`);
 			if (json) {
 				return JSON.parse(json);
 			}
@@ -263,7 +279,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 			for (let i = 0; i < sessionStorage.length; i++) {
 				const ssKey = sessionStorage.key(i);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				if (!ssKey!.startsWith(this.collectionName)) {
+				if (!ssKey!.startsWith(this.storageKeyPrefix)) {
 					continue;
 				}
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

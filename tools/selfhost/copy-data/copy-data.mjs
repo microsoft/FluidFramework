@@ -8,6 +8,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { safeErrorMessage } from "./configuration/errors.mjs";
 
+class ConfirmationError extends Error {
+	constructor() {
+		super("Use --execute to create tenants and copy documents");
+		this.name = "ConfirmationError";
+	}
+}
+
 function parseArgs(argv) {
 	const options = {
 		configPath: path.join(
@@ -35,7 +42,7 @@ function parseArgs(argv) {
 				throw new Error(`Unknown argument: ${argv[index]}`);
 		}
 	}
-	if (!options.execute) throw new Error("Use --execute to create tenants and copy documents");
+	if (!options.execute) throw new ConfirmationError();
 	return options;
 }
 

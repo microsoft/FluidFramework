@@ -1,5 +1,39 @@
 # @fluidframework/tinylicious-driver
 
+## 3.2.0
+
+### Minor Changes
+
+- Add ServiceClient for Tinylicious ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
+
+  The new alpha [`createTinyliciousServiceClient`](https://fluidframework.com/docs/api/tinylicious-driver/createtinyliciousserviceclient-function) API creates a [`ServiceClient`](https://fluidframework.com/docs/api/driver-definitions/serviceclient-interface) backed by a Tinylicious service.
+
+- Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
+
+  The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
+  Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
+  Existing callers can omit the option without changing their behavior.
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+
+  const service = startEphemeralService();
+  const client = service.newClient({
+    oldestSupportedClient: "2.100.0",
+    logger: {
+      send(event) {
+        console.log(event);
+      },
+    },
+  });
+  ```
+
+  The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
+
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 ### Minor Changes

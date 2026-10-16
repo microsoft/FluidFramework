@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ServiceContainerBase } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
-import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import {
+	ContainerDevtools,
+	type ContainerDevtoolsProps,
+	type FluidContainerDevtoolsProps,
+} from "./ContainerDevtools.js";
 import {
 	ContainerRuntimeDevtools,
 	type ContainerRuntimeProps,
@@ -19,7 +25,7 @@ import type { DecomposedContainer } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
-import type { IFluidDevtools } from "./IFluidDevtools.js";
+import type { FluidDevtoolsAlpha, IFluidDevtools } from "./IFluidDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -303,7 +309,9 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * {@inheritDoc IFluidDevtools.registerContainerDevtools}
 	 */
-	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
+	public registerContainerDevtools(
+		props: ContainerDevtoolsProps | FluidContainerDevtoolsProps,
+	): void {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -314,7 +322,15 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
-		const containerDevtools = new ContainerDevtools(props);
+		const container = props.container;
+		const containerDevtools = new ContainerDevtools({
+			container:
+				container instanceof ServiceContainerBase
+					? container.container
+					: (container as IContainer),
+			containerKey,
+			containerData: props.containerData,
+		});
 		this.containers.set(containerKey, containerDevtools);
 
 		// Post message for container list change
@@ -519,9 +535,23 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
+ *
+ * See {@link initializeDevtoolsAlpha} for a variant of this which also supports {@link @fluidframework/driver-definitions#ServiceClient} containers.
  * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
+	return FluidDevtools.initialize(props);
+}
+
+/**
+ * {@link initializeDevtools} except the returned value exposes {@link FluidDevtoolsAlpha.registerContainerDevtools}
+ * which supports {@link @fluidframework/driver-definitions#ServiceClient} containers as well.
+ *
+ * @remarks
+ * Uses the same singleton as {@link initializeDevtools}.
+ * @alpha
+ */
+export function initializeDevtoolsAlpha(props?: FluidDevtoolsProps): FluidDevtoolsAlpha {
 	return FluidDevtools.initialize(props);
 }
 

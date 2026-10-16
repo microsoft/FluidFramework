@@ -106,6 +106,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import {
@@ -1251,16 +1252,20 @@ export class ContainerRuntime
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						pendingLocalState.pendingIdCompressorState,
+						SerializationVersion.V2,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
+				return toIdCompressorWithCore(
+					createIdCompressor(SerializationVersion.V2, compressorLogger),
+				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						serializedIdCompressor,
 						createSessionId(),
+						SerializationVersion.V2,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);

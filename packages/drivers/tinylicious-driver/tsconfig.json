@@ -5,6 +5,9 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// Disabled because this package imports container-runtime/container-loader, whose emitted
+		// declarations are incompatible with exactOptionalPropertyTypes.
+		"exactOptionalPropertyTypes": false,
 		"noUncheckedIndexedAccess": false,
 	},
 }

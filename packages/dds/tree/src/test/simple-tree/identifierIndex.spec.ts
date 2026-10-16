@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { FieldKey } from "../../core/index.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	createIdentifierIndex,
 } from "../../simple-tree/index.js";
@@ -88,5 +89,30 @@ describe("identifier indexes", () => {
 	it("fail on lookup if two nodes have the same key", () => {
 		const { index } = init(new IndexableChild({ childKey: parentId }));
 		assert.throws(() => index.get(parentId));
+	});
+
+	it("does not index schemas with multiple identifier fields", () => {
+		class AmbiguousIdentifier extends schemaFactory.object("AmbiguousIdentifier", {
+			first: schemaFactory.identifier,
+			second: schemaFactory.identifier,
+		}) {}
+		const view = getView(new TreeViewConfiguration({ schema: AmbiguousIdentifier }));
+		view.initialize({ first: "a", second: "b" });
+
+		const index = createIdentifierIndex(view);
+		assert.equal(index.get("a"), undefined);
+		assert.equal(index.get("b"), undefined);
+		assert.equal(index.size, 0);
+	});
+
+	it("indexes an identifier whose property and stored keys differ", () => {
+		class RenamedIdentifier extends schemaFactory.object("RenamedIdentifier", {
+			identifier: SchemaFactoryAlpha.identifier({ key: "storedIdentifier" }),
+		}) {}
+		const view = getView(new TreeViewConfiguration({ schema: RenamedIdentifier }));
+		view.initialize({ identifier: "identifier" });
+
+		const index = createIdentifierIndex(view);
+		assert.equal(index.get("identifier"), view.root);
 	});
 });

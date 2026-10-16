@@ -1,5 +1,19 @@
 # @fluidframework/odsp-driver
 
+## 3.2.0
+
+Dependency updates only.
+
+## 3.1.0
+
+### Minor Changes
+
+- Fix compact snapshot loading with pooled Node.js buffers ([#28203](https://github.com/microsoft/FluidFramework/pull/28203)) [64a22895a03](https://github.com/microsoft/FluidFramework/commit/64a22895a03e04990bdd719f7b7fb0683475235a)
+
+  Compact snapshots can now be loaded when their binary data is represented by a `Uint8Array` view
+  with a non-zero `byteOffset`. This prevents container load failures in Node.js 24.18 and later,
+  where the larger buffer pool causes more file reads to return pooled buffer views.
+
 ## 3.0.0
 
 ### Minor Changes
