@@ -475,15 +475,20 @@ export class OrderedClientElection
 	 * Find any summarizer-type client currently in the quorum.
 	 */
 	private findSummarizerInQuorum(): ITrackedClient | undefined {
+		let oldestSummarizer: ITrackedClient | undefined;
 		for (const [clientId, client] of this.quorum.getMembers()) {
-			if (client.client.details.type === summarizerClientType) {
+			if (
+				client.client.details.type === summarizerClientType &&
+				(oldestSummarizer === undefined ||
+					client.sequenceNumber < oldestSummarizer.sequenceNumber)
+			) {
 				const tracked = toTrackedClient(clientId, client);
 				if (this.isEligibleFn(tracked)) {
-					return tracked;
+					oldestSummarizer = tracked;
 				}
 			}
 		}
-		return undefined;
+		return oldestSummarizer;
 	}
 
 	/**
