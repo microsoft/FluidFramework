@@ -6,14 +6,7 @@
 import type { TreeLeafValue, TreeNode } from "@fluidframework/tree";
 import { Tree } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/internal";
-import {
-	type FC,
-	memo,
-	type MemoExoticComponent,
-	type ReactNode,
-	useEffect,
-	useState,
-} from "react";
+import { memo, useEffect, useState } from "react";
 
 import {
 	unwrapPropTreeNode,
@@ -23,6 +16,7 @@ import {
 	type UnwrapPropTreeNodeRecord,
 	type WrapNodes,
 } from "./propNode.js";
+import type { FC, MemoExoticComponent, PropsAreEqual, ReactNode } from "./reactTypes.js";
 import { useObservation, type ObservationOptions } from "./useObservation.js";
 
 /**
@@ -80,10 +74,15 @@ export function withTreeObservations<TIn>(
 export function withMemoizedTreeObservations<TIn>(
 	component: FC<TIn>,
 	options?: ObservationOptions & {
-		readonly propsAreEqual?: Parameters<typeof memo>[1];
+		readonly propsAreEqual?: PropsAreEqual<
+			Parameters<ReturnType<typeof withTreeObservations<TIn>>>[0]
+		>;
 	},
 ): MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
-	return memo(withTreeObservations(component, options), options?.propsAreEqual);
+	return memo(
+		withTreeObservations(component, options),
+		options?.propsAreEqual,
+	) as MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
 }
 
 /**

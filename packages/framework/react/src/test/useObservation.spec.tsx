@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
+import { version as reactVersion } from "react";
 
 import {
 	useObservation,
@@ -15,6 +16,8 @@ import {
 } from "../useObservation.js";
 
 // There is much more coverage of useObservation via useTree tests.
+
+const reactMajorVersion = Number.parseInt(reactVersion, 10);
 
 describe("useObservation", () => {
 	describe("dom tests", () => {
@@ -52,6 +55,13 @@ describe("useObservation", () => {
 						log.length = 0;
 					}
 
+					const strictModeMountUnsubscribe: readonly string[] =
+						reactStrictMode &&
+						reactMajorVersion >= 19 &&
+						useObservationHook !== useObservationWithEffects
+							? ["unsubscribe"]
+							: [];
+
 					describe(`StrictMode: ${reactStrictMode}`, () => {
 						it("useObservation", async () => {
 							const log: string[] = [];
@@ -87,7 +97,7 @@ describe("useObservation", () => {
 							const content = <TestComponent />;
 
 							const rendered = render(content, { reactStrictMode });
-							checkRenderLog(log, ["render", "useObservation"]);
+							checkRenderLog(log, ["render", ...strictModeMountUnsubscribe, "useObservation"]);
 
 							rendered.rerender(content);
 							assertLogEmpty(log);
@@ -130,7 +140,7 @@ describe("useObservation", () => {
 
 							const rendered = render(<TestComponent />, { reactStrictMode });
 
-							assertLogEmpty(log);
+							checkRenderLog(log, strictModeMountUnsubscribe);
 							rendered.unmount();
 
 							// Unsubscribe on unmount is done via FinalizationRegistry, so force a GC and wait for it.
@@ -175,7 +185,7 @@ describe("useObservation", () => {
 
 							const rendered = render(<TestComponent />, { reactStrictMode });
 
-							checkRenderLog(log, ["render"]);
+							checkRenderLog(log, ["render", ...strictModeMountUnsubscribe]);
 
 							// After unmount, unsubscribe could happen at any time due to finalizer,so suppress logging it to prevent the test from possibly becoming flaky.
 							logUnsubscribe = false;
@@ -187,7 +197,14 @@ describe("useObservation", () => {
 							// Invalidate after unmount.
 							// Since this can happen in real use, due to unsubscribe delay while waiting for finalizer, ensure it does not cause issues.
 							// This should be a no-op, but since it does a React SetState after unmount, React could object to it.
-							for (const callback of invalidateCallbacks) {
+							const eagerlyDisposedGenerations =
+								reactStrictMode &&
+								reactMajorVersion >= 19 &&
+								useObservationHook === useObservationStrict
+									? 1
+									: 0;
+
+							for (const callback of invalidateCallbacks.slice(eagerlyDisposedGenerations)) {
 								callback();
 							}
 
