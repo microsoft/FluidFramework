@@ -1,0 +1,52 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "kind": {
+        "leaf": 0
+      }
+    },
+    "test.allTheFields": {
+      "kind": {
+        "object": {
+          "optional": {
+            "kind": "Optional",
+            "types": [
+              "com.fluidframework.leaf.number"
+            ]
+          },
+          "sequence": {
+            "kind": "Sequence",
+            "types": [
+              "com.fluidframework.leaf.number"
+            ]
+          },
+          "valueField": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.number"
+            ]
+          }
+        }
+      }
+    },
+    "test.minimal": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.allTheFields"
+    ]
+  },
+  "schemaHash": "592b2433e20896b3e83b75252f4c3273c91f28b7457f8d4c5df9c2ddd142ce9e",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

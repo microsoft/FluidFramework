@@ -8,6 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
@@ -33,6 +34,7 @@ import {
 } from "../toStoredSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { SchemaHasher } from "../schemaHash.js";
 
 /**
  * Options when constructing a tree view.
@@ -183,6 +185,82 @@ export interface ITreeViewConfigurationAlpha<
 	 * ```
 	 */
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+
+	/**
+	 * Application-defined versions for the view schema.
+	 *
+	 * @remarks
+	 * Each value must be a non-negative safe integer.
+	 * Initialization and upgrades also require {@link ITreeViewConfigurationAlpha.schemaHash}
+	 * and a separately imported {@link ITreeViewConfigurationAlpha.schemaHasher}.
+	 * These versions are stored in documents initialized or upgraded through a {@link TreeViewAlpha}.
+	 * Schema versions use an experimental persisted format.
+	 * Every client that loads or collaborates on a document using schema versions must use a Fluid Framework version that supports schema versions.
+	 *
+	 * Without versions, schema upgrades are limited to changes that only expand what may be stored.
+	 * Providing versions also allows other changes that keep all existing documents valid.
+	 * Such a change must increase at least one version, and stored versions cannot decrease or be removed.
+	 *
+	 * @example Changing a required string field to an identifier field
+	 * Required string and identifier fields accept the same stored values, so changing between them keeps existing documents valid.
+	 * Increasing the application version establishes which schema is newer and allows the change without older applications changing it back.
+	 *
+	 * Persisting application-defined schema versions requires opting into the experimental stored schema format:
+	 *
+	 * ```typescript
+	 * const SharedTree = configuredSharedTreeAlpha({
+	 * 	allowPossiblyIncompatibleWriteVersionOverrides: true,
+	 * 	writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+	 * });
+	 * ```
+	 *
+	 * All clients that load or collaborate on the document must support this format.
+	 *
+	 * ```typescript
+	 * const schemaFactory = new SchemaFactory("com.example");
+	 * const libraryId = "com.example" as LibraryId;
+	 *
+	 * const oldConfig = new TreeViewConfigurationAlpha({
+	 * 	schema: schemaFactory.string,
+	 * 	schemaVersion: { [libraryId]: 0 },
+	 * 	schemaHash: computeSchemaHash(schemaFactory.string),
+	 * 	schemaHasher,
+	 * });
+	 * const newConfig = new TreeViewConfigurationAlpha({
+	 * 	schema: schemaFactory.identifier,
+	 * 	schemaVersion: { [libraryId]: 1 },
+	 * 	schemaHash: computeSchemaHash(schemaFactory.identifier),
+	 * 	schemaHasher,
+	 * });
+	 * ```
+	 * In production, generate each expected hash during development and store the result in application source.
+	 * Computing the expected hash from the schema on every launch cannot detect a forgotten hash update.
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
+
+	/**
+	 * Expected hash of the effective stored schema, computed with {@link computeSchemaHash}.
+	 *
+	 * @remarks
+	 * Required when initializing or upgrading a schema with {@link ITreeViewConfigurationAlpha.schemaVersion}.
+	 * Unversioned schemas may opt into hashing by supplying this and {@link ITreeViewConfigurationAlpha.schemaHasher}.
+	 * Once a stored schema has a hash, subsequent upgrades must also supply a valid hash and hasher.
+	 * Use the same staged-upgrade flags when computing the hash and selecting the effective schema.
+	 * Keep the expected hash in application source so a schema change requires explicitly updating it.
+	 * A mismatch throws a `UsageError` before changing the tree.
+	 *
+	 */
+	readonly schemaHash?: string;
+
+	/**
+	 * Separately imported {@link schemaHasher} used to validate {@link ITreeViewConfigurationAlpha.schemaHash}.
+	 *
+	 * @remarks
+	 * Required when initializing or upgrading a versioned schema or a schema that opts into hashing.
+	 * Not persisted or included in compatibility snapshots.
+	 *
+	 */
+	readonly schemaHasher?: SchemaHasher;
 }
 
 /**
@@ -287,6 +365,21 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaVersion}
+	 */
+	public readonly schemaVersion: SchemaVersionMap | undefined;
+
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaHash}
+	 */
+	public readonly schemaHash: string | undefined;
+
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaHasher}
+	 */
+	public readonly schemaHasher: SchemaHasher | undefined;
+
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
@@ -295,11 +388,42 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
-
+		this.schemaVersion = validateSchemaVersion(props.schemaVersion);
+		this.schemaHash = props.schemaHash;
+		this.schemaHasher = props.schemaHasher;
+		if (
+			this.schemaHash !== undefined &&
+			(typeof this.schemaHash !== "string" || this.schemaHash.length === 0)
+		) {
+			throw new UsageError("schemaHash must be a non-empty string.");
+		}
+		if (this.schemaHasher !== undefined && typeof this.schemaHasher !== "function") {
+			throw new UsageError("schemaHasher must be a function.");
+		}
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root, this.stagedUpgradePolicy);
+		toInitialSchema(this.root, this.stagedUpgradePolicy, this.schemaVersion);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
+}
+
+/**
+ * Validates and freezes an application-defined schema version map.
+ * A valid map is `undefined` or maps each library identifier to a non-negative safe integer.
+ */
+export function validateSchemaVersion(
+	schemaVersion: SchemaVersionMap | undefined,
+): SchemaVersionMap | undefined {
+	if (schemaVersion === undefined) {
+		return undefined;
+	}
+	for (const [libraryId, version] of Object.entries(schemaVersion)) {
+		if (!Number.isSafeInteger(version) || version < 0) {
+			throw new UsageError(
+				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative safe integer.`,
+			);
+		}
+	}
+	return Object.freeze({ ...schemaVersion });
 }
 
 /**

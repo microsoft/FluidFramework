@@ -1,0 +1,23 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "kind": {
+        "leaf": 0
+      }
+    }
+  },
+  "root": {
+    "kind": "Sequence",
+    "types": [
+      "com.fluidframework.leaf.number"
+    ]
+  },
+  "schemaHash": "30e6fcea5192ffc6b5971b1bd1b8adad1c4b22dbe2bace039d306a43f81bcbd0",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

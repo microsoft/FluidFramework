@@ -1,0 +1,45 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.null": {
+      "kind": {
+        "leaf": 4
+      }
+    },
+    "test.NestedMultiStage": {
+      "kind": {
+        "object": {
+          "a": {
+            "kind": "Optional",
+            "types": []
+          },
+          "b": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.null"
+            ]
+          },
+          "c": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.NestedMultiStage"
+    ]
+  },
+  "schemaHash": "1b0778e09a86e10adc16a89ae16db5518fe3bde0d5aac0267872e7a717b74acc",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

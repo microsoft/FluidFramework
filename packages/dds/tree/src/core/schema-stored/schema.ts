@@ -40,8 +40,36 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
 	v2: 2,
+	/**
+	 * Experimental format which adds application-defined schema versions.
+	 */
+	v3Experimental: "schemaVersion",
 });
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
+
+/**
+ * Identifies a library which owns an application-defined schema version.
+ *
+ * @remarks
+ * Library identifiers are persisted in documents and must remain stable across releases.
+ * Use a globally unique, namespaced identifier, such as a package name or domain-based name, to
+ * avoid collisions with independently developed libraries.
+ * Every client using the library must use the same identifier.
+ *
+ * @alpha
+ */
+export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" };
+
+/**
+ * Application-defined versions associated with stored schema.
+ *
+ * @remarks
+ * Each version must be a non-negative safe integer.
+ * Library identifiers and version values are persisted in the document as part of its stored schema.
+ *
+ * @alpha
+ */
+export type SchemaVersionMap = Readonly<Record<LibraryId, number>>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -424,6 +452,29 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	 * Schema for the root field which contains the whole tree.
 	 */
 	readonly rootFieldSchema: TreeFieldStoredSchema;
+
+	/**
+	 * Application-defined versions associated with this schema.
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
+
+	/**
+	 * Application-supplied fingerprint of the effective stored schema.
+	 *
+	 * @remarks
+	 * Generate this with {@link computeSchemaHash} during development, using the same staged-upgrade flags
+	 * as initialization or upgrade, and store the result in application source.
+	 * The hash includes persisted metadata but excludes application versions and non-persisted view metadata.
+	 * Supply the expected hash and the separately imported {@link schemaHasher} in {@link TreeViewConfigurationAlpha}.
+	 * Before initializing or upgrading a schema that uses hashing, SharedTree checks the hash against the effective schema
+	 * and throws a `UsageError` on a mismatch before changing the tree.
+	 * This detects schema changes for which the application has not updated its expected hash.
+	 * The hash is persisted alongside {@link TreeStoredSchema.schemaVersion} to identify the stored schema.
+	 * Unversioned schemas may opt into hashing, while versioned schemas require it.
+	 * Once a stored schema has a hash, upgrades cannot remove it.
+	 *
+	 */
+	readonly schemaHash?: string;
 }
 
 /**

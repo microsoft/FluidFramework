@@ -61,6 +61,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
+	storedEmptyFieldSchema,
 	diffHistories,
 	type ChangeMetadata,
 	type LabelTree,
@@ -2210,7 +2211,7 @@ function getSchemaChangeTelemetryMetrics(
 	return {
 		changeKind: isInverse
 			? "rollback"
-			: oldSchema.nodeSchema.size === 0
+			: isInitialStoredSchema(oldSchema)
 				? "initialize"
 				: allowsRepoSuperset(defaultSchemaPolicy, oldSchema, newSchema)
 					? "upgrade"
@@ -2224,6 +2225,24 @@ function getSchemaChangeTelemetryMetrics(
 		oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 		newRootAllowedTypeCount: newSchema.rootFieldSchema.types.size,
 	};
+}
+
+/**
+ * Returns whether the schema matches the initial state of a new stored schema repository.
+ * Used to classify schema-change telemetry as initialization rather than an upgrade or restriction.
+ * An empty node-schema collection alone is not sufficient: root-field changes, metadata, or
+ * application-defined versions distinguish the schema from the initial state.
+ */
+function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
+	const root = schema.rootFieldSchema;
+	return (
+		schema.schemaVersion === undefined &&
+		schema.schemaHash === undefined &&
+		schema.nodeSchema.size === 0 &&
+		root.kind === storedEmptyFieldSchema.kind &&
+		root.types.size === 0 &&
+		root.persistedMetadata === undefined
+	);
 }
 
 /**

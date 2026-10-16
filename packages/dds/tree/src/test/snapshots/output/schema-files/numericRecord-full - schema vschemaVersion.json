@@ -1,0 +1,33 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "kind": {
+        "leaf": 0
+      }
+    },
+    "test.numericRecord": {
+      "kind": {
+        "map": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.numericRecord"
+    ]
+  },
+  "schemaHash": "525e3a1c258aa3b809a133dba1f1e2266b031e2c195732cee0bdad65bd96fecd",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

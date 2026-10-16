@@ -1,0 +1,35 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.string": {
+      "kind": {
+        "leaf": 1
+      }
+    },
+    "test.hasIdentifierField": {
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Identifier",
+            "types": [
+              "com.fluidframework.leaf.string"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasIdentifierField"
+    ]
+  },
+  "schemaHash": "717de62c9173638e3b9ef976550c84c4bd32e3a4df29e1ce94b785afe973f51c",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

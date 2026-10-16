@@ -1,0 +1,46 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "kind": {
+        "leaf": 0
+      }
+    },
+    "com.fluidframework.leaf.string": {
+      "kind": {
+        "leaf": 1
+      }
+    },
+    "test.NestedStagedOptional": {
+      "kind": {
+        "object": {
+          "a": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.number"
+            ]
+          },
+          "b": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.string"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.NestedStagedOptional"
+    ]
+  },
+  "schemaHash": "94358e4d4317d1b17412c9b7b7830c1a8c8068e46475dc4e3181b587eeb085a2",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}
