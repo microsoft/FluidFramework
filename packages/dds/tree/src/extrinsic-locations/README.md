@@ -113,6 +113,8 @@ These can overlap with phase one, but have some minimal dependency on parts of i
 4. Improve MVP concurrency 3: Replace constraints with "Drill down" editing of index fields. No more rejected transactions.
 5. Deliver stable APIs, including safe rollout/evolution for existing text users.
 6. Presence integration for arrays. Maybe share some logic with new field kind[s]? (Not really part of this work, but has some overlap)
+7. Consider implementing support for multiple collections (or just single) ranges, or just locations.
+There are several ways this setup could be made more flexible, from allowing you to have a record of collections of ranges and locations (instead of just a single map collection), or full first class reference support.
 
 ## Notes:
 

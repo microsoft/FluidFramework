@@ -121,6 +121,10 @@ export interface RangeCollection<TData, TInsertableData = TData> {
 	 * Iterates over the tracked keys in unspecified order.
 	 * @returns An iterator over the current storage's keys.
 	 * An iterator does not follow replacement of the underlying storage.
+	 * @privateRemarks
+	 * TODO: We should probably provide efficient ways to find ranges by their locations.
+	 * Maybe make this API take in an optional range, and enumerate all ranges which overlap it,
+	 * or perhaps provide a way to iterate over ranges in order of their start positions starting from a given position.
 	 */
 	keys(): IterableIterator<string>;
 }
