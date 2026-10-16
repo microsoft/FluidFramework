@@ -82,6 +82,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon, { type SinonFakeTimers } from "sinon";
 
+import type { BlobManager } from "../blobManager/index.js";
 import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
@@ -3015,6 +3016,123 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
+			for (const reconnectThroughRead of [false, true]) {
+				it(`does not reuse batch IDs when replaying blob attachments through ${
+					reconnectThroughRead ? "a read-to-write reconnect" : "a write connection"
+				}`, async () => {
+					const metadata: IContainerRuntimeMetadata = {
+						summaryFormatVersion: 1,
+						documentSchema: {
+							version: 1,
+							refSeq: 0,
+							runtime: { explicitSchemaControl: true, opGroupingEnabled: true },
+						},
+					};
+					const logger = new MockLogger();
+					const deltaManager = new MockDeltaManager();
+					const submittedBatches: IBatchMessage[][] = [];
+					let clientSequenceNumber = 0;
+					const mockContext = {
+						...getMockContext({
+							logger,
+							connected: false,
+							baseSnapshot: {
+								trees: { ".channels": { trees: {}, blobs: {} } },
+								blobs: { [metadataBlobName]: "metadata-id" },
+							},
+							mockStorage: {
+								...defaultMockStorage,
+								readBlob: async (id) => {
+									assert.equal(id, "metadata-id");
+									return stringToBuffer(JSON.stringify(metadata), "utf8");
+								},
+							},
+						}),
+						deltaManager,
+						submitBatchFn: (batch: IBatchMessage[]): number => {
+							if (deltaManager.active) {
+								submittedBatches.push(batch);
+							}
+							clientSequenceNumber += batch.length;
+							return clientSequenceNumber;
+						},
+					};
+					const { runtime } = await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: true,
+						runtimeOptions: {
+							enableGroupedBatching: true,
+							compressionOptions: {
+								minimumBatchSizeInBytes: 1024,
+								compressionAlgorithm: CompressionAlgorithms.lz4,
+							},
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtimeWithPrivates = runtime as unknown as Patch<
+						ContainerRuntime,
+						{
+							blobManager: BlobManager;
+							submit: (
+								message: LocalContainerRuntimeMessage,
+								localOpMetadata: unknown,
+								opMetadata: { localId: string; blobId: string },
+							) => void;
+						}
+					>;
+					const submitBlobAttach = (opMetadata: Record<string, unknown> | undefined): void => {
+						assert(typeof opMetadata?.localId === "string");
+						assert(typeof opMetadata.blobId === "string");
+						runtimeWithPrivates.submit(
+							{ type: ContainerMessageType.BlobAttach, contents: undefined },
+							undefined,
+							{ localId: opMetadata.localId, blobId: opMetadata.blobId },
+						);
+					};
+					sandbox
+						.stub(runtimeWithPrivates.blobManager, "reSubmit")
+						.callsFake(submitBlobAttach);
+					const connectClient = (clientId: string, active: boolean): void => {
+						deltaManager.active = active;
+						clientSequenceNumber = 0;
+						changeConnectionState(runtime, true, clientId);
+					};
+
+					// Separate turns leave the schema-only batch between the two blob batches.
+					submitBlobAttach({ localId: "local-1", blobId: "blob-1" });
+					await Promise.resolve();
+					submitBlobAttach({ localId: "local-2", blobId: "blob-2" });
+					await Promise.resolve();
+					assert.equal(submittedBatches.length, 0, "Disconnected batches must not be sent");
+					logger.assertMatchAny([{ eventName: "ContainerRuntime:SchemaChangeProposal" }]);
+
+					if (reconnectThroughRead) {
+						connectClient("read-client", false);
+						changeConnectionState(runtime, false, "read-client");
+					}
+					connectClient("write-client", true);
+
+					assert.deepEqual(
+						submittedBatches
+							.flat()
+							.map((message) => message.metadata?.localId)
+							.filter((localId) => localId !== undefined),
+						["local-1", "local-2"],
+						"Both blob attachments must be resubmitted exactly once",
+					);
+					const batchIds = submittedBatches
+						.map((batch) => batch[0].metadata?.batchId)
+						.filter((batchId) => batchId !== undefined);
+					assert(batchIds.length > 0, "Resubmitted batches must carry their batch IDs");
+					assert.equal(
+						new Set(batchIds).size,
+						batchIds.length,
+						"Each resubmitted batch ID must identify only one outgoing batch",
+					);
+				});
+			}
+
 			// BatchId tracking is on by default (TurnBased); the kill-switch suppresses detection.
 			for (const variant of [
 				{ name: "default (no settings)", settings: {}, expectDetection: true },
