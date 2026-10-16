@@ -48,6 +48,7 @@ import {
 	type ITreeViewConfiguration,
 	type TreeNodeApi,
 	treeNodeApi,
+	type ImplicitFieldSchema,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -153,6 +154,45 @@ export function createTreeViewSchema(
 	const schemaFactory = schemaFactoryConstructor("treeFuzz") as SchemaFactory<"treeFuzz">;
 	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
 	return node as unknown as typeof fuzzFieldSchema;
+}
+
+/**
+ * Creates schemas for the dynamically added node types allowed by the fuzz schema.
+ * Each generated object schema has one required string field named `value`.
+ *
+ * @param nodeTypes - Fully qualified node-type identifiers.
+ * Duplicate identifiers produce a single schema.
+ * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are omitted.
+ */
+export function generateGuidNodeSchemas(
+	nodeTypes: Iterable<string>,
+	schemaFactoryConstructor: SchemaFactoryConstructor,
+): TreeNodeSchema[] {
+	const schemaFactory = schemaFactoryConstructor("treeFuzz");
+	const guidNodeSchemas = [];
+	const fuzzNodeTypePrefix = "treeFuzz.";
+	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
+	const shortIdentifierOf = (fullIdentifier: string) =>
+		fullIdentifier.slice(fuzzNodeTypePrefix.length);
+	// Schemas that are present in all fuzz tests and don't require dynamic creation.
+	const commonNodes = new Set(["node", "arrayChildren"]);
+	for (const nodeType of new Set(nodeTypes)) {
+		assert(
+			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
+			"Expected a treeFuzz or built-in leaf schema identifier",
+		);
+		if (nodeType.startsWith(fluidLeafTypePrefix)) {
+			continue;
+		}
+		const nodeIdentifier = shortIdentifierOf(nodeType);
+		if (!commonNodes.has(nodeIdentifier)) {
+			class GuidNode extends schemaFactory.object(nodeIdentifier, {
+				value: schemaFactory.required(schemaFactory.string),
+			}) {}
+			guidNodeSchemas.push(GuidNode);
+		}
+	}
+	return guidNodeSchemas;
 }
 
 export function nodeSchemaFromTreeSchema(
@@ -315,15 +355,22 @@ export type SchemaFactoryConstructor = (scope: string) => SchemaFactory;
 
 export interface TreePackageStatics {
 	readonly newSchemaFactory: SchemaFactoryConstructor;
-	readonly newTreeViewConfiguration: (props: ITreeViewConfiguration) => TreeViewConfiguration;
+	readonly newTreeViewConfiguration: <
+		TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>(
+		props: ITreeViewConfiguration<TSchema>,
+	) => TreeViewConfiguration<TSchema>;
 	readonly nodeApi: TreeNodeApi;
 }
 
 export const treeToPackageStatics = new WeakMap<ISharedTree, TreePackageStatics>();
 
 const defaultSchemaFactoryConstructor = (scope: string) => new SchemaFactory(scope);
-const defaultTreeViewConfigurationConstructor = (props: ITreeViewConfiguration) =>
-	new TreeViewConfiguration(props);
+const defaultTreeViewConfigurationConstructor = <
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+>(
+	props: ITreeViewConfiguration<TSchema>,
+) => new TreeViewConfiguration(props);
 
 export const defaultTreePackageStatics: TreePackageStatics = {
 	newSchemaFactory: defaultSchemaFactoryConstructor,

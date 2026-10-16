@@ -15,11 +15,9 @@ import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
 import {
-	SchemaFactory,
 	TreeArrayNode,
 	TreeViewConfiguration,
 	type TreeNode,
-	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
@@ -44,6 +42,7 @@ import {
 	convertToFuzzView,
 	getStaticsForTree,
 	type TreePackageStatics,
+	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import {
 	type FieldEdit,
@@ -135,76 +134,34 @@ export function applySynchronizationOp(
 	}
 }
 
-// TODO: Update this function to be done in a more ergonomic way using libraries
-export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
-	const builder = new SchemaFactory("treeFuzz");
-	const leafNodeSchemas = [];
-	for (const nodeType of nodeTypes) {
-		if (
-			nodeType !== "treeFuzz.node" &&
-			nodeType !== "treeFuzz.FuzzStringNode" &&
-			nodeType !== "treeFuzz.FuzzNumberNode" &&
-			nodeType !== "treeFuzz.FuzzHandleNode"
-		) {
-			const fuzzNodeTypePrefix = "treeFuzz.";
-			const nodeIdentifier = nodeType.startsWith(fuzzNodeTypePrefix)
-				? nodeType.slice(fuzzNodeTypePrefix.length)
-				: nodeType;
-			class GuidNode extends builder.object(nodeIdentifier, {
-				value: builder.required(builder.string),
-			}) {}
-			leafNodeSchemas.push(GuidNode);
-		}
-	}
-	return leafNodeSchemas;
-}
-
-export function generateLeafNodeSchemas2(nodeTypes: string[]): TreeNodeSchema[] {
-	const builder = new SchemaFactory("treeFuzz");
-	const leafNodeSchemas = [];
-	for (const nodeType of nodeTypes) {
-		if (
-			nodeType !== "treeFuzz.node" &&
-			nodeType !== "treeFuzz.FuzzStringNode" &&
-			nodeType !== "treeFuzz.FuzzNumberNode"
-		) {
-			const fuzzNodeTypePrefix = "treeFuzz.";
-			if (!nodeType.startsWith(fuzzNodeTypePrefix)) {
-				class GuidNode extends builder.object(nodeType, {
-					value: builder.required(builder.string),
-				}) {}
-				leafNodeSchemas.push(GuidNode);
-			}
-		}
-	}
-	return leafNodeSchemas;
-}
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
-	const nodeTypes = getAllowableNodeTypes(state);
-	nodeTypes.push(operation.contents.type);
-	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
-	const newSchema = createTreeViewSchema(
-		leafNodeSchemas,
-		getStaticsForTree(state.client.channel).newSchemaFactory,
+	const view = viewFromState(state, state.client);
+	assert(
+		view.checkout.isSharedBranch && view.checkout.transaction.size === 0,
+		"Schema operations require a root view without a pending transaction",
 	);
+	const nodeTypes = getAllowableNodeTypes(state);
+	nodeTypes.push(`treeFuzz.${operation.contents.type}`);
+	const { newSchemaFactory } = getStaticsForTree(state.client.channel);
+	const guidNodeSchemas = generateGuidNodeSchemas(nodeTypes, newSchemaFactory);
+	const newSchema = createTreeViewSchema(guidNodeSchemas, newSchemaFactory);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.
-	const view = viewFromState(state, state.client);
 	view.dispose();
-	state.transactionViews?.delete(state.client.channel);
+	state.clientViews?.delete(state.client.channel);
 
-	const newView = state.client.channel.viewWith(
+	const newView = state.client.channel.kernel.checkout.viewWith(
 		new TreeViewConfiguration({ schema: newSchema }),
-	) as FuzzTransactionView;
+	);
 	newView.upgradeSchema();
 
-	newView.currentSchema =
-		nodeSchemaFromTreeSchema(newSchema) ?? assert.fail("nodeSchema should not be undefined.");
-
-	const transactionViews = state.transactionViews ?? new Map();
-	transactionViews.set(state.client.channel, newView);
-	state.transactionViews = transactionViews;
+	convertToFuzzView(
+		newView,
+		nodeSchemaFromTreeSchema(newSchema) ?? assert.fail("nodeSchema should not be undefined."),
+	);
+	assert(state.clientViews !== undefined);
+	state.clientViews.set(state.client.channel, newView);
 }
 
 export function applyForkMergeOperation(

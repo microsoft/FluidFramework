@@ -37,6 +37,8 @@ const weights: Partial<EditGeneratorOpWeights> = {
 	start: 1,
 	commit: 5,
 	revertTo: 10,
+	// Crossing a schema change can transmit an inverse schema and hit 0x933.
+	schema: 0,
 };
 
 describe("Fuzz - revertTo", () => {

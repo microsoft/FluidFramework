@@ -775,6 +775,9 @@ export function expectSchemaEqual(
 	);
 }
 
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
 export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
@@ -789,7 +792,7 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedRoots(),
+			removed: treeB.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);
@@ -826,7 +829,9 @@ export function validateSnapshotConsistency(
 	forEachInNestedMap(mapA, (content, major, minor) => {
 		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
 		if (mapBContent !== undefined) {
-			assertStructuralEquality(content, mapBContent);
+			assertStructuralEquality(content, mapBContent, {
+				message: `Inconsistent removed trees json representation: ${idDifferentiator}`,
+			});
 		}
 	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
