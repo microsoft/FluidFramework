@@ -36,7 +36,7 @@ import { toInitialSchema } from "../toStoredSchema.js";
  * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them
  * If not provided, no staged upgrades are included.
  *
- * @returns the SHA-256 hash of the schema, in hexadecimal
+ * @returns the first 128 bits of the schema's SHA-256 hash, as 32 hexadecimal characters
  *
  * @alpha
  */
@@ -56,7 +56,7 @@ export function computeSchemaHash(
 	});
 	// Normalize metadata to its JSON representation before sorting object keys.
 	const persisted = JSON.parse(serialized) as JsonCompatibleReadOnly;
-	return new sha256().update(canonicalize(persisted)).digest("hex");
+	return new sha256().update(canonicalize(persisted)).digest("hex").slice(0, 32);
 }
 
 function serializeField(schema: TreeFieldStoredSchema): JsonCompatibleReadOnly {
