@@ -45,9 +45,7 @@ import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
-	type EncodedChunkShapeV2,
 	type EncodedFieldBatchAnyVersion,
-	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
@@ -222,7 +220,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 	e(
 		shape: EncodedIncrementalChunkShape,
-		context: DecoderContext<EncodedChunkShapeV2>,
+		context: DecoderContext<EncodedChunkShape>,
 	): ChunkDecoder {
 		return new IncrementalChunkDecoder(context);
 	},
@@ -382,14 +380,14 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly context: DecoderContext<EncodedChunkShapeV2>) {}
+	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.context.incrementalDecoder !== undefined,
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedFieldBatchV2): TreeChunk => {
+		const chunkDecoder = (batch: EncodedFieldBatchAnyVersion): TreeChunk => {
 			assert(
 				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,

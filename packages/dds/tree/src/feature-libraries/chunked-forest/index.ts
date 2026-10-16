@@ -29,6 +29,5 @@ export {
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 	type EncodedFieldBatchAnyVersion,
-	type EncodedFieldBatchV2,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";
