@@ -45,7 +45,7 @@ See [Planned work](#planned-work) for implementation progress and future design 
 
 ## Usage
 
-For arrays, see the API documentation in [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
+For arrays, see the API documentation in [extrinsicLocationsNamespace.ts](./extrinsicLocationsNamespace.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
 For formatted text, see the [text documentation](../text/README.md).
 
 ## Current MVP limitations
@@ -73,14 +73,13 @@ The current MVP has the following requirements and limitations:
 The MVP implements option 1 above: editing APIs maintain persisted numeric endpoints in a string-keyed map of range nodes.
 The array and formatted-text integrations share the same tracker.
 
-Each `TrackedRange` exposes borrowed endpoint anchors whose `index` getters resolve through the tracker.
+Each `ExtrinsicLocations.TrackedRange` exposes borrowed endpoint anchors whose `index` getters resolve through the tracker.
 These anchors require no cleanup and must not be disposed by the caller; doing so throws a `UsageError`.
-Remove the persisted range with `RangeCollection.removeTrackedRange` instead.
-Assigning `TrackedRange.data` replaces its data without changing its identity or endpoints.
+Remove the persisted range with `ExtrinsicLocations.RangeCollection.removeTrackedRange` instead.
+Assigning `ExtrinsicLocations.TrackedRange.data` replaces its data without changing its identity or endpoints.
 
-- [rangeCollection.ts](./rangeCollection.ts): Public collection, endpoint, and live-handle interfaces.
+- [extrinsicLocationsNamespace.ts](./extrinsicLocationsNamespace.ts): Public namespace, shared range interfaces, and array schema integration.
 - [extrinsicRangeTracker.ts](./extrinsicRangeTracker.ts): Internal tracker, guarded transactions, temporary anchors, and storage access.
-- [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts): Array schema and tracker integration.
 - [textDomainFormatted.ts](../text/textDomainFormatted.ts): Formatted-text integration, schema upgrades, and lazy range storage.
 
 ## Planned work

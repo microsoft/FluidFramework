@@ -5,13 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { RangeCollection, RangeEndpoints } from "../../extrinsic-locations/index.js";
-
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { asAlpha } from "../../api.js";
-import { ArrayWithExtrinsicRanges } from "../../extrinsic-locations/index.js";
+import { ExtrinsicLocations } from "../../extrinsic-locations/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { TreeBeta } from "../../shared-tree/index.js";
 import {
@@ -31,7 +29,7 @@ import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { createTestUndoRedoStacks, getView, TestTreeProviderLite } from "../utils.js";
 
 const sf = new SchemaFactoryBeta("test.extrinsicRanges");
-class ArrayWithRanges extends ArrayWithExtrinsicRanges.createSchema(
+class ArrayWithRanges extends ExtrinsicLocations.createArraySchema(
 	sf,
 	SchemaFactory.string,
 	SchemaFactory.number,
@@ -55,15 +53,24 @@ function rangeSnapshot(array: ArrayWithRanges): [string, number, number, string]
 }
 
 function rangeBounds(
-	ranges: Pick<RangeCollection<unknown>, "getRange">,
+	ranges: Pick<ExtrinsicLocations.RangeCollection<unknown>, "getRange">,
 	key: string,
-): RangeEndpoints {
+): ExtrinsicLocations.RangeEndpoints {
 	const range = ranges.getRange(key);
 	assert(range !== undefined);
 	return { start: range.start.index, end: range.end.index };
 }
 
-describe("ArrayWithExtrinsicRanges", () => {
+describe("ExtrinsicLocations", () => {
+	it("preserves array schema identifiers", () => {
+		const identifier: ExtrinsicLocations.ArraySchemaIdentifier<"test.extrinsicRanges"> =
+			ArrayWithRanges.identifier;
+		assert.equal(
+			identifier,
+			"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Manager",
+		);
+	});
+
 	describeHydration("content and ranges", (_init, hydrated) => {
 		function create(content: number[] = [0, 1, 2, 3, 4]): ArrayWithRanges {
 			const array = ArrayWithRanges.create(content);
@@ -466,7 +473,7 @@ describe("ArrayWithExtrinsicRanges", () => {
 	it("supports object content and range data without string-specific APIs", () => {
 		class Item extends sf.object("Item", { value: sf.number }) {}
 		class Comment extends sf.object("Comment", { message: sf.string }) {}
-		class Objects extends ArrayWithExtrinsicRanges.createSchema(
+		class Objects extends ExtrinsicLocations.createArraySchema(
 			new SchemaFactoryBeta("test.extrinsicRanges.objects"),
 			Comment,
 			[Item, SchemaFactory.null],
@@ -498,7 +505,7 @@ describe("ArrayWithExtrinsicRanges", () => {
 		class Item extends sf.objectRecursive("RecursiveItem", {
 			children: sf.optionalRecursive([() => RecursiveArray]),
 		}) {}
-		class RecursiveArray extends ArrayWithExtrinsicRanges.createSchema(
+		class RecursiveArray extends ExtrinsicLocations.createArraySchema(
 			new SchemaFactoryBeta("test.extrinsicRanges.recursive"),
 			sf.null,
 			[Item],
@@ -511,7 +518,7 @@ describe("ArrayWithExtrinsicRanges", () => {
 	});
 
 	it("keeps schema parameterizations distinct in the same document", () => {
-		const Other = ArrayWithExtrinsicRanges.createSchema(
+		const Other = ExtrinsicLocations.createArraySchema(
 			new SchemaFactoryBeta("test.extrinsicRanges.other"),
 			sf.null,
 			sf.string,
@@ -528,6 +535,11 @@ describe("ArrayWithExtrinsicRanges", () => {
 
 	it("erases constructors and unsafe mutation APIs while preserving inferred types", () => {
 		const check = (array: NodeFromSchema<typeof ArrayWithRanges>): void => {
+			const members: ExtrinsicLocations.ArrayMembers<
+				typeof SchemaFactory.string,
+				typeof SchemaFactory.number
+			> = array;
+			allowUnused(members);
 			const item: number | undefined = array.content[0];
 			const data: string | undefined = array.ranges.getRange("range")?.data;
 			allowUnused(item);
@@ -542,7 +554,11 @@ describe("ArrayWithExtrinsicRanges", () => {
 			allowUnused(array.ranges.set);
 			// @ts-expect-error Range removal must go through the manager.
 			allowUnused(array.ranges.delete);
-			const range = array.ranges.trackNewRange("range", { start: 0, end: 0 }, "range");
+			const range: ExtrinsicLocations.TrackedRange<string> = array.ranges.trackNewRange(
+				"range",
+				{ start: 0, end: 0 },
+				"range",
+			);
 			// @ts-expect-error Range operations use keys, not handles.
 			array.ranges.getRange(range);
 			// @ts-expect-error Keys must be strings.

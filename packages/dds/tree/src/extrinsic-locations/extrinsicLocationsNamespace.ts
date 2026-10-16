@@ -8,6 +8,7 @@ import {
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetailsSubclassable,
 	SchemaFactory,
+	type ArrayPlaceAnchor,
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type ImplicitAllowedTypes,
@@ -20,13 +21,15 @@ import {
 } from "../simple-tree/index.js";
 
 import { ExtrinsicRangeTracker } from "./extrinsicRangeTracker.js";
-import type { RangeCollection } from "./rangeCollection.js";
 
 /**
- * Schema and APIs for an array with separately stored ranges.
+ * APIs for extrinsic locations and ranges in arrays and formatted text.
  * @remarks
+ * Includes shared range collections and handles, and a schema factory for arrays with separately stored ranges.
+ * For formatted text, use {@link FormattedText.createSchemaWithRanges}.
+ *
  * A range stores two indexes into the content array and application-defined data.
- * Edit the array through {@link ArrayWithExtrinsicRanges.Members} to keep these indexes consistent.
+ * Edit managed arrays through {@link ExtrinsicLocations.ArrayMembers} to keep these indexes consistent.
  * Removing all content covered by a range collapses it to an empty range rather than deleting it.
  *
  * Structural content edits, range creation/removal, and bound changes use a document-wide {@link NoChangeConstraint}.
@@ -41,22 +44,22 @@ import type { RangeCollection } from "./rangeCollection.js";
  * import APIs, or an agent that bypasses these methods can violate the range invariants.
  * @alpha
  */
-export namespace ArrayWithExtrinsicRanges {
+export namespace ExtrinsicLocations {
 	/**
 	 * Creates a subclassable schema for an array with extrinsic ranges.
 	 * @param inputSchemaFactory - Factory whose scope distinguishes this schema from other parameterizations.
 	 * Keep the scope and parameter schemas stable when opening existing documents.
 	 * @param rangeDataSchema - Schema for the data associated with each range.
 	 * @param contentSchema - Schema for the items in the content array.
-	 * @returns A schema with {@link ArrayWithExtrinsicRanges.Statics} for construction and
-	 * {@link ArrayWithExtrinsicRanges.Members} for reading and editing.
+	 * @returns A schema with {@link ExtrinsicLocations.ArrayStatics} for construction and
+	 * {@link ExtrinsicLocations.ArrayMembers} for reading and editing.
 	 * @remarks
 	 * Generated identifiers use the scope `com.fluidframework.extrinsicRanges<user-scope>`.
 	 * Use a different factory scope for each distinct parameterization in a document.
 	 * Subclasses must not replace the `content`, `rangeStorage`, or `ranges` members.
 	 * @alpha
 	 */
-	export function createSchema<
+	export function createArraySchema<
 		const TUserScope extends string,
 		const TRangeDataSchema extends ImplicitAllowedTypes,
 		const TContentSchema extends ImplicitAllowedTypes,
@@ -64,7 +67,7 @@ export namespace ArrayWithExtrinsicRanges {
 		inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
 		rangeDataSchema: TRangeDataSchema,
 		contentSchema: TContentSchema,
-	): Schema<TUserScope, TRangeDataSchema, TContentSchema> {
+	): ArraySchema<TUserScope, TRangeDataSchema, TContentSchema> {
 		const sf = createCustomizedFluidFrameworkScopedFactory(
 			inputSchemaFactory,
 			"extrinsicRanges",
@@ -83,7 +86,7 @@ export namespace ArrayWithExtrinsicRanges {
 				content: SchemaFactory.required([() => Content], { key: EmptyKey }),
 				rangeStorage: SchemaFactory.required([() => Ranges], { key: "ranges" }),
 			})
-			implements Members<TRangeDataSchema, TContentSchema>
+			implements ArrayMembers<TRangeDataSchema, TContentSchema>
 		{
 			#tracker: Tracker | undefined;
 
@@ -125,25 +128,25 @@ export namespace ArrayWithExtrinsicRanges {
 		}) {}
 
 		type Node = ErasedNode<
-			Members<TRangeDataSchema, TContentSchema>,
-			SchemaIdentifier<TUserScope>
+			ArrayMembers<TRangeDataSchema, TContentSchema>,
+			ArraySchemaIdentifier<TUserScope>
 		>;
 		return eraseSchemaDetailsSubclassable<
-			Members<TRangeDataSchema, TContentSchema>,
-			Statics<Node, TContentSchema>
+			ArrayMembers<TRangeDataSchema, TContentSchema>,
+			ArrayStatics<Node, TContentSchema>
 		>()(Manager);
 	}
 
 	/**
 	 * Reading and editing APIs for an array with extrinsic ranges.
 	 * @remarks
-	 * Edit content synchronously with {@link ArrayWithExtrinsicRanges.Members.transactOnContent}.
+	 * Edit content synchronously with {@link ExtrinsicLocations.ArrayMembers.transactOnContent}.
 	 * Content items and range data that are object nodes can still be edited directly.
 	 * Such edits do not change array positions.
 	 * @sealed
 	 * @alpha
 	 */
-	export interface Members<
+	export interface ArrayMembers<
 		TRangeDataSchema extends ImplicitAllowedTypes,
 		TContentSchema extends ImplicitAllowedTypes,
 	> {
@@ -167,7 +170,7 @@ export namespace ArrayWithExtrinsicRanges {
 		 * @param edit - Synchronous callback with mutable access to the content array.
 		 * @remarks
 		 * Content edits and their events occur normally during the callback.
-		 * Range positions returned by {@link RangeCollection.getRange}
+		 * Range positions returned by {@link ExtrinsicLocations.RangeCollection.getRange}
 		 * track those edits using temporary array insertion anchors.
 		 * The underlying stored endpoint fields are not synchronized until the callback finishes.
 		 * Do not retain the mutable array for editing after the callback returns.
@@ -192,13 +195,13 @@ export namespace ArrayWithExtrinsicRanges {
 	 * @sealed
 	 * @alpha
 	 */
-	export interface Statics<TNode, TContentSchema extends ImplicitAllowedTypes> {
+	export interface ArrayStatics<TNode, TContentSchema extends ImplicitAllowedTypes> {
 		/**
 		 * Creates an array with no ranges.
 		 * @param content - Initial content. Defaults to an empty array.
 		 * @returns A new, unhydrated node of this schema.
 		 * @remarks
-		 * Use {@link RangeCollection.trackNewRange} to add ranges after construction.
+		 * Use {@link ExtrinsicLocations.RangeCollection.trackNewRange} to add ranges after construction.
 		 */
 		create(
 			content?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TContentSchema>>,
@@ -209,7 +212,7 @@ export namespace ArrayWithExtrinsicRanges {
 	 * Identifier of a generated array-with-ranges schema.
 	 * @alpha
 	 */
-	export type SchemaIdentifier<TUserScope extends string> = ScopedSchemaName<
+	export type ArraySchemaIdentifier<TUserScope extends string> = ScopedSchemaName<
 		`com.fluidframework.extrinsicRanges<${TUserScope}>`,
 		"Manager"
 	>;
@@ -218,16 +221,143 @@ export namespace ArrayWithExtrinsicRanges {
 	 * An erased, subclassable schema for an array with extrinsic ranges.
 	 * @alpha
 	 */
-	export type Schema<
+	export type ArraySchema<
 		TUserScope extends string,
 		TRangeDataSchema extends ImplicitAllowedTypes,
 		TContentSchema extends ImplicitAllowedTypes,
-	> = Statics<
-		ErasedNode<Members<TRangeDataSchema, TContentSchema>, SchemaIdentifier<TUserScope>>,
+	> = ArrayStatics<
+		ErasedNode<
+			ArrayMembers<TRangeDataSchema, TContentSchema>,
+			ArraySchemaIdentifier<TUserScope>
+		>,
 		TContentSchema
 	> &
 		ErasedSchemaSubclassable<
-			Members<TRangeDataSchema, TContentSchema>,
-			SchemaIdentifier<TUserScope>
+			ArrayMembers<TRangeDataSchema, TContentSchema>,
+			ArraySchemaIdentifier<TUserScope>
 		>;
+
+	/**
+	 * Bounds of a half-open range in content-item indexes.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface RangeEndpoints {
+		/**
+		 * Inclusive start index.
+		 */
+		readonly start: number;
+		/**
+		 * Exclusive end index. Equal endpoints describe an empty range.
+		 */
+		readonly end: number;
+	}
+
+	/**
+	 * A live handle to a tracked range and its application-defined data.
+	 * @typeParam TData - Type of data read from the range.
+	 * @typeParam TInsertableData - Type of data accepted when replacing the range's data.
+	 * @remarks
+	 * Endpoints follow insertion-point semantics: insertion at an endpoint moves it after the inserted content.
+	 * Insertion at the start is excluded, insertion at the end is included, and empty ranges stay empty.
+	 * Removal collapses endpoints inside the removed span to the start of that span.
+	 * Ranges remain with their collection rather than following moved content.
+	 *
+	 * Each endpoint anchor's `index` returns its current position, including during a content editing scope.
+	 * A known array-anchor event-ordering limitation can cause listeners registered before the scope to read stale positions.
+	 * Reads after a content edit returns within the scope are current.
+	 * Copy the endpoint indexes to retain a snapshot.
+	 *
+	 * A handle refers to a particular range, not to subsequent ranges created at the same key.
+	 * Reading an endpoint index or assigning data throws a {@link @fluidframework/telemetry-utils#UsageError} if that range is no longer tracked.
+	 * Undo that restores the same range makes the handle valid again.
+	 * Each handle retains the same endpoint anchor objects as its bounds change.
+	 * Repeated lookups do not guarantee the same handle object.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TrackedRange<TData, TInsertableData = TData> {
+		/**
+		 * Anchor for the inclusive start of the range.
+		 * @remarks
+		 * This is a borrowed anchor owned by the tracked range.
+		 * Do not dispose it: calling `dispose()` throws a {@link @fluidframework/telemetry-utils#UsageError}.
+		 * Use {@link ExtrinsicLocations.RangeCollection.removeTrackedRange} to remove the range.
+		 * Change both endpoints with {@link ExtrinsicLocations.RangeCollection.setRangeBounds}.
+		 */
+		readonly start: ArrayPlaceAnchor;
+
+		/**
+		 * Anchor for the exclusive end of the range.
+		 * @remarks
+		 * This is a borrowed anchor with the same ownership and editing rules as {@link ExtrinsicLocations.TrackedRange.start}.
+		 */
+		readonly end: ArrayPlaceAnchor;
+
+		/**
+		 * Application-defined data.
+		 * @remarks
+		 * Object data can be edited without changing the range endpoints.
+		 * Assigning this property replaces the data without changing the range's identity or endpoints.
+		 * Data edits use ordinary tree editing semantics, without a range-maintenance transaction.
+		 */
+		get data(): TData;
+		set data(value: TInsertableData);
+	}
+
+	/**
+	 * A live collection of string-keyed extrinsic ranges.
+	 * @typeParam TData - Type of data read from a range.
+	 * @typeParam TInsertableData - Type of data accepted when creating ranges or replacing their data.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface RangeCollection<TData, TInsertableData = TData> {
+		/**
+		 * Creates a tracked range without changing the content.
+		 * @param key - Unique key for the new range.
+		 * @param bounds - Initial endpoints in the current content.
+		 * @param data - Application-defined range data.
+		 * @returns A live handle to the new range.
+		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is already tracked or the endpoints are invalid.
+		 */
+		trackNewRange(
+			key: string,
+			bounds: RangeEndpoints,
+			data: TInsertableData,
+		): TrackedRange<TData, TInsertableData>;
+
+		/**
+		 * Looks up a tracked range without creating stored state.
+		 * @param key - Range key to look up.
+		 * @returns A live handle, or `undefined` if the key is not tracked.
+		 */
+		getRange(key: string): TrackedRange<TData, TInsertableData> | undefined;
+
+		/**
+		 * Changes both endpoints without changing the range's data or identity.
+		 * @param key - Key of a tracked range.
+		 * @param bounds - New endpoints in the current content.
+		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is not tracked or the endpoints are invalid.
+		 */
+		setRangeBounds(key: string, bounds: RangeEndpoints): void;
+
+		/**
+		 * Removes a range and its associated data without changing the content.
+		 * @param key - Key of a tracked range.
+		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is not tracked.
+		 */
+		removeTrackedRange(key: string): void;
+
+		/**
+		 * Iterates over the tracked keys in unspecified order.
+		 * @returns An iterator over the current storage's keys.
+		 * An iterator does not follow replacement of the underlying storage.
+		 * @privateRemarks
+		 * TODO: We should probably provide efficient ways to find ranges by their locations.
+		 * Maybe make this API take in an optional range, and enumerate all ranges which overlap it,
+		 * or perhaps provide a way to iterate over ranges in order of their start positions starting from a given position.
+		 */
+		keys(): IterableIterator<string>;
+	}
 }

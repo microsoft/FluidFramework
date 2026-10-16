@@ -6,8 +6,8 @@
 Track annotations across array and formatted text edits
 
 You can now track ranges with application-defined data, such as review comments, through edits to arrays and [`FormattedText`](https://fluidframework.com/docs/api/tree/formattedtext-namespace).
-The new alpha APIs `ArrayWithExtrinsicRanges` and `FormattedText.createSchemaWithRanges` provide this capability.
-Both expose a live `RangeCollection` through a `ranges` property.
+The new alpha APIs `ExtrinsicLocations.createArraySchema` and `FormattedText.createSchemaWithRanges` provide this capability.
+Both expose a live `ExtrinsicLocations.RangeCollection` through a `ranges` property.
 Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
 
 #### Formatted text
@@ -60,12 +60,12 @@ The original `FormattedText.createSchema` factory is unchanged.
 
 #### Arrays
 
-Use `ArrayWithExtrinsicRanges.createSchema` to create a scoped schema and read its content as a [`ReadonlyArrayNode`](https://fluidframework.com/docs/api/tree/readonlyarraynode-interface).
+Use `ExtrinsicLocations.createArraySchema` to create a scoped schema and read its content as a [`ReadonlyArrayNode`](https://fluidframework.com/docs/api/tree/readonlyarraynode-interface).
 Edit content with `transactOnContent`, which supplies the mutable [`TreeArrayNode`](https://fluidframework.com/docs/api/tree/treearraynode-interface) API and maintains ranges across insertions, removals, and moves.
 
 ```typescript
 import {
-	ArrayWithExtrinsicRanges,
+	ExtrinsicLocations,
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	createIndependentTreeAlpha,
@@ -73,7 +73,7 @@ import {
 
 const sf = new SchemaFactoryBeta("com.example.review");
 class Comment extends sf.object("Comment", { message: sf.string }) {}
-class Document extends ArrayWithExtrinsicRanges.createSchema(sf, Comment, sf.string) {}
+class Document extends ExtrinsicLocations.createArraySchema(sf, Comment, sf.string) {}
 
 const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewWith(
 	new TreeViewConfiguration({ schema: Document }),
@@ -97,8 +97,8 @@ Stored endpoints are synchronized before `transactOnContent` returns.
 
 #### Shared range behavior
 
-Use `RangeCollection` to create, look up, reposition, and remove ranges, and enumerate keys.
-Each `TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
+Use `ExtrinsicLocations.RangeCollection` to create, look up, reposition, and remove ranges, and enumerate keys.
+Each `ExtrinsicLocations.TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
 Read `start.index` and `end.index` for current positions; copy those numbers to retain a snapshot.
 Do not dispose these anchors: doing so throws a `UsageError`. Remove the range with `removeTrackedRange` instead.
 Assign `data` to replace the associated data, or edit fields within object data, without changing the range's identity or endpoints.

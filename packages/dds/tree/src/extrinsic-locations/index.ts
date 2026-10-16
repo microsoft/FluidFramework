@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ArrayWithExtrinsicRanges } from "./arrayWithExtrinsicRangesDomain.js";
-export type { TrackedRange, RangeCollection, RangeEndpoints } from "./rangeCollection.js";
+export { ExtrinsicLocations } from "./extrinsicLocationsNamespace.js";

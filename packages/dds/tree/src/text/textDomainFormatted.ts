@@ -20,7 +20,7 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
-import type { RangeCollection } from "../extrinsic-locations/index.js";
+import type { ExtrinsicLocations } from "../extrinsic-locations/index.js";
 import {
 	ExtrinsicRangeTracker,
 	// eslint-disable-next-line import-x/no-internal-modules -- Shared implementation details, intentionally not package exported.
@@ -347,7 +347,7 @@ export namespace FormattedText {
 				}
 			}
 
-			public get ranges(): RangeCollection<
+			public get ranges(): ExtrinsicLocations.RangeCollection<
 				TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
 				InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
 			> {
@@ -968,7 +968,7 @@ export namespace FormattedText {
 	/**
 	 * Formatted text with separately stored ranges and application-defined range data.
 	 * @remarks
-	 * Range endpoints follow the insertion-point semantics of {@link RangeCollection}.
+	 * Range endpoints follow the insertion-point semantics of {@link ExtrinsicLocations.RangeCollection}.
 	 * Ranges remain with this text rather than following moved content.
 	 * Content events are not buffered, and reentrant structural edits on this text are not supported.
 	 * Position reads from change-event listeners are subject to the known array-anchor event-ordering limitation.
@@ -986,7 +986,7 @@ export namespace FormattedText {
 		 * Live collection for reading and editing extrinsic ranges.
 		 * Reading this property does not initialize stored range data.
 		 */
-		readonly ranges: RangeCollection<
+		readonly ranges: ExtrinsicLocations.RangeCollection<
 			TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
 			InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
 		>;

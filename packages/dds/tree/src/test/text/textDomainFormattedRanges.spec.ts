@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { RangeCollection, RangeEndpoints } from "../../extrinsic-locations/index.js";
+import type { ExtrinsicLocations } from "../../extrinsic-locations/index.js";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
@@ -73,9 +73,9 @@ function snapshot(text: Text): object {
 }
 
 function rangeBounds(
-	ranges: Pick<RangeCollection<unknown>, "getRange">,
+	ranges: Pick<ExtrinsicLocations.RangeCollection<unknown>, "getRange">,
 	key: string,
-): RangeEndpoints {
+): ExtrinsicLocations.RangeEndpoints {
 	const range = ranges.getRange(key);
 	assert(range !== undefined);
 	return { start: range.start.index, end: range.end.index };

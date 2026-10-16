@@ -15,7 +15,7 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { validateIndexRange } from "../util/index.js";
-import type { TrackedRange, RangeCollection, RangeEndpoints } from "./rangeCollection.js";
+import type { ExtrinsicLocations } from "./extrinsicLocationsNamespace.js";
 
 /**
  * Persisted indexes delimiting a half-open range.
@@ -78,7 +78,7 @@ export class ExtrinsicRangeTracker<
 	TContent extends TreeArrayNode,
 	TRange extends TreeNode & StoredRangeEndpoints & { data: unknown },
 	TRangeData,
-> implements RangeCollection<TRange["data"], TRangeData>
+> implements ExtrinsicLocations.RangeCollection<TRange["data"], TRangeData>
 {
 	#anchors: Map<TRange, ActiveRangeAnchors> | undefined;
 
@@ -151,22 +151,27 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * {@inheritDoc RangeCollection.getRange}
+	 * {@inheritDoc ExtrinsicLocations.RangeCollection.getRange}
 	 */
-	public getRange(key: string): TrackedRange<TRange["data"], TRangeData> | undefined {
+	public getRange(
+		key: string,
+	): ExtrinsicLocations.TrackedRange<TRange["data"], TRangeData> | undefined {
 		const node = this.getRanges()?.get(key);
 		return node === undefined ? undefined : this.#createHandle(key, node);
 	}
 
 	/**
-	 * {@inheritDoc RangeCollection.keys}
+	 * {@inheritDoc ExtrinsicLocations.RangeCollection.keys}
 	 */
 	public keys(): IterableIterator<string> {
 		return this.getRanges()?.keys() ?? [][Symbol.iterator]();
 	}
 
-	#createHandle(key: string, node: TRange): TrackedRange<TRange["data"], TRangeData> {
-		const getBounds = (): RangeEndpoints => this.#getRangeBounds(key, node);
+	#createHandle(
+		key: string,
+		node: TRange,
+	): ExtrinsicLocations.TrackedRange<TRange["data"], TRangeData> {
+		const getBounds = (): ExtrinsicLocations.RangeEndpoints => this.#getRangeBounds(key, node);
 		const setData = (data: TRangeData): void => {
 			this.#requireTrackedRange(key, node);
 			node.data = data;
@@ -204,7 +209,7 @@ export class ExtrinsicRangeTracker<
 		}
 	}
 
-	#getRangeBounds(key: string, node: TRange): RangeEndpoints {
+	#getRangeBounds(key: string, node: TRange): ExtrinsicLocations.RangeEndpoints {
 		this.#requireTrackedRange(key, node);
 		const anchors = this.#anchors?.get(node);
 		assert(
@@ -218,13 +223,13 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * {@inheritDoc RangeCollection.trackNewRange}
+	 * {@inheritDoc ExtrinsicLocations.RangeCollection.trackNewRange}
 	 */
 	public trackNewRange(
 		key: string,
-		{ start, end }: RangeEndpoints,
+		{ start, end }: ExtrinsicLocations.RangeEndpoints,
 		data: TRangeData,
-	): TrackedRange<TRange["data"], TRangeData> {
+	): ExtrinsicLocations.TrackedRange<TRange["data"], TRangeData> {
 		if (this.getRanges()?.has(key) === true) {
 			throw new UsageError("An extrinsic range is already tracked at this key.");
 		}
@@ -238,9 +243,9 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * {@inheritDoc RangeCollection.setRangeBounds}
+	 * {@inheritDoc ExtrinsicLocations.RangeCollection.setRangeBounds}
 	 */
-	public setRangeBounds(key: string, { start, end }: RangeEndpoints): void {
+	public setRangeBounds(key: string, { start, end }: ExtrinsicLocations.RangeEndpoints): void {
 		const node = this.#findRange(key);
 		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.setRangeBounds");
 		this.#applyEdit(() => {

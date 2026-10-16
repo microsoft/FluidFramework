@@ -49,10 +49,10 @@ text.getString(start.index, end.index); // "world"
 comment.data = { message: "Updated review comment" };
 ```
 
-The `ranges` property returns a stable, live `RangeCollection`.
+The `ranges` property returns a stable, live `ExtrinsicLocations.RangeCollection`.
 Use `ranges.getRange(key)` to look up a range and `ranges.keys()` to enumerate keys in unspecified order.
 Use `ranges.setRangeBounds(key, { start, end })` to reposition a range and `ranges.removeTrackedRange(key)` to remove it without changing the text.
-Each `TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
+Each `ExtrinsicLocations.TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
 Read `start.index` and `end.index` for current positions; copy those numbers to retain a snapshot.
 Do not dispose the anchors: doing so throws a `UsageError`. Remove the range through its collection instead.
 Assign `data` to replace it with content matching the supplied schema, or edit fields within object data.
