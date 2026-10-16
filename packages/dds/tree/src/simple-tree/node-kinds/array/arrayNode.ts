@@ -1695,9 +1695,11 @@ export interface ArrayPlaceAnchor {
 	/**
 	 * Stop tracking this anchor and release any resources it holds.
 	 * @remarks
-	 * Call this when the anchor is no longer needed (for example when a tracked cursor position is discarded).
+	 * If you own this anchor, call this when it is no longer needed (for example when a tracked cursor position is discarded).
 	 * Interacting with an anchor (including reading its properties) after it has been disposed is invalid and will throw.
-	 * Calling `dispose` more than once has no effect.
+	 * Disposing an already disposed anchor has no effect.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} may be thrown when attempting to dispose a borrowed anchor.
+	 * Borrowed anchors must not be disposed by the caller.
 	 */
 	dispose(): void;
 }

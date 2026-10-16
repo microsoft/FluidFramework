@@ -416,6 +416,12 @@ export {
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export {
+	ArrayWithExtrinsicRanges,
+	type TrackedRange,
+	type RangeCollection,
+	type RangeEndpoints,
+} from "./extrinsic-locations/index.js";
 export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
