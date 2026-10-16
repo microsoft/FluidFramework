@@ -127,6 +127,13 @@ export class DefaultTreeBranchHistory implements TreeBranchHistory {
 		if (head.revision === "root") {
 			return undefined;
 		}
-		return new LazyTreeBranchCommitMetadata(head, this.idCompressor, this.getRevertTo);
+		return this.getCommitMetadata(head);
+	}
+
+	/**
+	 * Returns history metadata for a commit on this branch.
+	 */
+	public getCommitMetadata(commit: GraphCommit<SharedTreeChange>): TreeBranchCommitMetadata {
+		return new LazyTreeBranchCommitMetadata(commit, this.idCompressor, this.getRevertTo);
 	}
 }
