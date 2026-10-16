@@ -199,6 +199,54 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 			rmSync(fixtureDir, { recursive: true, force: true });
 		}
 	});
+
+	it("strips ANSI sequences and XML-invalid controls without changing the original error", async () => {
+		const fixtureDir = mkdtempSync(path.join(tmpdir(), "fluid-xunit-reporter-test-"));
+		const outputFile = path.join(fixtureDir, "junit-report.xml");
+		const message =
+			"\u001B[31mactual\u001B[39m != expected\u0000\u0001\u000B\u001F\n\t<&> \u{1F600}";
+		const error = new Error(message);
+		const originalStack = error.stack;
+		try {
+			const mocha = new Mocha({
+				fullTrace: true,
+				reporter: reporter as unknown as string,
+				reporterOptions: { output: outputFile, suiteName: "fixture-suite" },
+			});
+			const suite = Mocha.Suite.create(mocha.suite, "\u001B[31mcolored suite\u001B[39m");
+			suite.addTest(
+				new Mocha.Test("fails with colored diagnostics", () => {
+					throw error;
+				}),
+			);
+			const failures = await new Promise<number>((resolve) => {
+				mocha.run(resolve);
+			});
+			assert.equal(failures, 1);
+
+			const reportXml = readFileSync(outputFile, "utf8");
+			// XML parsers vary in whether they reject illegal control characters and references.
+			// Check both explicitly so a permissive parser cannot hide the publishing failure.
+			for (const codePoint of [0, 1, 0xb, 0x1b, 0x1f]) {
+				assert.ok(!reportXml.includes(String.fromCodePoint(codePoint)));
+				assert.ok(!reportXml.toLowerCase().includes(`&#x${codePoint.toString(16)};`));
+				assert.ok(!reportXml.includes(`&#${codePoint};`));
+			}
+			assert.ok(!reportXml.includes("[31m"));
+			assert.ok(!reportXml.includes("[39m"));
+			const testSuite = await parseJUnitReport(reportXml);
+			assert.equal(testSuite.testcase?.length, 1);
+			const testCase = testSuite.testcase[0];
+			assert.equal(testCase?.$.name, "colored suite fails with colored diagnostics");
+			const failure = testCase?.failure?.[0];
+			assert.ok(typeof failure === "string");
+			assert.ok(failure.includes("actual != expected\n\t<&> \u{1F600}"));
+			assert.equal(error.message, message);
+			assert.equal(error.stack, originalStack);
+		} finally {
+			rmSync(fixtureDir, { recursive: true, force: true });
+		}
+	});
 }
 
 describe("FluidXunitReporter", () => {
