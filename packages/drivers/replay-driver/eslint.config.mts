@@ -10,7 +10,6 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "error",
 			"@rushstack/no-new-null": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/no-null": "off",
