@@ -288,7 +288,6 @@ describe("unhydratedFlexTree", () => {
 			});
 
 			it("inserts and moves a large sequence of new content", () => {
-				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
 				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
 					cursorForMapTreeNode({
@@ -311,12 +310,9 @@ describe("unhydratedFlexTree", () => {
 				);
 				assert(field instanceof UnhydratedSequenceField);
 				field.editor.move(0, newContent.length - 1, newContent.length);
-				assert.deepEqual(Array.from(field), [
-					...newContent.slice(-1),
-					...newContent.slice(0, -1),
-				]);
+				assert.deepEqual([...field], [...newContent.slice(-1), ...newContent.slice(0, -1)]);
 				field.editor.move(1, newContent.length - 1, 0);
-				assert.deepEqual(Array.from(field), newContent);
+				assert.deepEqual([...field], newContent);
 			});
 		});
 	});
