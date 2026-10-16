@@ -55,7 +55,14 @@ import {
 	type MinimalFieldMap,
 	currentObserver,
 } from "../../feature-libraries/index.js";
-import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
+import {
+	adjustIndexForArraySplice,
+	brand,
+	filterIterable,
+	getOrCreate,
+	mapIterable,
+	replaceArrayRange,
+} from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";
 
 import type { Context } from "./context.js";
@@ -626,13 +633,7 @@ export class UnhydratedSequenceField
 			if (index > 0) marks.push({ count: index });
 			marks.push({ count: insertCount, attach: syntheticDetachedNodeId });
 			this.edit((mapTrees) => {
-				if (newContent.length < 1000) {
-					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
-					mapTrees.splice(index, 0, ...newContentChecked);
-				} else {
-					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
-				}
+				replaceArrayRange(mapTrees, index, index, newContentChecked);
 			}, marks);
 		},
 		remove: (index, count): UnhydratedFlexTreeNode[] => {
@@ -652,27 +653,16 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
-				// A destination gap inside the moved range leaves the sequence unchanged.
-				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
-					return;
-				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
-					const removed = mapTrees.splice(sourceIndex, count);
-					// Adjust destination index if it comes after the source
-					const adjustedDest = destIndex > sourceIndex ? destIndex - count : destIndex;
-					if (removed.length < 1000) {
-						// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
-						mapTrees.splice(adjustedDest, 0, ...removed);
-					} else {
-						// ...but we avoid using `splice` + spread for very large arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-						return [
-							...mapTrees.slice(0, adjustedDest),
-							...removed,
-							...mapTrees.slice(adjustedDest),
-						];
+					// Interior moves preserve content, but their marks still update insertion anchors.
+					if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+						return;
 					}
+					const removed = mapTrees.splice(sourceIndex, count);
+					const adjustedDest = adjustIndexForArraySplice(destIndex, sourceIndex, count, 0);
+					replaceArrayRange(mapTrees, adjustedDest, adjustedDest, removed);
 				}, marks);
 			} else {
 				// Cross-field move: remove from source, insert into destination
@@ -702,16 +692,14 @@ export class UnhydratedSequenceField
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
  * @remarks
- * The destination gap must not be strictly inside the moved range.
- *
- * Forward move (`sourceIndex < destIndex`):
+ * Forward move (`sourceIndex + count <= destIndex`):
  * `[retain(src), detach(n), retain(mid), attach(n)]`
  *
- * Backward move (`destIndex < sourceIndex`):
+ * Backward move (`destIndex <= sourceIndex`):
  * `[retain(dst), attach(n), retain(mid), detach(n)]`
  *
- * A no-op move (`sourceIndex === destIndex`) returns an empty array; the event
- * should not fire in that case, but the empty marks are harmless if it does.
+ * Interior moves split the detach around the attach, matching hydrated sequence edits.
+ * Content-preserving moves can still change insertion anchors.
  */
 function buildUnhydratedMoveMarks(
 	sourceIndex: number,
@@ -719,13 +707,25 @@ function buildUnhydratedMoveMarks(
 	destIndex: number,
 ): readonly DeltaMark[] {
 	const marks: DeltaMark[] = [];
-	if (sourceIndex < destIndex) {
+	if (count === 0) {
+		return marks;
+	}
+	if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+		const firstSectionLength = destIndex - sourceIndex;
+		marks.push({ count: firstSectionLength, detach: syntheticDetachedNodeId });
+		marks.push({ count, attach: syntheticDetachedNodeId });
+		marks.push({
+			count: count - firstSectionLength,
+			detach: syntheticDetachedNodeId,
+		});
+	} else if (sourceIndex < destIndex) {
 		if (sourceIndex > 0) marks.push({ count: sourceIndex });
 		marks.push({ count, detach: syntheticDetachedNodeId });
 		const between = destIndex - sourceIndex - count;
 		if (between > 0) marks.push({ count: between });
 		marks.push({ count, attach: syntheticDetachedNodeId });
-	} else if (destIndex < sourceIndex) {
+	} else {
 		if (destIndex > 0) marks.push({ count: destIndex });
 		marks.push({ count, attach: syntheticDetachedNodeId });
 		const between = sourceIndex - destIndex;

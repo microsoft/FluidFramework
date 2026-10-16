@@ -6,6 +6,22 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
+ * Adjusts an insertion-point index across an array splice.
+ * @remarks
+ * Insertions at the index leave it after the inserted content.
+ * Removals containing the index collapse it to the start of the removed span.
+ * Inputs must be valid non-negative indexes and counts for the array being edited.
+ */
+export function adjustIndexForArraySplice(
+	index: number,
+	start: number,
+	removedCount: number,
+	insertedCount: number,
+): number {
+	return index < start ? index : Math.max(start, index - removedCount) + insertedCount;
+}
+
+/**
  * Validates that the provided index is a safe integer.
  * @throws If the index is invalid.
  * @param index - The index to validate.
