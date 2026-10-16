@@ -25,7 +25,7 @@ For in memory locations which are nodes, holding onto a TreeNode accomplishes th
 For data locations actually stored in trees which need to include support for array place and range type locations (eliminating option 4), first class support (option 3) would be nice, but it adds a lot of complexity, since unlike in the in memory case, all the update logic has to be stable and identical across all clients, including on branches for which we don't have a forest. This gets particularly problematic with incremental summaries and eventual partial checkout support and would most likely require storing all history information to allow replacing old locations to the current revision (which would have to be available synchronously if we wanted synchronous location resolution) which would defeat out ability to do partial checkouts, or downloading and keeping in memory at all tracked locations.
 Theoretically some optimizations could be done by knowing where locations can be stored in the tree and what parts of the tree they are allowed to refer to to make partial checkouts still possible, but it complicates things a lot.
 
-Instead, the current plan is to pursue option 1 and iteratively refine the experience by adding and improving various features and APIs and performance for applications to use to maintain data invariants and while doing the needed kinds of edits.
+Instead, **the current plan is to pursue option 1 and iteratively refine the experience by adding and improving various features and APIs and performance** for applications to use to maintain data invariants and while doing the needed kinds of edits.
 The idea is this approach gives the minimal functionality very early to unblock users.
 Then we provide a series of generally useful SharedTree features and optimizations which we want to do anyway.
 Collectively these improvements should get extrinsic location support point of being acceptable for production,
@@ -39,92 +39,90 @@ Thus we will be able to make a more informed choice about if and how to pursue o
 
 ## Status
 
-An early `@alpha` minimum viable product (MVP) is available as `ArrayWithExtrinsicRanges`.
-It implements Phase 1, step 1 below using numeric endpoints and document-wide `noChange` constraints.
+Extrinsic ranges for arrays and formatted text are available as an early `@alpha` minimum viable product (MVP) and are not yet production-ready.
 
-For now, work is focused on `Extrinsic Ranges`.
+See [Planned work](#planned-work) for implementation progress and future design plans.
 
-`ArrayWithExtrinsicRanges.createSchema` creates a scoped, subclassable schema for an array and a collection of ranges with application-defined data.
-The erased API exposes the content directly as a `ReadonlyArrayNode` and a `RangeCollection` through `ranges`.
-Use `ranges.trackNewRange(key, { start, end }, data)` to create a range and `ranges.getRange(key)` to look one up.
-Both return `RangeAnchors` handles whose read-only `start` and `end` properties resolve current positions.
-Copy these properties to retain a snapshot.
-Use `ranges.setRangeBounds(key, { start, end })` to reposition a range and `ranges.removeTrackedRange(key)` to remove it.
-Use `ranges.keys()` to enumerate tracked keys in unspecified order.
-Use `transactOnContent` to edit the content through a synchronous callback with the existing mutable array API.
-You can also add, reposition, and remove ranges within that callback.
-Use a distinct `SchemaFactoryBeta` scope for each parameterization.
-Use the returned schema's `create` method to construct an array, then `ranges.trackNewRange` to add ranges.
-See [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
+## Usage
 
-Ranges use half-open intervals `[start, end)`.
-Both endpoints follow the same insertion-point semantics as array insertion anchors:
-an insertion at an endpoint leaves the endpoint after the inserted content.
-Insertion at the start is therefore excluded, insertion at the end is included, and an empty range stays empty.
-Removing content collapses endpoints inside the removed span to its start.
-Ranges survive removal of all their covered content and retain their data and identity until explicitly removed.
-Handles refer to particular ranges, not subsequent ranges created at the same key.
-Reading an endpoint of a removed or replaced range throws a `UsageError`.
-Undo that restores the same range makes its handles valid again.
-Repeated lookups need not return the same handle object.
-Moves use array insertion-anchor semantics: ranges remain with their manager rather than following moved content.
-When moving between managed arrays, nest both managers' `transactOnContent` callbacks so both arrays are edited within their editing scopes.
-Nested callbacks on the same manager are rejected.
+For arrays, see the API documentation in [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
+For formatted text, see the [text documentation](../text/README.md).
 
-Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
-Each structural edit is a transaction guarded by a document-wide `noChange` constraint.
-The transaction includes both the content edits and the final endpoint updates.
-Content changes are immediately visible, and events are delivered normally during the callback so application caches can invalidate.
-While the editing scope is active, range handles resolve positions through temporary array insertion anchors.
-The stored numeric endpoints are synchronized after the callback finishes and before `transactOnContent` returns.
-Endpoint writeback can emit further events; range handles continue to use anchors until writeback finishes.
-Do not retain the mutable content array for editing outside the callback.
-Callbacks must not return promises.
-Concurrent changes anywhere in the document can reject the entire transaction; applications must observe commit outcomes if they need to report or retry rejected edits.
-Undo is also guarded by `noChange` so that it cannot restore stale endpoints after another edit.
-Immediate undo and redo are supported, but selective undo across intervening edits can be rejected.
-Object content and range data can be edited directly without changing array positions.
-Unhydrated nodes do not support rollback; if a callback throws, completed edits and their endpoint updates remain.
-For hydrated nodes, errors have the same effect as errors in `TreeViewAlpha.runTransaction`.
+## Current MVP limitations
 
-There is a known anchor event-ordering bug: listeners registered before an anchor can read its previous position alongside updated content.
-Position reads after an edit returns within the callback are current.
-Skipped regression tests document the event-ordering bug for an independent fix.
+The current MVP has the following requirements and limitations:
 
-All writers must use the editing API to preserve the invariants.
-Type erasure does not prevent another view schema, import operation, or agent from changing the stored fields directly.
-Native location tracking, more permissive concurrency, and production stabilization remain future work.
+- SharedTree must be configured with `minVersionForCollab` of at least `2.80.0`.
+- Concurrent changes anywhere in the document can reject an entire content or range edit, even when the changes affect unrelated content.
+  Applications that need to report or retry rejected edits must observe commit outcomes.
+  Undo and redo can also be rejected after intervening changes.
+- All writers must use the provided content and range editing APIs to keep range endpoints correct.
+  Other view schemas, import operations, or agents can bypass these APIs and leave stale endpoints.
+- Content-editing callbacks must be synchronous, and editing scopes on the same array cannot be nested.
+  Mutable content arrays obtained through a callback must not be used for editing outside that callback.
+- Change listeners can observe stale range positions alongside updated content, including positions outside the current array bounds.
+  This known anchor bug affects some listeners during individual edits and descendant-node listeners during merged batches.
+  Position reads after an edit returns within the callback are current.
+  The independent [anchor regression-test PR](https://github.com/microsoft/FluidFramework/pull/28465) documents these cases.
+- Edits to unhydrated nodes cannot roll back.
+  If a content-editing callback throws, completed edits and their endpoint updates remain.
 
-### Internal integration
+## Implementation structure
 
-[`ExtrinsicRangeTracker`](./extrinsicRangeTracker.ts) implements the editing and tracking logic independently of the enclosing schema.
-It takes a content array, a tree array of range nodes with writable numeric `start` and `end` fields, and a factory for creating range nodes from endpoints and application data.
-The factory determines how application data is stored; the helper does not require a `data` field.
-The two arrays must be unhydrated or belong to the same hydrated tree context.
-Reuse one tracker per pair of arrays so range operations and content edits share the same active anchors.
-The helper looks up the current tree context for each editing scope, so you can keep using it after hydrating its arrays together.
+The MVP implements option 1 above: editing APIs maintain persisted numeric endpoints in a string-keyed map of range nodes.
+The array and formatted-text integrations share the same tracker.
 
-`ArrayWithExtrinsicRanges` caches a tracker and delegates its editing and position-reading methods to it.
-The tracker is exported only from its implementation module, not from package barrels or entrypoints, and has no release tag.
-It is an implementation detail that can change as integrations and optimizations evolve.
+- [rangeCollection.ts](./rangeCollection.ts): Public collection, endpoint, and live-handle interfaces.
+- [extrinsicRangeTracker.ts](./extrinsicRangeTracker.ts): Internal tracker, guarded transactions, temporary anchors, and storage access.
+- [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts): Array schema and tracker integration.
+- [textDomainFormatted.ts](../text/textDomainFormatted.ts): Formatted-text integration, schema upgrades, and lazy range storage.
 
-For now everything in the implementation and the rest of this document is focused on "option 1" from above, where the application (with the help from the utilities we include in this directory) maintains the data invariants by updating both the locations as needed.
+## Planned work
 
-## Challenges:
+Phase 1 status and remaining work (remaining Phase 1 work can proceed in parallel):
 
-Editing semantics:
+1. **Implemented:** An extrinsic range MVP using `NoChangeConstraint` to maintain its data invariants.
+It stores numeric endpoints and uses temporary array insertion anchors, which process sequence deltas, to update at the after editing the array.
+2. Schema versioning to allow for schema changes which change the field kind without strict field kind ordering rules to prevent cycles.
+3. Add Experimental (alpha) field kind: index. Support edits like "if larger than A, add B" (where A is adjusted when rebasing over other edits).
+4. Ensure stabilization and rollout of new field kinds is practical and robust (good errors, no asserts etc.)
+5. Generalize staged field kind changes (required to option is supported, add required vs identifier. One direction will depend on 2).
+6. Implement shallow "NoChangeConstraint" (also desired for tables)
+7. "Drill down" aka "Batch" editing: way to apply same edit to all nodes at a path which can include wildcards and/or ranges. Also consider table and range formatting use-cases in design.
+8. Work through the merge edge cases of the planned final design (see below), including undo/redo, moves, and cases where range ends can get swapped.
+The MVP has tests for its current constrained behavior; those do not validate the future design.
+9. **Partially implemented:** Range-enabled formatted text supports an explicit schema upgrade from existing text, with lazy range storage and no rewrite of existing content.
+Production rollout and stabilization remain future work.
+See the [upgrade documentation](../text/README.md#upgrade-existing-formatted-text).
+10. Design anchors for presence (Not really part of this work, but has some overlap).
+11. Ensure we have ways to hide fields from AI, not just expose methods to protected invariants.
+12. Write command pattern demo with showing how to have telemetry for failure, and how one could implement retry.
 
-Assuming we want the behavior where Extrinsic Ranges have lifetime of tied to the container, not the content,
-then deletions need to shrink the range they apply to, but never remove it fully.
-This complicates deletes (which contain all or part of the range) and moves.
-Presumably a delete should just shorten the range, as should detaches, but if a portion is detached containing the entire range, and moved elsewhere in the same range, maybe it should move?
-Maybe optionally detect such moves, and if some constraints pass, move the ranges with the main content?
-Relations to anchors, cursors, presence?
+Later:
+These can overlap with phase one, but have some minimal dependency on parts of it and each-other.
 
-Designs:
+1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app). Should support multiple children: make things like a range kind with 2 children (start and end) easier we end up having to do that. Using this to add range start and range end, or fields with other kinds of anchoring are also options.
+2. Improve MVP concurrency 1: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
+3. Improve MVP concurrency 2: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Replace above dummy node scheme with a shallow `noChange` constraint pointing at the map of ranges.
+4. Improve MVP concurrency 3: Replace constraints with "Drill down" editing of index fields. No more rejected transactions.
+5. Deliver stable APIs, including safe rollout/evolution for existing text users.
+6. Presence integration for arrays. Maybe share some logic with new field kind[s]? (Not really part of this work, but has some overlap)
 
+## Notes:
 
-index field kind (accepted)
+The following sections retain design questions and future plans.
+They are not commitments to deliver particular features.
+
+### Editing semantics:
+
+The MVP ties range lifetime to its owning collection, not to the covered content.
+Deletions shrink ranges without removing them, and moves use insertion-point semantics rather than carrying ranges with the moved content.
+Future designs could consider optional move-following behavior and its constraints.
+The relationship to anchors and presence remains a design question.
+
+### Designs:
+
+Index field kind (accepted design direction; not implemented by this MVP):
 - Reuse code from sequence field kind (identical changeset logic, including rebase and ops)
 - Child is just a number representing an index
 
@@ -137,37 +135,6 @@ Do we need to make it more limited, like can only do edits which don't change th
 Changing the shape means rebased are more complex.
 Do the later parts of this work (which impact merge results, not just optimized encoding) need to wait for
 ongoing rebaser/changeset work?
-
-### Planned work
-
-Currently actionable work (Phase 1):
-
-1. **Implemented:** An extrinsic range MVP using `NoChangeConstraint` to maintain its data invariants.
-It stores numeric endpoints and uses temporary array insertion anchors, which process sequence deltas, while editing content.
-The manager methods preserve the invariants; direct edits to stored fields, including edits by agents that bypass these methods, do not.
-2. Schema versioning to allow for schema changes which change the field kind without strict field kind ordering rules to prevent cycles.
-3. Add Experimental (alpha) field kind: index. Support edits like "if larger than A, add B" (where A is adjusted when rebasing over other edits).
-4. Ensure stabilization and rollout of new field kinds is practical and robust (good errors, no asserts etc.)
-5. Generalize staged field kind changes (required to option is supported, add required vs identifier. One direction will depend on 2).
-6. Implement shallow "NoChangeConstraint" (also desired for tables)
-7. "Drill down" aka "Batch" editing: way to apply same edit to all nodes at a path which can include wildcards and/or ranges. Also consider table and range formatting use-cases in design.
-8. Work through the merge edge cases of planned final design (see below). Validate undo/redo. Determine implications of moves within character and range arrays. Consider cases where range ends can get swapped.
-9. Design a safe rollout process for production apps using text without extrinsic ranges to get extrinsic range support.
-10. Design anchors for presence (Not really part of this work, but has some overlap).
-11. Ensure we have ways to hide fields from AI, not just expose methods to protected invariants.
-12. Write command pattern demo with showing how to have telemetry for failure, and how one could implement retry.
-
-These can all be done in parallel.
-
-Later:
-These can overlap with phase one, but have some minimal dependency on parts of it and each-other.
-
-1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app). Should support multiple children: make things like a range kind with 2 children (start and end) easier we end up having to do that. Using this to add range start and range end, or fields with other kinds of anchoring are also options.
-2. Improve MVP concurrency 1: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
-2. Improve MVP concurrency 2: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Replace above dummy node scheme with no shallow change constraint pointing at array of ranges.
-3. Improve MVP concurrency 3: Replace constraints with "Drill down" editing of index fields. No more rejected transactions.
-4. Deliver stable APIs, including safe rollout/evolution for existing text users.
-5. Presence integration for arrays. Maybe share some logic with new field kind[s]? (Not really part of this work, but has some overlap)
 
 ## Historical Decisions
 
