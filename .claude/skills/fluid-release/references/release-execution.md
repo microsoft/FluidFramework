@@ -106,6 +106,8 @@ This should detect the release and bump the version automatically.
 
 ### Option B: Manual bump (local or CI)
 
+Create a working branch from the Microsoft release branch before a manual bump. In an app-managed worktree, use a session branch based on that tip. Do not commit or push directly on `release/client/*`.
+
 ```bash
 # Local (interactive):
 pnpm exec flub bump client --bumpType patch
