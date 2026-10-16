@@ -148,6 +148,11 @@ export class SharedTreeBranch<
 	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
+	/**
+	 * The event source that notifies this branch when its ancestry is trimmed.
+	 * See {@link BranchTrimmingEvents} for details on trimming.
+	 * Set through {@link SharedTreeBranch.trimmer} and cleared when this branch is disposed.
+	 */
 	private branchTrimmer?: Listenable<BranchTrimmingEvents>;
 	private unsubscribeBranchTrimmer?: () => void;
 	/**

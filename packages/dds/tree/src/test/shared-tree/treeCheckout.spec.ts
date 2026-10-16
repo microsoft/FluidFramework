@@ -36,6 +36,7 @@ import {
 import {
 	Tree,
 	TreeCheckout,
+	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
@@ -112,7 +113,7 @@ const checkoutForks: {
 	{ name: "fork()", forkCheckout: (checkout) => checkout.fork() },
 	{
 		name: "forkWith()",
-		forkCheckout: (checkout) => checkout.forkWith((...args) => new TreeCheckout(...args)),
+		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
 	},
 ];
 
@@ -128,9 +129,8 @@ describe("sharedTreeView", () => {
 			}
 		}
 
-		const retainedCheckoutFactory = (
-			...args: ConstructorParameters<typeof TreeCheckout>
-		): RetainedCheckout => new RetainedCheckout(...args);
+		const retainedCheckoutFactory = (options: TreeCheckoutOptions): RetainedCheckout =>
+			new RetainedCheckout(options);
 		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
 
 		it("can dispose and recreate a view without disposing its retained checkout", () => {

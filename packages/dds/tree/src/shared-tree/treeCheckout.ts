@@ -427,20 +427,20 @@ export function createTreeCheckout(
 			() => idCompressor.generateCompressedId(),
 		);
 
-	return new TreeCheckout(
+	return new TreeCheckout({
 		branch,
-		true,
+		isSharedBranch: true,
 		changeFamily,
-		schema,
+		storedSchema: schema,
 		forest,
 		mintRevisionTag,
 		revisionTagCodec,
 		idCompressor,
-		codecOptions.jsonValidator,
-		args?.removedRoots,
-		true,
-		args?.getFinalizedCommit,
-	);
+		jsonValidator: codecOptions.jsonValidator,
+		removedRoots: args?.removedRoots,
+		disposeForksAfterTransaction: true,
+		getFinalizedCommit: args?.getFinalizedCommit,
+	});
 }
 
 /**
@@ -539,6 +539,84 @@ export function assertValidConstraint(
 			unreachableCase(constraint);
 		}
 	}
+}
+
+/**
+ * Components and policies used to construct a {@link TreeCheckout}.
+ * Also supplied to factories passed to {@link TreeCheckout.forkWith}.
+ */
+export interface TreeCheckoutOptions {
+	/**
+	 * The branch whose changes are applied to the checkout's stored schema and forest.
+	 */
+	readonly branch: SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
+
+	/**
+	 * Whether the branch is persisted in the document and shared with other clients.
+	 */
+	readonly isSharedBranch: boolean;
+
+	/**
+	 * The change family used to compose, invert, and rebase edits to the checkout.
+	 */
+	readonly changeFamily: ChangeFamily<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
+
+	/**
+	 * The stored schema for the checkout's current contents.
+	 */
+	readonly storedSchema: TreeStoredSchemaRepository;
+
+	/**
+	 * The editable forest containing the checkout's current contents.
+	 * Its breaker is also used by the checkout.
+	 */
+	readonly forest: IEditableForest;
+
+	/**
+	 * Generates revision tags for new commits.
+	 */
+	readonly mintRevisionTag: () => RevisionTag;
+
+	/**
+	 * Encodes and decodes revision tags.
+	 */
+	readonly revisionTagCodec: RevisionTagCodec;
+
+	/**
+	 * The ID compressor used for node identifiers and serialized changes.
+	 */
+	readonly idCompressor: IIdCompressor;
+
+	/**
+	 * The JSON validator used by the serialized change codec.
+	 */
+	readonly jsonValidator: FormatValidator;
+
+	/**
+	 * The index of removed subtrees retained for repair and undo.
+	 * Defaults to a new index with the prefix `"repair"`.
+	 */
+	readonly removedRoots?: DetachedFieldIndex;
+
+	/**
+	 * Whether to dispose forks created during a transaction when that transaction ends.
+	 * Defaults to true.
+	 */
+	readonly disposeForksAfterTransaction?: boolean;
+
+	/**
+	 * Supplies the finalized-history boundary returned by {@link TreeCheckout.getFinalizedCommit}.
+	 * Defaults to the current root of the checkout's commit graph.
+	 */
+	readonly getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
 }
 
 /**
@@ -657,30 +735,68 @@ export class TreeCheckout implements ITreeCheckout {
 		return !this.isSharedBranch;
 	}
 
-	public constructor(
-		private branch: SharedTreeBranch<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
-		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
-		public readonly isSharedBranch: boolean,
-		private readonly changeFamily: ChangeFamily<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
-		public readonly storedSchema: TreeStoredSchemaRepository,
-		public readonly forest: IEditableForest,
-		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly idCompressor: IIdCompressor,
-		private readonly jsonValidator: FormatValidator,
-		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
-		public readonly disposeForksAfterTransaction = true,
-		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
-		private readonly getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
-	) {
+	private branch: SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
+	/**
+	 * {@inheritDoc TreeCheckoutOptions.isSharedBranch}
+	 */
+	public readonly isSharedBranch: boolean;
+	private readonly changeFamily: ChangeFamily<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
+	public readonly storedSchema: TreeStoredSchemaRepository;
+	public readonly forest: IEditableForest;
+	private readonly mintRevisionTag: () => RevisionTag;
+	private readonly revisionTagCodec: RevisionTagCodec;
+	private readonly idCompressor: IIdCompressor;
+	private readonly jsonValidator: FormatValidator;
+	private readonly _removedRoots: DetachedFieldIndex;
+	/**
+	 * {@inheritDoc TreeCheckoutOptions.disposeForksAfterTransaction}
+	 */
+	public readonly disposeForksAfterTransaction: boolean;
+	/**
+	 * {@inheritDoc TreeCheckoutOptions.getFinalizedCommit}
+	 */
+	private readonly getFinalizedCommitOverride:
+		| (() => GraphCommit<SharedTreeChange>)
+		| undefined;
+
+	/**
+	 * Creates a checkout from the supplied components and policies.
+	 * @param options - The components and policies for this checkout.
+	 */
+	public constructor({
+		branch,
+		isSharedBranch,
+		changeFamily,
+		storedSchema,
+		forest,
+		mintRevisionTag,
+		revisionTagCodec,
+		idCompressor,
+		jsonValidator,
+		removedRoots = makeDetachedFieldIndex("repair"),
+		disposeForksAfterTransaction = true,
+		getFinalizedCommit,
+	}: TreeCheckoutOptions) {
+		this.branch = branch;
+		this.isSharedBranch = isSharedBranch;
+		this.changeFamily = changeFamily;
+		this.storedSchema = storedSchema;
+		this.forest = forest;
+		this.mintRevisionTag = mintRevisionTag;
+		this.revisionTagCodec = revisionTagCodec;
+		this.idCompressor = idCompressor;
+		this.jsonValidator = jsonValidator;
+		this._removedRoots = removedRoots;
+		this.disposeForksAfterTransaction = disposeForksAfterTransaction;
+		this.getFinalizedCommitOverride = getFinalizedCommit;
 		this.serializedChangeCodec = makeSerializedChangeCodec(
 			this.changeFamily,
 			this.jsonValidator,
@@ -1495,7 +1611,7 @@ export class TreeCheckout implements ITreeCheckout {
 	>;
 
 	public fork(): TreeCheckout {
-		return this.forkWith((...args) => new TreeCheckout(...args));
+		return this.forkWith((options) => new TreeCheckout(options));
 	}
 
 	/**
@@ -1506,28 +1622,12 @@ export class TreeCheckout implements ITreeCheckout {
 	 * By default, the fork has its own branch, stored schema, forest, and repair data.
 	 * Broken-state validation applies here so subclass fork entry points cannot bypass it.
 	 *
-	 * @param checkoutFactory - The factory to use for the forked checkout.
+	 * @param checkoutFactory - Creates the forked checkout from its cloned components and policies.
+	 * Receives {@link TreeCheckoutOptions} with a local branch and no finalized-history override.
 	 */
 	@throwIfBroken
 	public forkWith<T extends TreeCheckout>(
-		checkoutFactory: (
-			branch: SharedTreeBranch<
-				SharedTreeEditBuilder,
-				SharedTreeChange,
-				SharedTreeChangeProcessingContext
-			>,
-			isSharedBranch: boolean,
-			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
-			storedSchema: TreeStoredSchemaRepository,
-			forest: IEditableForest,
-			mintRevisionTag: () => RevisionTag,
-			revisionTagCodec: RevisionTagCodec,
-			idCompressor: IIdCompressor,
-			jsonValidator: FormatValidator,
-			removedRoots?: DetachedFieldIndex,
-			disposeForksAfterTransaction?: boolean,
-			getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
-		) => T,
+		checkoutFactory: (options: TreeCheckoutOptions) => T,
 	): T {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
@@ -1541,18 +1641,18 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = checkoutFactory(
+		const checkout = checkoutFactory({
 			branch,
-			false,
-			this.changeFamily,
+			isSharedBranch: false,
+			changeFamily: this.changeFamily,
 			storedSchema,
 			forest,
-			this.mintRevisionTag,
-			this.revisionTagCodec,
-			this.idCompressor,
-			this.jsonValidator,
-			this._removedRoots.clone(),
-		);
+			mintRevisionTag: this.mintRevisionTag,
+			revisionTagCodec: this.revisionTagCodec,
+			idCompressor: this.idCompressor,
+			jsonValidator: this.jsonValidator,
+			removedRoots: this._removedRoots.clone(),
+		});
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}
