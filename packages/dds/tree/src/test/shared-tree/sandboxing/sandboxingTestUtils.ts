@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	createChildLogger,
@@ -13,11 +12,6 @@ import {
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
-import {
-	extractPersistedSchema,
-	// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
-} from "../../../simple-tree/api/index.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -27,13 +21,8 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import {
-	normalizeProtocolError,
-	throwProtocolError,
-	validateTreePayloadVocabulary,
-} from "./common.js";
+import { normalizeProtocolError, throwProtocolError } from "./common.js";
 import { Guest } from "./guest.js";
-import { normalizeTransportData } from "./transport.js";
 import { Host } from "./host.js";
 
 /**
@@ -48,6 +37,8 @@ export interface SessionPorts<TInterop> {
 	readonly guestPort: MessagePort;
 	/** The controls that the test uses to manage message delivery. */
 	readonly interop: TInterop;
+	/** Delivers the Host's first message when the transport does not relay messages automatically. */
+	readonly deliverInitialization: () => Promise<void>;
 	/** Releases transport resources that the Host and the Guest do not own. */
 	dispose(): void;
 }
@@ -68,6 +59,7 @@ export function buildDirectSessionPorts(): SessionPorts<undefined> {
 		hostPort: channel.port1,
 		guestPort: channel.port2,
 		interop: undefined,
+		deliverInitialization: async () => {},
 		dispose: () => {},
 	};
 }
@@ -95,6 +87,18 @@ export function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> 
 			sendToHost: hostChannel.port2,
 			sendToGuest: guestChannel.port2,
 		},
+		deliverInitialization: async () =>
+			new Promise<void>((resolve) => {
+				hostChannel.port2.addEventListener(
+					"message",
+					(event: MessageEvent<unknown>) => {
+						guestChannel.port2.postMessage(event.data);
+						resolve();
+					},
+					{ once: true },
+				);
+				hostChannel.port2.start();
+			}),
 		dispose: () => {
 			hostChannel.port2.close();
 			guestChannel.port2.close();
@@ -147,43 +151,29 @@ export function disposeActiveSessions(ignoreErrors: boolean): void {
  * @param initialState - The initial state of the shared tree.
  * @returns The session components and teardown function.
  */
-export function setup(initialState: string[]) {
+export async function setup(initialState: string[]) {
 	return setupCustom(initialState, stringArrayConfig, buildDirectSessionPorts);
 }
 
 /**
- * Initializes a new Guest from an existing Host, including application-managed replacement sessions.
+ * Creates a Guest from the initialization message sent by the Host on the supplied port.
  * The caller owns the supplied port and must dispose the returned Guest.
  */
-export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
-	host: Host<TSchema>,
+export async function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	port: MessagePort,
 	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
-): Guest<TSchema> {
-	const localRoot = host.local.root;
-	assert(localRoot !== undefined, "Expected an initialized root");
-	const startingState = TreeAlpha.exportCompressed(localRoot, {
-		// TODO: shard the compressor here?
-		idCompressor: hostCompressor,
-		minVersionForCollab: FluidClientVersion.v2_80,
-	});
-	const normalized = normalizeTransportData(startingState);
-	validateTreePayloadVocabulary(normalized);
-	return new Guest(
+): Promise<Guest<TSchema>> {
+	return Guest.create({
 		config,
-		{ jsonValidator: FormatValidatorBasic },
-		{
-			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-			idCompressor: hostCompressor,
-		},
+		treeOptions: { jsonValidator: FormatValidatorBasic },
+		idCompressor: hostCompressor,
 		port,
 		logger,
 		handleProtocolError,
-	);
+	});
 }
 
 /**
@@ -198,7 +188,7 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
  * @typeParam TInterop - The test controls for the session's transport.
  * @typeParam TSchema - The schema of the shared tree.
  */
-export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>(
+export async function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>(
 	initialState: InsertableTreeFieldFromImplicitField<TSchema>,
 	config: TreeViewConfiguration<TSchema>,
 	sessionPortsBuilder: SessionPortsBuilder<TInterop>,
@@ -227,22 +217,32 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 
 	const peer = asAlpha(provider.trees[0].viewWith(config));
 	const sessionPorts = sessionPortsBuilder();
-	const host = new Host(
+	const host = new Host({
 		main,
-		sessionPorts.hostPort,
-		provider.trees[1].handle,
-		createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
+		port: sessionPorts.hostPort,
+		bindingHandle: provider.trees[1].handle,
+		idCompressor: provider.getCompressor(provider.trees[1]),
+		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
-	);
+	});
 
-	const guest = createGuestForHost(
-		host,
-		config,
-		sessionPorts.guestPort,
-		provider.getCompressor(provider.trees[1]),
-		createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
-		handleProtocolError,
-	);
+	let guest: Guest<TSchema>;
+	try {
+		const guestPromise = createGuestForHost(
+			config,
+			sessionPorts.guestPort,
+			provider.getCompressor(provider.trees[1]),
+			createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
+			handleProtocolError,
+		);
+		await sessionPorts.deliverInitialization();
+		guest = await guestPromise;
+	} catch (error) {
+		host.dispose();
+		sessionPorts.dispose();
+		main.dispose();
+		throw error;
+	}
 
 	const teardown = () => {
 		if (!activeTeardowns.delete(teardown)) {

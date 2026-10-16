@@ -88,9 +88,9 @@ overrides:
   # resolvers decode them as octal, allowing SSRF/trust-boundary bypass). Fixed in 10.3.1.
   ip-address@>=9 <10: ^10.3.1
   # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
-  # Exact pins: newer .1 patches are not yet mirrored in the internal artifact feed used by CI.
+  # Exact pins ensure vulnerable transitive versions are not selected.
   js-yaml@>=3 <4: 3.15.0
-  js-yaml@>=4 <5: 4.3.0
+  js-yaml@>=4 <5: 4.3.2
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
   # nanoid CVE-2026-67213 (infinite loop when size=0) and CVE-2026-67214 (infinite loop

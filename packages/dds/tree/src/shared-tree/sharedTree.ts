@@ -323,6 +323,7 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
+			getFinalizedCommit: () => this.getTrunkHead(),
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);

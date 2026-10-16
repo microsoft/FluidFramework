@@ -15,6 +15,8 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import { asAlpha } from "../../api.js";
 import {
 	createAnnouncedVisitor,
+	findAncestor,
+	type GraphCommit,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
@@ -104,6 +106,126 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 }
 
 describe("sharedTreeView", () => {
+	describe("finalized history", () => {
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+
+		it("defaults to the initial base before and after independent edits", () => {
+			const view = getView(config);
+			const checkout = view.checkout;
+			const base = checkout.mainBranch.getHead();
+			assert.equal(base.revision, "root");
+			assert.equal(base.parent, undefined);
+			assert.equal(checkout.getFinalizedCommit(), base);
+
+			view.initialize([]);
+			view.root.insertAtEnd("local");
+			assert.notEqual(checkout.mainBranch.getHead(), base);
+			assert.equal(checkout.getFinalizedCommit(), base);
+			view.dispose();
+		});
+
+		it("uses a supplied boundary even when it precedes the head", () => {
+			let boundary: GraphCommit<SharedTreeChange>;
+			const checkout = createTreeCheckout(
+				testIdCompressor,
+				mintRevisionTag,
+				testRevisionTagCodec,
+				{ getFinalizedCommit: () => boundary },
+			);
+			boundary = checkout.mainBranch.getHead();
+			const view = checkout.viewWith(config);
+			view.initialize([]);
+			assert.equal(checkout.getFinalizedCommit(), boundary);
+
+			boundary = checkout.mainBranch.getHead();
+			view.root.insertAtEnd("local");
+			assert.notEqual(checkout.mainBranch.getHead(), boundary);
+			assert.equal(checkout.getFinalizedCommit(), boundary);
+			view.dispose();
+		});
+
+		it("advances a collaborative boundary only when commits are sequenced", () => {
+			const provider = new TestTreeProviderLite(2);
+			const tree = provider.trees[0];
+			const checkout = tree.kernel.checkout;
+			const base = checkout.mainBranch.getHead();
+			assert.equal(checkout.getFinalizedCommit(), base);
+			assert.equal(base.revision, "root");
+
+			const view = tree.viewWith(config);
+			view.initialize([]);
+			assert.equal(checkout.getFinalizedCommit(), base);
+			provider.synchronizeMessages();
+			const initialized = checkout.mainBranch.getHead();
+			assert.equal(checkout.getFinalizedCommit(), initialized);
+
+			view.root.insertAtEnd("local");
+			assert.equal(checkout.getFinalizedCommit(), initialized);
+			provider.synchronizeMessages();
+			assert.equal(checkout.getFinalizedCommit(), checkout.mainBranch.getHead());
+
+			const peer = provider.trees[1].viewWith(config);
+			peer.root.insertAtEnd("remote");
+			provider.synchronizeMessages();
+			assert.equal(checkout.getFinalizedCommit(), checkout.mainBranch.getHead());
+			assert.deepEqual([...view.root], ["local", "remote"]);
+			peer.dispose();
+			view.dispose();
+		});
+
+		it("does not give a fork a boundary beyond its own history", () => {
+			const provider = new TestTreeProviderLite(1);
+			const tree = provider.trees[0];
+			const view = tree.kernel.viewWith(config);
+			view.initialize([]);
+			provider.synchronizeMessages();
+			const fork = view.fork();
+			try {
+				const base = findAncestor(fork.checkout.mainBranch.getHead());
+				assert.equal(fork.checkout.getFinalizedCommit(), base);
+
+				view.root.insertAtEnd("parent");
+				provider.synchronizeMessages();
+				assert.equal(fork.checkout.getFinalizedCommit(), base);
+				assert.notEqual(
+					fork.checkout.getFinalizedCommit(),
+					view.checkout.getFinalizedCommit(),
+				);
+				assert.deepEqual([...fork.root], []);
+			} finally {
+				fork.dispose();
+				view.dispose();
+			}
+		});
+
+		it("uses the current base after history is trimmed", () => {
+			const provider = new TestTreeProviderLite(2);
+			const tree = provider.trees[0];
+			const view = tree.kernel.viewWith(config);
+			view.initialize([]);
+			provider.synchronizeMessages();
+			const fork = view.fork();
+			try {
+				const initialBase = fork.checkout.getFinalizedCommit();
+				for (let i = 0; i < 5; i++) {
+					view.root.insertAtEnd(`${i}`);
+					provider.synchronizeMessages();
+					fork.rebaseOnto(view);
+				}
+				const currentBase = findAncestor(fork.checkout.mainBranch.getHead());
+				assert.notEqual(currentBase, initialBase);
+				assert.equal(currentBase.parent, undefined);
+				assert.equal(fork.checkout.getFinalizedCommit(), currentBase);
+			} finally {
+				fork.dispose();
+				view.dispose();
+			}
+		});
+	});
+
 	describe("Events", () => {
 		const sf = new SchemaFactory("Events test schema");
 		const RootNode = sf.object("RootNode", { x: sf.number });

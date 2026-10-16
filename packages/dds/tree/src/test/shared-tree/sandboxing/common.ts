@@ -5,6 +5,8 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
@@ -20,9 +22,30 @@ import {
 } from "../../../util/index.js";
 
 /**
+ * Session options shared by the Host and Guest endpoints.
+ */
+export interface SandboxEndpointOptions {
+	/** This endpoint's port in the Host and Guest message channel. */
+	readonly port: MessagePort;
+	/** The compressor shared by the Host and Guest for this session. */
+	readonly idCompressor: IIdCompressor;
+	/** The endpoint-scoped logger for diagnostic telemetry. */
+	readonly logger: TelemetryLoggerExt;
+	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
+	/**
+	 * Reports terminal session failure asynchronously.
+	 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+	 */
+	readonly handleProtocolError?: (error: Error) => void;
+}
+
+/**
  * A violation of the sandbox protocol's data or state requirements.
  * Used by either endpoint, including shared validation on send and receive.
  * This identifies the failed contract, not which participant is at fault.
+ *
+ * TODO: Ensure we have an established pattern for communicating a telemetry safe portion of the message,
+ * and a separate one which might include document contents directly.
  */
 export class SandboxProtocolError extends Error {
 	public override readonly name = "SandboxProtocolError";
@@ -45,6 +68,26 @@ const HandleToken = brandedNumberType<HandleToken>({
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
 const BlobRequestId = brandedNumberType<BlobRequestId>({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/**
+ * Identifies one Host branch update and its acknowledgment.
+ */
+export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
+const HostUpdateId = brandedNumberType<HostUpdateId>({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/**
+ * Identifies one Guest change and its acknowledgment.
+ */
+export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
+const GuestChangeId = brandedNumberType<GuestChangeId>({
 	minimum: 0,
 	maximum: Number.MAX_SAFE_INTEGER,
 	multipleOf: 1,
@@ -231,30 +274,122 @@ export function isSerializedHandle(value: unknown): value is SerializedHandle {
 	return serializedHandleValidator.check(value);
 }
 
-/**
- * A serialized SharedTree change that one participant sends to the other participant.
- */
-export interface DataChangeMessage {
-	/** Identifies this message as a data-change message. */
-	readonly type: "dataChange";
-	/** The serialized SharedTree change to apply. */
-	readonly change: JsonCompatibleReadOnly;
-}
+/** Runtime schema for revision tags used within one sandbox session. */
+const SessionRevisionTag = Type.Unsafe<RevisionTag>(
+	Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]),
+);
+
+/** A serialized SharedTree payload validated against the sandbox transport vocabulary. */
+const SerializedTreePayload = Type.Unsafe<JsonCompatibleReadOnly>(TreePayloadVocabulary);
+
+/** Serialized SharedTree commits in application order. */
+const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
+	Type.Array(TreePayloadVocabulary),
+);
 
 /**
- * Confirms that the receiver applied one data-change message.
+ * Initializes the Guest's copy of the Host main branch.
  */
-export interface AcknowledgmentMessage {
-	/** Identifies this message as an acknowledgment message. */
-	readonly type: "acknowledgment";
-}
+export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
+const HostInitializationMessage = Type.Object(
+	{
+		/** Identifies this message as the initial Host branch state. */
+		type: Type.Readonly(Type.Literal("hostInitialization")),
+		/** Identifies the commit represented by the snapshot. */
+		baseRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the Host main-branch head produced by replaying `commits`. */
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies a finalized-history boundary in the reconstructed Host branch, which may precede the newest finalized commit. */
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		/** The compressed tree at `baseRevision`. */
+		tree: Type.Readonly(SerializedTreePayload),
+		/** The persisted schema at `baseRevision`. */
+		schema: Type.Readonly(SerializedTreePayload),
+		/** Serialized commits after `baseRevision`, in application order. */
+		commits: Type.Readonly(SerializedTreeCommits),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Advances the Guest's copy of the Host main branch.
+ */
+export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
+const HostUpdateMessage = Type.Object(
+	{
+		/** Identifies this message as a Host branch update. */
+		type: Type.Readonly(Type.Literal("hostUpdate")),
+		/** Identifies this update and the acknowledgment that completes it. */
+		updateId: Type.Readonly(HostUpdateId),
+		/** Identifies the retained commit after which `commits` replaces the Guest's Host branch. */
+		baseRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the Host main-branch head produced by applying `commits`. */
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies a finalized-history boundary in the resulting Host branch, which may precede the newest finalized commit. */
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		/** Serialized commits after `baseRevision`, in application order. */
+		commits: Type.Readonly(SerializedTreeCommits),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Confirms that the Guest applied one {@link HostUpdateMessage}.
+ */
+export type HostUpdateAckMessage = Static<typeof HostUpdateAckMessage>;
+const HostUpdateAckMessage = Type.Object(
+	{
+		/** Identifies this message as a Host update acknowledgment. */
+		type: Type.Readonly(Type.Literal("hostUpdateAck")),
+		/** Identifies the applied Host update. */
+		updateId: Type.Readonly(HostUpdateId),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * A Guest commit and the Host branch revisions on which the Guest based it.
+ */
+export type GuestChangeMessage = Static<typeof GuestChangeMessage>;
+const GuestChangeMessage = Type.Object(
+	{
+		/** Identifies this message as a Guest-authored change. */
+		type: Type.Readonly(Type.Literal("guestChange")),
+		/** Identifies this change and the acknowledgment that completes it. */
+		changeId: Type.Readonly(GuestChangeId),
+		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the Host finalized-history boundary that the Guest had acknowledged. */
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		/** The serialized Guest-authored SharedTree change. */
+		change: Type.Readonly(SerializedTreePayload),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Confirms that the Host applied one {@link GuestChangeMessage}.
+ */
+export type GuestChangeAckMessage = Static<typeof GuestChangeAckMessage>;
+const GuestChangeAckMessage = Type.Object(
+	{
+		/** Identifies this message as a Guest change acknowledgment. */
+		type: Type.Readonly(Type.Literal("guestChangeAck")),
+		/** Identifies the applied Guest change. */
+		changeId: Type.Readonly(GuestChangeId),
+	},
+	{ additionalProperties: false },
+);
 
 /**
  * A message that the Host and the Guest can send through their shared protocol.
  */
 export type HostGuestMessage =
-	| DataChangeMessage
-	| AcknowledgmentMessage
+	| HostInitializationMessage
+	| HostUpdateMessage
+	| HostUpdateAckMessage
+	| GuestChangeMessage
+	| GuestChangeAckMessage
 	| BlobRequestMessage
 	| BlobResponseMessage
 	| SessionFailureMessage;
@@ -321,6 +456,11 @@ const blobRequestValidator = validator.compile(BlobRequestMessage);
 const blobResponseValidator = validator.compile(
 	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
 );
+const hostInitializationValidator = validator.compile(HostInitializationMessage);
+const hostUpdateValidator = validator.compile(HostUpdateMessage);
+const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
+const guestChangeValidator = validator.compile(GuestChangeMessage);
+const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
@@ -356,17 +496,28 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 	}
 
-	if (data.type === "acknowledgment") {
-		return data as AcknowledgmentMessage;
+	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
+		return data;
+	}
+
+	if (data.type === "hostInitialization" && hostInitializationValidator.check(data)) {
+		return data;
+	}
+
+	if (data.type === "hostUpdateAck" && hostUpdateAckValidator.check(data)) {
+		return data;
+	}
+
+	if (data.type === "guestChange" && guestChangeValidator.check(data)) {
+		return data;
+	}
+
+	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
+		return data;
 	}
 
 	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {
 		return data;
-	}
-
-	if (data.type === "dataChange" && Object.hasOwn(data, "change") && "change" in data) {
-		validateTreePayloadVocabulary(data.change);
-		return data as DataChangeMessage;
 	}
 
 	if (data.type === "blobRequest" && blobRequestValidator.check(data)) {

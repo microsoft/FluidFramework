@@ -123,7 +123,7 @@ overrides:
 
   # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
   js-yaml@<4: 3.15.0
-  js-yaml@>=4: 4.3.0
+  js-yaml@>=4: 4.3.2
 
   jws: ^3.2.3
 

@@ -83,3 +83,9 @@ export {
 	MessageFormatVersion,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
+
+export {
+	decodeCustomMetadataTree,
+	encodeCustomMetadataTree,
+} from "./customMetadataCodec.js";
+export type { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
