@@ -352,25 +352,22 @@ export namespace FormattedText {
 								`formatRange encountered an existing \`${NodeKind[atomFormatSchema.kind]}\` format node: these are not supported. Consider using \`reformat\` instead.`,
 							);
 						}
-						case NodeKind.Record:
-						case NodeKind.Map: {
-							assert(
-								isMapNodeSchema(atomFormatSchema) || isRecordNodeSchema(atomFormatSchema),
-								"Expected a map or record schema.",
-							);
-							if (isMapNodeSchema(atomFormatSchema)) {
-								return (formatNode: TreeNode) => {
-									assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a map node.");
-									for (const [key, value] of fieldFormats) {
-										// The setter validates the cloned value against this map's entry schema.
-										formatNode.set(key, TreeBeta.clone(value) as never);
-									}
-								};
-							}
+						case NodeKind.Record: {
+							assert(isRecordNodeSchema(atomFormatSchema), "Expected a record schema.");
 							return (formatNode: TreeNode) => {
 								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a record node.");
 								for (const [key, value] of fieldFormats) {
 									formatNode[key] = TreeBeta.clone(value);
+								}
+							};
+						}
+						case NodeKind.Map: {
+							assert(isMapNodeSchema(atomFormatSchema), "Expected a map schema.");
+							return (formatNode: TreeNode) => {
+								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a map node.");
+								for (const [key, value] of fieldFormats) {
+									// The setter validates the cloned value against this map's entry schema.
+									formatNode.set(key, TreeBeta.clone(value) as never);
 								}
 							};
 						}
