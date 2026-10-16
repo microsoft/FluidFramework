@@ -85,6 +85,26 @@ export interface IAckSummaryResult {
 }
 
 // @beta @legacy
+export interface IApplicationSummaryProjection {
+    readonly key: string;
+    summarize(context: IApplicationSummaryProjectionContext): IApplicationSummaryProjectionResult | Promise<IApplicationSummaryProjectionResult>;
+}
+
+// @beta @legacy
+export interface IApplicationSummaryProjectionContext {
+    readonly fullTree: boolean;
+    readonly previousSummary: ISummaryContext | undefined;
+    readonly referenceSequenceNumber: number;
+    readonly trackState: boolean;
+}
+
+// @beta @legacy
+export interface IApplicationSummaryProjectionResult {
+    readonly onAccepted?: (context: ISummaryContext) => void;
+    readonly summary: ISummaryTree;
+}
+
+// @beta @legacy
 export interface IBaseSummarizeResult {
     readonly error: IRetriableFailureError | undefined;
     // (undocumented)
@@ -350,6 +370,7 @@ export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promis
 
 // @beta @legacy
 export interface LoadContainerRuntimeParams {
+    applicationSummaryProjection?: IApplicationSummaryProjection;
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
