@@ -59,9 +59,6 @@ export interface DocumentationHierarchyConfigurationBase {
  */
 export interface SectionHierarchyConfiguration
 	extends DocumentationHierarchyConfigurationBase {
-	/**
-	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
-	 */
 	readonly kind: HierarchyKind.Section;
 }
 
@@ -73,9 +70,6 @@ export interface SectionHierarchyConfiguration
  */
 export interface DocumentHierarchyConfiguration
 	extends DocumentationHierarchyConfigurationBase {
-	/**
-	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
-	 */
 	readonly kind: HierarchyKind.Document;
 }
 
@@ -103,9 +97,6 @@ export enum FolderDocumentPlacement {
  * @public
  */
 export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
-	/**
-	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
-	 */
 	readonly kind: HierarchyKind.Folder;
 
 	/**

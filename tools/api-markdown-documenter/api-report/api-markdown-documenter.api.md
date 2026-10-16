@@ -257,6 +257,7 @@ export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfigura
 
 // @public @sealed
 export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    // (undocumented)
     readonly kind: HierarchyKind.Document;
 }
 
@@ -290,6 +291,7 @@ export enum FolderDocumentPlacement {
 // @public @sealed
 export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
     readonly documentPlacement: FolderDocumentPlacement;
+    // (undocumented)
     readonly kind: HierarchyKind.Folder;
 }
 
@@ -542,6 +544,7 @@ export interface SectionHeading extends Node_2 {
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    // (undocumented)
     readonly kind: HierarchyKind.Section;
 }
 

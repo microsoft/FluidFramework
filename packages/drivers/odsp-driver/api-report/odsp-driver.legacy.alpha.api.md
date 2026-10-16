@@ -203,6 +203,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
+    // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 

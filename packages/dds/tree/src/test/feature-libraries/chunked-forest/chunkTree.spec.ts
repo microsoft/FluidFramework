@@ -68,7 +68,6 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
-	incrementalSummaryHint,
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
@@ -803,9 +802,7 @@ describe("chunkTree", () => {
 		it("incremental", () => {
 			const sf = new SchemaFactoryAlpha("chunkTree");
 			const structValueIncremental = sf.object("structValue", {
-				foo: sf.types([{ type: sf.number, metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				foo: sf.required(sf.number, { summarizeIncrementally: true }),
 			});
 			const params: ShapeFromSchemaParameters = {
 				schema: toInitialSchema([structValueIncremental]),
@@ -881,9 +878,7 @@ describe("chunkTree", () => {
 		it("incrementalField", () => {
 			const sf = new SchemaFactoryAlpha("chunkTree");
 			const structValueIncremental = sf.object("structValue", {
-				foo: sf.types([{ type: sf.number, metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				foo: sf.required(sf.number, { summarizeIncrementally: true }),
 			});
 			const structValueFieldIncremental = sf.required(structValueIncremental);
 			const params: ShapeFromSchemaParameters = {

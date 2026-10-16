@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import type { ITelemetryBaseLogger, Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -54,6 +54,9 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 	ShardSynchronizationToken,
+	SerializedIdCompressorShard,
+	ParentShardSynchronizationToken,
+	IdCompressorEvents,
 } from "./types/index.js";
 import { SerializationVersion } from "./types/index.js";
 import {
@@ -76,9 +79,25 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 const MAX_STRIDE_LENGTH = 1000000;
 
 /**
+ * Validates the generation count in a shard synchronization token.
+ *
+ * @param localGenCount - The number of positions filled, including backfilled positions.
+ * @throws {@link TypeError} if the count is not a nonnegative safe integer.
+ */
+function validateShardGenerationCount(localGenCount: number): void {
+	if (!Number.isSafeInteger(localGenCount) || localGenCount < 0) {
+		throw new TypeError("Invalid shard synchronization token generation count.");
+	}
+}
+
+/**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
+	private readonly eventEmitter = createEmitter<IdCompressorEvents>();
+
+	public readonly events: Listenable<IdCompressorEvents> = this.eventEmitter;
+
 	/**
 	 * Max allowed initial cluster size.
 	 */
@@ -261,9 +280,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.ongoingGhostSession = { ghostSessionId };
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
-	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void {
 		if (this.shardingState) {
 			throw new Error("Cannot start a ghost session while sharded.");
@@ -276,10 +292,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.shard}
-	 */
-	public shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[] {
+	public shard(newShardCount: number): SerializedIdCompressorShard[] {
 		if (!Number.isSafeInteger(newShardCount) || newShardCount <= 0) {
 			throw new Error("Shard count must be a positive safe integer");
 		}
@@ -299,7 +312,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (newStride > MAX_STRIDE_LENGTH) {
 			throw new Error("Sharding limit reached.");
 		}
-		assert(Number.isSafeInteger(newStride), "Shard stride must be a safe integer");
+		assert(Number.isSafeInteger(newStride), 0xd52 /* Shard stride must be a safe integer */);
 
 		if (this.shardingState === undefined) {
 			// First time sharding - initialize state
@@ -316,7 +329,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const serialized = this.serialize(true);
 		const { localGenCount: parentGenCount } = this;
 
-		const shards: SerializedIdCompressorWithOngoingSession[] = [];
+		const shards: SerializedIdCompressorShard[] = [];
 
 		// Children are positioned at consecutive positions within the parents current stride cycle
 		// e.g. if parent owns the "evens" space (-2, -4, -6, ...) and is sharded into 3 (two children)
@@ -334,7 +347,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const genCountJump = childLocalGenCount - parentGenCount;
 			assert(
 				child.localGenCount === parentGenCount && genCountJump > 0,
-				"Child offsets incorrectly calculated.",
+				0xd53 /* Child offsets incorrectly calculated. */,
 			);
 
 			child.normalizer.addLocalRange(child.localGenCount + 1, genCountJump);
@@ -346,24 +359,73 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				shardId: childShardId,
 			};
 
-			shards.push(child.serialize(true));
+			shards.push({
+				serialized: child.serialize(true),
+				syncToken: child.makeShardToken(false),
+			});
 		}
 
 		return shards;
 	}
-	/**
-	 * {@inheritdoc IIdCompressorCore.synchronizeWithShard}
-	 */
+
 	public synchronizeWithShard(syncToken: ShardSynchronizationToken): void {
 		const isNowLeaf = this.synchronizeChild(syncToken);
 		// A disposal token additionally reclaims the child's ID space. If reclaiming the last child
 		// returns this compressor to a leaf and it is the root (originalStride === 1), exit sharding mode.
 		if (syncToken.disposed) {
-			assert(this.shardingState !== undefined, "Must be sharded");
+			assert(this.shardingState !== undefined, 0xd54 /* Must be sharded */);
 			if (isNowLeaf && this.shardingState.originalStride === 1) {
 				this.shardingState = undefined;
 			}
 		}
+	}
+
+	public getChildShardSyncToken(
+		childToken: ShardSynchronizationToken,
+	): ParentShardSynchronizationToken {
+		if (!this.shardingState?.activeChildIds.has(childToken.shardId)) {
+			throw new Error("Cannot get a synchronization token for an inactive child shard.");
+		}
+		const token: ParentShardSynchronizationToken = {
+			type: "parentIdSpaceShardSyncToken",
+			shardId: childToken.shardId,
+			localGenCount: this.localGenCount,
+		};
+		return token;
+	}
+
+	public synchronizeWithParent(token: ParentShardSynchronizationToken): void {
+		const state = this.shardingState;
+		if (
+			token.type !== "parentIdSpaceShardSyncToken" ||
+			state?.shardId === undefined ||
+			state.shardId !== token.shardId
+		) {
+			throw new Error("Invalid parent synchronization token for this child shard.");
+		}
+		validateShardGenerationCount(token.localGenCount);
+		if (token.localGenCount <= this.localGenCount) {
+			// A child can already be ahead through its own allocations. Its local range
+			// then includes the parent's IDs through this generation count.
+			return;
+		}
+		this.backfillToNextStridePosition(token.localGenCount, state.currentStride);
+	}
+
+	/**
+	 * Adds IDs through the next position in this shard's stride after the given generation count.
+	 */
+	private backfillToNextStridePosition(targetGenCount: number, stride: number): void {
+		if (targetGenCount <= this.localGenCount) {
+			return;
+		}
+		const count = Math.ceil((targetGenCount - this.localGenCount + 1) / stride) * stride;
+		const nextGenCount = this.localGenCount + count;
+		if (!Number.isSafeInteger(nextGenCount)) {
+			throw new TypeError("Shard progress exceeds the supported ID space.");
+		}
+		this.normalizer.addLocalRange(this.localGenCount + 1, count);
+		this.localGenCount = nextGenCount;
 	}
 
 	private synchronizeChild(syncToken: ShardToken): boolean {
@@ -386,39 +448,27 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				`Cannot synchronize with child with ID ${childShardId}: not in active children set`,
 			);
 		}
+		validateShardGenerationCount(syncToken.localGenCount);
 
-		// Only disposal removes the child from the active set. A plain synchronization leaves the
-		// child active so it can continue generating IDs and be synchronized with again later.
+		// A last-child disposal realigns on the original stride. Backfill before changing
+		// membership so invalid progress cannot accidentally reclaim the child.
+		const isLeaf = childDisposed && activeChildIds.size === 1;
+		this.backfillToNextStridePosition(
+			syncToken.localGenCount,
+			isLeaf ? originalStride : this.shardingState.currentStride,
+		);
+
+		// A plain synchronization leaves the child active so it can keep generating IDs.
 		if (childDisposed) {
 			activeChildIds.delete(childShardId);
-		}
-
-		const isLeaf = activeChildIds.size === 0;
-		if (isLeaf && childDisposed) {
-			this.shardingState.currentStride = originalStride;
-		}
-
-		// Read currentStride after the possible stride reset above, so that a leaf-making disposal
-		// realigns the parent on its original (reclaimed) stride rather than the wider sharded stride.
-		const { currentStride } = this.shardingState;
-		const childGenCount = syncToken.localGenCount;
-
-		// Realign parent to next position in its sequence if child is ahead
-		if (childGenCount > this.localGenCount) {
-			// Find next aligned position in parent's sequence after child's genCount
-			const distance = childGenCount - this.localGenCount + 1;
-			const steps = Math.ceil(distance / currentStride);
-			const count = steps * currentStride;
-			this.normalizer.addLocalRange(this.localGenCount + 1, count);
-			this.localGenCount += count;
+			if (isLeaf) {
+				this.shardingState.currentStride = originalStride;
+			}
 		}
 
 		return isLeaf;
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.dispose}
-	 */
 	public disposeShard(): ShardSynchronizationToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
@@ -438,9 +488,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return token;
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.getShardSyncToken}
-	 */
 	public getShardSyncToken(): ShardSynchronizationToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
@@ -454,7 +501,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * @param disposed - Whether the token also signals disposal (reclamation of this shard's ID space).
 	 */
 	private makeShardToken(disposed: boolean): ShardSynchronizationToken {
-		assert(this.shardingState !== undefined, "Compressor is not sharded.");
+		assert(this.shardingState !== undefined, 0xd55 /* Compressor is not sharded. */);
 
 		// Root cannot produce a token (shardId is undefined for root)
 		if (this.shardingState.shardId === undefined) {
@@ -639,6 +686,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		assert(!session.isEmpty(), 0x757 /* Empty sessions should not be created. */);
+		this.eventEmitter.emit("rangeFinalized", range);
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {

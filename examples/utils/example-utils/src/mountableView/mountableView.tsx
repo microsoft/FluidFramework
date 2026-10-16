@@ -18,9 +18,6 @@ import type { IFluidMountableView } from "./interface.js";
  * @internal
  */
 export class MountableView implements IFluidMountableView {
-	/**
-	 * {@inheritDoc IProvideFluidMountableView.IFluidMountableView}
-	 */
 	public get IFluidMountableView(): MountableView {
 		return this;
 	}
@@ -62,9 +59,6 @@ export class MountableView implements IFluidMountableView {
 		this.view = view;
 	}
 
-	/**
-	 * {@inheritDoc IFluidMountableView.mount}
-	 */
 	public mount(container: HTMLElement): void {
 		if (this.containerElement !== undefined) {
 			throw new Error("Already mounted");
@@ -87,9 +81,6 @@ export class MountableView implements IFluidMountableView {
 		throw new Error("Failed to mount");
 	}
 
-	/**
-	 * {@inheritDoc IFluidMountableView.unmount}
-	 */
 	public unmount(): void {
 		// Do nothing if we are already unmounted.
 		if (this.containerElement === undefined) {

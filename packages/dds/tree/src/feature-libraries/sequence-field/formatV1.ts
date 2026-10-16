@@ -36,7 +36,7 @@ export enum DetachIdOverrideType {
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
+const CellCount = Type.Integer({ minimum: 1 });
 
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });
@@ -47,7 +47,7 @@ const LineageEvent = Type.Tuple([
 	/** count */
 	CellCount,
 	/** offset */
-	Type.Number({ multipleOf: 1, minimum: 0 }),
+	Type.Integer({ minimum: 0 }),
 ]);
 
 const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });

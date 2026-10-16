@@ -51,7 +51,7 @@ import {
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import { assertUnique, expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 
 import type { FuzzView } from "./fuzzEditGenerators.js";
 
@@ -111,7 +111,7 @@ export const fuzzFieldSchema = FuzzNode.info.optionalChild;
  * @returns The tree's schema used for the fuzz view.
  */
 export function createFuzzSchema(
-	nodeTypes: string[],
+	nodeTypes: readonly string[],
 	schemaFactoryConstructor: SchemaFactoryConstructor,
 ): typeof fuzzFieldSchema {
 	assertUnique(nodeTypes, "Duplicate fuzz node schema identifier");
@@ -167,16 +167,6 @@ export function createFuzzSchema(
 		type _check = ValidateRecursiveSchema<typeof UpgradedNode>;
 	}
 	return UpgradedNode.info.optionalChild as unknown as typeof fuzzFieldSchema;
-}
-
-function assertUnique<T>(iterable: Iterable<T>, errorMessage: string): void {
-	const seen = new Set<T>();
-	for (const item of iterable) {
-		if (seen.has(item)) {
-			throw new Error(errorMessage);
-		}
-		seen.add(item);
-	}
 }
 
 export function nodeSchemaFromTreeSchema(

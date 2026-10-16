@@ -421,7 +421,7 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	const innerNode = getInnerNode(record);
 	for (const key of innerNode.keys()) {
 		const field = innerNode.tryGetField(brand(key));
-		assert(field !== undefined, "Expected a field for each key of the inner node.");
+		assert(field !== undefined, 0xd51 /* Expected a field for each key of the inner node. */);
 		yield [
 			key,
 			tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,

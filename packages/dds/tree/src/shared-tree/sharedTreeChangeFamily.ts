@@ -104,6 +104,10 @@ export class SharedTreeChangeFamily
 		);
 	}
 
+	public hasSchemaChange(change: SharedTreeChange): boolean {
+		return hasSchemaChange(change);
+	}
+
 	public buildProcessor(
 		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
 	): (change: SharedTreeChange) => SharedTreeChange {
@@ -390,8 +394,8 @@ export enum ConstraintStatus {
 	 * At least one explicit constraint has been violated.
 	 * @remarks
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 */
 	ExplicitViolation,
 }

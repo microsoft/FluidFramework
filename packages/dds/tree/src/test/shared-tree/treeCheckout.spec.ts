@@ -380,6 +380,28 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("Views", () => {
+		for (const shared of [false, true]) {
+			for (const disposeCheckoutOnViewDispose of [undefined, false, true]) {
+				it(`disposes checkout according to view option ${disposeCheckoutOnViewDispose} (shared: ${shared})`, () => {
+					const provider = new TestTreeProviderLite(1);
+					const main = provider.trees[0].kernel.checkout;
+					const checkout = shared ? main : main.fork();
+					const config = new TreeViewConfiguration({ schema: StringArray });
+					const view = checkout.viewWithInternal(config, disposeCheckoutOnViewDispose);
+					view.initialize(["content"]);
+					view.dispose();
+
+					assert.equal(checkout.disposed, disposeCheckoutOnViewDispose ?? !shared);
+					if (!checkout.disposed) {
+						const replacement = checkout.viewWithInternal(config, false);
+						assert.deepEqual([...replacement.root], ["content"]);
+						replacement.dispose();
+						checkout.dispose();
+					}
+				});
+			}
+		}
+
 		itView(
 			"can fork and apply edits without affecting the parent",
 			({ view: parentView, tree: parentTree }) => {
@@ -1424,9 +1446,11 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
-		// TODO: 0xaf9: the fork's chunker looks up types using its parent's schema.
-		// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
-		it.skip("can edit a fork after its parent's schema upgrade loses a rebase", () => {
+		// This is a regression test for a historical bug with tree chunk encoding exposed by fuzz testing.
+		// The problem at the time was the tree chunker used for b's fork captured the schema from bView,
+		// which incorrectly coupled the schema on that fork to the schema of bView.
+		// The test sets up a scenario where the fork and parent's schema diverge, which would manifest in 0xaf9.
+		it("can edit a fork after its parent's schema upgrade loses a rebase", () => {
 			const sf = new SchemaFactory("forkSchemaRebase");
 			class Added extends sf.object("Added", { value: sf.string }) {}
 			const oldSchema = sf.optional(sf.string);
@@ -1977,6 +2001,28 @@ describe("sharedTreeView", () => {
 					view.root.number = 4;
 				},
 				error: "Editing the tree is forbidden during a change event callback",
+			});
+		});
+
+		it("apply a serialized change", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) =>
+					view.applyChange(view.checkout.serializeCommit(view.checkout.mainBranch.getHead())),
+				error: "Applying a change is forbidden during a change event callback",
+			});
+		});
+
+		it("switch branches", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				error: "Switching branches is forbidden during a change event callback",
+			});
+		});
+
+		it("update the schema", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.updateSchema(view.checkout.storedSchema.clone()),
+				error: "Updating the schema is forbidden during a change event callback",
 			});
 		});
 

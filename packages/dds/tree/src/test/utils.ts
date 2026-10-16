@@ -36,7 +36,7 @@ import {
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	OldestSupportedClientVersion,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -618,6 +618,16 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 }
 
 /**
+ * Asserts that the array contains no duplicate items, using `Set` equality.
+ * @throws An `Error` with `errorMessage` if a duplicate item is found.
+ */
+export function assertUnique<T>(items: readonly T[], errorMessage: string): void {
+	if (new Set(items).size !== items.length) {
+		throw new Error(errorMessage);
+	}
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
@@ -863,16 +873,44 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 	});
 }
 
+/**
+ * Options for a test checkout with initialized content.
+ */
+interface CheckoutWithContentOptions {
+	/**
+	 * The compressor used by the forest, revision codec, and checkout to create new revisions.
+	 * Supply a separate compressor for tests that need their own ID session or an ID space shard.
+	 * @defaultValue {@link testIdCompressor}.
+	 */
+	idCompressor?: IIdCompressor;
+	/** Events supplied to the checkout's branch. */
+	events?: Listenable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
+	/**
+	 * The forest implementation to use.
+	 * @defaultValue {@link ForestTypeReference}.
+	 */
+	forestType?: ForestType;
+	/**
+	 * The policy for incremental encoding.
+	 * @defaultValue {@link defaultIncrementalEncodingPolicy}.
+	 */
+	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+	/** Options for encoding and decoding tree changes. */
+	codecOptions?: Partial<CodecWriteOptions>;
+}
+
+/**
+ * Creates a test checkout with the given stored schema and initial tree content.
+ *
+ * @param content - The stored schema and initial tree content.
+ * @param args - Options for the checkout.
+ * @returns A checkout initialized with `content`.
+ */
 export function checkoutWithContent(
 	content: TreeStoredContent,
-	args?: {
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		forestType?: ForestType;
-		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-		codecOptions?: Partial<CodecWriteOptions>;
-	},
+	args?: CheckoutWithContentOptions,
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
 	return checkout;
@@ -880,17 +918,11 @@ export function checkoutWithContent(
 
 function createCheckoutWithContent(
 	content: TreeStoredContent,
-	args?: {
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		forestType?: ForestType;
-		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-		codecOptions?: Partial<CodecWriteOptions>;
-	},
+	args?: CheckoutWithContentOptions,
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	const schema = new TreeStoredSchemaRepository(content.schema);
+	const { idCompressor = testIdCompressor, ...checkoutArgs } = args ?? {};
 
 	const logger = createMockLoggerExt();
 	const breaker = new Breakable("createCheckoutWithContent", logger);
@@ -898,17 +930,21 @@ function createCheckoutWithContent(
 		breaker,
 		args?.forestType ?? ForestTypeReference,
 		schema,
-		testIdCompressor,
+		idCompressor,
 		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
 	initializeForest(forest, fieldCursor);
 
 	const checkout = createTreeCheckout(
-		testIdCompressor,
-		mintRevisionTag,
-		testRevisionTagCodec,
+		idCompressor,
+		idCompressor === testIdCompressor
+			? mintRevisionTag
+			: () => idCompressor.generateCompressedId(),
+		idCompressor === testIdCompressor
+			? testRevisionTagCodec
+			: new RevisionTagCodec(idCompressor),
 		{
-			...args,
+			...checkoutArgs,
 			forest,
 			schema,
 		},
@@ -1492,10 +1528,10 @@ export function makeTestFieldBatchContexts(opts: {
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & {
-		idCompressor?: IIdCompressor | undefined;
-		minVersionForCollab?: OldestSupportedClientVersion;
-	} = {},
+	options: ForestOptions &
+		Partial<CodecWriteOptions> & {
+			idCompressor?: IIdCompressor | undefined;
+		} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
@@ -1619,6 +1655,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public get branchHistory(): TreeBranchHistory {
 		throw new Error("'history' property not implemented in MockTreeCheckout.");
+	}
+	public get locations(): never {
+		throw new Error("'locations' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

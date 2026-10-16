@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	compareArrays,
+	debugAssert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -25,6 +31,7 @@ import {
 	eraseSchemaDetails,
 	isObjectNodeSchema,
 	eraseSchemaDetailsSubclassable,
+	NodeKind,
 } from "../simple-tree/index.js";
 import type {
 	ArrayPlaceAnchor,
@@ -36,7 +43,6 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTreeFieldFromImplicitField,
-	NodeKind,
 	TreeNode,
 	ScopedSchemaName,
 	ErasedSchemaSubclassable,
@@ -45,6 +51,7 @@ import type {
 } from "../simple-tree/index.js";
 import {
 	brand,
+	getOrCreate,
 	mapIterable,
 	oneFromIterable,
 	validateIndex,
@@ -121,7 +128,7 @@ export class StringTextAtomNode
  * This is generic over formatting an embedded object/atom types.
  *
  * @privateRemarks
- * See {@link FormattedTextDefault} for an example parameterization.
+ * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization.
  *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
@@ -145,7 +152,7 @@ export namespace FormattedText {
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
 	 *
 	 * @privateRemarks
-	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
+	 * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization of this factory.
 	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
@@ -223,6 +230,14 @@ export namespace FormattedText {
 				this.content.removeRange(index, end);
 			}
 
+			public moveRangeToIndex(
+				destinationGap: number,
+				sourceStart: number,
+				sourceEnd: number,
+			): void {
+				this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+			}
+
 			public characters(): Iterable<string> {
 				return mapIterable(this.content, (atom) => atom.content.content);
 			}
@@ -294,6 +309,12 @@ export namespace FormattedText {
 				end: number | undefined,
 				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 			): void {
+				if (TreeStatic.is(format, SchemaFactory.leaves)) {
+					throw new UsageError(
+						"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
+					);
+				}
+
 				const fieldFormatsRaw = Object.entries(format) as [
 					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 					unknown,
@@ -307,33 +328,70 @@ export namespace FormattedText {
 					);
 					return [key, value] as const;
 				});
-				this.#editRange(start, end, "FormattedText.formatRange", (atom) => {
-					const formatNode: TreeNode | TreeValue = atom.format;
-					const atomFormatSchema = TreeStatic.schema(formatNode);
-					if (!isObjectNodeSchema(atomFormatSchema)) {
-						throw new UsageError(
-							"formatRange currently only supports object nodes for the format.",
-						);
-					}
-					for (const [key, value] of fieldFormats) {
-						const field = atomFormatSchema.fields.get(key);
-						if (field === undefined) {
-							throw new UsageError(`Unknown format key: ${key}`);
+
+				type Operation = (formatNode: TreeNode) => void;
+				const perSchemaOperation = new Map<TreeNodeSchema, Operation>();
+				const buildOperation = (atomFormatSchema: TreeNodeSchema): Operation => {
+					switch (atomFormatSchema.kind) {
+						case NodeKind.Leaf:
+						case NodeKind.Array:
+						case NodeKind.Record:
+						case NodeKind.Map: {
+							throw new UsageError(
+								`formatRange encountered an existing \`${NodeKind[atomFormatSchema.kind]}\` format node: these are not supported. Consider using \`reformat\` instead.`,
+							);
+						}
+						case NodeKind.Object: {
+							// Narrow the typing to allow easy access to object specific APIs.
+							assert(isObjectNodeSchema(atomFormatSchema), "Expected an object schema.");
+							// Precompute values to assign to each modified field.
+							// Since this runs once per schema (instead of once per character),
+							// we precompute as much as we can here.
+							const createdValues: [
+								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+								TreeNode | TreeValue | undefined,
+							][] = fieldFormats.map(([key, value]) => {
+								const field = atomFormatSchema.fields.get(key);
+								if (field === undefined) {
+									throw new UsageError(`Unknown format key: ${key}`);
+								}
+
+								// Create validates the type/schema internally, so this cast is safe.
+								const createdValue = TreeBeta.create(field, value as never);
+								return [key, createdValue] as const;
+							});
+
+							// Return the per character operation that will be applied to each with this schema.
+							return (formatNode: TreeNode) => {
+								for (const [key, createdValue] of createdValues) {
+									// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+									// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
+									const clonedValue = TreeBeta.clone(createdValue);
+									(
+										formatNode as unknown as Record<
+											keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+											TreeNode | TreeValue | undefined
+										>
+									)[key] = clonedValue;
+								}
+							};
 						}
 
-						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-						// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
-						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
-							| TreeNode
-							| TreeValue;
-
-						(
-							formatNode as unknown as Record<
-								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-								TreeNode | TreeValue
-							>
-						)[key] = clonedValue;
+						default: {
+							unreachableCase(atomFormatSchema.kind);
+						}
 					}
+				};
+
+				// Apply the per-schema operation to each atom in the range.
+				// In the future we may want to implement a more efficient way to express and encode at least the common case of edits like this,
+				// like a lower level range editing API which we can use for more efficient batch updates when the schema allows it.
+				this.#editRange(start, end, "FormattedText.formatRange", (atom) => {
+					const formatNode = atom.format;
+					const atomFormatSchema = TreeStatic.schema(formatNode);
+					const operation = getOrCreate(perSchemaOperation, atomFormatSchema, buildOperation);
+					// buildOperation rejects leaf schema, so this cast is safe.
+					operation(formatNode as TreeNode);
 				});
 			}
 

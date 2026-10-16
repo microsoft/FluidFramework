@@ -98,7 +98,7 @@ import type {
 export type NodeProvider<T> = T | (() => T);
 
 /**
- * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
+ * Stateless APIs exposed via {@link SchemaFactoryAlpha} as both instance properties and as statics.
  * @see {@link SchemaStatics} for why this is useful.
  * @system @sealed @alpha
  */

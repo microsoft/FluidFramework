@@ -5,30 +5,136 @@
 
 import { strict as assert } from "node:assert";
 
-import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 
-describe("Host and Guest Demo", () => {
-	afterEach(function () {
+import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
+import {
+	cleanupEphemeralService,
+	startEphemeralService,
+} from "@fluidframework/local-driver/internal";
+import {
+	sharedObjectRegistryFromIterable,
+	defineDataStore,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ITree,
+	type ViewableTree,
+} from "../../../simple-tree/index.js";
+import { Sandboxing } from "../../../index.js";
+import { SharedTreeAlpha } from "../../../treeFactory.js";
+import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { asBeta } from "../../../api.js";
+import { getCheckout, sandboxFormatValidator } from "../../../sandboxing/index.js";
+
+describe("End to End Host and Guest integrations", () => {
+	afterEach(async function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+		await cleanupEphemeralService();
+	});
+
+	// Demos which look more like real end user use.
+	// Currently shows limitations which need fixing.
+	describe("User Facing APIs", () => {
+		let channel: MessageChannel | undefined;
+		let host: Sandboxing.Host | undefined;
+		let guest: Sandboxing.Guest | undefined;
+
+		afterEach(() => {
+			channel?.port2.close();
+			guest?.dispose();
+			host?.dispose();
+			channel = undefined;
+			guest = undefined;
+			host = undefined;
+		});
+
+		// TODO: would be nice to make this use case possible with the simpler defineTreeDataStore.
+		// defineTreeDataStore should get an overload or alternative which omits the config and does not crate the view for you.
+		const TestDataStore = defineDataStore<ViewableTree, ITree>({
+			type: "testTree",
+			registry: sharedObjectRegistryFromIterable([SharedTreeAlpha]),
+			async instantiateFirstTime(rootCreator: SharedObjectCreator): Promise<ITree> {
+				return rootCreator.createSharedObject(SharedTreeAlpha);
+			},
+			async view(tree): Promise<ITree> {
+				return tree;
+			},
+		});
+
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
+
+		it("synchronizes a Guest edit through ServiceClient", async () => {
+			const client = startEphemeralService().newClient({
+				// At least `3.4.0` is required for id-compressor's V3 serialization format, which is required for ID space sharding.
+				oldestSupportedClient: "3.4.0",
+			});
+			const container = await client.createAttachedContainer(TestDataStore);
+			const tree = container.data;
+			// TODO: ideally we wouldn't require the host to create a view.
+			// See existing TODO on `Sandboxing.HostOptions.main` for details.
+			const viewHost = asBeta(tree.viewWith(config));
+
+			const log: string[] = [];
+			const logger = createChildLogger({
+				logger: {
+					send(event: ITelemetryBaseEvent, logLevel: LogLevel) {
+						log.push(JSON.stringify(event));
+					},
+				},
+			});
+
+			channel = new MessageChannel();
+
+			// TODO: we need to expose a better way to inspect the compressor's shard state.
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
+			const idCompressor = getCheckout(viewHost)["idCompressor"];
+			const rootCompressor = toIdCompressorWithCore(idCompressor);
+
+			host = Sandboxing.createHost({
+				logger,
+				main: viewHost,
+				port: channel.port1,
+			});
+			guest = await Sandboxing.createGuest({
+				logger,
+				port: channel.port2,
+				treeOptions: { jsonValidator: sandboxFormatValidator },
+			});
+			const viewGuest = guest.tree.viewWith(config);
+
+			viewGuest.initialize("B");
+			await (guest.updateHostPromise ?? assert.fail("Expected Guest initialization update"));
+
+			assert.equal(viewHost.root, "B");
+			assert.equal(host.error, undefined);
+			assert.equal(guest.error, undefined);
+			guest.dispose();
+			host.dispose();
+			assert.equal(rootCompressor.getShardSyncToken(), undefined);
+		});
 	});
 
 	it("the initial state is consistent across the Host and Guest", async () => {
-		const { host, guest } = await setup(["A"]);
-		assert.deepEqual([...guest.view.root], ["A"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
+		const { main, local, guestView } = await setup(["A"]);
+		assert.deepEqual([...guestView.root], ["A"]);
+		assert.deepEqual([...local.root], ["A"]);
+		assert.deepEqual([...main.root], ["A"]);
 	});
 
 	it("one Guest edit", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, main, local, guest, guestView, provider } = await setup([]);
 
 		// Edit in the Guest.
-		guest.view.root.push("B(g)");
+		guestView.root.push("B(g)");
 		// The edit is synchronously reflected in the Guest.
-		assert.deepEqual([...guest.view.root], ["B(g)"]);
+		assert.deepEqual([...guestView.root], ["B(g)"]);
 		// The edit is not reflected in the Host yet.
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...host.main.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...main.root], []);
 
 		// The Guest should have started to push the edit to the Host.
 		const pushPromise =
@@ -37,8 +143,8 @@ describe("Host and Guest Demo", () => {
 		await pushPromise;
 
 		// The edit is now reflected in the Host.
-		assert.deepEqual([...host.local.root], ["B(g)"]);
-		assert.deepEqual([...host.main.root], ["B(g)"]);
+		assert.deepEqual([...local.root], ["B(g)"]);
+		assert.deepEqual([...main.root], ["B(g)"]);
 		// The edit is not reflected in the peer yet.
 		assert.deepEqual([...peer.root], []);
 
@@ -48,26 +154,26 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("new Guest edits during Guest edit push", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, main, local, guest, guestView, provider } = await setup([]);
 
 		// Edit in the Guest.
-		guest.view.root.push("B(g)");
+		guestView.root.push("B(g)");
 		const pushPromise =
 			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 
 		// Before the push completes, make more edits in the Guest.
-		guest.view.root.push("C(g)");
-		guest.view.root.push("D(g)");
+		guestView.root.push("C(g)");
+		guestView.root.push("D(g)");
 		// The new edits are synchronously reflected in the Guest.
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...guestView.root], ["B(g)", "C(g)", "D(g)"]);
 		// The new edits are not reflected in the Host yet.
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...host.main.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...main.root], []);
 
 		await pushPromise;
 		// The edits are now reflected in the Host.
-		assert.deepEqual([...host.local.root], ["B(g)", "C(g)", "D(g)"]);
-		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...local.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...main.root], ["B(g)", "C(g)", "D(g)"]);
 		// The edits are not reflected in the peer yet.
 		assert.deepEqual([...peer.root], []);
 
@@ -77,17 +183,17 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("concurrent Guest, Host, and peer edits converge", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
 
 		// Each participant edits independently before any synchronization completes.
-		guest.view.root.push("Guest");
+		guestView.root.push("Guest");
 		const pushPromise =
 			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
-		host.main.root.push("Host");
+		main.root.push("Host");
 		peer.root.push("Peer");
 
-		assert.deepEqual([...guest.view.root], ["Guest"]);
-		assert.deepEqual([...host.main.root], ["Host"]);
+		assert.deepEqual([...guestView.root], ["Guest"]);
+		assert.deepEqual([...main.root], ["Host"]);
 		assert.deepEqual([...peer.root], ["Peer"]);
 
 		// Sequence the Host and peer edits while the Guest edit is still being pushed.
@@ -107,29 +213,29 @@ describe("Host and Guest Demo", () => {
 		// Guest crosses the asynchronous sandbox channel and is submitted last.
 		// Concurrent inserts at the same position end up in reverse sequencing order.
 		const expected = ["Guest", "Peer", "Host"];
-		assert.deepEqual([...guest.view.root], expected);
-		assert.deepEqual([...host.local.root], expected);
-		assert.deepEqual([...host.main.root], expected);
+		assert.deepEqual([...guestView.root], expected);
+		assert.deepEqual([...local.root], expected);
+		assert.deepEqual([...main.root], expected);
 		assert.deepEqual([...peer.root], expected);
 	});
 
 	it("one peer edit", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");
 		// The edit is synchronously reflected in the peer.
 		assert.deepEqual([...peer.root], ["B(p)"]);
 		// The edit is not reflected in the Host or the Guest yet.
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...host.main.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...main.root], []);
+		assert.deepEqual([...guestView.root], []);
 
 		provider.synchronizeMessages();
 		// The edit is now reflected in the Host but not in the local branch or Guest.
-		assert.deepEqual([...host.main.root], ["B(p)"]);
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...main.root], ["B(p)"]);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...guestView.root], []);
 
 		// The Host should have started to update the Guest with the peer change.
 		const updatePromise =
@@ -138,20 +244,20 @@ describe("Host and Guest Demo", () => {
 		await updatePromise;
 
 		// The peer edit is now reflected in the local branch and Guest.
-		assert.deepEqual([...host.local.root], ["B(p)"]);
-		assert.deepEqual([...guest.view.root], ["B(p)"]);
+		assert.deepEqual([...local.root], ["B(p)"]);
+		assert.deepEqual([...guestView.root], ["B(p)"]);
 	});
 
 	it("new peer edits during Guest update", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");
 		provider.synchronizeMessages();
 		// The new peer edit is reflected in the Host but not in the local branch or Guest.
-		assert.deepEqual([...host.main.root], ["B(p)"]);
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...main.root], ["B(p)"]);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...guestView.root], []);
 
 		// The Host should have started to update the Guest with the peer change.
 		const updatePromise =
@@ -162,13 +268,13 @@ describe("Host and Guest Demo", () => {
 		peer.root.push("D(p)");
 		provider.synchronizeMessages();
 		// The new peer edits are reflected in the Host but not in the local branch or Guest.
-		assert.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...main.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...guestView.root], []);
 
 		await updatePromise;
 		// After the promise resolves, all peer edits are reflected in the local branch and Guest.
-		assert.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
-		assert.deepEqual([...guest.view.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...local.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...guestView.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 });

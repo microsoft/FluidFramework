@@ -40,23 +40,14 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return MapFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return MapFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -69,9 +60,6 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 		return map;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
 		const map = new SharedMapInternal(id, runtime, MapFactory.Attributes);
 		map.initializeLocal();

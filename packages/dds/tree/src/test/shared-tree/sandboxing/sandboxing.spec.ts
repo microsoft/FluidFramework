@@ -12,45 +12,67 @@ import {
 	StressMode,
 } from "@fluid-private/stochastic-test-utils";
 import { fail } from "@fluidframework/core-utils/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	deserializeIdCompressor,
+	type IIdCompressor,
+	SerializationVersion,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	LoggingError,
+	MockLogger,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockHandle,
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { brand, hasSome } from "../../../util/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
+import { brand, hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	mintRevisionTag,
-	testIdCompressor,
 	TestTreeProviderLite,
 	viewCheckout,
 } from "../../utils.js";
 
 import {
 	type GuestChangeMessage,
-	type HostGuestMessage,
+	type GuestToHostMessage,
+	guestToHostMessageValidator,
+	GuestImplementation,
+	GuestSynchronization,
+	HostImplementation,
+	type HostToGuestMessage,
+	hostToGuestMessageValidator,
+	HostSynchronization,
 	type HostUpdateMessage,
 	makePromiseWithResolvers,
-	parseHostGuestMessage,
+	normalizeTransportData,
+	sandboxFormatValidator,
+	SandboxSessionEndpoint,
 	SandboxProtocolError,
-} from "./common.js";
-import { Host } from "./host.js";
-import { GuestSynchronization } from "./guestSynchronization.js";
-import { HostSynchronization } from "./hostSynchronization.js";
-import { SandboxSessionEndpoint } from "./session.js";
-import { normalizeTransportData } from "./transport.js";
-import { getFinalizedCommit } from "./synchronizationUtils.js";
+	SandboxFailureCode,
+	getCheckout,
+} from "../../../sandboxing/index.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -63,63 +85,351 @@ import {
 	stringArrayConfig,
 } from "./sandboxingTestUtils.js";
 
+/**
+ * Creates a real child ID space shard token for envelope wire-shape tests.
+ */
+function createTestIdSpaceShardToken() {
+	const [{ syncToken: token }] = createIdCompressor(SerializationVersion.V3).shard(1);
+	assert(!token.disposed, "Expected an active child ID space shard");
+	return { ...token, disposed: false as const };
+}
+
+/**
+ * Creates a parent-to-child synchronization token for protocol-message tests.
+ *
+ * @remarks
+ * This helper creates a root compressor, creates a child ID space shard, and asks the
+ * root for a token addressed to that child. The result has the same data shape as
+ * a token sent by a Host, without putting either compressor object in a message.
+ * No sandbox Host owns this child, so the token is not authorized for a real Guest.
+ * Use a token from the test Host when a test must apply it to a Guest.
+ *
+ * @returns The parent synchronization token for the new test child shard.
+ */
+function createTestParentIdSpaceShardSyncToken() {
+	const root = createIdCompressor(SerializationVersion.V3);
+	const [{ syncToken: token }] = root.shard(1);
+	return root.getChildShardSyncToken(token);
+}
+
+/**
+ * Gets a checkout's compressor for sandbox tests that verify ID space shard identity and progress.
+ */
+function getCheckoutIdCompressor(checkout: ReturnType<typeof getCheckout>): IIdCompressor {
+	// eslint-disable-next-line @typescript-eslint/dot-notation -- The checkout's compressor is private.
+	return checkout["idCompressor"];
+}
+
+/** Waits for the next message on a test port. */
+async function nextMessage(port: MessagePort): Promise<unknown> {
+	return new Promise((resolve) => {
+		port.addEventListener("message", (event: MessageEvent<unknown>) => resolve(event.data), {
+			once: true,
+		});
+		port.start();
+	});
+}
+
 describe("Host and Guest message protocol", () => {
 	it("accepts initialization, branch updates, Guest changes, and acknowledgments", () => {
 		const messages = [
 			{
-				type: "hostInitialization",
-				baseRevision: 1,
-				mainRevision: 2,
-				trunkRevision: 1,
-				tree: [],
-				schema: {},
-				commits: [{ value: 1 }],
+				hostInitialization: {
+					baseRevision: 1,
+					mainRevision: 2,
+					trunkRevision: 1,
+					tree: [],
+					schema: {},
+					commits: [{ value: 1 }],
+					idCompressor: "serialized child",
+				},
 			},
 			{
-				type: "hostUpdate",
-				updateId: 0,
-				baseRevision: "root",
-				mainRevision: 1,
-				trunkRevision: "root",
-				commits: [{ value: 1 }],
+				hostUpdate: {
+					updateId: 0,
+					baseRevision: "root",
+					mainRevision: 1,
+					trunkRevision: "root",
+					commits: [{ value: 1 }],
+					parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+				},
 			},
 			{
-				type: "guestChange",
-				changeId: 0,
-				mainRevision: 1,
-				trunkRevision: "root",
-				change: { value: 2 },
+				hostIdRange: {
+					rangeId: 0,
+					parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+					range: {
+						sessionId: createSessionId(),
+						ids: {
+							firstGenCount: 1,
+							count: 1,
+							requestedClusterSize: 512,
+							localIdRanges: [[1, 1]],
+						},
+					},
+				},
 			},
-			{ type: "hostUpdateAck", updateId: 0 },
-			{ type: "guestChangeAck", changeId: 0 },
+			{
+				guestChange: {
+					changeId: 0,
+					mainRevision: 1,
+					trunkRevision: "root",
+					change: { value: 2 },
+					idSpaceShardToken: createTestIdSpaceShardToken(),
+				},
+			},
+			{ hostUpdateAck: { updateId: 0 } },
+			{ guestChangeAck: { changeId: 0 } },
 		];
 
 		for (const message of messages) {
 			const normalized = normalizeTransportData(message);
-			assert.equal(parseHostGuestMessage(normalized), normalized);
+			assert(
+				hostToGuestMessageValidator.check(normalized) ||
+					guestToHostMessageValidator.check(normalized),
+			);
 		}
 	});
 
+	it("requires exactly one message for the expected direction", () => {
+		const updateAck = normalizeTransportData({ hostUpdateAck: { updateId: 0 } });
+		const changeAck = normalizeTransportData({ guestChangeAck: { changeId: 0 } });
+
+		assert(guestToHostMessageValidator.check(updateAck));
+		assert(hostToGuestMessageValidator.check(changeAck));
+		assert(!hostToGuestMessageValidator.check(updateAck));
+		assert(!guestToHostMessageValidator.check(changeAck));
+		assert(
+			!guestToHostMessageValidator.check(
+				normalizeTransportData({
+					hostUpdateAck: { updateId: 0 },
+					sessionFailure: { code: SandboxFailureCode.ProcessingFailure },
+				}),
+			),
+		);
+	});
+
 	it("rejects invalid message envelopes", () => {
+		const validChange = {
+			guestChange: {
+				changeId: 0,
+				mainRevision: "root",
+				trunkRevision: "root",
+				change: {},
+			},
+		};
+		const token = createTestIdSpaceShardToken();
 		const invalidMessages: unknown[] = [
 			null,
 			"guestChange",
 			{},
-			{ type: "unknown" },
-			{ type: "hostInitialization" },
-			{ type: "guestChange" },
-			{ type: "hostUpdateAck" },
-			{ type: "guestChangeAck" },
-			{ type: "sessionFailure" },
-			{ type: "sessionFailure", error: 0 },
-			{ type: "sessionFailure", error: "failure", extra: true },
+			{ unknown: {} },
+			{ hostInitialization: {} },
+			// Initialization requires the serialized child compressor, even when all other fields are present.
+			{
+				hostInitialization: {
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					tree: [],
+					schema: {},
+					commits: [],
+				},
+			},
+			// A number cannot represent the serialized compressor state.
+			{
+				hostInitialization: {
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					tree: [],
+					schema: {},
+					commits: [],
+					idCompressor: 1,
+				},
+			},
+			{ guestChange: {} },
+			// Every Host update needs a parent token so the Guest can decode its commits.
+			{
+				hostUpdate: {
+					updateId: 0,
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					commits: [],
+				},
+			},
+			// A negative generation count is not valid in a parent synchronization token.
+			{
+				hostUpdate: {
+					updateId: 0,
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					commits: [],
+					parentIdSpaceShardSyncToken: {
+						...createTestParentIdSpaceShardSyncToken(),
+						localGenCount: -1,
+					},
+				},
+			},
+			// A Guest change cannot be decoded safely without the child ID space shard progress token.
+			validChange,
+			{ guestChange: { ...validChange.guestChange, idSpaceShardToken: null } },
+			// Disposal would let a change message reclaim the ID space while the Guest is still active.
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, disposed: true },
+				},
+			},
+			// Progress must be a nonnegative safe integer, and the child ID must be a valid session ID.
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, localGenCount: -1 },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, localGenCount: 1.5 },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: {
+						...token,
+						localGenCount: Number.MAX_SAFE_INTEGER + 1,
+					},
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, shardId: "not a session ID" },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, unexpected: true },
+				},
+			},
+			// Unexpected fields must not bypass the token or message envelope validation.
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: token,
+					extra: true,
+				},
+			},
+			{ hostUpdateAck: {} },
+			// The Guest needs both a parent token and the finalized range.
+			{ hostIdRange: { rangeId: 0 } },
+			// Generation counts start at one, and the range also needs its count, cluster size, and local ID ranges.
+			{
+				hostIdRange: {
+					rangeId: 0,
+					parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+					range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
+				},
+			},
+			{ guestChangeAck: {} },
+			{ guestClose: { idSpaceShardToken: createTestIdSpaceShardToken() } },
+			// A failure notification must include a classification code.
+			{ sessionFailure: {} },
+			// The legacy error field is no longer supported and does not replace the required code.
+			{ sessionFailure: { error: "legacy failure" } },
+			// Failure codes are string enum values, not numeric indices.
+			{ sessionFailure: { code: 0 } },
+			// The enum member name is not its case-sensitive wire value.
+			{ sessionFailure: { code: "ProtocolViolation" } },
+			// Arbitrary strings are not members of the closed set of failure codes.
+			{ sessionFailure: { code: "unknownFailure" } },
+			// The prototype accessor name must not be accepted as a failure code.
+			{ sessionFailure: { code: "__proto__" } },
+			// The inherited constructor property must not be accepted as a failure code.
+			{ sessionFailure: { code: "constructor" } },
+			// Inherited method names must not be accepted as failure codes.
+			{ sessionFailure: { code: "toString" } },
+			// A valid code does not permit additional fields.
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, extra: true } },
+			// Protocol diagnostics must be strings when present.
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, protocolMessage: 0 } },
+			// Sensitive diagnostics must be strings when present.
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, sensitiveMessage: {} } },
 		];
 
 		for (const message of invalidMessages) {
-			assert.throws(
-				() => parseHostGuestMessage(normalizeTransportData(message)),
-				SandboxProtocolError,
+			const normalized = normalizeTransportData(message);
+			assert(!hostToGuestMessageValidator.check(normalized));
+			assert(!guestToHostMessageValidator.check(normalized));
+		}
+	});
+
+	it("accepts only known failure codes with independently optional diagnostics", () => {
+		for (const code of Object.values(SandboxFailureCode)) {
+			for (const diagnostics of [
+				{},
+				{ protocolMessage: "Received 2, expected 1." },
+				{ sensitiveMessage: "Schema or document information" },
+				{ protocolMessage: "", sensitiveMessage: "" },
+			]) {
+				const message = normalizeTransportData({
+					sessionFailure: { code, ...diagnostics },
+				});
+				assert(hostToGuestMessageValidator.check(message));
+				assert(guestToHostMessageValidator.check(message));
+			}
+		}
+	});
+
+	it("sends classified diagnostics through the failure channel without the failed codec", async () => {
+		const protocolMessage = "Received 2, expected 1.";
+		const secret = "Private schema identifier";
+		for (const [cause, code, expectedProtocolMessage] of [
+			[
+				new SandboxProtocolError(protocolMessage, {
+					cause: new Error(secret),
+				}),
+				SandboxFailureCode.ProtocolViolation,
+				protocolMessage,
+			],
+			[new Error(secret), SandboxFailureCode.ProcessingFailure, undefined],
+			[new LoggingError(secret), SandboxFailureCode.ProcessingFailure, undefined],
+			[new UsageError(secret), SandboxFailureCode.ApplicationUsageError, undefined],
+		] as const) {
+			const channel = new MessageChannel();
+			const received = nextMessage(channel.port2);
+			const reported = makePromiseWithResolvers();
+			const endpoint = new SandboxSessionEndpoint(
+				channel.port1,
+				() => {},
+				() => reported.resolver(),
 			);
+			try {
+				endpoint.fail(cause);
+				const notification = await received;
+				await reported.promise;
+				assert.deepEqual(notification, {
+					sessionFailure: {
+						code,
+						...(expectedProtocolMessage === undefined
+							? undefined
+							: { protocolMessage: expectedProtocolMessage }),
+					},
+				});
+				assert(guestToHostMessageValidator.check(notification));
+				assert(hostToGuestMessageValidator.check(notification));
+				assert(endpoint.error !== undefined);
+				assert(!endpoint.error.message.includes(secret));
+				assert.equal(endpoint.error.cause, cause);
+			} finally {
+				endpoint.dispose();
+				channel.port2.close();
+			}
 		}
 	});
 
@@ -173,11 +483,977 @@ describe("Host and Guest message protocol", () => {
 			}
 		}
 	});
+
+	it("preserves tagged protocol diagnostics without logging the cause", async () => {
+		const secret = "Guest document contents";
+		const original = new Error(secret);
+		const cause = new SandboxProtocolError("Invalid Guest data.", {
+			cause: original,
+			telemetryProperties: {
+				receivedData: { value: secret, tag: TelemetryDataTag.UserData },
+				expectedCount: 1,
+			},
+		});
+		assert.equal(cause.name, "SandboxProtocolError");
+		assert.equal(cause.cause, original);
+		const channel = new MessageChannel();
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const endpoint = new SandboxSessionEndpoint(
+			channel.port1,
+			() => {},
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		try {
+			endpoint.fail(cause, false);
+			await reported.promise;
+			const [event] = logger.events;
+			assert(event !== undefined);
+			assert.equal(
+				event.error,
+				"Sandbox session failed; recreate the Host and Guest. Invalid Guest data.",
+			);
+			assert.equal(event.message, event.error);
+			assert.equal(event.cause, undefined);
+			assert.equal(event.expectedCount, 1);
+			assert.deepEqual(event.receivedData, {
+				value: secret,
+				tag: TelemetryDataTag.UserData,
+			});
+			const { stack } = event;
+			assert(typeof stack === "string");
+			assert(!stack.includes(secret));
+		} finally {
+			endpoint.dispose();
+			channel.port2.close();
+		}
+	});
+
+	it("keeps unknown and shutdown error messages out of safe telemetry and peer notifications", async () => {
+		const channel = new MessageChannel();
+		const reported = makePromiseWithResolvers();
+		const secret = "Private document contents";
+		const peerMessage = new Promise<unknown>((resolve) => {
+			channel.port2.addEventListener("message", (event) => resolve(event.data), {
+				once: true,
+			});
+			channel.port2.start();
+		});
+		const logger = new MockLogger();
+		const endpoint = new SandboxSessionEndpoint(
+			channel.port1,
+			() => {
+				throw new Error(`Shutdown: ${secret}`);
+			},
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		try {
+			endpoint.fail(new Error(secret));
+			await reported.promise;
+			assert.deepEqual(await peerMessage, {
+				sessionFailure: { code: SandboxFailureCode.ProcessingFailure },
+			});
+			const [event] = logger.events;
+			assert(event !== undefined);
+			const { error: errorMessage, stack } = event;
+			assert(typeof errorMessage === "string");
+			assert(typeof stack === "string");
+			assert(!errorMessage.includes(secret));
+			assert(!stack.includes(secret));
+			assert.deepEqual(event.originalErrorMessage, {
+				value: secret,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.deepEqual(event.localShutdownError, {
+				value: `Shutdown: ${secret}`,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.throws(
+				() => endpoint.breaker.use(),
+				(error: unknown) => {
+					assert(error instanceof UsageError);
+					assert(!error.message.includes(secret));
+					assert.equal(error.cause, endpoint.error?.cause);
+					return true;
+				},
+			);
+		} finally {
+			endpoint.dispose();
+			channel.port2.close();
+		}
+	});
 });
 
 describe("Host and Guest correctness", () => {
 	afterEach(function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+	});
+
+	it("logs the Guest's code separately from its tagged protocol and sensitive diagnostics", async () => {
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const { host, interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		const protocolMessage = "Received 2, expected 1.";
+		const secret = "Guest schema and document contents";
+		interop.sendToHost.postMessage({
+			sessionFailure: {
+				code: SandboxFailureCode.ProtocolViolation,
+				protocolMessage,
+				sensitiveMessage: secret,
+			},
+		});
+		await reported.promise;
+		const [event] = logger.events;
+		assert(event !== undefined);
+		const { error: errorMessage, message } = event;
+		assert(typeof errorMessage === "string");
+		assert(typeof message === "string");
+		assert(!errorMessage.includes(secret));
+		assert(!message.includes(secret));
+		assert.equal(event.fromGuestCode, SandboxFailureCode.ProtocolViolation);
+		assert.deepEqual(event.fromGuest, {
+			value: protocolMessage,
+			tag: TelemetryDataTag.SandboxGuestData,
+		});
+		assert.deepEqual(event.fromGuestSensitive, {
+			value: secret,
+			tag: TelemetryDataTag.UserData,
+		});
+		assert(host.error?.cause instanceof SandboxProtocolError);
+	});
+
+	it("does not trust a compromised Guest's protocol text as the local error message", async () => {
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const { interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		const secret = "Compromised Guest document contents";
+		interop.sendToHost.postMessage({
+			sessionFailure: {
+				code: SandboxFailureCode.ApplicationUsageError,
+				protocolMessage: secret,
+			},
+		});
+		await reported.promise;
+		const [event] = logger.events;
+		assert(event !== undefined);
+		const { error: errorMessage, message } = event;
+		assert(typeof errorMessage === "string");
+		assert(typeof message === "string");
+		assert(!errorMessage.includes(secret));
+		assert(!message.includes(secret));
+		assert.equal(event.fromGuestCode, SandboxFailureCode.ApplicationUsageError);
+		assert.deepEqual(event.fromGuest, {
+			value: secret,
+			tag: TelemetryDataTag.SandboxGuestData,
+		});
+	});
+
+	it("rejects an unknown Guest failure code before looking up its description", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToHost.postMessage({
+			sessionFailure: { code: "constructor", protocolMessage: "Private contents" },
+		});
+		await reported.promise;
+		assert(host.error?.cause instanceof SandboxProtocolError);
+		assert.match(host.error.cause.message, /Invalid Host and Guest protocol message/);
+		assert.equal(host.error.cause.getTelemetryProperties().fromGuestCode, undefined);
+	});
+
+	it("initializes through the port with a distinct child compressor", async () => {
+		const { guestView, provider } = await setup(["initial"]);
+		const root = provider.getCompressor(provider.trees[1]);
+		const idSpaceShard = getCheckoutIdCompressor(getCheckout(guestView));
+
+		// The Guest has a distinct compressor with the Host's session ID, but it is a child, not another root.
+		assert.notEqual(idSpaceShard, root);
+		assert.equal(idSpaceShard.localSessionId, root.localSessionId);
+		assert.equal(
+			toIdCompressorWithCore(idSpaceShard).getShardSyncToken()?.disposed,
+			false,
+			"Expected an active child ID space shard, not a copy of the root",
+		);
+		assert.deepEqual([...guestView.root], ["initial"]);
+	});
+
+	it("updates the live Guest ID space shard before applying later Host commits", async () => {
+		const { guestView, host, main, provider } = await setup(["initial"]);
+		const parent = provider.getCompressor(provider.trees[1]);
+		const child = getCheckoutIdCompressor(getCheckout(guestView));
+		for (let index = 0; index < 32; index++) {
+			parent.generateCompressedId();
+		}
+		main.root.push("host");
+		const revision = getCheckout(main).mainBranch.getHead().revision;
+		assert(revision !== "root");
+		await host.updateGuestPromise;
+		assert.equal(child.decompress(revision), parent.decompress(revision));
+		assert.deepEqual([...guestView.root], ["initial", "host"]);
+	});
+
+	it("delivers peer finalized ranges before the dependent Host update", async () => {
+		const { guestView, host, main, peer, provider } = await setup(["initial"]);
+		const child = getCheckoutIdCompressor(getCheckout(guestView));
+		peer.root.push("peer");
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+		const head = getCheckout(main).mainBranch.getHead().revision;
+		assert(head !== "root");
+		assert.equal(
+			child.decompress(head),
+			provider.getCompressor(provider.trees[1]).decompress(head),
+		);
+		assert.deepEqual([...guestView.root], ["initial", "peer"]);
+	});
+
+	it("delivers a delayed peer range and update while Guest edits are in flight", async () => {
+		const { host, main, local, guest, guestView, peer, provider, interop } = await setupCustom(
+			["a", "b"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+		);
+		const guestChange = new Promise<GuestToHostMessage>((resolve) => {
+			interop.sendToGuest.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => {
+					const message = normalizeTransportData(event.data);
+					assert(guestToHostMessageValidator.check(message));
+					resolve(message);
+				},
+				{ once: true },
+			);
+			interop.sendToGuest.start();
+		});
+		guestView.root.push("guest");
+		const change = await guestChange;
+		assert(change.guestChange !== undefined);
+
+		const hostMessages: HostToGuestMessage[] = [];
+		const ready = new Promise<void>((resolve) => {
+			interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
+				const message = normalizeTransportData(event.data);
+				assert(hostToGuestMessageValidator.check(message));
+				hostMessages.push(message);
+				if (hostMessages.length === 2) {
+					resolve();
+				}
+			});
+			interop.sendToHost.start();
+		});
+		peer.root.insertAtStart("peer");
+		provider.synchronizeMessages();
+		await ready;
+		assert(hostMessages[0]?.hostIdRange !== undefined);
+		assert(hostMessages[1]?.hostUpdate !== undefined);
+		assert.deepEqual([...guestView.root], ["a", "b", "guest"]);
+
+		const updateAck = new Promise<GuestToHostMessage>((resolve) => {
+			interop.sendToGuest.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => {
+					const message = normalizeTransportData(event.data);
+					assert(guestToHostMessageValidator.check(message));
+					resolve(message);
+				},
+				{ once: true },
+			);
+		});
+		// Relay the delayed range before its dependent update, while the Guest edit is still pending.
+		interop.sendToGuest.postMessage(hostMessages[0]);
+		interop.sendToGuest.postMessage(hostMessages[1]);
+		const hostAcknowledgment = await updateAck;
+		assert(hostAcknowledgment.hostUpdateAck !== undefined);
+		assert.deepEqual([...guestView.root], ["peer", "a", "b", "guest"]);
+
+		// The Guest change was authored against the earlier Host state. Deliver it before the
+		// Host update acknowledgment, as required by message order in this direction.
+		const changeAck = new Promise<HostToGuestMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = normalizeTransportData(event.data);
+				assert(hostToGuestMessageValidator.check(message));
+				if (message.guestChangeAck !== undefined) {
+					interop.sendToHost.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			interop.sendToHost.addEventListener("message", onMessage);
+		});
+		interop.sendToHost.postMessage(change);
+		const guestAcknowledgment = await changeAck;
+		assert(guestAcknowledgment.guestChangeAck !== undefined);
+		assert.deepEqual([...main.root], [...guestView.root]);
+		const nextUpdate = hostMessages.find((message) => message.hostUpdate?.updateId === 1);
+		assert(nextUpdate !== undefined, "Expected an update for the merged Guest change");
+		const nextUpdateAck = new Promise<GuestToHostMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = normalizeTransportData(event.data);
+				assert(guestToHostMessageValidator.check(message));
+				if (message.hostUpdateAck?.updateId === 1) {
+					interop.sendToGuest.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			interop.sendToGuest.addEventListener("message", onMessage);
+		});
+		interop.sendToHost.postMessage(hostAcknowledgment);
+		interop.sendToGuest.postMessage(nextUpdate);
+		interop.sendToGuest.postMessage(guestAcknowledgment);
+		interop.sendToHost.postMessage(await nextUpdateAck);
+		await Promise.all([host.updateGuestPromise, guest.updateHostPromise]);
+		assert.deepEqual([...local.root], [...guestView.root]);
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
+	it("delivers a finalized ID range even without a tree update", async () => {
+		const ports = buildDirectSessionPorts();
+		const { main, guestView, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const peerCompressor = toIdCompressorWithCore(provider.getCompressor(provider.trees[0]));
+		const peerId = peerCompressor.generateCompressedId();
+		const encoded = peerCompressor.normalizeToOpSpace(peerId);
+		const range = peerCompressor.takeNextCreationRange();
+		assert(range.ids !== undefined, "Expected a peer creation range");
+		const child = getCheckoutIdCompressor(getCheckout(guestView));
+		assert.throws(
+			() => child.normalizeToSessionSpace(encoded, peerCompressor.localSessionId),
+			/No IDs have ever been finalized/,
+		);
+		const delivered = new Promise<void>((resolve) => {
+			ports.guestPort.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => {
+					const message = normalizeTransportData(event.data);
+					assert(hostToGuestMessageValidator.check(message));
+					assert(message.hostIdRange !== undefined);
+					resolve();
+				},
+				{ once: true },
+			);
+		});
+		toIdCompressorWithCore(provider.getCompressor(provider.trees[1])).finalizeCreationRange(
+			range,
+		);
+		await delivered;
+		const local = child.normalizeToSessionSpace(encoded, peerCompressor.localSessionId);
+		assert.equal(child.decompress(local), peerCompressor.decompress(peerId));
+		assert.deepEqual([...main.root], [...guestView.root]);
+	});
+
+	it("rejects an out-of-order finalized Host ID range", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToGuest.postMessage({
+			hostIdRange: {
+				rangeId: 1,
+				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+				range: {
+					sessionId: createSessionId(),
+					ids: {
+						firstGenCount: 1,
+						count: 1,
+						requestedClusterSize: 512,
+						localIdRanges: [[1, 1]],
+					},
+				},
+			},
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host ID range identifier order/);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects a finalized Host ID range repeated after successful delivery", async () => {
+		const reported = makePromiseWithResolvers();
+		const ports = buildDirectSessionPorts();
+		const { host, main, guest, peer, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => reported.resolver(),
+		);
+		const deliveredRange = new Promise<HostToGuestMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = normalizeTransportData(event.data);
+				assert(hostToGuestMessageValidator.check(message));
+				if (message.hostIdRange !== undefined) {
+					ports.guestPort.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			ports.guestPort.addEventListener("message", onMessage);
+		});
+		peer.root.push("peer");
+		provider.synchronizeMessages();
+		const range = await deliveredRange;
+		assert(range.hostIdRange !== undefined);
+		await host.updateGuestPromise;
+		ports.hostPort.postMessage(range);
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host ID range identifier order mismatch/);
+		assert.deepEqual([...main.root], ["initial", "peer"]);
+	});
+
+	it("rejects a finalized range whose generation counts start out of order", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, guestView, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken();
+		assert(token !== undefined, "Expected a child ID space shard token");
+		const parent = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		interop.sendToGuest.postMessage({
+			hostIdRange: {
+				rangeId: 0,
+				parentIdSpaceShardSyncToken: parent.getChildShardSyncToken(token),
+				range: {
+					sessionId: createSessionId(),
+					ids: {
+						firstGenCount: 2,
+						count: 1,
+						requestedClusterSize: 512,
+						localIdRanges: [[2, 1]],
+					},
+				},
+			},
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Invalid finalized Host ID range/);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects a Host synchronization token for another ID space shard before applying an update", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, main, guest, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToGuest.postMessage({
+			hostUpdate: {
+				updateId: 0,
+				baseRevision: host.synchronization.guestInitialization.mainRevision,
+				mainRevision: host.synchronization.guestInitialization.mainRevision,
+				trunkRevision: host.synchronization.guestInitialization.trunkRevision,
+				commits: [],
+				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+			},
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /targets another ID space shard/);
+		assert.deepEqual([...main.root], ["initial"]);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects a Host synchronization token that moves backward across ordered updates", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, main, guest, guestView, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken();
+		assert(token !== undefined, "Expected an ID space shard token");
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const previous = root.getChildShardSyncToken(token);
+		root.generateCompressedId();
+		const current = root.getChildShardSyncToken(token);
+		const revision = host.synchronization.guestInitialization.mainRevision;
+		for (const [updateId, progress] of [
+			[0, current],
+			[1, previous],
+		] as const) {
+			interop.sendToGuest.postMessage({
+				hostUpdate: {
+					updateId,
+					baseRevision: revision,
+					mainRevision: revision,
+					trunkRevision: host.synchronization.guestInitialization.trunkRevision,
+					commits: [],
+					parentIdSpaceShardSyncToken: progress,
+				},
+			});
+		}
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host synchronization token moved backward/);
+		assert.deepEqual([...main.root], ["initial"]);
+	});
+
+	it("applies a trunk-only Host update after its creation range is finalized", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, main, guestView, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const updates: HostUpdateMessage[] = [];
+		ports.guestPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = normalizeTransportData(event.data);
+			assert(hostToGuestMessageValidator.check(message));
+			if (message.hostUpdate !== undefined) {
+				updates.push(message.hostUpdate);
+			}
+		});
+
+		main.root.push("host");
+		await host.updateGuestPromise;
+		const initialTrunkRevision = updates.at(-1)?.trunkRevision;
+		assert(initialTrunkRevision !== undefined, "Expected the original Host update");
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+		assert(
+			updates.some(
+				(update) =>
+					update.commits.length === 0 && update.trunkRevision !== initialTrunkRevision,
+			),
+			"Expected an update of the finalized-history boundary without new commits",
+		);
+		assert.deepEqual([...guestView.root], ["initial", "host"]);
+	});
+
+	it("rejects an invalid serialized child before constructing the Guest view", async () => {
+		const channel = new MessageChannel();
+		const errors: Error[] = [];
+		const guestPromise = GuestImplementation.create({
+			treeOptions: { jsonValidator: sandboxFormatValidator },
+			port: channel.port2,
+			logger: createChildLogger({ namespace: "Guest" }),
+			handleProtocolError: (error) => errors.push(error),
+		});
+		// Attach the rejection check before delivery so the asynchronous failure is observed.
+		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		// The envelope checks only for a string; the Guest rejects its invalid contents.
+		const initialization = {
+			hostInitialization: {
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				tree: [],
+				schema: {},
+				commits: [],
+				idCompressor: "not a serialized compressor",
+			},
+		};
+		const normalizedInitialization = normalizeTransportData(initialization);
+		assert(hostToGuestMessageValidator.check(normalizedInitialization));
+		assert(normalizedInitialization.hostInitialization !== undefined);
+		channel.port1.postMessage(initialization);
+		try {
+			await rejected;
+			assert(errors[0]?.cause instanceof SandboxProtocolError);
+		} finally {
+			channel.port1.close();
+		}
+	});
+
+	it("rejects a serialized root compressor in place of a child ID space shard", async () => {
+		const channel = new MessageChannel();
+		const guestPromise = GuestImplementation.create({
+			treeOptions: { jsonValidator: sandboxFormatValidator },
+			port: channel.port2,
+			logger: createChildLogger({ namespace: "Guest" }),
+			handleProtocolError: () => {},
+		});
+		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		// A serialized root is well formed, but it has no child allocation to prevent collisions within a shared session.
+		channel.port1.postMessage({
+			hostInitialization: {
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				tree: [],
+				schema: {},
+				commits: [],
+				idCompressor: serializeIdCompressor(createIdCompressor(SerializationVersion.V3), true),
+			},
+		});
+		try {
+			await rejected;
+		} finally {
+			channel.port1.close();
+		}
+	});
+
+	it("rejects a Host view whose compressor cannot create a child ID space shard", () => {
+		const checkout = checkoutWithContent(
+			{
+				schema: toInitialSchema(stringArrayConfig.schema),
+				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["initial"]),
+			},
+			{
+				idCompressor: createIdCompressor(SerializationVersion.V2),
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			},
+		);
+		const main = viewCheckout(checkout, stringArrayConfig);
+		const channel = new MessageChannel();
+		try {
+			assert.throws(
+				() =>
+					new HostImplementation({
+						main,
+						port: channel.port1,
+						logger: createChildLogger({ namespace: "Host" }),
+					}),
+				/Sharding requires document version 3/,
+			);
+			main.root.push("still usable");
+			assert.deepEqual([...main.root], ["initial", "still usable"]);
+		} finally {
+			channel.port2.close();
+			main.dispose();
+		}
+	});
+
+	it("reclaims an unsent ID space shard when Host initialization cannot be delivered", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v2_80,
+			}).getFactory(),
+		);
+		const main = asAlpha(provider.trees[1].viewWith(stringArrayConfig));
+		main.initialize(["initial"]);
+		provider.synchronizeMessages();
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const channel = new MessageChannel();
+		// Fail after the Host has created its child, but before the Guest receives initialization.
+		channel.port1.postMessage = () => {
+			throw new Error("Transport unavailable");
+		};
+		try {
+			assert.throws(
+				() =>
+					new HostImplementation({
+						main,
+						port: channel.port1,
+						logger: createChildLogger({ namespace: "Host" }),
+					}),
+				/Transport unavailable/,
+			);
+			// The root exits sharding mode when the unsent child's ID space is reclaimed.
+			assert.equal(root.getShardSyncToken(), undefined);
+			main.root.push("still usable");
+		} finally {
+			channel.port2.close();
+			main.dispose();
+		}
+	});
+
+	it("reclaims an ID space shard when Host closes after Guest disposal", async () => {
+		const { host, guest, guestView, main, provider, peer } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an active Guest shard");
+		const retainedRoot = guestView.root;
+		guestView.root.push("guest");
+		await guest.updateHostPromise;
+		guest.dispose();
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+		host.dispose();
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+		assert.equal(root.getShardSyncToken(), undefined);
+		assert.doesNotThrow(() => guest.dispose());
+		assert.throws(() => guestView.root.push("after close"), /disposed|invalid state/i);
+		assert.throws(
+			() => retainedRoot.push("after close"),
+			/deleted node|disposed|invalid state/i,
+		);
+		main.root.push("host");
+		provider.synchronizeMessages();
+		assert.deepEqual([...peer.root], ["initial", "guest", "host"]);
+
+		const ports = buildDirectSessionPorts();
+		const replacementHost = new HostImplementation({
+			main,
+			port: ports.hostPort,
+			logger: createChildLogger({ namespace: "Host" }),
+		});
+		const replacementGuest = await createGuestForHost(ports.guestPort);
+		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
+		try {
+			replacementGuestView.root.push("replacement");
+			await replacementGuest.updateHostPromise;
+			assert.deepEqual([...main.root], ["initial", "guest", "host", "replacement"]);
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			assert.equal(root.getShardSyncToken(), undefined);
+		} finally {
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			ports.dispose();
+		}
+	});
+
+	it("reclaims the shard even if Host branch cleanup fails", async () => {
+		const { host, guest, provider } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		guest.dispose();
+		const disposeBranches = host.synchronization.dispose.bind(host.synchronization);
+		host.synchronization.dispose = () => {
+			disposeBranches();
+			throw new Error("Host branch cleanup failed");
+		};
+		assert.throws(() => host.dispose(), /Host branch cleanup failed/);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("stops the Guest session even if checkout cleanup fails", async () => {
+		const { host, guest, guestView } = await setup(["initial"]);
+		const synchronization = guest.synchronization;
+		const disposeCheckouts = synchronization.dispose.bind(synchronization);
+		synchronization.dispose = () => {
+			throw new Error("Guest checkout cleanup failed");
+		};
+		guestView.root.push("pending");
+		const pending = guest.updateHostPromise ?? assert.fail("Expected a pending Guest change");
+		const rejected = assert.rejects(pending, /disposed before synchronization completed/);
+		assert.throws(() => guest.dispose(), /Guest checkout cleanup failed/);
+		await rejected;
+		disposeCheckouts();
+		host.dispose();
+	});
+
+	it("preserves accepted Guest edits when reclaiming a lost Guest shard", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, guestView, main, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const childId = child.generateCompressedId();
+		const stableId = child.decompress(childId);
+		guestView.root.push("accepted");
+		await guest.updateHostPromise;
+		ports.guestPort.close();
+		guest.dispose();
+		host.dispose();
+		assert.deepEqual([...main.root], ["initial", "accepted"]);
+		assert.equal(root.decompress(childId), stableId);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("can apply a queued Guest change after Guest disposal but before Host disposal", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, guestView, main, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an active Guest shard");
+		const sentChange = nextMessage(ports.hostPort);
+		guestView.root.push("queued");
+		const pending = guest.updateHostPromise ?? assert.fail("Expected a pending Guest change");
+		const rejected = assert.rejects(pending, /disposed before synchronization completed/);
+		guest.dispose();
+		await sentChange;
+		await rejected;
+		assert.deepEqual([...main.root], ["initial", "queued"]);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+		host.dispose();
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("disposes the Guest locally without posting a close notice", async () => {
+		const ports = buildDirectSessionPorts();
+		const { guest, guestView, host, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected a Guest shard token");
+		ports.guestPort.postMessage = () => {
+			throw new Error("Unexpected Guest message");
+		};
+		assert.doesNotThrow(() => guest.dispose());
+		assert.throws(() => guestView.root, /disposed|invalid state/i);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+		host.dispose();
+		assert.throws(() => root.getChildShardSyncToken(token), /inactive child/);
+	});
+
+	it("reclaims one Guest shard without affecting another active child shard", async () => {
+		const { host, guest, guestView, provider } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const guestToken =
+			child.getShardSyncToken() ?? assert.fail("Expected a Guest shard token");
+		const [{ serialized: serializedSibling }] = root.shard(1);
+		assert(serializedSibling !== undefined, "Expected a sibling child shard");
+		const sibling = deserializeIdCompressor(serializedSibling, SerializationVersion.V3);
+		const siblingToken = sibling.getShardSyncToken() ?? assert.fail("Expected sibling token");
+
+		guest.dispose();
+		host.dispose();
+		assert.throws(() => root.getChildShardSyncToken(guestToken), /inactive child/);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(siblingToken));
+		sibling.generateCompressedId();
+		root.synchronizeWithShard(
+			sibling.disposeShard() ?? assert.fail("Expected a sibling disposal token"),
+		);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("rejects a pending Guest change while the Host can still apply a sent change", async () => {
+		const { host, guest, guestView, main, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token =
+			child.getShardSyncToken() ?? assert.fail("Expected a Guest ID space shard token");
+		const sentChange = nextMessage(interop.sendToGuest);
+		guestView.root.push("pending");
+		const changeMessage = normalizeTransportData(await sentChange);
+		assert(guestToHostMessageValidator.check(changeMessage));
+		const change = changeMessage.guestChange ?? assert.fail("Expected a Guest change message");
+		const pending = guest.updateHostPromise ?? assert.fail("Expected a pending Guest change");
+		const rejected = assert.rejects(pending, /disposed before synchronization completed/);
+		guest.dispose();
+		assert.throws(() => guestView.root.push("after close"), /disposed|invalid state/i);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+
+		const changeAck = new Promise<void>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = normalizeTransportData(event.data);
+				assert(hostToGuestMessageValidator.check(message));
+				if (message.guestChangeAck !== undefined) {
+					interop.sendToHost.removeEventListener("message", onMessage);
+					resolve();
+				}
+			};
+			interop.sendToHost.addEventListener("message", onMessage);
+		});
+		interop.sendToHost.postMessage({ guestChange: change });
+		await changeAck;
+		await rejected;
+		assert.deepEqual([...main.root], ["initial", "pending"]);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+		host.dispose();
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("closes while a Host update is in flight without losing the main-tree edit", async () => {
+		const { host, guest, main, peer, provider } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		main.root.push("host");
+		const update = host.updateGuestPromise ?? assert.fail("Expected a pending Host update");
+		const updateRejected = assert.rejects(update, /disposed before synchronization completed/);
+		guest.dispose();
+		host.dispose();
+		await updateRejected;
+		assert.deepEqual([...main.root], ["initial", "host"]);
+		provider.synchronizeMessages();
+		assert.deepEqual([...peer.root], ["initial", "host"]);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("reclaims an ID space shard after the connection is lost and Host is disposed", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, guestView, main, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an ID space shard token");
+		ports.guestPort.close();
+		guestView.root.push("unreported");
+		guest.dispose();
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
+		host.dispose();
+		assert.throws(() => root.getChildShardSyncToken(token), /inactive child/);
+		assert.deepEqual([...main.root], ["initial"]);
+		main.root.push("still usable");
+		assert.deepEqual([...main.root], ["initial", "still usable"]);
+		assert.equal(host.updateGuestPromise, undefined);
+
+		const replacementPorts = buildDirectSessionPorts();
+		const replacementHost = new HostImplementation({
+			main,
+			port: replacementPorts.hostPort,
+			logger: createChildLogger({ namespace: "Host" }),
+		});
+		const replacementGuest = await createGuestForHost(replacementPorts.guestPort);
+		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
+		try {
+			replacementGuestView.root.push("replacement");
+			await replacementGuest.updateHostPromise;
+			assert.deepEqual([...main.root], ["initial", "still usable", "replacement"]);
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			assert.equal(root.getShardSyncToken(), undefined);
+		} finally {
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			replacementPorts.dispose();
+		}
 	});
 
 	// The Host and Guest are intended to support being run in separate JavaScript realms.
@@ -186,32 +1462,52 @@ describe("Host and Guest correctness", () => {
 		const channel = new MessageChannel();
 		const change = { revision: "test revision" };
 		const message: GuestChangeMessage = {
-			type: "guestChange",
 			changeId: brand(0),
 			mainRevision: "root",
 			trunkRevision: "root",
 			change,
+			idSpaceShardToken: createTestIdSpaceShardToken(),
 		};
-		const received = new Promise<HostGuestMessage>((resolve) => {
+		const received = new Promise<GuestToHostMessage>((resolve) => {
 			channel.port2.addEventListener(
 				"message",
-				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				(event: MessageEvent<unknown>) => {
+					const wireMessage = normalizeTransportData(event.data);
+					assert(guestToHostMessageValidator.check(wireMessage));
+					resolve(wireMessage);
+				},
 				{ once: true },
 			);
 			channel.port2.start();
 		});
 
-		channel.port1.postMessage(message);
+		channel.port1.postMessage({ guestChange: message });
 		const receivedMessage = await received;
-
-		assert.deepEqual(receivedMessage, normalizeTransportData(message));
-		assert.notEqual(receivedMessage, message);
-		if (receivedMessage.type === "guestChange") {
-			assert.notEqual(receivedMessage.change, change);
-		}
+		assert.deepEqual(receivedMessage, normalizeTransportData({ guestChange: message }));
+		assert(receivedMessage.guestChange !== undefined);
+		assert.notEqual(receivedMessage.guestChange.change, change);
 		channel.port1.close();
 		channel.port2.close();
+	});
+
+	it("continues synchronizing after replacing the Guest view", async () => {
+		const { host, main, guest, guestView } = await setup(["initial"]);
+		guestView.dispose();
+
+		const replacementView = asAlpha(guest.tree.viewWith(stringArrayConfig));
+		try {
+			assert.deepEqual([...replacementView.root], ["initial"]);
+
+			main.root.push("host");
+			await host.updateGuestPromise;
+			assert.deepEqual([...replacementView.root], ["initial", "host"]);
+
+			replacementView.root.push("guest");
+			await guest.updateHostPromise;
+			assert.deepEqual([...main.root], ["initial", "host", "guest"]);
+		} finally {
+			replacementView.dispose();
+		}
 	});
 
 	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
@@ -228,32 +1524,36 @@ describe("Host and Guest correctness", () => {
 			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
 		];
 		const config = new TreeViewConfiguration({ schema: Records });
-		const { host, guest, provider, peer } = await setupCustom(
+		const { host, main, guest, guestView, provider, peer } = await setupCustom(
 			values,
 			config,
 			buildDirectSessionPorts,
 		);
 		const read = (nodes: Iterable<RecordNode>) =>
 			Array.from(nodes, (node) => Object.fromEntries(Object.entries(node)));
-		assert.deepEqual(read(guest.view.root), values);
-		host.main.root.insertAtEnd(...values);
+		assert.deepEqual(read(guestView.root), values);
+		main.root.insertAtEnd(...values);
 		await host.updateGuestPromise;
-		assert.deepEqual(read(guest.view.root), [...values, ...values]);
-		guest.view.root.insertAtEnd(...values);
+		assert.deepEqual(read(guestView.root), [...values, ...values]);
+		guestView.root.insertAtEnd(...values);
 		await guest.updateHostPromise;
-		assert.deepEqual(read(host.main.root), [...values, ...values, ...values]);
+		assert.deepEqual(read(main.root), [...values, ...values, ...values]);
 		provider.synchronizeMessages();
 		assert.deepEqual(read(peer.root), [...values, ...values, ...values]);
 	});
 
 	it("passes blob handles from the Host to the Guest", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const value = new Uint8Array([1, 2, 3]).buffer;
 
-		host.main.root.push(new MockHandle(value));
+		main.root.push(new MockHandle(value));
 		await (host.updateGuestPromise ?? assert.fail("Expected update to be in progress"));
 
-		const resolved = await guest.view.root[0].get();
+		const resolved = await guestView.root[0].get();
 		assert.deepEqual(resolved, value);
 		assert.notEqual(resolved, value);
 		assert.equal(value.byteLength, 3);
@@ -262,75 +1562,106 @@ describe("Host and Guest correctness", () => {
 	it("passes existing handles from the Guest back to the Host and peers", async () => {
 		const value = new Uint8Array([4, 5]).buffer;
 		const handle = new MockHandle(value);
-		const { host, guest, peer, provider } = await setupCustom(
+		const { host, main, guest, guestView, peer, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
 
-		guest.view.root.push(guest.view.root[0]);
+		guestView.root.push(guestView.root[0]);
 		await (guest.updateHostPromise ?? assert.fail("Expected push to be in progress"));
 
-		assert.equal(host.main.root[1], host.main.root[0]);
-		assert.deepEqual(await host.main.root[1].get(), value);
+		assert.equal(main.root[1], main.root[0]);
+		assert.deepEqual(await main.root[1].get(), value);
 		provider.synchronizeMessages();
 		assert(compareFluidHandles(peer.root[1], handle));
 	});
 
 	it("preserves proxy identity across initialization and updates", async () => {
 		const handle = new MockHandle(new ArrayBuffer(2));
-		const { host, guest } = await setupCustom(
+		const { host, main, guestView } = await setupCustom(
 			[handle, handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		const proxy = guest.view.root[0];
-		assert.equal(proxy, guest.view.root[1]);
-		assert.notEqual(proxy, host.main.root[0]);
-		host.main.root.push(host.main.root[0]);
+		const proxy = guestView.root[0];
+		assert.equal(proxy, guestView.root[1]);
+		assert.notEqual(proxy, main.root[0]);
+		main.root.push(main.root[0]);
 		await host.updateGuestPromise;
-		assert.equal(proxy, guest.view.root[2]);
+		assert.equal(proxy, guestView.root[2]);
 		assert.deepEqual(await proxy.get(), new ArrayBuffer(2));
 	});
 
-	it("clearly rejects resolution of handles to Fluid objects", async () => {
-		const { host, guest, provider } = await setupCustom(
+	it("rejects resolution of handles to Fluid objects without terminating the session", async () => {
+		const { host, main, guest, guestView, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		host.main.root.push(provider.trees[1].handle);
+		main.root.push(provider.trees[1].handle);
 		await host.updateGuestPromise;
-		await assert.rejects(guest.view.root[0].get(), {
+		await assert.rejects(guestView.root[0].get(), {
 			name: "Error",
-			message:
-				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
+			message: "The service failed to resolve the handle.",
 		});
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 	});
 
-	it("propagates Host resolution failures through the port", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
-			get: async () => {
-				throw new Error("Blob retrieval failed");
-			},
+	for (const [kind, error] of [
+		["Error", new Error("Blob retrieval failed")],
+		[
+			"LoggingError",
+			new LoggingError("Blob retrieval failed", {
+				diagnostic: { value: "Host-only diagnostic", tag: TelemetryDataTag.UserData },
+			}),
+		],
+	] as const) {
+		it(`logs Host resolution failures and sends a fixed message to the Guest (${kind})`, async () => {
+			const logger = new MockLogger();
+			const { host, main, guest, guestView } = await setupCustom(
+				[],
+				handleArrayConfig,
+				buildDirectSessionPorts,
+				false,
+				undefined,
+				logger.toTelemetryLogger(),
+			);
+			const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
+				get: async () => {
+					throw error;
+				},
+			});
+			main.root.push(handle);
+			await host.updateGuestPromise;
+			await assert.rejects(guestView.root[0].get(), {
+				name: "Error",
+				message: "The service failed to resolve the handle.",
+			});
+			const events = logger.events.filter(
+				(event) => event.eventName === "Host:BlobResolutionFailed",
+			);
+			assert.equal(events.length, 1);
+			assert.equal(events[0].category, "error");
+			assert.equal(events[0].error, error.message);
+			assert.equal(typeof events[0].stack, "string");
+			if (error instanceof LoggingError) {
+				assert.equal(events[0].errorInstanceId, error.errorInstanceId);
+				assert.deepEqual(events[0].diagnostic, {
+					value: "Host-only diagnostic",
+					tag: TelemetryDataTag.UserData,
+				});
+			}
+			guestView.root.push(guestView.root[0]);
+			await guest.updateHostPromise;
+			assert.equal(main.root.length, 2);
+			assert.equal(host.error, undefined);
+			assert.equal(guest.error, undefined);
 		});
-		host.main.root.push(handle);
-		await host.updateGuestPromise;
-		await assert.rejects(guest.view.root[0].get(), {
-			name: "Error",
-			message: "Blob retrieval failed",
-		});
-		guest.view.root.push(guest.view.root[0]);
-		await guest.updateHostPromise;
-		assert.equal(host.main.root.length, 2);
-		assert.equal(host.error, undefined);
-		assert.equal(guest.error, undefined);
-	});
+	}
 
 	for (const transaction of [false, true]) {
 		it(`fails both endpoints on a foreign Guest handle and allows application-managed replacement (transaction: ${transaction})`, async () => {
@@ -343,7 +1674,7 @@ describe("Host and Guest correctness", () => {
 					return new ArrayBuffer(1);
 				},
 			});
-			const { host, guest, provider, peer } = await setupCustom(
+			const { host, main, guest, guestView, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildDirectSessionPorts,
@@ -355,26 +1686,35 @@ describe("Host and Guest correctness", () => {
 					}
 				},
 			);
-			const proxy = guest.view.root[0];
+			const proxy = guestView.root[0];
 			const blobRejected = assert.rejects(proxy.get(), /recreate the Host and Guest/);
-			guest.view.root.push(proxy);
+			guestView.root.push(proxy);
 			const push = guest.updateHostPromise ?? assert.fail("Expected pending Guest change");
 			const pushRejected = assert.rejects(push, /recreate the Host and Guest/);
 			const insertForeignHandle = () => {
-				guest.view.root.push(new MockHandle(new ArrayBuffer(2)));
+				guestView.root.push(new MockHandle(new ArrayBuffer(2)));
 			};
 			if (transaction) {
-				guest.view.runTransaction(insertForeignHandle);
+				guestView.runTransaction(insertForeignHandle);
 			} else {
 				insertForeignHandle();
 			}
 			await Promise.all([failed.promise, blobRejected, pushRejected]);
 
-			assert.match(guest.error?.message ?? "", /foreign/);
-			assert.match(host.error?.message ?? "", /foreign/);
+			assert.match(guest.error?.message ?? "", /Invalid sandbox application use/);
+			assert.match(host.error?.message ?? "", /The Guest reported a sandbox session failure/);
 			assert(guest.error?.cause instanceof UsageError);
-			assert(host.error?.cause instanceof Error);
-			assert.equal(host.error.cause.constructor, Error);
+			assert(host.error?.cause instanceof SandboxProtocolError);
+			assert.equal(host.error.cause.getTelemetryProperties().fromGuestSensitive, undefined);
+			assert(guest.error instanceof LoggingError);
+			assert.deepEqual(guest.error.getTelemetryProperties().originalErrorMessage, {
+				value: guest.error.cause.message,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.equal(
+				host.error.cause.getTelemetryProperties().fromGuestCode,
+				SandboxFailureCode.ApplicationUsageError,
+			);
 			assert.equal(errors[0], guest.error);
 			assert.equal(errors[1], host.error);
 			assert.throws(
@@ -390,32 +1730,26 @@ describe("Host and Guest correctness", () => {
 			guest.dispose();
 			host.dispose();
 			// The valid edit sent before the failure remains on main; the foreign handle never reaches it.
-			assert.equal(host.main.root.length, 2);
-			host.main.root.push(handle);
+			assert.equal(main.root.length, 2);
+			main.root.push(handle);
 			provider.synchronizeMessages();
 			assert.equal(peer.root.length, 3);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host({
-				main: host.main,
+			const replacementHost = new HostImplementation({
+				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
-			const replacementGuest = await createGuestForHost(
-				handleArrayConfig,
-				ports.guestPort,
-				provider.getCompressor(provider.trees[1]),
-			);
+			const replacementGuest = await createGuestForHost(ports.guestPort);
+			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(handleArrayConfig));
 			try {
-				assert.equal(replacementGuest.view.root.length, 3);
-				replacementGuest.view.root.push(replacementGuest.view.root[0]);
+				assert.equal(replacementGuestView.root.length, 3);
+				replacementGuestView.root.push(replacementGuestView.root[0]);
 				await replacementGuest.updateHostPromise;
-				replacementHost.main.root.push(handle);
+				main.root.push(handle);
 				await replacementHost.updateGuestPromise;
-				assert.equal(replacementGuest.view.root.length, 5);
-				assert.equal(replacementHost.main.root.length, 5);
+				assert.equal(replacementGuestView.root.length, 5);
+				assert.equal(main.root.length, 5);
 				assert.equal(errors.length, 2);
 			} finally {
 				replacementGuest.dispose();
@@ -429,26 +1763,28 @@ describe("Host and Guest correctness", () => {
 		[
 			"Host",
 			{
-				type: "guestChange",
-				changeId: 0,
-				mainRevision: "root",
-				trunkRevision: "root",
-				change: { type: "__sandbox_handle__", token: 99 },
+				guestChange: {
+					changeId: 0,
+					mainRevision: "root",
+					trunkRevision: "root",
+					change: { type: "__sandbox_handle__", token: 99 },
+					idSpaceShardToken: createTestIdSpaceShardToken(),
+				},
 			},
 			/Unknown sandbox handle token/,
 		],
-		["Host", { type: "blobRequest", requestId: 0, token: 99 }, /Unknown sandbox handle token/],
-		["Guest", { type: "blobResponse", blob: new ArrayBuffer(0) }, /Invalid Host and Guest/],
+		["Host", { blobRequest: { requestId: 0, token: 99 } }, /Unknown sandbox handle token/],
+		["Guest", { blobResponse: { blob: new ArrayBuffer(0) } }, /Invalid Host and Guest/],
 		[
 			"Guest",
-			{ type: "blobResponse", requestId: 99, blob: new ArrayBuffer(0) },
+			{ blobResponse: { requestId: 99, blob: new ArrayBuffer(0) } },
 			/Unexpected sandbox blob response/,
 		],
 	] as const) {
 		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
 			const reported = makePromiseWithResolvers();
 			const handle = new MockHandle(new ArrayBuffer(1));
-			const { host, guest, interop, provider, peer } = await setupCustom(
+			const { host, main, guest, guestView, interop, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildIsolatedSessionPorts,
@@ -458,12 +1794,12 @@ describe("Host and Guest correctness", () => {
 			let synchronization: Promise<void> | undefined;
 			let blobRejected: Promise<void> | undefined;
 			if (receiver === "Host") {
-				host.main.root.push(handle);
+				main.root.push(handle);
 				synchronization = host.updateGuestPromise;
 			} else {
-				guest.view.root.push(guest.view.root[0]);
+				guestView.root.push(guestView.root[0]);
 				synchronization = guest.updateHostPromise;
-				blobRejected = assert.rejects(guest.view.root[0].get(), expected);
+				blobRejected = assert.rejects(guestView.root[0].get(), expected);
 			}
 			assert(synchronization !== undefined);
 			const synchronizationRejected = assert.rejects(synchronization, expected);
@@ -475,9 +1811,9 @@ describe("Host and Guest correctness", () => {
 				(receiver === "Host" ? host.error : guest.error)?.cause instanceof
 					SandboxProtocolError,
 			);
-			host.main.root.push(handle);
+			main.root.push(handle);
 			provider.synchronizeMessages();
-			assert.equal(peer.root.length, host.main.root.length);
+			assert.equal(peer.root.length, main.root.length);
 		});
 	}
 
@@ -485,7 +1821,7 @@ describe("Host and Guest correctness", () => {
 		const reported = makePromiseWithResolvers();
 		let reports = 0;
 		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
-		const { host, guest } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -496,21 +1832,21 @@ describe("Host and Guest correctness", () => {
 				}
 			},
 		);
-		await assert.rejects(guest.view.root[0].get(), /buffers cannot have custom properties/);
+		await assert.rejects(guestView.root[0].get(), /Sandbox protocol violation/);
 		await reported.promise;
 		assert(host.error !== undefined);
 		assert(guest.error !== undefined);
 		assert(host.error.cause instanceof SandboxProtocolError);
 		assert(guest.error.cause instanceof Error);
-		assert.equal(guest.error.cause.constructor, Error);
-		host.main.root.push(handle);
-		assert.equal(host.main.root.length, 2);
+		assert(guest.error.cause instanceof SandboxProtocolError);
+		main.root.push(handle);
+		assert.equal(main.root.length, 2);
 	});
 
 	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
 		const reported = makePromiseWithResolvers();
 		const transportError = new Error("Transport unavailable");
-		const { host, guest } = await setupCustom(
+		const { host, main, guest } = await setupCustom(
 			[],
 			stringArrayConfig,
 			() => {
@@ -533,18 +1869,27 @@ describe("Host and Guest correctness", () => {
 			false,
 			() => reported.resolver(),
 		);
-		assert.doesNotThrow(() => host.main.root.push("retained edit"));
+		assert.doesNotThrow(() => main.root.push("retained edit"));
 		await reported.promise;
-		assert.match(host.error?.message ?? "", /Peer notification failed: Transport unavailable/);
+		assert(host.error instanceof LoggingError);
+		assert(!host.error.message.includes("Transport unavailable"));
+		assert.deepEqual(host.error.getTelemetryProperties().peerNotificationError, {
+			value: "Transport unavailable",
+			tag: TelemetryDataTag.UserData,
+		});
 		assert.equal(host.error?.cause, transportError);
 		assert.equal(guest.error, undefined);
 		host.dispose();
-		host.main.root.push("still usable");
-		assert.deepEqual([...host.main.root], ["retained edit", "still usable"]);
+		main.root.push("still usable");
+		assert.deepEqual([...main.root], ["retained edit", "still usable"]);
 	});
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guest, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const requested = makePromiseWithResolvers();
 		const release = makePromiseWithResolvers();
 		const blob = new Uint8Array([7]).buffer;
@@ -557,43 +1902,47 @@ describe("Host and Guest correctness", () => {
 				return blob;
 			},
 		});
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		const proxy = guest.view.root[0];
+		const proxy = guestView.root[0];
 		const first = proxy.get();
 		assert.equal(proxy.get(), first);
 		await requested.promise;
-		guest.view.root.push(proxy);
+		guestView.root.push(proxy);
 		await guest.updateHostPromise;
-		assert.equal(host.main.root.length, 2);
-		host.main.root.push(handle);
+		assert.equal(main.root.length, 2);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		assert.equal(guest.view.root.length, 3);
+		assert.equal(guestView.root.length, 3);
 		release.resolver();
 		assert.deepEqual(await first, blob);
 		assert.equal(requests, 1);
 	});
 
 	it("retains a handle for Guest deletion, undo, and redo", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guest, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const blob = new Uint8Array([8]).buffer;
 		const handle = new MockHandle(blob);
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		const proxy = guest.view.root[0];
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		const proxy = guestView.root[0];
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guestView.events);
 		try {
-			guest.view.root.removeAt(0);
+			guestView.root.removeAt(0);
 			await guest.updateHostPromise;
-			assert.equal(host.main.root.length, 0);
+			assert.equal(main.root.length, 0);
 			assert.deepEqual(await proxy.get(), blob);
 			undoStack.pop()?.revert();
 			await guest.updateHostPromise;
-			assert.equal(guest.view.root[0], proxy);
-			assert.equal(host.main.root[0], handle);
+			assert.equal(guestView.root[0], proxy);
+			assert.equal(main.root[0], handle);
 			redoStack.pop()?.revert();
 			await guest.updateHostPromise;
-			assert.equal(host.main.root.length, 0);
+			assert.equal(main.root.length, 0);
 		} finally {
 			unsubscribe();
 		}
@@ -607,21 +1956,26 @@ describe("Host and Guest correctness", () => {
 			false,
 			() => {},
 		);
-		const received = new Promise<HostGuestMessage>((resolve) => {
+		const received = new Promise<HostToGuestMessage>((resolve) => {
 			interop.sendToHost.addEventListener(
 				"message",
-				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				(event: MessageEvent<unknown>) => {
+					const message = normalizeTransportData(event.data);
+					assert(hostToGuestMessageValidator.check(message));
+					resolve(message);
+				},
 				{ once: true },
 			);
 			interop.sendToHost.start();
 		});
-		interop.sendToHost.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+		interop.sendToHost.postMessage({ blobRequest: { requestId: 0, token: 0 } });
 		assert.deepEqual(
 			await received,
 			normalizeTransportData({
-				type: "sessionFailure",
-				error: "Unknown sandbox handle token.",
+				sessionFailure: {
+					code: SandboxFailureCode.ProtocolViolation,
+					protocolMessage: "Unknown sandbox handle token.",
+				},
 			}),
 		);
 		assert(host.error !== undefined);
@@ -642,23 +1996,24 @@ describe("Host and Guest correctness", () => {
 			);
 			if (receiver === "Host") {
 				interop.sendToHost.postMessage({
-					type: "blobResponse",
-					requestId: 0,
-					error: "failure",
+					blobResponseError: {
+						requestId: 0,
+						error: "failure",
+					},
 				});
 			} else {
-				interop.sendToGuest.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+				interop.sendToGuest.postMessage({ blobRequest: { requestId: 0, token: 0 } });
 			}
 			const reported = await error;
 			assert(reported.cause instanceof SandboxProtocolError);
-			assert.match(reported.cause.message, /received a message with type "blob/);
+			assert.match(reported.cause.message, /Invalid Host and Guest protocol message/);
 		});
 	}
 
 	for (const receiver of ["Host", "Guest"] as const) {
 		it(`classifies an unsolicited acknowledgment to the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, guest, interop, provider, peer } = await setupCustom(
+			const { host, main, guest, interop, provider, peer } = await setupCustom(
 				[],
 				stringArrayConfig,
 				buildIsolatedSessionPorts,
@@ -668,14 +2023,14 @@ describe("Host and Guest correctness", () => {
 			const port = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
 			port.postMessage(
 				receiver === "Host"
-					? { type: "hostUpdateAck", updateId: 99 }
-					: { type: "guestChangeAck", changeId: 99 },
+					? { hostUpdateAck: { updateId: 99 } }
+					: { guestChangeAck: { changeId: 99 } },
 			);
 			await reported.promise;
 			const error = receiver === "Host" ? host.error : guest.error;
 			assert(error?.cause instanceof SandboxProtocolError);
 			assert.match(error.cause.message, /Unexpected .* acknowledgment/);
-			host.main.root.push("still usable");
+			main.root.push("still usable");
 			provider.synchronizeMessages();
 			assert.deepEqual([...peer.root], ["still usable"]);
 		});
@@ -689,29 +2044,40 @@ describe("Host and Guest correctness", () => {
 				false,
 				() => reported.resolver(),
 			);
-			const { mainRevision, trunkRevision } = host.guestInitialization;
+			const { mainRevision, trunkRevision } = host.synchronization.guestInitialization;
 			if (receiver === "Host") {
 				interop.sendToHost.postMessage({
-					type: "guestChange",
-					changeId: 1,
-					mainRevision,
-					trunkRevision,
-					change: {},
+					guestChange: {
+						changeId: 1,
+						mainRevision,
+						trunkRevision,
+						change: {},
+						idSpaceShardToken: createTestIdSpaceShardToken(),
+					},
 				});
 			} else {
 				interop.sendToGuest.postMessage({
-					type: "hostUpdate",
-					updateId: 1,
-					baseRevision: mainRevision,
-					mainRevision,
-					trunkRevision,
-					commits: [],
+					hostUpdate: {
+						updateId: 1,
+						baseRevision: mainRevision,
+						mainRevision,
+						trunkRevision,
+						commits: [],
+						parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+					},
 				});
 			}
 			await reported.promise;
 			const error = receiver === "Host" ? host.error : guest.error;
 			assert(error?.cause instanceof SandboxProtocolError);
 			assert.match(error.cause.message, /identifier order/);
+			if (receiver === "Host") {
+				assert.deepEqual(error.cause.getTelemetryProperties().receivedChangeId, {
+					value: 1,
+					tag: TelemetryDataTag.SandboxGuestData,
+				});
+				assert.equal(error.cause.getTelemetryProperties().expectedChangeId, 0);
+			}
 		});
 
 		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {
@@ -754,13 +2120,118 @@ describe("Host and Guest correctness", () => {
 		assert(error.cause instanceof SandboxProtocolError);
 	});
 
+	for (const reason of ["a foreign ID space shard", "an old progress count"] as const) {
+		it(`rejects ${reason} before applying a Guest change`, async () => {
+			const reported = makePromiseWithResolvers();
+			const { host, main, guest, guestView, provider, interop } = await setupCustom(
+				[],
+				stringArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			const root = provider.getCompressor(provider.trees[1]);
+			const idSpaceShard = toIdCompressorWithCore(
+				getCheckoutIdCompressor(getCheckout(guestView)),
+			);
+			const token =
+				idSpaceShard.getShardSyncToken() ?? assert.fail("Expected Guest ID space shard token");
+			const sibling =
+				reason === "a foreign ID space shard"
+					? (() => {
+							const [{ serialized: serializedIdSpaceShard }] =
+								toIdCompressorWithCore(root).shard(1);
+							assert(
+								serializedIdSpaceShard !== undefined,
+								"Expected a second active ID space shard",
+							);
+							return deserializeIdCompressor(serializedIdSpaceShard, SerializationVersion.V3);
+						})()
+					: undefined;
+			// The stale case uses a count below the Guest's initial ID space shard progress.
+			const idSpaceShardToken =
+				reason === "a foreign ID space shard"
+					? (sibling?.getShardSyncToken() ??
+						assert.fail("Expected a sibling ID space shard token"))
+					: { ...token, localGenCount: 0 };
+			const before = serializeIdCompressor(root, true);
+			// Even another ID space shard registered with the same root cannot act as this Guest.
+			interop.sendToHost.postMessage({
+				guestChange: {
+					changeId: 0,
+					mainRevision: host.synchronization.guestInitialization.mainRevision,
+					trunkRevision: host.synchronization.guestInitialization.trunkRevision,
+					change: {},
+					idSpaceShardToken,
+				},
+			});
+			await reported.promise;
+			assert(host.error?.cause instanceof SandboxProtocolError, String(host.error?.cause));
+			assert.match(host.error.cause.message, /Guest ID space shard/);
+			assert.deepEqual([...main.root], []);
+			// Neither a foreign token nor a stale count may mutate the Host's compressor.
+			assert.equal(serializeIdCompressor(root, true), before);
+			assert.equal(guest.error, undefined);
+			if (sibling !== undefined) {
+				toIdCompressorWithCore(root).synchronizeWithShard(
+					sibling.disposeShard() ??
+						assert.fail("Expected sibling ID space shard disposal token"),
+				);
+			}
+		});
+	}
+
+	it("rejects backward ID space shard progress after acknowledging a Guest change", async () => {
+		const reported = makePromiseWithResolvers();
+		const ports = buildDirectSessionPorts();
+		const { host, main, guest, guestView, provider } = await setupCustom(
+			[],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => reported.resolver(),
+		);
+		let firstChange: GuestChangeMessage | undefined;
+		// Capture the genuine token sent with the first edit so the second message can replay it.
+		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = normalizeTransportData(event.data);
+			assert(guestToHostMessageValidator.check(message));
+			if (message.guestChange !== undefined) {
+				firstChange ??= message.guestChange;
+			}
+		});
+		guestView.root.push("first");
+		await guest.updateHostPromise;
+		await host.updateGuestPromise;
+		const token = firstChange?.idSpaceShardToken ?? assert.fail("Expected a Guest change");
+		assert(token.localGenCount > 0, "Expected Guest change to generate IDs");
+		const root = provider.getCompressor(provider.trees[1]);
+		const before = serializeIdCompressor(root, true);
+
+		// Use the next change ID and current Host revisions so stale progress is rejected before decoding the dummy change.
+		ports.guestPort.postMessage({
+			guestChange: {
+				changeId: 1,
+				mainRevision: getCheckout(main).mainBranch.getHead().revision,
+				trunkRevision: host.synchronization.guestInitialization.trunkRevision,
+				change: {},
+				idSpaceShardToken: { ...token, localGenCount: token.localGenCount - 1 },
+			},
+		});
+		await reported.promise;
+		assert(host.error?.cause instanceof SandboxProtocolError);
+		assert.match(host.error.cause.message, /Guest ID space shard progress moved backward/);
+		assert.deepEqual([...main.root], ["first"]);
+		assert.equal(serializeIdCompressor(root, true), before);
+	});
+
 	it("does not acknowledge a Guest change with an unknown base", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
 		const protocolError = new Promise<Error>((resolve) => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { host, interop } = await setupCustom(
+		const { host, main, guest, guestView, interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -769,31 +2240,38 @@ describe("Host and Guest correctness", () => {
 		);
 		let acknowledgmentReceived = false;
 		interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			acknowledgmentReceived ||= message.type === "guestChangeAck";
+			const message = normalizeTransportData(event.data);
+			assert(hostToGuestMessageValidator.check(message));
+			acknowledgmentReceived ||= message.guestChangeAck !== undefined;
 		});
 		interop.sendToHost.start();
 
+		const compressor = getCheckoutIdCompressor(getCheckout(guestView));
+		const idSpaceShardToken = toIdCompressorWithCore(compressor).getShardSyncToken();
+		assert(idSpaceShardToken !== undefined, "Expected Guest ID space shard token");
+		// Supply a valid token so the Host reports the unknown branch base, not an invalid envelope.
 		interop.sendToHost.postMessage(
 			host.codec.encode({
-				type: "guestChange",
-				changeId: 0,
-				mainRevision: mintRevisionTag(),
-				trunkRevision: mintRevisionTag(),
-				change: { handle: new MockHandle(new ArrayBuffer(0)) },
+				guestChange: {
+					changeId: 0,
+					mainRevision: mintRevisionTag(),
+					trunkRevision: mintRevisionTag(),
+					change: { handle: new MockHandle(new ArrayBuffer(0)) },
+					idSpaceShardToken,
+				},
 			}),
 		);
 		await protocolError;
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		assert.equal(acknowledgmentReceived, false);
-		assert.equal(host.main.root.length, 0);
+		assert.equal(main.root.length, 0);
 	});
 
 	it("applies consecutive Guest changes to their authoring state despite concurrent insertions", async () => {
-		const { peer, host, guest, provider } = await setup(["a", "b"]);
-		guest.view.root.push("g1");
-		guest.view.root.removeAt(0);
+		const { peer, host, main, local, guest, guestView, provider } = await setup(["a", "b"]);
+		guestView.root.push("g1");
+		guestView.root.removeAt(0);
 		peer.root.insertAtStart("p");
 		provider.synchronizeMessages();
 
@@ -803,18 +2281,54 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 
 		const expected = ["p", "b", "g1"];
-		for (const view of [host.main, host.local, guest.view, peer]) {
+		for (const view of [main, local, guestView, peer]) {
 			assert.deepEqual([...view.root], expected);
 		}
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 	});
 
+	it("accepts equal ID progress for multiple commits merged from a Guest fork", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, main, guest, guestView } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => {},
+		);
+		const changes: GuestChangeMessage[] = [];
+		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = normalizeTransportData(event.data);
+			assert(guestToHostMessageValidator.check(message));
+			if (message.guestChange !== undefined) {
+				changes.push(message.guestChange);
+			}
+		});
+
+		const fork = guestView.fork();
+		fork.root.push("first");
+		fork.root.push("second");
+		guestView.merge(fork);
+
+		await (guest.updateHostPromise ?? assert.fail("Expected pending Guest changes"));
+		await host.updateGuestPromise;
+		assert.equal(changes.length, 2);
+		assert.equal(
+			changes[0]?.idSpaceShardToken.localGenCount,
+			changes[1]?.idSpaceShardToken.localGenCount,
+		);
+		assert.deepEqual([...main.root], ["initial", "first", "second"]);
+		assert.deepEqual([...guestView.root], [...main.root]);
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
 	it("preserves nested Guest commit metadata through Host synchronization", async () => {
-		const { host, guest, peer, provider } = await setup([]);
-		guest.view.runTransaction(
+		const { host, main, local, guest, guestView, peer, provider } = await setup([]);
+		guestView.runTransaction(
 			() => {
-				guest.view.runTransaction(() => guest.view.root.push("a"), {
+				guestView.runTransaction(() => guestView.root.push("a"), {
 					customMetadata: { tag: "inner" },
 				});
 			},
@@ -827,7 +2341,7 @@ describe("Host and Guest correctness", () => {
 		await guest.updateHostPromise;
 		await host.updateGuestPromise;
 
-		for (const view of [host.main, host.local, guest.view]) {
+		for (const view of [main, local, guestView]) {
 			assert.deepEqual(
 				normalizeTransportData(view.branchHistory.getHead()?.customTree),
 				expected,
@@ -838,9 +2352,9 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 		assert.deepEqual([...peer.root], ["a"]);
 		for (const [name, view] of [
-			["Host main", host.main],
-			["Host local", host.local],
-			["Guest", guest.view],
+			["Host main", main],
+			["Host local", local],
+			["Guest", guestView],
 		] as const) {
 			assert.deepEqual([...view.root], ["a"]);
 			assert.deepEqual(
@@ -852,10 +2366,10 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves nested Host commit metadata in Guest updates", async () => {
-		const { host, guest } = await setup([]);
-		host.main.runTransaction(
+		const { host, main, guestView } = await setup([]);
+		main.runTransaction(
 			() => {
-				host.main.runTransaction(() => host.main.root.push("a"), {
+				main.runTransaction(() => main.root.push("a"), {
 					customMetadata: { tag: "inner" },
 				});
 			},
@@ -863,7 +2377,7 @@ describe("Host and Guest correctness", () => {
 		);
 		await host.updateGuestPromise;
 
-		const customTree = guest.view.branchHistory.getHead()?.customTree;
+		const customTree = guestView.branchHistory.getHead()?.customTree;
 		assert(customTree !== undefined, "Expected custom metadata on the Guest commit");
 		assert.deepEqual(customTree.metadata, normalizeTransportData({ tag: "outer" }));
 		assert.equal(customTree.children.length, 1);
@@ -875,28 +2389,42 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves Host commit metadata during Guest initialization", async () => {
-		const { host, guest, provider } = await setup([]);
+		const { host, main, guest, provider } = await setup([]);
 		guest.dispose();
 		host.dispose();
-		host.main.runTransaction(() => host.main.root.push("a"), {
+		main.runTransaction(() => main.root.push("a"), {
 			customMetadata: { tag: "initialization" },
 		});
 
 		const ports = buildDirectSessionPorts();
-		const replacementHost = new Host({
-			main: host.main,
-			port: ports.hostPort,
-			bindingHandle: provider.trees[1].handle,
-			idCompressor: provider.getCompressor(provider.trees[1]),
-			logger: createChildLogger({ namespace: "Host" }),
+		const initialization = new Promise<unknown>((resolve) => {
+			ports.guestPort.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => resolve(event.data),
+				{ once: true },
+			);
+			ports.guestPort.start();
 		});
-		const replacementGuest = await createGuestForHost(
-			stringArrayConfig,
-			ports.guestPort,
-			provider.getCompressor(provider.trees[1]),
-		);
+		const replacementHost = new HostImplementation({
+			main,
+			port: ports.hostPort,
+		});
+		const replacementGuest = await createGuestForHost(ports.guestPort);
+		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
 		try {
-			assert.deepEqual(replacementGuest.view.branchHistory.getHead()?.custom, {
+			const wireMessage = normalizeTransportData(await initialization);
+			assert(hostToGuestMessageValidator.check(wireMessage));
+			const initializationMessage =
+				wireMessage.hostInitialization ?? assert.fail("Expected Host initialization");
+			// The port carries serialized child state, not the live root compressor supplied to the Host.
+			assert.equal(typeof initializationMessage.idCompressor, "string");
+			assert.equal(initializationMessage.commits.length, 1);
+			// The replacement Guest must use its own child instance while the Host retains the runtime root.
+			const replacementCompressor = getCheckoutIdCompressor(
+				replacementGuest.synchronization.checkout,
+			);
+			assert.notEqual(replacementCompressor, provider.getCompressor(provider.trees[1]));
+			assert.deepEqual(replacementGuestView.branchHistory.getHead()?.custom, {
 				tag: "initialization",
 			});
 		} finally {
@@ -907,45 +2435,50 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("synchronizes an independent Host using its base as the finalized boundary", async () => {
+		const idCompressor = createIdCompressor(SerializationVersion.V3);
 		const checkout = checkoutWithContent(
 			{
 				schema: toInitialSchema(stringArrayConfig.schema),
 				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["a"]),
 			},
-			{ codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
+			{ idCompressor, codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
-		const base = getFinalizedCommit(main);
+		const base = getCheckout(main).getFinalizedCommit();
 		main.root.push("before");
 
 		const ports = buildDirectSessionPorts();
-		const independentHost = new Host({
+		const independentHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
-			idCompressor: testIdCompressor,
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
-			assert.equal(independentHost.guestInitialization.baseRevision, base.revision);
-			assert.equal(independentHost.guestInitialization.trunkRevision, base.revision);
-			assert.notEqual(independentHost.guestInitialization.mainRevision, base.revision);
-			const independentGuest = await createGuestForHost(
-				stringArrayConfig,
-				ports.guestPort,
-				testIdCompressor,
+			assert.equal(
+				independentHost.synchronization.guestInitialization.baseRevision,
+				base.revision,
 			);
+			assert.equal(
+				independentHost.synchronization.guestInitialization.trunkRevision,
+				base.revision,
+			);
+			assert.notEqual(
+				independentHost.synchronization.guestInitialization.mainRevision,
+				base.revision,
+			);
+			const independentGuest = await createGuestForHost(ports.guestPort);
+			const independentGuestView = asAlpha(independentGuest.tree.viewWith(stringArrayConfig));
 			try {
-				assert.deepEqual([...independentGuest.view.root], ["a", "before"]);
+				assert.deepEqual([...independentGuestView.root], ["a", "before"]);
 				main.root.push("host");
 				await independentHost.updateGuestPromise;
-				independentGuest.view.root.push("guest");
+				independentGuestView.root.push("guest");
 				await independentGuest.updateHostPromise;
 				await independentHost.updateGuestPromise;
 
 				assert.deepEqual([...main.root], ["a", "before", "host", "guest"]);
-				assert.deepEqual([...independentGuest.view.root], [...main.root]);
-				assert.equal(getFinalizedCommit(main), base);
+				assert.deepEqual([...independentGuestView.root], [...main.root]);
+				assert.equal(getCheckout(main).getFinalizedCommit(), base);
 				assert.equal(independentHost.error, undefined);
 				assert.equal(independentGuest.error, undefined);
 			} finally {
@@ -959,16 +2492,18 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("initializes the Guest with the current sequenced trunk revision", async () => {
-		const { host, guest } = await setup(["a"]);
+		const { host, main, guest } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
+		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
-			host.main,
-			() => {},
+			mainCheckout,
 			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
+			() => assert.fail("No Guest changes expected"),
+			() => assert.fail("No Host updates expected"),
 		);
 		try {
 			assert.equal(
@@ -984,22 +2519,101 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
+	it("reports malformed Guest changes as protocol errors", async () => {
+		const { host, main, guest, provider } = await setup(["a"]);
+		const source = main.fork();
+		let validChange: JsonCompatibleReadOnly | undefined;
+		const offChanged = source.events.on("changed", (metadata) => {
+			if (metadata.isLocal) {
+				validChange = metadata.getChange();
+			}
+		});
+		source.root.push("b");
+		offChanged();
+		source.dispose();
+		assert(
+			typeof validChange === "object" && validChange !== null && !Array.isArray(validChange),
+			"Expected a serialized change object",
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		guest.dispose();
+		host.dispose();
+		const [{ serialized: serializedChild }] = root.shard(1);
+		assert(serializedChild !== undefined, "Expected a child ID space shard");
+		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+		const idSpaceShardToken =
+			child.getShardSyncToken() ?? assert.fail("Expected an active child ID space shard");
+		const malformedChanges: readonly JsonCompatibleReadOnly[] = [
+			{ invalid: "change" },
+			{ ...validChange, originatorId: "invalid" },
+			{ ...validChange, originatorId: createSessionId() },
+		];
+
+		for (const change of malformedChanges) {
+			const synchronization = new HostSynchronization(
+				getCheckout(main),
+				() => {},
+				(action) => action(),
+				(error) => assert.fail(String(error)),
+				createChildLogger({ namespace: "Host" }),
+				(token) => {
+					assert.deepEqual(token, { ...idSpaceShardToken, disposed: false });
+					root.synchronizeWithShard(idSpaceShardToken);
+				},
+				() => root.getChildShardSyncToken(idSpaceShardToken),
+			);
+			try {
+				const { mainRevision, trunkRevision } = synchronization.guestInitialization;
+				assert.throws(
+					() =>
+						synchronization.receiveChangeFromGuest({
+							changeId: brand(0),
+							mainRevision,
+							trunkRevision,
+							change,
+							idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
+						}),
+					(error: unknown) => {
+						assert(error instanceof SandboxProtocolError);
+						assert.match(error.message, /Invalid encoded data from Guest/);
+						return true;
+					},
+				);
+			} finally {
+				synchronization.dispose();
+			}
+		}
+		root.synchronizeWithShard(
+			child.disposeShard() ?? assert.fail("Expected a child disposal token"),
+		);
+	});
+
 	it("advances the Guest trunk revision for remote peer commits", async () => {
-		const { peer, host, guest, provider } = await setup(["a"]);
+		const { peer, host, main, guest, provider } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const sent: HostUpdateMessage[] = [];
+		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
-			host.main,
+			mainCheckout,
 			(message) => {
-				if (message.type === "hostUpdate") {
-					sent.push(message);
+				if (
+					"hostUpdate" in message &&
+					typeof message.hostUpdate === "object" &&
+					message.hostUpdate !== null
+				) {
+					sent.push(message.hostUpdate);
 				}
 			},
-			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
+			() => assert.fail("No Guest changes expected"),
+			() => ({
+				type: "parentIdSpaceShardSyncToken",
+				shardId: createTestIdSpaceShardToken().shardId,
+				localGenCount: 0,
+			}),
 		);
 		try {
 			const initialTrunkRevision = synchronization.guestInitialization.trunkRevision;
@@ -1016,38 +2630,87 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("accepts an empty update at an aliased initialization revision", async () => {
-		const { host } = await setup(["a"]);
+		const { main } = await setup(["a"]);
 		const revision = mintRevisionTag();
-		const sent: HostGuestMessage[] = [];
+		const sent: GuestToHostMessage[] = [];
+		const root = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(main)));
+		const [{ serialized: serializedChild }] = root.shard(1);
+		assert(serializedChild !== undefined, "Expected a serialized child ID space shard");
+		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+		const childToken = child.getShardSyncToken();
+		assert(childToken !== undefined, "Expected a child ID space shard token");
 		const synchronization = new GuestSynchronization(
-			host.main.fork(),
+			getCheckout(main.fork()),
 			{
 				baseRevision: revision,
 				mainRevision: revision,
 				trunkRevision: revision,
 				commits: [],
 			},
+			child,
 			(message) => sent.push(message),
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Guest" }),
 		);
+		const view = synchronization.checkout.viewWith(stringArrayConfig);
 		try {
 			synchronization.receiveHostUpdate({
-				type: "hostUpdate",
 				updateId: brand(0),
 				baseRevision: revision,
 				mainRevision: revision,
 				trunkRevision: revision,
 				commits: [],
+				parentIdSpaceShardSyncToken: root.getChildShardSyncToken(childToken),
 			});
-			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
-			assert.deepEqual([...synchronization.view.root], ["a"]);
+			assert.deepEqual(sent, [{ hostUpdateAck: { updateId: 0 } }]);
+			assert.deepEqual([...view.root], ["a"]);
 		} finally {
 			synchronization.stop(new Error("Test complete"));
-			synchronization.view.dispose();
+			assert.deepEqual([...view.root], ["a"]);
+			const finalToken =
+				child.getShardSyncToken() ?? assert.fail("Expected a child disposal token");
 			synchronization.dispose();
+			assert.equal(synchronization.checkout.disposed, true);
+			assert.equal(synchronization.hostCheckout.disposed, true);
+			assert.throws(() => view.root, /disposed|invalid state/i);
+			root.synchronizeWithShard({ ...finalToken, disposed: true });
 		}
+	});
+
+	it("disposes the authoring view and shard once without waiting for acknowledgments", async () => {
+		const { main, provider } = await setup(["a"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const [{ serialized: serializedChild }] = root.shard(1);
+		assert(serializedChild !== undefined, "Expected a child ID space shard");
+		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+		const revision = getCheckout(main).mainBranch.getHead().revision;
+		const synchronization = new GuestSynchronization(
+			getCheckout(main).fork(),
+			{
+				baseRevision: revision,
+				mainRevision: revision,
+				trunkRevision: revision,
+				commits: [],
+			},
+			child,
+			() => assert.fail("No branch messages expected"),
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Guest" }),
+		);
+		const view = synchronization.checkout.viewWith(stringArrayConfig);
+		const hostView = synchronization.hostCheckout.viewWith(stringArrayConfig);
+		const token = child.getShardSyncToken() ?? assert.fail("Expected a child shard token");
+		synchronization.dispose();
+		assert.throws(() => view.root, /disposed|invalid state/i);
+		assert.throws(() => child.generateCompressedId(), /disposed/);
+		assert.equal(synchronization.checkout.disposed, true);
+		assert.equal(synchronization.hostCheckout.disposed, true);
+		assert.throws(() => hostView.root, /disposed|invalid state/i);
+		assert.throws(() => view.root, /disposed|invalid state/i);
+		assert.doesNotThrow(() => synchronization.dispose());
+		root.synchronizeWithShard({ ...token, disposed: true });
 	});
 
 	for (const [trimHistory, concurrentPeerEdit] of [
@@ -1057,43 +2720,44 @@ describe("Host and Guest correctness", () => {
 		[true, true],
 	]) {
 		it(`initializes with pending Host edits (trimmed history: ${trimHistory}, concurrent peer: ${concurrentPeerEdit})`, async () => {
-			const { peer, host, guest, provider } = await setup(["a", "b"]);
+			const { peer, host, main, guest, provider } = await setup(["a", "b"]);
 			guest.dispose();
 			host.dispose();
 			if (trimHistory) {
 				for (let i = 0; i < 5; i++) {
 					peer.root.push("temporary");
 					provider.synchronizeMessages();
-					host.main.root.removeAt(2);
+					main.root.removeAt(2);
 					provider.synchronizeMessages();
 				}
 			}
 			if (concurrentPeerEdit) {
 				peer.root.insertAtStart("p");
 			}
-			host.main.root.push("first");
-			host.main.root.push("second");
-			host.main.root.removeAt(0);
+			main.root.push("first");
+			main.root.push("second");
+			main.root.removeAt(0);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host({
-				main: host.main,
+			const replacementHost = new HostImplementation({
+				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
 			if (trimHistory) {
-				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
+				assert.notEqual(
+					replacementHost.synchronization.guestInitialization.baseRevision,
+					"root",
+				);
 			}
-			const replacementGuest = await createGuestForHost(
+			const replacementGuest = await createGuestForHost(ports.guestPort);
+			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
+			const replacementLocal = replacementHost.synchronization.localCheckout.viewWithInternal(
 				stringArrayConfig,
-				ports.guestPort,
-				provider.getCompressor(provider.trees[1]),
+				false,
 			);
 			try {
-				assert.deepEqual([...replacementGuest.view.root], ["b", "first", "second"]);
-				replacementGuest.view.root.push("guest");
+				assert.deepEqual([...replacementGuestView.root], ["b", "first", "second"]);
+				replacementGuestView.root.push("guest");
 				const push = replacementGuest.updateHostPromise;
 				provider.synchronizeMessages();
 				await push;
@@ -1108,12 +2772,7 @@ describe("Host and Guest correctness", () => {
 					"second",
 					"guest",
 				];
-				for (const view of [
-					replacementHost.main,
-					replacementHost.local,
-					replacementGuest.view,
-					peer,
-				]) {
+				for (const view of [main, replacementLocal, replacementGuestView, peer]) {
 					assert.deepEqual([...view.root], expected);
 				}
 				assert.equal(replacementHost.error, undefined);
@@ -1127,16 +2786,16 @@ describe("Host and Guest correctness", () => {
 	}
 
 	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
 
 		// Make edits in the Guest
-		guest.view.root.push("B(g)");
-		guest.view.root.push("C(g)");
+		guestView.root.push("B(g)");
+		guestView.root.push("C(g)");
 		// The Guest edits are synchronously reflected in the Guest
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
+		assert.deepEqual([...guestView.root], ["B(g)", "C(g)"]);
 		// The Guest edits are not reflected in the Host yet
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...host.main.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...main.root], []);
 
 		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
@@ -1147,8 +2806,8 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
 		// The Host forwards the peer edit without waiting for the Guest edits.
-		assert.deepEqual([...host.main.root], ["B(p)"]);
-		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...main.root], ["B(p)"]);
+		assert.deepEqual([...local.root], []);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
@@ -1159,8 +2818,8 @@ describe("Host and Guest correctness", () => {
 
 		// The Guest edits are now reflected in the Host
 		// The concurrent Host update acknowledgment may also have advanced this branch already.
-		assert.deepEqual([...host.local.root].slice(0, 2), ["B(g)", "C(g)"]);
-		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...local.root].slice(0, 2), ["B(g)", "C(g)"]);
+		assert.deepEqual([...main.root], ["B(g)", "C(g)", "B(p)"]);
 		// The Guest edits are not reflected in the peer yet
 		assert.deepEqual([...peer.root], ["B(p)"]);
 
@@ -1173,20 +2832,20 @@ describe("Host and Guest correctness", () => {
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["B(g)", "C(g)", "B(p)"]);
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...local.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...guestView.root], ["B(g)", "C(g)", "B(p)"]);
 	});
 
 	it("Host edits sequenced before peer edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the Host
-		host.main.root.push("H");
-		assert.deepEqual([...host.main.root], ["H"]);
+		main.root.push("H");
+		assert.deepEqual([...main.root], ["H"]);
 
 		// The Guest edits are not reflected in the Guest or peer yet
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...guestView.root], []);
 		assert.deepEqual([...peer.root], []);
 
 		// The Host should have started the process of updating the Guest with the peer change
@@ -1199,27 +2858,27 @@ describe("Host and Guest correctness", () => {
 
 		provider.synchronizeMessages();
 		// The peer and Host edits are sequenced
-		assert.deepEqual([...host.main.root], ["P", "H"]);
+		assert.deepEqual([...main.root], ["P", "H"]);
 		assert.deepEqual([...peer.root], ["P", "H"]);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["P", "H"]);
-		assert.deepEqual([...guest.view.root], ["P", "H"]);
+		assert.deepEqual([...local.root], ["P", "H"]);
+		assert.deepEqual([...guestView.root], ["P", "H"]);
 	});
 
 	it("peer edits sequenced before Host edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the peer
 		peer.root.push("P");
 		assert.deepEqual([...peer.root], ["P"]);
 
 		// Make an edit on the Host
-		host.main.root.push("H");
-		assert.deepEqual([...host.main.root], ["H"]);
+		main.root.push("H");
+		assert.deepEqual([...main.root], ["H"]);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
@@ -1228,26 +2887,26 @@ describe("Host and Guest correctness", () => {
 		provider.synchronizeMessages();
 
 		// The peer and Host edits are sequenced
-		assert.deepEqual([...host.main.root], ["H", "P"]);
+		assert.deepEqual([...main.root], ["H", "P"]);
 		assert.deepEqual([...peer.root], ["H", "P"]);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["H", "P"]);
-		assert.deepEqual([...guest.view.root], ["H", "P"]);
+		assert.deepEqual([...local.root], ["H", "P"]);
+		assert.deepEqual([...guestView.root], ["H", "P"]);
 	});
 
 	it("Guest edits can be reverted", async () => {
-		const { host, guest } = await setup([]);
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		const { host, main, local, guest, guestView } = await setup([]);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guestView.events);
 
 		// Make undoable edits in the Guest
-		guest.view.root.push("Ga");
-		guest.view.root.push("Gb");
-		guest.view.root.push("Gc");
-		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
+		guestView.root.push("Ga");
+		guestView.root.push("Gb");
+		guestView.root.push("Gc");
+		assert.deepEqual([...guestView.root], ["Ga", "Gb", "Gc"]);
 		assert.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
 
 		// The Guest should have started the process of pushing the edit to the Host
@@ -1255,21 +2914,21 @@ describe("Host and Guest correctness", () => {
 			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
-		assert.deepEqual([...host.local.root], ["Ga", "Gb", "Gc"]);
-		assert.deepEqual([...host.main.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...main.root], ["Ga", "Gb", "Gc"]);
 
 		// Make an edit on the Host
-		host.main.root.insertAtStart("H");
-		assert.deepEqual([...host.main.root], ["H", "Ga", "Gb", "Gc"]);
+		main.root.insertAtStart("H");
+		assert.deepEqual([...main.root], ["H", "Ga", "Gb", "Gc"]);
 
 		// Wait for the update to be applied to the Guest
 		const updatePromise =
 			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 		await updatePromise;
 
-		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["H", "Ga", "Gb", "Gc"]);
 
 		assert.deepEqual(
 			undoStack.length,
@@ -1286,9 +2945,9 @@ describe("Host and Guest correctness", () => {
 		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...guest.view.root], ["H"]);
-		assert.deepEqual([...host.local.root], ["H"]);
-		assert.deepEqual([...host.main.root], ["H"]);
+		assert.deepEqual([...guestView.root], ["H"]);
+		assert.deepEqual([...local.root], ["H"]);
+		assert.deepEqual([...main.root], ["H"]);
 		assert(redoStack.length === 3, "Expected redo stack to have 3 entries");
 
 		// Undo the Guest edits
@@ -1300,8 +2959,8 @@ describe("Host and Guest correctness", () => {
 		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["H", "Ga", "Gb", "Gc"]);
 		unsubscribe();
 	});
 
@@ -1342,9 +3001,9 @@ describe("Host and Guest correctness", () => {
 			/** Controls queued message delivery between the Host and the Guest. */
 			interface MessageRelay {
 				/** Messages that the Host sent and the relay has not sent to the Guest. */
-				readonly hostToGuest: HostGuestMessage[];
+				readonly hostToGuest: object[];
 				/** Messages that the Guest sent and the relay has not sent to the Host. */
-				readonly guestToHost: HostGuestMessage[];
+				readonly guestToHost: object[];
 
 				/** Sends the first queued Host message to the Guest. */
 				dispatchToGuest(): void;
@@ -1502,9 +3161,8 @@ describe("Host and Guest correctness", () => {
 					"message",
 					(event: MessageEvent<unknown>) => {
 						try {
-							relay.hostToGuest.push(
-								parseHostGuestMessage(normalizeTransportData(event.data)),
-							);
+							assert(typeof event.data === "object" && event.data !== null);
+							relay.hostToGuest.push(event.data);
 						} finally {
 							messagesMovingToRelay -= 1;
 							resolveIfSettled();
@@ -1515,9 +3173,8 @@ describe("Host and Guest correctness", () => {
 					"message",
 					(event: MessageEvent<unknown>) => {
 						try {
-							relay.guestToHost.push(
-								parseHostGuestMessage(normalizeTransportData(event.data)),
-							);
+							assert(typeof event.data === "object" && event.data !== null);
+							relay.guestToHost.push(event.data);
 						} finally {
 							messagesMovingToRelay -= 1;
 							resolveIfSettled();
@@ -1533,7 +3190,9 @@ describe("Host and Guest correctness", () => {
 					interop: relay,
 					deliverInitialization: async () => {
 						await relay.waitForMessages();
-						assert.equal(relay.hostToGuest[0]?.type, "hostInitialization");
+						const initialization =
+							relay.hostToGuest[0] ?? assert.fail("Expected Host initialization");
+						assert(Object.hasOwn(initialization, "hostInitialization"));
 						relay.dispatchToGuest();
 						await relay.waitForMessages();
 					},
@@ -1547,12 +3206,18 @@ describe("Host and Guest correctness", () => {
 			for (const seed of generateTestSeeds(testCount, stressMode)) {
 				it(`seed ${seed}`, async () => {
 					const random = makeRandom(seed);
-					const { teardown, peer, host, guest, provider, interop, logger } = await setupCustom(
-						["a", "b"],
-						stringArrayConfig,
-						buildMessageRelay,
-						false,
-					);
+					const {
+						teardown,
+						peer,
+						host,
+						main,
+						local,
+						guest,
+						guestView,
+						provider,
+						interop,
+						logger,
+					} = await setupCustom(["a", "b"], stringArrayConfig, buildMessageRelay, false);
 					let peerEditCounter = 0;
 					let hostEditCounter = 0;
 					let guestEditCounter = 0;
@@ -1562,7 +3227,7 @@ describe("Host and Guest correctness", () => {
 							serviceQueue.push(Step.SequenceEdit);
 						}
 					});
-					const offHostChange = host.main.events.on("changed", ({ isLocal }) => {
+					const offHostChange = main.events.on("changed", ({ isLocal }) => {
 						if (isLocal) {
 							serviceQueue.push(Step.SequenceAck);
 						}
@@ -1571,7 +3236,7 @@ describe("Host and Guest correctness", () => {
 					try {
 						while (actual.length < maxSteps) {
 							const potentialNext: Step[] = [Step.GuestEdit, Step.HostEdit, Step.PeerEdit];
-							if (guest.view.root.length > 0) {
+							if (guestView.root.length > 0) {
 								potentialNext.push(Step.GuestDelete);
 							}
 							if (hasSome(serviceQueue)) {
@@ -1579,14 +3244,14 @@ describe("Host and Guest correctness", () => {
 							}
 							if (hasSome(interop.hostToGuest)) {
 								potentialNext.push(
-									interop.hostToGuest[0].type === "guestChangeAck"
+									Object.hasOwn(interop.hostToGuest[0], "guestChangeAck")
 										? Step.HostToGuestAck
 										: Step.HostToGuestEdit,
 								);
 							}
 							if (hasSome(interop.guestToHost)) {
 								potentialNext.push(
-									interop.guestToHost[0].type === "hostUpdateAck"
+									Object.hasOwn(interop.guestToHost[0], "hostUpdateAck")
 										? Step.GuestToHostAck
 										: Step.GuestToHostEdit,
 								);
@@ -1597,12 +3262,12 @@ describe("Host and Guest correctness", () => {
 							switch (step) {
 								case Step.GuestEdit: {
 									guestEditCounter += 1;
-									guest.view.root.push(`G${guestEditCounter}`);
+									guestView.root.push(`G${guestEditCounter}`);
 									break;
 								}
 								case Step.HostEdit: {
 									hostEditCounter += 1;
-									host.main.root.insertAtStart(`H${hostEditCounter}`);
+									main.root.insertAtStart(`H${hostEditCounter}`);
 									break;
 								}
 								case Step.PeerEdit: {
@@ -1611,20 +3276,21 @@ describe("Host and Guest correctness", () => {
 									break;
 								}
 								case Step.GuestDelete: {
-									guest.view.root.removeAt(0);
+									guestView.root.removeAt(0);
 									break;
 								}
 								case Step.SequenceEdit:
 								case Step.SequenceAck: {
 									const expected = serviceQueue.shift();
 									assert.equal(expected, step, actual.join(", "));
-									let nextMessage = provider.peekNextMessage();
+									let nextSequencedMessage = provider.peekNextMessage();
 									while (
-										nextMessage?.type === "op" &&
-										(nextMessage.contents as { type?: string }).type === "idAllocation"
+										nextSequencedMessage?.type === "op" &&
+										(nextSequencedMessage.contents as { type?: string }).type ===
+											"idAllocation"
 									) {
 										provider.synchronizeMessages({ count: 1 });
-										nextMessage = provider.peekNextMessage();
+										nextSequencedMessage = provider.peekNextMessage();
 									}
 									provider.synchronizeMessages({ count: 1 });
 									break;
@@ -1645,20 +3311,12 @@ describe("Host and Guest correctness", () => {
 							}
 							await interop.waitForMessages();
 							if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
-								assert.deepEqual([...host.main.root], [...guest.view.root], actual.join(", "));
-								assert.deepEqual(
-									[...host.local.root],
-									[...guest.view.root],
-									actual.join(", "),
-								);
+								assert.deepEqual([...main.root], [...guestView.root], actual.join(", "));
+								assert.deepEqual([...local.root], [...guestView.root], actual.join(", "));
 							}
 
 							if (host.updateGuestPromise === undefined) {
-								assert.equal(
-									host.local.isMissingEditsFrom(host.main),
-									false,
-									actual.join(", "),
-								);
+								assert.equal(local.isMissingEditsFrom(main), false, actual.join(", "));
 							}
 						}
 						// Complete every schedule so that undelivered changes cannot hide divergence.
@@ -1682,8 +3340,8 @@ describe("Host and Guest correctness", () => {
 							hasSome(interop.hostToGuest) ||
 							hasSome(interop.guestToHost)
 						);
-						for (const view of [host.local, guest.view, peer]) {
-							assert.deepEqual([...view.root], [...host.main.root], actual.join(", "));
+						for (const view of [local, guestView, peer]) {
+							assert.deepEqual([...view.root], [...main.root], actual.join(", "));
 						}
 						assert.equal(host.updateGuestPromise, undefined);
 						assert.equal(guest.updateHostPromise, undefined);

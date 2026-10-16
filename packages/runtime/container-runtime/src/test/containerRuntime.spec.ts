@@ -42,6 +42,10 @@ import {
 	type IDocumentAttributes,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	FluidDataStoreMessage,
 	ISummaryTreeWithStats,
@@ -104,10 +108,12 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { disableStrictLoaderLayerCompatibilityCheckKey } from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
 	neverCancelledSummaryToken,
+	idCompressorBlobName,
 	metadataBlobName,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
@@ -275,9 +281,10 @@ describe("Runtime", () => {
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
 			attachState?: AttachState;
+			updatePendingOpState?: (pending: boolean) => void;
 		} = {},
 		clientId: string = mockClientId,
-	): Partial<IContainerContext> => {
+	): Partial<IContainerContextInternal> => {
 		const {
 			settings = {},
 			logger = new MockLogger(),
@@ -286,6 +293,7 @@ describe("Runtime", () => {
 			baseSnapshot,
 			connected = true,
 			attachState = AttachState.Attached,
+			updatePendingOpState = (_pending: boolean): void => {},
 		} = params;
 
 		const mockContext = {
@@ -297,6 +305,7 @@ describe("Runtime", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			updatePendingOpState,
 			getLoadedFromVersion: () => loadedFromVersion,
 			submitFn: (
 				_type: MessageType,
@@ -319,7 +328,7 @@ describe("Runtime", () => {
 			connected,
 			storage: mockStorage as IContainerStorageService,
 			baseSnapshot,
-		} satisfies Partial<IContainerContext>;
+		} satisfies Partial<IContainerContextInternal>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
 		mockContext.deltaManager.lastMessage = {
@@ -340,7 +349,220 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("legacy loader compatibility", () => {
+			for (const [name, settings] of [
+				["strict compatibility enabled by default", {}],
+				[
+					"strict compatibility disabled",
+					{ [disableStrictLoaderLayerCompatibilityCheckKey]: true },
+				],
+			] as const) {
+				it(`rejects a loader without a tagged logger when ${name}`, async () => {
+					const untaggedLogger = new MockLogger();
+					const closeFn = Sinon.fake();
+					const legacyContext = {
+						...getMockContext({ logger: untaggedLogger, settings }),
+						taggedLogger: undefined,
+						logger: untaggedLogger,
+						closeFn,
+					};
+
+					await assert.rejects(
+						ContainerRuntime.loadRuntime2({
+							context: legacyContext as unknown as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+						(error: Error) =>
+							error instanceof UsageError &&
+							error.message === "Loader must provide a tagged logger",
+					);
+
+					assert(closeFn.calledOnce, "The incompatible container should be closed");
+					assert.deepEqual(
+						untaggedLogger.events,
+						[],
+						"Runtime telemetry must not be sent to the untagged logger",
+					);
+				});
+			}
+		});
+
 		describe("IdCompressor", () => {
+			/**
+			 * Asserts that pending local state and an attachment summary use the expected ID compressor serialization format.
+			 *
+			 * @remarks
+			 * This helper changes runtime state: capturing pending state flushes the pending batch,
+			 * and creating the attachment summary finalizes the compressor's next ID creation range.
+			 *
+			 * @param runtime - A runtime with an initialized ID compressor.
+			 * @param expectedVersion - The serialization format version expected in both persisted representations.
+			 */
+			function assertSerializationVersion(
+				runtime: ContainerRuntime,
+				expectedVersion: SerializationVersion,
+			): void {
+				// Capture local session state before creating the summary finalizes newly allocated IDs.
+				const pendingState = runtime.getPendingLocalState() as IPendingRuntimeState;
+				assert(pendingState.pendingIdCompressorState !== undefined);
+				// The base64 payload stores the format version in its first 64-bit floating-point slot.
+				// stringToBuffer returns an ArrayBuffer, so Float64Array views the decoded bytes, matching the compressor's reader.
+				assert.equal(
+					new Float64Array(stringToBuffer(pendingState.pendingIdCompressorState, "base64"))[0],
+					expectedVersion,
+					"Pending state should use the selected serialization version",
+				);
+
+				const summary = runtime.createSummary();
+				const blob: SummaryObject | undefined = summary.tree[idCompressorBlobName];
+				assert(blob?.type === SummaryType.Blob);
+				assert(typeof blob.content === "string");
+				// Summary blobs JSON-encode the base64 string; pending state stores that string directly.
+				const serialized: unknown = JSON.parse(blob.content);
+				assert(typeof serialized === "string");
+				assert.equal(
+					new Float64Array(stringToBuffer(serialized, "base64"))[0],
+					expectedVersion,
+					"Summary should use the selected serialization version",
+				);
+			}
+
+			for (const [oldestSupportedClient, expectedVersion] of [
+				[undefined, SerializationVersion.V2],
+				["2.0.0", SerializationVersion.V2],
+				["3.3.0", SerializationVersion.V2],
+				["3.4.0", SerializationVersion.V3],
+			] as const) {
+				for (const enableRuntimeIdCompressor of ["on", "delayed"] as const) {
+					it(`selects V${expectedVersion} with oldestSupportedClient ${oldestSupportedClient} in ${enableRuntimeIdCompressor} mode`, async () => {
+						const { runtime } = await ContainerRuntime.loadRuntime2({
+							context: getMockContext({
+								connected: enableRuntimeIdCompressor === "on",
+							}) as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: { enableRuntimeIdCompressor },
+							provideEntryPoint: mockProvideEntryPoint,
+							...(oldestSupportedClient === undefined ? {} : { oldestSupportedClient }),
+						});
+
+						if (enableRuntimeIdCompressor === "delayed") {
+							const pendingState = runtime.getPendingLocalState() as IPendingRuntimeState;
+							assert.equal(pendingState.pendingIdCompressorState, undefined);
+							changeConnectionState(runtime, true, mockClientId);
+							assert.equal(runtime.idCompressor, undefined);
+							runtime.generateDocumentUniqueId();
+							assertSerializationVersion(runtime, expectedVersion);
+						} else {
+							assert(runtime.idCompressor !== undefined);
+							const id = runtime.idCompressor.generateCompressedId();
+							const stableId = runtime.idCompressor.decompress(id);
+							assertSerializationVersion(runtime, expectedVersion);
+							assert.equal(runtime.idCompressor.recompress(stableId), id);
+						}
+					});
+				}
+			}
+
+			it("selects V3 with the deprecated minVersionForCollab option", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { enableRuntimeIdCompressor: "on" },
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab: "3.4.0",
+				});
+
+				assertSerializationVersion(runtime, SerializationVersion.V3);
+			});
+
+			for (const source of ["summary", "pending state"] as const) {
+				for (const serializedVersion of [SerializationVersion.V2, SerializationVersion.V3]) {
+					for (const [oldestSupportedClient, requestedVersion] of [
+						["3.3.0", SerializationVersion.V2],
+						["3.4.0", SerializationVersion.V3],
+					] as const) {
+						it(`restores V${serializedVersion} ${source} with oldestSupportedClient ${oldestSupportedClient}`, async () => {
+							const compressor = createIdCompressor(serializedVersion);
+							const id = compressor.generateCompressedId();
+							const stableId = compressor.decompress(id);
+							if (source === "summary") {
+								compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+							}
+
+							// A different snapshot compressor verifies that pending state takes precedence.
+							const snapshotCompressor =
+								source === "summary"
+									? compressor
+									: createIdCompressor(SerializationVersion.V2);
+							const metadata: IContainerRuntimeMetadata = {
+								summaryFormatVersion: 1,
+								documentSchema: {
+									version: 1,
+									refSeq: 0,
+									info: { minVersionForCollab: "2.0.0" },
+									runtime: { explicitSchemaControl: true, idCompressorMode: "on" },
+								},
+							};
+							const blobs = new Map([
+								[metadataBlobName, JSON.stringify(metadata)],
+								[idCompressorBlobName, JSON.stringify(snapshotCompressor.serialize(false))],
+							]);
+							const context = {
+								...getMockContext({
+									baseSnapshot: {
+										trees: { ".channels": { trees: {}, blobs: {} } },
+										blobs: {
+											[metadataBlobName]: metadataBlobName,
+											[idCompressorBlobName]: idCompressorBlobName,
+										},
+									},
+									mockStorage: {
+										...defaultMockStorage,
+										readBlob: async (blobId) => {
+											const content = blobs.get(blobId);
+											assert(content !== undefined, `Unexpected blob: ${blobId}`);
+											return stringToBuffer(content, "utf8");
+										},
+									},
+								}),
+								pendingLocalState:
+									source === "pending state"
+										? { pendingIdCompressorState: compressor.serialize(true) }
+										: undefined,
+							};
+							const { runtime } = await ContainerRuntime.loadRuntime2({
+								context: context as IContainerContext,
+								registry: new FluidDataStoreRegistry([]),
+								existing: true,
+								provideEntryPoint: mockProvideEntryPoint,
+								oldestSupportedClient,
+							});
+
+							const restored = runtime.idCompressor;
+							assert(restored !== undefined);
+							if (source === "pending state") {
+								assert.equal(restored.localSessionId, compressor.localSessionId);
+								assert.equal(restored.recompress(stableId), id);
+							} else {
+								assert.notEqual(restored.localSessionId, compressor.localSessionId);
+							}
+							assert.equal(restored.decompress(restored.recompress(stableId)), stableId);
+							assertSerializationVersion(
+								runtime,
+								serializedVersion === SerializationVersion.V3
+									? SerializationVersion.V3
+									: requestedVersion,
+							);
+							assert.notEqual(restored.decompress(restored.generateCompressedId()), stableId);
+						});
+					}
+				}
+			}
+
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
@@ -1183,6 +1405,255 @@ describe("Runtime", () => {
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+			});
+
+			it("reports op-only transitions and orders clean notifications", async () => {
+				const opDirtyStates: boolean[] = [];
+				const notifications: string[] = [];
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							opDirtyStates.push(pending);
+							notifications.push(`pending:${pending}`);
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				assert.deepStrictEqual(opDirtyStates, [false], "Expected the initial op state");
+
+				type RuntimeWithDirtyInternals = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+					internalEvents: {
+						on(event: "opsSaved", listener: () => void): () => void;
+					};
+				};
+				const runtimeWithInternals = containerRuntime as unknown as RuntimeWithDirtyInternals;
+				runtimeWithInternals.submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+				assert.deepStrictEqual(opDirtyStates, [false, true]);
+
+				const offOpsSaved = runtimeWithInternals.internalEvents.on("opsSaved", () => {
+					notifications.push("opsSaved");
+				});
+				containerRuntime.on("saved", () => {
+					notifications.push("saved");
+				});
+				notifications.length = 0;
+
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.deepStrictEqual(opDirtyStates, [false, true, false]);
+				assert.deepStrictEqual(notifications, ["pending:false", "opsSaved", "saved"]);
+				offOpsSaved();
+			});
+
+			it("does not emit saved when an op-state callback synchronously submits new work", async () => {
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+
+				const runtimeRef: { current?: ContainerRuntime } = {};
+				let submitOnClean = false;
+				const opDirtyStates: boolean[] = [];
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							opDirtyStates.push(pending);
+							if (!pending && submitOnClean) {
+								submitOnClean = false;
+								assert(runtimeRef.current !== undefined, "Expected the runtime to be loaded");
+								(runtimeRef.current as unknown as ContainerRuntimeWithSubmit).submit(
+									{ type: ContainerMessageType.Rejoin, contents: undefined },
+									undefined,
+									undefined,
+								);
+							}
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				runtimeRef.current = containerRuntime;
+
+				let dirtyEvents = 0;
+				let savedEvents = 0;
+				containerRuntime.on("dirty", () => dirtyEvents++);
+				containerRuntime.on("saved", () => savedEvents++);
+
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+				submitOnClean = true;
+
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"The reentrant op must replace the acknowledged op without a clean interval",
+				);
+				assert.strictEqual(dirtyEvents, 1, "Should not emit a duplicate dirty transition");
+				assert.strictEqual(savedEvents, 0, "Must not emit a stale saved transition");
+				assert.deepStrictEqual(opDirtyStates, [false, true, false, true]);
+			});
+
+			it("keeps runtime, DDS, and GC connection state consistent when a saved listener disconnects during reconnect", async () => {
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+
+				const runtimeRef: { current?: ContainerRuntime } = {};
+				let reconnectOnClean = false;
+				let propagatingConnection = false;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							// Mirrors the loader: draining pending ops releases the reconnect barrier,
+							// which synchronously propagates the new connection state to the runtime.
+							if (!pending && reconnectOnClean) {
+								reconnectOnClean = false;
+								propagatingConnection = true;
+								try {
+									assert(
+										runtimeRef.current !== undefined,
+										"Expected the runtime to be loaded",
+									);
+									changeConnectionState(runtimeRef.current, true, mockClientId);
+								} finally {
+									propagatingConnection = false;
+								}
+							}
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				runtimeRef.current = containerRuntime;
+
+				// Observe what the runtime propagates to its children.
+				const runtimeWithChildren = containerRuntime as unknown as {
+					channelCollection: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+					garbageCollector: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+				};
+				const channelStates: boolean[] = [];
+				const gcStates: boolean[] = [];
+				sandbox
+					.stub(runtimeWithChildren.channelCollection, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						channelStates.push(connected);
+					});
+				sandbox
+					.stub(runtimeWithChildren.garbageCollector, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						gcStates.push(connected);
+					});
+
+				// Disconnect with an op still outstanding, as when a reconnect is waiting for ops to drain.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+
+				// The host tears the connection down as soon as the container reports itself saved.
+				let savedCount = 0;
+				let savedDuringPropagation = false;
+				containerRuntime.on("saved", () => {
+					savedCount++;
+					if (propagatingConnection) {
+						savedDuringPropagation = true;
+					}
+					changeConnectionState(containerRuntime, false, mockClientId);
+				});
+
+				reconnectOnClean = true;
+				// Final acknowledgement: drains pending ops and so releases the reconnect.
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.strictEqual(savedCount, 1, "Should emit exactly one saved transition");
+				assert.strictEqual(
+					containerRuntime.connected,
+					false,
+					"The runtime must observe the disconnect requested by the saved listener",
+				);
+				assert.strictEqual(
+					channelStates.at(-1),
+					false,
+					"DDSs must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					gcStates.at(-1),
+					false,
+					"GC must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					savedDuringPropagation,
+					false,
+					"Must not publish saved while connection state is still propagating",
+				);
 			});
 		});
 

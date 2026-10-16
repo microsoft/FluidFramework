@@ -59,9 +59,6 @@ export class DocumentLambda implements IPartitionLambda {
 		);
 	}
 
-	/**
-	 * {@inheritDoc IPartitionLambda.handler}
-	 */
 	public handler(message: IQueuedMessage): undefined {
 		if (!this.contextManager.setHead(message)) {
 			this.context.log?.warn(

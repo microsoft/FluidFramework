@@ -178,6 +178,19 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	extends FieldProps<TCustomMetadata> {
 	/**
+	 * Whether this field is an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field with this option enabled can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * @defaultValue `false`, unless the legacy
+	 * {@link @fluidframework/tree#incrementalSummaryHint | incremental-summary hint} is present,
+	 * in which case the hint is respected.
+	 */
+	readonly summarizeIncrementally?: boolean;
+
+	/**
 	 * The persisted metadata for a field schema.
 	 * @remarks
 	 * Sets {@link SimpleFieldSchema.persistedMetadata}.

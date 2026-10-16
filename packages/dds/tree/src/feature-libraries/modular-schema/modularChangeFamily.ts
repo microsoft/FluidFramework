@@ -187,6 +187,10 @@ export class ModularChangeFamily
 		return this;
 	}
 
+	public hasSchemaChange(_change: ModularChangeset): boolean {
+		return false;
+	}
+
 	public buildProcessor(
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
