@@ -182,6 +182,7 @@ describe("Summary Manager", () => {
 					} as const;
 				},
 				async (options) => {},
+				() => {},
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
 				summaryCollection,
 				neverCancelledSummaryToken,

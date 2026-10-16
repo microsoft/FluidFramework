@@ -19,6 +19,7 @@ import {
 import type {
 	IRefreshSummaryAckOptions,
 	IRetriableFailureError,
+	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	SubmitSummaryFailureData,
@@ -31,7 +32,7 @@ import {
 	raceTimer,
 	type SummarizeErrorCode,
 } from "../summarizerUtils.js";
-import type { IClientSummaryWatcher } from "../summaryCollection.js";
+import type { IClientSummaryWatcher, ISummaryOpMessage } from "../summaryCollection.js";
 
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import type { INackSummaryResult, ISummarizeResults } from "./summaryResultTypes.js";
@@ -56,6 +57,10 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 		private readonly refreshLatestSummaryCallback: (
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
+		private readonly summaryTimeoutCallback: (
+			summary: ISubmitSummaryOpResult,
+			broadcastOp?: ISummaryOpMessage,
+		) => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: TelemetryLoggerExt,
 	) {
@@ -265,6 +270,8 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			if (waitBroadcastResult.result !== "done") {
 				// The summary op may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
+				// Record the timeout before a retry can acquire the summarize lock.
+				this.summaryTimeoutCallback(summaryData);
 				const errorCode: SummarizeErrorCode = "summaryOpWaitTimeout";
 				return summaryFail(
 					errorCode,
@@ -302,6 +309,8 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				const errorCode: SummarizeErrorCode = "summaryAckWaitTimeout";
 				// The summary ack may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
+				// Retire the proposal before a retry can acquire the summarize lock.
+				this.summaryTimeoutCallback(summaryData, summarizeOp);
 				return summaryFail(
 					errorCode,
 					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
