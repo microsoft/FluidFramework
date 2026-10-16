@@ -74,7 +74,6 @@ class TextNode
 	 * @remarks
 	 * Depending on this accessor also depends on text being represented by an array node.
 	 * Future text optimizations may change that representation, so such dependencies should generally be avoided.
-	 * The current location capture and resolution implementation accepts this dependency for now.
 	 */
 	public get [textLocationArray](): TreeArrayNode {
 		return this.content;

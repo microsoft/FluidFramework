@@ -10,7 +10,7 @@ import type { TextLocationNode, TreeArrayNode, TreeNode } from "../simple-tree/i
  * Not exported from the package: applications cannot register arbitrary nodes as text.
  * @remarks
  * Accessing this capability depends on the array-node representation of text, which future text optimizations may change.
- * Such dependencies should generally be avoided; the current location capture and resolution dependency is accepted for now.
+ * Such dependencies should generally be avoided.
  */
 export const textLocationArray: unique symbol = Symbol("textLocationArray");
 
