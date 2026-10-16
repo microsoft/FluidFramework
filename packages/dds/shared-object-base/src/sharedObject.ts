@@ -419,18 +419,25 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			// NOTE: We may also be encoding in the ContainerRuntime layer.
-			// Once the layer-compat window passes we can remove the encoding codepath here altogether
-			const onlyBind =
-				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
-					.submitMessagesWithoutEncodingHandles === true;
-			const contentToSubmit = onlyBind
-				? bindHandles(content, this.handle)
-				: makeHandlesSerializable(content, this.serializer, this.handle);
-
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			const contentToSubmit = this.#prepareMessage(content);
+			this.#submitMessage(contentToSubmit, localOpMetadata);
 		}
+	}
+
+	#prepareMessage(content: unknown): unknown {
+		// NOTE: We may also be encoding in the ContainerRuntime layer.
+		// Once the layer-compat window passes we can remove the encoding codepath here altogether
+		const onlyBind =
+			(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+				.submitMessagesWithoutEncodingHandles === true;
+		return onlyBind
+			? bindHandles(content, this.handle)
+			: makeHandlesSerializable(content, this.serializer, this.handle);
+	}
+
+	#submitMessage(content: unknown, localOpMetadata: unknown): void {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.services!.deltaConnection.submit(content, localOpMetadata);
 	}
 
 	/**
@@ -517,6 +524,24 @@ export abstract class SharedObjectCore<
 		});
 	}
 
+	readonly #deltaHandler: IDeltaHandler = {
+		processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+			this.processMessages(messagesCollection);
+		},
+		setConnectionState: (connected: boolean) => {
+			this.setConnectionState(connected);
+		},
+		reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			this.reSubmit(content, localOpMetadata, squash);
+		},
+		applyStashedOp: (content: unknown): void => {
+			this.applyStashedOp(parseHandles(content, this.serializer));
+		},
+		rollback: (content: unknown, localOpMetadata: unknown) => {
+			this.rollback(content, localOpMetadata);
+		},
+	};
+
 	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
 		assert(
@@ -524,23 +549,7 @@ export abstract class SharedObjectCore<
 			0x07a /* "Services should be there to attach delta handler" */,
 		);
 		// attachDeltaHandler is only called after services is assigned
-		this.services.deltaConnection.attach({
-			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
-				this.processMessages(messagesCollection);
-			},
-			setConnectionState: (connected: boolean) => {
-				this.setConnectionState(connected);
-			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
-				this.reSubmit(content, localOpMetadata, squash);
-			},
-			applyStashedOp: (content: unknown): void => {
-				this.applyStashedOp(parseHandles(content, this.serializer));
-			},
-			rollback: (content: unknown, localOpMetadata: unknown) => {
-				this.rollback(content, localOpMetadata);
-			},
-		} satisfies IDeltaHandler);
+		this.services.deltaConnection.attach(this.#deltaHandler);
 	}
 
 	/**

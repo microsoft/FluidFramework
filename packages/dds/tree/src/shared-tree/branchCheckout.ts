@@ -4,19 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	ChangeFamily,
-	DetachedFieldIndex,
-	GraphCommit,
-	IEditableForest,
-	RevisionTag,
-	RevisionTagCodec,
-	TreeStoredSchemaRepository,
-} from "../core/index.js";
-import type { FormatValidator } from "../codec/index.js";
 import type { SharedTreeBranch } from "../shared-tree-core/index.js";
 import type {
 	ImplicitFieldSchema,
@@ -30,7 +19,7 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import { TreeCheckout, type TreeCheckoutOptions } from "./treeCheckout.js";
 
 /**
  * Maps each {@link SharedTreeBranch} to its canonical {@link BranchCheckout}, if any.
@@ -185,41 +174,10 @@ export function getBranchCheckout(
  * merging is explicit via {@link TreeCheckout.merge}.
  */
 export class BranchCheckout extends TreeCheckout {
-	public constructor(
-		branch: SharedTreeBranch<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
-		isSharedBranch: boolean,
-		changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
-		storedSchema: TreeStoredSchemaRepository,
-		forest: IEditableForest,
-		mintRevisionTag: () => RevisionTag,
-		revisionTagCodec: RevisionTagCodec,
-		idCompressor: IIdCompressor,
-		jsonValidator: FormatValidator,
-		removedRoots?: DetachedFieldIndex,
-		disposeForksAfterTransaction?: boolean,
-		getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
-	) {
-		// `isSharedBranch` is required by the base constructor signature (and by `forkWith`'s checkoutConstructor type),
-		// so we accept it positionally and reject the only invalid value here.
-		assert(!isSharedBranch, "BranchCheckout cannot represent a shared branch");
-		super(
-			branch,
-			isSharedBranch,
-			changeFamily,
-			storedSchema,
-			forest,
-			mintRevisionTag,
-			revisionTagCodec,
-			idCompressor,
-			jsonValidator,
-			removedRoots,
-			disposeForksAfterTransaction,
-			getFinalizedCommitOverride,
-		);
+	public constructor(options: TreeCheckoutOptions) {
+		assert(!options.isSharedBranch, "BranchCheckout cannot represent a shared branch");
+		super(options);
+		const { branch } = options;
 		// A BranchCheckout is local-only (asserted above) and its lifetime is bounded by the holder,
 		// not by the SharedTree. Detach from the long-lived branchTrimmer: the trimmer's
 		// `ancestryTrimmed` listener closure would otherwise strongly retain this branch (and
@@ -233,9 +191,8 @@ export class BranchCheckout extends TreeCheckout {
 		// it is disposed. Callers are expected to dispose a BranchCheckout when done; GC is not a
 		// substitute for disposal. See AB#75745 to make undisposed BranchCheckouts collectable.
 		//
-		// The detachTrimmer behavior relied on here is verified by "detaches the branch from its
-		// trimmer" in branch.spec.ts.
-		branch.detachTrimmer();
+		// Clearing the trimmer stops its notifications, as verified in branch.spec.ts.
+		branch.trimmer = undefined;
 		branchCheckoutMap.set(branch, new WeakRef(this));
 
 		// Register for finalization-based observability. The held value is a fresh state object
@@ -247,7 +204,7 @@ export class BranchCheckout extends TreeCheckout {
 	}
 
 	public override fork(): BranchCheckout {
-		return this.forkWith(BranchCheckout);
+		return this.forkWith((options) => new BranchCheckout(options));
 	}
 
 	/**
@@ -256,7 +213,7 @@ export class BranchCheckout extends TreeCheckout {
 	 * those views must not invalidate the branch for other callers, so we opt out of the
 	 * 1:1 view/checkout auto-dispose contract that `TreeCheckout` defaults to for non-shared branches.
 	 */
-	public override get disposeWithView(): boolean {
+	public override get disposesWithView(): boolean {
 		return false;
 	}
 
@@ -318,7 +275,7 @@ export class BranchCheckout extends TreeCheckout {
  * public alpha surface — consumers should call {@link getBranch} instead.
  */
 export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
-	return parent.forkWith(BranchCheckout);
+	return parent.forkWith((options) => new BranchCheckout(options));
 }
 
 /**

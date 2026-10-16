@@ -182,9 +182,12 @@ export class GuestSynchronization {
 	 */
 	public receiveHostUpdate(message: HostUpdateMessage): void {
 		if (message.updateId !== this.nextHostUpdateId) {
-			throw new SandboxProtocolError(
-				`Host update identifier order mismatch: received ${message.updateId}, expected ${this.nextHostUpdateId}.`,
-			);
+			throw new SandboxProtocolError("Host update identifier order mismatch.", {
+				telemetryProperties: {
+					receivedUpdateId: message.updateId,
+					expectedUpdateId: this.nextHostUpdateId,
+				},
+			});
 		}
 		this.nextHostUpdateId++;
 		this.applyParentIdSpaceShardSyncToken(message.parentIdSpaceShardSyncToken);
@@ -220,7 +223,9 @@ export class GuestSynchronization {
 		try {
 			this.idCompressor.finalizeCreationRange(message.range);
 		} catch (error) {
-			throw new SandboxProtocolError("Invalid finalized Host ID range.", { cause: error });
+			throw new SandboxProtocolError("Invalid finalized Host ID range.", {
+				cause: error,
+			});
 		}
 		this.nextHostIdRangeId++;
 	}
@@ -252,7 +257,9 @@ export class GuestSynchronization {
 		try {
 			this.idCompressor.synchronizeWithParent(parentToken);
 		} catch (error) {
-			throw new SandboxProtocolError("Invalid Host synchronization token.", { cause: error });
+			throw new SandboxProtocolError("Invalid Host synchronization token.", {
+				cause: error,
+			});
 		}
 		this.lastParentGenerationCount = parentToken.localGenCount;
 	}

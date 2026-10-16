@@ -61,21 +61,11 @@ describe("BranchCheckout", () => {
 		});
 
 		it("rejects construction over a shared branch", () => {
-			// The constructor's only invariant is `!isSharedBranch`. The assert fires before super()
-			// runs, so the remaining params are unreachable — `as never` reflects that intent without
-			// requiring real values.
+			const view = makeView();
 			assert.throws(
 				() =>
-					new BranchCheckout(
-						undefined as never,
-						true,
-						undefined as never,
-						undefined as never,
-						undefined as never,
-						undefined as never,
-						undefined as never,
-						undefined as never,
-						undefined as never,
+					view.checkout.forkWith(
+						(options) => new BranchCheckout({ ...options, isSharedBranch: true }),
 					),
 				/BranchCheckout cannot represent a shared branch/,
 			);
@@ -344,7 +334,7 @@ describe("BranchCheckout", () => {
 		it("disposing a view created via getViewOfBranch does not dispose the BranchCheckout", () => {
 			// Regression guard: a BranchCheckout may have multiple views created over its lifetime,
 			// so disposing one view must not tear down the underlying branch (the default 1:1
-			// view/checkout auto-dispose contract is opt-out for BranchCheckout via `disposeWithView`).
+			// view/checkout auto-dispose contract is opt-out for BranchCheckout via `disposesWithView`).
 			const view = makeView();
 			const branch = forkAsBranchCheckout(view.checkout);
 			const v1 = getViewOfBranch(branch, config);
@@ -505,8 +495,8 @@ describe("BranchCheckout", () => {
 		// trimmer (see the BranchCheckout constructor) removes only one retention edge; the EditManager
 		// still retains the forked branch via `trunkBranches` and the `onForkTransitive` registration.
 		// Callers must dispose a BranchCheckout; GC is not a substitute. Making undisposed
-		// BranchCheckouts collectable is tracked by AB#75745. The detachTrimmer behavior the constructor
-		// relies on is verified directly in branch.spec.ts ("detaches the branch from its trimmer").
+		// BranchCheckouts collectable is tracked by AB#75745. Clearing the trimmer is verified
+		// directly in branch.spec.ts ("clearing the trimmer stops forwarding notifications").
 		it("undisposed BranchCheckout from getBranch is eligible for GC, and a fresh getBranch returns a new instance (independent-view path)", async () => {
 			const view = makeView();
 			const { checkoutRef } = ((): { checkoutRef: WeakRef<BranchCheckout> } => {

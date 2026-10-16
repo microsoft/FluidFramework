@@ -388,8 +388,8 @@ export enum ConstraintStatus {
 	 * At least one explicit constraint has been violated.
 	 * @remarks
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 */
 	ExplicitViolation,
 }
