@@ -328,6 +328,7 @@ export {
 	cloneWithReplacements, 
 	codePointCount, 
 	comparePersistedSchema, 
+	computeSchemaHash,
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 

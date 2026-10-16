@@ -277,6 +277,9 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
+// @alpha
+export function computeSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy): string;
+
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -1291,6 +1294,10 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaIdentity?: {
+        readonly schemaHash?: string;
+        readonly schemaHasher: (schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy) => string;
+    };
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
@@ -2945,6 +2952,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 

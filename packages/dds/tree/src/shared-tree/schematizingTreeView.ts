@@ -198,8 +198,6 @@ export class SchematizingSimpleTreeView<
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
-		checkout.forest.anchors.slots.set(ViewSlot, this);
-
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
 		const stagedUpgradePolicy =
@@ -209,6 +207,16 @@ export class SchematizingSimpleTreeView<
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
+		if (configAlpha.schemaIdentity?.schemaHash !== undefined) {
+			const { schemaHash: expectedHash, schemaHasher: hasher } = configAlpha.schemaIdentity;
+			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			if (actualHash !== expectedHash) {
+				throw new UsageError(
+					`Schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, computed ${JSON.stringify(actualHash)}.`,
+				);
+			}
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
@@ -261,8 +269,9 @@ export class SchematizingSimpleTreeView<
 			throw new UsageError("Tree cannot be initialized more than once.");
 		}
 
+		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -315,12 +324,19 @@ export class SchematizingSimpleTreeView<
 				);
 			});
 		});
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaInitialized",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
 	}
 
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
+		const upgradePolicy = this.effectiveUpgradePolicy;
+		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -332,7 +348,22 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
+		const schemaHash = this.computeSchemaHash(upgradePolicy);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaUpgraded",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
+	}
+
+	private computeSchemaHash(
+		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
+	): string | undefined {
+		return this.config instanceof TreeViewConfigurationAlpha
+			? this.config.schemaIdentity?.schemaHasher(this.config.schema, stagedUpgradePolicy)
+			: undefined;
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {

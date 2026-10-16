@@ -12,6 +12,7 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
+export { computeSchemaHash } from "./schemaHash.js";
 export type {
 	CommitRevision,
 	ITree,
