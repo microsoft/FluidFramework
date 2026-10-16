@@ -28,7 +28,7 @@ import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
 	type FuzzNode,
-	createTreeViewSchema,
+	createFuzzSchema,
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
@@ -36,7 +36,6 @@ import {
 	type SchemaFactoryConstructor,
 	type TreePackageStatics,
 	convertToFuzzView,
-	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import {
 	type Insert,
@@ -180,10 +179,7 @@ export function simpleSchemaFromStoredSchema(
 	storedSchema: TreeStoredSchemaRepository,
 	schemaFactoryConstructor: SchemaFactoryConstructor,
 ): typeof fuzzFieldSchema {
-	return createTreeViewSchema(
-		generateGuidNodeSchemas(storedSchema.nodeSchema.keys(), schemaFactoryConstructor),
-		schemaFactoryConstructor,
-	);
+	return createFuzzSchema([...storedSchema.nodeSchema.keys()], schemaFactoryConstructor);
 }
 
 /**

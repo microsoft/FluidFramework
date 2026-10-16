@@ -28,12 +28,11 @@ import {
 	type FuzzTestState,
 	type FuzzTransactionView,
 	type FuzzView,
-	getAllowableNodeTypes,
 	type KeyDownPath,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
-	createTreeViewSchema,
+	createFuzzSchema,
 	type FuzzNode,
 	isRevertibleSharedTreeView,
 	type ArrayChildren,
@@ -42,7 +41,6 @@ import {
 	convertToFuzzView,
 	getStaticsForTree,
 	type TreePackageStatics,
-	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import {
 	type FieldEdit,
@@ -140,11 +138,11 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 		view.checkout.isSharedBranch && view.checkout.transaction.size === 0,
 		"Schema operations require a root view without a pending transaction",
 	);
-	const nodeTypes = getAllowableNodeTypes(state);
-	nodeTypes.push(`treeFuzz.${operation.contents.type}`);
 	const { newSchemaFactory } = getStaticsForTree(state.client.channel);
-	const guidNodeSchemas = generateGuidNodeSchemas(nodeTypes, newSchemaFactory);
-	const newSchema = createTreeViewSchema(guidNodeSchemas, newSchemaFactory);
+	const newSchema = createFuzzSchema(
+		[...view.checkout.storedSchema.nodeSchema.keys(), `treeFuzz.${operation.contents.type}`],
+		newSchemaFactory,
+	);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.

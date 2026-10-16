@@ -32,10 +32,9 @@ import {
 	applyTransactionBoundary,
 } from "./fuzzEditReducers.js";
 import {
-	createTreeViewSchema,
+	createFuzzSchema,
 	defaultTreePackageStatics,
 	deterministicIdCompressorFactory,
-	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
@@ -49,7 +48,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 	it("rejects node identifiers outside the supported namespaces", () => {
 		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
 			assert.throws(
-				() => generateGuidNodeSchemas([nodeType], defaultTreePackageStatics.newSchemaFactory),
+				() => createFuzzSchema([nodeType], defaultTreePackageStatics.newSchemaFactory),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
@@ -71,23 +70,21 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		}
 	});
 
-	it("deduplicates qualified node identifiers and excludes structural and built-in types", () => {
-		const schemas = generateGuidNodeSchemas(
-			[
-				"treeFuzz.upgrade",
-				"treeFuzz.upgrade",
-				"treeFuzz.node",
-				"treeFuzz.arrayChildren",
-				"com.fluidframework.leaf.string",
-				"com.fluidframework.leaf.number",
-				"com.fluidframework.leaf.handle",
-			],
-			defaultTreePackageStatics.newSchemaFactory,
-		);
-		assert.deepEqual(
-			schemas.map((schema) => schema.identifier),
-			["treeFuzz.upgrade"],
-		);
+	it("rejects duplicate node identifiers, including structural and built-in types", () => {
+		for (const nodeType of [
+			"treeFuzz.upgrade",
+			"treeFuzz.node",
+			"treeFuzz.arrayChildren",
+			"com.fluidframework.leaf.string",
+			"com.fluidframework.leaf.number",
+			"com.fluidframework.leaf.handle",
+		]) {
+			assert.throws(
+				() =>
+					createFuzzSchema([nodeType, nodeType], defaultTreePackageStatics.newSchemaFactory),
+				/Duplicate fuzz node schema identifier/,
+			);
+		}
 	});
 
 	function setValue(view: FuzzView, value: GeneratedFuzzNode): void {
@@ -193,17 +190,28 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 
 	scenario("stored GUID schemas round-trip without changing their value type", (state) => {
 		const checkout = viewFromState(state).checkout;
-		const schemaFactory = new SchemaFactory("treeFuzz");
+		const schemaFactory = defaultTreePackageStatics.newSchemaFactory("treeFuzz");
 		// Construct the expected schema independently of the helper used during reconstruction.
-		const expectedSchema = toInitialSchema(
-			createTreeViewSchema(
-				["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"].map((name) =>
-					schemaFactory.object(name, {
-						value: schemaFactory.required(schemaFactory.string),
-					}),
-				),
-				defaultTreePackageStatics.newSchemaFactory,
+		const allowedTypes = [
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
+			...["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"].map((name) =>
+				schemaFactory.object(name, {
+					value: schemaFactory.required(schemaFactory.string),
+				}),
 			),
+		];
+		class Node extends schemaFactory.objectRecursive("node", {
+			requiredChild: [() => Node, ...allowedTypes],
+			optionalChild: schemaFactory.optionalRecursive([() => Node, ...allowedTypes]),
+			arrayChildren: schemaFactory.arrayRecursive("arrayChildren", [
+				() => Node,
+				...allowedTypes,
+			]),
+		}) {}
+		const expectedSchema = toInitialSchema(
+			schemaFactory.optionalRecursive([() => Node, ...allowedTypes]),
 		);
 		checkout.updateSchema(expectedSchema);
 		expectSchemaEqual(
@@ -225,12 +233,11 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 				contents: { type: "fork", branchNumber: undefined },
 			});
 			const fork = viewFromState(state, state.client, 0);
-			const schemaFactory = defaultTreePackageStatics.newSchemaFactory;
 			fork.checkout.updateSchema(
 				toInitialSchema(
-					createTreeViewSchema(
-						generateGuidNodeSchemas(["treeFuzz.forkUpgrade"], schemaFactory),
-						schemaFactory,
+					createFuzzSchema(
+						["treeFuzz.forkUpgrade"],
+						defaultTreePackageStatics.newSchemaFactory,
 					),
 				),
 			);
