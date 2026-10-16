@@ -64,6 +64,7 @@ import {
 	processCharactersChangedDelta,
 	type PlainText,
 } from "./textDomain.js";
+import { textLocationArray } from "./textLocationAdapter.js";
 
 /**
  * Sets up scope for formatted text schema built-in types.
@@ -208,6 +209,16 @@ export namespace FormattedText {
 			})
 			implements Members<FormatSchema, ExtraAtomsSchema>
 		{
+			/**
+			 * Exposes the current array-node representation of this text.
+			 * @remarks
+			 * Depending on this accessor also depends on text being represented by an array node.
+			 * Future text optimizations may change that representation, so such dependencies should generally be avoided.
+			 */
+			public get [textLocationArray](): TreeArrayNode {
+				return this.content;
+			}
+
 			public insertAt(
 				index: number,
 				additionalCharacters:

@@ -39,6 +39,7 @@ export type {
 export { asTreeViewAlpha } from "./tree.js";
 export type {
 	TreeLocation,
+	TextLocationNode,
 	CapturedTreeLocation,
 	TreeGapCaptureOptions,
 	ResolvedTreeLocation,

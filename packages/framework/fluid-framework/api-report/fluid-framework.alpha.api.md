@@ -1749,6 +1749,11 @@ export interface ResolvedTreeLocation {
         readonly node: TreeArrayNode;
         readonly index: number;
         readonly affinity: "before" | "after";
+    } | {
+        readonly kind: "text";
+        readonly node: TextLocationNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
     };
     readonly status: "resolved";
 }
@@ -2486,6 +2491,9 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @alpha @sealed
+export type TextLocationNode = TreeNode & PlainText.Members;
+
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
@@ -2761,7 +2769,7 @@ export type TreeLocation = {
     readonly node: TreeNode;
 } | (TreeGapCaptureOptions & {
     readonly kind: "sequence";
-    readonly node: TreeArrayNode;
+    readonly node: TreeArrayNode | TextLocationNode;
     readonly index: number;
 });
 
@@ -2777,7 +2785,7 @@ export type TreeLocationResolution = ResolvedTreeLocation | {
 export interface TreeLocationResolver {
     capture(location: TreeLocation): CapturedTreeLocation;
     capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
-    captureGap(node: TreeArrayNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    captureGap(node: TreeArrayNode | TextLocationNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
     captureNode(node: TreeNode): CapturedTreeLocation;
     resolve(capture: CapturedTreeLocation): TreeLocationResolution;
     resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];

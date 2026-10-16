@@ -256,6 +256,7 @@ export {
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
 	type TreeLocation,
+	type TextLocationNode,
 	type CapturedTreeLocation,
 	type TreeGapCaptureOptions,
 	type ResolvedTreeLocation,
