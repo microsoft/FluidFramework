@@ -16,4 +16,11 @@ describe("checkDebugAsserts", () => {
 		assert.match(bundle, /kept 3/);
 		assert.doesNotMatch(bundle, /removed in production/);
 	});
+
+	it("SharedTree excludes unused rebase validation", () => {
+		// This test must be run after webpack.
+		const bundle = readFileSync("./build/sharedTree.js", "utf-8");
+		assert.doesNotMatch(bundle, /rebase validation cannot be enabled/);
+		assert.doesNotMatch(bundle, /nodeToParent table/);
+	});
 });

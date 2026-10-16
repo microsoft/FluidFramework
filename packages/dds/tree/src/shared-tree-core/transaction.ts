@@ -21,6 +21,7 @@ import {
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
+	cheapRebaseValidation,
 } from "../core/index.js";
 import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
@@ -503,6 +504,10 @@ export class SquashingTransactionStack<
 								}
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
+								cheapRebaseValidation("Malformed composed transaction", () =>
+									changeFamily.validator(squash),
+								);
+
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
 								// "minimize" it so that it contains no extraneous information).
 								const change =
@@ -547,8 +552,9 @@ export class SquashingTransactionStack<
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
 										mintRevisionTag,
-										rebaser,
+										changeFamily,
 										unrebasedHead,
+										branch.getHead(),
 										branch.getHead(),
 									);
 									assert(

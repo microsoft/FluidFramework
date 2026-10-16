@@ -33,6 +33,14 @@ export interface ChangeFamily<
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 
 	/**
+	 * A pure function that checks whether a change is well-formed for debugging purposes.
+	 * @returns `true` if valid or validation is disabled, otherwise a description of the error.
+	 * @remarks
+	 * Production builds may omit validation and just return `true`.
+	 */
+	readonly validator: (change: TChange) => true | string;
+
+	/**
 	 * Returns whether the changeset contains a schema change, including in a composed changeset.
 	 */
 	hasSchemaChange(change: TChange): boolean;

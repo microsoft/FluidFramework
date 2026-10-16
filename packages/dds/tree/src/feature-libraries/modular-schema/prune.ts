@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, FieldKindIdentifier, RevisionTag } from "../../core/index.js";
+import {
+	strictRebaseValidation,
+	type ChangesetLocalId,
+	type FieldKindIdentifier,
+	type RevisionTag,
+} from "../../core/index.js";
 import { brand, type Mutable } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { FlexFieldKind } from "./fieldKind.js";
@@ -14,14 +19,20 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
+import {
+	getChangeHandler,
+	isChangesetValid,
+	nodeChangeFromId,
+	normalizeNodeId,
+} from "./modularChangeUtils.js";
 
 export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(changeset, fieldKinds);
+	strictRebaseValidation("Malformed prune input", () =>
+		isChangesetValid(changeset, fieldKinds),
+	);
 
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
@@ -39,8 +50,9 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(prunedChangeset, fieldKinds);
+	strictRebaseValidation("Malformed prune output", () =>
+		isChangesetValid(prunedChangeset, fieldKinds),
+	);
 	return prunedChangeset;
 }
 
