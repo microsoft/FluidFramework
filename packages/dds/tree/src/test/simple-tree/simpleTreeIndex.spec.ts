@@ -12,6 +12,7 @@ import {
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
+	type TreeIndexKeyFieldSelector,
 	TreeViewConfiguration,
 	createTreeIndex,
 	TreeIndexKey,
@@ -50,7 +51,7 @@ function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 }
 
 describe("simple tree indexes", () => {
-	function indexer(schema: TreeNodeSchema) {
+	function keyFieldSelector(schema: TreeNodeSchema) {
 		if (
 			schema.identifier === IndexableParent.identifier ||
 			schema.identifier === IndexableChild.identifier
@@ -64,7 +65,7 @@ describe("simple tree indexes", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
 		const index = createTreeIndex(
 			view,
-			(s) => indexer(s),
+			(s) => keyFieldSelector(s),
 			() => 3,
 			isStringKey,
 			[IndexableParent, IndexableChild],
@@ -80,7 +81,7 @@ describe("simple tree indexes", () => {
 		const { view, parent } = createView({ childKey: childId });
 		const index = createTreeIndex(
 			view,
-			(s) => indexer(s),
+			(s) => keyFieldSelector(s),
 			(nodes) => nodes,
 			isStringKey,
 			[IndexableParent, IndexableChild],
@@ -111,7 +112,7 @@ describe("simple tree indexes", () => {
 		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const index = createTreeIndex<typeof IndexableParent, string, TreeIndexNodes<TreeNode>>(
 			view,
-			(schema) => indexer(schema),
+			(schema) => keyFieldSelector(schema),
 			(nodes) => nodes,
 			isStringKey,
 		);
@@ -159,19 +160,29 @@ describe("simple tree indexes", () => {
 
 	it("can be defined using a map of schemas to field keys", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
-		const index = createTreeIndex(
-			view,
-			new Map<TreeNodeSchema, string>([
-				[IndexableParent, parentKey],
-				[IndexableChild, childKey],
-			]),
-			() => 3,
-			isStringKey,
-			[IndexableParent, IndexableChild],
-		);
+		const keyFieldSelectorMap: ReadonlyMap<TreeNodeSchema, string> = new Map<
+			TreeNodeSchema,
+			string
+		>([
+			[IndexableParent, parentKey],
+			[IndexableChild, childKey],
+		]);
+		const index = createTreeIndex(view, keyFieldSelectorMap, () => 3, isStringKey, [
+			IndexableParent,
+			IndexableChild,
+		]);
 		assert.equal(index.size, 2);
 
 		// test that both keys have been indexed
+		assert.equal(index.get(parentId), 3);
+		assert.equal(index.get(childId), 3);
+	});
+
+	it("can be defined using an object with a get method", () => {
+		const { view } = createView(new IndexableChild({ childKey: childId }));
+		const selector: TreeIndexKeyFieldSelector = { get: keyFieldSelector };
+		const index = createTreeIndex(view, selector, () => 3, isStringKey);
+
 		assert.equal(index.get(parentId), 3);
 		assert.equal(index.get(childId), 3);
 	});

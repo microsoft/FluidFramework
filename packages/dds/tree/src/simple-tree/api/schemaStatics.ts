@@ -25,6 +25,7 @@ import {
 	handleSchema,
 } from "../leafNodeSchema.js";
 
+import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
@@ -257,7 +258,7 @@ export const schemaStatics = {
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
 		return createFieldSchema(FieldKind.Identifier, stringSchema, {
-			defaultProvider: undefined,
+			defaultProvider: defaultIdentifierProvider,
 			...props,
 		});
 	},

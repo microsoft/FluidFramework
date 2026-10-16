@@ -65,6 +65,8 @@ export function create(
 		restTenantGeneralThrottler,
 	} = utils.createRouteContext(config, restTenantThrottlers);
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
+	const reuseCustomerAccessTokenForSummaryOwnership: boolean =
+		config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false;
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -118,6 +120,7 @@ export function create(
 			routeType,
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
+			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
 		});
 		return utils.createGitService({
 			config,
@@ -165,11 +168,6 @@ export function create(
 	): Promise<IWriteSummaryResponse> {
 		let service: RestGitService;
 		if (initial === true) {
-			await utils.validateInitialSummaryUpload({
-				tenantId,
-				authorization,
-				documentManager,
-			});
 			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
 				[BaseTelemetryProperties.correlationId]:
 					getGlobalTelemetryContext().getProperties().correlationId,
