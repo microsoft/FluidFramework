@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ensurePackageInstalled, getDataRuntimeApi } from "@fluid-private/test-version-utils";
+import { ensureVersionLoaded, getDataRuntimeApi } from "@fluid-private/test-version-utils";
 import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
 
-const versionForCompat = "2.82.0";
+const versionForCompat = "3.5.0";
 
-await ensurePackageInstalled(versionForCompat, 0, false);
+await ensureVersionLoaded(versionForCompat, 0);
 
 /**
  * Fuzz tests in this suite are meant to exercise as much of the SharedTree code as possible and do so in the most
