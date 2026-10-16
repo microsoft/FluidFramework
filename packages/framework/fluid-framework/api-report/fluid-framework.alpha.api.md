@@ -186,6 +186,10 @@ export enum AttachState {
 }
 
 // @alpha @sealed
+export interface CapturedTreeLocation extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {
+}
+
+// @alpha @sealed
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @beta @sealed
@@ -1735,6 +1739,20 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 // @alpha
 export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: HandleConverter<T>): VerboseTree<T>;
 
+// @alpha @sealed
+export interface ResolvedTreeLocation {
+    readonly location: {
+        readonly kind: "node";
+        readonly node: TreeNode;
+    } | {
+        readonly kind: "sequence";
+        readonly node: TreeArrayNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
+    };
+    readonly status: "resolved";
+}
+
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
@@ -2703,6 +2721,12 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
+// @alpha @input
+export interface TreeGapCaptureOptions {
+    readonly affinity?: "before" | "after" | undefined;
+    readonly movePolicy?: "follow" | undefined;
+}
+
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
@@ -2730,6 +2754,34 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+// @alpha @input
+export type TreeLocation = {
+    readonly kind: "node";
+    readonly node: TreeNode;
+} | (TreeGapCaptureOptions & {
+    readonly kind: "sequence";
+    readonly node: TreeArrayNode;
+    readonly index: number;
+});
+
+// @alpha @sealed
+export type TreeLocationResolution = ResolvedTreeLocation | {
+    readonly status: "unavailable";
+    readonly reason: "target-deleted" | "invalid-location";
+} | {
+    readonly status: "revision-unavailable";
+};
+
+// @alpha @sealed
+export interface TreeLocationResolver {
+    capture(location: TreeLocation): CapturedTreeLocation;
+    capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+    captureGap(node: TreeArrayNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    captureNode(node: TreeNode): CapturedTreeLocation;
+    resolve(capture: CapturedTreeLocation): TreeLocationResolution;
+    resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
+}
 
 // @public @sealed
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
@@ -2968,6 +3020,7 @@ export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransact
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
+    readonly locations: TreeLocationResolver;
     revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
     rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
