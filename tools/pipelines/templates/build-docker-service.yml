@@ -447,7 +447,7 @@ extends:
               # which runs precisely when installPackages is true) so the Dockerfile's `pnpm install`
               # skips the checks our npm mirror can't satisfy.
               ${{ if eq(parameters.installPackages, true) }}:
-                buildArguments: --target base $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+                buildArguments: --target base $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --build-arg PNPM_CONFIG_TRUST_LOCKFILE=$(PNPM_CONFIG_TRUST_LOCKFILE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
               ${{ else }}:
                 buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
@@ -597,7 +597,7 @@ extends:
             # See the base-image build above for the rationale (including the pnpm supply-chain
             # overrides). Passed here too because a cache miss could re-execute the base stage layers.
             ${{ if eq(parameters.installPackages, true) }}:
-              buildArguments: $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              buildArguments: $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --build-arg PNPM_CONFIG_TRUST_LOCKFILE=$(PNPM_CONFIG_TRUST_LOCKFILE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
             ${{ else }}:
               buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
