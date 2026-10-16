@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
-import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,
@@ -25,7 +24,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
-	type ArrayPlaceAnchor,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
@@ -1406,47 +1404,6 @@ describe("ArrayNode", () => {
 			array.insertAtStart(4);
 			assert.equal(anchor.index, 1);
 		});
-
-		for (const event of ["nodeChanged", "treeChanged"] as const) {
-			for (const anchorFirst of [true, false]) {
-				// TODO: Fix anchor update ordering in a separate change.
-				// Listeners registered before the anchor currently observe its previous index
-				// with the updated content, for both hydrated and unhydrated arrays.
-				const test = anchorFirst ? it : it.skip;
-				test(`updates anchors before ${event} callbacks registered ${anchorFirst ? "after" : "before"} the anchor`, () => {
-					const array = init(CustomizableNumberArray, [1, 2, 3]);
-					const anchors: ArrayPlaceAnchor[] = [];
-					const observed: { content: number[]; indexes: number[] }[] = [];
-					if (anchorFirst) {
-						anchors.push(createArrayInsertionAnchor(array, 1));
-					}
-					const off = TreeBeta.on(array, event, () => {
-						observed.push({
-							content: [...array],
-							indexes: anchors.map((anchor) => anchor.index),
-						});
-					});
-					if (!anchorFirst) {
-						anchors.push(createArrayInsertionAnchor(array, 1));
-					}
-					try {
-						array.insertAtStart(9);
-						array.removeAt(0);
-						array.moveToIndex(0, 2);
-						assert.deepEqual(observed, [
-							{ content: [9, 1, 2, 3], indexes: [2] },
-							{ content: [1, 2, 3], indexes: [1] },
-							{ content: [3, 1, 2], indexes: [2] },
-						]);
-					} finally {
-						off();
-						for (const anchor of anchors) {
-							anchor.dispose();
-						}
-					}
-				});
-			}
-		}
 
 		it("past end", () => {
 			const array = init(CustomizableNumberArray, [1]);

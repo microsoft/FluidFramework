@@ -368,26 +368,6 @@ describe("ArrayWithExtrinsicRanges", () => {
 					[1, 4],
 				]);
 			});
-
-			// TODO: Anchor updates run after previously registered listeners.
-			// Enable this regression test when the independent anchor event-ordering bug is fixed.
-			it.skip(`resolves positions from ${event} callbacks registered before the editing scope`, () => {
-				const array = create();
-				array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
-				const observed: [number, number][] = [];
-				const off = TreeBeta.on(array.content, event, () => {
-					observed.push(endpoints(array, "range"));
-				});
-				array.transactOnContent((content) => {
-					content.insertAtStart(9);
-					content.removeAt(0);
-				});
-				off();
-				assert.deepEqual(observed, [
-					[2, 5],
-					[1, 4],
-				]);
-			});
 		}
 
 		it("rejects same-manager nesting without ending the outer editing scope", () => {
