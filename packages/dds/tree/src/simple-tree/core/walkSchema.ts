@@ -26,8 +26,8 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
-	// Ensure all reachable schema are marked as most derived.
-	// This ensures if multiple schema extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
+	// Ensure all reachable schemas are marked as most derived.
+	// This ensures if multiple schemas extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
 	// an error is reported.
 	markSchemaMostDerived(schema, false);
 

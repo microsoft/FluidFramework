@@ -2124,7 +2124,7 @@ export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;
 
 // @beta
-export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
     [Symbol.iterator](): FluidIterableIterator<[
     string,
     TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
@@ -2132,7 +2132,7 @@ export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = Imp
 }
 
 // @beta @sealed @system
-export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
+export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes> | undefined>, TreeNode {
     // (undocumented)
     [Symbol.iterator](): FluidIterableIterator<[
     string,

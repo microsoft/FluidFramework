@@ -30,7 +30,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
  *
- * If two schema have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
+ * If two schemas have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
  *
  * See also {@link comparePersistedSchema}.
  *
@@ -86,11 +86,11 @@ export function extractPersistedSchema(
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
  *
  * @returns The ability of `view` to view and/or upgrade the persisted stored schema.
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas, without `canInitialize`.
  *
  * @example
  * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
- * then test that documents using those schema can be upgraded to work with the current schema using a test like:
+ * then test that documents using those schemas can be upgraded to work with the current schema using a test like:
  * ```typescript
  * assert(
  * 	comparePersistedSchema(

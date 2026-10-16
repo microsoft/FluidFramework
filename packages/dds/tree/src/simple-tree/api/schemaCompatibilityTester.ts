@@ -120,7 +120,7 @@ export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
 /**
  * Determines the compatibility of a stored document (based on its stored schema) with a viewer (based on its view schema).
  *
- * Adapters can be provided to handle differences between the two schema.
+ * Adapters can be provided to handle differences between the two schemas.
  * Adapters should only use to types in the `view` SchemaRepository.
  *
  * TODO: this API violates the parse don't validate design philosophy.
