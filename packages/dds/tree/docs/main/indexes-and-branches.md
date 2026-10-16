@@ -54,7 +54,18 @@ From the perspective of a single Fluid client, there can be several relevant bra
     They can be used to experiment with a copy of the document, work offline for extended periods while preserving history when merging,
     or just as a way to have a user-controlled snapshot.
 
-    Currently shared-tree does not use or support this type of branches, but forward looking designs should consider them.
+    SharedTree exposes an alpha API for this model: [`getBranch(view)` and `getViewOfBranch(branch, config)`](../../src/shared-tree/branchCheckout.ts)
+    provide a branch-bound checkout and create a view over it. For an ordinary view, `getBranch` returns an independent fork;
+    edits remain separate from the source view until explicitly merged. If the view is already backed by a branch checkout,
+    `getBranch` returns that checkout. Calls can share a checkout instance, whose lifetime may extend beyond the source view,
+    so callers coordinate its disposal with other users.
+
+    A checkout can also be forked from a `changed` callback: [TreeCheckout.forkWith](../../src/shared-tree/treeCheckout.ts)
+    does not reject the operation merely because the callback holds the edit lock. It still rejects a fork while a transaction
+    is unfinished. Fork creation uses the checkout's committed branch, rather than its active transaction branch; when a
+    transaction's synchronous `changed` event fires during pop, the transaction stack may already be empty while the active
+    branch still refers to a temporary transaction branch. Using the committed branch preserves the fork's ancestry relative
+    to the source checkout, so subsequent fork edits can be merged back with the source's committed edits.
 
 TODO: diagrams showing branch diagram for a couple clients over time.
 

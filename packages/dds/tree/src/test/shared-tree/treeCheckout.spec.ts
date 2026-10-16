@@ -36,10 +36,13 @@ import {
 import {
 	Tree,
 	TreeCheckout,
+	BranchCheckout,
 	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
+	getViewOfBranch,
 	type SharedTreeChange,
+	forkAsBranchCheckout,
 	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
@@ -59,6 +62,8 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type TreeBranchAlpha,
+	type TreeViewAlpha,
 	type TransactionVoidResult,
 	type UntypedTreeView,
 } from "../../simple-tree/index.js";
@@ -115,6 +120,7 @@ const checkoutForks: {
 		name: "forkWith()",
 		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
 	},
+	{ name: "BranchCheckout", forkCheckout: forkAsBranchCheckout },
 ];
 
 describe("sharedTreeView", () => {
@@ -1101,7 +1107,7 @@ describe("sharedTreeView", () => {
 			view.initialize([]);
 
 			const forks: (typeof view)[] = [];
-			view.events.on("changed", () => {
+			const unsubscribe = view.events.on("changed", () => {
 				forks.push(view.fork());
 			});
 
@@ -1110,20 +1116,18 @@ describe("sharedTreeView", () => {
 				view.root.insertAtEnd("B");
 			});
 
-			// Verify that the fork was created
 			assert.equal(forks.length, 1);
 			const fork = forks[0];
-			assert.deepEqual(fork.disposed, false);
+			assert.equal(fork.disposed, false);
 			assert.deepEqual(fork.root, ["A", "B"]);
 
-			// Verify that the fork can be modified independently of the parent view
 			fork.root.insertAtEnd("C");
 			assert.deepEqual(fork.root, ["A", "B", "C"]);
 			assert.deepEqual(view.root, ["A", "B"]);
 
-			// Verify that the fork can be merged back into the parent view
 			view.merge(fork);
 			assert.deepEqual(view.root, ["A", "B", "C"]);
+			unsubscribe();
 		});
 
 		/**
@@ -1441,6 +1445,14 @@ describe("sharedTreeView", () => {
 			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
+			// For checkouts that are 1:1 with their view (plain `TreeCheckout` forks), disposing the view
+			// also disposes the underlying branch. `BranchCheckout` opts out of this contract via
+			// `disposesWithView` so a single branch can back multiple views over its lifetime; in that
+			// case, the branch must be disposed explicitly.
+			if (treeBranch instanceof BranchCheckout) {
+				assert.equal(treeBranch.disposed, false);
+				treeBranch.dispose();
+			}
 			assert.equal(treeBranch.disposed, true);
 		});
 
@@ -2795,6 +2807,7 @@ interface CheckoutViewTestArgs<TRootSchema extends ImplicitFieldSchema> {
 	tree: TreeCheckout;
 	logger: IMockLoggerExt;
 	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+	getViewOfTree: (tree: TreeBranchAlpha) => TreeViewAlpha<TRootSchema>;
 }
 
 /**
@@ -2845,27 +2858,35 @@ function itView<
 	): void {
 		if (options.initialContent) {
 			const { logger } = new TestTreeProviderLite();
-			const { view, tree } = makeViewFromConfig(
-				new TreeViewConfiguration({
-					schema: options.initialContent.schema,
-					enableSchemaValidation,
-				}),
-			);
+			const config = new TreeViewConfiguration({
+				schema: options.initialContent.schema,
+				enableSchemaValidation,
+			});
+			const made = makeViewFromConfig(config);
+			const { view, tree } = made;
 			view.initialize(options.initialContent.initialTree);
-			fn({ view, tree, logger, forkCheckout });
+			fn({
+				view,
+				tree,
+				logger,
+				forkCheckout,
+				getViewOfTree: (branch) =>
+					branch instanceof BranchCheckout
+						? getViewOfBranch(branch, config)
+						: (branch as unknown as TreeCheckout).viewWith(config),
+			});
 		} else {
+			const config = new TreeViewConfiguration({
+				schema: rootArray,
+				enableSchemaValidation,
+			});
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
 					tree: TreeCheckout;
 					logger: IMockLoggerExt;
 				}
-			)(
-				new TreeViewConfiguration({
-					schema: rootArray,
-					enableSchemaValidation,
-				}),
-			);
+			)(config);
 			view.initialize([]);
 			// down cast here is safe due to overload protections
 			(fn as unknown as (args: CheckoutViewTestArgs<typeof rootArray>) => void)({
@@ -2873,6 +2894,10 @@ function itView<
 				tree,
 				logger,
 				forkCheckout,
+				getViewOfTree: (branch) =>
+					branch instanceof BranchCheckout
+						? getViewOfBranch(branch, config)
+						: (branch as unknown as TreeCheckout).viewWith(config),
 			});
 		}
 	}
