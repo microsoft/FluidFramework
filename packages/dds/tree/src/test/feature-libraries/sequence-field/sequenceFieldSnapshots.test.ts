@@ -5,7 +5,8 @@
 
 import path from "node:path";
 
-import { RevisionTagCodec } from "../../../core/index.js";
+import { newChangeAtomIdTransform, RevisionTagCodec } from "../../../core/index.js";
+import { newChangeAtomIdBTree } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
@@ -37,6 +38,25 @@ export function testSnapshots(): void {
 						const encoded = codec.encode(changeset, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+							rootNodeChanges: newChangeAtomIdBTree(),
+							rootRenames: newChangeAtomIdTransform(),
+							getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+							getOutputRootId: (id, count) => ({ start: id, value: id, length: count }),
+							getFirstRenameId: (id, count) => ({
+								start: id,
+								value: undefined,
+								length: count,
+							}),
+							isAttachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							isDetachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
 						});
 						takeJsonSnapshot(encoded);
 					});

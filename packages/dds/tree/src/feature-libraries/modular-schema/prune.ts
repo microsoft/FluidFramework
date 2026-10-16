@@ -3,26 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, FieldKindIdentifier, RevisionTag } from "../../core/index.js";
-import { brand, type Mutable } from "../../util/index.js";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type {
+	ChangeAtomId,
+	ChangesetLocalId,
+	FieldKindIdentifier,
+	RevisionTag,
+} from "../../core/index.js";
+import { brand, type Mutable, type TupleBTree } from "../../util/index.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type { FlexFieldKind } from "./fieldKind.js";
+import { newFieldIdKeyBTree } from "./modularChangeFamily.js";
 import type {
 	FieldChangeMap,
 	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	NodeLocation,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
+import {
+	fieldIdKeyFromFieldId,
+	getChangeHandler,
+	nodeChangeFromId,
+	normalizeFieldId,
+	tryRemoveDetachLocation,
+	type FieldIdKey,
+} from "./modularChangeUtils.js";
+import { fail } from "@fluidframework/core-utils/internal";
 
 export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(changeset, fieldKinds);
-
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -30,25 +48,47 @@ export function pruneChangeset(
 		nodeAliases: changeset.nodeAliases.clone(),
 	};
 
+	const fieldsWithRootMoves = getFieldsWithRootMoves(
+		changeset.rootNodes,
+		changeset.nodeAliases,
+	);
+
+	const fieldToRootChanges = getFieldToRootChanges(changeset.rootNodes, changeset.nodeAliases);
+
 	prunedChangeset.fieldChanges =
 		pruneFieldMap(
 			prunedChangeset.fieldChanges,
+			undefined,
 			prunedChangeset.nodeChanges,
 			prunedChangeset.nodeToParent,
 			prunedChangeset.nodeAliases,
+			prunedChangeset.rootNodes,
+			fieldsWithRootMoves,
+			fieldToRootChanges,
 			fieldKinds,
 		) ?? new Map();
 
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(prunedChangeset, fieldKinds);
+	prunedChangeset.rootNodes = pruneRoots(
+		prunedChangeset.rootNodes,
+		prunedChangeset.nodeChanges,
+		prunedChangeset.nodeToParent,
+		prunedChangeset.nodeAliases,
+		fieldsWithRootMoves,
+		fieldToRootChanges,
+		fieldKinds,
+	);
+
 	return prunedChangeset;
 }
-
 function pruneFieldMap(
 	changeset: FieldChangeMap | undefined,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	nodeToParent: ChangeAtomIdBTree<FieldId>,
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	parentId: NodeId | undefined,
+	nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	aliases: ChangeAtomIdBTree<NodeId>,
+	roots: RootNodeTable,
+	fieldsWithRootMoves: TupleBTree<FieldIdKey, boolean>,
+	fieldToRootChanges: TupleBTree<FieldIdKey, ChangeAtomId[]>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): FieldChangeMap | undefined {
 	if (changeset === undefined) {
@@ -60,10 +100,50 @@ function pruneFieldMap(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 
 		const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
-			pruneNodeChange(nodeId, nodes, nodeToParent, nodeAliases, fieldKinds),
+			pruneNodeChange(
+				nodeId,
+				nodeMap,
+				nodeToParent,
+				aliases,
+				roots,
+				fieldsWithRootMoves,
+				fieldToRootChanges,
+				fieldKinds,
+			),
 		);
 
-		if (!handler.isEmpty(prunedFieldChangeset)) {
+		const fieldId: FieldId = { nodeId: parentId, field };
+		const fieldIdKey = fieldIdKeyFromFieldId(fieldId);
+		const rootsWithChanges = fieldToRootChanges.get(fieldIdKey) ?? [];
+		let hasRootWithNodeChange = false;
+		for (const rootId of rootsWithChanges) {
+			const nodeId =
+				getFromChangeAtomIdMap(roots.nodeChanges, rootId) ?? fail("No root change found");
+
+			const isRootChangeEmpty =
+				pruneNodeChange(
+					nodeId,
+					nodeMap,
+					nodeToParent,
+					aliases,
+					roots,
+					fieldsWithRootMoves,
+					fieldToRootChanges,
+					fieldKinds,
+				) === undefined;
+
+			if (isRootChangeEmpty) {
+				roots.nodeChanges.delete([rootId.revision, rootId.localId]);
+				tryRemoveDetachLocation(roots, rootId, 1);
+			} else {
+				hasRootWithNodeChange = true;
+			}
+		}
+
+		const hasRootChanges =
+			hasRootWithNodeChange || fieldsWithRootMoves.get(fieldIdKey) === true;
+
+		if (!handler.isEmpty(prunedFieldChangeset) || hasRootChanges) {
 			prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
 		}
 	}
@@ -71,38 +151,87 @@ function pruneFieldMap(
 	return prunedChangeset.size > 0 ? prunedChangeset : undefined;
 }
 
+function pruneRoots(
+	roots: RootNodeTable,
+	nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	aliases: ChangeAtomIdBTree<NodeId>,
+	fieldsWithRootMoves: TupleBTree<FieldIdKey, boolean>,
+	fieldsToRootChanges: TupleBTree<FieldIdKey, ChangeAtomId[]>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): RootNodeTable {
+	const pruned: RootNodeTable = { ...roots, nodeChanges: newChangeAtomIdBTree() };
+	for (const [rootIdKey, nodeId] of roots.nodeChanges.entries()) {
+		const rootId: ChangeAtomId = { revision: rootIdKey[0], localId: rootIdKey[1] };
+		const hasDetachLocation = roots.detachLocations.getFirst(rootId, 1).value !== undefined;
+
+		// If the root has a detach location it should be pruned by recursion when pruning the field it was detached from.
+		const prunedId = hasDetachLocation
+			? nodeId
+			: pruneNodeChange(
+					nodeId,
+					nodeMap,
+					nodeToParent,
+					aliases,
+					roots,
+					fieldsWithRootMoves,
+					fieldsToRootChanges,
+					fieldKinds,
+				);
+
+		if (prunedId !== undefined) {
+			pruned.nodeChanges.set(rootIdKey, prunedId);
+		}
+
+		tryRemoveDetachLocation(pruned, rootId, 1);
+	}
+
+	return pruned;
+}
+
 function pruneNodeChange(
 	nodeId: NodeId,
-	nodeMap: ChangeAtomIdBTree<NodeChangeset>,
-	nodeToParent: ChangeAtomIdBTree<FieldId>,
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	aliases: ChangeAtomIdBTree<NodeId>,
+	roots: RootNodeTable,
+	fieldsWithRootMoves: TupleBTree<FieldIdKey, boolean>,
+	fieldsToRootChanges: TupleBTree<FieldIdKey, ChangeAtomId[]>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeId | undefined {
-	const changeset = nodeChangeFromId(nodeMap, nodeId, nodeAliases);
+	const changeset = nodeChangeFromId(nodes, aliases, nodeId);
 	const prunedFields =
 		changeset.fieldChanges === undefined
 			? undefined
-			: pruneFieldMap(changeset.fieldChanges, nodeMap, nodeToParent, nodeAliases, fieldKinds);
+			: pruneFieldMap(
+					changeset.fieldChanges,
+					nodeId,
+					nodes,
+					nodeToParent,
+					aliases,
+					roots,
+					fieldsWithRootMoves,
+					fieldsToRootChanges,
+					fieldKinds,
+				);
 
 	const prunedChange = { ...changeset, fieldChanges: prunedFields };
 	if (prunedChange.fieldChanges === undefined) {
 		delete prunedChange.fieldChanges;
 	}
 
-	const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 	if (isEmptyNodeChangeset(prunedChange)) {
 		const nodeIdKey: [RevisionTag | undefined, ChangesetLocalId] = [
-			normalizedNodeId.revision,
-			normalizedNodeId.localId,
+			nodeId.revision,
+			nodeId.localId,
 		];
 
-		nodeMap.delete(nodeIdKey);
+		// TODO: Shouldn't we also delete all aliases associated with this node?
+		nodes.delete(nodeIdKey);
 		nodeToParent.delete(nodeIdKey);
-
-		// TODO: Also remove aliases for this node.
 		return undefined;
 	} else {
-		setInChangeAtomIdMap(nodeMap, normalizedNodeId, prunedChange);
+		setInChangeAtomIdMap(nodes, nodeId, prunedChange);
 		return nodeId;
 	}
 }
@@ -113,4 +242,54 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 		change.nodeExistsConstraint === undefined &&
 		change.nodeExistsConstraintOnRevert === undefined
 	);
+}
+
+function getFieldsWithRootMoves(
+	roots: RootNodeTable,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): TupleBTree<FieldIdKey, boolean> {
+	const fields: TupleBTree<FieldIdKey, boolean> = newFieldIdKeyBTree();
+	for (const { start: rootId, value: fieldId, length } of roots.detachLocations.entries()) {
+		let isRootMoved = false;
+		for (const renameEntry of roots.oldToNewId.getAll(rootId, length)) {
+			if (renameEntry.value !== undefined) {
+				isRootMoved = true;
+			}
+		}
+
+		for (const outputDetachEntry of roots.outputDetachLocations.getAll(rootId, length)) {
+			if (outputDetachEntry.value !== undefined) {
+				isRootMoved = true;
+			}
+		}
+
+		if (isRootMoved) {
+			fields.set(fieldIdKeyFromFieldId(normalizeFieldId(fieldId, nodeAliases)), true);
+		}
+	}
+
+	return fields;
+}
+
+function getFieldToRootChanges(
+	roots: RootNodeTable,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): TupleBTree<FieldIdKey, ChangeAtomId[]> {
+	const fields: TupleBTree<FieldIdKey, ChangeAtomId[]> = newFieldIdKeyBTree();
+	for (const rootIdKey of roots.nodeChanges.keys()) {
+		const rootId: ChangeAtomId = { revision: rootIdKey[0], localId: rootIdKey[1] };
+		const detachLocation = roots.detachLocations.getFirst(rootId, 1).value;
+		if (detachLocation !== undefined) {
+			const fieldIdKey = fieldIdKeyFromFieldId(normalizeFieldId(detachLocation, nodeAliases));
+			let rootsInField = fields.get(fieldIdKey);
+			if (rootsInField === undefined) {
+				rootsInField = [];
+				fields.set(fieldIdKey, rootsInField);
+			}
+
+			rootsInField.push(rootId);
+		}
+	}
+
+	return fields;
 }

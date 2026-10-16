@@ -16,7 +16,6 @@ import {
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
-	type FieldUpPath,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
 	type RevisionTag,
@@ -121,7 +120,7 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
  * @param change - The change to be applied.
  */
 export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDetachedNodeId> {
-	return relevantModularRemovedRoots(change, fieldKinds);
+	return relevantModularRemovedRoots(change);
 }
 
 /**
@@ -232,11 +231,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.exitTransaction();
 	}
 
-	public addNodeExistsConstraint(path: UpPath): void {
+	public addNodeExistsConstraint(path: NormalizedUpPath): void {
 		this.modularBuilder.addNodeExistsConstraint(path, this.mintRevisionTag());
 	}
 
-	public addNodeExistsConstraintOnRevert(path: UpPath): void {
+	public addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void {
 		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
 	}
 
@@ -248,7 +247,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
+	public valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk): void => {
 				assert(
@@ -278,7 +277,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
+	public optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
 				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
@@ -319,10 +318,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 
 	public move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destIndex: number,
 	): void {
 		if (count === 0) {
@@ -392,6 +391,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// Extend with index-adjusted parent.
 						parent = {
 							parent,
+							detachedNodeId: undefined,
 							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
 							parentField: firstDifferentAttachAncestor.parentField,
 						};
@@ -411,19 +411,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(
+			const moveOut = sequence.changeHandler.editor.remove(
 				sourceIndex,
 				count,
 				detachCellId,
 				revision,
 			);
-			const moveIn = sequence.changeHandler.editor.moveIn(
+			const moveIn = sequence.changeHandler.editor.insert(
 				destIndex,
 				count,
-				detachCellId,
 				attachCellId,
 				revision,
+				detachCellId,
 			);
+
 			this.modularBuilder.submitChanges(
 				[
 					{
@@ -446,7 +447,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
+	public sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
 		return {
 			insert: (index: number, content: TreeChunk): void => {
 				const length = content.topLevelLength;
@@ -458,7 +459,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
 				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, length, firstId, revision),
+					sequence.changeHandler.editor.insert(
+						index,
+						length,
+						firstId,
+						revision,
+						firstId.localId,
+					),
 				);
 				const attach: FieldEditDescription = {
 					type: "field",
@@ -480,7 +487,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
+
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: sequence.identifier,
+					change,
+					revision,
+				};
+				this.modularBuilder.submitChanges([fieldEdit], revision);
 			},
 		};
 	}

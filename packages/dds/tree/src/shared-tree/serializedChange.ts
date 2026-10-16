@@ -141,14 +141,24 @@ export type SerializedChangeCodec = IJsonCodec<
 
 /**
  * Gets the newest SharedTree change format supported by a codec family.
+ * TODO:
+ * There is no reliable way to determine the latest supported format from the codec family alone.
+ * A the highest numeric format version may be deprecated, so it may not be desirable to use it as the latest supported format.
+ * Consider using min version for collab instead for selecting the latest supported format.
  */
 function getLatestSharedTreeChangeFormatVersion(
 	supportedFormats: Iterable<FormatVersion>,
 ): number {
 	let latest: number | undefined;
 	for (const format of supportedFormats) {
-		if (typeof format !== "number") {
-			fail(0xd68 /* SharedTree change format versions must be numbers */);
+		if (typeof format === "string") {
+			// String formats are for unreleased or experimental formats
+			continue;
+		}
+		if (format === undefined) {
+			// Undefined is used to represent the version before an explicit format version was introduced.
+			// It should not be the only supported format.
+			continue;
 		}
 		latest = latest === undefined ? format : Math.max(latest, format);
 	}

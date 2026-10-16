@@ -14863,12 +14863,18 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../test-version-utils
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.68.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10

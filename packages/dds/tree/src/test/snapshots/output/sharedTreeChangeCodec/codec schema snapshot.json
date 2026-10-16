@@ -67,5 +67,28 @@
         }
       }
     }
+  },
+  {
+    "version": "detached-roots|v0.1",
+    "schema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "new": {},
+              "old": {}
+            },
+            "required": [
+              "new",
+              "old"
+            ]
+          },
+          "data": {}
+        }
+      }
+    }
   }
 ]

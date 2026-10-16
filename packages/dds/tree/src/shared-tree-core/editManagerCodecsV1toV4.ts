@@ -48,7 +48,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
-	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
+	const includeCustomMetadata = doesVersionSupportCustomMetadata(version);
 	const schema = EncodedEditManager(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 		includeCustomMetadata,
@@ -100,4 +100,25 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		},
 	};
 	return codec;
+}
+
+function doesVersionSupportCustomMetadata(version: EditManagerFormatVersion): boolean {
+	switch (version) {
+		case undefined:
+		case EditManagerFormatVersion.v1:
+		case EditManagerFormatVersion.v2:
+		case EditManagerFormatVersion.v3:
+		case EditManagerFormatVersion.v4:
+		case EditManagerFormatVersion.v6: {
+			return false;
+		}
+		case EditManagerFormatVersion.v7:
+		case EditManagerFormatVersion.vSharedBranches:
+		case EditManagerFormatVersion.vDetachedRoots: {
+			return true;
+		}
+		default: {
+			throw new Error("XXX"); // unreachableCase(version);
+		}
+	}
 }

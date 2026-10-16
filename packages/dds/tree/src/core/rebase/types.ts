@@ -19,6 +19,7 @@ import {
 	type NestedMap,
 	RangeMap,
 	brand,
+	brandedIntegerType,
 	brandedNumberType,
 	brandedStringType,
 	comparePartialStrings,
@@ -75,7 +76,13 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
+export const ChangesetLocalIdSchema = brandedIntegerType<ChangesetLocalId>();
+
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	ChangesetLocalIdSchema,
+]);
+export type EncodedChangeAtomId = Type.Static<typeof EncodedChangeAtomId>;
 
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 

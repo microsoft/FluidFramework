@@ -51,7 +51,7 @@ describe("Fuzz - revertTo", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "revert to random past revision",
-		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+		factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState), undefined, {
 			forest: ForestTypeExpensiveDebug,
 		}),
 		generatorFactory,

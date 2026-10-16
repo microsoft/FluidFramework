@@ -364,7 +364,7 @@ describe("Fuzz - ArrayNodeDelta: delta events keep per-client shadow consistent 
 
 	const model: DDSFuzzModel<SharedTreeTestFactory, Op, FuzzState> = {
 		workloadName: "arrayNodeDelta",
-		factory: new SharedTreeTestFactory((tree) => {
+		factory: SharedTreeTestFactory.build((tree) => {
 			const view = tree.viewWith(viewConfig);
 			view.initialize({ arr1: [1, 2, 3, 4, 5], arr2: [10, 20, 30, 40, 50] });
 			view.dispose();

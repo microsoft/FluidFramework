@@ -140,8 +140,11 @@ export {
 
 export {
 	RangeMap,
+	type RangeMapEntry,
 	type RangeQueryResult,
+	type RangeQueryResultFragment,
 	newIntegerRangeMap,
+	areAdjacentIntegerRanges,
 } from "./rangeMap.js";
 
 export {

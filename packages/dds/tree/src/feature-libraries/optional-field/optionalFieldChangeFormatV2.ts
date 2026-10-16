@@ -6,7 +6,7 @@
 import * as Type from "@sinclair/typebox";
 import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
-import { EncodedChangeAtomId } from "../modular-schema/index.js";
+import { EncodedChangeAtomId } from "../../core/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

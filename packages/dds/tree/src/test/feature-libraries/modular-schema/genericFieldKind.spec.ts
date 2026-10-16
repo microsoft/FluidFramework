@@ -7,11 +7,14 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
+import { newChangeAtomIdTransform, type DeltaFieldChanges } from "../../../core/index.js";
+import {
+	newChangeAtomIdBTree,
+	type GenericChangeset,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,
 	type NodeId,
@@ -33,27 +36,19 @@ import {
 } from "../../utils.js";
 
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
+import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 const nodeId3: NodeId = { localId: brand(3) };
 const nodeId4: NodeId = { localId: brand(4) };
 
-const unexpectedDelegate = () => assert.fail("Unexpected call");
-
 const revisionMetadata: RebaseRevisionMetadata = {
 	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
 	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
-	getIndex: () => assert.fail("Unexpected revision index query"),
+	compareRevisions: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 	hasRollback: () => assert.fail("Unexpected revision info query"),
-};
-
-const crossFieldManager: CrossFieldManager = {
-	get: unexpectedDelegate,
-	set: unexpectedDelegate,
-	onMoveIn: unexpectedDelegate,
-	moveKey: unexpectedDelegate,
 };
 
 describe("GenericField", () => {
@@ -79,7 +74,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -104,7 +99,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -130,7 +125,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -154,7 +149,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -175,7 +170,7 @@ describe("GenericField", () => {
 			true,
 			new DefaultAtomIdAliasAllocator(),
 			mintRevisionTag(),
-			crossFieldManager,
+			failInvertManager,
 			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);
@@ -189,14 +184,12 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: FieldChangeDelta = {
-			local: {
-				marks: [
-					{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-					{ count: 1 },
-					{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-				],
-			},
+		const expected: DeltaFieldChanges = {
+			marks: [
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+				{ count: 1 },
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+			],
 		};
 
 		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
@@ -225,8 +218,37 @@ describe("GenericField", () => {
 					]),
 					{
 						baseContext,
+						getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+						getOutputRootId: (id, count) => ({
+							start: id,
+							value: id,
+							length: count,
+						}),
+						getFirstRenameId: (id, count) => ({
+							start: id,
+							value: undefined,
+							length: count,
+						}),
+						isAttachId: (id, count) => ({
+							start: id,
+							value: false,
+							length: count,
+						}),
+						isDetachId: (id, count) => ({
+							start: id,
+							value: false,
+							length: count,
+						}),
 						encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 						decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+						rootNodeChanges: newChangeAtomIdBTree(),
+						rootRenames: newChangeAtomIdTransform(),
+						decodeRootNodeChange: () => {},
+						decodeRootRename: () => {},
+						decodeMoveAndDetach: () => {},
+						generateId: () => ({
+							localId: brand(0),
+						}),
 					},
 				],
 			],
@@ -257,21 +279,5 @@ describe("GenericField", () => {
 				[2, nodeId3],
 			]),
 		);
-	});
-
-	it("relevantRemovedRoots", () => {
-		const actual = genericChangeHandler.relevantRemovedRoots(
-			newGenericChangeset([
-				[0, nodeId1],
-				[2, nodeId2],
-			]),
-			(child) =>
-				child === nodeId1
-					? [{ minor: 42 }]
-					: child === nodeId2
-						? [{ minor: 43 }]
-						: assert.fail("Unexpected child"),
-		);
-		assert.deepEqual([...actual], [{ minor: 42 }, { minor: 43 }]);
 	});
 });

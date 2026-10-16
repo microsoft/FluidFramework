@@ -6,11 +6,9 @@
 import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeAtomIdRangeMap,
 	ChangeEncodingContext,
 	ChangesetLocalId,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeId,
-	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	RevisionMetadataSource,
@@ -19,42 +17,23 @@ import type {
 	RevisionTagSchema,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant, RangeQueryResult } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
-import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type {
+	ComposeNodeManager,
+	InvertNodeManager,
+	RebaseNodeManager,
+} from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
-import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { CrossFieldKeyRange, NodeId, RebaseVersion } from "./modularChangeTypes.js";
 
 export interface ChildChangeInfo {
 	nodeId: NodeId;
 
 	/**
-	 * The root ID for this node in the input context of the changeset.
-	 * Undefined if the node was attached in the input context.
-	 */
-	inputRootId: ChangeAtomId | undefined;
-
-	/**
 	 * The ID this changeset detaches this node with.
 	 */
 	detachId: ChangeAtomId | undefined;
-}
-
-/**
- * The return value of calling {@link FieldChangeHandler.intoDelta}.
- */
-export interface FieldChangeDelta {
-	/**
-	 * {@inheritdoc DeltaFieldChanges}
-	 */
-	readonly local?: DeltaFieldChanges;
-	/**
-	 * {@inheritdoc DeltaRoot.global}
-	 */
-	readonly global?: readonly DeltaDetachedNodeChanges[];
-	/**
-	 * {@inheritdoc DeltaRoot.rename}
-	 */
-	readonly rename?: readonly DeltaDetachedNodeRename[];
 }
 
 /**
@@ -75,27 +54,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
-	/**
-	 * Returns the set of removed roots that should be in memory for the given change to be applied.
-	 * A removed root is relevant if any of the following is true:
-	 * - It is being inserted
-	 * - It is being restored
-	 * - It is being edited
-	 * - The ID it is associated with is being changed
-	 *
-	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
-	 * (though they should, for the sake of performance, try to avoid doing so).
-	 *
-	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
-	 *
-	 * @param change - The change to be applied.
-	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
-	 */
-	readonly relevantRemovedRoots: (
-		change: TChangeset,
-		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-	) => Iterable<DeltaDetachedNodeId>;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): DeltaFieldChanges;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -125,6 +84,17 @@ export interface FieldChangeHandler<
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
 	createEmpty(): TChangeset;
+
+	/**
+	 * Returns a potentially simplified version of this change.
+	 * The returned change must produce the same delta as `change`, but may have different rebasing behavior.
+	 * The returned change should be compatible with `rebaseVersion`.
+	 */
+	ensureCompatibility(
+		change: TChangeset,
+		rebaseVersion: RebaseVersion,
+		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+	): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
@@ -140,7 +110,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change2: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: ComposeNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
@@ -153,10 +123,11 @@ export interface FieldChangeRebaser<TChangeset> {
 		isRollback: boolean,
 		genId: AtomIdAliasAllocator,
 		revision: RevisionTag | undefined,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: InvertNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
+	// XXX: It's not clear whether `rebaseChild` must be called in all cases.
 	/**
 	 * Rebase `change` over `over`.
 	 * See `ChangeRebaser` for details.
@@ -166,7 +137,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TChangeset,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: RebaseNodeManager,
 		revisionMetadata: RebaseRevisionMetadata,
 	): TChangeset;
 
@@ -205,16 +176,6 @@ export type FilterDetachFunc = (
 	 */
 	detachId: ChangeAtomId,
 	count: number,
-
-	/**
-	 * The input-context ID of the nodes being detached, if they are already detached.
-	 */
-	inputRootId: ChangeAtomId | undefined,
-
-	/**
-	 * The ID of the associated attach, if this is part of a move with a different attach ID.
-	 */
-	endpoint?: ChangeAtomId,
 ) => RangeQueryResult<FilterDetachResult>;
 
 export type FilterAttachFunc = (
@@ -223,16 +184,6 @@ export type FilterAttachFunc = (
 	 */
 	attachId: ChangeAtomId,
 	count: number,
-
-	/**
-	 * The output-context ID of the nodes being attached, if they are only transiently attached.
-	 */
-	outputRootId: ChangeAtomId | undefined,
-
-	/**
-	 * The ID of the associated detach, if this is part of a move with a different detach ID.
-	 */
-	endpoint?: ChangeAtomId,
 ) => RangeQueryResult<FilterAttachResult>;
 
 export interface FilterDetachResult {
@@ -240,7 +191,10 @@ export interface FilterDetachResult {
 
 	/**
 	 * If true, the filtered change should also remove any child changes for the detached nodes.
-	 * This will only be set when `action` is `EditFilterStatus.Remove`.
+	 * This can only be set when `action` is `EditFilterStatus.Remove`.
+	 *
+	 * This is needed to support change minimization's use of edit filtering
+	 * as a form of change decomposition.
 	 */
 	readonly shouldRemoveChild?: boolean;
 }
@@ -249,16 +203,14 @@ export interface FilterAttachResult {
 	readonly action: EditFilterStatus;
 
 	/**
-	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
-	 * the filtered change should include a child change with this ID.
+	 * If true, the attach previously represented a move from another location,
+	 * but in the filtered change should be treated as a revive of a node at the attach location.
+	 * This can only be set when `action` is `EditFilterStatus.Preserve`.
+	 *
+	 * This is needed to support change minimization's use of edit filtering
+	 * as a form of change decomposition.
 	 */
-	readonly nodeId?: NodeId;
-
-	/**
-	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
-	 * this ID should be used as the attach ID for the filtered change.
-	 */
-	readonly newAttachId?: ChangeAtomId;
+	readonly convertFromMove?: boolean;
 }
 
 /**
@@ -274,13 +226,6 @@ export enum EditFilterStatus {
 	 * The edit should be preserved in the filtered changeset.
 	 */
 	Preserve,
-
-	/**
-	 * This should only be used for an attach or detach which is part of a move.
-	 * The edit should be preserved, but should be adjusted, if necessary,
-	 * to reflect that the other endpoint of the move has been filtered out.
-	 */
-	PreserveWithoutMove,
 }
 
 /**
@@ -355,11 +300,6 @@ export type NodeChangeComposer = (
 
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
-/**
- * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
- */
-export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
-
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getRevisionToRebase: () => RevisionTag | undefined;
 	readonly getBaseRevisions: () => RevisionTag[];
@@ -367,7 +307,73 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
+
+	/**
+	 * A map from root ID to node ID, containing all roots which were last detached from this field.
+	 * The field must encode these root node changes.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, changes to root nodes were represented in the field they were last detached from.
+	 * This should only be used during encoding.
+	 */
+	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
+
+	/**
+	 * A map from input context root ID to output context root ID, containing all roots which were last detached from this field.
+	 * The field must encode these renames.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, root node renames were represented in the field they were last detached from.
+	 * This should only be used during encoding.
+	 */
+	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	// This should only be called during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
+
+	// XXX: Update comment
+	/**
+	 * Returns the input context root ID from an output context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	getInputRootId(
+		outputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	// XXX: Update comment
+	/**
+	 * Returns the output context root ID from an input context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	getOutputRootId(
+		outputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	/**
+	 * XXX: Comment
+	 */
+	getFirstRenameId(
+		inputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	/**
+	 * Returns the input context root ID from an output context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	isAttachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+
+	/**
+	 * Returns whether `id` is used as a detach ID in this changeset.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+
+	// This should only be called during decoding.
 }
 
 /**
@@ -378,6 +384,46 @@ export interface FieldChangeEncodingContext {
 export interface FieldChangeDecodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+
+	/**
+	 * Must be called for each root node changeset encoded in this field.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, changes to root node were represented in the field they were last detached from.
+	 * This should only be called during decoding.
+	 */
+	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;
+
+	/**
+	 * Must be called for each root node rename encoded in this field.
+	 * * This should only be called during decoding.
+	 * as in those versions, root node renames were represented in the field they were last detached from.
+	 * @param doesChangeDetachRoots - Should be true iff these roots are attached in the input context of this changeset.
+	 *
+	 * This method is only needed to support encoding to ModularChangeset formats older than v3.
+	 */
+	decodeRootRename(
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+		firstIntermediateRename: ChangeAtomId | undefined,
+		doesChangeDetachRoots: boolean,
+	): void;
+
+	/**
+	 * Must be called for each node which has its detach location changed to this field.
+	 * The node may be either detached by this change, or already detached in this change's input context.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, root node locations were represented in the field they were last detached from.
+	 * This should only be called during decoding.
+	 */
+	decodeMoveAndDetach(detachId: ChangeAtomId, count: number): void;
+
+	/**
+	 * Generates a new ChangeAtomId which has not been used in this changeset.
+	 * This is only needed for decoding optional field format v2 and older.
+	 * This should only be called during decoding.
+	 */
+	generateId(): ChangeAtomId;
 }
 
 /**

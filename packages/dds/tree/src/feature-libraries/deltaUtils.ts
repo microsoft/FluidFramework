@@ -4,15 +4,22 @@
  */
 
 import {
+	areDetachedNodeIdsEqual,
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
+	type DeltaFieldMap,
+	type DeltaMark,
 	type DeltaRoot,
 	makeDetachedNodeId,
 } from "../core/index.js";
-import type { Mutable } from "../util/index.js";
+import { brand, type Mutable } from "../util/index.js";
 
 export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {
 	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
+}
+
+export function changeAtomIdFromNodeId(nodeId: DeltaDetachedNodeId): ChangeAtomId {
+	return { revision: nodeId.major, localId: brand(nodeId.minor) };
 }
 
 /**
@@ -53,4 +60,34 @@ export function mapRootChanges<TIn, TOut>(
 		}));
 	}
 	return out;
+}
+
+export function createDeltaMark(
+	count: number,
+	fields: DeltaFieldMap | undefined,
+	detach: DeltaDetachedNodeId | undefined,
+	attach: DeltaDetachedNodeId | undefined,
+): DeltaMark {
+	const mark: Mutable<DeltaMark> = { count };
+	if (fields !== undefined) {
+		mark.fields = fields;
+	}
+
+	if (
+		detach !== undefined &&
+		attach !== undefined &&
+		areDetachedNodeIdsEqual(detach, attach)
+	) {
+		return mark;
+	}
+
+	if (detach !== undefined) {
+		mark.detach = detach;
+	}
+
+	if (attach !== undefined) {
+		mark.attach = attach;
+	}
+
+	return mark;
 }
