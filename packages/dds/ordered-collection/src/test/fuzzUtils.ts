@@ -155,7 +155,7 @@ function assertEqualConsensusOrderedCollections(
 	const aData = (a as any).data as IOrderedCollection<string>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const bData = (b as any).data as IOrderedCollection<string>;
-	assert.equal(aData.size, bData.size, "Data sizes should be equal");
+	assert.equal(aData.size(), bData.size(), "Data sizes should be equal");
 	assert.deepEqual(aData.asArray(), bData.asArray(), "Data contents should be equal");
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
