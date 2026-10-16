@@ -679,10 +679,20 @@ export class BlobManager {
 		localId: string,
 		signal?: AbortSignal,
 	): Promise<void> => {
-		if (signal?.aborted === true) {
-			this.discardLocalBlob(localId);
-			throw createAbortError();
-		}
+		/**
+		 * Abort this flow, discarding the local blob. These belong together: an aborted blob has no flow
+		 * left to complete it, so leaving it counted would hold the container dirty forever. Written as a
+		 * helper because the signal has to be re-read after anything that can run customer code, which
+		 * type narrowing would otherwise treat as impossible.
+		 */
+		const throwIfAborted = (): void => {
+			if (signal?.aborted === true) {
+				this.discardLocalBlob(localId);
+				throw createAbortError();
+			}
+		};
+
+		throwIfAborted();
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
@@ -694,6 +704,12 @@ export class BlobManager {
 		// From here on this BlobManager is responsible for sharing the blob, so it counts as outstanding
 		// work. An upload aborted before this point returns above without ever counting.
 		this.startTrackingUnsharedBlob(localId);
+
+		// Counting the blob can synchronously raise the container's dirty state, and a host listening for
+		// that may abort this upload before the flow below registers its abort listener. An AbortSignal
+		// only fires "abort" once, at abort time, so a listener registered afterwards would never run and
+		// the cancellation would be lost.
+		throwIfAborted();
 
 		/**
 		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state

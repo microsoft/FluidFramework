@@ -1138,6 +1138,9 @@ export class Container
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
 						isDirty: this.isDirty,
+						// Attribution for isDirty, which may now be held by runtime work that has not
+						// produced an operation (e.g. an attachment blob still being shared).
+						hasPendingOps: this._hasPendingOps,
 						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
