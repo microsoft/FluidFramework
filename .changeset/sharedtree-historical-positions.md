@@ -20,7 +20,7 @@ const capture = view.locations.capture([
     { kind: "sequence", node: characters, index: anchorIndex },
 ]);
 
-// Send to another client, typically to the presence API.
+// Send to another client, typically using the presence API.
 publishSelection({ capture });
 
 // On receipt, with the editor model synchronized to the local tree:
