@@ -989,3 +989,177 @@ describe("Shared String Obliterate", () => {
 		assert.equal(sharedString2.getText(), "01234BBB56789", "obliterate failed");
 	});
 });
+
+describe("IntervalCollection local op metadata propertyKeys", () => {
+	// Captures the `localOpMetadata` argument forwarded to MockContainerRuntime.submit
+	// by wrapping the runtime's submit method. Each entry corresponds to one outgoing op.
+	function setupCapture(): {
+		sharedString: SharedString;
+		submittedMetadata: unknown[];
+		processAll: () => void;
+	} {
+		const containerRuntimeFactory = new MockContainerRuntimeFactory();
+		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		const sharedString = new SharedStringClass(
+			dataStoreRuntime,
+			"shared-string-prop-keys",
+			SharedStringFactory.Attributes,
+		);
+		dataStoreRuntime.setAttachState(AttachState.Attached);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+
+		const submittedMetadata: unknown[] = [];
+		const originalSubmit = containerRuntime.submit.bind(containerRuntime);
+		containerRuntime.submit = (content: unknown, localOpMetadata: unknown): number => {
+			submittedMetadata.push(localOpMetadata);
+			return originalSubmit(content, localOpMetadata);
+		};
+
+		const services = {
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+		sharedString.initializeLocal();
+		sharedString.connect(services);
+		sharedString.insertText(0, "hello world");
+		// Clear out the insertText metadata so callers only see metadata from interval ops.
+		submittedMetadata.length = 0;
+
+		return {
+			sharedString,
+			submittedMetadata,
+			processAll: () => containerRuntimeFactory.processAllMessages(),
+		};
+	}
+
+	// Pulls out the `propertyKeys` field from the most recently captured interval-op metadata.
+	// The metadata is wrapped in a ListNode by IntervalCollection.submitDelta before reaching the
+	// runtime, so unwrap via `.data` to inspect the IntervalAddLocalMetadata/IntervalChangeLocalMetadata.
+	function lastPropertyKeys(submitted: unknown[]): ReadonlySet<string> | undefined {
+		assert.ok(submitted.length > 0, "expected at least one submitted op");
+		const node = submitted[submitted.length - 1] as {
+			data?: { propertyKeys?: ReadonlySet<string> };
+		};
+		assert.ok(
+			node?.data !== undefined,
+			"expected captured metadata to be a ListNode with a data payload",
+		);
+		return node.data.propertyKeys;
+	}
+
+	describe("add", () => {
+		it("propertyKeys is undefined when no props are supplied", () => {
+			const { sharedString, submittedMetadata } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ start: 0, end: 5 });
+			assert.strictEqual(
+				lastPropertyKeys(submittedMetadata),
+				undefined,
+				"propertyKeys should be undefined when no props supplied to add",
+			);
+		});
+
+		it("propertyKeys is an empty set when an empty props bag is supplied", () => {
+			const { sharedString, submittedMetadata } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ start: 0, end: 5, props: {} });
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set when props is supplied");
+			assert.strictEqual(keys?.size, 0, "propertyKeys should be empty for an empty props bag");
+		});
+
+		it("propertyKeys contains only user-defined keys for a populated props bag", () => {
+			const { sharedString, submittedMetadata } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ start: 0, end: 5, props: { a: 1, b: "hello" } });
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set");
+			assert.deepStrictEqual(
+				new Set(keys),
+				new Set(["a", "b"]),
+				"propertyKeys should contain exactly the user-supplied keys",
+			);
+		});
+
+		it("propertyKeys excludes reserved keys when present in props bag", () => {
+			const { sharedString, submittedMetadata } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			// "intervalId" is the reserved interval id key; the add path stamps its own id
+			// onto the serialized op, so a user-supplied value gets overwritten/normalized.
+			// Either way, it must not appear in propertyKeys.
+			collection.add({
+				start: 0,
+				end: 5,
+				props: { intervalId: "user-supplied-id", a: 1 },
+			});
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set");
+			assert.strictEqual(
+				keys?.has("intervalId"),
+				false,
+				"propertyKeys should not contain the reserved intervalId key",
+			);
+			assert.strictEqual(
+				keys?.has("referenceRangeLabels"),
+				false,
+				"propertyKeys should not contain the reserved referenceRangeLabels key",
+			);
+			assert.strictEqual(keys?.has("a"), true, "propertyKeys should contain user key 'a'");
+		});
+	});
+
+	describe("change", () => {
+		it("propertyKeys is an empty set when an empty props bag is supplied", () => {
+			const { sharedString, submittedMetadata, processAll } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			const id = collection.add({ start: 0, end: 5 }).getIntervalId();
+			processAll();
+			submittedMetadata.length = 0;
+			collection.change(id, { props: {} });
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set when props is supplied");
+			assert.strictEqual(keys?.size, 0, "propertyKeys should be empty for an empty props bag");
+		});
+
+		it("propertyKeys contains only user-defined keys for a populated props bag", () => {
+			const { sharedString, submittedMetadata, processAll } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			const id = collection.add({ start: 0, end: 5 }).getIntervalId();
+			processAll();
+			submittedMetadata.length = 0;
+			collection.change(id, { props: { a: 1, b: "world" } });
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set");
+			assert.deepStrictEqual(
+				new Set(keys),
+				new Set(["a", "b"]),
+				"propertyKeys should contain exactly the user-supplied keys",
+			);
+		});
+
+		it("propertyKeys excludes reserved keys when present in props bag", () => {
+			const { sharedString, submittedMetadata, processAll } = setupCapture();
+			const collection = sharedString.getIntervalCollection("test");
+			const id = collection.add({ start: 0, end: 5 }).getIntervalId();
+			processAll();
+			submittedMetadata.length = 0;
+			// The change path rejects attempts to set referenceRangeLabels, but a user could still
+			// pass an intervalId override; serialization always stamps the canonical id, so the
+			// reserved key must be filtered out of propertyKeys.
+			collection.change(id, { props: { intervalId: "user-supplied-id", a: 1 } });
+			const keys = lastPropertyKeys(submittedMetadata);
+			assert.ok(keys instanceof Set, "propertyKeys should be a Set");
+			assert.strictEqual(
+				keys?.has("intervalId"),
+				false,
+				"propertyKeys should not contain the reserved intervalId key",
+			);
+			assert.strictEqual(
+				keys?.has("referenceRangeLabels"),
+				false,
+				"propertyKeys should not contain the reserved referenceRangeLabels key",
+			);
+			assert.strictEqual(keys?.has("a"), true, "propertyKeys should contain user key 'a'");
+		});
+	});
+});
