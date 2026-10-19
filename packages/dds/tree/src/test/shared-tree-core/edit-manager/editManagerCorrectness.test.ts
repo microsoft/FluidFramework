@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeFamilyEditor,
@@ -656,7 +657,7 @@ export function testCorrectness(): void {
 
 			describe("Retains history", () => {
 				/**
-				 * Sequences `count` commits from {@link peer1}, each building on the last.
+				 * Sequences `count` commits from one peer, each building on the last.
 				 * @param startSequenceNumber - the sequence number of the first commit to sequence.
 				 * @param startIntention - the intention of the first commit to sequence.
 				 */
@@ -665,6 +666,7 @@ export function testCorrectness(): void {
 					count: number,
 					startSequenceNumber: number,
 					startIntention: number,
+					sessionId: SessionId = peer1,
 				): void {
 					for (let i = 0; i < count; i += 1) {
 						const intention = startIntention + i;
@@ -679,7 +681,7 @@ export function testCorrectness(): void {
 									customMetadata: undefined,
 								},
 							],
-							peer1,
+							sessionId,
 							brand(startSequenceNumber + i),
 							brand(startSequenceNumber + i - 1),
 							"main",
@@ -702,6 +704,248 @@ export function testCorrectness(): void {
 					manager.advanceMinimumSequenceNumber(brand(5));
 
 					assert.equal(manager.getSummaryData().main.trunk.length, 0);
+				});
+
+				it("a local limit overrides unlimited retention and can be reset", () => {
+					const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+					manager.setMaxRetainedCommits(3);
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					assert.equal(manager.getTrunkCommits("main").length, 3);
+					assert.equal(manager.getSummaryData().main.trunk.length, 3);
+					manager.setMaxRetainedCommits(undefined);
+					sequencePeerCommits(manager, 5, 6, 6);
+					manager.advanceMinimumSequenceNumber(brand(10));
+					assert.equal(manager.getTrunkCommits("main").length, 8);
+					assert.equal(manager.getSummaryData().main.trunk.length, 8);
+				});
+
+				for (const limit of [0, 1, 3, 50]) {
+					it(`retains the newest ${limit} commits without trimming the collaboration window`, () => {
+						const { manager } = testChangeEditManagerFactory({});
+						manager.setMaxRetainedCommits(limit);
+						assert.equal(manager.isEmpty(), true);
+						assert.equal(manager.getSummaryData().main.trunk.length, 0);
+
+						sequencePeerCommits(manager, limit + 1, 1, 1);
+						const revisions = manager.getTrunkCommits("main").map((commit) => commit.revision);
+						assert.equal(revisions.length, limit + 1);
+						assert.equal(manager.getSummaryData().main.trunk.length, limit + 1);
+
+						manager.advanceMinimumSequenceNumber(brand(limit + 1));
+						assert.deepEqual(
+							manager.getTrunkCommits("main").map((commit) => commit.revision),
+							revisions.slice(1),
+						);
+						assert.equal(manager.getSummaryData().main.trunk.length, limit);
+					});
+				}
+
+				it("retains exactly 50 commits at the boundary and after the next commit", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(50);
+					sequencePeerCommits(manager, 50, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(50));
+					const revisions = manager.getTrunkCommits("main").map((commit) => commit.revision);
+					assert.equal(revisions.length, 50);
+
+					sequencePeerCommits(manager, 1, 51, 51);
+					manager.advanceMinimumSequenceNumber(brand(51));
+					assert.deepEqual(
+						manager
+							.getTrunkCommits("main")
+							.slice(0, -1)
+							.map((commit) => commit.revision),
+						revisions.slice(1),
+					);
+					assert.equal(manager.getTrunkCommits("main").length, 50);
+					assert.equal(manager.getSummaryData().main.trunk.length, 50);
+				});
+
+				it("applies decreases immediately and grows only from available history", () => {
+					const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					manager.setMaxRetainedCommits(3);
+					assert.equal(manager.getTrunkCommits("main").length, 3);
+
+					manager.setMaxRetainedCommits(5);
+					assert.equal(manager.getTrunkCommits("main").length, 3);
+					sequencePeerCommits(manager, 2, 6, 6);
+					manager.advanceMinimumSequenceNumber(brand(7));
+					assert.equal(manager.getTrunkCommits("main").length, 5);
+
+					const head = manager.getTrunkHead("main");
+					manager.setMaxRetainedCommits(1);
+					assert.deepEqual(manager.getTrunkCommits("main"), [head]);
+					manager.setMaxRetainedCommits(0);
+					assert.equal(manager.getTrunkCommits("main").length, 0);
+					assert.equal(manager.getSummaryData().main.trunk.length, 0);
+				});
+
+				it("restores collaboration-window retention when the local limit is cleared", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(3);
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					assert.equal(manager.getTrunkCommits("main").length, 3);
+
+					manager.setMaxRetainedCommits(undefined);
+					assert.equal(manager.getTrunkCommits("main").length, 0);
+					sequencePeerCommits(manager, 5, 6, 6);
+					manager.advanceMinimumSequenceNumber(brand(10));
+					assert.equal(manager.getTrunkCommits("main").length, 0);
+					assert.equal(manager.getSummaryData().main.trunk.length, 0);
+				});
+
+				it("does not serialize the retention policy", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(3);
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					const loaded = testChangeEditManagerFactory({}).manager;
+					loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
+					loaded.advanceMinimumSequenceNumber(brand(5));
+					assert.equal(loaded.getTrunkCommits("main").length, 0);
+					assert.equal(manager.getTrunkCommits("main").length, 3);
+				});
+
+				it("does not count or discard unsequenced local commits", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(2);
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+
+					manager.setMaxRetainedCommits(1);
+					assert.equal(manager.getTrunkCommits("main").length, 1);
+					assert.deepEqual(
+						manager.getLocalCommits("main").map((commit) => commit.revision),
+						[local.revision],
+					);
+					manager.addSequencedChanges(
+						[local],
+						manager.localSessionId,
+						brand(6),
+						brand(5),
+						"main",
+					);
+					manager.advanceMinimumSequenceNumber(brand(6));
+					assert.deepEqual(
+						manager.getTrunkCommits("main").map((commit) => commit.revision),
+						[local.revision],
+					);
+					assert.equal(manager.getLocalCommits("main").length, 0);
+				});
+
+				it("accepts the largest safe integer as a limit", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(Number.MAX_SAFE_INTEGER);
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					assert.equal(manager.getTrunkCommits("main").length, 5);
+					assert.equal(manager.getSummaryData().main.trunk.length, 5);
+				});
+
+				for (const limit of [
+					-1,
+					1.5,
+					Number.NaN,
+					Infinity,
+					-Infinity,
+					Number.MAX_SAFE_INTEGER + 1,
+				]) {
+					it(`rejects invalid limit ${limit} without changing retention`, () => {
+						const { manager } = testChangeEditManagerFactory({});
+						manager.setMaxRetainedCommits(3);
+						assert.throws(
+							() => manager.setMaxRetainedCommits(limit),
+							validateAssertionError(
+								"maxRetainedCommits must be a nonnegative safe integer or undefined",
+							),
+						);
+						sequencePeerCommits(manager, 5, 1, 1);
+						manager.advanceMinimumSequenceNumber(brand(5));
+						assert.equal(manager.getTrunkCommits("main").length, 3);
+					});
+				}
+
+				it("counts each commit in a sequenced batch separately", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					manager.setMaxRetainedCommits(2);
+					const commits = makeArray(5, (i) => ({
+						change: TestChange.mint(
+							makeArray(i, (j) => j + 1),
+							[i + 1],
+						),
+						revision: mintRevisionTag(),
+						customMetadata: undefined,
+					}));
+					manager.addSequencedChanges(commits, peer1, brand(1), brand(0), "main");
+					assert.equal(manager.getTrunkCommits("main").length, 5);
+					manager.advanceMinimumSequenceNumber(brand(1));
+					assert.deepEqual(
+						manager.getTrunkCommits("main").map((commit) => commit.revision),
+						commits.slice(-2).map((commit) => commit.revision),
+					);
+					assert.equal(manager.getSummaryData().main.trunk.length, 2);
+				});
+
+				for (const limit of [0, 3]) {
+					it(`keeps serialized peer bases when a fork pins history with limit ${limit}`, () => {
+						const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+						sequencePeerCommits(manager, 1, 1, 1);
+						const fork = manager.getLocalBranch("main").fork();
+						const peerBaseRevision = fork.getHead().revision;
+						sequencePeerCommits(manager, 9, 2, 2, peer2);
+						manager.advanceMinimumSequenceNumber(brand(10));
+						manager.setMaxRetainedCommits(limit);
+
+						const summary = structuredClone(manager.getSummaryData());
+						assert.equal(summary.main.peerLocalBranches.get(peer1)?.base, peerBaseRevision);
+						assert.equal(summary.main.trunk.length, 10);
+						assert.deepEqual(
+							summary.main.trunk.map((commit) => commit.revision),
+							manager.getTrunkCommits("main").map((commit) => commit.revision),
+						);
+						assert.equal(fork.getHead().revision, peerBaseRevision);
+
+						const loaded = testChangeEditManagerFactory({ retainHistory: true }).manager;
+						loaded.setMaxRetainedCommits(limit);
+						loaded.loadSummaryData(summary);
+						assert.deepEqual(
+							loaded.getTrunkCommits("main").map((commit) => commit.revision),
+							summary.main.trunk.map((commit) => commit.revision),
+						);
+						sequencePeerCommits(loaded, 1, 11, 11);
+						loaded.advanceMinimumSequenceNumber(brand(11));
+						assert.equal(loaded.getTrunkCommits("main").length, limit);
+						assert.equal(loaded.getSummaryData().main.trunk.length, limit);
+
+						fork.dispose();
+						assert.equal(manager.getTrunkCommits("main").length, limit);
+						const trimmedSummary = structuredClone(manager.getSummaryData());
+						assert.equal(trimmedSummary.main.trunk.length, limit);
+						const reloaded = testChangeEditManagerFactory({ retainHistory: true }).manager;
+						reloaded.setMaxRetainedCommits(limit);
+						reloaded.loadSummaryData(trimmedSummary);
+						assert.equal(reloaded.getTrunkCommits("main").length, limit);
+					});
+				}
+
+				it("preserves bounded history through repeated summary generations", () => {
+					let manager = testChangeEditManagerFactory({}).manager;
+					manager.setMaxRetainedCommits(3);
+					for (let generation = 0; generation < 3; generation++) {
+						sequencePeerCommits(manager, 5, generation * 5 + 1, generation * 5 + 1);
+						manager.advanceMinimumSequenceNumber(brand(generation * 5 + 5));
+						const summary = structuredClone(manager.getSummaryData());
+						assert.equal(summary.main.trunk.length, 3);
+						manager = testChangeEditManagerFactory({}).manager;
+						manager.setMaxRetainedCommits(3);
+						manager.loadSummaryData(summary);
+						assert.equal(manager.getTrunkCommits("main").length, 3);
+					}
 				});
 
 				it("compounds history across repeated summarize/load generations", () => {
