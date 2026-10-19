@@ -1742,6 +1742,13 @@ export interface ArrayPlaceAnchor {
  * fixed so a delta is always available; when adding new code constrained by it, note it here (or track it centrally)
  * so the full set of affected call sites is known and can be prioritized.
  *
+ * TODO: Restore anchor positions across transaction rollback and undo of removals.
+ * Removal collapses anchors inside the removed span, losing their original offsets.
+ * Reinserting the removed content does not restore those offsets, even when a transaction rolls back.
+ * For example, removing [0, 3) moves an anchor at index 1 to 0; rollback restores the content but moves the anchor to 3, not 1.
+ * This also affects extrinsic ranges: a nested transaction that removes content and rolls back during a tracked edit
+ * can cause the tracker to persist incorrect endpoints after the content has been restored.
+ *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
  * How this would work, especially for unhydrated nodes is not yet clear.
