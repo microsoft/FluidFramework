@@ -1,0 +1,23 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "kind": {
+        "leaf": 2
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.leaf.boolean"
+    ]
+  },
+  "schemaHash": "a3d5c443c5b0cbeb10fd1661dc1475ead3d464909d46df48eda3792e943b6598",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

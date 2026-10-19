@@ -1,0 +1,35 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.hasRenamedField": {
+      "kind": {
+        "object": {
+          "stored-name": {
+            "kind": "Value",
+            "types": [
+              "test.minimal"
+            ]
+          }
+        }
+      }
+    },
+    "test.minimal": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasRenamedField"
+    ]
+  },
+  "schemaHash": "979266b507d85c3e80ff07d9d718e35e71dd2c842cab6f24a22283f01a948083",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

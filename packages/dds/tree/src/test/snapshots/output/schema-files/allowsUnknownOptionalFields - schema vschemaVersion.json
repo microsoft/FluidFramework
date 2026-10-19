@@ -1,0 +1,23 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.hasUnknownOptionalFields": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasUnknownOptionalFields"
+    ]
+  },
+  "schemaHash": "1e59be54a0e9910de31186defa7d9c29abab1242dbe43aa1e2fb87ff57ffe3d4",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

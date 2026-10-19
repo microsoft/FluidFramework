@@ -12,7 +12,8 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { TreeViewConfigurationAlpha, validateSchemaVersion } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -83,13 +84,20 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function checkCompatibility(
-	documentViewConfiguration: TreeViewConfiguration,
-	clientViewConfiguration: TreeViewConfiguration,
+	documentViewConfiguration: ITreeViewConfigurationAlpha,
+	clientViewConfiguration: ITreeViewConfigurationAlpha,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
+		schemaVersion: clientViewConfiguration.schemaVersion,
+		schemaHash: clientViewConfiguration.schemaHash,
 	});
-	const stored = toInitialSchema(documentViewConfiguration.schema);
+	const stored = toInitialSchema(
+		documentViewConfiguration.schema,
+		undefined,
+		documentViewConfiguration.schemaVersion,
+		documentViewConfiguration.schemaHash,
+	);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
@@ -101,7 +109,7 @@ export function checkCompatibility(
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
- * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
+ * @param config - The schema and application-defined versions to snapshot.
  * @returns The JSON representation of the schema.
  *
  * @example Create and persist a snapshot of a Point2D schema.
@@ -123,10 +131,14 @@ export function checkCompatibility(
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
-	config: Pick<TreeViewConfiguration, "schema">,
+	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion" | "schemaHash">,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
-	return encodeSchemaCompatibilitySnapshot(treeSchema);
+	return encodeSchemaCompatibilitySnapshot({
+		...treeSchema,
+		schemaVersion: validateSchemaVersion(config.schemaVersion),
+		...(config.schemaHash === undefined ? {} : { schemaHash: config.schemaHash }),
+	});
 }
 
 /**
@@ -137,7 +149,9 @@ export function exportCompatibilitySchemaSnapshot(
  * @see {@link exportCompatibilitySchemaSnapshot} which creates these snapshots.
  *
  * @param config - The JSON representation of the schema.
- * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
+ * @returns The schema.
+ * Only the schema, schema version, and schema hash fields of the {@link TreeViewConfigurationAlpha} are populated.
+ * Supply a separately imported hasher before using the result to initialize or upgrade a versioned tree.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example Load and parse a snapshot of a Point2D schema.
@@ -152,13 +166,17 @@ export function exportCompatibilitySchemaSnapshot(
  */
 export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
-): TreeViewConfiguration {
+): TreeViewConfigurationAlpha {
 	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
 	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for
 	// a schema produced by `generateSchemaFromSimpleSchema`.
-	return new TreeViewConfiguration({ schema: viewSchema.root });
+	return new TreeViewConfigurationAlpha({
+		schema: viewSchema.root,
+		schemaVersion: simpleSchema.schemaVersion,
+		schemaHash: simpleSchema.schemaHash,
+	});
 }
 
 /**

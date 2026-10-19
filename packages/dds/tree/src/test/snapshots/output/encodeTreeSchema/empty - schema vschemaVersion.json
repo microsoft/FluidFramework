@@ -1,0 +1,15 @@
+{
+  "version": "schemaVersion",
+  "nodes": {},
+  "root": {
+    "kind": "Forbidden",
+    "types": []
+  },
+  "schemaHash": "503127e5434b062d7c5a4dfb54f1c262c5d74b6348f6720d61015488fa2e5c57",
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}
