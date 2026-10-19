@@ -5,6 +5,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// ES2022 includes ES2021's FinalizationRegistry and WeakRef types.
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		// Avoid emitting __classPrivateFieldGet/Set, __esDecorate, __runInitializers, etc.
 		// inline in every compiled module. Webpack's concatenateModules cannot dedupe these
 		// across modules (each gets unique scope-local var names), so without importHelpers
