@@ -195,8 +195,8 @@ export function checkSchemaCompatibility(
 
 	const canUpgrade = allowsSchemaUpgrade(policy, stored, wouldUpgradeTo);
 
-	// If true, then upgrading has no effect on what can be stored in the document.
-	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
+	// Equivalent schemas allow the same content and have the same application versions.
+	// Metadata differences alone do not trigger an upgrade.
 	const isEquivalent =
 		canView &&
 		canUpgrade &&

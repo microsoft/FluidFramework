@@ -42,7 +42,7 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
  */
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 	/**
-	 * Application-defined version for this schema.
+	 * application-defined versions for this schema
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
 

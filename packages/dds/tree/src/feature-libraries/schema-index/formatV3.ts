@@ -11,7 +11,7 @@ import { SchemaFormatVersion, schemaFormatV2 } from "../../core/index.js";
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 /**
- * Experimental stored schema format which adds application-defined schema versions.
+ * experimental stored schema format with application-defined versions
  */
 export const Format = Type.Object(
 	{

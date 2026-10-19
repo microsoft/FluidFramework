@@ -23,15 +23,16 @@ import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 /**
- * Returns true iff `superset` is a superset of `original`.
+ * Returns whether `superset` accepts every tree that `original` accepts.
  *
- * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
  *
- * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
- *
- * @param enforceAdditiveOnlySchemaUpgrades - Whether to enforce the restrictions for additive-only schema upgrades in addition to checking that `superset` accepts every tree accepted by `original`.
- * For example, required string and identifier fields accept the same trees, but the upgrade policy may not allow required to become identifier.
- * That change therefore returns false when this is true and may return true when this is false.
+ * @remarks
+ * Equivalent schemas return `true`.
+ * An `undefined` {@link TreeNodeStoredSchema} accepts no trees.
+ * Required string fields and identifier fields accept the same stored values.
+ * The additive-only rules allow only one upgrade direction between these field kinds.
+ * Set the parameter to `false` to check allowed content without those rules.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
@@ -145,18 +146,17 @@ export function allowsValueSuperset(
 }
 
 /**
- * Returns true iff `superset` is a superset of `original`.
+ * Returns whether `superset` accepts every field that `original` accepts.
  *
- * This does not require a strict (aka proper) superset: equivalent schema will return true.
- *
- * @param enforceAdditiveOnlySchemaUpgrades - Whether to enforce the restrictions for additive-only schema upgrades in addition to checking that `superset` accepts every tree accepted by `original`.
- * This prevents upgrades whose inverse could also be applied, which could cause clients to repeatedly replace each other's schemas.
+ * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
  *
  * @remarks
- * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+ * Equivalent schemas return `true`.
+ * The additive-only rules prevent clients from repeatedly reversing field-kind changes.
+ * Set the parameter to `false` to check allowed content without those rules.
  *
  * @privateRemarks
- * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
+ * See {@link FieldKindOptions.allowMonotonicUpgradeFrom} for allowed field-kind changes.
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
@@ -206,15 +206,15 @@ export function allowsTreeSchemaIdentifierSuperset(
 }
 
 /**
- * Returns true iff `superset` is a superset of `original`.
+ * Returns whether `superset` accepts every document that `original` accepts.
  *
- * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
  *
- * A version of this that assumes a specific root field could be slightly more permissive in some simple cases,
- * however if any extra fields and fields with unconstrained types are reachable,
- * it would have to compare everything anyway.
- *
- * @param enforceAdditiveOnlySchemaUpgrades - Whether to enforce the restrictions for additive-only schema upgrades in addition to checking that `superset` accepts every tree accepted by `original`.
+ * @remarks
+ * Equivalent schemas return `true`.
+ * This checks all node schemas, including schemas not reachable from the root.
+ * Detached fields can contain nodes of any stored type.
+ * See {@link allowsFieldSuperset} for the field-kind upgrade rules.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
@@ -257,7 +257,7 @@ export function allowsRepoSuperset(
 }
 
 /**
- * Returns whether `updated` is a valid schema upgrade from `original`.
+ * Returns whether `original` can be upgraded to `updated`.
  */
 export function allowsSchemaUpgrade(
 	policy: FullSchemaPolicy,
@@ -282,7 +282,10 @@ export function allowsSchemaUpgrade(
 }
 
 /**
- * Returns whether two application-defined schema version maps are equal.
+ * Returns whether both maps have the same library identifiers and version values.
+ *
+ * @remarks
+ * An absent map differs from an empty map.
  */
 export function areSchemaVersionsEqual(
 	a: TreeStoredSchema["schemaVersion"],
@@ -300,11 +303,11 @@ export function areSchemaVersionsEqual(
 }
 
 /**
- * Returns whether `updated` removes a library from `original` or decreases its version.
- * This prevents schema upgrades from removing or lowering stored application-defined versions.
+ * Returns whether `updated` removes a library identifier or decreases a version in `original`.
  *
  * @remarks
- * Returns false if `original` is undefined, and true if only `updated` is undefined.
+ * The result is `false` if `original` is `undefined`.
+ * The result is `true` if only `updated` is `undefined`.
  * Adding library identifiers does not count as a decrease.
  */
 function ifSchemaVersionsDecrease(

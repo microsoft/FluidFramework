@@ -320,7 +320,7 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
  */
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 	/**
-	 * Application-defined versions associated with this schema.
+	 * application-defined versions for this schema
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
 

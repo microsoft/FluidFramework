@@ -134,7 +134,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 }
 
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
-	// A version-only schema is initialized state and must not be overwritten by initialization.
+	// A schema with only application versions is already initialized.
 	return data.nodeSchema.size === 0 && data.schemaVersion === undefined;
 }
 

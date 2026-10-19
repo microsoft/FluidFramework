@@ -114,10 +114,10 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  */
 export interface ViewableTreeAlpha extends ViewableTree {
 	/**
-	 * Application-defined versions in the document's stored schema.
+	 * application-defined versions in the document's stored schema
 	 *
 	 * @remarks
-	 * This is `undefined` when the stored schema has no application-defined versions.
+	 * The value is `undefined` if the stored schema has no application-defined versions.
 	 * The value can change when a {@link TreeViewAlpha} updates the stored schema.
 	 */
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;
@@ -1032,15 +1032,16 @@ export interface TreeViewAlpha<
 		>,
 		UntypedTreeViewAlpha {
 	/**
-	 * Application-defined versions declared by this view's {@link TreeViewConfigurationAlpha}.
+	 * application-defined versions from this view's {@link TreeViewConfigurationAlpha}
 	 */
 	readonly schemaVersion: SchemaVersionMap | undefined;
 
 	/**
-	 * Application-defined versions in the document's stored schema.
+	 * application-defined versions in the document's stored schema
 	 *
 	 * @remarks
-	 * This value may change when the stored schema changes.
+	 * The value is `undefined` if the stored schema has no application-defined versions.
+	 * The value can change when the stored schema changes.
 	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
 	 */
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;

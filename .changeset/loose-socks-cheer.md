@@ -5,22 +5,31 @@
 ---
 Add application-defined schema versions to SharedTree
 
-SharedTree now supports optional application-defined schema versions through [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
-Version maps use non-negative safe integers keyed by [`LibraryId`](https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias), allowing each library or component to manage its own version.
-Library identifiers are persisted and must be stable, globally unique, and namespaced, such as a package name or domain-based name.
+SharedTree supports optional application-defined schema versions.
+Set versions with [`TreeViewConfigurationAlpha`][view-configuration].
+Use a [`SchemaVersionMap`][version-map] to give each library or component its own version.
+Each entry has a [`LibraryId`][library-id] key and a non-negative safe integer value.
+Use a globally unique library identifier, such as a package name or a domain-based name.
+The identifier is stored in documents and must stay the same across releases.
 
-Increasing a version is required when a schema change keeps every existing document valid but does not only expand what may be stored.
-Existing versions cannot decrease or be removed.
-This prevents older applications from reversing the change and repeatedly conflicting with newer applications.
-For changes that only expand what may be stored, increasing a version is optional but can still be useful for identifying application schema revisions in telemetry and compatibility snapshots.
-Versioned schemas use an experimental persisted format.
-Every client that loads or collaborates on a versioned document must use the same Fluid Framework version until this format is stabilized.
-Applications using schema versions must configure SharedTree to write the experimental schema format, as shown below.
-Metadata-only changes at unchanged versions do not update the stored schema.
-Increase at least one application version to apply a metadata-only change.
+By default, schema upgrades must keep existing documents valid and cannot be reversed.
+After application versions are stored, you can make other changes that keep documents valid.
+For these changes, increase at least one version.
+Stored versions cannot decrease, and library identifiers cannot be removed.
+This prevents older applications from reversing a newer application's schema change.
+For changes allowed by the default upgrade rules, a version increase is optional.
+You can still increase a version to identify schemas in telemetry and compatibility snapshots.
 
-For example, changing a required string field to an identifier field is not normally allowed.
-Both fields accept the same stored values, so increasing the application version allows it:
+To store a metadata-only change, increase at least one application version.
+At the same versions, a metadata-only change does not update the stored schema.
+
+Schema versions use an experimental stored schema format.
+Until the format is stable, all clients that load or collaborate on the document
+must use the same Fluid Framework version.
+Use [`configuredSharedTreeAlpha`][configured-tree] to select this format, as shown below.
+
+For example, a required string field and an identifier field accept the same stored values.
+Increase the application version to change a required string field to an identifier field:
 
 ```typescript
 import {
@@ -47,6 +56,16 @@ const newConfig = new TreeViewConfigurationAlpha({
 });
 ```
 
-The configured and stored versions are available from [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), and the stored versions are also available from [`ITreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface).
-Schema compatibility snapshots now include the configured version map.
-The new snapshot v2 stores optional application-defined versions.
+Read the configured and stored versions from [`TreeViewAlpha`][tree-view].
+Read stored versions from [`ITreeAlpha`][tree].
+[`exportCompatibilitySchemaSnapshot`][snapshot-export] includes the configured version map.
+Snapshots with a version map use snapshot v2.
+Without a version map, snapshots continue to use v1.
+
+[view-configuration]: https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class
+[version-map]: https://fluidframework.com/docs/api/fluid-framework/schemaversionmap-typealias
+[library-id]: https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias
+[configured-tree]: https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function
+[tree-view]: https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface
+[tree]: https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface
+[snapshot-export]: https://fluidframework.com/docs/api/fluid-framework/exportcompatibilityschemasnapshot-function

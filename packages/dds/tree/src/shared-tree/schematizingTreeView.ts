@@ -336,8 +336,7 @@ export class SchematizingSimpleTreeView<
 			this.schemaVersion,
 		);
 		const storedSchema = this.checkout.storedSchema.clone();
-		// Select whether to retain updateSchema's additive-only assertion. Version-enabled upgrades
-		// can pass canUpgrade below without satisfying that assertion.
+		// A version increase can allow an upgrade that fails the additive-only assertion.
 		const isAdditiveSchemaUpgrade = allowsRepoSuperset(
 			defaultSchemaPolicy,
 			storedSchema,

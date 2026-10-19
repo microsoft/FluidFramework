@@ -186,23 +186,27 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * Application-defined versions for the view schema.
+	 * application-defined versions for the view schema
 	 *
 	 * @remarks
 	 * Each value must be a non-negative safe integer.
-	 * These versions are stored in documents initialized or upgraded through a {@link TreeViewAlpha}.
-	 * Schema versions use an experimental persisted format.
-	 * Every client that loads or collaborates on a document using schema versions must use a Fluid Framework version that supports schema versions.
+	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store these versions.
+	 * Stored versions cannot decrease, and library identifiers cannot be removed.
 	 *
-	 * Without versions, schema upgrades are limited to changes that only expand what may be stored.
-	 * Providing versions also allows other changes that keep all existing documents valid.
-	 * Such a change must increase at least one version, and stored versions cannot decrease or be removed.
+	 * By default, upgrades must keep all existing documents valid and cannot be reversed.
+	 * Stored versions let you make other changes that keep all existing documents valid.
+	 * For these changes, increase at least one version.
 	 *
-	 * @example Changing a required string field to an identifier field
-	 * Required string and identifier fields accept the same stored values, so changing between them keeps existing documents valid.
-	 * Increasing the application version establishes which schema is newer and allows the change without older applications changing it back.
+	 * Schema versions use an experimental stored schema format.
+	 * Until the format is stable, all clients that load or collaborate on the document
+	 * must use the same Fluid Framework version.
 	 *
-	 * Persisting application-defined schema versions requires opting into the experimental stored schema format:
+	 * @example
+	 * Required string fields and identifier fields accept the same stored values.
+	 * Increase the application version to change a required string field to an identifier field.
+	 * Older applications cannot reverse this change because stored versions cannot decrease.
+	 *
+	 * Configure {@link configuredSharedTreeAlpha} to write the experimental schema format:
 	 *
 	 * ```typescript
 	 * const SharedTree = configuredSharedTreeAlpha({
@@ -211,7 +215,8 @@ export interface ITreeViewConfigurationAlpha<
 	 * });
 	 * ```
 	 *
-	 * All clients that load or collaborate on the document must support this format.
+	 * Use {@link LibraryId} to give your library a stable identifier.
+	 * Set the version in {@link TreeViewConfigurationAlpha}:
 	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
@@ -354,8 +359,11 @@ export class TreeViewConfigurationAlpha<
 }
 
 /**
- * Validates and freezes an application-defined schema version map.
- * A valid map is `undefined` or maps each library identifier to a non-negative safe integer.
+ * Validates an application-defined schema version map and returns a frozen copy.
+ *
+ * @remarks
+ * Each version must be a non-negative safe integer.
+ * If the input is `undefined`, the result is `undefined`.
  */
 export function validateSchemaVersion(
 	schemaVersion: SchemaVersionMap | undefined,

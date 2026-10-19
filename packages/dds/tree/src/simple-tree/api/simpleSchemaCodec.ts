@@ -34,18 +34,20 @@ import * as Format from "../simpleSchemaFormatV1.js";
 import * as FormatV2 from "../simpleSchemaFormatV2.js";
 
 /**
- * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
+ * Encodes a view or stored schema for snapshot compatibility checks.
  *
- * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
- * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
- * @param treeSchema - The tree schema to convert.
- * @returns A serializable representation of the schema.
+ * @param simpleSchema - schema to encode
+ *
+ * @returns a JSON-compatible schema snapshot
+ *
+ * @remarks
+ * Use this snapshot only to compare schema compatibility.
+ * It does not include metadata or persisted metadata.
+ * Schemas without an application version map use snapshot v1.
+ * Schemas with an application version map use snapshot v2.
  *
  * @privateRemarks
- * Encodes schemas without application versions to v1.
- * Schemas with application versions use v2.
- *
- * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ * TODO: Replace this export with a higher-level snapshot compatibility API.
  *
  * @alpha
  */
@@ -82,17 +84,20 @@ export function encodeSchemaCompatibilitySnapshot(
 }
 
 /**
- * Decodes a JSON-compatible schema into a simple schema.
- * @param encodedSchema - The encoded schema to decode.
- * @param validator - The format validator to use to validate the encoded schema.
- * @returns A decoded simple schema.
- * @throws Will throw a usage error if the encoded schema is not in the expected format.
+ * Decodes a schema compatibility snapshot into a {@link SimpleTreeSchema}.
+ *
+ * @param encodedSchema - snapshot to decode
+ * @param validator - optional validator for the snapshot format
+ *
+ * @returns the decoded schema
+ *
+ * @throws a usage error if validation fails or the application version map is invalid
  *
  * @privateRemarks
- * If a validator is not provided, this implicitly performs an unsafe type conversion:
- * this is something our user facing APIs generally avoid doing, and should be reconsidered before stabilizing.
+ * Without a validator, this function assumes the input has a supported snapshot format.
+ * Check this behavior before the API is made stable.
  *
- * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ * TODO: Replace this export with a higher-level snapshot compatibility API.
  *
  * @alpha
  */

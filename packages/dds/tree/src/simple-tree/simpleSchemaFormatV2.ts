@@ -12,15 +12,16 @@ import {
 } from "./simpleSchemaFormatV1.js";
 
 /**
- * The format version for the schema.
+ * format version for schema compatibility snapshots
  */
 export const SimpleSchemaFormatVersion = {
 	v2: 2,
 } as const;
 
 /**
- * Persisted format for the compatibility impacting subset of simple schema with application-defined schema versions.
- * @see {@link SimpleTreeSchema}.
+ * snapshot format for schema compatibility and application-defined versions
+ *
+ * @see {@link SimpleTreeSchema}
  */
 export const SimpleTreeSchemaFormat = Type.Object(
 	{

@@ -41,31 +41,31 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	 */
 	v2: 2,
 	/**
-	 * Experimental format which adds application-defined schema versions.
+	 * experimental format with application-defined schema versions
 	 */
 	v3Experimental: "schemaVersion",
 });
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 /**
- * Identifies a library which owns an application-defined schema version.
+ * identifier for a library that defines a schema version
  *
  * @remarks
- * Library identifiers are persisted in documents and must remain stable across releases.
- * Use a globally unique, namespaced identifier, such as a package name or domain-based name, to
- * avoid collisions with independently developed libraries.
- * Every client using the library must use the same identifier.
+ * Library identifiers are stored in documents and must stay the same across releases.
+ * Use a globally unique name, such as a package name or a domain-based name.
+ * This prevents conflicts with identifiers from other libraries.
+ * All clients that use the library must use the same identifier.
  *
  * @alpha
  */
 export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" };
 
 /**
- * Application-defined versions associated with stored schema.
+ * application-defined schema versions keyed by {@link LibraryId}
  *
  * @remarks
  * Each version must be a non-negative safe integer.
- * Library identifiers and version values are persisted in the document as part of its stored schema.
+ * The document stores the library identifiers and versions as part of its stored schema.
  *
  * @alpha
  */
@@ -454,7 +454,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	readonly rootFieldSchema: TreeFieldStoredSchema;
 
 	/**
-	 * Application-defined versions associated with this schema.
+	 * application-defined versions for this schema
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
 }
