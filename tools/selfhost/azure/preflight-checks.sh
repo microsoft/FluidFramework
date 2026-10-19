@@ -4,17 +4,48 @@
 
 # Read-only provider checks, sourced by preflight-check.sh.
 
+check_aks_capacity() {
+  local skus vm_family vcpus_per_node required_vcpus current_val limit_val available_vcpus
+  note "Querying VM SKU information once for quota and zone checks"
+  if ! skus="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
+      --resource-type virtualMachines --all --subscription "$SUB" -o json)"; then
+    fail "could not query VM SKU information for $AKS_NODE_VM_SIZE in $AKS_LOC"
+    return
+  fi
+  if ! jq -e 'type == "array" and all(.[]; type == "object")' <<<"$skus" >/dev/null; then
+    fail "could not parse VM SKU information for $AKS_NODE_VM_SIZE in $AKS_LOC"
+    return
+  fi
+  vm_family="$(jq -r --arg size "$AKS_NODE_VM_SIZE" '[.[] | select(.name == $size)][0].family // empty' <<<"$skus")"
+  vcpus_per_node="$(jq -r --arg size "$AKS_NODE_VM_SIZE" '
+    [.[] | select(.name == $size)][0] | [.capabilities[]? | select(.name == "vCPUs")][0].value // empty
+  ' <<<"$skus")"
+  if [[ -z "$vm_family" || ! "$vcpus_per_node" =~ ^[1-9][0-9]*$ ]]; then
+    note "could not resolve VM size '$AKS_NODE_VM_SIZE' in $AKS_LOC -- verify it's a valid, available SKU there"
+  else
+    required_vcpus=$(( vcpus_per_node * (AKS_NODE_MIN_COUNT + 1) ))
+    read -r current_val limit_val <<<"$(az vm list-usage -l "$AKS_LOC" \
+      --query "[?name.value=='$vm_family'].[currentValue, limit]" -o tsv 2>/dev/null)"
+    if [[ -z "$limit_val" ]]; then
+      note "could not read quota for family '$vm_family' in $AKS_LOC"
+    else
+      available_vcpus=$(( limit_val - current_val ))
+      if [[ $available_vcpus -ge $required_vcpus ]]; then
+        ok "quota OK: $vm_family has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool)"
+      else
+        fail "quota SHORTFALL: $vm_family only has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool) -- request a quota increase or pick a smaller VM size/region"
+      fi
+    fi
+  fi
+  check_aks_zones "$skus"
+}
+
 check_aks_zones() {
   if [[ -z "$AKS_ZONES" ]]; then
     note "aks.availabilityZones is empty -- creating a non-zonal pool"
     return
   fi
-  local skus zones missing="" z
-  if ! skus="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
-      --resource-type virtualMachines --all --subscription "$SUB" -o json)"; then
-    fail "could not query zone availability for $AKS_NODE_VM_SIZE in $AKS_LOC"
-    return
-  fi
+  local skus="$1" zones missing="" z
   if ! zones="$(jq -r --arg size "$AKS_NODE_VM_SIZE" --arg loc "$AKS_LOC" '
     def in_region:
       (.restrictionInfo.locations // .values // []) as $locations |

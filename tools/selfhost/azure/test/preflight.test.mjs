@@ -14,6 +14,8 @@ const checks = path.resolve(import.meta.dirname, "../preflight-checks.sh");
 const sku = (zones, restrictions = []) => [
 	{
 		name: "Standard_D8as_v5",
+		family: "standardDASv5Family",
+		capabilities: [{ name: "vCPUs", value: "8" }],
 		locationInfo: [{ location: "eastus2", zones }],
 		restrictions,
 	},
@@ -37,6 +39,7 @@ az() {
   echo "$*" >> "$PREFLIGHT_TEMP_DIR/calls"
   case "$1 $2" in
     "vm list-skus") printf '%s' "$SKUS"; return "\${SKU_EXIT:-0}" ;;
+    "vm list-usage") printf '%s' "\${USAGE:-0 64}"; return 0 ;;
     "redisenterprise list") printf '%s' "\${CACHES:-[]}"; return "\${CACHES_EXIT:-0}" ;;
     "group exists") printf '%s' "\${GROUP_EXISTS:-true}"; return "\${GROUP_EXIT:-0}" ;;
     "deployment group")
@@ -66,6 +69,7 @@ exit "$FAILURES"
 				AKS_LOC: "eastus2",
 				AKS_NODE_VM_SIZE: "Standard_D8as_v5",
 				AKS_ZONES: "1 2 3",
+				AKS_NODE_MIN_COUNT: "3",
 				SKUS: JSON.stringify(sku(["1", "2", "3"])),
 				SUB: "test-subscription",
 				RG: "test-group",
@@ -86,8 +90,31 @@ exit "$FAILURES"
 	};
 }
 
+test("AKS reuses exactly one SKU request for VM family, vCPUs, and zones", (t) => {
+	const result = run(t, "check_aks_capacity");
+	assert.equal(result.status, 0, result.stdout + result.stderr);
+	assert.equal(result.calls.match(/^vm list-skus /gm)?.length, 1);
+	assert.match(
+		result.calls,
+		/--resource-type virtualMachines --all --subscription test-subscription/,
+	);
+	assert.match(result.calls, /vm list-usage .*standardDASv5Family/);
+	assert.match(result.stdout, /need 32 vCPUs/);
+	assert.match(result.stdout, /supports all requested zones/);
+	const script = fs.readFileSync(
+		path.resolve(import.meta.dirname, "../preflight-check.sh"),
+		"utf8",
+	);
+	assert.match(script, /check_aks_capacity/);
+	const aksSection = script.slice(
+		script.indexOf('banner "AKS node pool vCPU quota'),
+		script.indexOf('banner "Cosmos DB region availability'),
+	);
+	assert.doesNotMatch(aksSection, /az vm list-skus/);
+});
+
 test("AKS requested zones are checked against subscription restrictions", (t) => {
-	assert.equal(run(t, "check_aks_zones").status, 0);
+	assert.equal(run(t, "check_aks_capacity").status, 0);
 	for (const skus of [
 		sku([]),
 		[],
@@ -97,7 +124,7 @@ test("AKS requested zones are checked against subscription restrictions", (t) =>
 		),
 		sku(["1", "2", "3"], [{ type: "Location", values: ["eastus2"] }]),
 	]) {
-		const result = run(t, "check_aks_zones", { SKUS: JSON.stringify(skus) });
+		const result = run(t, "check_aks_capacity", { SKUS: JSON.stringify(skus) });
 		assert.equal(result.status, 1, result.stdout);
 		assert.match(result.stdout, /does not support requested zone/);
 		assert.match(result.calls, /--all/);
@@ -105,7 +132,7 @@ test("AKS requested zones are checked against subscription restrictions", (t) =>
 });
 
 test("AKS ignores restrictions for a different region", (t) => {
-	const result = run(t, "check_aks_zones", {
+	const result = run(t, "check_aks_capacity", {
 		SKUS: JSON.stringify(
 			sku(
 				["1", "2", "3"],
@@ -117,11 +144,29 @@ test("AKS ignores restrictions for a different region", (t) => {
 });
 
 test("AKS query and malformed response failures cannot pass zone validation", (t) => {
-	for (const env of [{ SKU_EXIT: "1" }, { SKUS: "not-json" }]) {
-		const result = run(t, "check_aks_zones", env);
+	for (const env of [{ SKU_EXIT: "1" }, { SKUS: "not-json" }, { SKUS: "{}" }]) {
+		const result = run(t, "check_aks_capacity", env);
 		assert.equal(result.status, 1);
 		assert.match(result.stdout, /could not (query|parse)/);
+		assert.equal(result.calls.match(/^vm list-skus /gm)?.length, 1);
+		assert.doesNotMatch(result.stdout, /quota OK|supports all requested zones/);
 	}
+});
+
+test("AKS reports quota shortfalls and still checks zones using the same SKU response", (t) => {
+	const result = run(t, "check_aks_capacity", { USAGE: "40 64" });
+	assert.equal(result.status, 1, result.stdout + result.stderr);
+	assert.match(result.stdout, /quota SHORTFALL.*need 32 vCPUs/);
+	assert.match(result.stdout, /supports all requested zones/);
+	assert.equal(result.calls.match(/^vm list-skus /gm)?.length, 1);
+});
+
+test("non-zonal AKS pools still use the shared SKU request for quota", (t) => {
+	const result = run(t, "check_aks_capacity", { AKS_ZONES: "" });
+	assert.equal(result.status, 0, result.stdout + result.stderr);
+	assert.match(result.stdout, /quota OK/);
+	assert.match(result.stdout, /non-zonal/);
+	assert.equal(result.calls.match(/^vm list-skus /gm)?.length, 1);
 });
 
 test("explicit non-zonal pools do not require a SKU query", (t) => {

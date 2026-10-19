@@ -305,29 +305,7 @@ banner "AKS node pool vCPU quota ($AKS_LOC, $AKS_NODE_VM_SIZE x $AKS_NODE_MIN_CO
 if az aks show -g "$RG" -n "$AKS" >/dev/null 2>&1; then
   ok "AKS cluster '$AKS' already exists in target RG $RG -- deploy.sh will reuse it (skipping quota check)"
 else
-  vm_family="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
-    --query "[?name=='$AKS_NODE_VM_SIZE'].family | [0]" -o tsv 2>/dev/null)"
-  vcpus_per_node="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
-    --query "[?name=='$AKS_NODE_VM_SIZE'].capabilities[] | [?name=='vCPUs'].value | [0]" -o tsv 2>/dev/null)"
-  if [[ -z "$vm_family" || -z "$vcpus_per_node" ]]; then
-    note "could not resolve VM size '$AKS_NODE_VM_SIZE' in $AKS_LOC -- verify it's a valid, available SKU there"
-  else
-    required_vcpus=$(( vcpus_per_node * (AKS_NODE_MIN_COUNT + 1) ))
-    read -r current_val limit_val <<<"$(az vm list-usage -l "$AKS_LOC" \
-      --query "[?name.value=='$vm_family'].[currentValue, limit]" -o tsv 2>/dev/null)"
-    if [[ -z "$limit_val" ]]; then
-      note "could not read quota for family '$vm_family' in $AKS_LOC"
-    else
-      available_vcpus=$(( limit_val - current_val ))
-      if [[ $available_vcpus -ge $required_vcpus ]]; then
-        ok "quota OK: $vm_family has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool)"
-      else
-        fail "quota SHORTFALL: $vm_family only has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool) -- request a quota increase or pick a smaller VM size/region"
-      fi
-    fi
-  fi
-
-  check_aks_zones
+  check_aks_capacity
 fi
 
 # ---------------------------------------------------------------------------
