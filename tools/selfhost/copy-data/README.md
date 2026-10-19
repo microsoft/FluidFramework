@@ -148,7 +148,7 @@ Use `node copy-data.mjs --help` for all flags.
 
 **Rotate the Azure Fluid Relay key 2 and both self-hosted tenant keys after the documents are copied.**
 
-## Benchmark and service follow-up
+## Benchmark
 
 Run the controlled, no-Azure-write benchmark from this directory:
 
@@ -158,4 +158,3 @@ node document-copy/benchmark.mjs
 
 It compares per-document credentials against tenant-scoped credentials with 1, 2, and 4 workers using fixed fixture delays.
 It is not a prediction of Azure throughput.
-See [implementation results and the bulk API assessment](PERFORMANCE-PLAN.md).
