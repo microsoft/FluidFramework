@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import { Tree, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	SchemaFactoryBeta,
@@ -27,7 +27,7 @@ import {
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
-import { FormattedTextDefault } from "./formattedTextDefault.js";
+import { FormattedTextTest } from "./formattedTextTest.js";
 import { oneFromIterable } from "../../util/index.js";
 
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
@@ -120,21 +120,43 @@ describe("textDomainFormatted", () => {
 		assert.equal(insertedAtom.text?.fullString(), "inside");
 	});
 
-	it("compatibility-default", () => {
+	it("compatibility-test", () => {
 		const currentViewSchema = new TreeViewConfiguration({
-			schema: FormattedTextDefault.Tree,
+			schema: FormattedTextTest.Tree,
 		});
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.114.0", "formattedText-default");
+		testSchemaCompatibilitySnapshots(currentViewSchema, "3.5.0", "formattedText-test");
 	});
 
 	it("@Smoke basic unformatted use", () => {
-		const text = FormattedTextDefault.Tree.fromString("hello");
+		const text = FormattedTextTest.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
 		text.insertAt(5, " world");
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
+	});
+
+	it("moves a range of characters", () => {
+		const text = FormattedTextTest.Tree.fromString("abcdef");
+		text.formatRange(3, 5, { bold: true });
+
+		text.moveRangeToIndex(1, 3, 5);
+		assert.equal(text.fullString(), "adebcf");
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => [
+				atom.content.content,
+				atom.format.bold,
+			]),
+			[
+				["a", false],
+				["d", true],
+				["e", true],
+				["b", false],
+				["c", false],
+				["f", false],
+			],
+		);
 	});
 
 	it("default formatting", () => {
@@ -164,12 +186,10 @@ describe("textDomainFormatted", () => {
 	it("fromString applies the provided format", () => {
 		const format = {
 			bold: true,
-			italic: true,
-			underline: true,
 			size: 24,
 			font: "Times New Roman",
 		};
-		const text = FormattedTextDefault.Tree.fromString("ab", format);
+		const text = FormattedTextTest.Tree.fromString("ab", format);
 
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => ({ ...atom.format })),
@@ -206,8 +226,245 @@ describe("textDomainFormatted", () => {
 	});
 
 	describe("formatRange", () => {
+		for (const kind of ["object", "record", "map"] as const) {
+			describeHydration(`reusing ${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.reuse.${kind}`);
+				/**
+				 * A node-valued formatting property, rather than a leaf, so copying it requires cloning a subtree.
+				 * Its mutable color also lets the test detect aliases between the source and destination atoms.
+				 */
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				/** Exercises the object-field update path with a required child node. */
+				const ObjectFormat = factory.object("ObjectFormat", { detail: Detail });
+				/** Exercises the record-entry update path with node-valued entries. */
+				const RecordFormat = factory.record("RecordFormat", Detail);
+				/** Exercises the map-entry update path, including reading the update through its iterator. */
+				const MapFormat = factory.map("MapFormat", Detail);
+				/** Selects the format kind used by every atom in this test case. */
+				const Format =
+					kind === "object" ? ObjectFormat : kind === "record" ? RecordFormat : MapFormat;
+				/**
+				 * Text with a node-valued default format and no additional atom types.
+				 * The schema allows all three format kinds to share the test setup, but each case uses only the selected kind.
+				 * Explicitly constructing that kind disambiguates the otherwise identical default data.
+				 */
+				class Text extends FormattedText.createSchema(
+					factory,
+					[ObjectFormat, RecordFormat, MapFormat],
+					[],
+					new Format({ detail: new Detail({ color: "red" }) }),
+				) {}
+
+				it("copies an existing atom's node-valued format independently", () => {
+					const text = Text.fromString("abcd");
+					// Hydrate before reading the source format so its Detail is already in the tree when copied.
+					// Hydrating only the destination while supplying a new Detail would not reproduce the bug.
+					// The unhydrated case is a control for copying a child that already has a parent but is not hydrated.
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					const atoms = text.charactersWithFormatting();
+					const originalFormats = atoms.map((atom) => atom.format);
+					// All atoms start with the same color, so value comparisons alone cannot detect a no-op.
+					// Keep the original child identities to verify which subtrees are replaced.
+					const originalDetails = originalFormats.map((format) => {
+						const detail = Tree.is(format, MapFormat) ? format.get("detail") : format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+
+					// Copy the first atom's existing format onto two destinations, leaving the source and last atom untouched.
+					// Clone the hydrated source's children rather than treating them as insertable input to TreeBeta.create.
+					text.formatRange(1, 3, atoms[0].format);
+
+					const details = atoms.map((atom, index) => {
+						// A partial format update must preserve the enclosing format node.
+						assert.equal(atom.format, originalFormats[index]);
+						const detail = Tree.is(atom.format, MapFormat)
+							? atom.format.get("detail")
+							: atom.format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "red", "red", "red"],
+					);
+					assert.equal(new Set(details).size, 4);
+					assert.equal(details[0], originalDetails[0]);
+					assert.equal(details[3], originalDetails[3]);
+					assert.notEqual(details[1], originalDetails[1]);
+					assert.notEqual(details[2], originalDetails[2]);
+
+					// Editing one copy must not affect the source, the other copy, or the atom outside the range.
+					details[1].color = "blue";
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "blue", "red", "red"],
+					);
+				});
+
+				it("rejects values not allowed by the destination schema", () => {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					assert.throws(
+						() =>
+							// @ts-expect-error Testing invalid input.
+							text.formatRange(1, 3, { detail: 42 }),
+						validateUsageError(/incompatible with all of the types allowed by the schema/),
+					);
+				});
+
+				if (kind === "object") {
+					it("rejects unknown object fields", () => {
+						const text = Text.fromString("abcd");
+						if (hydrated) {
+							hydrateNode(text);
+						}
+						assert.throws(
+							() => text.formatRange(1, 3, { unknown: new Detail({ color: "red" }) }),
+							validateUsageError("Unknown format key: unknown"),
+						);
+					});
+				}
+			});
+		}
+
+		for (const kind of ["record", "map"] as const) {
+			describeHydration(`${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.${kind}`);
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				const allowedTypes = [SchemaFactory.boolean, SchemaFactory.string, Detail] as const;
+				const RecordFormat = factory.record("RecordFormat", allowedTypes);
+				const MapFormat = factory.map("MapFormat", allowedTypes);
+				const defaultFormat = { bold: false, font: "Arial" };
+				class Text extends FormattedText.createSchema(
+					factory,
+					[RecordFormat, MapFormat],
+					[],
+					kind === "record" ? new RecordFormat(defaultFormat) : new MapFormat(defaultFormat),
+				) {}
+
+				function makeText(): Text {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					return text;
+				}
+
+				it("adds and overwrites entries without changing other formatting", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: true, color: "red" });
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("removes entries with undefined and ignores missing entries", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: undefined, missing: undefined });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ font: "Arial" },
+							{ font: "Arial" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("supports different format schemas in the same range", () => {
+					const text = makeText();
+					text.reformat(1, 2, new RecordFormat({ bold: false, font: "Times" }));
+					text.reformat(2, 3, new MapFormat({ bold: false, font: "Courier" }));
+					text.formatRange(0, 4, { bold: true });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: true, font: "Arial" },
+							{ bold: true, font: "Times" },
+							{ bold: true, font: "Courier" },
+							{ bold: true, font: "Arial" },
+						],
+					);
+				});
+
+				it("clones node values independently for each atom", () => {
+					const text = makeText();
+					const detail = new Detail({ color: "red" });
+					text.formatRange(undefined, undefined, { detail });
+					const copies = text.charactersWithFormatting().map((atom) => {
+						const value = Object.fromEntries(atom.format).detail;
+						assert(value instanceof Detail);
+						assert.notEqual(value, detail);
+						return value;
+					});
+					assert.equal(new Set(copies).size, 4);
+					copies[0].color = "blue";
+					assert.deepEqual(
+						copies.map((copy) => copy.color),
+						["blue", "red", "red", "red"],
+					);
+					assert.equal(detail.color, "red");
+				});
+
+				it("rejects values not allowed by the entry schema", () => {
+					const text = makeText();
+					assert.throws(() =>
+						// @ts-expect-error Testing invalid input.
+						text.formatRange(0, 2, { bold: 42 }),
+					);
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						Array.from({ length: 4 }, () => ({ bold: false, font: "Arial" })),
+					);
+				});
+
+				if (kind === "map") {
+					it("accepts map entries, including deletion", () => {
+						const text = makeText();
+						text.formatRange(1, 3, new Map([["bold", true]]));
+						text.formatRange(2, 3, new Map([["bold", undefined]]));
+						assert.deepEqual(
+							text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+							[
+								{ bold: false, font: "Arial" },
+								{ bold: true, font: "Arial" },
+								{ font: "Arial" },
+								{ bold: false, font: "Arial" },
+							],
+						);
+					});
+
+					it("accepts a map node as the update", () => {
+						const text = makeText();
+						const format = new MapFormat({ bold: true });
+						text.formatRange(1, 3, format);
+						assert.deepEqual(
+							text
+								.charactersWithFormatting()
+								.map((atom) => Object.fromEntries(atom.format).bold),
+							[false, true, true, false],
+						);
+					});
+				}
+			});
+		}
+
 		it("basic use", () => {
-			const text = FormattedTextDefault.Tree.fromString("hello");
+			const text = FormattedTextTest.Tree.fromString("hello");
 			text.formatRange(1, 4, { bold: true });
 			assert.equal(text.fullString(), "hello");
 			assert.deepEqual(
@@ -249,7 +506,7 @@ describe("textDomainFormatted", () => {
 			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
 
@@ -262,25 +519,33 @@ describe("textDomainFormatted", () => {
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
+			);
+		});
+
+		it("throws when a leaf value is provided", () => {
+			const text = UnionFormatText.fromString("a");
+			assert.throws(
+				() => text.formatRange(0, 1, 999),
+				validateUsageError(
+					"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
+				),
 			);
 		});
 	});
 
 	describe("reformat", () => {
 		it("replaces formatting over a range", () => {
-			const text = FormattedTextDefault.Tree.fromString("hello");
+			const text = FormattedTextTest.Tree.fromString("hello");
 			// Apply some formatting to the whole string first.
 			text.formatRange(0, 5, { bold: true });
 			// Reformat a sub-range, replacing all of its formatting.
 			text.reformat(
 				1,
 				4,
-				new FormattedTextDefault.CharacterFormat({
+				new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: true,
-					underline: false,
-					size: 12,
+					size: 24,
 					font: "Arial",
 				}),
 			);
@@ -289,28 +554,26 @@ describe("textDomainFormatted", () => {
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.content.content,
 					atom.format.bold,
-					atom.format.italic,
+					atom.format.size,
 				]),
 				[
-					["h", true, false],
-					["e", false, true],
-					["l", false, true],
-					["l", false, true],
-					["o", true, false],
+					["h", true, 12],
+					["e", false, 24],
+					["l", false, 24],
+					["l", false, 24],
+					["o", true, 12],
 				],
 			);
 		});
 
 		it("applies to the whole text when the range is omitted", () => {
-			const text = FormattedTextDefault.Tree.fromString("abc");
-			text.formatRange(0, 3, { bold: true, italic: true });
+			const text = FormattedTextTest.Tree.fromString("abc");
+			text.formatRange(0, 3, { bold: true, size: 24 });
 			text.reformat(
 				undefined,
 				undefined,
-				new FormattedTextDefault.CharacterFormat({
+				new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: false,
-					underline: false,
 					size: 12,
 					font: "Arial",
 				}),
@@ -318,35 +581,33 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.format.bold,
-					atom.format.italic,
+					atom.format.size,
 				]),
 				[
-					[false, false],
-					[false, false],
-					[false, false],
+					[false, 12],
+					[false, 12],
+					[false, 12],
 				],
 			);
 		});
 
 		it("uses the default format when no format is provided", () => {
-			const text = FormattedTextDefault.Tree.fromString("hello");
-			text.formatRange(0, 5, { bold: true, italic: true });
+			const text = FormattedTextTest.Tree.fromString("hello");
+			text.formatRange(0, 5, { bold: true, size: 24 });
 			text.reformat(1, 4);
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.content.content,
 					atom.format.bold,
-					atom.format.italic,
-					atom.format.underline,
 					atom.format.size,
 					atom.format.font,
 				]),
 				[
-					["h", true, true, false, 12, "Arial"],
-					["e", false, false, false, 12, "Arial"],
-					["l", false, false, false, 12, "Arial"],
-					["l", false, false, false, 12, "Arial"],
-					["o", true, true, false, 12, "Arial"],
+					["h", true, 24, "Arial"],
+					["e", false, 12, "Arial"],
+					["l", false, 12, "Arial"],
+					["l", false, 12, "Arial"],
+					["o", true, 24, "Arial"],
 				],
 			);
 		});
@@ -368,15 +629,13 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("insertWithFormattingAt", () => {
-		const text = FormattedTextDefault.Tree.fromString("ab");
+		const text = FormattedTextTest.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
 			{
 				content: FormattedText.StringTextAtom.fromCharacter("c"),
 				format: {
 					bold: false,
-					italic: true,
-					underline: false,
-					size: 12,
+					size: 24,
 					font: "Arial",
 				},
 			},
@@ -385,29 +644,27 @@ describe("textDomainFormatted", () => {
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
-				atom.format.italic,
+				atom.format.size,
 			]),
 			[
-				["a", false],
-				["c", true],
-				["b", false],
+				["a", 12],
+				["c", 24],
+				["b", 12],
 			],
 		);
 	});
 
 	it("insertAt applies the provided format", () => {
-		const text = FormattedTextDefault.Tree.fromString("ab");
+		const text = FormattedTextTest.Tree.fromString("ab");
 		text.insertAt(2, "cd", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
-				atom.format.underline,
+				atom.format.bold,
 			]),
 			[
 				["a", false],
@@ -419,20 +676,18 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("insertAt accepts text atoms", () => {
-		const text = FormattedTextDefault.Tree.fromString("ab");
+		const text = FormattedTextTest.Tree.fromString("ab");
 		text.insertAt(
 			1,
 			[
-				new FormattedTextDefault.StringLineAtom({
-					tag: FormattedTextDefault.LineTag("h1"),
+				new FormattedTextTest.StringLineAtom({
+					tag: FormattedTextTest.LineTag("h1"),
 					indent: 0,
 				}),
 				FormattedText.StringTextAtom.fromCharacter("c"),
 			],
 			{
 				bold: true,
-				italic: false,
-				underline: false,
 				size: 12,
 				font: "Arial",
 			},
@@ -446,19 +701,15 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("getUniformRun", () => {
-		const text = FormattedTextDefault.Tree.fromString("abc");
+		const text = FormattedTextTest.Tree.fromString("abc");
 		text.insertAt(3, "de", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		text.insertAt(5, "f", {
-			bold: false,
-			italic: true,
-			underline: true,
-			size: 12,
+			bold: true,
+			size: 24,
 			font: "Arial",
 		});
 		assert.equal(text.getUniformRun(0, 5), 3);
@@ -485,19 +736,15 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("getString with getUniformRun", () => {
-		const text = FormattedTextDefault.Tree.fromString("abc");
+		const text = FormattedTextTest.Tree.fromString("abc");
 		text.insertAt(3, "de", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		text.insertAt(5, "f", {
-			bold: false,
-			italic: true,
-			underline: true,
-			size: 12,
+			bold: true,
+			size: 24,
 			font: "Arial",
 		});
 		let index = 0;
@@ -512,18 +759,16 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.getUniformRun(0), 3);
 	});
 	it("getString with getUniformRun on line atoms", () => {
-		const text = FormattedTextDefault.Tree.fromString("abcde");
+		const text = FormattedTextTest.Tree.fromString("abcde");
 
 		text.insertWithFormattingAt(3, [
 			{
-				content: new FormattedTextDefault.StringLineAtom({
-					tag: FormattedTextDefault.LineTag("h5"),
+				content: new FormattedTextTest.StringLineAtom({
+					tag: FormattedTextTest.LineTag("h2"),
 					indent: 0,
 				}),
-				format: new FormattedTextDefault.CharacterFormat({
+				format: new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: false,
-					underline: false,
 					size: 12,
 					font: "Arial",
 				}),
@@ -543,7 +788,7 @@ describe("textDomainFormatted", () => {
 
 	describeHydration("onContentChanged", (_init, hydrated) => {
 		it("creates an insertion anchor that tracks edits", () => {
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -561,7 +806,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with insert ops when characters are added", () => {
-			const text = FormattedTextDefault.Tree.fromString("ab");
+			const text = FormattedTextTest.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -580,7 +825,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for insert at start", () => {
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -598,7 +843,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for insert at end", () => {
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -616,7 +861,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with remove ops when characters are deleted", () => {
-			const text = FormattedTextDefault.Tree.fromString("abcde");
+			const text = FormattedTextTest.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -635,7 +880,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for remove all", () => {
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -650,7 +895,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with insert and remove ops for a replace", () => {
-			const text = FormattedTextDefault.Tree.fromString("abcde");
+			const text = FormattedTextTest.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -676,7 +921,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with formattingChanged on retain when formatting changes", () => {
-			const text = FormattedTextDefault.Tree.fromString("abcde");
+			const text = FormattedTextTest.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -708,7 +953,7 @@ describe("textDomainFormatted", () => {
 		// the unhydrated event path), so we only assert the hydrated behavior here.
 		it("does not fire for an empty insert (hydrated)", () => {
 			if (!hydrated) return;
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onContentChanged(() => {
@@ -720,7 +965,7 @@ describe("textDomainFormatted", () => {
 
 		it("does not fire for an empty remove (hydrated)", () => {
 			if (!hydrated) return;
-			const text = FormattedTextDefault.Tree.fromString("abc");
+			const text = FormattedTextTest.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onContentChanged(() => {
@@ -731,7 +976,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("cleanup function unsubscribes the callback", () => {
-			const text = FormattedTextDefault.Tree.fromString("ab");
+			const text = FormattedTextTest.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -752,8 +997,8 @@ describe("textDomainFormatted", () => {
 	describeHydration("observation tracking", (init, hydrated) => {
 		// Text has debug asserts which can add observations, so ensure tracking works with and without production build emulation.
 		suitesWithAndWithoutProduction((emulateProduction) => {
-			function setupObservations(): [FormattedTextDefault.Tree, string[]] {
-				const text = FormattedTextDefault.Tree.fromString("hello");
+			function setupObservations(): [FormattedTextTest.Tree, string[]] {
+				const text = FormattedTextTest.Tree.fromString("hello");
 				if (hydrated) {
 					hydrateNode(text);
 				}

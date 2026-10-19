@@ -13,7 +13,8 @@ import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
 import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
-import { TreeViewConfigurationAlpha, validateSchemaVersion } from "./configuration.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
+import { SchemaIdentityInternal } from "./schemaIdentity.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -78,12 +79,12 @@ export function checkCompatibility(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
-		schemaVersion: clientViewConfiguration.schemaVersion,
+		schemaIdentity: clientViewConfiguration.schemaIdentity,
 	});
 	const stored = toInitialSchema(
 		documentViewConfiguration.schema,
 		undefined,
-		documentViewConfiguration.schemaVersion,
+		documentViewConfiguration.schemaIdentity?.schemaVersion,
 	);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
@@ -121,12 +122,12 @@ export function checkCompatibility(
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
-	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion">,
+	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaIdentity">,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
 	return encodeSchemaCompatibilitySnapshot({
 		...treeSchema,
-		schemaVersion: validateSchemaVersion(config.schemaVersion),
+		schemaVersion: config.schemaIdentity?.schemaVersion,
 	});
 }
 
@@ -167,7 +168,11 @@ export function importCompatibilitySchemaSnapshot(
 	// Generated schemas can use the default configuration checks.
 	return new TreeViewConfigurationAlpha({
 		schema: viewSchema.root,
-		schemaVersion: simpleSchema.schemaVersion,
+		// Snapshots restore versions, not runtime hash checks or telemetry.
+		schemaIdentity:
+			simpleSchema.schemaVersion === undefined
+				? undefined
+				: new SchemaIdentityInternal(undefined, undefined, simpleSchema.schemaVersion),
 	});
 }
 

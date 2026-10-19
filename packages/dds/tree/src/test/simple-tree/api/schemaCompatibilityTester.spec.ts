@@ -24,6 +24,7 @@ import {
 	type StagedUpgradeStatus,
 	type ValidateRecursiveSchema,
 	schemaStatics,
+	identifySchema,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
@@ -384,7 +385,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
-						schemaVersion: { [testLibraryId]: 2 },
+						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
 					});
 					const { discrepancies, enabledUpgrades, ...compatibility } =
 						checkSchemaCompatibility(view, stored);
@@ -403,7 +404,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
-						schemaVersion: { [testLibraryId]: 1 },
+						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
 					});
 					assert.equal(checkSchemaCompatibility(view, stored).canUpgrade, false);
 				});
@@ -414,7 +415,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.string,
-						schemaVersion: { [testLibraryId]: 2 },
+						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
 					});
 
 					assert.equal(checkSchemaCompatibility(view, stored).isEquivalent, false);

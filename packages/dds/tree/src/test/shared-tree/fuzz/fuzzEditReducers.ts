@@ -85,7 +85,13 @@ const syncFuzzReducer = combineReducers<
 	},
 	revertTo: (state, { revision }) => {
 		const view = viewFromState(state).checkout;
-		view.revertTo(revision);
+		let commit = view.branchHistory.getHead();
+		while (commit !== undefined && commit.revision !== revision) {
+			commit = commit.getParent();
+		}
+		assert(commit !== undefined, "Revision to revert to is not in this branch's history.");
+		assert(commit.revertTo !== undefined, "Revision to revert to is not revertible.");
+		commit.revertTo();
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);

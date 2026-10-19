@@ -36,7 +36,7 @@ describe("Menu Accessibility Check", () => {
 			},
 		};
 	});
-	const MenuWrapper: FC = () => {
+	const MenuWrapper: FC<{ telemetry?: boolean }> = ({ telemetry = true }) => {
 		const [menuSelection, setMenuSelection] = useState<MenuSelection>({
 			type: "homeMenuSelection",
 		});
@@ -51,7 +51,7 @@ describe("Menu Accessibility Check", () => {
 					currentSelection={menuSelection}
 					setSelection={setMenuSelection}
 					containers={containers}
-					supportedFeatures={supportedFeatures}
+					supportedFeatures={{ ...supportedFeatures, telemetry }}
 					onRemoveContainer={mockRemoveContainer}
 				/>
 			</MessageRelayContext.Provider>
@@ -61,6 +61,66 @@ describe("Menu Accessibility Check", () => {
 	it("Menu is accessible", async () => {
 		const { container } = render(<MenuWrapper />);
 		await assertNoAccessibilityViolations(container);
+	});
+
+	it("Associates the 'Events' button with its 'Telemetry' section heading", () => {
+		const { rerender } = render(<MenuWrapper />);
+
+		const telemetryHeading = screen.getByText("Telemetry");
+		const headingId = telemetryHeading.id;
+		const eventsButton = screen.getByRole("button", { name: "Events" });
+		const group = eventsButton.closest("[role='group']");
+
+		assert.ok(group);
+		assert.equal(group.getAttribute("aria-labelledby"), telemetryHeading.id);
+		assert.notEqual(telemetryHeading.id, "");
+		assert.equal(group, screen.getByRole("group", { name: "Telemetry" }));
+		assert.deepEqual(screen.getAllByRole("group"), [group]);
+
+		rerender(<MenuWrapper />);
+		const rerenderedGroup = screen.getByRole("group", { name: "Telemetry" });
+		assert.equal(screen.getByText("Telemetry").id, headingId);
+		assert.equal(rerenderedGroup.getAttribute("aria-labelledby"), headingId);
+		assert.equal(
+			screen.getByRole("button", { name: "Events" }).closest("[role='group']"),
+			rerenderedGroup,
+		);
+	});
+
+	it("Uses a distinct Telemetry heading ID for each menu", () => {
+		const firstMenu = render(<MenuWrapper />);
+		const secondMenu = render(<MenuWrapper />);
+
+		for (const menu of [firstMenu, secondMenu]) {
+			const menuQueries = within(menu.container);
+			const heading = menuQueries.getByText("Telemetry");
+			const group = menuQueries.getByRole("group", { name: "Telemetry" });
+			const eventsButton = within(group).getByRole("button", { name: "Events" });
+
+			assert.notEqual(heading.id, "");
+			assert.equal(group.getAttribute("aria-labelledby"), heading.id);
+			assert.equal(document.querySelector(`[id="${heading.id}"]`), heading);
+			assert.equal(eventsButton.closest("[role='group']"), group);
+		}
+	});
+
+	it("Exposes the Telemetry group only when telemetry is supported", () => {
+		const { rerender } = render(<MenuWrapper telemetry={false} />);
+		assert.equal(screen.queryByText("Telemetry"), null);
+		assert.equal(screen.queryByRole("button", { name: "Events" }), null);
+		assert.deepEqual(screen.queryAllByRole("group"), []);
+
+		rerender(<MenuWrapper telemetry={true} />);
+		const group = screen.getByRole("group", { name: "Telemetry" });
+		assert.equal(
+			screen.getByRole("button", { name: "Events" }).closest("[role='group']"),
+			group,
+		);
+
+		rerender(<MenuWrapper telemetry={false} />);
+		assert.equal(screen.queryByText("Telemetry"), null);
+		assert.equal(screen.queryByRole("button", { name: "Events" }), null);
+		assert.deepEqual(screen.queryAllByRole("group"), []);
 	});
 
 	for (const activation of ["click", "Enter", "Space"] as const) {
@@ -203,6 +263,29 @@ describe("Menu Accessibility Check", () => {
 		}
 	});
 
+	for (const name of ["Home", ...containers, "Events", "Op Latency", "Settings"]) {
+		it(`Keeps ${name} selected after keyboard focus moves away`, async () => {
+			render(<MenuWrapper />);
+			const user = userEvent.setup();
+			const item = screen.getByRole("button", { name: new RegExp(`^${name}(?:$| )`) });
+
+			await user.click(item);
+			await user.tab();
+
+			assert.notEqual(document.activeElement, item);
+			assert.deepEqual(screen.getAllByRole("button", { current: "page" }), [item]);
+
+			const nextItem = screen.getByRole("button", {
+				name: name === "Home" ? "Events" : "Home",
+			});
+			nextItem.focus();
+			await user.keyboard("{Enter}");
+
+			assert.equal(item.hasAttribute("aria-current"), false);
+			assert.deepEqual(screen.getAllByRole("button", { current: "page" }), [nextItem]);
+		});
+	}
+
 	it("Can tab/arrow navigate through the Menu", async () => {
 		render(<MenuWrapper />);
 
@@ -241,6 +324,12 @@ describe("Menu Accessibility Check", () => {
 
 		await user.tab();
 		const opLatency = screen.getByRole("button", { name: "Op Latency" });
+		assert.equal(document.activeElement, opLatency);
+
+		await user.tab({ shift: true });
+		assert.equal(document.activeElement, events);
+
+		await user.tab();
 		assert.equal(document.activeElement, opLatency);
 
 		await user.tab();

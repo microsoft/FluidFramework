@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
-import type { GraphCommit, CustomMetadataTree } from "../core/index.js";
+import type { GraphCommit, CustomMetadataTree, RevertToOptionsAlpha } from "../core/index.js";
 import { flattenCustomMetadata } from "../core/index.js";
 import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
 import type {
@@ -39,6 +39,10 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	public constructor(
 		private readonly commit: GraphCommit<SharedTreeChange>,
 		private readonly idCompressor: IIdCompressor,
+		/** If the given commit can be reverted to, returns a function that reverts it; otherwise, returns undefined. */
+		private readonly getRevertTo: (
+			revision: CommitRevision,
+		) => ((options?: RevertToOptionsAlpha) => void) | undefined,
 	) {
 		assert(
 			commit.revision !== "root",
@@ -63,6 +67,10 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		return this.snapshot.customMetadata;
 	}
 
+	public get revertTo(): ((options?: RevertToOptionsAlpha) => void) | undefined {
+		return this.getRevertTo(this.revision);
+	}
+
 	public getParent(): TreeBranchCommitMetadata | undefined {
 		if (this.commit.wasTrimmed) {
 			delete this.parentCache;
@@ -75,7 +83,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 				cached:
 					parent === undefined || parent.wasTrimmed
 						? undefined
-						: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
+						: new LazyTreeBranchCommitMetadata(parent, this.idCompressor, this.getRevertTo),
 			};
 		}
 		return this.parentCache?.cached;
@@ -99,6 +107,9 @@ export class DefaultTreeBranchHistory implements TreeBranchHistory {
 			unknown
 		>,
 		private readonly idCompressor: IIdCompressor,
+		private readonly getRevertTo: (
+			revision: CommitRevision,
+		) => ((options?: RevertToOptionsAlpha) => void) | undefined,
 	) {
 		this.commitCounter = new BranchCommitCounter(branch);
 	}
@@ -116,6 +127,6 @@ export class DefaultTreeBranchHistory implements TreeBranchHistory {
 		if (head.revision === "root") {
 			return undefined;
 		}
-		return new LazyTreeBranchCommitMetadata(head, this.idCompressor);
+		return new LazyTreeBranchCommitMetadata(head, this.idCompressor, this.getRevertTo);
 	}
 }

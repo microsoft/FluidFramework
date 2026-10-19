@@ -35,7 +35,7 @@ import {
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatchV1,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
@@ -57,7 +57,7 @@ export function schemaCompressedEncodeV1(
 	_incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
 ): EncodedFieldBatchV1 {
-	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
+	const encoded: EncodedFieldBatchAnyVersion = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -112,7 +112,7 @@ function schemaCompressedEncode(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchAnyVersion {
 	return compressedEncode(
 		fieldBatch,
 		buildContext(schema, policy, idCompressor, incrementalEncoder, version, isSummary),

@@ -85,12 +85,18 @@ export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
 );
 
 /**
- * Encoded {@link FieldBatch}, which might use V2 features, but might also have been from a V1 encoder.
+ * Encoded {@link FieldBatch} in any supported {@link FieldBatchFormatVersion}.
  * @remarks
- * Type wise, equivalent to V2, as that is a superset of V1.
- * Used instead of just V2 for clarity.
+ * Currently we use the same code-paths to decode all supported versions. To accomplish
+ * that, they accept this type. When adding a new format, if continuing this pattern,
+ * add the batch type to this union. If the format diverges sufficiently that this approach
+ * no longer makes sense, rename this type accordingly, and set up new code paths for
+ * handling the new format.
  */
-export type EncodedFieldBatchV1OrV2 = EncodedFieldBatchV1 | EncodedFieldBatchV2;
+export type EncodedFieldBatchAnyVersion =
+	| EncodedFieldBatchV1
+	| EncodedFieldBatchV2
+	| EncodedFieldBatchVTextExperimental;
 
 /**
  * Encoded data, compatible with both V1 and V2 formats.

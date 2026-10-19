@@ -1,5 +1,9 @@
 # Guidance for FluidFramework maintainers and contributors
 
+## Running tests and benchmarks
+
+For packages using the shared Mocha configuration, see [Running tests](packages/test/mocha-test-setup/README.md#running-tests) for commands, test selection, and performance measurements.
+
 ## Git Hooks (hk)
 
 This repo uses [hk](https://hk.jdx.dev/) to manage git hooks. Hooks are configured in `hk.pkl` at the repo root. Currently, a pre-commit hook runs `biome format` on staged files and auto-stages the formatted results.

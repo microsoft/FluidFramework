@@ -50,7 +50,8 @@ import {
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
 	type EncodedChunkShapeVTextExperimental,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
+	type EncodedFieldBatchVTextExperimental,
 	type EncodedNodeShape,
 	type EncodedSpecializedNodeShape,
 	FieldBatchFormatVersion,
@@ -1222,7 +1223,7 @@ describe("chunkDecoding", () => {
 			//
 			// `f` is part of the vTextExperimental format, so the batch is tagged with that
 			// version to match the on-the-wire contract.
-			const batch = {
+			const batch: EncodedFieldBatchVTextExperimental = {
 				version: FieldBatchFormatVersion.vTextExperimental,
 				identifiers: [],
 				shapes: [
@@ -1232,7 +1233,7 @@ describe("chunkDecoding", () => {
 					{ f: { base: 0, fields: [["bold", 2]] } },
 				],
 				data: [[3]],
-			} as unknown as EncodedFieldBatchV1OrV2;
+			};
 
 			const result = decode(batch, idDecodingContext);
 
@@ -1629,7 +1630,7 @@ describe("chunkDecoding", () => {
 		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
 
 		function createMockIncrementalDecoder(
-			chunksMap: Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>,
+			chunksMap: Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>,
 		): IncrementalDecoder {
 			return {
 				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
@@ -1643,7 +1644,7 @@ describe("chunkDecoding", () => {
 		function createMockEncodedIdentifierBatch(
 			nodeIdentifier: TreeNodeSchemaIdentifier,
 			value: TreeValue,
-		): EncodedFieldBatchV1OrV2 {
+		): EncodedFieldBatchAnyVersion {
 			const shape: EncodedNodeShape = {
 				type: nodeIdentifier,
 				value: SpecialField.Identifier,
@@ -1663,13 +1664,13 @@ describe("chunkDecoding", () => {
 
 		it("empty", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
-			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+			const emptyBatch: EncodedFieldBatchAnyVersion = {
 				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			};
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
@@ -1685,11 +1686,11 @@ describe("chunkDecoding", () => {
 			const referenceId = brand<ChunkReferenceId>(1);
 			const compressedId = testIdCompressor.generateCompressedId();
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
-			const batch: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+			const batch: EncodedFieldBatchAnyVersion = createMockEncodedIdentifierBatch(
 				nodeIdentifier,
 				compressedId,
 			);
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 
 			chunksMap.set(referenceId, batch);
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
@@ -1711,7 +1712,7 @@ describe("chunkDecoding", () => {
 			const referenceId2 = brand<ChunkReferenceId>(2);
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
 			// The encoded incremental chunk contains a nested array with another incremental chunk.
-			const batch1: EncodedFieldBatchV1OrV2 = {
+			const batch1: EncodedFieldBatchAnyVersion = {
 				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
@@ -1726,12 +1727,12 @@ describe("chunkDecoding", () => {
 			};
 
 			const compressedId2 = testIdCompressor.generateCompressedId();
-			const batch2: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+			const batch2: EncodedFieldBatchAnyVersion = createMockEncodedIdentifierBatch(
 				nodeIdentifier,
 				compressedId2,
 			);
 
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId1, batch1);
 			chunksMap.set(referenceId2, batch2);
 
@@ -1770,13 +1771,13 @@ describe("chunkDecoding", () => {
 
 		it("fails for unsupported FieldBatchFormatVersion.v1", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
-			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+			const emptyBatch: EncodedFieldBatchAnyVersion = {
 				version: brand(FieldBatchFormatVersion.v1),
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			};
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);

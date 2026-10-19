@@ -6,7 +6,9 @@
 Add application-defined schema versions to SharedTree
 
 SharedTree supports optional application-defined schema versions.
-Set versions with [`TreeViewConfigurationAlpha`][view-configuration].
+Pass versions to [`identifySchema`][identify-schema].
+Set the returned [`SchemaIdentity`][schema-identity] on
+[`TreeViewConfigurationAlpha`][view-configuration].
 Use a [`SchemaVersionMap`][version-map] to give each library or component its own version.
 Each entry has a [`LibraryId`][library-id] key and a non-negative safe integer value.
 Use a globally unique library identifier, such as a package name or a domain-based name.
@@ -34,6 +36,7 @@ Increase the application version to change a required string field to an identif
 ```typescript
 import {
 	configuredSharedTreeAlpha,
+	identifySchema,
 	type LibraryId,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
@@ -48,11 +51,11 @@ const SharedTree = configuredSharedTreeAlpha({
 
 const oldConfig = new TreeViewConfigurationAlpha({
 	schema: schemaFactory.string,
-	schemaVersion: { [libraryId]: 0 },
+	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 0 } }),
 });
 const newConfig = new TreeViewConfigurationAlpha({
 	schema: schemaFactory.identifier,
-	schemaVersion: { [libraryId]: 1 },
+	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
 });
 ```
 
@@ -69,3 +72,5 @@ Without a version map, snapshots continue to use v1.
 [tree-view]: https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface
 [tree]: https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface
 [snapshot-export]: https://fluidframework.com/docs/api/fluid-framework/exportcompatibilityschemasnapshot-function
+[identify-schema]: https://fluidframework.com/docs/api/fluid-framework/identifyschema-function
+[schema-identity]: https://fluidframework.com/docs/api/fluid-framework/schemaidentity-interface

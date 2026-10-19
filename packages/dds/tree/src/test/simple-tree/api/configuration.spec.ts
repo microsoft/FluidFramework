@@ -21,6 +21,7 @@ import {
 import {
 	type TreeNodeSchema,
 	type LibraryId,
+	identifySchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
@@ -277,7 +278,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaVersion: { [testLibraryId]: -1 },
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: -1 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -285,7 +286,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaVersion: { [testLibraryId]: 1.5 },
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1.5 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -294,10 +295,30 @@ describe("simple-tree configuration", () => {
 	it("accepts zero as a schema version", () => {
 		const config = new TreeViewConfigurationAlpha({
 			schema: [],
-			schemaVersion: { [testLibraryId]: 0 },
+			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 0 } }),
 		});
 
 		assert.equal(config.schemaVersion?.[testLibraryId], 0);
+		assert.equal(config.schemaIdentity?.schemaVersion?.[testLibraryId], 0);
+	});
+
+	it("copies and freezes application versions on the schema identity", () => {
+		const versions = { [testLibraryId]: 1 };
+		const identity = identifySchema({ schemaVersion: versions });
+		versions[testLibraryId] = 2;
+
+		assert.deepEqual(identity.schemaVersion, { test: 1 });
+		assert(Object.isFrozen(identity));
+		assert(Object.isFrozen(identity.schemaVersion));
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+	});
+
+	it("preserves identities without application versions", () => {
+		const identity = identifySchema();
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(identity.schemaVersion, undefined);
+		assert.equal(config.schemaVersion, undefined);
 	});
 
 	it("rejects positive integers larger than Number.MAX_SAFE_INTEGER", () => {
@@ -306,7 +327,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaVersion: { [testLibraryId]: version },
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: version } }),
 				}),
 			/non-negative safe integer/,
 		);

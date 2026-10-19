@@ -57,7 +57,7 @@ import {
 	type EncodedChunkShapeV1,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -122,11 +122,11 @@ function makeFieldBatchCodec(
 				encode: (
 					data: FieldBatch,
 					context: FieldBatchEncodingContext,
-				): EncodedFieldBatchV1OrV2 => {
+				): EncodedFieldBatchAnyVersion => {
 					return compressedEncode(data, encoderContext);
 				},
 				decode: (
-					data: EncodedFieldBatchV1OrV2,
+					data: EncodedFieldBatchAnyVersion,
 					fieldBatchContext: FieldBatchDecodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.

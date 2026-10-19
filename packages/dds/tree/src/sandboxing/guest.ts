@@ -86,7 +86,10 @@ export class GuestImplementation implements Sandboxing.Guest {
 		blobResponse: (message) => {
 			this.getSynchronizationForMessage("blob response");
 			const blob = getTransportBuffer(message.blob);
-			assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+			assert(
+				blob !== undefined,
+				0xd6b /* Validated blob placeholder must have a registered buffer */,
+			);
 			this.codec.receiveBlobResponse(message.requestId, blob);
 		},
 		blobResponseError: (message) => {

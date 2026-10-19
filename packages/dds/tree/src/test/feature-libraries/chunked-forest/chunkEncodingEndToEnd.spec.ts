@@ -41,7 +41,7 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
-	EncodedFieldBatchV1OrV2,
+	EncodedFieldBatchAnyVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import {
@@ -218,7 +218,7 @@ describe("End to end chunked encoding", () => {
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
-				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				(content as FormatCommon).fields as EncodedFieldBatchAnyVersion,
 				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
@@ -254,7 +254,7 @@ describe("End to end chunked encoding", () => {
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
-				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				(content as FormatCommon).fields as EncodedFieldBatchAnyVersion,
 				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,

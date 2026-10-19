@@ -32,23 +32,20 @@
             "type": "object",
             "properties": {
               "a": {
-                "multipleOf": 1,
                 "minimum": 0,
-                "type": "number"
+                "type": "integer"
               },
               "b": {
                 "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "length": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   },
                   "shape": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -66,9 +63,8 @@
                         "type": "string"
                       },
                       {
-                        "multipleOf": 1,
                         "minimum": 0,
-                        "type": "number"
+                        "type": "integer"
                       }
                     ]
                   },
@@ -100,16 +96,14 @@
                               "type": "string"
                             },
                             {
-                              "multipleOf": 1,
                               "minimum": 0,
-                              "type": "number"
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "multipleOf": 1,
                           "minimum": 0,
-                          "type": "number"
+                          "type": "integer"
                         }
                       ],
                       "additionalItems": false,
@@ -118,9 +112,8 @@
                     }
                   },
                   "extraFields": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   }
                 }
               },
@@ -176,23 +169,20 @@
             "type": "object",
             "properties": {
               "a": {
-                "multipleOf": 1,
                 "minimum": 0,
-                "type": "number"
+                "type": "integer"
               },
               "b": {
                 "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "length": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   },
                   "shape": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -210,9 +200,8 @@
                         "type": "string"
                       },
                       {
-                        "multipleOf": 1,
                         "minimum": 0,
-                        "type": "number"
+                        "type": "integer"
                       }
                     ]
                   },
@@ -244,16 +233,14 @@
                               "type": "string"
                             },
                             {
-                              "multipleOf": 1,
                               "minimum": 0,
-                              "type": "number"
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "multipleOf": 1,
                           "minimum": 0,
-                          "type": "number"
+                          "type": "integer"
                         }
                       ],
                       "additionalItems": false,
@@ -262,9 +249,8 @@
                     }
                   },
                   "extraFields": {
-                    "multipleOf": 1,
                     "minimum": 0,
-                    "type": "number"
+                    "type": "integer"
                   }
                 }
               },

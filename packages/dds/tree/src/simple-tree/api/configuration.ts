@@ -35,6 +35,8 @@ import {
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
+import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+
 /**
  * Options when constructing a tree view.
  * @public
@@ -186,53 +188,13 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * application-defined versions for the view schema
+	 * schema identity for runtime hashing and application-defined versions
 	 *
 	 * @remarks
-	 * Each value must be a non-negative safe integer.
-	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store these versions.
-	 * Stored versions cannot decrease, and library identifiers cannot be removed.
-	 *
-	 * By default, upgrades must keep all existing documents valid and cannot be reversed.
-	 * Stored versions let you make other changes that keep all existing documents valid.
-	 * For these changes, increase at least one version.
-	 *
-	 * Schema versions use an experimental stored schema format.
-	 * Until the format is stable, all clients that load or collaborate on the document
-	 * must use the same Fluid Framework version.
-	 *
-	 * @example
-	 * Required string fields and identifier fields accept the same stored values.
-	 * Increase the application version to change a required string field to an identifier field.
-	 * Older applications cannot reverse this change because stored versions cannot decrease.
-	 *
-	 * Configure {@link configuredSharedTreeAlpha} to write the experimental schema format:
-	 *
-	 * ```typescript
-	 * const SharedTree = configuredSharedTreeAlpha({
-	 * 	allowPossiblyIncompatibleWriteVersionOverrides: true,
-	 * 	writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
-	 * });
-	 * ```
-	 *
-	 * Use {@link LibraryId} to give your library a stable identifier.
-	 * Set the version in {@link TreeViewConfigurationAlpha}:
-	 *
-	 * ```typescript
-	 * const schemaFactory = new SchemaFactory("com.example");
-	 * const libraryId = "com.example" as LibraryId;
-	 *
-	 * const oldConfig = new TreeViewConfigurationAlpha({
-	 * 	schema: schemaFactory.string,
-	 * 	schemaVersion: { [libraryId]: 0 },
-	 * });
-	 * const newConfig = new TreeViewConfigurationAlpha({
-	 * 	schema: schemaFactory.identifier,
-	 * 	schemaVersion: { [libraryId]: 1 },
-	 * });
-	 * ```
+	 * Create with {@link identifySchema}.
+	 * See {@link SchemaIdentity.schemaVersion} for application version requirements.
 	 */
-	readonly schemaVersion?: SchemaVersionMap;
+	readonly schemaIdentity?: SchemaIdentity;
 }
 
 /**
@@ -338,9 +300,16 @@ export class TreeViewConfigurationAlpha<
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
 	/**
-	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaVersion}
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaIdentity}
 	 */
-	public readonly schemaVersion: SchemaVersionMap | undefined;
+	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
+
+	/**
+	 * application-defined versions from {@link TreeViewConfigurationAlpha.schemaIdentity}
+	 */
+	public get schemaVersion(): SchemaVersionMap | undefined {
+		return this.schemaIdentity?.schemaVersion;
+	}
 
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
@@ -350,35 +319,14 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
-		this.schemaVersion = validateSchemaVersion(props.schemaVersion);
+		if (props.schemaIdentity !== undefined) {
+			this.schemaIdentity = SchemaIdentityInternal.extract(props.schemaIdentity);
+		}
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy, this.schemaVersion);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
-}
-
-/**
- * Validates an application-defined schema version map and returns a frozen copy.
- *
- * @remarks
- * Each version must be a non-negative safe integer.
- * If the input is `undefined`, the result is `undefined`.
- */
-export function validateSchemaVersion(
-	schemaVersion: SchemaVersionMap | undefined,
-): SchemaVersionMap | undefined {
-	if (schemaVersion === undefined) {
-		return undefined;
-	}
-	for (const [libraryId, version] of Object.entries(schemaVersion)) {
-		if (!Number.isSafeInteger(version) || version < 0) {
-			throw new UsageError(
-				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative safe integer.`,
-			);
-		}
-	}
-	return Object.freeze({ ...schemaVersion });
 }
 
 /**
