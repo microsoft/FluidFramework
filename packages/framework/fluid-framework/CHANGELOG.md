@@ -121,7 +121,7 @@
   Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
   Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
   nest them within other presence data).
-  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](../packages/dds/tree/src/simple-tree/api/locations.ts).
+  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/api/locations.ts).
 
 - Capture and resolve presence positions in plain and formatted text ([#28466](https://github.com/microsoft/FluidFramework/pull/28466)) [d603008a6c3](https://github.com/microsoft/FluidFramework/commit/d603008a6c37a1ac2d9a77c7c81469e64caaa429)
 
