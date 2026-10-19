@@ -28,6 +28,7 @@ import {
 // The Azure Fluid Relay summary read and self-hosted document creation need these document-scoped permissions.
 const scopes = ["doc:read", "doc:write", "summary:write"];
 const tokenLifetimeSeconds = 60;
+const unresolvedCreateReasons = new Set(["ambiguous-create", "document-id-mismatch"]);
 
 // Historian Git API Authorization
 function azureFluidRelayAuthorization(tenantId, documentId, key) {
@@ -614,17 +615,23 @@ export async function copyInventory(
 				);
 			}
 		};
-		const previousFailures = structuredClone(results.tenants);
+		const previousFailures = new Map(
+			Object.entries(results.tenants).map(([id, tenant]) => [
+				id,
+				new Map(tenant.failed.map((failure) => [failure.documentId, failure.reason])),
+			]),
+		);
 		// Persist pending work before requests, so an interrupted run can select unfinished documents.
 		for (const [id, tenant] of Object.entries(work.tenants)) {
 			const outcomes = results.tenants[id];
 			for (const documentId of tenant.documents) {
+				const priorReason = previousFailures.get(id)?.get(documentId);
 				for (const key of ["successful", "warnings", "failed"])
 					outcomes[key] = outcomes[key].filter((entry) => entry.documentId !== documentId);
 				outcomes.failed.push({
 					documentId,
 					stage: "document-copy",
-					reason: "interrupted",
+					reason: unresolvedCreateReasons.has(priorReason) ? priorReason : "interrupted",
 					message: "Document has not completed in this run",
 				});
 			}
@@ -645,12 +652,15 @@ export async function copyInventory(
 				);
 				let status;
 				if (error) {
+					const priorReason = previousFailures.get(id)?.get(documentId);
 					const failure = {
 						...createFailure(documentId, "document-copy", error, { endpoint }),
 						message: safeErrorMessage(error),
 					};
-					outcomes.failed.push(failure);
 					status = failure.reason;
+					// A later request failure does not reconcile an earlier uncertain create.
+					if (unresolvedCreateReasons.has(priorReason)) failure.reason = priorReason;
+					outcomes.failed.push(failure);
 					log(`Failed ${id}/${documentId}: ${failure.reason}: ${failure.message}`);
 				} else if (result.result === "success") {
 					recordSuccess(
@@ -718,12 +728,10 @@ export async function copyInventory(
 										onAttempt: (event) => requestHistory.get(documentId).push(event),
 									},
 								);
-								const prior = previousFailures[id]?.failed.find(
-									(entry) => entry.documentId === documentId,
-								);
+								const priorReason = previousFailures.get(id)?.get(documentId);
 								if (
-									["ambiguous-create", "document-id-mismatch"].includes(prior?.reason) ||
-									(prior?.reason === "interrupted" && exists)
+									unresolvedCreateReasons.has(priorReason) ||
+									(priorReason === "interrupted" && exists)
 								)
 									throw new CopyError(
 										"Earlier create outcome is unresolved; creation was NOT repeated. Verify destination state and review a separate inventory before another attempt.",

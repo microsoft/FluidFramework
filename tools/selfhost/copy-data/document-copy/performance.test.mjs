@@ -301,6 +301,67 @@ test("unexpected create statuses and invalid success bodies never cause duplicat
 	}
 });
 
+test("unresolved creates survive durable checkpoints and later credential or existence failures across resumes", async (t) => {
+	for (const reason of ["ambiguous-create", "document-id-mismatch"]) {
+		const f = fixture({ documents: 1 });
+		const root = await directory(t);
+		const resultsPath = path.join(root, RESULTS_FILE_NAME);
+		const originalFetch = f.dependencies.fetchImplementation;
+		const originalDestinationKey = f.dependencies.destinationKey;
+		let posts = 0;
+		f.dependencies.fetchImplementation = async (url, options) => {
+			if (options.method !== "POST") return originalFetch(url, options);
+			posts++;
+			return reason === "document-id-mismatch"
+				? Response.json({ id: "different-id" }, { status: 201 })
+				: Response.json({}, { status: 501 });
+		};
+		const first = await copyInventory({ ...f, resultsDirectory: root }, f.dependencies);
+		assert.equal(first.results.tenants["source-1"].failed[0].reason, reason);
+		assert.equal(f.created.size, 0);
+		const resume = () =>
+			copyInventory(
+				{ ...f, resultsDirectory: root, options: { failedOnly: resultsPath } },
+				f.dependencies,
+			);
+		const durableReason = async () => {
+			const saved = JSON.parse(await readFile(resultsPath, "utf8"));
+			return saved.stages["document-copy"].tenants["source-1"].failed[0].reason;
+		};
+
+		f.dependencies.destinationKey = async () => {
+			assert.equal(await durableReason(), reason);
+			throw new Error("Controlled interruption after the pending checkpoint");
+		};
+		await assert.rejects(resume(), /Controlled interruption/);
+		assert.equal(await durableReason(), reason);
+
+		f.dependencies.destinationKey = async () => {
+			throw new CredentialError("Controlled credential failure");
+		};
+		assert.equal((await resume()).failed, 1);
+		assert.equal(await durableReason(), reason);
+
+		f.dependencies.destinationKey = originalDestinationKey;
+		f.dependencies.fetchImplementation = async () => Response.json({}, { status: 403 });
+		assert.equal((await resume()).failed, 1);
+		assert.equal(await durableReason(), reason);
+
+		f.dependencies.fetchImplementation = originalFetch;
+		f.events.length = 0;
+		const final = await resume();
+		assert.equal(final.failed, 1);
+		assert.equal(final.copied, 0);
+		assert.equal(final.skipped, 0);
+		assert.equal(await durableReason(), reason);
+		assert.match(final.results.tenants["source-1"].failed[0].message, /NOT repeated/);
+		assert.equal(posts, 1);
+		assert.equal(f.created.size, 0);
+		assert.ok(f.events.every((event) => new URL(event.url).hostname === "alfred.example"));
+		assert.equal(f.acquired.filter((scope) => scope.startsWith("source:")).length, 1);
+	}
+});
+
 test("an all-existing tenant never acquires its source key or claims verified data", async (t) => {
 	const f = fixture({ documents: 2 });
 	await copyInventory({ ...f, resultsDirectory: await directory(t) }, f.dependencies);
