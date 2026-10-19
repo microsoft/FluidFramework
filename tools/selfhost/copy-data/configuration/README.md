@@ -13,6 +13,9 @@ tenant's `key2`.
   subscription ID, resource group, and AKS name in the copy configuration.
 - The self-hosted Alfred deployment must set `alfred.enforceServerGeneratedDocumentId`
   to `false`. When documents are copied, the existing `documentId` is used.
+  The selfhost Helm values set it explicitly, and migration checks every running Alfred replica.
+  Setting it to `true` can replace requested **document IDs**, not tenant IDs, breaking existing links and rerun detection.
+- Install dependencies using the [copy-data prerequisites](../README.md#prerequisites).
 
 ## Commands
 
@@ -43,3 +46,5 @@ Validation reads only local files. It does not call Azure CLI or retrieve keys.
 
 Run the [copy-data command](../README.md#command) to create the new
 self-hosted tenants and copy the reviewed documents.
+It validates the local files again, checks dependencies and Alfred configuration, then runs both stages for you.
+The individual-stage guides are for troubleshooting; there is no additional required manual tenant-creation step.

@@ -20,6 +20,7 @@ test("uses the default configuration to run phases in order", async () => {
 	);
 	assert.deepEqual(calls, [
 		{ script: "validate-config.mjs", args: ["--config", configPath] },
+		{ script: "check-deployment.mjs", args: ["--config", configPath] },
 		{ script: "tenant-creation.mjs", args: ["--config", configPath, "--execute"] },
 		{ script: "copy.mjs", args: ["--config", configPath, "--execute"] },
 	]);
@@ -40,6 +41,18 @@ test("uses --config to override the default configuration", async () => {
 
 test("requires execution confirmation", async () => {
 	await assert.rejects(main([]), /Use --execute/);
+});
+
+test("failed migration preflight prevents tenant creation and document copy", async () => {
+	const calls = [];
+	await assert.rejects(
+		main(["--execute"], async (script) => {
+			calls.push(path.basename(script));
+			if (script.endsWith("check-deployment.mjs")) throw new Error("preflight failed");
+		}),
+		/preflight failed/,
+	);
+	assert.deepEqual(calls, ["validate-config.mjs", "check-deployment.mjs"]);
 });
 
 test("reports the execution confirmation error safely", async () => {

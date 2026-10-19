@@ -20,6 +20,9 @@ tenant.
 
 ## Commands
 
+Prefer the [combined copy-data command](../README.md#command), which runs deployment preflight before tenant creation and document copy.
+Use the following commands only when troubleshooting this individual stage.
+
 Validate the configuration:
 
 ```bash

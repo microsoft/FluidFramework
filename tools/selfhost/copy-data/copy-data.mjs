@@ -75,6 +75,10 @@ export async function main(argv, run = runScript) {
 		"--config",
 		configPath,
 	]);
+	await run(path.join(dataCopyDirectory, "configuration", "check-deployment.mjs"), [
+		"--config",
+		configPath,
+	]);
 	await run(path.join(dataCopyDirectory, "tenant-creation", "tenant-creation.mjs"), [
 		"--config",
 		configPath,

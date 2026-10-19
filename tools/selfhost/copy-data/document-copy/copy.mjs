@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateToken } from "@fluidframework/server-services-client";
 import { loadConfiguration } from "../configuration/configuration.mjs";
+import { verifyDeployment } from "../configuration/check-deployment.mjs";
 import {
 	withAzureFluidRelayTenantKey2,
 	withSelfHostTenantKey2,
@@ -355,12 +356,74 @@ function buildCreateRequest(summary, documentId) {
 			"azure-fluid-relay-historian",
 		);
 	}
-	if (!Number.isInteger(sequenceNumber) || !Array.isArray(values)) {
+	if (!Number.isInteger(sequenceNumber) || sequenceNumber < 0 || !Array.isArray(values)) {
 		throw new CopyError(
 			"Azure Fluid Relay summary protocol metadata was incomplete",
 			undefined,
 			"azure-fluid-relay-historian",
 		);
+	}
+	if (!tree.entries.some((entry) => entry.path === ".app" || entry.path.startsWith(".app/")))
+		throw new CopyError(
+			"Azure Fluid Relay summary is missing its application tree",
+			undefined,
+			"azure-fluid-relay-historian",
+		);
+	const logTailEntry = tree.entries.find((entry) => entry.path === ".logTail/logTail");
+	if (logTailEntry || tree.entries.some((entry) => entry.path === ".logTail")) {
+		const tailBlob = blobs.get(logTailEntry?.id);
+		if (logTailEntry?.type !== "blob" || !tailBlob)
+			throw new CopyError(
+				"Azure Fluid Relay summary is missing its operation tail blob",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		let operations;
+		try {
+			operations = JSON.parse(
+				tailBlob.encoding === "base64"
+					? Buffer.from(tailBlob.content, "base64").toString("utf8")
+					: tailBlob.content,
+			);
+		} catch {
+			throw new CopyError(
+				"Azure Fluid Relay operation tail could not be parsed",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		}
+		if (
+			!Array.isArray(operations) ||
+			operations.some(
+				(op) =>
+					!Number.isInteger(op?.sequenceNumber) ||
+					op.sequenceNumber < 0 ||
+					typeof op.type !== "string",
+			)
+		)
+			throw new CopyError(
+				"Azure Fluid Relay operation tail is malformed",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		// Client summaries can include their own summary/ack and membership traffic after the snapshot.
+		const protocolOnly = new Set([
+			"noop",
+			"join",
+			"leave",
+			"noClient",
+			"summarize",
+			"summaryAck",
+			"summaryNack",
+		]);
+		if (
+			operations.some((op) => op.sequenceNumber > sequenceNumber && !protocolOnly.has(op.type))
+		)
+			throw new CopyError(
+				"Copy refused: the latest summary contains operations not incorporated into its application snapshot. Stop source writes, load the source document, and wait for an acknowledged client summary before retrying. This tool does not replay the operation tail.",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
 	}
 	// Send only `.app`; Alfred creates a new `.protocol` tree for the self-hosted deployment.
 	return {
@@ -504,6 +567,7 @@ export async function main(argv) {
 	const { config, configDirectory, inventory, warnings } = await loadConfiguration(
 		options.configPath,
 	);
+	await verifyDeployment(config);
 	const resultsDirectory = path.resolve(configDirectory, config.resultsDirectory);
 	for (const warning of warnings) console.warn(`Warning: ${warning}`);
 	const results = createResults(inventory);
@@ -514,6 +578,11 @@ export async function main(argv) {
 		const selfHostTenantId = (
 			tenant.selfHostTenantId || azureFluidRelayTenantId
 		).toLowerCase();
+		const started = Date.now();
+		let processed = 0;
+		console.log(
+			`Starting tenant ${azureFluidRelayTenantId} -> ${selfHostTenantId}: ${tenant.documents.length} document(s).`,
+		);
 		for (const documentId of tenant.documents) {
 			let failureContext = { endpoint: "self-host-credentials" };
 			try {
@@ -579,7 +648,15 @@ export async function main(argv) {
 			}
 			// Write the result to the result file
 			resultsPath = await writeStageResults(resultsDirectory, "document-copy", results);
+			processed++;
+			console.log(
+				`Tenant ${azureFluidRelayTenantId}: ${processed}/${tenant.documents.length} processed (${((Date.now() - started) / 1000).toFixed(1)}s elapsed).`,
+			);
 		}
+		const counts = results.tenants[azureFluidRelayTenantId];
+		console.log(
+			`Completed tenant ${azureFluidRelayTenantId}: ${counts.successful.length} copied, ${counts.warnings.length} skipped, ${counts.failed.length} failed.`,
+		);
 	}
 	console.log(`Wrote copy results to ${resultsPath}`);
 	if (Object.values(results.tenants).some((tenant) => tenant.failed.length > 0))

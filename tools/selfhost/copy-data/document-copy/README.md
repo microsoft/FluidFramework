@@ -22,8 +22,18 @@ warning instead of attempting to create it.
 - Ensure Alfred sets `alfred.enforceServerGeneratedDocumentId` to `false`.
 	The self-hosted document ID must match the requested Azure Fluid Relay ID so
 	the copy tool can detect documents that were already copied.
+- Stop source writes and verify an acknowledged client summary incorporates the intended document state.
+	The copy tool does not replay `.logTail`.
+	It refuses to create a document if that tail contains application or unknown operations after the application snapshot's sequence number.
+	Protocol-only summary/acknowledgment and membership traffic does not cause this refusal.
+	A service summary is not proof that the application state was summarized.
+	The check cannot detect writes newer than the summary being read.
+- Install dependencies as described in the [copy-data prerequisites](../README.md#prerequisites).
 
 ## Commands
+
+Prefer the [combined copy-data command](../README.md#command), which checks deployment settings before tenant creation and then runs this stage.
+This individual stage also checks every Alfred replica before copying; it does not create missing tenants.
 
 Validate the shared configuration before running this phase:
 
