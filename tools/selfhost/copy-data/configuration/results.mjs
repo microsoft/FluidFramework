@@ -25,10 +25,17 @@ export function createResults(inventory) {
 	return { generatedAt: new Date().toISOString(), tenants };
 }
 
-export function recordSuccess(results, tenantId, documentId, selfHostDocumentId) {
+export function recordSuccess(
+	results,
+	tenantId,
+	documentId,
+	selfHostDocumentId,
+	ignoredLogTailOperations = 0,
+) {
 	results.tenants[tenantId].successful.push({
 		documentId,
 		...(selfHostDocumentId === undefined ? {} : { selfHostDocumentId }),
+		...(ignoredLogTailOperations > 0 ? { ignoredLogTailOperations } : {}),
 	});
 }
 

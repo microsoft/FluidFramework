@@ -35,6 +35,25 @@ test("retries only explicitly transient failures with bounded backoff and Retry-
 
 test("rejects invalid CLI options before execution and derives the payload-bounded worker limit", () => {
 	assert.equal(parseCopyOptions(["--execute"]).workers, 1);
+	assert.equal(parseCopyOptions(["--execute"]).ignoreLogTail, false);
+	const override = parseCopyOptions([
+		"--execute",
+		"--ignore-logtail",
+		"--failed-only",
+		"reviewed.json",
+		"--concurrency",
+		"2",
+	]);
+	assert.equal(override.ignoreLogTail, true);
+	assert.equal(override.concurrency, 2);
+	assert.ok(override.failedOnly.endsWith("reviewed.json"));
+	assert.deepEqual(override.copyArgs, [
+		"--ignore-logtail",
+		"--failed-only",
+		"reviewed.json",
+		"--concurrency",
+		"2",
+	]);
 	assert.equal(
 		parseCopyOptions(["--execute", "--concurrency", "4", "--memory-budget-mib", "128"])
 			.workers,
@@ -48,6 +67,7 @@ test("rejects invalid CLI options before execution and derives the payload-bound
 		["--execute", "--failed-only"],
 		["--execute", "--memory-budget-mib", "2"],
 		["--execute", "--concurrency", "1.5"],
+		["--execute", "--ignore-logtail=false"],
 	])
 		assert.throws(() => parseCopyOptions(args));
 });

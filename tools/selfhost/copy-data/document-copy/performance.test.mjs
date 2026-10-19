@@ -12,6 +12,7 @@ import { copyInventory, copyDocument } from "./copy.mjs";
 import { fixture } from "./fixtures.mjs";
 import { RESULTS_FILE_NAME, writeStageResults } from "../configuration/results.mjs";
 import { CredentialError } from "../configuration/credentials.mjs";
+import { parseCopyOptions } from "../configuration/options.mjs";
 
 async function directory(t) {
 	const result = await mkdtemp(path.join(os.tmpdir(), "selfhost-copy-test-"));
@@ -114,6 +115,76 @@ test("failed-only retries only failed documents, retains successes/stages/histor
 		/mapping differs/,
 	);
 	assert.equal(f.acquired.length, before);
+});
+
+test("failed-only with ignore-logtail retries unsafe summaries without recopying successes or applying tail data", async (t) => {
+	const f = fixture({ documents: 3 });
+	const root = await directory(t);
+	const original = f.dependencies.fetchImplementation;
+	const logs = [];
+	f.dependencies.log = (message) => logs.push(message);
+	f.dependencies.fetchImplementation = async (url, options) => {
+		const response = await original(url, options);
+		if (!url.endsWith("/git/summaries/doc-1-1")) return response;
+		const summary = await response.json();
+		summary.trees[0].entries.push(
+			{ path: ".logTail", type: "tree" },
+			{ path: ".logTail/logTail", type: "blob", id: "tail" },
+		);
+		summary.blobs.push({
+			id: "tail",
+			content: JSON.stringify([
+				{
+					sequenceNumber: 6,
+					type: "op",
+					contents: { incrementAmount: 20, privateTailValue: "not-for-results" },
+				},
+				{ sequenceNumber: 7, type: "summaryAck" },
+			]),
+			encoding: "utf-8",
+		});
+		return Response.json(summary);
+	};
+	const first = await copyInventory({ ...f, resultsDirectory: root }, f.dependencies);
+	assert.equal(first.copied, 2);
+	assert.equal(first.failed, 1);
+	assert.equal(first.results.tenants["source-1"].failed[0].reason, "unsafe-summary");
+	f.events.length = 0;
+	const options = parseCopyOptions([
+		"--execute",
+		"--failed-only",
+		path.join(root, RESULTS_FILE_NAME),
+		"--ignore-logtail",
+		"--concurrency",
+		"2",
+	]);
+	const resumed = await copyInventory(
+		{ ...f, resultsDirectory: root, options },
+		f.dependencies,
+	);
+	assert.equal(resumed.copied, 3);
+	assert.equal(resumed.failed, 0);
+	assert.equal(f.events.filter((event) => event.method === "POST").length, 1);
+	const copied = [...f.created.values()].find((body) => body.id === "doc-1-1");
+	assert.equal(JSON.parse(copied.summary.entries[0].value.content).value, 7);
+	assert.equal(copied.sequenceNumber, 5);
+	const saved = JSON.parse(await readFile(path.join(root, RESULTS_FILE_NAME), "utf8")).stages[
+		"document-copy"
+	];
+	assert.equal(
+		saved.tenants["source-1"].successful.find((doc) => doc.documentId === "doc-1-1")
+			.ignoredLogTailOperations,
+		1,
+	);
+	const history = saved.history["source-1"];
+	assert.equal(history["doc-1-1"].length, 2);
+	assert.equal(history["doc-1-1"][0].outcome, "unsafe-summary");
+	assert.equal(history["doc-1-1"][1].ignoredLogTailOperations, 1);
+	assert.equal(history["doc-1-0"].length, 1);
+	assert.equal(history["doc-1-2"].length, 1);
+	assert.ok(logs.some((message) => message.includes("WARNING: --ignore-logtail")));
+	assert.ok(logs.some((message) => message.includes("WARNING: source-1/doc-1-1 ignored 1")));
+	assert.doesNotMatch(JSON.stringify(saved), /privateTailValue|not-for-results/);
 });
 
 test("credential failures release leases and record one failure per affected document", async (t) => {

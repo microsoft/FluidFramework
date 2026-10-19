@@ -208,7 +208,7 @@ function makeWholeTree(entries, blobs, pathPrefix = "") {
 }
 
 // Generate the request to create the new document
-function buildCreateRequest(summary, documentId) {
+function buildCreateRequest(summary, documentId, ignoreLogTail = false) {
 	// Historian returns one flat root tree for a whole summary.
 	const tree = summary?.trees?.[0];
 	if (!tree || !Array.isArray(tree.entries) || !Array.isArray(summary.blobs)) {
@@ -283,6 +283,7 @@ function buildCreateRequest(summary, documentId) {
 			undefined,
 			"azure-fluid-relay-historian",
 		);
+	let ignoredLogTailOperations = 0;
 	const logTailEntry = tree.entries.find((entry) => entry.path === ".logTail/logTail");
 	if (logTailEntry || tree.entries.some((entry) => entry.path === ".logTail")) {
 		const tailBlob = blobs.get(logTailEntry?.id);
@@ -330,24 +331,31 @@ function buildCreateRequest(summary, documentId) {
 			"summaryAck",
 			"summaryNack",
 		]);
-		if (
-			operations.some((op) => op.sequenceNumber > sequenceNumber && !protocolOnly.has(op.type))
-		)
+		const unappliedOperations = operations.reduce(
+			(count, op) =>
+				count + (op.sequenceNumber > sequenceNumber && !protocolOnly.has(op.type) ? 1 : 0),
+			0,
+		);
+		if (unappliedOperations > 0 && ignoreLogTail !== true)
 			throw new CopyError(
-				"Copy refused: the latest summary contains operations not incorporated into its application snapshot. Stop source writes, load the source document, and wait for an acknowledged client summary before retrying. This tool does not replay the operation tail.",
+				"Copy refused: the latest summary contains operations not incorporated into its application snapshot. Stop source writes, load the source document, and wait for an acknowledged client summary before retrying. This tool does not replay the operation tail. Use --ignore-logtail only to accept a snapshot-only copy that can omit recent changes.",
 				undefined,
 				"azure-fluid-relay-historian",
 				"unsafe-summary",
 			);
+		ignoredLogTailOperations = unappliedOperations;
 	}
 	// Send only `.app`; Alfred creates a new `.protocol` tree for the self-hosted deployment.
 	return {
-		id: documentId,
-		summary: makeWholeTree(tree.entries, blobs, ".app/"),
-		sequenceNumber,
-		values,
-		enableDiscovery: true,
-		enableAnyBinaryBlobOnFirstSummary: true,
+		request: {
+			id: documentId,
+			summary: makeWholeTree(tree.entries, blobs, ".app/"),
+			sequenceNumber,
+			values,
+			enableDiscovery: true,
+			enableAnyBinaryBlobOnFirstSummary: true,
+		},
+		ignoredLogTailOperations,
 	};
 }
 
@@ -360,6 +368,7 @@ export async function copyDocument({
 	documentId,
 	azureFluidRelayKey,
 	selfHostKey,
+	ignoreLogTail = false,
 	fetchImplementation = fetch,
 	policy = {},
 	metrics,
@@ -411,7 +420,8 @@ export async function copyDocument({
 		// Convert the flat Historian summary into Alfred's nested initial-summary payload.
 		step = "summary-conversion";
 		const convert = async () => {
-			const body = JSON.stringify(buildCreateRequest(summary, documentId));
+			const converted = buildCreateRequest(summary, documentId, ignoreLogTail);
+			const body = JSON.stringify(converted.request);
 			if (Buffer.byteLength(body) > maxBytes)
 				throw new CopyError(
 					"Create payload exceeds --max-summary-mib",
@@ -419,9 +429,11 @@ export async function copyDocument({
 					"self-host",
 					"payload-too-large",
 				);
-			return body;
+			return { body, ignoredLogTailOperations: converted.ignoredLogTailOperations };
 		};
-		const body = await (metrics ? metrics.measure("summary-conversion", convert) : convert());
+		const { body, ignoredLogTailOperations } = await (metrics
+			? metrics.measure("summary-conversion", convert)
+			: convert());
 		step = "self-host-create";
 		const created = await retry(
 			async (attempt) => {
@@ -509,7 +521,11 @@ export async function copyDocument({
 				"self-host",
 				"document-id-mismatch",
 			);
-		return { result: "success", documentId: selfHostDocumentId };
+		return {
+			result: "success",
+			documentId: selfHostDocumentId,
+			...(ignoredLogTailOperations > 0 ? { ignoredLogTailOperations } : {}),
+		};
 	} catch (error) {
 		if (error instanceof CopyError) throw error;
 		const endpoint = step.startsWith("self-host")
@@ -580,6 +596,10 @@ export async function copyInventory(
 			inventory,
 			settings.failedOnly,
 		);
+		if (settings.ignoreLogTail === true)
+			log(
+				"WARNING: --ignore-logtail copies application snapshots without replaying unapplied tail operations. Recent changes may be lost; existing destinations are not overwritten or repaired.",
+			);
 		let processed = 0;
 		let resultsPath;
 		const save = async () => {
@@ -633,8 +653,18 @@ export async function copyInventory(
 					status = failure.reason;
 					log(`Failed ${id}/${documentId}: ${failure.reason}: ${failure.message}`);
 				} else if (result.result === "success") {
-					recordSuccess(results, id, documentId, result.documentId);
+					recordSuccess(
+						results,
+						id,
+						documentId,
+						result.documentId,
+						result.ignoredLogTailOperations,
+					);
 					status = "success";
+					if (result.ignoredLogTailOperations > 0)
+						log(
+							`WARNING: ${id}/${documentId} ignored ${result.ignoredLogTailOperations} unapplied log-tail operation(s); copied snapshot only, so recent changes may be lost.`,
+						);
 					log(`Copied ${id}/${documentId} as ${result.documentId}.`);
 				} else {
 					recordWarning(results, id, documentId, result);
@@ -647,6 +677,9 @@ export async function copyInventory(
 					completedAt: new Date().toISOString(),
 					outcome: status,
 					requests: requestHistory.get(documentId),
+					...(result?.ignoredLogTailOperations > 0
+						? { ignoredLogTailOperations: result.ignoredLogTailOperations }
+						: {}),
 				});
 				requestHistory.delete(documentId);
 				finished.add(documentId);
@@ -727,6 +760,7 @@ export async function copyInventory(
 											documentId,
 											azureFluidRelayKey,
 											selfHostKey,
+											ignoreLogTail: settings.ignoreLogTail,
 											fetchImplementation,
 											policy,
 											metrics,

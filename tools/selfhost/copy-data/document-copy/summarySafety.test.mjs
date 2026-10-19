@@ -35,7 +35,7 @@ function tailSummary(operations, encoding = "utf-8", sequenceNumber = 0) {
 	};
 }
 
-function copySummary(summary, requests) {
+function copySummary(summary, requests, options = {}) {
 	const response = (value, status = 200) => ({ status, json: async () => value });
 	return copyDocument({
 		azureFluidRelayEndpoint: "https://discovery.example",
@@ -45,6 +45,7 @@ function copySummary(summary, requests) {
 		documentId: "document",
 		azureFluidRelayKey: "source-test-key",
 		selfHostKey: "destination-test-key",
+		...options,
 		fetchImplementation: async (url, options) => {
 			requests.push({ url, options });
 			if (url.includes("/session/"))
@@ -109,6 +110,79 @@ test("does not reject operations already covered by the application snapshot", a
 	const requests = [];
 	await copySummary(tailSummary([{ sequenceNumber: 5, type: "op" }], "utf-8", 5), requests);
 	assert.equal(requests.at(-1).options.method, "POST");
+});
+
+test("explicit log-tail override copies only the snapshot and reports unapplied non-protocol operations", async () => {
+	for (const encoding of ["utf-8", "base64"]) {
+		const requests = [];
+		const result = await copySummary(
+			tailSummary(
+				[
+					{ sequenceNumber: 5, type: "op" },
+					{ sequenceNumber: 6, type: "op", contents: { incrementAmount: 14 } },
+					{ sequenceNumber: 7, type: "summaryAck" },
+					{ sequenceNumber: 8, type: "unknown-type" },
+				],
+				encoding,
+				5,
+			),
+			requests,
+			{ ignoreLogTail: true },
+		);
+		assert.equal(result.result, "success");
+		assert.equal(result.ignoredLogTailOperations, 2);
+		const request = JSON.parse(requests.at(-1).options.body);
+		assert.equal(request.id, "document");
+		assert.equal(request.sequenceNumber, 5);
+		assert.equal(JSON.parse(request.summary.entries[0].value.content).value, 0);
+		assert.doesNotMatch(
+			JSON.stringify(request),
+			/logTail|incrementAmount|ignoredLogTailOperations/,
+		);
+	}
+});
+
+test("log-tail override does not bypass malformed tails or missing application/protocol metadata", async () => {
+	const missingTail = tailSummary([]);
+	missingTail.blobs = missingTail.blobs.filter((blob) => blob.id !== "tail");
+	const missingApplication = tailSummary([{ sequenceNumber: 1, type: "op" }]);
+	missingApplication.trees[0].entries = missingApplication.trees[0].entries.filter(
+		(entry) => !entry.path.startsWith(".app"),
+	);
+	const malformedProtocol = tailSummary([{ sequenceNumber: 1, type: "op" }]);
+	malformedProtocol.blobs.find((blob) => blob.id === "attributes").content = "{}";
+	for (const summary of [
+		missingTail,
+		missingApplication,
+		malformedProtocol,
+		tailSummary("not-json"),
+		tailSummary("{}"),
+		tailSummary([null]),
+		tailSummary([{ sequenceNumber: -1, type: "op" }]),
+	]) {
+		const requests = [];
+		await assert.rejects(copySummary(summary, requests, { ignoreLogTail: true }), {
+			name: "CopyError",
+		});
+		assert.equal(
+			requests.some((request) => request.options.method === "POST"),
+			false,
+		);
+	}
+});
+
+test("log-tail override does not mark complete snapshots as having ignored operations", async () => {
+	for (const operations of [
+		[],
+		[{ sequenceNumber: 5, type: "op" }],
+		[{ sequenceNumber: 6, type: "summaryAck" }],
+	]) {
+		const result = await copySummary(tailSummary(operations, "utf-8", 5), [], {
+			ignoreLogTail: true,
+		});
+		assert.equal(result.result, "success");
+		assert.equal(result.ignoredLogTailOperations, undefined);
+	}
 });
 
 test("rejects malformed, incomplete, or unknown operation tails without writes", async () => {

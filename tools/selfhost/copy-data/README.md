@@ -117,6 +117,22 @@ After manually verifying those outcomes, use a separately reviewed, pruned inven
 Older results without version 2 mapping metadata cannot be resumed safely through this flag; use a separately reviewed, pruned inventory instead.
 Existing documents are never overwritten or described as repaired.
 
+To retry failed documents while explicitly accepting an older application snapshot, add `--ignore-logtail`:
+
+```bash
+node copy-data.mjs --execute --concurrency 2 \
+  --failed-only results/copy-data-results.json --ignore-logtail
+```
+
+**This can lose recent changes.**
+The flag bypasses only the refusal for unapplied application or unknown operations in a valid `.logTail`.
+It does not replay those operations: the destination contains the application snapshot, not the newer state represented by the tail.
+For example, a counter can remain at zero even if tail operations incremented it.
+Malformed summaries or tails still fail, and existing destinations are still skipped rather than overwritten.
+The tool prints a warning when the flag is enabled and identifies each copied document that ignored operations.
+Those successful outcomes and their attempt histories include `ignoredLogTailOperations`, the number of unapplied non-protocol operations omitted.
+Without the flag, the existing safety refusal remains unchanged.
+
 Only one document-copy process may use a results directory at a time.
 Results use serialized, owner-only writes and an atomic publish after flushing the temporary file.
 After a hard interruption, first confirm the process has exited, then remove only the stale `copy-data.run.lock` or `copy-data.write.lock` file in that results directory.

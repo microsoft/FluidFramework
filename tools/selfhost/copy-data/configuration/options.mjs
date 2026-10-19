@@ -13,6 +13,7 @@ export function parseCopyOptions(
 	const options = {
 		configPath: path.join(import.meta.dirname, "parameters", "copy-data.config.json"),
 		execute: false,
+		ignoreLogTail: false,
 		concurrency: 1,
 		maxSummaryBytes: 64 * 1024 ** 2,
 		memoryBudgetBytes: 512 * 1024 ** 2,
@@ -36,11 +37,17 @@ export function parseCopyOptions(
   --memory-budget-mib <2-8192>  Serialized payload reservation budget (default: 512)
   --attempts <1-10>            Maximum attempts per transient request (default: 3)
   --request-timeout-ms <1-45000> Per-request deadline (default: 45000)
-  --failed-only <results.json> Retry only failed/interrupted documents from a reviewed run`);
+  --failed-only <results.json> Retry only failed/interrupted documents from a reviewed run
+  --ignore-logtail            Copy snapshot without unapplied tail operations (may lose data)`);
 			return undefined;
 		}
 		if (flag === "--execute") {
 			options.execute = true;
+			continue;
+		}
+		if (flag === "--ignore-logtail") {
+			options.ignoreLogTail = true;
+			options.copyArgs.push(flag);
 			continue;
 		}
 		if (flag !== "--config" && flag !== "--failed-only" && !numbers[flag])

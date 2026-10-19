@@ -21,9 +21,9 @@ warning instead of attempting to create it.
 - Ensure Alfred sets `alfred.enforceServerGeneratedDocumentId` to `false`.
 	The self-hosted document ID must match the requested Azure Fluid Relay ID so
 	the copy tool can detect documents that were already copied.
-- Stop source writes and verify an acknowledged client summary incorporates the intended document state.
+- To copy the intended current state, stop source writes and verify an acknowledged client summary incorporates that state.
 	The copy tool does not replay `.logTail`.
-	It refuses to create a document if that tail contains application or unknown operations after the application snapshot's sequence number.
+	By default, it refuses to create a document if that tail contains application or unknown operations after the application snapshot's sequence number.
 	Protocol-only summary/acknowledgment and membership traffic does not cause this refusal.
 	A service summary is not proof that the application state was summarized.
 	The check cannot detect writes newer than the summary being read.
@@ -71,6 +71,16 @@ node copy.mjs --execute --concurrency 2 --failed-only ../results/copy-data-resul
 
 Source/destination mappings are validated before network access.
 Uncertain creates are not blindly retried, and existing destination state is never treated as repaired.
+
+To explicitly accept the application snapshot without unapplied tail operations:
+
+```bash
+node copy.mjs --execute --failed-only ../results/copy-data-results.json --ignore-logtail
+```
+
+**`--ignore-logtail` can omit recent document changes; it does not replay or recover the tail.**
+Warnings identify affected copies, and their successful result records and attempt histories include `ignoredLogTailOperations`.
+Malformed tails, invalid protocol/application data, and other copy failures are not bypassed.
 
 ## Next step
 

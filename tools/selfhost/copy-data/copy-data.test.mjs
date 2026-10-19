@@ -67,18 +67,21 @@ test("reports the execution confirmation error safely", async () => {
 test("validates resume before mutations and forwards only copy options to document copying", async () => {
 	const calls = [];
 	await main(
-		["--execute", "--concurrency", "2", "--failed-only", "reviewed.json"],
+		["--execute", "--concurrency", "2", "--failed-only", "reviewed.json", "--ignore-logtail"],
 		async (script, args) => {
 			calls.push({ script: path.basename(script), args });
 		},
 	);
 	assert.ok(calls[0].args.includes(path.resolve("reviewed.json")));
 	assert.equal(calls[2].args.includes("--concurrency"), false);
-	assert.deepEqual(calls[3].args.slice(-4), [
+	for (const call of calls.slice(0, 3))
+		assert.equal(call.args.includes("--ignore-logtail"), false);
+	assert.deepEqual(calls[3].args.slice(-5), [
 		"--concurrency",
 		"2",
 		"--failed-only",
 		"reviewed.json",
+		"--ignore-logtail",
 	]);
 });
 
