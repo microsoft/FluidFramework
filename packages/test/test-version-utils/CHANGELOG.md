@@ -1,9 +1,5 @@
 # @fluid-private/test-version-utils
 
-## 3.6.0
-
-Dependency updates only.
-
 ## 3.5.0
 
 Dependency updates only.
