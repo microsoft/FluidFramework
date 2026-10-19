@@ -423,3 +423,8 @@ export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.j
 export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
+export {
+	computeSchemaHash,
+	identifySchema,
+	type SchemaIdentity,
+} from "./simple-tree/index.js";
