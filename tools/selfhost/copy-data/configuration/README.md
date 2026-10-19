@@ -48,3 +48,9 @@ Run the [copy-data command](../README.md#command) to create the new
 self-hosted tenants and copy the reviewed documents.
 It validates the local files again, checks dependencies and Alfred configuration, then runs both stages for you.
 The individual-stage guides are for troubleshooting; there is no additional required manual tenant-creation step.
+
+When using `--failed-only`, the initial validation also checks the reviewed results' recorded source/destination identities.
+Do not change a source server, destination tenant, endpoint, cluster, namespace, or subscription and reuse the old results as a resume manifest.
+Keep every failed document in the current inventory.
+Duplicate document IDs and mappings that send two source documents to the same destination tenant/document are rejected.
+Endpoints must be HTTPS URLs without inline credentials or query strings; signing keys are retrieved separately.

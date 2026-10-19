@@ -5,10 +5,9 @@ it through the self-hosted Alfred public API, requesting the same
 document ID.
 
 The self-hosted service writes its own Gitrest summary, document metadata,
-operations state, and checkpoints. The copy does not copy Git objects or
-refs, write Cosmos DB records, or copy Azure Fluid Relay deli/scribe state. If
-the self-hosted service cannot preserve the requested document ID, the results
-file records the Azure Fluid Relay-to-self-hosted ID mapping.
+operations state, and checkpoints.
+The copy does not copy Git objects or refs, write Cosmos DB records, or copy Azure Fluid Relay deli/scribe state.
+If the service returns a different document ID, copying fails explicitly and creation is not repeated.
 
 If the self-hosted document already exists, the copy is skipped and recorded as a
 warning instead of attempting to create it.
@@ -58,9 +57,20 @@ direct Historian endpoint. For each document, the tool discovers its session,
 uses the returned Historian URL to read the newest summary, then submits the
 application summary, sequence number, and quorum values to self-hosted Alfred.
 The self-hosted document creation request asks to preserve the
-Azure Fluid Relay ID. It retrieves Azure Fluid Relay and self-hosted
-`key2` values only for each document operation and does not log or write either
-key or its JWT.
+Azure Fluid Relay ID.
+It retrieves self-hosted `key2` once per tenant, and source `key2` once per tenant only when documents need copying.
+Keys remain callback-scoped; each request attempt generates a new JWT.
+Read/existence JWTs are document-scoped; document creation uses the tenant-scoped token required by Alfred.
+Neither keys nor JWTs are logged or written.
+
+The [performance and recovery flags](../README.md#performance-and-recovery) work here as well:
+
+```bash
+node copy.mjs --execute --concurrency 2 --failed-only ../results/copy-data-results.json
+```
+
+Source/destination mappings are validated before network access.
+Uncertain creates are not blindly retried, and existing destination state is never treated as repaired.
 
 ## Next step
 

@@ -1,8 +1,59 @@
 # Migration performance and recovery investigation
 
-This is a proposed follow-up plan, not implemented functionality.
-It covers improvement items 14–17 from end-to-end selfhost testing.
-Credential caching, parallel copy, bulk export, retries, and failed-only resume are deliberately not part of the accompanying implementation.
+This records implementation results and the original investigation for improvement items 14–17.
+Tenant-scoped credential reuse, stage metrics, safe results persistence, bounded parallel copy, classified retries, and failed-only resume are implemented.
+The service-side bulk API contract remains an external dependency; no bulk endpoint or raw-storage copy has been invented.
+
+## Implementation results
+
+The copier now retrieves each destination key once per tenant and retrieves the source key only if that tenant has documents to copy.
+Tokens are minted immediately before each attempt.
+Read tokens remain document-scoped; Alfred creation requires a tenant-scoped token.
+Keys never enter metrics or result files.
+
+Copy concurrency defaults to 1 and supports explicit limits of 2–4.
+A serialized-payload budget can reduce that limit.
+Response streams and create payloads have an explicit size limit; the budget is not a bound on total JavaScript heap/RSS.
+Results writes are serialized and use unique private temporary files, file flush, atomic rename, and fail-closed process locks.
+Unfinished documents are persisted before work starts.
+Failed-only resume validates the recorded source/destination mapping and preserves successes, other stages, and attempt history.
+
+HTTP failures retain safe status/code classifications without arbitrary service text.
+Transient reads use bounded jittered retries and honor `Retry-After`.
+Create throttling can retry after reconciliation.
+Network timeouts, connection losses, and 5xx create outcomes remain uncertain even after an immediate 404, so they are not automatically re-POSTed.
+An uncertain existing destination remains unresolved until its state is checked manually.
+Failed-only resume also refuses to repeat a known ambiguous or mismatched-ID creation when its original ID is absent.
+An operator must verify the previous outcome and review a separate pruned inventory before deliberately attempting creation again.
+
+Stage metrics include credential retrieval, existence check, discovery, ref read, summary download/conversion, creation, and persistence.
+Percentiles use bounded log2 histograms and report bucket upper bounds.
+Fault-injection tests cover throttling, permanent failures, timeouts, oversized bodies, interrupted persistence, out-of-order completion, credential cleanup, safe mapping checks, and ambiguous creation.
+A local HTTP integration test exercises native fetch and streamed bodies without Azure writes.
+
+Run `node document-copy/benchmark.mjs` from `tools/selfhost/copy-data`.
+One representative controlled run used 12 documents, 5 ms per HTTP request, and 20 ms per credential retrieval:
+
+| Pattern | Elapsed | Key retrievals |
+| --- | --- | --- |
+| Per-document keys, serial baseline | 1,080 ms | 24 |
+| Tenant-scoped keys, 1 worker | 729 ms | 2 |
+| Tenant-scoped keys, 2 workers | 351 ms | 2 |
+| Tenant-scoped keys, 4 workers | 342 ms | 2 |
+
+These are small synthetic-fixture measurements, including real local result-file writes, not Azure throughput predictions.
+They justify removing repeated credential setup, not a production throughput claim or a change to the default worker count.
+Measure the authorized deployment with representative payloads before choosing a larger production limit.
+
+### Remaining bulk-contract dependency
+
+The installed public CLI was checked again: `az fluid-relay container --help` exposes only `delete`, `list`, and `show`.
+No supported content export/import contract or service-owner confirmation was supplied when requested.
+The per-document APIs remain the supported path used by this tool.
+To finish the service-side investigation, an AFR owner must confirm a supported contract covering snapshot/tail consistency, attachments, tenant/document identity, region routing, deletion, authorization, per-document errors, and a resumable manifest.
+Until then, a true bulk backend is blocked, not implemented or assumed available.
+
+## Original investigation and acceptance plan
 
 ## Baseline and constraints
 
@@ -10,11 +61,11 @@ The reported sample averaged approximately 18 seconds per document across five d
 At that rate, 3,000 documents would take approximately 15 hours sequentially.
 This is an extrapolation from a small sample, not a throughput guarantee.
 
-`document-copy/copy.mjs` currently processes one document at a time.
+Before these improvements, `document-copy/copy.mjs` processed one document at a time.
 For each new document it retrieves a destination key, checks destination existence, retrieves a source key, discovers the source session, reads the latest ref and whole summary, and posts a destination creation request.
 It then rewrites the aggregate results file.
 
-`configuration/credentials.mjs` invokes `tenant-admin.sh get-key` for each destination document.
+The original `configuration/credentials.mjs` invocation pattern ran `tenant-admin.sh get-key` for each destination document.
 That shell command retrieves AKS credentials, creates a temporary ConfigMap and administration pod, waits for readiness, executes the CLI, and deletes the temporary resources.
 This repeats substantially more work than an HTTP request.
 Source key retrieval also invokes Azure CLI once per new document.
@@ -43,7 +94,7 @@ Compare measured stage durations and documents/minute against the sequential bas
 ## 15. Add bounded concurrency
 
 First make result persistence safe for concurrent completions.
-`configuration/results.mjs` currently read-modify-writes the full results object through one fixed `.tmp` path.
+The original `configuration/results.mjs` read-modify-wrote the full results object through one fixed `.tmp` path.
 Parallel calls can overwrite each other's updates, collide on rename, or lose another stage.
 Serialize result updates through one writer and test crash-safe persistence before adding workers.
 
@@ -74,14 +125,14 @@ Do not bypass Historian/Alfred by copying raw storage or database records.
 
 ## 17. Classify failures and add retry/resume
 
-The copier currently preserves HTTP status/endpoint metadata but discards API response details.
+At investigation time, the copier preserved HTTP status/endpoint metadata but discarded API response details.
 Deleted-document discovery and other 404s therefore cannot safely be distinguished from status alone.
 Known missing-summary repositories may return 400.
 Add only allowlisted, bounded, non-sensitive service error codes to distinguish these cases; do not print arbitrary response bodies.
 Keep unknown failures visible rather than declaring every 400 corrupt or every 404 deleted.
 
-`configuration/retry.mjs` exists but is not wired into document copying.
-Its default retries every error, so do not use it unchanged.
+The original `configuration/retry.mjs` was not wired into document copying.
+Its default retried every error, so it required changes before reuse.
 Define an explicit predicate for transport timeouts, 408, 429, and selected 5xx responses, with bounded attempts, jittered backoff, and `Retry-After`.
 Do not automatically retry validation failures, missing summaries, confirmed deletion, authentication failures, or the unapplied-operation safety rejection.
 
