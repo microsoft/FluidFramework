@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Keep unresolved version marks pending when history is inconclusive ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Keep unresolved version marks pending when history is inconclusive ([#28448](https://github.com/microsoft/FluidFramework/pull/28448)) [2e167d8c734](https://github.com/microsoft/FluidFramework/commit/2e167d8c734c76a57eed0135a390d11e1b55ff69)
 
   Version marks are no longer permanently classified as unresolvable when a historical operation read is empty or starts
   after the mark's sequence-number lower bound.

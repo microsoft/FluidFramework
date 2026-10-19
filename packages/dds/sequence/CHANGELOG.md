@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- SharedString now allows applications to configure which snapshot format it uses ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- SharedString now allows applications to configure which snapshot format it uses ([#28370](https://github.com/microsoft/FluidFramework/pull/28370)) [46d068346f7](https://github.com/microsoft/FluidFramework/commit/46d068346f7bdbd9889f2b0970d4d498f847ad00)
 
   Use `configuredSharedString` to select a snapshot format through the registered DDS factory.
   Set `newMergeTreeSnapshotFormat` to `true` for flat snapshots or `false` for legacy snapshots.

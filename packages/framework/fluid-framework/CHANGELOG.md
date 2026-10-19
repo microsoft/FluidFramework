@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Plain and formatted text nodes support moving character ranges ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Plain and formatted text nodes support moving character ranges ([#28440](https://github.com/microsoft/FluidFramework/pull/28440)) [3eb861c0c18](https://github.com/microsoft/FluidFramework/commit/3eb861c0c1815e874f8ef00f6f0ee217515883d5)
 
   The [PlainText.Members](https://fluidframework.com/docs/api/tree/plaintext-namespace/members-interface) API now exposes `moveRangeToIndex`, matching the existing [TreeArrayNode.moveRangeToIndex](https://fluidframework.com/docs/api/tree/treearraynode-interface#moverangetoindex-methodsignature) operation.
   Both plain text and [formatted text](https://fluidframework.com/docs/api/tree/formattedtext-namespace/members-interface) nodes can now reorder ranges of text without removing and reinserting characters.
@@ -17,7 +17,7 @@
   console.log(text.fullString()); // "cdabef"
   ```
 
-- Support record and map formatting in formatted text ranges ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Support record and map formatting in formatted text ranges ([#28458](https://github.com/microsoft/FluidFramework/pull/28458)) [6180bb2162d](https://github.com/microsoft/FluidFramework/commit/6180bb2162d68d88e7d4915a6b95139735f547ee)
 
   `FormattedText.Members.formatRange` now supports record and map format nodes in addition to object format nodes.
   Updates preserve entries not included in the update.
@@ -33,7 +33,7 @@
   text.formatRange(0, 5, new Map([["bold", true]]));
   ```
 
-- Revert to a commit directly from branch history ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Revert to a commit directly from branch history ([#28399](https://github.com/microsoft/FluidFramework/pull/28399)) [14cfce7daed](https://github.com/microsoft/FluidFramework/commit/14cfce7daed3979b4345e283b3ac5f17da05f0e6)
 
   Commit metadata now has a `revertTo()` method that reverts later changes on the branch from which the commit was obtained.
   This supersedes the existing `revertTo()` API on the view (though that API remains available).
@@ -56,7 +56,7 @@
   Custom metadata supplied to transactions and reverts is read and serialized while edits to the target checkout are disallowed.
   Getters and serialization hooks that attempt to edit that tree throw an error before the edit is applied.
 
-- Unhydrated array range moves preserve content when the destination overlaps the source ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Unhydrated array range moves preserve content when the destination overlaps the source ([#28441](https://github.com/microsoft/FluidFramework/pull/28441)) [5c61971ff70](https://github.com/microsoft/FluidFramework/commit/5c61971ff709120cfe11546ef94797760ff85393)
 
   Calling [`TreeArrayNode.moveRangeToIndex`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface#moverangetoindex-methodsignature) with a destination gap inside the source range now leaves an [`Unhydrated`](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) array unchanged, matching the resulting array contents in the hydrated case.
   Previously, these moves could reorder the array incorrectly and emit change deltas that did not match its content.
@@ -66,7 +66,7 @@
   These overlapping moves do not emit change events on unhydrated arrays.
   Hydrated arrays may still emit change events even though their content remains unchanged.
 
-- Stop recognizing pre-symbol in-memory Fluid handles ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Stop recognizing pre-symbol in-memory Fluid handles ([#28418](https://github.com/microsoft/FluidFramework/pull/28418)) [97f7061ed43](https://github.com/microsoft/FluidFramework/commit/97f7061ed43804399da0479b3995ffb5f3e6c186)
 
   In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
   Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
@@ -121,7 +121,7 @@
   If a test reports a mismatch, review the schema change.
   If the change is intentional, update the expected hash with the computed hash from the error message.
 
-- Resolve historical node selections and text positions for presence ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Resolve historical node selections and text positions for presence ([#28446](https://github.com/microsoft/FluidFramework/pull/28446)) [7d20e3b8239](https://github.com/microsoft/FluidFramework/commit/7d20e3b8239418c38eea10dd955ff23572c4f53f)
 
   The new alpha `TreeViewAlpha.locations` API allows capturing a _location_ on one view and resolving it in another view (possibly one on a different client).
   The resolved position accounts for intervening edits and moves.
@@ -171,9 +171,9 @@
   Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
   Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
   nest them within other presence data).
-  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](../packages/dds/tree/src/simple-tree/api/locations.ts).
+  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/api/locations.ts).
 
-- SharedString now allows applications to configure which snapshot format it uses ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- SharedString now allows applications to configure which snapshot format it uses ([#28370](https://github.com/microsoft/FluidFramework/pull/28370)) [46d068346f7](https://github.com/microsoft/FluidFramework/commit/46d068346f7bdbd9889f2b0970d4d498f847ad00)
 
   Use `configuredSharedString` to select a snapshot format through the registered DDS factory.
   Set `newMergeTreeSnapshotFormat` to `true` for flat snapshots or `false` for legacy snapshots.
@@ -212,7 +212,7 @@
   No additional DDS attributes are stored for the setting.
   Format selection does not force an otherwise unchanged DDS to produce a new summary.
 
-- Capture and resolve presence positions in plain and formatted text ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Capture and resolve presence positions in plain and formatted text ([#28466](https://github.com/microsoft/FluidFramework/pull/28466)) [d603008a6c3](https://github.com/microsoft/FluidFramework/commit/d603008a6c37a1ac2d9a77c7c81469e64caaa429)
 
   The alpha `TreeLocationResolver.captureGap` method and `kind: "sequence"` capture inputs now accept `PlainText.Tree` and schemas produced by `FormattedText.createSchema`, including subclasses, as well as array nodes.
 

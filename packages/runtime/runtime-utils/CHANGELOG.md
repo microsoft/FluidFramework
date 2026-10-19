@@ -4,12 +4,12 @@
 
 ### Minor Changes
 
-- Stop recognizing pre-symbol in-memory Fluid handles ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Stop recognizing pre-symbol in-memory Fluid handles ([#28418](https://github.com/microsoft/FluidFramework/pull/28418)) [97f7061ed43](https://github.com/microsoft/FluidFramework/commit/97f7061ed43804399da0479b3995ffb5f3e6c186)
 
   In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
   Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
 
-- Identify a data store's package path, for use in telemetry ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+- Identify a data store's package path, for use in telemetry ([#28375](https://github.com/microsoft/FluidFramework/pull/28375)) [84015f846aa](https://github.com/microsoft/FluidFramework/commit/84015f846aa88483e74e95f30930feb8607290e7)
 
   The legacy-beta `getDataStorePackagePath` function lets callers add the containing data store's package path to diagnostic telemetry.
   For example, the path can identify the package containing a component that takes a long time to load.
