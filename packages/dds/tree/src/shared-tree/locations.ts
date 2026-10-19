@@ -314,14 +314,20 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			const resolved = this.#resolveRevision(revision, locations, source);
 			for (const [index, result] of resolved.entries()) {
 				const target = indices[index];
-				assert(target !== undefined, "Expected a result index for every captured location");
+				assert(
+					target !== undefined,
+					0xd6f /* Expected a result index for every captured location */,
+				);
 				results[target] = result;
 			}
 		}
 		if (isReadonlyArray(captured)) {
 			return results;
 		}
-		assert(results[0] !== undefined, "Expected a result for a single captured location");
+		assert(
+			results[0] !== undefined,
+			0xd70 /* Expected a result for a single captured location */,
+		);
 		return results[0];
 	}
 
@@ -440,7 +446,10 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				cursor.enterNode(step.parentIndex);
 			}
 			const context = this.checkout.forest.anchors.slots.get(ContextSlot);
-			assert(context !== undefined, "Expected a FlexTree context for the receiving view");
+			assert(
+				context !== undefined,
+				0xd71 /* Expected a FlexTree context for the receiving view */,
+			);
 			const node = getOrCreateNodeFromInnerNode(
 				getOrCreateHydratedFlexTreeNode(context, cursor),
 			);
