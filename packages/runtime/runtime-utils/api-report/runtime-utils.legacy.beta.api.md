@@ -28,6 +28,13 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @beta @legacy
+export interface IDisposalEventSource {
+    readonly disposed?: boolean;
+    off(event: "disposed", listener: (...args: unknown[]) => void): unknown;
+    once(event: "disposed", listener: (...args: unknown[]) => void): unknown;
+}
+
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
@@ -90,6 +97,21 @@ export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidH
 
 // @beta @legacy
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
+
+// @beta @legacy
+export function waitForEvent<TListeners extends object>(listenable: Listenable<TListeners>, resolveOn: NoInfer<keyof Listeners<TListeners> | readonly (keyof Listeners<TListeners>)[]>, options?: NoInfer<WaitForEventOptions<TListeners>>): Promise<void>;
+
+// @beta @legacy
+export interface WaitForEventOptions<TListeners extends object> {
+    readonly abortSignal?: AbortSignal;
+    readonly rejectOn?: readonly (keyof Listeners<TListeners>)[];
+}
+
+// @beta @legacy
+export function waitForPayloadUploaded(handle: IFluidHandle, abortSignal?: AbortSignal): Promise<void>;
+
+// @beta @legacy
+export function withDisposalAbort<T>(source: IDisposalEventSource, operation: (abortSignal: AbortSignal) => Promise<T>): Promise<T>;
 
 // (No @packageDocumentation comment for this package)
 
