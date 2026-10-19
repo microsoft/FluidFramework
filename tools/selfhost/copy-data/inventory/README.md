@@ -33,9 +33,7 @@ node inventory.mjs --tenant-ids '["<frs-tenant-id-1>","<frs-tenant-id-2>"]'
 Do not combine it with `--tenant-id`.
 All selected tenants are collected into one inventory, even when their resources are in different resource groups in the selected subscription.
 Use `--resource-group` as an additional restriction only when all selected tenants are in that group.
-Duplicate tenant IDs and document IDs are deduplicated.
 If any requested tenant is not found in the selected scope, the command fails without overwriting the existing inventory.
-The original singular `--tenant-id` remains supported.
 
 Use a different `document-inventory.json` output location:
 

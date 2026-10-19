@@ -61,7 +61,7 @@ For example, `<release-id>` can be `r0.1.0`; it names an immutable local bundle.
 The command checks your configuration before building, creates/reuses and logs into the build ACR, generates the bundle, and runs deployment with its own preflight checks.
 Deployment creates/reuses and logs into the deploy ACR.
 You do **not** need to log into registries that do not exist yet.
-The standalone script tests and manual preflight in the Azure guide are optional diagnostics, not additional prerequisites for this path.
+You do not need to run preflight separately.
 
 If a complete bundle was generated but deployment failed, fix the configuration and reuse it without rebuilding:
 

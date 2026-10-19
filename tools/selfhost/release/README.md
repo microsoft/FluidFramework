@@ -37,10 +37,7 @@ After a deployment failure, reuse a **completed** bundle:
 ./release/create-and-deploy-release.sh r0.1.0 --skip-build
 ```
 
-Generation uses a private staging directory and publishes the final bundle only after all generation gates pass.
-A failed generation removes its staging directory, so you can retry the same release ID.
-It does not delete previously completed bundles, pushed images, or Azure resources.
-If generation failed, rerun without `--skip-build`.
+If generation failed, rerun with the same release ID without `--skip-build`.
 
 ## Prerequisites
 
@@ -77,9 +74,8 @@ unset DOCKERHUB_USERNAME DOCKERHUB_TOKEN
 ```
 
 Use a Docker Hub access token with pull/read permission; do not put it in the parameters file.
-Deployment sends source credentials through an owner-only temporary ARM request file, removes it after submission or on exit, and waits for the pinned digest to become readable.
-Credentials are not passed as CLI arguments or printed.
-Anonymous imports remain supported when neither variable is set; authenticated accounts still have their own rate limits.
+Without these credentials, imports use anonymous Docker Hub access.
+Authenticated accounts still have their own rate limits.
 
 ## Generate a release bundle
 

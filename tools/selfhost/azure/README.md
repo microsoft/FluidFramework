@@ -134,9 +134,7 @@ to re-checking.
 **Regional capacity is not guaranteed.** Azure Managed Redis Balanced SKUs, and the VM size for
 your AKS nodes, can both fail with `AllocationFailed` in a region that is temporarily full. This
 is unrelated to your quota.
-Preflight checks requested AKS zones against subscription/SKU restrictions and performs Redis provider-level ARM validation when the target resource group exists.
-The Redis check creates no resources and reports provider capacity/policy/permission errors, but does not reserve capacity.
-When the group does not yet exist, it explicitly reports that capacity was not validated; deployment repeats preflight after build-registry provisioning creates the group.
+Preflight checks availability before creating resources, but does not reserve capacity.
 If allocation still fails, try another region or SKU.
 
 **Check your network range before you deploy.** The default VNet is `10.20.0.0/16`. If you intend
@@ -267,21 +265,9 @@ You can leave these alone. Every one has a working default:
 
 ## Step 2 — Check your configuration before deploying
 
-These are optional diagnostics.
-The recommended `release/create-and-deploy-release.sh` command runs cloud preflight before building and again during deployment, so do not run it manually as an additional required step.
-The script tests are for contributors checking deployment logic, not validation of your live configuration.
-
-**Validate the scripts — no Azure account needed, runs in seconds:**
-
-```bash
-bash azure/test/deploy.test.sh
-```
-
-Expect a summary with zero failures.
-This runs the real deployment logic against stub tools, so
-nothing reaches Azure and nothing costs anything. Run it after editing any file in this directory.
-
-**Validate your parameters against Azure — read-only, creates nothing:**
+The deployment runs preflight automatically.
+To check your parameters before starting a build or deployment, run this optional command.
+It does not create Azure resources.
 
 ```bash
 bash azure/preflight-check.sh azure/deploy.parameters.json
@@ -289,11 +275,8 @@ bash azure/preflight-check.sh azure/deploy.parameters.json
 
 This confirms you are signed in, your subscription has enough vCPU quota for your node settings,
 every globally-unique name is actually available, and your region supports Availability Zones.
-It also checks Redis capacity through provider validation when the target resource group exists.
-Provider validation is an ARM POST to `/validate`, not a deployment or resource creation.
-
-The deployment runs this automatically and refuses to start if it fails — but running it yourself
-while you are still editing the file is much faster than discovering a name collision mid-deploy.
+It also checks Redis capacity when the target resource group exists.
+Resolve any reported failures before deploying.
 
 ## Step 3 — Deploy
 
