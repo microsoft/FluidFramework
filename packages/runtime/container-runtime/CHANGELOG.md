@@ -1,5 +1,17 @@
 # @fluidframework/container-runtime
 
+## 3.6.0
+
+### Minor Changes
+
+- Keep unresolved version marks pending when history is inconclusive ([#28448](https://github.com/microsoft/FluidFramework/pull/28448)) [2e167d8c734](https://github.com/microsoft/FluidFramework/commit/2e167d8c734c76a57eed0135a390d11e1b55ff69)
+
+  Version marks are no longer permanently classified as unresolvable when a historical operation read is empty or starts
+  after the mark's sequence-number lower bound.
+  Neither result proves that the specific batch sequenced in the unavailable range.
+  The runtime keeps the mark pending so a disconnected or resubmitted batch can still sequence and resolve later.
+  Hosts own retry suppression and expiration policy for long-lived pending marks.
+
 ## 3.5.0
 
 Dependency updates only.
