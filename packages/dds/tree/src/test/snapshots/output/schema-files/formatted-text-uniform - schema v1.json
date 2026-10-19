@@ -20,93 +20,68 @@
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
+    "com.fluidframework.text.formatted<test.text>.StringArray": {
       "object": {
         "": {
           "kind": "Sequence",
           "types": [
-            "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom"
+            "com.fluidframework.text.formatted<test.text>.StringAtom"
           ]
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
+    "com.fluidframework.text.formatted<test.text>.StringAtom": {
       "object": {
         "": {
           "kind": "Value",
           "types": [
             "com.fluidframework.text.formatted.StringTextAtom",
-            "test.FormattedTextTest.StringLineAtom"
+            "test.text.LineAtom"
           ]
         },
         "format": {
           "kind": "Value",
           "types": [
-            "test.FormattedTextTest.CharacterFormat"
+            "test.text.TextFormat"
           ]
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
+    "com.fluidframework.text.formatted<test.text>.Text": {
       "object": {
         "": {
           "kind": "Value",
           "types": [
-            "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray"
+            "com.fluidframework.text.formatted<test.text>.StringArray"
           ]
         }
       }
     },
-    "test.FormattedTextTest.CharacterFormat": {
-      "object": {
-        "bold": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.boolean"
-          ]
-        },
-        "font": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.string"
-          ]
-        },
-        "size": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        }
-      }
-    },
-    "test.FormattedTextTest.StringLineAtom": {
+    "test.text.LineAtom": {
       "object": {
         "indent": {
           "kind": "Value",
           "types": [
             "com.fluidframework.leaf.number"
           ]
-        },
-        "tag": {
-          "kind": "Value",
-          "types": [
-            "test.FormattedTextTest.lineTag.h1",
-            "test.FormattedTextTest.lineTag.h2"
-          ]
         }
       }
     },
-    "test.FormattedTextTest.lineTag.h1": {
-      "object": {}
-    },
-    "test.FormattedTextTest.lineTag.h2": {
-      "object": {}
+    "test.text.TextFormat": {
+      "object": {
+        "bold": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        }
+      }
     }
   },
   "root": {
     "kind": "Value",
     "types": [
-      "com.fluidframework.text.formatted<test.FormattedTextTest>.Text"
+      "com.fluidframework.text.formatted<test.text>.Text"
     ]
   }
 }
