@@ -40,7 +40,7 @@ import {
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
 	type FieldBatchFormatVersion,
@@ -58,7 +58,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchAnyVersion {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references

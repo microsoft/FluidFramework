@@ -249,7 +249,7 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider, api
 		assert.equal(freshContext.sharedMap.get("retainedHistoryEdit"), true);
 	});
 
-	it("preserves a disconnected batch ID across reconnect and resolves it once", async () => {
+	it("keeps a disconnected mark pending while other batches sequence, then resolves it once", async () => {
 		const creator = await createTestContext();
 		const observer = await loadTestContext();
 		const originalClientId = creator.container.clientId;
@@ -266,6 +266,37 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider, api
 		creator.exactlyOnceCounter.increment(1);
 		const mark = creator.containerRuntime.versionMarkResolver.sealAndCaptureVersionMark();
 		assert(mark.kind === "pending", "the disconnected edits should produce a pending mark");
+
+		const unrelatedBatch: { id: string | undefined } = { id: undefined };
+		let unsubscribeUnrelated = (): void => {};
+		const unrelatedSequenced = new Promise<void>((resolve) => {
+			unsubscribeUnrelated = observer.containerRuntime.versionMarkResolver.onBatchSequenced(
+				(batchId) => {
+					if (batchId === unrelatedBatch.id) {
+						resolve();
+					}
+				},
+			);
+		});
+		observer.sharedMap.set("unrelatedWhileCreatorDisconnected", true);
+		const unrelatedMark =
+			observer.containerRuntime.versionMarkResolver.sealAndCaptureVersionMark();
+		assert(
+			unrelatedMark.kind === "pending",
+			"the unrelated edit should produce a pending mark",
+		);
+		unrelatedBatch.id = unrelatedMark.batchId;
+		await unrelatedSequenced;
+		unsubscribeUnrelated();
+		const pending = await observer.containerRuntime.versionMarkResolver.resolve(
+			mark.batchId,
+			mark.sequenceNumberLowerBound,
+		);
+		assert.deepEqual(
+			pending,
+			{ kind: "pending", reason: "awaitingSequence" },
+			"other sequenced batches must not make the disconnected mark terminal",
+		);
 
 		const notifications: {
 			readonly sequenceNumber: number;

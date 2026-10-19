@@ -6,7 +6,10 @@
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	TelemetryDataTag,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	findAncestor,
@@ -166,9 +169,15 @@ export class HostSynchronization {
 	 */
 	public receiveChangeFromGuest(message: GuestChangeMessage): void {
 		if (message.changeId !== this.nextGuestChangeId) {
-			throw new SandboxProtocolError(
-				`Guest change identifier order mismatch: received ${message.changeId}, expected ${this.nextGuestChangeId}.`,
-			);
+			throw new SandboxProtocolError("Guest change identifier order mismatch.", {
+				telemetryProperties: {
+					receivedChangeId: {
+						value: message.changeId,
+						tag: TelemetryDataTag.SandboxGuestData,
+					},
+					expectedChangeId: this.nextGuestChangeId,
+				},
+			});
 		}
 		this.nextGuestChangeId++;
 		if (message.mainRevision !== this.guestMainRevision) {

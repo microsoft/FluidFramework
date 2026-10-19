@@ -17,6 +17,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,
@@ -251,8 +252,16 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeLocation,
+	type TextLocationNode,
+	type CapturedTreeLocation,
+	type TreeGapCaptureOptions,
+	type ResolvedTreeLocation,
+	type TreeLocationResolution,
+	type TreeLocationResolver,
 	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
@@ -267,6 +276,7 @@ export {
 	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
+	type TransactionConstraintBeta,
 	type TransactionPostProcessor,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
@@ -347,7 +357,10 @@ export {
 	type CodecName,
 	type FormatVersion,
 } from "./codec/index.js";
-export { FormatValidatorBasic } from "./external-utilities/index.js";
+export {
+	FormatValidatorBasic,
+	FormatValidatorInterpreted,
+} from "./external-utilities/index.js";
 
 export type {
 	// Type Testing
@@ -400,7 +413,6 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	PlainText,
 	FormattedText,
-	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

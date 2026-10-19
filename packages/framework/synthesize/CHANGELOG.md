@@ -1,5 +1,9 @@
 # @fluidframework/synthesize
 
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

@@ -13,7 +13,7 @@ import {
 	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
+} from "@fluidframework/tree/alpha";
 import Quill from "quill-next";
 import type { Op } from "@quill-next/delta-es";
 import { type FC, useEffect, useReducer, useRef, useState } from "react";
