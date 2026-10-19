@@ -71,6 +71,56 @@
   In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
   Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
 
+- Add optional checksums to help catch unintended schema changes ([#28462](https://github.com/microsoft/FluidFramework/pull/28462)) [5c2ac041189](https://github.com/microsoft/FluidFramework/commit/5c2ac041189a0825272ba4311bdeb503cf12cbef)
+
+  SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
+
+  The checksum is a hash saved in application code to guard against unintended schema changes.
+  To enable this check, pass the saved hash as `expectedHash` to the separately imported [`identifySchema`](https://fluidframework.com/docs/api/tree#identifyschema-function) function and provide its result as the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property).
+  Calling `identifySchema()` without an expected hash enables schema hash telemetry without a construction check.
+
+  #### Configure the expected hash
+
+  To set the initial hash, use a non-empty placeholder and run a test that constructs the view.
+  Replace the placeholder with the computed hash from the error message.
+
+  ```typescript
+  import {
+    identifySchema,
+    SchemaFactoryAlpha,
+    StagedSchemaUpgradePolicy,
+    TreeViewConfigurationAlpha,
+  } from "fluid-framework/alpha";
+
+  const sf = new SchemaFactoryAlpha("com.example");
+  const stagedNumber = sf.staged(sf.number);
+  class Note extends sf.object("Note", {
+    text: sf.types([sf.string, stagedNumber]),
+  }) {}
+  const stagedUpgradePolicy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+    stagedNumber.metadata.stagedSchemaUpgrade!,
+  );
+
+  const expectedSchemaHash = "replace-with-computed-hash-from-error";
+
+  const config = new TreeViewConfigurationAlpha({
+    schema: Note,
+    stagedUpgradePolicy,
+    schemaIdentity: identifySchema({
+      // Optional.
+      expectedHash: expectedSchemaHash, // Optional: enables the hash check.
+    }),
+  });
+  // Throws if expectedHash does not match the current schema hash.
+  const view = tree.viewWith(config);
+  // initialize and upgradeSchema emit the target hash in Fluid Framework telemetry when schemaIdentity is provided.
+  view.initialize({ text: "Hello" });
+  ```
+
+  Keep the expected hash fixed until a schema change is intentional.
+  If a test reports a mismatch, review the schema change.
+  If the change is intentional, update the expected hash with the computed hash from the error message.
+
 - Resolve historical node selections and text positions for presence ([#28446](https://github.com/microsoft/FluidFramework/pull/28446)) [7d20e3b8239](https://github.com/microsoft/FluidFramework/commit/7d20e3b8239418c38eea10dd955ff23572c4f53f)
 
   The new alpha `TreeViewAlpha.locations` API allows capturing a _location_ on one view and resolving it in another view (possibly one on a different client).
