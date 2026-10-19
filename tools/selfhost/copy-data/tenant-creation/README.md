@@ -2,6 +2,8 @@
 
 Creates each self-hosted tenant that does not already exist.
 Existing tenants are left unchanged.
+Rerunning this stage after an interruption lists existing tenants again and creates only the missing tenants.
+Multiple source tenants mapped to the same destination tenant create that destination only once.
 
 This uses the self-host subscription ID, resource group, AKS name, namespace,
 and contact information from the configuration file.
@@ -38,6 +40,10 @@ node tenant-creation.mjs --execute
 When `tenant-admin` creates a tenant, it returns generated keys. This script
 immediately discards the response and never writes or logs the keys. Rotating
 the tenant keys is recommended.
+
+Tenant-admin output has an 8 MiB limit to allow tenant lists larger than a single key response while keeping memory use bounded.
+An oversized response, invalid JSON, or command failure stops this stage with an explicit error before document copying.
+Raw command output and generated keys are not included in those errors.
 
 ## Next step
 

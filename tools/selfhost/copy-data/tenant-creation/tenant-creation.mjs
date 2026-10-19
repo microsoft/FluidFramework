@@ -8,9 +8,10 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { loadConfiguration } from "../configuration/configuration.mjs";
-import { classifyError } from "../configuration/errors.mjs";
+import { safeErrorMessage, StageError } from "../configuration/errors.mjs";
 
 const execFileAsync = promisify(execFile);
+const maxTenantAdminOutputBytes = 8 * 1024 * 1024;
 
 class ConfirmationError extends Error {
 	constructor() {
@@ -66,7 +67,7 @@ function tenantAdminArguments(selfHost, namespace, command, tenantId) {
 	return argumentsList;
 }
 
-async function runTenantAdmin(target, namespace, argumentsList, execute = execFileAsync) {
+async function runTenantAdmin(command, argumentsList, execute = execFileAsync) {
 	const tenantAdmin = path.resolve(
 		import.meta.dirname,
 		"..",
@@ -76,8 +77,32 @@ async function runTenantAdmin(target, namespace, argumentsList, execute = execFi
 	);
 	let output;
 	try {
-		({ stdout: output } = await execute(tenantAdmin, argumentsList, { maxBuffer: 4096 }));
-		return JSON.parse(output);
+		try {
+			({ stdout: output } = await execute(tenantAdmin, argumentsList, {
+				maxBuffer: maxTenantAdminOutputBytes,
+			}));
+		} catch (error) {
+			let detail;
+			if (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER")
+				detail = "exceeded the 8 MiB output limit";
+			else if (error.code === "ENOENT")
+				detail =
+					"could not start; check that tenant-admin and its required tools are installed";
+			else if (error.code === "EACCES")
+				detail = "could not start; check executable permissions";
+			else
+				detail = `failed${Number.isInteger(error.code) ? ` with exit code ${error.code}` : ""}; check Azure access, AKS connectivity, and tenant-admin pod readiness`;
+			throw new StageError(
+				`tenant-admin ${command} ${detail}.${command === "create" ? " Creation may have completed; rerun this stage to check existing tenants before another creation attempt." : ""}`,
+			);
+		}
+		try {
+			return JSON.parse(output);
+		} catch {
+			throw new StageError(
+				`tenant-admin ${command} returned invalid JSON.${command === "create" ? " Creation may have completed; rerun this stage to check existing tenants before another creation attempt." : ""}`,
+			);
+		}
 	} finally {
 		output = undefined;
 	}
@@ -86,11 +111,19 @@ async function runTenantAdmin(target, namespace, argumentsList, execute = execFi
 /** Create missing self-host tenants without exposing generated tenant keys. */
 export async function createMissingTenants(config, inventory, execute) {
 	const existingTenants = await runTenantAdmin(
-		config.selfHost,
-		config.selfHostNamespace,
+		"list",
 		tenantAdminArguments(config.selfHost, config.selfHostNamespace, "list"),
 		execute,
 	);
+	if (
+		!Array.isArray(existingTenants) ||
+		existingTenants.some(
+			(tenant) => !tenant || typeof tenant.id !== "string" || tenant.id.trim() === "",
+		)
+	)
+		throw new StageError(
+			"tenant-admin list returned an invalid tenant collection; no tenants were created",
+		);
 	const existingIds = new Set(existingTenants.map((tenant) => tenant.id));
 	const created = [];
 	for (const [azureFluidRelayTenantId, tenant] of Object.entries(inventory.tenants)) {
@@ -100,8 +133,7 @@ export async function createMissingTenants(config, inventory, execute) {
 		if (!existingIds.has(selfHostTenantId)) {
 			console.log(`Creating new tenant: ${selfHostTenantId}`);
 			await runTenantAdmin(
-				config.selfHost,
-				config.selfHostNamespace,
+				"create",
 				[
 					...tenantAdminArguments(
 						config.selfHost,
@@ -114,6 +146,7 @@ export async function createMissingTenants(config, inventory, execute) {
 				],
 				execute,
 			);
+			existingIds.add(selfHostTenantId);
 			created.push(selfHostTenantId);
 		}
 	}
@@ -141,7 +174,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 		console.error(
 			error instanceof ConfirmationError
 				? error.message
-				: `Tenant creation failed: ${classifyError(error)}.`,
+				: `Tenant creation failed: ${safeErrorMessage(error)}`,
 		);
 		process.exitCode = 1;
 	}
