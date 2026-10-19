@@ -9,6 +9,19 @@ const FAILURE_REASONS = new Set([
 	"internal-error",
 	"az-cli-error",
 	"timeout",
+	"authentication",
+	"not-found",
+	"deleted",
+	"missing-summary",
+	"throttled",
+	"server-error",
+	"invalid-summary",
+	"unsafe-summary",
+	"payload-too-large",
+	"ambiguous-create",
+	"conflict",
+	"interrupted",
+	"document-id-mismatch",
 ]);
 const COPY_ENDPOINTS = new Set([
 	"azure-fluid-relay-discovery",
@@ -22,10 +35,19 @@ const SAFE_ERROR_NAMES = new Set([
 	"ConfirmationError",
 	"CopyError",
 	"CredentialError",
+	"StageError",
 ]);
+
+export class StageError extends Error {
+	constructor(message) {
+		super(message);
+		this.name = "StageError";
+	}
+}
 
 /** Classify an error without retaining its message or stack. */
 export function classifyError(error) {
+	if (error?.name === "CopyError" && FAILURE_REASONS.has(error.reason)) return error.reason;
 	if (error?.name === "AbortError" || error?.code === "ETIMEDOUT") return "timeout";
 	if (typeof error?.statusCode === "number" || typeof error?.status === "number")
 		return "http-error";
@@ -43,6 +65,10 @@ export function createFailure(documentId, stage, error, fallback = {}) {
 		stage,
 		reason: FAILURE_REASONS.has(reason) ? reason : "internal-error",
 		...(typeof status === "number" ? { httpStatus: status } : {}),
+		...(typeof error?.attempts === "number" ? { attempts: error.attempts } : {}),
+		...(typeof error?.serviceCode === "string" && SAFE_SERVICE_CODES.has(error.serviceCode)
+			? { serviceCode: error.serviceCode }
+			: {}),
 		...(COPY_ENDPOINTS.has(error?.endpoint)
 			? { endpoint: error.endpoint }
 			: fallback.endpoint === undefined
@@ -50,6 +76,13 @@ export function createFailure(documentId, stage, error, fallback = {}) {
 				: { endpoint: fallback.endpoint }),
 	};
 }
+
+export const SAFE_SERVICE_CODES = new Set([
+	"DocumentDeleted",
+	"DocumentNotFound",
+	"RepositoryNotFound",
+	"SummaryNotFound",
+]);
 
 /** Return an error message only when it is a safe error type. */
 export function safeErrorMessage(error) {
