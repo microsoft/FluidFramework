@@ -32,6 +32,8 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v2: 2,
 	/**
 	 * Experimental codec with optimizations for text.
+	 * @remarks
+	 * Adds {@link EncodedSpecializedNodeShape} to the shapes of v2.
 	 */
 	vTextExperimental: "text",
 });

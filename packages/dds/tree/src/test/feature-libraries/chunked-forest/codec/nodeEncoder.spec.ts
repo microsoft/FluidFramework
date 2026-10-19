@@ -357,5 +357,25 @@ describe("nodeShape", () => {
 				),
 			);
 		});
+
+		it("asserts when encoding in a format without specialized shapes", () => {
+			const base = new NodeShapeBasedEncoder(brand("node"), false, [], undefined);
+			const shape = new SpecializedNodeShapeEncoder(base, []);
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				undefined /* incrementalEncoder */,
+				brand(FieldBatchFormatVersion.v2),
+				false /* isSummary */,
+			);
+			assert.throws(
+				() => checkNodeEncode(shape, context, { type: brand("node") }),
+				validateAssertionError(
+					"SpecializedNodeShapeEncoder requires a format that supports specialized shapes",
+				),
+			);
+		});
 	});
 });

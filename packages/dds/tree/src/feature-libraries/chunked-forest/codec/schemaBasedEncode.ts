@@ -43,6 +43,7 @@ import {
 } from "./format/index.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+import type { SpecializedNodeEncoderPolicy } from "./schemaBasedEncodeVText.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -83,7 +84,7 @@ export function schemaCompressedEncodeV2(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
 ): EncodedFieldBatchV2 {
-	return schemaCompressedEncode(
+	const encoded: EncodedFieldBatchAnyVersion = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -92,6 +93,8 @@ export function schemaCompressedEncodeV2(
 		brand(FieldBatchFormatVersion.v2),
 		isSummary,
 	);
+	// No node encoder policy is passed, so no specialized shapes are produced, and this cast should be safe.
+	return encoded as EncodedFieldBatchV2;
 }
 
 /**
@@ -119,6 +122,12 @@ function schemaCompressedEncode(
 	);
 }
 
+/**
+ * Builds the {@link EncoderContext} for schema-based encoding.
+ * @param nodeEncoderFor - Chooses the node encoder of each node type.
+ * Defaults to the encoder that {@link getNodeEncoder} selects.
+ * Only formats that support specialized shapes can return a {@link SpecializedNodeShapeEncoder}.
+ */
 export function buildContext(
 	storedSchema: StoredSchemaCollection,
 	policy: SchemaPolicy,
@@ -126,10 +135,15 @@ export function buildContext(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
+	nodeEncoderFor: SpecializedNodeEncoderPolicy = (base) => base,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
-			getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
+			nodeEncoderFor(
+				getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
+				schemaName,
+				fieldBuilder,
+			),
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
 			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,

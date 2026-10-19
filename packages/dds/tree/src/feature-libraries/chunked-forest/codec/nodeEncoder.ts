@@ -24,6 +24,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import {
+	FieldBatchFormatVersion,
 	SpecialField,
 	type EncodedChunkShape,
 	type EncodedFieldShape,
@@ -208,6 +209,11 @@ export class SpecializedNodeShapeEncoder
 		context: EncoderContext,
 		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
+		// Older formats cannot represent the `f` shape that this encoder writes.
+		assert(
+			context.version === FieldBatchFormatVersion.vTextExperimental,
+			"SpecializedNodeShapeEncoder requires a format that supports specialized shapes",
+		);
 		this.inner.encodeNode(cursor, context, outputBuffer);
 	}
 
