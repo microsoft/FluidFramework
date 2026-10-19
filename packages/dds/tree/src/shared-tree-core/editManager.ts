@@ -154,9 +154,9 @@ export class EditManager<
 			this.trunkBase,
 			changeFamily,
 			mintRevisionTag,
-			this._events,
 			this.telemetryEventBatcher,
 		);
+		mainTrunk.trimmer = this._events;
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
 	}
@@ -767,9 +767,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
-			branchTrimmer,
 			telemetryEventBatcher,
 		);
+		this.localBranch.trimmer = branchTrimmer;
 
 		this.sequenceIdToCommit.set(baseCommitSequenceId, this.trunk.getHead());
 
