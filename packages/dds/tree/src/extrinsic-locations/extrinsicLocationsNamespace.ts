@@ -23,25 +23,26 @@ import {
 import { ExtrinsicRangeTracker } from "./extrinsicRangeTracker.js";
 
 /**
- * APIs for extrinsic locations and ranges in arrays and formatted text.
+ * APIs for storing extrinsic locations in trees.
+ *
  * @remarks
- * Includes shared range collections and handles, and a schema factory for arrays with separately stored ranges.
- * For formatted text, use {@link FormattedText.createSchemaWithRanges}.
+ * In this context extrinsic locations refer to references to positions in the tree, which are stored at a location away from the actual referenced position.
  *
- * A range stores two indexes into the content array and application-defined data.
- * Edit managed arrays through {@link ExtrinsicLocations.ArrayMembers} to keep these indexes consistent.
- * Removing all content covered by a range collapses it to an empty range rather than deleting it.
+ * Some similar cases which have alternative solutions (listed here to help with discoverability of alternatives: prefer these solutions when relevant):
+ * - Lookup of locations of {@link TreeNode | TreeNodes} (which you can hold references to in memory): hold onto the `TreeNode` itself, and use {@link (TreeNodeApi:interface).parent | Tree.parent} and {@link (TreeNodeApi:interface).key | Tree.key} if needed.
+ * - Lookup of nodes based on leaf data stored on them: use {@link TreeIndex}.
+ * - Tracking of a location in an array, in memory: use {@link createArrayInsertionAnchor} or just hold onto the {@link TreeNode} at that location.
+ * - Sharing a location that only needs to work in the current revision: use a TreeNode and/or key within the node if in memory, or a full path (via {@link (TreeNodeApi:interface).parent | Tree.parent} and {@link (TreeNodeApi:interface).key | Tree.key}) if needed.
+ * - Sharing transient locations between collaborating clients (for example, presence): use {@link UntypedTreeViewAlpha.locations | TreeViewAlpha.locations}.
  *
- * Structural content edits, range creation/removal, and bound changes use a document-wide {@link NoChangeConstraint}.
- * Range data edits use ordinary tree editing semantics without adding this constraint.
- * Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
- * Concurrent changes anywhere in the document can cause the entire edit to be rejected.
- * Applications must account for this asynchronous rejection, for example by observing commit outcomes.
- * Reverts also require the document to be unchanged since the edit, to avoid restoring stale indexes.
+ * Only use `ExtrinsicLocations` when the location in question must be stored in the tree, and it can't be done better through any of the above means.
+ * Current support is limited to array ranges, including {@link FormattedText.createSchemaWithRanges | range-enabled formatted text}.
+ * Range-maintenance edits use document-wide {@link NoChangeConstraint | no-change constraints};
+ * concurrent changes anywhere in the document can reject the entire guarded edit.
+ * Requires {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} of at least `2.80.0`.
  *
- * This is an early implementation, not native support for persistent locations.
- * All writers must use these APIs: editing the underlying stored fields through another view schema,
- * import APIs, or an agent that bypasses these methods can violate the range invariants.
+ * This is an early implementation, not robust native support for persistent locations.
+ * Future versions may provide more robust support.
  * @alpha
  */
 export namespace ExtrinsicLocations {
@@ -57,6 +58,8 @@ export namespace ExtrinsicLocations {
 	 * Generated identifiers use the scope `com.fluidframework.extrinsicRanges<user-scope>`.
 	 * Use a different factory scope for each distinct parameterization in a document.
 	 * Subclasses must not replace the `content`, `rangeStorage`, or `ranges` members.
+	 * All writers must use the provided content and range editing APIs.
+	 * Other view schemas or imports that bypass them can leave stale range bounds.
 	 * @alpha
 	 */
 	export function createArraySchema<
