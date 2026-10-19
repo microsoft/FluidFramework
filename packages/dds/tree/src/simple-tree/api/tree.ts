@@ -1068,6 +1068,25 @@ export interface TreeViewAlpha<
 	initialize(content: InsertableField<TSchema>): void;
 
 	/**
+	 * Upgrade the schema for this view immediately, but submit the upgrade only when this view next edits the tree.
+	 *
+	 * @remarks
+	 * This keeps a read connection from becoming a write connection just to upgrade the schema.
+	 * It does not change read-only permissions.
+	 * The view continues to receive remote edits while the upgrade is pending.
+	 *
+	 * Like {@link TreeView.upgradeSchema}, this requires {@link SchemaCompatibilityStatus.canUpgrade}
+	 * and includes staged upgrades selected by the view configuration.
+	 * The upgrade is optimistic and can be invalidated by concurrent schema changes.
+	 * Call this method outside a transaction.
+	 *
+	 * Disposing this view before its next edit discards the pending upgrade.
+	 * Call {@link TreeView.upgradeSchema} outside a transaction to submit it immediately instead.
+	 * An aborted transaction does not submit the upgrade.
+	 */
+	upgradeSchemaOnNextEdit(): void;
+
+	/**
 	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
 	 *
 	 * @param upgrade - The upgrade token to check.

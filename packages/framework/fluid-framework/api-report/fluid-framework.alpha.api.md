@@ -2917,6 +2917,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    upgradeSchemaOnNextEdit(): void;
 }
 
 // @beta @sealed

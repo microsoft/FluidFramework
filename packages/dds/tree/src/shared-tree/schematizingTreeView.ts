@@ -12,7 +12,14 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
+import {
+	anchorSlot,
+	rootFieldKey,
+	type RevertToOptionsAlpha,
+	type TreeStoredSchema,
+	type ChangeMetadata,
+	type GraphCommit,
+} from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -78,6 +85,7 @@ import {
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -168,14 +176,28 @@ export class SchematizingSimpleTreeView<
 	 */
 	private pendingHydration?: () => void;
 
+	private deferredUpgradeSource?: TreeCheckout;
+	private deferredSourceEdited = false;
+	private publishingDeferredEdits = false;
+	private deferringSchemaEdit = false;
+	private schemaBeforeDeferredRebase?: TreeStoredSchema;
+	private schemaChangedDuringDeferredRebase = false;
+	private pendingSchemaUpgradeBase?: GraphCommit<SharedTreeChange>;
+	private checkRootChanged?: () => void;
+
 	private readonly rootFieldSchema: FieldSchema;
+	private activeCheckout: TreeCheckout;
 	public readonly breaker: Breakable;
+
+	public get checkout(): TreeCheckout {
+		return this.activeCheckout;
+	}
 
 	public constructor(
 		/**
 		 * The checkout that supplies the tree content and branch operations for the view.
 		 */
-		public readonly checkout: TreeCheckout,
+		checkout: TreeCheckout,
 		/**
 		 * The schema and behavior configuration for the view.
 		 */
@@ -194,6 +216,7 @@ export class SchematizingSimpleTreeView<
 		 */
 		private readonly disposeCheckoutOnDispose: boolean = !checkout.isSharedBranch,
 	) {
+		this.activeCheckout = checkout;
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
@@ -225,8 +248,15 @@ export class SchematizingSimpleTreeView<
 
 		this.unregisterCallbacks.add(
 			this.checkout.events.on("changed", (data, getRevertible) => {
-				this.events.emit("changed", data, getRevertible);
-				this.events.emit("commitApplied", data, getRevertible);
+				const emit = (): void => {
+					this.events.emit("changed", data, getRevertible);
+					this.events.emit("commitApplied", data, getRevertible);
+				};
+				if (this.deferredUpgradeSource === undefined) {
+					emit();
+				} else {
+					this.checkout.emitChangedLocked(emit);
+				}
 			}),
 		);
 	}
@@ -318,6 +348,33 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public upgradeSchema(): void {
+		const newSchema = this.getSchemaUpgrade();
+		if (newSchema !== undefined) {
+			this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		}
+		if (this.checkout.transaction.size === 0) {
+			this.publishDeferredEdits();
+		}
+	}
+
+	public upgradeSchemaOnNextEdit(): void {
+		const newSchema = this.getSchemaUpgrade();
+		if (newSchema === undefined) {
+			return;
+		}
+		this.runSchemaEdit(() => {
+			this.startDeferredUpgrade();
+			this.deferringSchemaEdit = true;
+			try {
+				this.pendingSchemaUpgradeBase ??= this.checkout.mainBranch.getHead();
+				this.checkout.updateSchema(newSchema);
+			} finally {
+				this.deferringSchemaEdit = false;
+			}
+		});
+	}
+
+	private getSchemaUpgrade(): TreeStoredSchema | undefined {
 		this.ensureUndisposed();
 
 		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
@@ -332,7 +389,135 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
-		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		return newSchema;
+	}
+
+	private startDeferredUpgrade(): void {
+		if (this.deferredUpgradeSource !== undefined) {
+			return;
+		}
+
+		const source = this.checkout;
+		const checkout = source.forkForSchemaUpgrade();
+		this.disposeFlexView();
+		source.disposeLocations();
+		this.deferredUpgradeSource = source;
+		this.activeCheckout = checkout;
+		checkout.forest.anchors.slots.set(ViewSlot, this);
+
+		this.unregisterCallbacks.add(
+			source.events.on("afterBatch", () => this.synchronizeDeferredCheckout()),
+		);
+		this.unregisterCallbacks.add(
+			source.events.on("changed", (data) => {
+				if (data.isLocal) {
+					source.onCommitValid(source.mainBranch.getHead(), () => {
+						if (!this.publishingDeferredEdits) {
+							this.deferredSourceEdited = true;
+							this.synchronizeDeferredCheckout();
+						}
+					});
+				}
+			}),
+		);
+		this.unregisterCallbacks.add(
+			source.mainBranch.events.on("commitSequenced", (commit) => {
+				checkout.mainBranch.commitWasSequenced(commit);
+			}),
+		);
+		this.unregisterCallbacks.add(
+			checkout.events.on("changed", (data) => {
+				if (data.isLocal && !this.deferringSchemaEdit) {
+					// Publish only after the edit has been applied and the checkout is unlocked.
+					checkout.onCommitValid(checkout.mainBranch.getHead(), () =>
+						this.publishDeferredEdits(data),
+					);
+				}
+			}),
+		);
+		this.unregisterCallbacks.add(
+			checkout.events.on("dispose", () => {
+				if (!this.disposed) {
+					this.dispose();
+				}
+			}),
+		);
+		this.update();
+	}
+
+	private synchronizeDeferredCheckout(): void {
+		const source = this.deferredUpgradeSource;
+		if (
+			source !== undefined &&
+			!this.publishingDeferredEdits &&
+			source.transaction.size === 0 &&
+			this.checkout.transaction.size === 0
+		) {
+			const base = this.pendingSchemaUpgradeBase;
+			if (base === undefined) {
+				// The source can still hold its edit lock during afterBatch.
+				// Only the independent checkout is changed by this rebase.
+				this.checkout.mainBranch.rebaseOnto(source.mainBranch);
+			} else if (source.mainBranch.getHead() !== base) {
+				this.refreshDeferredUpgrade(source, base);
+			}
+			if (this.deferredSourceEdited) {
+				this.deferredSourceEdited = false;
+				this.publishDeferredEdits();
+			}
+		}
+	}
+
+	private refreshDeferredUpgrade(
+		source: TreeCheckout,
+		base: GraphCommit<SharedTreeChange>,
+	): void {
+		const checkout = this.checkout;
+		const previousSchema = checkout.storedSchema.clone();
+		this.schemaBeforeDeferredRebase = previousSchema;
+		this.schemaChangedDuringDeferredRebase = false;
+		this.deferringSchemaEdit = true;
+		try {
+			checkout.rebaseDeferredSchemaUpgrade(source, base, () => {
+				this.pendingSchemaUpgradeBase = undefined;
+				if (this.computeCompatibility().canUpgrade) {
+					const newSchema = this.getSchemaUpgrade();
+					if (newSchema !== undefined) {
+						this.pendingSchemaUpgradeBase = checkout.mainBranch.getHead();
+						checkout.updateSchema(newSchema);
+					}
+				}
+			});
+		} finally {
+			this.deferringSchemaEdit = false;
+			this.schemaBeforeDeferredRebase = undefined;
+		}
+		if (
+			this.schemaChangedDuringDeferredRebase &&
+			(!allowsRepoSuperset(defaultSchemaPolicy, previousSchema, checkout.storedSchema) ||
+				!allowsRepoSuperset(defaultSchemaPolicy, checkout.storedSchema, previousSchema))
+		) {
+			this.update();
+		} else {
+			this.currentCompatibility = this.computeCompatibility();
+			this.checkRootChanged?.();
+		}
+	}
+
+	private publishDeferredEdits(metadata?: ChangeMetadata): void {
+		const source = this.deferredUpgradeSource;
+		if (source === undefined || this.publishingDeferredEdits) {
+			return;
+		}
+		this.synchronizeDeferredCheckout();
+		this.publishingDeferredEdits = true;
+		try {
+			source.merge(this.checkout, false, metadata);
+			this.pendingSchemaUpgradeBase = undefined;
+			this.checkout.mainBranch.rebaseOnto(source.mainBranch);
+		} finally {
+			this.publishingDeferredEdits = false;
+		}
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -389,7 +574,9 @@ export class SchematizingSimpleTreeView<
 		params?: RunTransactionParamsAlpha,
 	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.ensureUndisposed();
-		return this.checkout.runTransaction(transaction, params);
+		const result = this.checkout.runTransaction(transaction, params);
+		this.synchronizeDeferredCheckout();
+		return result;
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
@@ -422,7 +609,9 @@ export class SchematizingSimpleTreeView<
 				),
 			);
 		}
-		return this.checkout.runTransactionAsync(transaction, params);
+		const result = await this.checkout.runTransactionAsync(transaction, params);
+		this.synchronizeDeferredCheckout();
+		return result;
 	}
 
 	private ensureUndisposed(): void {
@@ -490,25 +679,37 @@ export class SchematizingSimpleTreeView<
 					this.flexTreeContext.root as FlexTreeOptionalField
 				).content;
 
+				this.checkRootChanged = () => {
+					// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
+					// Accessing `this.root` in that case can throw. It's OK to ignore this because:
+					// - The rootChanged event will already be raised at the end of the current upgrade
+					// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
+					//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
+					if (
+						!this.midUpgrade &&
+						this.schemaBeforeDeferredRebase === undefined &&
+						lastRoot !== this.flexRoot.content
+					) {
+						lastRoot = this.flexRoot.content;
+						this.events.emit("rootChanged");
+					}
+				};
 				this.flexTreeViewUnregisterCallbacks.add(
-					this.checkout.events.on("afterBatch", () => {
-						// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
-						// Accessing `this.root` in that case can throw. It's OK to ignore this because:
-						// - The rootChanged event will already be raised at the end of the current upgrade
-						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
-						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-						if (!this.midUpgrade && lastRoot !== this.flexRoot.content) {
-							lastRoot = this.flexRoot.content;
-							this.events.emit("rootChanged");
-						}
-					}),
+					this.checkout.events.on("afterBatch", this.checkRootChanged),
 				);
 			}
 		}
 
 		this.flexTreeViewUnregisterCallbacks.add(
 			// Will dispose the old view (if there is one) when its no longer valid, and create a new one if appropriate.
-			this.checkout.storedSchema.events.on("afterSchemaChange", () => this.update()),
+			this.checkout.storedSchema.events.on("afterSchemaChange", () => {
+				if (this.schemaBeforeDeferredRebase === undefined) {
+					this.update();
+				} else {
+					// A rebase can roll the pending upgrade back and then apply it again.
+					this.schemaChangedDuringDeferredRebase = true;
+				}
+			}),
 		);
 
 		if (!this.midUpgrade) {
@@ -552,6 +753,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	private disposeFlexView(): void {
+		this.checkRootChanged = undefined;
 		const anchors = this.checkout.forest.anchors;
 		if (this.flexTreeContext !== undefined) {
 			// Cleanup any TreeNodes cached in the AnchorSet when disposing the flex-tree which they wrap.
@@ -584,12 +786,18 @@ export class SchematizingSimpleTreeView<
 			unregister();
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
+		const source = this.deferredUpgradeSource;
+		source?.forest.anchors.slots.delete(ViewSlot);
+		source?.disposeLocations();
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
-		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
+		if ((this.disposeCheckoutOnDispose || source !== undefined) && !this.checkout.disposed) {
 			// Branch views normally own their checkout, unlike views created for a retained checkout.
 			this.checkout.dispose();
+		}
+		if (this.disposeCheckoutOnDispose && source !== undefined && !source.disposed) {
+			source.dispose();
 		}
 	}
 

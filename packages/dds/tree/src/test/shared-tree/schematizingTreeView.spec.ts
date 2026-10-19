@@ -45,6 +45,7 @@ import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	expectSchemaEqual,
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
@@ -581,6 +582,356 @@ describe("SchematizingSimpleTreeView", () => {
 
 			view.upgradeSchema();
 			validateViewConsistency(view.checkout, updatedCheckout);
+		});
+	});
+
+	describe("upgradeSchemaOnNextEdit", () => {
+		const oldFactory = new SchemaFactory("deferred-upgrade");
+		class OldRoot extends oldFactory.object("Root", {
+			value: oldFactory.number,
+		}) {}
+		const newFactory = new SchemaFactory("deferred-upgrade");
+		class NewRoot extends newFactory.object("Root", {
+			value: newFactory.number,
+			extra: newFactory.optional(newFactory.string),
+		}) {}
+		const oldConfig = new TreeViewConfiguration({ schema: OldRoot });
+		const newConfig = new TreeViewConfiguration({ schema: NewRoot });
+
+		function setup() {
+			const provider = new TestTreeProviderLite(2);
+			const [oldTree, newTree] = provider.trees;
+			const oldView = oldTree.kernel.viewWith(oldConfig);
+			oldView.initialize({ value: 0 });
+			provider.synchronizeMessages();
+			const view = newTree.kernel.viewWith(newConfig);
+			const source = newTree.kernel.checkout;
+			let localCommits = 0;
+			source.events.on("changed", (data) => {
+				if (data.isLocal) {
+					localCommits++;
+				}
+			});
+			return {
+				provider,
+				oldTree,
+				oldView,
+				view,
+				source,
+				get localCommits() {
+					return localCommits;
+				},
+			};
+		}
+
+		it("upgrades locally without submitting an operation", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			assert.equal(state.view.root.value, 0);
+			assert.equal(state.view.compatibility.isEquivalent, true);
+			assert.equal(state.localCommits, 0);
+			state.provider.synchronizeMessages();
+			assert.equal(state.oldView.compatibility.isEquivalent, true);
+			assert.equal(state.oldView.root.value, 0);
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(OldRoot));
+		});
+
+		it("submits the upgrade with the first edit and continues collaborating", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const root = state.view.root;
+			root.extra = "first edit";
+			assert(state.localCommits > 0);
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root, root);
+			assert.equal(state.oldView.compatibility.canView, false);
+			state.oldView.dispose();
+			const remoteView = state.oldTree.kernel.viewWith(newConfig);
+			assert.equal(remoteView.root.extra, "first edit");
+			remoteView.root.value = 1;
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root.value, 1);
+			assert.equal(state.view.root, root);
+			state.view.root.value = 2;
+			state.provider.synchronizeMessages();
+			assert.equal(remoteView.root.value, 2);
+		});
+
+		it("receives remote edits without submitting or invalidating nodes", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const root = state.view.root;
+			for (let value = 1; value <= 20; value++) {
+				state.oldView.root.value = value;
+				state.provider.synchronizeMessages();
+				assert.equal(state.view.root, root);
+				assert.equal(root.value, value);
+				assert.equal(state.localCommits, 0);
+			}
+		});
+
+		it("notifies root replacement while the upgrade is pending", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			let rootChanges = 0;
+			state.view.events.on("rootChanged", () => rootChanges++);
+			state.oldView.root = { value: 1 };
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root.value, 1);
+			assert.equal(rootChanges, 1);
+			assert.equal(state.localCommits, 0);
+		});
+
+		it("keeps the upgraded schema available to node change listeners", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const root = state.view.root;
+			let nodeChanges = 0;
+			Tree.on(root, "nodeChanged", () => {
+				nodeChanges++;
+				assert.equal(root.extra, undefined);
+				assert.equal(root.value, 1);
+			});
+			state.oldView.root.value = 1;
+			state.provider.synchronizeMessages();
+			assert.equal(nodeChanges, 1);
+		});
+
+		it("invalidates normally if the submitted upgrade loses a concurrent edit", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.oldView.root.value = 1;
+			state.view.root.extra = "concurrent edit";
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.compatibility.canView, false);
+			assert.equal(state.oldView.root.value, 1);
+			assert.equal(state.localCommits, 2);
+		});
+
+		it("does not submit for empty or aborted transactions", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.view.runTransaction(() => {});
+			state.view.runTransaction(() => {
+				state.view.root.extra = "discarded";
+				return { rollback: true };
+			});
+			assert.equal(state.view.root.extra, undefined);
+			assert.equal(state.localCommits, 0);
+			state.view.runTransaction(() => {
+				state.view.root.extra = "committed";
+			});
+			state.provider.synchronizeMessages();
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+		});
+
+		it("receives edits after an asynchronous transaction aborts", async () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			await state.view.runTransactionAsync(async () => {
+				state.view.root.extra = "discarded";
+				state.oldView.root.value = 1;
+				state.provider.synchronizeMessages();
+				return { rollback: true };
+			});
+			assert.equal(state.view.root.value, 1);
+			assert.equal(state.view.root.extra, undefined);
+			assert.equal(state.localCommits, 0);
+		});
+
+		it("rebases a committed asynchronous transaction over remote edits", async () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			await state.view.runTransactionAsync(async () => {
+				state.view.root.extra = "committed";
+				state.oldView.root.value = 1;
+				state.provider.synchronizeMessages();
+			});
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root.value, 1);
+			assert.equal(state.view.root.extra, "committed");
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+		});
+
+		it("preserves transaction labels, undo, and commit settlement", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const { undoStack } = createTestUndoRedoStacks(state.view.events);
+			const labels: unknown[] = [];
+			let settled = 0;
+			state.view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					labels.push(metadata.label);
+					metadata.events.on("settled", () => settled++);
+				}
+			});
+			state.view.runTransaction(
+				() => {
+					state.view.root.value = 1;
+				},
+				{ label: "first edit" },
+			);
+			assert.equal(labels.at(-1), "first edit");
+			assert.equal(undoStack.length, 1);
+			state.provider.synchronizeMessages();
+			assert.equal(settled, state.localCommits);
+			undoStack.pop()?.revert();
+			assert.equal(state.view.root.value, 0);
+			assert.equal(labels.at(-1), "first edit");
+			state.provider.synchronizeMessages();
+		});
+
+		it("publishes when an existing undo token makes the first edit", () => {
+			const state = setup();
+			state.view.dispose();
+			const oldLocalView = state.source.viewWith(oldConfig);
+			const { undoStack } = createTestUndoRedoStacks(oldLocalView.events);
+			oldLocalView.root.value = 1;
+			state.provider.synchronizeMessages();
+			oldLocalView.dispose();
+
+			const view = state.source.viewWith(newConfig);
+			view.upgradeSchemaOnNextEdit();
+			const commitsBeforeUndo = state.localCommits;
+			undoStack.pop()?.revert();
+			assert.equal(view.root.value, 0);
+			assert.equal(state.localCommits, commitsBeforeUndo + 2);
+			state.provider.synchronizeMessages();
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+		});
+
+		it("keeps location resolution available after the upgrade is sequenced", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.view.root.extra = "first edit";
+			state.provider.synchronizeMessages();
+			const capture = state.view.locations.captureNode(state.view.root);
+			const resolution = state.view.locations.resolve(capture);
+			assert.equal(resolution.status, "resolved");
+		});
+
+		it("can submit a pending upgrade explicitly", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.view.upgradeSchema();
+			assert(state.localCommits > 0);
+			state.provider.synchronizeMessages();
+			assert.equal(state.oldView.compatibility.canView, false);
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+		});
+
+		it("allows an explicit upgrade within a committed transaction", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.view.runTransaction(() => {
+				state.view.upgradeSchema();
+				state.view.root.extra = "committed";
+			});
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root.extra, "committed");
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+		});
+
+		it("prevents edits during forwarded change events", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const root = state.view.root;
+			let changeEvents = 0;
+			state.view.events.on("changed", () => {
+				changeEvents++;
+				assert.throws(
+					() => {
+						root.value = 100;
+					},
+					validateUsageError(/forbidden during a change event callback/),
+				);
+			});
+			root.extra = "first edit";
+			assert.equal(changeEvents, 2);
+			assert.equal(root.value, 0);
+		});
+
+		it("does not dispose the shared view when it is merged into a fork", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const fork = state.view.fork();
+			state.view.root.extra = "first edit";
+			fork.merge(state.view);
+			assert.equal(state.view.disposed, false);
+			assert.equal(fork.root.extra, "first edit");
+			fork.dispose();
+		});
+
+		it("still prevents rebasing the shared view", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const fork = state.view.fork();
+			assert.throws(() => state.view.rebaseOnto(fork), /0xa5d/);
+			fork.dispose();
+		});
+
+		it("publishes edits merged from a fork", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const fork = state.view.fork();
+			fork.root.extra = "from fork";
+			assert.equal(state.localCommits, 0);
+			state.view.merge(fork);
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.root.extra, "from fork");
+			expectSchemaEqual(state.source.storedSchema, toInitialSchema(NewRoot));
+			assert.equal(fork.disposed, true);
+		});
+
+		it("handles an incompatible concurrent schema upgrade without submitting", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			state.oldView.dispose();
+			const competingFactory = new SchemaFactory("deferred-upgrade");
+			class CompetingRoot extends competingFactory.object("Root", {
+				value: competingFactory.number,
+				other: competingFactory.optional(competingFactory.number),
+			}) {}
+			const competingView = state.oldTree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: CompetingRoot }),
+			);
+			competingView.upgradeSchema();
+			state.provider.synchronizeMessages();
+			assert.equal(state.view.compatibility.canView, false);
+			assert.equal(state.view.compatibility.canUpgrade, false);
+			assert.equal(state.localCommits, 0);
+		});
+
+		it("discards the pending upgrade and disposes its branch with the view", () => {
+			const state = setup();
+			state.view.upgradeSchemaOnNextEdit();
+			const checkout = state.view.checkout;
+			state.view.dispose();
+			assert.equal(checkout.disposed, true);
+			assert.equal(state.source.disposed, false);
+			assert.equal(state.localCommits, 0);
+			const replacement = state.source.viewWith(oldConfig);
+			assert.equal(replacement.root.value, 0);
+			replacement.dispose();
+			state.oldView.root.value = 1;
+			state.provider.synchronizeMessages();
+		});
+
+		it("does not create a branch when no upgrade is needed", () => {
+			const state = setup();
+			state.view.upgradeSchema();
+			const checkout = state.view.checkout;
+			state.view.upgradeSchemaOnNextEdit();
+			assert.equal(state.view.checkout, checkout);
+		});
+
+		it("rejects an incompatible schema", () => {
+			const checkout = checkoutWithInitialTree(config, 5);
+			const view = checkout.viewWith(new TreeViewConfiguration({ schema: schema.string }));
+			assert.throws(
+				() => view.upgradeSchemaOnNextEdit(),
+				validateUsageError(/cannot be upgraded/),
+			);
 		});
 	});
 

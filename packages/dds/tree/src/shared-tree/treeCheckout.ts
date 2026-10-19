@@ -639,6 +639,14 @@ export class TreeCheckout implements ITreeCheckout {
 	private _branchHistory?: DefaultTreeBranchHistory;
 	private _locations?: DefaultTreeLocationResolver;
 	private locationRevisionSource?: () => LocationRevisionSource;
+	private schemaUpgradeSource?: TreeCheckout;
+
+	/**
+	 * Whether this checkout represents the shared view, including its deferred-upgrade checkout.
+	 */
+	private get isSharedView(): boolean {
+		return this.isSharedBranch || this.schemaUpgradeSource?.isSharedView === true;
+	}
 
 	public constructor(
 		private branch: SharedTreeBranch<
@@ -1092,11 +1100,14 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
 	 * The `try`/`finally` ensures the lock is released even if a listener throws.
 	 */
-	private emitChangedLocked(
+	public emitChangedLocked(
 		emit: () => void,
 		reason: string = "a change event callback",
 	): void {
-		this.editLock.lock(reason);
+		const wasLocked = this.editLock.isLocked;
+		if (!wasLocked) {
+			this.editLock.lock(reason);
+		}
 		try {
 			emit();
 		} finally {
@@ -1107,7 +1118,9 @@ export class TreeCheckout implements ITreeCheckout {
 			// into a broken state (using a properly scoped `Breakable`),
 			// likely by moving emitChangedLocked into EditLock, and having EditLock get a Breakable,
 			// and having the new emitChangedLocked use `Breakable.use`.
-			this.editLock.unlock();
+			if (!wasLocked) {
+				this.editLock.unlock();
+			}
 		}
 	}
 
@@ -1574,6 +1587,69 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChangeProcessingContext
 	>;
 
+	/**
+	 * Create the local checkout used to defer a view's schema upgrade.
+	 * The checkout retains the source's canonical history for location resolution.
+	 */
+	public forkForSchemaUpgrade(): TreeCheckout {
+		this.editLock.checkUnlocked("Deferring a schema upgrade");
+		const checkout = this.fork();
+		checkout.schemaUpgradeSource = this;
+		if (this.locationRevisionSource !== undefined) {
+			checkout.setLocationRevisionSource(this.locationRevisionSource);
+		}
+		return checkout;
+	}
+
+	/**
+	 * Replace an unsubmitted schema upgrade after receiving changes from its source.
+	 * Schema changes cannot be rebased over concurrent edits, so only the data changes are rebased.
+	 * The callback recreates the upgrade against the source's current schema before the data is reapplied.
+	 */
+	public rebaseDeferredSchemaUpgrade(
+		source: TreeCheckout,
+		base: GraphCommit<SharedTreeChange>,
+		upgrade: () => void,
+	): void {
+		assert(this.transaction.size === 0, "Cannot rebase an upgrade during a transaction");
+		const branch = this.#transaction.branch;
+		const commits: GraphCommit<SharedTreeChange>[] = [];
+		assert(
+			findAncestor([branch.getHead(), commits], (commit) => commit === base) !== undefined,
+			"The deferred upgrade base must be an ancestor of the view",
+		);
+		assert(
+			commits[0] !== undefined && hasSchemaChange(commits[0].change),
+			"The first deferred commit must be the schema upgrade",
+		);
+		const dataBranch = branch.fork(base);
+		try {
+			for (const commit of commits.slice(1)) {
+				dataBranch.apply(commit, CommitKind.Default, commit.customMetadata);
+			}
+			dataBranch.rebaseOnto(source.#transaction.branch);
+			const rebasedCommits: GraphCommit<SharedTreeChange>[] = [];
+			assert(
+				findAncestor(
+					[dataBranch.getHead(), rebasedCommits],
+					(commit) => commit === source.#transaction.branch.getHead(),
+				) !== undefined,
+				"Rebased data must descend from the source",
+			);
+			branch.removeAfter(base);
+			for (const commit of commits) {
+				this.localCommitEventEmitters.delete(commit.revision);
+			}
+			branch.rebaseOnto(source.#transaction.branch);
+			upgrade();
+			for (const commit of rebasedCommits) {
+				branch.apply(commit, CommitKind.Default, commit.customMetadata);
+			}
+		} finally {
+			dataBranch.dispose();
+		}
+	}
+
 	@throwIfBroken
 	public fork(): TreeCheckout {
 		this.checkNotDisposed(
@@ -1616,7 +1692,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
-		if (this.isSharedBranch) {
+		if (this.isSharedView) {
 			throw new UsageError(
 				"Cannot switch a view away from a shared branch. Consider forking first.",
 			);
@@ -1769,7 +1845,7 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		assert(
-			!checkout.isSharedBranch,
+			!checkout.isSharedView,
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
@@ -1816,7 +1892,12 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public merge(view: UntypedTreeView): void;
 	public merge(view: UntypedTreeView, disposeMerged: boolean): void;
-	public merge(view: UntypedTreeView, disposeMerged = true): void {
+	public merge(
+		view: UntypedTreeView,
+		disposeMerged: boolean,
+		metadata: ChangeMetadata | undefined,
+	): void;
+	public merge(view: UntypedTreeView, disposeMerged = true, metadata?: ChangeMetadata): void {
 		const checkout = getCheckout(view);
 		this.checkNotDisposed(
 			"The target branch of the merge has been disposed and cannot be merged.",
@@ -1835,8 +1916,17 @@ export class TreeCheckout implements ITreeCheckout {
 				"Views with an open transaction cannot be merged into another view.",
 			);
 		}
-		this.#transaction.branch.merge(checkout.#transaction.branch);
-		if (disposeMerged && !checkout.isSharedBranch) {
+		const previousLabels = this.labelTreeNode;
+		if (metadata?.isLocal === true) {
+			this.labelTreeNode =
+				metadata.labels.tree === undefined ? undefined : cloneLabelTree(metadata.labels.tree);
+		}
+		try {
+			this.#transaction.branch.merge(checkout.#transaction.branch, metadata?.kind);
+		} finally {
+			this.labelTreeNode = previousLabels;
+		}
+		if (disposeMerged && !checkout.isSharedView) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
 		}

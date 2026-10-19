@@ -359,10 +359,12 @@ export class SharedTreeBranch<
 	 * Apply all the divergent changes on the given branch to this branch.
 	 *
 	 * @param branch - the branch to merge into this branch
+	 * @param kind - The commit kind to report for the merged changes.
 	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
 	public merge(
 		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
+		kind: CommitKind = CommitKind.Default,
 	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
@@ -384,7 +386,7 @@ export class SharedTreeBranch<
 		const changeEvent = defineLazyCachedProperty(
 			{
 				type: "append",
-				kind: CommitKind.Default,
+				kind,
 				newCommits: sourceCommits,
 			} as const,
 			"change",

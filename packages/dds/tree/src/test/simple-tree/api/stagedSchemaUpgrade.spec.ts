@@ -86,6 +86,37 @@ describe("runtime schema upgrade API", () => {
 
 		assert.throws(() => view.initialize("test"));
 	});
+
+	it("defers a configured staged upgrade until the next edit", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [oldTree, newTree] = provider.trees;
+		const oldView = oldTree.kernel.viewWith(
+			new TreeViewConfiguration({
+				schema: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number),
+			}),
+		);
+		oldView.initialize(1);
+		provider.synchronizeMessages();
+		const view = newTree.kernel.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaWithStagedType,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+			}),
+		);
+
+		view.upgradeSchemaOnNextEdit();
+		assert.equal(view.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+		provider.synchronizeMessages();
+		assert.equal(oldView.compatibility.canView, true);
+		oldView.root = 2;
+		provider.synchronizeMessages();
+		assert.equal(view.root, 2);
+
+		view.root = "first edit";
+		provider.synchronizeMessages();
+		assert.equal(oldView.compatibility.canView, false);
+		assert.equal(view.root, "first edit");
+	});
 });
 
 describe("staged allowed type upgrade", () => {
