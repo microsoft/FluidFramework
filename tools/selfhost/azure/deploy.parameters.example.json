@@ -107,7 +107,7 @@
 		"additionalTenants": [],
 		"hostingPlan": "flex",
 		"authorizationPolicy": "",
-		"tokenIssuerVersion": "",
+		"tokenIssuerVersion": "v2",
 		"tokenLifetimeSec": 3600,
 		"nodeVersion": "",
 		"spaRedirectUris": [],

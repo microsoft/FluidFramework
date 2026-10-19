@@ -84,10 +84,12 @@ git clone https://github.com/microsoft/FluidFramework.git ~/FluidFramework
 Use a checkout you are happy to have moved to an arbitrary commit — the deployment checks out a
 specific pinned revision in this directory. Do not point it at a clone you are actively working in.
 
-**4. Have a release bundle.** A release bundle pins exactly which source revision and which image
+**4. Select a release.** A release bundle pins exactly which source revision and which image
 digests get deployed, so the same bundle always produces the same deployment. It lives in
 `release-artifacts/<release-id>/`. See [`release/README.md`](../release/README.md) to create one.
-The deployment refuses to run without a bundle, and refuses one whose images are not all pinned.
+The recommended [combined command](../release/README.md#recommended-path) builds this bundle and deploys it for you.
+Only the standalone `azure/deploy.sh` path requires a pre-existing bundle.
+The deployment refuses bundles whose images are not all pinned.
 
 ### Things that commonly go wrong
 
@@ -131,7 +133,11 @@ to re-checking.
 
 **Regional capacity is not guaranteed.** Azure Managed Redis Balanced SKUs, and the VM size for
 your AKS nodes, can both fail with `AllocationFailed` in a region that is temporarily full. This
-is unrelated to your quota. If it happens, try another region, or a different VM size.
+is unrelated to your quota.
+Preflight checks requested AKS zones against subscription/SKU restrictions and performs Redis provider-level ARM validation when the target resource group exists.
+The Redis check creates no resources and reports provider capacity/policy/permission errors, but does not reserve capacity.
+When the group does not yet exist, it explicitly reports that capacity was not validated; deployment repeats preflight after build-registry provisioning creates the group.
+If allocation still fails, try another region or SKU.
 
 **Check your network range before you deploy.** The default VNet is `10.20.0.0/16`. If you intend
 to peer this deployment with an existing network, make sure that range does not overlap, because
@@ -261,7 +267,9 @@ You can leave these alone. Every one has a working default:
 
 ## Step 2 — Check your configuration before deploying
 
-Two checks, both cheap. Run them in this order.
+These are optional diagnostics.
+The recommended `release/create-and-deploy-release.sh` command runs cloud preflight before building and again during deployment, so do not run it manually as an additional required step.
+The script tests are for contributors checking deployment logic, not validation of your live configuration.
 
 **Validate the scripts — no Azure account needed, runs in seconds:**
 
@@ -269,7 +277,8 @@ Two checks, both cheap. Run them in this order.
 bash azure/test/deploy.test.sh
 ```
 
-Expect `Total: 63 passed, 0 failed`. This runs the real deployment logic against stub tools, so
+Expect a summary with zero failures.
+This runs the real deployment logic against stub tools, so
 nothing reaches Azure and nothing costs anything. Run it after editing any file in this directory.
 
 **Validate your parameters against Azure — read-only, creates nothing:**
@@ -280,6 +289,8 @@ bash azure/preflight-check.sh azure/deploy.parameters.json
 
 This confirms you are signed in, your subscription has enough vCPU quota for your node settings,
 every globally-unique name is actually available, and your region supports Availability Zones.
+It also checks Redis capacity through provider validation when the target resource group exists.
+Provider validation is an ARM POST to `/validate`, not a deployment or resource creation.
 
 The deployment runs this automatically and refuses to start if it fails — but running it yourself
 while you are still editing the file is much faster than discovering a name collision mid-deploy.
@@ -294,6 +305,16 @@ There are two ways. They create identical resources in the identical order.
 | **[Step by step](#step-by-step)** | You want to inspect each resource as it appears, or a phase failed and you want to re-run just that one. |
 
 ### All at once
+
+For a new release, build and deploy together:
+
+```bash
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> <release-id>
+```
+
+This defaults its build checkout to `fluidRepoDir`.
+It creates and logs into both ACRs as needed; see [registry authentication](../release/README.md#registry-authentication) for upstream Docker Hub credentials.
+For a completed release bundle, the standalone deployment command is:
 
 ```bash
 ./azure/deploy.sh <release-id>
@@ -318,6 +339,8 @@ finishes it prints your three public endpoints.
 
 **If it fails partway, just run it again.** Every phase checks whether its resource already
 exists before creating it, so re-running skips completed work and resumes where it stopped.
+When using the combined command, add `--skip-build` and pass the existing release ID to avoid rebuilding a completed bundle.
+Both commands accept `--skip-preflight` for deliberate retries after validation; this bypasses Azure checks with a warning but keeps local validation.
 
 ### Step by step
 

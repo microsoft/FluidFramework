@@ -14,6 +14,34 @@ than editing files under `release-artifacts/<id>/` by hand.
 `generate-release.sh` creates a complete release bundle. `create-and-deploy-release.sh` provisions or
 reuses a build registry, generates the release bundle, and deploys it with `azure/deploy.sh`.
 
+## Recommended path
+
+Configure `azure/deploy.parameters.json` first, including `fluidRepoDir` pointing to a dedicated, clean checkout outside this repository.
+Run from `tools/selfhost`:
+
+```bash
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
+```
+
+The first argument selects source; the second names your immutable release bundle.
+The combined command defaults `FLUID_DIR` to the parameters file's `fluidRepoDir`.
+You can override the build checkout with `FLUID_DIR=/path/to/separate/clone`.
+It validates the checkout and deployment configuration before provisioning the build registry or building images.
+It creates/reuses the build registry and authenticates automatically, then builds, pins, and deploys the bundle.
+The deployment repeats preflight against the deployment checkout and current Azure state.
+You do not need to run the manual release steps or preflight separately.
+
+After a deployment failure, reuse a **completed** bundle:
+
+```bash
+./release/create-and-deploy-release.sh r0.1.0 --skip-build
+```
+
+Generation uses a private staging directory and publishes the final bundle only after all generation gates pass.
+A failed generation removes its staging directory, so you can retry the same release ID.
+It does not delete previously completed bundles, pushed images, or Azure resources.
+If generation failed, rerun without `--skip-build`.
+
 ## Prerequisites
 
 - Bash, `git`, `jq`, `shasum`, and network access to the FluidFramework repository.
@@ -24,6 +52,34 @@ reuses a build registry, generates the release bundle, and deploys it with `azur
   example `ACR_LOGIN_SERVER=myacr.azurecr.io` after `az acr login -n myacr`.
 - Optional registry provisioning: Azure CLI logged in with permission to create or reuse the target
   resource group and ACR.
+
+## Registry authentication
+
+The combined command creates/reuses `.buildAcr.name` and runs `az acr login` before pushing images.
+Deployment creates/reuses `.deployAcr.name` and runs its own login.
+No manual ACR login is required before either registry exists.
+If you supply `ACR_LOGIN_SERVER`, provisioning is skipped; create and log into that build registry first.
+For standalone build commands, also log into the existing build ACR first.
+An expired build login can be refreshed with `az acr login -n <build-acr-name>`.
+
+Docker Hub is a separate upstream registry.
+`az acr login` does not authenticate Docker Hub imports, and `docker login` affects local Docker operations, not Azure's server-side `az acr import`.
+To authenticate both local builds/image inspection and the deploy-time Docker Hub import, set credentials interactively:
+
+```bash
+read -r -p "Docker Hub username: " DOCKERHUB_USERNAME
+read -r -s -p "Docker Hub read-only access token: " DOCKERHUB_TOKEN
+printf '\n'
+export DOCKERHUB_USERNAME DOCKERHUB_TOKEN
+printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
+unset DOCKERHUB_USERNAME DOCKERHUB_TOKEN
+```
+
+Use a Docker Hub access token with pull/read permission; do not put it in the parameters file.
+Deployment sends source credentials through an owner-only temporary ARM request file, removes it after submission or on exit, and waits for the pinned digest to become readable.
+Credentials are not passed as CLI arguments or printed.
+Anonymous imports remain supported when neither variable is set; authenticated accounts still have their own rate limits.
 
 ## Generate a release bundle
 
@@ -165,6 +221,9 @@ Options:
 
 - `--skip-build` - deploy an existing release id instead of generating a new bundle.
 - `--skip-deploy` - generate the bundle only.
+- `--skip-preflight` - explicitly bypass Azure preflight in both orchestration and deployment.
+  Local argument, checkout, and release-bundle validation still runs.
+  Do not use this to hide unsupported settings after changing your configuration.
 - `-p, --parameters <file>` - deploy parameters file; the script defaults to
   `azure/deploy.parameters.json`.
 

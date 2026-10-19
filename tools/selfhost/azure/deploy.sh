@@ -58,18 +58,20 @@ SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat >&2 <<'EOF'
-Usage: azure/deploy.sh [--mode full|deploy-only] <release-id> [path/to/deploy.parameters.json]
+Usage: azure/deploy.sh [--mode full|deploy-only] [--skip-preflight] <release-id> [path/to/deploy.parameters.json]
 
   --mode full     new deployment: create Azure infrastructure and deploy the release (default)
                   aliases: --new, --full
   --mode deploy-only
                   deploy only the release bundle onto existing Azure/AKS infrastructure
+  --skip-preflight skip Azure preflight checks; local validation still runs
   -h, --help      show this help
 EOF
 }
 
 # Deployment mode
 MODE=full
+SKIP_PREFLIGHT=false
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -77,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     --mode=*)                     MODE="${1#*=}"; shift ;;
     --new|--full)                 MODE=full; shift ;;
     --deploy-only)                 MODE=deploy-only; shift ;;
+    --skip-preflight)              SKIP_PREFLIGHT=true; shift ;;
     -h|--help)                    usage; exit 0 ;;
     --)                           shift; while [[ $# -gt 0 ]]; do POSITIONAL+=("$1"); shift; done ;;
     -*)                           echo "ERROR: unknown option '$1'" >&2; usage; exit 1 ;;
@@ -317,8 +320,9 @@ export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 # chart/values rendering errors before any phase below creates, modifies,
 # or deletes anything. Aborts here on failure rather than partway through a real deploy.
 # ---------------------------------------------------------------------------
-banner "Running preflight checks (azure/preflight-check.sh)"
-if ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
+if [[ "$SKIP_PREFLIGHT" == true ]]; then
+  log "WARNING: --skip-preflight bypasses Azure capacity, zone, name, and Helm checks."
+elif ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
   echo "ERROR: preflight checks failed -- fix the issues above before deploying" >&2
   exit 1
 fi
@@ -859,6 +863,45 @@ create_private_endpoint() {
 # ===========================================================================
 # Phase 1 (images) — import pinned release images into target ACR
 # ===========================================================================
+import_release_image() {
+  local source="$1" target="$2" digest="$3" registry_id body attempt
+  case "$source" in
+    docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+      if [[ -n "${DOCKERHUB_USERNAME:-}" || -n "${DOCKERHUB_TOKEN:-}" ]]; then
+        [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]] \
+          || fail "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN for authenticated Docker Hub imports."
+        registry_id="$(az acr show -n "$ACR" --query id -o tsv)"
+        [[ -n "$registry_id" ]] || fail "could not resolve the deploy ACR resource id."
+        body="$(mktemp "$DEPLOY_DIR/image-import.XXXXXX")"
+        SENSITIVE_TEMP_FILES+=("$body")
+        chmod 600 "$body"
+        # Read secrets from the environment, not process arguments. Never log this request body.
+        jq -n --arg image "${source#*/}" --arg target "$target" '{
+          source: {
+            registryUri: "registry.hub.docker.com", sourceImage: $image,
+            credentials: {username: env.DOCKERHUB_USERNAME, password: env.DOCKERHUB_TOKEN}
+          },
+          targetTags: [$target], mode: "Force"
+        }' > "$body"
+        az rest --method post \
+          --url "https://management.azure.com${registry_id}/importImage?api-version=2023-07-01" \
+          --body "@$body" -o none
+        rm -f "$body"
+        # importImage can return 202. Verify the pinned digest is readable before continuing.
+        for ((attempt=1; attempt<=60; attempt++)); do
+          if az acr repository show --name "$ACR" --image "${target%:*}@$digest" >/dev/null 2>&1; then
+            return 0
+          fi
+          sleep 5
+        done
+        fail "authenticated import of $target did not become readable within 5 minutes; check the ACR activity log before retrying."
+      fi
+      log "Docker Hub import uses anonymous access; set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN if the upstream registry rate-limits it."
+      ;;
+  esac
+  az acr import --name "$ACR" --source "$source" --image "$target" --force
+}
+
 phase1_images() {
   banner "Phase 1: Import release images"
   az acr login -n "$ACR"
@@ -871,7 +914,7 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$repo:$IMAGE_TAG" >/dev/null 2>&1; then
       log "$repo:$IMAGE_TAG already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$repo:$IMAGE_TAG" --force
+      import_release_image "$src" "$repo:$IMAGE_TAG" "$digest"
     fi
   done < <(jq -r '.builtImages[]? | select(.status == "pinned") | [.name, .repository, .digest] | @tsv' "$IMAGES_FILE")
 
@@ -897,7 +940,7 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
       log "$target_repo@$digest already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
+      import_release_image "$src" "$target_repo:$target_tag" "$digest"
     fi
   done < <(jq -r '.dependencyImages[]? | select(.status == "pinned") | [.name, (.tag // ""), .digest] | @tsv' "$IMAGES_FILE")
 

@@ -8,6 +8,24 @@
 # Print an error to stderr and exit non-zero so a release pipeline fails fast.
 fail() { echo "ERROR: $*" >&2; exit 1; }
 
+# Validate the build checkout before provisioning registries or creating release artifacts.
+validate_fluid_directory() {
+  [ -n "${FLUID_DIR:-}" ] || fail "set FLUID_DIR or fluidRepoDir to a dedicated FluidFramework clone outside this repository."
+  case "$FLUID_DIR" in
+    "~/"*) FLUID_DIR="$HOME/${FLUID_DIR:2}" ;;
+    "~") FLUID_DIR="$HOME" ;;
+  esac
+  [ -e "$FLUID_DIR/.git" ] || fail "FLUID_DIR '$FLUID_DIR' must be the root of a dedicated FluidFramework git checkout."
+  FLUID_DIR="$(cd "$FLUID_DIR" && pwd -P)"
+  local tooling_root
+  tooling_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
+  case "$FLUID_DIR/" in
+    "$tooling_root/"*) fail "FLUID_DIR must point to a separate checkout outside $tooling_root." ;;
+  esac
+  validate_checkout "$FLUID_DIR"
+  export FLUID_DIR
+}
+
 # Ensure a git checkout has no tracked edits or untracked files.
 validate_checkout() {
   local dir="$1" status

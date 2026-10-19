@@ -42,7 +42,7 @@ cat > "$BIN/az" <<'STUB'
 echo "az $*" >> "$CALLS"
 case "$*" in
   *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
-    [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
+    if [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] || grep -q "/importImage?" "$CALLS"; then exit 0; else exit 1; fi ;;
   *"acr repository show"*"routerlicious:mock-tag"*|*"acr repository show"*"historian:mock-tag"*|*"acr repository show"*"gitrest:mock-tag"*)
     exit 0 ;;
   *"acr show"*"--query provisioningState"*) echo "Succeeded"; exit 0 ;;
@@ -52,6 +52,7 @@ case "$*" in
   *"acr show"*"--query resourceGroup"*)
     [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && echo "mock-rg" && exit 0 || exit 1 ;;
   *"acr show"*"--query loginServer"*) echo "mockbuildacr.azurecr.io"; exit 0 ;;
+  *"acr show"*"--query id"*) echo "/subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.ContainerRegistry/registries/mockacr"; exit 0 ;;
   *"acr show"*) [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"extension show"*"redisenterprise"*)                                  exit 0 ;;
   *"redisenterprise create --help"*)
@@ -82,6 +83,11 @@ case "$*" in
   *"authorization-rule keys list"*)                           echo 'Endpoint=sb://ns.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abc+/='; exit 0 ;;
   *"keyvault secret show"*)                                   echo "https://kv.vault.azure.net/secrets/eventhub-connection-string/1"; exit 0 ;;
   *"privateLinkServiceConnections"*)                          echo "Approved"; exit 0 ;;
+  *"/importImage?"*)
+    for arg in "$@"; do
+      case "$arg" in @*) cp "${arg#@}" "$CALLS.import.json"; test "$(stat -f '%Lp' "${arg#@}" 2>/dev/null || stat -c '%a' "${arg#@}")" = 600 || exit 1 ;; esac
+    done
+    exit 0 ;;
   *"network vnet show"*"--query id"*)                         echo "/subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Network/virtualNetworks/mock-vnet"; exit 0 ;;
   *"private-dns link vnet list"*)
     [ "${MOCK_DNS_LINK_TO_VNET:-0}" = 1 ] && echo "link-legacy-resource"
@@ -349,6 +355,26 @@ assert_has "dependency import checks the release-pinned digest" "$CALLS" \
 assert_has "missing pinned busybox digest is imported into the deploy ACR" "$CALLS" \
   "acr import --name mockacr --source docker.io/library/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
+: > "$CALLS"
+out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token run_phase 'phase1_images')"; rc=$?
+assert_eq "authenticated Docker Hub import exits 0" "$rc" "0"
+assert_has "authenticated import uses ARM importImage" "$CALLS" "/importImage?api-version=2023-07-01"
+assert_eq "source credentials are passed in a private request file" \
+  "$(jq -r '.source.credentials.username + ":" + .source.credentials.password' "$CALLS.import.json")" \
+  "test-user:test-only-token"
+assert_eq "authenticated import preserves the pinned digest" \
+  "$(jq -r '.source.sourceImage' "$CALLS.import.json")" \
+  "library/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+if grep -qF "test-only-token" "$CALLS" || [[ "$out" == *test-only-token* ]]; then
+  no "source token stays out of logs and process arguments"
+else
+  ok "source token stays out of logs and process arguments"
+fi
+
+: > "$CALLS"
+out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
+[[ "$rc" != 0 ]] && ok "partial Docker Hub credentials are rejected" || no "partial Docker Hub credentials are rejected"
+
 : > "$CALLS"; export MOCK_BUSYBOX_DIGEST_EXISTS=1
 out="$(run_phase 'phase1_images')"; rc=$?
 assert_eq "existing dependency digest check exits 0" "$rc" "0"
@@ -543,6 +569,7 @@ for name, good in [
   ("rendered kafka.lib.endpoint is the Event Hubs host", c['kafka']['lib']['endpoint'] == 'mock-eventhubs.servicebus.windows.net:9093'),
   ("rendered eventHubConnString is empty (env fills it)", c['kafka']['lib'].get('eventHubConnString') == ''),
   ("rendered numberOfPartitions is 32", c['kafka']['lib']['numberOfPartitions'] == 32),
+  ("rendered Alfred preserves requested document IDs", c['alfred']['enforceServerGeneratedDocumentId'] is False),
   ("ignoreCheckpointFlushException present", c['checkpoints']['ignoreCheckpointFlushException'] is True),
   ("no SharedAccessKey anywhere in the ConfigMap", 'SharedAccessKey' not in raw),
 ]:
