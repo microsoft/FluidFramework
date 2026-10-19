@@ -1,5 +1,29 @@
 # @fluidframework/runtime-utils
 
+## 3.6.0
+
+### Minor Changes
+
+- Stop recognizing pre-symbol in-memory Fluid handles ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+
+  In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
+  Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
+
+- Identify a data store's package path, for use in telemetry ([#28474](https://github.com/microsoft/FluidFramework/pull/28474)) [0192259e70a](https://github.com/microsoft/FluidFramework/commit/0192259e70a7e03579cc31148f0d526487e3ab64)
+
+  The legacy-beta `getDataStorePackagePath` function lets callers add the containing data store's package path to diagnostic telemetry.
+  For example, the path can identify the package containing a component that takes a long time to load.
+  The package path is diagnostic information, not an input that configures the runtime.
+  If the data store's snapshot details are not yet available, the lookup may fetch an omitted snapshot and read its attributes blob.
+  This work can add latency and affect the timing of other operations, so avoid awaiting the lookup on a latency-sensitive load path.
+  It does not resolve the handle, load the data store, or include the package path of a DDS.
+
+  ```typescript
+  import { getDataStorePackagePath } from "@fluidframework/runtime-utils/legacy";
+
+  const packagePath = await getDataStorePackagePath(containerRuntime, handle);
+  ```
+
 ## 3.5.0
 
 Dependency updates only.
