@@ -8,8 +8,8 @@ Add optional checksums to help catch unintended schema changes
 SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
 
 The checksum is a hash saved in application code to guard against unintended schema changes.
-To enable this check, provide the saved hash as `schemaHash` and the separately imported [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-function) function as `schemaHasher` in the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) object.
-Providing a `schemaHasher` enables telemetry with the schema hash during initialization and schema upgrades, even without an expected `schemaHash`.
+To enable this check, pass the saved hash as `expectedHash` to the separately imported [`identifySchema`](https://fluidframework.com/docs/api/tree#identifyschema-function) function and provide its result as the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property).
+Calling `identifySchema()` without an expected hash enables schema hash telemetry without a construction check.
 
 #### Configure the expected hash
 
@@ -18,7 +18,7 @@ Replace the placeholder with the computed hash from the error message.
 
 ```typescript
 import {
-	computeSchemaHash,
+	identifySchema,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
@@ -36,12 +36,13 @@ const expectedSchemaHash = "replace-with-computed-hash-from-error";
 const config = new TreeViewConfigurationAlpha({
 	schema: Note,
 	stagedUpgradePolicy,
-	schemaIdentity: { // Optional.
-		schemaHash: expectedSchemaHash, // Optional: enables the hash check.
-		schemaHasher: computeSchemaHash, // Required when schemaIdentity is provided.
-	},
+	schemaIdentity: identifySchema({ // Optional.
+		expectedHash: expectedSchemaHash, // Optional: enables the hash check.
+	}),
 });
+// Throws if expectedHash does not match the current schema hash.
 const view = tree.viewWith(config);
+// initialize and upgradeSchema emit the target hash in Fluid Framework telemetry when schemaIdentity is provided.
 view.initialize({ text: "Hello" });
 ```
 

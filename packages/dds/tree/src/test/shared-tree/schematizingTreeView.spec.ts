@@ -43,6 +43,7 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
+	identifySchema,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -97,10 +98,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: {
-							schemaHash: computeSchemaHash(root),
-							schemaHasher: computeSchemaHash,
-						},
+						schemaIdentity: identifySchema({ expectedHash: computeSchemaHash(root) }),
 					}),
 				);
 
@@ -111,10 +109,9 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: {
-						schemaHash: computeSchemaHash(schema.string),
-						schemaHasher: computeSchemaHash,
-					},
+					schemaIdentity: identifySchema({
+						expectedHash: computeSchemaHash(schema.string),
+					}),
 				});
 				const checkout = checkoutWithInitialTree(config, 5);
 				const beforeSchema = checkout.storedSchema.clone();
@@ -126,7 +123,9 @@ describe("SchematizingSimpleTreeView", () => {
 							viewConfig,
 							new MockNodeIdentifierManager(),
 						),
-					validateUsageError(/Schema hash does not match/),
+					validateUsageError(
+						`Expected schema hash does not match the configured schema. Expected "${computeSchemaHash(schema.string)}", got "${computeSchemaHash(root)}".`,
+					),
 				);
 				assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
 				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
@@ -136,23 +135,21 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: {
-							schemaHasher: () => assert.fail("Unexpected construction hash check"),
-						},
+						schemaIdentity: identifySchema(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires a hasher when schema identity is provided", () => {
+			it("requires schema identity to be created with identifySchema", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
 							schema: root,
-							// @ts-expect-error A hasher is required even without an expected hash.
+							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity.schemaHasher must be a function/),
+					validateUsageError(/schemaIdentity must be created with identifySchema/),
 				);
 			});
 		});
@@ -165,7 +162,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: { schemaHasher: computeSchemaHash },
+					schemaIdentity: identifySchema(),
 				}),
 			);
 
@@ -192,7 +189,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: { schemaHasher: computeSchemaHash },
+					schemaIdentity: identifySchema(),
 				}),
 			);
 

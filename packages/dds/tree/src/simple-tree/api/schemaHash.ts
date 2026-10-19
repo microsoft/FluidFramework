@@ -23,6 +23,33 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 
+import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+
+/**
+ * Enables schema hash telemetry and optional checks when constructing a view.
+ * @remarks
+ * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
+ * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
+ * @param options - Options for checking the schema hash.
+ * @returns An immutable schema identity that uses {@link computeSchemaHash}.
+ * @alpha
+ */
+export function identifySchema(
+	options: {
+		/**
+		 * An optional hash used to detect unintended schema changes.
+		 * @remarks
+		 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
+		 * View construction throws a UsageError containing the expected and actual hashes if they differ.
+		 * If the schema change is intentional, update this value with the actual hash from the error.
+		 * Omit this value to enable telemetry without a construction check.
+		 */
+		readonly expectedHash?: string;
+	} = {},
+): SchemaIdentity {
+	return new SchemaIdentityInternal(options.expectedHash, computeSchemaHash);
+}
+
 /**
  * Computes a hash from a view schema.
  *

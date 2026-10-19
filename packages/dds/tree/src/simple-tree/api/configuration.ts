@@ -12,7 +12,6 @@ import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	StagedSchemaUpgradePolicy,
-	type SchemaUpgrade,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
@@ -34,6 +33,8 @@ import {
 } from "../toStoredSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+
+import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
 /**
  * Options when constructing a tree view.
@@ -187,26 +188,10 @@ export interface ITreeViewConfigurationAlpha<
 
 	/**
 	 * Provides hashing for schema telemetry and optional checks when constructing a view.
+	 * @remarks
+	 * Create with {@link identifySchema}.
 	 */
-	readonly schemaIdentity?: {
-		/**
-		 * An optional hash used to detect unintended schema changes during testing.
-		 *
-		 * @remarks
-		 * When constructing a view, SharedTree computes the actual hash from the provided schema and configured staged upgrade policy using the provided hashing function.
-		 * If the actual hash does not match this value, view construction throws a UsageError containing the expected and computed hashes.
-		 * If the schema change is intentional, update this value with the computed hash from the error.
-		 */
-		readonly schemaHash?: string;
-		/**
-		 * The separately imported {@link computeSchemaHash} function used for schema telemetry
-		 * and to check {@link ITreeViewConfigurationAlpha.schemaIdentity | schemaHash}, when provided.
-		 */
-		readonly schemaHasher: (
-			schema: ImplicitFieldSchema,
-			stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-		) => string;
-	};
+	readonly schemaIdentity?: SchemaIdentity;
 }
 
 /**
@@ -325,23 +310,7 @@ export class TreeViewConfigurationAlpha<
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
 		if (props.schemaIdentity !== undefined) {
-			const identity = props.schemaIdentity;
-			if (identity === null || typeof identity !== "object") {
-				throw new UsageError("schemaIdentity must be an object.");
-			}
-			if (
-				identity.schemaHash !== undefined &&
-				(typeof identity.schemaHash !== "string" || identity.schemaHash.length === 0)
-			) {
-				throw new UsageError("schemaIdentity.schemaHash must be a non-empty string.");
-			}
-			if (typeof identity.schemaHasher !== "function") {
-				throw new UsageError("schemaIdentity.schemaHasher must be a function.");
-			}
-			this.schemaIdentity = Object.freeze({
-				...(identity.schemaHash === undefined ? {} : { schemaHash: identity.schemaHash }),
-				schemaHasher: identity.schemaHasher,
-			});
+			this.schemaIdentity = SchemaIdentityInternal.extract(props.schemaIdentity);
 		}
 
 		// Eagerly perform these conversions to surface errors sooner.

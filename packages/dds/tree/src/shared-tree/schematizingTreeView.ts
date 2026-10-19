@@ -63,6 +63,8 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
+	type ITreeViewConfigurationAlpha,
+	SchemaIdentityInternal,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -202,12 +204,16 @@ export class SchematizingSimpleTreeView<
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
-		if (configAlpha.schemaIdentity?.schemaHash !== undefined) {
-			const { schemaHash: expectedHash, schemaHasher: hasher } = configAlpha.schemaIdentity;
+		const identity =
+			configAlpha.schemaIdentity === undefined
+				? undefined
+				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
+		if (identity?.expectedHash !== undefined) {
+			const { expectedHash, schemaHasher: hasher } = identity;
 			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
 			if (actualHash !== expectedHash) {
 				throw new UsageError(
-					`Schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, computed ${JSON.stringify(actualHash)}.`,
+					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
 				);
 			}
 		}
@@ -356,9 +362,13 @@ export class SchematizingSimpleTreeView<
 	private computeSchemaHash(
 		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
 	): string | undefined {
-		return this.config instanceof TreeViewConfigurationAlpha
-			? this.config.schemaIdentity?.schemaHasher(this.config.schema, stagedUpgradePolicy)
-			: undefined;
+		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
+		return identity === undefined
+			? undefined
+			: SchemaIdentityInternal.extract(identity).schemaHasher(
+					this.config.schema,
+					stagedUpgradePolicy,
+				);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
