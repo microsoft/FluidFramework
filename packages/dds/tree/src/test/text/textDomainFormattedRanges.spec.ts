@@ -342,6 +342,45 @@ describe("FormattedText with extrinsic ranges", () => {
 			assert.equal(text.fullString(), "Xabcdef");
 		});
 
+		it("rejects range mutations during an input iterator while allowing reads and data edits", () => {
+			const text = create();
+			const range = text.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "original" },
+			);
+			const input = {
+				*[Symbol.iterator](): IterableIterator<FormattedText.StringTextAtom> {
+					assert.throws(
+						() =>
+							text.ranges.trackNewRange("added", { start: 0, end: 2 }, { message: "added" }),
+						validateUsageError(/while editing content/),
+					);
+					assert.throws(
+						() => text.ranges.setRangeBounds("range", { start: 0, end: 2 }),
+						validateUsageError(/while editing content/),
+					);
+					assert.throws(
+						() => text.ranges.removeTrackedRange("range"),
+						validateUsageError(/while editing content/),
+					);
+					assert.deepEqual([...text.ranges.keys()], ["range"]);
+					assert.deepEqual([range.start.index, range.end.index], [1, 4]);
+					range.data = { message: "replacement" };
+					range.data.message = "updated";
+					yield FormattedText.StringTextAtom.fromCharacter("X");
+				},
+			};
+			text.insertAt(0, input);
+			assert.equal(text.fullString(), "Xabcdef");
+			assert.deepEqual([range.start.index, range.end.index], [2, 5]);
+			assert.equal(range.data.message, "updated");
+			text.ranges.setRangeBounds("range", { start: 0, end: 2 });
+			text.ranges.removeTrackedRange("range");
+			text.ranges.trackNewRange("added", { start: 0, end: 1 }, { message: "added" });
+			assert.deepEqual(endpoints(text, "added"), [0, 1]);
+		});
+
 		it("delivers invalidation events synchronously, including during an input iterator", () => {
 			const text = create();
 			text.ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "range" });

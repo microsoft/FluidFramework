@@ -172,19 +172,23 @@ export namespace ExtrinsicLocations {
 		 * Edits the content array and persists the resulting range endpoints in the same transaction.
 		 * @param edit - Synchronous callback with mutable access to the content array.
 		 * @remarks
+		 * Edits to the array are tracked during the callback, and the ranges are updated accordingly.
+		 * Content edits and range updates occur in the same transaction.
+		 * Structural editing methods on {@link FormattedText.MembersWithRanges | range-enabled formatted text} track content edits and update ranges automatically.
+		 *
 		 * Content edits and their events occur normally during the callback.
-		 * Range positions returned by {@link ExtrinsicLocations.RangeCollection.getRange}
-		 * track those edits using temporary array insertion anchors.
-		 * The underlying stored endpoint fields are not synchronized until the callback finishes.
+		 * Range positions returned by {@link ExtrinsicLocations.RangeCollection.getRange} track those edits.
 		 * Do not retain the mutable array for editing after the callback returns.
 		 *
-		 * Methods on this manager's range collection can be used inside the callback.
+		 * Ranges can be read and their data edited during this call.
+		 * Adding or removing ranges in this manager's collection or explicitly changing their bounds during this call
+		 * throws a {@link @fluidframework/telemetry-utils#UsageError}.
+		 * Perform those operations before or after this call, optionally within an enclosing transaction.
 		 * Calls on the same manager cannot be nested.
 		 * For moves between managed arrays, nest the two managers' callbacks so both arrays
 		 * are edited only while their respective callbacks are active.
 		 * Ranges remain with their manager rather than following moved content.
 		 *
-		 * Temporary anchors are disposed even if the callback throws.
 		 * On hydrated nodes, errors have the same effect as errors in {@link UntypedTreeViewAlpha.(runTransaction:2)}.
 		 * On unhydrated nodes, edits cannot roll back: completed edits and their endpoint updates remain.
 		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if called recursively on the same
@@ -312,6 +316,11 @@ export namespace ExtrinsicLocations {
 	 * A live collection of string-keyed extrinsic ranges.
 	 * @typeParam TData - Type of data read from a range.
 	 * @typeParam TInsertableData - Type of data accepted when creating ranges or replacing their data.
+	 * @remarks
+	 * Adding or removing ranges and explicitly changing bounds are forbidden during calls to
+	 * {@link ExtrinsicLocations.ArrayMembers.transactOnContent} or structural editing methods on
+	 * {@link FormattedText.MembersWithRanges | range-enabled formatted text} for this collection's content.
+	 * Reading ranges and editing their data remain allowed.
 	 * @sealed
 	 * @alpha
 	 */
@@ -323,6 +332,7 @@ export namespace ExtrinsicLocations {
 		 * @param data - Application-defined range data.
 		 * @returns A live handle to the new range.
 		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is already tracked or the endpoints are invalid.
+		 * Also throws during content-editing calls as described in {@link ExtrinsicLocations.RangeCollection}.
 		 */
 		trackNewRange(
 			key: string,
@@ -342,6 +352,7 @@ export namespace ExtrinsicLocations {
 		 * @param key - Key of a tracked range.
 		 * @param bounds - New endpoints in the current content.
 		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is not tracked or the endpoints are invalid.
+		 * Also throws during content-editing calls as described in {@link ExtrinsicLocations.RangeCollection}.
 		 */
 		setRangeBounds(key: string, bounds: RangeEndpoints): void;
 
@@ -349,6 +360,7 @@ export namespace ExtrinsicLocations {
 		 * Removes a range and its associated data without changing the content.
 		 * @param key - Key of a tracked range.
 		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is not tracked.
+		 * Also throws during content-editing calls as described in {@link ExtrinsicLocations.RangeCollection}.
 		 */
 		removeTrackedRange(key: string): void;
 

@@ -61,6 +61,10 @@ The current MVP has the following requirements and limitations:
   Other view schemas, import operations, or agents can bypass these APIs and leave stale endpoints.
 - Content-editing callbacks must be synchronous, and editing scopes on the same array cannot be nested.
   Mutable content arrays obtained through a callback must not be used for editing outside that callback.
+- Adding or removing ranges and explicitly changing their bounds during calls to [`transactOnContent`](./extrinsicLocationsNamespace.ts) or structural formatted-text editing methods throws a `UsageError`.
+  This restriction applies to the collection whose content is being edited.
+  Reading ranges and editing their data remain allowed.
+  Perform range membership and bound changes before or after the content edit, optionally within an enclosing transaction.
 - Change listeners can observe stale range positions alongside updated content, including positions outside the current array bounds.
   This known anchor bug affects some listeners during individual edits and descendant-node listeners during merged batches.
   Position reads after an edit returns within the callback are current.

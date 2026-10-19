@@ -11,7 +11,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { asAlpha } from "../../api.js";
 import { ExtrinsicLocations } from "../../extrinsic-locations/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import { TreeBeta } from "../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../shared-tree/index.js";
 import {
 	allowUnused,
 	SchemaFactory,
@@ -217,7 +217,7 @@ describe("ExtrinsicLocations", () => {
 			assert.deepEqual([...array.content], [0, 1, 2, 3, 4]);
 		});
 
-		it("rejects duplicate keys and supports reusing a removed key during an edit", () => {
+		it("rejects duplicate keys and supports reusing a removed key", () => {
 			const array = create();
 			const original = array.ranges.trackNewRange("review", { start: 1, end: 3 }, "original");
 			const initial = JSON.stringify(array);
@@ -226,18 +226,14 @@ describe("ExtrinsicLocations", () => {
 				validateUsageError(/already tracked/),
 			);
 			assert.equal(JSON.stringify(array), initial);
+			array.ranges.removeTrackedRange("review");
+			const replacement = array.ranges.trackNewRange(
+				"review",
+				{ start: 0, end: 2 },
+				"replacement",
+			);
+			assert.notEqual(replacement, original);
 			array.transactOnContent((content) => {
-				assert.throws(
-					() => array.ranges.trackNewRange("review", { start: 0, end: 1 }, "replacement"),
-					validateUsageError(/already tracked/),
-				);
-				array.ranges.removeTrackedRange("review");
-				const replacement = array.ranges.trackNewRange(
-					"review",
-					{ start: 0, end: 2 },
-					"replacement",
-				);
-				assert.notEqual(replacement, original);
 				content.insertAtStart(9);
 				assert.deepEqual(rangeBounds(array.ranges, "review"), { start: 1, end: 3 });
 			});
@@ -324,24 +320,34 @@ describe("ExtrinsicLocations", () => {
 			assert.deepEqual([range.start.index, range.end.index], [2, 3]);
 		});
 
-		it("adds, repositions, and removes ranges in current coordinates during a callback", () => {
+		it("rejects range mutations during a callback while allowing reads and data edits", () => {
 			const array = create();
-			array.ranges.trackNewRange("kept", { start: 1, end: 4 }, "kept");
-			array.ranges.trackNewRange("removed", { start: 0, end: 5 }, "removed");
+			const range = array.ranges.trackNewRange("range", { start: 1, end: 4 }, "original");
 			array.transactOnContent((content) => {
 				content.insertAtStart(9);
-				array.ranges.trackNewRange("added", { start: 0, end: 2 }, "added");
-				array.ranges.setRangeBounds("kept", { start: 2, end: 5 });
-				array.ranges.removeTrackedRange("removed");
+				assert.throws(
+					() => array.ranges.trackNewRange("added", { start: 0, end: 2 }, "added"),
+					validateUsageError(/while editing content/),
+				);
+				assert.throws(
+					() => array.ranges.setRangeBounds("range", { start: 0, end: 2 }),
+					validateUsageError(/while editing content/),
+				);
+				assert.throws(
+					() => array.ranges.removeTrackedRange("range"),
+					validateUsageError(/while editing content/),
+				);
+				assert.deepEqual([...array.ranges.keys()], ["range"]);
+				assert.deepEqual(endpoints(array, "range"), [2, 5]);
+				range.data = "replacement";
 				content.insertAt(1, 8);
-				assert.deepEqual(endpoints(array, "kept"), [3, 6]);
-				assert.deepEqual(endpoints(array, "added"), [0, 3]);
-				assert.equal(array.ranges.getRange("removed"), undefined);
+				assert.deepEqual([range.start.index, range.end.index], [3, 6]);
 			});
-			assert.deepEqual(rangeSnapshot(array), [
-				["added", 0, 3, "added"],
-				["kept", 3, 6, "kept"],
-			]);
+			assert.deepEqual(rangeSnapshot(array), [["range", 3, 6, "replacement"]]);
+			array.ranges.setRangeBounds("range", { start: 0, end: 2 });
+			array.ranges.trackNewRange("added", { start: 0, end: 1 }, "added");
+			array.ranges.removeTrackedRange("range");
+			assert.deepEqual(rangeSnapshot(array), [["added", 0, 1, "added"]]);
 		});
 
 		it("uses anchors for position reads during endpoint writeback", () => {
@@ -598,13 +604,16 @@ describe("ExtrinsicLocations", () => {
 				array.transactOnContent((content) => content.removeRange(2, 4)),
 			move: (array: ArrayWithRanges): void =>
 				array.transactOnContent((content) => content.moveToIndex(0, 4)),
-			compound: (array: ArrayWithRanges): void =>
-				array.transactOnContent((content) => {
-					content.insertAtStart(9);
-					content.removeRange(2, 4);
+			compound: (array: ArrayWithRanges): void => {
+				TreeAlpha.context(array).runTransaction(() => {
+					array.transactOnContent((content) => {
+						content.insertAtStart(9);
+						content.removeRange(2, 4);
+					});
 					array.ranges.trackNewRange("new", { start: 0, end: 2 }, "new");
 					array.ranges.setRangeBounds("range", { start: 1, end: 3 });
-				}),
+				});
+			},
 			add: (array: ArrayWithRanges): void => {
 				array.ranges.trackNewRange("new", { start: 0, end: 2 }, "new");
 			},
@@ -631,6 +640,33 @@ describe("ExtrinsicLocations", () => {
 			view.root.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
 			provider.synchronizeMessages();
 			return { provider, view };
+		}
+
+		for (const [name, edit] of Object.entries({
+			add: (array: ArrayWithRanges): void => {
+				array.ranges.trackNewRange("added", { start: 0, end: 2 }, "added");
+			},
+			set: edits.set,
+			remove: edits.remove,
+		})) {
+			it(`rejects range ${name} in an aborted nested transaction without changing anchors`, () => {
+				const { view } = setup();
+				const array = view.root;
+				const range = array.ranges.getRange("range");
+				assert(range !== undefined);
+				array.transactOnContent((content) => {
+					content.insertAtStart(9);
+					const result = view.runTransaction(() => {
+						assert.throws(() => edit(array), validateUsageError(/while editing content/));
+						return { rollback: true };
+					});
+					assert.equal(result.success, false);
+					assert.deepEqual(rangeSnapshot(array), [["range", 2, 5, "range"]]);
+					content.insertAtStart(8);
+					assert.deepEqual([range.start.index, range.end.index], [3, 6]);
+				});
+				assert.deepEqual(rangeSnapshot(array), [["range", 3, 6, "range"]]);
+			});
 		}
 
 		it("replicates sequential edits and their range updates", () => {

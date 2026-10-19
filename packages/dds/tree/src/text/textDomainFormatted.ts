@@ -999,6 +999,10 @@ export namespace FormattedText {
 	 * Range endpoints follow the insertion-point semantics of {@link ExtrinsicLocations.RangeCollection}.
 	 * Ranges remain with this text rather than following moved content.
 	 * Content events are not buffered, and reentrant structural edits on this text are not supported.
+	 * Structural editing methods track content edits and update ranges automatically, as described in {@link ExtrinsicLocations.ArrayMembers.transactOnContent}.
+	 * Adding or removing ranges in this text's collection or explicitly changing their bounds during these calls
+	 * throws a {@link @fluidframework/telemetry-utils#UsageError}.
+	 * Reading ranges and editing their data remain allowed.
 	 * Position reads from change-event listeners are subject to the known array-anchor event-ordering limitation.
 	 * @sealed
 	 * @alpha

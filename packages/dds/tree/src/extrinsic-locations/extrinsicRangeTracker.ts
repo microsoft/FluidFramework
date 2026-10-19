@@ -100,7 +100,10 @@ export class ExtrinsicRangeTracker<
 	 * Edits content and writes the tracked endpoints back within the same guarded transaction.
 	 * @param edit - Synchronous callback with mutable access to the original array.
 	 * @remarks
-	 * Range operations can be used within the callback, but editing scopes on this tracker cannot be nested.
+	 * Ranges can be read and their data edited within the callback.
+	 * Adding or removing ranges and explicitly changing bounds are forbidden during the
+	 * {@link ExtrinsicLocations.ArrayMembers.transactOnContent | tracked content edit} and the subsequent range updates.
+	 * Editing scopes on this tracker cannot be nested.
 	 * Temporary anchors are disposed on every exit path.
 	 * Unhydrated edits cannot roll back, so their endpoints are written back even if the callback throws.
 	 * Errors on hydrated nodes have the same effect as errors in `runTransaction`.
@@ -230,12 +233,13 @@ export class ExtrinsicRangeTracker<
 		{ start, end }: ExtrinsicLocations.RangeEndpoints,
 		data: TRangeData,
 	): ExtrinsicLocations.TrackedRange<TRange["data"], TRangeData> {
+		this.#checkNotEditingContent();
 		if (this.getRanges()?.has(key) === true) {
 			throw new UsageError("An extrinsic range is already tracked at this key.");
 		}
 		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.trackNewRange");
 		const range = this.createRange(start, end, data);
-		this.#applyEdit(() => {
+		this.transactOnContent(() => {
 			this.#setAnchors(range, start, end);
 			this.#requireRanges().set(key, range);
 		});
@@ -246,9 +250,10 @@ export class ExtrinsicRangeTracker<
 	 * {@inheritDoc ExtrinsicLocations.RangeCollection.setRangeBounds}
 	 */
 	public setRangeBounds(key: string, { start, end }: ExtrinsicLocations.RangeEndpoints): void {
+		this.#checkNotEditingContent();
 		const node = this.#findRange(key);
 		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.setRangeBounds");
-		this.#applyEdit(() => {
+		this.transactOnContent(() => {
 			this.#setAnchors(node, start, end);
 		});
 	}
@@ -258,8 +263,9 @@ export class ExtrinsicRangeTracker<
 	 * @param key - Key of a tracked extrinsic range.
 	 */
 	public removeTrackedRange(key: string): void {
+		this.#checkNotEditingContent();
 		const node = this.#findRange(key);
-		this.#applyEdit(() => {
+		this.transactOnContent(() => {
 			assert(this.#anchors !== undefined, "Range edits must run in an editing scope.");
 			const anchors = this.#anchors.get(node);
 			assert(anchors !== undefined, "A range being removed must have anchors.");
@@ -300,11 +306,11 @@ export class ExtrinsicRangeTracker<
 		this.#anchors.set(range, { start: startAnchor, end: endAnchor });
 	}
 
-	#applyEdit(edit: () => void): void {
-		if (this.#anchors === undefined) {
-			this.transactOnContent(() => edit());
-		} else {
-			edit();
+	#checkNotEditingContent(): void {
+		if (this.#anchors !== undefined) {
+			throw new UsageError(
+				"Cannot add or remove ranges or change their bounds while editing content.",
+			);
 		}
 	}
 }

@@ -93,6 +93,8 @@ Formatting-only edits and range data edits do not need range-tracking transactio
 
 Content events are delivered synchronously without buffering.
 Reentrant structural edits on the same text are not supported.
-During a structural edit, endpoint reads use temporary array insertion anchors.
+Structural editing methods track content edits and update ranges automatically, as described in [`transactOnContent`](../extrinsic-locations/extrinsicLocationsNamespace.ts).
+Adding or removing ranges in this text's collection or explicitly changing their bounds during these calls throws a `UsageError`.
+Reading ranges and editing their data remain allowed.
 There is a known anchor event-ordering limitation: a change listener registered before these anchors can observe their previous positions.
 After the editing method returns, the stored endpoints are current.
