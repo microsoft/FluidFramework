@@ -142,4 +142,4 @@ node document-copy/benchmark.mjs
 
 It compares per-document credentials against tenant-scoped credentials with 1, 2, and 4 workers using fixed fixture delays.
 It is not a prediction of Azure throughput.
-See [implementation results and the remaining bulk-contract dependency](PERFORMANCE-PLAN.md).
+See [implementation results and the bulk API assessment](PERFORMANCE-PLAN.md).

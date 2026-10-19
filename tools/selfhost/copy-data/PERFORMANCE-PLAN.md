@@ -2,7 +2,8 @@
 
 This records implementation results and the original investigation for improvement items 14–17.
 Tenant-scoped credential reuse, stage metrics, safe results persistence, bounded parallel copy, classified retries, and failed-only resume are implemented.
-The service-side bulk API contract remains an external dependency; no bulk endpoint or raw-storage copy has been invented.
+The bulk API assessment selected the existing per-document path because the reviewed public contracts expose no content export/import operation.
+No bulk endpoint or raw-storage copy has been invented.
 
 ## Implementation results
 
@@ -45,13 +46,24 @@ These are small synthetic-fixture measurements, including real local result-file
 They justify removing repeated credential setup, not a production throughput claim or a change to the default worker count.
 Measure the authorized deployment with representative payloads before choosing a larger production limit.
 
-### Remaining bulk-contract dependency
+### Bulk API assessment and implementation decision
 
 The installed public CLI was checked again: `az fluid-relay container --help` exposes only `delete`, `list`, and `show`.
-No supported content export/import contract or service-owner confirmation was supplied when requested.
-The per-document APIs remain the supported path used by this tool.
-To finish the service-side investigation, an AFR owner must confirm a supported contract covering snapshot/tail consistency, attachments, tenant/document identity, region routing, deletion, authorization, per-document errors, and a resumable manifest.
-Until then, a true bulk backend is blocked, not implemented or assumed available.
+The [published CLI reference](https://learn.microsoft.com/en-us/cli/azure/fluid-relay/container?view=azure-cli-latest) confirms those commands.
+The public Azure REST specifications were also checked:
+
+- [Stable API version 2022-06-01](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/fluidrelay/resource-manager/Microsoft.FluidRelay/FluidRelay/stable/2022-06-01/fluidrelay.json)
+- [Newest published preview API version 2025-06-20-preview](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/fluidrelay/resource-manager/Microsoft.FluidRelay/FluidRelay/preview/2025-06-20-preview/fluidrelay.json)
+
+Both specifications expose only container list, get, and delete operations.
+Neither contains an export, import, or bulk operation.
+The public `specification/fluidrelay` directory contains management-plane specifications, not a data-plane content-transfer contract.
+These findings do not establish whether an internal or planned managed-service capability exists.
+No additional supported contract or service-owner confirmation was supplied when requested.
+
+The assessment outcome is to ship tenant-scoped credentials and bounded concurrency over the existing per-document APIs, as this plan's fallback specifies.
+A true service-side bulk backend is a separate future design, not an undocumented endpoint to implement in this change.
+Before adding that backend, an AFR owner must confirm a supported contract covering snapshot/tail consistency, attachments, tenant/document identity, region routing, deletion, authorization, per-document errors, and a resumable manifest.
 
 ## Original investigation and acceptance plan
 
