@@ -83,8 +83,8 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	// Constructing from a typed array always allocates a fresh `ArrayBuffer` of exactly
 	// `array.byteLength` bytes. See ECMAScript https://tc39.es/ecma262/multipage/indexed-collections.html#sec-initializetypedarrayfromtypedarray.
 	//
-	// `array.slice()` must not be used here: Node.js `Buffer` overrides `slice` to return a view
-	// over the same memory (like `subarray`) rather than a copy, so `.buffer` of the result would be
-	// the entire (possibly pooled) backing buffer, including bytes outside the input view.
+	// `array.slice()` must not be used here: Node.js `Buffer` extends Uint8Array and overrides `slice` to
+	// return a view over the same memory (like `subarray`) rather than a copy, so `.buffer` of the result
+	// would be the entire (possibly pooled) backing buffer, including bytes outside the input view.
 	return new Uint8Array(array).buffer;
 }
