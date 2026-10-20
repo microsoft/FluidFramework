@@ -653,13 +653,13 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
+				// A destination gap inside the moved range leaves the sequence unchanged.
+				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+					return;
+				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
-					// Interior moves preserve content, but their marks still update insertion anchors.
-					if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
-						return;
-					}
 					const removed = mapTrees.splice(sourceIndex, count);
 					const adjustedDest = adjustIndexForArraySplice(destIndex, sourceIndex, count, 0);
 					replaceArrayRange(mapTrees, adjustedDest, adjustedDest, removed);
@@ -692,14 +692,16 @@ export class UnhydratedSequenceField
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
  * @remarks
- * Forward move (`sourceIndex + count <= destIndex`):
+ * The destination gap must not be strictly inside the moved range.
+ *
+ * Forward move (`sourceIndex < destIndex`):
  * `[retain(src), detach(n), retain(mid), attach(n)]`
  *
- * Backward move (`destIndex <= sourceIndex`):
+ * Backward move (`destIndex < sourceIndex`):
  * `[retain(dst), attach(n), retain(mid), detach(n)]`
  *
- * Interior moves split the detach around the attach, matching hydrated sequence edits.
- * Content-preserving moves can still change insertion anchors.
+ * A no-op move (`sourceIndex === destIndex`) returns an empty array; the event
+ * should not fire in that case, but the empty marks are harmless if it does.
  */
 function buildUnhydratedMoveMarks(
 	sourceIndex: number,
@@ -707,25 +709,13 @@ function buildUnhydratedMoveMarks(
 	destIndex: number,
 ): readonly DeltaMark[] {
 	const marks: DeltaMark[] = [];
-	if (count === 0) {
-		return marks;
-	}
-	if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
-		if (sourceIndex > 0) marks.push({ count: sourceIndex });
-		const firstSectionLength = destIndex - sourceIndex;
-		marks.push({ count: firstSectionLength, detach: syntheticDetachedNodeId });
-		marks.push({ count, attach: syntheticDetachedNodeId });
-		marks.push({
-			count: count - firstSectionLength,
-			detach: syntheticDetachedNodeId,
-		});
-	} else if (sourceIndex < destIndex) {
+	if (sourceIndex < destIndex) {
 		if (sourceIndex > 0) marks.push({ count: sourceIndex });
 		marks.push({ count, detach: syntheticDetachedNodeId });
 		const between = destIndex - sourceIndex - count;
 		if (between > 0) marks.push({ count: between });
 		marks.push({ count, attach: syntheticDetachedNodeId });
-	} else {
+	} else if (destIndex < sourceIndex) {
 		if (destIndex > 0) marks.push({ count: destIndex });
 		marks.push({ count, attach: syntheticDetachedNodeId });
 		const between = sourceIndex - destIndex;
