@@ -1,10 +1,8 @@
-# This file is used as the configuration for srvaroa/labeler
+# This file is used as the configuration for actions/labeler
 
-version: 1
-labels:
-- label: "base: main"
-  base-branch: "main"
-- label: "base: next"
-  base-branch: "next"
-- label: "base: release"
-  base-branch: "^release/.*"
+"base: main":
+  - base-branch: "main"
+"base: next":
+  - base-branch: "next"
+"base: release":
+  - base-branch: "^release/.*"

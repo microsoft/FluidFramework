@@ -73,8 +73,9 @@ export function create(
 		config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false;
 	// Local records do not carry a document generation, so they are safe only when
 	// Alfred prevents caller-selected document IDs from being reused.
+	// Historian stores Alfred as an endpoint string, so this capability is separate.
 	const ephemeralSummaryAccessEnabled =
-		config.get("alfred:enforceServerGeneratedDocumentId") === true;
+		config.get("alfredEnforcesServerGeneratedDocumentId") === true;
 	const accessStore =
 		ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache) ? cache : undefined;
 

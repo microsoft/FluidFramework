@@ -47,7 +47,7 @@ function createBranch(branchTrimmer?: Listenable<BranchTrimmingEvents>): BranchT
 		testIdCompressor,
 	);
 
-	return new SharedTreeBranch(
+	const branch = new SharedTreeBranch(
 		{
 			change: changeFamily.rebaser.compose([]),
 			revision: "root",
@@ -56,8 +56,9 @@ function createBranch(branchTrimmer?: Listenable<BranchTrimmingEvents>): BranchT
 		},
 		changeFamily,
 		mintRevisionTag,
-		branchTrimmer,
 	);
+	branch.trimmer = branchTrimmer;
+	return branch;
 }
 
 function setRootValue(branch: BranchType, value: number): void {

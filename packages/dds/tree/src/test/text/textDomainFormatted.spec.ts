@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import { Tree, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	SchemaFactoryBeta,
@@ -226,6 +226,243 @@ describe("textDomainFormatted", () => {
 	});
 
 	describe("formatRange", () => {
+		for (const kind of ["object", "record", "map"] as const) {
+			describeHydration(`reusing ${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.reuse.${kind}`);
+				/**
+				 * A node-valued formatting property, rather than a leaf, so copying it requires cloning a subtree.
+				 * Its mutable color also lets the test detect aliases between the source and destination atoms.
+				 */
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				/** Exercises the object-field update path with a required child node. */
+				const ObjectFormat = factory.object("ObjectFormat", { detail: Detail });
+				/** Exercises the record-entry update path with node-valued entries. */
+				const RecordFormat = factory.record("RecordFormat", Detail);
+				/** Exercises the map-entry update path, including reading the update through its iterator. */
+				const MapFormat = factory.map("MapFormat", Detail);
+				/** Selects the format kind used by every atom in this test case. */
+				const Format =
+					kind === "object" ? ObjectFormat : kind === "record" ? RecordFormat : MapFormat;
+				/**
+				 * Text with a node-valued default format and no additional atom types.
+				 * The schema allows all three format kinds to share the test setup, but each case uses only the selected kind.
+				 * Explicitly constructing that kind disambiguates the otherwise identical default data.
+				 */
+				class Text extends FormattedText.createSchema(
+					factory,
+					[ObjectFormat, RecordFormat, MapFormat],
+					[],
+					new Format({ detail: new Detail({ color: "red" }) }),
+				) {}
+
+				it("copies an existing atom's node-valued format independently", () => {
+					const text = Text.fromString("abcd");
+					// Hydrate before reading the source format so its Detail is already in the tree when copied.
+					// Hydrating only the destination while supplying a new Detail would not reproduce the bug.
+					// The unhydrated case is a control for copying a child that already has a parent but is not hydrated.
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					const atoms = text.charactersWithFormatting();
+					const originalFormats = atoms.map((atom) => atom.format);
+					// All atoms start with the same color, so value comparisons alone cannot detect a no-op.
+					// Keep the original child identities to verify which subtrees are replaced.
+					const originalDetails = originalFormats.map((format) => {
+						const detail = Tree.is(format, MapFormat) ? format.get("detail") : format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+
+					// Copy the first atom's existing format onto two destinations, leaving the source and last atom untouched.
+					// Clone the hydrated source's children rather than treating them as insertable input to TreeBeta.create.
+					text.formatRange(1, 3, atoms[0].format);
+
+					const details = atoms.map((atom, index) => {
+						// A partial format update must preserve the enclosing format node.
+						assert.equal(atom.format, originalFormats[index]);
+						const detail = Tree.is(atom.format, MapFormat)
+							? atom.format.get("detail")
+							: atom.format.detail;
+						assert(detail instanceof Detail);
+						return detail;
+					});
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "red", "red", "red"],
+					);
+					assert.equal(new Set(details).size, 4);
+					assert.equal(details[0], originalDetails[0]);
+					assert.equal(details[3], originalDetails[3]);
+					assert.notEqual(details[1], originalDetails[1]);
+					assert.notEqual(details[2], originalDetails[2]);
+
+					// Editing one copy must not affect the source, the other copy, or the atom outside the range.
+					details[1].color = "blue";
+					assert.deepEqual(
+						details.map((detail) => detail.color),
+						["red", "blue", "red", "red"],
+					);
+				});
+
+				it("rejects values not allowed by the destination schema", () => {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					assert.throws(
+						() =>
+							// @ts-expect-error Testing invalid input.
+							text.formatRange(1, 3, { detail: 42 }),
+						validateUsageError(/incompatible with all of the types allowed by the schema/),
+					);
+				});
+
+				if (kind === "object") {
+					it("rejects unknown object fields", () => {
+						const text = Text.fromString("abcd");
+						if (hydrated) {
+							hydrateNode(text);
+						}
+						assert.throws(
+							() => text.formatRange(1, 3, { unknown: new Detail({ color: "red" }) }),
+							validateUsageError("Unknown format key: unknown"),
+						);
+					});
+				}
+			});
+		}
+
+		for (const kind of ["record", "map"] as const) {
+			describeHydration(`${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.${kind}`);
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				const allowedTypes = [SchemaFactory.boolean, SchemaFactory.string, Detail] as const;
+				const RecordFormat = factory.record("RecordFormat", allowedTypes);
+				const MapFormat = factory.map("MapFormat", allowedTypes);
+				const defaultFormat = { bold: false, font: "Arial" };
+				class Text extends FormattedText.createSchema(
+					factory,
+					[RecordFormat, MapFormat],
+					[],
+					kind === "record" ? new RecordFormat(defaultFormat) : new MapFormat(defaultFormat),
+				) {}
+
+				function makeText(): Text {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					return text;
+				}
+
+				it("adds and overwrites entries without changing other formatting", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: true, color: "red" });
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("removes entries with undefined and ignores missing entries", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: undefined, missing: undefined });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ font: "Arial" },
+							{ font: "Arial" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("supports different format schemas in the same range", () => {
+					const text = makeText();
+					text.reformat(1, 2, new RecordFormat({ bold: false, font: "Times" }));
+					text.reformat(2, 3, new MapFormat({ bold: false, font: "Courier" }));
+					text.formatRange(0, 4, { bold: true });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: true, font: "Arial" },
+							{ bold: true, font: "Times" },
+							{ bold: true, font: "Courier" },
+							{ bold: true, font: "Arial" },
+						],
+					);
+				});
+
+				it("clones node values independently for each atom", () => {
+					const text = makeText();
+					const detail = new Detail({ color: "red" });
+					text.formatRange(undefined, undefined, { detail });
+					const copies = text.charactersWithFormatting().map((atom) => {
+						const value = Object.fromEntries(atom.format).detail;
+						assert(value instanceof Detail);
+						assert.notEqual(value, detail);
+						return value;
+					});
+					assert.equal(new Set(copies).size, 4);
+					copies[0].color = "blue";
+					assert.deepEqual(
+						copies.map((copy) => copy.color),
+						["blue", "red", "red", "red"],
+					);
+					assert.equal(detail.color, "red");
+				});
+
+				it("rejects values not allowed by the entry schema", () => {
+					const text = makeText();
+					assert.throws(() =>
+						// @ts-expect-error Testing invalid input.
+						text.formatRange(0, 2, { bold: 42 }),
+					);
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						Array.from({ length: 4 }, () => ({ bold: false, font: "Arial" })),
+					);
+				});
+
+				if (kind === "map") {
+					it("accepts map entries, including deletion", () => {
+						const text = makeText();
+						text.formatRange(1, 3, new Map([["bold", true]]));
+						text.formatRange(2, 3, new Map([["bold", undefined]]));
+						assert.deepEqual(
+							text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+							[
+								{ bold: false, font: "Arial" },
+								{ bold: true, font: "Arial" },
+								{ font: "Arial" },
+								{ bold: false, font: "Arial" },
+							],
+						);
+					});
+
+					it("accepts a map node as the update", () => {
+						const text = makeText();
+						const format = new MapFormat({ bold: true });
+						text.formatRange(1, 3, format);
+						assert.deepEqual(
+							text
+								.charactersWithFormatting()
+								.map((atom) => Object.fromEntries(atom.format).bold),
+							[false, true, true, false],
+						);
+					});
+				}
+			});
+		}
+
 		it("basic use", () => {
 			const text = FormattedTextTest.Tree.fromString("hello");
 			text.formatRange(1, 4, { bold: true });
@@ -269,7 +506,7 @@ describe("textDomainFormatted", () => {
 			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
 
@@ -282,7 +519,17 @@ describe("textDomainFormatted", () => {
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
+			);
+		});
+
+		it("throws when a leaf value is provided", () => {
+			const text = UnionFormatText.fromString("a");
+			assert.throws(
+				() => text.formatRange(0, 1, 999),
+				validateUsageError(
+					"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
+				),
 			);
 		});
 	});
