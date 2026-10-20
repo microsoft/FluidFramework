@@ -205,8 +205,8 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			coreOptions.retainHistory ?? false,
 		);
+		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
 		this.registerSharedBranch("main");
 

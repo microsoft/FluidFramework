@@ -105,7 +105,7 @@ export class EditManager<
 	 */
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
-	private maxRetainedCommits: number | undefined;
+	private historyRetention: boolean | number = false;
 
 	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
@@ -124,7 +124,6 @@ export class EditManager<
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
-	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted unless overridden by {@link EditManager.setMaxRetainedCommits}.
 	 */
 	public constructor(
 		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
@@ -132,7 +131,6 @@ export class EditManager<
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: TelemetryLoggerExt,
-		private readonly retainHistory: boolean = false,
 	) {
 		this.trunkBase = {
 			revision: rootRevision,
@@ -164,40 +162,38 @@ export class EditManager<
 	}
 
 	/**
-	 * Sets this manager's local retention limit for sequenced main-branch commits.
+	 * Sets this manager's local retention policy for sequenced main-branch commits.
 	 *
-	 * @param value - A nonnegative safe integer, or `undefined` to clear the explicit limit.
+	 * @param value - `true` to retain all available history, `false` or zero to disable extra retention,
+	 * or a positive safe integer to retain the newest specified number of available commits.
 	 *
 	 * @remarks
-	 * If this method is never called, or the limit is cleared with `undefined`, the constructor's
-	 * `retainHistory` policy applies: `true` retains all trunk commits; `false` (the default)
-	 * retains only history required for collaboration and registered branches.
+	 * If this method is never called, extra retention is disabled (`false`).
+	 * Each call replaces the current policy; there is no separate fallback policy.
 	 *
-	 * A numeric limit overrides `retainHistory`, regardless of its value.
-	 * A positive limit retains the newest specified number of available sequenced main-branch commits.
-	 * Zero disables extra retention, even when `retainHistory` is `true`.
-	 * Collaboration and registered branches can require retaining more commits than the limit.
+	 * Collaboration and registered branches can require retaining history even when extra retention is disabled,
+	 * or retaining more commits than a numeric limit.
 	 * Each commit counts separately, including commits in the same batch.
 	 * Unsequenced local commits do not count toward the limit.
 	 *
-	 * Setting the limit immediately checks for history that can be trimmed.
-	 * Increasing the limit preserves available history but does not recover trimmed commits.
+	 * Setting the policy immediately checks for history that can be trimmed.
+	 * Increasing retention preserves available history but does not recover trimmed commits.
 	 * This setting is not serialized; callers must configure each manager independently.
 	 */
-	public setMaxRetainedCommits(value: number | undefined): void {
+	public setHistoryRetention(value: boolean | number): void {
 		assert(
-			value === undefined || (Number.isSafeInteger(value) && value >= 0),
-			"maxRetainedCommits must be a nonnegative safe integer or undefined",
+			typeof value === "boolean" || (Number.isSafeInteger(value) && value >= 0),
+			"historyRetention must be a boolean or a nonnegative safe integer",
 		);
-		this.maxRetainedCommits = value;
+		this.historyRetention = value;
 		this.trimHistory();
 	}
 
 	private getRetainedHistoryStart(): SequenceId | undefined {
-		if (this.maxRetainedCommits === undefined || this.maxRetainedCommits === 0) {
+		if (typeof this.historyRetention !== "number" || this.historyRetention === 0) {
 			return undefined;
 		}
-		let remaining = this.maxRetainedCommits;
+		let remaining = this.historyRetention;
 		let oldest: SequenceId | undefined;
 		for (const [sequenceId, commit] of this.getSharedBranch(
 			"main",
@@ -328,6 +324,14 @@ export class EditManager<
 		trimHistory = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
+			// New sequenced commits can move the retention window without changing the MSN.
+			if (
+				trimHistory &&
+				typeof this.historyRetention === "number" &&
+				this.historyRetention > 0
+			) {
+				this.trimHistory();
+			}
 			return;
 		}
 
@@ -347,8 +351,7 @@ export class EditManager<
 	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
 	 */
 	private trimHistory(): void {
-		if (this.retainHistory && this.maxRetainedCommits === undefined) {
-			// Without an explicit limit, retainHistory keeps all trunk commits.
+		if (this.historyRetention === true) {
 			return;
 		}
 
@@ -357,7 +360,7 @@ export class EditManager<
 			sequenceNumber: this.minimumSequenceNumber,
 			indexInBatch: Number.POSITIVE_INFINITY,
 		};
-		if (this.maxRetainedCommits !== undefined && this.maxRetainedCommits > 0) {
+		if (typeof this.historyRetention === "number" && this.historyRetention > 0) {
 			const retainedStart = this.getRetainedHistoryStart();
 			if (retainedStart === undefined) {
 				return;
@@ -472,7 +475,7 @@ export class EditManager<
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
 		let minBaseSeqId: SequenceId =
-			this.retainHistory && this.maxRetainedCommits === undefined
+			this.historyRetention === true
 				? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
 				: minSeqNumberToSummarize;
 		const retainedStart = this.getRetainedHistoryStart();

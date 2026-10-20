@@ -657,7 +657,7 @@ export function testCorrectness(): void {
 
 			describe("Retains history", () => {
 				/**
-				 * Sequences `count` commits from one peer, each building on the last.
+				 * Sequences `count` commits from {@link peer1}, each building on the last.
 				 * @param startSequenceNumber - the sequence number of the first commit to sequence.
 				 * @param startIntention - the intention of the first commit to sequence.
 				 */
@@ -689,8 +689,8 @@ export function testCorrectness(): void {
 					}
 				}
 
-				it("summarizes the whole trunk when retainHistory is enabled", () => {
-					const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+				it("summarizes the whole trunk when historyRetention is true", () => {
+					const { manager } = testChangeEditManagerFactory({ historyRetention: true });
 					sequencePeerCommits(manager, 5, 1, 1);
 					// Move the collaboration window past every commit sequenced above.
 					manager.advanceMinimumSequenceNumber(brand(5));
@@ -706,14 +706,30 @@ export function testCorrectness(): void {
 					assert.equal(manager.getSummaryData().main.trunk.length, 0);
 				});
 
-				it("a local limit overrides unlimited retention and can be reset", () => {
-					const { manager } = testChangeEditManagerFactory({ retainHistory: true });
-					manager.setMaxRetainedCommits(3);
+				for (const historyRetention of [false, 0]) {
+					it(`disables initially unlimited retention with ${historyRetention}`, () => {
+						const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+						sequencePeerCommits(manager, 5, 1, 1);
+						manager.advanceMinimumSequenceNumber(brand(5));
+						assert.equal(manager.getTrunkCommits("main").length, 5);
+
+						manager.setHistoryRetention(historyRetention);
+						assert.equal(manager.getTrunkCommits("main").length, 0);
+						sequencePeerCommits(manager, 1, 6, 6);
+						manager.advanceMinimumSequenceNumber(brand(6));
+						assert.equal(manager.getTrunkCommits("main").length, 0);
+						assert.equal(manager.getSummaryData().main.trunk.length, 0);
+					});
+				}
+
+				it("switches from unlimited to numeric retention and back", () => {
+					const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+					manager.setHistoryRetention(3);
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
 					assert.equal(manager.getTrunkCommits("main").length, 3);
 					assert.equal(manager.getSummaryData().main.trunk.length, 3);
-					manager.setMaxRetainedCommits(undefined);
+					manager.setHistoryRetention(true);
 					sequencePeerCommits(manager, 5, 6, 6);
 					manager.advanceMinimumSequenceNumber(brand(10));
 					assert.equal(manager.getTrunkCommits("main").length, 8);
@@ -722,8 +738,7 @@ export function testCorrectness(): void {
 
 				for (const limit of [0, 1, 3, 50]) {
 					it(`retains the newest ${limit} commits without trimming the collaboration window`, () => {
-						const { manager } = testChangeEditManagerFactory({});
-						manager.setMaxRetainedCommits(limit);
+						const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
 						assert.equal(manager.isEmpty(), true);
 						assert.equal(manager.getSummaryData().main.trunk.length, 0);
 
@@ -741,9 +756,30 @@ export function testCorrectness(): void {
 					});
 				}
 
+				for (const limit of [1, 3]) {
+					it(`reevaluates numeric retention ${limit} with an unchanged MSN unless trimming is suppressed`, () => {
+						const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
+						sequencePeerCommits(manager, 5, 1, 1);
+						manager.advanceMinimumSequenceNumber(brand(5));
+						assert.equal(manager.getTrunkCommits("main").length, limit);
+
+						sequencePeerCommits(manager, 1, 6, 6);
+						const revisions = manager.getTrunkCommits("main").map((commit) => commit.revision);
+						manager.advanceMinimumSequenceNumber(brand(5), false);
+						assert.equal(manager.getTrunkCommits("main").length, limit + 1);
+
+						manager.advanceMinimumSequenceNumber(brand(5));
+						assert.deepEqual(
+							manager.getTrunkCommits("main").map((commit) => commit.revision),
+							revisions.slice(1),
+						);
+						assert.equal(manager.getSummaryData().main.trunk.length, limit);
+					});
+				}
+
 				it("retains exactly 50 commits at the boundary and after the next commit", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(50);
+					manager.setHistoryRetention(50);
 					sequencePeerCommits(manager, 50, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(50));
 					const revisions = manager.getTrunkCommits("main").map((commit) => commit.revision);
@@ -763,34 +799,34 @@ export function testCorrectness(): void {
 				});
 
 				it("applies decreases immediately and grows only from available history", () => {
-					const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+					const { manager } = testChangeEditManagerFactory({ historyRetention: true });
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
-					manager.setMaxRetainedCommits(3);
+					manager.setHistoryRetention(3);
 					assert.equal(manager.getTrunkCommits("main").length, 3);
 
-					manager.setMaxRetainedCommits(5);
+					manager.setHistoryRetention(5);
 					assert.equal(manager.getTrunkCommits("main").length, 3);
 					sequencePeerCommits(manager, 2, 6, 6);
 					manager.advanceMinimumSequenceNumber(brand(7));
 					assert.equal(manager.getTrunkCommits("main").length, 5);
 
 					const head = manager.getTrunkHead("main");
-					manager.setMaxRetainedCommits(1);
+					manager.setHistoryRetention(1);
 					assert.deepEqual(manager.getTrunkCommits("main"), [head]);
-					manager.setMaxRetainedCommits(0);
+					manager.setHistoryRetention(0);
 					assert.equal(manager.getTrunkCommits("main").length, 0);
 					assert.equal(manager.getSummaryData().main.trunk.length, 0);
 				});
 
-				it("restores collaboration-window retention when the local limit is cleared", () => {
+				it("disables extra retention when historyRetention is set to false", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(3);
+					manager.setHistoryRetention(3);
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
 					assert.equal(manager.getTrunkCommits("main").length, 3);
 
-					manager.setMaxRetainedCommits(undefined);
+					manager.setHistoryRetention(false);
 					assert.equal(manager.getTrunkCommits("main").length, 0);
 					sequencePeerCommits(manager, 5, 6, 6);
 					manager.advanceMinimumSequenceNumber(brand(10));
@@ -800,7 +836,7 @@ export function testCorrectness(): void {
 
 				it("does not serialize the retention policy", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(3);
+					manager.setHistoryRetention(3);
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
 					const loaded = testChangeEditManagerFactory({}).manager;
@@ -812,12 +848,12 @@ export function testCorrectness(): void {
 
 				it("does not count or discard unsequenced local commits", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(2);
+					manager.setHistoryRetention(2);
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
 					const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
 
-					manager.setMaxRetainedCommits(1);
+					manager.setHistoryRetention(1);
 					assert.equal(manager.getTrunkCommits("main").length, 1);
 					assert.deepEqual(
 						manager.getLocalCommits("main").map((commit) => commit.revision),
@@ -840,7 +876,7 @@ export function testCorrectness(): void {
 
 				it("accepts the largest safe integer as a limit", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(Number.MAX_SAFE_INTEGER);
+					manager.setHistoryRetention(Number.MAX_SAFE_INTEGER);
 					sequencePeerCommits(manager, 5, 1, 1);
 					manager.advanceMinimumSequenceNumber(brand(5));
 					assert.equal(manager.getTrunkCommits("main").length, 5);
@@ -855,14 +891,13 @@ export function testCorrectness(): void {
 					-Infinity,
 					Number.MAX_SAFE_INTEGER + 1,
 				]) {
-					it(`rejects invalid limit ${limit} without changing retention`, () => {
+					it(`rejects invalid retention ${limit} without changing the policy`, () => {
+						const message = "historyRetention must be a boolean or a nonnegative safe integer";
 						const { manager } = testChangeEditManagerFactory({});
-						manager.setMaxRetainedCommits(3);
+						manager.setHistoryRetention(3);
 						assert.throws(
-							() => manager.setMaxRetainedCommits(limit),
-							validateAssertionError(
-								"maxRetainedCommits must be a nonnegative safe integer or undefined",
-							),
+							() => manager.setHistoryRetention(limit),
+							validateAssertionError(message),
 						);
 						sequencePeerCommits(manager, 5, 1, 1);
 						manager.advanceMinimumSequenceNumber(brand(5));
@@ -872,7 +907,7 @@ export function testCorrectness(): void {
 
 				it("counts each commit in a sequenced batch separately", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.setMaxRetainedCommits(2);
+					manager.setHistoryRetention(2);
 					const commits = makeArray(5, (i) => ({
 						change: TestChange.mint(
 							makeArray(i, (j) => j + 1),
@@ -891,15 +926,16 @@ export function testCorrectness(): void {
 					assert.equal(manager.getSummaryData().main.trunk.length, 2);
 				});
 
-				for (const limit of [0, 3]) {
-					it(`keeps serialized peer bases when a fork pins history with limit ${limit}`, () => {
-						const { manager } = testChangeEditManagerFactory({ retainHistory: true });
+				for (const historyRetention of [false, 0, 3]) {
+					it(`keeps serialized peer bases when a fork pins history with retention ${historyRetention}`, () => {
+						const expectedCount = historyRetention === false ? 0 : historyRetention;
+						const { manager } = testChangeEditManagerFactory({ historyRetention: true });
 						sequencePeerCommits(manager, 1, 1, 1);
 						const fork = manager.getLocalBranch("main").fork();
 						const peerBaseRevision = fork.getHead().revision;
 						sequencePeerCommits(manager, 9, 2, 2, peer2);
 						manager.advanceMinimumSequenceNumber(brand(10));
-						manager.setMaxRetainedCommits(limit);
+						manager.setHistoryRetention(historyRetention);
 
 						const summary = structuredClone(manager.getSummaryData());
 						assert.equal(summary.main.peerLocalBranches.get(peer1)?.base, peerBaseRevision);
@@ -910,8 +946,8 @@ export function testCorrectness(): void {
 						);
 						assert.equal(fork.getHead().revision, peerBaseRevision);
 
-						const loaded = testChangeEditManagerFactory({ retainHistory: true }).manager;
-						loaded.setMaxRetainedCommits(limit);
+						const loaded = testChangeEditManagerFactory({ historyRetention: true }).manager;
+						loaded.setHistoryRetention(historyRetention);
 						loaded.loadSummaryData(summary);
 						assert.deepEqual(
 							loaded.getTrunkCommits("main").map((commit) => commit.revision),
@@ -919,43 +955,43 @@ export function testCorrectness(): void {
 						);
 						sequencePeerCommits(loaded, 1, 11, 11);
 						loaded.advanceMinimumSequenceNumber(brand(11));
-						assert.equal(loaded.getTrunkCommits("main").length, limit);
-						assert.equal(loaded.getSummaryData().main.trunk.length, limit);
+						assert.equal(loaded.getTrunkCommits("main").length, expectedCount);
+						assert.equal(loaded.getSummaryData().main.trunk.length, expectedCount);
 
 						fork.dispose();
-						assert.equal(manager.getTrunkCommits("main").length, limit);
+						assert.equal(manager.getTrunkCommits("main").length, expectedCount);
 						const trimmedSummary = structuredClone(manager.getSummaryData());
-						assert.equal(trimmedSummary.main.trunk.length, limit);
-						const reloaded = testChangeEditManagerFactory({ retainHistory: true }).manager;
-						reloaded.setMaxRetainedCommits(limit);
+						assert.equal(trimmedSummary.main.trunk.length, expectedCount);
+						const reloaded = testChangeEditManagerFactory({ historyRetention: true }).manager;
+						reloaded.setHistoryRetention(historyRetention);
 						reloaded.loadSummaryData(trimmedSummary);
-						assert.equal(reloaded.getTrunkCommits("main").length, limit);
+						assert.equal(reloaded.getTrunkCommits("main").length, expectedCount);
 					});
 				}
 
 				it("preserves bounded history through repeated summary generations", () => {
 					let manager = testChangeEditManagerFactory({}).manager;
-					manager.setMaxRetainedCommits(3);
+					manager.setHistoryRetention(3);
 					for (let generation = 0; generation < 3; generation++) {
 						sequencePeerCommits(manager, 5, generation * 5 + 1, generation * 5 + 1);
 						manager.advanceMinimumSequenceNumber(brand(generation * 5 + 5));
 						const summary = structuredClone(manager.getSummaryData());
 						assert.equal(summary.main.trunk.length, 3);
 						manager = testChangeEditManagerFactory({}).manager;
-						manager.setMaxRetainedCommits(3);
+						manager.setHistoryRetention(3);
 						manager.loadSummaryData(summary);
 						assert.equal(manager.getTrunkCommits("main").length, 3);
 					}
 				});
 
 				it("compounds history across repeated summarize/load generations", () => {
-					const first = testChangeEditManagerFactory({ retainHistory: true }).manager;
+					const first = testChangeEditManagerFactory({ historyRetention: true }).manager;
 					sequencePeerCommits(first, 5, 1, 1);
 					first.advanceMinimumSequenceNumber(brand(5));
 					const firstSummary = structuredClone(first.getSummaryData());
 					assert.equal(firstSummary.main.trunk.length, 5);
 
-					const second = testChangeEditManagerFactory({ retainHistory: true }).manager;
+					const second = testChangeEditManagerFactory({ historyRetention: true }).manager;
 					second.loadSummaryData(firstSummary);
 					assert.equal(second.getTrunkCommits("main").length, 5);
 					// The second generation extends the history it loaded rather than restarting it.
@@ -964,7 +1000,7 @@ export function testCorrectness(): void {
 					const secondSummary = structuredClone(second.getSummaryData());
 					assert.equal(secondSummary.main.trunk.length, 10);
 
-					const third = testChangeEditManagerFactory({ retainHistory: true }).manager;
+					const third = testChangeEditManagerFactory({ historyRetention: true }).manager;
 					third.loadSummaryData(secondSummary);
 					assert.equal(third.getTrunkCommits("main").length, 10);
 				});
