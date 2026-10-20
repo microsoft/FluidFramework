@@ -1454,8 +1454,12 @@ describe("summary ownership routes", () => {
 		);
 	});
 
-	it("serves repeated local EC GETs without durable storage lookup", async () => {
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
+	it("serves repeated local EC GETs with a string Alfred endpoint", async () => {
+		const config = createTestProvider(false, false);
+		config.use("memory");
+		config.set("alfred", testUrl);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		superTest = createSummaryOwnershipSuperTest(config);
 		const createTime = Date.now();
 		await cache.activateSummaryAccessIfNotDeleted(
 			tenantId,
