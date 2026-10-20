@@ -7,3 +7,5 @@ Insertion anchors now track range moves consistently before and after hydration
 
 Array insertion anchors on unhydrated nodes now match the behavior of anchors on hydrated nodes when a range is moved to its own starting gap or an interior gap.
 These moves leave the array contents unchanged, but can update insertion anchor indexes.
+Unhydrated arrays now also emit change events for moves to an interior gap, matching hydrated arrays.
+Previously, these interior moves emitted no change events on unhydrated arrays.

@@ -23,7 +23,7 @@ import {
 } from "../../util/arrayUtilities.js";
 
 describe("arrayUtilities unit tests", () => {
-	it("adjusts insertion-point indexes across array splices", () => {
+	it("adjustIndexForArraySplice", () => {
 		for (const [index, start, removedCount, insertedCount, expected] of [
 			[1, 2, 0, 3, 1],
 			[2, 2, 0, 3, 5],

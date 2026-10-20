@@ -11,6 +11,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * Insertions at the index leave it after the inserted content.
  * Removals containing the index collapse it to the start of the removed span.
  * Inputs must be valid non-negative indexes and counts for the array being edited.
+ *
+ * Note that this approach to tracking positions across edits to an array is lossy:
+ * It cannot restore the original position after a remove of a range which
+ * contains the index and undoing the remove.
  */
 export function adjustIndexForArraySplice(
 	index: number,
