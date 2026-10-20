@@ -219,6 +219,22 @@ test("npm package-lock input bypasses enumeration and --path auto-detects the lo
 	assert.ok((await readCalls()).every((call) => call.args[0] === "install"));
 });
 
+test("npm workspace root is discovered above member packages, but unrelated ancestor locks are ignored", async (t) => {
+	const { root, workspace } = await fixture(t);
+	await rm(path.join(workspace, "pnpm-workspace.yaml"));
+	const member = path.join(workspace, "packages", "member");
+	await mkdir(member, { recursive: true });
+	await writeFile(path.join(member, "package.json"), "{}");
+	await writeFile(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{}}');
+	assert.equal(await findWorkspace(member), member);
+	await writeFile(
+		path.join(workspace, "package-lock.json"),
+		'{"lockfileVersion":3,"packages":{}}',
+	);
+	await writeFile(path.join(workspace, "package.json"), '{"workspaces":["packages/*"]}');
+	assert.equal(await findWorkspace(member), workspace);
+});
+
 test("accumulates violations, preserves union selectors, and writes real names", async (t) => {
 	const { workspace, run, readCalls } = await fixture(t, [
 		listResponse,
@@ -325,4 +341,16 @@ test("the built-in runner can invoke the installed pnpm launcher", async () => {
 	const result = await runPnpm(["--version"], process.cwd(), false);
 	assert.equal(result.code, 0, result.stderr);
 	assert.match(result.stdout.trim(), /^\d+\.\d+\.\d+/);
+});
+
+test("single-package CLI rejects non-exact specs and incompatible audit flags before network access", async () => {
+	for (const args of [
+		["--package", "example@latest"],
+		["--package", "example@1.0.0", "--path", process.cwd()],
+		["--package", "example@1.0.0", "--policy", "unsafe"],
+		["--policy", "metadata"],
+		["--package", "example@1.0.0", "--max-candidates", "0"],
+	]) {
+		await assert.rejects(exec(process.execPath, [cli, ...args, "--json"]));
+	}
 });

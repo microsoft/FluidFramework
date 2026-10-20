@@ -76,6 +76,10 @@ test("npm v1: recursive dependencies, npm aliases, duplicates, and file/Git excl
 					nested: { version: "1.0.0" },
 					local: { version: "file:../local" },
 					git: { version: "git+https://github.com/example/repo.git#abc" },
+					resolvedGit: {
+						version: "1.0.0",
+						resolved: "git+https://github.com/example/repo.git#abc",
+					},
 				},
 			}),
 		),

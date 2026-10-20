@@ -9,6 +9,7 @@ import path from "node:path";
 
 import { Command, Flags } from "@oclif/core";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
+import { checkPackage, type PackageCheckResult } from "./package-check.js";
 
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
 
@@ -43,10 +44,9 @@ interface DependencyEntry {
  * pnpm remains responsible for enumerating dependencies and evaluating trust.
  */
 export default class CheckTrustPolicyCommand extends Command {
-	static readonly summary =
-		"Audit package dependencies against the no-downgrade trust policy.";
+	static readonly summary = "Audit dependency trust or verify a single package's provenance.";
 	static readonly description =
-		"Creates a scratch workspace with one leaf project per installed registry dependency, then runs pnpm install --trust-policy no-downgrade and iteratively excludes each violation to report the complete set.";
+		"Audit pnpm dependencies or Yarn/npm lockfiles using pnpm's no-downgrade policy. With --package name@version, check cryptographic provenance (default), registry metadata, or no-downgrade history and suggest an attested alternative when rejected. Provenance does not establish that package code is harmless.";
 	static readonly enableJsonFlag = true;
 	static readonly flags = {
 		keep: Flags.boolean({
@@ -61,6 +61,27 @@ export default class CheckTrustPolicyCommand extends Command {
 		lockfile: Flags.file({
 			description: "Audit a Yarn or npm lockfile directly, without installing its project.",
 			exists: true,
+			exclusive: ["package"],
+		}),
+		package: Flags.string({
+			description:
+				"Check one exact name@version and suggest an attested alternative if rejected.",
+			exclusive: ["path", "lockfile", "tempDir", "keep"],
+		}),
+		policy: Flags.string({
+			description: "Single-package policy (default: cryptographic).",
+			options: ["cryptographic", "metadata", "no-downgrade"] as const,
+			dependsOn: ["package"],
+		}),
+		registry: Flags.string({
+			description:
+				"HTTPS registry for single-package mode (default: https://registry.npmjs.org).",
+			dependsOn: ["package"],
+		}),
+		"max-candidates": Flags.integer({
+			description: "Maximum alternative releases to check (default: 20).",
+			min: 1,
+			dependsOn: ["package"],
 		}),
 		tempDir: Flags.directory({
 			description:
@@ -79,8 +100,41 @@ export default class CheckTrustPolicyCommand extends Command {
 		}),
 	} as const;
 
-	public async run(): Promise<TrustPolicyAuditResult> {
+	public async run(): Promise<TrustPolicyAuditResult | PackageCheckResult> {
 		const { flags } = await this.parse(CheckTrustPolicyCommand);
+		if (flags.package !== undefined) {
+			const policy = flags.policy ?? "cryptographic";
+			if (policy !== "cryptographic" && policy !== "metadata" && policy !== "no-downgrade") {
+				this.error(`Unsupported package policy: ${policy}`);
+			}
+			const result = await checkPackage(flags.package, {
+				policy,
+				...(flags.registry === undefined ? {} : { registry: flags.registry }),
+				...(flags["max-candidates"] === undefined
+					? {}
+					: { maxCandidates: flags["max-candidates"] }),
+			});
+			if (!flags.quiet) {
+				this.log(
+					`${flags.package}: ${result.requested.accepted ? "meets policy" : "does not meet policy"} (${result.policy})`,
+				);
+				this.log(result.requested.reason);
+				if (result.alternative)
+					this.log(
+						`Alternative: ${result.alternative.name}@${result.alternative.version} — ${result.alternative.reason}`,
+					);
+				else if (!result.requested.accepted)
+					this.log("No acceptable alternative found within the search limit.");
+				if (result.auditIncomplete)
+					this.logToStderr(
+						`WARNING: Incomplete verification or alternative search. ${result.errors.join("; ")}`,
+					);
+				this.log(result.disclaimer);
+			}
+			if (!this.jsonEnabled() && (!result.requested.accepted || result.auditIncomplete))
+				this.exit(1);
+			return result;
+		}
 		const info = (message: string): void => {
 			if (!flags.quiet) this.log(`INFO: ${message}`);
 		};

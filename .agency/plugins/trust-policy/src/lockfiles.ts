@@ -5,6 +5,7 @@
 
 import { parseSyml } from "@yarnpkg/parsers";
 import classicLockfile from "@yarnpkg/lockfile";
+import semver from "semver";
 
 export interface PinnedVersion {
 	name: string;
@@ -93,7 +94,10 @@ export function parseNpmLock(source: string): PinnedVersion[] {
 	function visit(name: string, entry: unknown): void {
 		if (!isRecord(entry)) throw new Error(`Invalid npm dependency entry: ${name}`);
 		const version = entry.version;
-		if (entry.link !== true && version !== undefined) {
+		const nonRegistryResolution =
+			typeof entry.resolved === "string" &&
+			/^(?:file|link|workspace|git|github|git\+[^:]+):/.test(entry.resolved);
+		if (entry.link !== true && !nonRegistryResolution && version !== undefined) {
 			if (typeof version !== "string") throw new Error(`Invalid npm version: ${name}`);
 			if (!/^(?:file|link|workspace|https?|git|github|git\+[^:]+):/.test(version)) {
 				if (version.startsWith("npm:")) {
@@ -104,7 +108,7 @@ export function parseNpmLock(source: string): PinnedVersion[] {
 					addPinned(result, typeof entry.name === "string" ? entry.name : name, version);
 				}
 			}
-		} else if (entry.link !== true) {
+		} else if (entry.link !== true && !nonRegistryResolution) {
 			throw new Error(`Missing npm version: ${name}`);
 		}
 	}
@@ -136,7 +140,8 @@ export function addPinned(
 	if (
 		!/^(@[a-z0-9_.~-]+\/)?[a-z0-9_.~-]+$/i.test(name) ||
 		typeof version !== "string" ||
-		!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)
+		!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version) ||
+		semver.valid(version) === null
 	) {
 		throw new Error(`Invalid registry package pin: ${name}@${String(version)}`);
 	}
