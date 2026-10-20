@@ -431,11 +431,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				chunk,
 			);
 			let chunkReferenceId: ChunkReferenceId;
-			// TODO: Reuse checks neither the chunk's format version nor the current encode's.
-			// A chunk written in an experimental format (for example vTextExperimental, selected by an override)
-			// is still referenced by later summaries after the override is removed, so clients that cannot read
-			// that format fail to load them. Track each chunk's format version and only reuse matching chunks
-			// before an experimental format can be selected without allowPossiblyIncompatibleWriteVersionOverrides.
 			if (previousChunkProperties !== undefined && !trackedSummaryProperties.fullTree) {
 				chunkReferenceId = previousChunkProperties.referenceId;
 				// Compute this chunk's path in the latest summary by traversing the parent chain.

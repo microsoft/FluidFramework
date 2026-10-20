@@ -5,40 +5,21 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type {
-	SchemaPolicy,
-	StoredSchemaCollection,
-	TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
+import type { SchemaPolicy, StoredSchemaCollection } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
-import {
-	type FieldEncodeBuilder,
-	type NodeEncoder,
-	compressedEncode,
-} from "./compressedEncode.js";
+import { compressedEncode } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatchVTextExperimental,
 	FieldBatchFormatVersion,
 } from "./format/index.js";
-import type { NodeShapeBasedEncoder } from "./nodeEncoder.js";
-import { buildContext } from "./schemaBasedEncode.js";
-
-/**
- * Chooses the node encoder of one node type.
- * @remarks
- * `base` is the node encoder that the V2 format uses for the type.
- * The result can be `base`, a {@link SpecializedNodeShapeEncoder}, or any other {@link NodeEncoder}.
- *
- * Called at most one time for each node type in an {@link EncoderContext}.
- */
-export type SpecializedNodeEncoderPolicy = (
-	base: NodeShapeBasedEncoder,
-	schemaName: TreeNodeSchemaIdentifier,
-	fieldBuilder: FieldEncodeBuilder,
-) => NodeEncoder;
+import {
+	type SpecializedNodeEncoderPolicy,
+	baseNodeEncoders,
+	buildContext,
+} from "./schemaBasedEncode.js";
 
 /**
  * Decides how an encode uses specialized (`f`) shapes.
@@ -73,7 +54,7 @@ export type SpecializationStrategy = (
  * A {@link SpecializationStrategy} that never specializes.
  * It does not read the batch, and it uses the base node encoder for each node type.
  */
-export const noSpecialization: SpecializationStrategy = () => (base) => base;
+export const noSpecialization: SpecializationStrategy = () => baseNodeEncoders;
 
 /**
  * The {@link SpecializationStrategy | specialization strategies} available to the vText format, by name.

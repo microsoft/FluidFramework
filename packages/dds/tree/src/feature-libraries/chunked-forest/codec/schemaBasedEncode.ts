@@ -27,6 +27,7 @@ import {
 	type FieldEncodeBuilder,
 	type KeyedFieldEncoder,
 	type NodeEncodeBuilder,
+	type NodeEncoder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
@@ -43,7 +44,6 @@ import {
 } from "./format/index.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
-import type { SpecializedNodeEncoderPolicy } from "./schemaBasedEncodeVText.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -123,9 +123,28 @@ function schemaCompressedEncode(
 }
 
 /**
+ * Chooses the node encoder of one node type.
+ * @remarks
+ * `base` is the node encoder that the V2 format uses for the type.
+ * The result can be `base`, a {@link SpecializedNodeShapeEncoder}, or any other {@link NodeEncoder}.
+ *
+ * Called at most one time for each node type in an {@link EncoderContext}.
+ */
+export type SpecializedNodeEncoderPolicy = (
+	base: NodeShapeBasedEncoder,
+	schemaName: TreeNodeSchemaIdentifier,
+	fieldBuilder: FieldEncodeBuilder,
+) => NodeEncoder;
+
+/**
+ * A {@link SpecializedNodeEncoderPolicy} that uses the base node encoder for each node type.
+ */
+export const baseNodeEncoders: SpecializedNodeEncoderPolicy = (base) => base;
+
+/**
  * Builds the {@link EncoderContext} for schema-based encoding.
  * @param nodeEncoderFor - Chooses the node encoder of each node type.
- * Defaults to the encoder that {@link getNodeEncoder} selects.
+ * Defaults to {@link baseNodeEncoders}, which uses the encoder that {@link getNodeEncoder} selects.
  * Only formats that support specialized shapes can return a {@link SpecializedNodeShapeEncoder}.
  */
 export function buildContext(
@@ -135,7 +154,7 @@ export function buildContext(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
-	nodeEncoderFor: SpecializedNodeEncoderPolicy = (base) => base,
+	nodeEncoderFor: SpecializedNodeEncoderPolicy = baseNodeEncoders,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>

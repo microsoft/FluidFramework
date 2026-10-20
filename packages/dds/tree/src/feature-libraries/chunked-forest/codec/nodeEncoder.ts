@@ -24,8 +24,8 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import {
-	FieldBatchFormatVersion,
 	SpecialField,
+	supportsSpecializedNodeShapes,
 	type EncodedChunkShape,
 	type EncodedFieldShape,
 	type EncodedValueShape,
@@ -189,7 +189,7 @@ export class SpecializedNodeShapeEncoder
 			"duplicate field key in SpecializedNodeShapeEncoder fieldOverrides",
 		);
 		const mergedFields: KeyedFieldEncoder[] = base.specializedFieldEncoders.map(
-			(override) => overrideMap.get(override.key) ?? override,
+			(baseField) => overrideMap.get(baseField.key) ?? baseField,
 		);
 		for (const override of fieldOverrides) {
 			if (!base.specializedFieldEncoders.some((field) => field.key === override.key)) {
@@ -211,7 +211,7 @@ export class SpecializedNodeShapeEncoder
 	): void {
 		// Older formats cannot represent the `f` shape that this encoder writes.
 		assert(
-			context.version === FieldBatchFormatVersion.vTextExperimental,
+			supportsSpecializedNodeShapes(context.version),
 			"SpecializedNodeShapeEncoder requires a format that supports specialized shapes",
 		);
 		this.inner.encodeNode(cursor, context, outputBuffer);

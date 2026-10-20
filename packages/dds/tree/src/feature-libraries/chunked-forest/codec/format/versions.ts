@@ -54,6 +54,21 @@ export function supportsIncrementalEncoding(version: FieldBatchFormatVersion): b
 }
 
 /**
+ * Whether the given format version supports the {@link EncodedSpecializedNodeShape} (`f`) shape.
+ *
+ * @remarks
+ * This helper should be used for comparison since experimental versions
+ * can be a string.
+ */
+export function supportsSpecializedNodeShapes(version: FieldBatchFormatVersion): boolean {
+	if (version === FieldBatchFormatVersion.v1 || version === FieldBatchFormatVersion.v2) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Encoded {@link FieldBatch} using V1 format.
  * @remarks
  * Does not support {@link EncodedIncrementalChunkShape}.
