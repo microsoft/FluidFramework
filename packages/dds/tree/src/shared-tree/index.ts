@@ -28,6 +28,7 @@ export { ForestTypeExpensiveDebug } from "./forestTypeExpensiveDebug.js";
 export {
 	createTreeCheckout,
 	TreeCheckout,
+	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	type CheckoutEvents,
 	type TreeTransactor,

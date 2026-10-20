@@ -65,6 +65,7 @@ import {
 	walkFieldSchema,
 	ObjectNodeSchema,
 } from "../simple-tree/index.js";
+import { FormattedText, PlainText } from "../text/index.js";
 import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -411,6 +412,33 @@ class NestedMultiStage extends factory.object("NestedMultiStage", {
 	),
 }) {}
 
+const textFactory = factory.scopedFactory("text");
+
+class TextFormat extends textFactory.object("TextFormat", {
+	bold: SchemaFactoryAlpha.boolean,
+}) {}
+
+/**
+ * Newline atom which carries formatting for the line it ends.
+ */
+class LineAtom extends textFactory.object("LineAtom", {
+	indent: SchemaFactoryAlpha.number,
+}) {
+	public readonly content = "\n";
+}
+
+/**
+ * Formatted text with an extra atom kind.
+ * @remarks
+ * Unambiguous, so apps that prevent ambiguity can use formatted text.
+ */
+class FormattedTextDocument extends FormattedText.createSchema(
+	textFactory,
+	TextFormat,
+	[LineAtom],
+	{ bold: false },
+) {}
+
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
@@ -457,6 +485,8 @@ export const testSchema: readonly TestSimpleTreeSchema[] = [
 	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
 	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
 	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
+	{ name: "plainText", schema: PlainText.Tree, ambiguous: false },
+	{ name: "formattedText", schema: FormattedTextDocument, ambiguous: false },
 ];
 
 /**
@@ -528,6 +558,20 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 		NestedMultiStage,
 		{ b: null, c: null },
 		false,
+	),
+	// "🌍" is two UTF-16 code units, which a single character must keep together.
+	testSimpleTree("plain-text", PlainText.Tree, () => PlainText.Tree.fromString("Hi🌍")),
+	testSimpleTree("formatted-text", FormattedTextDocument, () => {
+		const text = FormattedTextDocument.fromString("Hello");
+		text.insertAt(text.characterCount(), [new LineAtom({ indent: 0 })]);
+		text.insertAt(text.characterCount(), "world🌍", { bold: true });
+		return text;
+	}),
+	// Identical characters with identical formatting.
+	// Field batch encoding does not yet produce uniform chunks, so this currently encodes like any other formatted text.
+	// It exists to cover uniform-chunk encoding once field batches support it.
+	testSimpleTree("formatted-text-uniform", FormattedTextDocument, () =>
+		FormattedTextDocument.fromString("aaaa"),
 	),
 ];
 

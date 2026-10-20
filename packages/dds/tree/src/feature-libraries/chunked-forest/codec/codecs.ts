@@ -38,7 +38,7 @@ import {
 	EncodedFieldBatchV2,
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
@@ -230,7 +230,7 @@ export type FieldBatchCodec = VersionDispatchingCodec<
  */
 function makeFieldBatchCodecForVersion(
 	version: FieldBatchFormatVersion,
-	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchV1OrV2,
+	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchAnyVersion,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
 		policy: SchemaPolicy,
@@ -238,21 +238,21 @@ function makeFieldBatchCodecForVersion(
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
 		isSummary: boolean,
-	) => EncodedFieldBatchV1OrV2,
+	) => EncodedFieldBatchAnyVersion,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	return {
 		encode: (
 			data: FieldBatch,
 			context: FieldBatchEncodingContext,
-		): EncodedFieldBatchV1OrV2 => {
+		): EncodedFieldBatchAnyVersion => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: EncodedFieldBatchV1OrV2;
+			let encoded: EncodedFieldBatchAnyVersion;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -295,7 +295,7 @@ function makeFieldBatchCodecForVersion(
 			return encoded;
 		},
 		decode: (
-			data: EncodedFieldBatchV1OrV2,
+			data: EncodedFieldBatchAnyVersion,
 			context: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
