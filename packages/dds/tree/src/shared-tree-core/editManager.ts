@@ -342,14 +342,6 @@ export class EditManager<
 		trimHistory = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
-			// New sequenced commits can move the retention window without changing the MSN.
-			if (
-				trimHistory &&
-				typeof this.historyRetention === "number" &&
-				this.historyRetention > 0
-			) {
-				this.trimHistory();
-			}
 			return;
 		}
 
@@ -664,6 +656,9 @@ export class EditManager<
 	 *   - They are all from the same client.
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
+	 *
+	 * @param trimHistory - Whether to reevaluate numeric retention after sequencing the entire bunch.
+	 * Set to false for detached edits to defer trimming.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
 	public addSequencedChanges(
@@ -672,6 +667,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
+		trimHistory = true,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
@@ -726,6 +722,14 @@ export class EditManager<
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
+		if (
+			trimHistory &&
+			branchId === "main" &&
+			typeof this.historyRetention === "number" &&
+			this.historyRetention > 0
+		) {
+			this.trimHistory();
+		}
 	}
 
 	public findLocalCommit(

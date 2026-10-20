@@ -836,23 +836,80 @@ export function testCorrectness(): void {
 				});
 
 				for (const limit of [1, 3]) {
-					it(`reevaluates numeric retention ${limit} with an unchanged MSN unless trimming is suppressed`, () => {
+					for (const isLocal of [false, true]) {
+						for (const count of [1, 3, 5]) {
+							it(`reevaluates numeric retention ${limit} when sequencing ${count} ${isLocal ? "local" : "remote"} commits without another MSN update`, () => {
+								const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
+								sequencePeerCommits(manager, 5, 1, 1);
+								manager.advanceMinimumSequenceNumber(brand(5));
+								const retained = manager
+									.getTrunkCommits("main")
+									.map((commit) => commit.revision);
+								const commits = makeArray(count, (i) => {
+									const context = makeArray(5 + i, (j) => j + 1);
+									return isLocal
+										? applyLocalCommit(manager, context, 6 + i)
+										: {
+												change: TestChange.mint(context, [6 + i]),
+												revision: mintRevisionTag(),
+												customMetadata: undefined,
+											};
+								});
+								const expected = [
+									...retained,
+									...commits.map((commit) => commit.revision),
+								].slice(-Math.max(limit, count));
+
+								manager.addSequencedChanges(
+									commits,
+									isLocal ? manager.localSessionId : peer1,
+									brand(6),
+									brand(5),
+									"main",
+								);
+								assert.deepEqual(
+									manager.getTrunkCommits("main").map((commit) => commit.revision),
+									expected,
+								);
+								assert.deepEqual(
+									manager.getSummaryData().main.trunk.map((commit) => commit.revision),
+									expected,
+								);
+							});
+						}
+					}
+
+					it(`defers numeric retention ${limit} when sequencing and MSN updates suppress trimming`, () => {
 						const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
 						sequencePeerCommits(manager, 5, 1, 1);
 						manager.advanceMinimumSequenceNumber(brand(5));
-						assert.equal(manager.getTrunkCommits("main").length, limit);
+						const retained = manager.getTrunkCommits("main").map((commit) => commit.revision);
+						const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+						const expected = [...retained, local.revision];
 
-						sequencePeerCommits(manager, 1, 6, 6);
-						const revisions = manager.getTrunkCommits("main").map((commit) => commit.revision);
-						manager.advanceMinimumSequenceNumber(brand(5), false);
-						assert.equal(manager.getTrunkCommits("main").length, limit + 1);
-
-						manager.advanceMinimumSequenceNumber(brand(5));
-						assert.deepEqual(
-							manager.getTrunkCommits("main").map((commit) => commit.revision),
-							revisions.slice(1),
+						manager.addSequencedChanges(
+							[local],
+							manager.localSessionId,
+							brand(6),
+							brand(5),
+							"main",
+							false,
 						);
-						assert.equal(manager.getSummaryData().main.trunk.length, limit);
+						manager.advanceMinimumSequenceNumber(brand(6), false);
+						assert.deepEqual(
+							manager.getTrunkCommits("main").map((c) => c.revision),
+							expected,
+						);
+						manager.advanceMinimumSequenceNumber(brand(6));
+						assert.deepEqual(
+							manager.getTrunkCommits("main").map((c) => c.revision),
+							expected,
+						);
+						manager.advanceMinimumSequenceNumber(brand(7));
+						assert.deepEqual(
+							manager.getTrunkCommits("main").map((c) => c.revision),
+							expected.slice(-limit),
+						);
 					});
 				}
 

@@ -399,6 +399,7 @@ export class SharedTreeCore<
 				newRevision,
 				this.detachedRevision,
 				branchId,
+				false,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
