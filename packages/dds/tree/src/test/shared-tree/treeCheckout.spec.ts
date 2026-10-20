@@ -1445,6 +1445,130 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	describe("rewindTo", () => {
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after rejecting a sibling revision through the ${throughView ? "view" : "checkout"}`, () => {
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const sibling = view.fork();
+				const fork = view.fork();
+				sibling.root.insertAtEnd("sibling");
+				const revision = sibling.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const head = fork.checkout.mainBranch.getHead();
+
+				assert.throws(
+					() => (throughView ? fork : fork.checkout).rewindTo(revision),
+					validateUsageError(`No commit found with revision: ${revision}`),
+				);
+				assert.equal(fork.checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...fork.root], ["parent"]);
+				fork.root.insertAtEnd("child");
+				view.merge(fork, false);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				fork.dispose();
+				assert.equal(fork.checkout.disposed, true);
+				sibling.dispose();
+				view.dispose();
+			});
+
+			for (const rejection of [
+				"unrecognized revision",
+				"transaction",
+				"shared branch",
+				"edit lock",
+			]) {
+				it(`remains usable after rejecting rewind for ${rejection} through the ${throughView ? "view" : "checkout"}`, () => {
+					const view = getView(config);
+					view.initialize(["parent"]);
+					const fork = rejection === "shared branch" ? view : view.fork();
+					const head = fork.checkout.mainBranch.getHead();
+					const revision = fork.branchHistory.getHead()?.revision;
+					assert(revision !== undefined);
+					const target = throughView ? fork : fork.checkout;
+
+					switch (rejection) {
+						case "unrecognized revision": {
+							const unknownRevision = "00000000-0000-4000-8000-000000000000";
+							assert.throws(
+								() => target.rewindTo(unknownRevision),
+								validateUsageError(`Unrecognized revision id: ${unknownRevision}`),
+							);
+							break;
+						}
+						case "transaction": {
+							fork.runTransaction(() => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError("Rewinding is not supported during transactions."),
+								);
+							});
+							break;
+						}
+						case "shared branch": {
+							assert.throws(
+								() => target.rewindTo(revision),
+								validateUsageError(
+									"Cannot switch a view away from a shared branch. Consider forking first.",
+								),
+							);
+							break;
+						}
+						case "edit lock": {
+							const unsubscribe = Tree.on(fork.root, "nodeChanged", () => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError(
+										"Switching branches is forbidden during a change event callback",
+									),
+								);
+							});
+							fork.root.insertAtEnd("trigger");
+							unsubscribe();
+							fork.root.removeAt(1);
+							break;
+						}
+						default: {
+							assert.fail("Unexpected rejection case.");
+						}
+					}
+
+					if (rejection !== "edit lock") {
+						assert.equal(fork.checkout.mainBranch.getHead(), head);
+					}
+					assert.deepEqual([...fork.root], ["parent"]);
+					fork.root.insertAtEnd("child");
+					if (fork !== view) {
+						view.merge(fork, false);
+						fork.dispose();
+					}
+					assert.deepEqual([...view.root], ["parent", "child"]);
+					view.dispose();
+				});
+			}
+		}
+
+		it("breaks the checkout when branch switching throws", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const fork = view.fork();
+			const revision = fork.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			fork.root.insertAtEnd("child");
+			const error = new Error("Rewind event failure");
+			fork.checkout.events.on("afterBatch", () => {
+				throw error;
+			});
+
+			assert.throws(() => fork.checkout.rewindTo(revision), error);
+			assert.throws(() => fork.root, validateUsageError(/invalid state/));
+			assert.deepEqual([...view.root], ["parent"]);
+			view.dispose();
+		});
+	});
+
 	describe("history", () => {
 		it("exposes historical information for the current branch", () => {
 			const provider = new TestTreeProviderLite(1);

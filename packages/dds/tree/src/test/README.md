@@ -55,7 +55,10 @@ The checkout lifecycle hardening changes have a temporary gap in focused regress
 The tests in `shared-tree/treeCheckout.spec.ts` cover retained-checkout forks and fork guards, but do not directly cover these behaviors:
 
 - Disposing a view returned by `branchView.fork()` must dispose its underlying checkout, even when that checkout type normally outlives its views.
-- Rejecting `rewindTo()` before mutation, through either a raw branch or its typed view, must leave the branch editable and mergeable.
+- A subclass rejecting `rewindTo()` before mutation, through either a raw branch or its typed view, must leave the branch editable and mergeable.
+
+The `rewindTo` tests cover validation rejections in the base checkout through both raw checkouts and typed views.
+They do not replace the subclass-specific regression above.
 
 Focused tests for these behaviors are planned to land with [microsoft/FluidFramework#27217](https://github.com/microsoft/FluidFramework/pull/27217).
 
