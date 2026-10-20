@@ -420,6 +420,8 @@ describe("Branches", () => {
 			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
 			assert.deepEqual(received, []);
 			branch.dispose();
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.deepEqual(received, []);
 		});
 
 		it("existing forks retain their trimmer subscriptions after the parent clears its trimmer", () => {

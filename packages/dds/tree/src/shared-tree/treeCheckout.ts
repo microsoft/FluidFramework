@@ -719,7 +719,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private locationRevisionSource?: () => LocationRevisionSource;
 
 	/**
-	 * Whether disposing a view also disposes this checkout by default.
+	 * Whether disposing a view also disposes this checkout.
 	 *
 	 * @remarks
 	 * By default, this is false when {@link TreeCheckout.isSharedBranch} is true, and true otherwise.
@@ -1798,6 +1798,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
+	@breakingMethod
 	public rewindTo(revisionString: string): void {
 		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
 		if (this.#transaction.size > 0) {
