@@ -5,8 +5,9 @@ This plugin transplants the `flub check trustPolicy` command from main.
 The build-tools implementation is unchanged.
 
 The checker still uses pnpm to enumerate dependencies and evaluate `trustPolicy: no-downgrade`.
+It also reads Yarn Classic and Berry lockfiles directly, without installing Yarn or the target dependencies.
 It does not yet audit npm lockfiles, require provenance on every package, or independently verify provenance signatures.
-Its only direct runtime dependency is `@oclif/core`; the rest uses Node.js built-ins.
+It uses oclif and Yarn's official `@yarnpkg/parsers` parser, independently of build-tools.
 The checker and tests are written in TypeScript.
 TypeScript and Node.js types are plugin-local development dependencies.
 
@@ -27,6 +28,7 @@ You can also run the command directly, without Agency:
 ```powershell
 node .\lib\run.js --path D:\FluidFramework2\build-tools
 node .\lib\run.js --path D:\FluidFramework2\build-tools --json
+node .\lib\run.js --lockfile D:\my-project\yarn.lock --json
 ```
 
 Use `--help` to see `--keep`, `--tempDir`, `--verbose`, and `--quiet`.
@@ -43,6 +45,10 @@ Each scratch install uses `--lockfile-only` and `--trust-policy no-downgrade`.
 The checker accumulates violations and retries with version-specific exclusions until pnpm succeeds or stops reporting new violations.
 Multiple excluded versions of a package are combined into one `||` selector.
 The target manifests and lockfiles are not modified.
+For Yarn projects, the nearest `yarn.lock` is detected by `--path`, or you can select it explicitly with `--lockfile`.
+Both lockfile formats preserve npm aliases' real registry names and exclude local, workspace, and Git dependencies.
+Patched Yarn packages currently cause an explicit error rather than an incomplete success.
+pnpm remains required to evaluate trust policy for the extracted registry versions.
 
 By default, the scratch directory is `<workspace>/.trust-audit-temp` and is removed after the audit.
 Use `--keep` to retain it or `--tempDir` to choose another location.

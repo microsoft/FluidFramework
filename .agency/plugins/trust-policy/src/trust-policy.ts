@@ -4,17 +4,13 @@
  */
 
 import { spawn } from "node:child_process";
-import { mkdir, stat, rm, writeFile } from "node:fs/promises";
+import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { Command, Flags } from "@oclif/core";
+import { parseYarnLock, type PinnedVersion } from "./lockfiles.js";
 
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
-
-interface PinnedVersion {
-	name: string;
-	version: string;
-}
 
 interface PnpmRunResult {
 	code: number | null;
@@ -61,6 +57,10 @@ export default class CheckTrustPolicyCommand extends Command {
 				"Path inside the workspace to audit. Uses the nearest enclosing pnpm workspace, or package directory if there is no workspace. Defaults to the current directory.",
 			exists: true,
 		}),
+		lockfile: Flags.file({
+			description: "Audit a Yarn lockfile directly, without installing its project.",
+			exists: true,
+		}),
 		tempDir: Flags.directory({
 			description:
 				"New scratch directory (default: <workspace>/.trust-audit-temp). Must not already exist.",
@@ -89,23 +89,37 @@ export default class CheckTrustPolicyCommand extends Command {
 		const warning = (message: string): void => {
 			if (!flags.quiet) this.logToStderr(`WARNING: ${message}`);
 		};
-		const workspaceDir = await findWorkspace(path.resolve(flags.path ?? process.cwd()));
+		const workspaceDir = flags.lockfile
+			? path.dirname(path.resolve(flags.lockfile))
+			: await findWorkspace(path.resolve(flags.path ?? process.cwd()));
 		const tempDir = path.resolve(
 			flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
 		);
 		verbose(`Auditing workspace: ${workspaceDir}`);
-		verbose("Enumerating installed dependencies via pnpm list -r --json...");
-		const listResult = await runPnpm(
-			["list", "--recursive", "--json", "--depth", "Infinity"],
-			workspaceDir,
-			false,
-		);
-		if (listResult.code !== 0) {
-			this.error(
-				`pnpm list exited with code ${listResult.code}. stderr:\n${listResult.stderr}`,
+		const yarnLock = flags.lockfile
+			? path.resolve(flags.lockfile)
+			: (await isFile(path.join(workspaceDir, "yarn.lock"))) &&
+					!(await isFile(path.join(workspaceDir, "pnpm-workspace.yaml")))
+				? path.join(workspaceDir, "yarn.lock")
+				: undefined;
+		let pinned: PinnedVersion[];
+		if (yarnLock !== undefined) {
+			verbose(`Reading lockfile: ${yarnLock}`);
+			pinned = parseYarnLock(await readFile(yarnLock, "utf8"));
+		} else {
+			verbose("Enumerating installed dependencies via pnpm list -r --json...");
+			const listResult = await runPnpm(
+				["list", "--recursive", "--json", "--depth", "Infinity"],
+				workspaceDir,
+				false,
 			);
+			if (listResult.code !== 0) {
+				this.error(
+					`pnpm list exited with code ${listResult.code}. stderr:\n${listResult.stderr}`,
+				);
+			}
+			pinned = collectPinnedVersions(listResult.stdout);
 		}
-		const pinned = collectPinnedVersions(listResult.stdout);
 		verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		// Never remove a pre-existing user-selected directory to prepare an audit.
@@ -231,6 +245,7 @@ export async function findWorkspace(searchPath: string): Promise<string> {
 	let packageDir: string | undefined;
 	for (let dir = searchPath; ; dir = path.dirname(dir)) {
 		if (await isFile(path.join(dir, "pnpm-workspace.yaml"))) return dir;
+		if (await isFile(path.join(dir, "yarn.lock"))) return dir;
 		if (packageDir === undefined && (await isFile(path.join(dir, "package.json")))) {
 			packageDir = dir;
 		}

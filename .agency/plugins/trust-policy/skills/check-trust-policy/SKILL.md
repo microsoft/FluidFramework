@@ -1,6 +1,6 @@
 ---
 name: check-trust-policy
-description: Audit installed pnpm dependencies for provenance or trusted-publisher downgrades. Use when asked to check package provenance, audit trust policy, or find trust downgrades in a pnpm workspace.
+description: Audit pnpm dependencies or Yarn lockfiles for provenance or trusted-publisher downgrades. Use when asked to check package provenance, audit trust policy, or find trust downgrades.
 ---
 
 # Check package trust policy
@@ -13,7 +13,8 @@ Do not invoke flub or install or build Fluid Framework build-tools.
 
 - Node.js 22.22.2 or later.
 - pnpm 10.24.0 or later on PATH.
-- The target workspace's dependencies must already be installed.
+- For pnpm input, the target workspace's dependencies must already be installed.
+  Yarn Classic and Berry lockfiles are read directly; Yarn and installed target dependencies are not required.
 - Registry access and any required registry credentials.
 
 If plugin dependencies are missing, install them with `npm ci --prefix "<absolute-plugin-directory>"`.
@@ -27,6 +28,7 @@ Do not install the audited workspace's dependencies automatically.
 1. Identify the target directory with the user.
    The checker selects the nearest enclosing `pnpm-workspace.yaml`, or the nearest package directory if there is no workspace.
 2. Run `node "<absolute-plugin-directory>/lib/run.js" --path "<target-directory>" --json`.
+   For Yarn, pass `--lockfile "<absolute-yarn.lock-path>"` instead of `--path` to select the exact lockfile.
    Use the operating system's path separators.
    Do not add `--keep` unless the user wants to inspect the generated workspace.
 3. Report `totalUniqueDependencies`, `violations`, and `auditIncomplete`.

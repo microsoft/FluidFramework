@@ -11,17 +11,20 @@
 	"scripts": {
 		"build": "tsc --project tsconfig.json",
 		"pretest": "npm run build",
-		"test": "node --test lib/test/trust-policy.test.js",
+		"test": "node --test lib/test/*.test.js",
 		"check": "tsc --project tsconfig.json --noEmit"
 	},
 	"engines": {
 		"node": ">=22.22.2"
 	},
 	"dependencies": {
-		"@oclif/core": "^4.10.5"
+		"@oclif/core": "^4.10.5",
+		"@yarnpkg/lockfile": "^1.1.0",
+		"@yarnpkg/parsers": "^3.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "~22.19.17",
+		"@types/yarnpkg__lockfile": "^1.1.9",
 		"typescript": "~5.9.3"
 	},
 	"oclif": {

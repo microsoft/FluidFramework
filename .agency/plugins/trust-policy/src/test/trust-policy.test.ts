@@ -179,6 +179,26 @@ test("selects the nearest nested workspace and supports standalone packages", as
 	assert.equal(await findWorkspace(child), nested);
 });
 
+test("explicit Yarn lockfiles bypass pnpm list and support scoped registry aliases", async (t) => {
+	const { root, run, readCalls } = await fixture(t, [{ code: 0 }]);
+	const lock = path.join(root, "yarn.lock");
+	await writeFile(
+		lock,
+		'# yarn lockfile v1\n"alias@npm:@scope/real@^1":\n  version "1.2.3"\n  resolved "https://registry.npmjs.org/@scope/real/-/real-1.2.3.tgz"\n',
+	);
+	const output = await run(["--lockfile", lock, "--json", "--keep"]);
+	assert.equal(output.code, 0, output.stdout + output.stderr);
+	const result = JSON.parse(output.stdout);
+	assert.equal(result.totalUniqueDependencies, 1);
+	const calls = await readCalls();
+	assert.equal(calls.length, 1);
+	assert.equal(calls[0]?.args[0], "install");
+	const manifest = JSON.parse(
+		await readFile(path.join(result.tempDir, "projects", "0", "package.json"), "utf8"),
+	);
+	assert.deepEqual(manifest.dependencies, { "@scope/real": "1.2.3" });
+});
+
 test("accumulates violations, preserves union selectors, and writes real names", async (t) => {
 	const { workspace, run, readCalls } = await fixture(t, [
 		listResponse,
