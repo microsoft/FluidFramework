@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "kind": {
+        "leaf": 2
+      }
+    },
+    "com.fluidframework.leaf.number": {
+      "kind": {
+        "leaf": 0
+      }
+    },
+    "com.fluidframework.leaf.string": {
+      "kind": {
+        "leaf": 1
+      }
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "kind": {
+        "object": {
+          "": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.string"
+            ]
+          }
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.StringArray": {
+      "kind": {
+        "object": {
+          "": {
+            "kind": "Sequence",
+            "types": [
+              "com.fluidframework.text.formatted<test.text>.StringAtom"
+            ]
+          }
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.StringAtom": {
+      "kind": {
+        "object": {
+          "": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.text.formatted.StringTextAtom",
+              "test.text.LineAtom"
+            ]
+          },
+          "format": {
+            "kind": "Value",
+            "types": [
+              "test.text.TextFormat"
+            ]
+          }
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.Text": {
+      "kind": {
+        "object": {
+          "": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.text.formatted<test.text>.StringArray"
+            ]
+          }
+        }
+      }
+    },
+    "test.text.LineAtom": {
+      "kind": {
+        "object": {
+          "indent": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.number"
+            ]
+          }
+        }
+      }
+    },
+    "test.text.TextFormat": {
+      "kind": {
+        "object": {
+          "bold": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.boolean"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.formatted<test.text>.Text"
+    ]
+  }
+}

@@ -8631,6 +8631,9 @@ importers:
       semver-ts:
         specifier: ^1.0.3
         version: 1.0.3
+      sha.js:
+        specifier: ^2.4.12
+        version: 2.4.12
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -8707,6 +8710,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/sha.js':
+        specifier: ^2.4.4
+        version: 2.4.4
       ajv:
         specifier: ^8.17.1
         version: 8.18.0
