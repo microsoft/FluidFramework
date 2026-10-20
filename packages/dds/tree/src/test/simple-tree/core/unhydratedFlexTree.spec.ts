@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -145,7 +146,10 @@ describe("buildUnhydratedMoveMarks", () => {
 	}
 
 	for (const count of [0, -1, 0.5]) {
-		it(`rejects a count of ${count}`, () => {
+		it(`rejects a count of ${count}`, function () {
+			if (!nonProductionConditionalsIncluded()) {
+				this.skip();
+			}
 			assert.throws(
 				() => buildUnhydratedMoveMarks(1, count, 0),
 				validateAssertionError("Debug assert failed: Expected a positive integer move count"),
