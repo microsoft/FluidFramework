@@ -5,7 +5,10 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-import { sha256 } from "sha.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Noble exposes its public APIs through subpath exports.
+import { sha256 } from "@noble/hashes/sha2.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Noble exposes its public APIs through subpath exports.
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 import {
 	LeafNodeStoredSchema,
@@ -83,7 +86,7 @@ export function computeSchemaHash(
 	});
 	// Normalize metadata to its JSON representation before sorting object keys.
 	const persisted = JSON.parse(serialized) as JsonCompatibleReadOnly;
-	return new sha256().update(canonicalize(persisted)).digest("hex").slice(0, 32);
+	return bytesToHex(sha256(utf8ToBytes(canonicalize(persisted))).subarray(0, 16));
 }
 
 function serializeField(schema: TreeFieldStoredSchema): JsonCompatibleReadOnly {
