@@ -76,8 +76,7 @@ The trigger includes `main`, `lts`, `release/client/*`, and `test/*` branches.
 For this release, use the successful build from `release/client/<MAJOR>.<MINOR>`.
 Do not queue a separate publish run as the normal release step.
 
-The [build definition](../../../../tools/pipelines/build-client.yml) sets `publishAsPartOfBuild: false`.
-It produces packed packages and `pack/publish-metadata.json` for the separate publisher.
+The build produces packed packages and `pack/publish-metadata.json` for the separate publisher.
 The publish definition is `devOps/pipelines/publish-client.yml` in the ADO repository `ff_publishing`.
 Its `candidate` pipeline resource provides the automatic trigger.
 
