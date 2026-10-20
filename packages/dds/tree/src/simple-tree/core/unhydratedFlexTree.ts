@@ -655,8 +655,11 @@ export class UnhydratedSequenceField
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
-					// Interior moves preserve content, but their marks still update insertion anchors.
 					if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+						// The destination gap is inside the moved range.
+						// This leaves the content unchanged, so we return early.
+						// We still need the enclosing edit call to emit a change event with delta marks
+						// matching hydrated editing behavior.
 						return;
 					}
 					const removed = mapTrees.splice(sourceIndex, count);
