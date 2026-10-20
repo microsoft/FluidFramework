@@ -3,35 +3,17 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Add application-defined schema versions to SharedTree
+Add application-defined schema versions
 
 SharedTree supports optional application-defined schema versions.
-Pass versions to [`identifySchema`][identify-schema].
-Set the returned [`SchemaIdentity`][schema-identity] on
-[`TreeViewConfigurationAlpha`][view-configuration].
-Use a [`SchemaVersionMap`][version-map] to give each library or component its own version.
-Each entry has a [`LibraryId`][library-id] key and a non-negative safe integer value.
-Use a globally unique library identifier, such as a package name or a domain-based name.
-The identifier is stored in documents and must stay the same across releases.
+These versions are provided as a version map, where each version is keyed by a stable, globally unique [`LibraryId`](https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias).
+This allows an application to have separate versions for different features, components, or libraries.
+For example, a notes feature and a comments feature can each track changes to their part of the schema without sharing a single application-wide version.
 
-By default, schema upgrades must keep existing documents valid and cannot be reversed.
-After application versions are stored, you can make other changes that keep documents valid.
-For these changes, increase at least one version.
-Stored versions cannot decrease, and library identifiers cannot be removed.
-This prevents older applications from reversing a newer application's schema change.
-For changes allowed by the default upgrade rules, a version increase is optional.
-You can still increase a version to identify schemas in telemetry and compatibility snapshots.
-
-To store a metadata-only change, increase at least one application version.
-At the same versions, a metadata-only change does not update the stored schema.
-
-Schema versions use an experimental stored schema format.
-Until the format is stable, all clients that load or collaborate on the document
-must use the same Fluid Framework version.
-Use [`configuredSharedTreeAlpha`][configured-tree] to select this format, as shown below.
-
-For example, a required string field and an identifier field accept the same stored values.
-Increase the application version to change a required string field to an identifier field:
+[`identifySchema`](https://fluidframework.com/docs/api/fluid-framework/identifyschema-function) accepts the version map in its `schemaVersion` option.
+The result is passed to the `schemaIdentity` option of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
+Storing versions requires the experimental schema format, enabled through [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function).
+The example below configures separate versions for notes and comments:
 
 ```typescript
 import {
@@ -43,34 +25,47 @@ import {
 } from "fluid-framework/alpha";
 
 const schemaFactory = new SchemaFactory("com.example");
-const libraryId = "com.example" as LibraryId;
+const notesId = "com.example.notes" as LibraryId;
+const commentsId = "com.example.comments" as LibraryId;
+class AppSchema extends schemaFactory.object("App", {
+	notes: schemaFactory.array("Notes", schemaFactory.string),
+	comments: schemaFactory.array("Comments", schemaFactory.string),
+}) {}
+
 const SharedTree = configuredSharedTreeAlpha({
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 	writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
 });
 
-const oldConfig = new TreeViewConfigurationAlpha({
-	schema: schemaFactory.string,
-	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 0 } }),
-});
-const newConfig = new TreeViewConfigurationAlpha({
-	schema: schemaFactory.identifier,
-	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
+const config = new TreeViewConfigurationAlpha({
+	schema: AppSchema,
+	schemaIdentity: identifySchema({
+		schemaVersion: {
+			[notesId]: 3,
+			[commentsId]: 1,
+		},
+	}),
 });
 ```
 
-Read the configured and stored versions from [`TreeViewAlpha`][tree-view].
-Read stored versions from [`ITreeAlpha`][tree].
-[`exportCompatibilitySchemaSnapshot`][snapshot-export] includes the configured version map.
-Snapshots with a version map use snapshot v2.
-Without a version map, snapshots continue to use v1.
+If a later release changes the notes schema but leaves comments unchanged, the notes version can increase from `3` to `4` while the comments version stays at `1`.
+This records which feature's schema changed without assigning a new version to every feature in the application.
 
-[view-configuration]: https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class
-[version-map]: https://fluidframework.com/docs/api/fluid-framework/schemaversionmap-typealias
-[library-id]: https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias
-[configured-tree]: https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function
-[tree-view]: https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface
-[tree]: https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface
-[snapshot-export]: https://fluidframework.com/docs/api/fluid-framework/exportcompatibilityschemasnapshot-function
-[identify-schema]: https://fluidframework.com/docs/api/fluid-framework/identifyschema-function
-[schema-identity]: https://fluidframework.com/docs/api/fluid-framework/schemaidentity-interface
+[`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface) exposes two version maps:
+
+- `schemaVersion` contains the versions configured by the application.
+- `storedSchemaVersion` contains the versions stored in the document.
+  This property is also available on [`ITreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface).
+
+Comparing these maps can help explain a schema compatibility issue.
+For example, the application might expect notes version `4` while the document stores version `3`.
+If both use comments version `1`, the notes schema is a useful starting point for investigation.
+The version numbers identify schema revisions, but compatibility checks still determine whether the document can be viewed or upgraded.
+
+[`exportCompatibilitySchemaSnapshot`](https://fluidframework.com/docs/api/fluid-framework/exportcompatibilityschemasnapshot-function) also includes the version map, so snapshots track feature versions alongside schema changes.
+
+Application-defined versions have the following constraints:
+
+- Version numbers must be non-negative safe integers, and library identifiers must remain stable across releases.
+- Stored versions cannot decrease, and existing library identifiers cannot be removed from the map.
+- Until the stored format is stable, all clients that load or collaborate on a versioned document must use the same Fluid Framework version.
