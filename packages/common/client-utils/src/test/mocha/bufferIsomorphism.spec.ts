@@ -46,6 +46,9 @@ describe("Buffer isomorphism", () => {
 		const nodeClone = nodeBody.slice(0);
 		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
 		const browserClone = browserBody.slice(0);
+		// Overwrite a byte in both originals. In the browser case `browserClone` is a true copy,
+		// so it is unaffected. In the Node.js case `Buffer#slice` returns a view over the same
+		// memory, so `nodeClone` is an alias and this write corrupts it as well.
 		nodeBody[9] = "=".codePointAt(0) ?? oob();
 		browserBody[9] = "=".codePointAt(0) ?? oob();
 
@@ -330,8 +333,12 @@ describe("Buffer isomorphism", () => {
 				]) {
 					assert.equal(iso.byteLength, view.byteLength);
 					assert.equal(iso.toString("utf8"), content);
-					// Node.js may copy into the same shared pool as `view`, so check for
-					// independence by mutation rather than by comparing backing buffers.
+					// Node.js `Buffer.from(array)` copies into the shared internal pool whenever the
+					// size is less than `Buffer.poolSize >>> 1` (`poolSize` defaults to 8 KiB), per
+					// https://nodejs.org/api/buffer.html#static-method-bufferfromarray and
+					// https://nodejs.org/api/buffer.html#static-method-bufferallocunsafesize.
+					// The copy can therefore share a backing `ArrayBuffer` with a pooled `view`, so
+					// check for independence by mutation rather than by comparing backing buffers.
 					iso.fill(0);
 					assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
 				}
@@ -340,10 +347,13 @@ describe("Buffer isomorphism", () => {
 	});
 
 	it("stringToBuffer returns only the encoded bytes for pooled Node.js Buffers", () => {
-		for (const [input, encoding, expectedByteLength] of [
-			["hello", "utf8", 5],
-			["比特币", "utf8", 9],
-			["aGVsbG8=", "base64", 5],
+		for (const { input, encoding, expectedByteLength } of [
+			// 5 ASCII characters, 1 UTF-8 byte each.
+			{ input: "hello", encoding: "utf8", expectedByteLength: 5 },
+			// 3 CJK characters, 3 UTF-8 bytes each.
+			{ input: "比特币", encoding: "utf8", expectedByteLength: 9 },
+			// Base64 for "hello": 8 characters (including 1 padding character) decode to 5 bytes.
+			{ input: "aGVsbG8=", encoding: "base64", expectedByteLength: 5 },
 		] as const) {
 			// Precondition: Node.js allocates this small Buffer from a larger shared pool.
 			const pooled = BufferNode.IsoBuffer.from(input, encoding);

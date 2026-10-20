@@ -9,6 +9,14 @@ import { Buffer } from "node:buffer";
 import * as HashFileBrowser from "../../hashFileBrowser.js";
 import * as HashFileNode from "../../hashFileNode.js";
 
+/**
+ * The existing hash tests (under `src/test/playwright`) run only in a real browser, using the
+ * browser `IsoBuffer`, whose instances span their whole backing buffer. In Node.js, `Buffer`s are
+ * frequently views into a larger allocation (a `subarray`, or a small `Buffer` allocated from the
+ * shared internal pool), so these tests verify that both the Node.js and browser
+ * `hashFile`/`gitHashFile` implementations hash only the bytes of the view rather than its entire
+ * backing buffer.
+ */
 describe("hashFile with Node.js Buffer views", () => {
 	const content = "hello world";
 	// Known digests of "hello world".

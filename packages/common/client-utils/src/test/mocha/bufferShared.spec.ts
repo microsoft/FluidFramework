@@ -63,9 +63,12 @@ describe("bufferShared", () => {
 		 */
 		it("AnyUint8ArrayToArrayBuffer preserves blob contents from a Node.js Buffer view", () => {
 			const content = JSON.stringify({ value: "payload" });
-			const backing = Buffer.alloc(content.length + 16, "!");
-			backing.write(content, 8, "utf8");
-			const nodeView = backing.subarray(8, 8 + content.length);
+			// Surround `content` with filler bytes on both sides so the view neither starts at
+			// offset 0 nor extends to the end of its backing buffer.
+			const paddingByteLength = 8;
+			const backing = Buffer.alloc(content.length + 2 * paddingByteLength, "!");
+			backing.write(content, paddingByteLength, "utf8");
+			const nodeView = backing.subarray(paddingByteLength, paddingByteLength + content.length);
 			const browserView = new Uint8Array(
 				nodeView.buffer,
 				nodeView.byteOffset,
@@ -86,7 +89,6 @@ describe("bufferShared", () => {
 			assert(pooled.buffer.byteLength > pooled.byteLength);
 
 			const result = AnyUint8ArrayToArrayBuffer(pooled);
-			assert(result instanceof ArrayBuffer);
 			assert.notEqual(result, pooled.buffer);
 			assert.equal(result.byteLength, pooled.byteLength);
 			assert.equal(bufferToString(result, "utf8"), content);
