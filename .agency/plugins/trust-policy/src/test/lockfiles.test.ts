@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseYarnLock } from "../lockfiles.js";
+import { parseYarnLock, parseNpmLock } from "../lockfiles.js";
 
 test("Yarn Classic: grouped selectors, scoped aliases, deduplication, and local dependencies", () => {
 	assert.deepEqual(
@@ -62,5 +62,65 @@ test("Yarn refuses malformed pins, syntax, and unsupported patched packages", ()
 				'"x@patch:x@npm:1#file":\n  version: 1.0.0\n  resolution: "x@patch:x@npm:1#file"\n',
 			),
 		/Patched/,
+	);
+});
+
+test("npm v1: recursive dependencies, npm aliases, duplicates, and file/Git exclusions", () => {
+	assert.deepEqual(
+		parseNpmLock(
+			JSON.stringify({
+				lockfileVersion: 1,
+				dependencies: {
+					semver: { version: "5.7.2", dependencies: { nested: { version: "1.0.0" } } },
+					alias: { version: "npm:@scope/real@1.2.3" },
+					nested: { version: "1.0.0" },
+					local: { version: "file:../local" },
+					git: { version: "git+https://github.com/example/repo.git#abc" },
+				},
+			}),
+		),
+		[
+			{ name: "semver", version: "5.7.2" },
+			{ name: "nested", version: "1.0.0" },
+			{ name: "@scope/real", version: "1.2.3" },
+		],
+	);
+});
+
+test("npm v2/v3: packages map, nested scoped names, aliases, links, and workspace definitions", () => {
+	for (const lockfileVersion of [2, 3]) {
+		assert.deepEqual(
+			parseNpmLock(
+				JSON.stringify({
+					lockfileVersion,
+					packages: {
+						"": { name: "private-root", version: "1.0.0" },
+						"packages/workspace": { name: "workspace", version: "1.0.0" },
+						"node_modules/workspace": { link: true, resolved: "packages/workspace" },
+						"node_modules/foo/node_modules/@scope/bar": { version: "2.0.0" },
+						"node_modules/alias": { name: "real", version: "1.0.0" },
+						"node_modules/local": { version: "file:../local" },
+					},
+					dependencies: { stale: { version: "9.0.0" } },
+				}),
+			),
+			[
+				{ name: "@scope/bar", version: "2.0.0" },
+				{ name: "real", version: "1.0.0" },
+			],
+		);
+	}
+});
+
+test("npm rejects unsupported formats and malformed dependency pins", () => {
+	assert.throws(() => parseNpmLock('{"lockfileVersion":4}'), /lockfileVersion/);
+	assert.throws(() => parseNpmLock('{"lockfileVersion":3}'), /packages/);
+	assert.throws(
+		() => parseNpmLock('{"lockfileVersion":1,"dependencies":{"x":{}}}'),
+		/Missing/,
+	);
+	assert.throws(
+		() => parseNpmLock('{"lockfileVersion":1,"dependencies":{"x":{"version":"^1"}}}'),
+		/pin/,
 	);
 });

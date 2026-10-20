@@ -8,7 +8,7 @@ import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { Command, Flags } from "@oclif/core";
-import { parseYarnLock, type PinnedVersion } from "./lockfiles.js";
+import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
 
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
 
@@ -43,7 +43,8 @@ interface DependencyEntry {
  * pnpm remains responsible for enumerating dependencies and evaluating trust.
  */
 export default class CheckTrustPolicyCommand extends Command {
-	static readonly summary = "Audit pnpm dependencies against the no-downgrade trust policy.";
+	static readonly summary =
+		"Audit package dependencies against the no-downgrade trust policy.";
 	static readonly description =
 		"Creates a scratch workspace with one leaf project per installed registry dependency, then runs pnpm install --trust-policy no-downgrade and iteratively excludes each violation to report the complete set.";
 	static readonly enableJsonFlag = true;
@@ -54,11 +55,11 @@ export default class CheckTrustPolicyCommand extends Command {
 		}),
 		path: Flags.directory({
 			description:
-				"Path inside the workspace to audit. Uses the nearest enclosing pnpm workspace, or package directory if there is no workspace. Defaults to the current directory.",
+				"Path inside the project to audit. Detects the nearest pnpm workspace, Yarn lockfile, or npm lockfile. Defaults to the current directory.",
 			exists: true,
 		}),
 		lockfile: Flags.file({
-			description: "Audit a Yarn lockfile directly, without installing its project.",
+			description: "Audit a Yarn or npm lockfile directly, without installing its project.",
 			exists: true,
 		}),
 		tempDir: Flags.directory({
@@ -96,16 +97,26 @@ export default class CheckTrustPolicyCommand extends Command {
 			flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
 		);
 		verbose(`Auditing workspace: ${workspaceDir}`);
-		const yarnLock = flags.lockfile
-			? path.resolve(flags.lockfile)
-			: (await isFile(path.join(workspaceDir, "yarn.lock"))) &&
-					!(await isFile(path.join(workspaceDir, "pnpm-workspace.yaml")))
-				? path.join(workspaceDir, "yarn.lock")
-				: undefined;
+		let lockfile = flags.lockfile ? path.resolve(flags.lockfile) : undefined;
+		if (
+			lockfile === undefined &&
+			!(await isFile(path.join(workspaceDir, "pnpm-workspace.yaml")))
+		) {
+			for (const name of ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"]) {
+				const candidate = path.join(workspaceDir, name);
+				if (await isFile(candidate)) {
+					lockfile = candidate;
+					break;
+				}
+			}
+		}
 		let pinned: PinnedVersion[];
-		if (yarnLock !== undefined) {
-			verbose(`Reading lockfile: ${yarnLock}`);
-			pinned = parseYarnLock(await readFile(yarnLock, "utf8"));
+		if (lockfile !== undefined) {
+			verbose(`Reading lockfile: ${lockfile}`);
+			const source = await readFile(lockfile, "utf8");
+			pinned = source.trimStart().startsWith("{")
+				? parseNpmLock(source)
+				: parseYarnLock(source);
 		} else {
 			verbose("Enumerating installed dependencies via pnpm list -r --json...");
 			const listResult = await runPnpm(
@@ -245,9 +256,17 @@ export async function findWorkspace(searchPath: string): Promise<string> {
 	let packageDir: string | undefined;
 	for (let dir = searchPath; ; dir = path.dirname(dir)) {
 		if (await isFile(path.join(dir, "pnpm-workspace.yaml"))) return dir;
-		if (await isFile(path.join(dir, "yarn.lock"))) return dir;
-		if (packageDir === undefined && (await isFile(path.join(dir, "package.json")))) {
-			packageDir = dir;
+		const manifestPath = path.join(dir, "package.json");
+		const hasManifest = await isFile(manifestPath);
+		if (packageDir === undefined && hasManifest) packageDir = dir;
+		const manifest = hasManifest
+			? (JSON.parse(await readFile(manifestPath, "utf8")) as { workspaces?: unknown })
+			: undefined;
+		// An unrelated ancestor's standalone npm install must not capture this project.
+		if (packageDir === undefined || dir === packageDir || manifest?.workspaces !== undefined) {
+			for (const name of ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"]) {
+				if (await isFile(path.join(dir, name))) return dir;
+			}
 		}
 		if (path.dirname(dir) === dir) break;
 	}

@@ -6,7 +6,8 @@ The build-tools implementation is unchanged.
 
 The checker still uses pnpm to enumerate dependencies and evaluate `trustPolicy: no-downgrade`.
 It also reads Yarn Classic and Berry lockfiles directly, without installing Yarn or the target dependencies.
-It does not yet audit npm lockfiles, require provenance on every package, or independently verify provenance signatures.
+It also reads npm `package-lock.json` and `npm-shrinkwrap.json` versions 1–3, without installing target dependencies.
+It does not yet require provenance on every package or independently verify provenance signatures.
 It uses oclif and Yarn's official `@yarnpkg/parsers` parser, independently of build-tools.
 The checker and tests are written in TypeScript.
 TypeScript and Node.js types are plugin-local development dependencies.
@@ -29,6 +30,7 @@ You can also run the command directly, without Agency:
 node .\lib\run.js --path D:\FluidFramework2\build-tools
 node .\lib\run.js --path D:\FluidFramework2\build-tools --json
 node .\lib\run.js --lockfile D:\my-project\yarn.lock --json
+node .\lib\run.js --lockfile D:\my-project\package-lock.json --json
 ```
 
 Use `--help` to see `--keep`, `--tempDir`, `--verbose`, and `--quiet`.
@@ -49,6 +51,10 @@ For Yarn projects, the nearest `yarn.lock` is detected by `--path`, or you can s
 Both lockfile formats preserve npm aliases' real registry names and exclude local, workspace, and Git dependencies.
 Patched Yarn packages currently cause an explicit error rather than an incomplete success.
 pnpm remains required to evaluate trust policy for the extracted registry versions.
+For npm projects, `--path` detects the nearest package-lock or shrinkwrap file.
+At a directory containing multiple formats, a pnpm workspace takes precedence, followed by npm shrinkwrap, npm package-lock, and Yarn.
+Use `--lockfile` to override that selection.
+npm aliases, nested dependencies, and multiple installed versions are included; workspace links and local or Git sources are excluded.
 
 By default, the scratch directory is `<workspace>/.trust-audit-temp` and is removed after the audit.
 Use `--keep` to retain it or `--tempDir` to choose another location.

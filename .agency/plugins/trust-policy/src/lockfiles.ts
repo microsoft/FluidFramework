@@ -80,6 +80,54 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Reads npm package-lock/shrinkwrap versions 1–3, including nested and aliased pins.
+ * Version 2's compatibility dependency tree is ignored in favor of its packages map.
+ */
+export function parseNpmLock(source: string): PinnedVersion[] {
+	const lock: unknown = JSON.parse(source);
+	if (!isRecord(lock) || ![1, 2, 3].includes(Number(lock.lockfileVersion))) {
+		throw new Error("Expected an npm lockfile with lockfileVersion 1, 2, or 3.");
+	}
+	const result = new Map<string, PinnedVersion>();
+	function visit(name: string, entry: unknown): void {
+		if (!isRecord(entry)) throw new Error(`Invalid npm dependency entry: ${name}`);
+		const version = entry.version;
+		if (entry.link !== true && version !== undefined) {
+			if (typeof version !== "string") throw new Error(`Invalid npm version: ${name}`);
+			if (!/^(?:file|link|workspace|https?|git|github|git\+[^:]+):/.test(version)) {
+				if (version.startsWith("npm:")) {
+					const alias = /^npm:(@?[^@]+)@(.+)$/.exec(version);
+					if (alias === null) throw new Error(`Invalid npm alias: ${version}`);
+					addPinned(result, alias[1] ?? "", alias[2]);
+				} else {
+					addPinned(result, typeof entry.name === "string" ? entry.name : name, version);
+				}
+			}
+		} else if (entry.link !== true) {
+			throw new Error(`Missing npm version: ${name}`);
+		}
+	}
+	if (lock.lockfileVersion === 1) {
+		function walk(dependencies: unknown): void {
+			if (!isRecord(dependencies)) throw new Error("Invalid npm dependencies map.");
+			for (const [name, entry] of Object.entries(dependencies)) {
+				visit(name, entry);
+				if (isRecord(entry) && entry.dependencies !== undefined) walk(entry.dependencies);
+			}
+		}
+		walk(lock.dependencies ?? {});
+	} else {
+		if (!isRecord(lock.packages)) throw new Error("Missing npm packages map.");
+		for (const [location, entry] of Object.entries(lock.packages)) {
+			// Root and workspace package definitions are not registry dependencies.
+			const match = /(?:^|\/)node_modules\/((?:@[^/]+\/)?[^/]+)$/.exec(location);
+			if (match !== null) visit(match[1] ?? "", entry);
+		}
+	}
+	return [...result.values()];
+}
+
 export function addPinned(
 	result: Map<string, PinnedVersion>,
 	name: string,

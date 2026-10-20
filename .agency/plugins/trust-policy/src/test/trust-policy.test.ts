@@ -199,6 +199,26 @@ test("explicit Yarn lockfiles bypass pnpm list and support scoped registry alias
 	assert.deepEqual(manifest.dependencies, { "@scope/real": "1.2.3" });
 });
 
+test("npm package-lock input bypasses enumeration and --path auto-detects the lock", async (t) => {
+	const { workspace, run, readCalls } = await fixture(t, [{ code: 0 }, { code: 0 }]);
+	const lock = path.join(workspace, "package-lock.json");
+	await writeFile(
+		lock,
+		JSON.stringify({
+			lockfileVersion: 3,
+			packages: { "node_modules/semver": { version: "5.7.2" } },
+		}),
+	);
+	let output = await run(["--lockfile", lock, "--json"]);
+	assert.equal(output.code, 0, output.stdout + output.stderr);
+	assert.equal(JSON.parse(output.stdout).totalUniqueDependencies, 1);
+	await rm(path.join(workspace, "pnpm-workspace.yaml"));
+	output = await run(["--json"]);
+	assert.equal(output.code, 0, output.stdout + output.stderr);
+	assert.equal(JSON.parse(output.stdout).totalUniqueDependencies, 1);
+	assert.ok((await readCalls()).every((call) => call.args[0] === "install"));
+});
+
 test("accumulates violations, preserves union selectors, and writes real names", async (t) => {
 	const { workspace, run, readCalls } = await fixture(t, [
 		listResponse,
