@@ -701,17 +701,18 @@ export class UnhydratedSequenceField
  * Builds {@link DeltaMark}s describing a within-field move for use in
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
+ * @param sourceIndex - The index of the first element to move in the pre-edit sequence.
+ * @param count - The number of consecutive elements to move.
+ * @param destIndex - The destination gap in the pre-edit sequence, without adjustment for removal.
+ * @returns Synthetic notification marks, or an empty array when `count` is zero.
+ * These marks use placeholder detached-node IDs and are not suitable for applying the move to a forest.
  * @remarks
- * Forward move (`sourceIndex + count <= destIndex`):
- * `[retain(src), detach(n), retain(mid), attach(n)]`
+ * The caller must provide nonnegative integer inputs with the source range and destination gap
+ * within the sequence bounds. This function does not validate inputs.
  *
- * Backward move (`destIndex <= sourceIndex`):
- * `[retain(dst), attach(n), retain(mid), detach(n)]`
- *
- * Interior moves split the detach around the attach, matching hydrated sequence edits.
  * Content-preserving moves can still change insertion anchors.
  */
-function buildUnhydratedMoveMarks(
+export function buildUnhydratedMoveMarks(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
@@ -720,8 +721,17 @@ function buildUnhydratedMoveMarks(
 	if (count === 0) {
 		return marks;
 	}
+
+	const leadingRetain = Math.min(sourceIndex, destIndex);
+	if (leadingRetain > 0) {
+		marks.push({ count: leadingRetain });
+	}
+
 	if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
-		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+		// Destination is strictly inside the source range.
+		// This is a no-op as far as content changes go, but still needs to emit marks which match the hydrated event behavior.
+
+		// Detach the prefix, attach the whole range, then detach the suffix.
 		const firstSectionLength = destIndex - sourceIndex;
 		marks.push({ count: firstSectionLength, detach: syntheticDetachedNodeId });
 		marks.push({ count, attach: syntheticDetachedNodeId });
@@ -730,13 +740,15 @@ function buildUnhydratedMoveMarks(
 			detach: syntheticDetachedNodeId,
 		});
 	} else if (sourceIndex < destIndex) {
-		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+		// Forward move, including to the source range's ending gap: detach before attaching.
+		// Retain only the elements between the source range's end and the destination.
 		marks.push({ count, detach: syntheticDetachedNodeId });
 		const between = destIndex - sourceIndex - count;
 		if (between > 0) marks.push({ count: between });
 		marks.push({ count, attach: syntheticDetachedNodeId });
 	} else {
-		if (destIndex > 0) marks.push({ count: destIndex });
+		// Backward move, including to the source range's starting gap: attach before detaching.
+		// This order matters for insertion anchors even when the destination equals the source.
 		marks.push({ count, attach: syntheticDetachedNodeId });
 		const between = sourceIndex - destIndex;
 		if (between > 0) marks.push({ count: between });
