@@ -1084,14 +1084,11 @@ for (const createBlobPayloadPending of [false, true]) {
 				const { mockBlobStorage, blobManager } = createTestMaterial({
 					createBlobPayloadPending,
 				});
-				// Holding storage means a dropped abort leaves the upload pending forever, which is the
-				// failure mode under test rather than a slow-but-eventually-settling upload.
+				// Block storage so a missed abort cannot settle later.
 				mockBlobStorage.pause();
 				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
 
-				// Counting the blob synchronously raises the container's dirty state, so a host aborting
-				// from its dirty listener aborts from here. That is before the upload flow registers its
-				// own abort listener, and an AbortSignal never replays "abort" to a late listener.
+				// Simulate a host aborting from the synchronous dirty notification.
 				const ac = new AbortController();
 				blobManager.events.on("outstandingBlobWorkChanged", () => {
 					if (blobManager.hasOutstandingBlobWork) {
@@ -1102,8 +1099,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
 				if (createBlobPayloadPending) {
 					const handle = await createP;
-					// Subscribe before attaching. Attaching starts the sharing flow, which here fails
-					// within it, so a listener added afterwards would miss the failure.
+					// Attach can fail synchronously, so subscribe first.
 					const sharedP = waitHandlePayloadShared(handle);
 					attachHandle(handle);
 					await assert.rejects(sharedP, { message: "uploadBlob aborted" });

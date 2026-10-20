@@ -78,10 +78,6 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 
 /**
  * Waits for `key` to be set on the data store's root map.
- *
- * @remarks
- * Used instead of `ensureSynchronized` by tests that deliberately hold a container dirty, since
- * `ensureSynchronized` waits for every tracked container to be saved and so would never return.
  */
 async function waitForKey(dataStore: ITestDataObject, key: string): Promise<void> {
 	return timeoutPromise(
@@ -101,10 +97,6 @@ async function waitForKey(dataStore: ITestDataObject, key: string): Promise<void
 
 /**
  * Waits until `container` has processed every op up to and including `sequenceNumber`.
- *
- * @remarks
- * Used instead of `ensureSynchronized` by tests that deliberately hold a container dirty, since
- * `ensureSynchronized` waits for every tracked container to be saved and so would never return.
  */
 async function waitForSequenceNumber(
 	container: IContainer,
@@ -514,9 +506,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 
 				const container2 = await provider.loadTestContainer(testContainerConfig);
 				const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
-				// Deliberately not `ensureSynchronized`: that waits for every tracked container to be
-				// saved, and container1 stays dirty for as long as its blob upload is blocked. Wait for
-				// the ops themselves to reach container2 instead, which is what this test is about.
+				// Wait for op delivery without waiting for container1's blocked blob upload.
 				await waitForKey(dataStore2, "another key");
 
 				assert.strictEqual(dataStore2._root.get("key"), "value");
@@ -527,10 +517,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			});
 
 			it("stays dirty until an attachment blob has been shared", async () => {
-				// Regression test for hosts that dispose a container as soon as it reports itself saved.
-				// Before attachment blobs participated in dirty state, a container could report "saved"
-				// while a blob payload was still being uploaded, so disposing on that signal stranded
-				// the payload. The container must stay dirty for the whole upload/BlobAttach flow.
+				// A host disposing on "saved" must not strand an in-flight blob.
 				const testString = "this is a test string";
 				const uploadBlobPromise = new Deferred<void>();
 				const container1 = await provider.makeTestContainer({
@@ -568,13 +555,9 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 
 				const handleP = dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 				if (createBlobPayloadPending === true) {
-					// The handle resolves before the payload is shared, and sharing only starts once the
-					// handle is attached to the container's graph.
+					// Attaching the pending-payload handle starts sharing.
 					dataStore1._root.set("blob", await handleP);
-					// Let that op round-trip, so the blob is the only thing that can still be holding
-					// the container dirty below. container2 seeing the op proves the service sequenced
-					// it; waiting for container1 to reach that sequence number proves container1
-					// processed its own acknowledgement too.
+					// Drain the reference op on both clients so only the blocked blob keeps container1 dirty.
 					await waitForKey(dataStore2, "blob");
 					await waitForSequenceNumber(container1, container2.deltaManager.lastSequenceNumber);
 				}
@@ -599,8 +582,6 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					});
 				}
 
-				// Once the container reports itself saved the blob is durable, so a container that never
-				// saw the local upload can read it back.
 				dataStore1._root.set("blob", handle);
 				await provider.ensureSynchronized();
 				const remoteHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");

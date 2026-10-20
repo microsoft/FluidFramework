@@ -1676,10 +1676,7 @@ describe("Runtime", () => {
 			}
 
 			/**
-			 * Drives the real BlobManager bookkeeping behind `hasOutstandingBlobWork` so these tests
-			 * exercise the same `outstandingBlobWorkChanged` event the blob flow raises in production,
-			 * rather than a stand-in for it. The blob upload flow itself is covered by the BlobManager
-			 * tests; what is under test here is how the runtime folds that signal into dirty state.
+			 * Uses real blob bookkeeping to test dirty-state integration without running an upload.
 			 */
 			const getBlobWorkControls = (containerRuntime: ContainerRuntime): BlobWorkControls =>
 				(containerRuntime as unknown as { blobManager: BlobWorkControls }).blobManager;
@@ -1706,22 +1703,18 @@ describe("Runtime", () => {
 			};
 
 			/**
-			 * Loads a runtime and records every dirty-state transition it publishes.
-			 *
-			 * @param context - The container context to load against, allowing a caller to simulate an
-			 * older loader or a different config.
-			 * @returns The runtime plus the transitions it published, in the order they were published.
+			 * Loads a runtime and records aggregate and operation-only dirty transitions.
 			 */
 			const loadRuntimeTrackingDirtyState = async (
 				context: Partial<IContainerContextInternal>,
 			): Promise<{
 				containerRuntime: ContainerRuntime;
 				/**
-				 * The host-facing "dirty"/"saved" transitions, as booleans.
+				 * Aggregate dirty/saved transitions.
 				 */
 				dirtyTransitions: boolean[];
 				/**
-				 * The op-only transitions reported to the loader.
+				 * Operation-only transitions sent to the loader.
 				 */
 				opDirtyStates: boolean[];
 			}> => {
@@ -1805,10 +1798,7 @@ describe("Runtime", () => {
 			});
 
 			it("starts dirty, and publishes a single saved, when blobs are restored from pending local state", async () => {
-				// A restored blob is already counted by the time the runtime subscribes to the BlobManager's
-				// outstandingBlobWorkChanged event, so the baseline the runtime seeds at load is the only signal
-				// for it. Load offline so the blob stays unshared: restored blobs being shared is covered by the
-				// BlobManager tests, and mock storage cannot upload them.
+				// Load offline to test the restored dirty baseline before blob sharing can finish.
 				const loaderDirtyStates: boolean[] = [];
 				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState({
 					...getMockContext({ connected: false }),
@@ -1938,8 +1928,6 @@ describe("Runtime", () => {
 			});
 
 			it("keeps dirty state op-only for a loader that cannot track op-only state", async () => {
-				// An older loader uses the host-facing dirty state for op-specific decisions, so the
-				// runtime must not broaden it there.
 				const legacyContext = getMockContext();
 				delete (legacyContext as { updatePendingOpState?: unknown }).updatePendingOpState;
 				const { containerRuntime, dirtyTransitions } =
@@ -1956,9 +1944,7 @@ describe("Runtime", () => {
 			});
 
 			it("suppresses blob-driven publication while dirty events are disabled", async () => {
-				// Op replay disables dirty events to avoid noise, restores the last emitted state, then
-				// publishes any net change itself. Blob-driven publication doesn't go through
-				// updateDocumentDirtyState, so it has to honor that suppression on its own.
+				// Blob events bypass the op-state update path but must honor replay's publication gate.
 				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
 					getMockContext(),
 				);
@@ -1984,8 +1970,7 @@ describe("Runtime", () => {
 			});
 
 			/**
-			 * Replaces the op replay that a reconnect runs with `duringReplay`, so a test can change blob
-			 * work while replay has dirty events disabled. Replaying real ops never starts or stops a blob.
+			 * Injects blob changes into replay, which normally replays only operations.
 			 */
 			const stubOpReplay = (
 				containerRuntime: ContainerRuntime,
@@ -2056,9 +2041,7 @@ describe("Runtime", () => {
 			});
 
 			it("does not re-publish dirty when replay resubmits a non-dirtyable op during blob work", async () => {
-				// While dirty events are disabled, resubmitting an op overwrites the last emitted state with
-				// the op-only state. That is clean for a GC op, so replay has to restore the aggregate state
-				// it saved, or the outstanding blob would be announced as dirty a second time.
+				// Replaying a GC op seeds op-only dirty state; replay must restore the blob-driven baseline.
 				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
 					getMockContext(),
 				);
@@ -2074,7 +2057,7 @@ describe("Runtime", () => {
 					undefined,
 					undefined,
 				);
-				// Not connected, so nothing is sent on flush - the op is just queued in PendingStateManager
+				// Disconnected flush queues the op for replay.
 				(containerRuntime as unknown as ContainerRuntime_WithPrivates).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
 				(containerRuntime as unknown as ContainerRuntime_WithPrivates).flush();

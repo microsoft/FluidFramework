@@ -1588,13 +1588,7 @@ export class ContainerRuntime
 	 */
 	private lastOpDirty: boolean;
 	/**
-	 * Whether outstanding blob work contributes to host-facing dirty state.
-	 *
-	 * @remarks Gated on the loader accepting op-only state separately (see
-	 * {@link ContainerRuntime.updatePendingOpState}): older loaders drive op-specific decisions such as
-	 * reconnect ordering from the host-facing state, so broadening it for them would change behavior they
-	 * depend on. Also honors a config kill switch so the broadened state can be turned off in a deployment
-	 * without reverting code.
+	 * Blob-aware dirty state requires separate loader-side op tracking to preserve reconnect ordering.
 	 */
 	private readonly blobWorkContributesToDirtyState: boolean;
 	private emitDirtyDocumentEvent = true;
@@ -2356,10 +2350,7 @@ export class ContainerRuntime
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
-		// Subscribe after the baseline above, which seeds lastEmittedDirty by reading
-		// hasOutstandingBlobWork directly. The event reports transitions only and blobs restored from
-		// pending state are already counted by the time the BlobManager constructor returns, so that
-		// first transition is never observable to a subscriber.
+		// Restored blobs are counted before subscription; seed their dirty state above.
 		this.blobManager.events.on("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
@@ -2664,8 +2655,6 @@ export class ContainerRuntime
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
-				// Attribution for isDirty, which now aggregates both sources: lets dashboards tell an
-				// unacknowledged-op dispose apart from one that stranded an unshared blob payload.
 				opDirty: this.isOpDirty,
 				hasOutstandingBlobWork: this.blobManager.hasOutstandingBlobWork,
 				lastSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4227,14 +4216,7 @@ export class ContainerRuntime
 	private readonly signalAudience?: IAudience;
 
 	/**
-	 * Returns true if the container is dirty, i.e. it holds local changes that the service has not yet
-	 * acknowledged. This covers unacknowledged dirtyable operations and attachment blobs whose payload
-	 * has not finished being shared.
-	 *
-	 * @remarks Disposing a dirty container can lose local work. Blob participation is a liveness signal,
-	 * not a per-blob success guarantee: if sharing ends in failure or abort the blob stops contributing
-	 * even though its handle may be unusable. Apps that need an individual result should observe the
-	 * handle's `payloadShared` and `payloadShareFailed` events.
+	 * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.isDirty}
 	 */
 	public get isDirty(): boolean {
 		// Rather than recomputing the dirty state in this moment,
@@ -4245,10 +4227,6 @@ export class ContainerRuntime
 	/**
 	 * Returns true if the container is dirty: not attached, has pending user messages (ignoring
 	 * "non-dirtyable" ones), or has outstanding blob work.
-	 *
-	 * @remarks Blob work participates because a blob's payload is not durable until its BlobAttach op is
-	 * acknowledged. Reporting "saved" while an upload is still in flight lets a host dispose the container
-	 * and strand a payload that the document already references through an attached handle.
 	 */
 	private computeCurrentDirtyState(): boolean {
 		return (
@@ -5178,18 +5156,14 @@ export class ContainerRuntime
 	/**
 	 * Emit "dirty" or "saved" if host-facing dirty state has changed since the last emit.
 	 *
-	 * @remarks Publication is suppressed after disposal or while
-	 * {@link ContainerRuntime.emitDirtyDocumentEvent} is off,
-	 * i.e. during op replay, which restores the last emitted state and publishes any net change itself.
-	 * Callers reached from {@link ContainerRuntime.updateDocumentDirtyState} are already behind that
-	 * check, but blob-driven publication is not, so it is enforced here.
-	 *
-	 * Publication is deferred while a pending-op-state notification is in progress. Such a
+	 * @remarks Publication is deferred while a pending-op-state notification is in progress. Such a
 	 * notification can synchronously drive a full connection-state propagation, and publishing from
 	 * inside one lets a listener (e.g. a host calling disconnect() on "saved") reenter that propagation,
 	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
 	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
 	 * frame publishes whatever state is current once nesting unwinds.
+	 *
+	 * Publication is suppressed after disposal and during op replay, which publishes its own net change.
 	 */
 	private readonly publishDirtyState = (): void => {
 		if (

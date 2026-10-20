@@ -146,14 +146,10 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * service. In some cases this can be due to lack of network connection. If the network connection is down,
 	 * it needs to be restored for the pending changes to be acknowledged.
 	 *
-	 * 3. The container was attached, but an attachment blob created locally has not yet been shared with the
-	 * service and the other clients in the session. Blob payloads are uploaded separately from ops, so a container
-	 * can have no pending ops and still have blob work outstanding.
+	 * 3. An attachment blob is being uploaded or shared, even if no operations are pending.
 	 *
-	 * For attachment blobs, `isDirty` tracks whether sharing is still in progress, not whether it succeeded.
-	 * If sharing a blob fails or is cancelled, the blob stops keeping the container dirty and its handle may be
-	 * unusable.
-	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for an individual blob's outcome.
+	 * Failed or cancelled blobs stop contributing even if their handles remain unusable.
+	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for per-blob outcomes.
 	 */
 	readonly isDirty: boolean;
 
