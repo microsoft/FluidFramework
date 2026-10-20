@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type DeltaMark,
 	EmptyKey,
@@ -37,9 +39,6 @@ describe("buildUnhydratedMoveMarks", () => {
 		destIndex: number,
 		expected: readonly DeltaMark[],
 	][] = [
-		["empty range moving backward", 3, 0, 1, []],
-		["empty range at its starting gap", 2, 0, 2, []],
-		["empty range moving forward", 1, 0, 4, []],
 		[
 			"backward move to zero",
 			3,
@@ -142,6 +141,15 @@ describe("buildUnhydratedMoveMarks", () => {
 	for (const [name, sourceIndex, count, destIndex, expected] of cases) {
 		it(name, () => {
 			assert.deepEqual(buildUnhydratedMoveMarks(sourceIndex, count, destIndex), expected);
+		});
+	}
+
+	for (const count of [0, -1, 0.5]) {
+		it(`rejects a count of ${count}`, () => {
+			assert.throws(
+				() => buildUnhydratedMoveMarks(1, count, 0),
+				validateAssertionError("Debug assert failed: Expected a positive integer move count"),
+			);
 		});
 	}
 });

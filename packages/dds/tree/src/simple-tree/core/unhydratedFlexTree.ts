@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -67,7 +67,7 @@ interface UnhydratedTreeSequenceFieldEditBuilder
 	 * Moves elements from a source position to a destination position.
 	 * Can move within the same field or from another unhydrated sequence field.
 	 * @param sourceIndex - The index of the first element to move.
-	 * @param count - The number of elements to move.
+	 * @param count - The number of elements to move. Must be a positive integer.
 	 * @param destIndex - The index at which to insert the moved elements.
 	 * @param source - The source field to move from (defaults to this field for within-field moves).
 	 */
@@ -702,13 +702,13 @@ export class UnhydratedSequenceField
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
  * @param sourceIndex - The index of the first element to move in the pre-edit sequence.
- * @param count - The number of consecutive elements to move.
+ * @param count - The number of consecutive elements to move. Must be a positive integer.
  * @param destIndex - The destination gap in the pre-edit sequence, without adjustment for removal.
- * @returns Synthetic notification marks, or an empty array when `count` is zero.
+ * @returns Synthetic notification marks.
  * These marks use placeholder detached-node IDs and are not suitable for applying the move to a forest.
  * @remarks
- * The caller must provide nonnegative integer inputs with the source range and destination gap
- * within the sequence bounds. This function does not validate inputs.
+ * The caller must provide nonnegative integer indices with the source range and destination gap
+ * within the sequence bounds. The array API filters out empty moves before calling this helper.
  *
  * Content-preserving moves can still change insertion anchors.
  */
@@ -717,10 +717,10 @@ export function buildUnhydratedMoveMarks(
 	count: number,
 	destIndex: number,
 ): readonly DeltaMark[] {
+	debugAssert(
+		() => (Number.isInteger(count) && count > 0) || "Expected a positive integer move count",
+	);
 	const marks: DeltaMark[] = [];
-	if (count === 0) {
-		return marks;
-	}
 
 	const leadingRetain = Math.min(sourceIndex, destIndex);
 	if (leadingRetain > 0) {
@@ -731,12 +731,15 @@ export function buildUnhydratedMoveMarks(
 		// Destination is strictly inside the source range.
 		// This is a no-op as far as content changes go, but still needs to emit marks which match the hydrated event behavior.
 
+		// The prefix is the part of the source range before the destination gap; the suffix is the part after it.
 		// Detach the prefix, attach the whole range, then detach the suffix.
-		const firstSectionLength = destIndex - sourceIndex;
-		marks.push({ count: firstSectionLength, detach: syntheticDetachedNodeId });
+		// With real detached-node IDs, the suffix's ID would keep the prefix's major and increase its minor by prefixLength.
+		const prefixLength = destIndex - sourceIndex;
+		marks.push({ count: prefixLength, detach: syntheticDetachedNodeId });
+		// Attach the whole range at the destination gap.
 		marks.push({ count, attach: syntheticDetachedNodeId });
 		marks.push({
-			count: count - firstSectionLength,
+			count: count - prefixLength,
 			detach: syntheticDetachedNodeId,
 		});
 	} else if (sourceIndex < destIndex) {
