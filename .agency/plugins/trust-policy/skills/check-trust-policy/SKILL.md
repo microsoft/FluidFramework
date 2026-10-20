@@ -33,8 +33,12 @@ For a single package, use the single-package procedure below instead of a worksp
    For Yarn or npm, pass `--lockfile "<absolute-lockfile-path>"` instead of `--path` to select the exact lockfile.
    Use the operating system's path separators.
    Do not add `--keep` unless the user wants to inspect the generated workspace.
+   Add `--include-excluded` only if the user asks to see violations covered by the workspace's `trustPolicyExclude`, or says they prefer to ignore exclusions.
+   Otherwise respect the exclusions; do not ask about them proactively.
 3. Report `totalUniqueDependencies`, `violations`, and `auditIncomplete`.
    A successful JSON command exit is not a passing audit: JSON mode returns results even when there are violations.
+   If `excludedViolationCount` is nonzero and `--include-excluded` was not passed, state how many violations the exclusions suppressed and that they can be listed on request.
+   With `--include-excluded`, identify excluded violations by their `excludedBy` selector, separately from unexcluded ones.
 4. If `auditIncomplete` is true, state that the checker could not finish and that further violations may exist.
    Ask before rerunning with `--verbose`, which prints registry output.
 5. Do not change package versions, trust-policy exclusions, or the target lockfile unless requested.

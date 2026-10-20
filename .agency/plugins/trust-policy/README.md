@@ -32,6 +32,7 @@ You can also run the command directly, without Agency:
 ```powershell
 node .\lib\run.js --path D:\FluidFramework2\build-tools
 node .\lib\run.js --path D:\FluidFramework2\build-tools --json
+node .\lib\run.js --path D:\FluidFramework2\build-tools --include-excluded
 node .\lib\run.js --lockfile D:\my-project\yarn.lock --json
 node .\lib\run.js --lockfile D:\my-project\package-lock.json --json
 ```
@@ -58,6 +59,22 @@ For npm projects, `--path` detects the nearest package-lock or shrinkwrap file.
 At a directory containing multiple formats, a pnpm workspace takes precedence, followed by npm shrinkwrap, npm package-lock, and Yarn.
 Use `--lockfile` to override that selection.
 npm aliases, nested dependencies, and multiple installed versions are included; workspace links and local or Git sources are excluded.
+
+### Exclusions
+
+pnpm workspace audits honor the workspace's [`trustPolicyExclude`](https://pnpm.io/settings/dependency-resolution#trustpolicyexclude) setting.
+The checker reads the effective value with `pnpm config get trustPolicyExclude --json`, so workspace, global, and environment configuration are resolved by pnpm.
+Selectors follow pnpm 11's rules: a bare name or name glob (such as `@myorg/*`) covers every version, and `name@1.0.0 || 2.0.0` covers only those exact versions.
+Exclusions apply even when the workspace sets `trustPolicy: off`, because the checker always evaluates `no-downgrade`.
+Invalid selectors, such as semver ranges, fail the audit before the scratch workspace is created.
+
+By default, violations covered by an exclusion are omitted from `violations`, do not affect the exit code, and are only counted in `excludedViolationCount`.
+Pass `--include-excluded` to list them as violations; each one carries the matching selector in `excludedBy` and causes text mode to exit 1.
+The result always includes the applied selectors in `trustPolicyExclude`.
+Exclusions from pnpm's global configuration or environment also apply to the scratch install, so `--include-excluded` cannot reveal violations hidden only by those sources.
+
+Yarn and npm have no trust policy, so lockfile audits apply no exclusions.
+Yarn's `npmPreapprovedPackages` and npm's `min-release-age-exclude` exempt packages from release-age gates, not from provenance checks, and are intentionally not treated as trust exclusions.
 
 By default, the scratch directory is `<workspace>/.trust-audit-temp` and is removed after the audit.
 Use `--keep` to retain it or `--tempDir` to choose another location.

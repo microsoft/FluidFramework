@@ -8,6 +8,7 @@ import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { Command, Flags } from "@oclif/core";
+import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
 import { checkPackage, type PackageCheckResult } from "./package-check.js";
 
@@ -26,7 +27,22 @@ interface TrustPolicyAuditResult {
 	elapsedSec: number;
 	totalUniqueDependencies: number;
 	auditIncomplete: boolean;
-	violations: PinnedVersion[];
+	/**
+	 * The pnpm workspace's effective `trustPolicyExclude` selectors. Empty for Yarn and npm lockfiles.
+	 */
+	trustPolicyExclude: string[];
+	/**
+	 * Violations covered by `trustPolicyExclude`, whether or not they are listed in `violations`.
+	 */
+	excludedViolationCount: number;
+	violations: TrustPolicyViolation[];
+}
+
+interface TrustPolicyViolation extends PinnedVersion {
+	/**
+	 * The `trustPolicyExclude` selector covering this violation. Present only with `--include-excluded`.
+	 */
+	excludedBy?: string;
 }
 
 interface DependencyEntry {
@@ -46,7 +62,7 @@ interface DependencyEntry {
 export default class CheckTrustPolicyCommand extends Command {
 	static readonly summary = "Audit dependency trust or verify a single package's provenance.";
 	static readonly description =
-		"Audit pnpm dependencies or Yarn/npm lockfiles using pnpm's no-downgrade policy. With --package name@version, check cryptographic provenance (default), registry metadata, or no-downgrade history and suggest an attested alternative when rejected. Provenance does not establish that package code is harmless.";
+		"Audit pnpm dependencies or Yarn/npm lockfiles using pnpm's no-downgrade policy. pnpm workspace audits honor trustPolicyExclude unless --include-excluded is passed. With --package name@version, check cryptographic provenance (default), registry metadata, or no-downgrade history and suggest an attested alternative when rejected. Provenance does not establish that package code is harmless.";
 	static readonly enableJsonFlag = true;
 	static readonly flags = {
 		keep: Flags.boolean({
@@ -82,6 +98,12 @@ export default class CheckTrustPolicyCommand extends Command {
 			description: "Maximum alternative releases to check (default: 20).",
 			min: 1,
 			dependsOn: ["package"],
+		}),
+		"include-excluded": Flags.boolean({
+			description:
+				"Also report and fail on violations covered by the pnpm workspace's trustPolicyExclude.",
+			default: false,
+			exclusive: ["package"],
 		}),
 		tempDir: Flags.directory({
 			description:
@@ -165,6 +187,7 @@ export default class CheckTrustPolicyCommand extends Command {
 			}
 		}
 		let pinned: PinnedVersion[];
+		let trustPolicyExclude: string[] = [];
 		if (lockfile !== undefined) {
 			verbose(`Reading lockfile: ${lockfile}`);
 			const source = await readFile(lockfile, "utf8");
@@ -184,8 +207,23 @@ export default class CheckTrustPolicyCommand extends Command {
 				);
 			}
 			pinned = collectPinnedVersions(listResult.stdout);
+			// pnpm resolves workspace, global, and environment configuration for us.
+			const configResult = await runPnpm(
+				["config", "get", "trustPolicyExclude", "--json"],
+				workspaceDir,
+				false,
+			);
+			if (configResult.code !== 0) {
+				this.error(
+					`pnpm config get trustPolicyExclude exited with code ${configResult.code}. stderr:\n${configResult.stderr}`,
+				);
+			}
+			trustPolicyExclude = parseTrustPolicyExcludeConfig(configResult.stdout);
 		}
+		const excludedBy = createTrustPolicyExclude(trustPolicyExclude);
 		verbose(`Found ${pinned.length} unique name@version entries.`);
+		if (trustPolicyExclude.length > 0)
+			verbose(`trustPolicyExclude: ${trustPolicyExclude.join(", ")}`);
 
 		// Never remove a pre-existing user-selected directory to prepare an audit.
 		await mkdir(tempDir);
@@ -261,12 +299,20 @@ export default class CheckTrustPolicyCommand extends Command {
 		}
 
 		const elapsedSec = Number(((Date.now() - start) / 1000).toFixed(1));
-		const violations: PinnedVersion[] = [];
+		const violations: TrustPolicyViolation[] = [];
+		let excludedViolationCount = 0;
 		for (const [name, versions] of [...violationsByName.entries()].sort(([left], [right]) =>
 			left < right ? -1 : left > right ? 1 : 0,
 		)) {
 			for (const version of [...versions].sort()) {
-				violations.push({ name, version });
+				const selector = excludedBy(name, version);
+				if (selector === undefined) {
+					violations.push({ name, version });
+					continue;
+				}
+				excludedViolationCount++;
+				if (flags["include-excluded"])
+					violations.push({ name, version, excludedBy: selector });
 			}
 		}
 		const exitCode = lastResult?.code ?? 2;
@@ -276,17 +322,30 @@ export default class CheckTrustPolicyCommand extends Command {
 		info(`  Unique pinned versions: ${pinned.length}`);
 		info(`  Elapsed: ${elapsedSec}s`);
 		if (violations.length === 0 && !auditIncomplete) {
-			info("\nNo trust-policy violations detected.");
+			info(
+				excludedViolationCount === 0
+					? "\nNo trust-policy violations detected."
+					: "\nNo trust-policy violations detected outside trustPolicyExclude.",
+			);
 		} else {
 			if (violations.length > 0) {
 				info(`\n${violations.length} trust-policy violation(s):\n`);
-				for (const { name, version } of violations) info(`  ${name}@${version}`);
+				for (const { name, version, excludedBy: selector } of violations) {
+					info(
+						`  ${name}@${version}${selector === undefined ? "" : ` (excluded by trustPolicyExclude "${selector}")`}`,
+					);
+				}
 			}
 			if (auditIncomplete) {
 				info(
 					"\nAudit incomplete. There may be more violations. Re-run with --verbose to see pnpm's full output.",
 				);
 			}
+		}
+		if (excludedViolationCount > 0 && !flags["include-excluded"]) {
+			info(
+				`${excludedViolationCount} violation(s) covered by trustPolicyExclude were not reported. Pass --include-excluded to list them.`,
+			);
 		}
 		const result: TrustPolicyAuditResult = {
 			tempDir,
@@ -295,6 +354,8 @@ export default class CheckTrustPolicyCommand extends Command {
 			elapsedSec,
 			totalUniqueDependencies: pinned.length,
 			auditIncomplete,
+			trustPolicyExclude,
+			excludedViolationCount,
 			violations,
 		};
 		if (!this.jsonEnabled() && (violations.length > 0 || auditIncomplete)) this.exit(1);

@@ -53,7 +53,7 @@ const listResponse = {
 	]),
 };
 
-async function fixture(t: TestContext, responses: FixtureResponse[] = []) {
+async function fixture(t: TestContext, responses: FixtureResponse[] = [], exclude = "") {
 	const root = await mkdtemp(path.join(os.tmpdir(), "trust-policy test-"));
 	t.after(() => rm(root, { recursive: true, force: true }));
 	const workspace = path.join(root, "workspace");
@@ -70,6 +70,10 @@ async function fixture(t: TestContext, responses: FixtureResponse[] = []) {
 		fakePnpm,
 		`const fs = require("node:fs");
 fs.appendFileSync(process.env.TEST_CALLS, JSON.stringify({args: process.argv.slice(2), cwd: process.cwd(), ci: process.env.CI}) + "\\n");
+if (process.argv[2] === "config") {
+  process.stdout.write(process.env.TEST_EXCLUDE);
+  return;
+}
 const responses = JSON.parse(fs.readFileSync(process.env.TEST_RESPONSES, "utf8"));
 const response = responses.shift();
 if (!response) throw new Error("Unexpected pnpm invocation");
@@ -92,6 +96,7 @@ process.exitCode = response.code;
 		...process.env,
 		TEST_RESPONSES: state,
 		TEST_CALLS: calls,
+		TEST_EXCLUDE: exclude,
 	};
 	const pathKey = Object.keys(env).find((key) => key.toUpperCase() === "PATH") ?? "PATH";
 	env[pathKey] = `${bin}${path.delimiter}${env[pathKey] ?? ""}`;
@@ -324,7 +329,10 @@ test("does not overwrite an existing scratch directory or a user-selected direct
 	assert.notEqual((await run()).code, 0);
 	assert.equal(await readFile(sentinel, "utf8"), "keep");
 	assert.notEqual((await run(["--tempDir", workspace])).code, 0);
-	assert.equal((await readCalls()).length, 2);
+	assert.deepEqual(
+		(await readCalls()).map((call) => call.args[0]),
+		["list", "config", "list", "config"],
+	);
 	assert.ok(await stat(path.join(workspace, "package.json")));
 });
 
@@ -334,6 +342,62 @@ test("malformed install output fails and still cleans up", async (t) => {
 		{ code: 1, stdout: "ERR_PNPM_TRUST_DOWNGRADE" },
 	]);
 	assert.notEqual((await run(["--json"])).code, 0);
+	await assert.rejects(stat(path.join(workspace, ".trust-audit-temp")), { code: "ENOENT" });
+});
+
+test("hides violations covered by trustPolicyExclude unless --include-excluded is passed", async (t) => {
+	const responses = [
+		listResponse,
+		{ code: 1, stdout: downgrade("example", "2.0.0") },
+		{ code: 1, stdout: downgrade("@scope/example", "1.0.0") },
+		{ code: 0 },
+	];
+	const exclude = JSON.stringify(["example@1.0.0", "example@2.0.0", "other"]);
+	const hidden = await fixture(t, responses, exclude);
+	let output = await hidden.run();
+	assert.equal(output.code, 1, output.stderr);
+	assert.match(output.stdout, /1 trust-policy violation/);
+	assert.doesNotMatch(output.stdout, /example@2\.0\.0/);
+	assert.match(
+		output.stdout,
+		/1 violation\(s\) covered by trustPolicyExclude were not reported/,
+	);
+	const config = (await hidden.readCalls()).find((call) => call.args[0] === "config");
+	assert.deepEqual(config?.args, ["config", "get", "trustPolicyExclude", "--json"]);
+	assert.equal(config?.cwd, hidden.workspace);
+
+	const included = await fixture(t, responses, exclude);
+	output = await included.run(["--json", "--include-excluded"]);
+	assert.equal(output.code, 0, output.stderr);
+	const result = JSON.parse(output.stdout);
+	assert.deepEqual(result.trustPolicyExclude, ["example@1.0.0", "example@2.0.0", "other"]);
+	assert.equal(result.excludedViolationCount, 1);
+	assert.deepEqual(result.violations, [
+		{ name: "@scope/example", version: "1.0.0" },
+		{ name: "example", version: "2.0.0", excludedBy: "example@2.0.0" },
+	]);
+
+	const onlyExcluded = [
+		listResponse,
+		{ code: 1, stdout: downgrade("example", "2.0.0") },
+		{ code: 0 },
+	];
+	output = await (await fixture(t, onlyExcluded, '"example"')).run();
+	assert.equal(output.code, 0, output.stderr);
+	assert.match(
+		output.stdout,
+		/No trust-policy violations detected outside trustPolicyExclude/,
+	);
+	output = await (await fixture(t, onlyExcluded, '"example"')).run(["--include-excluded"]);
+	assert.equal(output.code, 1, output.stderr);
+	assert.match(output.stdout, /example@2\.0\.0 \(excluded by trustPolicyExclude "example"\)/);
+});
+
+test("invalid trustPolicyExclude selectors fail before creating scratch files", async (t) => {
+	const { workspace, run } = await fixture(t, [listResponse], '["example@^1.0.0"]');
+	const output = await run(["--json"]);
+	assert.notEqual(output.code, 0);
+	assert.match(output.stdout + output.stderr, /Use exact versions only/);
 	await assert.rejects(stat(path.join(workspace, ".trust-audit-temp")), { code: "ENOENT" });
 });
 
