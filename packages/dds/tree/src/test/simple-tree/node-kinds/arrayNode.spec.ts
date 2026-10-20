@@ -1622,6 +1622,35 @@ describe("ArrayNode", () => {
 			});
 		});
 
+		describeHydration("range move insertion anchors", (init) => {
+			for (const [destinationGap, expectedContent, expectedIndexes] of [
+				[0, [1, 2, 0, 3, 4], [2, 3, 3, 3, 4, 5]],
+				[1, [0, 1, 2, 3, 4], [0, 3, 3, 3, 4, 5]],
+				[2, [0, 1, 2, 3, 4], [0, 1, 3, 3, 4, 5]],
+				[3, [0, 1, 2, 3, 4], [0, 1, 1, 3, 4, 5]],
+				[4, [0, 3, 1, 2, 4], [0, 1, 1, 1, 4, 5]],
+				[5, [0, 3, 4, 1, 2], [0, 1, 1, 1, 2, 5]],
+			] as const) {
+				it(`tracks every gap when moving [1, 3) to gap ${destinationGap}`, () => {
+					const array = init(CustomizableNumberArray, [0, 1, 2, 3, 4]);
+					const anchors = Array.from({ length: array.length + 1 }, (_, index) =>
+						createArrayInsertionAnchor(array, index),
+					);
+
+					array.moveRangeToIndex(destinationGap, 1, 3);
+
+					assert.deepEqual([...array], expectedContent);
+					assert.deepEqual(
+						anchors.map((anchor) => anchor.index),
+						expectedIndexes,
+					);
+					for (const anchor of anchors) {
+						anchor.dispose();
+					}
+				});
+			}
+		});
+
 		// Multiple edits being processed at once can complicate anchor handling.
 		// We ideally should ensure that the entire view of the tree, including anchors, is consistent
 		// when any event is triggered.
