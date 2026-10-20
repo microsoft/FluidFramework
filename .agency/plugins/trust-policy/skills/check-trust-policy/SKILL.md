@@ -31,6 +31,11 @@ Every run first probes `registry.npmjs.org`, `registry.yarnpkg.com`, and `regist
 Always tell the user which registries are blocked, if any.
 If the command stops because the registry it needs is blocked, report that and ask whether the user has an alternative registry or proxy; do not retry with `--no-registry-check` unless the user says the registry is reachable through a proxy.
 
+If the command stops because the registry is an Azure Artifacts feed, explain that Azure Artifacts does not serve provenance attestations, so results through it would be meaningless.
+Ask whether to rerun against the public registry, for a dependency audit by setting the environment variable `pnpm_config_registry=https://registry.npmjs.org/` (pnpm 11+) or `npm_config_registry=https://registry.npmjs.org/` (pnpm 10) for that command only; never edit the user's `.npmrc`.
+If the public registry is also blocked, report that a trust check is not possible from this network.
+Relay any warning that packages in a scope resolve from an Azure Artifacts feed and could not be evaluated.
+
 1. Identify the target directory with the user.
    The checker selects the nearest enclosing `pnpm-workspace.yaml`, or the nearest package directory if there is no workspace.
 2. Run `node "<absolute-plugin-directory>/lib/trust-policy.js" --path "<target-directory>" --json`.

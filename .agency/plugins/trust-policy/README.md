@@ -54,13 +54,31 @@ If the registry the command will use is one of these and is blocked, the command
 
 - Single-package mode checks `--registry`, or `https://registry.npmjs.org` by default.
   Pass `--registry` with a reachable HTTPS registry that serves npm attestations.
-- Dependency audits check the registry reported by `pnpm config get registry` in the target workspace.
+- Dependency audits check the registry pnpm resolves (`pnpm config list --json`) in the scratch workspace where the audit install runs.
 
 Blocked registries that the command will not use are reported but do not stop it.
 In JSON mode, the error message for a blocked registry lists every probe result, because no result object is returned.
 Pass `--no-registry-check` to skip the probe, for example when only an HTTP proxy can reach the registry.
 Node.js's `fetch` ignores `HTTP_PROXY` and `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` is set (Node.js 22.21+), while pnpm honors its proxy configuration, so a registry reported as blocked may still work for pnpm.
 Sigstore endpoints used by cryptographic verification are not probed.
+
+### Azure Artifacts feeds
+
+Azure Artifacts feeds do not serve npm provenance attestations or trusted-publisher metadata, even when they proxy npmjs.
+Through such a feed, every package appears unattested: pnpm reports no trust downgrades and single-package checks reject every version.
+The checker therefore fails with an error, regardless of `--no-registry-check`, when the registry it would use is a feed on `pkgs.dev.azure.com`, `*.pkgs.visualstudio.com`, or any URL path containing `/_packaging/` (Azure DevOps Server):
+
+- Single-package mode rejects such a `--registry` before any network access.
+  Omit `--registry` to use `https://registry.npmjs.org`.
+- Dependency audits reject such a default pnpm registry, which is commonly set by a user `.npmrc`.
+  Override it for the audit with an environment variable: `pnpm_config_registry` for pnpm 11 and later, or `npm_config_registry` for pnpm 10.
+  For example, `$env:pnpm_config_registry = "https://registry.npmjs.org/"` in PowerShell or `pnpm_config_registry=https://registry.npmjs.org/` in a POSIX shell.
+
+The audit reads the registry from `pnpm config list --json` in the scratch workspace, which is what its `pnpm install` uses.
+That scratch workspace does not inherit the audited project's `.npmrc`, so only user, global, and environment configuration can select an Azure Artifacts feed.
+
+Scoped registries (`@scope:registry`) on Azure Artifacts are allowed, because they usually serve internal packages, but the audit warns that the trust of those scopes' packages cannot be evaluated.
+Registry URLs are shown without credentials, and no other pnpm configuration is printed.
 
 ## Behavior
 

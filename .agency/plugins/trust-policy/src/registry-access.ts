@@ -87,3 +87,78 @@ export function formatRegistryAccess(access: readonly RegistryAccess[]): string[
 			`  ${registry.padEnd(width)}  ${reachable ? "reachable" : "BLOCKED"} (${detail})`,
 	);
 }
+
+export const azureArtifactsReason =
+	"Azure Artifacts feeds do not serve npm provenance attestations or trusted-publisher metadata, so every package resolved through them appears unattested.";
+
+/**
+ * Returns whether a registry URL is an Azure Artifacts (or Azure DevOps Server) npm feed.
+ * @param registry - Registry URL.
+ */
+export function isAzureArtifactsRegistry(registry: string): boolean {
+	let url: URL;
+	try {
+		url = new URL(registry);
+	} catch {
+		return false;
+	}
+	const host = url.hostname.toLowerCase();
+	return (
+		host === "pkgs.dev.azure.com" ||
+		host.endsWith(".pkgs.visualstudio.com") ||
+		/\/_packaging\//i.test(url.pathname)
+	);
+}
+
+/**
+ * Removes any credentials embedded in a registry URL so it can be shown to the user.
+ * @param registry - Registry URL.
+ */
+export function redactRegistry(registry: string): string {
+	try {
+		const url = new URL(registry);
+		if (url.username === "" && url.password === "") return registry;
+		url.username = "";
+		url.password = "";
+		return url.href;
+	} catch {
+		return "<unparseable registry URL>";
+	}
+}
+
+export interface RegistryConfig {
+	registry: string | undefined;
+	/**
+	 * Registries configured for individual scopes, keyed by scope (for example `@contoso`).
+	 */
+	scoped: Map<string, string>;
+}
+
+/**
+ * Extracts default and scoped registries from `pnpm config list --json`.
+ * The output also contains credentials, so it must never be logged or echoed in errors.
+ * @param configListJson - Output of `pnpm config list --json`.
+ */
+export function parseRegistryConfig(configListJson: string): RegistryConfig {
+	let data: unknown;
+	try {
+		data = JSON.parse(configListJson);
+	} catch {
+		throw new Error("pnpm config list did not return JSON.");
+	}
+	if (typeof data !== "object" || data === null || Array.isArray(data)) {
+		throw new Error("pnpm config list did not return a JSON object.");
+	}
+	let registry: string | undefined;
+	const scoped = new Map<string, string>();
+	for (const [key, value] of Object.entries(data)) {
+		if (typeof value !== "string") continue;
+		if (key === "registry") {
+			registry = value;
+			continue;
+		}
+		const scope = /^(@[^:/]+):registry$/.exec(key)?.[1];
+		if (scope !== undefined) scoped.set(scope, value);
+	}
+	return { registry, scoped };
+}

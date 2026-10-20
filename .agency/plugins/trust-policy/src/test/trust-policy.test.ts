@@ -53,7 +53,12 @@ const listResponse = {
 	]),
 };
 
-async function fixture(t: TestContext, responses: FixtureResponse[] = [], exclude = "") {
+async function fixture(
+	t: TestContext,
+	responses: FixtureResponse[] = [],
+	exclude = "",
+	config: Record<string, string> = { registry: "https://registry.npmjs.org/" },
+) {
 	const root = await mkdtemp(path.join(os.tmpdir(), "trust-policy test-"));
 	t.after(() => rm(root, { recursive: true, force: true }));
 	const workspace = path.join(root, "workspace");
@@ -71,7 +76,7 @@ async function fixture(t: TestContext, responses: FixtureResponse[] = [], exclud
 		`const fs = require("node:fs");
 fs.appendFileSync(process.env.TEST_CALLS, JSON.stringify({args: process.argv.slice(2), cwd: process.cwd(), ci: process.env.CI}) + "\\n");
 if (process.argv[2] === "config") {
-  process.stdout.write(process.env.TEST_EXCLUDE);
+  process.stdout.write(process.argv[3] === "list" ? process.env.TEST_CONFIG : process.env.TEST_EXCLUDE);
   return;
 }
 const responses = JSON.parse(fs.readFileSync(process.env.TEST_RESPONSES, "utf8"));
@@ -97,6 +102,7 @@ process.exitCode = response.code;
 		TEST_RESPONSES: state,
 		TEST_CALLS: calls,
 		TEST_EXCLUDE: exclude,
+		TEST_CONFIG: JSON.stringify(config),
 	};
 	const pathKey = Object.keys(env).find((key) => key.toUpperCase() === "PATH") ?? "PATH";
 	env[pathKey] = `${bin}${path.delimiter}${env[pathKey] ?? ""}`;
@@ -200,8 +206,14 @@ test("explicit Yarn lockfiles bypass pnpm list and support scoped registry alias
 	const result = JSON.parse(output.stdout);
 	assert.equal(result.totalUniqueDependencies, 1);
 	const calls = await readCalls();
-	assert.equal(calls.length, 1);
-	assert.equal(calls[0]?.args[0], "install");
+	assert.deepEqual(
+		calls.map((call) => call.args.slice(0, 2)),
+		[
+			["config", "list"],
+			["install", "--recursive"],
+		],
+	);
+	assert.equal(calls[0]?.cwd, result.tempDir);
 	const manifest = JSON.parse(
 		await readFile(path.join(result.tempDir, "projects", "0", "package.json"), "utf8"),
 	);
@@ -225,7 +237,9 @@ test("npm package-lock input bypasses enumeration and --path auto-detects the lo
 	output = await run(["--json"]);
 	assert.equal(output.code, 0, output.stdout + output.stderr);
 	assert.equal(JSON.parse(output.stdout).totalUniqueDependencies, 1);
-	assert.ok((await readCalls()).every((call) => call.args[0] === "install"));
+	assert.ok(
+		(await readCalls()).every((call) => ["config", "install"].includes(call.args[0] ?? "")),
+	);
 });
 
 test("npm workspace root is discovered above member packages, but unrelated ancestor locks are ignored", async (t) => {
@@ -423,4 +437,50 @@ test("single-package CLI rejects non-exact specs and incompatible audit flags be
 			exec(process.execPath, [cli, ...args, "--no-registry-check", "--json"]),
 		);
 	}
+});
+
+test("rejects Azure Artifacts registries before any trust check and warns about Azure scopes", async (t) => {
+	const feed = "https://user:secret@pkgs.dev.azure.com/o/_packaging/f/npm/registry/";
+	await assert.rejects(
+		exec(process.execPath, [
+			cli,
+			"--package",
+			"example@1.0.0",
+			"--registry",
+			feed,
+			"--no-registry-check",
+		]),
+		(error: { stderr: string }) => {
+			assert.match(error.stderr, /is an Azure Artifacts feed/);
+			assert.doesNotMatch(error.stderr, /secret/);
+			return true;
+		},
+	);
+
+	const azure = await fixture(t, [listResponse], "", { registry: feed, _password: "secret" });
+	const output = await azure.run(["--json"]);
+	assert.notEqual(output.code, 0);
+	assert.match(
+		output.stdout + output.stderr,
+		/pnpm_config_registry=https:\/\/registry\.npmjs\.org/,
+	);
+	assert.doesNotMatch(output.stdout + output.stderr, /secret/);
+	assert.deepEqual(
+		(await azure.readCalls()).map((call) => call.args[0]),
+		["list", "config", "config"],
+	);
+	await assert.rejects(stat(path.join(azure.workspace, ".trust-audit-temp")), {
+		code: "ENOENT",
+	});
+
+	const scoped = await fixture(t, [listResponse, { code: 0 }], "", {
+		registry: "https://registry.npmjs.org/",
+		"@scope:registry": "https://contoso.pkgs.visualstudio.com/_packaging/f/npm/registry/",
+	});
+	const scopedOutput = await scoped.run();
+	assert.equal(scopedOutput.code, 0, scopedOutput.stderr);
+	assert.match(
+		scopedOutput.stderr,
+		/1 @scope package version\(s\) resolve from the Azure Artifacts feed/,
+	);
 });

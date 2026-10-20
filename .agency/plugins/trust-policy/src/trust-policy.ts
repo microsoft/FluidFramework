@@ -13,10 +13,14 @@ import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclu
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
 import { checkPackage, type PackageCheckResult } from "./package-check.js";
 import {
+	azureArtifactsReason,
 	findBlockedRegistry,
 	formatRegistryAccess,
+	isAzureArtifactsRegistry,
+	parseRegistryConfig,
 	probeRegistries,
 	publicRegistries,
+	redactRegistry,
 	type RegistryAccess,
 } from "./registry-access.js";
 
@@ -168,6 +172,11 @@ export default class CheckTrustPolicyCommand extends Command {
 			}
 		};
 		if (flags.package !== undefined) {
+			if (flags.registry !== undefined && isAzureArtifactsRegistry(flags.registry)) {
+				this.error(
+					`--registry ${redactRegistry(flags.registry)} is an Azure Artifacts feed. ${azureArtifactsReason} Omit --registry to use https://registry.npmjs.org, or pass a registry that serves npm attestations.`,
+				);
+			}
 			failIfBlocked(
 				flags.registry ?? publicRegistries[0],
 				"Pass --registry with a reachable HTTPS registry that serves npm attestations.",
@@ -220,17 +229,6 @@ export default class CheckTrustPolicyCommand extends Command {
 			flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
 		);
 		verbose(`Auditing workspace: ${workspaceDir}`);
-		if (registryAccess !== undefined) {
-			const registryResult = await runPnpm(["config", "get", "registry"], workspaceDir, false);
-			const registry = registryResult.stdout.trim();
-			if (registryResult.code === 0 && registry !== "") {
-				verbose(`pnpm registry: ${registry}`);
-				failIfBlocked(
-					registry,
-					"pnpm needs this registry to evaluate trust. Configure a reachable registry in .npmrc or pass --no-registry-check if pnpm uses a proxy.",
-				);
-			}
-		}
 		let lockfile = flags.lockfile ? path.resolve(flags.lockfile) : undefined;
 		if (
 			lockfile === undefined &&
@@ -292,6 +290,33 @@ export default class CheckTrustPolicyCommand extends Command {
 		const start = Date.now();
 		try {
 			await writeAuditWorkspace(tempDir, pinned);
+			// Resolve configuration where the audit install runs, since it may differ from the workspace's.
+			const configList = await runPnpm(["config", "list", "--json"], tempDir, false);
+			if (configList.code !== 0) {
+				this.error(`pnpm config list exited with code ${configList.code}.`);
+			}
+			// The full configuration includes credentials; only registry URLs are used.
+			const registryConfig = parseRegistryConfig(configList.stdout);
+			const registry = registryConfig.registry ?? publicRegistries[0];
+			verbose(`pnpm registry: ${redactRegistry(registry)}`);
+			if (isAzureArtifactsRegistry(registry)) {
+				this.error(
+					`pnpm resolves packages from the Azure Artifacts feed ${redactRegistry(registry)}. ${azureArtifactsReason} pnpm would report no trust downgrades even when published packages have them. Point pnpm at the public registry for the audit by setting the environment variable pnpm_config_registry=https://registry.npmjs.org/ (pnpm 11+) or npm_config_registry=https://registry.npmjs.org/ (pnpm 10).`,
+				);
+			}
+			failIfBlocked(
+				registry,
+				"pnpm needs this registry to evaluate trust. Configure a reachable registry or pass --no-registry-check if pnpm uses a proxy.",
+			);
+			for (const [scope, scopeRegistry] of registryConfig.scoped) {
+				if (!isAzureArtifactsRegistry(scopeRegistry)) continue;
+				const count = pinned.filter(({ name }) => name.startsWith(`${scope}/`)).length;
+				if (count > 0) {
+					warning(
+						`${count} ${scope} package version(s) resolve from the Azure Artifacts feed ${redactRegistry(scopeRegistry)}. Their trust cannot be evaluated.`,
+					);
+				}
+			}
 			while (true) {
 				const excludeFlags: string[] = [];
 				for (const [name, versions] of [...violationsByName.entries()].sort(

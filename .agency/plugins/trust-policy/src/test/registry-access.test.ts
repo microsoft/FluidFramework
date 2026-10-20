@@ -8,7 +8,10 @@ import { test } from "node:test";
 import {
 	findBlockedRegistry,
 	formatRegistryAccess,
+	isAzureArtifactsRegistry,
+	parseRegistryConfig,
 	probeRegistries,
+	redactRegistry,
 } from "../registry-access.js";
 
 test("classifies registry probe outcomes", async () => {
@@ -72,4 +75,45 @@ test("matches the registry in use by origin", () => {
 	assert.equal(findBlockedRegistry("https://registry.yarnpkg.com/", access), undefined);
 	assert.equal(findBlockedRegistry("https://mirror.example/npm/", access), undefined);
 	assert.equal(findBlockedRegistry("not a url", access), undefined);
+});
+
+test("detects Azure Artifacts feeds", () => {
+	for (const feed of [
+		"https://pkgs.dev.azure.com/org/_packaging/feed/npm/registry/",
+		"https://pkgs.dev.azure.com/org/project/_packaging/feed/npm/registry/",
+		"https://contoso.pkgs.visualstudio.com/_packaging/feed/npm/registry/",
+		"https://tfs.contoso.com/tfs/DefaultCollection/_packaging/feed/npm/registry/",
+	]) {
+		assert.equal(isAzureArtifactsRegistry(feed), true, feed);
+	}
+	for (const registry of [
+		"https://registry.npmjs.org/",
+		"https://registry.yarnpkg.com",
+		"https://npm.pkg.github.com",
+		"not a url",
+	]) {
+		assert.equal(isAzureArtifactsRegistry(registry), false, registry);
+	}
+});
+
+test("extracts registries from pnpm config without exposing credentials", () => {
+	const config = parseRegistryConfig(
+		JSON.stringify({
+			registry: "https://registry.npmjs.org/",
+			"@scope:registry": "https://contoso.pkgs.visualstudio.com/_packaging/f/npm/registry/",
+			"//contoso.pkgs.visualstudio.com/_packaging/f/npm/registry/:_password": "secret",
+			"trust-policy": "no-downgrade",
+		}),
+	);
+	assert.equal(config.registry, "https://registry.npmjs.org/");
+	assert.deepEqual(
+		[...config.scoped],
+		[["@scope", "https://contoso.pkgs.visualstudio.com/_packaging/f/npm/registry/"]],
+	);
+	assert.equal(parseRegistryConfig("{}").registry, undefined);
+	assert.throws(() => parseRegistryConfig("secret"), /did not return JSON/);
+	assert.equal(
+		redactRegistry("https://user:secret@pkgs.dev.azure.com/o/_packaging/f/npm/registry/"),
+		"https://pkgs.dev.azure.com/o/_packaging/f/npm/registry/",
+	);
 });
