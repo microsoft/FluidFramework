@@ -12,6 +12,13 @@ import { Command, Flags, execute } from "@oclif/core";
 import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
 import { checkPackage, type PackageCheckResult } from "./package-check.js";
+import {
+	findBlockedRegistry,
+	formatRegistryAccess,
+	probeRegistries,
+	publicRegistries,
+	type RegistryAccess,
+} from "./registry-access.js";
 
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
 
@@ -37,6 +44,10 @@ interface TrustPolicyAuditResult {
 	 */
 	excludedViolationCount: number;
 	violations: TrustPolicyViolation[];
+	/**
+	 * Startup reachability of public registries. Absent with `--no-registry-check`.
+	 */
+	registryAccess?: RegistryAccess[];
 }
 
 interface TrustPolicyViolation extends PinnedVersion {
@@ -106,6 +117,12 @@ export default class CheckTrustPolicyCommand extends Command {
 			default: false,
 			exclusive: ["package"],
 		}),
+		"registry-check": Flags.boolean({
+			description:
+				"Report which public registries are blocked before starting, and stop early if the registry in use is blocked.",
+			default: true,
+			allowNo: true,
+		}),
 		tempDir: Flags.directory({
 			description:
 				"New scratch directory (default: <workspace>/.trust-audit-temp). Must not already exist.",
@@ -123,9 +140,38 @@ export default class CheckTrustPolicyCommand extends Command {
 		}),
 	} as const;
 
-	public async run(): Promise<TrustPolicyAuditResult | PackageCheckResult> {
+	public async run(): Promise<
+		TrustPolicyAuditResult | (PackageCheckResult & { registryAccess?: RegistryAccess[] })
+	> {
 		const { flags } = await this.parse(CheckTrustPolicyCommand);
+		let registryAccess: RegistryAccess[] | undefined;
+		if (flags["registry-check"]) {
+			registryAccess = await probeRegistries(publicRegistries);
+			if (!flags.quiet) {
+				this.log("Registry access (from Node.js):");
+				for (const line of formatRegistryAccess(registryAccess)) this.log(line);
+			}
+		}
+		const failIfBlocked = (registry: string, remedy: string): void => {
+			const blocked =
+				registryAccess === undefined
+					? undefined
+					: findBlockedRegistry(registry, registryAccess);
+			if (blocked !== undefined) {
+				// Text mode has already printed the table; JSON errors carry no result object.
+				const summary = this.jsonEnabled()
+					? ` Registry access: ${formatRegistryAccess(registryAccess ?? [])
+							.map((line) => line.trim().replace(/\s+/, " "))
+							.join("; ")}.`
+					: "";
+				this.error(`${blocked.registry} is blocked (${blocked.detail}). ${remedy}${summary}`);
+			}
+		};
 		if (flags.package !== undefined) {
+			failIfBlocked(
+				flags.registry ?? publicRegistries[0],
+				"Pass --registry with a reachable HTTPS registry that serves npm attestations.",
+			);
 			const policy = flags.policy ?? "cryptographic";
 			if (policy !== "cryptographic" && policy !== "metadata" && policy !== "no-downgrade") {
 				this.error(`Unsupported package policy: ${policy}`);
@@ -156,7 +202,7 @@ export default class CheckTrustPolicyCommand extends Command {
 			}
 			if (!this.jsonEnabled() && (!result.requested.accepted || result.auditIncomplete))
 				this.exit(1);
-			return result;
+			return registryAccess === undefined ? result : { ...result, registryAccess };
 		}
 		const info = (message: string): void => {
 			if (!flags.quiet) this.log(`INFO: ${message}`);
@@ -174,6 +220,17 @@ export default class CheckTrustPolicyCommand extends Command {
 			flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
 		);
 		verbose(`Auditing workspace: ${workspaceDir}`);
+		if (registryAccess !== undefined) {
+			const registryResult = await runPnpm(["config", "get", "registry"], workspaceDir, false);
+			const registry = registryResult.stdout.trim();
+			if (registryResult.code === 0 && registry !== "") {
+				verbose(`pnpm registry: ${registry}`);
+				failIfBlocked(
+					registry,
+					"pnpm needs this registry to evaluate trust. Configure a reachable registry in .npmrc or pass --no-registry-check if pnpm uses a proxy.",
+				);
+			}
+		}
 		let lockfile = flags.lockfile ? path.resolve(flags.lockfile) : undefined;
 		if (
 			lockfile === undefined &&
@@ -358,6 +415,7 @@ export default class CheckTrustPolicyCommand extends Command {
 			trustPolicyExclude,
 			excludedViolationCount,
 			violations,
+			...(registryAccess === undefined ? {} : { registryAccess }),
 		};
 		if (!this.jsonEnabled() && (violations.length > 0 || auditIncomplete)) this.exit(1);
 		return result;

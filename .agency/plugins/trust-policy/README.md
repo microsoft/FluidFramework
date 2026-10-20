@@ -42,6 +42,26 @@ Use `--help` to see `--keep`, `--tempDir`, `--verbose`, and `--quiet`.
 Rebuild the plugin after changing its TypeScript source.
 Generated JavaScript and source maps live in the ignored `lib` directory.
 
+## Registry access
+
+Some corporate networks block public registries.
+Before doing anything else, the checker pings `/-/ping` on `https://registry.npmjs.org`, `https://registry.yarnpkg.com`, and `https://registry.npmmirror.com` concurrently, with a 5-second timeout each.
+Text mode prints each registry as `reachable` or `BLOCKED`, with the HTTP status or network error code; `--quiet` hides the table.
+JSON results include the probe results in `registryAccess`.
+Any non-2xx response, including a redirect to a sign-in or block page, counts as blocked.
+
+If the registry the command will use is one of these and is blocked, the command stops before doing any work:
+
+- Single-package mode checks `--registry`, or `https://registry.npmjs.org` by default.
+  Pass `--registry` with a reachable HTTPS registry that serves npm attestations.
+- Dependency audits check the registry reported by `pnpm config get registry` in the target workspace.
+
+Blocked registries that the command will not use are reported but do not stop it.
+In JSON mode, the error message for a blocked registry lists every probe result, because no result object is returned.
+Pass `--no-registry-check` to skip the probe, for example when only an HTTP proxy can reach the registry.
+Node.js's `fetch` ignores `HTTP_PROXY` and `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` is set (Node.js 22.21+), while pnpm honors its proxy configuration, so a registry reported as blocked may still work for pnpm.
+Sigstore endpoints used by cryptographic verification are not probed.
+
 ## Behavior
 
 The command selects the nearest enclosing pnpm workspace instead of loading Fluid Framework's build-project configuration.
@@ -139,5 +159,6 @@ npm run check
 ```
 
 Tests use Node.js's built-in test runner and do not require build-tools or live registry access.
+CLI tests pass `--no-registry-check`; the registry probe is tested with an injected `fetch`.
 `npm test` builds the plugin before running the compiled tests.
 `npm run check` type-checks the source without emitting build output.

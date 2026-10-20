@@ -102,10 +102,14 @@ process.exitCode = response.code;
 	env[pathKey] = `${bin}${path.delimiter}${env[pathKey] ?? ""}`;
 	async function run(args: string[] = []) {
 		try {
-			const result = await exec(process.execPath, [cli, "--path", workspace, ...args], {
-				env,
-				cwd: root,
-			});
+			const result = await exec(
+				process.execPath,
+				[cli, "--path", workspace, "--no-registry-check", ...args],
+				{
+					env,
+					cwd: root,
+				},
+			);
 			return { ...result, code: 0 };
 		} catch (error) {
 			if (
@@ -415,6 +419,8 @@ test("single-package CLI rejects non-exact specs and incompatible audit flags be
 		["--policy", "metadata"],
 		["--package", "example@1.0.0", "--max-candidates", "0"],
 	]) {
-		await assert.rejects(exec(process.execPath, [cli, ...args, "--json"]));
+		await assert.rejects(
+			exec(process.execPath, [cli, ...args, "--no-registry-check", "--json"]),
+		);
 	}
 });

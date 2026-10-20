@@ -27,6 +27,10 @@ Do not install the audited workspace's dependencies automatically.
 
 For a single package, use the single-package procedure below instead of a workspace audit.
 
+Every run first probes `registry.npmjs.org`, `registry.yarnpkg.com`, and `registry.npmmirror.com` and reports them in `registryAccess` (or, if the command stops because a registry is blocked, in the error message).
+Always tell the user which registries are blocked, if any.
+If the command stops because the registry it needs is blocked, report that and ask whether the user has an alternative registry or proxy; do not retry with `--no-registry-check` unless the user says the registry is reachable through a proxy.
+
 1. Identify the target directory with the user.
    The checker selects the nearest enclosing `pnpm-workspace.yaml`, or the nearest package directory if there is no workspace.
 2. Run `node "<absolute-plugin-directory>/lib/trust-policy.js" --path "<target-directory>" --json`.
