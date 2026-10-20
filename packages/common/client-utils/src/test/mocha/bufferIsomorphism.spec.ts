@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { Buffer } from "node:buffer";
 
 import * as BufferBrowser from "../../bufferBrowser.js";
 import * as BufferNode from "../../bufferNode.js";
@@ -271,6 +272,90 @@ describe("Buffer isomorphism", () => {
 		const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
 		const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
 		assert.equal(nodeStringBase64, browserStringBase64);
+	});
+
+	describe("partial views over a larger buffer", () => {
+		const content = "比特币 payload";
+		const padding = "!!!!";
+
+		/**
+		 * Creates views of `content` that do not start at offset 0 nor span their whole backing
+		 * buffer: a Node.js `Buffer` subarray, a pooled Node.js `Buffer`, and a plain `Uint8Array`.
+		 */
+		function createViews(): [string, Uint8Array][] {
+			const backing = Buffer.from(`${padding}${content}${padding}`, "utf8");
+			const contentByteLength = Buffer.byteLength(content, "utf8");
+			const nodeSubarray = backing.subarray(
+				padding.length,
+				padding.length + contentByteLength,
+			);
+			const pooled = Buffer.from(content, "utf8");
+			const plainView = new Uint8Array(
+				nodeSubarray.buffer,
+				nodeSubarray.byteOffset,
+				nodeSubarray.byteLength,
+			);
+			for (const view of [nodeSubarray, pooled, plainView]) {
+				// Precondition: each view covers only part of its backing buffer.
+				assert(view.buffer.byteLength > view.byteLength);
+			}
+			return [
+				["Node.js Buffer subarray", nodeSubarray],
+				["pooled Node.js Buffer", pooled],
+				["Uint8Array view", plainView],
+			];
+		}
+
+		const expectedBase64 = Buffer.from(content, "utf8").toString("base64");
+
+		for (const [name, view] of createViews()) {
+			it(`Uint8ArrayToString respects ${name}`, () => {
+				assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferNode.Uint8ArrayToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "base64"), expectedBase64);
+			});
+
+			it(`bufferToString respects ${name}`, () => {
+				assert.equal(BufferNode.bufferToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.bufferToString(view, "utf8"), content);
+				assert.equal(BufferNode.bufferToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.bufferToString(view, "base64"), expectedBase64);
+			});
+
+			it(`IsoBuffer.from copies only the logical bytes of ${name}`, () => {
+				for (const iso of [
+					BufferNode.IsoBuffer.from(view),
+					BufferBrowser.IsoBuffer.from(view),
+				]) {
+					assert.equal(iso.byteLength, view.byteLength);
+					assert.equal(iso.toString("utf8"), content);
+					// Node.js may copy into the same shared pool as `view`, so check for
+					// independence by mutation rather than by comparing backing buffers.
+					iso.fill(0);
+					assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				}
+			});
+		}
+	});
+
+	it("stringToBuffer returns only the encoded bytes for pooled Node.js Buffers", () => {
+		for (const [input, encoding, expectedByteLength] of [
+			["hello", "utf8", 5],
+			["比特币", "utf8", 9],
+			["aGVsbG8=", "base64", 5],
+		] as const) {
+			// Precondition: Node.js allocates this small Buffer from a larger shared pool.
+			const pooled = BufferNode.IsoBuffer.from(input, encoding);
+			assert(pooled.buffer.byteLength > pooled.byteLength);
+
+			const nodeBuffer = BufferNode.stringToBuffer(input, encoding);
+			const browserBuffer = BufferBrowser.stringToBuffer(input, encoding);
+			assert.equal(nodeBuffer.byteLength, expectedByteLength);
+			assert.equal(browserBuffer.byteLength, expectedByteLength);
+			assert.deepEqual(new Uint8Array(nodeBuffer), new Uint8Array(browserBuffer));
+			assert.equal(BufferNode.bufferToString(nodeBuffer, encoding), input);
+		}
 	});
 
 	it("stringToBuffer is compatible", () => {

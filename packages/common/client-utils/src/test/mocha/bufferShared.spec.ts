@@ -51,27 +51,81 @@ describe("bufferShared", () => {
 	});
 
 	/**
-	 * `AnyUint8ArrayToArrayBuffer` behaves differently between Node and browser targets. In the
-	 * browser case, AnyUint8ArrayToArrayBuffer will return a buffer containing only the logical
-	 * bytes. In the node case, it returns the underlying buffer which may be larger than the
-	 * portion owned by the input object. We effectively forget the input owner.
+	 * Node.js `Buffer` overrides `slice` to return a view over the same memory rather than a copy,
+	 * and small `Buffer`s are commonly allocated from a shared pool. These tests ensure the helpers
+	 * only ever surface the bytes logically owned by the input view.
 	 */
-	it("AnyUint8ArrayToArrayBuffer preserves blob contents from a Node.js Buffer view", () => {
-		const content = JSON.stringify({ value: "payload" });
-		const backing = Buffer.alloc(content.length + 16, "!");
-		backing.write(content, 8, "utf8");
-		const nodeView = backing.subarray(8, 8 + content.length);
-		const browserView = new Uint8Array(
-			nodeView.buffer,
-			nodeView.byteOffset,
-			nodeView.byteLength,
-		);
+	describe("Node.js Buffer inputs", () => {
+		/**
+		 * Regression test: `AnyUint8ArrayToArrayBuffer` previously used `array.slice().buffer`,
+		 * which for a Node.js `Buffer` returned the entire underlying buffer (which may be larger
+		 * than the portion owned by the input view) instead of a copy of only the logical bytes.
+		 */
+		it("AnyUint8ArrayToArrayBuffer preserves blob contents from a Node.js Buffer view", () => {
+			const content = JSON.stringify({ value: "payload" });
+			const backing = Buffer.alloc(content.length + 16, "!");
+			backing.write(content, 8, "utf8");
+			const nodeView = backing.subarray(8, 8 + content.length);
+			const browserView = new Uint8Array(
+				nodeView.buffer,
+				nodeView.byteOffset,
+				nodeView.byteLength,
+			);
 
-		assert.equal(bufferToString(AnyUint8ArrayToArrayBuffer(browserView), "utf8"), content);
+			assert.equal(bufferToString(AnyUint8ArrayToArrayBuffer(browserView), "utf8"), content);
 
-		const result = AnyUint8ArrayToArrayBuffer(nodeView);
-		assert.equal(bufferToString(result, "utf8"), content);
-		assert.equal(result.byteLength, nodeView.byteLength);
+			const result = AnyUint8ArrayToArrayBuffer(nodeView);
+			assert.equal(bufferToString(result, "utf8"), content);
+			assert.equal(result.byteLength, nodeView.byteLength);
+		});
+
+		it("AnyUint8ArrayToArrayBuffer copies only the logical bytes of a pooled Node.js Buffer", () => {
+			const content = "pooled";
+			const pooled = Buffer.from(content, "utf8");
+			// Precondition: small Buffers are allocated from a larger shared pool.
+			assert(pooled.buffer.byteLength > pooled.byteLength);
+
+			const result = AnyUint8ArrayToArrayBuffer(pooled);
+			assert(result instanceof ArrayBuffer);
+			assert.notEqual(result, pooled.buffer);
+			assert.equal(result.byteLength, pooled.byteLength);
+			assert.equal(bufferToString(result, "utf8"), content);
+		});
+
+		it("AnyUint8ArrayToArrayBuffer result does not alias a partial Node.js Buffer view", () => {
+			const backing = Buffer.from(values);
+			const view = backing.subarray(2, 7);
+
+			const result = AnyUint8ArrayToArrayBuffer(view);
+			assertBufferContents(result, [2, 3, 4, 5, 6]);
+
+			view[0] = 20;
+			backing[backing.length - 1] = 90;
+			assertBufferContents(result, [2, 3, 4, 5, 6]);
+		});
+
+		it("AnyUint8ArrayToArrayBuffer returns the backing buffer of an unpooled full Node.js Buffer", () => {
+			const unpooled = Buffer.alloc(values.length);
+			unpooled.set(values);
+			// Precondition: `Buffer.alloc` does not use the shared pool.
+			assert.equal(unpooled.byteOffset, 0);
+			assert.equal(unpooled.buffer.byteLength, unpooled.byteLength);
+
+			const result = AnyUint8ArrayToArrayBuffer(unpooled);
+			assert.equal(result, unpooled.buffer);
+			assertBufferContents(result, values);
+		});
+
+		it("Uint8ArrayToArrayBufferLike copies only the logical bytes of a pooled Node.js Buffer", () => {
+			const content = "pooled";
+			const pooled = Buffer.from(content, "utf8");
+			assert(pooled.buffer.byteLength > pooled.byteLength);
+
+			const result = Uint8ArrayToArrayBufferLike(pooled);
+			assert.notEqual(result, pooled.buffer);
+			assert.equal(result.byteLength, pooled.byteLength);
+			assert.equal(bufferToString(result, "utf8"), content);
+		});
 	});
 
 	for (const [name, createBuffer] of [
