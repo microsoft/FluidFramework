@@ -45,3 +45,6 @@ Hosts that compose their own loader and runtime should note that blob coverage a
 Against an older loader the runtime keeps the previous operation-only behavior, so `isDirty` can report
 `false` while a blob is still being shared.
 Service clients such as `@fluidframework/azure-client` ship a matching loader, so they are unaffected.
+
+Setting the runtime configuration flag `Fluid.ContainerRuntime.DisableBlobAwareDirtyState` to `true` restores operation-only dirty tracking.
+With this override, `saved` can fire while blob work remains outstanding.

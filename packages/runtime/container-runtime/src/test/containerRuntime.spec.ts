@@ -25,6 +25,7 @@ import type {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import type {
+	HasListeners,
 	IErrorBase,
 	ISignalEnvelope,
 	ITelemetryBaseLogger,
@@ -82,6 +83,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon, { type SinonFakeTimers } from "sinon";
 
+import type { IBlobManagerEvents } from "../blobManager/index.js";
 import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
@@ -1668,6 +1670,7 @@ describe("Runtime", () => {
 
 			interface BlobWorkControls {
 				readonly hasOutstandingBlobWork: boolean;
+				readonly events: HasListeners<IBlobManagerEvents>;
 				startTrackingUnsharedBlob(localId: string): void;
 				stopTrackingUnsharedBlob(localId: string): void;
 			}
@@ -1773,6 +1776,31 @@ describe("Runtime", () => {
 					opDirtyStates,
 					[],
 					"Blob work must not be reported as op-only state",
+				);
+			});
+
+			it("unsubscribes from outstanding blob work before disposal callbacks", async () => {
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+				assert.strictEqual(blobWork.events.hasListeners("outstandingBlobWorkChanged"), true);
+				blobWork.startTrackingUnsharedBlob("blob-1");
+
+				containerRuntime.on("dispose", () => {
+					assert.strictEqual(
+						blobWork.events.hasListeners("outstandingBlobWorkChanged"),
+						false,
+						"Must unsubscribe before disposal callbacks run",
+					);
+					blobWork.stopTrackingUnsharedBlob("blob-1");
+				});
+				containerRuntime.dispose();
+
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"Must not publish saved when blob work ends during disposal",
 				);
 			});
 

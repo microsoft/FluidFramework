@@ -2360,11 +2360,7 @@ export class ContainerRuntime
 		// hasOutstandingBlobWork directly. The event reports transitions only and blobs restored from
 		// pending state are already counted by the time the BlobManager constructor returns, so that
 		// first transition is never observable to a subscriber.
-		this.blobManager.events.on("outstandingBlobWorkChanged", () => {
-			if (!this.disposed) {
-				this.publishDirtyState();
-			}
-		});
+		this.blobManager.events.on("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
@@ -2660,6 +2656,7 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		this.blobManager.events.off("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -5181,7 +5178,8 @@ export class ContainerRuntime
 	/**
 	 * Emit "dirty" or "saved" if host-facing dirty state has changed since the last emit.
 	 *
-	 * @remarks Publication is suppressed while {@link ContainerRuntime.emitDirtyDocumentEvent} is off,
+	 * @remarks Publication is suppressed after disposal or while
+	 * {@link ContainerRuntime.emitDirtyDocumentEvent} is off,
 	 * i.e. during op replay, which restores the last emitted state and publishes any net change itself.
 	 * Callers reached from {@link ContainerRuntime.updateDocumentDirtyState} are already behind that
 	 * check, but blob-driven publication is not, so it is enforced here.
@@ -5193,8 +5191,12 @@ export class ContainerRuntime
 	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
 	 * frame publishes whatever state is current once nesting unwinds.
 	 */
-	private publishDirtyState(): void {
-		if (!this.emitDirtyDocumentEvent || this.pendingOpStateNotificationRunner.running) {
+	private readonly publishDirtyState = (): void => {
+		if (
+			this.disposed ||
+			!this.emitDirtyDocumentEvent ||
+			this.pendingOpStateNotificationRunner.running
+		) {
 			return;
 		}
 
@@ -5203,7 +5205,7 @@ export class ContainerRuntime
 			this.lastEmittedDirty = dirty;
 			this.emit(dirty ? "dirty" : "saved");
 		}
-	}
+	};
 
 	/**
 	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
