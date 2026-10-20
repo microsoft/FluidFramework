@@ -34,6 +34,8 @@ import {
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
+import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+
 /**
  * Options when constructing a tree view.
  * @public
@@ -183,6 +185,13 @@ export interface ITreeViewConfigurationAlpha<
 	 * ```
 	 */
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+
+	/**
+	 * Provides hashing for schema telemetry and optional checks when constructing a view.
+	 * @remarks
+	 * Create with {@link identifySchema}.
+	 */
+	readonly schemaIdentity?: SchemaIdentity;
 }
 
 /**
@@ -287,6 +296,11 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaIdentity}
+	 */
+	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
+
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
@@ -295,6 +309,9 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
+		if (props.schemaIdentity !== undefined) {
+			this.schemaIdentity = SchemaIdentityInternal.extract(props.schemaIdentity);
+		}
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy);

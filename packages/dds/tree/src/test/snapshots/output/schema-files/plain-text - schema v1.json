@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "com.fluidframework.text.StringArray": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.Text": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.StringArray"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.Text"
+    ]
+  }
+}

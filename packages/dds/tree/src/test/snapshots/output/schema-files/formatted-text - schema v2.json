@@ -28,74 +28,50 @@
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
+    "com.fluidframework.text.formatted<test.text>.StringArray": {
       "kind": {
         "object": {
           "": {
             "kind": "Sequence",
             "types": [
-              "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom"
+              "com.fluidframework.text.formatted<test.text>.StringAtom"
             ]
           }
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
+    "com.fluidframework.text.formatted<test.text>.StringAtom": {
       "kind": {
         "object": {
           "": {
             "kind": "Value",
             "types": [
               "com.fluidframework.text.formatted.StringTextAtom",
-              "test.FormattedTextTest.StringLineAtom"
+              "test.text.LineAtom"
             ]
           },
           "format": {
             "kind": "Value",
             "types": [
-              "test.FormattedTextTest.CharacterFormat"
+              "test.text.TextFormat"
             ]
           }
         }
       }
     },
-    "com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
+    "com.fluidframework.text.formatted<test.text>.Text": {
       "kind": {
         "object": {
           "": {
             "kind": "Value",
             "types": [
-              "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray"
+              "com.fluidframework.text.formatted<test.text>.StringArray"
             ]
           }
         }
       }
     },
-    "test.FormattedTextTest.CharacterFormat": {
-      "kind": {
-        "object": {
-          "bold": {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.boolean"
-            ]
-          },
-          "font": {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.string"
-            ]
-          },
-          "size": {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ]
-          }
-        }
-      }
-    },
-    "test.FormattedTextTest.StringLineAtom": {
+    "test.text.LineAtom": {
       "kind": {
         "object": {
           "indent": {
@@ -103,32 +79,27 @@
             "types": [
               "com.fluidframework.leaf.number"
             ]
-          },
-          "tag": {
-            "kind": "Value",
-            "types": [
-              "test.FormattedTextTest.lineTag.h1",
-              "test.FormattedTextTest.lineTag.h2"
-            ]
           }
         }
       }
     },
-    "test.FormattedTextTest.lineTag.h1": {
+    "test.text.TextFormat": {
       "kind": {
-        "object": {}
-      }
-    },
-    "test.FormattedTextTest.lineTag.h2": {
-      "kind": {
-        "object": {}
+        "object": {
+          "bold": {
+            "kind": "Value",
+            "types": [
+              "com.fluidframework.leaf.boolean"
+            ]
+          }
+        }
       }
     }
   },
   "root": {
     "kind": "Value",
     "types": [
-      "com.fluidframework.text.formatted<test.FormattedTextTest>.Text"
+      "com.fluidframework.text.formatted<test.text>.Text"
     ]
   }
 }

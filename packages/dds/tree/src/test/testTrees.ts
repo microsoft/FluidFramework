@@ -65,12 +65,11 @@ import {
 	walkFieldSchema,
 	ObjectNodeSchema,
 } from "../simple-tree/index.js";
+import { FormattedText, PlainText } from "../text/index.js";
 import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextTest } from "./text/formattedTextTest.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 
 interface NamedCase {
@@ -413,6 +412,33 @@ class NestedMultiStage extends factory.object("NestedMultiStage", {
 	),
 }) {}
 
+const textFactory = factory.scopedFactory("text");
+
+class TextFormat extends textFactory.object("TextFormat", {
+	bold: SchemaFactoryAlpha.boolean,
+}) {}
+
+/**
+ * Newline atom which carries formatting for the line it ends.
+ */
+class LineAtom extends textFactory.object("LineAtom", {
+	indent: SchemaFactoryAlpha.number,
+}) {
+	public readonly content = "\n";
+}
+
+/**
+ * Formatted text with an extra atom kind.
+ * @remarks
+ * Unambiguous, so apps that prevent ambiguity can use formatted text.
+ */
+class FormattedTextDocument extends FormattedText.createSchema(
+	textFactory,
+	TextFormat,
+	[LineAtom],
+	{ bold: false },
+) {}
+
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
@@ -459,7 +485,8 @@ export const testSchema: readonly TestSimpleTreeSchema[] = [
 	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
 	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
 	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
-	{ name: "formattedText", schema: FormattedTextTest.Tree, ambiguous: true },
+	{ name: "plainText", schema: PlainText.Tree, ambiguous: false },
+	{ name: "formattedText", schema: FormattedTextDocument, ambiguous: false },
 ];
 
 /**
@@ -532,25 +559,19 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 		{ b: null, c: null },
 		false,
 	),
-	testSimpleTree(
-		"formatted-text",
-		FormattedTextTest.Tree,
-		() => {
-			const text = FormattedTextTest.Tree.fromString("Hello, world!");
-			text.insertAt(text.characterCount(), [
-				new FormattedTextTest.StringLineAtom({
-					tag: FormattedTextTest.LineTag("h1"),
-					indent: 0,
-				}),
-			]);
-			text.insertAt(text.characterCount(), "This is formatted text.", {
-				bold: true,
-				size: 14,
-				font: "Courier",
-			});
-			return text;
-		},
-		true,
+	// "🌍" is two UTF-16 code units, which a single character must keep together.
+	testSimpleTree("plain-text", PlainText.Tree, () => PlainText.Tree.fromString("Hi🌍")),
+	testSimpleTree("formatted-text", FormattedTextDocument, () => {
+		const text = FormattedTextDocument.fromString("Hello");
+		text.insertAt(text.characterCount(), [new LineAtom({ indent: 0 })]);
+		text.insertAt(text.characterCount(), "world🌍", { bold: true });
+		return text;
+	}),
+	// Identical characters with identical formatting.
+	// Field batch encoding does not yet produce uniform chunks, so this currently encodes like any other formatted text.
+	// It exists to cover uniform-chunk encoding once field batches support it.
+	testSimpleTree("formatted-text-uniform", FormattedTextDocument, () =>
+		FormattedTextDocument.fromString("aaaa"),
 	),
 ];
 
@@ -560,15 +581,6 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
  */
 export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
-	// Ambiguous schema with unambiguous content, which testSimpleTrees cannot express.
-	// Identical characters with identical formatting.
-	// Field batch encoding does not yet produce uniform chunks, so this currently encodes like any other formatted text.
-	// It exists to cover uniform-chunk encoding once field batches support it.
-	convertSimpleTreeTest(
-		testSimpleTree("formatted-text-uniform", FormattedTextTest.Tree, () =>
-			FormattedTextTest.Tree.fromString("a".repeat(20)),
-		),
-	),
 	test(
 		"numericSequence",
 		{

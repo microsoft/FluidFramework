@@ -24,7 +24,6 @@ import type {
 } from "../../../../core/index.js";
 import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
-	decode,
 	readValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -111,29 +110,19 @@ function makeFieldBatchCodec(
 	FieldBatchDecodingContext
 > {
 	const name = "TestCompressedFieldBatch";
-	// Mirror the real registry so every format, including experimental ones, can be selected with an override.
+	// Reuse the real registry so every format, including experimental ones, can be selected with an override.
+	// Only encode is replaced: the real codec cannot use the provided encoderContext, which these tests need to control shapes.
 	const builder = VersionDispatchingCodecBuilder.build(
 		name,
 		fieldBatchCodecBuilder.registry.map(({ minVersionForCollab, formatVersion, codec }) => ({
 			minVersionForCollab,
 			formatVersion,
 			codec: {
+				...codec(options),
 				encode: (
 					data: FieldBatch,
-					context: FieldBatchEncodingContext,
-				): EncodedFieldBatchAnyVersion => {
-					return compressedEncode(data, encoderContext);
-				},
-				decode: (
-					data: EncodedFieldBatchAnyVersion,
-					fieldBatchContext: FieldBatchDecodingContext,
-				): FieldBatch => {
-					// TODO: consider checking data is in schema.
-					return decode(data, fieldBatchContext.idDecodingContext).map((chunk) =>
-						chunk.cursor(),
-					);
-				},
-				schema: codec(options).schema,
+					_context: FieldBatchEncodingContext,
+				): EncodedFieldBatchAnyVersion => compressedEncode(data, encoderContext),
 			},
 		})),
 	);

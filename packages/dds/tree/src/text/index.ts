@@ -6,3 +6,4 @@
 export { PlainText } from "./textDomain.js";
 export { FormattedText } from "./textDomainFormatted.js";
 export { codePointCount, utf16LengthForCodePoints } from "./codePointUtils.js";
+export { isTextLocationNode, textLocationArray } from "./textLocationAdapter.js";

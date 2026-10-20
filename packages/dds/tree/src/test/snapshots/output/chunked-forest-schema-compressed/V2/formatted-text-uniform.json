@@ -11,7 +11,19 @@
         "fields": [
           [
             0,
-            1
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.text>.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            3
           ]
         ]
       }
@@ -24,19 +36,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.Text",
-        "value": false,
-        "fields": [
-          [
-            0,
-            3
-          ]
-        ]
-      }
-    },
-    {
-      "c": {
-        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray",
+        "type": "com.fluidframework.text.formatted<test.text>.StringArray",
         "value": false,
         "fields": [
           [
@@ -51,7 +51,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom",
+        "type": "com.fluidframework.text.formatted<test.text>.StringAtom",
         "value": false,
         "fields": [
           [
@@ -70,20 +70,12 @@
     },
     {
       "c": {
-        "type": "test.FormattedTextTest.CharacterFormat",
+        "type": "test.text.TextFormat",
         "value": false,
         "fields": [
           [
             "bold",
             8
-          ],
-          [
-            "size",
-            9
-          ],
-          [
-            "font",
-            1
           ]
         ]
       }
@@ -93,118 +85,24 @@
         "type": "com.fluidframework.leaf.boolean",
         "value": true
       }
-    },
-    {
-      "c": {
-        "type": "com.fluidframework.leaf.number",
-        "value": true
-      }
     }
   ],
   "data": [
     [
-      2,
+      1,
       [
         0,
         "a",
         false,
-        12,
-        "Arial",
         0,
         "a",
         false,
-        12,
-        "Arial",
         0,
         "a",
         false,
-        12,
-        "Arial",
         0,
         "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial",
-        0,
-        "a",
-        false,
-        12,
-        "Arial"
+        false
       ]
     ]
   ]
