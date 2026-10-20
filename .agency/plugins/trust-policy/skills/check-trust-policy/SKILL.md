@@ -6,7 +6,7 @@ description: Audit pnpm, Yarn, or npm dependency trust; check whether a specific
 # Check package trust policy
 
 Use the standalone checker compiled into this plugin's `lib` directory.
-Resolve its absolute path from this skill's location: `../../lib/run.js`.
+Resolve its absolute path from this skill's location: `../../lib/trust-policy.js`.
 Do not invoke flub or install or build Fluid Framework build-tools.
 
 ## Prerequisites
@@ -29,7 +29,7 @@ For a single package, use the single-package procedure below instead of a worksp
 
 1. Identify the target directory with the user.
    The checker selects the nearest enclosing `pnpm-workspace.yaml`, or the nearest package directory if there is no workspace.
-2. Run `node "<absolute-plugin-directory>/lib/run.js" --path "<target-directory>" --json`.
+2. Run `node "<absolute-plugin-directory>/lib/trust-policy.js" --path "<target-directory>" --json`.
    For Yarn or npm, pass `--lockfile "<absolute-lockfile-path>"` instead of `--path` to select the exact lockfile.
    Use the operating system's path separators.
    Do not add `--keep` unless the user wants to inspect the generated workspace.
@@ -57,7 +57,7 @@ It detects decreases in trust evidence, not the absence of provenance on every p
    Do not silently choose a weaker policy.
    In noninteractive mode with no supplied policy, use `cryptographic` and state that default.
 3. Confirm permission for registry/Sigstore access and, for cryptographic mode, downloading tarball bytes for hashing.
-   Run `node "<absolute-plugin-directory>/lib/run.js" --package "<name@version>" --policy "<selected-policy>" --json`.
+   Run `node "<absolute-plugin-directory>/lib/trust-policy.js" --package "<name@version>" --policy "<selected-policy>" --json`.
    This does not install packages or require pnpm.
 4. Report `requested.accepted`, `requested.provenanceVerified`, the reason, and any `alternative`.
    If an alternative is suggested, disclose that it may be from a different major version and require code changes.

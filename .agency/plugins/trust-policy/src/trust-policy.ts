@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -7,7 +8,7 @@ import { spawn } from "node:child_process";
 import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { Command, Flags } from "@oclif/core";
+import { Command, Flags, execute } from "@oclif/core";
 import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
 import { checkPackage, type PackageCheckResult } from "./package-check.js";
@@ -554,3 +555,6 @@ export async function runPnpm(
 		subprocess.once("close", (code) => resolve({ code, stdout, stderr }));
 	});
 }
+
+// Not awaited: oclif imports this module to load the command, which would wait on its own evaluation.
+if (import.meta.main) void execute({ dir: import.meta.url });

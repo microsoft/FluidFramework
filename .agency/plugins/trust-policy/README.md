@@ -30,14 +30,15 @@ The `check-trust-policy` skill runs the checker from its installed plugin locati
 You can also run the command directly, without Agency:
 
 ```powershell
-node .\lib\run.js --path D:\FluidFramework2\build-tools
-node .\lib\run.js --path D:\FluidFramework2\build-tools --json
-node .\lib\run.js --path D:\FluidFramework2\build-tools --include-excluded
-node .\lib\run.js --lockfile D:\my-project\yarn.lock --json
-node .\lib\run.js --lockfile D:\my-project\package-lock.json --json
+node .\lib\trust-policy.js --path D:\FluidFramework2\build-tools
+node .\lib\trust-policy.js --path D:\FluidFramework2\build-tools --json
+node .\lib\trust-policy.js --path D:\FluidFramework2\build-tools --include-excluded
+node .\lib\trust-policy.js --lockfile D:\my-project\yarn.lock --json
+node .\lib\trust-policy.js --lockfile D:\my-project\package-lock.json --json
 ```
 
 Use `--help` to see `--keep`, `--tempDir`, `--verbose`, and `--quiet`.
+`lib/trust-policy.js` is both the oclif command and the executable entry point; it is also exposed as the `check-trust-policy` bin.
 Rebuild the plugin after changing its TypeScript source.
 Generated JavaScript and source maps live in the ignored `lib` directory.
 
@@ -93,10 +94,10 @@ Verbose subprocess output is suppressed in JSON mode so stdout remains valid JSO
 Use an exact version, including a scope when needed:
 
 ```powershell
-node .\lib\run.js --package semver@5.7.2 --json
-node .\lib\run.js --package "@sigstore/verify@4.1.2" --policy cryptographic --json
-node .\lib\run.js --package semver@5.7.2 --policy metadata --json
-node .\lib\run.js --package semver@5.7.2 --policy no-downgrade --json
+node .\lib\trust-policy.js --package semver@5.7.2 --json
+node .\lib\trust-policy.js --package "@sigstore/verify@4.1.2" --policy cryptographic --json
+node .\lib\trust-policy.js --package semver@5.7.2 --policy metadata --json
+node .\lib\trust-policy.js --package semver@5.7.2 --policy no-downgrade --json
 ```
 
 `--policy` selects:

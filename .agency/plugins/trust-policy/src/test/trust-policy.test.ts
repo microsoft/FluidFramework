@@ -32,7 +32,7 @@ interface PnpmCall {
 }
 
 const exec = promisify(execFile);
-const cli = fileURLToPath(new URL("../run.js", import.meta.url));
+const cli = fileURLToPath(new URL("../trust-policy.js", import.meta.url));
 const registryPackage = (name: string, version: string) => ({
 	from: name,
 	version,

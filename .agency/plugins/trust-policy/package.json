@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"type": "module",
 	"bin": {
-		"check-trust-policy": "./lib/run.js"
+		"check-trust-policy": "./lib/trust-policy.js"
 	},
 	"scripts": {
 		"build": "tsc --project tsconfig.json",
