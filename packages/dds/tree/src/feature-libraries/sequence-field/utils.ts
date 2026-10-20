@@ -293,6 +293,10 @@ export function getDetachedRootId(mark: Detach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }
 
+export function getPinDetachId(mark: Pin): ChangeAtomId {
+	return mark.detachId ?? getAttachedRootId(mark);
+}
+
 export function getMovedNodeId(mark: Attach | Detach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }

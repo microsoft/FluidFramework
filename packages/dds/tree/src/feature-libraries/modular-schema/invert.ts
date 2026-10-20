@@ -53,6 +53,7 @@ import {
 	newRootTable,
 	normalizeFieldId,
 	updateConstraints,
+	validateChangeset,
 } from "./modularChangeUtils.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import {
@@ -201,7 +202,7 @@ export function invertModularChange(
 		);
 	}
 
-	return makeModularChangeset({
+	const inverted = makeModularChangeset({
 		rebaseVersion: change.change.rebaseVersion,
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
@@ -216,6 +217,9 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
+
+	// validateChangeset(inverted, fieldKinds);
+	return inverted;
 }
 
 function invertFieldMap(

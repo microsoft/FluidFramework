@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { RevisionTag } from "../../core/index.js";
+import { areEqualChangeAtomIds, type RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
@@ -20,6 +20,7 @@ import {
 	type MarkList,
 	type NoopMark,
 	NoopMarkType,
+	type Pin,
 	type Rename,
 } from "./types.js";
 import {
@@ -28,6 +29,7 @@ import {
 	getDetachedRootId,
 	getInputCellId,
 	getOutputCellId,
+	getPinDetachId,
 	isImpactful,
 	splitMark,
 	withNodeChange,
@@ -77,10 +79,6 @@ function invertMark(
 	crossFieldManager: InvertNodeManager,
 	revision: RevisionTag | undefined,
 ): Mark[] {
-	if (!isImpactful(mark)) {
-		const inputId = getInputCellId(mark);
-		return [invertNodeChangeOrSkip(mark.count, mark.changes, inputId)];
-	}
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
@@ -164,19 +162,38 @@ function invertInsertSegment(
 	isRollback: boolean,
 	nodeChange: NodeId | undefined,
 ): Mark {
+	const inverseDetachId = manager.getInvertedMoveId(getAttachedRootId(mark));
 	const inputId = getInputCellId(mark);
-	assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 
-	const detachId = manager.getInvertedMoveId(getAttachedRootId(mark));
+	if (inputId === undefined) {
+		// This is a pin mark, the inverse of which is also a pin.
+		const inverseAttachId = manager.getInvertedMoveId(getPinDetachId(mark as Pin));
+		const pin: Mutable<CellMark<Attach>> = {
+			type: "Attach",
+			count: mark.count,
+			revision: inverseAttachId.revision,
+			id: inverseAttachId.localId,
+		};
+
+		if (!areEqualChangeAtomIds(inverseDetachId, inverseAttachId)) {
+			pin.detachId = inverseDetachId;
+		}
+
+		if (mark.changes !== undefined) {
+			pin.changes = mark.changes;
+		}
+
+		return pin;
+	}
 
 	const removeMark: Mutable<CellMark<Detach>> = {
 		type: "Detach",
 		count: mark.count,
-		id: detachId.localId,
-		revision: detachId.revision,
+		id: inverseDetachId.localId,
+		revision: inverseDetachId.revision,
 	};
 
-	if (isRollback && !areEqualCellIds(inputId, detachId)) {
+	if (isRollback && !areEqualCellIds(inputId, inverseDetachId)) {
 		removeMark.cellRename = inputId;
 	}
 
