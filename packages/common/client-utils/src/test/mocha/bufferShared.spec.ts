@@ -19,7 +19,14 @@ function initializeBuffer(buffer: ArrayBufferLike): void {
 	new Uint8Array(buffer).set(values);
 }
 
+/**
+ * Asserts that `buffer` contains exactly `expected`.
+ *
+ * @remarks Checks `byteLength` first so that a buffer of the wrong size (for example, an entire
+ * 8 KiB Node.js `Buffer` pool) produces a concise failure rather than an enormous content diff.
+ */
 function assertBufferContents(buffer: ArrayBufferLike, expected: readonly number[]): void {
+	assert.equal(buffer.byteLength, expected.length, "unexpected byteLength");
 	assert.deepEqual([...new Uint8Array(buffer)], expected);
 }
 
@@ -75,11 +82,13 @@ describe("bufferShared", () => {
 				nodeView.byteLength,
 			);
 
-			assert.equal(bufferToString(AnyUint8ArrayToArrayBuffer(browserView), "utf8"), content);
+			const browserResult = AnyUint8ArrayToArrayBuffer(browserView);
+			assert.equal(browserResult.byteLength, browserView.byteLength);
+			assert.equal(bufferToString(browserResult, "utf8"), content);
 
 			const result = AnyUint8ArrayToArrayBuffer(nodeView);
-			assert.equal(bufferToString(result, "utf8"), content);
 			assert.equal(result.byteLength, nodeView.byteLength);
+			assert.equal(bufferToString(result, "utf8"), content);
 		});
 
 		it("AnyUint8ArrayToArrayBuffer copies only the logical bytes of a pooled Node.js Buffer", () => {
@@ -89,8 +98,8 @@ describe("bufferShared", () => {
 			assert(pooled.buffer.byteLength > pooled.byteLength);
 
 			const result = AnyUint8ArrayToArrayBuffer(pooled);
-			assert.notEqual(result, pooled.buffer);
 			assert.equal(result.byteLength, pooled.byteLength);
+			assert(result !== pooled.buffer, "result must not be the shared pool buffer");
 			assert.equal(bufferToString(result, "utf8"), content);
 		});
 
@@ -124,8 +133,8 @@ describe("bufferShared", () => {
 			assert(pooled.buffer.byteLength > pooled.byteLength);
 
 			const result = Uint8ArrayToArrayBufferLike(pooled);
-			assert.notEqual(result, pooled.buffer);
 			assert.equal(result.byteLength, pooled.byteLength);
+			assert(result !== pooled.buffer, "result must not be the shared pool buffer");
 			assert.equal(bufferToString(result, "utf8"), content);
 		});
 	});
