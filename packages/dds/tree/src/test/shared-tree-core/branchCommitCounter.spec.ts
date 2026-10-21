@@ -43,12 +43,13 @@ function mintCommit(revision?: RevisionTag): GraphCommit<DefaultChangeset> {
 function createBranch(
 	branchTrimmer?: ReturnType<typeof createEmitter<BranchTrimmingEvents>>,
 ): DefaultBranch {
-	return new SharedTreeBranch(
+	const branch = new SharedTreeBranch(
 		mintCommit("root"),
 		defaultChangeFamily,
 		mintRevisionTag,
-		branchTrimmer,
 	);
+	branch.trimmer = branchTrimmer;
+	return branch;
 }
 
 function edit(branch: DefaultBranch): void {

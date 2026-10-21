@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "3.5.0",
+	"version": "3.7.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -134,6 +134,7 @@
 		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"semver-ts": "^1.0.3",
+		"sha.js": "^2.4.12",
 		"tslib": "^2.8.1",
 		"uuid": "^11.1.0"
 	},
@@ -155,12 +156,13 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@3.4.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@3.6.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
+		"@types/sha.js": "^2.4.4",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"c8": "^10.1.3",

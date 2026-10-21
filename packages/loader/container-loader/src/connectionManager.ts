@@ -457,7 +457,14 @@ export class ConnectionManager implements IConnectionManager {
 				if (this.shouldJoinWrite()) {
 					// If we have pending changes, then we will never send them - it smells like
 					// host logic error.
-					this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
+					this.logger.sendErrorEvent({
+						eventName: "ForceReadonlyPendingChanged",
+						details: JSON.stringify({
+							outstandingOps: this.hasOutstandingOps,
+							opDirty: this.containerOpDirty(),
+							isDirty: this.containerDirty(),
+						}),
+					});
 				}
 
 				reconnect = this.disconnectFromDeltaStream({ text: "Force readonly" });

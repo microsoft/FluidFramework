@@ -68,6 +68,13 @@ type SummaryOwnershipOutcome =
 	| "scheduledDeletion"
 	| "dependencyError";
 
+export interface ISummaryOwnershipTelemetryDetails {
+	source?: "localEphemeral" | "alfred";
+	localOutcome?: "active" | "deleted" | "miss" | "expired" | "malformed" | "dependencyError";
+	fallbackReason?: "cleanMiss" | "localDependencyError";
+	activationOutcome?: "created" | "alreadyActive" | "deleted" | "writeError";
+}
+
 export interface IValidateSummaryDocumentArgs {
 	tenantId: string;
 	authorization: string | undefined;
@@ -77,6 +84,8 @@ export interface IValidateSummaryDocumentArgs {
 	ephemeralDocumentTTLSec: number;
 	ignoreEphemeralFlag?: boolean;
 	reuseCustomerAccessToken?: boolean;
+	telemetryDetails?: ISummaryOwnershipTelemetryDetails;
+	logAllowedOutcome?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -266,7 +275,7 @@ async function checkAndCacheIsEphemeral({
 const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
 const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
 
-function getTokenDocumentIdentity(
+export function getTokenDocumentIdentity(
 	tenantId: string,
 	authorization: string | undefined,
 ): { accessToken: string; documentId: string } {
@@ -288,13 +297,14 @@ function getTokenDocumentId(tenantId: string, authorization: string | undefined)
 	return getTokenDocumentIdentity(tenantId, authorization).documentId;
 }
 
-function logOwnershipOutcome(
+export function logOwnershipOutcome(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
 	outcome: SummaryOwnershipOutcome,
 	error?: unknown,
+	details?: ISummaryOwnershipTelemetryDetails,
 ): void {
 	const properties = {
 		[BaseTelemetryProperties.tenantId]: tenantId,
@@ -304,6 +314,14 @@ function logOwnershipOutcome(
 		operation,
 		routeType,
 		outcome,
+		...(details?.source === undefined ? {} : { source: details.source }),
+		...(details?.localOutcome === undefined ? {} : { localOutcome: details.localOutcome }),
+		...(details?.fallbackReason === undefined
+			? {}
+			: { fallbackReason: details.fallbackReason }),
+		...(details?.activationOutcome === undefined
+			? {}
+			: { activationOutcome: details.activationOutcome }),
 		...(error === undefined
 			? {}
 			: {
@@ -318,14 +336,15 @@ function logOwnershipOutcome(
 	}
 }
 
-function denyDocumentAccess(
+export function denyDocumentAccess(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
 	outcome: Exclude<SummaryOwnershipOutcome, "allowed" | "dependencyError">,
+	details?: ISummaryOwnershipTelemetryDetails,
 ): never {
-	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome);
+	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome, undefined, details);
 	throw new NetworkError(404, documentUnavailableMessage);
 }
 
@@ -335,6 +354,7 @@ function validateAlfredDocumentResponse(
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
+	telemetryDetails?: ISummaryOwnershipTelemetryDetails,
 ): void {
 	if (
 		typeof document !== "object" ||
@@ -349,7 +369,15 @@ function validateAlfredDocumentResponse(
 		(document.storageName != null && typeof document.storageName !== "string")
 	) {
 		const error = new NetworkError(502, "Invalid document response from Alfred.");
-		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		logOwnershipOutcome(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"dependencyError",
+			error,
+			telemetryDetails,
+		);
 		throw error;
 	}
 }
@@ -363,6 +391,8 @@ export async function validateSummaryDocument({
 	ephemeralDocumentTTLSec,
 	ignoreEphemeralFlag = false,
 	reuseCustomerAccessToken = false,
+	telemetryDetails,
+	logAllowedOutcome = true,
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
 	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
 	const readDocument = reuseCustomerAccessToken
@@ -384,31 +414,91 @@ export async function validateSummaryDocument({
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {
-			return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+			return denyDocumentAccess(
+				tenantId,
+				documentId,
+				operation,
+				routeType,
+				"notFound",
+				telemetryDetails,
+			);
 		}
-		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		logOwnershipOutcome(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"dependencyError",
+			error,
+			telemetryDetails,
+		);
 		throw error;
 	}
 
 	if (document === null) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"notFound",
+			telemetryDetails,
+		);
 	}
-	validateAlfredDocumentResponse(document, tenantId, documentId, operation, routeType);
+	validateAlfredDocumentResponse(
+		document,
+		tenantId,
+		documentId,
+		operation,
+		routeType,
+		telemetryDetails,
+	);
 	if (document.tenantId !== tenantId || document.documentId !== documentId) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "identityMismatch");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"identityMismatch",
+			telemetryDetails,
+		);
 	}
 	if (document.scheduledDeletionTime !== undefined) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "scheduledDeletion");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"scheduledDeletion",
+			telemetryDetails,
+		);
 	}
 	if (
 		!ignoreEphemeralFlag &&
 		document.isEphemeralContainer === true &&
 		Date.now() > document.createTime + ephemeralDocumentTTLSec * 1000
 	) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"notFound",
+			telemetryDetails,
+		);
 	}
 
-	logOwnershipOutcome(tenantId, documentId, operation, routeType, "allowed");
+	if (logAllowedOutcome) {
+		logOwnershipOutcome(
+			document.tenantId,
+			document.documentId,
+			operation,
+			routeType,
+			"allowed",
+			undefined,
+			telemetryDetails ?? { source: "alfred" },
+		);
+	}
 	return document;
 }
 
@@ -428,8 +518,10 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		summaryAccessContext,
 	} = createArgs;
-	const documentId = getTokenDocumentId(tenantId, authorization);
+	const documentId =
+		summaryAccessContext?.documentId ?? getTokenDocumentId(tenantId, authorization);
 	const token = parseToken(tenantId, authorization);
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
@@ -444,16 +536,18 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	const isEphemeral = ignoreEphemeralFlag
-		? false
-		: await checkAndCacheIsEphemeral({
-				documentId,
-				tenantId,
-				documentManager,
-				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-				isEphemeralContainerOverride: isEphemeralContainer,
-				cache,
-		  });
+	const isEphemeral =
+		summaryAccessContext?.isEphemeralContainer ??
+		(ignoreEphemeralFlag
+			? false
+			: await checkAndCacheIsEphemeral({
+					documentId,
+					tenantId,
+					documentManager,
+					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+					isEphemeralContainerOverride: isEphemeralContainer,
+					cache,
+			  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
@@ -468,10 +562,20 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		);
 	}
 
-	const calculatedStorageName =
-		initialUpload && storageName
-			? storageName
-			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
+	let calculatedStorageName: string | undefined;
+	if (initialUpload && storageName) {
+		calculatedStorageName = storageName;
+	} else if (summaryAccessContext?.isEphemeralContainer === true) {
+		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
+		// applies only to durable containers. Calling the retriever for a local EC hit would
+		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
+		calculatedStorageName = undefined;
+	} else {
+		calculatedStorageName =
+			summaryAccessContext?.storageName ??
+			(await storageNameRetriever?.get(tenantId, documentId)) ??
+			customData?.storageName;
+	}
 	return new RestGitService(
 		details.storage,
 		writeToExternalStorage,

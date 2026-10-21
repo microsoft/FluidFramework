@@ -1,0 +1,151 @@
+{
+  "version": 2,
+  "identifiers": [
+    ""
+  ],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.text>.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.text.LineAtom",
+        "value": false,
+        "fields": [
+          [
+            "indent",
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.text>.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "a": 7
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.text>.StringAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            8
+          ],
+          [
+            "format",
+            9
+          ]
+        ]
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "test.text.TextFormat",
+        "value": false,
+        "fields": [
+          [
+            "bold",
+            10
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.boolean",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      1,
+      [
+        0,
+        "H",
+        false,
+        0,
+        "e",
+        false,
+        0,
+        "l",
+        false,
+        0,
+        "l",
+        false,
+        0,
+        "o",
+        false,
+        2,
+        0,
+        false,
+        0,
+        "w",
+        true,
+        0,
+        "o",
+        true,
+        0,
+        "r",
+        true,
+        0,
+        "l",
+        true,
+        0,
+        "d",
+        true,
+        0,
+        "🌍",
+        true
+      ]
+    ]
+  ]
+}

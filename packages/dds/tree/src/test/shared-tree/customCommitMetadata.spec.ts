@@ -660,16 +660,189 @@ describe("custom commit metadata", () => {
 	});
 
 	describe("revertTo", () => {
-		it("attaches metadata to the commit it produces", () => {
+		for (const api of ["revision", "commit metadata"] as const) {
+			it(`attaches metadata to the commit it produces through the ${api} API`, () => {
+				const view = createView();
+				const commit = view.branchHistory.getHead();
+				assert(commit !== undefined);
+
+				view.root.insertAtEnd("a");
+				const options = { customMetadata: { tag: "the-revert" } };
+				if (api === "revision") {
+					view.revertTo(commit.revision, options);
+				} else {
+					assert(commit.revertTo !== undefined);
+					commit.revertTo(options);
+				}
+
+				assert.deepEqual([...view.root], []);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
+			});
+		}
+
+		for (const getter of ["options", "metadata"] as const) {
+			it(`prevents edits from the ${getter} getter when reverting to an ancestor`, () => {
+				const view = createView();
+				view.root.insertAtEnd("A");
+				const commit = view.branchHistory.getHead();
+				assert(commit !== undefined);
+				view.root.insertAtEnd("B");
+				const revertTo = commit.revertTo;
+				assert(revertTo !== undefined);
+				const historyLength = view.branchHistory.length;
+
+				const options =
+					getter === "options"
+						? {
+								get customMetadata() {
+									view.root.insertAtStart("X");
+									return { tag: "the-revert" };
+								},
+							}
+						: {
+								customMetadata: {
+									get tag() {
+										view.root.insertAtStart("X");
+										return "the-revert";
+									},
+								},
+							};
+
+				assert.throws(
+					() => revertTo(options),
+					validateUsageError(
+						/Editing the tree is forbidden during custom metadata evaluation/,
+					),
+				);
+				assert.deepEqual([...view.root], ["A", "B"]);
+				assert.equal(view.branchHistory.length, historyLength);
+				assert.throws(() => revertTo(), validateUsageError(/more than once/));
+
+				assert(commit.revertTo !== undefined);
+				commit.revertTo();
+				assert.deepEqual([...view.root], ["A"]);
+			});
+		}
+	});
+
+	describe("Metadata edit locking", () => {
+		for (const api of [
+			"transaction",
+			"revertible",
+			"cloned revertible",
+			"revision",
+			"commit metadata",
+		] as const) {
+			it(`locks the target checkout during options and metadata getters for the ${api} API`, () => {
+				const originalView = createView();
+				let view = originalView;
+				view.root.insertAtEnd("A");
+				let revertible: RevertibleAlpha | undefined;
+				if (api === "revertible" || api === "cloned revertible") {
+					const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+					view.root.insertAtEnd("B");
+					revertible = undoStack.pop();
+					assert(revertible !== undefined);
+					unsubscribe();
+					if (api === "cloned revertible") {
+						view = view.fork();
+						revertible = revertible.clone(view);
+					}
+				} else {
+					view.root.insertAtEnd("B");
+				}
+				const commit = view.branchHistory.getHead()?.getParent();
+				assert(commit !== undefined);
+				const historyLength = view.branchHistory.length;
+				const expectLocked = (): void => {
+					assert.equal(commit.revertTo, undefined);
+					if (api === "cloned revertible") {
+						assert(originalView.branchHistory.getHead()?.revertTo !== undefined);
+					}
+					assert.throws(
+						() => view.root.insertAtStart("X"),
+						validateUsageError(
+							"Editing the tree is forbidden during custom metadata evaluation",
+						),
+					);
+					assert.deepEqual([...view.root], ["A", "B"]);
+					assert.equal(view.branchHistory.length, historyLength);
+				};
+
+				let optionsReads = 0;
+				let metadataReads = 0;
+				const options = {
+					get customMetadata() {
+						optionsReads++;
+						expectLocked();
+						return {
+							get tag() {
+								metadataReads++;
+								expectLocked();
+								return "the-operation";
+							},
+						};
+					},
+				};
+				switch (api) {
+					case "transaction": {
+						view.runTransaction(() => view.root.insertAtEnd("C"), options);
+						break;
+					}
+					case "revertible":
+					case "cloned revertible": {
+						assert(revertible !== undefined);
+						revertible.revert(options);
+						break;
+					}
+					case "revision": {
+						view.revertTo(commit.revision, options);
+						break;
+					}
+					case "commit metadata": {
+						assert(commit.revertTo !== undefined);
+						commit.revertTo(options);
+						break;
+					}
+					default: {
+						assert.fail("Unexpected API");
+					}
+				}
+
+				assert.equal(optionsReads, 1);
+				assert.equal(metadataReads, 1);
+				assert.deepEqual([...view.root], api === "transaction" ? ["A", "B", "C"] : ["A"]);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-operation" });
+				assert(commit.revertTo !== undefined);
+				view.root.insertAtEnd("after");
+			});
+		}
+
+		it("preserves an outer change-event lock after a rejected revert", () => {
 			const view = createView();
-			const revision = view.branchHistory.getHead()?.revision;
-			assert(revision !== undefined);
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
+			const unsubscribe = view.events.on("changed", () => {
+				assert.throws(
+					() =>
+						view.checkout.revertTo(commit.revision, {
+							customMetadata: { tag: "the-revert" },
+						}),
+					validateUsageError(
+						"Reverting to a revision is forbidden during a change event callback",
+					),
+				);
+				assert.throws(
+					() => view.root.insertAtStart("X"),
+					validateUsageError("Editing the tree is forbidden during a change event callback"),
+				);
+			});
 
-			view.root.insertAtEnd("a");
-			view.revertTo(revision, { customMetadata: { tag: "the-revert" } });
-
-			assert.deepEqual([...view.root], []);
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
+			view.root.insertAtEnd("A");
+			unsubscribe();
+			assert.deepEqual([...view.root], ["A"]);
+			view.root.insertAtEnd("B");
+			assert.deepEqual([...view.root], ["A", "B"]);
 		});
 	});
 

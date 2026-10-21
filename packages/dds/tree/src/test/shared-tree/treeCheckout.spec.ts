@@ -36,6 +36,7 @@ import {
 import {
 	Tree,
 	TreeCheckout,
+	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
@@ -105,7 +106,162 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 	return parsed as Record<string, unknown>;
 }
 
+const checkoutForks: {
+	name: string;
+	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+}[] = [
+	{ name: "fork()", forkCheckout: (checkout) => checkout.fork() },
+	{
+		name: "forkWith()",
+		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
+	},
+];
+
 describe("sharedTreeView", () => {
+	describe("checkout extensibility", () => {
+		class RetainedCheckout extends TreeCheckout {
+			public override get disposesWithView(): boolean {
+				return false;
+			}
+
+			public override fork(): RetainedCheckout {
+				return this.forkWith(retainedCheckoutFactory);
+			}
+		}
+
+		const retainedCheckoutFactory = (options: TreeCheckoutOptions): RetainedCheckout =>
+			new RetainedCheckout(options);
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+
+		it("constructs independent subclass forks that can be merged back", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const fork = checkout.fork();
+			const branchView = checkout.viewWith(config);
+			const forkView = fork.viewWith(config);
+			forkView.root.insertAtEnd("child");
+			assert.deepEqual([...branchView.root], ["parent"]);
+			assert.deepEqual([...view.root], ["parent"]);
+			forkView.dispose();
+			assert.equal(fork.disposed, false);
+			const nextForkView = fork.viewWith(config);
+			assert.deepEqual([...nextForkView.root], ["parent", "child"]);
+			nextForkView.dispose();
+			checkout.merge(fork);
+			assert.equal(fork.disposed, true);
+			assert.deepEqual([...branchView.root], ["parent", "child"]);
+			view.merge(branchView);
+			assert.deepEqual([...view.root], ["parent", "child"]);
+			assert.equal(checkout.disposed, true);
+			view.dispose();
+		});
+
+		it("can dispose and recreate a view without disposing its retained checkout", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const branchView = checkout.viewWith(config);
+			branchView.root.insertAtEnd("retained");
+			branchView.dispose();
+			assert.equal(checkout.disposed, false);
+			const nextView = checkout.viewWith(config);
+			assert.deepEqual([...nextView.root], ["retained"]);
+			nextView.dispose();
+			const nestedFork = checkout.fork();
+			const nestedView = nestedFork.viewWith(config);
+			nestedView.dispose();
+			assert.equal(nestedFork.disposed, false);
+			nestedFork.dispose();
+			checkout.dispose();
+			view.dispose();
+		});
+
+		it("disposes the retained checkout owned by a forked view", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const branchView = checkout.viewWith(config);
+			const forkView = branchView.fork();
+			assert(forkView.checkout instanceof RetainedCheckout);
+			assert.equal(forkView.checkout.disposed, false);
+			forkView.dispose();
+			assert.equal(forkView.checkout.disposed, true);
+			assert.equal(checkout.disposed, false);
+			branchView.dispose();
+			checkout.dispose();
+			view.dispose();
+		});
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after a subclass rejects rewind through the ${throughView ? "view" : "checkout"}`, () => {
+				const error = new Error("Rewind rejected before mutation");
+				class RewindRejectingCheckout extends RetainedCheckout {
+					public override rewindTo(): void {
+						throw error;
+					}
+				}
+
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const checkout = view.checkout.forkWith(
+					(options) => new RewindRejectingCheckout(options),
+				);
+				const branchView = checkout.viewWith(config);
+				const revision = branchView.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const head = checkout.mainBranch.getHead();
+
+				assert.throws(() => (throughView ? branchView : checkout).rewindTo(revision), error);
+				assert.equal(checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...branchView.root], ["parent"]);
+				branchView.root.insertAtEnd("child");
+				view.merge(branchView);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				assert.equal(checkout.disposed, true);
+				view.dispose();
+			});
+		}
+
+		it("rejects subclass forks during pending transactions", () => {
+			const view = getView(config);
+			view.initialize([]);
+			view.runTransaction(() => {
+				assert.throws(
+					() => view.checkout.forkWith(retainedCheckoutFactory),
+					validateUsageError("A view cannot be forked while it has a pending transaction."),
+				);
+			});
+			view.dispose();
+		});
+
+		it("rejects subclass forks after disposal", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			checkout.dispose();
+			assert.throws(
+				() => checkout.fork(),
+				validateUsageError(
+					"The parent branch has already been disposed and can no longer create new branches.",
+				),
+			);
+			view.dispose();
+		});
+
+		it("rejects subclass forks when the parent is broken", () => {
+			const view = getView(config);
+			view.initialize([]);
+			assert.throws(() => view.checkout.breaker.break(new Error("broken parent")));
+			assert.throws(
+				() => view.checkout.forkWith(retainedCheckoutFactory),
+				validateUsageError(/broken parent/),
+			);
+			view.checkout.breaker.clearError();
+			view.dispose();
+		});
+	});
+
 	describe("finalized history", () => {
 		const config = new TreeViewConfiguration({
 			schema: StringArray,
@@ -404,9 +560,9 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"can fork and apply edits without affecting the parent",
-			({ view: parentView, tree: parentTree }) => {
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
 				parentView.root.insertAtStart("parent");
-				const childTree = parentTree.fork();
+				const childTree = forkCheckout(parentTree);
 				const childView = childTree.viewWith(parentView.config);
 				childView.root.insertAtStart("child");
 				assert.deepEqual([...parentView.root], ["parent"]);
@@ -416,8 +572,8 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"can apply edits without affecting a fork",
-			({ view: parentView, tree: parentTree }) => {
-				const childTree = parentTree.fork();
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				const childTree = forkCheckout(parentTree);
 				const childView = childTree.viewWith(parentView.config);
 				assert.equal(parentView.root[0], undefined);
 				assert.equal(childView.root[0], undefined);
@@ -427,28 +583,34 @@ describe("sharedTreeView", () => {
 			},
 		);
 
-		itView("can merge changes into a parent", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.fork();
-			const childView = childTree.viewWith(parentView.config);
-			childView.root.insertAtStart("view");
-			parentTree.merge(childTree);
-			assert.equal(parentView.root[0], "view");
-		});
+		itView(
+			"can merge changes into a parent",
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				const childTree = forkCheckout(parentTree);
+				const childView = childTree.viewWith(parentView.config);
+				childView.root.insertAtStart("view");
+				parentTree.merge(childTree);
+				assert.equal(parentView.root[0], "view");
+			},
+		);
 
-		itView("can rebase over a parent view", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.fork();
-			const childView = childTree.viewWith(parentView.config);
-			parentView.root.insertAtStart("root");
-			assert.equal(childView.root[0], undefined);
-			childTree.rebaseOnto(parentTree);
-			assert.equal(childView.root[0], "root");
-		});
+		itView(
+			"can rebase over a parent view",
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				const childTree = forkCheckout(parentTree);
+				const childView = childTree.viewWith(parentView.config);
+				parentView.root.insertAtStart("root");
+				assert.equal(childView.root[0], undefined);
+				childTree.rebaseOnto(parentTree);
+				assert.equal(childView.root[0], "root");
+			},
+		);
 
-		itView("can rebase over a child view", ({ view, tree }) => {
-			const parentTree = tree.fork();
+		itView("can rebase over a child view", ({ view, tree, forkCheckout }) => {
+			const parentTree = forkCheckout(tree);
 			const parentView = parentTree.viewWith(view.config);
 			parentView.root.insertAtStart("P1");
-			const childTree = parentTree.fork();
+			const childTree = forkCheckout(parentTree);
 			const childView = childTree.viewWith(view.config);
 			parentView.root.insertAtStart("P2");
 			childView.root.insertAtStart("C1");
@@ -457,30 +619,33 @@ describe("sharedTreeView", () => {
 			assert.deepEqual([...parentView.root], ["P2", "C1", "P1"]);
 		});
 
-		itView("merge changes through multiple views", ({ view: viewA, tree: treeA }) => {
-			const treeB = treeA.fork();
-			const viewB = treeB.viewWith(viewA.config);
-			const treeC = treeB.fork();
-			const viewC = treeC.viewWith(viewA.config);
-			const treeD = treeC.fork();
-			const viewD = treeD.viewWith(viewA.config);
-			viewD.root.insertAtStart("view");
-			treeC.merge(treeD);
-			assert.equal(viewB.root[0], undefined);
-			assert.equal(viewC.root[0], "view");
-			treeB.merge(treeC, false);
-			assert.equal(viewB.root[0], "view");
-			assert.equal(viewC.root[0], "view");
-		});
+		itView(
+			"merge changes through multiple views",
+			({ view: viewA, tree: treeA, forkCheckout }) => {
+				const treeB = forkCheckout(treeA);
+				const viewB = treeB.viewWith(viewA.config);
+				const treeC = forkCheckout(treeB);
+				const viewC = treeC.viewWith(viewA.config);
+				const treeD = forkCheckout(treeC);
+				const viewD = treeD.viewWith(viewA.config);
+				viewD.root.insertAtStart("view");
+				treeC.merge(treeD);
+				assert.equal(viewB.root[0], undefined);
+				assert.equal(viewC.root[0], "view");
+				treeB.merge(treeC, false);
+				assert.equal(viewB.root[0], "view");
+				assert.equal(viewC.root[0], "view");
+			},
+		);
 
 		itView(
 			"merge correctly when multiple ancestors are mutated",
-			({ view: viewA, tree: treeA }) => {
-				const treeB = treeA.fork();
+			({ view: viewA, tree: treeA, forkCheckout }) => {
+				const treeB = forkCheckout(treeA);
 				const viewB = treeB.viewWith(viewA.config);
-				const treeC = treeB.fork();
+				const treeC = forkCheckout(treeB);
 				const viewC = treeC.viewWith(viewA.config);
-				const treeD = treeC.fork();
+				const treeD = forkCheckout(treeC);
 				const viewD = treeD.viewWith(viewA.config);
 				viewB.root.insertAtStart("B");
 				viewC.root.insertAtStart("C");
@@ -493,11 +658,11 @@ describe("sharedTreeView", () => {
 			},
 		);
 
-		itView("can merge a parent view into a child", ({ view, tree }) => {
-			const parentTree = tree.fork();
+		itView("can merge a parent view into a child", ({ view, tree, forkCheckout }) => {
+			const parentTree = forkCheckout(tree);
 			const parentView = parentTree.viewWith(view.config);
 			parentView.root.insertAtStart("P1");
-			const childTree = parentTree.fork();
+			const childTree = forkCheckout(parentTree);
 			const childView = childTree.viewWith(view.config);
 			parentView.root.insertAtStart("P2");
 			childView.root.insertAtStart("C1");
@@ -506,46 +671,49 @@ describe("sharedTreeView", () => {
 			assert.deepEqual([...parentView.root], ["P2", "P1"]);
 		});
 
-		itView("can perform a complicated merge scenario", ({ view: viewA, tree: treeA }) => {
-			const treeB = treeA.fork();
-			const viewB = treeB.viewWith(viewA.config);
-			const treeC = treeB.fork();
-			const viewC = treeC.viewWith(viewA.config);
-			const treeD = treeC.fork();
-			const viewD = treeD.viewWith(viewA.config);
-			viewB.root.insertAtStart("A1");
-			viewC.root.insertAtStart("B1");
-			viewD.root.insertAtStart("C1");
-			treeC.merge(treeD);
-			viewA.root.insertAtStart("R1");
-			viewB.root.insertAtStart("A2");
-			viewC.root.insertAtStart("B2");
-			treeB.merge(treeC);
-			const treeE = treeB.fork();
-			const viewE = treeE.viewWith(viewA.config);
-			viewB.root.insertAtStart("A3");
-			treeE.rebaseOnto(treeB);
-			assert.equal(viewE.root[0], "A3");
-			viewB.root.insertAtStart("A4");
-			viewE.root.insertAtStart("D1");
-			viewA.root.insertAtStart("R2");
-			treeB.merge(treeE);
-			treeA.merge(treeB);
-			viewA.root.insertAtStart("R3");
-			assert.deepEqual(viewA.root, [
-				"R3",
-				"D1",
-				"A4",
-				"A3",
-				"B2",
-				"C1",
-				"B1",
-				"A2",
-				"A1",
-				"R2",
-				"R1",
-			]);
-		});
+		itView(
+			"can perform a complicated merge scenario",
+			({ view: viewA, tree: treeA, forkCheckout }) => {
+				const treeB = forkCheckout(treeA);
+				const viewB = treeB.viewWith(viewA.config);
+				const treeC = forkCheckout(treeB);
+				const viewC = treeC.viewWith(viewA.config);
+				const treeD = forkCheckout(treeC);
+				const viewD = treeD.viewWith(viewA.config);
+				viewB.root.insertAtStart("A1");
+				viewC.root.insertAtStart("B1");
+				viewD.root.insertAtStart("C1");
+				treeC.merge(treeD);
+				viewA.root.insertAtStart("R1");
+				viewB.root.insertAtStart("A2");
+				viewC.root.insertAtStart("B2");
+				treeB.merge(treeC);
+				const treeE = forkCheckout(treeB);
+				const viewE = treeE.viewWith(viewA.config);
+				viewB.root.insertAtStart("A3");
+				treeE.rebaseOnto(treeB);
+				assert.equal(viewE.root[0], "A3");
+				viewB.root.insertAtStart("A4");
+				viewE.root.insertAtStart("D1");
+				viewA.root.insertAtStart("R2");
+				treeB.merge(treeE);
+				treeA.merge(treeB);
+				viewA.root.insertAtStart("R3");
+				assert.deepEqual(viewA.root, [
+					"R3",
+					"D1",
+					"A4",
+					"A3",
+					"B2",
+					"C1",
+					"B1",
+					"A2",
+					"A1",
+					"R2",
+					"R1",
+				]);
+			},
+		);
 
 		itView("update anchors after applying a change", ({ view }) => {
 			view.root.insertAtStart("A");
@@ -566,7 +734,7 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"update anchors after merging into a parent",
-			({ view: parentView, tree: parentTree }) => {
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
@@ -577,7 +745,7 @@ describe("sharedTreeView", () => {
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
 				cursor.clear();
-				const childTree = parentTree.fork();
+				const childTree = forkCheckout(parentTree);
 				const childView = childTree.viewWith(parentView.config);
 				childView.root.insertAtStart("B");
 				parentTree.merge(childTree);
@@ -590,7 +758,7 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"update anchors after merging a branch into a divergent parent",
-			({ view: parentView, tree: parentTree }) => {
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
@@ -601,7 +769,7 @@ describe("sharedTreeView", () => {
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
 				cursor.clear();
-				const childTree = parentTree.fork();
+				const childTree = forkCheckout(parentTree);
 				const childView = childTree.viewWith(parentView.config);
 				parentView.root.insertAtStart("P");
 				childView.root.insertAtStart("B");
@@ -633,39 +801,48 @@ describe("sharedTreeView", () => {
 			unsubscribe();
 		});
 
-		itView("can be mutated after merging", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.fork();
-			const childView = childTree.viewWith(parentView.config);
-			childView.root.insertAtStart("A");
-			parentTree.merge(childTree, false);
-			childView.root.insertAtStart("B");
-			assert.deepEqual([...parentView.root], ["A"]);
-			assert.deepEqual([...childView.root], ["B", "A"]);
-			parentTree.merge(childTree);
-			assert.deepEqual([...parentView.root], ["B", "A"]);
-		});
+		itView(
+			"can be mutated after merging",
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				const childTree = forkCheckout(parentTree);
+				const childView = childTree.viewWith(parentView.config);
+				childView.root.insertAtStart("A");
+				parentTree.merge(childTree, false);
+				childView.root.insertAtStart("B");
+				assert.deepEqual([...parentView.root], ["A"]);
+				assert.deepEqual([...childView.root], ["B", "A"]);
+				parentTree.merge(childTree);
+				assert.deepEqual([...parentView.root], ["B", "A"]);
+			},
+		);
 
-		itView("can rebase after merging", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.fork();
-			const childView = childTree.viewWith(parentView.config);
-			childView.root.insertAtStart("A");
-			parentTree.merge(childTree, false);
-			parentView.root.insertAtStart("B");
-			childTree.rebaseOnto(parentTree);
-			assert.deepEqual([...childView.root], ["B", "A"]);
-		});
+		itView(
+			"can rebase after merging",
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				const childTree = forkCheckout(parentTree);
+				const childView = childTree.viewWith(parentView.config);
+				childView.root.insertAtStart("A");
+				parentTree.merge(childTree, false);
+				parentView.root.insertAtStart("B");
+				childTree.rebaseOnto(parentTree);
+				assert.deepEqual([...childView.root], ["B", "A"]);
+			},
+		);
 
-		itView("can be read after merging", ({ view: parentView, tree: parentTree }) => {
-			parentView.root.insertAtStart("root");
-			const childTree = parentTree.fork();
-			const childView = childTree.viewWith(parentView.config);
-			parentTree.merge(childTree, false);
-			assert.equal(childView.root[0], "root");
-		});
+		itView(
+			"can be read after merging",
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
+				parentView.root.insertAtStart("root");
+				const childTree = forkCheckout(parentTree);
+				const childView = childTree.viewWith(parentView.config);
+				parentTree.merge(childTree, false);
+				assert.equal(childView.root[0], "root");
+			},
+		);
 
 		itView(
 			"properly fork the tree schema",
-			({ view: parentView, tree: parentTree }) => {
+			({ view: parentView, tree: parentTree, forkCheckout }) => {
 				const schemaB = new SchemaFactory("fork schema branch").optional(defaultSf.number);
 				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
 					return t.storedSchema.rootFieldSchema.kind === FieldKinds.required.identifier
@@ -676,7 +853,7 @@ describe("sharedTreeView", () => {
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
-				const childTree = parentTree.fork();
+				const childTree = forkCheckout(parentTree);
 				const childView = childTree.viewWith(new TreeViewConfiguration({ schema: schemaB }));
 				childView.upgradeSchema();
 				assert.equal(getSchema(parentView.checkout), "schemaA");
@@ -691,64 +868,66 @@ describe("sharedTreeView", () => {
 			},
 		);
 
-		it("submit edits to Fluid when merging into the root view", () => {
-			const sf = new SchemaFactory("edits submitted schema");
-			const provider = new TestTreeProviderLite(2);
-			const branch1 = provider.trees[0].kernel.checkout;
-			const view1 = provider.trees[0].kernel.viewWith(
-				new TreeViewConfiguration({
-					schema: sf.array(sf.string),
-					enableSchemaValidation,
-				}),
-			);
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const tree2 = provider.trees[1].kernel.viewWith(
-				new TreeViewConfiguration({
-					schema: sf.array(sf.string),
-					enableSchemaValidation,
-				}),
-			);
-			const baseTree = branch1.fork();
-			const tree = baseTree.fork();
-			const view = tree.viewWith(view1.config);
-			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
-			view.root.insertAtStart("42");
-			provider.synchronizeMessages();
-			assert.equal(tree2.root[0], undefined);
-			baseTree.merge(tree);
-			provider.synchronizeMessages();
-			assert.equal(tree2.root[0], undefined);
-			branch1.merge(baseTree);
-			provider.synchronizeMessages();
-			assert.equal(tree2.root[0], "42");
-		});
+		for (const { name, forkCheckout } of checkoutForks) {
+			it(`submit edits to Fluid when merging into the root view (${name})`, () => {
+				const sf = new SchemaFactory("edits submitted schema");
+				const provider = new TestTreeProviderLite(2);
+				const branch1 = provider.trees[0].kernel.checkout;
+				const view1 = provider.trees[0].kernel.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.array(sf.string),
+						enableSchemaValidation,
+					}),
+				);
+				view1.initialize([]);
+				provider.synchronizeMessages();
+				const tree2 = provider.trees[1].kernel.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.array(sf.string),
+						enableSchemaValidation,
+					}),
+				);
+				const baseTree = forkCheckout(branch1);
+				const tree = forkCheckout(baseTree);
+				const view = tree.viewWith(view1.config);
+				// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
+				view.root.insertAtStart("42");
+				provider.synchronizeMessages();
+				assert.equal(tree2.root[0], undefined);
+				baseTree.merge(tree);
+				provider.synchronizeMessages();
+				assert.equal(tree2.root[0], undefined);
+				branch1.merge(baseTree);
+				provider.synchronizeMessages();
+				assert.equal(tree2.root[0], "42");
+			});
 
-		it("do not squash commits", () => {
-			const sf = new SchemaFactory("no squash commits schema");
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0];
-			const branch1 = tree1.kernel.checkout;
-			const view1 = tree1.kernel.viewWith(
-				new TreeViewConfiguration({
-					schema: sf.array(sf.string),
-					enableSchemaValidation,
-				}),
-			);
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			let opsReceived = 0;
-			provider.trees[1].on("op", () => (opsReceived += 1));
-			const baseBranch = branch1.fork();
-			const tree = baseBranch.fork();
-			const view = tree.viewWith(view1.config);
-			view.root.insertAtStart("A");
-			view.root.insertAtStart("B");
-			baseBranch.merge(tree);
-			branch1.merge(baseBranch);
-			provider.synchronizeMessages();
-			assert.equal(opsReceived, 2);
-		});
+			it(`do not squash commits (${name})`, () => {
+				const sf = new SchemaFactory("no squash commits schema");
+				const provider = new TestTreeProviderLite(2);
+				const tree1 = provider.trees[0];
+				const branch1 = tree1.kernel.checkout;
+				const view1 = tree1.kernel.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.array(sf.string),
+						enableSchemaValidation,
+					}),
+				);
+				view1.initialize([]);
+				provider.synchronizeMessages();
+				let opsReceived = 0;
+				provider.trees[1].on("op", () => (opsReceived += 1));
+				const baseBranch = forkCheckout(branch1);
+				const tree = forkCheckout(baseBranch);
+				const view = tree.viewWith(view1.config);
+				view.root.insertAtStart("A");
+				view.root.insertAtStart("B");
+				baseBranch.merge(tree);
+				branch1.merge(baseBranch);
+				provider.synchronizeMessages();
+				assert.equal(opsReceived, 2);
+			});
+		}
 
 		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
@@ -834,21 +1013,24 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		itView("rejects forks while a transaction is in progress", ({ view, tree }) => {
-			Tree.runTransaction(view, () => {
-				view.root.insertAtEnd("42");
-				assert.throws(
-					() => tree.fork(),
-					validateUsageError("A view cannot be forked while it has a pending transaction."),
-				);
-			});
-			tree.fork();
-		});
+		itView(
+			"rejects forks while a transaction is in progress",
+			({ view, tree, forkCheckout }) => {
+				Tree.runTransaction(view, () => {
+					view.root.insertAtEnd("42");
+					assert.throws(
+						() => forkCheckout(tree),
+						validateUsageError("A view cannot be forked while it has a pending transaction."),
+					);
+				});
+				forkCheckout(tree).dispose();
+			},
+		);
 
 		itView(
 			"rejects merges while a transaction is in progress on the target view",
-			({ view, tree }) => {
-				const treeBranch = tree.fork();
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
 				const viewBranch = treeBranch.viewWith(view.config);
 				viewBranch.root.insertAtEnd("42");
 
@@ -865,8 +1047,8 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"rejects merges while a transaction is in progress on the source view",
-			({ view, tree }) => {
-				const treeBranch = tree.fork();
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 				viewBranch.root.insertAtEnd("43");
@@ -885,8 +1067,8 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"rejects rebases while a transaction is in progress on the source view",
-			({ view, tree }) => {
-				const treeBranch = tree.fork();
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 
@@ -903,8 +1085,8 @@ describe("sharedTreeView", () => {
 
 		itView(
 			"rejects rebases while a transaction is in progress on the target view",
-			({ view, tree }) => {
-				const treeBranch = tree.fork();
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 				viewBranch.root.insertAtEnd("43");
@@ -921,8 +1103,8 @@ describe("sharedTreeView", () => {
 			},
 		);
 
-		itView("do not affect pre-existing forks", ({ view, tree }) => {
-			const treeBranch = tree.fork();
+		itView("do not affect pre-existing forks", ({ view, tree, forkCheckout }) => {
+			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			view.root.insertAtEnd("A");
 			Tree.runTransaction(viewBranch, () => {
@@ -1310,6 +1492,130 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	describe("rewindTo", () => {
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after rejecting a sibling revision through the ${throughView ? "view" : "checkout"}`, () => {
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const sibling = view.fork();
+				const fork = view.fork();
+				sibling.root.insertAtEnd("sibling");
+				const revision = sibling.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const head = fork.checkout.mainBranch.getHead();
+
+				assert.throws(
+					() => (throughView ? fork : fork.checkout).rewindTo(revision),
+					validateUsageError(`No commit found with revision: ${revision}`),
+				);
+				assert.equal(fork.checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...fork.root], ["parent"]);
+				fork.root.insertAtEnd("child");
+				view.merge(fork, false);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				fork.dispose();
+				assert.equal(fork.checkout.disposed, true);
+				sibling.dispose();
+				view.dispose();
+			});
+
+			for (const rejection of [
+				"unrecognized revision",
+				"transaction",
+				"shared branch",
+				"edit lock",
+			]) {
+				it(`remains usable after rejecting rewind for ${rejection} through the ${throughView ? "view" : "checkout"}`, () => {
+					const view = getView(config);
+					view.initialize(["parent"]);
+					const fork = rejection === "shared branch" ? view : view.fork();
+					const head = fork.checkout.mainBranch.getHead();
+					const revision = fork.branchHistory.getHead()?.revision;
+					assert(revision !== undefined);
+					const target = throughView ? fork : fork.checkout;
+
+					switch (rejection) {
+						case "unrecognized revision": {
+							const unknownRevision = "00000000-0000-4000-8000-000000000000";
+							assert.throws(
+								() => target.rewindTo(unknownRevision),
+								validateUsageError(`Unrecognized revision id: ${unknownRevision}`),
+							);
+							break;
+						}
+						case "transaction": {
+							fork.runTransaction(() => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError("Rewinding is not supported during transactions."),
+								);
+							});
+							break;
+						}
+						case "shared branch": {
+							assert.throws(
+								() => target.rewindTo(revision),
+								validateUsageError(
+									"Cannot switch a view away from a shared branch. Consider forking first.",
+								),
+							);
+							break;
+						}
+						case "edit lock": {
+							const unsubscribe = Tree.on(fork.root, "nodeChanged", () => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError(
+										"Switching branches is forbidden during a change event callback",
+									),
+								);
+							});
+							fork.root.insertAtEnd("trigger");
+							unsubscribe();
+							fork.root.removeAt(1);
+							break;
+						}
+						default: {
+							assert.fail("Unexpected rejection case.");
+						}
+					}
+
+					if (rejection !== "edit lock") {
+						assert.equal(fork.checkout.mainBranch.getHead(), head);
+					}
+					assert.deepEqual([...fork.root], ["parent"]);
+					fork.root.insertAtEnd("child");
+					if (fork !== view) {
+						view.merge(fork, false);
+						fork.dispose();
+					}
+					assert.deepEqual([...view.root], ["parent", "child"]);
+					view.dispose();
+				});
+			}
+		}
+
+		it("breaks the checkout when branch switching throws", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const fork = view.fork();
+			const revision = fork.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			fork.root.insertAtEnd("child");
+			const error = new Error("Rewind event failure");
+			fork.checkout.events.on("afterBatch", () => {
+				throw error;
+			});
+
+			assert.throws(() => fork.checkout.rewindTo(revision), error);
+			assert.throws(() => fork.root, validateUsageError(/invalid state/));
+			assert.deepEqual([...view.root], ["parent"]);
+			view.dispose();
+		});
+	});
+
 	describe("history", () => {
 		it("exposes historical information for the current branch", () => {
 			const provider = new TestTreeProviderLite(1);
@@ -1341,22 +1647,47 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("disposal", () => {
-		itView("forks can be disposed", ({ view, tree }) => {
-			const treeBranch = tree.fork();
+		itView("disposed checkouts cannot create views", ({ view, tree, forkCheckout }) => {
+			const checkout = forkCheckout(tree);
+			checkout.dispose();
+			assert.throws(
+				() => checkout.viewWith(view.config),
+				validateUsageError("The checkout has already been disposed and cannot create a view."),
+			);
+		});
+
+		itView("rejects forks after disposal", ({ view, tree, forkCheckout }) => {
+			view.dispose();
+			if (!tree.disposed) {
+				tree.dispose();
+			}
+			assert.throws(
+				() => forkCheckout(tree),
+				validateUsageError(
+					"The parent branch has already been disposed and can no longer create new branches.",
+				),
+			);
+		});
+
+		itView("forks can be disposed", ({ view, tree, forkCheckout }) => {
+			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
 			assert.equal(treeBranch.disposed, true);
 		});
 
-		itView("disposed forks cannot be edited or double-disposed", ({ view, tree }) => {
-			const treeBranch = tree.fork();
-			const viewBranch = treeBranch.viewWith(view.config);
-			treeBranch.dispose();
-			assert.throws(() => treeBranch.dispose());
-			assert.throws(() => viewBranch.root.insertAtStart("A"));
-			assert.throws(() => viewBranch.upgradeSchema());
-			assert.throws(() => viewBranch.dispose());
-		});
+		itView(
+			"disposed forks cannot be edited or double-disposed",
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
+				const viewBranch = treeBranch.viewWith(view.config);
+				treeBranch.dispose();
+				assert.throws(() => treeBranch.dispose());
+				assert.throws(() => viewBranch.root.insertAtStart("A"));
+				assert.throws(() => viewBranch.upgradeSchema());
+				assert.throws(() => viewBranch.dispose());
+			},
+		);
 
 		it("views should not be double-disposed on schema upgrade", () => {
 			const provider = new TestTreeProviderLite(1);
@@ -1781,39 +2112,42 @@ describe("sharedTreeView", () => {
 			unsubscribe();
 		});
 
-		itView("disposing of a view also disposes of its revertibles", ({ view, tree }) => {
-			const treeBranch = tree.fork();
-			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = viewBranch.events.on("changed", ({ getRevertible }) => {
-				const r = getRevertible?.(onRevertibleDisposed);
-				assert(r !== undefined, "commit should be revertible");
-				assert.equal(r.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(r);
-			});
+		itView(
+			"disposing of a view also disposes of its revertibles",
+			({ view, tree, forkCheckout }) => {
+				const treeBranch = forkCheckout(tree);
+				const viewBranch = asAlpha(treeBranch.viewWith(view.config));
+				const revertiblesCreated: Revertible[] = [];
+				const unsubscribe = viewBranch.events.on("changed", ({ getRevertible }) => {
+					const r = getRevertible?.(onRevertibleDisposed);
+					assert(r !== undefined, "commit should be revertible");
+					assert.equal(r.status, RevertibleStatus.Valid);
+					revertiblesCreated.push(r);
+				});
 
-			const revertiblesDisposed: Revertible[] = [];
-			function onRevertibleDisposed(disposed: Revertible): void {
-				assert.equal(disposed.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(disposed);
-			}
+				const revertiblesDisposed: Revertible[] = [];
+				function onRevertibleDisposed(disposed: Revertible): void {
+					assert.equal(disposed.status, RevertibleStatus.Disposed);
+					revertiblesDisposed.push(disposed);
+				}
 
-			viewBranch.root.insertAtStart("A");
+				viewBranch.root.insertAtStart("A");
 
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 0);
+				assert.equal(revertiblesCreated.length, 1);
+				assert.equal(revertiblesDisposed.length, 0);
 
-			treeBranch.dispose();
+				treeBranch.dispose();
 
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
+				assert.equal(revertiblesCreated.length, 1);
+				assert.equal(revertiblesDisposed.length, 1);
+				assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
 
-			unsubscribe();
-		});
+				unsubscribe();
+			},
+		);
 
-		itView("can be reverted after rebasing", ({ view, tree }) => {
-			const treeBranch = tree.fork();
+		itView("can be reverted after rebasing", ({ view, tree, forkCheckout }) => {
+			const treeBranch = forkCheckout(tree);
 			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
@@ -2001,6 +2335,28 @@ describe("sharedTreeView", () => {
 					view.root.number = 4;
 				},
 				error: "Editing the tree is forbidden during a change event callback",
+			});
+		});
+
+		it("apply a serialized change", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) =>
+					view.applyChange(view.checkout.serializeCommit(view.checkout.mainBranch.getHead())),
+				error: "Applying a change is forbidden during a change event callback",
+			});
+		});
+
+		it("switch branches", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				error: "Switching branches is forbidden during a change event callback",
+			});
+		});
+
+		it("update the schema", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.updateSchema(view.checkout.storedSchema.clone()),
+				error: "Updating the schema is forbidden during a change event callback",
 			});
 		});
 
@@ -2572,6 +2928,13 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	itView("rejects forks when the parent is broken", ({ view, tree, forkCheckout }) => {
+		assert.throws(() => tree.breaker.break(new Error("broken parent")));
+		assert.throws(() => forkCheckout(tree), validateUsageError(/broken parent/));
+		tree.breaker.clearError();
+		view.dispose();
+	});
+
 	itView("breaks the checkout when an announced visitor throws", ({ view, tree }) => {
 		const error = new Error("Announced visitor failure");
 		tree.forest.registerAnnouncedVisitor(() =>
@@ -2659,10 +3022,16 @@ describe("sharedTreeView", () => {
 const defaultSf = new SchemaFactory("Checkout and view test schema");
 const rootArray = defaultSf.array(defaultSf.string);
 
+interface CheckoutViewTestArgs<TRootSchema extends ImplicitFieldSchema> {
+	view: SchematizingSimpleTreeView<TRootSchema>;
+	tree: TreeCheckout;
+	logger: IMockLoggerExt;
+	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+}
+
 /**
- * Runs the given test function as two tests,
- * one where `view` is the root SharedTree view and the other where `view` is a fork.
- * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
+ * Runs the test with root, reference, and forked views using both checkout fork methods.
+ * The supplied `forkCheckout` operation uses the selected method for subsequent forks.
  *
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
@@ -2672,11 +3041,7 @@ function itView<
 	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,
-	fn: (args: {
-		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: ITreeCheckout;
-		logger: IMockLoggerExt;
-	}) => void,
+	fn: (args: CheckoutViewTestArgs<TRootSchema>) => void,
 	options: {
 		initialContent: { schema: TRootSchema; initialTree: T };
 		skip?: true;
@@ -2684,11 +3049,7 @@ function itView<
 ): void;
 function itView(
 	title: string,
-	fn: (args: {
-		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: ITreeCheckout;
-		logger: IMockLoggerExt;
-	}) => void,
+	fn: (args: CheckoutViewTestArgs<typeof rootArray>) => void,
 	options?: {
 		skip?: true;
 	},
@@ -2698,11 +3059,7 @@ function itView<
 	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,
-	fn: (args: {
-		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: ITreeCheckout;
-		logger: IMockLoggerExt;
-	}) => void,
+	fn: (args: CheckoutViewTestArgs<TRootSchema>) => void,
 	options: {
 		initialContent?: { schema: TRootSchema; initialTree: T };
 		skip?: true;
@@ -2711,12 +3068,12 @@ function itView<
 	const itFunction = options.skip === true ? it.skip.bind(it) : it;
 
 	function callWithView(
-		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: ITreeCheckout;
+			tree: TreeCheckout;
 			logger: IMockLoggerExt;
 		},
+		forkCheckout: (checkout: TreeCheckout) => TreeCheckout,
 	): void {
 		if (options.initialContent) {
 			const { logger } = new TestTreeProviderLite();
@@ -2727,12 +3084,12 @@ function itView<
 				}),
 			);
 			view.initialize(options.initialContent.initialTree);
-			thunk({ view, tree, logger });
+			fn({ view, tree, logger, forkCheckout });
 		} else {
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: ITreeCheckout;
+					tree: TreeCheckout;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -2743,22 +3100,21 @@ function itView<
 			);
 			view.initialize([]);
 			// down cast here is safe due to overload protections
-			(
-				thunk as unknown as (args: {
-					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: ITreeCheckout;
-					logger: IMockLoggerExt;
-				}) => void
-			)({ view, tree, logger });
+			(fn as unknown as (args: CheckoutViewTestArgs<typeof rootArray>) => void)({
+				view,
+				tree,
+				logger,
+				forkCheckout,
+			});
 		}
 	}
 
 	function makeReferenceView(
 		config: TreeViewConfiguration<TRootSchema>,
-		fork: boolean,
+		forkCheckout?: (checkout: TreeCheckout) => TreeCheckout,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: ITreeCheckout;
+		tree: TreeCheckout;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
@@ -2780,47 +3136,51 @@ function itView<
 			new MockNodeIdentifierManager(),
 		);
 
-		if (fork) {
-			const treeBranch = view.checkout.fork();
-			const viewBranch = treeBranch.viewWith(view.config);
-			assert(viewBranch instanceof SchematizingSimpleTreeView);
-			return { view: viewBranch, tree: treeBranch, logger };
-		} else {
+		if (forkCheckout === undefined) {
 			return {
 				view,
 				tree: view.checkout,
 				logger,
 			};
 		}
+		const treeBranch = forkCheckout(view.checkout);
+		const viewBranch = treeBranch.viewWith(view.config);
+		assert(viewBranch instanceof SchematizingSimpleTreeView);
+		return { view: viewBranch, tree: treeBranch, logger };
 	}
 
-	itFunction(`${title} (root view)`, () => {
-		const provider = new TestTreeProviderLite();
-		const [tree] = provider.trees;
-		const branch = tree.kernel.checkout;
-		callWithView(fn, (config) => ({
-			view: tree.kernel.viewWith(config),
-			tree: branch,
-			logger: provider.logger,
-		}));
-	});
-
-	itFunction(`${title} (reference view)`, () => {
-		callWithView(fn, (config) => makeReferenceView(config, false));
-	});
-
-	itFunction(`${title} (forked view)`, () => {
-		const provider = new TestTreeProviderLite();
-		const [tree] = provider.trees;
-		const branch = tree.kernel.checkout.fork();
-		callWithView(fn, (config) => {
-			const view = branch.viewWith(config);
-			assert(view instanceof SchematizingSimpleTreeView);
-			return { view, tree: branch, logger: provider.logger };
+	for (const { name, forkCheckout } of checkoutForks) {
+		itFunction(`${title} (root view, ${name})`, () => {
+			const provider = new TestTreeProviderLite();
+			const [tree] = provider.trees;
+			const branch = tree.kernel.checkout;
+			callWithView(
+				(config) => ({
+					view: tree.kernel.viewWith(config),
+					tree: branch,
+					logger: provider.logger,
+				}),
+				forkCheckout,
+			);
 		});
-	});
 
-	itFunction(`${title} (reference forked view)`, () => {
-		callWithView(fn, (config) => makeReferenceView(config, true));
-	});
+		itFunction(`${title} (reference view, ${name})`, () => {
+			callWithView((config) => makeReferenceView(config), forkCheckout);
+		});
+
+		itFunction(`${title} (forked view, ${name})`, () => {
+			const provider = new TestTreeProviderLite();
+			const [tree] = provider.trees;
+			const branch = forkCheckout(tree.kernel.checkout);
+			callWithView((config) => {
+				const view = branch.viewWith(config);
+				assert(view instanceof SchematizingSimpleTreeView);
+				return { view, tree: branch, logger: provider.logger };
+			}, forkCheckout);
+		});
+
+		itFunction(`${title} (reference forked view, ${name})`, () => {
+			callWithView((config) => makeReferenceView(config, forkCheckout), forkCheckout);
+		});
+	}
 }

@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/driver-web-cache";
-export const pkgVersion = "3.5.0";
+export const pkgVersion = "3.7.0";

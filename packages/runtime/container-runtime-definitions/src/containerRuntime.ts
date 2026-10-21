@@ -193,6 +193,11 @@ export interface IContainerRuntime
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that
 	 * either were not sent out to delta stream or were not yet acknowledged.
+	 * This also includes attachment blobs being uploaded or shared.
+	 *
+	 * @remarks
+	 * Failed or cancelled blobs stop contributing even if their handles remain unusable.
+	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for per-blob outcomes.
 	 */
 	readonly isDirty: boolean;
 

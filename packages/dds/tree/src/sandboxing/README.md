@@ -329,7 +329,7 @@ The remaining limitations are:
 
 - Initialization and change payloads do not yet have complete codec-specific structural validation before mutation.
 - Tree codecs still need verification that they reject handles in structural-record positions without traversing handle internals.
-- The protocol does not enforce limits for message size, nesting depth, pending requests, or blob data.
+- The Host does not enforce rate or size limits for incoming Guest messages.
 - Failures during main-tree merge are not fully isolated.
 - Retained Guest references cannot always be invalidated after a broken tree operation.
 - Cross-realm integration coverage uses `MessagePort` but does not yet include an isolated iframe.
@@ -344,8 +344,11 @@ Do not continue editing a Guest after session failure.
 
 - Complete codec-specific validation of initialization and change payloads before mutation.
 - Verify that tree codecs reject handles in structural-record positions without traversing handle internals.
-- Define limits for message size, nesting depth, pending requests, and blob data.
 - Add malformed-message and protocol-state tests for the remaining message types.
+
+### Rate and Size Limiting
+
+- Add Host-side rate and size limits for incoming Guest messages, enforced before or during transport normalization.
 
 ### Session Fault Isolation
 

@@ -55,6 +55,9 @@ export abstract class BaseSegment implements ISegment {
 }
 
 // @beta @legacy
+export function configuredSharedString(options: SharedStringOptions): ISharedObjectKind<ISharedString> & SharedObjectKind<ISharedString>;
+
+// @beta @legacy
 export function createOverlappingIntervalsIndex(sharedString: ISharedString): ISequenceOverlappingIntervalsIndex;
 
 // @beta @legacy (undocumented)
@@ -473,6 +476,11 @@ export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<I
 
 // @beta @legacy
 export type SharedString = ISharedString;
+
+// @beta @legacy
+export interface SharedStringOptions {
+    readonly newMergeTreeSnapshotFormat?: boolean;
+}
 
 // @beta @legacy
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;

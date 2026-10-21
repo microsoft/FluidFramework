@@ -42,8 +42,8 @@ import {
 
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { createViewableTreeAlpha } from "./viewableTree.js";
+import { buildConfiguredForest } from "./forestType.js";
 import {
-	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
 	type ForestOptions,

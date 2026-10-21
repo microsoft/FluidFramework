@@ -28,6 +28,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @beta @legacy
+export function getDataStorePackagePath(containerRuntime: IContainerRuntimeBase, handle: IFluidHandle): Promise<PackagePath | undefined>;
+
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 

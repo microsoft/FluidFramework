@@ -42,6 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
@@ -497,6 +498,28 @@ export interface TreeBranchCommitMetadata {
 	 * This method may return a different value over time if the parent commit is trimmed from the branch's history.
 	 */
 	getParent(): TreeBranchCommitMetadata | undefined;
+
+	/**
+	 * Applies a new change that reverts all changes made after this commit on the branch from which it was obtained.
+	 * This is a no-op if this commit is the head of that branch.
+	 *
+	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 *
+	 * @remarks
+	 * This method is `undefined` when the commit is no longer reachable on its original branch, the branch has
+	 * been replaced or disposed, a later commit contains a schema change, or reverting is temporarily disallowed
+	 * (for example, during a transaction). Its availability can change as the branch's history changes.
+	 * A schema change in this commit does not prevent reverting later data changes.
+	 *
+	 * Access this method on the metadata before each call; do not retain references to it.
+	 * Each obtained function is single-use and throws a `UsageError` if reused or if the branch changes before it is called.
+	 *
+	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 */
+	revertTo?(options?: RevertToOptionsAlpha): void;
 }
 
 /**
@@ -550,6 +573,11 @@ export interface UntypedTreeViewAlpha
 	readonly branchHistory: TreeBranchHistory;
 
 	/**
+	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.
+	 */
+	readonly locations: TreeLocationResolver;
+
+	/**
 	 * Returns true if this view has the given schema as its root schema.
 	 * @remarks This is a type guard which allows this view to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
 	 *
@@ -598,6 +626,7 @@ export interface UntypedTreeViewAlpha
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 * For new code, use {@link TreeBranchCommitMetadata.revertTo} on a commit from this view's branch history instead.
 	 */
 	revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
 
