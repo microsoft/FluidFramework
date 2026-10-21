@@ -5,39 +5,39 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import type {
+	PackageInRegistry,
+	PackageMeta,
+	PackageMetaWithTime,
+} from "@pnpm/resolving.registry.types";
 import {
 	checkPackage,
 	type PackageServices,
 	parsePackageSpec,
 	type ProvenanceVerificationServices,
 	type RegistryKey,
-	type RegistryPackage,
-	type RegistryVersion,
 	verifyNpmSlsaProvenance,
 } from "../package-check.js";
 
 const registry = "https://registry.npmjs.org";
 const predicateType = "https://slsa.dev/provenance/v1";
 
-function manifest(version: string, attested = true): RegistryVersion {
+function manifest(version: string, attested = true): PackageInRegistry {
 	return {
 		name: "example",
 		version,
-		...(attested
-			? {
-					dist: {
-						attestations: {
-							provenance: { predicateType },
-						},
-					},
-				}
-			: {}),
+		dist: {
+			shasum: "",
+			tarball: `https://registry.npmjs.org/example/-/example-${version}.tgz`,
+			...(attested ? { attestations: { provenance: { predicateType } } } : {}),
+		},
 	};
 }
 
-function packument(): RegistryPackage {
+function packument(): PackageMetaWithTime {
 	return {
 		name: "example",
+		"dist-tags": {},
 		versions: {
 			"1.0.0": manifest("1.0.0", false),
 			"1.1.0": manifest("1.1.0"),
@@ -54,7 +54,7 @@ function packument(): RegistryPackage {
 }
 
 function services(
-	data: RegistryPackage,
+	data: PackageMeta,
 	verify: PackageServices["verify"] = async () => {
 		throw new Error("Must not verify");
 	},
@@ -111,7 +111,7 @@ test("metadata is opt-in and never claims cryptographic verification", async () 
 });
 
 test("no-downgrade follows pnpm: publication order, trust evidence ranking, and prerelease exclusion", async () => {
-	const check = async (spec: string, data: RegistryPackage) =>
+	const check = async (spec: string, data: PackageMeta) =>
 		checkPackage(
 			spec,
 			{ policy: "no-downgrade" },
@@ -132,14 +132,14 @@ test("no-downgrade follows pnpm: publication order, trust evidence ranking, and 
 	const trustedPublisher = packument();
 	const earlier = trustedPublisher.versions["1.1.0"];
 	assert.ok(earlier);
-	earlier._npmUser = { trustedPublisher: { id: "github" } };
+	earlier._npmUser = { trustedPublisher: { id: "github", oidcConfigId: "oidc" } };
 	assert.equal((await check("example@2.0.0", trustedPublisher)).requested.verdict, "rejected");
 
 	// pnpm ranks a trusted publisher only when provenance is also present.
 	const publisherOnly = packument();
 	const unattested = publisherOnly.versions["1.0.0"];
 	assert.ok(unattested);
-	unattested._npmUser = { trustedPublisher: { id: "github" } };
+	unattested._npmUser = { trustedPublisher: { id: "github", oidcConfigId: "oidc" } };
 	assert.equal((await check("example@1.1.0", publisherOnly)).requested.verdict, "accepted");
 
 	const staged = packument();

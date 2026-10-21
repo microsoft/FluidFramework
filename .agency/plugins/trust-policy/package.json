@@ -34,6 +34,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
+		"@pnpm/resolving.registry.types": "^1100.2.4",
 		"@types/node": "~22.19.17",
 		"@types/npm-package-arg": "^6.1.4",
 		"@types/npm-registry-fetch": "^8.0.9",

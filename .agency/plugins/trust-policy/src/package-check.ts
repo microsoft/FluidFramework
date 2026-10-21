@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { PackageInRegistry, PackageMeta } from "@pnpm/resolving.registry.types";
 import npa from "npm-package-arg";
 import npmFetch from "npm-registry-fetch";
 import pacote from "pacote";
@@ -49,74 +50,6 @@ export enum TrustEvidence {
 	 * A maintainer approved the version through npm staged publishing (`_npmUser.approver`).
 	 */
 	StagedPublish = 3,
-}
-
-/**
- * The subset of a registry version manifest (one entry of a packument's `versions`) that trust checks read.
- */
-export interface RegistryVersion {
-	/**
-	 * Package name.
-	 */
-	name: string;
-	/**
-	 * Exact version.
-	 */
-	version: string;
-	/**
-	 * Deprecation message, present when the version is deprecated.
-	 */
-	deprecated?: string;
-	/**
-	 * Distribution metadata.
-	 */
-	dist?: {
-		/**
-		 * Attestations the registry stores for this version.
-		 */
-		attestations?: {
-			/**
-			 * Present when the version has a provenance attestation.
-			 */
-			provenance?: {
-				/**
-				 * The attestation's in-toto predicate type.
-				 */
-				predicateType?: string;
-			};
-		};
-	};
-	/**
-	 * The npm account that published the version.
-	 */
-	_npmUser?: {
-		/**
-		 * Present when the version was published by an npm trusted publisher.
-		 */
-		trustedPublisher?: unknown;
-		/**
-		 * Present when a maintainer approved a staged publish.
-		 */
-		approver?: unknown;
-	};
-}
-
-/**
- * The subset of a registry packument (all versions of a package) that trust checks read.
- */
-export interface RegistryPackage {
-	/**
-	 * Package name.
-	 */
-	name: string;
-	/**
-	 * Version manifests, keyed by version.
-	 */
-	versions: Record<string, RegistryVersion>;
-	/**
-	 * ISO 8601 publication times, keyed by version.
-	 */
-	time: Record<string, string>;
 }
 
 /**
@@ -227,7 +160,7 @@ export interface PackageServices {
 	/**
 	 * Loads a package's packument.
 	 */
-	load: (name: string, registry: string) => Promise<RegistryPackage>;
+	load: (name: string, registry: string) => Promise<PackageMeta>;
 	/**
 	 * Cryptographically verifies a version's provenance.
 	 */
@@ -287,7 +220,7 @@ export function parsePackageSpec(spec: string): PinnedVersion {
  * Returns the trust evidence the registry reports for a version, as pnpm computes it.
  * @param manifest - Registry version manifest.
  */
-export function getTrustEvidence(manifest: RegistryVersion): TrustEvidence {
+export function getTrustEvidence(manifest: PackageInRegistry): TrustEvidence {
 	if (manifest._npmUser?.approver) {
 		return TrustEvidence.StagedPublish;
 	}
@@ -350,7 +283,7 @@ export async function checkPackage(
  * State shared by the assessments of one {@link checkPackage} call.
  */
 interface AssessmentContext {
-	packument: RegistryPackage;
+	packument: PackageMeta;
 	registry: string;
 	services: PackageServices;
 	/**
@@ -367,7 +300,7 @@ interface AssessmentContext {
  */
 async function assessVersion(
 	context: AssessmentContext,
-	manifest: RegistryVersion,
+	manifest: PackageInRegistry,
 	policy: PackagePolicy,
 ): Promise<PackageAssessment> {
 	const { packument } = context;
@@ -426,10 +359,10 @@ async function assessVersion(
  * @param version - Version to assess.
  */
 export function assessNoDowngrade(
-	packument: RegistryPackage,
+	packument: PackageMeta,
 	version: string,
 ): Pick<PackageAssessment, "verdict" | "reason"> {
-	const publishedAt = Date.parse(packument.time[version] ?? "");
+	const publishedAt = Date.parse(packument.time?.[version] ?? "");
 	const manifest = packument.versions[version];
 	if (!Number.isFinite(publishedAt) || manifest === undefined) {
 		throw new Error(`Missing publication time for ${packument.name}@${version}.`);
@@ -459,7 +392,7 @@ export function assessNoDowngrade(
  * @param excludePrerelease - Whether to ignore prerelease versions.
  */
 function findStrongestEarlierTrustEvidence(
-	packument: RegistryPackage,
+	packument: PackageMeta,
 	before: number,
 	excludePrerelease: boolean,
 ): { version: string; evidence: TrustEvidence } | undefined {
@@ -468,7 +401,7 @@ function findStrongestEarlierTrustEvidence(
 		if (excludePrerelease && semver.prerelease(version, true) !== null) {
 			continue;
 		}
-		const publishedAt = Date.parse(packument.time[version] ?? "");
+		const publishedAt = Date.parse(packument.time?.[version] ?? "");
 		if (!(publishedAt < before)) {
 			continue;
 		}
@@ -503,9 +436,9 @@ function describeTrustEvidence(evidence: TrustEvidence): string {
  * @param excludedVersion - The requested version, which is never its own alternative.
  */
 function selectAlternativeCandidates(
-	packument: RegistryPackage,
+	packument: PackageMeta,
 	excludedVersion: string,
-): RegistryVersion[] {
+): PackageInRegistry[] {
 	return Object.entries(packument.versions)
 		.filter(
 			([version, manifest]) =>
@@ -531,7 +464,7 @@ function selectAlternativeCandidates(
  */
 async function findAlternative(
 	context: AssessmentContext,
-	candidates: readonly RegistryVersion[],
+	candidates: readonly PackageInRegistry[],
 	policy: PackagePolicy,
 	maxCandidates: number,
 ): Promise<Pick<PackageCheckResult, "alternative" | "candidatesChecked" | "searchTruncated">> {
@@ -589,7 +522,8 @@ function createDefaultServices(): PackageServices {
 			// Each selected version is checked again against its requested identity before use.
 			return {
 				name: packument.name,
-				versions: packument.versions as unknown as Record<string, RegistryVersion>,
+				"dist-tags": packument["dist-tags"],
+				versions: packument.versions as unknown as Record<string, PackageInRegistry>,
 				time: packument.time ?? {},
 			};
 		},
