@@ -10,6 +10,7 @@ import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { redact } from "@npmcli/redact";
 import { Command, Flags, execute } from "@oclif/core";
 import { mergePackageVersionSpecs } from "@pnpm/config.version-policy";
 import { findWorkspaceDir } from "@pnpm/find-workspace-dir";
@@ -31,7 +32,6 @@ import {
 	planEndpoints,
 	probeEndpoints,
 	publicRegistries,
-	redactRegistry,
 	sigstoreTufEndpoint,
 } from "./registry-access.js";
 
@@ -223,7 +223,7 @@ export default class CheckTrustPolicyCommand extends Command {
 		if (flags.package !== undefined) {
 			if (flags.registry !== undefined && isAzureArtifactsRegistry(flags.registry)) {
 				this.error(
-					`--registry ${redactRegistry(flags.registry)} is an Azure Artifacts feed. ${azureArtifactsReason} Omit --registry to use https://registry.npmjs.org, or pass a registry that serves npm attestations.`,
+					`--registry ${redact(flags.registry)} is an Azure Artifacts feed. ${azureArtifactsReason} Omit --registry to use https://registry.npmjs.org, or pass a registry that serves npm attestations.`,
 				);
 			}
 			const policy = flags.policy ?? "cryptographic";
@@ -373,14 +373,14 @@ export default class CheckTrustPolicyCommand extends Command {
 			// The full configuration includes credentials; only registry URLs are used.
 			const registryConfig = parseRegistryConfig(configList.stdout);
 			const registry = registryConfig.registry ?? publicRegistries[0];
-			verbose(`pnpm registry: ${redactRegistry(registry)}`);
+			verbose(`pnpm registry: ${redact(registry)}`);
 			if (isAzureArtifactsRegistry(registry)) {
 				this.error(
-					`pnpm resolves packages from the Azure Artifacts feed ${redactRegistry(registry)}. ${azureArtifactsReason} pnpm would report no trust downgrades even when published packages have them. Point pnpm at the public registry for the audit by setting the environment variable pnpm_config_registry=https://registry.npmjs.org/ (pnpm 11+) or npm_config_registry=https://registry.npmjs.org/ (pnpm 10).`,
+					`pnpm resolves packages from the Azure Artifacts feed ${redact(registry)}. ${azureArtifactsReason} pnpm would report no trust downgrades even when published packages have them. Point pnpm at the public registry for the audit by setting the environment variable pnpm_config_registry=https://registry.npmjs.org/ (pnpm 11+) or npm_config_registry=https://registry.npmjs.org/ (pnpm 10).`,
 				);
 			}
 			await requireEndpoints(
-				[npmRegistryEndpoint(redactRegistry(registry), "pnpm package resolution")],
+				[npmRegistryEndpoint(registry, "pnpm package resolution")],
 				"pnpm needs this registry to evaluate trust. Configure a reachable registry or pass --no-registry-check if pnpm uses a proxy.",
 			);
 			for (const [scope, scopeRegistry] of registryConfig.scoped) {
@@ -390,7 +390,7 @@ export default class CheckTrustPolicyCommand extends Command {
 				const count = pinned.filter(({ name }) => name.startsWith(`${scope}/`)).length;
 				if (count > 0) {
 					warning(
-						`${count} ${scope} package version(s) resolve from the Azure Artifacts feed ${redactRegistry(scopeRegistry)}. Their trust cannot be evaluated.`,
+						`${count} ${scope} package version(s) resolve from the Azure Artifacts feed ${redact(scopeRegistry)}. Their trust cannot be evaluated.`,
 					);
 				}
 			}

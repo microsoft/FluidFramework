@@ -487,7 +487,8 @@ test("rejects Azure Artifacts registries before any trust check and warns about 
 			"--no-registry-check",
 		]),
 		(error: { stderr: string }) => {
-			assert.match(error.stderr, /is an Azure Artifacts feed/);
+			// oclif wraps error messages and prefixes continuation lines with "»".
+			assert.match(error.stderr.replace(/\s+(»\s+)?/g, " "), /is an Azure Artifacts feed/);
 			assert.doesNotMatch(error.stderr, /secret/);
 			return true;
 		},

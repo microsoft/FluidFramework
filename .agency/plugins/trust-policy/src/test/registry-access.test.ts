@@ -14,7 +14,6 @@ import {
 	parseRegistryConfig,
 	planEndpoints,
 	probeEndpoints,
-	redactRegistry,
 	sigstoreTufEndpoint,
 } from "../registry-access.js";
 
@@ -146,8 +145,4 @@ test("extracts registries from pnpm config without exposing credentials", () => 
 	);
 	assert.equal(parseRegistryConfig("{}").registry, undefined);
 	assert.throws(() => parseRegistryConfig("secret"), /did not return JSON/);
-	assert.equal(
-		redactRegistry("https://user:secret@pkgs.dev.azure.com/o/_packaging/f/npm/registry/"),
-		"https://pkgs.dev.azure.com/o/_packaging/f/npm/registry/",
-	);
 });

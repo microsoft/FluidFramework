@@ -194,24 +194,6 @@ export function isAzureArtifactsRegistry(registry: string): boolean {
 	);
 }
 
-/**
- * Removes any credentials embedded in a registry URL so it can be shown to the user.
- * @param registry - Registry URL.
- */
-export function redactRegistry(registry: string): string {
-	try {
-		const url = new URL(registry);
-		if (url.username === "" && url.password === "") {
-			return registry;
-		}
-		url.username = "";
-		url.password = "";
-		return url.href;
-	} catch {
-		return "<unparseable registry URL>";
-	}
-}
-
 export interface RegistryConfig {
 	registry: string | undefined;
 	/**

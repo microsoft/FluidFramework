@@ -20,6 +20,7 @@
 		"node": "^22.22.2 || ^24.15.0 || >=26.0.0"
 	},
 	"dependencies": {
+		"@npmcli/redact": "^5.0.0",
 		"@oclif/core": "^4.10.5",
 		"@pnpm/config.version-policy": "^1100.2.9",
 		"@pnpm/find-workspace-dir": "^1000.1.5",
