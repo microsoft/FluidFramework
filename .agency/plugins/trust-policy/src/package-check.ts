@@ -4,16 +4,10 @@
  */
 
 import npa from "npm-package-arg";
+import npmFetch from "npm-registry-fetch";
+import pacote from "pacote";
 import semver from "semver";
-import {
-	type BundleVerifier,
-	createVerifier,
-	PolicyError,
-	ValidationError,
-	VerificationError,
-} from "sigstore";
-import ssri from "ssri";
-import { isRecord, type PinnedVersion, toPinnedVersion } from "./lockfiles.js";
+import { type PinnedVersion, toPinnedVersion } from "./lockfiles.js";
 
 /**
  * How single-package mode decides whether a version is trustworthy.
@@ -78,21 +72,9 @@ export interface RegistryVersion {
 	 */
 	dist?: {
 		/**
-		 * URL of the package tarball.
-		 */
-		tarball?: string;
-		/**
-		 * Subresource Integrity hash of the tarball, which installers verify on download.
-		 */
-		integrity?: string;
-		/**
 		 * Attestations the registry stores for this version.
 		 */
 		attestations?: {
-			/**
-			 * URL of the registry's attestations endpoint for this version.
-			 */
-			url?: string;
 			/**
 			 * Present when the version has a provenance attestation.
 			 */
@@ -249,25 +231,7 @@ export interface PackageServices {
 	/**
 	 * Cryptographically verifies a version's provenance.
 	 */
-	verify: (
-		pin: PinnedVersion,
-		manifest: RegistryVersion,
-		registry: string,
-	) => Promise<ProvenanceResult>;
-}
-
-/**
- * Network and Sigstore dependencies of {@link verifyNpmSlsaProvenance}, replaceable in tests.
- */
-export interface ProvenanceVerificationServices {
-	/**
-	 * Fetch implementation used for the attestations endpoint.
-	 */
-	fetcher: typeof fetch;
-	/**
-	 * Returns a Sigstore bundle verifier backed by a trusted root.
-	 */
-	getVerifier: () => Promise<BundleVerifier>;
+	verify: (pin: PinnedVersion, registry: string) => Promise<ProvenanceResult>;
 }
 
 /**
@@ -284,13 +248,14 @@ export const slsaProvenancePredicateTypes: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * {@link https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md | in-toto Statement} types npm signs, and the DSSE payload type that carries them.
+ * Codes of the errors pacote throws when attestations fail verification, as opposed to operational failures.
  */
-const inTotoStatementTypes: ReadonlySet<string> = new Set([
-	"https://in-toto.io/Statement/v0.1",
-	"https://in-toto.io/Statement/v1",
+const attestationErrorCodes: ReadonlySet<string> = new Set([
+	"EATTESTATIONSUBJECT",
+	"EATTESTATIONVERIFY",
+	"EEXPIREDSIGNATUREKEY",
+	"EMISSINGSIGNATUREKEY",
 ]);
-const inTotoPayloadType = "application/vnd.in-toto+json";
 
 const defaultRegistry = "https://registry.npmjs.org";
 
@@ -344,11 +309,7 @@ export function getTrustEvidence(manifest: RegistryVersion): TrustEvidence {
 export async function checkPackage(
 	spec: string,
 	options: PackageCheckOptions = {},
-	services: PackageServices = {
-		load: loadRegistryPackage,
-		verify: (pin, manifest, registry) =>
-			verifyNpmSlsaProvenance(pin, manifest, registry, defaultVerificationServices),
-	},
+	services: PackageServices = createDefaultServices(),
 ): Promise<PackageCheckResult> {
 	const pin = parsePackageSpec(spec);
 	const policy = options.policy ?? "cryptographic";
@@ -439,7 +400,6 @@ async function assessVersion(
 	try {
 		const checked = await context.services.verify(
 			{ name: packument.name, version: manifest.version },
-			manifest,
 			context.registry,
 		);
 		return {
@@ -597,118 +557,161 @@ function normalizeRegistry(registry: string): string {
 	return url.href.replace(/\/$/, "");
 }
 
-async function fetchJson(url: string, fetcher: typeof fetch): Promise<unknown> {
-	const response = await fetcher(url, {
-		signal: AbortSignal.timeout(60_000),
-		redirect: "error",
-	});
-	if (!response.ok) {
-		throw new Error(`Registry request failed: HTTP ${response.status} for ${url}`);
-	}
-	return response.json();
-}
+/**
+ * Registry requests that take longer than this fail, making the affected assessment inconclusive.
+ */
+const requestTimeoutMs = 60_000;
 
-async function loadRegistryPackage(name: string, registry: string): Promise<RegistryPackage> {
-	const data = await fetchJson(`${registry}/${encodeURIComponent(name)}`, fetch);
-	if (!isRecord(data) || data.name !== name || !isRecord(data.versions)) {
-		throw new Error(`Invalid registry metadata for ${name}.`);
-	}
-	// Each selected version is checked again against its requested identity before use.
+/**
+ * Creates the production {@link PackageServices} for one {@link checkPackage} call.
+ * Packuments are shared between loading and verification, and registry keys are fetched once.
+ */
+function createDefaultServices(): PackageServices {
+	const options = {
+		fullMetadata: true,
+		packumentCache: new Map(),
+		timeout: requestTimeoutMs,
+	} as const;
+	let keys: Promise<RegistryKey[] | undefined> | undefined;
+	const verificationServices: ProvenanceVerificationServices = {
+		manifest: async (spec, manifestOptions) =>
+			(await pacote.manifest(spec, { ...options, ...manifestOptions })) as {
+				_attestationBundles?: unknown;
+			},
+		fetchKeys: async (registry) => {
+			keys ??= fetchRegistryKeys(registry);
+			return keys;
+		},
+	};
 	return {
-		name,
-		versions: data.versions as Record<string, RegistryVersion>,
-		time: isRecord(data.time) ? (data.time as Record<string, string>) : {},
+		load: async (name, registry) => {
+			const packument = await pacote.packument(name, { ...options, registry });
+			// Each selected version is checked again against its requested identity before use.
+			return {
+				name: packument.name,
+				versions: packument.versions as unknown as Record<string, RegistryVersion>,
+				time: packument.time ?? {},
+			};
+		},
+		verify: async (pin, registry) =>
+			verifyNpmSlsaProvenance(pin, registry, verificationServices),
 	};
 }
 
-let defaultVerifier: Promise<BundleVerifier> | undefined;
-
 /**
- * Production {@link ProvenanceVerificationServices}: global fetch, and a Sigstore verifier whose trusted root is fetched once through Sigstore's TUF repository.
+ * A registry key that signs npm's publish attestations, in the form pacote accepts.
  */
-export const defaultVerificationServices: ProvenanceVerificationServices = {
-	fetcher: fetch,
-	getVerifier: async () => {
-		defaultVerifier ??= createVerifier({ tlogThreshold: 1, ctLogThreshold: 1 }).catch(
-			(error: unknown) => {
-				// Allow a later attempt to retry after a transient TUF failure.
-				defaultVerifier = undefined;
-				throw error;
-			},
-		);
-		return defaultVerifier;
-	},
-};
+export interface RegistryKey {
+	/**
+	 * Key identifier that attestation signatures reference.
+	 */
+	keyid: string;
+	/**
+	 * PEM-encoded public key.
+	 */
+	pemkey: string;
+	/**
+	 * Expiry time, after which the key no longer verifies new attestations.
+	 */
+	expires: string | null;
+}
 
 /**
- * Verifies npm SLSA build provenance the way npm's
- * {@link https://github.com/npm/pacote/blob/main/lib/registry.js | pacote} does for `npm install` with attestation verification.
+ * Fetches the registry's attestation signing keys, as npm's
+ * {@link https://github.com/npm/cli/blob/latest/lib/utils/verify-signatures.js | verify-signatures} does when TUF has no keys for the registry.
+ * @param registry - Normalized registry URL.
+ * @returns The keys, or `undefined` if the registry does not publish any.
+ */
+async function fetchRegistryKeys(registry: string): Promise<RegistryKey[] | undefined> {
+	let response: { keys?: { keyid: string; key: string; expires: string | null }[] };
+	try {
+		response = (await npmFetch.json("/-/npm/v1/keys", {
+			registry,
+			timeout: requestTimeoutMs,
+		})) as typeof response;
+	} catch (error) {
+		const code = (error as { code?: unknown }).code;
+		if (code === "E404" || code === "E400") {
+			return undefined;
+		}
+		throw error;
+	}
+	return response.keys?.map(({ keyid, key, expires }) => ({
+		keyid,
+		expires,
+		pemkey: `-----BEGIN PUBLIC KEY-----\n${key}\n-----END PUBLIC KEY-----`,
+	}));
+}
+
+/**
+ * Registry operations used by {@link verifyNpmSlsaProvenance}, replaceable in tests.
+ */
+export interface ProvenanceVerificationServices {
+	/**
+	 * Resolves a version manifest with pacote's `manifest`, which verifies attestations when `verifyAttestations` is set.
+	 */
+	manifest: (
+		spec: string,
+		options: { registry: string; verifyAttestations: true; [key: string]: unknown },
+	) => Promise<{ _attestationBundles?: unknown }>;
+	/**
+	 * Returns the registry's attestation signing keys, or `undefined` if it does not publish any.
+	 */
+	fetchKeys: (registry: string) => Promise<RegistryKey[] | undefined>;
+}
+
+/**
+ * Verifies npm SLSA build provenance with {@link https://github.com/npm/pacote | pacote}, as `npm install` does when attestation verification is enabled.
  *
- * Each SLSA provenance bundle must pass Sigstore verification (Fulcio certificate chain, signature, and transparency log inclusion).
- * Its signed in-toto statement must name the requested package URL, and its SHA-512 subject must match the version's registry `dist.integrity`, which installers check when they download the tarball.
- * Registry-signed publish attestations alone are not build provenance.
+ * pacote checks each attestation's Sigstore bundle, and that its signed subject names the requested package URL and matches the version's registry SHA-512 integrity, which installers check when they download the tarball.
+ * This function additionally requires a signed statement with an SLSA provenance predicate, since pacote also accepts registry-signed publish attestations alone, which are not build provenance.
  *
  * @param pin - Requested package version.
- * @param manifest - The version's registry manifest.
- * @param registry - Normalized registry URL. Attestations must be served from its origin.
- * @param services - Network and Sigstore dependencies.
+ * @param registry - Normalized registry URL.
+ * @param services - Registry operations.
  * @returns Whether the provenance verified. Operational failures, such as network or TUF errors, are thrown.
  */
 export async function verifyNpmSlsaProvenance(
 	pin: PinnedVersion,
-	manifest: RegistryVersion,
 	registry: string,
 	services: ProvenanceVerificationServices,
 ): Promise<ProvenanceResult> {
-	const attestationUrl = manifest.dist?.attestations?.url;
-	if (attestationUrl === undefined) {
-		return { verified: false, reason: "Missing attestations URL." };
-	}
-	const url = new URL(attestationUrl);
-	if (url.protocol !== "https:" || url.origin !== new URL(registry).origin || url.username) {
-		throw new Error("Attestations URL must use the HTTPS registry origin.");
-	}
-	const integrity = ssri.parse(manifest.dist?.integrity ?? "", { strict: true });
-	if (integrity.sha512 === undefined) {
-		return { verified: false, reason: "Registry integrity has no SHA-512 hash." };
-	}
-	const data = await fetchJson(attestationUrl, services.fetcher);
-	if (!isRecord(data) || !Array.isArray(data.attestations)) {
-		throw new Error("Malformed registry attestation response.");
-	}
-	const provenance = data.attestations.filter(
-		(entry: unknown): entry is Record<string, unknown> =>
-			isRecord(entry) &&
-			typeof entry.predicateType === "string" &&
-			slsaProvenancePredicateTypes.has(entry.predicateType),
-	);
-	if (provenance.length === 0) {
-		return {
-			verified: false,
-			reason: "No SLSA provenance bundle; publish attestations alone are insufficient.",
-		};
-	}
-	const verifier = await services.getVerifier();
-	// `toPurl` exists in npm-package-arg but is missing from @types/npm-package-arg.
-	const { toPurl } = npa as typeof npa & { toPurl: (arg: npa.Result) => string };
-	const purl = toPurl(npa.resolve(pin.name, pin.version));
-	for (const entry of provenance) {
-		try {
-			verifier.verify(entry.bundle as Parameters<BundleVerifier["verify"]>[0]);
-		} catch (error) {
-			if (
-				error instanceof VerificationError ||
-				error instanceof PolicyError ||
-				error instanceof ValidationError
-			) {
-				return { verified: false, reason: `Invalid provenance: ${error.message}` };
-			}
+	const keys = await services.fetchKeys(registry);
+	const url = new URL(registry);
+	// pacote looks keys up by this exact key, including the trailing slash.
+	const keysOption =
+		keys === undefined ? {} : { [`//${url.host}${url.pathname}:_keys`]: keys };
+	let manifest: { _attestationBundles?: unknown };
+	try {
+		manifest = await services.manifest(`${pin.name}@${pin.version}`, {
+			...keysOption,
+			registry,
+			verifyAttestations: true,
+		});
+	} catch (error) {
+		const code = (error as { code?: unknown }).code;
+		if (typeof code !== "string" || !attestationErrorCodes.has(code)) {
 			throw error;
 		}
-		const failure = checkSignedStatement(entry, purl, integrity);
-		if (failure !== undefined) {
-			return { verified: false, reason: failure };
+		const message = error instanceof Error ? error.message : String(error);
+		if (code === "EMISSINGSIGNATUREKEY" && keys === undefined) {
+			throw new Error(
+				`${registry} does not publish attestation signing keys, so its publish attestations cannot be verified: ${message}`,
+				{ cause: error },
+			);
 		}
+		return { verified: false, reason: `Invalid attestation: ${message}` };
+	}
+	const bundles = Array.isArray(manifest._attestationBundles)
+		? manifest._attestationBundles
+		: [];
+	if (
+		!bundles.some((bundle) => slsaProvenancePredicateTypes.has(signedPredicateType(bundle)))
+	) {
+		return {
+			verified: false,
+			reason: "No verified SLSA provenance; publish attestations alone are insufficient.",
+		};
 	}
 	return {
 		verified: true,
@@ -718,51 +721,22 @@ export async function verifyNpmSlsaProvenance(
 }
 
 /**
- * Checks that a Sigstore-verified provenance attestation's statement describes the expected artifact.
- * @param entry - Attestation entry whose bundle has already been verified.
- * @param purl - Expected package URL of the subject.
- * @param integrity - Registry integrity the subject digest must match.
- * @returns A failure reason, or `undefined` if the statement matches.
+ * Returns the predicate type of the in-toto statement an attestation's DSSE envelope signs.
+ * The registry's top-level `predicateType` is not signed, so it is not trusted.
+ * @param attestation - Attestation whose bundle pacote has verified.
  */
-function checkSignedStatement(
-	entry: Record<string, unknown>,
-	purl: string,
-	integrity: ssri.IntegrityMap,
-): string | undefined {
-	const envelope = isRecord(entry.bundle) ? entry.bundle.dsseEnvelope : undefined;
-	if (
-		!isRecord(envelope) ||
-		envelope.payloadType !== inTotoPayloadType ||
-		typeof envelope.payload !== "string"
-	) {
-		return "Provenance bundle does not sign an in-toto statement.";
+function signedPredicateType(attestation: unknown): string {
+	const payload = (
+		attestation as { bundle?: { dsseEnvelope?: { payload?: unknown } } } | null | undefined
+	)?.bundle?.dsseEnvelope?.payload;
+	if (typeof payload !== "string") {
+		return "";
 	}
-	let statement: unknown;
 	try {
-		statement = JSON.parse(Buffer.from(envelope.payload, "base64").toString("utf8"));
+		const statement: unknown = JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+		const predicateType = (statement as { predicateType?: unknown } | null)?.predicateType;
+		return typeof predicateType === "string" ? predicateType : "";
 	} catch {
-		return "Signed statement is not valid JSON.";
+		return "";
 	}
-	if (
-		!isRecord(statement) ||
-		typeof statement._type !== "string" ||
-		!inTotoStatementTypes.has(statement._type) ||
-		statement.predicateType !== entry.predicateType ||
-		!Array.isArray(statement.subject) ||
-		statement.subject.length !== 1
-	) {
-		return "Signed statement is not the expected SLSA provenance.";
-	}
-	const subject: unknown = statement.subject[0];
-	if (!isRecord(subject) || subject.name !== purl) {
-		return `Signed subject does not name ${purl}.`;
-	}
-	const sha512 = isRecord(subject.digest) ? subject.digest.sha512 : undefined;
-	if (typeof sha512 !== "string" || !/^[\da-f]{128}$/i.test(sha512)) {
-		return "Signed subject has no SHA-512 digest.";
-	}
-	if (integrity.match(ssri.fromHex(sha512.toLowerCase(), "sha512")) === false) {
-		return "Signed SHA-512 digest does not match the registry integrity.";
-	}
-	return undefined;
 }

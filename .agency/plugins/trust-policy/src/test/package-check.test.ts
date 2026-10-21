@@ -4,18 +4,13 @@
  */
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { test } from "node:test";
-import { bundleFromJSON } from "@sigstore/bundle";
-import { TrustedRoot } from "@sigstore/protobuf-specs";
-import { toSignedEntity, toTrustMaterial, Verifier } from "@sigstore/verify";
-import { type BundleVerifier, TUFError } from "sigstore";
 import {
 	checkPackage,
 	type PackageServices,
 	parsePackageSpec,
 	type ProvenanceVerificationServices,
+	type RegistryKey,
 	type RegistryPackage,
 	type RegistryVersion,
 	verifyNpmSlsaProvenance,
@@ -32,7 +27,6 @@ function manifest(version: string, attested = true): RegistryVersion {
 			? {
 					dist: {
 						attestations: {
-							url: `${registry}/attestations`,
 							provenance: { predicateType },
 						},
 					},
@@ -211,7 +205,7 @@ test("operational verification failures are inconclusive, never accepted or reje
 		{},
 		services(packument(), async (pin) => {
 			if (pin.version === "2.0.0") {
-				throw new TUFError({ code: "TUF_REFRESH_METADATA_ERROR", message: "offline" });
+				throw new Error("TUF metadata refresh failed: offline");
 			}
 			return { verified: true, reason: "verified" };
 		}),
@@ -235,141 +229,99 @@ test("malformed identities, unknown packages, and missing dates fail explicitly"
 	);
 });
 
-/**
- * Real registry responses for semver@7.7.3, captured from registry.npmjs.org.
- * Together with the Sigstore trusted root, they allow genuine Sigstore verification without network access.
- */
-function readFixture(name: string): unknown {
-	return JSON.parse(
-		readFileSync(new URL(`../../src/test/fixtures/${name}`, import.meta.url), "utf8"),
-	);
-}
-
-const semverManifest = readFixture("semver-7.7.3-manifest.json") as RegistryVersion;
-const semverAttestations = readFixture("semver-7.7.3-attestations.json") as {
-	attestations: { predicateType: string; bundle: { dsseEnvelope: { payload: string } } }[];
-};
+const semverPin = { name: "semver", version: "7.7.3" };
+const publishPredicateType = "https://github.com/npm/attestation/tree/main/specs/publish/v0.1";
+const registryKeys: RegistryKey[] = [{ keyid: "SHA256:key", pemkey: "PEM", expires: null }];
 
 /**
- * Reads the Sigstore public-good trusted root that `@sigstore/tuf` ships as its offline seed.
- * `seeds.json` is not a public API of that package, so this may need updating when it is upgraded.
+ * Builds an attestation as pacote returns it, whose signed statement has the given predicate type.
  */
-function readSeedTrustedRoot(): TrustedRoot {
-	const seeds = JSON.parse(
-		readFileSync(createRequire(import.meta.url).resolve("@sigstore/tuf/seeds.json"), "utf8"),
-	) as Record<string, { targets: Record<string, string> }>;
-	const encoded = seeds["https://tuf-repo-cdn.sigstore.dev"]?.targets["trusted_root.json"];
-	assert(encoded !== undefined, "@sigstore/tuf seeds.json has no public-good trusted root");
-	return TrustedRoot.fromJSON(JSON.parse(Buffer.from(encoded, "base64").toString("utf8")));
-}
-
-const trustedRoot = readSeedTrustedRoot();
-
-/**
- * Builds a Sigstore verifier from the captured trusted root, matching the thresholds production uses.
- */
-function offlineVerifier(): BundleVerifier {
-	const verifier = new Verifier(toTrustMaterial(trustedRoot), {
-		tlogThreshold: 1,
-		ctlogThreshold: 1,
-	});
-	return { verify: (bundle) => verifier.verify(toSignedEntity(bundleFromJSON(bundle))) };
-}
-
-function offlineServices(
-	attestations: unknown = semverAttestations,
-): ProvenanceVerificationServices & {
-	fetched: string[];
-} {
-	const fetched: string[] = [];
+function attestation(signedPredicateType: string, listedPredicateType = signedPredicateType) {
+	const statement = { predicateType: signedPredicateType };
 	return {
-		fetched,
-		fetcher: async (input) => {
-			fetched.push(String(input));
-			return Response.json(structuredClone(attestations));
+		predicateType: listedPredicateType,
+		bundle: {
+			dsseEnvelope: { payload: Buffer.from(JSON.stringify(statement)).toString("base64") },
 		},
-		getVerifier: async () => offlineVerifier(),
 	};
 }
 
-const semverPin = { name: "semver", version: "7.7.3" };
+/**
+ * Stubs pacote's manifest with a result or error, recording the options it receives.
+ */
+function pacoteStub(
+	outcome: { bundles: unknown[] } | Error,
+): ProvenanceVerificationServices & { calls: [string, Record<string, unknown>][] } {
+	const calls: [string, Record<string, unknown>][] = [];
+	return {
+		calls,
+		fetchKeys: async () => registryKeys,
+		manifest: async (spec, options) => {
+			calls.push([spec, options]);
+			if (outcome instanceof Error) {
+				throw outcome;
+			}
+			return { _attestationBundles: outcome.bundles };
+		},
+	};
+}
 
-test("real npm SLSA provenance verifies against Sigstore and the registry integrity", async () => {
-	const fixture = offlineServices();
-	const result = await verifyNpmSlsaProvenance(semverPin, semverManifest, registry, fixture);
-	assert.deepEqual(
-		{ verified: result.verified, fetched: fixture.fetched },
-		{ verified: true, fetched: [semverManifest.dist?.attestations?.url] },
-	);
+function attestationError(code: string, message: string): Error {
+	return Object.assign(new Error(message), { code });
+}
+
+test("provenance verifies when pacote verifies a signed SLSA provenance attestation", async () => {
+	const stub = pacoteStub({
+		bundles: [attestation(publishPredicateType), attestation(predicateType)],
+	});
+	const result = await verifyNpmSlsaProvenance(semverPin, registry, stub);
+	assert.equal(result.verified, true);
+	assert.deepEqual(stub.calls, [
+		[
+			"semver@7.7.3",
+			{ registry, verifyAttestations: true, "//registry.npmjs.org/:_keys": registryKeys },
+		],
+	]);
 });
 
-test("provenance for a different artifact, a forged statement, or only publish attestations is rejected", async () => {
-	const reject = async (
-		pin: typeof semverPin,
-		version: RegistryVersion,
-		attestations: unknown = semverAttestations,
-	): Promise<string> => {
-		const result = await verifyNpmSlsaProvenance(
-			pin,
-			version,
-			registry,
-			offlineServices(attestations),
-		);
+test("publish attestations alone, relabeled attestations, and pacote verification failures are rejected", async () => {
+	const reject = async (outcome: { bundles: unknown[] } | Error): Promise<string> => {
+		const result = await verifyNpmSlsaProvenance(semverPin, registry, pacoteStub(outcome));
 		assert.equal(result.verified, false);
 		return result.reason;
 	};
-
-	assert.match(await reject({ name: "semver", version: "7.7.2" }, semverManifest), /subject/);
-
-	const otherTarball = structuredClone(semverManifest);
-	assert.ok(otherTarball.dist);
-	otherTarball.dist.integrity = `sha512-${Buffer.alloc(64, 1).toString("base64")}`;
-	assert.match(await reject(semverPin, otherTarball), /integrity/);
-
-	const forged = structuredClone(semverAttestations);
-	for (const { bundle } of forged.attestations) {
-		const statement = JSON.parse(
-			Buffer.from(bundle.dsseEnvelope.payload, "base64").toString(),
-		);
-		statement.subject[0].digest.sha512 = "0".repeat(128);
-		bundle.dsseEnvelope.payload = Buffer.from(JSON.stringify(statement)).toString("base64");
+	assert.match(
+		await reject({ bundles: [attestation(publishPredicateType)] }),
+		/publish attestations/,
+	);
+	// The registry's listed predicate type is unsigned, so only the signed statement counts.
+	assert.match(
+		await reject({ bundles: [attestation(publishPredicateType, predicateType)] }),
+		/publish attestations/,
+	);
+	for (const code of ["EATTESTATIONVERIFY", "EATTESTATIONSUBJECT", "EEXPIREDSIGNATUREKEY"]) {
+		assert.match(await reject(attestationError(code, "bad")), /Invalid attestation: bad/);
 	}
-	assert.match(await reject(semverPin, semverManifest, forged), /Invalid provenance/);
-
-	const publishOnly = {
-		attestations: semverAttestations.attestations.filter(
-			(entry) => entry.predicateType !== predicateType,
-		),
-	};
-	assert.match(await reject(semverPin, semverManifest, publishOnly), /publish attestations/);
 });
 
-test("provenance verification throws for operational failures and foreign attestation hosts", async () => {
+test("provenance verification throws for operational failures and registries without signing keys", async () => {
 	await assert.rejects(
-		verifyNpmSlsaProvenance(semverPin, semverManifest, registry, {
-			...offlineServices(),
-			fetcher: async () => {
-				throw new TypeError("fetch failed");
-			},
-		}),
+		verifyNpmSlsaProvenance(semverPin, registry, pacoteStub(new TypeError("fetch failed"))),
 		/fetch failed/,
 	);
+	const noKeys = {
+		...pacoteStub(attestationError("EMISSINGSIGNATUREKEY", "no key")),
+		fetchKeys: async () => undefined,
+	};
 	await assert.rejects(
-		verifyNpmSlsaProvenance(semverPin, semverManifest, registry, {
-			...offlineServices(),
-			getVerifier: async () => {
-				throw new TUFError({ code: "TUF_REFRESH_METADATA_ERROR", message: "TUF offline" });
-			},
-		}),
-		/TUF offline/,
+		verifyNpmSlsaProvenance(semverPin, registry, noKeys),
+		/does not publish attestation signing keys/,
 	);
-	await assert.rejects(
-		verifyNpmSlsaProvenance(
-			semverPin,
-			semverManifest,
-			"https://mirror.example.com",
-			offlineServices(),
-		),
-		/registry origin/,
+	assert.deepEqual(noKeys.calls[0]?.[1], { registry, verifyAttestations: true });
+	const missingKey = await verifyNpmSlsaProvenance(
+		semverPin,
+		registry,
+		pacoteStub(attestationError("EMISSINGSIGNATUREKEY", "unknown keyid")),
 	);
+	assert.equal(missingKey.verified, false);
 });
