@@ -863,7 +863,7 @@ describe("Routerlicious", () => {
 				});
 
 				it("Should still checkpoint state whose sends succeeded when a later send fails", async () => {
-					const tooLargeError = new NetworkError(413, "Message too large");
+					const sendError = new Error("send failed");
 					let resolveSecondSend: () => void = () => {};
 					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
 					sendStub.onSecondCall().returns(
@@ -871,7 +871,7 @@ describe("Routerlicious", () => {
 							resolveSecondSend = resolve;
 						}),
 					);
-					sendStub.onThirdCall().rejects(tooLargeError);
+					sendStub.onThirdCall().rejects(sendError);
 
 					await lambdaWithBatching.handler(
 						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
@@ -885,12 +885,34 @@ describe("Routerlicious", () => {
 						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
 					);
 					await flush();
-					assert.deepEqual(contextErrors, [tooLargeError]);
+					assert.deepEqual(contextErrors, [sendError]);
 
 					resolveSecondSend();
 					await flush();
 
 					assert.equal(testContext.offset, lastSuccessfulCheckpointOffset);
+				});
+
+				it("Should keep checkpointing messages after one that is too large to send", async () => {
+					const tooLargeError = new NetworkError(413, "Message too large");
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onSecondCall().rejects(tooLargeError);
+
+					// Handle every message before the rejection is observed, as the document partition does.
+					const handlerResults = [
+						messageFactory.createJoin(),
+						messageFactory.create(),
+						messageFactory.create(),
+					].map((message) =>
+						lambdaWithBatching.handler(
+							kafkaMessageFactory.sequenceMessage(message, testId),
+						),
+					);
+					await Promise.all(handlerResults);
+					await flush();
+
+					assert.deepEqual(contextErrors, [tooLargeError]);
+					assert.equal(testContext.offset, kafkaMessageFactory.getHeadOffset(testId) - 1);
 				});
 
 				it("Should write checkpoints in order when NoClient sends settle out of order", async () => {

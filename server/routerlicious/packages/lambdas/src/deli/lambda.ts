@@ -239,6 +239,9 @@ const isServiceMessageType = (type: string): boolean =>
 	type === MessageType.SummaryAck ||
 	type === MessageType.SummaryNack;
 
+const isMessageTooLargeError = (error: unknown): boolean =>
+	isNetworkError(error) && error.code === 413;
+
 /**
  * @internal
  */
@@ -513,9 +516,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						this.documentCheckpointManager.getNoActiveClients() &&
 						!this.serviceConfiguration.deli.disableNoClientMessage
 					) {
-						this.sendToRawDeltas(this.createOpMessage(MessageType.NoClient), {
-							trackForCheckpoint: true,
-						}).catch((error) => {
+						this.sendToRawDeltas(
+							this.createOpMessage(MessageType.NoClient),
+							true,
+						).catch((error) => {
 							const errorMsg = "Could not send no client message";
 							this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
 								messageMetaData: {
@@ -796,7 +800,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		rawMessage: IQueuedMessage,
 	): void {
 		const sendP = producer.send(messages, this.tenantId, this.documentId);
-		this.trackSend(sendP);
+		// An oversized message is dropped and the document is marked as corrupt instead of restarting.
+		// Kafka moves past it without reprocessing, so later checkpoints must still cover the messages after it.
+		this.trackSend(
+			sendP.catch((error) => {
+				if (!isMessageTooLargeError(error)) {
+					throw error;
+				}
+			}),
+		);
 		sendP.catch((error) => {
 			if (this.closed) {
 				return;
@@ -815,17 +827,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				error,
 			);
 
-			let restart = true;
-			let markAsCorrupt = false;
-
-			if (isNetworkError(error) && error.code === 413) {
-				// kafka message size too large
-				restart = false;
-				markAsCorrupt = true;
-			}
-
+			const markAsCorrupt = isMessageTooLargeError(error);
 			this.context.error(error, {
-				restart,
+				restart: !markAsCorrupt,
 				markAsCorrupt: markAsCorrupt ? rawMessage : undefined,
 				tenantId: this.tenantId,
 				documentId: this.documentId,
@@ -1443,11 +1447,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Sends a message to the rawdeltas queue.
 	 * This essentially sends the message to this deli lambda
-	 * @param options - When `trackForCheckpoint` is set, later checkpoints wait for this send and are skipped if it fails.
+	 * @param trackForCheckpoint - Whether later checkpoints wait for this send and are skipped if it fails.
 	 */
 	private async sendToRawDeltas(
 		message: IRawOperationMessage,
-		options?: { trackForCheckpoint?: boolean },
+		trackForCheckpoint: boolean,
 	): Promise<void> {
 		try {
 			const sendP = this.rawDeltasProducer.send(
@@ -1455,7 +1459,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				message.tenantId,
 				message.documentId,
 			);
-			if (options?.trackForCheckpoint === true) {
+			if (trackForCheckpoint) {
 				this.trackSend(sendP);
 			}
 			await sendP;
@@ -1496,7 +1500,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				idleClient.clientId,
 				idleClient.serverMetadata,
 			);
-			this.sendToRawDeltas(leaveMessage).catch((error) => {
+			this.sendToRawDeltas(leaveMessage, false).catch((error) => {
 				const lumberjackProperties = {
 					...getLumberBaseProperties(this.documentId, this.tenantId),
 					clientId: idleClient.clientId,
@@ -1524,7 +1528,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// write client idle is handled by checkIdleWriteClients
 			if (client.mode === "read" && exp < currentTime) {
 				const leaveMessage = this.createLeaveMessage(clientId);
-				this.sendToRawDeltas(leaveMessage).catch((error) => {
+				this.sendToRawDeltas(leaveMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 						clientId,
@@ -1741,7 +1745,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.activityIdleTimer = setTimeout(() => {
 			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				this.sendToRawDeltas(noOpMessage).catch((error) => {
+				this.sendToRawDeltas(noOpMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 					};
@@ -1784,7 +1788,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.noopEvent = setTimeout(() => {
 			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				this.sendToRawDeltas(noOpMessage).catch((error) => {
+				this.sendToRawDeltas(noOpMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 					};
