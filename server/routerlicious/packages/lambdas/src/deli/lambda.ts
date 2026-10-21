@@ -253,8 +253,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private readonly clientSeqManager = new ClientSequenceNumberManager();
 	private minimumSequenceNumber = 0;
 	private readonly checkpointContext: CheckpointContext;
-	private lastSendP = Promise.resolve();
+	/**
+	 * Settles once every message produced so far has been sent (or failed to send).
+	 */
+	private lastSendP: Promise<void> = Promise.resolve();
 	private lastNoClientP = Promise.resolve();
+	/**
+	 * Set when any producer send fails. Once set, checkpoints are no longer written so that,
+	 * after the lambda restarts, the unsent messages are reprocessed instead of skipped.
+	 */
+	private producerSendFailed = false;
 	private lastSentMSN = 0;
 	private lastHash: string;
 	private lastInstruction: InstructionType | undefined = InstructionType.NoOp;
@@ -745,10 +753,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
+	private trackSend(sendP: Promise<void>): void {
+		this.lastSendP = Promise.all([this.lastSendP, sendP]).then(() => undefined);
+	}
+
 	private produceMessage(producer: IProducer, message: ITicketedMessage): void {
-		this.lastSendP = producer
+		const sendP = producer
 			.send([message], message.tenantId, message.documentId)
 			.catch((error) => {
+				this.producerSendFailed = true;
 				if (this.closed) {
 					return;
 				}
@@ -771,6 +784,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					documentId: this.documentId,
 				});
 			});
+		this.trackSend(sendP);
 	}
 
 	private produceMessages(
@@ -778,7 +792,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		messages: ITicketedMessage[],
 		rawMessage: IQueuedMessage,
 	): void {
-		this.lastSendP = producer.send(messages, this.tenantId, this.documentId).catch((error) => {
+		const sendP = producer.send(messages, this.tenantId, this.documentId).catch((error) => {
+			this.producerSendFailed = true;
 			if (this.closed) {
 				return;
 			}
@@ -812,6 +827,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				documentId: this.documentId,
 			});
 		});
+		this.trackSend(sendP);
 	}
 
 	private logSessionEndMetrics(closeType: LambdaCloseType): void {
@@ -1429,6 +1445,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		try {
 			await this.rawDeltasProducer.send([message], message.tenantId, message.documentId);
 		} catch (error) {
+			this.producerSendFailed = true;
 			if (this.closed) {
 				return;
 			}
@@ -1901,16 +1918,29 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	/**
-	 * Checkpoints the current state once the pending kafka messages are produced
+	 * Checkpoints the current state once the pending kafka messages are produced.
+	 * The checkpoint is skipped if any message failed to be produced.
 	 */
 	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean): void {
 		this.documentCheckpointManager.resetCheckpointTimer();
 
+		// Capture state now so the checkpoint only covers messages whose sends are awaited below.
+		const checkpointParams = this.generateCheckpoint(reason);
+		if (reason === CheckpointReason.ClearCache) {
+			checkpointParams.clear = true;
+		}
+
 		Promise.all([this.lastSendP, this.lastNoClientP])
 			.then(() => {
-				const checkpointParams = this.generateCheckpoint(reason);
-				if (reason === CheckpointReason.ClearCache) {
-					checkpointParams.clear = true;
+				if (this.producerSendFailed) {
+					Lumberjack.warning(
+						"Skipping checkpoint due to a previous producer send failure",
+						{
+							...getLumberBaseProperties(this.documentId, this.tenantId),
+							checkpointReason: CheckpointReason[reason],
+						},
+					);
+					return;
 				}
 				const lumberjackProperties: Record<string, any> = {
 					...getLumberBaseProperties(this.documentId, this.tenantId),

@@ -785,6 +785,81 @@ describe("Routerlicious", () => {
 					assert.equal(lastMessage.operation.clientSequenceNumber, 3);
 				});
 			});
+
+			describe("checkpointing after producer send failures", () => {
+				let contextErrors: unknown[];
+
+				beforeEach(() => {
+					contextErrors = [];
+					testContext.on("error", (error) => contextErrors.push(error));
+				});
+
+				async function flush(): Promise<void> {
+					await new Promise((resolve) => setImmediate(resolve));
+				}
+
+				it("Should not checkpoint when sequenced messages fail to send", async () => {
+					const sendError = new Error("send failed");
+					Sinon.stub(testForwardProducer, "send").rejects(sendError);
+
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+
+					assert.deepEqual(contextErrors, [sendError, sendError]);
+					assert.equal(testContext.offset, -1);
+				});
+
+				it("Should not checkpoint when an earlier send fails after a later send succeeds", async () => {
+					const sendError = new Error("send failed");
+					let rejectFirstSend: (error: Error) => void = () => {};
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onFirstCall().returns(
+						new Promise((_resolve, reject) => {
+							rejectFirstSend = reject;
+						}),
+					);
+
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+					assert.equal(
+						testContext.offset,
+						-1,
+						"Should wait for every pending send before checkpointing",
+					);
+
+					rejectFirstSend(sendError);
+					await flush();
+
+					assert.deepEqual(contextErrors, [sendError]);
+					assert.equal(testContext.offset, -1);
+				});
+
+				it("Should checkpoint when all sends succeed", async () => {
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await quiesceWithClientsConnected();
+
+					assert.deepEqual(contextErrors, []);
+					assert.equal(testContext.offset, kafkaMessageFactory.getHeadOffset(testId) - 1);
+				});
+			});
 		});
 	});
 });
