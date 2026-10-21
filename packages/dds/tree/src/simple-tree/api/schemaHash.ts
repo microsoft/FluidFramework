@@ -5,7 +5,8 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-import { sha256 } from "sha.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 import {
 	LeafNodeStoredSchema,
@@ -31,10 +32,10 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
  * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
  * @param options - Options for checking the schema hash.
- * @returns An immutable schema identity that uses {@link computeSchemaHash}.
+ * @returns An immutable schema identity that uses SHA-256 hashing.
  * @alpha
  */
-export function identifySchema(
+export function identifySchemaAlpha(
 	options: {
 		/**
 		 * An optional hash used to detect unintended schema changes.
@@ -65,7 +66,7 @@ export function identifySchema(
  *
  * @returns the first 128 bits of the schema's SHA-256 hash, as 32 hexadecimal characters
  *
- * @alpha
+ * @internal
  */
 export function computeSchemaHash(
 	schema: ImplicitFieldSchema,
@@ -83,7 +84,7 @@ export function computeSchemaHash(
 	});
 	// Normalize metadata to its JSON representation before sorting object keys.
 	const persisted = JSON.parse(serialized) as JsonCompatibleReadOnly;
-	return new sha256().update(canonicalize(persisted)).digest("hex").slice(0, 32);
+	return bytesToHex(sha256(utf8ToBytes(canonicalize(persisted))).subarray(0, 16));
 }
 
 function serializeField(schema: TreeFieldStoredSchema): JsonCompatibleReadOnly {

@@ -270,9 +270,6 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
-// @alpha
-export function computeSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy): string;
-
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -639,7 +636,7 @@ export interface ICodecOptions {
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
-export function identifySchema(options?: {
+export function identifySchemaAlpha(options?: {
     readonly expectedHash?: string;
 }): SchemaIdentity;
 
