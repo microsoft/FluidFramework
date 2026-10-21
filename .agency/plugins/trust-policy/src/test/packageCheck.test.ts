@@ -22,7 +22,7 @@ import {
 	type ProvenanceVerificationServices,
 	type RegistryKey,
 	verifyNpmSlsaProvenance,
-} from "../package-check.js";
+} from "../packageCheck.js";
 
 const registry = "https://registry.npmjs.org";
 const predicateType = "https://slsa.dev/provenance/v1";

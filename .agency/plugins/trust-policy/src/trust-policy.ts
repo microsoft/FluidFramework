@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { redact } from "@npmcli/redact";
 import { Command, Flags, execute } from "@oclif/core";
 import semver from "semver";
-import { checkPackage, type PackageCheckResult, type Verdict } from "./package-check.js";
+import { checkPackage, type PackageCheckResult, type Verdict } from "./packageCheck.js";
 import {
 	azureArtifactsReason,
 	type EndpointAccess,
@@ -22,7 +22,7 @@ import {
 	probeEndpoints,
 	publicRegistries,
 	sigstoreTufEndpoint,
-} from "./registry-access.js";
+} from "./registryAccess.js";
 
 /**
  * Checks whether one exact package version has trustworthy provenance and, if not, suggests an attested alternative.

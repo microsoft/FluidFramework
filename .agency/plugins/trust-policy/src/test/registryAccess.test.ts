@@ -14,7 +14,7 @@ import {
 	planEndpoints,
 	probeEndpoints,
 	sigstoreTufEndpoint,
-} from "../registry-access.js";
+} from "../registryAccess.js";
 
 test("classifies endpoint probe outcomes", async () => {
 	const requested: string[] = [];
