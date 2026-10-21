@@ -76,6 +76,7 @@ import {
 	disposeSymbol,
 	isReadonlyArray,
 	type JsonCompatibleReadOnly,
+	throwIfBroken,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -667,9 +668,10 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.fork().viewWith(this.config);
+		return this.checkout.fork().viewWithInternal(this.config, true);
 	}
 
+	@throwIfBroken
 	public rewindTo(revision: string): void {
 		this.checkout.rewindTo(revision);
 	}
