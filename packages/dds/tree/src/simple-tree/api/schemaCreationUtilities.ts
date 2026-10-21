@@ -265,7 +265,14 @@ export function enumFromStrings<
 			: never;
 	};
 
-	type SchemaArray = UnionToTuple<MembersUnion extends unknown ? TOut[MembersUnion] : never>;
+	// Maps the Members tuple element by element, preserving its order.
+	// Avoid computing this from the union of members (for example with UnionToTuple):
+	// that recursion costs time roughly quadratic in the number of members when type-checking uses of the schema.
+	type SchemaArray = {
+		-readonly [Position in keyof Members]: ReturnType<
+			typeof singletonSchema<TScope, Members[Position] & string>
+		>;
+	};
 	const schemaArray: TreeNodeSchema[] = [];
 
 	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
