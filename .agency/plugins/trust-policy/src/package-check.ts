@@ -178,7 +178,7 @@ export interface PackageServices {
  * Predicate types of the SLSA build provenance that npm generates with `npm publish --provenance`.
  *
  * npm defines the same values as `SLSA_PREDICATE_V02_TYPE` and `SLSA_PREDICATE_V1_TYPE` in
- * {@link https://github.com/npm/cli/blob/latest/workspaces/libnpmpublish/lib/provenance.js | libnpmpublish}, but does not export them.
+ * {@link https://github.com/npm/cli/blob/ae98c62586b6fea44114f72e249e246a2981de70/workspaces/libnpmpublish/lib/provenance.js | libnpmpublish}, but does not export them.
  * {@link https://slsa.dev/spec/v1.0/provenance | SLSA} changes the URI only for a new major version, so a new value requires reviewing this verifier.
  * npm's other attestation, `https://github.com/npm/attestation/tree/main/specs/publish/v0.1`, is signed by the registry and is not build provenance.
  */
@@ -189,6 +189,10 @@ export const slsaProvenancePredicateTypes: ReadonlySet<string> = new Set([
 
 /**
  * Codes of the errors pacote throws when attestations fail verification, as opposed to operational failures.
+ *
+ * @remarks
+ * pacote throws these codes from
+ * {@link https://github.com/npm/pacote/blob/v22.0.0/lib/registry.js | lib/registry.js} but does not export them as constants.
  */
 const attestationErrorCodes: ReadonlySet<string> = new Set([
 	"EATTESTATIONSUBJECT",
@@ -231,6 +235,12 @@ export function parsePackageSpec(spec: string): PinnedVersion {
 
 /**
  * Returns the trust evidence the registry reports for a version, as pnpm computes it.
+ *
+ * @remarks
+ * Equivalent to `getTrustEvidence` in pnpm's
+ * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}.
+ * It is not called directly because `@pnpm/resolving.npm-resolver`'s `exports` map exposes only its index, which does not export it.
+ *
  * @param manifest - Registry version manifest.
  */
 export function getTrustEvidence(manifest: PackageInRegistry): TrustEvidence {
@@ -307,6 +317,12 @@ interface AssessmentContext {
 
 /**
  * Assesses one version of the context's package against a policy.
+ *
+ * @remarks
+ * Written for this plugin; neither npm nor pnpm has an equivalent that applies a choice of provenance policies to one version.
+ * `npm audit signatures` verifies attestations but rejects nothing for lacking them, and pnpm applies only `no-downgrade`, during resolution.
+ * Rejecting deprecated versions is stricter than npm-pick-manifest and pnpm, which only prefer non-deprecated versions when picking.
+ *
  * @param context - Assessment state.
  * @param manifest - Version manifest from the context's packument.
  * @param policy - Policy to apply.
@@ -368,6 +384,13 @@ async function assessVersion(
 /**
  * Applies pnpm's `no-downgrade` rule: a version is rejected if a release published before it has stronger {@link TrustEvidence}.
  * Earlier releases without a publication time are skipped, and prereleases are ignored when the version is stable, as in pnpm.
+ *
+ * @remarks
+ * Equivalent to `failIfTrustDowngraded` in pnpm's
+ * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}, without its `trustPolicyExclude` and `trustPolicyIgnoreAfter` options.
+ * It is not called directly because `@pnpm/resolving.npm-resolver`'s `exports` map exposes only its index, which does not export it.
+ * The only public entry point that applies it, `createNpmResolutionVerifier`, adds about 15 MB of dependencies, fetches the packument itself rather than reusing the one loaded here, and reports only pass or fail without naming the earlier release.
+ *
  * @param packument - The package's packument.
  * @param version - Version to assess.
  */
@@ -400,6 +423,12 @@ export function assessNoDowngrade(
 
 /**
  * Finds the strongest trust evidence among releases published before a given time.
+ *
+ * @remarks
+ * Equivalent to `detectStrongestTrustEvidenceBeforeDate` in pnpm's
+ * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}, which pnpm does not export.
+ * Unlike pnpm's, this returns the version that had the evidence, so the rejection reason can name it.
+ *
  * @param packument - The package's packument.
  * @param before - Exclusive upper bound on publication time, in milliseconds since the epoch.
  * @param excludePrerelease - Whether to ignore prerelease versions.
@@ -426,6 +455,13 @@ function findStrongestEarlierTrustEvidence(
 	return strongest;
 }
 
+/**
+ * Describes trust evidence for messages.
+ *
+ * @remarks
+ * Uses the wording of `prettyPrintTrustEvidence` in pnpm's
+ * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}, which pnpm does not export.
+ */
 function describeTrustEvidence(evidence: TrustEvidence): string {
 	switch (evidence) {
 		case TrustEvidence.StagedPublish: {
@@ -445,6 +481,11 @@ function describeTrustEvidence(evidence: TrustEvidence): string {
 
 /**
  * Lists stable, non-deprecated releases with registry-reported SLSA provenance, newest first.
+ *
+ * @remarks
+ * npm's {@link https://github.com/npm/npm-pick-manifest/blob/v12.0.0/lib/index.js | npm-pick-manifest} and pnpm's `pickPackageFromMeta` choose a single version for a tag or range, preferring non-deprecated releases.
+ * They are not used because the search needs every candidate in order, so that each can be verified until one is accepted.
+ *
  * @param packument - The package's packument.
  * @param excludedVersion - The requested version, which is never its own alternative.
  */
@@ -470,6 +511,12 @@ function selectAlternativeCandidates(
 /**
  * Returns the first candidate that a policy accepts, assessing at most `maxCandidates`.
  * Inconclusive candidates are skipped; their errors make the result incomplete.
+ *
+ * @remarks
+ * Similar to `pickWithoutTrustDowngrade` in pnpm's
+ * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}, which re-picks after each rejected candidate.
+ * pnpm's version is not exported, and its synchronous check cannot await the Sigstore verification that each candidate needs here.
+ *
  * @param context - Assessment state.
  * @param candidates - Candidate manifests in preference order.
  * @param policy - Policy to apply.
@@ -495,6 +542,12 @@ async function findAlternative(
 	return { alternative: null, candidatesChecked, searchTruncated: false };
 }
 
+/**
+ * Validates a registry URL and removes its trailing slash.
+ *
+ * @remarks
+ * npm-registry-fetch's `pickRegistry` selects a registry for a package but does not validate it, so no library equivalent is used.
+ */
 function normalizeRegistry(registry: string): string {
 	const url = new URL(registry);
 	if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) {
@@ -565,7 +618,14 @@ export interface RegistryKey {
 
 /**
  * Fetches the registry's attestation signing keys, as npm's
- * {@link https://github.com/npm/cli/blob/latest/lib/utils/verify-signatures.js | verify-signatures} does when TUF has no keys for the registry.
+ * {@link https://github.com/npm/cli/blob/ae98c62586b6fea44114f72e249e246a2981de70/lib/utils/verify-signatures.js | verify-signatures} does when TUF has no keys for the registry.
+ *
+ * @remarks
+ * Equivalent to the fallback in `VerifySignatures.setKeys` in npm's `verify-signatures.js`.
+ * It is not called directly because the `npm` package has no programmatic API.
+ * npm first reads the keys from Sigstore's TUF repository through `@sigstore/tuf`, which anchors them in Sigstore's trust root; this function does not.
+ * The keys verify only npm's registry-signed publish attestations, and the `cryptographic` policy accepts only keyless SLSA provenance, which is verified against Sigstore's trust root, so skipping TUF does not weaken its verdicts.
+ *
  * @param registry - Normalized registry URL.
  * @returns The keys, or `undefined` if the registry does not publish any.
  */
@@ -612,6 +672,11 @@ export interface ProvenanceVerificationServices {
  *
  * pacote checks each attestation's Sigstore bundle, and that its signed subject names the requested package URL and matches the version's registry SHA-512 integrity, which installers check when they download the tarball.
  * This function additionally requires a signed statement with an SLSA provenance predicate, since pacote also accepts registry-signed publish attestations alone, which are not build provenance.
+ *
+ * @remarks
+ * npm's `npm audit signatures`
+ * ({@link https://github.com/npm/cli/blob/ae98c62586b6fea44114f72e249e246a2981de70/lib/utils/verify-signatures.js | verify-signatures.js}) makes the same pacote call, but it is not used because the `npm` package has no programmatic API and the command audits only installed dependencies.
+ * It also counts any verified attestation as a pass, whereas this function requires SLSA provenance.
  *
  * @param pin - Requested package version.
  * @param registry - Normalized registry URL.
@@ -670,6 +735,12 @@ export async function verifyNpmSlsaProvenance(
 /**
  * Returns the predicate type of the in-toto statement an attestation's DSSE envelope signs.
  * The registry's top-level `predicateType` is not signed, so it is not trusted.
+ *
+ * @remarks
+ * pacote decodes the same statement in
+ * {@link https://github.com/npm/pacote/blob/v22.0.0/lib/registry.js | lib/registry.js} to check its subject, but returns only the raw bundles.
+ * `sigstore.verify` returns the signer's identity, not the statement, so no library exposes the signed predicate type.
+ *
  * @param attestation - Attestation whose bundle pacote has verified.
  */
 function signedPredicateType(attestation: unknown): string {
