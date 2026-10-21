@@ -39,6 +39,25 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		files: ["src/**/*.ts"],
+		ignores: ["src/test/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"*/index.js",
+						"@noble/hashes/sha2.js",
+						"@noble/hashes/utils.js",
+					],
+				},
+			],
+		},
+	},
+	{
 		files: ["src/test/**/*"],
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],

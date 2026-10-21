@@ -5,9 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- Noble exposes its public APIs through subpath exports.
 import { sha256 } from "@noble/hashes/sha2.js";
-// eslint-disable-next-line import-x/no-internal-modules -- Noble exposes its public APIs through subpath exports.
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 import {
@@ -34,10 +32,10 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
  * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
  * @param options - Options for checking the schema hash.
- * @returns An immutable schema identity that uses {@link computeSchemaHash}.
+ * @returns An immutable schema identity that uses SHA-256 hashing.
  * @alpha
  */
-export function identifySchema(
+export function identifySchemaAlpha(
 	options: {
 		/**
 		 * An optional hash used to detect unintended schema changes.
@@ -68,7 +66,7 @@ export function identifySchema(
  *
  * @returns the first 128 bits of the schema's SHA-256 hash, as 32 hexadecimal characters
  *
- * @alpha
+ * @internal
  */
 export function computeSchemaHash(
 	schema: ImplicitFieldSchema,

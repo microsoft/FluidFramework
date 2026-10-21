@@ -424,7 +424,6 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	computeSchemaHash,
-	identifySchema,
+	identifySchemaAlpha,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";
