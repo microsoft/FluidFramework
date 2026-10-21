@@ -1104,7 +1104,8 @@ This validation is not an unconditional merge-readiness claim.
   It does not support counter changes in this experiment; container messages, history, and summary/reload do.
 - Numeric temporary-storage bounds are covered by the retained 1,000-edit tests for both forests.
   No claim is made about bounded retained history, total memory, or throughput.
-- These results establish the tested counter integration, not feasibility of extrinsic array-location identity tracking.
+- These results establish the tested counter integration, not the planned index field's concurrent or undo semantics.
+  Stable element identity is not a prerequisite established by the selected extrinsic-range direction; see the context update below.
 
 ### Documentation follow-up
 
@@ -1139,3 +1140,26 @@ Both move cases check the resulting structure and values on two synchronized cli
 The history stacks are asserted to contain the expected edit so missing undo/redo coverage cannot silently pass.
 Formatting, ESLint, and `build:test:esm` passed.
 The counter integration suite passed all 17 tests after these additions.
+
+### Extrinsic-range context update
+
+The follow-up investigation now incorporates [microsoft/FluidFramework#27621](https://github.com/microsoft/FluidFramework/pull/27621), inspected at commit `78c058d79fa8f60bff2ccb55a5abd5b2392b450b`.
+Its [design README](https://github.com/microsoft/FluidFramework/blob/78c058d79fa8f60bff2ccb55a5abd5b2392b450b/packages/dds/tree/src/extrinsic-locations/README.md) supplies an existing plan rather than a new requirement to design native references.
+
+The selected approach stores numeric endpoints elsewhere in the same tree and has content-editing APIs maintain them explicitly.
+The current constrained MVP uses insertion points with after-insertion affinity, collapses endpoints on removal, and keeps ranges with their owning collection rather than following moved content.
+The planned index field rebases operation coordinates and aims to reuse sequence change logic.
+These facts resolve several questions initially left open in the follow-up note.
+
+This context changes how to apply the counter results:
+
+- Reuse numeric storage, accessor lifetime patterns, and appropriate modular extension points, but investigate sequence logic before generalizing counter arithmetic.
+- Do not require stable element identity or support for external locations as prerequisites.
+- Do not assume independent endpoint fields solve range-level merge behavior or concurrent changes to range membership.
+  Narrower constraints and eventually bulk editing are separate parts of the existing plan.
+- Keep schema migration, supported field-kind evolution, and rollout separate from proving the index algebra.
+- Treat undo/redo, overlapping removals, moves, and endpoint crossing as remaining future-design work.
+  The MVP's constraint-protected tests do not validate unconstrained merging.
+
+The updated [array-location design note](./array-location-field-design.md) records the baseline rules, source links, unresolved questions, and revised sequence-reuse-first investigation.
+This update changes the documented investigation plan only; no index field, sequence reuse, or bulk-editing implementation has been added or validated.
