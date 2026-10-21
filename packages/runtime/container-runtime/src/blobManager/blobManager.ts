@@ -679,10 +679,18 @@ export class BlobManager {
 		localId: string,
 		signal?: AbortSignal,
 	): Promise<void> => {
-		if (signal?.aborted === true) {
-			this.discardLocalBlob(localId);
-			throw createAbortError();
-		}
+		/**
+		 * Discards aborted blobs.
+		 * A helper lets TypeScript recheck the signal after callbacks.
+		 */
+		const throwIfAborted = (): void => {
+			if (signal?.aborted === true) {
+				this.discardLocalBlob(localId);
+				throw createAbortError();
+			}
+		};
+
+		throwIfAborted();
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
@@ -694,6 +702,9 @@ export class BlobManager {
 		// From here on this BlobManager is responsible for sharing the blob, so it counts as outstanding
 		// work. An upload aborted before this point returns above without ever counting.
 		this.startTrackingUnsharedBlob(localId);
+
+		// A dirty listener may abort synchronously before the upload's abort listener is registered.
+		throwIfAborted();
 
 		/**
 		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state

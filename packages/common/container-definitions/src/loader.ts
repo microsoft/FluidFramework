@@ -248,7 +248,7 @@ export interface IContainerEvents extends IEvent {
 	(event: "dirty", listener: (dirty: boolean) => void);
 
 	/**
-	 * Emitted when all local changes/edits have been acknowledged by the service.
+	 * Emitted when the container has no local work left outstanding.
 	 * I.e., when {@link IContainer.isDirty} transitions from `true` to `false`.
 	 *
 	 * @remarks Listener parameters:
@@ -380,6 +380,15 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
+	 *
+	 * @remarks
+	 * Includes pending operations and attachment blobs being uploaded or shared.
+	 * Disposing a dirty container can lose local work.
+	 * Failed or cancelled blobs stop contributing even if their handles remain unusable.
+	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for per-blob outcomes.
+	 *
+	 * Blob coverage requires `@fluidframework/container-loader` at the same version as this package or newer.
+	 * Older loaders retain operation-only tracking.
 	 */
 	readonly isDirty: boolean;
 
