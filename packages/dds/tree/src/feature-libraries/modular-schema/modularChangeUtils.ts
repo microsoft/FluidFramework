@@ -389,10 +389,9 @@ export function unifyAliases(
 	alias1: NodeId,
 	alias2: NodeId,
 ): NodeId {
-	const normalizedAlias1 = normalizeNodeId(alias1, nodeAliases);
 	const normalizedAlias2 = normalizeNodeId(alias2, nodeAliases);
-	if (!areEqualChangeAtomIds(normalizedAlias1, normalizedAlias2)) {
-		nodeAliases.set([normalizedAlias1.revision, normalizedAlias1.localId], normalizedAlias2);
+	if (!areEqualChangeAtomIds(alias1, normalizedAlias2)) {
+		nodeAliases.set([alias1.revision, alias1.localId], normalizedAlias2);
 	}
 	return normalizedAlias2;
 }
