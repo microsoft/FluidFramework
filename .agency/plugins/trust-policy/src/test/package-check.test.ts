@@ -5,6 +5,7 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { test } from "node:test";
 import { bundleFromJSON } from "@sigstore/bundle";
 import { TrustedRoot } from "@sigstore/protobuf-specs";
@@ -235,8 +236,8 @@ test("malformed identities, unknown packages, and missing dates fail explicitly"
 });
 
 /**
- * Real registry responses for semver@7.7.3, captured from registry.npmjs.org, and the Sigstore public-good trusted root.
- * Together they allow genuine Sigstore verification without network access.
+ * Real registry responses for semver@7.7.3, captured from registry.npmjs.org.
+ * Together with the Sigstore trusted root, they allow genuine Sigstore verification without network access.
  */
 function readFixture(name: string): unknown {
 	return JSON.parse(
@@ -248,7 +249,21 @@ const semverManifest = readFixture("semver-7.7.3-manifest.json") as RegistryVers
 const semverAttestations = readFixture("semver-7.7.3-attestations.json") as {
 	attestations: { predicateType: string; bundle: { dsseEnvelope: { payload: string } } }[];
 };
-const trustedRoot = TrustedRoot.fromJSON(readFixture("sigstore-trusted-root.json"));
+
+/**
+ * Reads the Sigstore public-good trusted root that `@sigstore/tuf` ships as its offline seed.
+ * `seeds.json` is not a public API of that package, so this may need updating when it is upgraded.
+ */
+function readSeedTrustedRoot(): TrustedRoot {
+	const seeds = JSON.parse(
+		readFileSync(createRequire(import.meta.url).resolve("@sigstore/tuf/seeds.json"), "utf8"),
+	) as Record<string, { targets: Record<string, string> }>;
+	const encoded = seeds["https://tuf-repo-cdn.sigstore.dev"]?.targets["trusted_root.json"];
+	assert(encoded !== undefined, "@sigstore/tuf seeds.json has no public-good trusted root");
+	return TrustedRoot.fromJSON(JSON.parse(Buffer.from(encoded, "base64").toString("utf8")));
+}
+
+const trustedRoot = readSeedTrustedRoot();
 
 /**
  * Builds a Sigstore verifier from the captured trusted root, matching the thresholds production uses.
