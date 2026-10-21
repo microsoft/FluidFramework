@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"@oclif/core": "^4.10.5",
+		"@pnpm/config.version-policy": "^1100.2.9",
 		"@yarnpkg/lockfile": "^1.1.0",
 		"@yarnpkg/parsers": "^3.1.0",
 		"npm-package-arg": "^14.0.0",

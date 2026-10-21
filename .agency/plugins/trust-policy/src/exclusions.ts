@@ -3,75 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import semver from "semver";
+import { createPackageVersionPolicyOrThrow } from "@pnpm/config.version-policy";
 
 /**
  * Returns the configured selector that exempts `name@version`, if any.
  */
 export type TrustPolicyExclude = (name: string, version: string) => string | undefined;
 
-interface ExclusionRule {
-	selector: string;
-	matchesName: (name: string) => boolean;
-	exactVersions: string[];
-}
-
 /**
- * Evaluates `trustPolicyExclude` selectors with pnpm 11's semantics.
- * A bare name or name glob covers every version, and exact versions from every rule matching a name are combined.
+ * Evaluates `trustPolicyExclude` selectors with pnpm's own parser and matcher.
+ * Each selector is evaluated separately so the one that exempts a version can be reported.
  * @param selectors - Values of pnpm's `trustPolicyExclude` setting.
  */
 export function createTrustPolicyExclude(selectors: readonly string[]): TrustPolicyExclude {
-	const rules = selectors.map((selector): ExclusionRule => {
-		const { packageName, exactVersions } = parseSelector(selector);
-		return { selector, matchesName: createNameMatcher(packageName), exactVersions };
-	});
+	const rules = selectors.map((selector) => ({
+		selector,
+		policy: createPackageVersionPolicyOrThrow(selector, "trustPolicyExclude"),
+	}));
 	return (name, version) =>
-		rules.find(
-			({ matchesName, exactVersions }) =>
-				matchesName(name) && (exactVersions.length === 0 || exactVersions.includes(version)),
-		)?.selector;
-}
-
-function parseSelector(selector: string): { packageName: string; exactVersions: string[] } {
-	const atIndex = selector.startsWith("@") ? selector.indexOf("@", 1) : selector.indexOf("@");
-	if (atIndex === -1) {
-		return { packageName: selector, exactVersions: [] };
-	}
-	const packageName = selector.slice(0, atIndex);
-	const exactVersions: string[] = [];
-	for (const raw of selector.slice(atIndex + 1).split("||")) {
-		const version = semver.valid(raw);
-		if (version === null) {
-			throw new Error(
-				`Invalid value in trustPolicyExclude: "${selector}". Use exact versions only.`,
-			);
-		}
-		exactVersions.push(version);
-	}
-	if (packageName.includes("*")) {
-		throw new Error(
-			`Invalid value in trustPolicyExclude: "${selector}". Name patterns are not allowed with versions.`,
-		);
-	}
-	return { packageName, exactVersions };
-}
-
-function createNameMatcher(pattern: string): (name: string) => boolean {
-	// pnpm treats a leading "!" in a single-pattern matcher as negation.
-	if (pattern.startsWith("!")) {
-		const matches = createNameMatcher(pattern.slice(1));
-		return (name) => !matches(name);
-	}
-	if (pattern === "*") {
-		return () => true;
-	}
-	const source = pattern
-		.replace(/[.+^${}()|[\]\\]/g, "\\$&")
-		.replace(/\*/g, ".*")
-		.replace(/\?/g, ".");
-	const regexp = new RegExp(`^${source}$`, "su");
-	return (name) => regexp.test(name);
+		rules.find(({ policy }) => {
+			const versions = policy(name);
+			return versions === true || (Array.isArray(versions) && versions.includes(version));
+		})?.selector;
 }
 
 /**

@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Command, Flags, execute } from "@oclif/core";
+import { mergePackageVersionSpecs } from "@pnpm/config.version-policy";
 import semver from "semver";
 import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
@@ -400,16 +401,12 @@ export default class CheckTrustPolicyCommand extends Command {
 				}
 			}
 			while (true) {
-				const excludeFlags: string[] = [];
-				for (const [name, versions] of [...violationsByName.entries()].sort(
-					([left], [right]) => (left < right ? -1 : left > right ? 1 : 0),
-				)) {
-					// pnpm consults only the first selector matching a name.
-					excludeFlags.push(
-						"--trust-policy-exclude",
-						`${name}@${[...versions].sort().join("||")}`,
-					);
-				}
+				// pnpm consults only the first selector matching a name, so merge each name's versions into one selector.
+				const excludeFlags = mergePackageVersionSpecs(
+					[...violationsByName].flatMap(([name, versions]) =>
+						[...versions].map((version) => `${name}@${version}`),
+					),
+				).flatMap((selector) => ["--trust-policy-exclude", selector]);
 				verbose(`Iteration ${iteration}: pnpm install`);
 				iteration++;
 				lastResult = await runPnpm(

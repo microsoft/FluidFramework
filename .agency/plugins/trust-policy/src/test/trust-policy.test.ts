@@ -292,9 +292,9 @@ test("accumulates violations, preserves union selectors, and writes real names",
 	assert.ok(lastCall);
 	assert.deepEqual(lastCall.args.slice(-4), [
 		"--trust-policy-exclude",
-		"@scope/example@1.0.0",
+		"example@1.0.0 || 2.0.0",
 		"--trust-policy-exclude",
-		"example@1.0.0||2.0.0",
+		"@scope/example@1.0.0",
 	]);
 	assert.ok(lastCall.args.includes("--lockfile-only"));
 	const manifest = JSON.parse(

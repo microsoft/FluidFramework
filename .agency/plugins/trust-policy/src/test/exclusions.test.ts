@@ -33,16 +33,18 @@ test("matches pnpm trustPolicyExclude selectors", () => {
 	assert.equal(createTrustPolicyExclude(["!keep"])("keep", "1.0.0"), undefined);
 });
 
-test("rejects selectors pnpm rejects", () => {
-	for (const selector of [
-		"semver@^5.0.0",
-		"semver@latest",
-		"semver@1.0.0 || ^2",
-		"@org/*@1.0.0",
-	]) {
+test("rejects selectors pnpm rejects, with pnpm's messages", () => {
+	for (const [selector, message] of [
+		["semver@^5.0.0", /Invalid versions union/],
+		["semver@latest", /Invalid versions union/],
+		["semver@1.0.0 || ^2", /Invalid versions union/],
+		["@org/*@1.0.0", /Name patterns are not allowed/],
+	] as const) {
 		assert.throws(
 			() => createTrustPolicyExclude([selector]),
-			/Invalid value in trustPolicyExclude/,
+			(error: Error) =>
+				error.message.startsWith("Invalid value in trustPolicyExclude: ") &&
+				message.test(error.message),
 		);
 	}
 });
