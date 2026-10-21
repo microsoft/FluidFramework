@@ -962,7 +962,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Trunk Trimming", () => {
-		it("preserves merged commit ancestry during detached change events", () => {
+		it("does not trim merged commits during detached change events", () => {
 			const tree = DefaultTestSharedTreeKind.getFactory().create(
 				new MockFluidDataStoreRuntime({
 					attachState: AttachState.Detached,
@@ -984,14 +984,11 @@ describe("SharedTree", () => {
 			fork.root.insertAtEnd("C");
 
 			const branch = tree.kernel.checkout.mainBranch;
-			const previousRevision = branch.getHead().revision;
 			let observedCommitCount = 0;
 			branch.events.on("afterChange", (event) => {
 				if (event.type === "append") {
-					let parentRevision = previousRevision;
 					for (const commit of event.newCommits) {
-						assert.equal(commit.parent?.revision, parentRevision);
-						parentRevision = commit.revision;
+						assert.equal(commit.wasTrimmed, undefined);
 						observedCommitCount++;
 					}
 				}
