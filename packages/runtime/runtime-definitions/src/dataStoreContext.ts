@@ -210,6 +210,7 @@ export interface IDataStore {
  * @remarks
  * Any inbound pause acquired through these controls is released when staging mode exits,
  * even if committing or discarding changes throws.
+ * The pause is released before exit notifications are emitted.
  * Pauses acquired by other code are not affected.
  *
  * @see {@link IContainerRuntimeBase.enterStagingMode}

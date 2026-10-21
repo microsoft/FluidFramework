@@ -5451,10 +5451,34 @@ describe("Runtime", () => {
 
 				for (const exitMethod of ["commitChanges", "discardChanges"] as const) {
 					it(`${exitMethod} releases an outstanding pause before notifying exit listeners`, async () => {
+						const channelCollection = stubChannelCollection(containerRuntime);
 						const controls = containerRuntime.enterStagingMode();
 						const { inbound } = deltaManager;
 						const resume = sandbox.spy(inbound, "resume");
 						const paused = controls.pauseInbound();
+						submitDataStoreOp(
+							containerRuntime,
+							"1",
+							genTestDataStoreMessage("staged-op"),
+							"LOCAL_OP_METADATA",
+						);
+						const hasStagedChangesChanged = sandbox.spy((hasStagedChanges: boolean) => {
+							if (!hasStagedChanges) {
+								assert.equal(
+									inbound.paused,
+									false,
+									"Inbound should resume before the staged-change exit event",
+								);
+							}
+						});
+						containerRuntime.on("hasStagedChangesChanged", hasStagedChangesChanged);
+						channelCollection.notifyStagingMode.withArgs(false).callsFake(() => {
+							assert.equal(
+								inbound.paused,
+								false,
+								"Inbound should resume before data store exit notifications",
+							);
+						});
 						containerRuntime.on("stagingModeChanged", ({ inStagingMode }) => {
 							if (!inStagingMode) {
 								assert.equal(
@@ -5466,6 +5490,7 @@ describe("Runtime", () => {
 						});
 
 						controls[exitMethod]();
+						assert(hasStagedChangesChanged.calledOnceWithExactly(false));
 						await paused;
 						assert.equal(
 							inbound.paused,

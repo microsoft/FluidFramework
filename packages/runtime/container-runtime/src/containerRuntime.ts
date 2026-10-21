@@ -4056,6 +4056,7 @@ export class ContainerRuntime
 						this.outbox.flush();
 
 						this.stageControls = undefined;
+						resumeInbound();
 
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
@@ -4075,6 +4076,7 @@ export class ContainerRuntime
 				this.closeFn(normalizedError);
 				throw normalizedError;
 			} finally {
+				// Also release the pause if the final flush fails before staging mode is cleared.
 				resumeInbound();
 			}
 			if (!silent) {
