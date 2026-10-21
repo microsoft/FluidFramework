@@ -176,6 +176,53 @@ describe("sharedTreeView", () => {
 			checkout.dispose();
 			view.dispose();
 		});
+
+		it("disposes the retained checkout owned by a forked view", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const branchView = checkout.viewWith(config);
+			const forkView = branchView.fork();
+			assert(forkView.checkout instanceof RetainedCheckout);
+			assert.equal(forkView.checkout.disposed, false);
+			forkView.dispose();
+			assert.equal(forkView.checkout.disposed, true);
+			assert.equal(checkout.disposed, false);
+			branchView.dispose();
+			checkout.dispose();
+			view.dispose();
+		});
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after a subclass rejects rewind through the ${throughView ? "view" : "checkout"}`, () => {
+				const error = new Error("Rewind rejected before mutation");
+				class RewindRejectingCheckout extends RetainedCheckout {
+					public override rewindTo(): void {
+						throw error;
+					}
+				}
+
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const checkout = view.checkout.forkWith(
+					(options) => new RewindRejectingCheckout(options),
+				);
+				const branchView = checkout.viewWith(config);
+				const revision = branchView.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const head = checkout.mainBranch.getHead();
+
+				assert.throws(() => (throughView ? branchView : checkout).rewindTo(revision), error);
+				assert.equal(checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...branchView.root], ["parent"]);
+				branchView.root.insertAtEnd("child");
+				view.merge(branchView);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				assert.equal(checkout.disposed, true);
+				view.dispose();
+			});
+		}
+
 		it("rejects subclass forks during pending transactions", () => {
 			const view = getView(config);
 			view.initialize([]);

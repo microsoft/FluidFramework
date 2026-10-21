@@ -49,24 +49,6 @@ This currently has a few uses:
 Currently this is applied to the CJS tests to ensure that the CJS build functions at all while avoiding running the full mostly redundant suite for it.
 This may be applied to other configuration in the future.
 
-## Deferred checkout lifecycle regression coverage
-
-The checkout lifecycle hardening changes have a temporary gap in focused regression coverage.
-The tests in `shared-tree/treeCheckout.spec.ts` cover retained-checkout forks and fork guards, but do not directly cover these behaviors:
-
-- Disposing a view returned by `branchView.fork()` must dispose its underlying checkout, even when that checkout type normally outlives its views.
-- A subclass rejecting `rewindTo()` before mutation, through either a raw branch or its typed view, must leave the branch editable and mergeable.
-
-The `rewindTo` tests cover validation rejections in the base checkout through both raw checkouts and typed views.
-They do not replace the subclass-specific regression above.
-
-Focused tests for these behaviors are planned to land with [microsoft/FluidFramework#27217](https://github.com/microsoft/FluidFramework/pull/27217).
-
-The existing generic tests do not replace these regressions.
-
-Remove this note when the focused coverage lands.
-If the follow-up is delayed or abandoned, add equivalent generic regression tests here rather than leaving the gap indefinitely.
-
 ## Document Status
 
 This is written aspirationalally: much of our current test suite only roughly approximates the patterns described above.
