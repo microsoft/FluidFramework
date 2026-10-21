@@ -13,5 +13,44 @@ export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
 		return array.buffer;
 	}
+	// Both ArrayBuffer and SharedArrayBuffer have a slice method and will return
+	// their same type, but TypeScript does not correctly determine that will
+	// satisfy TArrayBuffer. Cast to TArrayBuffer to indicate that.
 	return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
+}
+
+/**
+ * Distills a `Uint8Array` array to an `ArrayBuffer` copying data as needed per the array's
+ * `byteOffset` and `byteLength` or if underlying buffer is not `ArrayBuffer`.
+ *
+ * @param array - Array to convert to `ArrayBuffer`.
+ *
+ * @remarks The returned buffer may be the input array's backing buffer or a copy of its bytes.
+ * Callers should not mutate the returned buffer unless they own the input array and its backing
+ * storage, and should not rely on mutations being reflected in the input array.
+ *
+ * Prefer to use {@link Uint8ArrayToArrayBufferLike} if the call site doesn't require
+ * an explicit `ArrayBuffer` (can also handle `SharedArrayBuffer`).
+ *
+ * @internal
+ */
+export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
+	// Shortcut to provider underlying buffer as-is when possible.
+	if (
+		array.byteOffset === 0 &&
+		array.byteLength === array.buffer.byteLength &&
+		array.buffer instanceof ArrayBuffer
+	) {
+		return array.buffer;
+	}
+	// Copy into a new `Uint8Array` so that the result's underlying buffer is:
+	//  1. ArrayBuffer
+	//  2. the complete data (no offset, full length)
+	// Constructing from a typed array always allocates a fresh `ArrayBuffer` of exactly
+	// `array.byteLength` bytes. See ECMAScript https://tc39.es/ecma262/multipage/indexed-collections.html#sec-initializetypedarrayfromtypedarray.
+	//
+	// `array.slice()` must not be used here: Node.js `Buffer` extends Uint8Array and overrides `slice` to
+	// return a view over the same memory (like `subarray`) rather than a copy, so `.buffer` of the result
+	// would be the entire (possibly pooled) backing buffer, including bytes outside the input view.
+	return new Uint8Array(array).buffer;
 }
