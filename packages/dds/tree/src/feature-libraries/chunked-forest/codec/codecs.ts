@@ -339,6 +339,7 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 	},
 	{
 		// Experimental: no minVersionForCollab, so only a write version override can select it.
+		// Later incremental summaries reuse chunks in this format, also after the override is removed.
 		minVersionForCollab: undefined,
 		formatVersion: FieldBatchFormatVersion.vTextExperimental,
 		codec: makeFieldBatchCodecForVersion(
