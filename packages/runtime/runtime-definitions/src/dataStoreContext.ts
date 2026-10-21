@@ -205,7 +205,12 @@ export interface IDataStore {
 /**
  * Controls for managing staged changes in staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
+ *
+ * @remarks
+ * Any inbound pause acquired through these controls is released when staging mode exits,
+ * even if committing or discarding changes throws.
+ * Pauses acquired by other code are not affected.
  *
  * @see {@link IContainerRuntimeBase.enterStagingMode}
  *
@@ -213,6 +218,29 @@ export interface IDataStore {
  * @sealed
  */
 export interface StageControls {
+	/**
+	 * Pauses processing of inbound operations while in staging mode.
+	 *
+	 * @remarks
+	 * Repeated calls while paused do not acquire additional pauses.
+	 * Operations continue to be received and queued, and inbound signals are not paused.
+	 * Call {@link StageControls.resumeInbound} to release this pause without exiting staging mode.
+	 *
+	 * @returns A promise that resolves when any ongoing inbound operation processing has stopped.
+	 * @throws A `UsageError` if these controls are no longer for the active staging session.
+	 */
+	readonly pauseInbound: () => Promise<void>;
+	/**
+	 * Releases the inbound processing pause acquired through {@link StageControls.pauseInbound}
+	 * without exiting staging mode.
+	 *
+	 * @remarks
+	 * Has no effect if these controls have not paused inbound processing or have already resumed it.
+	 * Pauses acquired by other code are not affected.
+	 *
+	 * @throws A `UsageError` if these controls are no longer for the active staging session.
+	 */
+	readonly resumeInbound: () => void;
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
@@ -355,7 +383,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * - DDS rollback support may be incomplete — {@link StageControls.discardChanges} may throw for some DDS implementations.
 	 * - Squash-rebase semantics during {@link StageControls.commitChanges} are not yet fully specified.
 	 *
-	 * @returns Controls for committing or discarding staged changes.
+	 * @returns Controls for pausing inbound operations and committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControls;
 
