@@ -20,7 +20,10 @@ import {
 	toInitialSchema,
 	type UnsafeUnknownSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
+	type TreeRootFromImplicitField,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import {
 	Tree,
@@ -92,6 +95,35 @@ describe("native counter integration", () => {
 		}
 		genericAllowed(sf.number);
 	});
+
+	it("preserves generic root readers across content and field-read types", () => {
+		function readAllowed<TSchema extends ImplicitAllowedTypes>(
+			view: TreeView<TSchema>,
+		): TreeFieldFromImplicitField<TSchema> {
+			return view.root;
+		}
+		function readField<TSchema extends ImplicitFieldSchema>(
+			view: TreeView<TSchema>,
+		): TreeFieldFromImplicitField<TSchema> {
+			return view.root;
+		}
+		function readRoot<TSchema extends ImplicitFieldSchema>(
+			view: TreeView<TSchema>,
+		): TreeRootFromImplicitField<TSchema> {
+			return view.root;
+		}
+
+		const { left, right } = setup();
+		try {
+			assert.equal(readAllowed(left), left.root);
+			assert.equal(readField(left), left.root);
+			assert.equal(readRoot(left), left.root);
+		} finally {
+			left.dispose();
+			right.dispose();
+		}
+	});
+
 	it("supports recursive object schemas and unhydrated events", () => {
 		class Recursive extends sf.objectRecursive("Recursive", {
 			count: sf.counter(sf.number),
@@ -227,6 +259,69 @@ describe("native counter integration", () => {
 			[200, 3],
 		);
 	});
+
+	for (const scenario of ["existing-to-built", "built-to-existing"] as const) {
+		it(`preserves minimized counter edits across ${scenario} parent moves and undo/redo`, () => {
+			class Box extends sf.object("Box", { items: Items }) {}
+			class Boxes extends sf.array("Boxes", Box) {}
+			const provider = new TestTreeProviderLite(2, factory);
+			const boxesConfig = new TreeViewConfiguration({ schema: Boxes });
+			const left = provider.trees[0].viewWith(boxesConfig);
+			assert(left instanceof SchematizingSimpleTreeView);
+			left.initialize(new Boxes([new Box({ items: [new Item({ count: 200 })] })]));
+			provider.synchronizeMessages();
+			const right = provider.trees[1].viewWith(boxesConfig);
+			const undo = createTestUndoRedoStacks(left.events);
+
+			function assertBoth(expected: number[][]): void {
+				for (const view of [left, right]) {
+					assert.deepEqual(
+						Array.from(view.root, (box) => Array.from(box.items, (item) => item.count.value)),
+						expected,
+					);
+				}
+			}
+
+			try {
+				left.runTransaction(
+					() => {
+						if (scenario === "existing-to-built") {
+							left.root.push(new Box({ items: [] }));
+							left.root[0].items[0].count.add(3);
+							left.root[1].items.moveToEnd(0, left.root[0].items);
+						} else {
+							left.root.push(new Box({ items: [new Item({ count: 1 })] }));
+							left.root[1].items[0].count.add(2);
+							left.root[0].items.moveToEnd(0, left.root[1].items);
+							left.root.removeAt(1);
+						}
+					},
+					{ postProcessor: minimize },
+				);
+				provider.synchronizeMessages();
+				const expected = scenario === "existing-to-built" ? [[], [203]] : [[200, 3]];
+				assertBoth(expected);
+
+				assert.equal(undo.undoStack.length, 1);
+				const undoEdit = undo.undoStack.pop();
+				assert(undoEdit !== undefined);
+				undoEdit.revert();
+				provider.synchronizeMessages();
+				assertBoth([[200]]);
+
+				assert.equal(undo.redoStack.length, 1);
+				const redoEdit = undo.redoStack.pop();
+				assert(redoEdit !== undefined);
+				redoEdit.revert();
+				provider.synchronizeMessages();
+				assertBoth(expected);
+			} finally {
+				undo.unsubscribe();
+				left.dispose();
+				right.dispose();
+			}
+		});
+	}
 
 	it("emits field changes and follows parent movement, removal, and restoration", () => {
 		const { provider, left, right, item, retained } = setup();

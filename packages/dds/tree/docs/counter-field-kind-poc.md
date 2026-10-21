@@ -1126,3 +1126,16 @@ Focused formatting checks passed; ESLint completed with zero errors and 28 warni
 `git diff --check` passed, with Git's line-ending notices for the generated API reports.
 The comment-free emitted JavaScript for the 57 originally changed TypeScript files matches the pre-documentation build.
 The documentation pass does not change runtime behavior; the earlier runtime test results above remain the implementation validation.
+
+### Permanent infrastructure-review regression tests
+
+The review-time probes are now part of the counter integration suite:
+
+- Generic readers compile when returning either field-read or raw-root types from a `TreeView`, including readers constrained to implicit allowed types.
+- A minimized transaction edits an existing counter-owning node and moves it into a newly built parent.
+- A minimized transaction edits a newly built counter-owning node, moves it into an existing parent, and removes its original parent.
+
+Both move cases check the resulting structure and values on two synchronized clients, then check undo and redo on both clients.
+The history stacks are asserted to contain the expected edit so missing undo/redo coverage cannot silently pass.
+Formatting, ESLint, and `build:test:esm` passed.
+The counter integration suite passed all 17 tests after these additions.
