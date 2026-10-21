@@ -3,14 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { parseSyml } from "@yarnpkg/parsers";
 import classicLockfile from "@yarnpkg/lockfile";
+import { parseSyml } from "@yarnpkg/parsers";
+import npa from "npm-package-arg";
 import semver from "semver";
+import validatePackageName from "validate-npm-package-name";
 
 export interface PinnedVersion {
 	name: string;
 	version: string;
 }
+
+/**
+ * {@link https://github.com/npm/npm-package-arg | npm-package-arg} specifier types that do not resolve through a registry.
+ */
+const nonRegistrySpecTypes: ReadonlySet<string> = new Set([
+	"directory",
+	"file",
+	"git",
+	"remote",
+]);
+
+/**
+ * Yarn protocols for workspace and local packages, which npm-package-arg does not recognize.
+ */
+const localYarnProtocols = ["link:", "portal:", "workspace:"] as const;
 
 /**
  * Reads both Yarn Classic and Berry lockfiles without installing the target project.
@@ -42,54 +59,67 @@ export function parseYarnLock(source: string): PinnedVersion[] {
 		if (!isRecord(entry)) {
 			throw new Error(`Invalid Yarn lock entry: ${selector}`);
 		}
-		const resolution = entry.resolution;
-		let name: string;
-		if (typeof resolution === "string") {
-			// Berry records the real npm name, including aliases, in the locator.
-			const match = /^(@?[^@]+)@npm:(.+)$/.exec(resolution);
-			if (match === null) {
-				if (/@(?:workspace|file|link|portal|patch|https?|git|github):/.test(resolution)) {
-					throwIfPatchedRegistry(resolution);
-					continue;
-				}
-				throw new Error(`Unsupported Yarn resolution: ${resolution}`);
-			}
-			name = match[1] ?? "";
+		let name: string | undefined;
+		if (typeof entry.resolution === "string") {
+			// Berry records the real package name, including for aliases, in the resolved locator.
+			const [ident, reference] = splitYarnDescriptor(entry.resolution);
+			name = reference.startsWith("npm:") ? ident : registryPackage(ident, reference)?.name;
 		} else {
-			// Classic can group several quoted descriptors in a single key.
-			const descriptor = selector.split(/,\s*/)[0]?.replace(/^"|"$/g, "") ?? "";
-			const match = /^(@?[^@]+)@(.+)$/.exec(descriptor);
-			if (match === null) {
-				throw new Error(`Invalid Yarn descriptor: ${selector}`);
-			}
-			name = match[1] ?? "";
-			const range = match[2] ?? "";
-			if (/^(?:file|link|workspace|portal|patch|https?|git|github|git\+[^:]+):/.test(range)) {
-				throwIfPatchedRegistry(range);
-				continue;
-			}
-			if (range.startsWith("npm:")) {
-				const alias = /^npm:(@?[^@]+)@/.exec(range);
-				if (alias === null) {
-					throw new Error(`Invalid npm alias: ${selector}`);
-				}
-				name = alias[1] ?? "";
-			}
-			if (typeof entry.resolved !== "string" || !/^https?:\/\//.test(entry.resolved)) {
+			// @yarnpkg/lockfile already splits Classic's grouped selectors into one key per descriptor.
+			name = registryPackage(...splitYarnDescriptor(selector))?.name;
+			if (
+				name !== undefined &&
+				(typeof entry.resolved !== "string" || !/^https?:\/\//.test(entry.resolved))
+			) {
 				throw new Error(`Missing registry tarball for Yarn entry: ${selector}`);
 			}
 		}
-		addPinned(result, name, entry.version);
+		if (name !== undefined) {
+			addPinned(result, name, entry.version);
+		}
 	}
 	return [...result.values()];
 }
 
-function throwIfPatchedRegistry(resolution: string): void {
-	if (resolution.includes("patch:")) {
+/**
+ * Splits a Yarn descriptor or locator, such as `@scope/name@npm:^1`, into its package name and range or reference.
+ */
+function splitYarnDescriptor(descriptor: string): [name: string, range: string] {
+	// A scoped name starts with "@", so the separator is the first "@" after the first character.
+	const separator = descriptor.indexOf("@", 1);
+	if (separator === -1) {
+		throw new Error(`Invalid Yarn descriptor: ${descriptor}`);
+	}
+	return [descriptor.slice(0, separator), descriptor.slice(separator + 1)];
+}
+
+/**
+ * Resolves a dependency specifier to the registry package it installs, following npm aliases.
+ * @param name - Dependency name.
+ * @param spec - Version, range, tag, alias, or protocol specifier.
+ * @returns The registry package name and specifier, or `undefined` for workspace, local, Git, and tarball dependencies.
+ */
+function registryPackage(
+	name: string,
+	spec: string,
+): { name: string; spec: string } | undefined {
+	if (spec.startsWith("patch:")) {
 		throw new Error(
-			`Patched Yarn packages are not supported; refusing an incomplete audit: ${resolution}`,
+			`Patched packages are not supported; refusing an incomplete audit: ${name}@${spec}`,
 		);
 	}
+	if (localYarnProtocols.some((protocol) => spec.startsWith(protocol))) {
+		return undefined;
+	}
+	const parsed = npa.resolve(name, spec);
+	if (parsed.type === "alias") {
+		const target = parsed.subSpec;
+		if (!target?.name) {
+			throw new Error(`Invalid npm alias: ${name}@${spec}`);
+		}
+		return { name: target.name, spec: target.rawSpec };
+	}
+	return nonRegistrySpecTypes.has(parsed.type) ? undefined : { name, spec };
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -113,27 +143,28 @@ export function parseNpmLock(source: string): PinnedVersion[] {
 		if (!isRecord(entry)) {
 			throw new Error(`Invalid npm dependency entry: ${name}`);
 		}
-		const version = entry.version;
-		const nonRegistryResolution =
+		if (entry.link === true) {
+			return;
+		}
+		if (
 			typeof entry.resolved === "string" &&
-			/^(?:file|link|workspace|git|github|git\+[^:]+):/.test(entry.resolved);
-		if (entry.link !== true && !nonRegistryResolution && version !== undefined) {
-			if (typeof version !== "string") {
-				throw new Error(`Invalid npm version: ${name}`);
-			}
-			if (!/^(?:file|link|workspace|https?|git|github|git\+[^:]+):/.test(version)) {
-				if (version.startsWith("npm:")) {
-					const alias = /^npm:(@?[^@]+)@(.+)$/.exec(version);
-					if (alias === null) {
-						throw new Error(`Invalid npm alias: ${version}`);
-					}
-					addPinned(result, alias[1] ?? "", alias[2]);
-				} else {
-					addPinned(result, typeof entry.name === "string" ? entry.name : name, version);
-				}
-			}
-		} else if (entry.link !== true && !nonRegistryResolution) {
+			["directory", "file", "git"].includes(npa.resolve(name, entry.resolved).type)
+		) {
+			return;
+		}
+		if (entry.version === undefined) {
 			throw new Error(`Missing npm version: ${name}`);
+		}
+		if (typeof entry.version !== "string") {
+			throw new Error(`Invalid npm version: ${name}`);
+		}
+		// Version 2+ records an alias's real name in `name`; version 1 records the alias in `version`.
+		const pin = registryPackage(
+			typeof entry.name === "string" ? entry.name : name,
+			entry.version,
+		);
+		if (pin !== undefined) {
+			addPinned(result, pin.name, pin.spec);
 		}
 	}
 	if (lock.lockfileVersion === 1) {
@@ -153,11 +184,12 @@ export function parseNpmLock(source: string): PinnedVersion[] {
 		if (!isRecord(lock.packages)) {
 			throw new Error("Missing npm packages map.");
 		}
+		const installDir = "node_modules/";
 		for (const [location, entry] of Object.entries(lock.packages)) {
-			// Root and workspace package definitions are not registry dependencies.
-			const match = /(?:^|\/)node_modules\/((?:@[^/]+\/)?[^/]+)$/.exec(location);
-			if (match !== null) {
-				visit(match[1] ?? "", entry);
+			// Root and workspace package definitions are not installed under node_modules.
+			const index = location.lastIndexOf(installDir);
+			if (index !== -1) {
+				visit(location.slice(index + installDir.length), entry);
 			}
 		}
 	}
@@ -185,13 +217,18 @@ export function addPinned(
  * @param version - Exact version.
  */
 export function toPinnedVersion(name: string, version: unknown): PinnedVersion {
+	const parsed = typeof version === "string" ? semver.parse(version) : null;
+	// semver accepts a leading "v" or "=", which registries never record in a version.
+	const canonical =
+		parsed === null || parsed.build.length === 0
+			? parsed?.version
+			: `${parsed.version}+${parsed.build.join(".")}`;
 	if (
-		!/^(@[a-z0-9_.~-]+\/)?[a-z0-9_.~-]+$/i.test(name) ||
-		typeof version !== "string" ||
-		!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version) ||
-		semver.valid(version) === null
+		canonical === undefined ||
+		canonical !== version ||
+		!validatePackageName(name).validForOldPackages
 	) {
 		throw new Error(`Invalid registry package pin: ${name}@${String(version)}`);
 	}
-	return { name, version };
+	return { name, version: canonical };
 }

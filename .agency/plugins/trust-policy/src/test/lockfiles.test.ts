@@ -133,4 +133,25 @@ test("npm rejects unsupported formats and malformed dependency pins", () => {
 		() => parseNpmLock('{"lockfileVersion":1,"dependencies":{"x":{"version":"^1"}}}'),
 		/pin/,
 	);
+	// semver accepts these forms, but registries record only canonical versions and valid names.
+	for (const [name, version] of [
+		["x", "v1.0.0"],
+		["x", "=1.0.0"],
+		["x", "1.02.0"],
+		["bad name", "1.0.0"],
+	] as const) {
+		assert.throws(
+			() =>
+				parseNpmLock(
+					JSON.stringify({ lockfileVersion: 1, dependencies: { [name]: { version } } }),
+				),
+			/Invalid (?:registry package pin|package name)/,
+		);
+	}
+	assert.deepEqual(
+		parseNpmLock(
+			'{"lockfileVersion":1,"dependencies":{"x":{"version":"1.0.0-rc.1+build.5"}}}',
+		),
+		[{ name: "x", version: "1.0.0-rc.1+build.5" }],
+	);
 });

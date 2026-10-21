@@ -30,7 +30,8 @@
 		"npm-package-arg": "^14.0.0",
 		"npm-registry-fetch": "^20.0.1",
 		"pacote": "^22.0.0",
-		"semver": "^7.7.3"
+		"semver": "^7.7.3",
+		"validate-npm-package-name": "^8.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
@@ -40,6 +41,7 @@
 		"@types/npm-registry-fetch": "^8.0.9",
 		"@types/pacote": "^11.1.8",
 		"@types/semver": "^7.7.1",
+		"@types/validate-npm-package-name": "^4.0.2",
 		"@types/yarnpkg__lockfile": "^1.1.9",
 		"typescript": "~5.9.3"
 	},
