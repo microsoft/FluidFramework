@@ -6,33 +6,47 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-	findBlockedRegistry,
-	formatRegistryAccess,
+	findBlockedEndpoints,
+	formatEndpointAccess,
 	isAzureArtifactsRegistry,
+	normalizeEndpointUrl,
+	npmRegistryEndpoint,
 	parseRegistryConfig,
-	probeRegistries,
+	planEndpoints,
+	probeEndpoints,
 	redactRegistry,
+	sigstoreTufEndpoint,
 } from "../registry-access.js";
 
-test("classifies registry probe outcomes", async () => {
+test("classifies endpoint probe outcomes", async () => {
 	const requested: string[] = [];
 	const fakeFetch: typeof fetch = async (input) => {
 		const url = String(input);
 		requested.push(url);
-		if (url.startsWith("https://ok.example")) return new Response("{}", { status: 200 });
-		if (url.startsWith("https://denied.example")) return new Response("", { status: 403 });
-		if (url.startsWith("https://slow.example"))
+		if (url.startsWith("https://ok.example")) {
+			return new Response("{}", { status: 200 });
+		}
+		if (url.startsWith("https://denied.example")) {
+			return new Response("", { status: 403 });
+		}
+		if (url.startsWith("https://slow.example")) {
 			throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+		}
 		throw new TypeError("fetch failed", {
 			cause: Object.assign(new Error("getaddrinfo ENOTFOUND"), { code: "ENOTFOUND" }),
 		});
 	};
-	const access = await probeRegistries(
+	const access = await probeEndpoints(
 		[
-			"https://ok.example",
-			"https://denied.example",
-			"https://slow.example",
-			"https://missing.example",
+			npmRegistryEndpoint("https://ok.example/", "metadata"),
+			npmRegistryEndpoint("https://denied.example", "metadata", false),
+			{
+				url: "https://slow.example",
+				probePath: "/timestamp.json",
+				purpose: "trust",
+				required: true,
+			},
+			npmRegistryEndpoint("https://missing.example", "metadata"),
 		],
 		fakeFetch,
 	);
@@ -40,41 +54,61 @@ test("classifies registry probe outcomes", async () => {
 		"https://denied.example/-/ping",
 		"https://missing.example/-/ping",
 		"https://ok.example/-/ping",
-		"https://slow.example/-/ping",
+		"https://slow.example/timestamp.json",
 	]);
-	assert.deepEqual(access, [
-		{ registry: "https://ok.example", reachable: true, detail: "HTTP 200" },
-		{ registry: "https://denied.example", reachable: false, detail: "HTTP 403" },
-		{ registry: "https://slow.example", reachable: false, detail: "timed out" },
-		{ registry: "https://missing.example", reachable: false, detail: "ENOTFOUND" },
+	assert.deepEqual(
+		access.map(({ url, reachable, detail }) => ({ url, reachable, detail })),
+		[
+			{ url: "https://ok.example", reachable: true, detail: "HTTP 200" },
+			{ url: "https://denied.example", reachable: false, detail: "HTTP 403" },
+			{ url: "https://slow.example", reachable: false, detail: "timed out" },
+			{ url: "https://missing.example", reachable: false, detail: "ENOTFOUND" },
+		],
+	);
+	assert.deepEqual(formatEndpointAccess(access), [
+		"  https://ok.example       reachable (HTTP 200)  metadata",
+		"  https://denied.example   BLOCKED (HTTP 403)    metadata",
+		"  https://slow.example     BLOCKED (timed out)   trust",
+		"  https://missing.example  BLOCKED (ENOTFOUND)   metadata",
 	]);
-	assert.deepEqual(formatRegistryAccess(access), [
-		"  https://ok.example       reachable (HTTP 200)",
-		"  https://denied.example   BLOCKED (HTTP 403)",
-		"  https://slow.example     BLOCKED (timed out)",
-		"  https://missing.example  BLOCKED (ENOTFOUND)",
-	]);
+	// Only required endpoints stop the command.
+	assert.deepEqual(
+		findBlockedEndpoints(access).map(({ url }) => url),
+		["https://slow.example", "https://missing.example"],
+	);
 });
 
 test("treats redirects as blocked", async () => {
-	const access = await probeRegistries(
-		["https://proxy.example"],
+	const [access] = await probeEndpoints(
+		[npmRegistryEndpoint("https://proxy.example", "metadata")],
 		async () => new Response(null, { status: 302, headers: { location: "https://login" } }),
 	);
-	assert.deepEqual(access, [
-		{ registry: "https://proxy.example", reachable: false, detail: "HTTP 302" },
-	]);
+	assert.equal(access?.reachable, false);
+	assert.equal(access?.detail, "HTTP 302");
 });
 
-test("matches the registry in use by origin", () => {
-	const access = [
-		{ registry: "https://registry.npmjs.org", reachable: false, detail: "HTTP 403" },
-		{ registry: "https://registry.yarnpkg.com", reachable: true, detail: "HTTP 200" },
-	];
-	assert.equal(findBlockedRegistry("https://registry.npmjs.org/", access)?.detail, "HTTP 403");
-	assert.equal(findBlockedRegistry("https://registry.yarnpkg.com/", access), undefined);
-	assert.equal(findBlockedRegistry("https://mirror.example/npm/", access), undefined);
-	assert.equal(findBlockedRegistry("not a url", access), undefined);
+test("plans only the endpoints a mode needs as required, with public registries as information", () => {
+	const plan = planEndpoints([
+		npmRegistryEndpoint("https://registry.npmjs.org/", "package metadata"),
+		sigstoreTufEndpoint("trusted root", true),
+	]);
+	assert.deepEqual(
+		plan.map(({ url, required }) => [url, required]),
+		[
+			["https://registry.npmjs.org", true],
+			["https://tuf-repo-cdn.sigstore.dev", true],
+			["https://registry.yarnpkg.com", false],
+			["https://registry.npmmirror.com", false],
+		],
+	);
+	assert.deepEqual(
+		planEndpoints([]).map(({ required }) => required),
+		[false, false, false],
+	);
+	assert.equal(
+		normalizeEndpointUrl("https://user:pass@mirror.example/npm/?q=1#x"),
+		"https://mirror.example/npm",
+	);
 });
 
 test("detects Azure Artifacts feeds", () => {

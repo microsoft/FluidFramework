@@ -58,6 +58,7 @@ async function fixture(
 	responses: FixtureResponse[] = [],
 	exclude = "",
 	config: Record<string, string> = { registry: "https://registry.npmjs.org/" },
+	pnpmVersion = "10.33.0",
 ) {
 	const root = await mkdtemp(path.join(os.tmpdir(), "trust-policy test-"));
 	t.after(() => rm(root, { recursive: true, force: true }));
@@ -75,6 +76,10 @@ async function fixture(
 		fakePnpm,
 		`const fs = require("node:fs");
 fs.appendFileSync(process.env.TEST_CALLS, JSON.stringify({args: process.argv.slice(2), cwd: process.cwd(), ci: process.env.CI}) + "\\n");
+if (process.argv[2] === "--version") {
+  process.stdout.write(process.env.TEST_PNPM_VERSION);
+  return;
+}
 if (process.argv[2] === "config") {
   process.stdout.write(process.argv[3] === "list" ? process.env.TEST_CONFIG : process.env.TEST_EXCLUDE);
   return;
@@ -103,6 +108,7 @@ process.exitCode = response.code;
 		TEST_CALLS: calls,
 		TEST_EXCLUDE: exclude,
 		TEST_CONFIG: JSON.stringify(config),
+		TEST_PNPM_VERSION: pnpmVersion,
 	};
 	const pathKey = Object.keys(env).find((key) => key.toUpperCase() === "PATH") ?? "PATH";
 	env[pathKey] = `${bin}${path.delimiter}${env[pathKey] ?? ""}`;
@@ -208,10 +214,7 @@ test("explicit Yarn lockfiles bypass pnpm list and support scoped registry alias
 	const calls = await readCalls();
 	assert.deepEqual(
 		calls.map((call) => call.args.slice(0, 2)),
-		[
-			["config", "list"],
-			["install", "--recursive"],
-		],
+		[["--version"], ["config", "list"], ["install", "--recursive"]],
 	);
 	assert.equal(calls[0]?.cwd, result.tempDir);
 	const manifest = JSON.parse(
@@ -238,7 +241,9 @@ test("npm package-lock input bypasses enumeration and --path auto-detects the lo
 	assert.equal(output.code, 0, output.stdout + output.stderr);
 	assert.equal(JSON.parse(output.stdout).totalUniqueDependencies, 1);
 	assert.ok(
-		(await readCalls()).every((call) => ["config", "install"].includes(call.args[0] ?? "")),
+		(await readCalls()).every((call) =>
+			["--version", "config", "install"].includes(call.args[0] ?? ""),
+		),
 	);
 });
 
@@ -419,6 +424,27 @@ test("invalid trustPolicyExclude selectors fail before creating scratch files", 
 	await assert.rejects(stat(path.join(workspace, ".trust-audit-temp")), { code: "ENOENT" });
 });
 
+test("audits fail with a clear message when the scratch install would use an old pnpm", async (t) => {
+	const { workspace, run, readCalls } = await fixture(
+		t,
+		[listResponse],
+		"",
+		undefined,
+		"10.23.0",
+	);
+	const output = await run(["--json"]);
+	assert.notEqual(output.code, 0);
+	assert.match(
+		output.stdout + output.stderr,
+		/require pnpm 10\.24\.0 or later.*found 10\.23\.0/,
+	);
+	assert.deepEqual(
+		(await readCalls()).map((call) => call.args[0]),
+		["list", "config", "--version"],
+	);
+	await assert.rejects(stat(path.join(workspace, ".trust-audit-temp")), { code: "ENOENT" });
+});
+
 test("the built-in runner can invoke the installed pnpm launcher", async () => {
 	const result = await runPnpm(["--version"], process.cwd(), false);
 	assert.equal(result.code, 0, result.stderr);
@@ -467,7 +493,7 @@ test("rejects Azure Artifacts registries before any trust check and warns about 
 	assert.doesNotMatch(output.stdout + output.stderr, /secret/);
 	assert.deepEqual(
 		(await azure.readCalls()).map((call) => call.args[0]),
-		["list", "config", "config"],
+		["list", "config", "--version", "config"],
 	);
 	await assert.rejects(stat(path.join(azure.workspace, ".trust-audit-temp")), {
 		code: "ENOENT",

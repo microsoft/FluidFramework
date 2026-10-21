@@ -35,7 +35,9 @@ export function createTrustPolicyExclude(selectors: readonly string[]): TrustPol
 
 function parseSelector(selector: string): { packageName: string; exactVersions: string[] } {
 	const atIndex = selector.startsWith("@") ? selector.indexOf("@", 1) : selector.indexOf("@");
-	if (atIndex === -1) return { packageName: selector, exactVersions: [] };
+	if (atIndex === -1) {
+		return { packageName: selector, exactVersions: [] };
+	}
 	const packageName = selector.slice(0, atIndex);
 	const exactVersions: string[] = [];
 	for (const raw of selector.slice(atIndex + 1).split("||")) {
@@ -61,7 +63,9 @@ function createNameMatcher(pattern: string): (name: string) => boolean {
 		const matches = createNameMatcher(pattern.slice(1));
 		return (name) => !matches(name);
 	}
-	if (pattern === "*") return () => true;
+	if (pattern === "*") {
+		return () => true;
+	}
 	const source = pattern
 		.replace(/[.+^${}()|[\]\\]/g, "\\$&")
 		.replace(/\*/g, ".*")
@@ -77,10 +81,18 @@ function createNameMatcher(pattern: string): (name: string) => boolean {
  */
 export function parseTrustPolicyExcludeConfig(stdout: string): string[] {
 	const text = stdout.trim();
-	if (text === "" || text === "undefined") return [];
+	if (text === "" || text === "undefined") {
+		return [];
+	}
 	const value: unknown = JSON.parse(text);
-	if (value === null) return [];
-	if (typeof value === "string") return [value];
-	if (Array.isArray(value) && value.every((item) => typeof item === "string")) return value;
+	if (value === null) {
+		return [];
+	}
+	if (typeof value === "string") {
+		return [value];
+	}
+	if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+		return value;
+	}
 	throw new Error(`Unexpected trustPolicyExclude configuration: ${text}`);
 }

@@ -7,6 +7,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseYarnLock, parseNpmLock } from "../lockfiles.js";
 
+// Test inputs follow these formats:
+// - Yarn Classic: https://classic.yarnpkg.com/en/docs/yarn-lock
+// - Yarn Berry (no formal specification): https://yarnpkg.com/protocols and
+//   https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-core/sources/Project.ts
+// - npm: https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json
+
 test("Yarn Classic: grouped selectors, scoped aliases, deduplication, and local dependencies", () => {
 	assert.deepEqual(
 		parseYarnLock(`

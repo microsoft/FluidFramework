@@ -12,7 +12,9 @@
 		"build": "tsc --project tsconfig.json",
 		"pretest": "npm run build",
 		"test": "node --test lib/test/*.test.js",
-		"check": "tsc --project tsconfig.json --noEmit"
+		"check": "tsc --project tsconfig.json --noEmit",
+		"format": "biome check --write .",
+		"lint": "biome check ."
 	},
 	"engines": {
 		"node": "^22.22.2 || ^24.15.0 || >=26.0.0"
@@ -21,12 +23,20 @@
 		"@oclif/core": "^4.10.5",
 		"@yarnpkg/lockfile": "^1.1.0",
 		"@yarnpkg/parsers": "^3.1.0",
+		"npm-package-arg": "^14.0.0",
 		"semver": "^7.7.3",
-		"sigstore": "^5.0.0"
+		"sigstore": "^5.0.0",
+		"ssri": "^14.0.0"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@sigstore/bundle": "^5.0.0",
+		"@sigstore/protobuf-specs": "^0.5.2",
+		"@sigstore/verify": "^4.1.2",
 		"@types/node": "~22.19.17",
+		"@types/npm-package-arg": "^6.1.4",
 		"@types/semver": "^7.7.1",
+		"@types/ssri": "^7.1.5",
 		"@types/yarnpkg__lockfile": "^1.1.9",
 		"typescript": "~5.9.3"
 	},

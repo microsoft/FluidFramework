@@ -5,26 +5,41 @@
  */
 
 import { spawn } from "node:child_process";
+import { realpathSync, readFileSync } from "node:fs";
 import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { Command, Flags, execute } from "@oclif/core";
+import semver from "semver";
 import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
-import { checkPackage, type PackageCheckResult } from "./package-check.js";
+import { checkPackage, type PackageCheckResult, type Verdict } from "./package-check.js";
 import {
 	azureArtifactsReason,
-	findBlockedRegistry,
-	formatRegistryAccess,
+	type Endpoint,
+	type EndpointAccess,
+	findBlockedEndpoints,
+	formatEndpointAccess,
 	isAzureArtifactsRegistry,
+	npmRegistryEndpoint,
 	parseRegistryConfig,
-	probeRegistries,
+	planEndpoints,
+	probeEndpoints,
 	publicRegistries,
 	redactRegistry,
-	type RegistryAccess,
+	sigstoreTufEndpoint,
 } from "./registry-access.js";
 
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
+
+/**
+ * Oldest pnpm whose trust evaluation matches this checker.
+ * pnpm {@link https://pnpm.io/blog/releases/10.21 | 10.21} added `trustPolicy: no-downgrade`,
+ * {@link https://pnpm.io/blog/releases/10.22 | 10.22} added `trustPolicyExclude`, and
+ * {@link https://pnpm.io/blog/releases/10.24 | 10.24} stopped prerelease trust evidence from blocking stable releases, matching single-package `no-downgrade`.
+ */
+const minimumPnpmVersion = "10.24.0";
 
 interface PnpmRunResult {
 	code: number | null;
@@ -49,9 +64,9 @@ interface TrustPolicyAuditResult {
 	excludedViolationCount: number;
 	violations: TrustPolicyViolation[];
 	/**
-	 * Startup reachability of public registries. Absent with `--no-registry-check`.
+	 * Reachability of the network endpoints the audit uses, and of public registries for information. Absent with `--no-registry-check`.
 	 */
-	registryAccess?: RegistryAccess[];
+	endpointAccess?: EndpointAccess[];
 }
 
 interface TrustPolicyViolation extends PinnedVersion {
@@ -123,7 +138,7 @@ export default class CheckTrustPolicyCommand extends Command {
 		}),
 		"registry-check": Flags.boolean({
 			description:
-				"Report which public registries are blocked before starting, and stop early if the registry in use is blocked.",
+				"Probe the registries and Sigstore endpoints this mode needs, and public registries for information, before starting. Stop early if a required endpoint is blocked.",
 			default: true,
 			allowNo: true,
 		}),
@@ -145,30 +160,60 @@ export default class CheckTrustPolicyCommand extends Command {
 	} as const;
 
 	public async run(): Promise<
-		TrustPolicyAuditResult | (PackageCheckResult & { registryAccess?: RegistryAccess[] })
+		TrustPolicyAuditResult | (PackageCheckResult & { endpointAccess?: EndpointAccess[] })
 	> {
 		const { flags } = await this.parse(CheckTrustPolicyCommand);
-		let registryAccess: RegistryAccess[] | undefined;
-		if (flags["registry-check"]) {
-			registryAccess = await probeRegistries(publicRegistries);
-			if (!flags.quiet) {
-				this.log("Registry access (from Node.js):");
-				for (const line of formatRegistryAccess(registryAccess)) this.log(line);
+		let endpointAccess: EndpointAccess[] | undefined;
+		/**
+		 * Probes endpoints that have not been probed yet, then stops if any required endpoint is unreachable.
+		 * Endpoints are compared by URL, so a public registry probed for information becomes required when the command uses it.
+		 */
+		const requireEndpoints = async (endpoints: readonly Endpoint[], remedy: string) => {
+			if (!flags["registry-check"]) {
+				return;
 			}
-		}
-		const failIfBlocked = (registry: string, remedy: string): void => {
-			const blocked =
-				registryAccess === undefined
-					? undefined
-					: findBlockedRegistry(registry, registryAccess);
-			if (blocked !== undefined) {
+			const known = endpointAccess ?? [];
+			const unprobed = endpoints.filter(
+				({ url }) => !known.some((entry) => entry.url === url),
+			);
+			const probed = await probeEndpoints(unprobed);
+			const upgraded = new Set<string>();
+			const merged = known.map((entry) => {
+				const needed = endpoints.find(({ url }) => url === entry.url);
+				if (
+					needed === undefined ||
+					(needed.purpose === entry.purpose && needed.required === entry.required)
+				) {
+					return entry;
+				}
+				upgraded.add(entry.url);
+				return { ...entry, ...needed };
+			});
+			endpointAccess = [...merged, ...probed];
+			if (!flags.quiet && (probed.length > 0 || upgraded.size > 0)) {
+				if (known.length === 0) {
+					this.log("Network access (from Node.js):");
+				}
+				const lines = formatEndpointAccess(endpointAccess);
+				endpointAccess.forEach(({ url }, index) => {
+					if (index >= merged.length || upgraded.has(url)) {
+						this.log(lines[index]);
+					}
+				});
+			}
+			const blocked = findBlockedEndpoints(
+				endpointAccess.filter(({ url }) => endpoints.some((endpoint) => endpoint.url === url)),
+			);
+			if (blocked.length > 0) {
 				// Text mode has already printed the table; JSON errors carry no result object.
 				const summary = this.jsonEnabled()
-					? ` Registry access: ${formatRegistryAccess(registryAccess ?? [])
-							.map((line) => line.trim().replace(/\s+/, " "))
+					? ` Network access: ${formatEndpointAccess(endpointAccess)
+							.map((line) => line.trim().replace(/\s+/g, " "))
 							.join("; ")}.`
 					: "";
-				this.error(`${blocked.registry} is blocked (${blocked.detail}). ${remedy}${summary}`);
+				this.error(
+					`${blocked.map(({ url, detail }) => `${url} is blocked (${detail})`).join("; ")}. ${remedy}${summary}`,
+				);
 			}
 		};
 		if (flags.package !== undefined) {
@@ -177,14 +222,27 @@ export default class CheckTrustPolicyCommand extends Command {
 					`--registry ${redactRegistry(flags.registry)} is an Azure Artifacts feed. ${azureArtifactsReason} Omit --registry to use https://registry.npmjs.org, or pass a registry that serves npm attestations.`,
 				);
 			}
-			failIfBlocked(
-				flags.registry ?? publicRegistries[0],
-				"Pass --registry with a reachable HTTPS registry that serves npm attestations.",
-			);
 			const policy = flags.policy ?? "cryptographic";
 			if (policy !== "cryptographic" && policy !== "metadata" && policy !== "no-downgrade") {
 				this.error(`Unsupported package policy: ${policy}`);
 			}
+			const needed = [
+				npmRegistryEndpoint(
+					flags.registry ?? publicRegistries[0],
+					"package metadata and attestations",
+				),
+			];
+			if (policy === "cryptographic") {
+				needed.push(sigstoreTufEndpoint("Sigstore trusted root for verification", true));
+			} else if (policy === "no-downgrade") {
+				needed.push(
+					sigstoreTufEndpoint("Sigstore trusted root for verifying alternatives", false),
+				);
+			}
+			await requireEndpoints(
+				planEndpoints(needed),
+				"Pass --registry with a reachable HTTPS registry that serves npm attestations, or check access to Sigstore.",
+			);
 			const result = await checkPackage(flags.package, {
 				policy,
 				...(flags.registry === undefined ? {} : { registry: flags.registry }),
@@ -194,33 +252,46 @@ export default class CheckTrustPolicyCommand extends Command {
 			});
 			if (!flags.quiet) {
 				this.log(
-					`${flags.package}: ${result.requested.accepted ? "meets policy" : "does not meet policy"} (${result.policy})`,
+					`${flags.package}: ${describeVerdict(result.requested.verdict)} (${result.policy})`,
 				);
 				this.log(result.requested.reason);
-				if (result.alternative)
+				if (result.alternative) {
 					this.log(
 						`Alternative: ${result.alternative.name}@${result.alternative.version} — ${result.alternative.reason}`,
 					);
-				else if (!result.requested.accepted)
+				} else if (result.requested.verdict === "rejected") {
 					this.log("No acceptable alternative found within the search limit.");
-				if (result.auditIncomplete)
+				}
+				if (result.auditIncomplete) {
 					this.logToStderr(
 						`WARNING: Incomplete verification or alternative search. ${result.errors.join("; ")}`,
 					);
+				}
 				this.log(result.disclaimer);
 			}
-			if (!this.jsonEnabled() && (!result.requested.accepted || result.auditIncomplete))
+			if (
+				!this.jsonEnabled() &&
+				(result.requested.verdict !== "accepted" || result.auditIncomplete)
+			) {
 				this.exit(1);
-			return registryAccess === undefined ? result : { ...result, registryAccess };
+			}
+			return endpointAccess === undefined ? result : { ...result, endpointAccess };
 		}
+		await requireEndpoints(planEndpoints([]), "");
 		const info = (message: string): void => {
-			if (!flags.quiet) this.log(`INFO: ${message}`);
+			if (!flags.quiet) {
+				this.log(`INFO: ${message}`);
+			}
 		};
 		const verbose = (message: string): void => {
-			if (flags.verbose) info(message);
+			if (flags.verbose) {
+				info(message);
+			}
 		};
 		const warning = (message: string): void => {
-			if (!flags.quiet) this.logToStderr(`WARNING: ${message}`);
+			if (!flags.quiet) {
+				this.logToStderr(`WARNING: ${message}`);
+			}
 		};
 		const workspaceDir = flags.lockfile
 			? path.dirname(path.resolve(flags.lockfile))
@@ -278,8 +349,9 @@ export default class CheckTrustPolicyCommand extends Command {
 		}
 		const excludedBy = createTrustPolicyExclude(trustPolicyExclude);
 		verbose(`Found ${pinned.length} unique name@version entries.`);
-		if (trustPolicyExclude.length > 0)
+		if (trustPolicyExclude.length > 0) {
 			verbose(`trustPolicyExclude: ${trustPolicyExclude.join(", ")}`);
+		}
 
 		// Never remove a pre-existing user-selected directory to prepare an audit.
 		await mkdir(tempDir);
@@ -290,6 +362,14 @@ export default class CheckTrustPolicyCommand extends Command {
 		const start = Date.now();
 		try {
 			await writeAuditWorkspace(tempDir, pinned);
+			// Check the pnpm that runs the audit install, which can differ from the workspace's.
+			const pnpmVersion = (await runPnpm(["--version"], tempDir, false)).stdout.trim();
+			if (semver.valid(pnpmVersion) === null || semver.lt(pnpmVersion, minimumPnpmVersion)) {
+				this.error(
+					`Dependency audits require pnpm ${minimumPnpmVersion} or later on PATH; found ${pnpmVersion || "no version"}.`,
+				);
+			}
+			verbose(`pnpm version: ${pnpmVersion}`);
 			// Resolve configuration where the audit install runs, since it may differ from the workspace's.
 			const configList = await runPnpm(["config", "list", "--json"], tempDir, false);
 			if (configList.code !== 0) {
@@ -304,12 +384,14 @@ export default class CheckTrustPolicyCommand extends Command {
 					`pnpm resolves packages from the Azure Artifacts feed ${redactRegistry(registry)}. ${azureArtifactsReason} pnpm would report no trust downgrades even when published packages have them. Point pnpm at the public registry for the audit by setting the environment variable pnpm_config_registry=https://registry.npmjs.org/ (pnpm 11+) or npm_config_registry=https://registry.npmjs.org/ (pnpm 10).`,
 				);
 			}
-			failIfBlocked(
-				registry,
+			await requireEndpoints(
+				[npmRegistryEndpoint(redactRegistry(registry), "pnpm package resolution")],
 				"pnpm needs this registry to evaluate trust. Configure a reachable registry or pass --no-registry-check if pnpm uses a proxy.",
 			);
 			for (const [scope, scopeRegistry] of registryConfig.scoped) {
-				if (!isAzureArtifactsRegistry(scopeRegistry)) continue;
+				if (!isAzureArtifactsRegistry(scopeRegistry)) {
+					continue;
+				}
 				const count = pinned.filter(({ name }) => name.startsWith(`${scope}/`)).length;
 				if (count > 0) {
 					warning(
@@ -346,7 +428,9 @@ export default class CheckTrustPolicyCommand extends Command {
 					flags.verbose && !this.jsonEnabled(),
 				);
 				const found = extractTrustViolations(lastResult.stdout);
-				if (lastResult.code === 0) break;
+				if (lastResult.code === 0) {
+					break;
+				}
 				const newViolations = found.filter(
 					({ name, version }) => !violationsByName.get(name)?.has(version),
 				);
@@ -394,8 +478,9 @@ export default class CheckTrustPolicyCommand extends Command {
 					continue;
 				}
 				excludedViolationCount++;
-				if (flags["include-excluded"])
+				if (flags["include-excluded"]) {
 					violations.push({ name, version, excludedBy: selector });
+				}
 			}
 		}
 		const exitCode = lastResult?.code ?? 2;
@@ -440,9 +525,11 @@ export default class CheckTrustPolicyCommand extends Command {
 			trustPolicyExclude,
 			excludedViolationCount,
 			violations,
-			...(registryAccess === undefined ? {} : { registryAccess }),
+			...(endpointAccess === undefined ? {} : { endpointAccess }),
 		};
-		if (!this.jsonEnabled() && (violations.length > 0 || auditIncomplete)) this.exit(1);
+		if (!this.jsonEnabled() && (violations.length > 0 || auditIncomplete)) {
+			this.exit(1);
+		}
 		return result;
 	}
 }
@@ -454,22 +541,32 @@ export default class CheckTrustPolicyCommand extends Command {
 export async function findWorkspace(searchPath: string): Promise<string> {
 	let packageDir: string | undefined;
 	for (let dir = searchPath; ; dir = path.dirname(dir)) {
-		if (await isFile(path.join(dir, "pnpm-workspace.yaml"))) return dir;
+		if (await isFile(path.join(dir, "pnpm-workspace.yaml"))) {
+			return dir;
+		}
 		const manifestPath = path.join(dir, "package.json");
 		const hasManifest = await isFile(manifestPath);
-		if (packageDir === undefined && hasManifest) packageDir = dir;
+		if (packageDir === undefined && hasManifest) {
+			packageDir = dir;
+		}
 		const manifest = hasManifest
 			? (JSON.parse(await readFile(manifestPath, "utf8")) as { workspaces?: unknown })
 			: undefined;
 		// An unrelated ancestor's standalone npm install must not capture this project.
 		if (packageDir === undefined || dir === packageDir || manifest?.workspaces !== undefined) {
 			for (const name of ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"]) {
-				if (await isFile(path.join(dir, name))) return dir;
+				if (await isFile(path.join(dir, name))) {
+					return dir;
+				}
 			}
 		}
-		if (path.dirname(dir) === dir) break;
+		if (path.dirname(dir) === dir) {
+			break;
+		}
 	}
-	if (packageDir !== undefined) return packageDir;
+	if (packageDir !== undefined) {
+		return packageDir;
+	}
 	throw new Error(`No pnpm workspace or package.json contains ${searchPath}.`);
 }
 
@@ -477,7 +574,9 @@ async function isFile(file: string): Promise<boolean> {
 	try {
 		return (await stat(file)).isFile();
 	} catch (error) {
-		if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
+		if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+			return false;
+		}
 		throw error;
 	}
 }
@@ -510,11 +609,15 @@ export function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
 			entry.optionalDependencies,
 		]) {
 			if (map !== undefined) {
-				for (const child of Object.values(map)) visit(child);
+				for (const child of Object.values(map)) {
+					visit(child);
+				}
 			}
 		}
 	}
-	for (const project of projects) visit(project);
+	for (const project of projects) {
+		visit(project);
+	}
 	return result;
 }
 
@@ -556,7 +659,9 @@ async function writeAuditWorkspace(
 export function extractTrustViolations(ndjsonStdout: string): PinnedVersion[] {
 	const found: PinnedVersion[] = [];
 	for (const rawLine of ndjsonStdout.split(/\r?\n/)) {
-		if (rawLine === "" || !rawLine.includes(TRUST_DOWNGRADE_CODE)) continue;
+		if (rawLine === "" || !rawLine.includes(TRUST_DOWNGRADE_CODE)) {
+			continue;
+		}
 		let event: {
 			code?: string;
 			package?: { name?: string; version?: string };
@@ -627,11 +732,15 @@ export async function runPnpm(
 	subprocess.stderr.setEncoding("utf8");
 	subprocess.stdout.on("data", (chunk: string) => {
 		stdout += chunk;
-		if (streamLive) process.stdout.write(chunk);
+		if (streamLive) {
+			process.stdout.write(chunk);
+		}
 	});
 	subprocess.stderr.on("data", (chunk: string) => {
 		stderr += chunk;
-		if (streamLive) process.stderr.write(chunk);
+		if (streamLive) {
+			process.stderr.write(chunk);
+		}
 	});
 	return new Promise((resolve, reject) => {
 		subprocess.once("error", reject);
@@ -639,5 +748,44 @@ export async function runPnpm(
 	});
 }
 
-// Not awaited: oclif imports this module to load the command, which would wait on its own evaluation.
-if (import.meta.main) void execute({ dir: import.meta.url });
+function describeVerdict(verdict: Verdict): string {
+	switch (verdict) {
+		case "accepted": {
+			return "meets policy";
+		}
+		case "rejected": {
+			return "does not meet policy";
+		}
+		default: {
+			return "INCONCLUSIVE, verification could not complete";
+		}
+	}
+}
+
+/**
+ * Whether this module is the process entry point.
+ * `import.meta.main` is undefined before Node.js 22.18 and 24.2, so fall back to comparing paths rather than silently doing nothing.
+ */
+function isEntryPoint(): boolean {
+	const entry = process.argv[1];
+	return (
+		import.meta.main ??
+		(entry !== undefined && realpathSync(entry) === fileURLToPath(import.meta.url))
+	);
+}
+
+if (isEntryPoint()) {
+	// npm only warns about unsupported engines unless engine-strict is set, so check at run time too.
+	const { engines } = JSON.parse(
+		readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+	) as { engines: { node: string } };
+	if (semver.satisfies(process.versions.node, engines.node)) {
+		// Not awaited: oclif imports this module to load the command, which would wait on its own evaluation.
+		void execute({ dir: import.meta.url });
+	} else {
+		console.error(
+			`check-trust-policy requires Node.js ${engines.node}; this is Node.js ${process.versions.node}.`,
+		);
+		process.exitCode = 1;
+	}
+}

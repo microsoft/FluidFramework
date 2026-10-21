@@ -1,0 +1,20 @@
+{
+	"name": "semver",
+	"version": "7.7.3",
+	"dist": {
+		"tarball": "https://registry.npmjs.org/semver/-/semver-7.7.3.tgz",
+		"integrity": "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==",
+		"attestations": {
+			"url": "https://registry.npmjs.org/-/npm/v1/attestations/semver@7.7.3",
+			"provenance": {
+				"predicateType": "https://slsa.dev/provenance/v1"
+			}
+		}
+	},
+	"_npmUser": {
+		"trustedPublisher": {
+			"id": "github",
+			"oidcConfigId": "oidc:7a0c479c-0252-4ccd-81e5-c43546a76551"
+		}
+	}
+}
