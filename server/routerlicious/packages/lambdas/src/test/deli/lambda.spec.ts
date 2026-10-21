@@ -4,10 +4,11 @@
  */
 
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
+import { defaultHash, getNextHash, NetworkError } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
 	DefaultServiceConfiguration,
+	IDeliState,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
@@ -66,6 +67,7 @@ describe("Routerlicious", () => {
 			let lambdaWithBatching: IPartitionLambda;
 
 			let messageFactory: MessageFactory;
+			let checkpointService: CheckpointService;
 			let kafkaMessageFactory: KafkaMessageFactory;
 
 			/**
@@ -122,7 +124,7 @@ describe("Routerlicious", () => {
 				const mongoManager = new MongoManager(dbFactory);
 				const documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
-				const checkpointService = new CheckpointService(
+				checkpointService = new CheckpointService(
 					checkpointRepository,
 					documentRepository,
 					false,
@@ -858,6 +860,76 @@ describe("Routerlicious", () => {
 
 					assert.deepEqual(contextErrors, []);
 					assert.equal(testContext.offset, kafkaMessageFactory.getHeadOffset(testId) - 1);
+				});
+
+				it("Should still checkpoint state whose sends succeeded when a later send fails", async () => {
+					const tooLargeError = new NetworkError(413, "Message too large");
+					let resolveSecondSend: () => void = () => {};
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onSecondCall().returns(
+						new Promise<void>((resolve) => {
+							resolveSecondSend = resolve;
+						}),
+					);
+					sendStub.onThirdCall().rejects(tooLargeError);
+
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					const lastSuccessfulCheckpointOffset =
+						kafkaMessageFactory.getHeadOffset(testId) - 1;
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+					assert.deepEqual(contextErrors, [tooLargeError]);
+
+					resolveSecondSend();
+					await flush();
+
+					assert.equal(testContext.offset, lastSuccessfulCheckpointOffset);
+				});
+
+				it("Should write checkpoints in order when NoClient sends settle out of order", async () => {
+					const resolveNoClientSends: (() => void)[] = [];
+					Sinon.stub(testReverseProducer, "send").callsFake(
+						async () =>
+							new Promise<void>((resolve) => {
+								resolveNoClientSends.push(resolve);
+							}),
+					);
+					const secondClientFactory = new MessageFactory(testId, "test2");
+
+					for (const message of [
+						messageFactory.createJoin(),
+						messageFactory.createLeave(),
+						secondClientFactory.createJoin(),
+						secondClientFactory.createLeave(),
+					]) {
+						await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testId));
+					}
+					assert.equal(resolveNoClientSends.length, 2);
+
+					resolveNoClientSends[1]();
+					await flush();
+					resolveNoClientSends[0]();
+					await flush();
+
+					const writtenLogOffsets = (
+						checkpointService.writeCheckpoint as Sinon.SinonSpy
+					).args.map((args) => (args[3] as IDeliState).logOffset);
+					assert.deepEqual(
+						writtenLogOffsets,
+						[...writtenLogOffsets].sort((a, b) => a - b),
+					);
+					assert.equal(
+						writtenLogOffsets.at(-1),
+						kafkaMessageFactory.getHeadOffset(testId),
+					);
+					assert.deepEqual(contextErrors, []);
 				});
 			});
 		});
