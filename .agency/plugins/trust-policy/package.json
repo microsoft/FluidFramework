@@ -22,8 +22,10 @@
 	"dependencies": {
 		"@oclif/core": "^4.10.5",
 		"@pnpm/config.version-policy": "^1100.2.9",
+		"@pnpm/find-workspace-dir": "^1000.1.5",
 		"@yarnpkg/lockfile": "^1.1.0",
 		"@yarnpkg/parsers": "^3.1.0",
+		"empathic": "^2.1.0",
 		"npm-package-arg": "^14.0.0",
 		"npm-registry-fetch": "^20.0.1",
 		"pacote": "^22.0.0",

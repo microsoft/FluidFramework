@@ -6,12 +6,15 @@
 
 import { spawn } from "node:child_process";
 import { realpathSync, readFileSync } from "node:fs";
-import { mkdir, stat, rm, writeFile, readFile } from "node:fs/promises";
+import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Command, Flags, execute } from "@oclif/core";
 import { mergePackageVersionSpecs } from "@pnpm/config.version-policy";
+import { findWorkspaceDir } from "@pnpm/find-workspace-dir";
+import * as find from "empathic/find";
+import * as walk from "empathic/walk";
 import semver from "semver";
 import { createTrustPolicyExclude, parseTrustPolicyExcludeConfig } from "./exclusions.js";
 import { parseYarnLock, parseNpmLock, type PinnedVersion } from "./lockfiles.js";
@@ -294,26 +297,17 @@ export default class CheckTrustPolicyCommand extends Command {
 				this.logToStderr(`WARNING: ${message}`);
 			}
 		};
-		const workspaceDir = flags.lockfile
-			? path.dirname(path.resolve(flags.lockfile))
+		const workspace: Workspace = flags.lockfile
+			? {
+					dir: path.dirname(path.resolve(flags.lockfile)),
+					lockfile: path.resolve(flags.lockfile),
+				}
 			: await findWorkspace(path.resolve(flags.path ?? process.cwd()));
+		const { dir: workspaceDir, lockfile } = workspace;
 		const tempDir = path.resolve(
 			flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
 		);
 		verbose(`Auditing workspace: ${workspaceDir}`);
-		let lockfile = flags.lockfile ? path.resolve(flags.lockfile) : undefined;
-		if (
-			lockfile === undefined &&
-			!(await isFile(path.join(workspaceDir, "pnpm-workspace.yaml")))
-		) {
-			for (const name of ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"]) {
-				const candidate = path.join(workspaceDir, name);
-				if (await isFile(candidate)) {
-					lockfile = candidate;
-					break;
-				}
-			}
-		}
 		let pinned: PinnedVersion[];
 		let trustPolicyExclude: string[] = [];
 		if (lockfile !== undefined) {
@@ -532,52 +526,57 @@ export default class CheckTrustPolicyCommand extends Command {
 }
 
 /**
- * Finds the nearest pnpm workspace, with a standalone package as fallback.
+ * A dependency tree to audit.
+ */
+export interface Workspace {
+	/**
+	 * Directory of the pnpm workspace, lockfile, or standalone package.
+	 */
+	dir: string;
+	/**
+	 * Yarn or npm lockfile to read, if the tree is not audited through `pnpm list`.
+	 */
+	lockfile?: string;
+}
+
+const lockfileNames = ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"];
+
+/**
+ * Finds the nearest pnpm workspace or Yarn/npm lockfile, with a standalone package as fallback.
+ * A lockfile closer than the pnpm workspace root takes precedence.
  * @param searchPath - Absolute directory to search from.
  */
-export async function findWorkspace(searchPath: string): Promise<string> {
+export async function findWorkspace(searchPath: string): Promise<Workspace> {
+	// pnpm resolves the real path, so walk the same path to reach its workspace root.
+	const searchDir = realpathSync.native(searchPath);
+	const pnpmDir = await findWorkspaceDir(searchDir);
 	let packageDir: string | undefined;
-	for (let dir = searchPath; ; dir = path.dirname(dir)) {
-		if (await isFile(path.join(dir, "pnpm-workspace.yaml"))) {
-			return dir;
+	for (const dir of walk.up(searchDir, pnpmDir === undefined ? {} : { last: pnpmDir })) {
+		if (dir === pnpmDir) {
+			return { dir };
 		}
-		const manifestPath = path.join(dir, "package.json");
-		const hasManifest = await isFile(manifestPath);
-		if (packageDir === undefined && hasManifest) {
-			packageDir = dir;
-		}
-		const manifest = hasManifest
-			? (JSON.parse(await readFile(manifestPath, "utf8")) as { workspaces?: unknown })
-			: undefined;
+		const manifestPath = find.file("package.json", { cwd: dir, last: dir });
+		packageDir ??= manifestPath === undefined ? undefined : dir;
 		// An unrelated ancestor's standalone npm install must not capture this project.
-		if (packageDir === undefined || dir === packageDir || manifest?.workspaces !== undefined) {
-			for (const name of ["npm-shrinkwrap.json", "package-lock.json", "yarn.lock"]) {
-				if (await isFile(path.join(dir, name))) {
-					return dir;
-				}
+		if (
+			packageDir === undefined ||
+			dir === packageDir ||
+			(manifestPath !== undefined &&
+				(JSON.parse(readFileSync(manifestPath, "utf8")) as { workspaces?: unknown })
+					.workspaces !== undefined)
+		) {
+			const lockfile = find.any(lockfileNames, { cwd: dir, last: dir, type: "file" });
+			if (lockfile !== undefined) {
+				return { dir, lockfile };
 			}
 		}
-		if (path.dirname(dir) === dir) {
-			break;
-		}
 	}
-	if (packageDir !== undefined) {
-		return packageDir;
+	const dir = pnpmDir ?? packageDir;
+	if (dir === undefined) {
+		throw new Error(`No pnpm workspace or package.json contains ${searchPath}.`);
 	}
-	throw new Error(`No pnpm workspace or package.json contains ${searchPath}.`);
+	return { dir };
 }
-
-async function isFile(file: string): Promise<boolean> {
-	try {
-		return (await stat(file)).isFile();
-	} catch (error) {
-		if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-			return false;
-		}
-		throw error;
-	}
-}
-
 /**
  * Collects registry-resolved versions from pnpm's recursive dependency trees.
  * @param listJsonStdout - JSON emitted by pnpm list.

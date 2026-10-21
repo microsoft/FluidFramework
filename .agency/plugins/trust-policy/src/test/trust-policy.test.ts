@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test, type TestContext } from "node:test";
@@ -60,7 +60,7 @@ async function fixture(
 	config: Record<string, string> = { registry: "https://registry.npmjs.org/" },
 	pnpmVersion = "10.33.0",
 ) {
-	const root = await mkdtemp(path.join(os.tmpdir(), "trust-policy test-"));
+	const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "trust-policy test-")));
 	t.after(() => rm(root, { recursive: true, force: true }));
 	const workspace = path.join(root, "workspace");
 	const bin = path.join(root, "bin");
@@ -192,12 +192,19 @@ test("selects the nearest nested workspace and supports standalone packages", as
 	const child = path.join(nested, "child");
 	await mkdir(child, { recursive: true });
 	await writeFile(path.join(nested, "package.json"), "{}");
-	assert.equal(await findWorkspace(child), workspace);
+	assert.deepEqual(await findWorkspace(child), { dir: workspace });
+	// A lockfile closer than the pnpm workspace root takes precedence.
+	await writeFile(path.join(nested, "yarn.lock"), "");
+	assert.deepEqual(await findWorkspace(child), {
+		dir: nested,
+		lockfile: path.join(nested, "yarn.lock"),
+	});
+	await rm(path.join(nested, "yarn.lock"));
 	await writeFile(path.join(nested, "pnpm-workspace.yaml"), "packages: []\n");
-	assert.equal(await findWorkspace(child), nested);
+	assert.deepEqual(await findWorkspace(child), { dir: nested });
 	await rm(path.join(nested, "pnpm-workspace.yaml"));
 	await rm(path.join(workspace, "pnpm-workspace.yaml"));
-	assert.equal(await findWorkspace(child), nested);
+	assert.deepEqual(await findWorkspace(child), { dir: nested });
 });
 
 test("explicit Yarn lockfiles bypass pnpm list and support scoped registry aliases", async (t) => {
@@ -254,13 +261,16 @@ test("npm workspace root is discovered above member packages, but unrelated ance
 	await mkdir(member, { recursive: true });
 	await writeFile(path.join(member, "package.json"), "{}");
 	await writeFile(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{}}');
-	assert.equal(await findWorkspace(member), member);
+	assert.deepEqual(await findWorkspace(member), { dir: member });
 	await writeFile(
 		path.join(workspace, "package-lock.json"),
 		'{"lockfileVersion":3,"packages":{}}',
 	);
 	await writeFile(path.join(workspace, "package.json"), '{"workspaces":["packages/*"]}');
-	assert.equal(await findWorkspace(member), workspace);
+	assert.deepEqual(await findWorkspace(member), {
+		dir: workspace,
+		lockfile: path.join(workspace, "package-lock.json"),
+	});
 });
 
 test("accumulates violations, preserves union selectors, and writes real names", async (t) => {
