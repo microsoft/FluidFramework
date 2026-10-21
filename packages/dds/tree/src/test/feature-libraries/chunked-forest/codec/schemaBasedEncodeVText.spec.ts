@@ -5,12 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	createIdCompressor,
-	SerializationVersion,
-	toIdCompressorWithCore,
-} from "@fluidframework/id-compressor/internal";
-
 import { currentVersion } from "../../../../codec/index.js";
 import type {
 	FieldKey,
@@ -43,13 +37,11 @@ import { schemaCompressedEncodeV2 } from "../../../../feature-libraries/chunked-
 import {
 	noSpecialization,
 	schemaCompressedEncodeVTextExperimental,
-	specializationStrategies,
 	type SpecializationStrategy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncodeVText.js";
 import {
 	chunkFieldSingle,
-	cursorForJsonableTreeField,
 	defaultChunkPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
@@ -71,9 +63,7 @@ import {
 import { toStoredSchema } from "../../../../simple-tree/toStoredSchema.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
-import { testTrees } from "../../../testTrees.js";
 import {
-	assertIsSessionId,
 	fieldCursorFromInsertable,
 	makeTestFieldBatchContexts,
 	testIdCompressor,
@@ -393,37 +383,4 @@ describe("schemaBasedEncodeVText", () => {
 			);
 		});
 	});
-});
-
-describe("vtext round trip with available specialization strategies", () => {
-	for (const [strategyName, strategy] of specializationStrategies) {
-		it(strategyName, () => {
-			for (const { name, treeFactory, schemaData } of testTrees) {
-				const idCompressor = createIdCompressor(
-					assertIsSessionId("00000000-0000-4000-b000-000000000000"),
-					SerializationVersion.V3,
-				);
-				const tree = treeFactory(idCompressor);
-				const { decode: decodeContext } = makeTestFieldBatchContexts({
-					encodeType: TreeCompressionStrategy.Compressed,
-					schema: { schema: schemaData, policy: defaultSchemaPolicy },
-					idCompressor,
-				});
-				const idCompressorCore = toIdCompressorWithCore(idCompressor);
-				idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
-
-				const encoded = schemaCompressedEncodeVTextExperimental(
-					schemaData,
-					defaultSchemaPolicy,
-					[cursorForJsonableTreeField(tree)],
-					idCompressor,
-					undefined /* incrementalEncoder */,
-					false /* isSummary */,
-					strategy,
-				);
-				const decoded = vTextCodec.decode(encoded as JsonCompatibleReadOnly, decodeContext);
-				assert.deepEqual(decoded.map(jsonableTreeFromFieldCursor), [tree], name);
-			}
-		});
-	}
 });

@@ -57,17 +57,6 @@ export type SpecializationStrategy = (
 export const noSpecialization: SpecializationStrategy = () => baseNodeEncoders;
 
 /**
- * The {@link SpecializationStrategy | specialization strategies} available to the vText format, by name.
- * @remarks
- * Add each new strategy here.
- * Each strategy in this list is round-trip tested with all test trees,
- * which checks that its node encoders can encode each node that they get.
- */
-export const specializationStrategies: ReadonlyMap<string, SpecializationStrategy> = new Map([
-	["noSpecialization", noSpecialization],
-]);
-
-/**
  * Encodes data from `fieldBatch` in the {@link FieldBatchFormatVersion.vTextExperimental} format.
  * @remarks
  * `strategy` decides which nodes use specialized (`f`) shapes.

@@ -188,11 +188,12 @@ export class SpecializedNodeShapeEncoder
 			overrideMap.size === fieldOverrides.length,
 			"duplicate field key in SpecializedNodeShapeEncoder fieldOverrides",
 		);
+		const baseKeys = new Set(base.specializedFieldEncoders.map((field) => field.key));
 		const mergedFields: KeyedFieldEncoder[] = base.specializedFieldEncoders.map(
 			(baseField) => overrideMap.get(baseField.key) ?? baseField,
 		);
 		for (const override of fieldOverrides) {
-			if (!base.specializedFieldEncoders.some((field) => field.key === override.key)) {
+			if (!baseKeys.has(override.key)) {
 				mergedFields.push(override);
 			}
 		}
@@ -227,7 +228,7 @@ export class SpecializedNodeShapeEncoder
 		return {
 			f: {
 				base: baseIndex,
-				fields: encodeFieldShapes(this.fieldOverrides, identifiers, shapes) ?? [],
+				fields: encodeFieldShapes(this.fieldOverrides, identifiers, shapes),
 			},
 		};
 	}
