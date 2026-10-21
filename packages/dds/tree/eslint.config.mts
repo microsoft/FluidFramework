@@ -50,8 +50,8 @@ const config: Linter.Config[] = [
 						"@fluid-experimental/**",
 						"@fluid-internal/**",
 						"*/index.js",
-						"@noble/hashes/sha2.js",
-						"@noble/hashes/utils.js",
+						// Noble exposes its public APIs through package subpaths.
+						"@noble/hashes/**",
 					],
 				},
 			],
