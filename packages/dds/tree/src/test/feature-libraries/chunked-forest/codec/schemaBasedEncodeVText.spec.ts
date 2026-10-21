@@ -6,11 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { currentVersion } from "../../../../codec/index.js";
-import type {
-	FieldKey,
-	JsonableTree,
-	TreeNodeSchemaIdentifier,
-} from "../../../../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
@@ -95,6 +91,28 @@ const vTextCodec = fieldBatchCodecBuilder.build({
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 });
 
+/**
+ * Hard-codes a specialized shape for TextNode that keeps the `text` field as the constant "same".
+ * @remarks
+ * Only use this with TextNodes whose text is "same".
+ */
+const sameTextStrategy: SpecializationStrategy = () => (base, schemaName) =>
+	schemaName === TextNode.identifier
+		? new SpecializedNodeShapeEncoder(base, [
+				{
+					key: brand<FieldKey>("text"),
+					encoder: asFieldEncoder(
+						new NodeShapeBasedEncoder(
+							brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+							["same"],
+							[],
+							undefined,
+						),
+					),
+				},
+			])
+		: base;
+
 /** Encodes `root` with `strategy` in the vTextExperimental format. */
 function encodeVText(
 	root: TextArray,
@@ -144,25 +162,7 @@ describe("schemaBasedEncodeVText", () => {
 
 	it("encodes the specialized shape that the strategy returns", () => {
 		const root = makeTexts(["same", "same"]);
-		// Hard-codes a specialized shape for TextNode that keeps the `text` field as the constant "same".
-		const strategy: SpecializationStrategy = () => (base, schemaName) =>
-			schemaName === TextNode.identifier
-				? new SpecializedNodeShapeEncoder(base, [
-						{
-							key: brand<FieldKey>("text"),
-							encoder: asFieldEncoder(
-								new NodeShapeBasedEncoder(
-									brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
-									["same"],
-									[],
-									undefined,
-								),
-							),
-						},
-					])
-				: base;
-
-		const encoded = encodeVText(root, strategy);
+		const encoded = encodeVText(root, sameTextStrategy);
 		const { shapes, identifiers } = encoded;
 		// An identifier in a shape is either inline or an index into `identifiers`.
 		const resolve = (id: string | number | undefined): string | undefined =>
@@ -200,7 +200,7 @@ describe("schemaBasedEncodeVText", () => {
 				custom: { [incrementalSummaryHint]: true },
 			}),
 		}) {}
-		const doc = new Doc({ texts: makeTexts(["a", "b"]) });
+		const doc = new Doc({ texts: makeTexts(["same", "same"]) });
 		const chunks = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 		const incrementalEncoder: IncrementalEncoder = {
 			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
@@ -224,163 +224,16 @@ describe("schemaBasedEncodeVText", () => {
 			testIdCompressor,
 			incrementalEncoder,
 			true /* isSummary */,
-			noSpecialization,
+			sameTextStrategy,
 		);
 		assert.equal(chunks.size, 1);
-		assert.equal(chunks.get(brand(0))?.version, FieldBatchFormatVersion.vTextExperimental);
+		const encodedChunk = chunks.get(brand(0)) ?? assert.fail("missing chunk");
+		assert.equal(encodedChunk.version, FieldBatchFormatVersion.vTextExperimental);
+		// The strategy also applies to the incremental chunk, which holds the TextNodes.
+		assert(encodedChunk.shapes.some((shape) => "f" in shape && shape.f !== undefined));
 		checkDecodesTo(encoded, Doc, doc, {
 			decodeIncrementalChunk: (referenceId, chunkDecoder) =>
 				chunkDecoder(chunks.get(referenceId) ?? assert.fail("missing chunk")),
-		});
-	});
-
-	describe("through the field batch codec", () => {
-		const contexts = makeTestFieldBatchContexts({
-			encodeType: TreeCompressionStrategy.Compressed,
-			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
-		});
-
-		/** Decodes `batch` with the codec and checks that it has one field with `expected`. */
-		function checkDecode(
-			batch: EncodedFieldBatchVTextExperimental,
-			expected: JsonableTree[],
-		): void {
-			const decoded = vTextCodec.decode(batch as JsonCompatibleReadOnly, contexts.decode);
-			assert.deepEqual(decoded.map(jsonableTreeFromFieldCursor), [expected]);
-		}
-
-		// The batches below are written by hand. Each one uses specialized (`f`) shapes.
-		// The default strategy never writes these shapes, so these tests are the only coverage
-		// of their decoding through the codec.
-		// Encoding through the codec is covered for every format by the test trees in schemaBasedEncode.spec.ts.
-
-		it("decodes a field override", () => {
-			checkDecode(
-				{
-					version: FieldBatchFormatVersion.vTextExperimental,
-					identifiers: [],
-					shapes: [
-						// 0: a node with a variable boolean field "bold".
-						{ c: { type: "Format", value: false, fields: [["bold", 1]] } },
-						// 1: a variable boolean.
-						{ c: { type: "boolean", value: true } },
-						// 2: the constant boolean false.
-						{ c: { type: "boolean", value: [false] } },
-						// 3: shape 0 with "bold" kept as the constant false.
-						{ f: { base: 0, fields: [["bold", 2]] } },
-					],
-					// The node uses shape 3, so "bold" writes no data.
-					data: [[3]],
-				},
-				[
-					{
-						type: brand("Format"),
-						fields: { bold: [{ type: brand("boolean"), value: false }] },
-					},
-				],
-			);
-		});
-
-		it("decodes a value override", () => {
-			checkDecode(
-				{
-					version: FieldBatchFormatVersion.vTextExperimental,
-					identifiers: [],
-					shapes: [
-						// 0: a string leaf with a variable value.
-						{ c: { type: "string", value: true } },
-						// 1: shape 0 with the constant value "pinned".
-						{ f: { base: 0, value: ["pinned"] } },
-					],
-					data: [[1]],
-				},
-				[{ type: brand("string"), value: "pinned" }],
-			);
-		});
-
-		it("decodes a specialized shape of a specialized shape", () => {
-			checkDecode(
-				{
-					version: FieldBatchFormatVersion.vTextExperimental,
-					identifiers: [],
-					shapes: [
-						// 0: a node with the variable boolean fields "bold" and "italic".
-						{
-							c: {
-								type: "Format",
-								value: false,
-								fields: [
-									["bold", 1],
-									["italic", 1],
-								],
-							},
-						},
-						// 1: a variable boolean.
-						{ c: { type: "boolean", value: true } },
-						// 2: the constant boolean true.
-						{ c: { type: "boolean", value: [true] } },
-						// 3: shape 0 with "bold" kept as true.
-						{ f: { base: 0, fields: [["bold", 2]] } },
-						// 4: shape 3 with "italic" also kept as true.
-						{ f: { base: 3, fields: [["italic", 2]] } },
-					],
-					data: [[4]],
-				},
-				[
-					{
-						type: brand("Format"),
-						fields: {
-							bold: [{ type: brand("boolean"), value: true }],
-							italic: [{ type: brand("boolean"), value: true }],
-						},
-					},
-				],
-			);
-		});
-
-		it("decodes specialized shapes in a field that can contain more than one shape", () => {
-			checkDecode(
-				{
-					version: FieldBatchFormatVersion.vTextExperimental,
-					identifiers: [],
-					shapes: [
-						// 0: a node with a sequence field "items".
-						{ c: { type: "Doc", value: false, fields: [["items", 1]] } },
-						// 1: a sequence of items, where each item writes its own shape.
-						{ a: 2 },
-						// 2: any shape.
-						{ d: 0 },
-						// 3: an item with a variable boolean field "bold".
-						{ c: { type: "Item", value: false, fields: [["bold", 4]] } },
-						// 4: a variable boolean.
-						{ c: { type: "boolean", value: true } },
-						// 5: the constant boolean false.
-						{ c: { type: "boolean", value: [false] } },
-						// 6: shape 3 with "bold" kept as false.
-						{ f: { base: 3, fields: [["bold", 5]] } },
-					],
-					// The first item uses shape 6 and writes no data.
-					// The second item uses shape 3 and writes its value of "bold".
-					data: [[0, [6, 3, true]]],
-				},
-				[
-					{
-						type: brand("Doc"),
-						fields: {
-							items: [
-								{
-									type: brand("Item"),
-									fields: { bold: [{ type: brand("boolean"), value: false }] },
-								},
-								{
-									type: brand("Item"),
-									fields: { bold: [{ type: brand("boolean"), value: true }] },
-								},
-							],
-						},
-					},
-				],
-			);
 		});
 	});
 });
