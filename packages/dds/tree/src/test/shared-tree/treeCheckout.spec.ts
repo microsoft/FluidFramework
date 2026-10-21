@@ -36,10 +36,12 @@ import {
 import {
 	Tree,
 	TreeCheckout,
+	BranchCheckout,
 	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
+	forkAsBranchCheckout,
 	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
@@ -115,6 +117,7 @@ const checkoutForks: {
 		name: "forkWith()",
 		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
 	},
+	{ name: "BranchCheckout", forkCheckout: forkAsBranchCheckout },
 ];
 
 describe("sharedTreeView", () => {
@@ -1673,6 +1676,14 @@ describe("sharedTreeView", () => {
 			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
+			// For checkouts that are 1:1 with their view (plain `TreeCheckout` forks), disposing the view
+			// also disposes the underlying branch. `BranchCheckout` opts out of this contract via
+			// `disposesWithView` so a single branch can back multiple views over its lifetime; in that
+			// case, the branch must be disposed explicitly.
+			if (treeBranch instanceof BranchCheckout) {
+				assert.equal(treeBranch.disposed, false);
+				treeBranch.dispose();
+			}
 			assert.equal(treeBranch.disposed, true);
 		});
 

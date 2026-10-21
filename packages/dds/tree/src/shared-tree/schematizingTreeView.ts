@@ -630,7 +630,10 @@ export class SchematizingSimpleTreeView<
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
-			// Branch views normally own their checkout, unlike views created for a retained checkout.
+			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed
+			// when the view is disposed. Multi-view checkouts (BranchCheckout, shared branches) opt out
+			// via `disposesWithView` so that disposing one view does not invalidate the checkout for
+			// other callers.
 			this.checkout.dispose();
 		}
 	}
