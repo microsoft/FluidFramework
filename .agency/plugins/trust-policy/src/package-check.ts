@@ -4,9 +4,11 @@
  */
 
 import type { PackageInRegistry, PackageMeta } from "@pnpm/resolving.registry.types";
+import { getTrustedRoot, TUFError } from "@sigstore/tuf";
 import npa from "npm-package-arg";
 import npmFetch from "npm-registry-fetch";
 import pacote from "pacote";
+import pacoteCacheDir from "pacote/lib/util/cache-dir.js";
 import semver from "semver";
 
 /**
@@ -201,6 +203,36 @@ const attestationErrorCodes: ReadonlySet<string> = new Set([
 	"EMISSINGSIGNATUREKEY",
 ]);
 
+/**
+ * Code of the error {@link verifyNpmSlsaProvenance} throws when a registry does not publish the keys needed to verify its attestations.
+ */
+const noSigningKeysErrorCode = "ENOSIGNINGKEYS";
+
+/**
+ * Whether an error means that verification could not complete because a registry, the network, or Sigstore's trust root was unavailable.
+ * Other errors, such as malformed registry responses or bugs, are not operational and must not be reported as inconclusive.
+ *
+ * @remarks
+ * Recognizes HTTP errors from npm-registry-fetch (`HttpError*`), network, timeout, and invalid-response errors from minipass-fetch (`FetchError`),
+ * Node.js system errors, TUF errors from `@sigstore/tuf`, and registries without signing keys.
+ * @param error - The thrown value.
+ */
+export function isOperationalError(error: unknown): boolean {
+	if (error instanceof TUFError) {
+		return true;
+	}
+	if (!(error instanceof Error)) {
+		return false;
+	}
+	const { code, syscall } = error as { code?: unknown; syscall?: unknown };
+	return (
+		error.name === "FetchError" ||
+		error.name.startsWith("HttpError") ||
+		typeof syscall === "string" ||
+		code === noSigningKeysErrorCode
+	);
+}
+
 const defaultRegistry = "https://registry.npmjs.org";
 
 const disclaimer =
@@ -371,6 +403,9 @@ async function assessVersion(
 			reason: checked.reason,
 		};
 	} catch (error) {
+		if (!isOperationalError(error)) {
+			throw error;
+		}
 		const message = error instanceof Error ? error.message : String(error);
 		context.errors.push(`${packument.name}@${manifest.version}: ${message}`);
 		return {
@@ -563,16 +598,25 @@ const requestTimeoutMs = 60_000;
 
 /**
  * Creates the production {@link PackageServices} for one {@link checkPackage} call.
- * Packuments are shared between loading and verification, and registry keys are fetched once.
+ * Packuments are shared between loading and verification, and registry keys and the Sigstore trusted root are loaded once.
  */
 function createDefaultServices(): PackageServices {
+	// npm's TUF cache, which pacote uses by default; passing it explicitly keeps pacote and loadTrustedRoot on the same cache.
+	const tufCache = pacoteCacheDir().tufcache;
 	const options = {
 		fullMetadata: true,
 		packumentCache: new Map(),
 		timeout: requestTimeoutMs,
+		tufCache,
 	} as const;
 	let keys: Promise<RegistryKey[] | undefined> | undefined;
+	let trustedRoot: Promise<unknown> | undefined;
 	const verificationServices: ProvenanceVerificationServices = {
+		// Same cache and forceCache as pacote's call to sigstore.verify, so this succeeds exactly when pacote's TUF step would.
+		loadTrustedRoot: async () => {
+			trustedRoot ??= getTrustedRoot({ cachePath: tufCache, forceCache: true });
+			await trustedRoot;
+		},
 		manifest: async (spec, manifestOptions) =>
 			(await pacote.manifest(spec, { ...options, ...manifestOptions })) as {
 				_attestationBundles?: unknown;
@@ -665,6 +709,10 @@ export interface ProvenanceVerificationServices {
 	 * Returns the registry's attestation signing keys, or `undefined` if it does not publish any.
 	 */
 	fetchKeys: (registry: string) => Promise<RegistryKey[] | undefined>;
+	/**
+	 * Loads Sigstore's trusted root as pacote's verification will, throwing if it is unavailable.
+	 */
+	loadTrustedRoot: () => Promise<void>;
 }
 
 /**
@@ -678,6 +726,9 @@ export interface ProvenanceVerificationServices {
  * ({@link https://github.com/npm/cli/blob/ae98c62586b6fea44114f72e249e246a2981de70/lib/utils/verify-signatures.js | verify-signatures.js}) makes the same pacote call, but it is not used because the `npm` package has no programmatic API and the command audits only installed dependencies.
  * It also counts any verified attestation as a pass, whereas this function requires SLSA provenance.
  *
+ * pacote loads Sigstore's trusted root inside the same `try` that reports signature failures, so it reports a TUF outage as `EATTESTATIONVERIFY`.
+ * Loading the trusted root first makes an outage an operational error instead of an invalid attestation.
+ *
  * @param pin - Requested package version.
  * @param registry - Normalized registry URL.
  * @param services - Registry operations.
@@ -688,6 +739,7 @@ export async function verifyNpmSlsaProvenance(
 	registry: string,
 	services: ProvenanceVerificationServices,
 ): Promise<ProvenanceResult> {
+	await services.loadTrustedRoot();
 	const keys = await services.fetchKeys(registry);
 	const url = new URL(registry);
 	// pacote looks keys up by this exact key, including the trailing slash.
@@ -707,9 +759,12 @@ export async function verifyNpmSlsaProvenance(
 		}
 		const message = error instanceof Error ? error.message : String(error);
 		if (code === "EMISSINGSIGNATUREKEY" && keys === undefined) {
-			throw new Error(
-				`${registry} does not publish attestation signing keys, so its publish attestations cannot be verified: ${message}`,
-				{ cause: error },
+			throw Object.assign(
+				new Error(
+					`${registry} does not publish attestation signing keys, so its publish attestations cannot be verified: ${message}`,
+					{ cause: error },
+				),
+				{ code: noSigningKeysErrorCode },
 			);
 		}
 		return { verified: false, reason: `Invalid attestation: ${message}` };
