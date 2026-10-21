@@ -42,7 +42,12 @@ import {
 	type SimpleSchemaTransformationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	FieldKind,
+	normalizeFieldSchema,
+	validateFixedLeaf,
+	type ImplicitFieldSchema,
+} from "./fieldSchema.js";
 import type {
 	SchemaType,
 	SimpleAllowedTypeAttributes,
@@ -264,6 +269,7 @@ export function simpleStoredSchemaToStoredSchema(
 export function convertField(
 	schema: SimpleFieldSchema<SchemaType.Stored>,
 ): TreeFieldStoredSchema {
+	validateFixedLeaf(schema.kind, new Set(schema.simpleAllowedTypes.keys()));
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 	const types = convertAllowedTypes(schema.simpleAllowedTypes);
@@ -280,6 +286,7 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
 	[FieldKind.Identifier, FieldKinds.identifier],
+	[FieldKind.Counter, FieldKinds.counter],
 ]);
 
 /**

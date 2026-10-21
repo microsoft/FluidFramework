@@ -165,6 +165,7 @@ export {
 export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
+	type FlexTreeCounterField,
 	type FlexTreeSequenceField,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
@@ -226,3 +227,4 @@ export {
 	getFromChangeAtomIdMap,
 	setInChangeAtomIdMap,
 } from "./changeAtomIdBTree.js";
+export { counter, counterChangeHandler } from "./counter-field/index.js";

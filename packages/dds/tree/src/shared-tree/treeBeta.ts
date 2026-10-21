@@ -26,6 +26,7 @@ import {
 	type TreeChangeEventsBeta,
 	type TreeContextBeta,
 	type TreeEncodingOptions,
+	type TreeRootFromImplicitField,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
@@ -85,7 +86,7 @@ export interface TreeBeta {
 	importConcise<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: ConciseTree | undefined,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	): Unhydrated<TreeRootFromImplicitField<TSchema>>;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
@@ -103,8 +104,8 @@ export interface TreeBeta {
 	/**
 	 * Clones the persisted data associated with a node.
 	 *
-	 * @param node - The node to clone.
-	 * @returns A new unhydrated node with the same persisted data as the original node.
+	 * @param node - A node, leaf value, or `undefined`; not a live field accessor.
+	 * @returns A new unhydrated node with the same persisted data, or the original leaf value or `undefined`.
 	 * @remarks
 	 * Some key things to note:
 	 *
@@ -113,14 +114,22 @@ export interface TreeBeta {
 	 *
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 *
+	 * - Live field accessors are not content and cannot be cloned; clone their owning node or their current value instead.
+	 * Cloning an object with counter fields copies their numeric values and creates independent accessors on the clone.
+	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
 	 * - If the node (or any node in its subtree) contains {@link ObjectSchemaOptions.allowUnknownOptionalFields|unknown optional fields},
 	 * those fields will be cloned just like the known fields.
 	 */
+	clone<T extends TreeNode | TreeLeafValue | undefined>(node: T): T;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(clone:1)}
+	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
-		node: TreeFieldFromImplicitField<TSchema>,
-	): TreeFieldFromImplicitField<TSchema>;
+		node: TreeFieldFromImplicitField<TSchema> & (TreeNode | TreeLeafValue | undefined),
+	): TreeFieldFromImplicitField<TSchema> & (TreeNode | TreeLeafValue | undefined);
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -130,11 +139,12 @@ export interface TreeBeta {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
+	 * Counter fields can occur within an object schema, but cannot be the root `schema`.
 	 */
 	create<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: InsertableTreeFieldFromImplicitField<TSchema>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	): Unhydrated<TreeRootFromImplicitField<TSchema>>;
 }
 
 /**
@@ -158,7 +168,7 @@ export function borrowCursorFromTreeNodeOrValue(
 export function importConcise<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema & ImplicitFieldSchema,
 	data: ConciseTree | undefined,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+): Unhydrated<TreeRootFromImplicitField<TSchema>>;
 /**
  * {@inheritDoc (TreeAlpha:interface).importConcise}
  */
@@ -169,7 +179,7 @@ export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknow
 	data: ConciseTree | undefined,
 ): Unhydrated<
 	TSchema extends ImplicitFieldSchema
-		? TreeFieldFromImplicitField<TSchema>
+		? TreeRootFromImplicitField<TSchema>
 		: TreeNode | TreeLeafValue | undefined
 >;
 export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
@@ -179,7 +189,7 @@ export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknow
 	data: ConciseTree | undefined,
 ): Unhydrated<
 	TSchema extends ImplicitFieldSchema
-		? TreeFieldFromImplicitField<TSchema>
+		? TreeRootFromImplicitField<TSchema>
 		: TreeNode | TreeLeafValue | undefined
 > {
 	const mapTree = unhydratedFlexTreeFromInsertable(
@@ -189,7 +199,7 @@ export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknow
 	const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 	return result as Unhydrated<
 		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
+			? TreeRootFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	>;
 }
@@ -224,13 +234,13 @@ export function exportConcise(
 function createTree<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	data: InsertableTreeFieldFromImplicitField<TSchema>,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+): Unhydrated<TreeRootFromImplicitField<TSchema>> {
 	const mapTree = unhydratedFlexTreeFromInsertable(
 		data as InsertableContent | undefined,
 		schema,
 	);
 	const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
-	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	return result as Unhydrated<TreeRootFromImplicitField<TSchema>>;
 }
 
 /**

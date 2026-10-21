@@ -48,7 +48,9 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
-	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
+	// The experimental string version reuses v7's metadata support; version ordering is not meaningful here.
+	const includeCustomMetadata =
+		version === EditManagerFormatVersion.counter || version === EditManagerFormatVersion.v7;
 	const schema = EncodedEditManager(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 		includeCustomMetadata,

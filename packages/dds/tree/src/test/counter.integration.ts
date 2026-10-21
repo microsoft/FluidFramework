@@ -13,9 +13,25 @@ import {
 } from "../simple-tree/index.js";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import { defineTreeDataStore } from "../treeDataStore.js";
+import { configuredSharedTreeInternal } from "../treeFactory.js";
+import {
+	MessageFormatVersion,
+	EditManagerFormatVersion,
+	messageCodecName,
+	editManagerCodecName,
+} from "../shared-tree-core/index.js";
+import type { FormatVersion } from "../codec/index.js";
+
+const counterTree = configuredSharedTreeInternal({
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[messageCodecName, MessageFormatVersion.counter],
+		[editManagerCodecName, EditManagerFormatVersion.counter],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+});
 
 describe("counter example", () => {
-	it("existing APIs", () => {
+	describe("existing APIs", () => {
 		/**
 		 * Schema factory these tests.
 		 */
@@ -77,7 +93,7 @@ describe("counter example", () => {
 		});
 	});
 
-	it("Counter Field Kind", () => {
+	describe("Counter Field Kind", () => {
 		/**
 		 * Schema factory these tests.
 		 */
@@ -86,7 +102,7 @@ describe("counter example", () => {
 		/**
 		 * A atomic shared counter.
 		 */
-		class HasCounter extends sf.object("HasCounter", {
+		class HasCounter extends sf.objectAlpha("HasCounter", {
 			requiredExampleComplex: SchemaFactoryAlpha.withDefault(
 				SchemaFactoryAlpha.required(SchemaFactory.number, { key: "example1" }),
 				0,
@@ -102,31 +118,35 @@ describe("counter example", () => {
 			counterExampleSimple: SchemaFactoryAlpha.counter(SchemaFactory.number),
 		}) {}
 		it("counter", async () => {
-			const hasCounter = new HasCounter({
+			const initialCounter = new HasCounter({
 				requiredExampleSimple: 100,
 				counterExampleSimple: 200,
 			});
-			assert.equal(hasCounter.counterExampleSimple.value, 200);
-			assert.equal(hasCounter.counterExampleSimple.add(2), 202);
+			assert.equal(initialCounter.counterExampleSimple.value, 200);
+			assert.equal(initialCounter.counterExampleSimple.add(2), 202);
 
-			assert.equal(hasCounter.counterExampleComplex.value, 0);
-			assert.equal(hasCounter.counterExampleComplex.add(-5), -5);
+			assert.equal(initialCounter.counterExampleComplex.value, 0);
+			assert.equal(initialCounter.counterExampleComplex.add(-5), -5);
 
 			const myFactory = defineTreeDataStore({
 				type: "my-tree",
+				registry: [counterTree],
+				key: counterTree,
 				config: new TreeViewConfiguration({ schema: HasCounter }),
-				initializer: () => hasCounter,
+				initializer: () => initialCounter,
 			});
 
 			const client = startEphemeralService().defaultClient;
 			const attached = await client.createAttachedContainer(myFactory);
+			// The data store disposes its initialization view; use its new application view.
+			const hasCounter = attached.data.root;
 
 			const other = await client.loadContainer(attached.id, myFactory);
 
 			const otherHasCounter = other.data.root;
 
 			assert.equal(hasCounter.counterExampleSimple.add(3), 205);
-			assert.equal(otherHasCounter.counterExampleSimple.add(5), 208);
+			assert.equal(otherHasCounter.counterExampleSimple.add(5), 207);
 
 			await client.service.synchronize();
 

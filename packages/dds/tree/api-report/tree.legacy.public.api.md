@@ -12,12 +12,16 @@ type ApplyKind<T, Kind extends FieldKind> = {
     [FieldKind.Required]: T;
     [FieldKind.Optional]: T | undefined;
     [FieldKind.Identifier]: T;
+    [FieldKind.Counter]: {
+        readonly value: number;
+        add(amount: number): number;
+    };
 }[Kind];
 
 // @public @system
 type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
 Kind
-] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
+] extends [FieldKind.Required | FieldKind.Counter] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
 // @public
 export enum CommitKind {
@@ -48,7 +52,7 @@ FieldSchema<FieldKind.Optional | FieldKind.Identifier>
 export enum FieldKind {
     Identifier = 2,
     Optional = 0,
-    Required = 1
+    Required = 1,
 }
 
 // @public
@@ -554,6 +558,11 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 // @public
 export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
+// @public @system
+export type TreeRootFromImplicitField<TSchema extends ImplicitFieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? {
+    [K in FieldKind]: K extends FieldKind.Counter ? never : ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, K>;
+}[Kind] : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
+
 // @public
 export enum TreeStatus {
     Deleted = 2,
@@ -567,7 +576,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
     readonly compatibility: SchemaCompatibilityStatus;
     readonly events: Listenable<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
-    get root(): TreeFieldFromImplicitField<TSchema>;
+    get root(): TreeRootFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     readonly schema: TSchema;
     upgradeSchema(): void;

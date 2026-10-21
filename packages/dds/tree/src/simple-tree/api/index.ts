@@ -171,7 +171,7 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { cloneTree } from "./cloneTree.js";
+export { cloneTree, assertTreeContent } from "./cloneTree.js";
 export type {
 	ArrayNodeDeltaOp,
 	ArrayNodeInsertOp,

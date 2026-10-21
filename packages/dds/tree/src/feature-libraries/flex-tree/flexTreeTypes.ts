@@ -367,6 +367,29 @@ export interface FlexTreeRequiredField extends FlexTreeField {
 }
 
 /**
+ * Field containing exactly one built-in numeric leaf, edited by addition rather than assignment.
+ */
+export interface FlexTreeCounterField extends FlexTreeField {
+	/**
+	 * The unboxed numeric value, not the Simple-tree accessor for this field.
+	 */
+	readonly content: number;
+	/**
+	 * Edits the value using the current field content as the input context.
+	 */
+	readonly editor: {
+		/**
+		 * Adds a contribution and returns the resulting local value.
+		 * @param amount - The contribution to add; the caller must validate finite input and result.
+		 * @returns The value after the local edit, before any later concurrent changes.
+		 * @remarks
+		 * Hydrated fields must be in the document and editable; unhydrated fields are edited locally.
+		 */
+		add(amount: number): number;
+	};
+}
+
+/**
  * Field that stores zero or one child.
  *
  * @remarks
@@ -397,9 +420,11 @@ export type FlexTreeTypedField<Kind extends FlexFieldKind> =
 		? FlexTreeSequenceField
 		: Kind extends typeof FieldKinds.required | typeof FieldKinds.identifier
 			? FlexTreeRequiredField
-			: Kind extends typeof FieldKinds.optional
-				? FlexTreeOptionalField
-				: FlexTreeField;
+			: Kind extends typeof FieldKinds.counter
+				? FlexTreeCounterField
+				: Kind extends typeof FieldKinds.optional
+					? FlexTreeOptionalField
+					: FlexTreeField;
 
 // #endregion
 

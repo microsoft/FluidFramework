@@ -13,6 +13,7 @@ import {
 	Multiplicity,
 } from "../../core/index.js";
 import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
+import { counter } from "../counter-field/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -104,10 +105,25 @@ export const forbidden: Forbidden = new FlexFieldKind(
 	},
 );
 
+/**
+ * Field-kind codecs available in each modular format.
+ * Recognizing a kind in {@link fieldKinds} does not make it writable in every format.
+ */
 export const fieldKindConfigurations: ReadonlyMap<
 	ModularChangeFormatVersion,
 	FieldKindConfiguration
 > = new Map<ModularChangeFormatVersion, FieldKindConfiguration>([
+	[
+		ModularChangeFormatVersion.counter,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+			[counter.identifier, { kind: counter, formatVersion: 1 }],
+		]),
+	],
 	[
 		ModularChangeFormatVersion.v3,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
@@ -159,14 +175,17 @@ export function getCodecTreeForModularChangeFormat(
 }
 
 /**
- * All supported field kinds.
+ * Field kinds understood by schema policy and change processing.
+ * @remarks
+ * Encoding support is selected separately by {@link fieldKindConfigurations}.
+ * In particular, counter fields require explicit experimental format selection.
  *
  * @privateRemarks
  * Before making a SharedTree format change which impacts which set of field kinds are allowed,
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
-	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, identifier, forbidden, counter].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -196,8 +215,12 @@ export const FieldKinds: {
 	readonly optional: typeof optional;
 	readonly sequence: typeof sequence;
 	readonly identifier: Identifier;
+	/**
+	 * Additive numeric fields; writable only with the experimental counter format.
+	 */
+	readonly counter: typeof counter;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, identifier, forbidden };
+} = { required, optional, sequence, identifier, forbidden, counter };
 
 /**
  * FullSchemaPolicy with the default field kinds.
