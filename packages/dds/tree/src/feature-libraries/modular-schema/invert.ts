@@ -16,7 +16,7 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import { brand, hasSingle, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	newChangeAtomIdBTree,
 	rangeQueryChangeAtomIdMap,
@@ -86,8 +86,8 @@ export function invertModularChange(
 		0x89a /* Unexpected destroys in change to invert */,
 	);
 
-	const revInfos: RevisionInfo[] = isRollback
-		? [{ revision: revisionForInvert, rollbackOf: change.revision }]
+	const revInfos: readonly RevisionInfo[] = isRollback
+		? getRevInfosForRollback(change.change.revisions ?? [], revisionForInvert)
 		: [{ revision: revisionForInvert }];
 
 	const [noChangeConstraint, noChangeConstraintOnRevert] = isRollback
@@ -218,7 +218,7 @@ export function invertModularChange(
 		destroys,
 	});
 
-	// validateChangeset(inverted, fieldKinds);
+	validateChangeset(inverted, fieldKinds);
 	return inverted;
 }
 
@@ -667,4 +667,12 @@ function invertBuilds(
 		return brand(builds.mapValues((chunk) => chunk.topLevelLength));
 	}
 	return undefined;
+}
+
+function getRevInfosForRollback(
+	revisions: readonly RevisionInfo[],
+	revisionForInvert: RevisionTag,
+): readonly RevisionInfo[] {
+	assert(hasSingle(revisions), "Can only roll back a single revision at a time");
+	return [{ revision: revisionForInvert, rollbackOf: revisions[0].revision }];
 }
