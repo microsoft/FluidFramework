@@ -1112,7 +1112,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["B", "A"]);
 		});
 
-		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// This covers in-memory retention only. See the "History retention configuration" suite below for the
 		// summary round-trip behavior.
 		it("does not evict trunk commits when retainHistory is enabled", () => {
 			const provider = new TestTreeProviderLite(
@@ -1162,7 +1162,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Persists retained history", () => {
+	describe("History retention configuration", () => {
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past most of them.
@@ -1207,11 +1207,11 @@ describe("SharedTree", () => {
 		 * summarizing client's compressor rather than creating an empty one.
 		 */
 		async function loadFreshClient(
-			tree: ITree,
+			tree: ISharedTree,
 			factory: IChannelFactory<ITree>,
 			idCompressor: IIdCompressor,
 		): Promise<ISharedTree> {
-			const { summary } = await (tree as unknown as IChannel).summarize();
+			const { summary } = await tree.summarize();
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			return (await factory.load(
 				runtime,
@@ -1227,6 +1227,115 @@ describe("SharedTree", () => {
 		function trunkCommitCount(tree: ISharedTree): number {
 			return tree.kernel.checkout.branchHistory.length;
 		}
+
+		describe("numeric limits and option precedence", () => {
+			for (const { options, effectiveRetention } of [
+				{ options: { historyRetention: false }, effectiveRetention: false },
+				{ options: { historyRetention: 0 }, effectiveRetention: 0 },
+				{ options: { historyRetention: 1 }, effectiveRetention: 1 },
+				{ options: { historyRetention: 3 }, effectiveRetention: 3 },
+				{ options: { historyRetention: 5 }, effectiveRetention: 5 },
+				{ options: { historyRetention: true }, effectiveRetention: true },
+				{
+					options: { historyRetention: Number.MAX_SAFE_INTEGER },
+					effectiveRetention: Number.MAX_SAFE_INTEGER,
+				},
+				{
+					options: { historyRetention: false, retainHistory: true },
+					effectiveRetention: false,
+				},
+				{
+					options: { historyRetention: 0, retainHistory: true },
+					effectiveRetention: 0,
+				},
+				{
+					options: { historyRetention: 3, retainHistory: true },
+					effectiveRetention: 3,
+				},
+				{
+					options: { historyRetention: true, retainHistory: false },
+					effectiveRetention: true,
+				},
+			] as const) {
+				it(`retains and persists history for ${JSON.stringify(options)}`, async () => {
+					const { retainedCommitCount: collaborationWindowCount } = generateHistory(
+						configuredSharedTree({ jsonValidator: FormatValidatorBasic }).getFactory(),
+					);
+					const { retainedCommitCount: availableCommitCount } = generateHistory(
+						configuredSharedTree({
+							jsonValidator: FormatValidatorBasic,
+							retainHistory: true,
+						}).getFactory(),
+					);
+					let expectedCount = collaborationWindowCount;
+					if (effectiveRetention === true) {
+						expectedCount = availableCommitCount;
+					} else if (typeof effectiveRetention === "number") {
+						expectedCount = Math.max(
+							collaborationWindowCount,
+							Math.min(effectiveRetention, availableCommitCount),
+						);
+					}
+
+					const factory = configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						...options,
+					}).getFactory();
+					const { provider } = generateHistory(factory);
+					for (const peerTree of provider.trees) {
+						assert.equal(trunkCommitCount(peerTree), expectedCount);
+					}
+
+					const tree = provider.trees[0];
+					const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+					assert.equal(trunkCommitCount(loaded), expectedCount);
+					validateTreeConsistency(tree, loaded);
+				});
+			}
+		});
+
+		describe("invalid limits", () => {
+			for (const historyRetention of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.NEGATIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				it(`rejects ${historyRetention}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({ historyRetention }).getFactory(),
+							),
+						validateUsageError(
+							"historyRetention must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+
+			for (const historyRetention of ["3", null, {}]) {
+				it(`rejects type-erased input ${JSON.stringify(historyRetention)}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({
+									// @ts-expect-error Exercise runtime validation of type-erased application input.
+									historyRetention,
+									retainHistory: true,
+								}).getFactory(),
+							),
+						validateUsageError(
+							"historyRetention must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+		});
 
 		it("persists the retained trunk when retainHistory is enabled", async () => {
 			const factory = configuredSharedTree({
@@ -1256,6 +1365,40 @@ describe("SharedTree", () => {
 				retainedCommitCount,
 				"The default path must persist exactly the collaboration window",
 			);
+		});
+
+		it("applies a numeric policy to loaded history when the collaboration boundary advances", async () => {
+			const { provider, retainedCommitCount } = generateHistory(
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const tree = provider.trees[0];
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				historyRetention: 3,
+			}).getFactory();
+			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			assert.equal(trunkCommitCount(loaded), retainedCommitCount);
+
+			// Loading does not supply the collaboration boundary. Receiving it permits trimming without new edits.
+			loaded.kernel.processMessagesCore({
+				envelope: {
+					type: "op",
+					clientId: "test-client",
+					timestamp: 0,
+					sequenceNumber: provider.sequenceNumber + 1,
+					referenceSequenceNumber: provider.sequenceNumber,
+					minimumSequenceNumber: provider.minimumSequenceNumber,
+				},
+				local: false,
+				messagesContent: [],
+			});
+
+			assert.equal(trunkCommitCount(loaded), 3);
+			assert.equal(trunkCommitCount(tree), retainedCommitCount);
+			validateTreeConsistency(tree, loaded);
 		});
 	});
 
