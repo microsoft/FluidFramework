@@ -16,6 +16,7 @@ import { CheckoutBase, type TreeCheckoutOptions } from "./treeCheckout.js";
  *
  * It is "viewless" in the sense that no {@link TreeViewAlpha} is attached at construction time -
  * a view can still be materialized on demand via the inherited `viewWith`.
+ * These internal views must not call `rewindTo`, which requires replacing the underlying branch.
  *
  * Lifecycle: a `BranchCheckout` is independent from any other checkout that observes the same data.
  * Disposing the parent of a {@link forkAsBranchCheckout} does not dispose the child, and vice versa;

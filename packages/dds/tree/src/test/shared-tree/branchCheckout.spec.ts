@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import type { RevertibleAlpha } from "../../core/index.js";
 import {
@@ -322,7 +325,7 @@ describe("BranchCheckout", () => {
 			view.dispose();
 		});
 
-		it("rejecting rewind through the view leaves the branch usable", () => {
+		it("asserting on rewind through an internal view leaves the branch usable", () => {
 			const view = makeSharedView();
 			const branch = forkAsBranchCheckout(view.checkout);
 			const branchView = branch.viewWith(config);
@@ -331,7 +334,12 @@ describe("BranchCheckout", () => {
 			branchView.root.x = 1;
 			const head = branch.branchHistory.getHead()?.revision;
 
-			assert.throws(() => branchView.rewindTo(revision), validateUsageError(/not supported/));
+			assert.throws(
+				() => branchView.rewindTo(revision),
+				validateAssertionError(
+					"Rewinding requires a checkout that supports branch replacement",
+				),
+			);
 			assert.equal(branch.branchHistory.getHead()?.revision, head);
 			assert.equal(branchView.root.x, 1);
 			branchView.root.x = 2;

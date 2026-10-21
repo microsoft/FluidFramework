@@ -676,12 +676,10 @@ export class SchematizingSimpleTreeView<
 
 	@throwIfBroken
 	public rewindTo(revision: string): void {
-		// The public view API includes rewind, but a retained checkout cannot replace its branch.
-		if (!(this.checkout instanceof TreeCheckout)) {
-			throw new UsageError(
-				"rewindTo is not supported on BranchCheckout. Use revertTo instead.",
-			);
-		}
+		assert(
+			this.checkout instanceof TreeCheckout,
+			"Rewinding requires a checkout that supports branch replacement",
+		);
 		this.checkout.rewindTo(revision);
 	}
 
