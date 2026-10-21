@@ -105,6 +105,12 @@ export class EditManager<
 	 */
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
+	/**
+	 * Local retention policy, always a boolean or a nonnegative safe integer.
+	 * `false` or zero disables extra retention; `true` retains all available history.
+	 * A positive safe integer retains the newest specified number of available sequenced main-branch commits.
+	 * Collaboration and registered branches can require retaining additional history.
+	 */
 	private historyRetention: boolean | number = false;
 
 	/**
@@ -159,6 +165,14 @@ export class EditManager<
 		mainTrunk.trimmer = this._events;
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
+	}
+
+	/**
+	 * Gets this manager's current local history retention policy.
+	 * @returns The configured boolean or nonnegative safe integer, defaulting to `false`.
+	 */
+	public getHistoryRetention(): boolean | number {
+		return this.historyRetention;
 	}
 
 	/**
@@ -226,7 +240,8 @@ export class EditManager<
 			if (commit === this.trunkBase) {
 				break;
 			}
-			if (--remaining === 0) {
+			remaining--;
+			if (remaining === 0) {
 				return minSequenceId(trimmingBound, getUpperBoundOfPreviousSequenceId(sequenceId));
 			}
 		}
@@ -340,12 +355,13 @@ export class EditManager<
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
 	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
 	public advanceMinimumSequenceNumber(
 		minimumSequenceNumber: SeqNumber,
-		trimHistory = true,
+		allowHistoryTrimming = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
 			return;
@@ -357,7 +373,7 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
-		if (trimHistory) {
+		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
 	}
@@ -649,7 +665,7 @@ export class EditManager<
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
 	 *
-	 * @param trimHistory - Whether to reevaluate numeric retention after sequencing the entire bunch.
+	 * @param allowHistoryTrimming - Whether this call may reevaluate numeric retention after sequencing the entire bunch.
 	 * Set to false for detached edits to defer trimming.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
@@ -659,7 +675,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
-		trimHistory = true,
+		allowHistoryTrimming = true,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
@@ -715,7 +731,7 @@ export class EditManager<
 			onSequenceLocalCommit,
 		);
 		if (
-			trimHistory &&
+			allowHistoryTrimming &&
 			branchId === "main" &&
 			typeof this.historyRetention === "number" &&
 			this.historyRetention > 0
