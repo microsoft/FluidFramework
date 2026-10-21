@@ -2,6 +2,9 @@
 
 ## Status and purpose
 
+For conclusions from this experiment and the proposed numeric-position interpretation of array-location fields, see [From counter fields to array-location fields](./array-location-field-design.md).
+That follow-up separates demonstrated counter behavior from proposed semantics and next investigation steps.
+
 ### Approved API scope change (2026-10-21)
 
 The user explicitly approved preserving the existing homomorphic mutable `ObjectFromSchemaRecord` property map.
