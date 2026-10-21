@@ -14,7 +14,7 @@
 
 	"mochaExplorer.files": ["lib/test/**/*.*js"],
 	"mochaExplorer.require": [
-		"node_modules/@fluid-internal/mocha-test-setup/dist/index.js",
+		"node_modules/@fluid-internal/mocha-test-setup/lib/index.js",
 		"source-map-support/register",
 	],
 	"mochaExplorer.configFile": ".mocharc.cjs",

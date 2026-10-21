@@ -11,7 +11,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import type { Revertible } from "../../../core/index.js";
+import type { NormalizedUpPath, Revertible, UpPath } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
 import { TreeArrayNode, type TreeNode } from "../../../simple-tree/index.js";
@@ -430,7 +430,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint): v
 			if (constraintNode !== undefined) {
 				const flex = getInnerNode(constraintNode);
 				assert(flex.isHydrated());
-				tree.checkout.editor.addNodeExistsConstraint(flex.anchorNode);
+				tree.checkout.editor.addNodeExistsConstraint(node.anchorNode);
 			}
 			break;
 		}

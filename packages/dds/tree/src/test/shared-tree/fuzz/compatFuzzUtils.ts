@@ -84,7 +84,6 @@ export function createCompatFuzzSuite(
 	);
 }
 
-// TODO: Enable other types of ops.
 // AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
@@ -98,7 +97,7 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	abort: 1,
 	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 	schema: 0,
-	nodeConstraint: 3,
+	nodeConstraint: 0, // TODO: Enable when node existence constraints are supported across versions.
 	fork: 1,
 	merge: 1,
 };
