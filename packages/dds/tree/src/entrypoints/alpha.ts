@@ -259,7 +259,6 @@ export {
 	ReadSchema, 
 	ReadableField, 
 	RebaseValidation, 
-	RebaseValidationAlpha, 
 	RebaseValidationLevel, 
 	RecordNodeCustomizableSchema, 
 	RecordNodePojoEmulationSchema, 

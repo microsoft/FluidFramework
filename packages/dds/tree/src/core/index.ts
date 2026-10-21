@@ -239,7 +239,6 @@ export {
 	cheapRebaseValidation,
 	strictRebaseValidation,
 	RebaseValidation,
-	type RebaseValidationAlpha,
 	RebaseValidationLevel,
 } from "./rebase/index.js";
 

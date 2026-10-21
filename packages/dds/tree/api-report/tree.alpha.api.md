@@ -1150,15 +1150,15 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha
-export const RebaseValidation: RebaseValidationAlpha;
-
-// @alpha
-export interface RebaseValidationAlpha {
+export interface RebaseValidation {
     readonly currentLevel: RebaseValidationLevel;
     readonly Level: typeof RebaseValidationLevel;
     readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
     readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 }
+
+// @alpha
+export const RebaseValidation: RebaseValidation;
 
 // @alpha
 export const RebaseValidationLevel: {

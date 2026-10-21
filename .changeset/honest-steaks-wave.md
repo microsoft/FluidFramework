@@ -6,6 +6,21 @@
 Adds debug-only checks to facilitate root cause analysis of SharedTree bugs
 
 This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
+These checks can be used application authors when faced with a SharedTree rebasing bug.
+For example:
+```typescript
+import { RebaseValidation } from "@fluidframework/tree/alpha";
+
+it("repro SharedTree bug", () => {
+	// Reproduce the SharedTree bug under strict rebase validation level.
+	RebaseValidation.runWithLevel(RebaseValidation.Level.Strict, () => {
+		// Buggy scenario
+		// ...
+	});
+});
+```
+Running the test with strict validation is more likely to yield actionable feedback for SharedTree maintainers.
+
 These checks are tree-shaken out of production builds, so they have no impact on shipped applications.
 
 There are three levels of checking available:

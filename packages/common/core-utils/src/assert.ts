@@ -271,7 +271,7 @@ export function nonProductionConditionalsIncluded(): boolean {
 }
 
 /**
- * Overrides the behavior code which optimizes out non-production conditional code like {@link debugAssert}, {@link skipInProduction} and {@link nonProductionConditionalsIncluded}.
+ * Overrides the behavior code which optimizes out non-production conditional code like {@link debugAssert}, {@link skipInProduction}, and {@link nonProductionConditionalsIncluded}.
  *
  * Can be called multiple times. Will emulate production builds if called with `true` more times than `false`.
  * Emulation of production builds is disabled when enabled and disabled counts match (including at 0, by default).
