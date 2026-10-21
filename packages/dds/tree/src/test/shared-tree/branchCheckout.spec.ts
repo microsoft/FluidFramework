@@ -7,15 +7,27 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import type { RevertibleAlpha } from "../../core/index.js";
 import {
 	BranchCheckout,
+	CheckoutBase,
 	TreeCheckout,
 	forkAsBranchCheckout,
 } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
 import { getView, TestTreeProviderLite } from "../utils.js";
 
 const enableSchemaValidation = true;
+
+type _CheckoutCapabilities =
+	| requireTrue<isAssignableTo<TreeCheckout, CheckoutBase>>
+	| requireTrue<isAssignableTo<BranchCheckout, CheckoutBase>>
+	| requireFalse<isAssignableTo<BranchCheckout, TreeCheckout>>
+	| requireFalse<isAssignableTo<"switchBranch", keyof BranchCheckout>>
+	| requireFalse<isAssignableTo<"rewindTo", keyof BranchCheckout>>
+	| requireFalse<isAssignableTo<"switchBranch", keyof CheckoutBase>>
+	| requireFalse<isAssignableTo<"rewindTo", keyof CheckoutBase>>;
 
 describe("BranchCheckout", () => {
 	const schemaFactory = new SchemaFactory("BranchCheckout test schema");
@@ -29,11 +41,13 @@ describe("BranchCheckout", () => {
 	}
 
 	describe("construction", () => {
-		it("returns a BranchCheckout that is also a TreeCheckout", () => {
+		it("returns a sibling of TreeCheckout with the same common base", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
 			assert.ok(branchCheckout instanceof BranchCheckout);
-			assert.ok(branchCheckout instanceof TreeCheckout);
+			assert.ok(branchCheckout instanceof CheckoutBase);
+			assert.ok(view.checkout instanceof CheckoutBase);
+			assert.equal(branchCheckout instanceof TreeCheckout, false);
 		});
 
 		it("the forked checkout is independent from the parent", () => {
@@ -108,13 +122,13 @@ describe("BranchCheckout", () => {
 	});
 
 	describe("permanently bound to its branch", () => {
-		it("switchBranch throws regardless of which branch is passed", () => {
+		it("does not expose branch switching or rewind operations", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
-			assert.throws(
-				() => branchCheckout.switchBranch(branchCheckout.mainBranch),
-				validateUsageError(/switchBranch is not supported on BranchCheckout/),
-			);
+			assert.equal("switchBranch" in branchCheckout, false);
+			assert.equal("rewindTo" in branchCheckout, false);
+			assert.equal(branchCheckout.isView(), false);
+			assert.equal(branchCheckout.isBranch(), false);
 		});
 
 		it("fork() returns another BranchCheckout", () => {
@@ -144,6 +158,42 @@ describe("BranchCheckout", () => {
 	});
 
 	describe("edits and merges", () => {
+		for (const retainedSource of [false, true]) {
+			it(`clones revertibles from a ${retainedSource ? "retained" : "retargetable"} checkout to its sibling type`, () => {
+				const view = makeView();
+				const source = view.checkout.forkWith((options) =>
+					retainedSource ? new BranchCheckout(options) : new TreeCheckout(options),
+				);
+				const sourceView = source.viewWith(config);
+				const revertibles: RevertibleAlpha[] = [];
+				const unsubscribe = source.events.on("changed", (_data, getRevertible) => {
+					const revertible = getRevertible?.();
+					assert(revertible !== undefined);
+					revertibles.push(revertible);
+				});
+				sourceView.root.x = 1;
+				unsubscribe();
+				const target = source.forkWith((options) =>
+					retainedSource ? new TreeCheckout(options) : new BranchCheckout(options),
+				);
+				try {
+					const targetView = target.viewWith(config);
+					const [revertible] = revertibles;
+					assert(revertible !== undefined);
+					const clone = revertible.clone(target);
+					revertible.revert();
+					assert.equal(sourceView.root.x, 0);
+					assert.equal(targetView.root.x, 1);
+					clone.revert();
+					assert.equal(targetView.root.x, 0);
+				} finally {
+					target.dispose();
+					source.dispose();
+					view.dispose();
+				}
+			});
+		}
+
 		it("edits on the BranchCheckout do not affect the parent view", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
@@ -272,27 +322,22 @@ describe("BranchCheckout", () => {
 			view.dispose();
 		});
 
-		for (const target of ["branch", "view"]) {
-			it(`rejecting rewind through the ${target} leaves the branch usable`, () => {
-				const view = makeSharedView();
-				const branch = forkAsBranchCheckout(view.checkout);
-				const branchView = branch.viewWith(config);
-				const revision = branch.branchHistory.getHead()?.revision;
-				assert(revision !== undefined);
-				branchView.root.x = 1;
-				const head = branch.branchHistory.getHead()?.revision;
+		it("rejecting rewind through the view leaves the branch usable", () => {
+			const view = makeSharedView();
+			const branch = forkAsBranchCheckout(view.checkout);
+			const branchView = branch.viewWith(config);
+			const revision = branch.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			branchView.root.x = 1;
+			const head = branch.branchHistory.getHead()?.revision;
 
-				assert.throws(
-					() => (target === "branch" ? branch : branchView).rewindTo(revision),
-					validateUsageError(/not supported/),
-				);
-				assert.equal(branch.branchHistory.getHead()?.revision, head);
-				assert.equal(branchView.root.x, 1);
-				branchView.root.x = 2;
-				view.merge(branch);
-				assert.equal(view.root.x, 2);
-				view.dispose();
-			});
-		}
+			assert.throws(() => branchView.rewindTo(revision), validateUsageError(/not supported/));
+			assert.equal(branch.branchHistory.getHead()?.revision, head);
+			assert.equal(branchView.root.x, 1);
+			branchView.root.x = 2;
+			view.merge(branch);
+			assert.equal(view.root.x, 2);
+			view.dispose();
+		});
 	});
 });

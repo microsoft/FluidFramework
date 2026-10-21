@@ -38,6 +38,7 @@ import {
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { forkAsBranchCheckout } from "../../../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
@@ -593,6 +594,32 @@ describe("Host and Guest message protocol", () => {
 describe("Host and Guest correctness", () => {
 	afterEach(function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+	});
+
+	it("initializes and synchronizes a Host backed by a retained checkout", async () => {
+		const { main } = await setup(["a"]);
+		const checkout = forkAsBranchCheckout(getCheckout(main));
+		const view = checkout.viewWith(stringArrayConfig);
+		const ports = buildDirectSessionPorts();
+		const host = new HostImplementation({ main: view, port: ports.hostPort });
+		let guest: GuestImplementation | undefined;
+		try {
+			guest = await createGuestForHost(ports.guestPort);
+			const guestView = guest.tree.viewWith(stringArrayConfig);
+			assert.deepEqual([...guestView.root], ["a"]);
+			guestView.root.insertAtEnd("guest");
+			await guest.updateHostPromise;
+			assert.deepEqual([...view.root], ["a", "guest"]);
+			assert.deepEqual([...main.root], ["a"]);
+			view.root.insertAtEnd("host");
+			await host.updateGuestPromise;
+			assert.deepEqual([...guestView.root], ["a", "guest", "host"]);
+		} finally {
+			guest?.dispose();
+			host.dispose();
+			ports.dispose();
+			checkout.dispose();
+		}
 	});
 
 	it("logs the Guest's code separately from its tagged protocol and sensitive diagnostics", async () => {
