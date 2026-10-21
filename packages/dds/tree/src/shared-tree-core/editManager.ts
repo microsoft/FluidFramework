@@ -665,7 +665,7 @@ export class EditManager<
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
 	 *
-	 * @param allowHistoryTrimming - Whether this call may reevaluate numeric retention after sequencing the entire bunch.
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy after sequencing the entire bunch.
 	 * Set to false for detached edits to defer trimming.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
@@ -730,12 +730,7 @@ export class EditManager<
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
-		if (
-			allowHistoryTrimming &&
-			branchId === "main" &&
-			typeof this.historyRetention === "number" &&
-			this.historyRetention > 0
-		) {
+		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
 	}
