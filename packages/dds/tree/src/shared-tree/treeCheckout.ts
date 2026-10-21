@@ -719,7 +719,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private locationRevisionSource?: () => LocationRevisionSource;
 
 	/**
-	 * Whether disposing a view also disposes this checkout by default.
+	 * Whether disposing a view also disposes this checkout.
 	 *
 	 * @remarks
 	 * By default, this is false when {@link TreeCheckout.isSharedBranch} is true, and true otherwise.
@@ -1758,13 +1758,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return checkout;
 	}
 
-	public switchBranch(
-		branch: SharedTreeBranch<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
-	): void {
+	private checkCanSwitchBranch(): void {
 		this.editLock.checkUnlocked("Switching branches");
 		assert(
 			this.#transaction.size === 0,
@@ -1775,6 +1769,16 @@ export class TreeCheckout implements ITreeCheckout {
 				"Cannot switch a view away from a shared branch. Consider forking first.",
 			);
 		}
+	}
+
+	public switchBranch(
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): void {
+		this.checkCanSwitchBranch();
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1798,6 +1802,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
+	@throwIfBroken
 	public rewindTo(revisionString: string): void {
 		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
 		if (this.#transaction.size > 0) {
@@ -1814,7 +1819,10 @@ export class TreeCheckout implements ITreeCheckout {
 		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
 		}
-		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+		this.checkCanSwitchBranch();
+		this.breaker.run(() => {
+			this.switchBranch(this.#transaction.branch.fork(targetCommit));
+		});
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {

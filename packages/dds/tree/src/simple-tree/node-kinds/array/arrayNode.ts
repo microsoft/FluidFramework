@@ -1685,9 +1685,11 @@ export interface ArrayPlaceAnchor {
 	 * The current index within the array that this anchor refers to.
 	 * @remarks
 	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
-	 * This index is a value from 0 to the current length of the array (inclusive).
+	 * Outside change-event callbacks, this index is a value from 0 to the current length of the array (inclusive).
 	 * If used as the index to insert content into the array, this means it can point to any location in the array,
 	 * including just after the last child.
+	 * During change-event callbacks, the index can temporarily be stale or outside these bounds.
+	 * See {@link createArrayInsertionAnchor} for details.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the anchor has been {@link ArrayPlaceAnchor.dispose | disposed}.
 	 */
 	get index(): number;
@@ -1713,17 +1715,22 @@ export interface ArrayPlaceAnchor {
  * This anchor will track the logical position in the array across changes.
  * As long as the subsection of the array surrounding the anchor point is not edited,
  * this anchor will move with them, keeping its relative position to those children fixed.
- * How exactly it behaves when the adjacent portion of the array is modified is subject to change,
- * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ * How exactly it behaves when the adjacent portion of the array is modified is subject to change.
+ * Outside change-event callbacks, this reports a valid index to insert content at (which can be the index after the last item in the array).
  *
  * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
  * make it behave better for such uses.
  *
  * In rare cases the tracked index cannot be updated precisely and the anchor falls back to best-effort behavior:
- * it keeps reporting a valid in-bounds index, but that index may no longer correspond to the same logical position
+ * after change-event delivery completes, it reports a valid in-bounds index, but that index may no longer correspond to the same logical position
  * as before the change (this can happen when an incremental delta is unavailable for a change, such as during a
  * schema change). Consumers that require an accurate position across such changes should re-derive it from their
  * own state rather than relying solely on this anchor.
+ *
+ * During change-event callbacks, an anchor can temporarily report a stale index even though the tree already reflects the changes.
+ * This can occur during individual edits as well as merged batches.
+ * The stale index can be outside the current array bounds.
+ * After the synchronous edit or merge returns, the index is updated, subject to the best-effort limitations described above.
  * @privateRemarks
  * The index is maintained incrementally from the shallow (insert/remove) delta delivered by the array node's
  * `childrenChangedAfterBatch` event: inserts and removes before the anchor point shift it, while edits after it
@@ -1748,6 +1755,10 @@ export interface ArrayPlaceAnchor {
  * For example, removing [0, 3) moves an anchor at index 1 to 0; rollback restores the content but moves the anchor to 3, not 1.
  * This also affects extrinsic ranges: a nested transaction that removes content and rolls back during a tracked edit
  * can cause the tracker to persist incorrect endpoints after the content has been restored.
+ *
+ * TODO: Fix or improve the event ordering that causes the stale indices described above.
+ * This may require better APIs for applications to control update ordering between dependent content.
+ * See the skipped tests for this function covering array listeners registered before the anchor and descendant events during merges.
  *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.

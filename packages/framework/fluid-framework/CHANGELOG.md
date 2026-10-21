@@ -1,5 +1,232 @@
 # fluid-framework
 
+## 3.6.0
+
+### Minor Changes
+
+- Plain and formatted text nodes support moving character ranges ([#28440](https://github.com/microsoft/FluidFramework/pull/28440)) [3eb861c0c18](https://github.com/microsoft/FluidFramework/commit/3eb861c0c1815e874f8ef00f6f0ee217515883d5)
+
+  The [PlainText.Members](https://fluidframework.com/docs/api/tree/plaintext-namespace/members-interface) API now exposes `moveRangeToIndex`, matching the existing [TreeArrayNode.moveRangeToIndex](https://fluidframework.com/docs/api/tree/treearraynode-interface#moverangetoindex-methodsignature) operation.
+  Both plain text and [formatted text](https://fluidframework.com/docs/api/tree/formattedtext-namespace/members-interface) nodes can now reorder ranges of text without removing and reinserting characters.
+
+  ```typescript
+  import { PlainText } from "@fluidframework/tree/alpha";
+
+  const text = PlainText.Tree.fromString("abcdef");
+  text.moveRangeToIndex(4, 0, 2);
+  console.log(text.fullString()); // "cdabef"
+  ```
+
+- Support record and map formatting in formatted text ranges ([#28458](https://github.com/microsoft/FluidFramework/pull/28458)) [6180bb2162d](https://github.com/microsoft/FluidFramework/commit/6180bb2162d68d88e7d4915a6b95139735f547ee)
+
+  `FormattedText.Members.formatRange` now supports record and map format nodes in addition to object format nodes.
+  Updates preserve entries not included in the update.
+  Set an entry to `undefined` to remove it.
+  Map formats accept either an object containing entries or a readonly map.
+  Node-valued properties and entries are cloned independently for each atom, including when copied from an existing hydrated format.
+  This also fixes copying hydrated node-valued properties in object formats.
+
+  ```typescript
+  text.formatRange(0, 5, { bold: true });
+  text.formatRange(0, 5, { bold: undefined });
+  // For map formats:
+  text.formatRange(0, 5, new Map([["bold", true]]));
+  ```
+
+- Revert to a commit directly from branch history ([#28399](https://github.com/microsoft/FluidFramework/pull/28399)) [14cfce7daed](https://github.com/microsoft/FluidFramework/commit/14cfce7daed3979b4345e283b3ac5f17da05f0e6)
+
+  Commit metadata now has a `revertTo()` method that reverts later changes on the branch from which the commit was obtained.
+  This supersedes the existing `revertTo()` API on the view (though that API remains available).
+
+  ```typescript
+  // Given some arbitrary commit in the history of a particular view...
+  const commit = view.branchHistory.getHead()?.getParent();
+  // ...check whether that commit can still be reverted, then revert if so
+  if (commit?.revertTo === undefined) {
+    throw new Error("Sorry, the requested revert can't be completed");
+  }
+  commit.revertTo();
+  ```
+
+  If the commit is no longer reachable on its original branch, the original branch has been replaced or disposed, or a later commit changes the schema, then the revert is not possible.
+  In any of these cases, the `revertTo()` method will be absent (`undefined`) from the commit metadata object.
+  The method is also unavailable while a transaction is in progress or during change events.
+  Read `revertTo` from the commit metadata before each call rather than retaining the function; each obtained function can be called only once.
+
+  Custom metadata supplied to transactions and reverts is read and serialized while edits to the target checkout are disallowed.
+  Getters and serialization hooks that attempt to edit that tree throw an error before the edit is applied.
+
+- Unhydrated array range moves preserve content when the destination overlaps the source ([#28441](https://github.com/microsoft/FluidFramework/pull/28441)) [5c61971ff70](https://github.com/microsoft/FluidFramework/commit/5c61971ff709120cfe11546ef94797760ff85393)
+
+  Calling [`TreeArrayNode.moveRangeToIndex`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface#moverangetoindex-methodsignature) with a destination gap inside the source range now leaves an [`Unhydrated`](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) array unchanged, matching the resulting array contents in the hydrated case.
+  Previously, these moves could reorder the array incorrectly and emit change deltas that did not match its content.
+
+  The destination gap is a position between items before the move, not an index in the resulting array.
+  For example, calling `array.moveRangeToIndex(1, 0, 2)` on an array containing `["a", "b", "c", "d", "e", "f"]` now leaves that array unchanged.
+  These overlapping moves do not emit change events on unhydrated arrays.
+  Hydrated arrays may still emit change events even though their content remains unchanged.
+
+- Stop recognizing pre-symbol in-memory Fluid handles ([#28418](https://github.com/microsoft/FluidFramework/pull/28418)) [97f7061ed43](https://github.com/microsoft/FluidFramework/commit/97f7061ed43804399da0479b3995ffb5f3e6c186)
+
+  In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
+  Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
+
+- Add optional checksums to help catch unintended schema changes ([#28462](https://github.com/microsoft/FluidFramework/pull/28462)) [5c2ac041189](https://github.com/microsoft/FluidFramework/commit/5c2ac041189a0825272ba4311bdeb503cf12cbef)
+
+  SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
+
+  The checksum is a hash saved in application code to guard against unintended schema changes.
+  To enable this check, pass the saved hash as `expectedHash` to the separately imported [`identifySchema`](https://fluidframework.com/docs/api/tree#identifyschema-function) function and provide its result as the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property).
+  Calling `identifySchema()` without an expected hash enables schema hash telemetry without a construction check.
+
+  #### Configure the expected hash
+
+  To set the initial hash, use a non-empty placeholder and run a test that constructs the view.
+  Replace the placeholder with the computed hash from the error message.
+
+  ```typescript
+  import {
+    identifySchema,
+    SchemaFactoryAlpha,
+    StagedSchemaUpgradePolicy,
+    TreeViewConfigurationAlpha,
+  } from "fluid-framework/alpha";
+
+  const sf = new SchemaFactoryAlpha("com.example");
+  const stagedNumber = sf.staged(sf.number);
+  class Note extends sf.object("Note", {
+    text: sf.types([sf.string, stagedNumber]),
+  }) {}
+  const stagedUpgradePolicy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+    stagedNumber.metadata.stagedSchemaUpgrade!,
+  );
+
+  const expectedSchemaHash = "replace-with-computed-hash-from-error";
+
+  const config = new TreeViewConfigurationAlpha({
+    schema: Note,
+    stagedUpgradePolicy,
+    schemaIdentity: identifySchema({
+      // Optional.
+      expectedHash: expectedSchemaHash, // Optional: enables the hash check.
+    }),
+  });
+  // Throws if expectedHash does not match the current schema hash.
+  const view = tree.viewWith(config);
+  // initialize and upgradeSchema emit the target hash in Fluid Framework telemetry when schemaIdentity is provided.
+  view.initialize({ text: "Hello" });
+  ```
+
+  Keep the expected hash fixed until a schema change is intentional.
+  If a test reports a mismatch, review the schema change.
+  If the change is intentional, update the expected hash with the computed hash from the error message.
+
+- Resolve historical node selections and text positions for presence ([#28446](https://github.com/microsoft/FluidFramework/pull/28446)) [7d20e3b8239](https://github.com/microsoft/FluidFramework/commit/7d20e3b8239418c38eea10dd955ff23572c4f53f)
+
+  The new alpha `TreeViewAlpha.locations` API allows capturing a _location_ on one view and resolving it in another view (possibly one on a different client).
+  The resolved position accounts for intervening edits and moves.
+  The primary use case for this functionality is for presence scenarios.
+  Selections can target entire nodes (e.g. "whole paragraph," or "todo item") or a gap within a sequence of nodes (e.g. "text caret position").
+
+  The following pseudocode illustrates how an application may use this API.
+
+  ```typescript
+  // Use an attached main view with acknowledged edits and no open transaction.
+  const capture = view.locations.capture([
+    { kind: "node", node: selectedImage },
+    { kind: "sequence", node: characters, index: focusIndex },
+    { kind: "sequence", node: characters, index: anchorIndex },
+  ]);
+
+  // Send to another client, typically using the presence API.
+  publishSelection({ capture });
+
+  // On receipt, with the editor model synchronized to the local tree:
+  const results = view.locations.resolve(message.capture);
+  for (const entry of results) {
+    if (entry.status === "resolved") {
+      const location = entry.location;
+      if (location.kind === "node") {
+        highlightNode(location.node); // A local SimpleTree object.
+      } else {
+        showCaret(location.node, location.index); // Current array and gap.
+      }
+    }
+    // Otherwise, entry.status is "unavailable" and entry.reason explains why,
+    // or entry.status is "revision-unavailable".
+    // The receiving client may be behind the sender: retry after applying
+    // the inbound operations for that revision.
+    // If the revision has expired instead and been trimmed, wait for a fresh presence update.
+  }
+
+  // Single locations do not require arrays.
+  const caret = view.locations.captureGap(characters, focusIndex);
+  const caretResult = view.locations.resolve(caret);
+  const selectedNode = view.locations.captureNode(selectedImage);
+  ```
+
+  `capture` and `resolve` accept either one location or an array and return the corresponding single result or array.
+  The array overloads have identical per-location semantics and are more performant for many locations captured from the same revision.
+
+  Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
+  Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
+  nest them within other presence data).
+  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/api/locations.ts).
+
+- SharedString now allows applications to configure which snapshot format it uses ([#28370](https://github.com/microsoft/FluidFramework/pull/28370)) [46d068346f7](https://github.com/microsoft/FluidFramework/commit/46d068346f7bdbd9889f2b0970d4d498f847ad00)
+
+  Use `configuredSharedString` to select a snapshot format through the registered DDS factory.
+  Set `newMergeTreeSnapshotFormat` to `true` for flat snapshots or `false` for legacy snapshots.
+  Both snapshot formats remain supported.
+
+  ```typescript
+  import { configuredSharedString } from "@fluidframework/sequence/legacy";
+
+  const ConfiguredSharedString = configuredSharedString({
+    newMergeTreeSnapshotFormat: true,
+  });
+  const factory = ConfiguredSharedString.getFactory();
+  ```
+
+  Register this kind, or its factory, in place of the default SharedString.
+  The API is also available from `fluid-framework/legacy`.
+  Omit the factory option to allow the runtime option or loaded snapshot format to determine the format.
+
+  The existing configuration-provider flow remains supported:
+
+  ```typescript
+  const configProvider = {
+    getRawConfig(name: string): boolean | undefined {
+      return name === "Fluid.Sequence.newMergeTreeSnapshotFormat"
+        ? true
+        : undefined;
+    },
+  };
+  ```
+
+  Return `false` for this flag to explicitly select legacy snapshots.
+  Selection precedence is the configuration flag, the factory option, the runtime option, then the loaded snapshot format.
+  When no explicit setting is provided, new SharedStrings use the legacy format and loaded SharedStrings reuse the format identified by their snapshot header.
+  A summary written in the selected format becomes the inherited format for clients that load it without an explicit setting.
+  Configuration and options are fixed for each DDS instance; use a new client or factory configuration to select a different format.
+  No additional DDS attributes are stored for the setting.
+  Format selection does not force an otherwise unchanged DDS to produce a new summary.
+
+- Capture and resolve presence positions in plain and formatted text ([#28466](https://github.com/microsoft/FluidFramework/pull/28466)) [d603008a6c3](https://github.com/microsoft/FluidFramework/commit/d603008a6c37a1ac2d9a77c7c81469e64caaa429)
+
+  The alpha `TreeLocationResolver.captureGap` method and `kind: "sequence"` capture inputs now accept `PlainText.Tree` and schemas produced by `FormattedText.createSchema`, including subclasses, as well as array nodes.
+
+  ```typescript
+  const selection = view.locations.captureGap(view.root.text, 2, {
+    affinity: "after",
+  });
+  // selection can be resolved on another client, typically after being sent using presence APIs.
+  const result = otherView.locations.resolve(selection);
+  ```
+
+  Text-based gap locations treat the string as a sequence of characters and have semantics analogous to those documented for sequences.
+  Their resolved indices are character indices within the string (see the documentation on `PlainText.Members` for the distinction between character indices and UTF-16 code-unit indices).
+
 ## 3.5.0
 
 ### Minor Changes

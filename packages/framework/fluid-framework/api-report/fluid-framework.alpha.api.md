@@ -889,6 +889,11 @@ export type ICriticalContainerError = IErrorBase;
 // @beta
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
+// @alpha
+export function identifySchemaAlpha(options?: {
+    readonly expectedHash?: string;
+}): SchemaIdentity;
+
 // @public @sealed
 export interface IDisposable {
     dispose(error?: Error): void;
@@ -1337,6 +1342,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaIdentity?: SchemaIdentity;
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
@@ -2053,6 +2059,10 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
+
+// @alpha @sealed
+export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
+}
 
 // @public @sealed @system
 export interface SchemaStatics {
@@ -2999,6 +3009,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 

@@ -67,6 +67,8 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
+	type ITreeViewConfigurationAlpha,
+	SchemaIdentityInternal,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -74,6 +76,7 @@ import {
 	disposeSymbol,
 	isReadonlyArray,
 	type JsonCompatibleReadOnly,
+	throwIfBroken,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -198,8 +201,6 @@ export class SchematizingSimpleTreeView<
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
-		checkout.forest.anchors.slots.set(ViewSlot, this);
-
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
 		const stagedUpgradePolicy =
@@ -209,6 +210,20 @@ export class SchematizingSimpleTreeView<
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
+		const identity =
+			configAlpha.schemaIdentity === undefined
+				? undefined
+				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
+		if (identity?.expectedHash !== undefined) {
+			const { expectedHash, schemaHasher: hasher } = identity;
+			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			if (actualHash !== expectedHash) {
+				throw new UsageError(
+					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
+				);
+			}
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
@@ -261,8 +276,9 @@ export class SchematizingSimpleTreeView<
 			throw new UsageError("Tree cannot be initialized more than once.");
 		}
 
+		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -315,12 +331,19 @@ export class SchematizingSimpleTreeView<
 				);
 			});
 		});
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaInitialized",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
 	}
 
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
+		const upgradePolicy = this.effectiveUpgradePolicy;
+		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -332,7 +355,26 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
+		const schemaHash = this.computeSchemaHash(upgradePolicy);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaUpgraded",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
+	}
+
+	private computeSchemaHash(
+		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
+	): string | undefined {
+		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
+		return identity === undefined
+			? undefined
+			: SchemaIdentityInternal.extract(identity).schemaHasher(
+					this.config.schema,
+					stagedUpgradePolicy,
+				);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -626,9 +668,10 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.fork().viewWith(this.config);
+		return this.checkout.fork().viewWithInternal(this.config, true);
 	}
 
+	@throwIfBroken
 	public rewindTo(revision: string): void {
 		this.checkout.rewindTo(revision);
 	}

@@ -539,18 +539,27 @@ export namespace FormattedText {
 							);
 						}
 						case NodeKind.Record: {
-							assert(isRecordNodeSchema(atomFormatSchema), "Expected a record schema.");
+							assert(
+								isRecordNodeSchema(atomFormatSchema),
+								0xd72 /* Expected a record schema. */,
+							);
 							return (formatNode: TreeNode) => {
-								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a record node.");
+								assert(
+									TreeStatic.is(formatNode, atomFormatSchema),
+									0xd73 /* Expected a record node. */,
+								);
 								for (const [key, value] of fieldFormats) {
 									formatNode[key] = TreeBeta.clone(value);
 								}
 							};
 						}
 						case NodeKind.Map: {
-							assert(isMapNodeSchema(atomFormatSchema), "Expected a map schema.");
+							assert(isMapNodeSchema(atomFormatSchema), 0xd74 /* Expected a map schema. */);
 							return (formatNode: TreeNode) => {
-								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a map node.");
+								assert(
+									TreeStatic.is(formatNode, atomFormatSchema),
+									0xd75 /* Expected a map node. */,
+								);
 								for (const [key, value] of fieldFormats) {
 									// The setter validates the cloned value against this map's entry schema.
 									formatNode.set(key, TreeBeta.clone(value) as never);
@@ -559,7 +568,10 @@ export namespace FormattedText {
 						}
 						case NodeKind.Object: {
 							// Narrow the typing to allow easy access to object specific APIs.
-							assert(isObjectNodeSchema(atomFormatSchema), "Expected an object schema.");
+							assert(
+								isObjectNodeSchema(atomFormatSchema),
+								0xd76 /* Expected an object schema. */,
+							);
 							// Check keys explicitly: unknown properties may not invoke a tree field setter.
 							for (const [key] of fieldFormats) {
 								if (!atomFormatSchema.fields.has(key)) {
