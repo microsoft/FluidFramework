@@ -30,7 +30,6 @@ import {
 	getInputCellId,
 	getOutputCellId,
 	getPinDetachId,
-	isImpactful,
 	splitMark,
 	withNodeChange,
 } from "./utils.js";
