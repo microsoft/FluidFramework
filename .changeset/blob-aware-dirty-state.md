@@ -7,7 +7,7 @@
 ---
 Container dirty state now accounts for outstanding attachment blob work
 
-`IContainer.isDirty` and `IFluidContainer.isDirty` now include outstanding attachment blob work, not just operations.
+[`IContainer.isDirty`](https://fluidframework.com/docs/api/container-definitions/icontainer-interface#isdirty-propertysignature) and [`IFluidContainer.isDirty`](https://fluidframework.com/docs/api/fluid-static/ifluidcontainer-interface#isdirty-propertysignature) now include outstanding attachment blob work, not just operations.
 Previously, `saved` could fire during a blob upload, allowing hosts to dispose the container and lose the attachment.
 Do not dispose a container while `isDirty` is `true`.
 
