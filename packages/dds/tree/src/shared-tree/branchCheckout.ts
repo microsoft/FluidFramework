@@ -4,24 +4,34 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ImplicitFieldSchema, TreeViewAlpha } from "../simple-tree/index.js";
+import type {
+	ImplicitFieldSchema,
+	TreeViewAlpha,
+	UntypedTreeViewAlpha,
+} from "../simple-tree/index.js";
 
 import { CheckoutBase, type TreeCheckoutOptions } from "./treeCheckout.js";
 
 /**
- * A viewless checkout that is permanently bound to its underlying branch.
+ * An independently owned checkout for retaining an editable fork across typed-view lifetimes.
  *
  * @remarks
- * Unlike `TreeCheckout`, a `BranchCheckout` does not expose branch switching or rewind operations.
+ * By default, disposing a view created through this checkout leaves the checkout available for a new view.
+ * Its owner can create another view of the same checkout and must dispose the checkout when it is no longer needed.
+ * Views created through a typed view's `fork` operation instead own and dispose their child checkout.
  *
- * It is "viewless" in the sense that no {@link TreeViewAlpha} is attached at construction time -
- * a view can still be materialized on demand via the inherited `viewWith`.
+ * A `BranchCheckout` keeps the same underlying branch object:
+ * unlike `TreeCheckout`, it does not expose branch switching or rewind operations that replace that object.
+ * Its contents remain editable, and it supports merges and rebases.
+ *
+ * No {@link TreeViewAlpha} is attached at construction time.
+ * A typed view can be created on demand via the inherited {@link CheckoutBase.viewWith | viewWith}.
+ * The typed-view interface still exposes `rewindTo` even though this checkout does not support it.
  * These internal views must not call `rewindTo`, which requires replacing the underlying branch.
  *
- * Lifecycle: a `BranchCheckout` is independent from any other checkout that observes the same data.
  * Disposing the parent of a {@link forkAsBranchCheckout} does not dispose the child, and vice versa;
  * merging is explicit via {@link CheckoutBase.merge}.
- * The owner must dispose this checkout when it is no longer needed.
+ *
  * SharedTree-backed checkouts retain ancestry trimming notifications to keep history counts and repair data up to date.
  */
 export class BranchCheckout extends CheckoutBase {
@@ -35,12 +45,14 @@ export class BranchCheckout extends CheckoutBase {
 	}
 
 	/**
-	 * A `BranchCheckout` is permanently bound to its branch and may have multiple views created
-	 * over its lifetime via `viewWith`. Disposing one of those views must not invalidate the branch
-	 * for other callers, so we opt out of the 1:1 view/checkout auto-dispose contract that
-	 * {@link CheckoutBase} defaults to for non-shared branches.
+	 * By default, disposing a view created through this checkout leaves the checkout available for a new view.
+	 * Views created through a typed view's `fork` operation override this policy and dispose their child checkout.
 	 */
 	public override get disposesWithView(): boolean {
+		return false;
+	}
+
+	public override isView(): this is UntypedTreeViewAlpha {
 		return false;
 	}
 

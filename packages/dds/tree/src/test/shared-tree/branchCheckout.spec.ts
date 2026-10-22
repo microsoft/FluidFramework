@@ -51,6 +51,8 @@ describe("BranchCheckout", () => {
 			assert.ok(branchCheckout instanceof CheckoutBase);
 			assert.ok(view.checkout instanceof CheckoutBase);
 			assert.equal(branchCheckout instanceof TreeCheckout, false);
+			assert.equal(view.checkout.isView(), true);
+			assert.equal(view.checkout.isBranch(), true);
 		});
 
 		it("the forked checkout is independent from the parent", () => {

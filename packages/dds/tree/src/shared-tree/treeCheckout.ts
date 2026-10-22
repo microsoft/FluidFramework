@@ -622,7 +622,12 @@ export interface TreeCheckoutOptions {
 }
 
 /**
- * Shared implementation for checkouts with different branch-retargeting and lifetime policies.
+ * Shared implementation of the internal tree checkouts, {@link TreeCheckout} and `BranchCheckout`.
+ *
+ * @remarks
+ * Provides common editing, schema, history, and view-creation behavior.
+ * Concrete subclasses determine whether the underlying branch can be replaced
+ * and whether disposing a view also disposes its checkout.
  */
 export abstract class CheckoutBase implements ITreeCheckout {
 	public disposed = false;
@@ -1321,9 +1326,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return this.isView();
 	}
 
-	public isView(): this is UntypedTreeViewAlpha {
-		return false;
-	}
+	public abstract isView(): this is UntypedTreeViewAlpha;
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		_schema: TSchema,
