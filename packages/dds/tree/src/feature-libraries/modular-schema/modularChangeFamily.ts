@@ -2567,6 +2567,12 @@ const compareFieldIdKeys = createTupleComparator([
 	compareStrings<FieldKey>,
 ]);
 
+/**
+ * Composes the node aliases for two changesets.
+ * @param aliases1 - The node aliases from the first changeset.
+ * @param aliases2 - The node aliases from the second changeset.
+ * @param nodeId2ToId1 - A mapping from canonical node ID in the second changeset to the corresponding canonical ID in the first changeset.
+ */
 function composeNodeAliases(
 	aliases1: ChangeAtomIdBTree<NodeId>,
 	aliases2: ChangeAtomIdBTree<NodeId>,
