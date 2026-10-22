@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
 	revisionMetadataSourceFromInfo,
 	type ChangeAtomId,
-	type ChangesetLocalId,
 	type FieldKindIdentifier,
 	type RevisionInfo,
 	type RevisionMetadataSource,
@@ -15,8 +16,13 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand } from "../../util/index.js";
-import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { brand, hasSingle, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import {
+	newChangeAtomIdBTree,
+	rangeQueryChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type {
 	FieldChange,
 	FieldChangeMap,
@@ -24,22 +30,39 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	NodeLocation,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
 import {
-	CrossFieldManagerI,
+	addNodeRename,
+	areEqualFieldIds,
+	assignRootChange,
+	fieldChangeFromId,
+	firstAttachIdFromDetachId,
+	firstDetachIdFromAttachId,
 	getChangeHandler,
+	getFirstAttachField,
+	getFirstDetachField,
+	getFirstFieldForDetach,
+	getNewRootIdFromOldRootId,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
-	makeChangesetInversions,
+	makeCrossFieldKeyTable,
 	makeModularChangeset,
 	newConstraintState,
-	newCrossFieldTable,
-	updateConstraintsForFields,
-	type CrossFieldTable,
+	newRootTable,
+	normalizeFieldId,
+	updateConstraints,
+	validateChangeset,
 } from "./modularChangeUtils.js";
-import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { NodeAttachState, type AtomIdAliasAllocator } from "./fieldChangeHandler.js";
+import {
+	NodeMoveType,
+	setInCrossFieldMap,
+	type CrossFieldMap,
+	type InvertNodeManager,
+} from "./crossFieldQueries.js";
+import type { AtomIdAliasAllocator } from "./fieldChangeHandler.js";
 import { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 
 /**
@@ -54,9 +77,6 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(change.change, fieldKinds);
-
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
@@ -66,8 +86,8 @@ export function invertModularChange(
 		0x89a /* Unexpected destroys in change to invert */,
 	);
 
-	const revInfos: RevisionInfo[] = isRollback
-		? [{ revision: revisionForInvert, rollbackOf: change.revision }]
+	const revInfos: readonly RevisionInfo[] = isRollback
+		? getRevInfosForRollback(change.change.revisions ?? [], revisionForInvert)
 		: [{ revision: revisionForInvert }];
 
 	const [noChangeConstraint, noChangeConstraintOnRevert] = isRollback
@@ -77,6 +97,7 @@ export function invertModularChange(
 
 	if (hasConflicts(change.change)) {
 		return makeModularChangeset({
+			rebaseVersion: change.change.rebaseVersion,
 			maxId: change.change.maxId as number,
 			revisions: revInfos,
 			destroys,
@@ -84,11 +105,6 @@ export function invertModularChange(
 	}
 
 	const genId = new DefaultAtomIdAliasAllocator();
-
-	const crossFieldTable: InvertTable = {
-		...newCrossFieldTable<FieldChange>(),
-		originalFieldToContext: new Map(),
-	};
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
 
@@ -97,6 +113,28 @@ export function invertModularChange(
 			genId.reserve(revision, change.change.maxId);
 		}
 	}
+
+	const invertedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(
+		change.change.nodeToParent.clone(),
+	);
+
+	const crossFieldTable: InvertTable = {
+		change: change.change,
+		isRollback,
+		entries: newChangeAtomIdRangeMap(),
+		originalFieldToContext: new Map(),
+		invertRevision: revisionForInvert,
+		invertedNodeToParent,
+		invalidatedFields: new Set(),
+		genId,
+		invertedRoots: invertRootTable(
+			change.change,
+			invertedNodeToParent,
+			isRollback,
+			revisionForInvert,
+			genId,
+		),
+	};
 
 	const invertedFields = invertFieldMap(
 		change.change.fieldChanges,
@@ -136,44 +174,40 @@ export function invertModularChange(
 				context !== undefined,
 				0x851 /* Should have context for every invalidated field */,
 			);
-			const { invertedField, fieldId } = context;
+			const { invertedField } = context;
 
 			const amendedChange = getChangeHandler(fieldKinds, fieldChange.fieldKind).rebaser.invert(
 				originalFieldChange,
 				isRollback,
 				genId,
 				revisionForInvert,
-				new InvertManager(crossFieldTable, fieldChange, fieldId),
+				new InvertNodeManagerI(crossFieldTable, context.fieldId),
 				revisionMetadata,
 			);
 			invertedField.change = brand(amendedChange);
 		}
 	}
 
-	const { crossFieldKeys, nodeToParent } = makeChangesetInversions(
-		invertedFields,
-		invertedNodes,
-		fieldKinds,
-		change.change.nodeAliases,
-	);
+	const crossFieldKeys = makeCrossFieldKeyTable(invertedFields, invertedNodes, fieldKinds);
 
 	const constraintState = newConstraintState(0);
 	// Rollbacks are not subject to constraints
 	if (!isRollback) {
-		updateConstraintsForFields(
+		updateConstraints(
 			invertedFields,
-			NodeAttachState.Attached,
-			constraintState,
 			invertedNodes,
-			change.change.nodeAliases,
+			crossFieldTable.invertedRoots,
+			constraintState,
 			fieldKinds,
 		);
 	}
 
-	const inverse = makeModularChangeset({
+	const inverted = makeModularChangeset({
+		rebaseVersion: change.change.rebaseVersion,
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
-		nodeToParent,
+		nodeToParent: crossFieldTable.invertedNodeToParent,
+		rootNodes: crossFieldTable.invertedRoots,
 		nodeAliases: change.change.nodeAliases,
 		crossFieldKeys,
 		maxId: genId.getMaxId(),
@@ -184,10 +218,8 @@ export function invertModularChange(
 		destroys,
 	});
 
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(inverse, fieldKinds);
-
-	return inverse;
+	validateChangeset(inverted, fieldKinds);
+	return inverted;
 }
 
 function invertFieldMap(
@@ -204,7 +236,7 @@ function invertFieldMap(
 
 	for (const [field, fieldChange] of changes) {
 		const fieldId = { nodeId: parentId, field };
-		const manager = new InvertManager(crossFieldTable, fieldChange, fieldId);
+		const manager = new InvertNodeManagerI(crossFieldTable, fieldId);
 		const invertedChange = getChangeHandler(fieldKinds, fieldChange.fieldKind).rebaser.invert(
 			fieldChange.change,
 			isRollback,
@@ -239,7 +271,7 @@ function invertNodeChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeChangeset {
-	const inverse: NodeChangeset = {};
+	const inverse: Mutable<NodeChangeset> = {};
 
 	// Rollbacks are not subject to constraints
 	if (!isRollback) {
@@ -273,6 +305,361 @@ function invertNodeChange(
 	return inverse;
 }
 
+interface InvertTable {
+	change: ModularChangeset;
+	isRollback: boolean;
+
+	// Entries are keyed on attach ID
+	entries: CrossFieldMap<NodeId>;
+	originalFieldToContext: Map<FieldChange, InvertContext>;
+	invertedNodeToParent: ChangeAtomIdBTree<NodeLocation>;
+	invertRevision: RevisionTag;
+	invalidatedFields: Set<FieldChange>;
+	invertedRoots: RootNodeTable;
+	genId: AtomIdAliasAllocator;
+}
+
+interface InvertContext {
+	fieldId: FieldId;
+	invertedField: FieldChange;
+}
+
+class InvertNodeManagerI implements InvertNodeManager {
+	public constructor(
+		private readonly table: InvertTable,
+		private readonly fieldId: FieldId,
+	) {}
+
+	public invertDetach(
+		detachId: ChangeAtomId,
+		count: number,
+		nodeChange: NodeId | undefined,
+	): void {
+		let countProcessed = count;
+		const attachIdEntry = firstAttachIdFromDetachId(
+			this.table.change.rootNodes,
+			detachId,
+			countProcessed,
+		);
+		countProcessed = attachIdEntry.length;
+
+		if (nodeChange !== undefined) {
+			assert(count === 1, "A node change should only affect one node");
+
+			const attachFieldEntry = getFirstAttachField(
+				this.table.change.crossFieldKeys,
+				attachIdEntry.value,
+				count,
+			);
+
+			if (attachFieldEntry.value === undefined) {
+				assignRootChange(
+					this.table.invertedRoots,
+					this.table.invertedNodeToParent,
+					attachIdEntry.value,
+					nodeChange,
+					this.fieldId,
+					this.table.change.rebaseVersion,
+				);
+			} else {
+				setInCrossFieldMap(this.table.entries, attachIdEntry.value, count, nodeChange);
+				this.table.invalidatedFields.add(
+					fieldChangeFromId(this.table.change, attachFieldEntry.value),
+				);
+			}
+		}
+	}
+
+	public invertAttach(
+		attachId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<NodeId | undefined> {
+		let countToProcess = count;
+
+		const detachIdEntry = firstDetachIdFromAttachId(
+			this.table.change.rootNodes,
+			attachId,
+			countToProcess,
+		);
+
+		countToProcess = detachIdEntry.length;
+
+		const detachEntry = getFirstFieldForDetach(
+			this.table.change,
+			detachIdEntry.value,
+			countToProcess,
+		);
+		countToProcess = detachEntry.length;
+
+		let result: RangeQueryResult<NodeId | undefined>;
+		if (detachEntry.value === undefined) {
+			// This node is detached in the input context of the original change.
+			result = rangeQueryChangeAtomIdMap(
+				this.table.change.rootNodes.nodeChanges,
+				detachIdEntry.value,
+				countToProcess,
+			);
+			countToProcess = result.length;
+
+			const detachLocationEntry = this.table.change.rootNodes.detachLocations.getFirst(
+				detachIdEntry.value,
+				countToProcess,
+			);
+			countToProcess = detachLocationEntry.length;
+
+			if (
+				this.table.isRollback &&
+				detachLocationEntry.value !== undefined &&
+				!areEqualFieldIds(
+					normalizeFieldId(detachLocationEntry.value, this.table.change.nodeAliases),
+					this.fieldId,
+				)
+			) {
+				// These nodes are detached in the input context of the original change,
+				// and the change attaches these nodes in a different location from their detach location.
+				// The rollback change should send them back to that prior detach location.
+				this.table.invertedRoots.outputDetachLocations.set(
+					detachIdEntry.value,
+					countToProcess,
+					detachLocationEntry.value,
+				);
+			}
+
+			result = { ...result, length: countToProcess };
+		} else {
+			result = this.table.entries.getFirst(attachId, countToProcess);
+		}
+
+		if (result.value !== undefined) {
+			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value, {
+				field: this.fieldId,
+			});
+		}
+		return result;
+	}
+
+	public getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
+		return getInvertedMoveId(
+			id,
+			this.table.invertRevision,
+			this.table.isRollback,
+			this.table.genId,
+		);
+	}
+}
+
+function getInvertedMoveId(
+	id: ChangeAtomId,
+	invertRevision: RevisionTag,
+	isRollback: boolean,
+	genId: AtomIdAliasAllocator,
+): ChangeAtomId {
+	return isRollback
+		? id
+		: { revision: invertRevision, localId: genId.getAlias(id.revision, id.localId) };
+}
+
+function invertRootTable(
+	change: ModularChangeset,
+	invertedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	isRollback: boolean,
+	revisionForInverse: RevisionTag,
+	genId: AtomIdAliasAllocator,
+): RootNodeTable {
+	const invertedRoots: RootNodeTable = newRootTable();
+
+	if (isRollback) {
+		invertRenamesForRollback(change, invertedRoots);
+	} else {
+		invertRenamesForRevert(change, revisionForInverse, invertedRoots, genId);
+	}
+
+	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const detachId: ChangeAtomId = { revision, localId };
+		const renamedId = firstAttachIdFromDetachId(change.rootNodes, detachId, 1).value;
+
+		// This checks whether `change` attaches this node.
+		// If it does, the node is not detached in the input context of the inverse, and so should not be included in the root table.
+		if (
+			change.crossFieldKeys.getFirst({ ...renamedId, target: NodeMoveType.Attach }, 1)
+				.value === undefined
+		) {
+			assignRootChange(
+				invertedRoots,
+				invertedNodeToParent,
+				renamedId,
+				nodeId,
+				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
+				change.rebaseVersion,
+			);
+		}
+	}
+
+	return invertedRoots;
+}
+
+function invertRenamesForRevert(
+	change: ModularChangeset,
+	revisionForInverse: RevisionTag,
+	invertedRoots: RootNodeTable,
+	genId: AtomIdAliasAllocator,
+): void {
+	for (const {
+		start: crossFieldKey,
+		value: field,
+		length,
+	} of change.crossFieldKeys.entries()) {
+		if (crossFieldKey.target === NodeMoveType.Detach) {
+			addRenameForAttachInInverse(
+				change,
+				revisionForInverse,
+				{ revision: crossFieldKey.revision, localId: crossFieldKey.localId },
+				field,
+				length,
+				invertedRoots,
+				genId,
+			);
+		}
+	}
+}
+
+/**
+ * Adds a rename to `invertedRoots` for the nodes moved by `originalDetachId`.
+ */
+function addRenameForAttachInInverse(
+	change: ModularChangeset,
+	invertRevision: RevisionTag,
+	originalDetachId: ChangeAtomId,
+	originalDetachField: FieldId,
+	count: number,
+	invertedRoots: RootNodeTable,
+	genId: AtomIdAliasAllocator,
+): void {
+	let countProcessed = count;
+	const originalAttachIdEntry = getNewRootIdFromOldRootId(
+		change.rootNodes,
+		originalDetachId,
+		count,
+	);
+	countProcessed = originalAttachIdEntry.length;
+
+	const originalAttachEntry = getFirstAttachField(
+		change.crossFieldKeys,
+		originalAttachIdEntry.value,
+		countProcessed,
+	);
+	countProcessed = originalAttachEntry.length;
+
+	const invertedAttachId = getInvertedMoveId(originalDetachId, invertRevision, false, genId);
+	if (originalAttachEntry.value === undefined) {
+		const outputDetachLocationEntry = change.rootNodes.outputDetachLocations.getFirst(
+			originalAttachIdEntry.value,
+			countProcessed,
+		);
+		countProcessed = outputDetachLocationEntry.length;
+
+		// The original change had a detach and no reattach,
+		// so the inverse will have only an attach reviving the node.
+		// The inverse needs a rename from the original output ID to the inverse attach ID.
+		const detachLocation = outputDetachLocationEntry.value ?? originalDetachField;
+		addNodeRename(
+			invertedRoots,
+			originalAttachIdEntry.value,
+			invertedAttachId,
+			countProcessed,
+			detachLocation,
+		);
+	} else {
+		// The nodes are moved (in both the original and inverse change).
+		// The inverse should have a rename from the inverse's detach ID to the inverse's attach ID,
+		// if they are not the same.
+		const invertedDetachId = getInvertedMoveId(
+			originalAttachIdEntry.value,
+			invertRevision,
+			false,
+			genId,
+		);
+
+		addNodeRename(
+			invertedRoots,
+			invertedDetachId,
+			invertedAttachId,
+			countProcessed,
+			undefined,
+		);
+	}
+
+	const countRemaining = count - countProcessed;
+	if (countRemaining > 0) {
+		addRenameForAttachInInverse(
+			change,
+			invertRevision,
+			offsetChangeAtomId(originalDetachId, countProcessed),
+			originalDetachField,
+			countRemaining,
+			invertedRoots,
+			genId,
+		);
+	}
+}
+
+function invertRenamesForRollback(
+	change: ModularChangeset,
+	invertedRoots: RootNodeTable,
+): void {
+	for (const { start: oldId, value: newId, length } of change.rootNodes.oldToNewId.entries()) {
+		invertRename(change, invertedRoots, oldId, newId, length);
+	}
+}
+
+function invertRename(
+	change: ModularChangeset,
+	invertedRoots: RootNodeTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	length: number,
+): void {
+	let countProcessed = length;
+	const outputDetachEntry = change.rootNodes.outputDetachLocations.getFirst(
+		newId,
+		countProcessed,
+	);
+	countProcessed = outputDetachEntry.length;
+
+	const inputDetachEntry = change.rootNodes.detachLocations.getFirst(oldId, countProcessed);
+	countProcessed = inputDetachEntry.length;
+
+	const attachEntry = getFirstAttachField(change.crossFieldKeys, newId, countProcessed);
+	countProcessed = attachEntry.length;
+	if (
+		attachEntry.value === undefined &&
+		outputDetachEntry.value !== undefined &&
+		inputDetachEntry.value !== undefined
+	) {
+		// The original change moves the detached node, so the inverse should also record a move back to the original location.
+		invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
+	}
+
+	const detachEntry = getFirstDetachField(change.crossFieldKeys, oldId, countProcessed);
+	const locationWhileDetached =
+		outputDetachEntry.value ?? detachEntry.value ?? inputDetachEntry.value;
+
+	// If the node is attached by `change`, then it is attached in the input context of the inverse,
+	// so it should not have a detach location.
+	const detachLocation = attachEntry.value === undefined ? locationWhileDetached : undefined;
+	addNodeRename(invertedRoots, newId, oldId, countProcessed, detachLocation);
+
+	if (countProcessed < length) {
+		invertRename(
+			change,
+			invertedRoots,
+			offsetChangeAtomId(oldId, countProcessed),
+			offsetChangeAtomId(newId, countProcessed),
+			length - countProcessed,
+		);
+	}
+}
+
 function invertBuilds(
 	builds: ChangeAtomIdBTree<TreeChunk> | undefined,
 ): ChangeAtomIdBTree<number> | undefined {
@@ -282,37 +669,10 @@ function invertBuilds(
 	return undefined;
 }
 
-interface InvertTable extends CrossFieldTable<FieldChange> {
-	originalFieldToContext: Map<FieldChange, InvertContext>;
-}
-
-interface InvertContext {
-	fieldId: FieldId;
-	invertedField: FieldChange;
-}
-
-class InvertManager extends CrossFieldManagerI<FieldChange> {
-	public constructor(
-		table: InvertTable,
-		field: FieldChange,
-		private readonly fieldId: FieldId,
-		allowInval = true,
-	) {
-		super(table, field, allowInval);
-	}
-
-	public override onMoveIn(id: ChangeAtomId): void {}
-
-	public override moveKey(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-		count: number,
-	): void {
-		fail(0x9c5 /* Keys should not be moved manually during invert */);
-	}
-
-	private get table(): InvertTable {
-		return this.crossFieldTable as InvertTable;
-	}
+function getRevInfosForRollback(
+	revisions: readonly RevisionInfo[],
+	revisionForInvert: RevisionTag,
+): readonly RevisionInfo[] {
+	assert(hasSingle(revisions), "Can only roll back a single revision at a time");
+	return [{ revision: revisionForInvert, rollbackOf: revisions[0].revision }];
 }

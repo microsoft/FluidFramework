@@ -12,6 +12,7 @@ import {
 import { CommitKind, type GraphCommit, type RevisionTag } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
+	DefaultRevisionReplacer,
 	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
@@ -32,10 +33,13 @@ export type DefaultBranch = SharedTreeBranch<
 	DefaultChangeProcessingContext
 >;
 
-function mintCommit(revision?: RevisionTag): GraphCommit<DefaultChangeset> {
+function mintCommit(revision: RevisionTag = mintRevisionTag()): GraphCommit<DefaultChangeset> {
 	return {
-		change: defaultChangeFamily.rebaser.compose([]),
-		revision: revision ?? mintRevisionTag(),
+		change: defaultChangeFamily.rebaser.changeRevision(
+			defaultChangeFamily.rebaser.compose([]),
+			new DefaultRevisionReplacer(revision, new Set()),
+		),
+		revision,
 		customMetadata: undefined,
 	};
 }

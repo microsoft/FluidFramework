@@ -12,16 +12,16 @@ export {
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
-	addCrossFieldQuery,
-	type CrossFieldManager,
+	type InvertNodeManager,
+	type RebaseNodeManager,
+	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
-	CrossFieldTarget,
+	type DetachedNodeEntry,
+	NodeMoveType,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
@@ -31,12 +31,11 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
 	type ChildChangeInfo,
 	EditFilterStatus,
-	type FilterDetachFunc,
 	type FilterAttachFunc,
 	type FilterAttachResult,
+	type FilterDetachFunc,
 	type FilterDetachResult,
 	type FieldChangeHandler,
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,
 	type FieldChangeRebaser,
@@ -48,21 +47,20 @@ export {
 	type NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
-	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	NodeAttachState,
 } from "./fieldChangeHandler.js";
-export type {
-	CrossFieldKey,
-	CrossFieldKeyRange,
-	FieldChange,
-	FieldChangeMap,
-	FieldChangeset,
-	HasFieldChanges,
-	ModularChangeset,
-	NoChangeConstraint,
-	NodeExistsConstraint,
-	NodeId,
+export {
+	type CrossFieldKey,
+	type CrossFieldKeyRange,
+	type FieldChange,
+	type FieldChangeMap,
+	type FieldChangeset,
+	type HasFieldChanges,
+	type ModularChangeset,
+	type NodeExistsConstraint,
+	type NodeId,
+	type RebaseVersion,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,

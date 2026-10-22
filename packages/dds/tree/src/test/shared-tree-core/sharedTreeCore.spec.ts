@@ -356,7 +356,7 @@ describe("SharedTreeCore", () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const factory = new SharedTreeTestFactory(() => {});
+		const factory = SharedTreeTestFactory.build(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);

@@ -57,6 +57,7 @@ export function makeModularChangeCodecV2(
 			const encoded = encodeChange(
 				change,
 				context,
+				fieldKinds,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,

@@ -16,6 +16,7 @@ import type {
 
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js";
+import { makeOptionalFieldCodec as makeV3Codec } from "./optionalFieldCodecV3.js";
 
 export const makeOptionalFieldCodecFamily = (
 	revisionTagCodec: JsonCodecPart<
@@ -24,4 +25,7 @@ export const makeOptionalFieldCodecFamily = (
 		ChangeEncodingContext
 	>,
 ): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
-	makeCodecFamily([[2, makeV2Codec(revisionTagCodec)]]);
+	makeCodecFamily([
+		[2, makeV2Codec(revisionTagCodec)],
+		[3, makeV3Codec(revisionTagCodec)],
+	]);

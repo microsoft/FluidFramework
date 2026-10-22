@@ -39,7 +39,11 @@ import {
 	applyFieldEdit,
 	applySynchronizationOp,
 } from "./fuzzEditReducers.js";
-import { createOnCreate, deterministicIdCompressorFactory } from "./fuzzUtils.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	getStaticsForTree,
+} from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 /**
@@ -56,7 +60,7 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, edit);
+				applyFieldEdit(tree, edit, getStaticsForTree(state.client.channel));
 				break;
 			}
 			default: {
@@ -134,7 +138,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
+			factory: SharedTreeTestFactory.build(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzComposedVsIndividualReducer,
 			validateConsistency: () => {},

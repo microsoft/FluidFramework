@@ -1863,10 +1863,8 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 		const revisionForInvert = this.mintRevisionTag();
 		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
-		const inverse = this.changeFamily.rebaser.invert(
-			makeAnonChange(toUndo),
-			false,
-			revisionForInvert,
+		const inverse = this.changeFamily.rebaser.ensureCompatibility(
+			this.changeFamily.rebaser.invert(makeAnonChange(toUndo), false, revisionForInvert),
 		);
 		this.#transaction.branch.apply(
 			tagChange(inverse, revisionForInvert),
@@ -2097,7 +2095,9 @@ export class TreeCheckout implements ITreeCheckout {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			this.changeFamily.rebaser.ensureCompatibility(
+				this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			),
 			revisionForInvert,
 		);
 

@@ -4,13 +4,19 @@
  */
 
 import {
+	subtractChangeAtomIds,
 	compareChangesetLocalIds,
 	comparePartialRevisions,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type RevisionTag,
 } from "../core/index.js";
-import { createTupleComparator, newTupleBTree, type TupleBTree } from "../util/index.js";
+import {
+	createTupleComparator,
+	newTupleBTree,
+	type RangeQueryResult,
+	type TupleBTree,
+} from "../util/index.js";
 
 /**
  * A BTree which uses ChangeAtomId flattened into a tuple as the key.
@@ -42,6 +48,25 @@ export function setInChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
 	id: ChangeAtomId,
 	value: T,
-): void {
-	map.set([id.revision, id.localId], value);
+): boolean {
+	return map.set([id.revision, id.localId], value);
+}
+
+export function rangeQueryChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryResult<T | undefined> {
+	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
+	if (pair === undefined) {
+		return { value: undefined, length: count };
+	}
+
+	const [[revision, localId], value] = pair;
+	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
+	if (lengthBefore === 0) {
+		return { value, length: 1 };
+	}
+
+	return { value: undefined, length: Math.min(lengthBefore, count) };
 }

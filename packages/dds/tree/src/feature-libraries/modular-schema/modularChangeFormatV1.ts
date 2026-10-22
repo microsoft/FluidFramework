@@ -6,22 +6,17 @@
 import * as Type from "@sinclair/typebox";
 import type { ObjectOptions, Static } from "@sinclair/typebox";
 
-import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
+import {
+	ChangesetLocalIdSchema,
+	RevisionTagSchema,
+	schemaFormatV1,
+} from "../../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-	brandedIntegerType,
 } from "../../util/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
-
-export const ChangesetLocalIdSchema = brandedIntegerType<ChangesetLocalId>();
-
-export const EncodedChangeAtomId = Type.Union([
-	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
-	ChangesetLocalIdSchema,
-]);
-export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 export const EncodedFieldChange = Type.Object(
 	{
@@ -131,6 +126,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),
 		refreshers: Type.Optional(EncodedBuilds),
+
 		/**
 		 * The number of constraints within this changeset that are violated.
 		 */

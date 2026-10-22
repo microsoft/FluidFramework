@@ -18,4 +18,5 @@ export const explicitVersions = [
 	"0.56.0", // legacyChunking.spec.ts -- pre-2.x chunking behavior
 	"2.0.0-internal.1.4.6", // compression.spec.ts -- loader before compression field was introduced
 	"2.0.0-internal.7.0.0", // entryPointCompat.spec.ts -- loader before entryPoint API change
+	"3.5.0", // version-compat-tests/.../sharedTree.fuzz.spec.ts -- pre- ModularChangeFamily refactor
 ];

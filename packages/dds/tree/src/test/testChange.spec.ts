@@ -17,7 +17,7 @@ import {
 	makeAnonChange,
 	tagChange,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
+import { brand, type IdAllocator } from "../util/index.js";
 
 import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
@@ -128,10 +128,10 @@ describe("TestChange", () => {
 	const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
 		state: TestChangeTestState,
 		tagFromIntention: (intention: number) => RevisionTag,
-		mintIntention: () => number,
+		idAllocator: IdAllocator,
 	): Iterable<TestChangeTestState> {
 		const context = state.content;
-		const intention = mintIntention();
+		const intention = idAllocator.allocate();
 		const change = TestChange.mint(context, intention);
 		yield {
 			content: change.outputContext,

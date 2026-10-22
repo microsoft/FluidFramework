@@ -47,7 +47,6 @@ export interface MessageDecodingContext {
  * Codec name used to identify the message codec, see {@link makeMessageCodecBuilder}.
  */
 export const messageCodecName = "Message";
-
 /**
  * Options for constructing a message codec, see {@link makeMessageCodecBuilder}.
  */
@@ -57,6 +56,7 @@ interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 	/** Maps each MessageFormatVersion to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>;
 	/** Codec for encoding revision tags within changesets. */
+
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -147,6 +147,18 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					),
 					options.revisionTagCodec,
 					MessageFormatVersion.vSharedBranches,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.vDetachedRoots,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+				makeV1ToV4CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.vDetachedRoots),
+					),
+					options.revisionTagCodec,
+					MessageFormatVersion.vDetachedRoots,
 				),
 		},
 	];

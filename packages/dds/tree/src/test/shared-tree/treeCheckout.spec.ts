@@ -1788,7 +1788,7 @@ describe("sharedTreeView", () => {
 			const newSchema = sf.optional([sf.string, Added]);
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest: ForestTypeOptimized }),
 			);
 			const [a, b] = provider.trees;
 			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));

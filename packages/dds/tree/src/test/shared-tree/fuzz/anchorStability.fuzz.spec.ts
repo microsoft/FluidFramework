@@ -102,7 +102,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
+			factory: SharedTreeTestFactory.build(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
@@ -173,7 +173,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
+			factory: SharedTreeTestFactory.build(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},

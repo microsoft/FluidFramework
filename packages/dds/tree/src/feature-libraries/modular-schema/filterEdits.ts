@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	makeChangeAtomId,
+	offsetChangeAtomId,
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
 import { brand, type RangeQueryResult } from "../../util/index.js";
-import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	EditFilterStatus,
 	type FilterAttachResult,
@@ -23,18 +25,17 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
-import { makeChangesetInversions } from "./modularChangeUtils.js";
+import { addNodeRename, makeChangesetInversions, newRootTable } from "./modularChangeUtils.js";
 import { pruneChangeset } from "./prune.js";
 
 export function removeAllDetachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<FilterDetachResult> {
 	return {
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		value: { action: EditFilterStatus.Remove },
 		length: count,
 	};
 }
@@ -42,15 +43,31 @@ export function removeAllDetachesFilter(
 export function removeAllAttachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<FilterAttachResult> {
 	return { value: { action: EditFilterStatus.Remove }, length: count };
 }
 
+/**
+ * Returns a modified copy of the given changeset with field edits and renames filtered according to the provided functions.
+ * Note that the caller is responsible for ensuring that all removed detaches also have any associated renames removed,
+ * that preserved attaches of existing roots do not lose their associated renames.
+ */
 export function filterEdits(
 	change: ModularChangeset,
 	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
+	filterRename: (
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<EditFilterStatus>,
+	adjustmentPass:
+		| ((
+				filteredFieldChanges: FieldChangeMap,
+				filteredRoots: RootNodeTable,
+				filteredNodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+				nodeAliases: ChangeAtomIdBTree<NodeId>,
+		  ) => void)
+		| undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
 	const filteredFieldChanges = filterFieldMapEdits(
@@ -65,12 +82,63 @@ export function filterEdits(
 		),
 	);
 
+	// XXX: Handle outputDetachLocations.
+	const filteredRoots = newRootTable();
+	for (const {
+		start: oldIdFirst,
+		value: newIdFirst,
+		length,
+	} of change.rootNodes.oldToNewId.entries()) {
+		let remainingLength = length;
+		let oldId = oldIdFirst;
+		let newId = newIdFirst;
+		while (remainingLength > 0) {
+			const filterResult = filterRename(oldId, newId, remainingLength);
+			if (filterResult.value === EditFilterStatus.Preserve) {
+				const detachLocationEntry = change.rootNodes.detachLocations.getFirst(
+					oldId,
+					filterResult.length,
+				);
+
+				assert(detachLocationEntry.length === filterResult.length, "XXX");
+				addNodeRename(
+					filteredRoots,
+					oldId,
+					newId,
+					filterResult.length,
+					detachLocationEntry.value,
+				);
+			}
+
+			oldId = offsetChangeAtomId(oldId, filterResult.length);
+			newId = offsetChangeAtomId(newId, filterResult.length);
+			remainingLength -= filterResult.length;
+		}
+	}
+
+	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
+		setInChangeAtomIdMap(filteredRoots.nodeChanges, rootId, nodeId);
+
+		const detachLocation = change.rootNodes.detachLocations.getFirst(rootId, 1).value;
+		if (detachLocation !== undefined) {
+			filteredRoots.detachLocations.set(rootId, 1, detachLocation);
+		}
+	}
+
+	adjustmentPass?.(
+		filteredFieldChanges,
+		filteredRoots,
+		filteredNodeChanges,
+		change.nodeAliases,
+	);
 	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
 		makeChangesetInversions(
 			filteredFieldChanges,
+			filteredRoots,
 			filteredNodeChanges,
-			fieldKinds,
 			change.nodeAliases,
+			fieldKinds,
 		);
 
 	return pruneChangeset(
@@ -78,6 +146,7 @@ export function filterEdits(
 			...change,
 			fieldChanges: filteredFieldChanges,
 			nodeChanges: filteredNodeChanges,
+			rootNodes: filteredRoots,
 			crossFieldKeys: filteredCrossFieldKeys,
 			nodeToParent: filteredNodeToParent,
 		},

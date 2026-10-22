@@ -38,10 +38,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
 		| typeof MessageFormatVersion.v6
-		| typeof MessageFormatVersion.v7,
+		| typeof MessageFormatVersion.v7
+		| typeof MessageFormatVersion.vDetachedRoots,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext, MessageDecodingContext> {
-	// Persisted commit metadata was introduced in v7; older formats must not write the field.
-	const supportsCustomMetadata = version >= MessageFormatVersion.v7;
+	// Persisted commit metadata was introduced in v7; older formats must not write the field
+	const supportsCustomMetadata = doesVersionSupportCustomMetadata(version);
 	const schema = Message(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 		supportsCustomMetadata,
@@ -110,4 +111,25 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 			};
 		},
 	};
+}
+
+function doesVersionSupportCustomMetadata(version: MessageFormatVersion): boolean {
+	switch (version) {
+		case undefined:
+		case MessageFormatVersion.v1:
+		case MessageFormatVersion.v2:
+		case MessageFormatVersion.v3:
+		case MessageFormatVersion.v4:
+		case MessageFormatVersion.v6: {
+			return false;
+		}
+		case MessageFormatVersion.v7:
+		case MessageFormatVersion.vSharedBranches:
+		case MessageFormatVersion.vDetachedRoots: {
+			return true;
+		}
+		default: {
+			throw new Error("XXX"); // unreachableCase(version);
+		}
+	}
 }
