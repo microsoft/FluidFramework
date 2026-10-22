@@ -1163,3 +1163,79 @@ This context changes how to apply the counter results:
 
 The updated [array-location design note](./array-location-field-design.md) records the baseline rules, source links, unresolved questions, and revised sequence-reuse-first investigation.
 This update changes the documented investigation plan only; no index field, sequence reuse, or bulk-editing implementation has been added or validated.
+
+### Index investigation and independent preparation, 2026-10-22
+
+The [focused index investigation](./array-location-field-design.md#focused-investigation-results-2026-10-22) now includes four passing executable tests and a cleanup-candidate inventory with prerequisites and validation requirements.
+It uses existing sequence changesets and insertion anchors; no production index kind was added.
+
+The tests establish a concrete limit on reuse: correctly rebased sequence edits can produce identical content but different scalar endpoint projections.
+Removing a span and applying its inverse also loses endpoint offsets, while projecting their composed empty delta leaves the original offsets unchanged.
+Thus the current shallow anchor arithmetic cannot simply become the index field's merge/undo implementation.
+These are limitations of that proposed composition, not sequence convergence defects or regressions in the counter.
+
+The conclusion for preparation PRs is selective:
+
+- Documentation corrections and independently useful tests need not wait.
+- Field-generated build/destroy support can be evaluated separately with a neutral test handler and ownership/cleanup coverage.
+- Atomic-value filtering needs explicit treatment of semantic context before it is presented as sufficient for indexes.
+- General terminal-field helpers and sequence adapters should wait for a viable endpoint representation.
+- Public type refinements, experimental formats, and production field-kind rollout remain feature-coupled.
+
+The complete candidate table and exact test commands are in the design note.
+No standalone PRs were opened, and no existing code was refactored during this investigation.
+
+### Positive contextual-arithmetic experiment
+
+A [follow-up model](./array-location-field-design.md#contextual-arithmetic-follow-up-2026-10-22) demonstrates conditional arithmetic with convergent rebasing and selective undo/redo for edits sharing one original coordinate system.
+It retains identified edits and revert dependencies, subtracts the union of active removal intervals before the original endpoint, and adds active insertions at or before it.
+This fixes the earlier projection counterexamples within that domain without changing the forest.
+
+Six focused tests pass, including exhaustive small same-context pairs, overlapping-removal undo, and a negative test showing why causally authored coordinates cannot be treated as original coordinates.
+The experiment retains history; it is not a compact production rebaser, and does not establish causal coordinate translation, moves, explicit endpoint reassignment, or history compaction.
+Formatting, lint, and test compilation pass; a broader discovery attempt was blocked by a missing `sha.js` dependency before tests ran.
+The design note records the rules, limits, and exact successful test command.
+After the dependency installation was repaired, both investigation suites passed together through default test discovery (10 tests), and test compilation and focused Biome/ESLint checks passed again.
+
+### Downstream root-content compatibility
+
+After dependency installation was repaired, compiling `@fluidframework/tree-agent` and `@fluidframework/react` exposed six errors caused by generic root-content APIs still using `TreeFieldFromImplicitField`.
+That type now admits counter accessors, whereas roots and subtree replacement accept raw tree content.
+This is a consumer migration cost of the proof of concept, not a dependency-resolution failure.
+
+- Tree-agent's subtree setter and context root setter now use `ReadableField`, matching their getters and the existing context API.
+  This also keeps record-child replacement free of accessor objects.
+- React's `TreeViewProps`, root hook result, and root hook state now use `TreeRootFromImplicitField`.
+  Initializer types and runtime rendering behavior are unchanged.
+- No casts were added to hide accessor leakage.
+  No new counter editing support in tree-agent or reactive counter-property observation in React is claimed.
+- Regression coverage exercises generic optional-root replacement through tree-agent and numeric-root rendering/replacement in both React strict modes.
+
+Validation passed:
+
+- Both packages: `pnpm run build:esm`, `pnpm run build:test:esm`, `pnpm run build:entrypoints:esm`, `pnpm run build:api-reports`, and `pnpm run build:docs`.
+- Tree-agent: `pnpm run build:cjs`, `pnpm run build:test:cjs`, and `pnpm run build:entrypoints:cjs`.
+- Tree-agent: `pnpm run test:mocha:esm -- --grep '^(Context|createTreeAgent)'` (16 tests, using mock models rather than external AI services).
+- React: `pnpm run test:mocha:esm -- --grep '^reactSharedTreeView'` (five tests).
+- Focused Biome and ESLint checks on the five edited source/test files (no errors; existing lint warnings remain).
+
+API report generation initially failed because the generated alpha entrypoints were missing; generating entrypoints resolved that prerequisite in both packages.
+API Extractor still reports its existing TypeScript-version warning and React's `skipLibCheck` warning.
+The regenerated React alpha report changes only the root prop type.
+Tree-agent's exported API report is unchanged.
+Existing aggregator report edits were preserved.
+
+The React-only signature correction is alpha and needs no API Council approval on its own.
+The full counter branch still changes public and beta tree APIs and aggregator re-exports, so Council review and a compatibility audit remain production prerequisites.
+The raw-content migration must be checked against generic consumers before any claim of source compatibility or production readiness.
+The experimental changeset now includes React's root-prop correction.
+
+### Aggregator API report synchronization
+
+The five pending `fluid-framework` API reports reflect the counter and raw-root types already exported by the tree package.
+Rebuilding the aggregator, generating its ESM entrypoints, and regenerating current and legacy reports reproduced all five files byte-for-byte.
+These are generated synchronization changes, not a second implementation or an independent API proposal.
+
+The entrypoint generator exited successfully but printed an error-level diagnostic about the existing `InternalTypes` namespace lacking a recognized API-level tag.
+The namespace's source is unchanged by this work; this diagnostic remains a follow-up rather than a reason to hand-edit generated reports.
+API Extractor completed successfully with its TypeScript-version warning.
