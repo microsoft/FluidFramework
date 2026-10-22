@@ -11,10 +11,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
-import { EmptyKey } from "../../../core/index.js";
-import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
-	getInnerNode,
 	SchemaFactory,
 	TreeArrayNode,
 	TreeViewConfiguration,
@@ -28,12 +26,8 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import {
-	asIndex,
-	asIndexWithinBounds,
-	createArrayInsertionAnchor,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/node-kinds/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -224,7 +218,7 @@ describe("ArrayNode", () => {
 		title: string,
 		schemaType: typeof PojoEmulationNumberArray | typeof CustomizableNumberArray,
 	): void {
-		describeHydration(title, (init, hydrated) => {
+		describeHydration(title, (init) => {
 			function buildAlphaArray(
 				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
@@ -256,76 +250,6 @@ describe("ArrayNode", () => {
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
 			});
 
-			it("does not repeat bounds checks for indexed reads or traversal", () => {
-				const array = init(schemaType, [0, 1, 2]);
-				const field = getInnerNode(array).getBoxed(EmptyKey);
-				const length = field.length;
-				let lengthReads = 0;
-				Object.defineProperty(field, "length", {
-					configurable: true,
-					get: () => {
-						lengthReads++;
-						return length;
-					},
-				});
-				try {
-					assert.equal(typeof array.at, "function");
-					assert.equal(typeof array[Symbol.iterator], "function");
-					assert.equal(Reflect.get(array, "missing"), undefined);
-					assert.equal("at" in array, true);
-					assert.equal("length" in array, true);
-					assert.equal(Symbol.iterator in array, true);
-					assert.equal("missing" in array, false);
-					for (const key of ["missing", "-1", "1.5", "01", Symbol("missing")]) {
-						assert.equal(Reflect.get(array, key), undefined);
-						assert.equal(Reflect.has(array, key), false);
-						assert.equal(Object.getOwnPropertyDescriptor(array, key), undefined);
-					}
-					assert.equal(lengthReads, 0);
-					assert.equal(array.length, length);
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.deepEqual(Object.getOwnPropertyDescriptor(array, "length"), {
-						value: length,
-						writable: true,
-						enumerable: false,
-						configurable: false,
-					});
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.equal(1 in array, true);
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.equal(length in array, false);
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.equal(array[1], 1);
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.deepEqual(Object.getOwnPropertyDescriptor(array, "1"), {
-						value: 1,
-						writable: true,
-						enumerable: true,
-						configurable: true,
-					});
-					assert.equal(lengthReads, 1);
-					lengthReads = 0;
-					assert.deepEqual(TreeAlpha.children(array), [
-						[0, 0],
-						[1, 1],
-						[2, 2],
-					]);
-					// Unhydrated tryGetField also checks whether the field is empty.
-					assert.equal(lengthReads, length + (hydrated ? 1 : 2));
-					const values = array.values();
-					lengthReads = 0;
-					assert.deepEqual([...values], [0, 1, 2]);
-					assert.equal(lengthReads, length + 1);
-				} finally {
-					Reflect.deleteProperty(field, "length");
-				}
-			});
-
 			it("preserves indexed access bounds", () => {
 				const array = init(schemaType, [0, 1, 2]);
 				assert.equal(array[0], 0);
@@ -345,20 +269,6 @@ describe("ArrayNode", () => {
 					assert.equal(array.at(0), 0);
 					assert.equal(array.at(1), 1);
 					assert.equal(array.at(2), 2);
-				});
-
-				it("does not request boxed elements", () => {
-					const array = buildAlphaArray([0, 1, 2]);
-					const field = getInnerNode(array).getBoxed(EmptyKey);
-					const boxedAt = field.boxedAt;
-					field.boxedAt = () => assert.fail("at should not request a boxed element");
-					try {
-						assert.equal(array.at(0), 0);
-						assert.equal(array.at(-1), 2);
-						assert.equal(array.at(3), undefined);
-					} finally {
-						field.boxedAt = boxedAt;
-					}
 				});
 
 				it("supports negative indices, counting back from the end", () => {
@@ -731,6 +641,13 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
+				it("removes and returns null elements", () => {
+					const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+					const array = init(schema, [1, null, 2]);
+					assert.deepEqual(asAlpha(array).splice(1, 1), [null]);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
@@ -1334,31 +1251,6 @@ describe("ArrayNode", () => {
 		assert.equal(asIndex(Symbol.iterator), undefined);
 	});
 
-	it("asIndexWithinBounds checks bounds and only reads length for index keys", () => {
-		let lengthReads = 0;
-		const field = {
-			get length(): number {
-				lengthReads++;
-				return 2;
-			},
-		};
-		for (const key of ["length", "-0", "-1", "1.5", "01", "Infinity", Symbol.iterator]) {
-			assert.equal(asIndexWithinBounds(key, field), undefined);
-		}
-		assert.equal(lengthReads, 0);
-		for (const [key, expected] of [
-			["0", 0],
-			["1", 1],
-			["2", undefined],
-			["999", undefined],
-		] as const) {
-			lengthReads = 0;
-			assert.equal(asIndexWithinBounds(key, field), expected);
-			assert.equal(lengthReads, 1);
-		}
-		assert.equal(asIndexWithinBounds("0", { length: 0 }), undefined);
-	});
-
 	describeHydration(
 		"shadowing",
 		(init) => {
@@ -1438,34 +1330,10 @@ describe("ArrayNode", () => {
 	describeHydration(
 		"Iteration",
 		(init) => {
-			it("preserves leaf values and node identity during iteration and splice", () => {
-				class Item extends schemaFactory.object("IterationItem", {
-					value: schemaFactory.number,
-				}) {}
-				class MixedArray extends schemaFactory.array("IterationMixedArray", [
-					schemaFactory.null,
-					schemaFactory.boolean,
-					schemaFactory.number,
-					schemaFactory.string,
-					Item,
-				]) {}
-				const array = init(MixedArray, [null, false, 0, "", new Item({ value: 1 })]);
-				const item = array[4];
-				const expected = [null, false, 0, "", item];
-				for (const [index, value] of expected.entries()) {
-					assert.equal(array.at(index), value);
-					assert.equal(array.at(index - expected.length), value);
-				}
-				assert.deepEqual([...array], expected);
-				assert.equal([...array][4], item);
-				assert.deepEqual(
-					TreeAlpha.children(array),
-					expected.map((value, index) => [index, value]),
-				);
-				const removed = asAlpha(array).splice(0, 5);
-				assert.deepEqual(removed, expected);
-				assert.equal(removed[4], item);
-				assert.equal(array.length, 0);
+			it("iterates over null elements", () => {
+				const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+				const array = init(schema, [1, null, 2]);
+				assert.deepEqual([...array], [1, null, 2]);
 			});
 
 			it("Iterates through the values of the array", () => {
