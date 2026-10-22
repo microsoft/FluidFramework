@@ -82,7 +82,7 @@ export function writeStageResults(
 	resultsDirectory,
 	stage,
 	results,
-	{ renameFile = rename, priorStages = {} } = {},
+	{ renameFile = rename, priorStages = {}, warn = console.warn } = {},
 ) {
 	const resolvedDirectory = path.resolve(resultsDirectory);
 	const resultsPath = path.join(resolvedDirectory, RESULTS_FILE_NAME);
@@ -93,13 +93,23 @@ export function writeStageResults(
 			resolvedDirectory,
 			async () => {
 				let existing = { stages: {} };
+				let contents;
+				let corrupt = false;
 				try {
-					existing = JSON.parse(await readFile(resultsPath, "utf8"));
+					contents = await readFile(resultsPath, "utf8");
 				} catch (error) {
 					if (error?.code !== "ENOENT")
 						throw new ConfigurationError([
-							"Unable to read the existing results file; it was not overwritten. Check its JSON and permissions.",
+							"Unable to read the existing results file; it was not overwritten. Check read access or configure a different resultsDirectory.",
 						]);
+				}
+				if (contents !== undefined) {
+					try {
+						existing = JSON.parse(contents);
+					} catch (error) {
+						if (!(error instanceof SyntaxError)) throw error;
+						corrupt = true;
+					}
 				}
 				if (
 					!existing ||
@@ -107,15 +117,15 @@ export function writeStageResults(
 					existing.stages === null ||
 					Array.isArray(existing.stages)
 				)
-					throw new ConfigurationError([
-						"The existing results file has invalid stages; it was not overwritten.",
-					]);
+					corrupt = true;
+				if (corrupt) existing = { stages: {} };
 				const updated = {
 					...existing,
 					updatedAt: new Date().toISOString(),
 					stages: { ...priorStages, ...existing.stages, [stage]: snapshot },
 				};
 				const temporaryPath = `${resultsPath}.tmp-${randomUUID()}`;
+				let backupPath;
 				let temporary;
 				try {
 					temporary = await open(temporaryPath, "wx", 0o600);
@@ -123,11 +133,25 @@ export function writeStageResults(
 					await temporary.sync();
 					await temporary.close();
 					temporary = undefined;
+					if (corrupt) {
+						backupPath = `${resultsPath}.corrupt-${randomUUID()}`;
+						const backup = await open(backupPath, "wx", 0o600);
+						try {
+							await backup.writeFile(contents);
+							await backup.sync();
+						} finally {
+							await backup.close();
+						}
+					}
 					await renameFile(temporaryPath, resultsPath);
 				} finally {
 					await temporary?.close();
 					await rm(temporaryPath, { force: true });
 				}
+				if (corrupt)
+					warn(
+						`WARNING: Existing results were corrupt and were preserved at ${backupPath}. Current results were saved to ${resultsPath}; earlier outcomes could not be recovered. Review destination state before retrying documents from earlier runs.`,
+					);
 				return resultsPath;
 			},
 			"copy-data.write.lock",
