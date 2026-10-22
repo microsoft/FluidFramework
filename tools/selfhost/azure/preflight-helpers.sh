@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# Read-only provider checks, sourced by preflight-check.sh.
+# Read-only Azure provider checks, sourced by preflight-check.sh.
 
 check_aks_capacity() {
   local skus vm_family vcpus_per_node required_vcpus current_val limit_val available_vcpus

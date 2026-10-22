@@ -33,7 +33,7 @@ FAILURES=0
 fail() { printf '  FAIL: %s\n' "$*" >&2; FAILURES=$((FAILURES + 1)); }
 ok()   { printf '  OK:   %s\n' "$*"; }
 note() { printf '  NOTE: %s\n' "$*"; }
-. "$SELFHOST_ROOT/azure/preflight-checks.sh"
+. "$SELFHOST_ROOT/azure/preflight-helpers.sh"
 
 REQUIRED_TOOLS=(az jq helm)
 missing=()

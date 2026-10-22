@@ -892,6 +892,9 @@ import_release_image() {
           if az acr repository show --name "$ACR" --image "${target%:*}@$digest" >/dev/null 2>&1; then
             return 0
           fi
+          if [[ "$attempt" -eq 1 ]]; then
+            log "$target is not readable yet; retrying every 5 seconds for up to 5 minutes."
+          fi
           sleep 5
         done
         fail "authenticated import of $target did not become readable within 5 minutes; check the ACR activity log before retrying."

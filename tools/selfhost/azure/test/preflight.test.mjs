@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-const checks = path.resolve(import.meta.dirname, "../preflight-checks.sh");
+const checks = path.resolve(import.meta.dirname, "../preflight-helpers.sh");
 const sku = (zones, restrictions = []) => [
 	{
 		name: "Standard_D8as_v5",

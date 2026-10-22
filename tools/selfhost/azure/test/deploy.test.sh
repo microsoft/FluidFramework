@@ -42,6 +42,10 @@ cat > "$BIN/az" <<'STUB'
 echo "az $*" >> "$CALLS"
 case "$*" in
   *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
+    if [ "${MOCK_IMPORT_DELAYED:-0}" = 1 ]; then
+      if grep -q "/importImage?" "$CALLS" && \
+          [ "$(grep -c 'acr repository show.*busybox@sha256:' "$CALLS")" -ge 4 ]; then exit 0; else exit 1; fi
+    fi
     if [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] || grep -q "/importImage?" "$CALLS"; then exit 0; else exit 1; fi ;;
   *"acr repository show"*"routerlicious:mock-tag"*|*"acr repository show"*"historian:mock-tag"*|*"acr repository show"*"gitrest:mock-tag"*)
     exit 0 ;;
@@ -370,6 +374,22 @@ if grep -qF "test-only-token" "$CALLS" || [[ "$out" == *test-only-token* ]]; the
 else
   ok "source token stays out of logs and process arguments"
 fi
+
+if [[ "$out" == *"retrying every 5 seconds"* ]]; then
+  no "immediately available import does not report a wait"
+else
+  ok "immediately available import does not report a wait"
+fi
+
+: > "$CALLS"
+out="$(MOCK_IMPORT_DELAYED=1 DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+  run_phase 'sleep() { echo "sleep $*" >> "$CALLS"; }; phase1_images')"; rc=$?
+assert_eq "delayed authenticated import exits 0" "$rc" "0"
+assert_eq "delayed import announces the five-minute wait only once" \
+  "$(printf '%s\n' "$out" | grep -c 'retrying every 5 seconds for up to 5 minutes')" "1"
+assert_eq "delayed import waits between failed probes" "$(grep -c '^sleep 5$' "$CALLS")" "2"
+assert_eq "delayed import probes the pinned digest until readable" \
+  "$(grep -c 'acr repository show.*busybox@sha256:' "$CALLS")" "4"
 
 : > "$CALLS"
 out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
