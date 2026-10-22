@@ -13,7 +13,7 @@ import {
 	withSelfHostTenantKey2,
 } from "../configuration/credentials.mjs";
 import { createFailure, safeErrorMessage, StageError } from "../configuration/errors.mjs";
-import { parseCopyOptions } from "../configuration/options.mjs";
+import { confirmIgnoreLogTail, parseCopyOptions } from "../configuration/options.mjs";
 import { createMetrics } from "../configuration/metrics.mjs";
 import { prepareRun } from "../configuration/resume.mjs";
 import { retry } from "../configuration/retry.mjs";
@@ -825,6 +825,7 @@ export async function copyInventory(
 export async function main(argv) {
 	const options = parseCopyOptions(argv, { command: "copy.mjs" });
 	if (!options) return;
+	await confirmIgnoreLogTail(options);
 	const { config, configDirectory, inventory, warnings } = await loadConfiguration(
 		options.configPath,
 	);

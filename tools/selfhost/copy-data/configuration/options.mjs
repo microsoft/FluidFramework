@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { ConfigurationError } from "./configuration.mjs";
 
 export function parseCopyOptions(
@@ -38,7 +39,7 @@ export function parseCopyOptions(
   --attempts <1-10>            Maximum attempts per transient request (default: 3)
   --request-timeout-ms <1-45000> Per-request deadline (default: 45000)
   --failed-only <results.json> Retry only failed/interrupted documents from a reviewed run
-  --ignore-logtail            Copy snapshot without unapplied tail operations (may lose data)`);
+  --ignore-logtail            Copy snapshot without unapplied tail operations (may lose data; requires interactive confirmation)`);
 			return undefined;
 		}
 		if (flag === "--execute") {
@@ -77,4 +78,36 @@ export function parseCopyOptions(
 		Math.floor(options.memoryBudgetBytes / (2 * options.maxSummaryBytes)),
 	);
 	return options;
+}
+
+export async function confirmIgnoreLogTail(
+	options,
+	{ input = process.stdin, output = process.stdout } = {},
+) {
+	if (!options.ignoreLogTail) return;
+	output.write(
+		"WARNING: --ignore-logtail copies the application snapshot without replaying later operations. Recent document changes may NOT be copied.\n",
+	);
+	if (!input.isTTY)
+		throw new ConfigurationError([
+			"--ignore-logtail requires interactive confirmation. Run from a terminal to review and accept the possible data loss.",
+		]);
+	const prompt = createInterface({ input, output });
+	let answer;
+	try {
+		answer = await new Promise((resolve) => {
+			prompt.once("close", () => resolve(""));
+			prompt.once("SIGINT", () => {
+				resolve("");
+				prompt.close();
+			});
+			prompt.question("Continue and accept possible data loss? [y/N] ", resolve);
+		});
+	} finally {
+		prompt.close();
+	}
+	if (!["y", "yes"].includes(answer.trim().toLowerCase()))
+		throw new ConfigurationError([
+			"Document copy cancelled; possible data loss was not accepted.",
+		]);
 }

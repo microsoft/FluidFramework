@@ -96,6 +96,8 @@ node copy-data.mjs --execute --concurrency 2 \
 **This can lose recent changes.**
 `--ignore-logtail` copies the older application snapshot without replaying later operations.
 Use it only if you accept losing those changes.
+Before document copying starts, confirm the warning with `y` at the terminal prompt; the default is No.
+This option cannot run without an interactive terminal.
 It does not bypass malformed summaries or overwrite existing destinations.
 
 Only one document-copy process may use a results directory at a time.
