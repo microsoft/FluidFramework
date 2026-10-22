@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
+import { commonExampleConfig } from "@fluid-example/webpack-fluid-loader";
 
-module.exports = (env) => fluidRoute.commonExampleConfig(__dirname, env);
+export default (env) => commonExampleConfig(import.meta.dirname, env);
