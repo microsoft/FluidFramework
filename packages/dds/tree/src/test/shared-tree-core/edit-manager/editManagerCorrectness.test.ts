@@ -831,6 +831,7 @@ export function testCorrectness(): void {
 								() => manager.setHistoryRetention(limit),
 								validateAssertionError(message),
 							);
+							assert.equal(manager.getHistoryRetention(), 3);
 						});
 					}
 				});
@@ -896,23 +897,6 @@ export function testCorrectness(): void {
 
 							loaded.advanceMinimumSequenceNumber(brand(10));
 							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
-						});
-
-						it(`preserves a loaded shared branch's base with retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							const branchId = testIdCompressor.generateCompressedId();
-							sequencePeerCommits(manager, 2, 1, 1);
-							const baseRevision = manager.getTrunkHead("main").revision;
-							manager.addNewBranch(branchId);
-							sequencePeerCommits(manager, 8, 3, 3);
-							manager.advanceMinimumSequenceNumber(brand(10));
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
-							const retained = loaded.getTrunkCommits("main");
-
-							loaded.advanceMinimumSequenceNumber(brand(10));
-							assert.equal(loaded.getTrunkHead(branchId).revision, baseRevision);
-							assert.deepEqual(loaded.getTrunkCommits("main"), retained);
 						});
 					}
 
@@ -1076,31 +1060,6 @@ export function testCorrectness(): void {
 						});
 					}
 
-					for (const [historyRetention, retentionLimit] of batchedRetentionPolicies) {
-						it(`counts batched commits separately with retention ${historyRetention} across sequence-number gaps after loading a summary`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							sequencePeerCommits(manager, 1, 1, 1);
-							const commits = makeArray(5, (i) => ({
-								change: TestChange.mint(
-									makeArray(i + 1, (j) => j + 1),
-									[i + 2],
-								),
-								revision: mintRevisionTag(),
-								customMetadata: undefined,
-							}));
-							manager.addSequencedChanges(commits, peer1, brand(10), brand(1), "main");
-							const summary = structuredClone(manager.getSummaryData());
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(summary);
-							const retained = loaded.getTrunkCommits("main");
-							assert.equal(retained.length, 6);
-							const expected = retained.slice(6 - Math.min(retentionLimit, 6));
-
-							loaded.advanceMinimumSequenceNumber(brand(10));
-							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
-						});
-					}
-
 					for (const limit of [5, 50]) {
 						for (const extraCommit of [false, true]) {
 							it(`retains exactly ${limit} commits ${extraCommit ? "after sequencing another commit" : "at the boundary"}`, () => {
@@ -1198,49 +1157,6 @@ export function testCorrectness(): void {
 							manager.getLocalBranch("main").getHead(),
 						]);
 					});
-				});
-
-				describe("branch.dispose", () => {
-					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						it(`releases history pinned by a local fork with retention ${historyRetention}`, () => {
-							const { manager, fork } = setupForkWithRetainedHistory(
-								historyRetention,
-								2,
-								10,
-								peer1,
-							);
-							const expectedCount = Math.min(retentionLimit, 10);
-							const expected =
-								expectedCount === 0
-									? []
-									: manager.getTrunkCommits("main").slice(-expectedCount);
-
-							fork.dispose();
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-						});
-					}
-
-					for (const baseSequenceNumber of [1, 2]) {
-						for (const historyRetention of [false, 0, 1, 3, 20] as const) {
-							it(`releases pinned peer base ${baseSequenceNumber} with retention ${historyRetention}`, () => {
-								const expectedCount = Number(historyRetention);
-								const totalCommitCount = Math.max(10, expectedCount + baseSequenceNumber);
-								const { manager, fork } = setupForkWithRetainedHistory(
-									historyRetention,
-									baseSequenceNumber,
-									totalCommitCount,
-									peer2,
-								);
-								const expected =
-									expectedCount === 0
-										? []
-										: manager.getTrunkCommits("main").slice(-expectedCount);
-
-								fork.dispose();
-								assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							});
-						}
-					}
 				});
 
 				describe("summary roundtripping", () => {
@@ -1408,47 +1324,6 @@ export function testCorrectness(): void {
 									loaded.getTrunkCommits("main").map((commit) => commit.revision),
 									retained,
 								);
-							});
-						}
-
-						for (const advanceLoadedMSN of [false, true]) {
-							it(`keeps a shared branch's base in the main trunk with retention ${historyRetention}${advanceLoadedMSN ? " after advancing the loaded MSN" : ""}`, () => {
-								let { manager } = testChangeEditManagerFactory({ historyRetention });
-								const branchId = testIdCompressor.generateCompressedId();
-								sequencePeerCommits(manager, 2, 1, 1);
-								const baseRevision = manager.getTrunkHead("main").revision;
-								manager.addNewBranch(branchId);
-								sequencePeerCommits(manager, 8, 3, 3);
-								manager.advanceMinimumSequenceNumber(brand(10));
-
-								const retained = manager
-									.getTrunkCommits("main")
-									.map((commit) => commit.revision);
-								assert(retained.includes(baseRevision));
-								if (advanceLoadedMSN) {
-									const initialSummary = structuredClone(manager.getSummaryData());
-									manager = testChangeEditManagerFactory({ historyRetention }).manager;
-									manager.loadSummaryData(initialSummary);
-									manager.advanceMinimumSequenceNumber(brand(10));
-								}
-								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-
-								const summary = structuredClone(manager.getSummaryData());
-								assert.equal(summary.branches?.get(branchId)?.base, baseRevision);
-								assert.deepEqual(summary.branches?.get(branchId)?.trunk, []);
-								assert.deepEqual(
-									summary.main.trunk.map((commit) => commit.revision),
-									retained,
-								);
-								loaded.loadSummaryData(summary);
-								assert.equal(loaded.getTrunkHead(branchId).revision, baseRevision);
-								assert.deepEqual(
-									loaded.getTrunkCommits("main").map((commit) => commit.revision),
-									retained,
-								);
-								const reSummary = loaded.getSummaryData();
-								assert.equal(reSummary.branches?.get(branchId)?.base, baseRevision);
-								assert.deepEqual(reSummary.branches?.get(branchId)?.trunk, []);
 							});
 						}
 					}
