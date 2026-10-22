@@ -24,7 +24,7 @@ import { CheckoutBase, type TreeCheckoutOptions } from "./treeCheckout.js";
  * unlike `TreeCheckout`, it does not expose branch switching or rewind operations that replace that object.
  * Its contents remain editable, and it supports merges and rebases.
  *
- * No {@link TreeViewAlpha} is attached at construction time.
+ * No tree view is attached at construction time.
  * A typed view can be created on demand via the inherited {@link CheckoutBase.viewWith | viewWith}.
  * The typed-view interface still exposes `rewindTo` even though this checkout does not support it.
  * These internal views must not call `rewindTo`, which requires replacing the underlying branch.
