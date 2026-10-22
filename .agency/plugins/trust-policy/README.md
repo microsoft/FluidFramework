@@ -43,3 +43,4 @@ npm run format  # Biome, with fixes
 
 Tests use Node.js's built-in test runner and do not require build-tools or live network access.
 Cryptographic verification is delegated to pacote, so the tests cover only how its results are interpreted; verify against the live registry with the checks above.
+Pull requests that change this plugin run lint, type-checking, and tests in the [`Agency trust-policy plugin`](/.github/workflows/agency-trust-policy.yml) GitHub Actions workflow.
