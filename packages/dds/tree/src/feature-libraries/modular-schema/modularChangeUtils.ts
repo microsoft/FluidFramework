@@ -377,25 +377,6 @@ export function normalizeNodeId(
 	}
 }
 
-/**
- * Updates `nodeAliases` so that `alias1` and `alias2` are considered equivalent.
- * @param nodeAliases - The set of aliases to update.
- * @param alias1 - The first node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
- * @param alias2 - The second node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
- * @returns The normalized ID that both `alias1` and `alias2` map to as a result of unification.
- */
-export function unifyAliases(
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
-	alias1: NodeId,
-	alias2: NodeId,
-): NodeId {
-	const normalizedAlias2 = normalizeNodeId(alias2, nodeAliases);
-	if (!areEqualChangeAtomIds(alias1, normalizedAlias2)) {
-		nodeAliases.set([alias1.revision, alias1.localId], normalizedAlias2);
-	}
-	return normalizedAlias2;
-}
-
 export function makeChangesetInversions(
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,

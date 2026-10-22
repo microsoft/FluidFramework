@@ -47,6 +47,7 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
+	makeChangeAtomId,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -95,7 +96,6 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
-	unifyAliases,
 	CrossFieldManagerI,
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
@@ -302,21 +302,8 @@ export class ModularChangeFamily
 		const composedNodeToParent: ChangeAtomIdBTree<FieldId> = brand(
 			mergeTupleBTrees(change1.nodeToParent, change2.nodeToParent),
 		);
-		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(change1.nodeAliases.clone());
-		for (const [[aliasRevision, aliasLocalId], target] of change2.nodeAliases.entries()) {
-			unifyAliases(
-				composedNodeAliases,
-				{ revision: aliasRevision, localId: aliasLocalId },
-				target,
-			);
-		}
 
-		const crossFieldTable = newComposeTable(
-			change1,
-			change2,
-			composedNodeToParent,
-			composedNodeAliases,
-		);
+		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
 
 		const composedFields = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -332,7 +319,6 @@ export class ModularChangeFamily
 			composedFields,
 			composedNodeChanges,
 			composedNodeToParent,
-			composedNodeAliases,
 			genId,
 			revisionMetadata,
 		);
@@ -342,6 +328,13 @@ export class ModularChangeFamily
 			change1.crossFieldKeys,
 			change2.crossFieldKeys,
 		);
+
+		const composedNodeAliases = composeNodeAliases(
+			change1.nodeAliases,
+			change2.nodeAliases,
+			crossFieldTable.newToBaseNodeId,
+		);
+
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
@@ -401,7 +394,6 @@ export class ModularChangeFamily
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
@@ -419,7 +411,6 @@ export class ModularChangeFamily
 					table.newChange.nodeChanges,
 					composedNodes,
 					composedNodeToParent,
-					nodeAliases,
 					id1,
 					id2,
 					genId,
@@ -437,7 +428,6 @@ export class ModularChangeFamily
 				pending.affectedBaseFields,
 				composedFields,
 				composedNodes,
-				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -449,7 +439,6 @@ export class ModularChangeFamily
 				pending.affectedNewFields,
 				composedFields,
 				composedNodes,
-				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -488,7 +477,6 @@ export class ModularChangeFamily
 		affectedFields: BTree<FieldIdKey, true>,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
@@ -533,7 +521,11 @@ export class ModularChangeFamily
 			const nodeId =
 				getFromChangeAtomIdMap(table.newToBaseNodeId, fieldId.nodeId) ?? fieldId.nodeId;
 
-			let nodeChangeset = nodeChangeFromId(composedNodes, nodeId, nodeAliases);
+			let nodeChangeset = nodeChangeFromId(
+				composedNodes,
+				nodeId,
+				table.baseChange.nodeAliases,
+			);
 			if (!table.composedNodes.has(nodeChangeset)) {
 				nodeChangeset = cloneNodeChangeset(nodeChangeset);
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
@@ -654,7 +646,6 @@ export class ModularChangeFamily
 		nodeChanges2: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		id1: NodeId,
 		id2: NodeId,
 		idAllocator: IdAllocator,
@@ -682,17 +673,14 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		const parentInChange1 = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
-		// While `parentInChange1` is normalized with respect to the base change,
-		// it may not be normalized with respect to the composed changeset.
-		const normalizedParentInComposedChange = normalizeFieldId(parentInChange1, nodeAliases);
-		const composedId = unifyAliases(nodeAliases, normalizedId2, normalizedId1);
+		const parentFieldId = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
+		const composedId = id1;
 		composedNodes.delete([normalizedId1.revision, normalizedId1.localId]);
 		composedNodes.delete([normalizedId2.revision, normalizedId2.localId]);
 		composedNodeToParent.delete([normalizedId1.revision, normalizedId1.localId]);
 		composedNodeToParent.delete([normalizedId2.revision, normalizedId2.localId]);
 		setInChangeAtomIdMap(composedNodes, composedId, composedNodeChangeset);
-		setInChangeAtomIdMap(composedNodeToParent, composedId, normalizedParentInComposedChange);
+		setInChangeAtomIdMap(composedNodeToParent, composedId, parentFieldId);
 
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
@@ -1915,7 +1903,6 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-	composedNodeAliases: ChangeAtomIdBTree<NodeId>,
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
@@ -1925,7 +1912,6 @@ function newComposeTable(
 		newFieldToBaseField: new Map(),
 		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
-		composedNodeAliases,
 		composedNodeToParent,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
@@ -1945,7 +1931,6 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly fieldToContext: Map<FieldChange, ComposeFieldContext>;
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
-	readonly composedNodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -2127,11 +2112,9 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(
-			this.table.composedNodeToParent,
-			normalizeNodeId(id, this.table.composedNodeAliases),
-			this.fieldId,
-		);
+		if (getFromChangeAtomIdMap(this.table.newToBaseNodeId, id) === undefined) {
+			setInChangeAtomIdMap(this.table.composedNodeToParent, id, this.fieldId);
+		}
 	}
 
 	public override moveKey(
@@ -2583,3 +2566,22 @@ const compareFieldIdKeys = createTupleComparator([
 	comparePartialChangesetLocalIds,
 	compareStrings<FieldKey>,
 ]);
+
+function composeNodeAliases(
+	aliases1: ChangeAtomIdBTree<NodeId>,
+	aliases2: ChangeAtomIdBTree<NodeId>,
+	nodeId2ToId1: ChangeAtomIdBTree<NodeId>,
+): ChangeAtomIdBTree<NodeId> {
+	const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
+		mergeTupleBTrees(aliases1, aliases2),
+	);
+
+	for (const [id2Key, id1] of nodeId2ToId1.entries()) {
+		const id2 = makeChangeAtomId(id2Key[1], id2Key[0]);
+		if (!areEqualChangeAtomIds(id2, id1)) {
+			setInChangeAtomIdMap(composedNodeAliases, id2, id1);
+			composedNodeAliases.delete([id1.revision, id1.localId]);
+		}
+	}
+	return composedNodeAliases;
+}
