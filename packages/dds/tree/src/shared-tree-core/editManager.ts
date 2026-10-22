@@ -233,10 +233,13 @@ export class EditManager<
 		if (this.historyRetention === true) {
 			return minimumPossibleSequenceId;
 		}
+		const sequenceIdToCommit = this.getSharedBranch("main").sequenceIdToCommit;
+		// The map includes the trimmed base, which does not count toward retention.
+		if (this.historyRetention >= sequenceIdToCommit.size - 1) {
+			return minimumPossibleSequenceId;
+		}
 		let remaining = this.historyRetention;
-		for (const [sequenceId, commit] of this.getSharedBranch(
-			"main",
-		).sequenceIdToCommit.entriesReversed()) {
+		for (const [sequenceId, commit] of sequenceIdToCommit.entriesReversed()) {
 			if (commit === this.trunkBase) {
 				break;
 			}

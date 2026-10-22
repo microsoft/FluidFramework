@@ -671,6 +671,20 @@ export function testCorrectness(): void {
 					[6, 6],
 					[10, 10],
 				] as const;
+				const retentionTransitions = [
+					[5, false, 0],
+					[5, 0, 0],
+					[5, 1, 1],
+					[5, 3, 3],
+					[true, false, 0],
+					[true, 0, 0],
+					[true, 3, 3],
+					[false, 3, 0],
+					[0, 3, 0],
+					[3, 5, 3],
+					[3, true, 3],
+					[3, Number.MAX_SAFE_INTEGER, 3],
+				] as const;
 
 				/**
 				 * Sequences `count` commits from {@link peer1}, each building on the last.
@@ -817,12 +831,22 @@ export function testCorrectness(): void {
 								() => manager.setHistoryRetention(limit),
 								validateAssertionError(message),
 							);
-							assert.equal(manager.getHistoryRetention(), 3);
 						});
 					}
 				});
 
 				describe("advanceMinimumSequenceNumber", () => {
+					it("retains the newest three commits when MSN advances past all five commits", () => {
+						const { manager } = testChangeEditManagerFactory({ historyRetention: 3 });
+						sequencePeerCommits(manager, 5, 1, 1);
+						const commits = manager.getTrunkCommits("main");
+						assert.equal(commits.length, 5);
+
+						manager.advanceMinimumSequenceNumber(brand(5));
+
+						assert.deepEqual(manager.getTrunkCommits("main"), commits.slice(2));
+					});
+
 					for (const limit of [1, 3]) {
 						for (const [name, minimumSequenceNumber, trimHistory] of [
 							["defers trimming when disabled", 6, false],
@@ -1049,6 +1073,31 @@ export function testCorrectness(): void {
 
 							manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
 							assert.deepEqual(manager.getTrunkCommits("main"), expected);
+						});
+					}
+
+					for (const [historyRetention, retentionLimit] of batchedRetentionPolicies) {
+						it(`counts batched commits separately with retention ${historyRetention} across sequence-number gaps after loading a summary`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention });
+							sequencePeerCommits(manager, 1, 1, 1);
+							const commits = makeArray(5, (i) => ({
+								change: TestChange.mint(
+									makeArray(i + 1, (j) => j + 1),
+									[i + 2],
+								),
+								revision: mintRevisionTag(),
+								customMetadata: undefined,
+							}));
+							manager.addSequencedChanges(commits, peer1, brand(10), brand(1), "main");
+							const summary = structuredClone(manager.getSummaryData());
+							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
+							loaded.loadSummaryData(summary);
+							const retained = loaded.getTrunkCommits("main");
+							assert.equal(retained.length, 6);
+							const expected = retained.slice(6 - Math.min(retentionLimit, 6));
+
+							loaded.advanceMinimumSequenceNumber(brand(10));
+							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
 						});
 					}
 
