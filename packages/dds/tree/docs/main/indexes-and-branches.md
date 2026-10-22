@@ -54,7 +54,16 @@ From the perspective of a single Fluid client, there can be several relevant bra
     They can be used to experiment with a copy of the document, work offline for extended periods while preserving history when merging,
     or just as a way to have a user-controlled snapshot.
 
-    Currently shared-tree does not use or support this type of branches, but forward looking designs should consider them.
+    SharedTree exposes an alpha API for this model: [`forkBranch(view)` and `getViewOfBranch(branch, config)`](../../src/shared-tree/branchCheckout.ts)
+    create an independent branch and a view of it.
+    Each call to `forkBranch` creates a new branch, even when the source view was created by `getViewOfBranch`.
+    Edits stay separate from the source view until you merge them with `view.merge(branchView)`.
+
+    The caller owns the returned branch and must dispose it when it is no longer needed.
+    Disposing a view created by `getViewOfBranch` does not dispose the branch.
+    A successful merge disposes the merged branch by default.
+    The branch and its views do not support `rewindTo`.
+    To create another independent branch, pass a view created with `getViewOfBranch` to `forkBranch`.
 
 TODO: diagrams showing branch diagram for a couple clients over time.
 

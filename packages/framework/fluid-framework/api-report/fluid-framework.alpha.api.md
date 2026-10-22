@@ -743,6 +743,9 @@ export const ForestTypeOptimized: ForestType;
 export const ForestTypeReference: ForestType;
 
 // @alpha
+export function forkBranch(view: UntypedTreeViewAlpha): TreeBranchHandleAlpha;
+
+// @alpha
 export namespace FormattedText {
     export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
     // @sealed
@@ -823,6 +826,9 @@ export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithN
 
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
+
+// @alpha
+export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(branch: TreeBranchHandleAlpha, config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
@@ -2693,6 +2699,12 @@ export interface TreeBranchEvents extends TreeBranchEventsBeta {
 // @beta @sealed
 export interface TreeBranchEventsBeta {
     changed(data: ChangeMetadataBeta): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHandleAlpha {
+    dispose(): void;
+    readonly disposed: boolean;
 }
 
 // @alpha @sealed

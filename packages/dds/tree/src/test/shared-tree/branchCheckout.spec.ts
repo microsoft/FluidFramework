@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { RevertibleAlpha } from "../../core/index.js";
 import {
@@ -16,6 +13,9 @@ import {
 	CheckoutBase,
 	TreeCheckout,
 	forkAsBranchCheckout,
+	forkBranch,
+	getViewOfBranch,
+	type TreeBranchHandleAlpha,
 } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
@@ -26,6 +26,10 @@ const enableSchemaValidation = true;
 type _CheckoutCapabilities =
 	| requireTrue<isAssignableTo<TreeCheckout, CheckoutBase>>
 	| requireTrue<isAssignableTo<BranchCheckout, CheckoutBase>>
+	| requireTrue<isAssignableTo<BranchCheckout, TreeBranchHandleAlpha>>
+	| requireTrue<
+			isAssignableTo<{ readonly disposed: boolean; dispose(): void }, TreeBranchHandleAlpha>
+	  >
 	| requireFalse<isAssignableTo<BranchCheckout, TreeCheckout>>
 	| requireFalse<isAssignableTo<"switchBranch", keyof BranchCheckout>>
 	| requireFalse<isAssignableTo<"rewindTo", keyof BranchCheckout>>
@@ -42,6 +46,174 @@ describe("BranchCheckout", () => {
 		view.initialize({ x: 0 });
 		return view;
 	}
+
+	describe("getViewOfBranch", () => {
+		it("returns a view bound to the given BranchCheckout", () => {
+			const view = makeView();
+			const branchCheckout = forkAsBranchCheckout(view.checkout);
+			const branchViewA = getViewOfBranch(branchCheckout, config);
+			branchViewA.root.x = 99;
+			branchViewA.dispose();
+			assert.strictEqual(branchCheckout.disposed, false);
+			const branchViewB = getViewOfBranch(branchCheckout, config);
+			assert.strictEqual(branchViewB.root.x, 99);
+			assert.strictEqual(view.root.x, 0);
+		});
+
+		it("throws when passed a non-BranchCheckout TreeCheckout", () => {
+			const view = makeView();
+			assert.throws(
+				() => getViewOfBranch(view.checkout, config),
+				validateUsageError(/must be a branch returned by `forkBranch`/),
+			);
+		});
+
+		it("throws when the branch already has a live view", () => {
+			const branch = forkBranch(makeView());
+			const first = getViewOfBranch(branch, config);
+			assert.throws(
+				() => getViewOfBranch(branch, config),
+				validateUsageError(/Cannot create a second tree view/),
+			);
+			first.dispose();
+			getViewOfBranch(branch, config).dispose();
+		});
+
+		it("throws when the branch is disposed", () => {
+			const branch = forkBranch(makeView());
+			branch.dispose();
+			assert.equal(branch.disposed, true);
+			assert.throws(() => getViewOfBranch(branch, config), validateUsageError(/disposed/));
+		});
+
+		it("does not support rewindTo on the returned view", () => {
+			const branch = forkBranch(makeView());
+			const branchView = getViewOfBranch(branch, config);
+			assert(branch instanceof BranchCheckout);
+			const revision = branch.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			assert.throws(
+				() => branchView.rewindTo(revision),
+				validateUsageError(/Rewinding is not supported on a branch/),
+			);
+		});
+
+		it("rejects a view even though it structurally matches a branch handle", () => {
+			const view = makeView();
+			assert.throws(
+				() => getViewOfBranch(view, config),
+				validateUsageError(/must be a branch returned by `forkBranch`/),
+			);
+		});
+
+		it("rejects an external implementation of a branch handle", () => {
+			const branch: TreeBranchHandleAlpha = {
+				disposed: false,
+				dispose() {},
+			};
+			assert.throws(
+				() => getViewOfBranch(branch, config),
+				validateUsageError(/must be a branch returned by `forkBranch`/),
+			);
+		});
+	});
+
+	describe("forkBranch", () => {
+		it("creates independent branches on every call", () => {
+			const view = makeView();
+			const branchA = forkBranch(view);
+			const branchB = forkBranch(view);
+			assert.notStrictEqual(branchA, branchB);
+			const branchViewA = getViewOfBranch(branchA, config);
+			const branchViewB = getViewOfBranch(branchB, config);
+
+			branchViewA.root.x = 5;
+			assert.strictEqual(branchViewA.root.x, 5);
+			assert.strictEqual(branchViewB.root.x, 0);
+			assert.strictEqual(view.root.x, 0);
+			branchViewA.dispose();
+			branchViewB.dispose();
+			branchA.dispose();
+			branchB.dispose();
+		});
+
+		it("creates a new independent branch when the view already belongs to a BranchCheckout", () => {
+			const view = makeView();
+			const registeredBranch = forkAsBranchCheckout(view.checkout);
+			const childView = getViewOfBranch(registeredBranch, config);
+			const childBranch = forkBranch(childView);
+			const siblingBranch = forkBranch(childView);
+			assert.notStrictEqual(childBranch, registeredBranch);
+			assert.notStrictEqual(childBranch, siblingBranch);
+
+			const childBranchView = getViewOfBranch(childBranch, config);
+			const siblingBranchView = getViewOfBranch(siblingBranch, config);
+			childBranchView.root.x = 5;
+			assert.strictEqual(childBranchView.root.x, 5);
+			assert.strictEqual(siblingBranchView.root.x, 0);
+			assert.strictEqual(childView.root.x, 0);
+			assert.strictEqual(view.root.x, 0);
+
+			childBranchView.dispose();
+			childBranch.dispose();
+			assert.strictEqual(childBranch.disposed, true);
+			assert.strictEqual(siblingBranch.disposed, false);
+			siblingBranchView.root.x = 8;
+			assert.strictEqual(siblingBranchView.root.x, 8);
+			assert.strictEqual(childView.root.x, 0);
+			assert.strictEqual(view.root.x, 0);
+
+			siblingBranchView.dispose();
+			siblingBranch.dispose();
+			childView.dispose();
+			registeredBranch.dispose();
+		});
+
+		it("merges branch changes into the source and disposes the merged branch", () => {
+			const view = makeView();
+			const branch = forkBranch(view);
+			const branchView = getViewOfBranch(branch, config);
+			branchView.root.x = 7;
+
+			assert.strictEqual(view.root.x, 0);
+			view.merge(branchView);
+			assert.strictEqual(view.root.x, 7);
+			assert.strictEqual(branch.disposed, true);
+		});
+
+		it("throws when the view is disposed even if its branch is still alive", () => {
+			const view = makeView();
+			const branch = forkBranch(view);
+			try {
+				const branchView = getViewOfBranch(branch, config);
+				branchView.root.x = 3;
+				branchView.dispose();
+				assert.strictEqual(branchView.disposed, true);
+				assert.strictEqual(branch.disposed, false);
+
+				assert.throws(
+					() => forkBranch(branchView),
+					validateUsageError("A disposed view cannot be forked."),
+				);
+
+				const replacementView = getViewOfBranch(branch, config);
+				assert.strictEqual(replacementView.root.x, 3);
+				replacementView.root.x = 5;
+				assert.strictEqual(replacementView.root.x, 5);
+			} finally {
+				branch.dispose();
+				view.dispose();
+			}
+		});
+
+		it("throws when passed a non-SchematizingSimpleTreeView", () => {
+			const view = makeView();
+			assert.throws(
+				() => forkBranch(view.checkout as TreeCheckout),
+				validateUsageError(/external implementations are not supported/),
+			);
+		});
+	});
 
 	describe("construction", () => {
 		it("returns a sibling of TreeCheckout with the same common base", () => {
@@ -327,7 +499,7 @@ describe("BranchCheckout", () => {
 			view.dispose();
 		});
 
-		it("asserting on rewind through an internal view leaves the branch usable", () => {
+		it("rejecting rewind through a branch view leaves the branch usable", () => {
 			const view = makeSharedView();
 			const branch = forkAsBranchCheckout(view.checkout);
 			const branchView = branch.viewWith(config);
@@ -338,9 +510,7 @@ describe("BranchCheckout", () => {
 
 			assert.throws(
 				() => branchView.rewindTo(revision),
-				validateAssertionError(
-					"Rewinding requires a checkout that supports branch replacement",
-				),
+				validateUsageError(/Rewinding is not supported on a branch/),
 			);
 			assert.equal(branch.branchHistory.getHead()?.revision, head);
 			assert.equal(branchView.root.x, 1);

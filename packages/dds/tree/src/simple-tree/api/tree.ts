@@ -280,7 +280,7 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 
 	/**
 	 * Apply all the new changes on the given view to this view.
-	 * @param view - A view created by {@link UntypedTreeView.fork}.
+	 * @param view - A view of a related branch, such as one created by {@link UntypedTreeView.fork} or {@link getViewOfBranch}.
 	 * @param disposeMerged - Whether or not to dispose `view` after the merge completes.
 	 * Defaults to true.
 	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
@@ -609,6 +609,8 @@ export interface UntypedTreeViewAlpha
 	 * The original underlying branch will be disposed.
 	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
 	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Also not valid on permanently bound branches or their views, such as branches created by `forkBranch`
+	 * or views obtained through `getViewOfBranch`.
 	 */
 	rewindTo(revision: CommitRevision): void;
 
