@@ -1694,6 +1694,27 @@ export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
+// @alpha
+export interface RebaseValidation {
+    readonly currentLevel: RebaseValidationLevel;
+    readonly Level: typeof RebaseValidationLevel;
+    readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
+    readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
+}
+
+// @alpha
+export const RebaseValidation: RebaseValidation;
+
+// @alpha
+export const RebaseValidationLevel: {
+    readonly None: 0;
+    readonly Cheap: 1;
+    readonly Strict: 2;
+};
+
+// @alpha
+export type RebaseValidationLevel = (typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
+
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {
 }

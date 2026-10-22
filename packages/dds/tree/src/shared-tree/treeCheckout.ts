@@ -1959,11 +1959,13 @@ export class TreeCheckout implements ITreeCheckout {
 		view: UntypedTreeView,
 	): JsonCompatibleReadOnly | undefined {
 		const viewCheckout = getCheckout(view);
+		const target = viewCheckout.#transaction.branch.getHead();
 		const rebased = rebaseBranch(
 			this.mintRevisionTag,
-			this.changeFamily.rebaser,
+			this.changeFamily,
 			this.#transaction.branch.getHead(),
-			viewCheckout.#transaction.branch.getHead(),
+			target,
+			target,
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -2117,7 +2119,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 			change = tagChange(
 				rebaseChange(
-					this.changeFamily.rebaser,
+					this.changeFamily,
 					change,
 					commitToRevert,
 					headCommit,

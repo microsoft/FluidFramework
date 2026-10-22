@@ -160,6 +160,7 @@ export class SharedTreeBranch<
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
+	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
@@ -428,13 +429,7 @@ export class SharedTreeBranch<
 		}
 
 		const { duration, output } = measure(() =>
-			rebaseBranch(
-				this.mintRevisionTag,
-				this.changeFamily.rebaser,
-				head,
-				upTo,
-				onto.getHead(),
-			),
+			rebaseBranch(this.mintRevisionTag, this.changeFamily, head, upTo, onto.getHead()),
 		);
 
 		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });

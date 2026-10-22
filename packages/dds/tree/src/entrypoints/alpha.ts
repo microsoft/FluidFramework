@@ -258,6 +258,8 @@ export {
 	PlainText, 
 	ReadSchema, 
 	ReadableField, 
+	RebaseValidation, 
+	RebaseValidationLevel, 
 	RecordNodeCustomizableSchema, 
 	RecordNodePojoEmulationSchema, 
 	RecordNodeSchema, 

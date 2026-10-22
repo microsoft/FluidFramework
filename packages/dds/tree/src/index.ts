@@ -26,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
