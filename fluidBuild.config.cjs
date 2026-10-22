@@ -519,6 +519,10 @@ module.exports = {
 			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence-definitions/src/cjs/package.json",
 			"examples/utils/import-testing/src/cjs/package.json",
+
+			// Standalone npm package for an Agency plugin - not part of a pnpm workspace or release group.
+			".agency/plugins/trust-policy/package.json",
+			".agency/plugins/trust-policy/package-lock.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
