@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
