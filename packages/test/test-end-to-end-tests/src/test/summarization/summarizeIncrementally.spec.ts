@@ -11,13 +11,19 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerMessageType,
+	type ContainerRuntime,
+	type ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	type ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
@@ -257,6 +263,94 @@ describeCompat(
 				directory3.id,
 				true /* expectHandle */,
 			);
+		});
+	},
+);
+
+describeCompat(
+	"Incremental summary startup accounting",
+	"NoCompat",
+	(getTestObjectProvider) => {
+		it("reuses unchanged stores after catching up on grouped attaches before counting ops", async function () {
+			const provider = getTestObjectProvider({ syncSummarizer: true });
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
+			const config: ITestContainerConfig = {
+				runtimeOptions: { enableGroupedBatching: true },
+			};
+			const container = await provider.makeTestContainer(config);
+			const root = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const runtime = root._context.containerRuntime as ContainerRuntime;
+			const unchangedStore = await getDataStoreEntryPointBackCompat<ITestDataObject>(
+				await runtime.createDataStore(TestDataObjectType),
+			);
+			root._root.set("unchanged", unchangedStore.handle);
+			await provider.ensureSynchronized();
+			const first = await createSummarizer(provider, container, config);
+			const baseline = await summarizeNow(first.summarizer);
+			first.container.close();
+
+			// Create detached stores first, then attach them together from the interactive client.
+			const newStores = await Promise.all(
+				Array.from({ length: 12 }, async () =>
+					getDataStoreEntryPointBackCompat<ITestDataObject>(
+						await runtime.createDataStore(TestDataObjectType),
+					),
+				),
+			);
+			const attachSequenceNumbers: number[] = [];
+			runtime.on("op", (op) => {
+				if (op.type === ContainerMessageType.Attach) {
+					attachSequenceNumbers.push(op.sequenceNumber);
+				}
+			});
+			runtime.orderSequentially(() => {
+				for (const store of newStores) {
+					root._root.set(store._context.id, store.handle);
+				}
+			});
+			await provider.ensureSynchronized();
+			assert.equal(attachSequenceNumbers.length, newStores.length);
+			assert.equal(
+				new Set(attachSequenceNumbers).size,
+				1,
+				"attaches must share a sequence number",
+			);
+
+			// Load a fresh summarizer from the acknowledged checkpoint. Catch-up happens before
+			// RunningSummarizer begins tracking logical operations.
+			const logger = new MockLogger();
+			const second = await createSummarizer(
+				provider,
+				container,
+				config,
+				baseline.summaryVersion,
+				logger,
+			);
+			await provider.ensureSynchronized();
+			const summary = await summarizeNow(second.summarizer);
+			validateDataStoreStateInSummary(summary.summaryTree, unchangedStore._context.id, true);
+			validateDataStoreStateInSummary(summary.summaryTree, root._context.id, false);
+			for (const store of newStores) {
+				validateDataStoreStateInSummary(summary.summaryTree, store._context.id, false);
+			}
+			const generated = logger.events.find((event) =>
+				event.eventName.endsWith("Summarize_generate"),
+			);
+			assert(generated !== undefined, "summary generation telemetry is required");
+			assert.equal(generated.fullTree, false);
+			assert.equal(generated.hasMissingOpData, true, "must exercise missing startup op data");
+			assert(
+				Number(generated.summarizedDataStoreCount) >
+					Number(generated.opsSinceLastSummary) +
+						Number(generated.gcStateUpdatedDataStoreCount),
+				"serialized stores must exceed the unreliable sequence-gap bound",
+			);
+			logger.assertMatchNone([
+				{ eventName: "fluid:telemetry:Summarizer:Running:IncrementalSummaryViolation" },
+			]);
+			second.container.close();
 		});
 	},
 );

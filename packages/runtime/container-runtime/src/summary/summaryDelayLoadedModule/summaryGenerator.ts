@@ -211,8 +211,11 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
+					// Startup estimates use sequence numbers, which do not bound the number of logical
+					// ops (or changed data stores) in grouped batches. Only validate observed counts.
+					!this.heuristicData.hasMissingOpData &&
 					summarizedDataStoreCount >
-					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
+						gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
 				) {
 					summaryLogger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
