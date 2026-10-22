@@ -29,9 +29,11 @@ import {
 	defaultSchemaPolicy,
 	FieldBatchFormatVersion,
 	fieldBatchCodecBuilder,
+	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
 } from "../../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../../jsonDomainSchema.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -40,6 +42,18 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import { toInitialSchema } from "../../../../simple-tree/toStoredSchema.js";
 import { PlainText } from "../../../../text/index.js";
+import type { JsonCompatible } from "../../../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { generateCanada } from "../../../domains/json/canada.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { generateCitmJson } from "../../../domains/json/citm.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { generateTwitterJsonByNumStatuses } from "../../../domains/json/twitter.js";
+import { singleJsonCursor } from "../../../json/index.js";
+import {
+	makeDeepContentSimple,
+	makeWideContentWithEndValueSimple,
+} from "../../../scalableTestTrees.js";
 import { Table } from "../../../tablePerformanceTestUtilities.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextTest } from "../../../text/formattedTextTest.js";
@@ -73,6 +87,13 @@ function fromSimpleTree(
 			fieldCursorFromInsertable<UnsafeUnknownSchema>(schema, content),
 		),
 		schema: toInitialSchema(schema),
+	};
+}
+
+function fromJson(json: JsonCompatible): DatasetContent {
+	return {
+		tree: [jsonableTreeFromCursor(singleJsonCursor(json))],
+		schema: toInitialSchema(JsonAsTree.Tree),
 	};
 }
 
@@ -112,21 +133,23 @@ function makeTable(size: number, value: (row: number, column: number) => string)
 	});
 }
 
-const textSizes = [
-	{ size: 1000, benchmarkType: BenchmarkType.Measurement },
-	...(currentBenchmarkMode === BenchmarkMode.Performance
-		? [{ size: 10000, benchmarkType: BenchmarkType.Measurement }]
-		: []),
-];
-const tableSizes = [
-	{ size: 10, benchmarkType: BenchmarkType.Measurement },
-	...(currentBenchmarkMode === BenchmarkMode.Performance
-		? [{ size: 40, benchmarkType: BenchmarkType.Measurement }]
-		: []),
-];
+/**
+ * Returns the sizes to run: `small` always, and `large` only in performance mode.
+ */
+function sizes(
+	small: number,
+	large: number,
+): { readonly size: number; readonly benchmarkType: BenchmarkType }[] {
+	return [
+		{ size: small, benchmarkType: BenchmarkType.Measurement },
+		...(currentBenchmarkMode === BenchmarkMode.Performance
+			? [{ size: large, benchmarkType: BenchmarkType.Measurement }]
+			: []),
+	];
+}
 
 const datasets: readonly Dataset[] = [
-	...textSizes.flatMap(({ size, benchmarkType }) => [
+	...sizes(1000, 10000).flatMap(({ size, benchmarkType }) => [
 		{
 			name: `Plain text, ${size} characters`,
 			benchmarkType,
@@ -147,7 +170,7 @@ const datasets: readonly Dataset[] = [
 			build: () => fromSimpleTree(FormattedTextTest.Tree, makeModeratelyFormattedText(size)),
 		},
 	]),
-	...tableSizes.flatMap(({ size, benchmarkType }) => [
+	...sizes(10, 40).flatMap(({ size, benchmarkType }) => [
 		{
 			name: `Table, ${size}x${size} cells, constant values`,
 			benchmarkType,
@@ -176,6 +199,41 @@ const datasets: readonly Dataset[] = [
 				),
 		},
 	]),
+	// Datasets without text, to catch strategies that make other tree shapes slower or larger.
+	...sizes(10, 100).map(({ size, benchmarkType }) => ({
+		name: `Canada JSON, ${size} segments of 50 points`,
+		benchmarkType,
+		build: () =>
+			fromJson(
+				generateCanada(Array.from({ length: size }, () => 50)) as unknown as JsonCompatible,
+			),
+	})),
+	...sizes(20000, 200000).map(({ size, benchmarkType }) => ({
+		name: `CITM JSON, at most ${size} bytes`,
+		benchmarkType,
+		build: () => fromJson(generateCitmJson(1, size) as unknown as JsonCompatible),
+	})),
+	...sizes(5, 50).map(({ size, benchmarkType }) => ({
+		name: `Twitter JSON, ${size} statuses`,
+		benchmarkType,
+		build: () => fromJson(generateTwitterJsonByNumStatuses(size) as unknown as JsonCompatible),
+	})),
+	...sizes(1000, 10000).map(({ size, benchmarkType }) => ({
+		name: `Wide tree, ${size} numbers`,
+		benchmarkType,
+		build: () => {
+			const { schema, initialTree } = makeWideContentWithEndValueSimple(size);
+			return fromSimpleTree(schema, initialTree);
+		},
+	})),
+	...sizes(50, 200).map(({ size, benchmarkType }) => ({
+		name: `Deep tree, ${size} levels`,
+		benchmarkType,
+		build: () => {
+			const { schema, initialTree } = makeDeepContentSimple(size);
+			return fromSimpleTree(schema, initialTree);
+		},
+	})),
 ];
 
 /**
