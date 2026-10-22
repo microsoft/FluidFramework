@@ -72,6 +72,27 @@ describe("reactSharedTreeView", () => {
 					<span>View</span>
 				);
 
+				it("renders raw numeric root replacements", () => {
+					const view = independentView(new TreeViewConfiguration({ schema: builder.number }));
+					view.initialize(1);
+					const content = (
+						<TreeViewComponent
+							viewComponent={({ root }) => <span>{root.toFixed(1)}</span>}
+							tree={{ treeView: view }}
+						/>
+					);
+					const rendered = render(content, { reactStrictMode });
+					try {
+						assert.equal(rendered.container.textContent, "1.0");
+						view.root = 2;
+						rendered.rerender(content);
+						assert.equal(rendered.container.textContent, "2.0");
+					} finally {
+						rendered.unmount();
+						view.dispose();
+					}
+				});
+
 				it("TreeViewComponent", () => {
 					const view = independentView(new TreeViewConfiguration({ schema: Item }));
 					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
