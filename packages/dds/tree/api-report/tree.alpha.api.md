@@ -2386,6 +2386,9 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
 
 // @alpha
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T>;
+
+// @alpha
 export const UnsafeUnknownSchema: unique symbol;
 
 // @alpha

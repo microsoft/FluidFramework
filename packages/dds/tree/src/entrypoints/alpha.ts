@@ -360,6 +360,7 @@ export {
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
 	trackDirtyNodes, 
+	unsafeArrayToTuple,
 	utf16LengthForCodePoints
 	// #endregion
 } from "../index.js";
