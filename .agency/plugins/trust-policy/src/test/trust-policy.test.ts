@@ -37,11 +37,13 @@ test("rejects Azure Artifacts registries before any trust check without printing
 			"--registry",
 			feed,
 			"--no-registry-check",
+			"--json",
 		]),
-		(error: { stderr: string }) => {
-			// oclif wraps error messages and prefixes continuation lines with "»".
-			assert.match(error.stderr.replace(/\s+(»\s+)?/g, " "), /is an Azure Artifacts feed/);
-			assert.doesNotMatch(error.stderr, /secret/);
+		(error: { stdout: string; stderr: string }) => {
+			// JSON mode reports the error unwrapped, unlike oclif's platform- and width-dependent text rendering.
+			const { error: reported } = JSON.parse(error.stdout) as { error: { message: string } };
+			assert.match(reported.message, /is an Azure Artifacts feed/);
+			assert.doesNotMatch(error.stdout + error.stderr, /secret/);
 			return true;
 		},
 	);
