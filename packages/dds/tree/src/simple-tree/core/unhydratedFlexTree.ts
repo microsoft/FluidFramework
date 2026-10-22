@@ -652,6 +652,10 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
+				// A destination gap inside the moved range leaves the sequence unchanged.
+				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+					return;
+				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
@@ -698,6 +702,8 @@ export class UnhydratedSequenceField
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
  * @remarks
+ * The destination gap must not be strictly inside the moved range.
+ *
  * Forward move (`sourceIndex < destIndex`):
  * `[retain(src), detach(n), retain(mid), attach(n)]`
  *

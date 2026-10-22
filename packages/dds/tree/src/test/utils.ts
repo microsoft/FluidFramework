@@ -1647,6 +1647,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public get branchHistory(): TreeBranchHistory {
 		throw new Error("'history' property not implemented in MockTreeCheckout.");
 	}
+	public get locations(): never {
+		throw new Error("'locations' property not implemented in MockTreeCheckout.");
+	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
 	}

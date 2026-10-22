@@ -1588,7 +1588,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		runtime: IFluidDataStoreRuntime,
 		storage: IChannelStorageService,
 		serializer: IFluidSerializer,
-	): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+	): Promise<{
+		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
+		snapshotVersion: "1" | undefined;
+	}> {
 		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
 
 		return loader.initialize(storage);

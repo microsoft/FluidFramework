@@ -1864,7 +1864,6 @@ export const shortCodeMap = {
 	"0xcc3": "New commits must have a parent.",
 	"0xcc4": "Missing enriched commit.",
 	"0xcc5": "Unsupported modular change codec version",
-	"0xcc8": "Object.entries returned a non-string key.",
 	"0xcc9": "Count must be at least 1",
 	"0xcca": "TODO: Handle non-contiguous ranges",
 	"0xccb": "TODO: Handle non-contiguous ranges",
@@ -2021,5 +2020,16 @@ export const shortCodeMap = {
 	"0xd68": "SharedTree change format versions must be numbers",
 	"0xd69": "SharedTree change codec family has no supported formats",
 	"0xd6a": "Serialized change codec requires an encoded schema",
-	"0xd6b": "Validated blob placeholder must have a registered buffer"
+	"0xd6b": "Validated blob placeholder must have a registered buffer",
+	"0xd6c": "Expected a field while replaying a location",
+	"0xd6d": "Expected a node while replaying a location",
+	"0xd6e": "Expected a sequence gap",
+	"0xd6f": "Expected a result index for every captured location",
+	"0xd70": "Expected a result for a single captured location",
+	"0xd71": "Expected a FlexTree context for the receiving view",
+	"0xd72": "Expected a record schema.",
+	"0xd73": "Expected a record node.",
+	"0xd74": "Expected a map schema.",
+	"0xd75": "Expected a map node.",
+	"0xd76": "Expected an object schema."
 };

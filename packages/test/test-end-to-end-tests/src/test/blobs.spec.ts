@@ -13,6 +13,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -74,6 +75,51 @@ function makeTestContainerConfig(
 }
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
+
+/**
+ * Waits for `key` to be set on the data store's root map.
+ */
+async function waitForKey(dataStore: ITestDataObject, key: string): Promise<void> {
+	return timeoutPromise(
+		(resolve) => {
+			const checkKey = (): void => {
+				if (dataStore._root.get(key) !== undefined) {
+					dataStore._root.off("valueChanged", checkKey);
+					resolve();
+				}
+			};
+			dataStore._root.on("valueChanged", checkKey);
+			checkKey();
+		},
+		{ errorMsg: `Timeout waiting for "${key}" to reach the container` },
+	);
+}
+
+/**
+ * Waits until `container` has processed every op up to and including `sequenceNumber`.
+ */
+async function waitForSequenceNumber(
+	container: IContainer,
+	sequenceNumber: number,
+): Promise<void> {
+	if (container.deltaManager.lastSequenceNumber >= sequenceNumber) {
+		return;
+	}
+	return timeoutPromise(
+		(resolve) => {
+			const checkSeq = (): void => {
+				if (container.deltaManager.lastSequenceNumber >= sequenceNumber) {
+					container.deltaManager.off("op", checkSeq);
+					resolve();
+				}
+			};
+			container.deltaManager.on("op", checkSeq);
+		},
+		{
+			errorMsg: `Timeout waiting for the container to reach sequence number ${sequenceNumber}`,
+		},
+	);
+}
 
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
@@ -460,13 +506,87 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 
 				const container2 = await provider.loadTestContainer(testContainerConfig);
 				const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
-				await provider.ensureSynchronized();
+				// Wait for op delivery without waiting for container1's blocked blob upload.
+				await waitForKey(dataStore2, "another key");
 
 				assert.strictEqual(dataStore2._root.get("key"), "value");
 				assert.strictEqual(dataStore2._root.get("another key"), "another value");
 
 				uploadBlobPromise.resolve();
 				await assert.doesNotReject(handleP);
+			});
+
+			it("stays dirty until an attachment blob has been shared", async () => {
+				// A host disposing on "saved" must not strand an in-flight blob.
+				const testString = "this is a test string";
+				const uploadBlobPromise = new Deferred<void>();
+				const container1 = await provider.makeTestContainer({
+					...testContainerConfig,
+					loaderProps: {
+						documentServiceFactory: wrapObjectAndOverride(provider.documentServiceFactory, {
+							createDocumentService: {
+								connectToStorage: {
+									createBlob: (dss) => async (blob) => {
+										await uploadBlobPromise.promise;
+										return dss.createBlob(blob);
+									},
+								},
+							},
+						}),
+					},
+				});
+				const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
+				await waitForContainerConnection(container1);
+
+				const container2 = await provider.loadTestContainer(testContainerConfig);
+				const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					container1.isDirty,
+					false,
+					"Expected the container to start out saved",
+				);
+
+				let savedWhileUploading = false;
+				const onSaved = (): void => {
+					savedWhileUploading = true;
+				};
+				container1.on("saved", onSaved);
+
+				const handleP = dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+				if (createBlobPayloadPending === true) {
+					// Attaching the pending-payload handle starts sharing.
+					dataStore1._root.set("blob", await handleP);
+					// Drain the reference op on both clients so only the blocked blob keeps container1 dirty.
+					await waitForKey(dataStore2, "blob");
+					await waitForSequenceNumber(container1, container2.deltaManager.lastSequenceNumber);
+				}
+
+				assert.strictEqual(
+					container1.isDirty,
+					true,
+					"Expected a blocked blob upload to hold the container dirty",
+				);
+				assert.strictEqual(
+					savedWhileUploading,
+					false,
+					"Must not report the container saved while a blob payload is still being uploaded",
+				);
+
+				uploadBlobPromise.resolve();
+				const handle = await handleP;
+				container1.off("saved", onSaved);
+				if (container1.isDirty) {
+					await timeoutPromise((resolve) => container1.once("saved", () => resolve()), {
+						errorMsg: "Timeout waiting for the container to save after the blob was shared",
+					});
+				}
+
+				dataStore1._root.set("blob", handle);
+				await provider.ensureSynchronized();
+				const remoteHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+				assert(remoteHandle !== undefined, "Expected the remote container to see the blob");
+				assert.strictEqual(bufferToString(await remoteHandle.get(), "utf-8"), testString);
 			});
 		},
 	);

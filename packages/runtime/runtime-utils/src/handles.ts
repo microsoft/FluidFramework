@@ -18,6 +18,11 @@ import type {
 	IFluidHandlePayloadPending,
 	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
+import type {
+	IContainerRuntimeBase,
+	IContainerRuntimeBaseInternal,
+	PackagePath,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -118,6 +123,47 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
 	const aInternal = toFluidHandleInternal(a);
 	const bInternal = toFluidHandleInternal(b);
 	return aInternal.absolutePath === bInternal.absolutePath;
+}
+
+function hasDataStorePackagePath(
+	runtime: IContainerRuntimeBase,
+): runtime is IContainerRuntimeBase &
+	Pick<IContainerRuntimeBaseInternal, "getDataStorePackagePath"> {
+	return (
+		"getDataStorePackagePath" in runtime &&
+		typeof runtime.getDataStorePackagePath === "function"
+	);
+}
+
+/**
+ * Returns the package path of the data store containing the object referenced by a handle.
+ *
+ * @remarks
+ * Use this path in telemetry to identify the containing data store package, for example, when a component
+ * takes a long time to load. The path is diagnostic information; it cannot be used to configure the runtime.
+ * This function does not measure load time. If the data store's snapshot details are not yet available, the
+ * lookup may fetch an omitted snapshot and read its attributes blob. It can therefore take time and affect
+ * the timing of other operations. A completed data store load has already read these details, so a lookup
+ * after loading normally reuses them. Avoid awaiting the lookup on a latency-sensitive load path.
+ *
+ * The handle must belong to the supplied container runtime's container. This function does not verify that
+ * relationship or resolve the handle. It does not check whether a descendant object exists or return a DDS
+ * package path. An invalid handle or a runtime without the internal package-path lookup causes a TypeError.
+ *
+ * @param containerRuntime - The runtime of the container containing the handle.
+ * @param handle - A handle to a data store or an object within one.
+ * @returns The containing data store's package path, or undefined if the handle's path is not within a known data store.
+ * @legacy @beta
+ */
+export async function getDataStorePackagePath(
+	containerRuntime: IContainerRuntimeBase,
+	handle: IFluidHandle,
+): Promise<PackagePath | undefined> {
+	const nodePath = toFluidHandleInternal(handle).absolutePath;
+	if (!hasDataStorePackagePath(containerRuntime)) {
+		throw new TypeError("Container runtime does not support data store package path lookup");
+	}
+	return containerRuntime.getDataStorePackagePath(nodePath);
 }
 
 /**

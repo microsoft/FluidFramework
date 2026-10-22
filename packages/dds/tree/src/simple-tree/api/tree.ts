@@ -42,6 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
@@ -570,6 +571,11 @@ export interface UntypedTreeViewAlpha
 	 * APIs for querying the history of the branch being viewed.
 	 */
 	readonly branchHistory: TreeBranchHistory;
+
+	/**
+	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.
+	 */
+	readonly locations: TreeLocationResolver;
 
 	/**
 	 * Returns true if this view has the given schema as its root schema.

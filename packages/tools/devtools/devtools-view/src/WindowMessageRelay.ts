@@ -68,6 +68,12 @@ export class WindowMessageRelay
 	private readonly onWindowMessage = (
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
+		if (event.source !== globalThis.window) {
+			// Accept only messages posted by this window.
+			// See https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns
+			return;
+		}
+
 		const message = event.data;
 		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			// Forward incoming message onto subscribers.
