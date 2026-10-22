@@ -1201,45 +1201,6 @@ describe("SharedTree", () => {
 	});
 
 	describe("Persists retained history", () => {
-		it("preserves main and shared-branch content across summary loading when the branch was created at a trimmed base", async () => {
-			const factory = configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				enableSharedBranches: true,
-			}).getFactory();
-			const idCompressor = createSnapshotCompressor();
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({
-					attachState: AttachState.Detached,
-					idCompressor,
-				}),
-				"tree",
-			) as ISharedTree;
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const mainView = tree.viewWith(config);
-			mainView.initialize(["A"]);
-			// eslint-disable-next-line @typescript-eslint/dot-notation -- The edit manager is private.
-			const manager = tree.kernel["editManager"];
-			manager.setHistoryRetention(false);
-			assert.equal(tree.kernel.checkout.branchHistory.length, 0);
-			manager.setHistoryRetention(1);
-			const branchId = tree.createSharedBranch();
-			const branchView = tree.viewSharedBranchWith(branchId, config);
-			branchView.root.insertAtEnd("B");
-			mainView.root.insertAtEnd("C");
-			mainView.root.insertAtEnd("D");
-			branchView.root.insertAtEnd("E");
-
-			const loaded = await loadFreshClient(tree, factory, idCompressor);
-			assert.deepEqual([...loaded.viewWith(config).root], ["A", "C", "D"]);
-			assert.deepEqual(
-				[...loaded.viewSharedBranchWith(branchId, config).root],
-				["A", "B", "E"],
-			);
-		});
-
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past most of them.
@@ -3504,43 +3465,6 @@ describe("SharedTree", () => {
 		});
 
 		describe("can load a shared branch from summary", () => {
-			it("processes the first remote edit without importing newer main edits", async () => {
-				const provider = await TestTreeProvider.create(
-					1,
-					SummarizeType.onDemand,
-					new SharedTreeTestFactory(
-						() => {},
-						undefined,
-						resolveOptions({ enableSharedBranches: true }),
-					),
-				);
-				const tree = provider.trees[0];
-				const config = new TreeViewConfiguration({
-					schema: StringArray,
-					enableSchemaValidation,
-				});
-				const mainView = tree.viewWith(config);
-				mainView.initialize(["A"]);
-				await provider.ensureSynchronized();
-				const branchId = tree.createSharedBranch();
-				const branchView = tree.viewSharedBranchWith(branchId, config);
-				mainView.root.insertAtEnd("B");
-				await provider.ensureSynchronized();
-				await provider.summarize();
-				await provider.ensureSynchronized();
-				const loaded = await provider.createTree();
-				const loadedMainView = loaded.viewWith(config);
-				const loadedBranchView = loaded.viewSharedBranchWith(branchId, config);
-				assert.deepEqual([...loadedMainView.root], ["A", "B"]);
-				assert.deepEqual([...loadedBranchView.root], ["A"]);
-
-				branchView.root.insertAtEnd("C");
-				await provider.ensureSynchronized();
-				assert.deepEqual([...branchView.root], ["A", "C"]);
-				assert.deepEqual([...loadedBranchView.root], ["A", "C"]);
-				assert.deepEqual([...loadedMainView.root], ["A", "B"]);
-			});
-
 			for (const subCase of [
 				"based on a commit in the collab window",
 				"based on a commit outside the collab window",

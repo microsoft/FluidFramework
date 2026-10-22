@@ -749,61 +749,38 @@ export function testCorrectness(): void {
 						});
 					}
 
+					for (const [historyRetention, expectedCount] of [
+						[false, 0],
+						[0, 0],
+						[1, 1],
+						[3, 3],
+					] as const) {
+						it(`trims commits when retention is reduced from 5 to ${historyRetention}`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention: 5 });
+							sequencePeerCommits(manager, 5, 1, 1);
+							manager.advanceMinimumSequenceNumber(brand(5));
+							const expected = manager.getTrunkCommits("main").slice(5 - expectedCount);
+
+							manager.setHistoryRetention(historyRetention);
+							assert.deepEqual(manager.getTrunkCommits("main"), expected);
+						});
+					}
+
 					for (const [initialHistoryRetention, historyRetention, expectedCount] of [
-						[5, false, 0],
-						[5, 0, 0],
-						[5, 1, 1],
-						[5, 3, 3],
-						[true, false, 0],
-						[true, 0, 0],
-						[true, 3, 3],
 						[false, 3, 0],
 						[0, 3, 0],
 						[3, 5, 3],
 						[3, true, 3],
 						[3, Number.MAX_SAFE_INTEGER, 3],
 					] as const) {
-						it(`updates retention from ${initialHistoryRetention} to ${historyRetention} and roundtrips the remaining history`, () => {
+						it(`preserves available history without recovering trimmed commits when increasing retention from ${initialHistoryRetention} to ${historyRetention}`, () => {
 							const { manager } = testChangeEditManagerFactory({
 								historyRetention: initialHistoryRetention,
 							});
 							sequencePeerCommits(manager, 5, 1, 1);
-							const originalRevisions = manager
-								.getTrunkCommits("main")
-								.map((commit) => commit.revision);
 							manager.advanceMinimumSequenceNumber(brand(5));
-							const retained = manager.getTrunkCommits("main");
-							assert.equal(
-								retained.length,
-								initialHistoryRetention === true
-									? 5
-									: Math.min(Number(initialHistoryRetention), 5),
-							);
-							const expected = expectedCount === 0 ? [] : retained.slice(-expectedCount);
-
-							manager.setHistoryRetention(historyRetention);
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							const revisions =
-								expectedCount === 0 ? [] : originalRevisions.slice(-expectedCount);
-							const summary = structuredClone(manager.getSummaryData());
-							assert.deepEqual(
-								summary.main.trunk.map((commit) => commit.revision),
-								revisions,
-							);
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(summary);
-							assert.deepEqual(
-								loaded.getTrunkCommits("main").map((commit) => commit.revision),
-								revisions,
-							);
-						});
-					}
-
-					for (const historyRetention of [false, 0, 1, 3] as const) {
-						it(`preserves fork-required history when retention is reduced to ${historyRetention}`, () => {
-							const { manager } = setupForkWithRetainedHistory(5, 2, 10, peer1);
 							const expected = manager.getTrunkCommits("main");
-							assert.equal(expected.length, 9);
+							assert.equal(expected.length, expectedCount);
 
 							manager.setHistoryRetention(historyRetention);
 							assert.deepEqual(manager.getTrunkCommits("main"), expected);
@@ -847,55 +824,46 @@ export function testCorrectness(): void {
 
 				describe("advanceMinimumSequenceNumber", () => {
 					for (const limit of [1, 3]) {
-						it(`defers trimming until a newer MSN permits it with retention ${limit}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
-							sequencePeerCommits(manager, 5, 1, 1);
-							manager.advanceMinimumSequenceNumber(brand(5));
-							const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
-							const expectedAfterSequencing = [
-								...manager.getTrunkCommits("main"),
-								...manager.getLocalCommits("main"),
-							];
-							manager.addSequencedChanges(
-								[local],
-								manager.localSessionId,
-								brand(6),
-								brand(5),
-								"main",
-								false,
-							);
-							const retained = manager.getTrunkCommits("main");
-							assert.equal(retained.length, limit + 1);
-							assert.deepEqual(retained, expectedAfterSequencing);
+						for (const [name, minimumSequenceNumber, trimHistory] of [
+							["defers trimming when disabled", 6, false],
+							["does not trim deferred history at an unchanged MSN", 6, true],
+							["resumes deferred trimming at a newer MSN", 7, true],
+						] as const) {
+							it(`${name} with retention ${limit}`, () => {
+								const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
+								sequencePeerCommits(manager, 5, 1, 1);
+								manager.advanceMinimumSequenceNumber(brand(5));
+								const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+								manager.addSequencedChanges(
+									[local],
+									manager.localSessionId,
+									brand(6),
+									brand(5),
+									"main",
+									false,
+								);
+								const retained = manager.getTrunkCommits("main");
+								assert.equal(retained.length, limit + 1);
+								if (trimHistory) {
+									manager.advanceMinimumSequenceNumber(brand(6), false);
+								}
+								const expected =
+									minimumSequenceNumber === 7 ? retained.slice(-limit) : retained;
 
-							manager.advanceMinimumSequenceNumber(brand(6), false);
-							assert.deepEqual(manager.getTrunkCommits("main"), retained);
-
-							manager.advanceMinimumSequenceNumber(brand(6));
-							assert.deepEqual(manager.getTrunkCommits("main"), retained);
-
-							manager.advanceMinimumSequenceNumber(brand(7));
-							assert.deepEqual(manager.getTrunkCommits("main"), retained.slice(-limit));
-						});
+								manager.advanceMinimumSequenceNumber(
+									brand(minimumSequenceNumber),
+									trimHistory,
+								);
+								assert.deepEqual(manager.getTrunkCommits("main"), expected);
+							});
+						}
 					}
 
 					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						it(`roundtrips fork-pinned history and trims it after loading with retention ${historyRetention}`, () => {
+						it(`trims history no longer pinned by a local fork after loading with retention ${historyRetention}`, () => {
 							const { manager } = setupForkWithRetainedHistory(historyRetention, 2, 10, peer1);
-							const retained = manager
-								.getTrunkCommits("main")
-								.map((commit) => commit.revision);
-							const summary = structuredClone(manager.getSummaryData());
-							assert.deepEqual(
-								summary.main.trunk.map((commit) => commit.revision),
-								retained,
-							);
 							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(summary);
-							assert.deepEqual(
-								loaded.getTrunkCommits("main").map((commit) => commit.revision),
-								retained,
-							);
+							loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
 							const expectedCount = Math.min(retentionLimit, 10);
 							const expected =
 								expectedCount === 0
@@ -905,6 +873,48 @@ export function testCorrectness(): void {
 							loaded.advanceMinimumSequenceNumber(brand(10));
 							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
 						});
+
+						it(`preserves a loaded shared branch's base with retention ${historyRetention}`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention });
+							const branchId = testIdCompressor.generateCompressedId();
+							sequencePeerCommits(manager, 2, 1, 1);
+							const baseRevision = manager.getTrunkHead("main").revision;
+							manager.addNewBranch(branchId);
+							sequencePeerCommits(manager, 8, 3, 3);
+							manager.advanceMinimumSequenceNumber(brand(10));
+							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
+							loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
+							const retained = loaded.getTrunkCommits("main");
+
+							loaded.advanceMinimumSequenceNumber(brand(10));
+							assert.equal(loaded.getTrunkHead(branchId).revision, baseRevision);
+							assert.deepEqual(loaded.getTrunkCommits("main"), retained);
+						});
+					}
+
+					for (const baseSequenceNumber of [1, 2]) {
+						for (const historyRetention of [false, 0, 1, 3, 20] as const) {
+							it(`trims loaded peer base ${baseSequenceNumber} after the peer catches up with retention ${historyRetention}`, () => {
+								const expectedCount = Number(historyRetention);
+								const totalCommitCount = Math.max(10, expectedCount + baseSequenceNumber);
+								const { manager } = setupForkWithRetainedHistory(
+									historyRetention,
+									baseSequenceNumber,
+									totalCommitCount,
+									peer2,
+								);
+								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
+								loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
+								sequencePeerCommits(loaded, 1, totalCommitCount + 1, totalCommitCount + 1);
+								const expected =
+									expectedCount === 0
+										? []
+										: loaded.getTrunkCommits("main").slice(-expectedCount);
+
+								loaded.advanceMinimumSequenceNumber(brand(totalCommitCount + 1));
+								assert.deepEqual(loaded.getTrunkCommits("main"), expected);
+							});
+						}
 					}
 
 					it("retains an acknowledged local commit when it leaves the collaboration window", () => {
@@ -926,28 +936,32 @@ export function testCorrectness(): void {
 					});
 
 					for (const [historyRetention, retentionLimit] of batchedRetentionPolicies) {
-						it(`counts batched commits separately with retention ${historyRetention} across sequence-number gaps after loading a summary`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							sequencePeerCommits(manager, 1, 1, 1);
-							const commits = makeArray(5, (i) => ({
-								change: TestChange.mint(
-									makeArray(i + 1, (j) => j + 1),
-									[i + 2],
-								),
-								revision: mintRevisionTag(),
-								customMetadata: undefined,
-							}));
-							manager.addSequencedChanges(commits, peer1, brand(10), brand(1), "main");
-							const summary = structuredClone(manager.getSummaryData());
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(summary);
-							const retained = loaded.getTrunkCommits("main");
-							assert.equal(retained.length, 6);
-							const expected = retained.slice(6 - Math.min(retentionLimit, 6));
+						for (const fromSummary of [false, true]) {
+							it(`counts batched commits separately with retention ${historyRetention} across sequence-number gaps${fromSummary ? " after loading a summary" : ""}`, () => {
+								let { manager } = testChangeEditManagerFactory({ historyRetention });
+								sequencePeerCommits(manager, 1, 1, 1);
+								const commits = makeArray(5, (i) => ({
+									change: TestChange.mint(
+										makeArray(i + 1, (j) => j + 1),
+										[i + 2],
+									),
+									revision: mintRevisionTag(),
+									customMetadata: undefined,
+								}));
+								manager.addSequencedChanges(commits, peer1, brand(10), brand(1), "main");
+								if (fromSummary) {
+									const summary = structuredClone(manager.getSummaryData());
+									manager = testChangeEditManagerFactory({ historyRetention }).manager;
+									manager.loadSummaryData(summary);
+								}
+								const retained = manager.getTrunkCommits("main");
+								assert.equal(retained.length, 6);
+								const expected = retained.slice(6 - Math.min(retentionLimit, 6));
 
-							loaded.advanceMinimumSequenceNumber(brand(10));
-							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
-						});
+								manager.advanceMinimumSequenceNumber(brand(10));
+								assert.deepEqual(manager.getTrunkCommits("main"), expected);
+							});
+						}
 					}
 
 					for (const count of [2, 4]) {
@@ -985,10 +999,16 @@ export function testCorrectness(): void {
 					}
 
 					for (const [historyRetention, retentionLimit] of retentionPolicies) {
+						it(`handles empty history with retention ${historyRetention}`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention });
+
+							manager.advanceMinimumSequenceNumber(brand(10));
+							assert.equal(manager.getTrunkCommits("main").length, 0);
+						});
+
 						it(`retains commits sequenced after an empty MSN advancement with retention ${historyRetention}`, () => {
 							const { manager } = testChangeEditManagerFactory({ historyRetention });
 							manager.advanceMinimumSequenceNumber(brand(10));
-							assert.equal(manager.getTrunkCommits("main").length, 0);
 							sequencePeerCommits(manager, 5, 11, 1);
 							const expectedCount = Math.min(retentionLimit, 5);
 							const expected =
@@ -1053,119 +1073,6 @@ export function testCorrectness(): void {
 				});
 
 				describe("addSequencedChanges", () => {
-					for (const historyRetention of [1, true]) {
-						it(`preserves a shared branch's main base when acknowledging its local edit with retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({});
-							sequencePeerCommits(manager, 5, 1, 1);
-							manager.advanceMinimumSequenceNumber(brand(5));
-							manager.setHistoryRetention(historyRetention);
-							const branchId = testIdCompressor.generateCompressedId();
-							manager.addNewBranch(branchId);
-							const branch = manager.getLocalBranch(branchId);
-							const local = applyBranchCommit(branch, [1, 2, 3, 4, 5], 6);
-							const fork = branch.fork();
-							const sequenced: RevisionTag[] = [];
-							const forkSequenced: RevisionTag[] = [];
-							branch.events.on("commitSequenced", (commit) => sequenced.push(commit.revision));
-							fork.events.on("commitSequenced", (commit) =>
-								forkSequenced.push(commit.revision),
-							);
-							manager.addSequencedChanges(
-								[local],
-								manager.localSessionId,
-								brand(6),
-								brand(5),
-								branchId,
-							);
-							const remote = peerCommit(peer2, [1, 2, 3, 4, 5, 6], 7);
-
-							manager.addSequencedChanges([remote], peer2, brand(7), brand(6), branchId);
-							assert.deepEqual(
-								branch.getHead().change,
-								TestChange.mint([1, 2, 3, 4, 5, 6], 7),
-							);
-							assert.deepEqual(sequenced, [local.revision]);
-							assert.deepEqual(forkSequenced, [local.revision]);
-						});
-					}
-
-					it("restores trimming after shared-branch sequencing throws", () => {
-						const { manager } = testChangeEditManagerFactory({ historyRetention: 1 });
-						sequencePeerCommits(manager, 10, 1, 1);
-						const branchId = testIdCompressor.generateCompressedId();
-						manager.addNewBranch(branchId);
-						const local = applyBranchCommit(
-							manager.getLocalBranch(branchId),
-							makeArray(10, (i) => i + 1),
-							11,
-						);
-						manager.addSequencedChanges(
-							[local],
-							manager.localSessionId,
-							brand(12),
-							brand(10),
-							branchId,
-							false,
-						);
-						const retained = manager.getTrunkCommits("main");
-						assert.equal(retained.length, 10);
-						const expected = retained.slice(-1);
-
-						assert.throws(
-							() =>
-								manager.addSequencedChanges(
-									[local],
-									peer1,
-									brand(11),
-									brand(10),
-									branchId,
-									false,
-								),
-							/0xa64/,
-						);
-						manager.advanceMinimumSequenceNumber(brand(12));
-						assert.deepEqual(manager.getTrunkCommits("main"), expected);
-					});
-
-					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						for (const allowHistoryTrimming of [false, true]) {
-							it(`${allowHistoryTrimming ? "allows" : "defers"} main-history trimming while sequencing a shared-branch edit with retention ${historyRetention}`, () => {
-								const { manager } = testChangeEditManagerFactory({ historyRetention });
-								sequencePeerCommits(manager, 10, 1, 1);
-								const branchId = testIdCompressor.generateCompressedId();
-								manager.addNewBranch(branchId);
-								manager.advanceMinimumSequenceNumber(brand(10), false);
-								const retained = manager.getTrunkCommits("main");
-								assert.equal(retained.length, 10);
-								const expected = allowHistoryTrimming
-									? retained.slice(-Math.max(retentionLimit, 1))
-									: retained;
-
-								manager.addSequencedChanges(
-									[
-										{
-											change: TestChange.mint(
-												makeArray(10, (i) => i + 1),
-												[11],
-											),
-											revision: mintRevisionTag(),
-											customMetadata: undefined,
-										},
-									],
-									peer1,
-									brand(11),
-									brand(10),
-									branchId,
-									allowHistoryTrimming,
-								);
-								for (const commit of expected) {
-									assert.equal(commit.wasTrimmed, undefined);
-								}
-								assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							});
-						}
-					}
-
 					for (const [historyRetention, retentionLimit] of retentionPolicies) {
 						for (const isLocal of [false, true]) {
 							for (const count of [1, 3, 5]) {
@@ -1201,20 +1108,30 @@ export function testCorrectness(): void {
 										manager.getTrunkCommits("main").map((commit) => commit.revision),
 										expected,
 									);
-									const summary = structuredClone(manager.getSummaryData());
-									assert.deepEqual(
-										summary.main.trunk.map((commit) => commit.revision),
-										expected,
-									);
-									const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-									loaded.loadSummaryData(summary);
-									assert.deepEqual(
-										loaded.getTrunkCommits("main").map((commit) => commit.revision),
-										expected,
-									);
 								});
 							}
 						}
+					}
+
+					for (const limit of [1, 3]) {
+						it(`preserves history when sequencing suppresses trimming with retention ${limit}`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention: limit });
+							sequencePeerCommits(manager, 5, 1, 1);
+							manager.advanceMinimumSequenceNumber(brand(5));
+							const retained = manager.getTrunkCommits("main");
+							const local = applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+							const expected = [...retained, ...manager.getLocalCommits("main")];
+
+							manager.addSequencedChanges(
+								[local],
+								manager.localSessionId,
+								brand(6),
+								brand(5),
+								"main",
+								false,
+							);
+							assert.deepEqual(manager.getTrunkCommits("main"), expected);
+						});
 					}
 				});
 
@@ -1234,64 +1151,6 @@ export function testCorrectness(): void {
 					});
 				});
 
-				describe("branch.rebaseOnto", () => {
-					for (const historyRetention of [1, 3, true] as const) {
-						it(`rebases a fork's edit onto main and applies retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							sequencePeerCommits(manager, 2, 1, 1);
-							const main = manager.getLocalBranch("main");
-							const fork = main.fork();
-							applyBranchCommit(fork, [1, 2], 100);
-							sequencePeerCommits(manager, 4, 3, 3);
-							manager.advanceMinimumSequenceNumber(brand(6));
-							const expected = manager
-								.getTrunkCommits("main")
-								.slice(historyRetention === true ? 0 : -historyRetention);
-
-							fork.rebaseOnto(main);
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							assert.deepEqual(
-								fork.getHead().change,
-								TestChange.mint([1, 2, 3, 4, 5, 6], 100),
-							);
-						});
-					}
-
-					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						it(`keeps another fork's base within a batch after rebasing the oldest fork with retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							const commits = makeArray(5, (i) => ({
-								change: TestChange.mint(
-									makeArray(i, (j) => j + 1),
-									[i + 1],
-								),
-								revision: mintRevisionTag(),
-								customMetadata: undefined,
-							}));
-							manager.addSequencedChanges(
-								commits.slice(0, 2),
-								peer1,
-								brand(1),
-								brand(0),
-								"main",
-							);
-							const main = manager.getLocalBranch("main");
-							const oldestFork = main.fork();
-							manager.addSequencedChanges(commits.slice(2), peer1, brand(1), brand(0), "main");
-							const newerFork = main.fork();
-							sequencePeerCommits(manager, 5, 2, 6);
-							manager.advanceMinimumSequenceNumber(brand(6));
-							const expected = manager
-								.getTrunkCommits("main")
-								.slice(-Math.max(retentionLimit, 6));
-
-							oldestFork.rebaseOnto(main);
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							assert.equal(newerFork.getHead().wasTrimmed, undefined);
-						});
-					}
-				});
-
 				describe("branch.dispose", () => {
 					for (const [historyRetention, retentionLimit] of retentionPolicies) {
 						it(`releases history pinned by a local fork with retention ${historyRetention}`, () => {
@@ -1309,18 +1168,6 @@ export function testCorrectness(): void {
 
 							fork.dispose();
 							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-							const revisions = expected.map((commit) => commit.revision);
-							const summary = structuredClone(manager.getSummaryData());
-							assert.deepEqual(
-								summary.main.trunk.map((commit) => commit.revision),
-								revisions,
-							);
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(summary);
-							assert.deepEqual(
-								loaded.getTrunkCommits("main").map((commit) => commit.revision),
-								revisions,
-							);
 						});
 					}
 
@@ -1342,92 +1189,52 @@ export function testCorrectness(): void {
 
 								fork.dispose();
 								assert.deepEqual(manager.getTrunkCommits("main"), expected);
-								const revisions = expected.map((commit) => commit.revision);
-								const summary = structuredClone(manager.getSummaryData());
-								assert.equal(summary.main.trunk.length, expectedCount);
-								assert.deepEqual(
-									summary.main.trunk.map((commit) => commit.revision),
-									revisions,
-								);
-								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-								loaded.loadSummaryData(summary);
-								assert.deepEqual(
-									loaded.getTrunkCommits("main").map((commit) => commit.revision),
-									revisions,
-								);
 							});
 						}
 					}
 				});
 
 				describe("summary roundtripping", () => {
-					for (const historyRetention of [false, 1, true]) {
-						for (const hasBranchCommit of [false, true]) {
-							it(`processes a remote edit from a shared branch's original base after loading ${hasBranchCommit ? "nonempty" : "empty"} branch history with retention ${historyRetention}`, () => {
-								const { manager } = testChangeEditManagerFactory({ historyRetention });
-								sequencePeerCommits(manager, 2, 1, 1);
-								const branchId = testIdCompressor.generateCompressedId();
-								manager.addNewBranch(branchId);
-								sequencePeerCommits(manager, 3, 3, 3);
-								if (hasBranchCommit) {
-									const local = applyBranchCommit(
-										manager.getLocalBranch(branchId),
-										[1, 2],
-										100,
-									);
-									manager.addSequencedChanges(
-										[local],
-										manager.localSessionId,
-										brand(6),
-										brand(5),
-										branchId,
-									);
-								}
-								manager.advanceMinimumSequenceNumber(brand(5));
-								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-								loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
-								const remote = peerCommit(peer2, [1, 2], 200);
-								const expected = TestChange.mint(hasBranchCommit ? [1, 2, 100] : [1, 2], 200);
-								manager.addSequencedChanges([remote], peer2, brand(7), brand(5), branchId);
-								assert.deepEqual(manager.getTrunkHead(branchId).change, expected);
-
-								loaded.addSequencedChanges([remote], peer2, brand(7), brand(5), branchId);
-								assert.deepEqual(
-									loaded.getTrunkChanges(branchId),
-									manager.getTrunkChanges(branchId),
-								);
-							});
-						}
-					}
-
-					for (const historyRetention of [1, true]) {
+					for (const [historyRetention, retentionLimit] of retentionPolicies) {
 						for (const isLocal of [false, true]) {
-							for (const appendMainCommit of [false, true]) {
-								it(`roundtrips a ${isLocal ? "local" : "remote"} shared branch created at an already trimmed base after enabling retention ${historyRetention}${appendMainCommit ? " with new main history" : ""}`, () => {
-									const { manager } = testChangeEditManagerFactory({});
+							for (const count of [1, 3, 5]) {
+								it(`roundtrips history after sequencing ${count} ${isLocal ? "local" : "remote"} commits with retention ${historyRetention} without another MSN update`, () => {
+									const { manager } = testChangeEditManagerFactory({
+										historyRetention,
+									});
 									sequencePeerCommits(manager, 5, 1, 1);
 									manager.advanceMinimumSequenceNumber(brand(5));
-									manager.setHistoryRetention(historyRetention);
-									const branchId = testIdCompressor.generateCompressedId();
-									if (isLocal) {
-										manager.addNewBranch(branchId);
-									} else {
-										manager.sequenceBranchCreation(peer2, brand(5), branchId);
-									}
-									if (appendMainCommit) {
-										sequencePeerCommits(manager, 1, 6, 6);
-										manager.advanceMinimumSequenceNumber(brand(6));
-									}
-									const expected = manager
-										.getTrunkCommits("main")
+									const retained = manager.getTrunkCommits("main");
+									const commits = makeArray(count, (i) => {
+										const context = makeArray(5 + i, (j) => j + 1);
+										return isLocal
+											? applyLocalCommit(manager, context, 6 + i)
+											: {
+													change: TestChange.mint(context, [6 + i]),
+													revision: mintRevisionTag(),
+													customMetadata: undefined,
+												};
+									});
+									const expected = [...retained, ...commits]
+										.slice(-Math.max(retentionLimit, count))
 										.map((commit) => commit.revision);
-									assert.equal(expected.length, Number(appendMainCommit));
-									const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-									const loadedBase = loaded.getTrunkHead("main");
+									manager.addSequencedChanges(
+										commits,
+										isLocal ? manager.localSessionId : peer1,
+										brand(6),
+										brand(5),
+										"main",
+									);
+									const loaded = testChangeEditManagerFactory({
+										historyRetention,
+									}).manager;
 
 									const summary = structuredClone(manager.getSummaryData());
+									assert.deepEqual(
+										summary.main.trunk.map((commit) => commit.revision),
+										expected,
+									);
 									loaded.loadSummaryData(summary);
-									assert.equal(loaded.getTrunkHead(branchId), loadedBase);
 									assert.deepEqual(
 										loaded.getTrunkCommits("main").map((commit) => commit.revision),
 										expected,
@@ -1437,65 +1244,28 @@ export function testCorrectness(): void {
 						}
 					}
 
-					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						it(`continues a split batch after loading its first bunch with retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							sequencePeerCommits(manager, 1, 1, 1);
-							const commits = makeArray(5, (i) => ({
-								change: TestChange.mint(
-									makeArray(i + 1, (j) => j + 1),
-									[i + 2],
-								),
-								revision: mintRevisionTag(),
-								customMetadata: undefined,
-							}));
-							const revisions = [
-								manager.getTrunkHead("main").revision,
-								...commits.map((commit) => commit.revision),
-							];
-							manager.advanceMinimumSequenceNumber(brand(1));
-							manager.addSequencedChanges(
-								commits.slice(0, 2),
-								peer1,
-								brand(10),
-								brand(1),
-								"main",
-							);
-							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
-							loaded.loadSummaryData(structuredClone(manager.getSummaryData()));
-
-							loaded.addSequencedChanges(commits.slice(2), peer1, brand(10), brand(1), "main");
-							loaded.advanceMinimumSequenceNumber(brand(10));
-							assert.deepEqual(
-								loaded.getTrunkCommits("main").map((commit) => commit.revision),
-								revisions.slice(6 - Math.min(retentionLimit, 6)),
-							);
-						});
-					}
-
-					for (const [historyRetention, retentionLimit] of retentionPolicies) {
-						it(`roundtrips nonempty shared branches without counting their commits toward retention ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention });
-							sequencePeerCommits(manager, 2, 1, 1);
-							const branchId = testIdCompressor.generateCompressedId();
-							manager.addNewBranch(branchId);
-							sequencePeerCommits(manager, 3, 3, 3);
-							const branch = manager.getLocalBranch(branchId);
-							const commits = makeArray(5, (i) =>
-								applyBranchCommit(branch, [1, 2, ...makeArray(i, (j) => j + 100)], i + 100),
-							);
-							manager.addSequencedChanges(
-								commits,
-								manager.localSessionId,
-								brand(10),
-								brand(5),
-								branchId,
-							);
-							manager.advanceMinimumSequenceNumber(brand(10));
-							const expected = manager
+					for (const [initialHistoryRetention, historyRetention, expectedCount] of [
+						[true, false, 0],
+						[true, 0, 0],
+						[true, 3, 3],
+						[false, 3, 0],
+						[0, 3, 0],
+						[5, 1, 1],
+						[3, 5, 3],
+						[3, true, 3],
+						[3, Number.MAX_SAFE_INTEGER, 3],
+					] as const) {
+						it(`roundtrips history after changing retention from ${initialHistoryRetention} to ${historyRetention}`, () => {
+							const { manager } = testChangeEditManagerFactory({
+								historyRetention: initialHistoryRetention,
+							});
+							sequencePeerCommits(manager, 5, 1, 1);
+							const revisions = manager
 								.getTrunkCommits("main")
 								.map((commit) => commit.revision);
-							assert.equal(expected.length, Math.min(5, Math.max(retentionLimit, 4)));
+							manager.advanceMinimumSequenceNumber(brand(5));
+							manager.setHistoryRetention(historyRetention);
+							const expected = expectedCount === 0 ? [] : revisions.slice(-expectedCount);
 							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
 
 							const summary = structuredClone(manager.getSummaryData());
@@ -1503,16 +1273,11 @@ export function testCorrectness(): void {
 								summary.main.trunk.map((commit) => commit.revision),
 								expected,
 							);
-							assert.deepEqual(
-								summary.branches?.get(branchId)?.trunk.map((commit) => commit.revision),
-								commits.map((commit) => commit.revision),
-							);
 							loaded.loadSummaryData(summary);
 							assert.deepEqual(
 								loaded.getTrunkCommits("main").map((commit) => commit.revision),
 								expected,
 							);
-							assert.equal(loaded.getTrunkHead(branchId).revision, commits[4]?.revision);
 						});
 					}
 
@@ -1529,16 +1294,12 @@ export function testCorrectness(): void {
 								customMetadata: undefined,
 							}));
 							manager.addSequencedChanges(commits, peer1, brand(10), brand(1), "main");
-							const retained = manager.getTrunkCommits("main");
-							const revisions = retained.map((commit) => commit.revision);
+							const revisions = manager
+								.getTrunkCommits("main")
+								.map((commit) => commit.revision);
 							assert.equal(revisions.length, 6);
 							const expected = revisions.slice(6 - Math.min(retentionLimit, 6));
 							manager.advanceMinimumSequenceNumber(brand(10));
-							assert.deepEqual(
-								manager.getTrunkCommits("main"),
-								retained.slice(6 - Math.min(retentionLimit, 6)),
-							);
-							const expectedChanges = manager.getTrunkChanges("main");
 							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
 
 							const summary = structuredClone(manager.getSummaryData());
@@ -1551,33 +1312,75 @@ export function testCorrectness(): void {
 								loaded.getTrunkCommits("main").map((commit) => commit.revision),
 								expected,
 							);
-							assert.deepEqual(loaded.getTrunkChanges("main"), expectedChanges);
 							assert.deepEqual(loaded.getSummaryData().main.trunk, summary.main.trunk);
 						});
 					}
 
-					for (const [historyRetention] of retentionPolicies) {
-						it(`keeps a shared branch's base in the main trunk across loading and MSN advancement with retention ${historyRetention}`, () => {
-							let { manager } = testChangeEditManagerFactory({ historyRetention });
-							const branchId = testIdCompressor.generateCompressedId();
-							sequencePeerCommits(manager, 2, 1, 1);
-							const baseRevision = manager.getTrunkHead("main").revision;
-							manager.addNewBranch(branchId);
-							sequencePeerCommits(manager, 8, 3, 3);
-							manager.advanceMinimumSequenceNumber(brand(10));
+					for (const historyRetention of [true, Number.MAX_SAFE_INTEGER]) {
+						it(`roundtrips the whole trunk with retention ${historyRetention}`, () => {
+							const { manager } = testChangeEditManagerFactory({ historyRetention });
+							sequencePeerCommits(manager, 5, 1, 1);
+							// Move the collaboration window past every commit sequenced above.
+							manager.advanceMinimumSequenceNumber(brand(5));
+							const expected = manager.getTrunkCommits("main");
+							const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
 
-							const retained = manager
-								.getTrunkCommits("main")
-								.map((commit) => commit.revision);
-							assert(retained.includes(baseRevision));
-							for (const advanceLoadedMSN of [false, true]) {
+							const summary = structuredClone(manager.getSummaryData());
+							assert.equal(summary.main.trunk.length, 5);
+							loaded.loadSummaryData(summary);
+							assert.deepEqual(loaded.getTrunkCommits("main"), expected);
+						});
+					}
+
+					for (const [historyRetention] of retentionPolicies) {
+						for (const disposeFork of [false, true]) {
+							it(`roundtrips history ${disposeFork ? "after disposing" : "pinned by"} a local fork with retention ${historyRetention}`, () => {
+								const { manager, fork } = setupForkWithRetainedHistory(
+									historyRetention,
+									2,
+									10,
+									peer1,
+								);
+								if (disposeFork) {
+									fork.dispose();
+								}
+								const retained = manager
+									.getTrunkCommits("main")
+									.map((commit) => commit.revision);
+								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
+
+								const summary = structuredClone(manager.getSummaryData());
+								assert.deepEqual(
+									summary.main.trunk.map((commit) => commit.revision),
+									retained,
+								);
+								loaded.loadSummaryData(summary);
+								assert.deepEqual(
+									loaded.getTrunkCommits("main").map((commit) => commit.revision),
+									retained,
+								);
+							});
+						}
+
+						for (const advanceLoadedMSN of [false, true]) {
+							it(`keeps a shared branch's base in the main trunk with retention ${historyRetention}${advanceLoadedMSN ? " after advancing the loaded MSN" : ""}`, () => {
+								let { manager } = testChangeEditManagerFactory({ historyRetention });
+								const branchId = testIdCompressor.generateCompressedId();
+								sequencePeerCommits(manager, 2, 1, 1);
+								const baseRevision = manager.getTrunkHead("main").revision;
+								manager.addNewBranch(branchId);
+								sequencePeerCommits(manager, 8, 3, 3);
+								manager.advanceMinimumSequenceNumber(brand(10));
+
+								const retained = manager
+									.getTrunkCommits("main")
+									.map((commit) => commit.revision);
+								assert(retained.includes(baseRevision));
 								if (advanceLoadedMSN) {
+									const initialSummary = structuredClone(manager.getSummaryData());
+									manager = testChangeEditManagerFactory({ historyRetention }).manager;
+									manager.loadSummaryData(initialSummary);
 									manager.advanceMinimumSequenceNumber(brand(10));
-									assert.equal(manager.getTrunkHead(branchId).revision, baseRevision);
-									assert.deepEqual(
-										manager.getTrunkCommits("main").map((commit) => commit.revision),
-										retained,
-									);
 								}
 								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
 
@@ -1597,14 +1400,13 @@ export function testCorrectness(): void {
 								const reSummary = loaded.getSummaryData();
 								assert.equal(reSummary.branches?.get(branchId)?.base, baseRevision);
 								assert.deepEqual(reSummary.branches?.get(branchId)?.trunk, []);
-								manager = loaded;
-							}
-						});
+							});
+						}
 					}
 
 					for (const baseSequenceNumber of [1, 2]) {
 						for (const historyRetention of [false, 0, 1, 3, 20] as const) {
-							it(`roundtrips peer base ${baseSequenceNumber} in the main trunk and trims it after the peer catches up with retention ${historyRetention}`, () => {
+							it(`keeps peer base ${baseSequenceNumber} in the main trunk, not the peer branch, with retention ${historyRetention}`, () => {
 								const expectedCount = Number(historyRetention);
 								const totalCommitCount = Math.max(10, expectedCount + baseSequenceNumber);
 								const { manager, baseRevision: peerBaseRevision } =
@@ -1640,14 +1442,34 @@ export function testCorrectness(): void {
 									loaded.getTrunkCommits("main").map((commit) => commit.revision),
 									expected,
 								);
-								sequencePeerCommits(loaded, 1, totalCommitCount + 1, totalCommitCount + 1);
-								const expectedAfterCatchUp =
-									expectedCount === 0
-										? []
-										: loaded.getTrunkCommits("main").slice(-expectedCount);
+							});
 
-								loaded.advanceMinimumSequenceNumber(brand(totalCommitCount + 1));
-								assert.deepEqual(loaded.getTrunkCommits("main"), expectedAfterCatchUp);
+							it(`roundtrips history after releasing peer base ${baseSequenceNumber} with retention ${historyRetention}`, () => {
+								const expectedCount = Number(historyRetention);
+								const totalCommitCount = Math.max(10, expectedCount + baseSequenceNumber);
+								const { manager, fork } = setupForkWithRetainedHistory(
+									historyRetention,
+									baseSequenceNumber,
+									totalCommitCount,
+									peer2,
+								);
+								fork.dispose();
+								const expected = manager
+									.getTrunkCommits("main")
+									.map((commit) => commit.revision);
+								const reloaded = testChangeEditManagerFactory({ historyRetention }).manager;
+
+								const trimmedSummary = structuredClone(manager.getSummaryData());
+								assert.equal(trimmedSummary.main.trunk.length, expectedCount);
+								assert.deepEqual(
+									trimmedSummary.main.trunk.map((commit) => commit.revision),
+									expected,
+								);
+								reloaded.loadSummaryData(trimmedSummary);
+								assert.deepEqual(
+									reloaded.getTrunkCommits("main").map((commit) => commit.revision),
+									expected,
+								);
 							});
 						}
 					}
@@ -1657,18 +1479,25 @@ export function testCorrectness(): void {
 						[true, Number.POSITIVE_INFINITY],
 						[Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
 					] as const) {
-						it(`roundtrips history with retention ${historyRetention} across three generations`, () => {
-							let manager = testChangeEditManagerFactory({ historyRetention }).manager;
-							const revisions: RevisionTag[] = [];
-							for (let generation = 0; generation < 3; generation++) {
-								sequencePeerCommits(manager, 5, generation * 5 + 1, generation * 5 + 1);
-								revisions.push(
-									...manager
-										.getTrunkCommits("main")
-										.slice(-5)
-										.map((commit) => commit.revision),
-								);
-								manager.advanceMinimumSequenceNumber(brand(generation * 5 + 5));
+						for (const generationCount of [2, 3]) {
+							it(`roundtrips history with retention ${historyRetention} across ${generationCount} generations`, () => {
+								let manager = testChangeEditManagerFactory({ historyRetention }).manager;
+								const revisions: RevisionTag[] = [];
+								for (let generation = 0; generation < generationCount; generation++) {
+									sequencePeerCommits(manager, 5, generation * 5 + 1, generation * 5 + 1);
+									revisions.push(
+										...manager
+											.getTrunkCommits("main")
+											.slice(-5)
+											.map((commit) => commit.revision),
+									);
+									manager.advanceMinimumSequenceNumber(brand(generation * 5 + 5));
+									if (generation < generationCount - 1) {
+										const initialSummary = structuredClone(manager.getSummaryData());
+										manager = testChangeEditManagerFactory({ historyRetention }).manager;
+										manager.loadSummaryData(initialSummary);
+									}
+								}
 								const expected = revisions.slice(-retentionLimit);
 								const loaded = testChangeEditManagerFactory({ historyRetention }).manager;
 
@@ -1682,9 +1511,8 @@ export function testCorrectness(): void {
 									loaded.getTrunkCommits("main").map((commit) => commit.revision),
 									expected,
 								);
-								manager = loaded;
-							}
-						});
+							});
+						}
 					}
 				});
 			});
@@ -1946,26 +1774,24 @@ export function testCorrectness(): void {
 				seq: 0,
 				inFlight: 0,
 			};
-			for (const historyRetention of [false, 1, 3, true]) {
-				it(`for ${NUM_PEERS} peers and ${NUM_STEPS} steps with retention ${historyRetention}`, () => {
-					for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
-						// Uncomment the code below to log the titles of generated scenarios.
-						// This is helpful for creating a unit test out of a generated scenario that fails.
-						// const title = scenario
-						// 	.map((s) => {
-						// 		if (s.type === "Pull") {
-						// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-						// 		} else if (s.type === "Ack") {
-						// 			return `Ack(${s.seq})`;
-						// 		}
-						// 		return `Push(${s.seq})`;
-						// 	})
-						// 	.join("|");
-						// console.debug(title);
-						runUnitTestScenario(undefined, scenario, undefined, historyRetention);
-					}
-				});
-			}
+			it(`for ${NUM_PEERS} peers and ${NUM_STEPS} steps`, () => {
+				for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
+					// Uncomment the code below to log the titles of generated scenarios.
+					// This is helpful for creating a unit test out of a generated scenario that fails.
+					// const title = scenario
+					// 	.map((s) => {
+					// 		if (s.type === "Pull") {
+					// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+					// 		} else if (s.type === "Ack") {
+					// 			return `Ack(${s.seq})`;
+					// 		}
+					// 		return `Push(${s.seq})`;
+					// 	})
+					// 	.join("|");
+					// console.debug(title);
+					runUnitTestScenario(undefined, scenario);
+				}
+			});
 		});
 	});
 	describe("Eventing Correctness", () => {

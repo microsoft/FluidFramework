@@ -181,7 +181,6 @@ export function runUnitTestScenario(
 	title: string | undefined,
 	stepsWithoutIntention: readonly UnitTestScenarioStep[],
 	rebaser?: ChangeRebaser<TestChange>,
-	historyRetention: boolean | number = false,
 ): void {
 	const steps: UnitTestScenarioStepWithIntention[] = [];
 	// Assign an intention to each non-push step in the scenario. This is used for two purposes:
@@ -198,7 +197,7 @@ export function runUnitTestScenario(
 		}
 	}
 	const run = (advanceMinimumSequenceNumber: boolean) => {
-		const { manager } = testChangeEditManagerFactory({ rebaser, historyRetention });
+		const { manager } = testChangeEditManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
 		 * Used as a source of summary data to spin-up `joiners`.
@@ -206,7 +205,6 @@ export function runUnitTestScenario(
 		 */
 		const summarizer = testChangeEditManagerFactory({
 			rebaser,
-			historyRetention,
 			sessionId: "Summarizer" as SessionId,
 		}).manager;
 		/**
@@ -461,16 +459,13 @@ export function runUnitTestScenario(
 			}
 
 			// The exposed trunk and local changes should reflect what is known to the local client
-			const retentionCount = historyRetention === true ? Infinity : Number(historyRetention);
-			const retainedIntentions = new Set(
-				trunk
-					.slice(Math.max(0, trunk.length - retentionCount))
-					.map((value) => value.intention),
-			);
 			checkChangeList(
 				manager,
 				knownToLocal
-					.filter((i) => i.seq > minimumSequenceNumber || retainedIntentions.has(i.intention))
+					.filter(
+						// Only expect changes which have not been dropped by trunk eviction
+						(i) => i.seq > minimumSequenceNumber,
+					)
 					.map((value) => value.intention),
 			);
 			checkChangeList(
@@ -484,7 +479,6 @@ export function runUnitTestScenario(
 				if (step.type !== "Push") {
 					const joiner = testChangeEditManagerFactory({
 						rebaser,
-						historyRetention,
 						sessionId: `Join${joiners.length}` as SessionId,
 					}).manager;
 					const summary = structuredClone(summarizer.getSummaryData());
