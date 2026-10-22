@@ -58,7 +58,7 @@ const minimumPossibleSequenceId: SequenceId = {
  * A special revision tag for the initial {@link EditManager.trunkBase} commit.
  * @remarks This tag is used to supply the _initial_ trunk base with a known revision.
  * The trunk base may advance over time, after which point the trunk base will have a different revision.
- * When {@link EditManager.getSummaryData | serializing} and deserializing, peer branches that include the trunk base commit in their history will always use this tag.
+ * When {@link EditManager.getSummaryData | serializing} and deserializing, shared and peer branches that include the trunk base commit in their history will always use this tag.
  */
 const rootRevision = "root" as const satisfies RevisionTag;
 
@@ -112,6 +112,20 @@ export class EditManager<
 	 * Collaboration and registered branches can require retaining additional history.
 	 */
 	private historyRetention: boolean | number = false;
+
+	/**
+	 * Temporarily prevents history eviction, including trimming requested indirectly by branch events.
+	 *
+	 * @remarks
+	 * {@link addSequencedChanges} sets this flag when `allowHistoryTrimming` is `false`.
+	 * Sequencing can rebase registered branches, whose event handlers also call {@link trimHistory}.
+	 * Checking this flag in {@link trimHistory} prevents those indirect calls from bypassing the caller's request to defer trimming.
+	 *
+	 * The previous value is restored in a `finally` block so nested sequencing preserves an outer suspension,
+	 * and a failed call does not leave trimming suspended.
+	 * This flag does not change the retention policy, and restoring it does not itself trigger trimming.
+	 */
+	private historyTrimmingSuspended = false;
 
 	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
@@ -211,7 +225,7 @@ export class EditManager<
 	 * @remarks
 	 * The bound need not identify an existing commit.
 	 * With extra retention disabled, the bound is the collaboration bound unless a registered branch requires an earlier one.
-	 * Unlimited retention or an unfilled numeric window returns {@link minimumPossibleSequenceId}.
+	 * Unlimited retention or a numeric window covering all available history returns {@link minimumPossibleSequenceId}.
 	 * This also handles empty history.
 	 */
 	private getHistoryTrimmingBound(): SequenceId {
@@ -233,10 +247,13 @@ export class EditManager<
 		if (this.historyRetention === true) {
 			return minimumPossibleSequenceId;
 		}
+		const sequenceIdToCommit = this.getSharedBranch("main").sequenceIdToCommit;
+		// The map includes the trimmed base, which does not count toward retention.
+		if (this.historyRetention >= sequenceIdToCommit.size - 1) {
+			return minimumPossibleSequenceId;
+		}
 		let remaining = this.historyRetention;
-		for (const [sequenceId, commit] of this.getSharedBranch(
-			"main",
-		).sequenceIdToCommit.entriesReversed()) {
+		for (const [sequenceId, commit] of sequenceIdToCommit.entriesReversed()) {
 			if (commit === this.trunkBase) {
 				break;
 			}
@@ -383,6 +400,10 @@ export class EditManager<
 	 * to evict trunk commits that are no longer needed.
 	 */
 	private trimHistory(): void {
+		if (this.historyTrimmingSuspended) {
+			return;
+		}
+
 		const trunkTailSequenceId = this.getHistoryTrimmingBound();
 		const mainBranch = this.getSharedBranch("main");
 
@@ -488,7 +509,10 @@ export class EditManager<
 				);
 				branches.set(branchId, branchSummary);
 				assert(branchSummary.base !== undefined, 0xc57 /* Branch summary must have a base */);
-				const baseSequenceId = mainBranch.getCommitSequenceId(branchSummary.base);
+				const baseSequenceId =
+					branchSummary.base === rootRevision
+						? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
+						: mainBranch.getCommitSequenceId(branchSummary.base);
 				minBaseSeqId = minSequenceId(minBaseSeqId, baseSequenceId);
 			}
 		}
@@ -667,6 +691,7 @@ export class EditManager<
 	 *
 	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy after sequencing the entire bunch.
 	 * Set to false for detached edits to defer trimming.
+	 * When false, also prevents trimming requested by branch events during this call.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
 	public addSequencedChanges(
@@ -691,6 +716,20 @@ export class EditManager<
 			previousSequenceId: SequenceId,
 		): void => {
 			branch.localBranch.commitWasSequenced(commit);
+			if (branchId !== "main") {
+				// Shared-branch acknowledgements do not move any base on the main trunk.
+				for (const branches of this.trunkBranches.values()) {
+					for (const forkedBranch of branches) {
+						if (
+							forkedBranch !== branch.localBranch &&
+							findAncestor(forkedBranch.getHead(), (c) => c === commit) !== undefined
+						) {
+							forkedBranch.commitWasSequenced(commit);
+						}
+					}
+				}
+				return;
+			}
 			// Next, we need to update the sequence IDs that our local branches (user's branches, not peer branches) are associated with.
 			// In particular, if a local branch is based on the previous trunk head (the branch's first ancestor in the trunk is the commit that was the head before we pushed the new commit)
 			// and also branches off of the local branch (it has an ancestor that is part of the local branch), it needs to have its sequence number advanced to be that of the new trunk head.
@@ -722,14 +761,20 @@ export class EditManager<
 		};
 
 		const areLocalCommits = sessionId === this.localSessionId;
-		branch.addSequencedChanges(
-			newCommits,
-			sessionId,
-			sequenceNumber,
-			areLocalCommits,
-			referenceSequenceNumber,
-			onSequenceLocalCommit,
-		);
+		const wasHistoryTrimmingSuspended = this.historyTrimmingSuspended;
+		this.historyTrimmingSuspended = wasHistoryTrimmingSuspended || !allowHistoryTrimming;
+		try {
+			branch.addSequencedChanges(
+				newCommits,
+				sessionId,
+				sequenceNumber,
+				areLocalCommits,
+				referenceSequenceNumber,
+				onSequenceLocalCommit,
+			);
+		} finally {
+			this.historyTrimmingSuspended = wasHistoryTrimmingSuspended;
+		}
 		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
@@ -1228,7 +1273,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		return {
 			trunk,
 			peerLocalBranches,
-			base: trunkBase,
+			base: trunkBase === trunkBaseRevision ? rootRevision : trunkBase,
 			id: this.id,
 			name: this.branchName,
 			session: this.sessionId,
@@ -1246,6 +1291,11 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		const parentTrunkBase =
 			trunkRevisionCache.get(data.base ?? rootRevision) ??
 			fail(0xc61 /* Expected base revision to be in trunk cache */);
+		// The minimum-key entry is the fallback for reference-sequence lookups before this branch's first sequenced commit.
+		// The constructor seeds it from the initial trunk head.
+		// For a loaded shared branch, that head is main's current head, which may be newer than the serialized fork point.
+		// Restore the actual base so subsequent remote edits rebase from the fork point without importing newer main-only edits.
+		this.sequenceIdToCommit.set(minimumPossibleSequenceId, parentTrunkBase);
 		let trunkHead = parentTrunkBase;
 		for (const c of data.trunk) {
 			const sequenceId: SequenceId =
