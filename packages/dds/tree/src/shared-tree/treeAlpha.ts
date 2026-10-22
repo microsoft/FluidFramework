@@ -989,10 +989,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 
-				const index =
-					typeof propertyKey === "number"
-						? propertyKey
-						: asIndex(propertyKey, Number.POSITIVE_INFINITY);
+				const index = typeof propertyKey === "number" ? propertyKey : asIndex(propertyKey);
 
 				// If the key is not a valid index, then there is no corresponding child.
 				if (index === undefined) {
@@ -1060,8 +1057,7 @@ export const TreeAlpha: TreeAlpha = {
 				}
 
 				for (let index = 0; index < sequence.length; index++) {
-					const childFlexTree = sequence.at(index);
-					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+					const childFlexTree = sequence.atIndex(index);
 					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 					result.push([index, childTree]);
 				}

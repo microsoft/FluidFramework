@@ -26,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
@@ -384,7 +386,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, unsafeArrayToTuple } from "./util/index.js";
 
 import type * as InternalTypes from "./internalTypes.js";
 /**
@@ -424,7 +426,6 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	computeSchemaHash,
-	identifySchema,
+	identifySchemaAlpha,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";

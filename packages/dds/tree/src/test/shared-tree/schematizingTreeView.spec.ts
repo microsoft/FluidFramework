@@ -43,7 +43,7 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
-	identifySchema,
+	identifySchemaAlpha,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -98,7 +98,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchema({ expectedHash: computeSchemaHash(root) }),
+						schemaIdentity: identifySchemaAlpha({ expectedHash: computeSchemaHash(root) }),
 					}),
 				);
 
@@ -109,7 +109,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchema({
+					schemaIdentity: identifySchemaAlpha({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -135,13 +135,13 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchema(),
+						schemaIdentity: identifySchemaAlpha(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires schema identity to be created with identifySchema", () => {
+			it("requires schema identity to be created with identifySchemaAlpha", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
@@ -149,7 +149,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity must be created with identifySchema/),
+					validateUsageError(/schemaIdentity must be created with identifySchemaAlpha/),
 				);
 			});
 		});
@@ -162,7 +162,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchema(),
+					schemaIdentity: identifySchemaAlpha(),
 				}),
 			);
 
@@ -189,7 +189,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchema(),
+					schemaIdentity: identifySchemaAlpha(),
 				}),
 			);
 

@@ -189,7 +189,7 @@ export interface ITreeViewConfigurationAlpha<
 	/**
 	 * Provides hashing for schema telemetry and optional checks when constructing a view.
 	 * @remarks
-	 * Create with {@link identifySchema}.
+	 * Create with {@link identifySchemaAlpha}.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;
 }
@@ -301,6 +301,10 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
 
+	// TODO: Consider an async creator so identifySchemaAlpha can use native Web Crypto hashing APIs,
+	// saving approximately 2 KB of compressed bundle size.
+	// This is worth pursuing if there is another reason to make configuration creation async,
+	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);

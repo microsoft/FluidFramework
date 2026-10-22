@@ -258,6 +258,8 @@ export {
 	PlainText, 
 	ReadSchema, 
 	ReadableField, 
+	RebaseValidation, 
+	RebaseValidationLevel, 
 	RecordNodeCustomizableSchema, 
 	RecordNodePojoEmulationSchema, 
 	RecordNodeSchema, 
@@ -330,7 +332,6 @@ export {
 	cloneWithReplacements, 
 	codePointCount, 
 	comparePersistedSchema, 
-	computeSchemaHash,
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 
@@ -347,7 +348,7 @@ export {
 	generateSchemaFromSimpleSchema, 
 	getJsonSchema, 
 	getSimpleSchema, 
-	identifySchema,
+	identifySchemaAlpha,
 	importCompatibilitySchemaSnapshot, 
 	incrementalEncodingPolicyForAllowedTypes, 
 	incrementalSummaryHint, 
@@ -361,6 +362,7 @@ export {
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
 	trackDirtyNodes, 
+	unsafeArrayToTuple,
 	utf16LengthForCodePoints
 	// #endregion
 } from "../index.js";

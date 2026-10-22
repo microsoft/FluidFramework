@@ -32,6 +32,8 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v2: 2,
 	/**
 	 * Experimental codec with optimizations for text.
+	 * @remarks
+	 * Adds {@link EncodedSpecializedNodeShape} to the shapes of v2.
 	 */
 	vTextExperimental: "text",
 });
@@ -42,9 +44,34 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
  * @remarks
  * This helper should be used for comparison since experimental versions
  * can be a string.
+ *
+ * Formats in this encoding family are additive: each later format, including experimental ones,
+ * keeps every shape of the formats before it.
+ * Listing only the formats that predate {@link EncodedIncrementalChunkShape} is enough,
+ * and new formats do not need to be added here.
  */
 export function supportsIncrementalEncoding(version: FieldBatchFormatVersion): boolean {
 	if (version === FieldBatchFormatVersion.v1) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Whether the given format version supports the {@link EncodedSpecializedNodeShape} (`f`) shape.
+ *
+ * @remarks
+ * This helper should be used for comparison since experimental versions
+ * can be a string.
+ *
+ * Formats in this encoding family are additive: each later format, including experimental ones,
+ * keeps every shape of the formats before it.
+ * Listing only the formats that predate {@link EncodedSpecializedNodeShape} is enough,
+ * and new formats do not need to be added here.
+ */
+export function supportsSpecializedNodeShapes(version: FieldBatchFormatVersion): boolean {
+	if (version === FieldBatchFormatVersion.v1 || version === FieldBatchFormatVersion.v2) {
 		return false;
 	}
 
