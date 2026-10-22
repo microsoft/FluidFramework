@@ -375,9 +375,19 @@ describe("staged allowed type upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
+		expectCompatibility(fullyMigratedSchema, {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
 		assert(
 			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStagedType).rootFieldSchema),
 		);
+		expectCompatibility(baseSchema, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
 		expectCompatibility(schemaWithStagedType, {
 			canView: true,
 			canUpgrade: true,
@@ -397,6 +407,17 @@ describe("staged allowed type upgrade", () => {
 		);
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
+		expectCompatibility(baseSchema, {
+			canView: false,
+			canUpgrade: false,
+			isEquivalent: false,
+		});
+		expectCompatibility(schemaWithStagedType, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			enabledUpgrades: new Map([[stringUpgrade, "enabled"]]),
+		});
 		expectCompatibility(fullyMigratedSchema, {
 			canView: true,
 			canUpgrade: true,
@@ -653,9 +674,19 @@ describe("staged optional upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
+		expectCompatibility(optionalSchema, {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
 		assert(
 			stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedOptionalSchema).rootFieldSchema),
 		);
+		expectCompatibility(requiredSchema, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
 		expectCompatibility(stagedOptionalSchema, {
 			canView: true,
 			canUpgrade: true,
