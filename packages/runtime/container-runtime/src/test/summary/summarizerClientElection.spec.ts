@@ -801,7 +801,7 @@ describe("Summarizer Client Election", () => {
 				{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 100 },
 			);
 			assertState(undefined, undefined, 100, "missing elected client remains undefined");
-			mockLogger.matchEvents([
+			mockLogger.assertMatch([
 				{
 					eventName: "SummarizerClientElection:InitialElectedClientNotFound",
 					expectedClientId: "x",
