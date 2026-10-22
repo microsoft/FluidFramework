@@ -10,6 +10,7 @@ export {
 	ArrayNodeSchema,
 	arraySchema,
 	asIndex,
+	asIndexWithinBounds,
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	TreeArrayNode,
