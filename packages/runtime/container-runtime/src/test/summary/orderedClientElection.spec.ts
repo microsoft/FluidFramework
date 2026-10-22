@@ -9,18 +9,17 @@ import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type IOrderedClientCollection,
 	type IOrderedClientElection,
 	type ISerializedElection,
 	type ITrackedClient,
-	OrderedClientCollection,
 	OrderedClientElection,
+	SummarizerClientElection,
+	summarizerClientType,
 } from "../../summary/index.js";
 
 import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
-	let orderedClients: IOrderedClientCollection;
 	const mockLogger = new MockLogger();
 	const testQuorum = new TestQuorumClients();
 
@@ -31,11 +30,19 @@ describe("Ordered Client Collection", () => {
 		},
 	};
 
-	function addClient(clientId: string, sequenceNumber: number, interactive = true) {
+	function addClient(
+		clientId: string,
+		sequenceNumber: number,
+		interactive = true,
+		type?: string,
+	) {
 		if (sequenceNumber > currentSequenceNumber) {
 			currentSequenceNumber = sequenceNumber;
 		}
-		const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
+		const details: ISequencedClient["client"]["details"] = {
+			capabilities: { interactive },
+			type,
+		};
 		const c: Partial<ISequencedClient["client"]> = { details };
 		const client: ISequencedClient = {
 			client: c as ISequencedClient["client"],
@@ -47,73 +54,11 @@ describe("Ordered Client Collection", () => {
 		currentSequenceNumber += opCount;
 		testQuorum.removeClient(clientId);
 	}
-	function createOrderedClientCollection(
-		initialClients: [id: string, seq: number, int: boolean][] = [],
-	): IOrderedClientCollection {
-		for (const [id, seq, int] of initialClients) {
-			addClient(id, seq, int);
-		}
-		orderedClients = new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum);
-		return orderedClients;
-	}
-	function assertCollectionState(expectedCount: number, message = "") {
-		const prefix = message ? `${message} - ` : "";
-		assert.strictEqual(
-			orderedClients.count,
-			expectedCount,
-			`${prefix}Invalid client count: ${orderedClients.count} !== ${expectedCount}`,
-		);
-	}
-	function assertOrderedClientIds(...expectedIds: string[]) {
-		const actualIds = orderedClients.getAllClients();
-		assert.strictEqual(
-			actualIds.length,
-			expectedIds.length,
-			`Unexpected count of ordered client ids: ${actualIds.length} !== ${expectedIds.length}`,
-		);
-		for (let i = 0; i < actualIds.length; i++) {
-			assert.strictEqual(
-				actualIds[i].clientId,
-				expectedIds[i],
-				`Unexpected ordered client id at index ${i}: ${actualIds[i].clientId} !== ${expectedIds[i]}`,
-			);
-		}
-	}
 
 	afterEach(() => {
 		mockLogger.clear();
 		testQuorum.reset();
 		currentSequenceNumber = 0;
-	});
-
-	describe("Initialize", () => {
-		it("Should initialize with empty quorum", () => {
-			createOrderedClientCollection();
-			assertCollectionState(0);
-			assertOrderedClientIds();
-		});
-
-		it("Should initialize with correct count", () => {
-			createOrderedClientCollection([
-				["a", 1, true],
-				["b", 2, true],
-				["s", 5, false],
-				["c", 9, true],
-			]);
-			assertCollectionState(4);
-			assertOrderedClientIds("a", "b", "s", "c");
-		});
-
-		it("Should initialize in correct order", () => {
-			createOrderedClientCollection([
-				["c", 9, true],
-				["b", 2, true],
-				["a", 1, true],
-				["s", 5, false],
-			]);
-			assertCollectionState(4);
-			assertOrderedClientIds("a", "b", "s", "c");
-		});
 	});
 
 	describe("Ordered Client Election", () => {
@@ -122,8 +67,11 @@ describe("Ordered Client Collection", () => {
 		function createOrderedClientElection(
 			initialClients: [id: string, seq: number, int: boolean][] = [],
 			initialState?: ISerializedElection,
+			isEligibleFn = (c: ITrackedClient) => c.client.details.capabilities.interactive,
 		): IOrderedClientElection {
-			createOrderedClientCollection(initialClients);
+			for (const [id, seq, int] of initialClients) {
+				addClient(id, seq, int);
+			}
 			if (
 				initialState !== undefined &&
 				initialState.electionSequenceNumber > currentSequenceNumber
@@ -132,9 +80,10 @@ describe("Ordered Client Collection", () => {
 			}
 			election = new OrderedClientElection(
 				mockLogger.toTelemetryLogger(),
-				orderedClients,
+				testDeltaManager,
+				testQuorum,
 				initialState ?? currentSequenceNumber,
-				(c: ITrackedClient) => c.client.details.capabilities.interactive,
+				isEligibleFn,
 			);
 			election.on("election", () => electionEventCount++);
 			return election;
@@ -146,13 +95,11 @@ describe("Ordered Client Collection", () => {
 			election.resetElectedClient(sequenceNumber);
 		}
 		function assertElectionState(
-			expectedTotalCount: number,
 			expectedEligibleCount: number,
 			expectedElectedClientId: string | undefined,
 			expectedElectionSequenceNumber: number,
 			message = "",
 		) {
-			assertCollectionState(expectedTotalCount, message);
 			const prefix = message ? `${message} - ` : "";
 			assert.strictEqual(
 				election.eligibleCount,
@@ -198,15 +145,9 @@ describe("Ordered Client Collection", () => {
 		});
 
 		describe("Initialize", () => {
-			const emptySerializedElection = {
-				electedClientId: undefined,
-				electedParentId: undefined,
-				electionSequenceNumber: 101,
-			};
-
 			it("Should initialize with empty quorum", () => {
 				createOrderedClientElection();
-				assertElectionState(0, 0, undefined, 0);
+				assertElectionState(0, undefined, 0);
 				assertOrderedEligibleClientIds();
 			});
 
@@ -217,28 +158,63 @@ describe("Ordered Client Collection", () => {
 					["s", 5, false],
 					["c", 9, true],
 				]);
-				assertElectionState(4, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 
 			it("Should initialize with empty quorum at specific sequence number", () => {
 				currentSequenceNumber = 99;
 				createOrderedClientElection();
-				assertElectionState(0, 0, undefined, 99);
+				assertElectionState(0, undefined, 99);
 				assertOrderedEligibleClientIds();
+			});
+
+			it("Should elect parents by join sequence regardless of initial insertion order", () => {
+				createOrderedClientElection([
+					["c", 9, true],
+					["b", 2, true],
+					["a", 1, true],
+				]);
+				assertElectionState(3, "a", 9);
+				assert.equal(election.electedParent?.clientId, "a");
+				assert.equal(election.peekNextElectedClient()?.clientId, "b");
+
+				removeClient("a");
+				assertElectionState(2, "b", 10);
+				assert.equal(election.electedParent?.clientId, "b");
+				assertEvents(1);
+
+				resetElectedClient(100);
+				assertElectionState(2, "b", 10);
+				assert.equal(election.electedParent?.clientId, "b");
+				assertEvents(1);
+			});
+
+			it("Should elect the oldest eligible summarizer regardless of initial insertion order", () => {
+				addClient("a", 1);
+				addClient("newer", 3, false, summarizerClientType);
+				addClient("older", 2, false, summarizerClientType);
+				createOrderedClientElection([], undefined, SummarizerClientElection.isClientEligible);
+				assertElectionState(3, "older", 3);
+				assert.equal(election.electedParent?.clientId, "a");
+
+				removeClient("newer");
+				assertElectionState(2, "older", 3);
+				assertEvents(0);
+
+				removeClient("older");
+				assertElectionState(1, "a", 5);
+				assert.equal(election.electedParent?.clientId, "a");
+				assertEvents(1);
 			});
 
 			it("Should initialize with empty quorum and initial state", () => {
-				createOrderedClientElection(undefined, emptySerializedElection);
-				assertElectionState(0, 0, undefined, 101);
-				assertOrderedEligibleClientIds();
-			});
-
-			it("Should log error with empty quorum and initially elected client", () => {
-				const clientId = "x";
-				createOrderedClientElection(undefined, emptySerializedElection);
-				assertElectionState(0, 0, undefined, 101);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId }]);
+				createOrderedClientElection(undefined, {
+					electedClientId: undefined,
+					electedParentId: undefined,
+					electionSequenceNumber: 101,
+				});
+				assertElectionState(0, undefined, 101);
 				assertOrderedEligibleClientIds();
 			});
 
@@ -252,7 +228,7 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, "b", 4321);
+				assertElectionState(3, "b", 4321);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 
@@ -267,15 +243,108 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(5, 3, "c", 4321);
-				mockLogger.matchEvents([
+				assertElectionState(3, "c", 4321);
+				mockLogger.assertMatch([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: "c",
 					},
 				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
+			});
+
+			for (const electedParentId of [undefined, "missing", "ineligible"]) {
+				it(`Should use the restored interactive client as parent when the recorded parent is ${electedParentId}`, () => {
+					createOrderedClientElection(
+						[
+							["a", 1, true],
+							["ineligible", 2, false],
+							["b", 3, true],
+						],
+						{ electedClientId: "b", electedParentId, electionSequenceNumber: 100 },
+					);
+					assert.deepEqual(election.serialize(), {
+						electedClientId: "b",
+						electedParentId: "b",
+						electionSequenceNumber: 100,
+					});
+					removeClient("b");
+					assertElectionState(1, "a", 101);
+					assert.equal(election.electedParent?.clientId, "a");
+				});
+
+				it(`Should preserve a restored summarizer when the recorded parent is ${electedParentId}`, () => {
+					addClient("ineligible", 1, false);
+					addClient("s", 3, false, summarizerClientType);
+					createOrderedClientElection(
+						[],
+						{ electedClientId: "s", electedParentId, electionSequenceNumber: 100 },
+						SummarizerClientElection.isClientEligible,
+					);
+					assert.deepEqual(election.serialize(), {
+						electedClientId: "s",
+						electedParentId: undefined,
+						electionSequenceNumber: 100,
+					});
+					addClient("b", 101);
+					assert.equal(election.electedClient?.clientId, "s");
+					assert.equal(election.electedParent?.clientId, "b");
+					resetElectedClient(102);
+					assert.equal(election.electedClient?.clientId, "s");
+					removeClient("s");
+					assertElectionState(1, "b", 103);
+					assert.equal(election.electedParent?.clientId, "b");
+				});
+			}
+
+			for (const hasParent of [false, true]) {
+				it(`Should elect an existing summarizer on fresh initialization ${hasParent ? "with" : "without"} an interactive parent`, () => {
+					if (hasParent) {
+						addClient("a", 1);
+					}
+					addClient("s", 2, false, summarizerClientType);
+					createOrderedClientElection(
+						[],
+						undefined,
+						SummarizerClientElection.isClientEligible,
+					);
+					assertElectionState(hasParent ? 2 : 1, "s", 2);
+					assert.equal(election.electedParent?.clientId, hasParent ? "a" : undefined);
+					if (!hasParent) {
+						addClient("a", 3);
+					}
+					addClient("b", 4);
+					assert.equal(election.electedClient?.clientId, "s");
+					assert.equal(election.electedParent?.clientId, "a");
+					removeClient("s");
+					assertElectionState(2, "a", 5);
+					assert.equal(election.electedParent?.clientId, "a");
+				});
+			}
+
+			it("Should advance past an ineligible elected client rather than reuse its older parent", () => {
+				createOrderedClientElection(
+					[
+						["a", 1, true],
+						["ineligible", 2, false],
+						["b", 3, true],
+					],
+					{
+						electedClientId: "ineligible",
+						electedParentId: "a",
+						electionSequenceNumber: 100,
+					},
+				);
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "b",
+					electedParentId: "b",
+					electionSequenceNumber: 100,
+				});
+				removeClient("b");
+				assertElectionState(1, "a", 101);
+				assert.equal(election.electedParent?.clientId, "a");
 			});
 
 			it("Should log error and elect undefined when initially elected client is ineligible and last", () => {
@@ -288,11 +357,12 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 2, undefined, 4321);
-				mockLogger.matchEvents([
+				assertElectionState(2, undefined, 4321);
+				mockLogger.assertMatch([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: undefined,
 					},
 				]);
@@ -309,8 +379,16 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, undefined, 4321);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
+				assertElectionState(3, undefined, 4321);
+				mockLogger.assertMatch([
+					{
+						eventName: "InitialElectedClientNotFound",
+						electionSequenceNumber: 4321,
+						expectedClientId: "x",
+						electedClientId: undefined,
+						clientCount: 4,
+					},
+				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});
@@ -324,7 +402,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 100, false);
-				assertElectionState(5, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
@@ -332,7 +410,7 @@ describe("Ordered Client Collection", () => {
 			it("Should add ineligible client to empty quorum without impacting eligible clients", () => {
 				createOrderedClientElection();
 				addClient("n", 100, false);
-				assertElectionState(1, 0, undefined, 0);
+				assertElectionState(0, undefined, 0);
 				assertEvents(0);
 				assertOrderedEligibleClientIds();
 			});
@@ -340,7 +418,7 @@ describe("Ordered Client Collection", () => {
 			it("Should add and elect eligible client to empty quorum", () => {
 				createOrderedClientElection();
 				addClient("n", 100);
-				assertElectionState(1, 1, "n", 100);
+				assertElectionState(1, "n", 100);
 				assertEvents(1);
 				assertOrderedEligibleClientIds("n");
 			});
@@ -353,7 +431,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 100);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c", "n");
 			});
@@ -367,7 +445,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 3);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "n", "c");
 			});
@@ -381,38 +459,13 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 0);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("n", "a", "b", "c");
 			});
 		});
 
 		describe("Remove Client", () => {
-			it("Should log error when removing a client from empty quorum", () => {
-				createOrderedClientElection();
-				const clientId = "x";
-				removeClient(clientId);
-				mockLogger.matchEvents([{ eventName: "ClientNotFound", clientId }]);
-				assertElectionState(0, 0, undefined, 0);
-				assertEvents(0);
-				assertOrderedEligibleClientIds();
-			});
-
-			it("Should log error when removing a client that doesn't exist", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				const clientId = "x";
-				removeClient(clientId);
-				mockLogger.matchEvents([{ eventName: "ClientNotFound", clientId }]);
-				assertElectionState(4, 3, "a", 9);
-				assertEvents(0);
-				assertOrderedEligibleClientIds("a", "b", "c");
-			});
-
 			it("Should remove ineligible client", () => {
 				createOrderedClientElection([
 					["a", 1, true],
@@ -421,7 +474,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("s", 5);
-				assertElectionState(3, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
@@ -434,7 +487,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("c", 5);
-				assertElectionState(3, 2, "a", 9);
+				assertElectionState(2, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b");
 			});
@@ -447,7 +500,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("b", 5);
-				assertElectionState(3, 2, "a", 9);
+				assertElectionState(2, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "c");
 			});
@@ -460,7 +513,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("a", 5);
-				assertElectionState(3, 2, "b", 14);
+				assertElectionState(2, "b", 14);
 				assertEvents(1);
 				assertOrderedEligibleClientIds("b", "c");
 			});
@@ -476,14 +529,88 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
 				removeClient("s", 1111);
-				assertElectionState(3, 3, "c", 4321);
+				assertElectionState(3, "c", 4321);
 				removeClient("c", 1111);
-				assertElectionState(2, 2, "a", 6543);
+				assertElectionState(2, "a", 6543);
 				assertEvents(1);
 			});
 		});
 
 		describe("Reset elected client", () => {
+			it("Should reset a younger parent without displacing its active summarizer", () => {
+				addClient("a", 1);
+				addClient("b", 2);
+				addClient("s", 3, false, summarizerClientType);
+				createOrderedClientElection(
+					[],
+					{ electedClientId: "s", electedParentId: "b", electionSequenceNumber: 50 },
+					SummarizerClientElection.isClientEligible,
+				);
+				const summarizer = election.electedClient;
+				const events: {
+					client: ITrackedClient | undefined;
+					sequenceNumber: number;
+					prevClient: ITrackedClient | undefined;
+				}[] = [];
+				election.on("election", (client, sequenceNumber, prevClient) => {
+					events.push({ client, sequenceNumber, prevClient });
+				});
+
+				resetElectedClient(100);
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "s",
+					electedParentId: "a",
+					electionSequenceNumber: 50,
+				});
+				assertEvents(1);
+				assert.deepEqual(events, [
+					{ client: summarizer, sequenceNumber: 100, prevClient: summarizer },
+				]);
+
+				removeClient("s");
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "a",
+					electedParentId: "a",
+					electionSequenceNumber: 101,
+				});
+				assertEvents(2);
+			});
+
+			it("Should not emit elections or change serialized state when repeatedly resetting the elected interactive client", () => {
+				createOrderedClientElection([
+					["a", 1, true],
+					["b", 2, true],
+				]);
+				const initialState = election.serialize();
+				assert.equal(initialState.electedClientId, "a");
+				assert.equal(initialState.electedParentId, "a");
+
+				for (let i = 0; i < 2; i++) {
+					resetElectedClient(100);
+					assert.deepEqual(election.serialize(), initialState);
+					assertEvents(0);
+				}
+			});
+
+			it("Should not emit elections or displace the summarizer when repeatedly resetting its unchanged parent", () => {
+				addClient("a", 1);
+				addClient("s", 2, false, summarizerClientType);
+				createOrderedClientElection(
+					[],
+					{ electedClientId: "s", electedParentId: "a", electionSequenceNumber: 50 },
+					SummarizerClientElection.isClientEligible,
+				);
+				const initialState = election.serialize();
+				assert.equal(initialState.electedClientId, "s");
+				assert.equal(initialState.electedParentId, "a");
+
+				for (let i = 0; i < 2; i++) {
+					resetElectedClient(100);
+					assert.deepEqual(election.serialize(), initialState);
+					assertEvents(0);
+				}
+			});
+
 			it("Should reset to first when ineligible client is elected", () => {
 				createOrderedClientElection(
 					[
@@ -494,9 +621,9 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, "b", 4321);
+				assertElectionState(3, "b", 4321);
 				resetElectedClient(7777);
-				assertElectionState(4, 3, "a", 7777);
+				assertElectionState(3, "a", 7777);
 				assertEvents(1);
 			});
 		});

@@ -21,7 +21,6 @@ import {
 	type ISerializedElection,
 	type ISummarizer,
 	type ISummaryCollectionOpEvents,
-	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
 	SummaryManager,
@@ -176,7 +175,8 @@ describe("Summarizer Client Election", () => {
 			summaryCollectionEmitter,
 			new OrderedClientElection(
 				mockLogger.toTelemetryLogger(),
-				new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum),
+				testDeltaManager,
+				testQuorum,
 				initialState ?? currentSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 			),
