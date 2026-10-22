@@ -495,6 +495,54 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
+		it("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
+			createElection([
+				["a", 1, true],
+				["b", 2, true],
+			]);
+			addClient("s", 3, false, summarizerClientType);
+			summaryAck(47);
+			const restoredLogger = new MockLogger();
+			const restored = new SummarizerClientElection(
+				restoredLogger,
+				testDeltaManager,
+				testQuorum,
+				summaryCollectionEmitter,
+				maxOps,
+				election.serialize(),
+			);
+			removeClient("a");
+			assertState("s", "b", 50, "parent-only handoff retains ack progress");
+			assert.deepEqual(restored.serialize(), election.serialize());
+			const warnings = (logger: MockLogger) =>
+				logger.events.filter(
+					(event) =>
+						event.eventName === "SummarizerClientElection:ElectedClientNotSummarizing",
+				);
+			defaultOp(maxOps - 1);
+			assert.equal(warnings(mockLogger).length, 0);
+			assert.equal(warnings(restoredLogger).length, 0);
+			defaultOp();
+			for (const logger of [mockLogger, restoredLogger]) {
+				assert.deepEqual(
+					warnings(logger).map((event) => ({
+						opsWithoutSummary: event.opsWithoutSummary,
+						electedClientId: event.electedClientId,
+					})),
+					[{ opsWithoutSummary: maxOps + 1, electedClientId: "s" }],
+				);
+			}
+			assert.deepEqual(restored.serialize(), election.serialize());
+			removeClient("s");
+			assert.deepEqual(restored.serialize(), election.serialize());
+			assertState(
+				"b",
+				"b",
+				currentSequenceNumber,
+				"client transition starts a new progress baseline",
+			);
+		});
+
 		for (const firstToLeave of ["summarizer-1", "summarizer-2"]) {
 			it(`Should agree with a restored observer when ${firstToLeave} leaves first`, () => {
 				createElection([
