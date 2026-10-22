@@ -136,12 +136,12 @@ Never work around a fork PR failure by giving it a maintainer token or by runnin
 
 ## Troubleshooting
 
-| Symptom | Action |
-| --- | --- |
-| `401 Unauthorized` | Authenticate again in the same environment and as the same user that runs pnpm. Check whether `NPM_CONFIG_USERCONFIG` selects a different user file. |
-| `403 Forbidden` or an upstream-save permission error | Ask a feed owner to check your Collaborator role and access to the `public` project. A fresh token cannot fix missing permissions. |
-| A package/version is missing, or anonymous install fails | Ask a maintainer to save the exact version and its transitive dependencies. A missing package can appear as `404` rather than an authentication error. |
-| A package is quarantined | Wait for the feed's protection period or contact a feed owner. Do not change the registry to bypass it. |
-| Wrong registry | Check `pnpm config get registry` in the affected workspace, including environment and command-line overrides. npm reads `.npmrc`, not `pnpm-workspace.yaml`; pass `--registry` for global npm installs or commands outside the root. |
+| Symptom                                                  | Action                                                                                                                                                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `401 Unauthorized`                                       | Authenticate again in the same environment and as the same user that runs pnpm. Check whether `NPM_CONFIG_USERCONFIG` selects a different user file.                                                                                 |
+| `403 Forbidden` or an upstream-save permission error     | Ask a feed owner to check your Collaborator role and access to the `public` project. A fresh token cannot fix missing permissions.                                                                                                   |
+| A package/version is missing, or anonymous install fails | Ask a maintainer to save the exact version and its transitive dependencies. A missing package can appear as `404` rather than an authentication error.                                                                               |
+| A package is quarantined                                 | Wait for the feed's protection period or contact a feed owner. Do not change the registry to bypass it.                                                                                                                              |
+| Wrong registry                                           | Check `pnpm config get registry` in the affected workspace, including environment and command-line overrides. npm reads `.npmrc`, not `pnpm-workspace.yaml`; pass `--registry` for global npm installs or commands outside the root. |
 
 For feed access or availability issues, contact a Fluid Framework maintainer through the issue or PR.
