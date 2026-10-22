@@ -582,8 +582,7 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
-		// Enable when PR #28518 preserves progress through parent-only handoff.
-		it.skip("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
+		it("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
 			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],

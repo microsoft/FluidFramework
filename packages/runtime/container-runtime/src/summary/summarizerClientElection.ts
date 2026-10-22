@@ -38,7 +38,8 @@ function isClientEligible(client: ISequencedClient): boolean {
  */
 export interface ISerializedElection {
 	/**
-	 * Latest observed summary ack sequence number, or the election's starting sequence number if no ack has been observed.
+	 * Summary-progress baseline: the latest ack observed since the elected client changed,
+	 * or its election sequence number. Parent-only changes preserve this value.
 	 * @remarks The historical field name is retained for snapshot compatibility; the value tracks summary progress.
 	 */
 	readonly electionSequenceNumber: number;
@@ -78,8 +79,9 @@ export class SummarizerClientElection
 	/** Join sequence number of the elected parent, used for wrap-around election. */
 	private _electedParentSeq: number | undefined;
 	private _electedClientId: string | undefined;
+	/** Initial/restored baseline, replaced when the elected client changes. */
 	private _electionSequenceNumber: number;
-	/** Latest observed ack sequence number, cleared when either election identity changes. */
+	/** Latest observed ack sequence number, cleared when the elected client changes. */
 	private lastSummaryAckSeqForClient: number | undefined;
 	/** Sequence number of the last warning, used to rate-limit progress telemetry. */
 	private lastReportedSeq = 0;
@@ -231,8 +233,7 @@ export class SummarizerClientElection
 	}
 
 	/**
-	 * Applies an election transition while preserving the elected-client sequence baseline.
-	 * Parent-only changes reset the summary-ack baseline without changing that sequence number.
+	 * Applies an election transition, preserving summary progress through parent-only changes.
 	 */
 	private updateElection(
 		clientId: string | undefined,
@@ -246,10 +247,10 @@ export class SummarizerClientElection
 		const previousElectedParentId = this.electedParentId;
 		if (clientId !== this.electedClientId) {
 			this._electionSequenceNumber = sequenceNumber;
+			this.lastSummaryAckSeqForClient = undefined;
 		}
 		this._electedClientId = clientId;
 		this.setElectedParent(parentId);
-		this.lastSummaryAckSeqForClient = undefined;
 		this.logger.sendTelemetryEvent({
 			eventName: "ElectionChanged",
 			previousElectedClientId,
