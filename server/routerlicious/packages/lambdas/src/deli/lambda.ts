@@ -672,6 +672,27 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.emit("noClient");
 		}
 
+		// Check if Deli is over the max ops since last summary nack limit
+		// Note: we are explicitly checking this after processing the entire boxcar in order to not break batches.
+		// This must happen before the checkpoint below so the checkpoint includes the nack state.
+		if (
+			sequencedMessageCount > 0 &&
+			this.serviceConfiguration.deli.summaryNackMessages.enable &&
+			!this.nackMessages.has(NackMessagesType.SummaryMaxOps)
+		) {
+			const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+			if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+				// this op brings us over the limit
+				// start nacking non-system ops and ops that are submitted by non-summarizers
+				this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
+					identifier: NackMessagesType.SummaryMaxOps,
+					content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
+					allowSystemMessages: true,
+					allowedScopes: [ScopeType.SummaryWrite],
+				});
+			}
+		}
+
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason === undefined) {
 			this.documentCheckpointManager.updateCheckpointIdleTimer(
@@ -688,39 +709,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.clearActivityIdleTimer();
 		this.setActivityIdleTimer();
 
-		if (sequencedMessageCount > 0) {
-			// Check if Deli is over the max ops since last summary nack limit
-			// Note: we are explicitly checking this after processing the entire boxcar in order to not break batches
-			if (
-				this.serviceConfiguration.deli.summaryNackMessages.enable &&
-				!this.nackMessages.has(NackMessagesType.SummaryMaxOps)
-			) {
-				const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
-				if (
-					opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps
-				) {
-					// this op brings us over the limit
-					// start nacking non-system ops and ops that are submitted by non-summarizers
-					this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
-						identifier: NackMessagesType.SummaryMaxOps,
-						content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
-						allowSystemMessages: true,
-						allowedScopes: [ScopeType.SummaryWrite],
-					});
-				}
-			}
+		// Update the op event idle & max ops counter if ops were just sequenced
+		if (sequencedMessageCount > 0 && this.serviceConfiguration.deli.opEvent.enable) {
+			this.updateOpIdleTimer();
 
-			// Update the op event idle & max ops counter if ops were just sequenced
-			if (this.serviceConfiguration.deli.opEvent.enable) {
-				this.updateOpIdleTimer();
+			const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
+			if (maxOps !== undefined) {
+				this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
-				const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
-				if (maxOps !== undefined) {
-					this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
-
-					if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
-						this.emitOpEvent(OpEventType.MaxOps);
-					}
+				if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
+					this.emitOpEvent(OpEventType.MaxOps);
 				}
 			}
 		}

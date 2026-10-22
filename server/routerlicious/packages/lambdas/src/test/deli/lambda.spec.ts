@@ -15,6 +15,7 @@ import {
 	ITicketedSignalMessage,
 	LambdaCloseType,
 	MongoManager,
+	NackMessagesType,
 	NackOperationType,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
@@ -68,6 +69,8 @@ describe("Routerlicious", () => {
 
 			let messageFactory: MessageFactory;
 			let checkpointService: CheckpointService;
+			let mongoManager: MongoManager;
+			let documentRepository: TestNotImplementedDocumentRepository;
 			let kafkaMessageFactory: KafkaMessageFactory;
 
 			/**
@@ -121,8 +124,8 @@ describe("Routerlicious", () => {
 
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-				const mongoManager = new MongoManager(dbFactory);
-				const documentRepository = new TestNotImplementedDocumentRepository();
+				mongoManager = new MongoManager(dbFactory);
+				documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
 				checkpointService = new CheckpointService(
 					checkpointRepository,
@@ -952,6 +955,63 @@ describe("Routerlicious", () => {
 						kafkaMessageFactory.getHeadOffset(testId),
 					);
 					assert.deepEqual(contextErrors, []);
+				});
+
+				it("Should include summary nack state in the checkpoint of the message that crosses the limit", async () => {
+					const maxOps = 2;
+					const summaryNackFactory = new DeliLambdaFactory(
+						mongoManager,
+						documentRepository,
+						checkpointService,
+						testTenantManager,
+						undefined,
+						testForwardProducer,
+						undefined,
+						testReverseProducer,
+						{
+							...DefaultServiceConfiguration,
+							deli: {
+								...DefaultServiceConfiguration.deli,
+								summaryNackMessages: {
+									...DefaultServiceConfiguration.deli.summaryNackMessages,
+									enable: true,
+									maxOps,
+								},
+							},
+						},
+					);
+					const summaryNackLambda = await summaryNackFactory.create(
+						{ documentId: testId, tenantId: testTenantId },
+						testContext,
+					);
+
+					try {
+						await summaryNackLambda.handler(
+							kafkaMessageFactory.sequenceMessage(
+								messageFactory.createJoin(),
+								testId,
+							),
+						);
+						for (let i = 0; i < maxOps; i++) {
+							await summaryNackLambda.handler(
+								kafkaMessageFactory.sequenceMessage(
+									messageFactory.create(),
+									testId,
+								),
+							);
+						}
+						await quiesceWithClientsConnected();
+
+						const lastCheckpoint = (checkpointService.writeCheckpoint as Sinon.SinonSpy)
+							.lastCall.args[3] as IDeliState;
+						assert.equal(lastCheckpoint.sequenceNumber, maxOps + 1);
+						assert.deepEqual(lastCheckpoint.nackMessages?.map(([type]) => type), [
+							NackMessagesType.SummaryMaxOps,
+						]);
+					} finally {
+						summaryNackLambda.close(LambdaCloseType.Stop);
+						await summaryNackFactory.dispose();
+					}
 				});
 			});
 		});
