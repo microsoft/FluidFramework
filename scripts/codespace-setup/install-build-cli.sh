@@ -7,7 +7,7 @@
 set -euo pipefail
 
 echo "Installing @fluid-tools/build-cli globally..."
-CI=true pnpm add -g --registry=https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/ --allow-build=core-js @fluid-tools/build-cli
+CI=true pnpm add -g --registry=https://registry.npmjs.org/ --allow-build=core-js @fluid-tools/build-cli
 
 echo "flub installed: $(which flub)"
 flub --version

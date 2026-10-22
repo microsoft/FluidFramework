@@ -103,7 +103,6 @@ For an independent package, omit `--filter`.
 For a dependency change made by editing `package.json`, run `pnpm install --no-frozen-lockfile`.
 In the root or ESLint configuration workspace, `pnpm install-no-frozen` selects the minimum release age automatically: 7 days for npmjs or 0 for `publicPackages`.
 See [minimum release age guidance](../../../DEV.md#updating-dependencies-while-respecting-minimum-release-age) for details.
-Review the package manifest and lockfile together.
 
 Before submitting the change, verify the install:
 
@@ -112,6 +111,19 @@ pnpm install --frozen-lockfile
 ```
 
 Maintainers saving new versions should verify installation without credentials using an empty pnpm store, including optional packages needed on supported platforms.
+
+### Save dependencies for all platforms
+
+Some packages have platform-specific dependencies.
+To make sure newly saved packages work on all environments,
+maintainers should temporarily configure pnpm to download optional packages for multiple platforms.
+Before running the install command that saves new packages to the `publicPackages` feed, run this command from the affected workspace root:
+
+```shell
+pnpm config set --location=project --json supportedArchitectures '{"os":["win32","linux","darwin"],"cpu":["x64","arm64"],"libc":["glibc","musl"]}'
+```
+
+After dependencies are updated, revert the changes this command makes to pnpm-workspace.yaml.
 
 ## External contributors and dependency bots
 
