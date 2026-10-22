@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// pacote does not export or declare types for its cache location helper; it has no exports map, so the module is importable by path.
+// pacote neither exports nor declares types for its cache directory helper. pacote has no exports map, so the module can be imported by path.
 declare module "pacote/lib/util/cache-dir.js" {
 	/**
-	 * Returns npm's default cacache and TUF cache directories, which pacote uses when no cache options are passed.
+	 * Returns npm's default content cache (`cacache`) and TUF cache (`tufcache`) directories, which pacote uses when no cache options are passed.
 	 */
 	export default function cacheDir(): { cacache: string; tufcache: string };
 }
