@@ -863,46 +863,83 @@ create_private_endpoint() {
 # ===========================================================================
 # Phase 1 (images) — import pinned release images into target ACR
 # ===========================================================================
+load_saved_dockerhub_credentials() {
+  # Assign only the import caller's local credential variables, not the parent environment.
+  local config="${DOCKER_CONFIG:-$HOME/.docker}/config.json" settings helper server credentials auth
+  [[ -e "$config" ]] || return 0
+  if ! settings="$(jq -ce '
+    select(type == "object") |
+    ["https://index.docker.io/v1/", "https://index.docker.io/v1", "docker.io", "registry.hub.docker.com", "index.docker.io"] as $servers |
+    ([ $servers[] as $server | select(.credHelpers[$server] != null) |
+      {server: $server, helper: .credHelpers[$server]} ][0] //
+      {server: $servers[0], helper: .credsStore}) as $store |
+    ([ $servers[] as $server | .auths[$server] | select(. != null) ][0] // {}) as $auth |
+    {server: $store.server, helper: ($store.helper // ""), auth: ($auth.auth // ""),
+      identitytoken: ($auth.identitytoken // "")} |
+    select(all(.[]; type == "string"))
+  ' "$config" 2>/dev/null)"; then
+    log "WARNING: Cannot read Docker configuration; using anonymous Docker Hub imports. Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN to authenticate."
+    return 0
+  fi
+  helper="$(printf '%s' "$settings" | jq -r '.helper')"
+  server="$(printf '%s' "$settings" | jq -r '.server')"
+  if [[ -n "$helper" ]]; then
+    if [[ ! "$helper" =~ ^[a-zA-Z0-9._-]+$ ]] || ! command -v "docker-credential-$helper" >/dev/null 2>&1; then
+      log "WARNING: Docker credential helper is unavailable; using anonymous Docker Hub imports. Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN to authenticate."
+      return 0
+    fi
+    if ! credentials="$(printf '%s\n' "$server" | "docker-credential-$helper" get 2>/dev/null)"; then
+      log "WARNING: Docker credential helper could not retrieve Docker Hub credentials; using anonymous imports. Run docker login --username <username> with a read-only access token, or set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN."
+      return 0
+    fi
+  else
+    if [[ "$(printf '%s' "$settings" | jq -r '.identitytoken')" != "" ]]; then
+      log "WARNING: Saved Docker Hub identity tokens cannot be reused for Azure imports; using anonymous imports. Run docker login --username <username> with a read-only access token, or set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN."
+      return 0
+    fi
+    auth="$(printf '%s' "$settings" | jq -r '.auth')"
+    [[ -n "$auth" ]] || return 0
+    if ! credentials="$(printf '%s' "$auth" | jq -Rce '
+      @base64d | index(":") as $colon |
+      if $colon == null then error("Invalid Docker credentials")
+      else {Username: .[:$colon], Secret: .[$colon + 1:]} end
+    ' 2>/dev/null)"; then
+      log "WARNING: Saved Docker Hub credentials are invalid; using anonymous imports. Run docker login --username <username> again, or set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN."
+      return 0
+    fi
+  fi
+  if ! printf '%s' "$credentials" | jq -e '
+    (.Username | type == "string" and length > 0 and . != "<token>") and
+    (.Secret | type == "string" and length > 0)
+  ' >/dev/null 2>&1; then
+    log "WARNING: Saved Docker Hub credentials are not a reusable username and token; using anonymous imports. Run docker login --username <username> with a read-only access token, or set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN."
+    return 0
+  fi
+  DOCKERHUB_USERNAME="$(printf '%s' "$credentials" | jq -r '.Username')"
+  DOCKERHUB_TOKEN="$(printf '%s' "$credentials" | jq -r '.Secret')"
+  log "Using saved Docker Hub credentials for Azure-side image import."
+}
+
 import_release_image() {
-  local source="$1" target="$2" digest="$3" registry_id body attempt
+  local source="$1" target="$2"
+  local DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-}" DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN:-}"
+  local auth_args=()
   case "$source" in
     docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+      if [[ -z "$DOCKERHUB_USERNAME" && -z "$DOCKERHUB_TOKEN" ]]; then
+        load_saved_dockerhub_credentials
+      fi
       if [[ -n "${DOCKERHUB_USERNAME:-}" || -n "${DOCKERHUB_TOKEN:-}" ]]; then
         [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]] \
           || fail "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN for authenticated Docker Hub imports."
-        registry_id="$(az acr show -n "$ACR" --query id -o tsv)"
-        [[ -n "$registry_id" ]] || fail "could not resolve the deploy ACR resource id."
-        body="$(mktemp "$DEPLOY_DIR/image-import.XXXXXX")"
-        SENSITIVE_TEMP_FILES+=("$body")
-        chmod 600 "$body"
-        # Read secrets from the environment, not process arguments. Never log this request body.
-        jq -n --arg image "${source#*/}" --arg target "$target" '{
-          source: {
-            registryUri: "registry.hub.docker.com", sourceImage: $image,
-            credentials: {username: env.DOCKERHUB_USERNAME, password: env.DOCKERHUB_TOKEN}
-          },
-          targetTags: [$target], mode: "Force"
-        }' > "$body"
-        az rest --method post \
-          --url "https://management.azure.com${registry_id}/importImage?api-version=2023-07-01" \
-          --body "@$body" -o none
-        rm -f "$body"
-        # importImage can return 202. Verify the pinned digest is readable before continuing.
-        for ((attempt=1; attempt<=60; attempt++)); do
-          if az acr repository show --name "$ACR" --image "${target%:*}@$digest" >/dev/null 2>&1; then
-            return 0
-          fi
-          if [[ "$attempt" -eq 1 ]]; then
-            log "$target is not readable yet; retrying every 5 seconds for up to 5 minutes."
-          fi
-          sleep 5
-        done
-        fail "authenticated import of $target did not become readable within 5 minutes; check the ACR activity log before retrying."
+        auth_args=(--username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN")
+      else
+        log "Docker Hub import uses anonymous access; run docker login --username <username> with a read-only access token, or set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN if the upstream registry rate-limits it."
       fi
-      log "Docker Hub import uses anonymous access; set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN if the upstream registry rate-limits it."
       ;;
   esac
-  az acr import --name "$ACR" --source "$source" --image "$target" --force
+  az acr import --name "$ACR" --source "$source" --image "$target" --force \
+    ${auth_args[@]+"${auth_args[@]}"}
 }
 
 phase1_images() {
@@ -917,7 +954,7 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$repo:$IMAGE_TAG" >/dev/null 2>&1; then
       log "$repo:$IMAGE_TAG already in ACR, skipping import"
     else
-      import_release_image "$src" "$repo:$IMAGE_TAG" "$digest"
+      import_release_image "$src" "$repo:$IMAGE_TAG"
     fi
   done < <(jq -r '.builtImages[]? | select(.status == "pinned") | [.name, .repository, .digest] | @tsv' "$IMAGES_FILE")
 
@@ -943,7 +980,7 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
       log "$target_repo@$digest already in ACR, skipping import"
     else
-      import_release_image "$src" "$target_repo:$target_tag" "$digest"
+      import_release_image "$src" "$target_repo:$target_tag"
     fi
   done < <(jq -r '.dependencyImages[]? | select(.status == "pinned") | [.name, (.tag // ""), .digest] | @tsv' "$IMAGES_FILE")
 

@@ -50,6 +50,9 @@ tool check and then fails partway through the image build:
 docker buildx version
 ```
 
+Optionally, run `docker login --username <docker-hub-username>` and enter a read-only Docker Hub access token at the password prompt.
+This is not required, but helps avoid Docker Hub throttling limits for unauthenticated users during deployment.
+
 Run everything from **Bash** — Git Bash, WSL, macOS, or Linux. Zsh and PowerShell will not work.
 
 **Run every command in this guide from the `tools/selfhost` directory**, not the FluidFramework repository root:
