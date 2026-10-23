@@ -125,11 +125,12 @@ export interface BranchTrimmingEvents {
 
 /**
  * Count bookkeeping for branches whose ancestry is trimmed together.
+ * Branches share a reference to the same trim state, allowing implicit updating to all of their commit counts without O(branch count) updates.
  */
 export interface BranchTrimState {
 	/**
 	 * The cumulative number of commits trimmed from the shared ancestry.
-	 * The owner must update this when trimming the graph, before emitting any notifications.
+	 * The owner must update this before emitting any notifications.
 	 */
 	readonly trimmedCommitCount: number;
 }
