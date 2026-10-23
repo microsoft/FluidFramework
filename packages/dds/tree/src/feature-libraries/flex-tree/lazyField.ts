@@ -54,7 +54,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import { LazyMapNode, LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
@@ -63,10 +63,7 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  * Fixed-field nodes keep their wrappers until disposal.
  * These wrappers own cursors, anchors, and lifetime registrations, so reusing them avoids accumulating duplicate resources.
  *
- * Optional map fields, used by maps and records, instead borrow their parent's resources for each operation.
- * Empty fields are not cached, and changed fields which become empty are evicted after each batch, including remote edits and undo.
- * Eviction does not invalidate retained field wrappers: they continue to resolve their location through their parent node.
- * Cache maintenance examines only changed keys with cached wrappers, not the entire cache.
+ * Optional map fields instead borrow their parent's resources and are cached by {@link LazyMapNode}.
  *
  * Fields without a parent node are not cached here.
  * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
@@ -78,28 +75,17 @@ const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new Weak
  * The caller must validate the owning node's lifetime before using the result.
  */
 export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
-	return fieldCache.get(node)?.get(key);
+	return node.getCachedField(key);
 }
 
 /**
- * Evicts dynamic fields which became empty in a completed batch.
+ * Looks up a fixed field without navigating a cursor.
  */
-export function clearEmptyFields(node: LazyTreeNode, keys: ReadonlySet<FieldKey>): void {
-	const cache = fieldCache.get(node);
-	if (cache === undefined) {
-		return;
-	}
-	for (const key of keys) {
-		if (
-			cache.has(key) &&
-			inCursorField(node.cursor, key, (cursor) => cursor.getFieldLength() === 0)
-		) {
-			cache.delete(key);
-		}
-	}
-	if (cache.size === 0) {
-		fieldCache.delete(node);
-	}
+export function getCachedFixedField(
+	node: LazyTreeNode,
+	key: FieldKey,
+): FlexTreeField | undefined {
+	return fieldCache.get(node)?.get(key);
 }
 
 export function makeField(
@@ -135,17 +121,9 @@ export function makeField(
 		cursor.enterField(fieldAnchor.fieldKey);
 	}
 	assert(cacheKey instanceof LazyTreeNode, "Expected a lazy parent node");
-	if (cacheKey.hasDynamicFields) {
+	if (cacheKey instanceof LazyMapNode) {
 		context.checkout.forest.anchors.forget(fieldAnchor.parent);
-		const cached = getCachedField(cacheKey, fieldAnchor.fieldKey);
-		if (cached !== undefined) {
-			return cached;
-		}
-		const field = new MapField(cacheKey, fieldAnchor.fieldKey);
-		if (cursor.getFieldLength() !== 0) {
-			getOrCreate(fieldCache, cacheKey, () => new Map()).set(fieldAnchor.fieldKey, field);
-		}
-		return field;
+		return cacheKey.getOrCreateField(cursor);
 	}
 
 	const innerCache = getOrCreate(
@@ -166,12 +144,12 @@ export function makeField(
  * An optional map field whose lifetime and navigation are provided by its parent.
  * Unlike {@link LazyField}, this wrapper owns no cursor, anchor, or lifetime registration.
  */
-class MapField implements FlexTreeOptionalField {
+export class MapField implements FlexTreeOptionalField {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Field;
 	public readonly schema = FieldKinds.optional.identifier;
 
 	public constructor(
-		private readonly parentNode: LazyTreeNode,
+		private readonly parentNode: LazyMapNode,
 		public readonly key: FieldKey,
 	) {}
 

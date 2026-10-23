@@ -19,7 +19,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
-import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import { LazyMapNode, LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import { getCachedField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import {
@@ -30,6 +30,7 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	getInnerNode,
 } from "../../../simple-tree/index.js";
@@ -68,6 +69,30 @@ describe("LazyNode", () => {
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
 	] as const) {
+		it(`selects dynamic storage only for maps and records (${name})`, () => {
+			const sf = new SchemaFactoryAlpha("storage-policy");
+			class Values extends sf.map("Values", sf.number) {}
+			class Record extends sf.record("Record", sf.number) {}
+			class Items extends sf.array("Items", sf.number) {}
+			class Root extends sf.object("Root", { map: Values, record: Record, items: Items }) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Root }),
+			);
+			view.initialize({ map: { key: 1 }, record: { key: 1 }, items: [1] });
+			const root = view.root;
+			assert(getInnerNode(root.map) instanceof LazyMapNode);
+			assert(getInnerNode(root.record) instanceof LazyMapNode);
+			assert(!(getInnerNode(root) instanceof LazyMapNode));
+			assert(!(getInnerNode(root.items) instanceof LazyMapNode));
+			const map = getInnerNode(root.map);
+			const leaf = map.getBoxed(brand("key")).boxedAt(0);
+			assert(leaf instanceof LazyTreeNode);
+			assert(!(leaf instanceof LazyMapNode));
+			const checkout = leaf.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
 		it(`reads map leaves without field wrappers or leaf anchors (${name})`, () => {
 			const sf = new SchemaFactory("unboxed-map");
 			class Values extends sf.map("Values", [sf.number, sf.string, sf.boolean, sf.null]) {}
@@ -77,7 +102,7 @@ describe("LazyNode", () => {
 			view.initialize({ number: 1, string: "", boolean: false, null: null });
 			const map = view.root;
 			const node = getInnerNode(map);
-			assert(node instanceof LazyTreeNode);
+			assert(node instanceof LazyMapNode);
 			const resources = node.context.withAnchors.size;
 			const expected = [
 				["number", 1],

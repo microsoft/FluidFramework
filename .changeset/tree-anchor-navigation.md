@@ -10,6 +10,7 @@ Their caches no longer retain empty fields after edits, including merged changes
 Retained internal field references remain usable after cache eviction.
 Constructing leaf nodes also avoids map-field schema classification.
 Unhydrated maps and records use specialized node and field implementations, keeping empty-field reclamation and retained-reference redirection off fixed-field read paths.
+Hydrated maps and records own their dynamic-field caches and cleanup subscriptions in a specialized node implementation.
 
 The measurements below compare the original baseline with the map and record cache implementation before the leaf-construction fast path and storage specialization.
 Both versions were remeasured for these tables.

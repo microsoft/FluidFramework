@@ -18,6 +18,7 @@ import {
 } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
+	FieldKinds,
 	isFieldInSchema,
 	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
@@ -90,7 +91,8 @@ export function unhydratedFlexTreeFromCursor(
 		context.flexContext.schema.nodeSchema.get(identifier) ?? unknownTypeError(identifier);
 
 	const createNodeField =
-		storedSchema instanceof MapNodeStoredSchema
+		storedSchema instanceof MapNodeStoredSchema &&
+		storedSchema.mapFields.kind === FieldKinds.optional.identifier
 			? (...args: ConstructorParameters<typeof UnhydratedMapField>) =>
 					new UnhydratedMapField(...args)
 			: createField;
