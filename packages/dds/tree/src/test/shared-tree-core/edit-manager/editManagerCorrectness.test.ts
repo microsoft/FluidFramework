@@ -827,8 +827,7 @@ export function testCorrectness(): void {
 					// For example, "P > F > M > 0" represents a scenario where the retention policy (P) mandates more to be retained than the presence of a local fork (F),
 					// which in turn mandates more to be retained than the minimum sequence number (M), which in turn mandates more to be retained than 0.
 
-					// Since we are looking a scenarios where the retention policy (P) is being changed, there are two values for P: the original value (P1) and the new value (P2).
-
+					// Since we are looking at scenarios where the retention policy (P) is being changed, there are two values for P: the original value (P1) and the new value (P2).
 					function setup({
 						commitCount,
 						startingPolicy,
@@ -853,6 +852,14 @@ export function testCorrectness(): void {
 							sequencePeerCommits(manager, commitCount, 1, 1);
 						}
 						manager.advanceMinimumSequenceNumber(brand(commitCount - retainedByMsn));
+						assert.equal(
+							manager.getTrunkCommits("main").length,
+							Math.min(
+								commitCount,
+								Math.max(maxCountFromPolicy(startingPolicy), retainedByMsn, retainedByFork),
+							),
+							"Setup must retain the history required by the initial policy, MSN, and fork",
+						);
 						return manager;
 					}
 
@@ -959,15 +966,164 @@ export function testCorrectness(): void {
 							});
 						}
 					});
-				});
 
-				// P2 > P1 scenarios (increase retention):
-				// P2 > 0 >= P1/M/F
-				// P2 > P1 > 0 >= M/F
-				// P2 > P1 > M/F > 0
-				// P2 > M/F > P1 > 0
-				// M/F > P2 > P1 > 0
-				// M/F > P2 > 0 >= P1
+					// Increasing retention preserves available history, but cannot recover trimmed commits.
+					// Start with more commits than the initial requirements to exercise this limit.
+
+					// the policy after the change is greater than 0 and the policy before the change is 0/false
+					// Example P2 = 3: [P1 = M = F = 0] -------- [P2 = 3] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x x x x x x   (0 retained)
+					// After:       x x x x x x x x x x   (0 retained; P2 cannot recover trimmed commits)
+					describe("P2 > 0 >= P1/M/F", () => {
+						for (const policy1 of [0, false] as const) {
+							for (const policy2 of [1, 3, true, Number.MAX_SAFE_INTEGER] as const) {
+								it(`does not recover trimmed commits when retention increases from ${policy1} to ${policy2}`, () => {
+									const manager = setup({
+										commitCount: 10,
+										startingPolicy: policy1,
+										retainedByMsn: 0,
+										retainedByFork: 0,
+									});
+
+									manager.setHistoryRetention(policy2);
+									assert.deepEqual(manager.getTrunkCommits("main"), []);
+								});
+							}
+						}
+					});
+
+					// Example P2 = 5: [M = F = 0] ---- [P1 = 3] ---- [P2 = 5] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x x x H I J   (3 retained by P1)
+					// After:       x x x x x x x H I J   (only 3 available, although P2 requests 5)
+					describe("P2 > P1 > 0 >= M/F", () => {
+						const policy1 = 3;
+						for (const policy2 of [4, 5, true, Number.MAX_SAFE_INTEGER] as const) {
+							it(`preserves only ${policy1} commits when retention increases from ${policy1} to ${policy2}`, () => {
+								const manager = setup({
+									commitCount: 10,
+									startingPolicy: policy1,
+									retainedByMsn: 0,
+									retainedByFork: 0,
+								});
+								const expected = manager.getTrunkCommits("main");
+
+								manager.setHistoryRetention(policy2);
+								assert.deepEqual(manager.getTrunkCommits("main"), expected);
+							});
+						}
+					});
+
+					// Example P2 = 5: [0] ---- [mf = 2] ---- [P1 = 3] ---- [P2 = 5] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x x x H I J   (P1 keeps 3; MSN 8 or a fork at I requires I-J)
+					// After:       x x x x x x x H I J   (only 3 available, although P2 requests 5)
+					describe("P2 > P1 > M/F > 0", () => {
+						const policy1 = 3;
+						const mf = 2; // Commits with sequence numbers greater than MSN cannot be trimmed yet because collaboration still needs them
+						for (const policy2 of [4, 5, true, Number.MAX_SAFE_INTEGER] as const) {
+							describe(`preserves only ${policy1} commits when retention increases from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: 10,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main");
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
+
+					// Example P2 = 5: [0] ---- [P1 = 1] ---- [mf = 3] ---- [P2 = 5] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x x x H I J   (MSN 7 or a fork at H keeps 3 despite P1 = 1)
+					// After:       x x x x x x x H I J   (only 3 available, although P2 requests 5)
+					describe("P2 > M/F > P1 > 0", () => {
+						const policy1 = 1;
+						const mf = 3;
+						for (const policy2 of [4, 5, true, Number.MAX_SAFE_INTEGER] as const) {
+							describe(`preserves only ${mf} commits when retention increases from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: 10,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main");
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
+
+					// Example P2 = 3: [0] ---- [P1 = 1] ---- [P2 = 3] ---- [mf = 5] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x F G H I J   (MSN 5 or a fork at F keeps 5)
+					// After:       x x x x x F G H I J   (mf still exceeds P2)
+					describe("M/F > P2 > P1 > 0", () => {
+						const policy1 = 1;
+						const mf = 5;
+						for (const policy2 of [2, 3, 4] as const) {
+							describe(`preserves all ${mf} required commits when retention increases from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: 10,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main");
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
+
+					// Example P2 = 3: [P1 = 0] ---- [P2 = 3] ---- [mf = 5] --> required commit count
+					// Original 10: A B C D E F G H I J
+					// Before:      x x x x x F G H I J   (MSN 5 or a fork at F keeps 5; P1 is 0/false)
+					// After:       x x x x x F G H I J   (mf still exceeds P2)
+					describe("M/F > P2 > 0 >= P1", () => {
+						const mf = 5;
+						for (const policy1 of [0, false] as const) {
+							for (const policy2 of [1, 3, 4] as const) {
+								describe(`preserves all ${mf} required commits when retention increases from ${policy1} to ${policy2}`, () => {
+									for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+										it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+											const manager = setup({
+												commitCount: 10,
+												startingPolicy: policy1,
+												retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+												retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+											});
+											const expected = manager.getTrunkCommits("main");
+
+											manager.setHistoryRetention(policy2);
+											assert.deepEqual(manager.getTrunkCommits("main"), expected);
+										});
+									}
+								});
+							}
+						}
+					});
+				});
 
 				describe("advanceMinimumSequenceNumber", () => {
 					it("retains the newest three commits when MSN advances past all five commits", () => {
