@@ -41,7 +41,7 @@ import {
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
@@ -105,10 +105,7 @@ function createRecordNodeProxy(
 
 			if (typeof key === "string") {
 				const innerNode = getInnerNode(receiver);
-				const field = innerNode.tryGetField(brand(key));
-				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
-				}
+				return getTreeNodeForField(innerNode, brand(key));
 			}
 
 			return undefined;
@@ -157,14 +154,13 @@ function createRecordNodeProxy(
 			}
 
 			const innerNode = getInnerNode(proxy);
-			const field = innerNode.tryGetField(brand(key));
-
-			if (field === undefined) {
+			const value = getTreeNodeForField(innerNode, brand(key));
+			if (value === undefined) {
 				return undefined;
 			}
 
 			return {
-				value: tryGetTreeNodeForField(field),
+				value,
 				writable: true,
 				enumerable: true,
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.
@@ -420,12 +416,9 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	// but every key reported by the inner node has associated content, so the values yielded here are always defined.
 	const innerNode = getInnerNode(record);
 	for (const key of innerNode.keys()) {
-		const field = innerNode.tryGetField(brand(key));
-		assert(field !== undefined, 0xd51 /* Expected a field for each key of the inner node. */);
-		yield [
-			key,
-			tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		];
+		const value = getTreeNodeForField(innerNode, key);
+		assert(value !== undefined, "Expected content for each key of the inner node");
+		yield [key, value as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>];
 	}
 }
 

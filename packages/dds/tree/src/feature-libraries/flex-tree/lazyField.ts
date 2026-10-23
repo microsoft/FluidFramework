@@ -18,6 +18,7 @@ import {
 	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
+	inCursorField,
 	iterateCursorField,
 	mapCursorField,
 	rootFieldKey,
@@ -32,13 +33,14 @@ import {
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
+import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -52,29 +54,21 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
  * Reuses field wrappers by parent node and field key.
  * @remarks
- * Each field under a node owns a cursor and is strongly referenced by its context's `withAnchors` set and its parent's `afterDestroy` listener.
- * Preparing for an edit clears the cursor, but does not dispose the wrapper or release its parent anchor and listener.
- * Without reuse, repeated boxing of the same field would accumulate wrappers, even across edits.
- * This cache limits that accumulation to one wrapper per field key on each cached parent.
+ * Fixed-field nodes keep their wrappers until disposal.
+ * These wrappers own cursors, anchors, and lifetime registrations, so reusing them avoids accumulating duplicate resources.
  *
- * This does not bound retention by the current document size for map nodes:
- * public map `get`, `delete`, and `set` operations box fields even for missing keys.
- * When an entry is removed, its field wrapper remains cached and registered with the context and parent.
- * An empty map can therefore retain arbitrarily many wrappers for distinct keys accessed during its lifetime.
- * In contrast, `has` uses `tryGetField`, which does not box missing fields.
- * The outer WeakMap does not weaken references from the inner Map, context, or parent listener.
+ * Optional map fields, used by maps and records, instead borrow their parent's resources for each operation.
+ * Empty fields are not cached, and changed fields which become empty are evicted after each batch, including remote edits and undo.
+ * Eviction does not invalidate retained field wrappers: they continue to resolve their location through their parent node.
+ * Cache maintenance examines only changed keys with cached wrappers, not the entire cache.
  *
- * Fixing this retention requires avoiding unnecessary boxing and addressing field disposal, not just evicting cache entries:
- * eviction alone leaves the context and listener references intact and permits duplicate wrappers on subsequent accesses.
- * Fields are disposed when their parent is destroyed or their context is cleared, not when they become empty.
- *
- * Fields without a parent node or a cached parent wrapper are not cached here.
+ * Fields without a parent node are not cached here.
  * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
  */
 const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
@@ -85,6 +79,27 @@ const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new Weak
  */
 export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
 	return fieldCache.get(node)?.get(key);
+}
+
+/**
+ * Evicts dynamic fields which became empty in a completed batch.
+ */
+export function clearEmptyFields(node: LazyTreeNode, keys: ReadonlySet<FieldKey>): void {
+	const cache = fieldCache.get(node);
+	if (cache === undefined) {
+		return;
+	}
+	for (const key of keys) {
+		if (
+			cache.has(key) &&
+			inCursorField(node.cursor, key, (cursor) => cursor.getFieldLength() === 0)
+		) {
+			cache.delete(key);
+		}
+	}
+	if (cache.size === 0) {
+		fieldCache.delete(node);
+	}
 }
 
 export function makeField(
@@ -113,11 +128,24 @@ export function makeField(
 		fail(0xb10 /* missing anchor */);
 
 	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
-	const cacheKey = anchorNode.slots.get(flexTreeSlot);
-
-	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
+	let cacheKey = anchorNode.slots.get(flexTreeSlot);
 	if (cacheKey === undefined) {
-		return makeFlexTreeField();
+		cursor.exitField();
+		cacheKey = getOrCreateHydratedFlexTreeNode(context, cursor);
+		cursor.enterField(fieldAnchor.fieldKey);
+	}
+	assert(cacheKey instanceof LazyTreeNode, "Expected a lazy parent node");
+	if (cacheKey.hasDynamicFields) {
+		context.checkout.forest.anchors.forget(fieldAnchor.parent);
+		const cached = getCachedField(cacheKey, fieldAnchor.fieldKey);
+		if (cached !== undefined) {
+			return cached;
+		}
+		const field = new MapField(cacheKey, fieldAnchor.fieldKey);
+		if (cursor.getFieldLength() !== 0) {
+			getOrCreate(fieldCache, cacheKey, () => new Map()).set(fieldAnchor.fieldKey, field);
+		}
+		return field;
 	}
 
 	const innerCache = getOrCreate(
@@ -132,6 +160,112 @@ export function makeField(
 		context.checkout.forest.anchors.forget(fieldAnchor.parent);
 	}
 	return result;
+}
+
+/**
+ * An optional map field whose lifetime and navigation are provided by its parent.
+ * Unlike {@link LazyField}, this wrapper owns no cursor, anchor, or lifetime registration.
+ */
+class MapField implements FlexTreeOptionalField {
+	public readonly [flexTreeMarker] = FlexTreeEntityKind.Field;
+	public readonly schema = FieldKinds.optional.identifier;
+
+	public constructor(
+		private readonly parentNode: LazyTreeNode,
+		public readonly key: FieldKey,
+	) {}
+
+	public get context(): Context {
+		return this.parentNode.context;
+	}
+
+	public get parent(): HydratedFlexTreeNode {
+		this.getFieldPath();
+		return this.parentNode;
+	}
+
+	public is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind> {
+		assert(
+			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
+			"Narrowing must use a field kind from this context",
+		);
+		return this.schema === kind.identifier;
+	}
+
+	public get length(): number {
+		return inCursorField(this.parentNode.cursor, this.key, (cursor) =>
+			cursor.getFieldLength(),
+		);
+	}
+
+	public get content(): FlexTreeUnknownUnboxed | undefined {
+		return inCursorField(this.parentNode.cursor, this.key, (cursor) =>
+			cursor.getFieldLength() === 0
+				? undefined
+				: inCursorNode(cursor, 0, (child) =>
+						unboxedFlexNode(this.context, child, {
+							parent: this.parentNode.anchor,
+							fieldKey: this.key,
+						}),
+					),
+		);
+	}
+
+	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
+		return inCursorField(this.parentNode.cursor, this.key, (cursor) => {
+			const finalIndex = indexForAt(index, cursor.getFieldLength());
+			return finalIndex === undefined
+				? undefined
+				: inCursorNode(cursor, finalIndex, (child) =>
+						getOrCreateHydratedFlexTreeNode(this.context, child),
+					);
+		});
+	}
+
+	public *[Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
+		const child = this.boxedAt(0);
+		if (child !== undefined) {
+			yield child;
+		}
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		this.getFieldPath();
+		const cursor = cursorForMapTreeNode<FlexTreeNode>(this.parentNode);
+		cursor.enterField(this.key);
+		return cursor;
+	}
+
+	public getFieldPath(): { parent: AnchorNode; field: FieldKey } {
+		return this.parentNode.getFieldPath(this.key);
+	}
+
+	public readonly editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent, wasEmpty) => {
+			if (this.parentNode.isFreed()) {
+				throw new UsageError(
+					"Editing only allowed on fields with TreeStatus.InDocument status",
+				);
+			}
+			const path = this.getFieldPath();
+			if (treeStatusFromAnchorCache(path.parent) !== TreeStatus.InDocument) {
+				throw new UsageError(
+					"Editing only allowed on fields with TreeStatus.InDocument status",
+				);
+			}
+			const editor = new MappedEditBuilder(
+				this.context.checkout.editor,
+				(cursor: ITreeCursorSynchronous) =>
+					combineChunks(this.context.checkout.forest.chunkField(cursor)),
+			);
+			editor
+				.optionalField(path)
+				.set(
+					newContent === undefined ? undefined : cursorForMapTreeField([newContent]),
+					wasEmpty,
+				);
+		},
+	};
 }
 
 /**

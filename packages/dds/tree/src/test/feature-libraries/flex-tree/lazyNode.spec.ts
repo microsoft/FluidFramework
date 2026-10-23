@@ -7,6 +7,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { asAlpha } from "../../../api.js";
 import {
 	type Anchor,
 	type AnchorNode,
@@ -14,12 +15,18 @@ import {
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type MapTree,
+	type Revertible,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import { getCachedField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
-import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	type FlexTreeField,
+	type FlexTreeNode,
+} from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	SchemaFactory,
@@ -34,6 +41,7 @@ import {
 } from "../../../shared-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
+import { SharedTreeTestFactory, TestTreeProviderLite } from "../../utils.js";
 
 import { readonlyTreeWithContent } from "./utils.js";
 
@@ -60,6 +68,196 @@ describe("LazyNode", () => {
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
 	] as const) {
+		it(`reads map leaves without field wrappers or leaf anchors (${name})`, () => {
+			const sf = new SchemaFactory("unboxed-map");
+			class Values extends sf.map("Values", [sf.number, sf.string, sf.boolean, sf.null]) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ number: 1, string: "", boolean: false, null: null });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const resources = node.context.withAnchors.size;
+			const expected = [
+				["number", 1],
+				["string", ""],
+				["boolean", false],
+				["null", null],
+			];
+			assert.deepEqual([...map.entries()], expected);
+			assert.deepEqual([...map.values()], [1, "", false, null]);
+			const visited: unknown[] = [];
+			// eslint-disable-next-line unicorn/no-array-for-each -- Testing the map API.
+			map.forEach((value, key) => visited.push([key, value]));
+			assert.deepEqual(visited, expected);
+			for (const [key, value] of expected) {
+				assert(typeof key === "string");
+				assert.equal(map.get(key), value);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+			}
+			let observations = 0;
+			withObservation(
+				{
+					observeNodeDeep: () => assert.fail("unexpected deep observation"),
+					observeNodeFields: () => assert.fail("unexpected fields observation"),
+					observeParentOf: () => assert.fail("unexpected parent observation"),
+					observeNodeField: (observed, key) => {
+						assert.equal(observed, node);
+						assert.equal(key, "missing");
+						observations++;
+					},
+				},
+				() => assert.equal(map.get("missing"), undefined),
+			);
+			assert.equal(observations, 1);
+			assert.equal(node.context.withAnchors.size, resources);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => node.getFieldContent(brand("number")));
+			checkout.dispose();
+		});
+
+		it(`does not retain empty map fields across key churn (${name})`, () => {
+			const sf = new SchemaFactory("bounded-map");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({});
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const resources = node.context.withAnchors.size;
+			for (let i = 0; i < 256; i++) {
+				const key = `key-${i}`;
+				assert.equal(map.get(key), undefined);
+				assert.equal(node.getBoxed(brand(key)).length, 0);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+				map.delete(key);
+				map.set(key, undefined);
+				map.set(key, i);
+				const field = node.getBoxed(brand(key));
+				assert.equal(node.getBoxed(brand(key)), field);
+				assert.equal(getCachedField(node, brand(key)), field);
+				map.delete(key);
+				assert.equal(field.length, 0);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+				assert.equal(node.context.withAnchors.size, resources);
+			}
+			assert.equal(map.size, 0);
+			const checkout = node.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`keeps evicted map field references usable (${name})`, () => {
+			const sf = new SchemaFactory("retained-map-field");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			class Values extends sf.map("Values", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ key: { value: 1 } });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const field = node.getBoxed(brand("key"));
+			assert(field.is(FieldKinds.optional));
+			const original = map.get("key");
+			assert(original !== undefined);
+			assert.equal(Tree.parent(original), map);
+			assert.equal(Tree.key(original), "key");
+			map.delete("key");
+			assert.equal(field.content, undefined);
+			assert.equal(field.parent, node);
+			assert.equal(getCachedField(node, brand("key")), undefined);
+			map.set("key", { value: 2 });
+			assert.notEqual(node.getBoxed(brand("key")), field);
+			const replacement = map.get("key");
+			assert(replacement !== undefined);
+			assert.equal(field.boxedAt(0), getInnerNode(replacement));
+			assert.equal(field.borrowCursor().getFieldLength(), 1);
+			field.editor.set(undefined, false);
+			assert.equal(map.has("key"), false);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => field.parent);
+			assert.throws(() => field.content);
+			assert.throws(() => field.editor.set(undefined, true));
+			checkout.dispose();
+		});
+
+		it(`evicts map fields after merge and undo (${name})`, () => {
+			const sf = new SchemaFactory("map-field-merge");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ key: 1 });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const key: FieldKey = brand("key");
+			const field = node.getBoxed(key);
+			const fork = asAlpha(view).fork();
+			fork.root.delete("key");
+			asAlpha(view).merge(fork);
+			assert.equal(getCachedField(node, key), undefined);
+			assert.equal(field.length, 0);
+			let undo: Revertible | undefined;
+			const off = asAlpha(view).events.on("changed", (metadata) => {
+				assert(metadata.getRevertible !== undefined);
+				undo = metadata.getRevertible();
+			});
+			map.set("key", 2);
+			off();
+			const replacement = node.getBoxed(key);
+			assert.equal(getCachedField(node, key), replacement);
+			assert(undo !== undefined);
+			undo.revert();
+			assert.equal(map.size, 0);
+			assert.equal(getCachedField(node, key), undefined);
+			assert.equal(replacement.length, 0);
+			const checkout = node.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`evicts cached fields after a remote map clear (${name})`, () => {
+			const sf = new SchemaFactory("remote-map-field");
+			class Values extends sf.map("Values", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: Values });
+			const provider = new TestTreeProviderLite(
+				2,
+				new SharedTreeTestFactory(() => {}, undefined, { forest }),
+			);
+			const [sourceTree, targetTree] = provider.trees;
+			assert(sourceTree !== undefined && targetTree !== undefined);
+			const source = sourceTree.viewWith(config);
+			source.initialize(
+				Object.fromEntries(Array.from({ length: 64 }, (_, i) => [`key-${i}`, i])),
+			);
+			provider.synchronizeMessages();
+			const target = targetTree.viewWith(config);
+			const node = getInnerNode(target.root);
+			assert(node instanceof LazyTreeNode);
+			const retained = [...target.root.keys()].map((key) => {
+				const field = node.getBoxed(brand(key));
+				assert.equal(getCachedField(node, brand(key)), field);
+				return field;
+			});
+			asAlpha(source.root).clear();
+			provider.synchronizeMessages();
+			assert.equal(target.root.size, 0);
+			for (const field of retained) {
+				assert.equal(getCachedField(node, field.key), undefined);
+				assert.equal(field.length, 0);
+			}
+			source.dispose();
+			target.dispose();
+		});
+
 		it(`cached parents follow moves and removal without cursor recovery (${name})`, () => {
 			const sf = new SchemaFactory("cached-parents");
 			class Item extends sf.object("Item", { value: sf.number }) {}

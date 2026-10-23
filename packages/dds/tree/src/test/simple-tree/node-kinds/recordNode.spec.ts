@@ -8,8 +8,12 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree, TreeBeta } from "../../../shared-tree/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
 	SchemaFactoryAlpha,
+	getInnerNode,
 	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
@@ -18,6 +22,7 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { describeHydration } from "../utils.js";
+import { brand } from "../../../util/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
@@ -119,6 +124,31 @@ describe("RecordNode", () => {
 	});
 
 	describeHydration("POJO emulation", (init) => {
+		it("does not retain empty dynamic fields and preserves retained wrappers", () => {
+			const record = init(PojoEmulationNumberRecord, {});
+			const inner = getInnerNode(record);
+			const retained = inner.getBoxed(brand("key"));
+			assert(retained.is(FieldKinds.optional));
+			for (let i = 0; i < 128; i++) {
+				const key = `key-${i}`;
+				assert.equal(record[key], undefined);
+				record[key] = undefined;
+				record[key] = i;
+				assert(Reflect.deleteProperty(record, key));
+				if (inner instanceof UnhydratedFlexTreeNode) {
+					assert.equal(inner.allFieldsLazy.size, 0);
+				}
+			}
+			record.key = 1;
+			assert.equal(retained.content, 1);
+			delete record.key;
+			assert.equal(retained.content, undefined);
+			record.key = 2;
+			assert.equal(retained.content, 2);
+			retained.editor.set(undefined, false);
+			assert.equal(record.key, undefined);
+		});
+
 		it("deep equality", () => {
 			const aInsertable = { foo: 42, bar: 100 };
 			const aNode = PojoEmulationNumberRecord.create(aInsertable);

@@ -5,10 +5,18 @@
 
 import { strict as assert } from "node:assert";
 import { asAlpha } from "../../api.js";
+import type { FieldKey } from "../../core/index.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { isTreeNode } from "../../simple-tree/core/index.js";
-import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
+import {
+	SchemaFactory,
+	type NodeFromSchema,
+	isTreeNode,
+	getInnerNode,
+} from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
 
 import { describeHydration } from "./utils.js";
 
@@ -32,6 +40,47 @@ const initialTree = {
 describeHydration(
 	"MapNode",
 	(init) => {
+		it("does not retain empty dynamic fields", () => {
+			class Values extends schemaFactory.map("bounded-fields", schemaFactory.number) {}
+			const map = init(Values, {});
+			const inner = getInnerNode(map);
+			for (let i = 0; i < 128; i++) {
+				const key = `key-${i}`;
+				assert.equal(map.get(key), undefined);
+				assert.equal(inner.getBoxed(brand(key)).length, 0);
+				map.delete(key);
+				map.set(key, undefined);
+				map.set(key, i);
+				map.delete(key);
+				if (inner instanceof UnhydratedFlexTreeNode) {
+					assert.equal(inner.allFieldsLazy.size, 0);
+				}
+			}
+			assert.equal(map.size, 0);
+		});
+
+		it("preserves retained fields across eviction and replacement", () => {
+			class Values extends schemaFactory.map("retained-fields", schemaFactory.number) {}
+			const map = init(Values, {});
+			const inner = getInnerNode(map);
+			const key: FieldKey = brand("key");
+			const field = inner.getBoxed(key);
+			assert(field.is(FieldKinds.optional));
+			map.set(key, 1);
+			assert.equal(field.content, 1);
+			map.delete(key);
+			assert.equal(field.content, undefined);
+			const replacement = inner.getBoxed(key);
+			assert.notEqual(replacement, field);
+			map.set(key, 2);
+			assert.equal(field.content, 2);
+			assert.equal(replacement.boxedAt(0), field.boxedAt(0));
+			field.editor.set(undefined, false);
+			assert.equal(map.has(key), false);
+			map.set(key, 3);
+			assert.equal(field.content, 3);
+		});
+
 		describe("forEach", () => {
 			it("non-leaf children", () => {
 				class Child extends schemaFactory.map("child", schemaFactory.number) {}

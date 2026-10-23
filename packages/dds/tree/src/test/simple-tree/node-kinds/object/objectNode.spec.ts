@@ -766,7 +766,7 @@ describeHydration(
 					assert.equal(countAfter, countBefore + 1);
 				});
 
-				it("accessing leaf on map node does not allocate flex nodes", () => {
+				it("accessing leaf on map node does not allocate flex nodes or fields", () => {
 					class TreeWithLeaves extends schemaFactory.map(
 						"MapOfLeaves",
 						SchemaFactory.number,
@@ -783,11 +783,7 @@ describeHydration(
 					const _accessLeaf = root.get("1");
 					const countAfter = context.withAnchors.size;
 
-					// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
-					// than the before count.
-					// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
-					// the two counts match, plus its title updated accordingly.
-					assert.equal(countAfter, countBefore + 1);
+					assert.equal(countAfter, countBefore);
 				});
 
 				it("accessing leaf on array node does not allocate flex nodes", () => {

@@ -174,6 +174,12 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
 	getBoxed(key: FieldKey): FlexTreeField;
 
 	/**
+	 * Gets the first child of a field, unboxing leaf nodes, without creating a field wrapper.
+	 * Returns undefined if the field is empty.
+	 */
+	getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined;
+
+	/**
 	 * The field this tree is in, and the index within that field.
 	 * @remarks
 	 * The behavior of this at the root (especially removed and unhydrated roots) is currently not very consistent.

@@ -9,6 +9,7 @@ import {
 	type Anchor,
 	type AnchorNode,
 	CursorLocationType,
+	MapNodeStoredSchema,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
@@ -17,6 +18,7 @@ import {
 	type TreeNodeStoredSchema,
 	type Value,
 	inCursorField,
+	inCursorNode,
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
@@ -27,12 +29,13 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeUnknownUnboxed,
 	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { clearEmptyFields, getCachedField, makeField, unboxedFlexNode } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -75,8 +78,14 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
+	readonly #removeFieldChangeCallback: (() => void) | undefined;
 
 	private readonly storedSchema: TreeNodeStoredSchema;
+
+	/**
+	 * Whether this node has the dynamic optional fields used by maps and records.
+	 */
+	public readonly hasDynamicFields: boolean;
 
 	public constructor(
 		context: Context,
@@ -88,9 +97,17 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		super(context, cursor, anchor);
 		this.storedSchema =
 			context.schema.nodeSchema.get(this.type) ?? fail(0xb14 /* missing schema */);
+		this.hasDynamicFields =
+			this.storedSchema instanceof MapNodeStoredSchema &&
+			this.storedSchema.mapFields.kind === FieldKinds.optional.identifier;
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
+		this.#removeFieldChangeCallback = this.hasDynamicFields
+			? anchorNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					clearEmptyFields(this, changedFields);
+				})
+			: undefined;
 	}
 
 	public isHydrated(): this is HydratedFlexTreeNode {
@@ -109,6 +126,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
+		this.#removeFieldChangeCallback?.();
 		this.context.checkout.forest.anchors.forget(this.anchor);
 	}
 
@@ -158,6 +176,25 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return inCursorField(this.cursor, key, (cursor) => {
 			return makeField(this.context, fieldSchema.kind, cursor);
 		});
+	}
+
+	public getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
+		currentObserver?.observeNodeField(this, key);
+		return inCursorField(this.cursor, key, (cursor) =>
+			cursor.getFieldLength() === 0
+				? undefined
+				: inCursorNode(cursor, 0, (child) =>
+						unboxedFlexNode(this.context, child, { parent: this.anchor, fieldKey: key }),
+					),
+		);
+	}
+
+	/**
+	 * Gets an anchor-derived field path without recovering this node's cursor.
+	 */
+	public getFieldPath(key: FieldKey): { parent: AnchorNode; field: FieldKey } {
+		this.ensureValidForAccess();
+		return { parent: this.anchorNode, field: key };
 	}
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeField> {
