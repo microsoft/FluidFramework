@@ -22,12 +22,12 @@
  * active deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before
  * upgrading.
  *
- * Deployed-client values must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab}
+ * Deployed-client values must be at least {@link @fluidframework/runtime-utils#oldestSupportedClientVersionFloor}
  * and cannot exceed the version of any Fluid Framework client package in use by the local client.
  * APIs that still permit this setting to be omitted use
- * {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * {@link @fluidframework/runtime-utils#defaultOldestSupportedClient}.
  *
- * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
+ * {@link @fluidframework/runtime-utils#validateOldestSupportedClient} can be used to check these invariants at runtime.
  * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `OldestSupportedClientVersion`.
  *
  * @privateRemarks

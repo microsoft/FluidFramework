@@ -62,7 +62,7 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  * - runtimeVersionForLoading: "1.4.0"
  * We will return "1.4.0" since it's the lower of the two versions.
  */
-export function getMinVersionForCollab(
+export function getOldestSupportedClient(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string,
 ): OldestSupportedClientVersion {
@@ -71,8 +71,8 @@ export function getMinVersionForCollab(
 	// Preserve stable 1.x/2.x patches needed when compatibility tests run older runtime packages.
 	const normalizedRuntimeVersion = normalizeRuntimeVersion(runtimeVersion);
 	const normalizedRuntimeVersionForLoading = normalizeRuntimeVersion(runtimeVersionForLoading);
-	assertValidMinVersionForCollab(normalizedRuntimeVersion);
-	assertValidMinVersionForCollab(normalizedRuntimeVersionForLoading);
+	assertValidOldestSupportedClient(normalizedRuntimeVersion);
+	assertValidOldestSupportedClient(normalizedRuntimeVersionForLoading);
 	// Use the lower of the two versions to ensure compatibility between the two runtimes.
 	// (Outside of cross-client compat the two versions are the same, so this is a no-op.)
 	return semver.compare(normalizedRuntimeVersion, normalizedRuntimeVersionForLoading) <= 0
@@ -97,7 +97,7 @@ function normalizeRuntimeVersion(version: string): string {
  * Compatibility tests can exercise older runtime packages whose accepted floor predates the
  * current `OldestSupportedClientVersion` type, so this intentionally does not apply today's floor.
  */
-function assertValidMinVersionForCollab(
+function assertValidOldestSupportedClient(
 	version: string,
 ): asserts version is OldestSupportedClientVersion {
 	if (semver.valid(version) === null || semver.prerelease(version) !== null) {
@@ -189,7 +189,7 @@ export async function getVersionedTestObjectProviderFromApis(
 			containerOptions?.runtimeOptions,
 			containerOptions?.oldestSupportedClient ??
 				containerOptions?.minVersionForCollab ??
-				getMinVersionForCollab(
+				getOldestSupportedClient(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,
 				),
@@ -315,7 +315,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			containerOptions?.runtimeOptions,
 			containerOptions?.oldestSupportedClient ??
 				containerOptions?.minVersionForCollab ??
-				getMinVersionForCollab(
+				getOldestSupportedClient(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,
 				),
@@ -338,7 +338,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			containerOptions?.runtimeOptions,
 			containerOptions?.oldestSupportedClient ??
 				containerOptions?.minVersionForCollab ??
-				getMinVersionForCollab(
+				getOldestSupportedClient(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,
 				),
