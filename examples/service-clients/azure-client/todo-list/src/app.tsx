@@ -41,12 +41,12 @@ async function start(): Promise<void> {
 	const clientProps: AzureClientPropsInternal = {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
-		createContainerRuntimeFactory: ({ schema, minVersionForCollaboration }) => {
+		createContainerRuntimeFactory: ({ schema, oldestSupportedClient }) => {
 			if (!isTreeContainerSchema(schema)) {
 				throw new Error("Invalid container schema");
 			}
 			// eslint-disable-next-line import-x/no-deprecated -- not actually deprecated, eslint doesn't properly distinguish the overloads
-			return createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration });
+			return createTreeContainerRuntimeFactory({ schema, oldestSupportedClient });
 		},
 	};
 	const client = new AzureClient(clientProps);
