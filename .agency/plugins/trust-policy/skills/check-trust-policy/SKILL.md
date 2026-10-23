@@ -72,6 +72,7 @@ If the public registry is also blocked, report that a trust check is not possibl
 5. Report `requested.verdict`, `requested.provenanceVerified`, the reason, and any `alternative`.
    An `inconclusive` verdict means the check could not complete (for example, a network or Sigstore failure); it is neither acceptance nor rejection.
    If an alternative is suggested, disclose that it may be from a different major version and require code changes.
+   An alternative passes the same policy as the requested version, and always has registry-reported provenance.
    Metadata-only results must never be described as cryptographically verified.
 6. Report `auditIncomplete`, `searchTruncated`, and `errors`.
    A zero exit status in JSON mode does not establish acceptance.

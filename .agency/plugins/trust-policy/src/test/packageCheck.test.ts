@@ -104,6 +104,37 @@ test("cryptographic default rejects missing provenance and verifies newest stabl
 	assert.equal(result.auditIncomplete, false);
 });
 
+test("alternatives must pass the requested policy, not only cryptographic verification", async () => {
+	// 1.0.0 has a trusted publisher; 2.0.0 and 3.0.0 have only provenance, a downgrade from 1.0.0.
+	const data = packument();
+	data.versions = {
+		"1.0.0": {
+			...manifest("1.0.0"),
+			_npmUser: { trustedPublisher: { id: "github", oidcConfigId: "oidc" } },
+		},
+		"2.0.0": manifest("2.0.0"),
+		"3.0.0": manifest("3.0.0"),
+	};
+	data.time = { "1.0.0": "2020-01-01", "2.0.0": "2020-02-01", "3.0.0": "2020-03-01" };
+
+	const result = await checkPackage(
+		"example@2.0.0",
+		{ policy: "no-downgrade" },
+		services(data),
+	);
+	assert.equal(result.requested.verdict, "rejected");
+	// 3.0.0 is newer but is also a downgrade, so the search skips it.
+	assert.equal(result.alternative?.version, "1.0.0");
+	assert.equal(result.candidatesChecked, 2);
+
+	const recheck = await checkPackage(
+		"example@1.0.0",
+		{ policy: "no-downgrade" },
+		services(data),
+	);
+	assert.equal(recheck.requested.verdict, "accepted");
+});
+
 test("metadata is opt-in and never claims cryptographic verification", async () => {
 	const result = await checkPackage(
 		"example@1.1.0",
@@ -116,19 +147,17 @@ test("metadata is opt-in and never claims cryptographic verification", async () 
 });
 
 test("no-downgrade follows pnpm: publication order, trust evidence ranking, and prerelease exclusion", async () => {
+	// no-downgrade never verifies signatures; services() fails any verification attempt.
 	const check = async (spec: string, data: PackageMeta) =>
-		checkPackage(
-			spec,
-			{ policy: "no-downgrade" },
-			services(data, async () => ({ verified: true, reason: "verified" })),
-		);
+		checkPackage(spec, { policy: "no-downgrade" }, services(data));
 
 	const republished = packument();
 	republished.time["1.0.0"] = "2020-03-15";
 	const downgrade = await check("example@1.0.0", republished);
 	assert.equal(downgrade.requested.verdict, "rejected");
 	assert.match(downgrade.requested.reason, /provenance attestation.*no trust evidence/);
-	assert.ok(downgrade.alternative?.provenanceVerified);
+	assert.equal(downgrade.alternative?.version, "2.0.0");
+	assert.equal(downgrade.alternative?.provenanceVerified, false);
 
 	const first = await check("example@1.0.0", packument());
 	assert.equal(first.requested.verdict, "accepted");

@@ -288,8 +288,8 @@ export function getTrustEvidence(manifest: PackageInRegistry): TrustEvidence {
 
 /**
  * Checks one exact package version and, if it is rejected, searches the newest stable, non-deprecated, provenance-bearing releases for an alternative.
- * Alternatives are verified cryptographically unless the `metadata` policy was selected.
- * They are not guaranteed to be API-compatible or harmless.
+ * The requested version and every alternative are assessed by the same function against the same policy, so an alternative passes exactly the checks the requested version failed.
+ * Alternatives are not guaranteed to be API-compatible or harmless.
  * @param spec - Exact package version, such as `name@1.2.3`.
  * @param options - Policy, registry, and search options.
  * @param services - Registry and verification operations.
@@ -311,15 +311,13 @@ export async function checkPackage(
 	if (packument.name !== pin.name || requestedManifest === undefined) {
 		throw new Error(`Package version not found: ${spec}`);
 	}
-	const context: AssessmentContext = { packument, registry, services, errors: [] };
-	const requested = await assessVersion(context, requestedManifest, policy);
+	const context: AssessmentContext = { packument, policy, registry, services, errors: [] };
+	const requested = await assessVersion(context, requestedManifest);
 	const search =
 		requested.verdict === "rejected"
 			? await findAlternative(
 					context,
 					selectAlternativeCandidates(packument, pin.version),
-					// Alternatives always need provenance; no-downgrade alone could suggest an unattested release.
-					policy === "metadata" ? "metadata" : "cryptographic",
 					maxCandidates,
 				)
 			: { alternative: null, candidatesChecked: 0, searchTruncated: false };
@@ -339,6 +337,10 @@ export async function checkPackage(
  */
 interface AssessmentContext {
 	packument: PackageMeta;
+	/**
+	 * Policy applied to the requested version and to every alternative.
+	 */
+	policy: PackagePolicy;
 	registry: string;
 	services: PackageServices;
 	/**
@@ -348,23 +350,21 @@ interface AssessmentContext {
 }
 
 /**
- * Assesses one version of the context's package against a policy.
+ * Assesses one version of the context's package against the context's policy.
  *
  * @remarks
  * Written for this plugin; neither npm nor pnpm has an equivalent that applies a choice of provenance policies to one version.
  * `npm audit signatures` verifies attestations but rejects nothing for lacking them, and pnpm applies only `no-downgrade`, during resolution.
  * Rejecting deprecated versions is stricter than npm-pick-manifest and pnpm, which only prefer non-deprecated versions when picking.
  *
- * @param context - Assessment state.
+ * @param context - Assessment state, including the policy.
  * @param manifest - Version manifest from the context's packument.
- * @param policy - Policy to apply.
  */
 async function assessVersion(
 	context: AssessmentContext,
 	manifest: PackageInRegistry,
-	policy: PackagePolicy,
 ): Promise<PackageAssessment> {
-	const { packument } = context;
+	const { packument, policy } = context;
 	if (manifest.name !== packument.name || packument.versions[manifest.version] !== manifest) {
 		throw new Error(
 			`Registry manifest identity mismatch for ${packument.name}@${manifest.version}.`,
@@ -544,7 +544,7 @@ function selectAlternativeCandidates(
 }
 
 /**
- * Returns the first candidate that a policy accepts, assessing at most `maxCandidates`.
+ * Returns the first candidate that the context's policy accepts, assessing at most `maxCandidates`.
  * Inconclusive candidates are skipped; their errors make the result incomplete.
  *
  * @remarks
@@ -552,15 +552,13 @@ function selectAlternativeCandidates(
  * {@link https://github.com/pnpm/pnpm/blob/cbe5accc7ace6812e1770f6301d2742c91381c85/pnpm11/resolving/npm-resolver/src/trustChecks.ts | trustChecks.ts}, which re-picks after each rejected candidate.
  * pnpm's version is not exported, and its synchronous check cannot await the Sigstore verification that each candidate needs here.
  *
- * @param context - Assessment state.
+ * @param context - Assessment state, including the policy.
  * @param candidates - Candidate manifests in preference order.
- * @param policy - Policy to apply.
  * @param maxCandidates - Maximum number of candidates to assess.
  */
 async function findAlternative(
 	context: AssessmentContext,
 	candidates: readonly PackageInRegistry[],
-	policy: PackagePolicy,
 	maxCandidates: number,
 ): Promise<Pick<PackageCheckResult, "alternative" | "candidatesChecked" | "searchTruncated">> {
 	let candidatesChecked = 0;
@@ -569,7 +567,7 @@ async function findAlternative(
 			return { alternative: null, candidatesChecked, searchTruncated: true };
 		}
 		candidatesChecked++;
-		const candidate = await assessVersion(context, manifest, policy);
+		const candidate = await assessVersion(context, manifest);
 		if (candidate.verdict === "accepted") {
 			return { alternative: candidate, candidatesChecked, searchTruncated: false };
 		}

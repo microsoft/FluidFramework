@@ -81,10 +81,6 @@ export default class CheckTrustPolicyCommand extends Command {
 			];
 			if (policy === "cryptographic") {
 				needed.push(sigstoreTufEndpoint("Sigstore trusted root for verification", true));
-			} else if (policy === "no-downgrade") {
-				needed.push(
-					sigstoreTufEndpoint("Sigstore trusted root for verifying alternatives", false),
-				);
 			}
 			endpointAccess = await probeEndpoints(planEndpoints(needed));
 			const lines = formatEndpointAccess(endpointAccess);
