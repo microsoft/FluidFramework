@@ -7,10 +7,21 @@ import { strict as assert } from "node:assert";
 import { isDeepStrictEqual } from "node:util";
 
 import {
+	normalizeFieldSchema,
 	StagedSchemaUpgradePolicy,
 	toStoredSchema,
 	type SchemaUpgrade,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createFieldSchema } from "../simple-tree/fieldSchema.js";
+import {
+	hasStagedSchema,
+	simpleStoredSchemaToStoredSchema,
+	transformSimpleSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../simple-tree/toStoredSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createTreeSchema } from "../simple-tree/treeSchema.js";
 
 import {
 	getStagedSchemaUpgrades,
@@ -68,36 +79,84 @@ describe("test tree catalogs", () => {
 		}
 	});
 
-	describe("getStagedSchemaUpgrades on test schema", () => {
+	describe("staging in test schema", () => {
 		for (const testCase of testSchema) {
 			it(testCase.name, () => {
-				// Validate getStagedSchemaUpgrades against toStoredSchema.
+				// Reference conversions must bypass policy-key normalization and the stored-schema cache.
+				const treeSchema = createTreeSchema(testCase.schema);
 				const upgrades = getStagedSchemaUpgrades(testCase.schema);
-				const upgradesFromToStoredSchema = new Set<SchemaUpgrade>();
-				toStoredSchema(testCase.schema, {
+				const upgradesFromConversion = new Set<SchemaUpgrade>();
+				transformSimpleSchema(treeSchema, {
 					includeStaged(upgrade) {
-						upgradesFromToStoredSchema.add(upgrade);
+						upgradesFromConversion.add(upgrade);
 						return true;
 					},
 					includeStagedOptional(upgrade) {
-						upgradesFromToStoredSchema.add(upgrade);
+						upgradesFromConversion.add(upgrade);
 						return true;
 					},
 				});
-				assert(compareSets({ a: upgrades, b: upgradesFromToStoredSchema }));
+				assert(compareSets({ a: upgrades, b: upgradesFromConversion }));
+				assert.equal(upgrades.size > 0, testCase.hasStagedSchema === true);
 
-				// Sanity check: Convert the schema to stored schema using different staged schema policies and compare the results.
-				const restrictive = toStoredSchema(
-					testCase.schema,
-					StagedSchemaUpgradePolicy.restrictive,
+				const restrictive = simpleStoredSchemaToStoredSchema(
+					transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.restrictive),
 				);
-				const permissive = toStoredSchema(
-					testCase.schema,
-					StagedSchemaUpgradePolicy.permissive,
+				const permissive = simpleStoredSchemaToStoredSchema(
+					transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.permissive),
 				);
+				// Catalog staging must be observable; redundant staging need not change the stored schema in general.
 				const convertedHasStagedSchema = !isDeepStrictEqual(restrictive, permissive);
-				assert.equal(upgrades.size > 0, convertedHasStagedSchema);
+				assert.equal(convertedHasStagedSchema, testCase.hasStagedSchema === true);
+				assert.equal(hasStagedSchema(testCase.schema), testCase.hasStagedSchema === true);
 			});
+
+			for (const permissiveFirst of [false, true]) {
+				it(`${testCase.name}: ${permissiveFirst ? "permissive" : "restrictive"} first`, () => {
+					const original = normalizeFieldSchema(testCase.schema);
+					// A fresh root ensures neither lookup order is hidden by earlier cache population.
+					const root = createFieldSchema(
+						original.kind,
+						original.allowedTypes,
+						original.props ?? {},
+					);
+					const treeSchema = createTreeSchema(root);
+					const expectedRestrictive = simpleStoredSchemaToStoredSchema(
+						transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.restrictive),
+					);
+					const expectedPermissive = simpleStoredSchemaToStoredSchema(
+						transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.permissive),
+					);
+					const restrictivePolicy = { ...StagedSchemaUpgradePolicy.restrictive };
+					const permissivePolicy = { ...StagedSchemaUpgradePolicy.permissive };
+					const policies = permissiveFirst
+						? [permissivePolicy, restrictivePolicy]
+						: [restrictivePolicy, permissivePolicy];
+					for (const policy of policies) {
+						toStoredSchema(root, policy);
+					}
+					const restrictive = toStoredSchema(root, restrictivePolicy);
+					const permissive = toStoredSchema(root, permissivePolicy);
+					assert.deepEqual(restrictive, expectedRestrictive);
+					assert.deepEqual(permissive, expectedPermissive);
+					assert.equal(hasStagedSchema(root), testCase.hasStagedSchema === true);
+					assert.equal(restrictive === permissive, !testCase.hasStagedSchema);
+					assert.strictEqual(toStoredSchema(root, restrictivePolicy), restrictive);
+					if (!testCase.hasStagedSchema) {
+						assert.strictEqual(
+							toStoredSchema(root, {
+								...restrictivePolicy,
+								includeAlreadyEnabledUpgrades: true,
+							}),
+							permissive,
+						);
+						assert.strictEqual(
+							toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
+							permissive,
+						);
+					}
+				});
+			}
 		}
 	});
 });

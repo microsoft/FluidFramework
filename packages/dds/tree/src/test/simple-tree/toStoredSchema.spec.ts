@@ -27,6 +27,8 @@ import {
 	Unchanged,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	generateSchemaFromSimpleSchema,
 	SchemaFactory,
@@ -35,6 +37,7 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	getStoredSchema,
+	hasStagedSchema,
 	toInitialSchema,
 	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
@@ -70,6 +73,69 @@ function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
 }
 
 describe("toStoredSchema", () => {
+	describe("staging reachability", () => {
+		for (const reverse of [false, true]) {
+			it(`detects staging through a cycle (${reverse ? "B" : "A"} first)`, () => {
+				const sf = new SchemaFactoryAlpha("stagingCycle");
+				class A extends sf.objectRecursive("A", {
+					child: sf.optionalRecursive([() => B]),
+					staged: sf.stagedOptional(sf.number),
+				}) {}
+				class B extends sf.objectRecursive("B", {
+					child: sf.optionalRecursive([() => A]),
+				}) {}
+
+				// Both roots reach A's staged field; visiting the cycle must not cache an incomplete negative answer for B.
+				for (const root of reverse ? [B, A] : [A, B]) {
+					assert.equal(hasStagedSchema(root), true);
+					assert.notDeepEqual(
+						toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive),
+						toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
+					);
+				}
+			});
+		}
+
+		// Context creation calls toStoredSchema, so staging detection must not initialize contexts itself.
+		for (const initializeContextFirst of [false, true]) {
+			it(`works ${initializeContextFirst ? "after" : "before"} context initialization`, () => {
+				const sf = new SchemaFactoryAlpha("stagingContext");
+				class Staged extends sf.objectRecursive("Staged", {
+					child: sf.optionalRecursive([() => Staged]),
+					staged: sf.stagedOptional(sf.number),
+				}) {}
+				class Unstaged extends sf.objectRecursive("Unstaged", {
+					child: sf.optionalRecursive([() => Unstaged]),
+				}) {}
+
+				for (const [root, expected] of [
+					[Staged, true],
+					[Unstaged, false],
+				] as const) {
+					if (initializeContextFirst) {
+						getUnhydratedContext(root);
+					}
+					assert.equal(hasStagedSchema(root), expected);
+					const context = getUnhydratedContext(root);
+					const permissive = toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
+					assert.strictEqual(context.flexContext.schema, permissive);
+					const restrictive = toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive);
+					assert.equal(restrictive === permissive, !expected);
+				}
+			});
+		}
+
+		it("does not confuse root staging with staging in the referenced node", () => {
+			const sf = new SchemaFactoryAlpha("stagingRoot");
+			const optional = sf.stagedOptional(sf.number);
+			const allowedTypes = sf.types([sf.number, sf.staged(sf.string)]);
+			assert.equal(hasStagedSchema(optional), true);
+			assert.equal(hasStagedSchema(allowedTypes), true);
+			assert.equal(hasStagedSchema(sf.number), false);
+			assert.equal(hasStagedSchema(sf.string), false);
+		});
+	});
+
 	describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const schema = new SchemaFactory("com.example");

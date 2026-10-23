@@ -1,0 +1,9 @@
+---
+"@fluidframework/tree": minor
+"fluid-framework": minor
+"__section": tree
+---
+Reduce repeated schema conversion for SharedTree
+
+SharedTree reuses derived stored schemas across staged-upgrade policies when the view schema contains no staging.
+Schemas with staged upgrades continue to use policy-specific stored schemas.
