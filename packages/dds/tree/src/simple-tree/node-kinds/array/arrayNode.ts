@@ -1718,9 +1718,11 @@ export interface ArrayPlaceAnchor {
 	/**
 	 * Stop tracking this anchor and release any resources it holds.
 	 * @remarks
-	 * Call this when the anchor is no longer needed (for example when a tracked cursor position is discarded).
+	 * If you own this anchor, call this when it is no longer needed (for example when a tracked cursor position is discarded).
 	 * Interacting with an anchor (including reading its properties) after it has been disposed is invalid and will throw.
-	 * Calling `dispose` more than once has no effect.
+	 * Disposing an already disposed anchor has no effect.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} may be thrown when attempting to dispose a borrowed anchor.
+	 * Borrowed anchors must not be disposed by the caller.
 	 */
 	dispose(): void;
 }
@@ -1768,9 +1770,16 @@ export interface ArrayPlaceAnchor {
  * fixed so a delta is always available; when adding new code constrained by it, note it here (or track it centrally)
  * so the full set of affected call sites is known and can be prioritized.
  *
- * TODO: we should fix (or at least improve and/or clarify) how anchors can be out of date.
- * Perhaps this is a symptom of a larger issue where Apps don't have good APIs for when some of their content needs to update before others.
- * See the skipped tests for this function for some more details.
+ * TODO: Restore anchor positions across transaction rollback and undo of removals.
+ * Removal collapses anchors inside the removed span, losing their original offsets.
+ * Reinserting the removed content does not restore those offsets, even when a transaction rolls back.
+ * For example, removing [0, 3) moves an anchor at index 1 to 0; rollback restores the content but moves the anchor to 3, not 1.
+ * This also affects extrinsic ranges: a nested transaction that removes content and rolls back during a tracked edit
+ * can cause the tracker to persist incorrect endpoints after the content has been restored.
+ *
+ * TODO: Fix or improve the event ordering that causes the stale indices described above.
+ * This may require better APIs for applications to control update ordering between dependent content.
+ * See the skipped tests for this function covering array listeners registered before the anchor and descendant events during merges.
  *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
