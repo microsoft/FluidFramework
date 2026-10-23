@@ -140,7 +140,14 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_BaseContainerRuntimeFactoryProps": {
+				"forwardCompat": false
+			},
+			"Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
