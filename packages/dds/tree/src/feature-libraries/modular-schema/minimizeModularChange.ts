@@ -271,6 +271,7 @@ class ModularChangeMinimizer {
 						filterAttach: (id, count, _outputRootId, endpoint) =>
 							this.filterAttachForBuildChange(fieldId, id, count, endpoint),
 						preserveOtherEdits: false,
+						preserveValueChanges: this.isNodeIdInBuiltTree(fieldId.nodeId),
 					},
 				),
 			),
@@ -386,6 +387,9 @@ class ModularChangeMinimizer {
 						filterDetach: (...args) => this.filterDetachForResidualChange(fieldId, ...args),
 						filterAttach: (...args) => this.filterAttachForResidualChange(fieldId, ...args),
 						preserveOtherEdits: false,
+						preserveValueChanges:
+							!this.isNodeIdInBuiltTree(fieldId.nodeId) &&
+							!this.isFieldDetachedInOutput(fieldId),
 					},
 				),
 			),

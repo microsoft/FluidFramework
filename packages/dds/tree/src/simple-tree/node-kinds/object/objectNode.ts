@@ -19,6 +19,7 @@ import {
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
+	type FlexTreeCounterField,
 } from "../../../feature-libraries/index.js";
 import type {
 	RestrictiveStringRecord,
@@ -27,6 +28,7 @@ import type {
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
+import type { TreeCounter } from "../../fieldSchema.js";
 import {
 	CompatibilityLevel,
 	type TreeNodeSchema,
@@ -322,12 +324,7 @@ function createProxyHandler(
 			if (fieldInfo !== undefined) {
 				const flexNode = getInnerNode(proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
-				const field = flexNode.tryGetField(fieldInfo.storedKey);
-				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
-				}
-
-				return undefined;
+				return readObjectField(proxy, fieldInfo.storedKey, fieldInfo.schema.kind);
 			}
 
 			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
@@ -362,6 +359,12 @@ function createProxyHandler(
 			applyFieldChange(schema, { kind: "target", node: target }, fieldInfo, undefined);
 			return true;
 		},
+		defineProperty(target, propertyKey, descriptor): boolean {
+			if (schema.flexKeyMap.get(propertyKey)?.schema.kind === FieldKind.Counter) {
+				throw new UsageError("Counter fields cannot be redefined");
+			}
+			return Reflect.defineProperty(target, propertyKey, descriptor);
+		},
 		has: (target, propertyKey) => {
 			return (
 				schema.flexKeyMap.has(propertyKey) ||
@@ -390,8 +393,8 @@ function createProxyHandler(
 			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
-				writable: true,
+				value: readObjectField(proxy, fieldInfo.storedKey, fieldInfo.schema.kind),
+				writable: fieldInfo.schema.kind !== FieldKind.Counter,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
 				// JSON and deep equals with JSON compatible object (which can't have undefined fields).
@@ -653,6 +656,46 @@ export function objectSchema<
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
+/**
+ * Keeps counter accessor identity stable without retaining a field from an earlier hydration state.
+ */
+const counterAccessors = new WeakMap<TreeNode, Map<FieldKey, TreeCounter>>();
+
+/**
+ * Reads an object's field using the same representation for property access and property descriptors.
+ * @remarks
+ * Counter accessors capture only the owner and stored key, then resolve the current inner field on each operation.
+ * Capturing the field itself would retain stale unhydrated state or a path invalidated by parent movement.
+ */
+function readObjectField(node: TreeNode, key: FieldKey, kind: FieldKind): unknown {
+	if (kind !== FieldKind.Counter) {
+		const field = getInnerNode(node).tryGetField(key);
+		return field === undefined ? undefined : tryGetTreeNodeForField(field);
+	}
+	let fields = counterAccessors.get(node);
+	if (fields === undefined) {
+		fields = new Map();
+		counterAccessors.set(node, fields);
+	}
+	let accessor = fields.get(key);
+	if (accessor === undefined) {
+		const field = (): FlexTreeCounterField =>
+			getInnerNode(node).getBoxed(key) as FlexTreeCounterField;
+		accessor = Object.freeze({
+			get value(): number {
+				return field().content;
+			},
+			add(amount: number): number {
+				if (!Number.isFinite(amount) || !Number.isFinite(field().content + amount)) {
+					throw new UsageError("Counter additions and results must be finite numbers");
+				}
+				return field().editor.add(amount);
+			},
+		});
+		fields.set(key, accessor);
+	}
+	return accessor;
+}
 
 /**
  * Ensures that the set of property keys in the schema is unique.
@@ -805,6 +848,9 @@ function applyFieldChange(
 	fieldInfo: { storedKey: FieldKey; schema: FieldSchema },
 	value: InsertableContent | undefined,
 ): void {
+	if (fieldInfo.schema.kind === FieldKind.Counter) {
+		throw new UsageError("Counter fields cannot be assigned; use add instead");
+	}
 	const proxy =
 		from.kind === "proxy"
 			? from.node

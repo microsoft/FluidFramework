@@ -14,6 +14,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
+	type TreeRootFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -97,7 +98,8 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 ): TreeFieldFromImplicitField<TSchema> {
 	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
 	view.initialize(initialTree as InsertableField<TSchema>);
-	return view.root;
+	const root: TreeRootFromImplicitField<TSchema> = view.root;
+	return root;
 }
 
 /**

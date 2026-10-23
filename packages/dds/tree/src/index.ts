@@ -92,6 +92,8 @@ export {
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
+	type TreeRootFromImplicitField,
+	type TreeCounter,
 	type TreeChangeEvents,
 	type NodeFromSchema,
 	type TreeMapNode,

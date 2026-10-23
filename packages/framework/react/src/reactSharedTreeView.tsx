@@ -14,7 +14,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type {
 	SchemaCompatibilityStatus,
 	TreeViewConfiguration,
-	TreeFieldFromImplicitField,
+	TreeRootFromImplicitField,
 	TreeView,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -147,10 +147,10 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
  */
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
-	 * Component to display the tree content.
+	 * Component to display root content, not an object-field accessor.
 	 */
 	readonly viewComponent: FC<{
-		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
+		root: PropTreeValue<TreeRootFromImplicitField<TSchema>>;
 	}>;
 
 	/**
@@ -221,8 +221,8 @@ function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 
 function useViewRoot<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
-): TreeFieldFromImplicitField<TSchema> | undefined {
-	const [root, setRoot] = useState<TreeFieldFromImplicitField<TSchema> | undefined>(undefined);
+): TreeRootFromImplicitField<TSchema> | undefined {
+	const [root, setRoot] = useState<TreeRootFromImplicitField<TSchema> | undefined>(undefined);
 
 	useEffect(() => {
 		const updateRoot = (): void => {

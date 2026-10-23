@@ -155,6 +155,11 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
  */
 export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", {
 	/**
+	 * Opt-in counter-capable history format using the v7 envelope, including custom commit metadata.
+	 * Requires an explicit write-version override; no client version selects it by default.
+	 */
+	counter: "counter|v0.1",
+	/**
 	 * Introduced and retired prior to 2.0.
 	 * Reading and writing capability removed in 2.73.0.
 	 */
@@ -205,6 +210,7 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
 	new Set([
+		EditManagerFormatVersion.counter,
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.v6,

@@ -1528,6 +1528,7 @@ describe("ModularChangeFamily", () => {
 		]);
 		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
 			ModularChangeFormatVersion.v5,
+			ModularChangeFormatVersion.counter,
 		]);
 	});
 

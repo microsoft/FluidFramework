@@ -10,6 +10,11 @@ import { strictEnum, type Values } from "../util/index.js";
  */
 export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	/**
+	 * Opt-in counter-capable message format using the v7 envelope, including custom commit metadata.
+	 * Requires an explicit write-version override alongside the counter-capable history format.
+	 */
+	counter: "counter|v0.1",
+	/**
 	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
 	 * Introduced and retired prior to 2.0.
 	 * Reading and writing capability removed in 2.73.0.
@@ -65,6 +70,7 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 });
 export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
+	MessageFormatVersion.counter,
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
 	MessageFormatVersion.v6,

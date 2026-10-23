@@ -74,6 +74,11 @@ interface ChangeFormatDependencies {
  */
 export const SharedTreeChangeFormatVersion = strictEnum("SharedTreeChangeFormatVersion", {
 	/**
+	 * Change format selecting the counter-capable modular codec without changing existing dependencies.
+	 * Selected by the experimental message/history formats, not by a stable client-version default.
+	 */
+	counter: "counter|v0.1",
+	/**
 	 * Introduced prior to 2.0 and used beyond.
 	 * Reading capability must be maintained for backwards compatibility.
 	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
@@ -108,6 +113,10 @@ export const dependenciesForChangeFormat = new Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
 >([
+	[
+		SharedTreeChangeFormatVersion.counter,
+		{ modularChange: ModularChangeFormatVersion.counter },
+	],
 	[
 		SharedTreeChangeFormatVersion.v3,
 		{

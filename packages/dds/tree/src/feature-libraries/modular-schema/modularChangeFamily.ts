@@ -1745,6 +1745,8 @@ export function intoDelta(
 	const rootDelta: Mutable<DeltaRoot> = {};
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
+	const build: DeltaDetachedNodeBuild[] = [];
+	const destroy: DeltaDetachedNodeDestruction[] = [];
 
 	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
@@ -1755,6 +1757,8 @@ export function intoDelta(
 			fieldKinds,
 			global,
 			rename,
+			build,
+			destroy,
 		);
 		if (fieldDeltas.size > 0) {
 			rootDelta.fields = fieldDeltas;
@@ -1767,19 +1771,26 @@ export function intoDelta(
 		}
 	}
 
-	// Constraint violations should not prevent nodes from being built
+	// Outer builds are declarations and survive constraint violations.
+	// Field-generated builds above are effects and are omitted with the conflicted field edits.
 	if (change.builds && change.builds.size > 0) {
-		rootDelta.build = copyDetachedNodes(change.builds);
+		for (const entry of copyDetachedNodes(change.builds) ?? []) {
+			build.push(entry);
+		}
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
-		const destroys: DeltaDetachedNodeDestruction[] = [];
 		for (const [[major, minor], count] of change.destroys.entries()) {
-			destroys.push({
+			destroy.push({
 				id: makeDetachedNodeId(major, minor),
 				count,
 			});
 		}
-		rootDelta.destroy = destroys;
+	}
+	if (build.length > 0) {
+		rootDelta.build = build;
+	}
+	if (destroy.length > 0) {
+		rootDelta.destroy = destroy;
 	}
 	if (change.refreshers && change.refreshers.size > 0) {
 		rootDelta.refreshers = copyDetachedNodes(change.refreshers);
@@ -1813,6 +1824,8 @@ function intoDeltaImpl(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
+	build: DeltaDetachedNodeBuild[],
+	destroy: DeltaDetachedNodeDestruction[],
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 
@@ -1821,6 +1834,8 @@ function intoDeltaImpl(
 			local: fieldChanges,
 			global: fieldGlobal,
 			rename: fieldRename,
+			build: fieldBuild,
+			destroy: fieldDestroy,
 		} = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
 			(childChange): DeltaFieldMap => {
@@ -1832,6 +1847,8 @@ function intoDeltaImpl(
 					fieldKinds,
 					global,
 					rename,
+					build,
+					destroy,
 				);
 			},
 		);
@@ -1844,6 +1861,12 @@ function intoDeltaImpl(
 		for (const r of fieldRename ?? []) {
 			rename.push(r);
 		}
+		for (const entry of fieldBuild ?? []) {
+			build.push(entry);
+		}
+		for (const entry of fieldDestroy ?? []) {
+			destroy.push(entry);
+		}
 	}
 	return delta;
 }
@@ -1855,6 +1878,8 @@ function deltaFromNodeChange(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
+	build: DeltaDetachedNodeBuild[],
+	destroy: DeltaDetachedNodeDestruction[],
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(
@@ -1864,6 +1889,8 @@ function deltaFromNodeChange(
 			fieldKinds,
 			global,
 			rename,
+			build,
+			destroy,
 		);
 	}
 	// TODO: update the API to allow undefined to be returned here
