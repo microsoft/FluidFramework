@@ -21,13 +21,12 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	TestFluidObject,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 /**
  * In all cases we end up with a permanently corrupt file.

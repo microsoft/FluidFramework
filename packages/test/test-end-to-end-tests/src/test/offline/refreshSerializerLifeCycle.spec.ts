@@ -18,6 +18,7 @@ import type {
 import type { LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	DataObjectFactoryType,
 	ITestFluidObject,
@@ -29,8 +30,6 @@ import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../../mocking.js";
 
 import { loadContainerOffline } from "./offlineTestsUtils.js";
 
