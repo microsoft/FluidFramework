@@ -636,5 +636,31 @@ describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
 		const runtime = createRuntime("minVersionTest", "2.2.3");
 		assert.deepStrictEqual(runtime.minVersionForCollab, "2.2.3");
+		assert.strictEqual(runtime.oldestSupportedClient, "2.2.3");
+	});
+
+	it("reads oldestSupportedClient from the context", () => {
+		const context = new MockFluidDataStoreContext("oldestSupportedClient");
+		context.oldestSupportedClient = "2.20.0";
+		const runtime = new FluidDataStoreRuntime(context, new Map(), false, async (rt) => rt);
+		assert.strictEqual(runtime.oldestSupportedClient, "2.20.0");
+		assert.strictEqual(runtime.minVersionForCollab, "2.20.0");
+	});
+
+	it("prefers oldestSupportedClient when both properties are present", () => {
+		const context = new MockFluidDataStoreContext("dualProperties");
+		context.minVersionForCollab = "2.0.0";
+		Object.defineProperty(context, "oldestSupportedClient", { value: "2.20.0" });
+		const runtime = new FluidDataStoreRuntime(context, new Map(), false, async (rt) => rt);
+		assert.strictEqual(runtime.oldestSupportedClient, "2.20.0");
+		assert.strictEqual(runtime.minVersionForCollab, "2.20.0");
+	});
+
+	it("accepts a context that exposes only minVersionForCollab", () => {
+		const context = new MockFluidDataStoreContext("legacyProperty");
+		context.minVersionForCollab = "2.2.3";
+		Object.defineProperty(context, "oldestSupportedClient", { value: undefined });
+		const runtime = new FluidDataStoreRuntime(context, new Map(), false, async (rt) => rt);
+		assert.strictEqual(runtime.oldestSupportedClient, "2.2.3");
 	});
 });

@@ -80,6 +80,16 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
 	readonly minVersionForCollab?: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * The factory uses this setting to select compatible runtime features and write formats for the test.
+	 * If this property is absent, the factory accepts {@link ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab} for compatibility with older test configurations.
+	 * If neither property supplies a version, the factory uses {@link defaultTestOldestSupportedClient}, currently `"2.0.0"`.
+	 */
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }
 
 /**
@@ -152,7 +162,10 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		this.provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 		this.requestHandlers = [getDefaultObject];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.minVersionForCollab = props.minVersionForCollab ?? defaultTestOldestSupportedClient;
+		this.minVersionForCollab =
+			props.oldestSupportedClient ??
+			props.minVersionForCollab ??
+			defaultTestOldestSupportedClient;
 	}
 
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
