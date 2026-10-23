@@ -59,14 +59,14 @@ const config = new TreeViewConfiguration({ schema: StringArray });
 
 interface MetadataOptions {
 	readonly retainHistory?: boolean;
-	readonly minVersionForCollab?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
+	readonly oldestSupportedClient?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
 }
 
 /** A factory whose defaults enable persisted commit metadata. */
 function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
 	return configuredSharedTree({
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v2_117,
+		oldestSupportedClient: options.oldestSupportedClient ?? FluidClientVersion.v2_117,
 		retainHistory: options.retainHistory ?? false,
 	}).getFactory();
 }
@@ -76,7 +76,7 @@ function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
  * @remarks Sufficient for everything that does not involve replication or persistence.
  */
 function createView(): SchematizingSimpleTreeView<typeof StringArray> {
-	const view = getView(config, { minVersionForCollab: FluidClientVersion.v2_117 });
+	const view = getView(config, { oldestSupportedClient: FluidClientVersion.v2_117 });
 	view.initialize([]);
 	return view;
 }
@@ -914,7 +914,7 @@ describe("custom commit metadata", () => {
 			// even though the application supplies it.
 			const provider = generateHistory({
 				retainHistory: true,
-				minVersionForCollab: FluidClientVersion.v2_80,
+				oldestSupportedClient: FluidClientVersion.v2_80,
 			});
 			const tree = provider.trees[0];
 
@@ -938,7 +938,7 @@ describe("custom commit metadata", () => {
 			const {
 				provider,
 				views: [view1, view2],
-			} = createConnectedViews(2, { minVersionForCollab: FluidClientVersion.v2_80 });
+			} = createConnectedViews(2, { oldestSupportedClient: FluidClientVersion.v2_80 });
 
 			view1.runTransaction(
 				() => {
@@ -959,7 +959,7 @@ describe("custom commit metadata", () => {
 				1,
 				SummarizeType.onDemand,
 				new SharedTreeTestFactory(() => {}, undefined, {
-					minVersionForCollab: FluidClientVersion.v2_117,
+					oldestSupportedClient: FluidClientVersion.v2_117,
 					retainHistory: true,
 				}),
 			);
@@ -1000,7 +1000,7 @@ describe("custom commit metadata", () => {
 				2,
 				SummarizeType.disabled,
 				new SharedTreeTestFactory(() => {}, undefined, {
-					minVersionForCollab: FluidClientVersion.v2_117,
+					oldestSupportedClient: FluidClientVersion.v2_117,
 				}),
 			);
 			const view1 = asAlpha(provider.trees[0].viewWith(config));

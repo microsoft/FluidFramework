@@ -88,7 +88,7 @@ import { testIdCompressor } from "../utils.js";
 
 export const testCodecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
+	oldestSupportedClient: currentVersion,
 };
 
 class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {

@@ -87,14 +87,14 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
-		minVersionForCollab: OldestSupportedClientVersion,
+		oldestSupportedClient: OldestSupportedClientVersion,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,
 	) {
 		super(
 			EditManagerSummarizer.key,
-			minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
+			minVersionToEditManagerSummaryFormatVersion(oldestSupportedClient),
 			supportedVersions,
 			true /* supportPreVersioningFormat */,
 		);

@@ -175,7 +175,7 @@ export class SharedTreeCore<
 	) {
 		super(
 			summarizablesTreeKey,
-			minVersionToSharedTreeSummaryFormatVersion(coreOptions.minVersionForCollab),
+			minVersionToSharedTreeSummaryFormatVersion(coreOptions.oldestSupportedClient),
 			supportedSharedTreeSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -222,7 +222,7 @@ export class SharedTreeCore<
 				this.editManager,
 				editManagerCodec,
 				this.idCompressor,
-				coreOptions.minVersionForCollab,
+				coreOptions.oldestSupportedClient,
 				this.schemaAndPolicy,
 				coreOptions.healUnresolvableIdentifiersOnDecode === true
 					? { sharedObjectId: sharedObject.id, logger }

@@ -114,8 +114,8 @@ function makeFieldBatchCodec(
 	// Only encode is replaced: the real codec cannot use the provided encoderContext, which these tests need to control shapes.
 	const builder = VersionDispatchingCodecBuilder.build(
 		name,
-		fieldBatchCodecBuilder.registry.map(({ minVersionForCollab, formatVersion, codec }) => ({
-			minVersionForCollab,
+		fieldBatchCodecBuilder.registry.map(({ oldestSupportedClient, formatVersion, codec }) => ({
+			oldestSupportedClient,
 			formatVersion,
 			codec: {
 				...codec(options),
@@ -128,7 +128,7 @@ function makeFieldBatchCodec(
 	);
 	return builder.build({
 		...options,
-		minVersionForCollab: lowestMinVersionForCollab,
+		oldestSupportedClient: lowestMinVersionForCollab,
 		writeVersionOverrides: new Map([[name, version]]),
 		allowPossiblyIncompatibleWriteVersionOverrides: true,
 	});

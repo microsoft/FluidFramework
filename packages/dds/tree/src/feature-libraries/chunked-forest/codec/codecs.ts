@@ -318,7 +318,7 @@ function makeFieldBatchCodecForVersion(
  */
 export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("FieldBatch", [
 	{
-		minVersionForCollab: lowestMinVersionForCollab,
+		oldestSupportedClient: lowestMinVersionForCollab,
 		formatVersion: FieldBatchFormatVersion.v1,
 		codec: makeFieldBatchCodecForVersion(
 			FieldBatchFormatVersion.v1,
@@ -328,7 +328,7 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 		),
 	},
 	{
-		minVersionForCollab: FluidClientVersion.v2_73,
+		oldestSupportedClient: FluidClientVersion.v2_73,
 		formatVersion: FieldBatchFormatVersion.v2,
 		codec: makeFieldBatchCodecForVersion(
 			FieldBatchFormatVersion.v2,
@@ -338,10 +338,10 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 		),
 	},
 	{
-		// Experimental: no minVersionForCollab, so only a write version override can select it.
+		// Experimental: no oldestSupportedClient, so only a write version override can select it.
 		// Removing the override does not guarantee compatibility with older clients:
 		// incremental summaries may still reference unchanged chunks encoded in this format.
-		minVersionForCollab: undefined,
+		oldestSupportedClient: undefined,
 		formatVersion: FieldBatchFormatVersion.vTextExperimental,
 		codec: makeFieldBatchCodecForVersion(
 			FieldBatchFormatVersion.vTextExperimental,

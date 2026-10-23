@@ -72,7 +72,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v1, "2.73.0"),
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v2, "2.73.0"),
 		{
-			minVersionForCollab: lowestMinVersionForCollab,
+			oldestSupportedClient: lowestMinVersionForCollab,
 			formatVersion: EditManagerFormatVersion.v3,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeV1toV4andV6CodecWithVersion(
@@ -84,7 +84,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v2_43,
+			oldestSupportedClient: FluidClientVersion.v2_43,
 			formatVersion: EditManagerFormatVersion.v4,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeV1toV4andV6CodecWithVersion(
@@ -97,7 +97,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 		},
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
 		{
-			minVersionForCollab: FluidClientVersion.v2_80,
+			oldestSupportedClient: FluidClientVersion.v2_80,
 			formatVersion: EditManagerFormatVersion.v6,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeV1toV4andV6CodecWithVersion(
@@ -109,7 +109,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v2_117,
+			oldestSupportedClient: FluidClientVersion.v2_117,
 			formatVersion: EditManagerFormatVersion.v7,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeV1toV4andV6CodecWithVersion(
@@ -121,7 +121,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 				),
 		},
 		{
-			minVersionForCollab: undefined,
+			oldestSupportedClient: undefined,
 			formatVersion: EditManagerFormatVersion.vSharedBranches,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(

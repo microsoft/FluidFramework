@@ -74,7 +74,7 @@ function makeVersionedCodec<
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
 					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${[...supportedVersions].join(", ")}.
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified an "oldestSupportedClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
 			const decoded = inner.decode(data, context, onError);
@@ -132,7 +132,7 @@ export function makeDiscontinuedCodecAndSchema<
 	discontinuedSince: SemanticVersion,
 ): CodecVersion<TDecoded, unknown, TFormatVersion, ICodecOptions, unknown> {
 	return {
-		minVersionForCollab: undefined,
+		oldestSupportedClient: undefined,
 		formatVersion: discontinuedVersion,
 		codec: {
 			schema: JsonCompatibleReadOnlySchema,
@@ -180,11 +180,11 @@ export interface CodecVersionBase<
 	/**
 	 * When `undefined` the codec will never be selected as a write version except via override.
 	 * @remarks
-	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
+	 * This format will be used for decode if data in it needs to be decoded, regardless of `oldestSupportedClient`.
 	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
 	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
-	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	readonly oldestSupportedClient: OldestSupportedClientVersion | undefined;
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -286,7 +286,7 @@ function normalizeCodecVersion<
 	};
 
 	return {
-		minVersionForCollab: codecVersion.minVersionForCollab,
+		oldestSupportedClient: codecVersion.oldestSupportedClient,
 		formatVersion: codecVersion.formatVersion,
 		codec,
 	};
@@ -387,20 +387,20 @@ export class VersionDispatchingCodecBuilder<
 			);
 			debugAssert(
 				() =>
-					codec.minVersionForCollab === undefined ||
+					codec.oldestSupportedClient === undefined ||
 					typeof codec.formatVersion !== "string" ||
-					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minVersionForCollab in ${name}`,
+					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a oldestSupportedClient in ${name}`,
 			);
 			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
 			normalizedRegistry.push(normalizedCodec);
-			if (codec.minVersionForCollab !== undefined) {
+			if (codec.oldestSupportedClient !== undefined) {
 				debugAssert(
 					() =>
-						!versions.has(codec.minVersionForCollab) ||
-						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.minVersionForCollab)}`,
+						!versions.has(codec.oldestSupportedClient) ||
+						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.oldestSupportedClient)}`,
 				);
-				versions.add(codec.minVersionForCollab);
+				versions.add(codec.oldestSupportedClient);
 			}
 		}
 
@@ -423,7 +423,7 @@ export class VersionDispatchingCodecBuilder<
 		options: TBuildOptions,
 	): EvaluatedCodecVersion<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext>[] {
 		return this.registry.map((codec) => ({
-			minVersionForCollab: codec.minVersionForCollab,
+			oldestSupportedClient: codec.oldestSupportedClient,
 			formatVersion: codec.formatVersion,
 			codec: codec.codec(options),
 		}));
@@ -476,7 +476,7 @@ export class VersionDispatchingCodecBuilder<
 					if (codec === undefined) {
 						throw new UsageError(
 							`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified an "oldestSupportedClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 						);
 					}
 					return codec.codec.decode(data, context, onError);
@@ -524,8 +524,8 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	 * @example
 	 * ```typescript
 	 * const builder = VersionDispatchingCodecBuilder.build('myCodec', [
-	 *   { minVersionForCollab: lowestMinVersionForCollab, formatVersion: 1, codec: { encode, decode, schema } },
-	 *   { minVersionForCollab: '2.100.0', formatVersion: 2, codec: { encode, decode, schema } },
+	 *   { oldestSupportedClient: lowestMinVersionForCollab, formatVersion: 1, codec: { encode, decode, schema } },
+	 *   { oldestSupportedClient: '2.100.0', formatVersion: 2, codec: { encode, decode, schema } },
 	 * ]);
 	 * ```
 	 */
@@ -578,7 +578,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 /**
  * Selects which format should be used when writing data.
  * @remarks
- * This either uses the override specified in the options, or selects the newest format compatible with the provided minVersionForCollab.
+ * This either uses the override specified in the options, or selects the newest format compatible with the provided oldestSupportedClient.
  */
 function getWriteVersion<T extends CodecVersionBase>(
 	name: CodecName,
@@ -593,14 +593,14 @@ function getWriteVersion<T extends CodecVersionBase>(
 				`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)}. Supported versions are: ${versionList(versions)}.`,
 			);
 		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
-			const selectedMinVersionForCollab = selected.minVersionForCollab;
+			const selectedMinVersionForCollab = selected.oldestSupportedClient;
 			if (selectedMinVersionForCollab === undefined) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has oldestSupportedClient undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
-			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
+			} else if (gt(selectedMinVersionForCollab, options.oldestSupportedClient)) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.oldestSupportedClient}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			}
 		}
@@ -608,7 +608,7 @@ function getWriteVersion<T extends CodecVersionBase>(
 		return selected;
 	}
 
-	return getWriteVersionNoOverrides(versions, options.minVersionForCollab);
+	return getWriteVersionNoOverrides(versions, options.oldestSupportedClient);
 }
 
 /**
@@ -616,17 +616,17 @@ function getWriteVersion<T extends CodecVersionBase>(
  */
 function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 	versions: readonly T[],
-	minVersionForCollab: OldestSupportedClientVersion,
+	oldestSupportedClient: OldestSupportedClientVersion,
 ): T {
 	const stableVersions: [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T][] = [];
 	for (const version of versions) {
-		if (version.minVersionForCollab !== undefined) {
-			stableVersions.push([version.minVersionForCollab, version]);
+		if (version.oldestSupportedClient !== undefined) {
+			stableVersions.push([version.oldestSupportedClient, version]);
 		}
 	}
 
 	const result: T = getConfigForMinVersionForCollabIterable(
-		minVersionForCollab,
+		oldestSupportedClient,
 		stableVersions,
 	);
 	return result;

@@ -165,7 +165,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		case "compressed": {
 			return TreeAlpha.exportCompressed(tree, {
 				...options,
-				minVersionForCollab: compatVersion,
+				oldestSupportedClient: compatVersion,
 			}) as JsonCompatible;
 		}
 		case "snapshot": {
@@ -173,7 +173,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
-					minVersionForCollab: compatVersion,
+					oldestSupportedClient: compatVersion,
 					idCompressor,
 				}),
 

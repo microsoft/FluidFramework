@@ -54,7 +54,7 @@ describe("SharedTree op format snapshots", () => {
 			useSnapshotDirectory(`op-format/${versionKey}`);
 			beforeEach(() => {
 				const factory = configuredSharedTree({
-					minVersionForCollab:
+					oldestSupportedClient:
 						FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
 				}).getFactory();
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();

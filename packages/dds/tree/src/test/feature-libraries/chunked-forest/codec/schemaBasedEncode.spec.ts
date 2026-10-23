@@ -492,7 +492,7 @@ describe("schemaBasedEncoding", () => {
 					// Select each format with an override so every registered format, including experimental ones, is snapshotted.
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
-						minVersionForCollab: currentVersion,
+						oldestSupportedClient: currentVersion,
 						writeVersionOverrides: new Map([[fieldBatchCodecBuilder.name, version]]),
 						allowPossiblyIncompatibleWriteVersionOverrides: true,
 					});

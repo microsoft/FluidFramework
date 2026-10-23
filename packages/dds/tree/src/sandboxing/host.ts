@@ -345,7 +345,7 @@ export class HostImplementation implements Sandboxing.Host {
 				moveToDetachedField(checkout.forest, cursor);
 				const options = {
 					jsonValidator: sandboxFormatValidator,
-					minVersionForCollab: FluidClientVersion.v2_80,
+					oldestSupportedClient: FluidClientVersion.v2_80,
 				};
 				const tree = fieldBatchCodecBuilder
 					.build(options)

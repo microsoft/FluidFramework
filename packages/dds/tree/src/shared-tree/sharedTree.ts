@@ -217,8 +217,8 @@ export class SharedTreeKernel
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
-			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
+		if (lt(options.oldestSupportedClient, FluidClientVersion.v2_0)) {
+			throw new UsageError("SharedTree requires oldestSupportedClient of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
 		const forest = buildConfiguredForest(
@@ -236,7 +236,7 @@ export class SharedTreeKernel
 				getCurrentSeq: lastSequenceNumber,
 			},
 			schemaCodec,
-			options.minVersionForCollab,
+			options.oldestSupportedClient,
 		);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
@@ -736,6 +736,7 @@ export interface SharedTreeFormatOptions {
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: FormatValidatorNoOp,
+	oldestSupportedClient: FluidClientVersion.v2_0,
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,

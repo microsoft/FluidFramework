@@ -163,10 +163,10 @@ describe("SharedTree", () => {
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
 						// @ts-expect-error Client 3.0 excludes 1.x values, but runtime validation must reject type-erased input.
-						minVersionForCollab: "1.99.0",
+						oldestSupportedClient: "1.99.0",
 					}).getFactory(),
 				),
-			validateUsageError("SharedTree requires minVersionForCollab of at least 2.0.0"),
+			validateUsageError("SharedTree requires oldestSupportedClient of at least 2.0.0"),
 		);
 	});
 
@@ -1993,7 +1993,7 @@ describe("SharedTree", () => {
 				1,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_74,
+					oldestSupportedClient: FluidClientVersion.v2_74,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -2024,7 +2024,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
+					oldestSupportedClient: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -2078,7 +2078,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
+					oldestSupportedClient: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -3138,38 +3138,48 @@ describe("SharedTree", () => {
 	});
 
 	describe("Schema v2 format enablement via `configuredSharedTree`", () => {
-		it("can create a SharedTree with schema format v2 enabled", async () => {
-			// Create and initialize the runtime factory
-			const runtime = new MockSharedTreeRuntime();
-
-			// Enable schema format v2
-			const tree = configuredSharedTree({
-				minVersionForCollab: FluidClientVersion.v2_43,
-			}).create(runtime);
-			const schemaFactory = new SchemaFactoryAlpha("com.example");
-
-			// A schema with node and field persisted metadata
-			class Foo extends schemaFactory.objectAlpha(
-				"Foo",
+		for (const [name, options] of [
+			["preferred property", { oldestSupportedClient: FluidClientVersion.v2_43 }],
+			["deprecated property", { minVersionForCollab: FluidClientVersion.v2_43 }],
+			[
+				"both properties",
 				{
-					bar: schemaFactory.required(schemaFactory.number, {
-						persistedMetadata: { "fieldMetadata": 1 },
-					}),
+					oldestSupportedClient: FluidClientVersion.v2_43,
+					minVersionForCollab: FluidClientVersion.v2_0,
 				},
-				{ persistedMetadata: { "nodeMetadata": 2 } },
-			) {}
+			],
+		] as const) {
+			it(`enables schema format v2 with ${name}`, async () => {
+				// Create and initialize the runtime factory
+				const runtime = new MockSharedTreeRuntime();
 
-			const treeView = tree.viewWith(
-				new TreeViewConfiguration({
-					schema: Foo,
-				}),
-			);
+				// Enable schema format v2
+				const tree = configuredSharedTree(options).create(runtime);
+				const schemaFactory = new SchemaFactoryAlpha("com.example");
 
-			const schema = treeView.schema;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
-			assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
-		});
+				// A schema with node and field persisted metadata
+				class Foo extends schemaFactory.objectAlpha(
+					"Foo",
+					{
+						bar: schemaFactory.required(schemaFactory.number, {
+							persistedMetadata: { "fieldMetadata": 1 },
+						}),
+					},
+					{ persistedMetadata: { "nodeMetadata": 2 } },
+				) {}
+
+				const treeView = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: Foo,
+					}),
+				);
+
+				const schema = treeView.schema;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
+				assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
+			});
+		}
 	});
 
 	describe("Identifiers", () => {
@@ -3253,7 +3263,7 @@ describe("SharedTree", () => {
 
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({
-			minVersionForCollab: FluidClientVersion.v2_52,
+			oldestSupportedClient: FluidClientVersion.v2_52,
 		});
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,

@@ -61,20 +61,24 @@ function treeKernelFactory(
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 
-		const { minVersionForCollab, ...otherOptions } = options;
+		const { oldestSupportedClient, minVersionForCollab, ...otherOptions } = options;
 
 		const adjustedOptions = {
 			...otherOptions,
 			// Cases:
-			// A. If options specifies minVersionForCollab, it takes precedence over args.minVersionForCollab.
+			// A. If options specifies oldestSupportedClient, it takes precedence over args.oldestSupportedClient.
 			// This value is set when:
 			// - A customer using the declarative SharedTree API specifies the setting at the Shared Tree level.
 			//   There is currently no way to set it via the declarative API, but it could be added in the future.
-			// - treeKernelFactory is invoked in a fuzz test with a specific minVersionForCollab
-			// B. Otherwise, we use args.minVersionForCollab, which is propagated from the ContainerRuntime.
+			// - treeKernelFactory is invoked in a fuzz test with a specific oldestSupportedClient
+			// B. Otherwise, we use args.oldestSupportedClient, which is propagated from the ContainerRuntime.
 			// C. If neither specifies it, we fall back to a default value default of 2.0 since that is the oldest version that supports SharedTree.
-			minVersionForCollab:
-				minVersionForCollab ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
+			oldestSupportedClient:
+				oldestSupportedClient ??
+				minVersionForCollab ??
+				args.oldestSupportedClient ??
+				args.minVersionForCollab ??
+				FluidClientVersion.v2_0,
 		};
 
 		return new SharedTreeKernel(

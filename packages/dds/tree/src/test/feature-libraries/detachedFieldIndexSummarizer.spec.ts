@@ -36,7 +36,7 @@ import { brand } from "../../util/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
-	minVersionForCollab?: OldestSupportedClientVersion;
+	oldestSupportedClient?: OldestSupportedClientVersion;
 }): {
 	summarizer: DetachedFieldIndexSummarizer;
 	index: DetachedFieldIndex;
@@ -48,7 +48,7 @@ function createDetachedFieldIndexSummarizer(options?: {
 		testIdCompressor,
 		{
 			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: options?.minVersionForCollab ?? FluidClientVersion.v2_74,
+			oldestSupportedClient: options?.oldestSupportedClient ?? FluidClientVersion.v2_74,
 		},
 	);
 	return { summarizer, index };

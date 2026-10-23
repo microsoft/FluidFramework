@@ -79,12 +79,12 @@ function makeTexts(texts: readonly string[]): TextArray {
 /**
  * The field batch codec with the vTextExperimental format selected.
  * @remarks
- * The format has no minVersionForCollab, so only an override selects it.
+ * The format has no oldestSupportedClient, so only an override selects it.
  * Decoding through the codec validates the data against the format schema and dispatches by version.
  */
 const vTextCodec = fieldBatchCodecBuilder.build({
 	jsonValidator: ajvValidator,
-	minVersionForCollab: currentVersion,
+	oldestSupportedClient: currentVersion,
 	writeVersionOverrides: new Map([
 		[fieldBatchCodecBuilder.name, FieldBatchFormatVersion.vTextExperimental],
 	]),

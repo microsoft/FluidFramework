@@ -45,7 +45,7 @@ import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
-	minVersionForCollab: currentVersion,
+	oldestSupportedClient: currentVersion,
 };
 
 describe("sharedTreeChangeCodec", () => {

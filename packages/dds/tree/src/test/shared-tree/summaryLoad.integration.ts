@@ -70,7 +70,7 @@ async function generateSummaryContent(
 	const options: SharedTreeOptions = {
 		jsonValidator: FormatValidatorBasic,
 		treeEncodeType,
-		minVersionForCollab:
+		oldestSupportedClient:
 			versionKey === cleanedPackageVersion
 				? cleanedPackageVersion
 				: FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
@@ -92,7 +92,7 @@ async function generateSummaryContent(
 
 /**
  * Ensures the snapshot directory contains a summary for every supported
- * `TreeCompressionStrategy` × `minVersionForCollab` combination this build can produce.
+ * `TreeCompressionStrategy` × `oldestSupportedClient` combination this build can produce.
  *
  * Each missing variant is generated and (if `addIfMissing`) written to disk under a
  * non-colliding name; otherwise the test fails listing what is missing.
@@ -158,7 +158,7 @@ describe("Summary load regression tests", () => {
 		await checkForMissingSummaries(regenerateSnapshots);
 	});
 
-	describe("Load every snapshot with the current minVersionForCollab", () => {
+	describe("Load every snapshot with the current oldestSupportedClient", () => {
 		for (const file of listSnapshotFiles(outputDirectory)) {
 			const relativePath = path.relative(outputDirectory, file);
 			it(`loads ${relativePath}`, async () => {
@@ -166,7 +166,7 @@ describe("Summary load regression tests", () => {
 
 				const options: SharedTreeOptions = {
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: cleanedPackageVersion,
+					oldestSupportedClient: cleanedPackageVersion,
 				};
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const factory = configuredSharedTree(options).getFactory();

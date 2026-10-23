@@ -210,7 +210,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		2,
 		configuredSharedTree({
 			jsonValidator: sandboxFormatValidator,
-			minVersionForCollab: FluidClientVersion.v2_80,
+			oldestSupportedClient: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
 	const mainView = provider.trees[1].viewWith(config);

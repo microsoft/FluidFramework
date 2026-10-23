@@ -45,12 +45,12 @@ import { makeTestFieldBatchContexts, testIdCompressor } from "../../utils.js";
 
 const codecOptionsOld: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	oldestSupportedClient: FluidClientVersion.v2_0,
 };
 
 const codecOptionsCurrent: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
+	oldestSupportedClient: currentVersion,
 };
 
 const fieldBatchCodecOld = fieldBatchCodecBuilder.build(codecOptionsOld);

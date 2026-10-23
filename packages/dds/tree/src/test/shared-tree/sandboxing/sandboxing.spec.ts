@@ -1164,7 +1164,7 @@ describe("Host and Guest correctness", () => {
 			},
 			{
 				idCompressor: createIdCompressor(SerializationVersion.V2),
-				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 			},
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
@@ -1192,7 +1192,7 @@ describe("Host and Guest correctness", () => {
 			2,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v2_80,
+				oldestSupportedClient: FluidClientVersion.v2_80,
 			}).getFactory(),
 		);
 		const main = asAlpha(provider.trees[1].viewWith(stringArrayConfig));
@@ -2468,7 +2468,7 @@ describe("Host and Guest correctness", () => {
 				schema: toInitialSchema(stringArrayConfig.schema),
 				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["a"]),
 			},
-			{ idCompressor, codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
+			{ idCompressor, codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 } },
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
 		const base = getCheckout(main).getFinalizedCommit();

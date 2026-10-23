@@ -23,7 +23,7 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
 export const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	oldestSupportedClient: FluidClientVersion.v2_0,
 });
 
 export type DefaultBranch = SharedTreeBranch<

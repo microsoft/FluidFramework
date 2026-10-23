@@ -401,7 +401,7 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		oldestSupportedClient: FluidClientVersion.v2_0,
 	};
 	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
 	const changeFamily =

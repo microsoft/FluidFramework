@@ -80,19 +80,19 @@ describe("schemaSummarizer", () => {
 
 	describe("Summary metadata validation", () => {
 		function createSchemaSummarizer(options?: {
-			minVersionForCollab?: OldestSupportedClientVersion;
+			oldestSupportedClient?: OldestSupportedClientVersion;
 		}): SchemaSummarizer {
 			const schema = new TreeStoredSchemaRepository();
 			const collabWindow: CollabWindow = {
 				getCurrentSeq: () => 0,
 			};
-			const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
+			const oldestSupportedClient = options?.oldestSupportedClient ?? FluidClientVersion.v2_74;
 			const codecOptions: CodecWriteOptions = {
 				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab,
+				oldestSupportedClient,
 			};
 			const codec = schemaCodecBuilder.build(codecOptions);
-			return new SchemaSummarizer(schema, collabWindow, codec, minVersionForCollab);
+			return new SchemaSummarizer(schema, collabWindow, codec, oldestSupportedClient);
 		}
 
 		it("writes metadata blob with version 2", () => {

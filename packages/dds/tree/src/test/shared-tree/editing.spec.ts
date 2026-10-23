@@ -3369,7 +3369,7 @@ describe("Editing", () => {
 		describe("No Change constraint", () => {
 			it("gets violated when a change is rebased", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3392,7 +3392,7 @@ describe("Editing", () => {
 
 			it("remains violated once violated", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3416,7 +3416,7 @@ describe("Editing", () => {
 
 			it("is not violated if no rebase occurs", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3434,7 +3434,7 @@ describe("Editing", () => {
 
 			it("multiple No Change constraints in same transaction", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3457,7 +3457,7 @@ describe("Editing", () => {
 		describe("No Change constraint on revert", () => {
 			it("Should be violated when rebasing over an edit to the attached document tree", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3488,7 +3488,7 @@ describe("Editing", () => {
 
 			it("Should be violated when rebasing over an edit to detached trees", () => {
 				const tree = makeTreeFromJsonSequence([{ value: "initial" }], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 
 				const branchWithEdit = tree.fork();
@@ -3532,7 +3532,7 @@ describe("Editing", () => {
 
 			it("Should not be violated when there's no rebase", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 
@@ -3553,7 +3553,7 @@ describe("Editing", () => {
 
 			it("Should not be violated when rebasing over inserts and their reversals", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
@@ -3594,7 +3594,7 @@ describe("Editing", () => {
 
 			it("Should not be violated when rebasing over moves and their reversals", () => {
 				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
@@ -3648,7 +3648,7 @@ describe("Editing", () => {
 
 			it("Should not be violated when content is inserted then removed by later edits", () => {
 				const tree = makeTreeFromJsonSequence([], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+					codecOptions: { oldestSupportedClient: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.fork();
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);

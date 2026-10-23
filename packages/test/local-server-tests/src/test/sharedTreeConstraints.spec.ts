@@ -41,7 +41,7 @@ describe("SharedTree transaction constraints", () => {
 		// compatibility floors aligned.
 		const noChangeConstraintsMinVersion = FluidClientVersion.v2_80;
 		const sharedTree = configuredSharedTree({
-			minVersionForCollab: noChangeConstraintsMinVersion,
+			oldestSupportedClient: noChangeConstraintsMinVersion,
 		});
 
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();

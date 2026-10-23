@@ -53,17 +53,17 @@ describe("versioned Codecs", () => {
 
 		const builder = VersionDispatchingCodecBuilder.build("Test", [
 			{
-				minVersionForCollab: lowestMinVersionForCollab,
+				oldestSupportedClient: lowestMinVersionForCollab,
 				formatVersion: 1,
 				codec: codecV1,
 			},
 			{
-				minVersionForCollab: FluidClientVersion.v2_43,
+				oldestSupportedClient: FluidClientVersion.v2_43,
 				formatVersion: 2,
 				codec: () => codecV2,
 			},
 			{
-				minVersionForCollab: undefined,
+				oldestSupportedClient: undefined,
 				formatVersion: "X",
 				codec: codecVX,
 			},
@@ -71,11 +71,11 @@ describe("versioned Codecs", () => {
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
-				minVersionForCollab: "2.55.0",
+				oldestSupportedClient: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
@@ -90,19 +90,19 @@ describe("versioned Codecs", () => {
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
 				validateUsageError(`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
+The client which encoded this data likely specified an "oldestSupportedClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
 		});
 
 		it("unstable version", () => {
 			const codecX = builder.build({
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 				allowPossiblyIncompatibleWriteVersionOverrides: true,
 				writeVersionOverrides: new Map([["Test", "X"]]),
 			});
 			const codec2 = builder.build({
-				minVersionForCollab: "2.55.0",
+				oldestSupportedClient: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const vx = codecX.encode(42);
@@ -119,19 +119,19 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.throws(
 				() =>
 					builder.build({
-						minVersionForCollab: "2.0.0",
+						oldestSupportedClient: "2.0.0",
 						jsonValidator: FormatValidatorBasic,
 						writeVersionOverrides: new Map([["Test", "X"]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version "X" because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "Test" does not support requested format version "X" because it has oldestSupportedClient undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				),
 			);
 
 			assert.throws(
 				() =>
 					builder.build({
-						minVersionForCollab: "2.0.0",
+						oldestSupportedClient: "2.0.0",
 						jsonValidator: FormatValidatorBasic,
 						allowPossiblyIncompatibleWriteVersionOverrides: true,
 						writeVersionOverrides: new Map([["Test", "1"]]),
@@ -160,13 +160,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			};
 			const contextualBuilder = VersionDispatchingCodecBuilder.build("Contextual", [
 				{
-					minVersionForCollab: lowestMinVersionForCollab,
+					oldestSupportedClient: lowestMinVersionForCollab,
 					formatVersion: 1,
 					codec: contextualCodec,
 				},
 			]);
 			const codec = contextualBuilder.build({
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 
@@ -178,7 +178,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		it("good builds", () => {
 			VersionDispatchingCodecBuilder.build("Test", [
 				{
-					minVersionForCollab: lowestMinVersionForCollab,
+					oldestSupportedClient: lowestMinVersionForCollab,
 					formatVersion: 1,
 					codec: codecV1,
 				},
@@ -199,7 +199,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() => decoder.decode({ version: 3, value2: 42 }),
 					validateUsageError(
 						`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified an "oldestSupportedClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 					),
 				);
 			});
@@ -212,13 +212,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								oldestSupportedClient: lowestMinVersionForCollab,
 								formatVersion: "1",
 								codec: codecV1,
 							},
 						]),
 					validateAssertionError(
-						`Debug assert failed: unstable format "1" (string formats) must not have a minVersionForCollab in Test`,
+						`Debug assert failed: unstable format "1" (string formats) must not have a oldestSupportedClient in Test`,
 					),
 				);
 
@@ -226,7 +226,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: undefined,
+								oldestSupportedClient: undefined,
 								formatVersion: 1,
 								codec: codecV1,
 							},
@@ -240,12 +240,12 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								oldestSupportedClient: lowestMinVersionForCollab,
 								formatVersion: 1,
 								codec: codecV1,
 							},
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								oldestSupportedClient: lowestMinVersionForCollab,
 								formatVersion: 2,
 								codec: codecV1,
 							},
@@ -259,12 +259,12 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								oldestSupportedClient: lowestMinVersionForCollab,
 								formatVersion: 1,
 								codec: codecV1,
 							},
 							{
-								minVersionForCollab: undefined,
+								oldestSupportedClient: undefined,
 								formatVersion: 1,
 								codec: codecV1,
 							},

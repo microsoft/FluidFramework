@@ -60,7 +60,7 @@ import {
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
 
 function createEditManagerSummarizer(options?: {
-	minVersionForCollab?: OldestSupportedClientVersion;
+	oldestSupportedClient?: OldestSupportedClientVersion;
 }) {
 	const family = testChangeFamilyFactory();
 	const editManager = editManagerFactory(family);
@@ -70,10 +70,10 @@ function createEditManagerSummarizer(options?: {
 	const changeFormatVersion = DependentFormatVersion.fromPairs(
 		Array.from(editManagerFormatVersions, (e) => [e, 1]),
 	);
-	const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
+	const oldestSupportedClient = options?.oldestSupportedClient ?? FluidClientVersion.v2_74;
 	const codec = makeEditManagerCodecBuilder<TestChange>().build({
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab,
+		oldestSupportedClient,
 		changeCodecs: family.codecs,
 		dependentChangeFormatVersion: changeFormatVersion,
 		revisionTagCodec,
@@ -82,7 +82,7 @@ function createEditManagerSummarizer(options?: {
 		editManager,
 		codec,
 		testIdCompressor,
-		minVersionForCollab,
+		oldestSupportedClient,
 	);
 	return { summarizer, editManager };
 }
@@ -97,7 +97,7 @@ describe("EditManagerSummarizer", () => {
 		const oldConfig = new TreeViewConfiguration({ schema: sf.optional(sf.string) });
 		const newConfig = new TreeViewConfiguration({ schema: sf.optional([sf.string, Added]) });
 		const factory = new SharedTreeTestFactory(() => {}, undefined, {
-			minVersionForCollab: currentVersion,
+			oldestSupportedClient: currentVersion,
 		});
 		const provider = new TestTreeProviderLite(2, factory);
 		const [a, b] = provider.trees;
@@ -160,7 +160,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("loads with metadata blob with version 2", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_74,
+				oldestSupportedClient: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({
@@ -216,7 +216,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("fail to load with metadata blob with version > latest", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_74,
+				oldestSupportedClient: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({

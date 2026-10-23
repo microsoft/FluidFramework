@@ -76,11 +76,11 @@ export class SchemaSummarizer
 		private readonly schema: MutableTreeStoredSchema,
 		collabWindow: CollabWindow,
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
-		minVersionForCollab: OldestSupportedClientVersion,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	) {
 		super(
 			"Schema",
-			minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
+			minVersionToSchemaSummaryFormatVersion(oldestSupportedClient),
 			supportedVersions,
 			true /* supportPreVersioningFormat */,
 		);

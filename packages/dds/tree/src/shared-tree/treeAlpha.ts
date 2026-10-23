@@ -354,7 +354,10 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"oldestSupportedClient"
+		>,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -902,12 +905,15 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & Pick<
+			CodecWriteOptions,
+			"oldestSupportedClient"
+		>,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: options.minVersionForCollab,
+			oldestSupportedClient: options.oldestSupportedClient,
 		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];

@@ -96,7 +96,7 @@ export class ForestSummarizer
 	) {
 		super(
 			forestSummaryKey,
-			minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
+			minVersionToForestSummaryFormatVersion(options.oldestSupportedClient),
 			supportedForestSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -104,7 +104,7 @@ export class ForestSummarizer
 		this.codec = forestCodecBuilder.build(options);
 
 		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
-			options.minVersionForCollab,
+			options.oldestSupportedClient,
 		);
 		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
 			summaryFormatWriteVersion,

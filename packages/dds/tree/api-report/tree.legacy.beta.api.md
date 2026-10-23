@@ -132,7 +132,9 @@ export type ChangeMetadataBeta = CommitMetadata & ({
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
+    // @deprecated
     readonly minVersionForCollab: OldestSupportedClientVersion;
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }
 
 // @public

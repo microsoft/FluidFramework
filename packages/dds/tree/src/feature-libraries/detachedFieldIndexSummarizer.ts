@@ -88,12 +88,12 @@ export class DetachedFieldIndexSummarizer
 	) {
 		const normalizedOptions = options ?? {
 			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: FluidClientVersion.v2_0,
+			oldestSupportedClient: FluidClientVersion.v2_0,
 		};
 		super(
 			"DetachedFieldIndex",
 			minVersionToDetachedFieldIndexSummaryFormatVersion(
-				normalizedOptions.minVersionForCollab,
+				normalizedOptions.oldestSupportedClient,
 			),
 			supportedVersions,
 			true,

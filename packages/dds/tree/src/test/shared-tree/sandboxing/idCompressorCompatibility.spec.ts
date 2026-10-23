@@ -32,7 +32,7 @@ function createCompatibilityFixture() {
 		2,
 		configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
-			minVersionForCollab: FluidClientVersion.v2_80,
+			oldestSupportedClient: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
 	const main = asAlpha(provider.trees[1].viewWith(stringArrayConfig));
@@ -43,7 +43,7 @@ function createCompatibilityFixture() {
 	const content = {
 		tree: TreeAlpha.exportCompressed(main.root, {
 			idCompressor: parent,
-			minVersionForCollab: FluidClientVersion.v2_80,
+			oldestSupportedClient: FluidClientVersion.v2_80,
 		}),
 		schema: extractPersistedSchema(
 			stringArrayConfig.schema,

@@ -16,7 +16,7 @@ import { Column, Row, Table } from "./schema.js";
 const SharedTree = configuredSharedTreeBetaLegacy({
 	// TableSchema column insertions use no-change-on-revert constraints to protect existing cells.
 	// SharedTree supports these constraints only when all collaborating clients are version 2.80 or newer.
-	minVersionForCollab: FluidClientVersion.v2_80,
+	oldestSupportedClient: FluidClientVersion.v2_80,
 });
 
 /**

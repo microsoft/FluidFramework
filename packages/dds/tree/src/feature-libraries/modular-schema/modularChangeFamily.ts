@@ -2371,7 +2371,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraint(revision: RevisionTag): void {
-		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+		if (lt(this.codecOptions.oldestSupportedClient, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);
@@ -2386,7 +2386,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
-		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+		if (lt(this.codecOptions.oldestSupportedClient, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);

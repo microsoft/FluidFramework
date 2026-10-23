@@ -236,7 +236,7 @@ import {
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	// Default to v2_80 to support noChange constraints in table operations
-	minVersionForCollab: FluidClientVersion.v2_80,
+	oldestSupportedClient: FluidClientVersion.v2_80,
 }) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -569,24 +569,20 @@ export class TestTreeProviderLite {
 
 /**
  * Run a custom "spy function" every time the given method is invoked.
- * @param methodClass - the class that has the method
+ * @param target - The class or instance with the method.
  * @param methodName - the name of the method
  * @param spy - the spy function to run alongside the method
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
  * after the spy is no longer needed.
  */
-export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-	methodClass: Function,
-	methodName: string,
-	spy: () => void,
-): () => void {
-	const prototype = methodClass.prototype as Record<
+export function spyOnMethod(target: object, methodName: string, spy: () => void): () => void {
+	const prototype = (typeof target === "function" ? target.prototype : target) as Record<
 		string,
 		(this: unknown, ...args: unknown[]) => unknown
 	>;
 	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
+	const descriptor = Object.getOwnPropertyDescriptor(prototype, methodName);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
@@ -595,7 +591,11 @@ export function spyOnMethod(
 	prototype[methodName] = methodSpy;
 
 	return () => {
-		prototype[methodName] = method;
+		if (descriptor === undefined) {
+			Reflect.deleteProperty(prototype, methodName);
+		} else {
+			Object.defineProperty(prototype, methodName, descriptor);
+		}
 	};
 }
 
@@ -718,7 +718,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // case with schema format v2.
 const schemaCodec = schemaCodecBuilder.build({
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
+	oldestSupportedClient: currentVersion,
 });
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
@@ -1020,7 +1020,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
 export function makeTreeFromJson(
 	json: JsonCompatible,
 	optionalRoot = false,
-	minVersionForCollab: OldestSupportedClientVersion = FluidClientVersion.v2_0,
+	oldestSupportedClient: OldestSupportedClientVersion = FluidClientVersion.v2_0,
 ): ITreeCheckout {
 	return checkoutWithContent(
 		{
@@ -1029,7 +1029,7 @@ export function makeTreeFromJson(
 			),
 			initialTree: singleJsonCursor(json),
 		},
-		{ codecOptions: { minVersionForCollab } },
+		{ codecOptions: { oldestSupportedClient } },
 	);
 }
 
@@ -1526,11 +1526,11 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 		} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
-	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
+	const oldestSupportedClient = options.oldestSupportedClient ?? FluidClientVersion.v2_80;
 	const view = createIndependentTreeViewAlpha(config, {
 		...options,
 		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
-		minVersionForCollab,
+		oldestSupportedClient,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;

@@ -82,7 +82,7 @@ function createForestSummarizer(args: {
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
 	initialContent?: TreeStoredContentStrict;
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-	minVersionForCollab?: OldestSupportedClientVersion;
+	oldestSupportedClient?: OldestSupportedClientVersion;
 }): { forestSummarizer: ForestSummarizer; checkout: TreeCheckout } {
 	const {
 		initialContent = {
@@ -92,11 +92,11 @@ function createForestSummarizer(args: {
 		encodeType,
 		forestType,
 		shouldEncodeIncrementally,
-		minVersionForCollab = FluidClientVersion.v2_74,
+		oldestSupportedClient = FluidClientVersion.v2_74,
 	} = args;
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab,
+		oldestSupportedClient,
 	};
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
@@ -368,7 +368,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer } = createForestSummarizer({
 					encodeType,
 					forestType,
-					minVersionForCollab: FluidClientVersion.v2_52,
+					oldestSupportedClient: FluidClientVersion.v2_52,
 				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
 				// The summary tree should have 2 entries - one for forest contents and one for metadata
@@ -389,7 +389,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 					encodeType,
 					forestType,
-					minVersionForCollab: FluidClientVersion.v2_52,
+					oldestSupportedClient: FluidClientVersion.v2_52,
 				});
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
@@ -408,7 +408,7 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType,
 					forestType,
-					minVersionForCollab: FluidClientVersion.v2_52,
+					oldestSupportedClient: FluidClientVersion.v2_52,
 				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
 				// The summary tree should have 2 entries - one for forest contents and one for metadata
@@ -429,7 +429,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 					encodeType,
 					forestType,
-					minVersionForCollab: FluidClientVersion.v2_52,
+					oldestSupportedClient: FluidClientVersion.v2_52,
 				});
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
@@ -1313,7 +1313,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				oldestSupportedClient: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -1337,7 +1337,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				oldestSupportedClient: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -1361,7 +1361,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				oldestSupportedClient: FluidClientVersion.v2_73,
 			});
 
 			// Should load successfully with version 2
@@ -1396,7 +1396,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				oldestSupportedClient: FluidClientVersion.v2_73,
 			});
 
 			await assert.doesNotReject(async () => forestSummarizer.load(mockStorage, JSON.parse));

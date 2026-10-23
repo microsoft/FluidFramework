@@ -234,7 +234,7 @@ function generateTestCases(
 
 const defaultCodecWriteOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	oldestSupportedClient: FluidClientVersion.v2_0,
 };
 
 function makeDetachedFieldIndexCodec(

@@ -75,13 +75,13 @@ function makeForestSummarizerCodec(
  */
 export const forestCodecBuilder = VersionDispatchingCodecBuilder.build("Forest", [
 	{
-		minVersionForCollab: lowestMinVersionForCollab,
+		oldestSupportedClient: lowestMinVersionForCollab,
 		formatVersion: ForestFormatVersion.v1,
 		codec: (options: CodecWriteOptions) =>
 			makeForestSummarizerCodec(options, ForestFormatVersion.v1),
 	},
 	{
-		minVersionForCollab: FluidClientVersion.v2_74,
+		oldestSupportedClient: FluidClientVersion.v2_74,
 		formatVersion: ForestFormatVersion.v2,
 		codec: (options: CodecWriteOptions) =>
 			makeForestSummarizerCodec(options, ForestFormatVersion.v2),

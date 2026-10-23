@@ -202,7 +202,7 @@ describe("treeNodeApi", () => {
 						() => invalidations.add("exportCompressed"),
 						() =>
 							TreeAlpha.exportCompressed(node, {
-								minVersionForCollab: FluidClientVersion.v2_0,
+								oldestSupportedClient: FluidClientVersion.v2_0,
 							}),
 					);
 					TreeAlpha.trackObservations(
@@ -4262,7 +4262,7 @@ describe("treeNodeApi", () => {
 						);
 						assert(tree !== undefined);
 						const exported = TreeAlpha.exportCompressed(tree, {
-							minVersionForCollab: FluidClientVersion.v2_0,
+							oldestSupportedClient: FluidClientVersion.v2_0,
 						});
 						const imported = TreeAlpha.importCompressed(testCase.schema, exported, {
 							jsonValidator: ajvValidator,

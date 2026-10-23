@@ -65,7 +65,7 @@ describe("independentView", () => {
 				{
 					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
-						minVersionForCollab: FluidClientVersion.v2_0,
+						oldestSupportedClient: FluidClientVersion.v2_0,
 					}),
 					idCompressor: testIdCompressor,
 				},
@@ -185,15 +185,15 @@ describe("independentView", () => {
 		});
 
 		it("initialized", () => {
-			const minVersionForCollab = FluidClientVersion.v2_0;
+			const oldestSupportedClient = FluidClientVersion.v2_0;
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				jsonValidator: ajvValidator,
 				content: {
-					schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
+					schema: extractPersistedSchema(config.schema, oldestSupportedClient, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
-						minVersionForCollab,
+						oldestSupportedClient,
 					}),
 					idCompressor: testIdCompressor,
 				},
@@ -205,7 +205,7 @@ describe("independentView", () => {
 
 		for (const finalize of [true, false]) {
 			it(`initialized with compressed identifiers from another compressor ${finalize ? "with finalize" : "without finalize"}`, () => {
-				const minVersionForCollab = FluidClientVersion.v2_0;
+				const oldestSupportedClient = FluidClientVersion.v2_0;
 				const schemaFactory = new SchemaFactory("test");
 				class HasIdentifier extends schemaFactory.object("HasIdentifier", {
 					id: schemaFactory.identifier,
@@ -234,7 +234,7 @@ describe("independentView", () => {
 				assert.equal(isFinalId(opSpace), finalize);
 
 				const compressed = TreeAlpha.exportCompressed(sourceTree, {
-					minVersionForCollab,
+					oldestSupportedClient,
 					idCompressor: sourceCompressor,
 				});
 
@@ -262,7 +262,7 @@ describe("independentView", () => {
 					forest: ForestTypeExpensiveDebug,
 					jsonValidator: ajvValidator,
 					content: {
-						schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
+						schema: extractPersistedSchema(config.schema, oldestSupportedClient, () => true),
 						tree: compressed,
 						idCompressor: targetCompressor,
 					},

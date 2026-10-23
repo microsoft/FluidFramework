@@ -139,8 +139,8 @@ async function make4DepthTreeView(
 		treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
 		// Incremental summarization only takes effect when the tree writes the incremental-capable
 		// forest summary format (ForestSummaryFormatVersion.v3), which is selected when
-		// minVersionForCollab is at least 2.74.
-		minVersionForCollab: FluidClientVersion.v2_74,
+		// oldestSupportedClient is at least 2.74.
+		oldestSupportedClient: FluidClientVersion.v2_74,
 		shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
 	});
 

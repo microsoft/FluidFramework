@@ -1,7 +1,7 @@
 [
   {
     "version": 1,
-    "minVersionForCollab": "2.0.0",
+    "oldestSupportedClient": "2.0.0",
     "schema": {
       "additionalProperties": false,
       "type": "object",
@@ -94,7 +94,7 @@
   },
   {
     "version": 2,
-    "minVersionForCollab": "2.52.0",
+    "oldestSupportedClient": "2.52.0",
     "schema": {
       "additionalProperties": false,
       "type": "object",

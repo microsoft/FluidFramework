@@ -48,7 +48,7 @@ export const baseTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Reference Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: currentVersion,
+		oldestSupportedClient: currentVersion,
 		forest: ForestTypeReference,
 	}),
 	generatorFactory,
@@ -69,7 +69,7 @@ export const comparisonForestTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Comparison Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: currentVersion,
+		oldestSupportedClient: currentVersion,
 		forest: ForestTypeExpensiveDebug,
 	}),
 	generatorFactory,

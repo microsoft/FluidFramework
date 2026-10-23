@@ -27,7 +27,7 @@ import {
 
 const codecOptions = {
 	jsonValidator: FormatValidatorNoOp,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	oldestSupportedClient: FluidClientVersion.v2_0,
 };
 
 type BranchType = SharedTreeBranch<

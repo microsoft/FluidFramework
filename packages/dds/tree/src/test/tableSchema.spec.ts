@@ -3144,7 +3144,7 @@ describe("TableFactory unit tests", () => {
 			1,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v2_80,
+				oldestSupportedClient: FluidClientVersion.v2_80,
 			}).getFactory(),
 		);
 		const config = new TreeViewConfiguration({
@@ -3177,7 +3177,7 @@ describe("TableFactory unit tests", () => {
 			2,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v2_80,
+				oldestSupportedClient: FluidClientVersion.v2_80,
 			}).getFactory(),
 		);
 		const config = new TreeViewConfiguration({ schema: Table, enableSchemaValidation: true });

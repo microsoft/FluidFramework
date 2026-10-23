@@ -213,14 +213,17 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
 export type CodecName = string;
 
 // @alpha @input
-export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
+export interface CodecWriteOptions extends ICodecOptions, Omit<CodecWriteOptionsBeta, "minVersionForCollab"> {
     readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
+    readonly oldestSupportedClient: OldestSupportedClientVersion;
     readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
+    // @deprecated
     readonly minVersionForCollab: OldestSupportedClientVersion;
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }
 
 // @alpha
@@ -479,7 +482,7 @@ export namespace ExtensibleUnionNode {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema, minVersionForCollab: OldestSupportedClientVersion, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, oldestSupportedClient: OldestSupportedClientVersion, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
 
 // @alpha @system
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
@@ -2595,7 +2598,7 @@ export interface TreeAlpha {
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor_2;
-    } & Pick<CodecWriteOptions, "minVersionForCollab">): JsonCompatible<IFluidHandle>;
+    } & Pick<CodecWriteOptions, "oldestSupportedClient">): JsonCompatible<IFluidHandle>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;

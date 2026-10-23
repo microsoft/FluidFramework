@@ -183,8 +183,17 @@ export interface CodecWriteOptionsBeta {
 	 *
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
+	 *
+	 * @deprecated 3.7.0. To be removed in 3.10.0. Use {@link CodecWriteOptionsBeta.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851}.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to read the encoded output.
+	 * If absent, use {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 */
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }
 
 /**
@@ -193,16 +202,22 @@ export interface CodecWriteOptionsBeta {
  * Extends {@link ICodecOptions} with options that are specific to encoding data.
  * @alpha @input
  */
-export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
+export interface CodecWriteOptions
+	extends ICodecOptions,
+		Omit<CodecWriteOptionsBeta, "minVersionForCollab"> {
+	/**
+	 * Oldest Fluid Framework client version that must be able to read the encoded output.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	/**
 	 * Overrides the version of the codec to use for encoding.
 	 * @remarks
-	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.oldestSupportedClient}.
 	 */
 	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 
 	/**
-	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.oldestSupportedClient}.
 	 */
 	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
@@ -519,7 +534,7 @@ export function withSchemaValidation<
  * Each entry should document:
  * - The user-facing impact of opting into it (e.g. encoding efficiency improvements).
  * - Any new data formats introduced in that version.
- * - Whether those features/formats are enabled by default or require {@link OldestSupportedClientVersion | minVersionForCollab} to be set accordingly.
+ * - Whether those features/formats are enabled by default or require {@link OldestSupportedClientVersion | oldestSupportedClient} to be set accordingly.
  * @alpha
  */
 export const FluidClientVersion = {
@@ -532,10 +547,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.43 and newer.
 	 * @remarks
 	 * New formats introduced in 2.43:
-	 * - SchemaFormatVersion.v2 - written when minVersionForCollab \>= 2.43
-	 * - MessageFormatVersion.v4 - written when minVersionForCollab \>= 2.43
-	 * - EditManagerFormatVersion.v4 - written when minVersionForCollab \>= 2.43
-	 * - sequence-field/formatV3 - written when minVersionForCollab \>= 2.43
+	 * - SchemaFormatVersion.v2 - written when oldestSupportedClient \>= 2.43
+	 * - MessageFormatVersion.v4 - written when oldestSupportedClient \>= 2.43
+	 * - EditManagerFormatVersion.v4 - written when oldestSupportedClient \>= 2.43
+	 * - sequence-field/formatV3 - written when oldestSupportedClient \>= 2.43
 	 */
 	v2_43: "2.43.0",
 
@@ -543,7 +558,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.52 and newer.
 	 * @remarks
 	 * New formats introduced in 2.52:
-	 * - DetachedFieldIndexFormatVersion.v2 - written when minVersionForCollab \>= 2.52
+	 * - DetachedFieldIndexFormatVersion.v2 - written when oldestSupportedClient \>= 2.52
 	 */
 	v2_52: "2.52.0",
 
@@ -551,7 +566,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
 	 * New formats introduced in 2.73:
-	 * - FieldBatchFormatVersion.v2 - written when minVersionForCollab \>= 2.73
+	 * - FieldBatchFormatVersion.v2 - written when oldestSupportedClient \>= 2.73
 	 */
 	v2_73: "2.73.0",
 
@@ -564,8 +579,8 @@ export const FluidClientVersion = {
 	 * - SchemaSummaryFormatVersion.v2 - written by default
 	 * - EditManagerSummaryFormatVersion.v2 - written by default
 	 * - ForestSummaryFormatVersion.v2 - written by default
-	 * - ForestFormatVersion.v2 - written when minVersionForCollab \>= 2.74
-	 * - ForestSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.74
+	 * - ForestFormatVersion.v2 - written when oldestSupportedClient \>= 2.74
+	 * - ForestSummaryFormatVersion.v3 - written when oldestSupportedClient \>= 2.74
 	 */
 	v2_74: "2.74.0",
 
@@ -573,10 +588,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.80 and newer.
 	 * @remarks
 	 * New formats introduced in 2.80:
-	 * - MessageFormatVersion.v6 - written when minVersionForCollab \>= 2.80
-	 * - EditManagerFormatVersion.v6 - written when minVersionForCollab \>= 2.80
-	 * - SharedTreeChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
-	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
+	 * - MessageFormatVersion.v6 - written when oldestSupportedClient \>= 2.80
+	 * - EditManagerFormatVersion.v6 - written when oldestSupportedClient \>= 2.80
+	 * - SharedTreeChangeFormatVersion.v5 - written when oldestSupportedClient \>= 2.80
+	 * - ModularChangeFormatVersion.v5 - written when oldestSupportedClient \>= 2.80
 	 */
 	v2_80: "2.80.0",
 
@@ -584,14 +599,14 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.117 and newer.
 	 * @remarks
 	 * New formats introduced in 2.117:
-	 * - MessageFormatVersion.v7 - written when minVersionForCollab \>= 2.117
-	 * - EditManagerFormatVersion.v7 - written when minVersionForCollab \>= 2.117
+	 * - MessageFormatVersion.v7 - written when oldestSupportedClient \>= 2.117
+	 * - EditManagerFormatVersion.v7 - written when oldestSupportedClient \>= 2.117
 	 *
 	 * @privateRemarks
 	 * These formats are gated at 2.117.0 rather than 3.0.0 so that they can also be carried by a
 	 * 2.117.0 minor cut from the last pre-3.0 commit on main, should one be needed for consumers
 	 * that cannot yet absorb the 3.0 breaking changes. Since 3.0.0 \> 2.117.0, 3.x clients select
-	 * these formats for any minVersionForCollab at or above 2.117.0 whether or not that release
+	 * these formats for any oldestSupportedClient at or above 2.117.0 whether or not that release
 	 * ever ships.
 	 *
 	 * Every client at or above 2.117.0 must therefore be able to read and write these formats. A
