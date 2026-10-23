@@ -10,6 +10,7 @@ import {
 	benchmarkIt,
 	BenchmarkType,
 } from "@fluid-tools/benchmark";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	createIndependentTreeAlpha,
@@ -50,21 +51,16 @@ describe("FlexTree navigation benchmarks", () => {
 					type: BenchmarkType.Measurement,
 					...benchmarkDurationBatchless({
 						benchmarkFn: (state) => {
-							let content: Items | Wrapper = new Items([{ value: 0 }, 1, { value: 2 }]);
+							const item = new Item({ value: 0 });
+							const items = new Items([item, 1, { value: 2 }]);
+							let content: Items | Wrapper = items;
 							for (let i = 0; i < depth; i++) content = new Wrapper({ child: content });
 							const view = createIndependentTreeAlpha({ forest }).viewWith(
 								new TreeViewConfiguration({ schema: [Items, Wrapper] }),
 							);
 							view.initialize(content);
-							let node = view.root;
-							while (Tree.is(node, Wrapper)) node = node.child;
-							const items = node;
-							const item = items[0];
-							assert(Tree.is(item, Item));
 							const inner = getInnerNode(item);
 							const field = inner.getBoxed(brand("value"));
-							const checkout = inner.context.isHydrated() ? inner.context.checkout : undefined;
-							assert(checkout !== undefined);
 							let value = 0;
 							let running: boolean;
 							do {
@@ -90,7 +86,7 @@ describe("FlexTree navigation benchmarks", () => {
 											break;
 										}
 										default: {
-											assert.fail("Unknown benchmark operation");
+											unreachableCase(operation);
 										}
 									}
 								});
