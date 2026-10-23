@@ -743,6 +743,9 @@ export const ForestTypeOptimized: ForestType;
 export const ForestTypeReference: ForestType;
 
 // @alpha
+export function forkBranch(view: UntypedTreeViewAlpha): TreeBranchHandleAlpha;
+
+// @alpha
 export namespace FormattedText {
     export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
     // @sealed
@@ -2693,6 +2696,13 @@ export interface TreeBranchEvents extends TreeBranchEventsBeta {
 // @beta @sealed
 export interface TreeBranchEventsBeta {
     changed(data: ChangeMetadataBeta): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHandleAlpha {
+    dispose(): void;
+    readonly disposed: boolean;
+    viewWith<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 }
 
 // @alpha @sealed
