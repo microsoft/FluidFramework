@@ -20,7 +20,6 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IDeltaHandler,
-	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
@@ -63,7 +62,7 @@ import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
+import { bindHandles, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -425,14 +424,7 @@ export abstract class SharedObjectCore<
 	}
 
 	#prepareMessage(content: unknown): unknown {
-		// NOTE: We may also be encoding in the ContainerRuntime layer.
-		// Once the layer-compat window passes we can remove the encoding codepath here altogether
-		const onlyBind =
-			(this.runtime as IFluidDataStoreRuntimeInternalConfig)
-				.submitMessagesWithoutEncodingHandles === true;
-		return onlyBind
-			? bindHandles(content, this.handle)
-			: makeHandlesSerializable(content, this.serializer, this.handle);
+		return bindHandles(content, this.handle);
 	}
 
 	#submitMessage(content: unknown, localOpMetadata: unknown): void {

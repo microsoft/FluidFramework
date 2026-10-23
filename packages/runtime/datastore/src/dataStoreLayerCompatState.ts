@@ -9,6 +9,7 @@ import {
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
+import { encodeHandlesInContainerRuntime } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
 	type MonitoringContext,
@@ -62,7 +63,7 @@ export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirem
 	/**
 	 * The features that the Runtime must support to be compatible with DataStore.
 	 */
-	requiredFeatures: [],
+	requiredFeatures: [encodeHandlesInContainerRuntime],
 };
 
 /**

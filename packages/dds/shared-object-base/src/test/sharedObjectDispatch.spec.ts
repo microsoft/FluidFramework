@@ -15,7 +15,7 @@ import type {
 	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
-import { isFluidHandle, isSerializedHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -220,78 +220,62 @@ describe("SharedObject ordinary dispatch", () => {
 		assert.equal(messages.messagesContent[0]?.contents, encodedHandle);
 	});
 
-	for (const onlyBind of [false, true]) {
-		it(`binds Fluid handles before transmission and reSubmit (onlyBind: ${onlyBind})`, async () => {
-			const { runtime, sharedObject, delta, services, submitted } = createFixture(
-				AttachState.Attached,
-			);
-			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
-			await sharedObject.load(services);
-			sharedObject.handle.attachGraph();
-			const handle = new MockHandle("referenced");
-			const metadata = {};
-			const observed: unknown[] = [];
-			services.deltaConnection = new MockDeltaConnection(
-				(contents: unknown) => {
-					assert.equal(handle.isAttached, true);
-					observed.push(contents);
-					return observed.length;
-				},
-				() => {},
-			);
-			sharedObject.submit(handle, metadata);
-			delta.reSubmit(handle, metadata, false);
-			delta.reSubmit(handle, metadata, true);
-			assert.equal(submitted.length, 0);
-			assert.equal(observed.length, 3);
-			for (const contents of observed) {
-				if (onlyBind) {
-					assert.equal(contents, handle);
-				} else {
-					assert(isSerializedHandle(contents));
-					assert.equal(contents.url, handle.absolutePath);
-				}
-			}
-		});
+	it("binds Fluid handles before transmission and reSubmit without encoding", async () => {
+		const { sharedObject, delta, services, submitted } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
+		sharedObject.handle.attachGraph();
+		const handle = new MockHandle("referenced");
+		const metadata = {};
+		const observed: unknown[] = [];
+		services.deltaConnection = new MockDeltaConnection(
+			(contents: unknown) => {
+				assert.equal(handle.isAttached, true);
+				observed.push(contents);
+				return observed.length;
+			},
+			() => {},
+		);
+		sharedObject.submit(handle, metadata);
+		delta.reSubmit(handle, metadata, false);
+		delta.reSubmit(handle, metadata, true);
+		assert.equal(submitted.length, 0);
+		assert.equal(observed.length, 3);
+		for (const contents of observed) {
+			assert.equal(contents, handle);
+		}
+	});
 
-		it(`does not prepare or submit messages while detached (onlyBind: ${onlyBind})`, () => {
-			const { runtime, sharedObject, services, submitted } = createFixture(
-				AttachState.Detached,
-			);
-			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
-			const content = {
-				get payload(): never {
-					return assert.fail("Detached submissions must not prepare messages");
-				},
-			};
-			sharedObject.submit(content);
-			sharedObject.connect(services);
-			sharedObject.submit(content);
-			runtime.setAttachState(AttachState.Attaching);
-			assert.equal(submitted.length, 0);
-		});
+	it("does not prepare or submit messages while detached", () => {
+		const { runtime, sharedObject, services, submitted } = createFixture(AttachState.Detached);
+		const content = {
+			get payload(): never {
+				return assert.fail("Detached submissions must not prepare messages");
+			},
+		};
+		sharedObject.submit(content);
+		sharedObject.connect(services);
+		sharedObject.submit(content);
+		runtime.setAttachState(AttachState.Attaching);
+		assert.equal(submitted.length, 0);
+	});
 
-		it(`does not submit a message when preparation throws (onlyBind: ${onlyBind})`, async () => {
-			const { runtime, sharedObject, services, submitted } = createFixture(
-				AttachState.Attached,
-			);
-			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
-			await sharedObject.load(services);
-			const error = new Error("Message preparation failed");
-			const content = {
-				get payload(): never {
-					throw error;
-				},
-			};
-			assert.throws(
-				() => sharedObject.submit(content),
-				(caught: unknown) => caught === error,
-			);
-			assert.equal(submitted.length, 0);
-			sharedObject.submit("attached");
-			assert.deepEqual(submitted, [["attached", undefined]]);
-		});
-	}
+	it("does not submit a message when preparation throws", async () => {
+		const { sharedObject, services, submitted } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
+		const error = new Error("Message preparation failed");
+		const content = {
+			get payload(): never {
+				throw error;
+			},
+		};
+		assert.throws(
+			() => sharedObject.submit(content),
+			(caught: unknown) => caught === error,
+		);
+		assert.equal(submitted.length, 0);
+		sharedObject.submit("attached");
+		assert.deepEqual(submitted, [["attached", undefined]]);
+	});
 
 	it("selects the delta connection after message preparation", async () => {
 		const { sharedObject, services, submitted } = createFixture(AttachState.Attached);

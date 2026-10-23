@@ -11,6 +11,7 @@ import type {
 } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { encodeHandlesInContainerRuntime } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -261,7 +262,7 @@ describe("DataStore Layer compatibility", () => {
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
 				generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
-				supportedFeatures: new Set(),
+				supportedFeatures: new Set([encodeHandlesInContainerRuntime]),
 			};
 
 			await assert.doesNotReject(
@@ -276,7 +277,7 @@ describe("DataStore Layer compatibility", () => {
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
 				generation: runtimeGeneration,
-				supportedFeatures: new Set(),
+				supportedFeatures: new Set([encodeHandlesInContainerRuntime]),
 			};
 
 			await assert.rejects(
@@ -288,6 +289,27 @@ describe("DataStore Layer compatibility", () => {
 						runtimeGeneration,
 					),
 				"Runtime with generation < minSupportedGeneration should be incompatible",
+			);
+		});
+
+		it("Runtime without handle encoding is not compatible", async () => {
+			const runtimeGeneration = runtimeSupportRequirementsForDataStore.minSupportedGeneration;
+			const runtimeCompatDetails: ILayerCompatDetails = {
+				pkgVersion,
+				generation: runtimeGeneration,
+				supportedFeatures: new Set(),
+			};
+
+			await assert.rejects(
+				async () => createDataStoreRuntime(runtimeCompatDetails),
+				(error: Error) =>
+					validateFailureProperties(
+						error,
+						true /* isGenerationCompatible */,
+						runtimeGeneration,
+						[encodeHandlesInContainerRuntime],
+					),
+				"Runtime must encode handles",
 			);
 		});
 	});
