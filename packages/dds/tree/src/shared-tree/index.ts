@@ -41,7 +41,6 @@ export {
 	BranchCheckout,
 	forkAsBranchCheckout,
 	forkBranch,
-	getViewOfBranch,
 	type TreeBranchHandleAlpha,
 } from "./branchCheckout.js";
 

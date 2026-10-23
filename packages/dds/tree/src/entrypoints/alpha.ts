@@ -350,7 +350,6 @@ export {
 	generateSchemaFromSimpleSchema, 
 	getJsonSchema, 
 	getSimpleSchema, 
-	getViewOfBranch, 
 	identifySchemaAlpha, 
 	importCompatibilitySchemaSnapshot, 
 	incrementalEncodingPolicyForAllowedTypes, 

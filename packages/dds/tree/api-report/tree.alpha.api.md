@@ -628,9 +628,6 @@ export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<Tr
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
 
 // @alpha
-export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(branch: TreeBranchHandleAlpha, config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
-
-// @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
@@ -2085,6 +2082,7 @@ export interface TreeBranchEventsBeta {
 export interface TreeBranchHandleAlpha {
     dispose(): void;
     readonly disposed: boolean;
+    viewWith<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 }
 
 // @alpha @sealed
