@@ -163,7 +163,8 @@ export class UnhydratedFlexTreeNode
 		 */
 		public readonly simpleContext: Context,
 	) {
-		this.hasDynamicFields = this.storedSchema instanceof MapNodeStoredSchema;
+		this.hasDynamicFields =
+			data.value === undefined && this.storedSchema instanceof MapNodeStoredSchema;
 		for (const [key, field] of this.fieldsAll) {
 			field.parent = this;
 			if (this.hasDynamicFields && !field.pendingDefault && field.length === 0) {

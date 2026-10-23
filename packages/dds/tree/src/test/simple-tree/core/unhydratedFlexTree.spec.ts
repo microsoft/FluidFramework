@@ -5,11 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
 	type MapTree,
+	type TreeNodeStoredSchema,
 	type Value,
 } from "../../../core/index.js";
 import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
@@ -84,6 +87,38 @@ describe("unhydratedFlexTree", () => {
 
 	assert(map instanceof UnhydratedFlexTreeNode);
 	assert(arrayNode instanceof UnhydratedFlexTreeNode);
+
+	describe("leaf construction", () => {
+		class LeafNode extends UnhydratedFlexTreeNode {
+			public override get storedSchema(): TreeNodeStoredSchema {
+				return assert.fail("Leaf construction must not look up its stored schema");
+			}
+		}
+
+		for (const [schema, value] of [
+			[schemaFactory.string, ""],
+			[schemaFactory.number, 0],
+			[schemaFactory.boolean, false],
+			[schemaFactory.null, null],
+			[schemaFactory.handle, new MockHandle("leaf")],
+		] as const) {
+			it(`skips schema lookup for ${schema.identifier}`, () => {
+				const leaf = new LeafNode(
+					{ type: brand(schema.identifier), value },
+					new Map(),
+					getUnhydratedContext(schema),
+				);
+				assert.equal(leaf.hasDynamicFields, false);
+				assert.equal(leaf.value, value);
+			});
+		}
+	});
+
+	it("classifies non-leaf fields using their schema", () => {
+		assert.equal(map.hasDynamicFields, true);
+		assert.equal(arrayNode.hasDynamicFields, false);
+		assert.equal(object.hasDynamicFields, false);
+	});
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");
