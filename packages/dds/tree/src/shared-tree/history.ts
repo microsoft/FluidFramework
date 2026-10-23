@@ -8,7 +8,7 @@ import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id
 
 import type { GraphCommit, CustomMetadataTree, RevertToOptionsAlpha } from "../core/index.js";
 import { flattenCustomMetadata } from "../core/index.js";
-import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
+import type { SharedTreeBranch } from "../shared-tree-core/index.js";
 import type {
 	CommitRevision,
 	TreeBranchCommitMetadata,
@@ -94,12 +94,6 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
  * A default implementation of {@link TreeBranchHistory} that wraps a {@link SharedTreeBranch}.
  */
 export class DefaultTreeBranchHistory implements TreeBranchHistory {
-	private readonly commitCounter: BranchCommitCounter<
-		SharedTreeEditBuilder,
-		SharedTreeChange,
-		unknown
-	>;
-
 	public constructor(
 		private readonly branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
@@ -110,16 +104,10 @@ export class DefaultTreeBranchHistory implements TreeBranchHistory {
 		private readonly getRevertTo: (
 			revision: CommitRevision,
 		) => ((options?: RevertToOptionsAlpha) => void) | undefined,
-	) {
-		this.commitCounter = new BranchCommitCounter(branch);
-	}
-
-	public dispose(): void {
-		this.commitCounter.dispose();
-	}
+	) {}
 
 	public get length(): number {
-		return this.commitCounter.count;
+		return this.branch.getCommitCount();
 	}
 
 	public getHead(): TreeBranchCommitMetadata | undefined {

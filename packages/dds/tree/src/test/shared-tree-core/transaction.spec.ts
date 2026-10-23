@@ -781,7 +781,9 @@ describe("SquashingTransactionStacks", () => {
 			customMetadata: undefined,
 		};
 
-		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag, {
+			trimmedCommitCount: 0,
+		});
 	}
 
 	function editBranch(branch: DefaultBranch, value: string): RevisionTag {
