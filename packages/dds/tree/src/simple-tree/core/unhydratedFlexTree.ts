@@ -55,7 +55,14 @@ import {
 	type MinimalFieldMap,
 	currentObserver,
 } from "../../feature-libraries/index.js";
-import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
+import {
+	adjustIndexForArraySplice,
+	brand,
+	filterIterable,
+	getOrCreate,
+	mapIterable,
+	replaceArrayRange,
+} from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";
 
 import type { Context } from "./context.js";
@@ -626,13 +633,7 @@ export class UnhydratedSequenceField
 			if (index > 0) marks.push({ count: index });
 			marks.push({ count: insertCount, attach: syntheticDetachedNodeId });
 			this.edit((mapTrees) => {
-				if (newContent.length < 1000) {
-					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
-					mapTrees.splice(index, 0, ...newContentChecked);
-				} else {
-					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
-				}
+				replaceArrayRange(mapTrees, index, index, newContentChecked);
 			}, marks);
 		},
 		remove: (index, count): UnhydratedFlexTreeNode[] => {
@@ -660,19 +661,8 @@ export class UnhydratedSequenceField
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
 					const removed = mapTrees.splice(sourceIndex, count);
-					// Adjust destination index if it comes after the source
-					const adjustedDest = destIndex > sourceIndex ? destIndex - count : destIndex;
-					if (removed.length < 1000) {
-						// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
-						mapTrees.splice(adjustedDest, 0, ...removed);
-					} else {
-						// ...but we avoid using `splice` + spread for very large arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-						return [
-							...mapTrees.slice(0, adjustedDest),
-							...removed,
-							...mapTrees.slice(adjustedDest),
-						];
-					}
+					const adjustedDest = adjustIndexForArraySplice(destIndex, sourceIndex, count, 0);
+					replaceArrayRange(mapTrees, adjustedDest, adjustedDest, removed);
 				}, marks);
 			} else {
 				// Cross-field move: remove from source, insert into destination

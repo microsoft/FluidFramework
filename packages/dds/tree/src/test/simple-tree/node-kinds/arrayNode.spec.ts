@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
+import type { DeltaMark } from "../../../core/index.js";
 import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
@@ -28,6 +29,8 @@ import {
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { adjustIndexForArrayDelta } from "../../../simple-tree/node-kinds/array/arrayNode.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -1127,8 +1130,7 @@ describe("ArrayNode", () => {
 				}
 
 				it("preserves large arrays when the destination gap is inside the moved range", () => {
-					// The unhydrated editor switches from splice to slice-based insertion at 1000 items.
-					// Keep a suffix after the moved range to expose unintended relocation on that path.
+					// Keep a suffix after the moved range to expose unintended relocation.
 					const initialState = Array.from({ length: 1002 }, (_, index) => index);
 					const array = init(schemaType, initialState);
 					array.moveRangeToIndex(1, 0, 1000);
@@ -1508,6 +1510,175 @@ describe("ArrayNode", () => {
 			const fromIterable = new Schema(new Map(data).entries());
 			assert.equal(JSON.stringify(fromIterable), json);
 		});
+	});
+
+	describe("adjustIndexForArrayDelta", () => {
+		const detachedNodeId = { minor: 0 };
+		const cases: readonly {
+			name: string;
+			marks: readonly DeltaMark[];
+			expectedIndexes: readonly number[];
+		}[] = [
+			{
+				name: "empty array",
+				marks: [],
+				expectedIndexes: [0],
+			},
+			{
+				name: "omitted unchanged suffix",
+				marks: [],
+				expectedIndexes: [0, 1, 2, 3, 4, 5],
+			},
+			{
+				name: "explicit full retain",
+				marks: [{ count: 5 }],
+				expectedIndexes: [0, 1, 2, 3, 4, 5],
+			},
+			{
+				name: "insert at the start",
+				marks: [{ count: 2, attach: detachedNodeId }],
+				expectedIndexes: [2, 3, 4, 5, 6, 7],
+			},
+			{
+				name: "insert in the middle",
+				marks: [{ count: 2 }, { count: 2, attach: detachedNodeId }],
+				expectedIndexes: [0, 1, 4, 5, 6, 7],
+			},
+			{
+				name: "insert at the end",
+				marks: [{ count: 5 }, { count: 2, attach: detachedNodeId }],
+				expectedIndexes: [0, 1, 2, 3, 4, 7],
+			},
+			{
+				name: "remove one item",
+				marks: [{ count: 1 }, { count: 1, detach: detachedNodeId }],
+				expectedIndexes: [0, 1, 1, 2],
+			},
+			{
+				name: "remove a range at the start",
+				marks: [{ count: 2, detach: detachedNodeId }],
+				expectedIndexes: [0, 0, 0, 1, 2, 3],
+			},
+			{
+				name: "remove a range in the middle",
+				marks: [{ count: 1 }, { count: 3, detach: detachedNodeId }],
+				expectedIndexes: [0, 1, 1, 1, 1, 2],
+			},
+			{
+				name: "remove a range at the end",
+				marks: [{ count: 3 }, { count: 2, detach: detachedNodeId }],
+				expectedIndexes: [0, 1, 2, 3, 3, 3],
+			},
+			{
+				name: "remove all content",
+				marks: [{ count: 5, detach: detachedNodeId }],
+				expectedIndexes: [0, 0, 0, 0, 0, 0],
+			},
+			{
+				name: "consecutive inserts at the same gap",
+				marks: [
+					{ count: 2 },
+					{ count: 1, attach: detachedNodeId },
+					{ count: 2, attach: { minor: 1 } },
+				],
+				expectedIndexes: [0, 1, 5, 6, 7, 8],
+			},
+			{
+				name: "remove then insert at the same output position",
+				marks: [
+					{ count: 1 },
+					{ count: 2, detach: detachedNodeId },
+					{ count: 3, attach: { minor: 1 } },
+				],
+				expectedIndexes: [0, 1, 1, 4, 5, 6],
+			},
+			{
+				name: "insert then remove at the same input position",
+				marks: [
+					{ count: 1 },
+					{ count: 3, attach: detachedNodeId },
+					{ count: 2, detach: { minor: 3 } },
+				],
+				expectedIndexes: [0, 4, 4, 4, 5, 6],
+			},
+			{
+				name: "multiple edits separated by retains",
+				marks: [
+					{ count: 1 },
+					{ count: 2, attach: detachedNodeId },
+					{ count: 1 },
+					{ count: 1, detach: { minor: 2 } },
+					{ count: 1 },
+					{ count: 1, attach: { minor: 3 } },
+				],
+				expectedIndexes: [0, 3, 4, 4, 6, 7],
+			},
+			{
+				name: "backward move",
+				marks: [
+					{ count: 2, attach: detachedNodeId },
+					{ count: 1 },
+					{ count: 2, detach: detachedNodeId },
+				],
+				expectedIndexes: [2, 3, 3, 3, 4, 5],
+			},
+			{
+				name: "forward move",
+				marks: [
+					{ count: 1 },
+					{ count: 2, detach: detachedNodeId },
+					{ count: 2 },
+					{ count: 2, attach: detachedNodeId },
+				],
+				expectedIndexes: [0, 1, 1, 1, 2, 5],
+			},
+			{
+				name: "move to the starting gap",
+				marks: [
+					{ count: 1 },
+					{ count: 2, attach: detachedNodeId },
+					{ count: 2, detach: detachedNodeId },
+				],
+				expectedIndexes: [0, 3, 3, 3, 4, 5],
+			},
+			{
+				name: "move to an interior gap",
+				marks: [
+					{ count: 1 },
+					{ count: 1, detach: detachedNodeId },
+					{ count: 2, attach: detachedNodeId },
+					{ count: 1, detach: { minor: 1 } },
+				],
+				expectedIndexes: [0, 1, 3, 3, 4, 5],
+			},
+			{
+				name: "combined detach and attach",
+				marks: [{ count: 1 }, { count: 2, detach: detachedNodeId, attach: { minor: 2 } }],
+				expectedIndexes: [0, 1, 1, 3, 4, 5],
+			},
+			{
+				name: "nested changes leave indexes unchanged",
+				marks: [{ count: 1 }, { count: 1, fields: new Map() }, { count: 3 }],
+				expectedIndexes: [0, 1, 2, 3, 4, 5],
+			},
+			{
+				name: "nested changes do not hide a following insert",
+				marks: [
+					{ count: 1 },
+					{ count: 1, fields: new Map() },
+					{ count: 2, attach: detachedNodeId },
+				],
+				expectedIndexes: [0, 1, 4, 5, 6, 7],
+			},
+		];
+
+		for (const { name, marks, expectedIndexes } of cases) {
+			it(name, () => {
+				for (const [index, expected] of expectedIndexes.entries()) {
+					assert.equal(adjustIndexForArrayDelta(index, marks), expected, `index ${index}`);
+				}
+			});
+		}
 	});
 
 	describe("createArrayInsertionAnchor", () => {
