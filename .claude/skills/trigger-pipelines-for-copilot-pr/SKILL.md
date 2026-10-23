@@ -14,7 +14,7 @@ fails to trigger correctly.
 First comment:
 
 ```
-/azp run Build - protocol-definitions,Build - test-tools,server-gitrest,server-gitssh,server-historian,server-routerlicious,Build - client packages,repo-policy-check
+/azp run Build - protocol-definitions,Build - test-tools,server-gitrest,server-historian,server-routerlicious,Build - client packages,repo-policy-check
 ```
 
 Second comment:

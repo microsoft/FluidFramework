@@ -75,7 +75,8 @@ parameters:
     type: string
     default: repo
 
-  # If true, perform package-manager setup/install (set false for packages without package.json, e.g. gitssh).
+  # If true, perform package-manager setup/install (set false for packages without a package.json, e.g. a
+  # Docker-only build directory with no npm dependencies).
   - name: installPackages
     type: boolean
     default: true
@@ -377,22 +378,6 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
-        # GitSSH has no npm package or base image stage, but its downstream Docker publisher still consumes
-        # the common pack artifact and publish metadata contract.
-        - ${{ if and(eq(parameters.tagName, 'gitssh'), eq(parameters.emitDockerImageDigest, true)) }}:
-          - task: Bash@3
-            displayName: Create publish artifact directory
-            inputs:
-              targetType: inline
-              script: |
-                set -eu -o pipefail
-                mkdir -p $(hostPathToPackArtifact)
-
-          - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
-            parameters:
-              publishOverride: ${{ parameters.publishOverride }}
-              publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
-
         - task: Bash@3
           name: DockerBuildArgs
           displayName: Set docker build arguments
@@ -428,8 +413,10 @@ extends:
               set -eu -o pipefail
               cp ./CredScanSuppressions.json $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
 
-        # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
-        # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
+        # The gitssh package (the last caller with a Dockerfile that had no 'base' target nor pack/lint/test/docs
+        # tasks) was removed; no current server-* service sets tagName to a value that hits this branch, so it's
+        # effectively always true. Kept in case a future non-npm Docker-only service needs the same skip.
+        # This feels hacky but it's a simple solution for now to the issue of trying to use variables
         # which aren't available at compile-time, for expression-syntax conditionals that are evaluated at compile-time.
         - ${{ if ne(parameters.tagName, 'gitssh') }}:
           # Build base image where we can run pack/lint/test/docs tasks
@@ -442,7 +429,7 @@ extends:
               # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
               # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
               # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
-              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
+              # Dockerfiles don't consume it. (that case is already excluded one level up.)
               # Also forward the host's pnpm supply-chain overrides (set by include-install-pnpm.yml,
               # which runs precisely when installPackages is true) so the Dockerfile's `pnpm install`
               # skips the checks our npm mirror can't satisfy.
