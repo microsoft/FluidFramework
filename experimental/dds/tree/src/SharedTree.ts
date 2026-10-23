@@ -377,6 +377,9 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
+ * @deprecated This implementation class exposes internal details and will be removed from the package's exports in a future release.
+ * A replacement interface is not yet available.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/26691} for details.
  * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
