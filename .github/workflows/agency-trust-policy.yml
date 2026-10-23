@@ -1,0 +1,54 @@
+name: "Agency trust-policy plugin"
+
+# Builds and tests the standalone trust-policy Agency plugin when its source or this workflow changes.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".agency/plugins/trust-policy/**"
+      - ".github/workflows/agency-trust-policy.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, type-check, and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .agency/plugins/trust-policy
+    steps:
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      # The plugin's tests invoke the pnpm launcher pinned by the repository's root package.json.
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: .agency/plugins/trust-policy/package-lock.json
+
+      - name: Install plugin dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Test
+        run: npm test

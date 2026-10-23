@@ -1,0 +1,5 @@
+{
+	"name": "trust-policy",
+	"description": "Verify a package version's provenance before installing it, and find attested alternatives.",
+	"version": "0.1.0"
+}
