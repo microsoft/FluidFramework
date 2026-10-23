@@ -16,6 +16,7 @@ import type {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, isSerializedHandle } from "@fluidframework/runtime-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -126,6 +127,60 @@ describe("SharedObject ordinary dispatch", () => {
 		runtimes.length = 0;
 	});
 
+	it("does not install configuration for legacy subclasses during creation or load", async () => {
+		for (const initialize of ["create", "load"] as const) {
+			const { sharedObject, services } = createFixture(AttachState.Detached);
+			const attributes = sharedObject.attributes;
+			if (initialize === "create") {
+				sharedObject.initializeLocal();
+			} else {
+				await sharedObject.load(services);
+			}
+			assert(!("channelConfigurationProtocolVersion" in sharedObject));
+			assert.equal(sharedObject.attributes, attributes);
+			assert(!("configuration" in sharedObject.attributes));
+		}
+	});
+
+	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
+		it(`rejects the reserved configuration key on ordinary submissions (${attachState})`, async () => {
+			const { sharedObject, services, submitted } = createFixture(attachState);
+			await sharedObject.load(services);
+			assert.throws(
+				() =>
+					sharedObject.submit({
+						isChannelConfigurationOp: false,
+						get payload(): never {
+							return assert.fail("Reserved marker must be rejected before handle preparation");
+						},
+					}),
+				DataProcessingError,
+			);
+			assert.equal(submitted.length, 0);
+		});
+	}
+
+	it("rejects the reserved key before ordinary delivery or replay hooks", async () => {
+		const { sharedObject, delta, services } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
+		const contents = {
+			isChannelConfigurationOp: true,
+			version: 1,
+			expectedRevision: 0,
+			values: {},
+		};
+		for (const invoke of [
+			() => delta.processMessages(collection(contents, {})),
+			() => delta.applyStashedOp(contents),
+			() => delta.reSubmit(contents, {}, false),
+			() => delta.rollback?.(contents, {}),
+		]) {
+			assert.throws(invoke, DataProcessingError);
+		}
+		assert.deepEqual(sharedObject.calls, []);
+		assert.deepEqual(sharedObject.messages, []);
+	});
+
 	for (const initialize of ["create", "load"] as const) {
 		it(`retains ordinary payloads, events and replay hooks after ${initialize}`, async () => {
 			const { sharedObject, delta, services, submitted } = createFixture(AttachState.Attached);
@@ -137,10 +192,12 @@ describe("SharedObject ordinary dispatch", () => {
 			}
 			const content = {
 				kind: "configuration",
-				isChannelConfigurationOp: true,
-				version: 1,
-				expectedRevision: 0,
-				values: {},
+				data: {
+					isChannelConfigurationOp: true,
+					version: 1,
+					expectedRevision: 0,
+					values: {},
+				},
 			};
 			const metadata = { origin: "local" };
 			sharedObject.on("pre-op", () => sharedObject.calls.push(["pre-op"]));
