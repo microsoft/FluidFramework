@@ -26,7 +26,11 @@ import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";
 
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
-import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
+import {
+	checkChangeList,
+	testChangeEditManagerFactory,
+	type TestEditManager,
+} from "./editManagerTestUtils.js";
 
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
@@ -746,6 +750,16 @@ export function testCorrectness(): void {
 					return { manager, fork, baseRevision };
 				}
 
+				function maxCountFromPolicy(policy: boolean | number): number {
+					if (policy === false) {
+						return 0;
+					}
+					if (policy === true) {
+						return Number.POSITIVE_INFINITY;
+					}
+					return policy;
+				}
+
 				describe("getHistoryRetention", () => {
 					it("returns false by default", () => {
 						const { manager } = testChangeEditManagerFactory({});
@@ -754,52 +768,38 @@ export function testCorrectness(): void {
 				});
 
 				describe("setHistoryRetention", () => {
-					for (const [historyRetention] of retentionPolicies) {
-						it(`sets the policy to ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({});
+					describe("Updates the policy when passed valid policy values", () => {
+						for (const policy of [false, 0, 1, 3, true, Number.MAX_SAFE_INTEGER] as const) {
+							it(`${policy}`, () => {
+								const { manager } = testChangeEditManagerFactory({});
 
-							manager.setHistoryRetention(historyRetention);
-							assert.equal(manager.getHistoryRetention(), historyRetention);
-						});
-					}
-
-					for (const [historyRetention, expectedCount] of [
-						[false, 0],
-						[0, 0],
-						[1, 1],
-						[3, 3],
-					] as const) {
-						it(`trims commits when retention is reduced from 5 to ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({ historyRetention: 5 });
-							sequencePeerCommits(manager, 5, 1, 1);
-							manager.advanceMinimumSequenceNumber(brand(5));
-							const expected = manager.getTrunkCommits("main").slice(5 - expectedCount);
-
-							manager.setHistoryRetention(historyRetention);
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-						});
-					}
-
-					for (const [initialHistoryRetention, historyRetention, expectedCount] of [
-						[false, 3, 0],
-						[0, 3, 0],
-						[3, 5, 3],
-						[3, true, 3],
-						[3, Number.MAX_SAFE_INTEGER, 3],
-					] as const) {
-						it(`preserves available history without recovering trimmed commits when increasing retention from ${initialHistoryRetention} to ${historyRetention}`, () => {
-							const { manager } = testChangeEditManagerFactory({
-								historyRetention: initialHistoryRetention,
+								manager.setHistoryRetention(policy);
+								assert.equal(manager.getHistoryRetention(), policy);
 							});
-							sequencePeerCommits(manager, 5, 1, 1);
-							manager.advanceMinimumSequenceNumber(brand(5));
-							const expected = manager.getTrunkCommits("main");
-							assert.equal(expected.length, expectedCount);
+						}
+					});
 
-							manager.setHistoryRetention(historyRetention);
-							assert.deepEqual(manager.getTrunkCommits("main"), expected);
-						});
-					}
+					describe("Throws when passed invalid policy values", () => {
+						for (const policy of [
+							-1,
+							1.5,
+							Number.NaN,
+							Infinity,
+							-Infinity,
+							Number.MAX_SAFE_INTEGER + 1,
+						]) {
+							it(`${policy}`, () => {
+								const message =
+									"historyRetention must be a boolean or a nonnegative safe integer";
+								const { manager } = testChangeEditManagerFactory({ historyRetention: 3 });
+								assert.throws(
+									() => manager.setHistoryRetention(policy),
+									validateAssertionError(message),
+								);
+								assert.equal(manager.getHistoryRetention(), 3);
+							});
+						}
+					});
 
 					it("trims sequenced history without discarding pending local commits", () => {
 						const { manager } = testChangeEditManagerFactory({ historyRetention: 2 });
@@ -815,26 +815,159 @@ export function testCorrectness(): void {
 						assert.deepEqual(manager.getLocalCommits("main"), expectedLocalCommits);
 					});
 
-					for (const limit of [
-						-1,
-						1.5,
-						Number.NaN,
-						Infinity,
-						-Infinity,
-						Number.MAX_SAFE_INTEGER + 1,
-					]) {
-						it(`rejects invalid retention ${limit} without changing the policy`, () => {
-							const message =
-								"historyRetention must be a boolean or a nonnegative safe integer";
-							const { manager } = testChangeEditManagerFactory({ historyRetention: 3 });
-							assert.throws(
-								() => manager.setHistoryRetention(limit),
-								validateAssertionError(message),
-							);
-							assert.equal(manager.getHistoryRetention(), 3);
+					// The remaining tests in this describe block are annotated with an expression of the form "W >= X >= Y >= Z".
+					// These describe the family of scenarios being covered by the annotated test.
+					// Each symbol corresponds to a factor that may influence the retained commit count:
+					// P: The retention policy is forcing some commits to be retained
+					// F: A local fork is forcing some sequenced commits to be retained
+					// M: The minimum sequence number is forcing some sequenced commits to be retained
+					// 0: There cannot be fewer than 0 retained sequenced commits
+
+					// The relative position of each symbol indicates the relationships between the number of sequenced commits that a given factor mandates.
+					// For example, "P > F > M > 0" represents a scenario where the retention policy (P) mandates more to be retained than the presence of a local fork (F),
+					// which in turn mandates more to be retained than the minimum sequence number (M), which in turn mandates more to be retained than 0.
+
+					// Since we are looking a scenarios where the retention policy (P) is being changed, there are two values for P: the original value (P1) and the new value (P2).
+
+					function setup({
+						commitCount,
+						startingPolicy,
+						retainedByMsn,
+						retainedByFork,
+					}: {
+						commitCount: number;
+						startingPolicy: number | boolean;
+						retainedByMsn: number;
+						retainedByFork: number;
+					}): TestEditManager {
+						const { manager } = testChangeEditManagerFactory({
+							historyRetention: startingPolicy,
 						});
+						if (retainedByFork > 0) {
+							const forkFrom = retainedByFork - 1;
+							sequencePeerCommits(manager, commitCount - forkFrom, 1, 1);
+							const fork = manager.getLocalBranch("main").fork();
+							sequencePeerCommits(manager, forkFrom, commitCount - forkFrom, 1);
+							assert(fork.getHead() === manager.getTrunkCommits("main").at(-retainedByFork));
+						} else {
+							sequencePeerCommits(manager, commitCount, 1, 1);
+						}
+						manager.advanceMinimumSequenceNumber(brand(commitCount - retainedByMsn));
+						return manager;
 					}
+
+					describe("P1 > 0 >= P2/M/F", () => {
+						const policy1 = 5;
+						for (const policy2 of [0, false] as const) {
+							it(`trims all ${policy1} commits when retention is reduced from ${policy1} to ${policy2}`, () => {
+								const manager = setup({
+									commitCount: policy1,
+									startingPolicy: policy1,
+									retainedByMsn: 0,
+									retainedByFork: 0,
+								});
+
+								manager.setHistoryRetention(policy2);
+								assert.deepEqual(manager.getTrunkCommits("main"), []);
+							});
+						}
+					});
+
+					describe("P1 > P2 > 0 >= M/F", () => {
+						const policy1 = 5;
+						for (const policy2 of [4, 3, 1] as const) {
+							it(`trims ${policy1 - policy2} commits when retention is reduced from ${policy1} to ${policy2}`, () => {
+								const manager = setup({
+									commitCount: policy1,
+									startingPolicy: policy1,
+									retainedByMsn: 0,
+									retainedByFork: 0,
+								});
+								const expected = manager.getTrunkCommits("main").slice(policy1 - policy2);
+
+								manager.setHistoryRetention(policy2);
+								assert.deepEqual(manager.getTrunkCommits("main"), expected);
+							});
+						}
+					});
+
+					describe("P1 > P2 >= M/F > 0", () => {
+						const policy1 = 5;
+						const mf = 2; // The number of commits that must be retained due to correctness retention factor
+						for (const policy2 of [4, 3, 2] as const) {
+							describe(`trims ${policy1 - policy2} commits when retention is reduced from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: policy1,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main").slice(policy1 - policy2);
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
+
+					describe("P1 > M/F > P2 >= 0", () => {
+						const policy1 = 5;
+						const mf = 3; // The number of commits that must be retained due to correctness retention factor
+						for (const policy2 of [2, 1, 0, false] as const) {
+							describe(`trims ${policy1 - mf} commits when retention is reduced from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: policy1,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main").slice(policy1 - mf);
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
+
+					describe("M/F > P1 > P2 >= 0", () => {
+						const mf = 10; // The number of commits that must be retained due to correctness retention factor
+						const policy1 = 5;
+						for (const policy2 of [4, 1, 0, false] as const) {
+							describe(`trims no commits when retention is reduced from ${policy1} to ${policy2}`, () => {
+								for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+									it(`with ${correctnessRetentionFactor} requiring ${mf} commits to be retained`, () => {
+										const manager = setup({
+											commitCount: mf,
+											startingPolicy: policy1,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+										const expected = manager.getTrunkCommits("main");
+
+										manager.setHistoryRetention(policy2);
+										assert.deepEqual(manager.getTrunkCommits("main"), expected);
+									});
+								}
+							});
+						}
+					});
 				});
+
+				// P2 > P1 scenarios (increase retention):
+				// P2 > 0 >= P1/M/F
+				// P2 > P1 > 0 >= M/F
+				// P2 > P1 > M/F > 0
+				// P2 > M/F > P1 > 0
+				// M/F > P2 > P1 > 0
+				// M/F > P2 > 0 >= P1
 
 				describe("advanceMinimumSequenceNumber", () => {
 					it("retains the newest three commits when MSN advances past all five commits", () => {
