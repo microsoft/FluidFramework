@@ -55,6 +55,8 @@ import type {
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 
 import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
+import { schemaStaticsAlpha } from "./schemaFactoryAlpha.js";
+import { schemaStaticsBeta } from "./schemaFactoryBeta.js";
 import {
 	defaultSchemaFactoryObjectOptions,
 	type NodeSchemaOptions,
@@ -64,8 +66,6 @@ import {
 } from "./schemaFactoryOptions.js";
 import { scoped, structuralName, type ScopedSchemaName } from "./schemaFactoryUtils.js";
 import { SchemaFactory_base, schemaStatics } from "./schemaStatics.js";
-import { schemaStaticsAlpha } from "./schemaStaticsAlpha.js";
-import { schemaStaticsBeta } from "./schemaStaticsBeta.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	InsertableObjectFromSchemaRecordAlphaUnsafe,
