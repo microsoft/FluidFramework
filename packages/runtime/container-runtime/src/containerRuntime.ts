@@ -828,21 +828,6 @@ export interface LoadContainerRuntimeParams {
 	 *
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
-
-	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
-	 *
-	 * @remarks
-	 * See {@link LoadContainerRuntimeParams.oldestSupportedClient} for compatibility implications.
-	 *
-	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
-	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-	 */
-	minVersionForCollab?: OldestSupportedClientVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -996,23 +981,15 @@ export class ContainerRuntime
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 			oldestSupportedClient: oldestSupportedClientParam,
-			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
-			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
 
-		if (
-			oldestSupportedClientParam !== undefined &&
-			deprecatedMinVersionForCollab !== undefined
-		) {
+		if ("minVersionForCollab" in params) {
 			throw new UsageError(
-				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
+				"minVersionForCollab is no longer supported. Use oldestSupportedClient.",
 			);
 		}
 		// Both internal names remain available while older Runtime, DataStore, and DDS packages migrate.
-		const minVersionForCollab =
-			oldestSupportedClientParam ??
-			deprecatedMinVersionForCollab ??
-			defaultOldestSupportedClient;
+		const minVersionForCollab = oldestSupportedClientParam ?? defaultOldestSupportedClient;
 
 		if (context.taggedLogger === undefined) {
 			const error = new UsageError("Loader must provide a tagged logger");

@@ -21,14 +21,6 @@ export function createTreeContainerRuntimeFactory(props: {
     readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory;
 
-// @beta @deprecated @legacy
-export function createTreeContainerRuntimeFactory(props: {
-    readonly schema: TreeContainerSchema;
-    readonly minVersionForCollaboration: OldestSupportedClientVersion;
-    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
-    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-}): IRuntimeFactory;
-
 // @public
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
