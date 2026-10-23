@@ -172,7 +172,7 @@ export class TinyliciousClient {
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			minVersionForCollaboration: oldestSupportedClient,
+			oldestSupportedClient,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
