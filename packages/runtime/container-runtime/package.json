@@ -185,7 +185,11 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_LoadContainerRuntimeParams": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
