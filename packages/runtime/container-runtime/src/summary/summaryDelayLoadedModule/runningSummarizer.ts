@@ -21,6 +21,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	LoggingError,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
 	UsageError,
@@ -32,6 +33,7 @@ import type {
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
 	IRetriableFailureError,
+	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
@@ -47,6 +49,8 @@ import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summa
 import type {
 	IAckedSummary,
 	IClientSummaryWatcher,
+	ISummaryNackMessage,
+	ISummaryOpMessage,
 	SummaryCollection,
 } from "../summaryCollection.js";
 
@@ -57,6 +61,12 @@ import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
+const maxTimedOutSummaryOps = 32;
+
+interface TimedOutSummary {
+	handle: string;
+	referenceSequenceNumber: number;
+}
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -77,6 +87,11 @@ export class RunningSummarizer
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
+		retireSummaryCallback: (
+			proposalHandle: string,
+			referenceSequenceNumber: number,
+			clientSequenceNumber: number,
+		) => void,
 		heuristicData: ISummarizeHeuristicData,
 		summaryCollection: SummaryCollection,
 
@@ -91,6 +106,7 @@ export class RunningSummarizer
 			configuration,
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
+			retireSummaryCallback,
 			heuristicData,
 			summaryCollection,
 			cancellationToken,
@@ -164,6 +180,15 @@ export class RunningSummarizer
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
+	/** A missing op must leave its node state intact until that op appears. */
+	private readonly timedOutSummaryOps = new Map<number, TimedOutSummary>();
+	/** Keep the identity through ACK processing in case another proposal reuses the same handle. */
+	private readonly retiredSummaries = new Map<
+		number,
+		TimedOutSummary & { summarySequenceNumber: number }
+	>();
+	/** The op may appear after the timer fires but before the timeout continuation runs. */
+	private observedSummaryOps: Map<number, ISummaryOpMessage> | undefined;
 
 	private enqueuedSummary:
 		| {
@@ -199,6 +224,11 @@ export class RunningSummarizer
 		private readonly refreshLatestSummaryAckCallback: (
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
+		private readonly retireSummaryCallback: (
+			proposalHandle: string,
+			referenceSequenceNumber: number,
+			clientSequenceNumber: number,
+		) => void,
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly summaryCollection: SummaryCollection,
 
@@ -286,6 +316,7 @@ export class RunningSummarizer
 					await this.refreshLatestSummaryAckAndHandleError(options);
 				}
 			},
+			(summary, broadcastOp) => this.handleSummaryTimeout(summary, broadcastOp),
 			this.summaryWatcher,
 			this.mc.logger,
 		);
@@ -319,6 +350,9 @@ export class RunningSummarizer
 			});
 			await this.summarizingLock;
 		}
+		if (this.disposed) {
+			return;
+		}
 
 		// Make sure we block any summarizer from being executed/enqueued while
 		// executing the refreshLatestSummaryAck.
@@ -326,13 +360,32 @@ export class RunningSummarizer
 		await this.lockedSummaryAction(
 			() => {},
 			async () => {
+				const clientSequenceNumber = ack.summaryOp.clientSequenceNumber;
+				const timedOut = this.timedOutSummaryOps.get(clientSequenceNumber);
+				if (timedOut !== undefined) {
+					this.retireTimedOutSummary(clientSequenceNumber, timedOut, ack.summaryOp);
+				}
+				const retired = this.retiredSummaries.get(clientSequenceNumber);
+				if (
+					retired !== undefined &&
+					(retired.handle !== summaryOpHandle ||
+						retired.referenceSequenceNumber !== refSequenceNumber)
+				) {
+					this.failSummaryRetirement("RetiredSummaryAckMismatch", {
+						handle: summaryOpHandle,
+						clientSequenceNumber,
+						referenceSequenceNumber: refSequenceNumber,
+					});
+				}
 				const options: IRefreshSummaryAckOptions = {
 					proposalHandle: summaryOpHandle,
 					ackHandle: summaryAckHandle,
 					summaryRefSeq: refSequenceNumber,
 					summaryLogger,
+					isRetired: retired !== undefined,
 				};
 				await this.refreshLatestSummaryAckAndHandleError(options);
+				this.retiredSummaries.delete(clientSequenceNumber);
 			},
 			() => {},
 		);
@@ -382,6 +435,9 @@ export class RunningSummarizer
 			const ackedSummary = await this.summaryCollection.waitSummaryAck(
 				nextReferenceSequenceNumber,
 			);
+			if (this.disposed) {
+				break;
+			}
 			await this.handleSummaryAck(ackedSummary);
 			nextReferenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
 		}
@@ -394,6 +450,9 @@ export class RunningSummarizer
 		this.heuristicRunner = undefined;
 		this.generator.dispose();
 		this.pendingAckTimer.clear();
+		this.timedOutSummaryOps.clear();
+		this.retiredSummaries.clear();
+		this.observedSummaryOps = undefined;
 		this.disposeEnqueuedSummary();
 		this._disposed = true;
 		this.stopping = true;
@@ -402,6 +461,37 @@ export class RunningSummarizer
 	private readonly eventsCleanup: (() => void)[] = [];
 
 	private setupEventListeners(): void {
+		const summaryOpListener = (op: ISequencedDocumentMessage): void => {
+			if (op.clientId !== this.runtime.clientId) {
+				return;
+			}
+			const summaryOp = op as ISummaryOpMessage;
+			this.observedSummaryOps?.set(summaryOp.clientSequenceNumber, summaryOp);
+			const timedOut = this.timedOutSummaryOps.get(summaryOp.clientSequenceNumber);
+			if (timedOut !== undefined) {
+				// Remove node state during op dispatch, before a subsequent ACK can refresh it.
+				this.retireTimedOutSummary(summaryOp.clientSequenceNumber, timedOut, summaryOp);
+			}
+		};
+		this.summaryCollection.on(MessageType.Summarize, summaryOpListener);
+		this.eventsCleanup.push(() =>
+			this.summaryCollection.off(MessageType.Summarize, summaryOpListener),
+		);
+
+		const summaryNackListener = (op: ISequencedDocumentMessage): void => {
+			const summarySequenceNumber = (op as ISummaryNackMessage).contents.summaryProposal
+				.summarySequenceNumber;
+			for (const [clientSequenceNumber, retired] of this.retiredSummaries) {
+				if (retired.summarySequenceNumber === summarySequenceNumber) {
+					this.retiredSummaries.delete(clientSequenceNumber);
+				}
+			}
+		};
+		this.summaryCollection.on(MessageType.SummaryNack, summaryNackListener);
+		this.eventsCleanup.push(() =>
+			this.summaryCollection.off(MessageType.SummaryNack, summaryNackListener),
+		);
+
 		const runtimeListener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void =
 			(op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
 				this.handleOp(op, runtimeMessage === true);
@@ -424,6 +514,105 @@ export class RunningSummarizer
 			cleanup();
 		}
 		this.eventsCleanup.length = 0;
+	}
+
+	private handleSummaryTimeout(
+		summary: ISubmitSummaryOpResult,
+		broadcastOp?: ISummaryOpMessage,
+	): void {
+		const { handle, clientSequenceNumber, referenceSequenceNumber } = summary;
+		const observedOp = this.observedSummaryOps?.get(clientSequenceNumber);
+		const timedOut = { handle, referenceSequenceNumber };
+		const actualOp = broadcastOp ?? observedOp;
+		if (
+			broadcastOp !== undefined &&
+			observedOp !== undefined &&
+			broadcastOp.sequenceNumber !== observedOp.sequenceNumber
+		) {
+			this.failSummaryRetirement("TimedOutSummaryOpMismatch", summary);
+		}
+		if (actualOp !== undefined) {
+			this.retireTimedOutSummary(clientSequenceNumber, timedOut, actualOp);
+			return;
+		}
+
+		const existing = this.timedOutSummaryOps.get(clientSequenceNumber);
+		if (existing !== undefined) {
+			this.failSummaryRetirement("DuplicateTimedOutSummaryOp", summary);
+		}
+		this.timedOutSummaryOps.set(clientSequenceNumber, timedOut);
+		this.stopIfTimedOutSummaryLimitReached();
+	}
+
+	private retireTimedOutSummary(
+		clientSequenceNumber: number,
+		timedOut: TimedOutSummary,
+		broadcastOp: ISummaryOpMessage,
+	): void {
+		if (
+			timedOut.handle !== broadcastOp.contents.handle ||
+			clientSequenceNumber !== broadcastOp.clientSequenceNumber ||
+			timedOut.referenceSequenceNumber !== broadcastOp.referenceSequenceNumber
+		) {
+			this.failSummaryRetirement("TimedOutSummaryOpMismatch", {
+				...timedOut,
+				clientSequenceNumber,
+			});
+		}
+		try {
+			this.retireSummaryCallback(
+				timedOut.handle,
+				timedOut.referenceSequenceNumber,
+				clientSequenceNumber,
+			);
+		} catch (error) {
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "RetireTimedOutSummaryFailed",
+					proposalHandle: timedOut.handle,
+					clientSequenceNumber,
+				},
+				error,
+			);
+			this.stopping = true;
+			this.stopSummarizerCallback("failToSummarize");
+			this.dispose();
+			throw error;
+		}
+		this.timedOutSummaryOps.delete(clientSequenceNumber);
+		this.retiredSummaries.set(clientSequenceNumber, {
+			...timedOut,
+			summarySequenceNumber: broadcastOp.sequenceNumber,
+		});
+		this.stopIfTimedOutSummaryLimitReached();
+	}
+
+	private stopIfTimedOutSummaryLimitReached(): void {
+		const pendingCount = this.timedOutSummaryOps.size + this.retiredSummaries.size;
+		if (pendingCount >= maxTimedOutSummaryOps && !this.stopping) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "TimedOutSummaryOpLimitReached",
+				pendingCount,
+			});
+			this.stopping = true;
+			this.stopSummarizerCallback("failToSummarize");
+		}
+	}
+
+	private failSummaryRetirement(
+		eventName: string,
+		summary: { handle: string; clientSequenceNumber: number; referenceSequenceNumber: number },
+	): never {
+		const error = new LoggingError(eventName, {
+			proposalHandle: summary.handle,
+			clientSequenceNumber: summary.clientSequenceNumber,
+			referenceSequenceNumber: summary.referenceSequenceNumber,
+		});
+		this.mc.logger.sendErrorEvent({ eventName }, error);
+		this.stopping = true;
+		this.stopSummarizerCallback("failToSummarize");
+		this.dispose();
+		throw error;
 	}
 
 	/**
@@ -574,6 +763,7 @@ export class RunningSummarizer
 	}
 
 	private afterSummaryAction(): void {
+		this.observedSummaryOps = undefined;
 		const retry = this.tryWhileSummarizing;
 		this.tryWhileSummarizing = false;
 
@@ -646,6 +836,7 @@ export class RunningSummarizer
 					cancellationToken: this.cancellationToken,
 					latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
+				this.observedSummaryOps = new Map();
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
 				const result = await summarizeResult.receivedSummaryAckOrNack;
@@ -707,6 +898,9 @@ export class RunningSummarizer
 	 * Heuristics summarize attempt.
 	 */
 	private trySummarize(reason: SummarizeReason): void {
+		if (this.stopping) {
+			return;
+		}
 		if (this.summarizingLock !== undefined) {
 			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
 			// if it's still needed
@@ -769,6 +963,7 @@ export class RunningSummarizer
 				finalAttempt,
 				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
+			this.observedSummaryOps = new Map();
 			const summarizeResult = this.generator.summarize(summaryOptions);
 			return { summarizeProps, summarizeResult };
 		};
@@ -792,7 +987,7 @@ export class RunningSummarizer
 		let failureMessage: string | undefined;
 		do {
 			currentAttempt++;
-			if (this.cancellationToken.cancelled) {
+			if (this.cancellationToken.cancelled || this.stopping) {
 				status = "canceled";
 				done = true;
 				break;
@@ -866,7 +1061,7 @@ export class RunningSummarizer
 
 		// If summarization wasn't successful above and the failure contains "retryAfterSeconds", perform one last
 		// attempt. This gives a chance to the runtime to perform additional steps in the last attempt.
-		if (retryAfterSeconds !== undefined) {
+		if (retryAfterSeconds !== undefined && !this.stopping) {
 			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
@@ -887,7 +1082,7 @@ export class RunningSummarizer
 		}
 
 		// If summarization is still unsuccessful, stop the summarizer.
-		if (status === "failure") {
+		if (status === "failure" && !this.stopping) {
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "SummarizeFailed",

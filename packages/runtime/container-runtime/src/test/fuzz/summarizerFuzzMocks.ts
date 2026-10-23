@@ -240,6 +240,10 @@ export class MockContainerRuntimeForSummarizer
 		// Do nothing
 	}
 
+	public retireSummary(proposalHandle: string, referenceSequenceNumber: number): void {
+		// This mock does not track submitted summaries in a summarizer node.
+	}
+
 	public setConnectedState(value: boolean): void {
 		super.setConnectedState(value);
 

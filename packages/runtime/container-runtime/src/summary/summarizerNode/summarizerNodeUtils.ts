@@ -71,8 +71,13 @@ export interface ISummarizerNodeRootContract {
 		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
-	completeSummary(proposalHandle: string): void;
+	completeSummary(proposalHandle: string, clientSequenceNumber?: number): void;
 	clearSummary(): void;
+	retireSummary(
+		proposalHandle: string,
+		referenceSequenceNumber: number,
+		clientSequenceNumber?: number,
+	): boolean;
 	refreshLatestSummary(
 		proposalHandle: string,
 		summaryRefSeq: number,
@@ -84,6 +89,10 @@ export interface PendingSummaryInfo {
 	 * The sequence number at which the summary was created.
 	 */
 	referenceSequenceNumber: number;
+	/**
+	 * The client sequence number of the submitted summarize op, when available.
+	 */
+	clientSequenceNumber?: number;
 }
 
 /**
