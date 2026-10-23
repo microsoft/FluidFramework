@@ -22,7 +22,7 @@ import {
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol } from "../../util/index.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 
 import type { Context } from "./context.js";
@@ -35,14 +35,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import {
-	forgetFieldCache,
-	getCachedField,
-	getOrCreateFieldCache,
-	makeField,
-	MapField,
-	unboxedFlexNode,
-} from "./lazyField.js";
+import { getCachedField, makeField, MapField, unboxedFlexNode } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -83,6 +76,9 @@ function cleanupTree(anchor: AnchorNode): void {
 
 /**
  * Lazy implementation of {@link FlexTreeNode}.
+ * @remarks
+ * Node implementations capture schema-dependent behavior.
+ * See {@link Context} for the schema changes that can preserve wrappers and those that require invalidation.
  */
 export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
@@ -92,6 +88,16 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 	private readonly storedSchema: TreeNodeStoredSchema;
+
+	/**
+	 * Node-owned field storage, read directly by cache lookups.
+	 * @remarks
+	 * Fixed-field nodes retain wrappers until disposal because those wrappers own cursors,
+	 * anchors, and lifetime registrations.
+	 * {@link LazyMapNode} instead caches only populated fields and evicts them when they become empty.
+	 * The Map is allocated on demand, so leaves and unboxed field reads do not allocate one.
+	 */
+	public fieldCache: Map<FieldKey, FlexTreeField> | undefined;
 
 	public constructor(
 		context: Context,
@@ -125,6 +131,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
+		this.fieldCache = undefined;
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
 		this.context.checkout.forest.anchors.forget(this.anchor);
@@ -132,6 +139,23 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public get value(): Value {
 		return this.cursor.value;
+	}
+
+	/**
+	 * Gets or creates a field at the supplied cursor's location.
+	 * The cursor must be in a field of this node, and the caller must validate this node's lifetime.
+	 * @param createField - Creates a field which owns its navigation resources.
+	 * Implementations whose fields borrow this node's resources do not call this factory.
+	 */
+	public getOrCreateField(
+		cursor: ITreeSubscriptionCursor,
+		createField: () => FlexTreeField,
+	): FlexTreeField {
+		return getOrCreate(
+			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()),
+			cursor.getFieldKey(),
+			createField,
+		);
 	}
 
 	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
@@ -278,7 +302,6 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
  * Retained fields remain usable after eviction because they navigate through this node.
  */
 export class LazyMapNode extends LazyTreeNode {
-	#fieldCache: Map<FieldKey, FlexTreeField> | undefined;
 	readonly #removeFieldChangeCallback: () => void;
 
 	public constructor(...args: ConstructorParameters<typeof LazyTreeNode>) {
@@ -286,7 +309,7 @@ export class LazyMapNode extends LazyTreeNode {
 		this.#removeFieldChangeCallback = this.anchorNode.events.on(
 			"childrenChangedAfterBatch",
 			({ changedFields }) => {
-				const cache = this.#fieldCache;
+				const cache = this.fieldCache;
 				if (cache === undefined) {
 					return;
 				}
@@ -299,8 +322,7 @@ export class LazyMapNode extends LazyTreeNode {
 					}
 				}
 				if (cache.size === 0) {
-					this.#fieldCache = undefined;
-					forgetFieldCache(this);
+					this.fieldCache = undefined;
 				}
 			},
 		);
@@ -310,23 +332,21 @@ export class LazyMapNode extends LazyTreeNode {
 	 * Gets a field facade at the supplied cursor's location.
 	 * The cursor must be in a field of this node.
 	 */
-	public getOrCreateField(cursor: ITreeSubscriptionCursor): FlexTreeField {
+	public override getOrCreateField(cursor: ITreeSubscriptionCursor): FlexTreeField {
 		const key = cursor.getFieldKey();
-		const cached = this.#fieldCache?.get(key);
+		const cached = this.fieldCache?.get(key);
 		if (cached !== undefined) {
 			return cached;
 		}
 		const field = new MapField(this, key);
 		if (cursor.getFieldLength() !== 0) {
-			(this.#fieldCache ??= getOrCreateFieldCache(this)).set(key, field);
+			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()).set(key, field);
 		}
 		return field;
 	}
 
 	protected override forgetAnchor(): void {
 		this.#removeFieldChangeCallback();
-		this.#fieldCache = undefined;
-		forgetFieldCache(this);
 		super.forgetAnchor();
 	}
 }

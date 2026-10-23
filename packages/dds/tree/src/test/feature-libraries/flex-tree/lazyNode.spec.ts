@@ -33,6 +33,7 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	getInnerNode,
+	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import {
 	createIndependentTreeAlpha,
@@ -88,6 +89,7 @@ describe("LazyNode", () => {
 			const leaf = map.getBoxed(brand("key")).boxedAt(0);
 			assert(leaf instanceof LazyTreeNode);
 			assert(!(leaf instanceof LazyMapNode));
+			assert.equal(leaf.fieldCache, undefined);
 			const checkout = leaf.context.checkout;
 			view.dispose();
 			checkout.dispose();
@@ -137,6 +139,7 @@ describe("LazyNode", () => {
 			);
 			assert.equal(observations, 1);
 			assert.equal(node.context.withAnchors.size, resources);
+			assert.equal(node.fieldCache, undefined);
 			const checkout = node.context.checkout;
 			view.dispose();
 			assert.throws(() => node.getFieldContent(brand("number")));
@@ -159,15 +162,18 @@ describe("LazyNode", () => {
 				assert.equal(map.get(key), undefined);
 				assert.equal(node.getBoxed(brand(key)).length, 0);
 				assert.equal(getCachedField(node, brand(key)), undefined);
+				assert.equal(node.fieldCache === undefined, true);
 				map.delete(key);
 				map.set(key, undefined);
 				map.set(key, i);
 				const field = node.getBoxed(brand(key));
 				assert.equal(node.getBoxed(brand(key)), field);
 				assert.equal(getCachedField(node, brand(key)), field);
+				assert.equal(node.fieldCache?.size, 1);
 				map.delete(key);
 				assert.equal(field.length, 0);
 				assert.equal(getCachedField(node, brand(key)), undefined);
+				assert.equal(node.fieldCache === undefined, true);
 				assert.equal(node.context.withAnchors.size, resources);
 			}
 			assert.equal(map.size, 0);
@@ -341,7 +347,11 @@ describe("LazyNode", () => {
 			const node = getInnerNode(view.root);
 			assert(node instanceof LazyTreeNode);
 			const key: FieldKey = brand("value");
+			assert.equal(node.fieldCache === undefined, true);
 			const field = node.getBoxed(key);
+			const cache = node.fieldCache;
+			assert(cache !== undefined);
+			assert.equal(cache.get(key), field);
 			for (const entity of node.context.withCursors) entity.prepareForEdit();
 			let observations = 0;
 			withObservation(
@@ -365,11 +375,87 @@ describe("LazyNode", () => {
 			view.root.value = undefined;
 			assert.equal(node.getBoxed(key), field);
 			assert.equal(node.tryGetField(key), undefined);
+			assert.equal(node.fieldCache, cache);
+			assert.equal(cache.size, 1);
 			const checkout = node.context.checkout;
 			view.dispose();
+			assert.equal(node.fieldCache, undefined);
 			assert.throws(() => node.getBoxed(key));
 			checkout.dispose();
 		});
+
+		for (const compatible of [true, false]) {
+			it(`invalidates node-owned map caches after ${compatible ? "compatible" : "incompatible"} schema replacement (${name})`, () => {
+				const sf = new SchemaFactory("schema-dependent-cache");
+				class Values extends sf.map("Values", sf.number) {}
+				const view = createIndependentTreeAlpha({ forest }).viewWith(
+					new TreeViewConfiguration({ schema: Values }),
+				);
+				view.initialize({ key: 1 });
+				const map = view.root;
+				const node = getInnerNode(map);
+				assert(node instanceof LazyMapNode);
+				const key: FieldKey = brand("key");
+				const field = node.getBoxed(key);
+				assert.equal(node.fieldCache?.get(key), field);
+				const checkout = node.context.checkout;
+				checkout.updateSchema(toUpgradeSchema(compatible ? Values : [Values, sf.string]));
+				assert.equal(node.fieldCache, undefined);
+				assert.throws(() => node.getBoxed(key));
+				assert.throws(() => field.length);
+				assert.throws(() => map.get("key"));
+				assert.equal(view.compatibility.canView, compatible);
+				if (!compatible) {
+					checkout.updateSchema(toUpgradeSchema(Values), true);
+				}
+				const replacement = getInnerNode(view.root);
+				assert(replacement instanceof LazyMapNode);
+				assert.notEqual(replacement, node);
+				assert.notEqual(replacement.getBoxed(key), field);
+				assert.equal(view.root.get("key"), 1);
+				view.dispose();
+				assert.equal(replacement.fieldCache, undefined);
+				checkout.dispose();
+			});
+		}
+
+		for (const kind of ["map", "record"] as const) {
+			it(`invalidates node-owned ${kind} caches after a remote schema change (${name})`, () => {
+				const sf = new SchemaFactoryAlpha("remote-schema-dependent-cache");
+				class MapValues extends sf.map("Map", sf.number) {}
+				class RecordValues extends sf.record("Record", sf.number) {}
+				const config = new TreeViewConfiguration({ schema: [MapValues, RecordValues] });
+				const provider = new TestTreeProviderLite(
+					2,
+					new SharedTreeTestFactory(() => {}, undefined, { forest }),
+				);
+				const [sourceTree, targetTree] = provider.trees;
+				assert(sourceTree !== undefined && targetTree !== undefined);
+				const source = sourceTree.viewWith(config);
+				source.initialize(
+					kind === "map" ? new MapValues({ key: 1 }) : new RecordValues({ key: 1 }),
+				);
+				provider.synchronizeMessages();
+				const target = targetTree.viewWith(config);
+				const node = getInnerNode(target.root);
+				assert(node instanceof LazyMapNode);
+				const key: FieldKey = brand("key");
+				const field = node.getBoxed(key);
+				assert.equal(node.fieldCache?.get(key), field);
+				const sourceNode = getInnerNode(source.root);
+				assert(sourceNode instanceof LazyMapNode);
+				sourceNode.context.checkout.updateSchema(
+					toUpgradeSchema([MapValues, RecordValues, sf.string]),
+				);
+				provider.synchronizeMessages();
+				assert.equal(target.compatibility.canView, false);
+				assert.equal(node.fieldCache, undefined);
+				assert.throws(() => node.getBoxed(key));
+				assert.throws(() => field.length);
+				source.dispose();
+				target.dispose();
+			});
+		}
 	}
 
 	it("cached fields preserve current reads but reject recovery in a broken forest", () => {

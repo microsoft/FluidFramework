@@ -485,6 +485,10 @@ export class SchematizingSimpleTreeView<
 	 * This does not check if the view needs to be replaced, it replaces it unconditionally:
 	 * callers should do any checking to detect if it's really needed before calling `update`.
 	 * @privateRemarks
+	 * Schema changes currently invalidate FlexTree even when view-schema compatibility is unchanged.
+	 * See {@link Context} for the schema changes FlexTree can tolerate without invalidation and the cached behavior that must remain valid.
+	 * Skipping replacement would also require preserving the higher-level TreeNode and HydratedContext schema assumptions.
+	 *
 	 * This implementation avoids making any edits, which prevents it from being invoked reentrantly.
 	 * If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 	 */
@@ -549,7 +553,8 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.flexTreeViewUnregisterCallbacks.add(
-			// Will dispose the old view (if there is one) when its no longer valid, and create a new one if appropriate.
+			// Rebuild after every schema change, including ones that remain viewable.
+			// See update's documentation for the constraints on skipping this invalidation.
 			this.checkout.storedSchema.events.on("afterSchemaChange", () => this.update()),
 		);
 

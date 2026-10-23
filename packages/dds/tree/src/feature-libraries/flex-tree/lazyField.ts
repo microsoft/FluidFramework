@@ -23,7 +23,7 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, getOrCreate } from "../../util/index.js";
+import { disposeSymbol } from "../../util/index.js";
 import { combineChunks } from "../chunked-forest/index.js";
 import {
 	FieldKinds,
@@ -54,43 +54,19 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { LazyMapNode, LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import {
+	type LazyMapNode,
+	LazyTreeNode,
+	getOrCreateHydratedFlexTreeNode,
+} from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-
-/**
- * Reuses field wrappers by parent node and field key.
- * @remarks
- * Fixed-field nodes keep their wrappers until disposal.
- * These wrappers own cursors, anchors, and lifetime registrations, so reusing them avoids accumulating duplicate resources.
- *
- * Optional map fields instead borrow their parent's resources.
- * Their cache lifecycle is managed by {@link LazyMapNode}, with this WeakMap providing the same lookup path for both storage policies.
- *
- * Fields without a parent node are not cached here.
- * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
- */
-const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
 /**
  * Looks up a field without navigating a cursor.
  * The caller must validate the owning node's lifetime before using the result.
  */
 export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
-	return fieldCache.get(node)?.get(key);
-}
-
-/**
- * Registers field storage in the shared lookup index.
- */
-export function getOrCreateFieldCache(node: LazyTreeNode): Map<FieldKey, FlexTreeField> {
-	return getOrCreate(fieldCache, node, () => new Map<FieldKey, FlexTreeField>());
-}
-
-/**
- * Removes a dynamic node's empty or disposed field storage from the lookup index.
- */
-export function forgetFieldCache(node: LazyTreeNode): void {
-	fieldCache.delete(node);
+	return node.fieldCache?.get(key);
 }
 
 export function makeField(
@@ -126,16 +102,10 @@ export function makeField(
 		cursor.enterField(fieldAnchor.fieldKey);
 	}
 	assert(cacheKey instanceof LazyTreeNode, "Expected a lazy parent node");
-	if (cacheKey instanceof LazyMapNode) {
-		context.checkout.forest.anchors.forget(fieldAnchor.parent);
-		return cacheKey.getOrCreateField(cursor);
-	}
-
-	const innerCache = getOrCreateFieldCache(cacheKey);
-	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
+	const result = cacheKey.getOrCreateField(cursor, makeFlexTreeField);
 	if (!usedAnchor) {
 		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
-		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
+		// or a field which borrows its parent's resources, no field takes ownership of it.
 		context.checkout.forest.anchors.forget(fieldAnchor.parent);
 	}
 	return result;
