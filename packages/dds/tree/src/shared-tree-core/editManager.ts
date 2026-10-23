@@ -205,50 +205,53 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns an inclusive upper bound for trimming and summary selection based on the retention policy,
-	 * collaboration window, and registered branch bases.
-	 *
+	 * Returns an inclusive upper bound for trimming based on the retention policy,
 	 * @remarks
 	 * The bound need not identify an existing commit.
-	 * With extra retention disabled, the bound is the collaboration bound unless a registered branch requires an earlier one.
-	 * Unlimited retention or an unfilled numeric window returns {@link minimumPossibleSequenceId}.
-	 * This also handles empty history.
 	 */
-	private getHistoryTrimmingBound(): SequenceId {
-		let trimmingBound: SequenceId = {
-			sequenceNumber: this.minimumSequenceNumber,
-			indexInBatch: Number.POSITIVE_INFINITY,
-		};
-		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
-		if (minimumBranchBaseSequenceId !== undefined) {
-			// A branch's base must remain in the trunk, not become the trimmed sentinel.
-			trimmingBound = minSequenceId(
-				trimmingBound,
-				getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId),
-			);
-		}
-		if (this.historyRetention === false || this.historyRetention === 0) {
-			return trimmingBound;
-		}
+	private getUpperTrimmingBoundForHistory(): SequenceId {
 		if (this.historyRetention === true) {
 			return minimumPossibleSequenceId;
 		}
 		const sequenceIdToCommit = this.getSharedBranch("main").sequenceIdToCommit;
-		// The map includes the trimmed base, which does not count toward retention.
-		if (this.historyRetention >= sequenceIdToCommit.size - 1) {
-			return minimumPossibleSequenceId;
+		if (this.historyRetention === false || this.historyRetention === 0) {
+			return sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId;
 		}
-		let remaining = this.historyRetention;
-		for (const [sequenceId, commit] of sequenceIdToCommit.entriesReversed()) {
-			if (commit === this.trunkBase) {
-				break;
-			}
-			remaining--;
-			if (remaining === 0) {
-				return minSequenceId(trimmingBound, getUpperBoundOfPreviousSequenceId(sequenceId));
+		// The map includes the trimmed base, which does not count toward retention.
+		if (this.historyRetention < sequenceIdToCommit.size - 1) {
+			let remaining = this.historyRetention;
+			for (const [sequenceId] of sequenceIdToCommit.entriesReversed()) {
+				remaining--;
+				if (remaining === 0) {
+					return getUpperBoundOfPreviousSequenceId(sequenceId);
+				}
 			}
 		}
 		return minimumPossibleSequenceId;
+	}
+
+	/**
+	 * Returns an inclusive upper bound for trimming based on local forks (excluding peer branches maintained by EditManager),
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForLocalForks(): SequenceId {
+		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
+		return minimumBranchBaseSequenceId === undefined
+			? (this.getSharedBranch("main").sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId)
+			: getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId);
+	}
+
+	/**
+	 * Returns an inclusive upper bound for trimming based on the minimum sequence number,
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForMinimumSequenceNumber(): SequenceId {
+		return {
+			sequenceNumber: this.minimumSequenceNumber,
+			indexInBatch: Number.POSITIVE_INFINITY,
+		};
 	}
 
 	public getLocalBranch(
@@ -386,7 +389,13 @@ export class EditManager<
 	 * to evict trunk commits that are no longer needed.
 	 */
 	private trimHistory(): void {
-		const trunkTailSequenceId = this.getHistoryTrimmingBound();
+		const msnBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
+		const forkBound = this.getUpperTrimmingBoundForLocalForks();
+		const historyBound = this.getUpperTrimmingBoundForHistory();
+		const trunkTailSequenceId = minSequenceId(
+			msnBound,
+			minSequenceId(forkBound, historyBound),
+		);
 		const mainBranch = this.getSharedBranch("main");
 
 		const [sequenceId, latestEvicted] = mainBranch.getClosestTrunkCommit(
@@ -477,10 +486,10 @@ export class EditManager<
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
+		const historyBound = this.getUpperTrimmingBoundForHistory();
 		let minBaseSeqId = minSequenceId(
 			minSeqNumberToSummarize,
-			mainBranch.sequenceIdToCommit.nextHigherKey(this.getHistoryTrimmingBound()) ??
-				minSeqNumberToSummarize,
+			mainBranch.sequenceIdToCommit.nextHigherKey(historyBound) ?? minSeqNumberToSummarize,
 		);
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
