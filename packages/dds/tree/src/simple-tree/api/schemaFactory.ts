@@ -200,6 +200,9 @@ export { SchemaFactory_base } from "./schemaStatics.js";
  *
  * @see {@link SchemaFactoryAlpha}
  * @see {@link SchemaFactoryBeta}
+ * @see {@link (asAlpha:6)} to access alpha APIs on this factory
+ * @see {@link asBeta} to access beta APIs on this factory
+ *
  * @sealed @public
  */
 export class SchemaFactory<
@@ -256,6 +259,10 @@ export class SchemaFactory<
 		public readonly scope: TScope,
 	) {
 		super();
+		if (new.target === SchemaFactory || new.target === SchemaFactoryBeta) {
+			// All supported factory instances implement the alpha API so conversions can preserve identity.
+			return new SchemaFactoryAlpha<TScope, TName>(scope);
+		}
 	}
 
 	/**
@@ -797,8 +804,15 @@ export class SchemaFactory<
 
 /**
  * {@link SchemaFactory} with additional beta APIs.
+ *
+ * @remarks
+ * Use {@link asBeta} to access these APIs on an existing {@link SchemaFactory}.
+ * Use {@link SchemaStaticsBeta.types} to normalize allowed types and preserve their annotations.
+ *
+ * @see {@link SchemaFactoryAlpha}
+ * @see {@link (asAlpha:6)}
+ *
  * @beta
- * @privateRemarks
  */
 export class SchemaFactoryBeta<
 	out TScope extends string | undefined = string | undefined,
@@ -1169,7 +1183,14 @@ export class SchemaFactoryBeta<
 /**
  * {@link SchemaFactory} with additional alpha APIs.
  *
+ * @remarks
+ * Use {@link (asAlpha:6)} to access these APIs on an existing factory.
+ *
+ * @see {@link SchemaFactoryBeta}
+ * @see {@link asBeta}
+ *
  * @alpha
+ *
  * @privateRemarks
  * When building schema, when `options` is not provided, `TCustomMetadata` is inferred as `unknown`.
  * If desired, this could be made to infer `undefined` instead by adding overloads for everything,
@@ -1443,9 +1464,11 @@ export class SchemaFactoryAlpha<
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return this.mapAlpha(
-			name,
+		return mapSchema(
+			scoped<TScope, TName, Name>(this, name),
 			allowedTypes as T & ImplicitAllowedTypes,
+			/* implicitlyConstructable */ false,
+			/* useMapPrototype */ false,
 			options,
 		) as unknown as MapNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
@@ -1503,10 +1526,12 @@ export class SchemaFactoryAlpha<
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return this.arrayAlpha(
-			name,
+		return arraySchema(
+			scoped<TScope, TName, Name>(this, name),
 			allowedTypes as T & ImplicitAllowedTypes,
-			options,
+			false,
+			true,
+			options ?? {},
 		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
 			T,
