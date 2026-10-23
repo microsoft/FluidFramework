@@ -71,6 +71,14 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  */
 const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
+/**
+ * Looks up a field without navigating a cursor.
+ * The caller must validate the owning node's lifetime before using the result.
+ */
+export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
+	return fieldCache.get(node)?.get(key);
+}
+
 export function makeField(
 	context: Context,
 	schema: FieldKindIdentifier,
@@ -168,6 +176,14 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
+		this.assertCursorAccess();
+		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+		const cached = parent?.slots.get(flexTreeSlot);
+		if (cached !== undefined) {
+			assert(cached.context === this.context, "Parent context must match field context");
+			return cached;
+		}
+
 		const cursor = this.cursor;
 		cursor.exitField();
 		const output = getOrCreateHydratedFlexTreeNode(this.context, cursor);
@@ -221,8 +237,14 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public getFieldPath(): NormalizedFieldUpPath {
-		return { parent: this.parent?.anchorNode, field: this.key };
+	public getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey } {
+		this.assertCursorAccess();
+		const parent =
+			this.anchor.parent === undefined
+				? undefined
+				: (this.context.checkout.forest.anchors.locate(this.anchor.parent) ??
+					fail("Field parent anchor must exist"));
+		return { parent, field: this.key };
 	}
 
 	/**
@@ -230,15 +252,15 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		if (
-			!this.isFreed() &&
-			// Only allow editing if we are the root document field...
-			((this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
-				// ...or are under a node in the document
-				(this.parent !== undefined &&
-					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument))
-		) {
-			return this.getFieldPath();
+		if (!this.isFreed()) {
+			const path = this.getFieldPath();
+			if (
+				path.parent === undefined
+					? path.field === rootFieldKey
+					: treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
+			) {
+				return path;
+			}
 		}
 
 		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
