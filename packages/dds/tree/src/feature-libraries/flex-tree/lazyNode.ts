@@ -35,7 +35,14 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedFixedField, makeField, MapField, unboxedFlexNode } from "./lazyField.js";
+import {
+	forgetFieldCache,
+	getCachedField,
+	getOrCreateFieldCache,
+	makeField,
+	MapField,
+	unboxedFlexNode,
+} from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -127,14 +134,6 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return this.cursor.value;
 	}
 
-	/**
-	 * Looks up a field without recovering this node's cursor.
-	 * The caller must validate this node's lifetime before using the result.
-	 */
-	public getCachedField(key: FieldKey): FlexTreeField | undefined {
-		return getCachedFixedField(this, key);
-	}
-
 	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
 		{
 			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
@@ -160,7 +159,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return this.getCachedField(fieldKey) ?? makeField(this.context, schema.kind, cursor);
+			return getCachedField(this, fieldKey) ?? makeField(this.context, schema.kind, cursor);
 		});
 	}
 
@@ -168,7 +167,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		currentObserver?.observeNodeField(this, key);
 
 		this.ensureValidForAccess();
-		const cached = this.getCachedField(key);
+		const cached = getCachedField(this, key);
 		if (cached !== undefined) {
 			return cached;
 		}
@@ -218,7 +217,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		if (parent !== undefined) {
 			assert(parent.context === this.context, "Parent context must match child context");
 			assert(parent instanceof LazyTreeNode, "Expected a lazy parent node");
-			const cached = parent.getCachedField(key);
+			const cached = getCachedField(parent, key);
 			if (cached !== undefined) {
 				return { parent: cached, index };
 			}
@@ -299,12 +298,12 @@ export class LazyMapNode extends LazyTreeNode {
 						cache.delete(key);
 					}
 				}
+				if (cache.size === 0) {
+					this.#fieldCache = undefined;
+					forgetFieldCache(this);
+				}
 			},
 		);
-	}
-
-	public override getCachedField(key: FieldKey): FlexTreeField | undefined {
-		return this.#fieldCache?.get(key);
 	}
 
 	/**
@@ -319,7 +318,7 @@ export class LazyMapNode extends LazyTreeNode {
 		}
 		const field = new MapField(this, key);
 		if (cursor.getFieldLength() !== 0) {
-			(this.#fieldCache ??= new Map()).set(key, field);
+			(this.#fieldCache ??= getOrCreateFieldCache(this)).set(key, field);
 		}
 		return field;
 	}
@@ -327,6 +326,7 @@ export class LazyMapNode extends LazyTreeNode {
 	protected override forgetAnchor(): void {
 		this.#removeFieldChangeCallback();
 		this.#fieldCache = undefined;
+		forgetFieldCache(this);
 		super.forgetAnchor();
 	}
 }

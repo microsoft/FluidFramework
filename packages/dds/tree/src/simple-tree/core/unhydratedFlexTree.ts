@@ -104,12 +104,13 @@ export function createUnhydratedFlexTreeNode(
 	context: Context,
 	storedSchema?: TreeNodeStoredSchema,
 ): UnhydratedFlexTreeNode {
+	if (data.value !== undefined) {
+		return new UnhydratedFlexTreeNode(data, fields, context);
+	}
 	const schema =
-		data.value === undefined
-			? (storedSchema ??
-				context.flexContext.schema.nodeSchema.get(data.type) ??
-				fail("Missing schema for unhydrated node"))
-			: undefined;
+		storedSchema ??
+		context.flexContext.schema.nodeSchema.get(data.type) ??
+		fail("Missing schema for unhydrated node");
 	return schema instanceof MapNodeStoredSchema &&
 		schema.mapFields.kind === FieldKinds.optional.identifier
 		? new UnhydratedMapNode(data, fields, context)
