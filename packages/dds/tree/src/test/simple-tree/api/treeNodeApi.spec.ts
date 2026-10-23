@@ -1499,6 +1499,71 @@ describe("treeNodeApi", () => {
 		});
 	});
 
+	describe("hasUnknownChildren", () => {
+		// The test documents whose stored schema has unknown optional fields.
+		const documents = testDocuments.filter(
+			(testCase) => testCase.hasUnknownOptionalFieldSchema,
+		);
+		for (const testKind of ["hydrated", "unhydrated"] as const) {
+			describe(testKind, () => {
+				for (const testCase of documents) {
+					it(testCase.name, () => {
+						const view = testDocumentIndependentView(testCase);
+						const root = testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
+						assert(isTreeNode(root));
+						assert.equal(
+							TreeAlpha.hasUnknownChildren(root),
+							testCase.hasUnknownOptionalFields === true,
+						);
+					});
+				}
+			});
+		}
+
+		it("is false for nodes which cannot have unknown optional fields", () => {
+			class NumberArray extends schema.array("hasUnknownChildrenArray", schema.number) {}
+			class Strict extends schema.object("hasUnknownChildrenStrict", {
+				a: schema.optional(schema.number),
+			}) {}
+			assert.equal(TreeAlpha.hasUnknownChildren(new NumberArray([1])), false);
+			assert.equal(TreeAlpha.hasUnknownChildren(new Strict({ a: 1 })), false);
+		});
+
+		it("compares stored keys, not property keys", () => {
+			// `renamed` is a known property with stored key `renamedKey`.
+			// The unknown field `other` has stored key `renamed`.
+			const factoryNew = new SchemaFactoryAlpha("hasUnknownChildrenKeys");
+			class KeysNew extends factoryNew.object("Keys", {
+				renamed: factoryNew.optional(factoryNew.string, { key: "renamedKey" }),
+				other: factoryNew.optional(factoryNew.string, { key: "renamed" }),
+			}) {}
+			const factoryOld = new SchemaFactoryAlpha("hasUnknownChildrenKeys");
+			class KeysOld extends factoryOld.object(
+				"Keys",
+				{ renamed: factoryOld.optional(factoryOld.string, { key: "renamedKey" }) },
+				{ allowUnknownOptionalFields: true },
+			) {}
+
+			function hasUnknownChildren(content: KeysNew): boolean {
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: KeysOld,
+					schemaData: toInitialSchema(KeysNew),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(KeysNew, content)),
+				});
+				assert(isTreeNode(view.root));
+				return TreeAlpha.hasUnknownChildren(view.root);
+			}
+
+			assert.equal(hasUnknownChildren(new KeysNew({ renamed: "known" })), false);
+			assert.equal(
+				hasUnknownChildren(new KeysNew({ renamed: "known", other: "unknown" })),
+				true,
+			);
+		});
+	});
+
 	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
