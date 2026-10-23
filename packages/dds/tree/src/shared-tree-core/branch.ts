@@ -205,7 +205,6 @@ export class SharedTreeBranch<
 	 * Forks of this branch will be initialized with independent subscriptions to this branch's trimmer.
 	 * Disposing a branch clears the trimmer and setting the trimmer to any value other than `undefined` thereafter will throw an error.
 	 * Clearing only stops forwarding notifications; it does not prevent history trimming.
-	 * Changing notification subscriptions does not affect commit-count bookkeeping.
 	 *
 	 * @param branchTrimmer - The event source for ancestry trimming notifications, or `undefined` to clear it.
 	 */
