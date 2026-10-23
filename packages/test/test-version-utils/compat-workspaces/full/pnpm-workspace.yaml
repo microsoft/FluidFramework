@@ -3,6 +3,8 @@
 packages:
   - '*'
 
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
+
 # The security settings below are intentional — do not relax them.
 minimumReleaseAge: 0
 
