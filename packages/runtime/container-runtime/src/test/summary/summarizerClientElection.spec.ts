@@ -10,6 +10,7 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -40,7 +41,7 @@ describe("Summarizer Client Election", () => {
 	};
 	const mockLogger = new MockLogger();
 	const summaryCollectionEmitter = new TypedEventEmitter<ISummaryCollectionOpEvents>();
-	let election: SummarizerClientElection;
+	const elections: SummarizerClientElection[] = [];
 	const summaryManagers: SummaryManager[] = [];
 
 	const summaryCollection = {
@@ -150,6 +151,7 @@ describe("Summarizer Client Election", () => {
 	function createElection(
 		initialClients: [id: string, seq: number, int: boolean][] = [],
 		initialState?: ISerializedElection,
+		logger: ITelemetryBaseLogger = mockLogger.toTelemetryLogger(),
 	) {
 		for (const [id, seq, int] of initialClients) {
 			addClient(id, seq, int);
@@ -160,17 +162,19 @@ describe("Summarizer Client Election", () => {
 				initialState.electionSequenceNumber,
 			);
 		}
-		election = new SummarizerClientElection(
-			mockLogger.toTelemetryLogger(),
+		const election = new SummarizerClientElection(
+			logger,
 			testDeltaManager,
 			testQuorum,
 			summaryCollectionEmitter,
 			maxOps,
 			initialState ?? currentSequenceNumber,
 		);
+		elections.push(election);
+		return election;
 	}
 
-	function createManager(parentId: string) {
+	function createManager(election: SummarizerClientElection, parentId: string) {
 		const connectedState = new TestConnectedState(parentId);
 		const summarizers: TestSummarizer[] = [];
 		const requestSummarizer = async (): Promise<ISummarizer> => {
@@ -209,6 +213,7 @@ describe("Summarizer Client Election", () => {
 	}
 
 	function assertState(
+		election: SummarizerClientElection,
 		expectedId: string | undefined,
 		expectedParentId: string | undefined,
 		expectedSeq: number,
@@ -234,7 +239,9 @@ describe("Summarizer Client Election", () => {
 		mockLogger.clear();
 		testQuorum.reset();
 		summaryCollectionEmitter.removeAllListeners();
-		election.removeAllListeners();
+		for (const election of elections.splice(0)) {
+			election.removeAllListeners();
+		}
 		currentSequenceNumber = 0;
 		for (const manager of summaryManagers.splice(0)) {
 			manager.dispose();
@@ -243,81 +250,82 @@ describe("Summarizer Client Election", () => {
 
 	describe("Oldest eligible client election", () => {
 		it("Should initialize with empty quorum", () => {
-			createElection();
-			assertState(undefined, undefined, 0, "no clients");
+			const election = createElection();
+			assertState(election, undefined, undefined, 0, "no clients");
 		});
 
 		it("Should elect oldest eligible interactive client", () => {
-			createElection([
+			const election = createElection([
 				["s1", 1, false],
 				["a", 2, true],
 				["s2", 4, false],
 				["b", 7, true],
 			]);
-			assertState("a", "a", 7, "oldest interactive");
+			assertState(election, "a", "a", 7, "oldest interactive");
 		});
 
 		it("Should not elect non-interactive clients", () => {
-			createElection([
+			const election = createElection([
 				["s1", 1, false],
 				["s2", 4, false],
 			]);
-			assertState(undefined, undefined, 4, "no interactive clients");
+			assertState(election, undefined, undefined, 4, "no interactive clients");
 		});
 
 		it("Should elect when first interactive client joins empty quorum", () => {
-			createElection();
+			const election = createElection();
 			addClient("a", 10, true);
-			assertState("a", "a", 10, "first interactive client elected");
+			assertState(election, "a", "a", 10, "first interactive client elected");
 		});
 
 		it("Should not change election when younger interactive client joins", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			addClient("b", 20, true);
-			assertState("a", "a", 2, "older client stays elected");
+			assertState(election, "a", "a", 2, "older client stays elected");
 		});
 	});
 
 	describe("Re-election when parent leaves", () => {
 		it("Should reelect next oldest when elected parent leaves", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
-			assertState("a", "a", 7, "a is elected");
+			assertState(election, "a", "a", 7, "a is elected");
 			removeClient("a", 5);
-			assertState("b", "b", 12, "b takes over");
+			assertState(election, "b", "b", 12, "b takes over");
 		});
 
 		it("Should become undefined when last interactive client leaves", () => {
-			createElection([["a", 2, true]]);
-			assertState("a", "a", 2, "a is elected");
+			const election = createElection([["a", 2, true]]);
+			assertState(election, "a", "a", 2, "a is elected");
 			removeClient("a", 5);
-			assertState(undefined, undefined, 7, "no one to elect");
+			assertState(election, undefined, undefined, 7, "no one to elect");
 		});
 
 		it("Should not change election when non-elected client leaves", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
 			removeClient("b", 5);
-			assertState("a", "a", 7, "a stays elected");
+			assertState(election, "a", "a", 7, "a stays elected");
 		});
 	});
 
 	describe("Summarizer client in quorum", () => {
 		it("Should allow a summarizer to supersede a restored interactive client with a different parent", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 1, true],
 					["b", 2, true],
 				],
 				{ electedClientId: "b", electedParentId: "a", electionSequenceNumber: 100 },
 			);
-			assertState("b", "a", 100, "restored interactive identities differ");
+			assertState(election, "b", "a", 100, "restored interactive identities differ");
 			addClient("s", 101, false, summarizerClientType);
 			assertState(
+				election,
 				"s",
 				"a",
 				101,
@@ -326,45 +334,51 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should return summarizer as electedClientId when summarizer joins", () => {
-			createElection([["a", 2, true]]);
-			assertState("a", "a", 2, "parent is elected");
+			const election = createElection([["a", 2, true]]);
+			assertState(election, "a", "a", 2, "parent is elected");
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			assertState("a-summarizer", "a", 10, "summarizer is elected client");
+			assertState(election, "a-summarizer", "a", 10, "summarizer is elected client");
 		});
 
 		it("Should revert to parent when summarizer leaves", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			assertState("a-summarizer", "a", 10, "summarizer is elected");
+			assertState(election, "a-summarizer", "a", 10, "summarizer is elected");
 			removeClient("a-summarizer", 5);
-			assertState("a", "a", 15, "parent is elected again");
+			assertState(election, "a", "a", 15, "parent is elected again");
 		});
 
 		it("Should handle graceful handoff: A elected, A' joins, A leaves, B becomes parent, A' leaves", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
-			assertState("a", "a", 7, "A is elected parent");
+			assertState(election, "a", "a", 7, "A is elected parent");
 
 			// A spawns summarizer A'
 			addClient("a-summarizer", 20, false, summarizerClientType);
-			assertState("a-summarizer", "a", 20, "A' is elected client");
+			assertState(election, "a-summarizer", "a", 20, "A' is elected client");
 
 			// A leaves
 			removeClient("a", 5);
-			assertState("a-summarizer", "b", 20, "B becomes parent, A' still elected client");
+			assertState(
+				election,
+				"a-summarizer",
+				"b",
+				20,
+				"B becomes parent, A' still elected client",
+			);
 
 			// A' leaves
 			removeClient("a-summarizer", 5);
-			assertState("b", "b", 30, "B becomes elected client");
+			assertState(election, "b", "b", 30, "B becomes elected client");
 		});
 	});
 
 	describe("electedSummarizerChanged event", () => {
 		// Enable when PR #28518 adds consolidated transition telemetry.
 		it.skip("Should log identity transitions including parent-only handoff, but not ignored joins or resets", () => {
-			createElection([
+			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],
 			]);
@@ -412,7 +426,7 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should emit when parent changes", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
@@ -423,7 +437,7 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should emit when summarizer joins", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			let eventCount = 0;
 			election.on("electedSummarizerChanged", () => eventCount++);
 			addClient("a-summarizer", 10, false, summarizerClientType);
@@ -431,7 +445,7 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should emit when summarizer leaves", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			addClient("a-summarizer", 10, false, summarizerClientType);
 			let eventCount = 0;
 			election.on("electedSummarizerChanged", () => eventCount++);
@@ -440,7 +454,7 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should not emit when non-elected non-summarizer client leaves", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
@@ -454,27 +468,27 @@ describe("Summarizer Client Election", () => {
 
 	describe("Op-counting telemetry", () => {
 		it("Should preserve a restored younger parent's election across excess-op windows", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
 				],
 				{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 100 },
 			);
-			assertState("b", "b", 100, "restored younger parent remains elected");
+			assertState(election, "b", "b", 100, "restored younger parent remains elected");
 			let eventCount = 0;
 			election.on("electedSummarizerChanged", () => eventCount++);
 			defaultOp(maxOps);
-			assertState("b", "b", 100, "election unchanged at threshold");
+			assertState(election, "b", "b", 100, "election unchanged at threshold");
 			defaultOp();
-			assertState("b", "b", 100, "election unchanged after first excess-op window");
+			assertState(election, "b", "b", 100, "election unchanged after first excess-op window");
 			defaultOp(maxOps + 1);
-			assertState("b", "b", 100, "election unchanged after second excess-op window");
+			assertState(election, "b", "b", 100, "election unchanged after second excess-op window");
 			assert.equal(eventCount, 0, "excess ops should not emit election changes");
 		});
 
 		it("Should preserve a restored younger parent's election across excess-op windows after an ack", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
@@ -484,14 +498,27 @@ describe("Summarizer Client Election", () => {
 			let eventCount = 0;
 			election.on("electedSummarizerChanged", () => eventCount++);
 			defaultOp(maxOps + 1);
-			assertState("b", "b", 100, "election unchanged before ack");
+			assertState(election, "b", "b", 100, "election unchanged before ack");
 			summaryAck();
 			const ackSequenceNumber = currentSequenceNumber;
-			assertState("b", "b", ackSequenceNumber, "ack advances only the progress baseline");
+			assertState(
+				election,
+				"b",
+				"b",
+				ackSequenceNumber,
+				"ack advances only the progress baseline",
+			);
 			defaultOp(maxOps);
-			assertState("b", "b", ackSequenceNumber, "election unchanged at threshold after ack");
+			assertState(
+				election,
+				"b",
+				"b",
+				ackSequenceNumber,
+				"election unchanged at threshold after ack",
+			);
 			defaultOp();
 			assertState(
+				election,
 				"b",
 				"b",
 				ackSequenceNumber,
@@ -499,6 +526,7 @@ describe("Summarizer Client Election", () => {
 			);
 			defaultOp(maxOps + 1);
 			assertState(
+				election,
 				"b",
 				"b",
 				ackSequenceNumber,
@@ -557,23 +585,16 @@ describe("Summarizer Client Election", () => {
 	describe("Serialization", () => {
 		// Enable when PR #28518 preserves progress through parent-only handoff.
 		it.skip("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
-			createElection([
+			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],
 			]);
 			addClient("s", 3, false, summarizerClientType);
 			summaryAck(47);
 			const restoredLogger = new MockLogger();
-			const restored = new SummarizerClientElection(
-				restoredLogger,
-				testDeltaManager,
-				testQuorum,
-				summaryCollectionEmitter,
-				maxOps,
-				election.serialize(),
-			);
+			const restored = createElection([], election.serialize(), restoredLogger);
 			removeClient("a");
-			assertState("s", "b", 50, "parent-only handoff retains ack progress");
+			assertState(election, "s", "b", 50, "parent-only handoff retains ack progress");
 			assert.deepEqual(restored.serialize(), election.serialize());
 			const warnings = (logger: MockLogger) =>
 				logger.events.filter(
@@ -597,6 +618,7 @@ describe("Summarizer Client Election", () => {
 			removeClient("s");
 			assert.deepEqual(restored.serialize(), election.serialize());
 			assertState(
+				election,
 				"b",
 				"b",
 				currentSequenceNumber,
@@ -606,20 +628,13 @@ describe("Summarizer Client Election", () => {
 
 		for (const firstToLeave of ["summarizer-1", "summarizer-2"]) {
 			it(`Should agree with a restored observer when ${firstToLeave} leaves first`, () => {
-				createElection([
+				const election = createElection([
 					["a", 1, true],
 					["b", 2, true],
 				]);
 				addClient("summarizer-1", 3, false, summarizerClientType);
 				addClient("summarizer-2", 4, false, summarizerClientType);
-				const restored = new SummarizerClientElection(
-					mockLogger,
-					testDeltaManager,
-					testQuorum,
-					summaryCollectionEmitter,
-					maxOps,
-					election.serialize(),
-				);
+				const restored = createElection([], election.serialize(), mockLogger);
 				assert.deepEqual(restored.serialize(), election.serialize());
 				assert.equal(election.electedClientId, "summarizer-1");
 				removeClient("a");
@@ -636,16 +651,16 @@ describe("Summarizer Client Election", () => {
 			addClient("a", 1);
 			addClient("older", 2, false, summarizerClientType);
 			addClient("recorded", 3, false, summarizerClientType);
-			createElection([], {
+			const election = createElection([], {
 				electedClientId: "recorded",
 				electedParentId: "a",
 				electionSequenceNumber: 3,
 			});
-			assertState("recorded", "a", 3, "serialized election identity retained");
+			assertState(election, "recorded", "a", 3, "serialized election identity retained");
 		});
 
 		it("Should preserve the ack baseline on ignored joins and no-op resets", () => {
-			createElection([["a", 1, true]]);
+			const election = createElection([["a", 1, true]]);
 			addClient("s", 2, false, summarizerClientType);
 			summaryAck(10);
 			const state = election.serialize();
@@ -661,7 +676,7 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should serialize and restore correctly", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
@@ -671,31 +686,37 @@ describe("Summarizer Client Election", () => {
 		});
 
 		it("Should restore from serialized state", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
 				],
 				{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 100 },
 			);
-			assertState("b", "b", 100, "restored from serialized state");
+			assertState(election, "b", "b", 100, "restored from serialized state");
 		});
 
 		it("Should recover on the next op when serialized client and parent are missing", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
 				],
 				{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 100 },
 			);
-			assertState(undefined, undefined, 100, "missing elected client remains undefined");
+			assertState(
+				election,
+				undefined,
+				undefined,
+				100,
+				"missing elected client remains undefined",
+			);
 			defaultOp();
-			assertState("a", "a", 101, "recovered on the next op");
+			assertState(election, "a", "a", 101, "recovered on the next op");
 		});
 
 		it("Should use summary ack seq in serialization when available", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			summaryAck(50);
 			const serialized = election.serialize();
 			assert.strictEqual(serialized.electionSequenceNumber, 52, "uses ack seq");
@@ -704,19 +725,19 @@ describe("Summarizer Client Election", () => {
 
 	describe("Recovery", () => {
 		it("Should recover when electedClientId is undefined but eligible clients exist", () => {
-			createElection([], {
+			const election = createElection([], {
 				electedClientId: undefined,
 				electedParentId: undefined,
 				electionSequenceNumber: 100,
 			});
-			assertState(undefined, undefined, 100, "no elected client initially");
+			assertState(election, undefined, undefined, 100, "no elected client initially");
 			addClient("a", 110, true);
-			assertState("a", "a", 110, "auto-elect on add");
+			assertState(election, "a", "a", 110, "auto-elect on add");
 		});
 
 		it("Should auto-elect on op when eligible clients exist but none elected", () => {
 			currentSequenceNumber = 100;
-			createElection(
+			const election = createElection(
 				[
 					["s1", 1, false],
 					["a", 2, true],
@@ -727,141 +748,157 @@ describe("Summarizer Client Election", () => {
 					electionSequenceNumber: 50,
 				},
 			);
-			assertState(undefined, undefined, 50, "initial state is undefined");
+			assertState(election, undefined, undefined, 50, "initial state is undefined");
 			defaultOp();
-			assertState("a", "a", 101, "auto-elect on op");
+			assertState(election, "a", "a", 101, "auto-elect on op");
 		});
 	});
 
 	describe("Edge cases", () => {
 		it("Should handle empty quorum throughout", () => {
-			createElection();
+			const election = createElection();
 			defaultOp(100);
-			assertState(undefined, undefined, 0, "still undefined");
+			assertState(election, undefined, undefined, 0, "still undefined");
 		});
 
 		it("Should handle all clients leave", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
 			removeClient("a", 5);
 			removeClient("b", 5);
-			assertState(undefined, undefined, 17, "no clients left");
+			assertState(election, undefined, undefined, 17, "no clients left");
 		});
 
 		it("Should handle summarizer outliving parent", () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
 			addClient("a-summarizer", 20, false, summarizerClientType);
 			removeClient("a", 5);
-			assertState("a-summarizer", "b", 20, "summarizer outlives parent");
+			assertState(election, "a-summarizer", "b", 20, "summarizer outlives parent");
 			removeClient("b", 5);
-			assertState("a-summarizer", undefined, 20, "no parent, summarizer still alive");
+			assertState(
+				election,
+				"a-summarizer",
+				undefined,
+				20,
+				"no parent, summarizer still alive",
+			);
 			removeClient("a-summarizer", 5);
-			assertState(undefined, undefined, 35, "everything gone");
+			assertState(election, undefined, undefined, 35, "everything gone");
 		});
 
 		it("Should pick up summarizer already in quorum at construction time", () => {
 			// Add clients including a summarizer before creating the election
 			addClient("a", 2, true);
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			election = new SummarizerClientElection(
-				mockLogger.toTelemetryLogger(),
-				testDeltaManager,
-				testQuorum,
-				summaryCollectionEmitter,
-				maxOps,
-				currentSequenceNumber,
-			);
-			assertState("a-summarizer", "a", 10, "summarizer detected at construction");
+			const election = createElection();
+			assertState(election, "a-summarizer", "a", 10, "summarizer detected at construction");
 		});
 
 		it("Should retain the elected summarizer when a second summarizer joins", () => {
-			createElection([["a", 2, true]]);
+			const election = createElection([["a", 2, true]]);
 			addClient("summarizer-1", 10, false, summarizerClientType);
-			assertState("summarizer-1", "a", 10, "first summarizer is elected client");
+			assertState(election, "summarizer-1", "a", 10, "first summarizer is elected client");
 
 			addClient("summarizer-2", 20, false, summarizerClientType);
-			assertState("summarizer-1", "a", 10, "second summarizer does not replace incumbent");
+			assertState(
+				election,
+				"summarizer-1",
+				"a",
+				10,
+				"second summarizer does not replace incumbent",
+			);
 
 			removeClient("summarizer-2", 5);
-			assertState("summarizer-1", "a", 10, "removing unelected summarizer has no effect");
+			assertState(
+				election,
+				"summarizer-1",
+				"a",
+				10,
+				"removing unelected summarizer has no effect",
+			);
 
 			// Removing the tracked summarizer reverts to parent
 			removeClient("summarizer-1", 5);
-			assertState("a", "a", 30, "parent is elected again after tracked summarizer leaves");
+			assertState(
+				election,
+				"a",
+				"a",
+				30,
+				"parent is elected again after tracked summarizer leaves",
+			);
 		});
 	});
 
 	describe("Initialization from serialized state", () => {
 		it("Should advance past an ineligible serialized client and parent", () => {
 			// "s1" is non-interactive and non-summarizer, so ineligible
-			createElection(
+			const election = createElection(
 				[
 					["s1", 1, false],
 					["a", 5, true],
 				],
 				{ electedClientId: "s1", electedParentId: "s1", electionSequenceNumber: 100 },
 			);
-			assertState("a", "a", 100, "fell back to oldest eligible");
+			assertState(election, "a", "a", 100, "fell back to oldest eligible");
 		});
 
 		it("Should use electedClientId as parent when electedParentId is undefined (backward compat)", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
 				],
 				{ electedClientId: "b", electedParentId: undefined, electionSequenceNumber: 100 },
 			);
-			assertState("b", "b", 100, "electedClientId used as parent");
+			assertState(election, "b", "b", 100, "electedClientId used as parent");
 		});
 
 		it("Should not use electedClientId as parent when it is a summarizer type", () => {
 			addClient("a", 2, true);
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			election = new SummarizerClientElection(
-				mockLogger.toTelemetryLogger(),
-				testDeltaManager,
-				testQuorum,
-				summaryCollectionEmitter,
-				maxOps,
-				{
-					electedClientId: "a-summarizer",
-					electedParentId: undefined,
-					electionSequenceNumber: 100,
-				},
-			);
-			assertState("a-summarizer", undefined, 100, "summarizer not used as parent");
+			const election = createElection([], {
+				electedClientId: "a-summarizer",
+				electedParentId: undefined,
+				electionSequenceNumber: 100,
+			});
+			assertState(election, "a-summarizer", undefined, 100, "summarizer not used as parent");
 		});
 
 		it("Should select the next eligible client when electedClientId is ineligible", () => {
 			// "s1" is in quorum, matches electedClientId, but is ineligible
-			createElection(
+			const election = createElection(
 				[
 					["s1", 1, false],
 					["a", 5, true],
 				],
 				{ electedClientId: "s1", electedParentId: "s1", electionSequenceNumber: 100 },
 			);
-			assertState("a", "a", 100, "next eligible client elected");
+			assertState(election, "a", "a", 100, "next eligible client elected");
 			mockLogger.assertMatchNone([
 				{ eventName: "SummarizerClientElection:InitialElectedClientNotFound" },
 			]);
 		});
 
 		it("Should log error when electedClientId is not found in quorum", () => {
-			createElection(
+			const election = createElection(
 				[
 					["a", 2, true],
 					["b", 7, true],
 				],
 				{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 100 },
 			);
-			assertState(undefined, undefined, 100, "missing elected client remains undefined");
+			assertState(
+				election,
+				undefined,
+				undefined,
+				100,
+				"missing elected client remains undefined",
+			);
 			mockLogger.assertMatch([
 				{
 					eventName: "SummarizerClientElection:InitialElectedClientNotFound",
@@ -922,22 +959,15 @@ describe("Summarizer Client Election", () => {
 			};
 			testQuorum.addClient("a", client);
 			currentSequenceNumber = 5;
-			election = new SummarizerClientElection(
-				mockLogger.toTelemetryLogger(),
-				testDeltaManager,
-				testQuorum,
-				summaryCollectionEmitter,
-				maxOps,
-				currentSequenceNumber,
-			);
-			assertState("a", "a", 5, "interactive client with no type is eligible");
+			const election = createElection();
+			assertState(election, "a", "a", 5, "interactive client with no type is eligible");
 		});
 
 		it("Should not elect ineligible client when no parent is elected", () => {
-			createElection();
+			const election = createElection();
 			// Add a non-interactive, non-summarizer client — it is ineligible
 			addClient("bot", 10, false);
-			assertState(undefined, undefined, 0, "ineligible client not elected");
+			assertState(election, undefined, undefined, 0, "ineligible client not elected");
 		});
 	});
 
@@ -969,17 +999,17 @@ describe("Summarizer Client Election", () => {
 
 	describe("Integration with SummaryManager", () => {
 		it("Should spawn summarizer and handle graceful handoff", async () => {
-			createElection([
+			const election = createElection([
 				["a", 2, true],
 				["b", 7, true],
 			]);
-			const a = createManager("a");
-			const b = createManager("b");
-			assertState("a", "a", 7, "a elected");
+			const a = createManager(election, "a");
+			const b = createManager(election, "b");
+			assertState(election, "a", "a", 7, "a elected");
 			a.connectedState.connect();
 			b.connectedState.connect();
 			await flushPromises();
-			assertState("a-summarizer", "a", 7, "a's summarizer elected on connect");
+			assertState(election, "a-summarizer", "a", 7, "a's summarizer elected on connect");
 			assert.equal(a.summarizers.length, 1);
 			assert.equal(b.summarizers.length, 0);
 			const summarizer = a.summarizers[0];
@@ -988,7 +1018,7 @@ describe("Summarizer Client Election", () => {
 			// A leaves, B becomes parent, but A' still working
 			removeClient("a", 5);
 			a.connectedState.disconnect();
-			assertState("a-summarizer", "b", 7, "summarizer still doing work");
+			assertState(election, "a-summarizer", "b", 7, "summarizer still doing work");
 			assert.equal(await summarizer.stopDeferred.promise, "notElectedParent");
 			assert.equal(b.summarizers.length, 0, "B waits for the incumbent's quorum departure");
 
@@ -999,12 +1029,12 @@ describe("Summarizer Client Election", () => {
 			assert.equal(b.connectedState.clientId, "b");
 			assert.equal(a.summarizers.length, 1, "A does not create B's child");
 			assert.equal(b.summarizers.length, 1);
-			assertState("b-summarizer", "b", 12, "b's summarizer elected");
+			assertState(election, "b-summarizer", "b", 12, "b's summarizer elected");
 		});
 
 		it("Should auto-elect on op when initial state has undefined client", async () => {
 			currentSequenceNumber = 678;
-			createElection(
+			const election = createElection(
 				[
 					["s1", 1, false],
 					["a", 2, true],
@@ -1017,45 +1047,57 @@ describe("Summarizer Client Election", () => {
 					electionSequenceNumber: 432,
 				},
 			);
-			const a = createManager("a");
-			assertState(undefined, undefined, 432, "no elected client at first");
+			const a = createManager(election, "a");
+			assertState(election, undefined, undefined, 432, "no elected client at first");
 			defaultOp();
-			assertState("a", "a", 679, "auto-elect first eligible client");
+			assertState(election, "a", "a", 679, "auto-elect first eligible client");
 			a.connectedState.connect();
 			await flushPromises();
-			assertState("a-summarizer", "a", 679, "a's summarizer elected on connect");
+			assertState(election, "a-summarizer", "a", 679, "a's summarizer elected on connect");
 		});
 
 		it("Should handle add/remove clients with initial state", async () => {
-			createElection([], {
+			const election = createElection([], {
 				electedClientId: undefined,
 				electedParentId: undefined,
 				electionSequenceNumber: 12,
 			});
-			const a = createManager("a");
-			assertState(undefined, undefined, 12, "initially undefined");
+			const a = createManager(election, "a");
+			assertState(election, undefined, undefined, 12, "initially undefined");
 
 			addClient("s1", 1, false);
-			assertState(undefined, undefined, 12, "non-interactive doesn't trigger election");
+			assertState(
+				election,
+				undefined,
+				undefined,
+				12,
+				"non-interactive doesn't trigger election",
+			);
 
 			addClient("a", 17, true);
-			assertState("a", "a", 17, "first interactive client elected");
+			assertState(election, "a", "a", 17, "first interactive client elected");
 			a.connectedState.connect();
 			await flushPromises();
-			assertState("a-summarizer", "a", 17, "a's summarizer elected");
+			assertState(election, "a-summarizer", "a", 17, "a's summarizer elected");
 
 			addClient("s2", 19, false);
 			addClient("b", 41, true);
-			assertState("a-summarizer", "a", 17, "younger clients have no effect");
+			assertState(election, "a-summarizer", "a", 17, "younger clients have no effect");
 
 			removeClient("a", 400);
 			a.connectedState.disconnect();
-			assertState("a-summarizer", "b", 17, "summarizer still doing work");
+			assertState(election, "a-summarizer", "b", 17, "summarizer still doing work");
 			const summarizer = a.summarizers[0];
 			assert(summarizer !== undefined);
 			summarizer.runDeferred.resolve();
 			await flushPromises();
-			assertState("b", "b", 441, "next oldest client elected after summarizer leaves");
+			assertState(
+				election,
+				"b",
+				"b",
+				441,
+				"next oldest client elected after summarizer leaves",
+			);
 		});
 	});
 });
