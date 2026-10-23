@@ -66,40 +66,35 @@ describe("FlexTree navigation benchmarks", () => {
 							const checkout = inner.context.isHydrated() ? inner.context.checkout : undefined;
 							assert(checkout !== undefined);
 							let value = 0;
-							try {
-								let running: boolean;
-								do {
-									running = state.time(() => {
-										switch (operation) {
-											case "reads": {
-												assert.equal(item.value, 0);
-												assert.equal(item.optional, undefined);
-												assert.equal(items[1], 1);
-												break;
-											}
-											case "edits": {
-												item.value = ++value;
-												break;
-											}
-											case "parent and key": {
-												assert.equal(Tree.parent(item), items);
-												assert.equal(Tree.key(item), 0);
-												break;
-											}
-											case "cached field": {
-												assert.equal(inner.getBoxed(brand("value")), field);
-												break;
-											}
-											default: {
-												assert.fail("Unknown benchmark operation");
-											}
+							let running: boolean;
+							do {
+								running = state.time(() => {
+									switch (operation) {
+										case "reads": {
+											assert.equal(item.value, 0);
+											assert.equal(item.optional, undefined);
+											assert.equal(items[1], 1);
+											break;
 										}
-									});
-								} while (running);
-							} finally {
-								view.dispose();
-								checkout.dispose();
-							}
+										case "edits": {
+											item.value = ++value;
+											break;
+										}
+										case "parent and key": {
+											assert.equal(Tree.parent(item), items);
+											assert.equal(Tree.key(item), 0);
+											break;
+										}
+										case "cached field": {
+											assert.equal(inner.getBoxed(brand("value")), field);
+											break;
+										}
+										default: {
+											assert.fail("Unknown benchmark operation");
+										}
+									}
+								});
+							} while (running);
 						},
 						minSampleCount: 8,
 						maxBenchmarkDurationSeconds: 1,
