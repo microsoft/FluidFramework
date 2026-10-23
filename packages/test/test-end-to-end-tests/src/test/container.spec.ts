@@ -31,6 +31,8 @@ import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IAnyDriverError,
+	type ISequencedDocumentSystemMessage,
+	MessageType,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -44,7 +46,7 @@ import {
 	NonRetryableError,
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
+import { DataCorruptionError, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -267,6 +269,105 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 			container.dispose();
 		}
 	});
+
+	itExpects(
+		"closes a rehydrated container when its current self-join predates pending state",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				errorType: DriverErrorTypes.fileOverwrittenInStorage,
+				canRetry: false,
+			},
+		],
+		async () => {
+			const container = await createConnectedContainer();
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
+			// Save real client state through sequence 13, then close the original container.
+			while (container.deltaManager.lastSequenceNumber < 13) {
+				dataObject._root.set("savedSequence", container.deltaManager.lastSequenceNumber);
+				await provider.ensureSynchronized();
+			}
+			assert.strictEqual(container.deltaManager.lastSequenceNumber, 13);
+			const savedValue = dataObject._root.get("savedSequence");
+			container.disconnect();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+			container.close();
+
+			// Restore that state without connecting yet. Replace only the delta connection so
+			// the test controls when the new client's self-join arrives.
+			const deltaConnection = new MockDocumentDeltaConnection("new-write-client");
+			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStream: (_ds) => async () => deltaConnection,
+					},
+				},
+			);
+			const loader = provider.makeTestLoader({
+				loaderProps: { documentServiceFactory: mockFactory },
+			});
+			const rehydrated = await loader.resolve(
+				{
+					url: await provider.driver.createContainerUrl(provider.documentId),
+					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+				},
+				pendingLocalState,
+			);
+			loaderContainerTracker.addContainer(rehydrated);
+			try {
+				assert.strictEqual(rehydrated.deltaManager.lastSequenceNumber, 13);
+				const restoredDataObject = (await rehydrated.getEntryPoint()) as ITestDataObject;
+				assert.strictEqual(restoredDataObject._root.get("savedSequence"), savedValue);
+
+				let closeError: IErrorBase | undefined;
+				let becameConnected = false;
+				rehydrated.on("connected", () => {
+					becameConnected = true;
+				});
+				rehydrated.once("closed", (error) => {
+					closeError = error;
+				});
+
+				// Observe container events before starting the connection. The transport can
+				// connect, but the container must stay CatchingUp until it processes its self-join.
+				const connectedToStream = new Deferred<void>();
+				rehydrated.deltaManager.once("connect", () => connectedToStream.resolve());
+				rehydrated.connect();
+				await connectedToStream.promise;
+				assert.strictEqual(rehydrated.connectionState, ConnectionState.CatchingUp);
+
+				// Fake incompatible history: this newly assigned client's join is at sequence 6,
+				// before the saved baseline of 13. Ordinary duplicate filtering must not hide it.
+				const selfJoin: ISequencedDocumentSystemMessage = {
+					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
+					clientId: null,
+					clientSequenceNumber: 1,
+					sequenceNumber: 6,
+					minimumSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					timestamp: 1000,
+					contents: undefined,
+					data: JSON.stringify({ clientId: deltaConnection.clientId }),
+				};
+				deltaConnection.emitOp(provider.documentId, [selfJoin]);
+
+				assert.strictEqual(rehydrated.closed, true, "Stale self-join must close immediately");
+				assert(isFluidError(closeError));
+				assert.strictEqual(closeError.errorType, DriverErrorTypes.fileOverwrittenInStorage);
+				assert.strictEqual(closeError.getTelemetryProperties().canRetry, false);
+				assert.strictEqual(closeError.getTelemetryProperties().connectionSequenceBaseline, 13);
+				assert.strictEqual(closeError.getTelemetryProperties().selfJoinSequenceNumber, 6);
+				assert.strictEqual(becameConnected, false, "Stale self-join must not connect");
+				assert.strictEqual(rehydrated.connectionState, ConnectionState.Disconnected);
+				assert.strictEqual(deltaConnection.disposed, true);
+			} finally {
+				rehydrated.dispose();
+			}
+		},
+	);
 
 	it("Close called on container", async () => {
 		const deltaConnection = new MockDocumentDeltaConnection("test");

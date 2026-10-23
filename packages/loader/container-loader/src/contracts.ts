@@ -140,7 +140,12 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming op. Some ops maybe delivered before
 	 * connectHandler is called (initial ops on socket connection)
 	 */
-	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
+	readonly incomingOpHandler: (
+		messages: ISequencedDocumentMessage[],
+		reason: string,
+		clientId: string,
+		serviceCheckpointSequenceNumber: number | undefined,
+	) => void;
 
 	/**
 	 * Called by connection manager for each incoming signal.
