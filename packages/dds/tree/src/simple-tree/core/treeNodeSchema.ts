@@ -8,6 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnionToIntersection } from "../../util/index.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+import type { getUnhydratedContext } from "../createContext.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+import type { getSchemaDerivedData, SchemaDerivedData } from "../treeSchema.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
@@ -395,6 +399,8 @@ export interface TreeNodeSchemaPrivateData {
  * Additional data about a given schema which is private to this package.
  * @remarks
  * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
+ * Unlike the root analysis cached by {@link getSchemaDerivedData}, this data includes node-specific conversion handlers and initializes a context.
+ * Schema walks must use the root analysis or {@link TreeNodeSchemaPrivateData.childAllowedTypes} instead of triggering this initialization.
  */
 export interface TreeNodeSchemaInitializedData {
 	/**
@@ -416,6 +422,7 @@ export interface TreeNodeSchemaInitializedData {
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.
+	 * Obtained from {@link getUnhydratedContext} and shared with {@link SchemaDerivedData.unhydratedContext}.
 	 */
 	readonly context: Context;
 

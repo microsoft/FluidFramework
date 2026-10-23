@@ -56,40 +56,25 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { createTreeSchema, type TreeSchema } from "./treeSchema.js";
+import { getSchemaDerivedData } from "./treeSchema.js";
 
 // TODO: this file, src/simple-tree/api/storedSchema.ts and src/simple-tree/core/toStored.ts should be refactored to group the logic more logically.
 // The content of src/simple-tree/api/storedSchema.ts should probably removed from the API surface, replaced by simple schema snapshotting APIs.
 // The logic from this file for converting stored-simple-schema to the persisted format can be moved to its own file.
 // The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
 
+/**
+ * Caches stored-schema conversions by {@link (StagedSchemaUpgradePolicy:interface)} and root identity.
+ * @remarks
+ * {@link getSchemaDerivedData} separately shares the unfiltered graph, staging analysis, and optional unhydrated context.
+ * This cache retains policy-specific results because staged roots can produce different stored schemas.
+ * Roots without staging use {@link toUnhydratedSchema} as a common key so all policies share one result.
+ * Policy keys are weak to avoid retaining short-lived effective upgrade policies.
+ */
 const viewToStoredCache = new WeakMap<
 	StagedSchemaUpgradePolicy,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
-
-/**
- * View-schema data shared by {@link toStoredSchema} conversions under different {@link (StagedSchemaUpgradePolicy:interface)} instances.
- */
-interface SchemaGenerationData {
-	/**
-	 * Complete, unfiltered view-schema graph produced by {@link createTreeSchema}.
-	 * Retains schemas reachable only through staged references so {@link transformSimpleSchema} can apply any staged-upgrade policy.
-	 */
-	readonly treeSchema: TreeSchema;
-
-	/**
-	 * Whether the root field or any transitively reachable schema contains staging, as determined by {@link treeSchemaHasStagedSchema}.
-	 * If `false`, {@link toStoredSchema} can share its result across all staged-upgrade policies.
-	 */
-	readonly hasStagedSchema: boolean;
-}
-
-/**
- * Caches {@link SchemaGenerationData} by {@link ImplicitFieldSchema | root} identity before applying a {@link (StagedSchemaUpgradePolicy:interface)}.
- * Root identity preserves differences in field kind, staging annotations, and metadata even when the referenced nodes are identical.
- */
-const schemaGenerationCache = new WeakMap<ImplicitFieldSchema, SchemaGenerationData>();
 
 /**
  * Reports whether a root field or any transitively reachable schema contains staging.
@@ -105,84 +90,7 @@ const schemaGenerationCache = new WeakMap<ImplicitFieldSchema, SchemaGenerationD
  * @throws Throws a `UsageError` if reachable node schemas have conflicting identifiers.
  */
 export function hasStagedSchema(root: ImplicitFieldSchema): boolean {
-	return getSchemaGenerationData(root).hasStagedSchema;
-}
-
-/**
- * Builds or retrieves a root's {@link SchemaGenerationData} from {@link schemaGenerationCache}.
- * @remarks
- * Keeps the unfiltered graph so conversions with different {@link (StagedSchemaUpgradePolicy:interface)} instances do not rebuild it.
- * As with {@link toStoredSchema} caching, schema definitions must remain unchanged after evaluation.
- *
- * Publishes an entry only after the full graph has been traversed successfully.
- * Does not cache intermediate answers for descendants: a recursive back-edge can hide staging until the traversal completes.
- */
-function getSchemaGenerationData(root: ImplicitFieldSchema): SchemaGenerationData {
-	return getOrCreate(schemaGenerationCache, root, () => {
-		const treeSchema = createTreeSchema(root);
-		return { treeSchema, hasStagedSchema: treeSchemaHasStagedSchema(treeSchema) };
-	});
-}
-
-/**
- * Checks staging annotations in a complete, unfiltered graph produced by {@link createTreeSchema}.
- * @remarks
- * The graph already contains all reachable definitions, so this scan does not recurse or initialize node contexts.
- * When adding a staging mechanism, update this check and add an observable staged case to the test-schema catalog.
- */
-function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
-	/**
-	 * Checks {@link SimpleAllowedTypeAttributes.isStaged} on allowed-type references, not on the referenced node definitions.
-	 */
-	function allowedTypesHaveStaging(types: SimpleAllowedTypes<SchemaType.View>): boolean {
-		for (const attributes of types.values()) {
-			if (attributes.isStaged !== false) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Includes {@link SimpleFieldSchema.isStagedOptional}, which is not represented by allowed-type annotations.
-	 */
-	function fieldHasStaging(field: SimpleFieldSchema<SchemaType.View>): boolean {
-		return (
-			(field.isStagedOptional !== undefined && field.isStagedOptional !== false) ||
-			allowedTypesHaveStaging(field.simpleAllowedTypes)
-		);
-	}
-
-	if (fieldHasStaging(schema.root)) {
-		return true;
-	}
-	for (const node of schema.definitions.values()) {
-		switch (node.kind) {
-			case NodeKind.Leaf: {
-				break;
-			}
-			case NodeKind.Array:
-			case NodeKind.Map:
-			case NodeKind.Record: {
-				if (allowedTypesHaveStaging(node.simpleAllowedTypes)) {
-					return true;
-				}
-				break;
-			}
-			case NodeKind.Object: {
-				for (const field of node.fields.values()) {
-					if (fieldHasStaging(field)) {
-						return true;
-					}
-				}
-				break;
-			}
-			default: {
-				unreachableCase(node);
-			}
-		}
-	}
-	return false;
+	return getSchemaDerivedData(root).hasStagedSchema;
 }
 
 function isStagedSchemaUpgradePolicy(
@@ -267,7 +175,7 @@ export function toStoredSchema(
 	root: ImplicitFieldSchema,
 	options: StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
-	const data = getSchemaGenerationData(root);
+	const data = getSchemaDerivedData(root);
 
 	// Without staging, all policies produce the same schema.
 	// To better reused cached schema, normalize such cases to the unhydrated schema policy.

@@ -13,6 +13,8 @@ import {
 	type SchemaUpgrade,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../simple-tree/fieldSchema.js";
 import {
 	hasStagedSchema,
@@ -21,7 +23,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createTreeSchema } from "../simple-tree/treeSchema.js";
+import { createTreeSchema, getSchemaDerivedData } from "../simple-tree/treeSchema.js";
 
 import {
 	getStagedSchemaUpgrades,
@@ -142,6 +144,18 @@ describe("test tree catalogs", () => {
 					assert.equal(hasStagedSchema(root), testCase.hasStagedSchema === true);
 					assert.equal(restrictive === permissive, !testCase.hasStagedSchema);
 					assert.strictEqual(toStoredSchema(root, restrictivePolicy), restrictive);
+					const data = getSchemaDerivedData(root);
+					const context = getUnhydratedContext(root);
+					assert.strictEqual(data.unhydratedContext, context);
+					assert.deepEqual(context.flexContext.schema, expectedPermissive);
+					assert.strictEqual(
+						context.flexContext.schema,
+						toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
+					);
+					assert.deepEqual(
+						[...context.schema.values()],
+						[...data.treeSchema.definitions.values()],
+					);
 					if (!testCase.hasStagedSchema) {
 						assert.strictEqual(
 							toStoredSchema(root, {

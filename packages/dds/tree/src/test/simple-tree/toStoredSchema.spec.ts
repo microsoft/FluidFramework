@@ -23,6 +23,7 @@ import {
 import { exportSimpleSchema } from "../../shared-tree/index.js";
 import {
 	ExpectStored,
+	getTreeNodeSchemaPrivateData,
 	StagedSchemaUpgradePolicy,
 	Unchanged,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -45,6 +46,8 @@ import {
 	filterAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getSchemaDerivedData } from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";
 import {
 	getStagedSchemaUpgrades,
@@ -113,10 +116,25 @@ describe("toStoredSchema", () => {
 					[Unstaged, false],
 				] as const) {
 					if (initializeContextFirst) {
-						getUnhydratedContext(root);
+						getTreeNodeSchemaPrivateData(root).idempotentInitialize();
+					}
+					const data = getSchemaDerivedData(root);
+					if (!initializeContextFirst) {
+						assert.equal(data.unhydratedContext, undefined);
 					}
 					assert.equal(hasStagedSchema(root), expected);
 					const context = getUnhydratedContext(root);
+					assert.strictEqual(getSchemaDerivedData(root), data);
+					assert.strictEqual(data.unhydratedContext, context);
+					assert.strictEqual(getUnhydratedContext(root), context);
+					assert.strictEqual(
+						getTreeNodeSchemaPrivateData(root).idempotentInitialize().context,
+						context,
+					);
+					assert.deepEqual(
+						[...context.schema.values()],
+						[...data.treeSchema.definitions.values()],
+					);
 					const permissive = toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
 					assert.strictEqual(context.flexContext.schema, permissive);
 					const restrictive = toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive);
