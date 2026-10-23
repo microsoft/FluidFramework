@@ -989,7 +989,9 @@ export const TreeAlpha: TreeAlpha = {
 	): TreeNode | TreeLeafValue | undefined => {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
@@ -1057,7 +1059,9 @@ export const TreeAlpha: TreeAlpha = {
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
@@ -1114,18 +1118,21 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	hasUnknownChildren(node: TreeNode): boolean {
+		const flexNode = getInnerNode(node);
+		debugAssert(
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
+		);
+
 		const schema = treeNodeApi.schema(node);
 		if (!isObjectNodeSchema(schema) || !schema.allowUnknownOptionalFields) {
 			return false;
 		}
 
-		const flexNode = getInnerNode(node);
-		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
-		);
-
 		// `fields` contains only fields that have content, and also contains unknown fields.
 		for (const [storedKey] of flexNode.fields) {
+			// A stored key with no property key is an unknown optional field.
 			if (!schema.storedKeyToPropertyKey.has(storedKey)) {
 				return true;
 			}

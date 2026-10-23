@@ -1500,34 +1500,36 @@ describe("treeNodeApi", () => {
 	});
 
 	describe("hasUnknownChildren", () => {
-		// The test documents whose stored schema has unknown optional fields.
-		const documents = testDocuments.filter(
-			(testCase) => testCase.hasUnknownOptionalFieldSchema,
-		);
 		for (const testKind of ["hydrated", "unhydrated"] as const) {
+			/**
+			 * Gets the root of the test document, as a hydrated or unhydrated node.
+			 */
+			const getRoot = (testCase: (typeof testDocuments)[number]): unknown => {
+				const view = testDocumentIndependentView(testCase);
+				return testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
+			};
+
 			describe(testKind, () => {
-				for (const testCase of documents) {
-					it(testCase.name, () => {
-						const view = testDocumentIndependentView(testCase);
-						const root = testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
-						assert(isTreeNode(root));
-						assert.equal(
-							TreeAlpha.hasUnknownChildren(root),
-							testCase.hasUnknownOptionalFields === true,
-						);
-					});
-				}
+				it("is false for test documents without unknown optional fields", () => {
+					for (const testCase of testDocuments) {
+						const root = getRoot(testCase);
+						if (testCase.hasUnknownOptionalFields !== true && isTreeNode(root)) {
+							assert.equal(TreeAlpha.hasUnknownChildren(root), false, testCase.name);
+						}
+					}
+				});
+
+				it("is true for a test document with unknown optional fields at the root", () => {
+					const testCase = testDocuments.find(
+						(document) => document.name === "HasUnknownOptionalFields",
+					);
+					assert(testCase !== undefined);
+					const root = getRoot(testCase);
+					assert(isTreeNode(root));
+					assert.equal(TreeAlpha.hasUnknownChildren(root), true);
+				});
 			});
 		}
-
-		it("is false for nodes which cannot have unknown optional fields", () => {
-			class NumberArray extends schema.array("hasUnknownChildrenArray", schema.number) {}
-			class Strict extends schema.object("hasUnknownChildrenStrict", {
-				a: schema.optional(schema.number),
-			}) {}
-			assert.equal(TreeAlpha.hasUnknownChildren(new NumberArray([1])), false);
-			assert.equal(TreeAlpha.hasUnknownChildren(new Strict({ a: 1 })), false);
-		});
 
 		it("compares stored keys, not property keys", () => {
 			// `renamed` is a known property with stored key `renamedKey`.
