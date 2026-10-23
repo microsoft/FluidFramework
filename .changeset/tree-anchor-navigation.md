@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": tree
 ---
 Improve performance of SharedTree reads and parent queries
