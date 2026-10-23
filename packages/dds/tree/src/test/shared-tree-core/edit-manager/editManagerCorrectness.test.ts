@@ -1438,7 +1438,91 @@ export function testCorrectness(): void {
 					});
 				});
 
-				describe("summary roundtripping", () => {
+				describe("summary creation", () => {
+					describe("C >= P >= M/F >= 0", () => {
+						for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+							describe(`preserves the number of commits specified by the retention policy when it is >= to the number of commits retained for correctness by ${correctnessRetentionFactor}`, () => {
+								for (const [policy, mf] of [
+									[true, 10],
+									[10, 10],
+									[10, 9],
+									[9, 1],
+									[2, 1],
+									[1, 0],
+									[0, 0],
+								] as const) {
+									it(`with 10 commits and a retention policy of ${policy} >= ${mf} commits retained for correctness`, () => {
+										const manager = setup({
+											commitCount: 10,
+											startingPolicy: policy,
+											retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+											retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+										});
+
+										const summary = manager.getSummaryData();
+										assert.equal(summary.main.trunk.length, policy === true ? 10 : policy);
+									});
+								}
+							});
+						}
+					});
+
+					describe("P >= C >= M/F >= 0", () => {
+						for (const correctnessRetentionFactor of ["MSN", "local fork"] as const) {
+							describe(`preserves all 10 existing commits when the retention policy is <= 10 regardless of the number of commits retained for correctness by ${correctnessRetentionFactor}`, () => {
+								for (const policy of [true, 20, 11, 10]) {
+									for (const mf of [10, 9, 1, 0]) {
+										it(`with 10 commits and a retention policy of ${policy} >= 10 >= ${mf} commits retained for correctness`, () => {
+											const manager = setup({
+												commitCount: 10,
+												startingPolicy: policy,
+												retainedByMsn: correctnessRetentionFactor === "MSN" ? mf : 0,
+												retainedByFork: correctnessRetentionFactor === "local fork" ? mf : 0,
+											});
+
+											const summary = manager.getSummaryData();
+											assert.equal(summary.main.trunk.length, 10);
+										});
+									}
+								}
+							});
+						}
+					});
+
+					describe("C = M >= P >= 0 >= F", () => {
+						for (const policy of [10, 9, 1, 0, false]) {
+							it(`preserves all 10 existing commits required for correctness by MSN (policy: ${policy} >= 0)`, () => {
+								const manager = setup({
+									commitCount: 10,
+									startingPolicy: policy,
+									retainedByMsn: 10,
+									retainedByFork: 0,
+								});
+
+								const summary = manager.getSummaryData();
+								assert.equal(summary.main.trunk.length, 10);
+							});
+						}
+					});
+
+					describe("C = F >= P >= 0 >= M", () => {
+						for (const policy of [10, 9, 1, 0, false]) {
+							it(`preserves the number of commits specified by the retention policy (policy: ${policy})`, () => {
+								const manager = setup({
+									commitCount: 10,
+									startingPolicy: policy,
+									retainedByMsn: 0,
+									retainedByFork: 10,
+								});
+
+								const summary = manager.getSummaryData();
+								assert.equal(summary.main.trunk.length, policy === false ? 0 : policy);
+							});
+						}
+					});
+				});
+
+				describe("summary load", () => {
 					for (const [historyRetention, retentionLimit] of retentionPolicies) {
 						for (const isLocal of [false, true]) {
 							for (const count of [1, 3, 5]) {
