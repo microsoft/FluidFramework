@@ -32,6 +32,7 @@ steps:
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
+        FLUID_TINYLICIOUS_DIAGNOSTICS: "1"
 
 # Test - No coverage
 - ${{ else }}:
@@ -50,3 +51,4 @@ steps:
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
+        FLUID_TINYLICIOUS_DIAGNOSTICS: "1"

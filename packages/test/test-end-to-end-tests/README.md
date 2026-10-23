@@ -65,6 +65,36 @@ For example, if using "Debug Current Mocha Test" or one of its variants, remove 
 
 Break points in the set of legacy modules (found in test-version-utils' install tree) will then properly be hit.
 
+### Tinylicious latency diagnostics
+
+The Tinylicious tasks in Build - client packages and the real-service e2e pipeline enable `FLUID_TINYLICIOUS_DIAGNOSTICS=1`.
+To enable the same diagnostics locally, set this environment variable before running `npm run test:realsvc:tinylicious`.
+Leave it unset to run without instrumentation.
+The launcher instruments only the Tinylicious process, not the client tests.
+It uses the installed `tinylicious` dependency rather than the server source in this repository.
+
+Records prefixed with `tinylicious-diagnostics` appear in `tinylicious.log`.
+Build - client packages includes this file in the downloadable pipeline logs; the real-service e2e pipeline publishes it as a `tinyliciousLog_attempt-*` artifact.
+When queueing the real-service e2e pipeline, select a client build from the diagnostics branch as its `client` pipeline resource.
+The e2e pipeline checks out that build's source commit, so selecting only the pipeline YAML branch does not select the instrumented package.
+The same client build can be reused for repeated e2e runs.
+The startup record identifies the actual installed Tinylicious and Node versions.
+One-second samples report event-loop delay and utilization, CPU usage, GC duration, memory, socket count, and outstanding operations.
+Operations taking at least 250 ms, and failed operations, include their start time and duration.
+Process-local request IDs correlate inbound requests, Git operations, and outbound HTTP requests.
+Existing UUID-valued `x-correlation-id` identifiers link outbound requests to the corresponding inbound requests.
+Outbound records include socket-assignment, lookup, connection, and response-header timings when those events occur.
+Request bodies, other header values, and URL query strings are not recorded.
+
+The sampler also probes the snapshot-storage directory with `fs.stat` and resolves `localhost`.
+Only one probe of each kind can be outstanding; samples include the age of pending probes.
+A slow storage probe with low event-loop delay suggests filesystem or worker-pool delays, but does not distinguish those causes.
+High event-loop delay instead indicates that JavaScript could not run promptly.
+These diagnostics add overhead and do not measure host disk activity or operations in other processes.
+They do not change worker-pool size, request concurrency, or test timeouts.
+Run `npm run test:tinylicious:diagnostics` to check the instrumentation independently.
+These checks also run before the Tinylicious e2e suite.
+
 ## "Real Service" Tests
 
 The tests under the `real-service-tests` dir target a live production service like r11s or ODSP's Fluid server.
