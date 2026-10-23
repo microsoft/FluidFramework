@@ -4,9 +4,6 @@
 ARG NODE_VERSION=24
 FROM mcr.microsoft.com/devcontainers/javascript-node:${NODE_VERSION}
 
-# Global tool installs do not read the repository's project-level .npmrc.
-ENV NPM_CONFIG_REGISTRY=https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
-
 # Install Chromium to get .so libraries required for Puppeteer tests.
 # (Note that Puppeteer bundles its own version of Chromium, we just need OS dependencies.)
 RUN export DEBIAN_FRONTEND=noninteractive \
