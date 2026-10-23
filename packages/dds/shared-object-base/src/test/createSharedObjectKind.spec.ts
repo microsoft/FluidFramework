@@ -170,6 +170,7 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 	 */
 	function fooKernelFactory(options: FooOptionsInternal): SharedKernelFactory<FooKernelView> {
 		function fooFromKernelArgs(args: KernelArgs): FooKernel {
+			assert.strictEqual(args.oldestSupportedClient, args.minVersionForCollab);
 			return new FooKernel(args.minVersionForCollab);
 		}
 
@@ -189,34 +190,41 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		};
 	}
 
-	it("SharedObject can be constructed with a minVersionForCollab from the runtime", () => {
-		const minVersionForCollab = "2.2.3";
-		const type = "Foo";
+	for (const property of ["minVersionForCollab", "oldestSupportedClient"] as const) {
+		it(`SharedObject accepts a runtime that exposes only ${property}`, () => {
+			const minVersionForCollab = "2.2.3";
+			const type = "Foo";
 
-		const attributes: IChannelAttributes = {
-			type,
-			snapshotFormatVersion: "0.1",
-			packageVersion: "2.0.0",
-		};
+			const attributes: IChannelAttributes = {
+				type,
+				snapshotFormatVersion: "0.1",
+				packageVersion: "2.0.0",
+			};
 
-		const options: FooOptionsInternal = {
-			minVersionForCollab,
-		};
+			const options: FooOptionsInternal = {
+				minVersionForCollab,
+			};
 
-		const sharedObjectOptions: SharedObjectOptions<IFoo> = {
-			type: "",
-			attributes,
-			telemetryContextPrefix: "foo_",
-			factory: fooKernelFactory(options),
-		};
+			const sharedObjectOptions: SharedObjectOptions<IFoo> = {
+				type: "",
+				attributes,
+				telemetryContextPrefix: "foo_",
+				factory: fooKernelFactory(options),
+			};
 
-		const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedFoo.getFactory()],
-			minVersionForCollab,
+			const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
+			const runtime = new MockFluidDataStoreRuntime({
+				registry: [SharedFoo.getFactory()],
+				[property]: minVersionForCollab,
+			});
+			Object.defineProperty(
+				runtime,
+				property === "minVersionForCollab" ? "oldestSupportedClient" : "minVersionForCollab",
+				{ value: undefined },
+			);
+			const foo = SharedFoo.create(runtime, "test-id");
+
+			assert.strictEqual(foo.minVersionForCollab, "2.2.3");
 		});
-		const foo = SharedFoo.create(runtime, "test-id");
-
-		assert.strictEqual(foo.minVersionForCollab, "2.2.3");
-	});
+	}
 });

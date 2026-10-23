@@ -280,6 +280,11 @@ export interface ITestContainerConfig {
 	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
 	minVersionForCollab?: OldestSupportedClientVersion | undefined;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 */
+	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
 }
 
 /**

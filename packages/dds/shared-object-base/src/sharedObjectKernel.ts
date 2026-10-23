@@ -139,9 +139,9 @@ class SharedObjectFromKernel<
 		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
 		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
 		// would emit an error.
-		const minVersionForCollab: OldestSupportedClientVersion | undefined = (
-			runtime as IFluidDataStoreRuntimeInternalConfig
-		).minVersionForCollab;
+		const minVersionForCollab: OldestSupportedClientVersion | undefined =
+			(runtime as IFluidDataStoreRuntimeInternalConfig).oldestSupportedClient ??
+			(runtime as IFluidDataStoreRuntimeInternalConfig).minVersionForCollab;
 
 		assert(minVersionForCollab !== undefined, 0xcee /* minVersionForCollab must be defined */);
 
@@ -156,6 +156,7 @@ class SharedObjectFromKernel<
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
+			oldestSupportedClient: minVersionForCollab,
 		};
 	}
 
@@ -313,6 +314,11 @@ export interface KernelArgs {
 	 * for more details.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process operations from this DDS.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 }
 
 /**

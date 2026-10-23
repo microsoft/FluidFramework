@@ -349,6 +349,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
+    oldestSupportedClient?: OldestSupportedClientVersion;
     // (undocumented)
     on(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -384,6 +385,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: OldestSupportedClientVersion;
+        oldestSupportedClient?: OldestSupportedClientVersion;
         inStagingMode?: boolean;
         isDirty?: boolean;
     });
@@ -476,6 +478,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
+    // (undocumented)
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
     // (undocumented)
     options: Record<string | number, any>;
     // (undocumented)

@@ -388,6 +388,11 @@ export class FluidDataStoreRuntime
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.oldestSupportedClient.
+	 */
+	public readonly oldestSupportedClient?: OldestSupportedClientVersion;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -559,7 +564,9 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+		this.oldestSupportedClient =
+			this.dataStoreContext.oldestSupportedClient ?? this.dataStoreContext.minVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 	}
 
 	public get inStagingMode(): boolean {
