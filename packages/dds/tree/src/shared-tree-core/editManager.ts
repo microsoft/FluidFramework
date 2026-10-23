@@ -1189,7 +1189,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		assert(
 			trunkHead.revision === (data.base ?? rootRevision) &&
 				this.localBranch.getHead() === trunkHead,
-			"Expected branches to start at their summary base",
+			0xc61 /* Expected base revision to be in trunk cache */
 		);
 		for (const c of data.trunk) {
 			const sequenceId: SequenceId =
