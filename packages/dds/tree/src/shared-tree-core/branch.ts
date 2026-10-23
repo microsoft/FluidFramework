@@ -290,8 +290,7 @@ export class SharedTreeBranch<
 	 * Gets the number of commits in this branch.
 	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
 	 * @remarks
-	 * The first call walks the history to initialize a cached count.
-	 * Subsequent reads and count updates take constant time, including when ancestry is trimmed.
+	 * The first call has linear complexity in the number of commits in the branch and subsequent calls are O(1)
 	 * Cannot be called after this branch is disposed.
 	 */
 	public getCommitCount(): number {
