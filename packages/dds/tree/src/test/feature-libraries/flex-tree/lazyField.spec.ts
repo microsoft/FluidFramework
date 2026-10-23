@@ -463,13 +463,13 @@ describe("LazyField", () => {
 				["ObjectForest", ForestTypeReference],
 			] as const) {
 				describe(name, () => {
-					function setup() {
+					function setup(size = threshold) {
 						const checkout = checkoutWithContent(
 							{
 								schema: toInitialSchema(Holder),
 								initialTree: fieldCursorFromInsertable(Holder, {
-									items: content(threshold),
-									other: content(threshold),
+									items: content(size),
+									other: content(size),
 								}),
 							},
 							{ forestType },
@@ -482,8 +482,8 @@ describe("LazyField", () => {
 						return { checkout, view, field, parent };
 					}
 
-					it("reuses the cached length across reads and descendant edits", () => {
-						const { view, field } = setup();
+					function testLengthCaching(size: number, expectCaching: boolean): void {
+						const { view, field } = setup(size);
 						const cursor = field.cursor;
 						const getFieldLength = cursor.getFieldLength.bind(cursor);
 						let reads = 0;
@@ -491,12 +491,23 @@ describe("LazyField", () => {
 							reads++;
 							return getFieldLength();
 						};
-						assert.equal(field.length, threshold);
-						assert.equal(field.length, threshold);
-						view.root.items[0].value++;
-						assert.equal(field.length, threshold);
+						assert.equal(field.length, size);
 						assert.equal(reads, 1);
+						assert.equal(field.length, size);
+						assert.equal(reads, expectCaching ? 1 : 2);
+						view.root.items[0].value++;
+						const readsBefore = reads;
+						assert.equal(field.length, size);
+						assert.equal(reads, expectCaching ? 1 : readsBefore + 1);
 						view.dispose();
+					}
+
+					it("reuses the cached length across reads and descendant edits at the threshold", () => {
+						testLengthCaching(threshold, true);
+					});
+
+					it("does not cache length across reads and descendant edits below the threshold", () => {
+						testLengthCaching(threshold - 1, false);
 					});
 
 					it("updates lengths after insertion, removal, and moves", () => {
