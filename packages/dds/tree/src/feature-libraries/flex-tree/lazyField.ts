@@ -56,18 +56,26 @@ import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.j
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
- * Reuse fields.
- * Since field currently own cursors and register themselves for disposal when the node hit end of life,
- * not reusing them results in memory leaks every time the field is accessed.
- * Since the fields stay alive until the node is end of life reusing them this way is safe.
+ * Reuses field wrappers by parent node and field key.
+ * @remarks
+ * Each field under a node owns a cursor and is strongly referenced by its context's `withAnchors` set and its parent's `afterDestroy` listener.
+ * Preparing for an edit clears the cursor, but does not dispose the wrapper or release its parent anchor and listener.
+ * Without reuse, repeated boxing of the same field would accumulate wrappers, even across edits.
+ * This cache limits that accumulation to one wrapper per field key on each cached parent.
  *
- * This ins't a perfect solution:
+ * This does not bound retention by the current document size for map nodes:
+ * public map `get`, `delete`, and `set` operations box fields even for missing keys.
+ * When an entry is removed, its field wrapper remains cached and registered with the context and parent.
+ * An empty map can therefore retain arbitrarily many wrappers for distinct keys accessed during its lifetime.
+ * In contrast, `has` uses `tryGetField`, which does not box missing fields.
+ * The outer WeakMap does not weaken references from the inner Map, context, or parent listener.
  *
- * - This can cause leaks, like map nodes will keep all accessed field objects around. Since other things cause this same leak already, its not too bad.
- * - This does not cache the root.
- * - Finding the parent anchor to do the caching on has significant cost.
+ * Fixing this retention requires avoiding unnecessary boxing and addressing field disposal, not just evicting cache entries:
+ * eviction alone leaves the context and listener references intact and permits duplicate wrappers on subsequent accesses.
+ * Fields are disposed when their parent is destroyed or their context is cleared, not when they become empty.
  *
- * Despite these limitations, this cache provides a large performance win in some common cases (over 10x), especially with how simple tree requests far more field objects than necessary currently.
+ * Fields without a parent node or a cached parent wrapper are not cached here.
+ * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
  */
 const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
@@ -176,7 +184,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
-		this.assertCursorAccess();
+		this.ensureValidForAccess();
 		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
 		const cached = parent?.slots.get(flexTreeSlot);
 		if (cached !== undefined) {
@@ -238,7 +246,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey } {
-		this.assertCursorAccess();
+		this.ensureValidForAccess();
 		const parent =
 			this.anchor.parent === undefined
 				? undefined

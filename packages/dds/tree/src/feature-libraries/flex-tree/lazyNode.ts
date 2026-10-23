@@ -148,7 +148,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public getBoxed(key: FieldKey): FlexTreeField {
 		currentObserver?.observeNodeField(this, key);
 
-		this.assertCursorAccess();
+		this.ensureValidForAccess();
 		const cached = getCachedField(this, key);
 		if (cached !== undefined) {
 			return cached;
@@ -173,7 +173,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
 		currentObserver?.observeParentOf(this);
 
-		this.assertCursorAccess();
+		this.ensureValidForAccess();
 		const index = this.anchorNode.parentIndex;
 		const key = this.anchorNode.parentField;
 		const parent = this.anchorNode.parent?.slots.get(flexTreeSlot);
