@@ -453,6 +453,64 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Op-counting telemetry", () => {
+		it("Should preserve a restored younger parent's election across excess-op windows", () => {
+			createElection(
+				[
+					["a", 2, true],
+					["b", 7, true],
+				],
+				{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 100 },
+			);
+			assertState("b", "b", 100, "restored younger parent remains elected");
+			let eventCount = 0;
+			election.on("electedSummarizerChanged", () => eventCount++);
+			defaultOp(maxOps);
+			assertState("b", "b", 100, "election unchanged at threshold");
+			defaultOp();
+			assertState("b", "b", 100, "election unchanged after first excess-op window");
+			defaultOp(maxOps + 1);
+			assertState("b", "b", 100, "election unchanged after second excess-op window");
+			assert.equal(eventCount, 0, "excess ops should not emit election changes");
+		});
+
+		it("Should preserve a restored younger parent's election across excess-op windows after an ack", () => {
+			createElection(
+				[
+					["a", 2, true],
+					["b", 7, true],
+				],
+				{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 100 },
+			);
+			let eventCount = 0;
+			election.on("electedSummarizerChanged", () => eventCount++);
+			defaultOp(maxOps + 1);
+			assertState("b", "b", 100, "election unchanged before ack");
+			summaryAck();
+			const ackSequenceNumber = currentSequenceNumber;
+			assertState("b", "b", ackSequenceNumber, "ack advances only the progress baseline");
+			defaultOp(maxOps);
+			assertState("b", "b", ackSequenceNumber, "election unchanged at threshold after ack");
+			defaultOp();
+			assertState(
+				"b",
+				"b",
+				ackSequenceNumber,
+				"election unchanged after first excess-op window",
+			);
+			defaultOp(maxOps + 1);
+			assertState(
+				"b",
+				"b",
+				ackSequenceNumber,
+				"election unchanged after second excess-op window",
+			);
+			assert.equal(
+				eventCount,
+				0,
+				"excess ops and summary acks should not emit election changes",
+			);
+		});
+
 		it("Should log when ops exceed threshold without summary ack", () => {
 			createElection([["a", 2, true]]);
 			defaultOp(maxOps);
