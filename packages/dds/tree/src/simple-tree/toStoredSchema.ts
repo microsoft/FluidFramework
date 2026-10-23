@@ -69,19 +69,34 @@ const viewToStoredCache = new WeakMap<
 >();
 
 /**
- * Caches policy-independent schema data by root identity.
+ * View-schema data shared by {@link toStoredSchema} conversions under different {@link (StagedSchemaUpgradePolicy:interface)} instances.
+ */
+interface SchemaGenerationData {
+	/**
+	 * Complete, unfiltered view-schema graph produced by {@link createTreeSchema}.
+	 * Retains schemas reachable only through staged references so {@link transformSimpleSchema} can apply any staged-upgrade policy.
+	 */
+	readonly treeSchema: TreeSchema;
+
+	/**
+	 * Whether the root field or any transitively reachable schema contains staging, as determined by {@link treeSchemaHasStagedSchema}.
+	 * If `false`, {@link toStoredSchema} can share its result across all staged-upgrade policies.
+	 */
+	readonly hasStagedSchema: boolean;
+}
+
+/**
+ * Caches {@link SchemaGenerationData} by {@link ImplicitFieldSchema | root} identity before applying a {@link (StagedSchemaUpgradePolicy:interface)}.
  * Root identity preserves differences in field kind, staging annotations, and metadata even when the referenced nodes are identical.
  */
-const schemaGenerationCache = new WeakMap<
-	ImplicitFieldSchema,
-	{ readonly treeSchema: TreeSchema; readonly hasStagedSchema: boolean }
->();
+const schemaGenerationCache = new WeakMap<ImplicitFieldSchema, SchemaGenerationData>();
 
 /**
  * Reports whether a root field or any transitively reachable schema contains staging.
  * @remarks
- * Includes staged allowed types and staged optional fields, including those reachable only through other staged references.
- * A `false` result permits sharing stored schema across all staged-upgrade policies.
+ * Includes {@link SimpleAllowedTypeAttributes.isStaged | staged allowed types} and {@link SimpleFieldSchema.isStagedOptional | staged optional fields},
+ * including those reachable only through other staged references.
+ * A `false` result permits {@link toStoredSchema} to share stored schema across all {@link (StagedSchemaUpgradePolicy:interface)} instances.
  * A `true` result does not guarantee that different policies produce different stored schemas, since staging can be redundant.
  *
  * Resolves lazy schema references, so all referenced schemas must already be declared.
@@ -94,18 +109,15 @@ export function hasStagedSchema(root: ImplicitFieldSchema): boolean {
 }
 
 /**
- * Builds or retrieves a root's complete view-schema graph and staging flag.
+ * Builds or retrieves a root's {@link SchemaGenerationData} from {@link schemaGenerationCache}.
  * @remarks
- * Keeps the unfiltered graph so additional policy-specific conversions do not rebuild it.
- * As with stored-schema caching, schema definitions must remain unchanged after evaluation.
+ * Keeps the unfiltered graph so conversions with different {@link (StagedSchemaUpgradePolicy:interface)} instances do not rebuild it.
+ * As with {@link toStoredSchema} caching, schema definitions must remain unchanged after evaluation.
  *
  * Publishes an entry only after the full graph has been traversed successfully.
  * Does not cache intermediate answers for descendants: a recursive back-edge can hide staging until the traversal completes.
  */
-function getSchemaGenerationData(root: ImplicitFieldSchema): {
-	readonly treeSchema: TreeSchema;
-	readonly hasStagedSchema: boolean;
-} {
+function getSchemaGenerationData(root: ImplicitFieldSchema): SchemaGenerationData {
 	return getOrCreate(schemaGenerationCache, root, () => {
 		const treeSchema = createTreeSchema(root);
 		return { treeSchema, hasStagedSchema: treeSchemaHasStagedSchema(treeSchema) };
@@ -120,7 +132,7 @@ function getSchemaGenerationData(root: ImplicitFieldSchema): {
  */
 function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
 	/**
-	 * Checks staging on allowed-type references, not on the referenced node definitions.
+	 * Checks {@link SimpleAllowedTypeAttributes.isStaged} on allowed-type references, not on the referenced node definitions.
 	 */
 	function allowedTypesHaveStaging(types: SimpleAllowedTypes<SchemaType.View>): boolean {
 		for (const attributes of types.values()) {
@@ -132,7 +144,7 @@ function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
 	}
 
 	/**
-	 * Includes optionality staging, which is not represented by allowed-type annotations.
+	 * Includes {@link SimpleFieldSchema.isStagedOptional}, which is not represented by allowed-type annotations.
 	 */
 	function fieldHasStaging(field: SimpleFieldSchema<SchemaType.View>): boolean {
 		return (
@@ -236,8 +248,9 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
  *
  * @remarks
- * Results are shared by root and policy identity.
- * Roots without reachable staging share one result across all policies, including the permissive policy used by unhydrated contexts.
+ * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
+ * Roots without {@link hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
+ * including {@link toUnhydratedSchema} for unhydrated contexts.
  * Treat the returned schema as immutable.
  *
  * @privateRemarks
@@ -255,8 +268,11 @@ export function toStoredSchema(
 	options: StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	const data = getSchemaGenerationData(root);
-	// Without staging, all policies produce the same schema, including the unhydrated schema.
+
+	// Without staging, all policies produce the same schema.
+	// To better reused cached schema, normalize such cases to the unhydrated schema policy.
 	const policy = data.hasStagedSchema ? options : toUnhydratedSchema;
+
 	const cache = getOrCreate(viewToStoredCache, policy, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
 		const simpleSchema = transformSimpleSchema(data.treeSchema, policy);

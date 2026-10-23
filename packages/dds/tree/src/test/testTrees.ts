@@ -90,8 +90,8 @@ interface TestSimpleTreeSchema extends NamedCase {
 	/**
 	 * Expected presence of staging in the root field or any transitively reachable schema.
 	 * @remarks
-	 * Schema-catalog tests interpret omission as `false`.
-	 * This expectation is authored independently of the production staging detection.
+	 * Tests of {@link testSchema} interpret omission as `false`.
+	 * This expectation is authored independently of {@link getStagedSchemaUpgrades} and the production staging detection.
 	 */
 	readonly hasStagedSchema?: true;
 }
