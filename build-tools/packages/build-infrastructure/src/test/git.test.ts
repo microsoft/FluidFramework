@@ -7,8 +7,10 @@ import { strict as assert } from "node:assert";
 import { unlink } from "node:fs/promises";
 import * as os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { expect } from "chai";
+import execa from "execa";
 import { readJson, writeJson } from "fs-extra/esm";
 import { describe, it } from "mocha";
 import { CleanOptions, type SimpleGit, simpleGit } from "simple-git";
@@ -31,17 +33,47 @@ import { packageRootPath, testRepoRoot } from "./init.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
-		// This is the path to the current repo, because when tests are executed the working directory is
-		// the root of this package: build-tools/packages/build-infrastructure
-		const expected = path.resolve(packageRootPath, "../../..");
-		const actual = findGitRootSync(process.cwd());
-		assert.strictEqual(actual, expected);
+		// testRepoRoot is the isolated per-process fixture repo created in init.ts;
+		// findGitRootSync should resolve it to its own repository root.
+		const expected = path.resolve(testRepoRoot);
+		const actual = findGitRootSync(path.join(testRepoRoot, "packages/pkg-a"));
+		assert.strictEqual(path.resolve(actual), expected);
 	});
 
 	it("throws outside git repo", () => {
 		assert.throws(() => {
 			findGitRootSync(os.tmpdir());
 		}, NotInGitRepository);
+	});
+});
+
+describe("isolated test repositories", () => {
+	it("supports concurrent Git mutations in separate processes", async function () {
+		this.timeout(10_000);
+
+		const initModule = pathToFileURL(path.join(packageRootPath, "lib/test/init.js")).href;
+		const mutationScript = `
+			import { writeFile } from "node:fs/promises";
+			import path from "node:path";
+			import { simpleGit } from "simple-git";
+			import { testRepoRoot } from ${JSON.stringify(initModule)};
+
+			const file = "concurrent-" + process.pid + ".json";
+			await writeFile(path.join(testRepoRoot, file), "{}");
+			await simpleGit(testRepoRoot).add(file);
+			console.log(testRepoRoot);
+		`;
+
+		const results = await Promise.all(
+			[1, 2].map(() =>
+				execa(process.execPath, ["--input-type=module", "--eval", mutationScript], {
+					cwd: packageRootPath,
+				}),
+			),
+		);
+		const roots = results.map(({ stdout }) => stdout.trim());
+
+		expect(new Set(roots).size).to.equal(2);
 	});
 });
 
@@ -60,14 +92,14 @@ describe("getRemote", () => {
 });
 
 describe("getChangedSinceRef: local", () => {
-	const git = simpleGit(process.cwd());
+	const git = simpleGit(testRepoRoot);
 	const repo = loadBuildProject(testRepoRoot);
 
 	beforeEach(async () => {
 		// create a file
 		const newFile = path.join(testRepoRoot, "second/newFile.json");
 		await writeJson(newFile, '{"foo": "bar"}');
-		await git.add(newFile);
+		await git.add("second/newFile.json");
 
 		// delete a file
 		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
@@ -80,9 +112,9 @@ describe("getChangedSinceRef: local", () => {
 	});
 
 	afterEach(async () => {
-		await git.reset(["HEAD", "--", testRepoRoot]);
-		await git.checkout(["HEAD", "--", testRepoRoot]);
-		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
+		await git.reset(["HEAD", "--", "."]);
+		await git.checkout(["HEAD", "--", "."]);
+		await git.clean(CleanOptions.FORCE, ["."]);
 	});
 
 	it("returns correct files", async () => {
@@ -136,38 +168,35 @@ describe("getChangedSinceRef: local", () => {
 });
 
 describe("getFiles", () => {
-	const git = simpleGit(process.cwd());
-	const gitRoot = findGitRootSync();
+	const git = simpleGit(testRepoRoot);
 
 	it("correct files with clean working directory", async () => {
-		const actual = await getFiles(git, testRepoRoot);
+		const actual = await getFiles(git, ".");
 		console.debug(testRepoRoot, actual);
 
-		expect(actual).to.be.containingAllOf(
-			[
-				`${testRepoRoot}/.changeset/README.md`,
-				`${testRepoRoot}/.changeset/bump-main-group-minor.md`,
-				`${testRepoRoot}/.changeset/config.json`,
-				`${testRepoRoot}/fluidBuild.config.cjs`,
-				`${testRepoRoot}/package.json`,
-				`${testRepoRoot}/packages/group2/pkg-d/package.json`,
-				`${testRepoRoot}/packages/group2/pkg-e/package.json`,
-				`${testRepoRoot}/packages/group3/pkg-f/package.json`,
-				`${testRepoRoot}/packages/group3/pkg-f/src/index.mjs`,
-				`${testRepoRoot}/packages/group3/pkg-g/package.json`,
-				`${testRepoRoot}/packages/pkg-a/package.json`,
-				`${testRepoRoot}/packages/pkg-b/package.json`,
-				`${testRepoRoot}/packages/pkg-c/package.json`,
-				`${testRepoRoot}/packages/shared/package.json`,
-				`${testRepoRoot}/pnpm-lock.yaml`,
-				`${testRepoRoot}/pnpm-workspace.yaml`,
-				`${testRepoRoot}/second/package.json`,
-				`${testRepoRoot}/second/packages/other-pkg-a/package.json`,
-				`${testRepoRoot}/second/packages/other-pkg-b/package.json`,
-				`${testRepoRoot}/second/pnpm-lock.yaml`,
-				`${testRepoRoot}/second/pnpm-workspace.yaml`,
-			].map((p) => path.relative(gitRoot, p)),
-		);
+		expect(actual).to.be.containingAllOf([
+			".changeset/README.md",
+			".changeset/bump-main-group-minor.md",
+			".changeset/config.json",
+			"fluidBuild.config.cjs",
+			"package.json",
+			"packages/group2/pkg-d/package.json",
+			"packages/group2/pkg-e/package.json",
+			"packages/group3/pkg-f/package.json",
+			"packages/group3/pkg-f/src/index.mjs",
+			"packages/group3/pkg-g/package.json",
+			"packages/pkg-a/package.json",
+			"packages/pkg-b/package.json",
+			"packages/pkg-c/package.json",
+			"packages/shared/package.json",
+			"pnpm-lock.yaml",
+			"pnpm-workspace.yaml",
+			"second/package.json",
+			"second/packages/other-pkg-a/package.json",
+			"second/packages/other-pkg-b/package.json",
+			"second/pnpm-lock.yaml",
+			"second/pnpm-workspace.yaml",
+		]);
 	});
 });
 
@@ -398,22 +427,20 @@ describe("listPackageJsonPaths", () => {
 
 describe("listPackageJsonPaths: staged deletion (local)", () => {
 	// Root simpleGit at testRepoRoot so git's output paths come back testRepo-relative; the
-	// underlying repo is still the main FF repo (testRepo is a directory inside it, not its
-	// own git repo), so `ls-files` / `ls-tree HEAD` work as usual.
+	// temporary fixture is its own repository, so `ls-files` / `ls-tree HEAD` work as usual.
 	const git = simpleGit(testRepoRoot);
 	const targetPkgRel = "packages/group3/pkg-g/package.json";
-	const targetPkgAbs = path.join(testRepoRoot, targetPkgRel);
 	const targetDir = path.posix.dirname(targetPkgRel);
 
 	beforeEach(async () => {
 		// Stage the deletion of an existing tracked package.json.
-		await git.rm([targetPkgAbs]);
+		await git.rm([targetPkgRel]);
 	});
 
 	afterEach(async () => {
 		// Restore both the index entry and the working-tree file.
-		await git.reset(["HEAD", "--", targetPkgAbs]);
-		await git.checkout(["HEAD", "--", targetPkgAbs]);
+		await git.reset(["HEAD", "--", targetPkgRel]);
+		await git.checkout(["HEAD", "--", targetPkgRel]);
 	});
 
 	it("excludes a staged-for-deletion package.json from the no-ref listing", async () => {

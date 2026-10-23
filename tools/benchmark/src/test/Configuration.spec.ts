@@ -59,9 +59,9 @@ describe("Configuration", () => {
 			);
 		});
 
-		it("omits category when category is undefined", () => {
+		it("omits category when category is not defined", () => {
 			assert.equal(
-				qualifiedTitle({ title: "my test", category: undefined }),
+				qualifiedTitle({ title: "my test" }),
 				`${performanceTestSuiteTag} @Measurement my test`,
 			);
 		});

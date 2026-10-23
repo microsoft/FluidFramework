@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { DriverEndpoint, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type {
+	DriverEndpoint,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import commander from "commander";
 
 import { createLogger } from "./FileLogger.js";
 import { getProfile } from "./getProfile.js";
-import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
@@ -24,7 +30,6 @@ const readRunOptions = () => {
 		)
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option("-id, --testId <testId>", "Load an existing data store rather than creating new")
-		.option("-c, --credFile <filePath>", "Filename containing user credentials for test")
 		.option("-s, --seed <number>", "Seed for this run")
 		.option("-dbg, --debug", "Debug child processes via --inspect-brk")
 		.option(
@@ -48,7 +53,6 @@ const readRunOptions = () => {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed ?? Date.now();
-	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
@@ -61,7 +65,6 @@ const readRunOptions = () => {
 		log,
 		verbose,
 		seed,
-		credFilePath,
 		enableMetrics,
 		createTestId,
 	};
@@ -77,7 +80,6 @@ const main = async (): Promise<void> => {
 		log,
 		verbose,
 		seed,
-		credFilePath,
 		enableMetrics,
 		createTestId,
 	} = readRunOptions();
@@ -86,7 +88,7 @@ const main = async (): Promise<void> => {
 		process.env.DEBUG = log;
 	}
 
-	const testDriver = await createTestDriver(
+	const testDriver: ITestDriver = await createTestDriver(
 		driver,
 		endpoint,
 		seed,
@@ -94,10 +96,15 @@ const main = async (): Promise<void> => {
 	);
 
 	const startTime = Date.now();
-	const outputDir = `${__dirname}/output/${startTime}`;
+	const outputDir = path.join(
+		path.dirname(fileURLToPath(import.meta.url)),
+		"output",
+		`${startTime}`,
+	);
 	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
+		driverTenantName: testDriver.tenantName,
 		profile: profileName,
 		runId: undefined,
 	});
@@ -106,8 +113,6 @@ const main = async (): Promise<void> => {
 	try {
 		const profile = getProfile(profileName);
 
-		const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
-
 		await stressTest(testDriver, profile, {
 			testId,
 			debug,
@@ -115,7 +120,6 @@ const main = async (): Promise<void> => {
 			seed,
 			enableMetrics,
 			createTestId,
-			testUsers,
 			profileName,
 			logger,
 			outputDir,

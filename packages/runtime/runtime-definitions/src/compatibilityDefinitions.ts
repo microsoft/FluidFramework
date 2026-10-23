@@ -7,7 +7,7 @@
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by newer clients.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific stable version of the Fluid Framework client package.
  *
  * The framework uses this value to select write formats and features. Clients using this version
  * or newer must be able to open and process documents written by newer clients. Choosing an older
@@ -18,7 +18,14 @@
  * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
  * to the specified `OldestSupportedClientVersion`.
  *
- * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
+ * Client 3.0 supports stable 2.x versions and 3.x minor checkpoints whose patch is zero. Every
+ * active deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before
+ * upgrading.
+ *
+ * Deployed-client values must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab}
+ * and cannot exceed the version of any Fluid Framework client package in use by the local client.
+ * APIs that still permit this setting to be omitted use
+ * {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
  * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
  * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `OldestSupportedClientVersion`.
@@ -34,18 +41,21 @@
  *
  * Since this type is marked with `@input`, it is only consumed by the framework and never returned, so widening the accepted set is a non-breaking change.
  *
- * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
- * For example it might make sense to constrain this to something like:
- * ```ts
- * "1.4.0" | typeof defaultMinVersionForCollab | `2.${bigint}.0`
- * ```
+ * Historically, this type allowed arbitrary patch versions, but as noted above that is problematic for ordering, so only the major and minor versions are supported for new majors:
+ * support for patch versions can be aged out as support for version 2 is dropped (or simply deprecated and removed in a later major version).
+ * Once gone that simplification is done, this type will align with {@link @fluidframework/driver-definitions#OldestSupportedServiceClientVersion} and the two types can be deduplicated.
+ *
+ * In the future, we may want to generalize this to mean
+ * "a value that compares less than or equal to the oldest Fluid Framework client version that must be able to open and process the container".
+ * As a non-breaking change, we could then allow values such as "3.1" without requiring the trailing ".0".
+ * However, omitting ".0" has some complications on the implementation side and might make the value look less like a version and obscure semver ordering;
+ * for example, how "3.21" is greater than "3.3".
+ * We may therefore want to retain the ".0" for simplicity and clarity.
  *
  * @input
  * @public
  */
-export type OldestSupportedClientVersion =
-	| `${1 | 2 | 3}.${bigint}.${bigint}`
-	| `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process

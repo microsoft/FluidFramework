@@ -3,16 +3,64 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKindIdentifier } from "../../core/index.js";
-import { brand } from "../../util/index.js";
+import {
+	strictRebaseValidation,
+	type ChangesetLocalId,
+	type FieldKindIdentifier,
+	type RevisionTag,
+} from "../../core/index.js";
+import { brand, type Mutable } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import type { FieldChangeMap, NodeChangeset, NodeId } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId } from "./modularChangeUtils.js";
+import type {
+	FieldChangeMap,
+	FieldId,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
+} from "./modularChangeTypes.js";
+import {
+	getChangeHandler,
+	isChangesetValid,
+	nodeChangeFromId,
+	normalizeNodeId,
+} from "./modularChangeUtils.js";
 
-export function pruneFieldMap(
+export function pruneChangeset(
+	changeset: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): ModularChangeset {
+	strictRebaseValidation("Malformed prune input", () =>
+		isChangesetValid(changeset, fieldKinds),
+	);
+
+	const prunedChangeset: Mutable<ModularChangeset> = {
+		...changeset,
+		nodeChanges: changeset.nodeChanges.clone(),
+		nodeToParent: changeset.nodeToParent.clone(),
+		nodeAliases: changeset.nodeAliases.clone(),
+	};
+
+	prunedChangeset.fieldChanges =
+		pruneFieldMap(
+			prunedChangeset.fieldChanges,
+			prunedChangeset.nodeChanges,
+			prunedChangeset.nodeToParent,
+			prunedChangeset.nodeAliases,
+			fieldKinds,
+		) ?? new Map();
+
+	strictRebaseValidation("Malformed prune output", () =>
+		isChangesetValid(prunedChangeset, fieldKinds),
+	);
+	return prunedChangeset;
+}
+
+function pruneFieldMap(
 	changeset: FieldChangeMap | undefined,
-	nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): FieldChangeMap | undefined {
 	if (changeset === undefined) {
@@ -24,7 +72,7 @@ export function pruneFieldMap(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 
 		const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
-			pruneNodeChange(nodeId, nodeMap, fieldKinds),
+			pruneNodeChange(nodeId, nodes, nodeToParent, nodeAliases, fieldKinds),
 		);
 
 		if (!handler.isEmpty(prunedFieldChangeset)) {
@@ -38,24 +86,35 @@ export function pruneFieldMap(
 function pruneNodeChange(
 	nodeId: NodeId,
 	nodeMap: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeId | undefined {
-	const changeset = nodeChangeFromId(nodeMap, nodeId);
+	const changeset = nodeChangeFromId(nodeMap, nodeId, nodeAliases);
 	const prunedFields =
 		changeset.fieldChanges === undefined
 			? undefined
-			: pruneFieldMap(changeset.fieldChanges, nodeMap, fieldKinds);
+			: pruneFieldMap(changeset.fieldChanges, nodeMap, nodeToParent, nodeAliases, fieldKinds);
 
 	const prunedChange = { ...changeset, fieldChanges: prunedFields };
 	if (prunedChange.fieldChanges === undefined) {
 		delete prunedChange.fieldChanges;
 	}
 
+	const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 	if (isEmptyNodeChangeset(prunedChange)) {
-		nodeMap.delete([nodeId.revision, nodeId.localId]);
+		const nodeIdKey: [RevisionTag | undefined, ChangesetLocalId] = [
+			normalizedNodeId.revision,
+			normalizedNodeId.localId,
+		];
+
+		nodeMap.delete(nodeIdKey);
+		nodeToParent.delete(nodeIdKey);
+
+		// TODO: Also remove aliases for this node.
 		return undefined;
 	} else {
-		setInChangeAtomIdMap(nodeMap, nodeId, prunedChange);
+		setInChangeAtomIdMap(nodeMap, normalizedNodeId, prunedChange);
 		return nodeId;
 	}
 }

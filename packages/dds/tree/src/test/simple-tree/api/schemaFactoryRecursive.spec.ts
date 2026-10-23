@@ -7,7 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
 	validateTypeError,
@@ -45,6 +44,7 @@ import {
 import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
+	isAssignableTo,
 	requireAssignableTo,
 	requireTrue,
 	requireFalse,
@@ -138,7 +138,6 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const tree = SharedTree.create(
 				new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
 					registry: [SharedTree.getFactory()],
 				}),
 				"tree",
@@ -1059,17 +1058,21 @@ describe("SchemaFactory Recursive methods", () => {
 
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
-				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
+				// Existing nodes are rejected at runtime when used as constructor data
+				// (see the UsageError thrown by TreeNodeValid's constructor), and are also rejected by the type system.
+				type _check2 = requireFalse<isAssignableTo<RecordRecursive, TBuild>>;
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
 			}
 
-			node.x = new RecordRecursive();
-			node.x.x = new RecordRecursive({});
+			const x = new RecordRecursive();
+			node.x = x;
+			x.x = new RecordRecursive({});
 
-			// This should not build, but it does.
 			assert.throws(() => {
+				// @ts-expect-error Each record read may be undefined.
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
 				node.y.x.z.q = new RecordRecursive({});
 			}, validateTypeError("Cannot read properties of undefined (reading 'x')"));
 		});
@@ -1517,7 +1520,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * 2. Make it easier to communicate to customers which might have accidentally used these unsupported patterns when and how they might need to adjust their code.
 	 * 3. Detect if/when the TypeScript compiler changes and starts to support these patterns to possibly enable out schema to explicitly allow them.
 	 *
-	 * Currently this collection of test cases covers one specific edge case: schema which do not use explicit sub-classing.
+	 * Currently this collection of test cases covers one specific edge case: schemas which do not use explicit sub-classing.
 	 * Our current guidance says this pattern is not supported for recursive schema.
 	 *
 	 * These patterns also {@link https://github.com/microsoft/TypeScript/issues/55832 | break type safety in .d.ts generation}:

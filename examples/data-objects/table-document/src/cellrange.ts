@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/legacy";
 import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence/legacy";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
@@ -60,7 +59,9 @@ export class CellRange {
 		private readonly resolve: (localRef: ReferencePosition) => { row: number; col: number },
 	) {
 		// Ensure CellInterval was not created with a null/undefined interval.
-		assert(!!interval, "CellInterval created with bad interval!");
+		if (!interval) {
+			throw new Error("CellInterval created with bad interval!");
+		}
 	}
 
 	public getRange(): { row: number; col: number; numRows: number; numCols: number } {

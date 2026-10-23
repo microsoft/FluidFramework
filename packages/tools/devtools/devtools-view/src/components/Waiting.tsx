@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Spinner } from "@fluentui/react-components";
 import type { ReactElement } from "react";
+
+import { FluentReactComponents } from "../FluentUi.cjs";
+
+const { Spinner } = FluentReactComponents;
 
 /**
  * Default label displayed by {@link Waiting} when no {@link WaitingProps.label} is specified.

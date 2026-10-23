@@ -8,4 +8,5 @@ export {
 	FormattedMainView,
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,
+	FormattedTextDefault,
 } from "./formatted/index.js";

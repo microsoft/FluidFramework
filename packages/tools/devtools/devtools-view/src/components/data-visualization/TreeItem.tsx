@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Tree as FluentTree,
-	TreeItem as FluentTreeItem,
-	TreeItemLayout as FluentTreeItemLayout,
-} from "@fluentui/react-components";
 import { Children, type PropsWithChildren, type ReactElement } from "react";
+
+import { FluentReactComponents } from "../../FluentUi.cjs";
+
+const {
+	Tree: FluentTree,
+	TreeItem: FluentTreeItem,
+	TreeItemLayout: FluentTreeItemLayout,
+} = FluentReactComponents;
 
 /**
  * Input to {@link TreeItem}

@@ -48,9 +48,6 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskManagerDiceRoller = await runtime.createDataStore(
 			TaskManagerDiceRollerInstantiationFactory.type,
@@ -62,9 +59,6 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 		await oldestClientDiceRoller.trySetAlias(oldestClientDiceId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,

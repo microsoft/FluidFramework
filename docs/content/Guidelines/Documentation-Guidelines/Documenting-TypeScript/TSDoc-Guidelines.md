@@ -220,6 +220,46 @@ Additionally helps with IDE hover-over behaviors.
 public rotateEntries(shapes: ShapeList, clockwiseRotationInDegrees: number): ShapeList;
 ```
 
+#### \@throws
+
+See: <https://tsdoc.org/pages/tags/throws/>
+
+##### \@throws: Guidance
+
+Use `@throws` blocks when an error is intentionally part of a supported API contract.
+Describe the condition that causes the error and the kind of error reported.
+Use separate blocks for distinct error conditions when that makes the documentation clearer.
+Include errors propagated from other APIs only when they are part of the supported contract, not merely incidental implementation failures.
+
+When an input is not currently supported but its error behavior is not intended as a stable contract, document the restriction with `@param` or `@remarks` without an `@throws` block.
+Alternatively, note in `@throws` that the API may throw while the input remains unsupported, documenting that it will either throw or otherwise handle the input correctly.
+These approaches preserve the ability to support the input later without changing a documented error contract.
+
+Use `{@link ...}` to reference exported project error types when they are available at the API's support level and their use is part of the API contract.
+Use code formatting for standard JavaScript error types, such as `RangeError`.
+Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
+
+Document input requirements with `@param` or `@remarks` in addition to `@throws`.
+
+An `@throws` block does not imply that an error is safe to catch or that the affected state remains usable.
+Document recoverability or fault-isolation guarantees only when the API provides a reliable way to identify the error and explicitly defines the usable state after it occurs.
+
+Internal assertion failures represent implementation bugs, not expected error cases in the API contract, so they should not be represented by `@throws` documentation.
+See the [error-handling guidelines](../../Coding-Guidelines.md#errors) for guidance on errors and assertions.
+
+##### \@throws: Example
+
+```typescript
+/**
+ * Returns the item at the specified index.
+ *
+ * @param items - The items to read from.
+ * @param index - Must be an integer in the range [0, items.length).
+ * @throws A `RangeError` if index is not an integer inside the supported range.
+ */
+export function getItemAt(items: readonly string[], index: number): string;
+```
+
 #### \@typeParam
 
 See: <https://api-extractor.com/pages/tsdoc/tag_typeparam/>
@@ -849,16 +889,20 @@ See: <https://api-extractor.com/pages/tsdoc/tag_inheritdoc/>
 Use the `@inheritDoc` tag to indicate that the associated member's documentation is the same as some other API member.
 
 > [!IMPORTANT]
-> Do not use the `@inheritDoc` tag when documenting an API member the inherits from some base type.
+> Do not use the `@inheritDoc` tag when documenting an API member that inherits from a base type.
 >
 > While API-Extractor does not currently support automatic documentation inheritance like this, most other tools do (including IntelliSense).
 >
-> We have decided that it is generally preferrable for IntelliSense to work well over our generated API docs in this case.
+> We have decided that it is generally preferable for IntelliSense to work well over our generated API docs in this case.
 > Users of our API docs can still navigate to base definitions to read the docs as needed.
+>
+> One exception is when the member needs a local TSDoc comment to apply additional tags, such as `@sealed`, `@deprecated`, or documentation for an additional parameter.
+> In this case, use `@inheritDoc` in the local comment instead of duplicating or replacing the inherited summary.
 
 ##### \@inheritDoc: Rationale
 
-This can be extremely useful in reducing duplicated documentation - especially when implementing an interface, or overriding members of a parent class.
+This can be useful for reducing duplicated documentation when declarations that are not related through inheritance have the same semantics.
+It also lets a naturally inherited member retain its inherited documentation when the member needs a local TSDoc comment for additional tags.
 
 ##### \@inheritDoc: Enforcement
 
@@ -889,6 +933,34 @@ export function log(logger: Logger, data: unknown): void {
 ```
 
 Because the global function `log` doesn't inherit from `Logger.log`, but we would like to reuse the documentation, `@inheritDoc` is a good candidate.
+
+###### Applying tags to a naturally inherited member
+
+```typescript
+export class BaseLogger {
+	/**
+	 * Logs the provided data.
+	 */
+	public log(data: unknown): void {
+		// ...
+	}
+}
+
+export class Logger extends BaseLogger {
+	/**
+	 * {@inheritDoc BaseLogger.log}
+	 *
+	 * @sealed
+	 */
+	public override log(data: unknown): void {
+		// ...
+	}
+}
+```
+
+The `log` method naturally inherits its documentation from `BaseLogger.log`.
+However, the `@sealed` tag requires a local TSDoc comment.
+Using `@inheritDoc` preserves the inherited documentation without duplicating its summary.
 
 ###### Inheriting documentation from an imported member from another package
 

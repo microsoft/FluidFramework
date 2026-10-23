@@ -6,6 +6,7 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
 import type { TreeNode } from "../core/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -26,10 +27,16 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
 export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
+ * Type for beta version {@link TransactionConstraint | constraint}s.
+ * @sealed @beta
+ */
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
+
+/**
  * Type for alpha version {@link TransactionConstraint | constraint}s
  * @sealed @alpha
  */
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
+export type TransactionConstraintAlpha = TransactionConstraintBeta; // TODO: Add more constraint types here
 
 /**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
@@ -42,9 +49,9 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * A {@link TransactionConstraintAlpha | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
+ * A {@link TransactionConstraintBeta | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
  * When used as a revert precondition it requires that, for the revert to apply, the document must be in the same state immediately before the revert is applied as it was after the transaction was applied.
- * @alpha
+ * @beta
  */
 export interface NoChangeConstraint {
 	readonly type: "noChange";
@@ -61,11 +68,11 @@ export interface WithValue<TValue> {
 }
 
 /**
- * Contains a value and status returned from a user-supplied {@link TreeViewBeta.runTransaction | transaction callback}.
+ * Contains a value and status returned from a user-supplied {@link UntypedTreeView.(runTransaction:3) | transaction callback}.
  * @input
  * @beta
  */
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (
 	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
 			readonly rollback?: false;
@@ -73,10 +80,20 @@ export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
 			readonly rollback: true;
-	  });
+	  })
+) & {
+	/**
+	 * An optional list of {@link TransactionConstraintBeta | constraints} that will be checked when the commit corresponding
+	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
+	 * locally or on remote clients, the revert will be ignored.
+	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
+	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
+	 */
+	readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 /**
- * The result of a {@link TreeViewBeta.runTransaction | transaction} that doesn't return a value.
+ * The result of a {@link UntypedTreeView.(runTransaction:2) | transaction} that doesn't return a value.
  * @input
  * @beta
  */
@@ -86,21 +103,12 @@ export type VoidTransactionCallbackStatusBeta = Omit<
 >;
 
 /**
- * {@link TransactionCallbackStatusBeta} extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
+ * Alpha version of {@link TransactionCallbackStatusBeta}.
  * @input
  * @alpha
  */
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
-	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-		/**
-		 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
-		 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
-		 * locally or on remote clients, the revert will be ignored.
-		 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
-		 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
-		 */
-		readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-	};
+	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;
 
 /**
  * The result of a {@link UntypedTreeViewAlpha.(runTransaction:2) | transaction} that doesn't return a value.
@@ -113,7 +121,7 @@ export type VoidTransactionCallbackStatusAlpha = Omit<
 >;
 
 /**
- * The result of a {@link TreeViewBeta.(runTransaction:1) | transaction} that completed successfully.
+ * The result of a {@link UntypedTreeView.(runTransaction:1) | transaction} that completed successfully.
  * @sealed
  * @beta
  */
@@ -123,7 +131,7 @@ export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSucc
 }
 
 /**
- * The result of a {@link TreeViewBeta.runTransaction | transaction} that was rolled back.
+ * The result of a {@link UntypedTreeView.(runTransaction:2) | transaction} that was rolled back.
  * @sealed
  * @beta
  */
@@ -186,22 +194,22 @@ export interface RunTransactionParamsBeta {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
-}
 
-/**
- * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
- * @input
- * @alpha
- */
-export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
-	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
+	 * An optional list of {@link TransactionConstraintBeta | constraints} that are checked just before the transaction begins.
 	 * @remarks
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
-	readonly preconditions?: readonly TransactionConstraintAlpha[];
+	readonly preconditions?: readonly TransactionConstraintBeta[];
+}
 
+/**
+ * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only options.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
 	 * An optional {@link TransactionPostProcessor | post-processor} applied to
 	 * the change produced when this transaction is committed.
@@ -218,4 +226,30 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * reserving the behavior; a real post-processor will be provided in a future change.
 	 */
 	readonly postProcessor?: TransactionPostProcessor;
+
+	/**
+	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
+	 * @remarks
+	 * The metadata is replicated to all collaborating clients and persisted in the document, and is readable
+	 * via {@link TreeBranchCommitMetadata.custom} while walking the branch's
+	 * {@link UntypedTreeViewAlpha.branchHistory | history}. It shares the lifetime of the commit it is attached
+	 * to: once that commit is trimmed from the trunk, the metadata goes with it. If the transaction produces no
+	 * commit — because its body made no changes, or because it was rolled back — the metadata is discarded.
+	 *
+	 * Nested transactions all contribute to the single commit they produce, and their metadata is available
+	 * both flattened via {@link TreeBranchCommitMetadata.custom} and structurally via
+	 * {@link TreeBranchCommitMetadata.customTree}.
+	 *
+	 * To attach metadata to the commit produced by
+	 * {@link RevertibleAlpha.(revert:3) | reverting}, use {@link RevertOptionsAlpha.customMetadata} instead.
+	 *
+	 * The value is snapshotted when the transaction starts and normalized as `JSON.stringify` would. An error is
+	 * thrown if it cannot be represented as a JSON object at all, such as when it contains a cycle or a
+	 * `bigint`. Because it is persisted, it should be kept small; it is also bounded by the runtime's maximum
+	 * op size.
+	 *
+	 * Metadata is only written to the document when `minVersionForCollab` is set to `"2.117.0"` or later.
+	 * Otherwise it is retained in memory for the local session but not persisted or replicated.
+	 */
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }

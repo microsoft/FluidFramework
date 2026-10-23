@@ -5,58 +5,49 @@
 
 // The in-cluster Key Vault read that backs the `rotate` safety check.
 //
-// Everything here is exercised with an injected fetch and a real temp token file, so no cluster
-// and no network are involved. What matters is the status-code contract the guard depends on:
-// 404 means "no token service uses this tenant" and is safe to continue past, while every other
-// failure means "the check could not run" and must be distinguishable, because the caller has to
-// fail closed on it.
+// Everything here is exercised with injected credential and fetch doubles, so no cluster and no
+// network are involved. A 404 means "no token service uses this tenant"; every authentication or
+// transport failure means "the check could not run" and must fail closed.
 
 "use strict";
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-
 const {
 	KeyVaultAccessError,
 	getSecret,
+	getVaultAccessToken,
 	readWorkloadIdentityEnv,
 } = require("../src/keyVaultClient");
 
-function tokenFile(contents = "federated-token-value") {
-	const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "tenant-admin-wi-")), "token");
-	fs.writeFileSync(file, contents);
-	return file;
-}
-
-function envWith(file) {
+function envWith() {
 	return {
 		AZURE_CLIENT_ID: "client-id-guid",
 		AZURE_TENANT_ID: "tenant-id-guid",
-		AZURE_FEDERATED_TOKEN_FILE: file,
+		AZURE_FEDERATED_TOKEN_FILE: "/var/run/secrets/azure/tokens/azure-identity-token",
 		AZURE_AUTHORITY_HOST: "https://login.microsoftonline.com/",
 	};
 }
 
-/** Minimal fetch double: token endpoint first, then the vault. */
-function fakeFetch({
-	vaultStatus = 200,
-	vaultBody = { value: "the-secret" },
-	tokenStatus = 200,
-}) {
+function fakeCredentialFactory({ token = "vault-access-token", error } = {}) {
+	const calls = [];
+	const factory = (options) => ({
+		getToken: async (scope) => {
+			calls.push({ options, scope });
+			if (error) {
+				throw error;
+			}
+			return token === undefined ? null : { token, expiresOnTimestamp: Date.now() + 3600000 };
+		},
+	});
+	factory.calls = calls;
+	return factory;
+}
+
+function fakeFetch({ vaultStatus = 200, vaultBody = { value: "the-secret" } }) {
 	const calls = [];
 	const impl = async (url, init) => {
 		calls.push({ url: String(url), init });
-		if (String(url).includes("/oauth2/v2.0/token")) {
-			return {
-				ok: tokenStatus >= 200 && tokenStatus < 300,
-				status: tokenStatus,
-				json: async () => ({ access_token: "vault-access-token" }),
-				text: async () => "AADSTS700213: no matching federated identity record.",
-			};
-		}
 		return {
 			ok: vaultStatus >= 200 && vaultStatus < 300,
 			status: vaultStatus,
@@ -71,8 +62,9 @@ function fakeFetch({
 test("a secret that exists is returned", async () => {
 	const fetchImpl = fakeFetch({});
 	const result = await getSecret("my-kv", "fluid-tenant-key-contoso", {
-		env: envWith(tokenFile()),
+		env: envWith(),
 		fetchImpl,
+		credentialFactory: fakeCredentialFactory(),
 	});
 
 	assert.deepEqual(result, { found: true, value: "the-secret" });
@@ -91,8 +83,9 @@ test("a missing secret reports found:false rather than throwing", async () => {
 	// This is the "no token service uses this tenant" path. It must be distinguishable from a
 	// failure, or a tenant with no token service could never be rotated.
 	const result = await getSecret("my-kv", "fluid-tenant-key-contoso", {
-		env: envWith(tokenFile()),
+		env: envWith(),
 		fetchImpl: fakeFetch({ vaultStatus: 404 }),
+		credentialFactory: fakeCredentialFactory(),
 	});
 	assert.deepEqual(result, { found: false });
 });
@@ -101,8 +94,9 @@ test("a denied read throws, and names the role that is missing", async () => {
 	await assert.rejects(
 		() =>
 			getSecret("my-kv", "fluid-tenant-key-contoso", {
-				env: envWith(tokenFile()),
+				env: envWith(),
 				fetchImpl: fakeFetch({ vaultStatus: 403 }),
+				credentialFactory: fakeCredentialFactory(),
 			}),
 		(error) => {
 			assert.ok(error instanceof KeyVaultAccessError);
@@ -116,8 +110,9 @@ test("an unexpected vault status throws rather than being read as absent", async
 	await assert.rejects(
 		() =>
 			getSecret("my-kv", "s", {
-				env: envWith(tokenFile()),
+				env: envWith(),
 				fetchImpl: fakeFetch({ vaultStatus: 500 }),
+				credentialFactory: fakeCredentialFactory(),
 			}),
 		KeyVaultAccessError,
 	);
@@ -127,21 +122,23 @@ test("a secret with no value throws instead of comparing against undefined", asy
 	await assert.rejects(
 		() =>
 			getSecret("my-kv", "s", {
-				env: envWith(tokenFile()),
+				env: envWith(),
 				fetchImpl: fakeFetch({ vaultBody: {} }),
+				credentialFactory: fakeCredentialFactory(),
 			}),
 		KeyVaultAccessError,
 	);
 });
 
-test("a failed token exchange surfaces the AADSTS detail", async () => {
-	// The AADSTS code is the entire diagnosis for a misconfigured federated credential, and it
-	// contains no secret material, so it is worth passing through.
+test("an Azure Identity failure preserves its diagnostic detail", async () => {
 	await assert.rejects(
 		() =>
 			getSecret("my-kv", "s", {
-				env: envWith(tokenFile()),
-				fetchImpl: fakeFetch({ tokenStatus: 400 }),
+				env: envWith(),
+				fetchImpl: fakeFetch({}),
+				credentialFactory: fakeCredentialFactory({
+					error: new Error("AADSTS700213: no matching federated identity record."),
+				}),
 			}),
 		(error) => {
 			assert.ok(error instanceof KeyVaultAccessError);
@@ -151,26 +148,23 @@ test("a failed token exchange surfaces the AADSTS detail", async () => {
 	);
 });
 
-test("the token exchange presents the projected token as a client assertion", async () => {
-	const fetchImpl = fakeFetch({});
-	await getSecret("my-kv", "s", {
-		env: envWith(tokenFile("projected-sa-token")),
-		fetchImpl,
-	});
+test("Azure Identity receives the workload identity settings and Key Vault scope", async () => {
+	const credentialFactory = fakeCredentialFactory();
+	const identity = readWorkloadIdentityEnv(envWith());
+	const token = await getVaultAccessToken(identity, credentialFactory);
 
-	const tokenCall = fetchImpl.calls.find((c) => c.url.includes("/oauth2/v2.0/token"));
-	assert.equal(
-		tokenCall.url,
-		"https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token",
-	);
-	const body = tokenCall.init.body;
-	assert.equal(body.get("client_assertion"), "projected-sa-token");
-	assert.equal(body.get("client_id"), "client-id-guid");
-	assert.equal(body.get("scope"), "https://vault.azure.net/.default");
-	assert.equal(
-		body.get("client_assertion_type"),
-		"urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-	);
+	assert.equal(token, "vault-access-token");
+	assert.deepEqual(credentialFactory.calls, [
+		{
+			options: {
+				clientId: "client-id-guid",
+				tenantId: "tenant-id-guid",
+				tokenFile: "/var/run/secrets/azure/tokens/azure-identity-token",
+				authorityHost: "https://login.microsoftonline.com/",
+			},
+			scope: "https://vault.azure.net/.default",
+		},
+	]);
 });
 
 test("a Pod without workload identity is reported, not silently skipped", async () => {
@@ -187,23 +181,27 @@ test("a Pod without workload identity is reported, not silently skipped", async 
 	);
 
 	await assert.rejects(
-		() => getSecret("my-kv", "s", { env: {}, fetchImpl: fakeFetch({}) }),
+		() =>
+			getSecret("my-kv", "s", {
+				env: {},
+				fetchImpl: fakeFetch({}),
+				credentialFactory: fakeCredentialFactory(),
+			}),
 		KeyVaultAccessError,
 	);
 });
 
-test("the authority host is normalised whether or not it ends in a slash", async () => {
-	const fetchImpl = fakeFetch({});
-	await getSecret("my-kv", "s", {
-		env: {
-			...envWith(tokenFile()),
-			AZURE_AUTHORITY_HOST: "https://login.microsoftonline.com",
+test("an empty Azure Identity token is rejected", async () => {
+	await assert.rejects(
+		() =>
+			getVaultAccessToken(
+				readWorkloadIdentityEnv(envWith()),
+				fakeCredentialFactory({ token: null }),
+			),
+		(error) => {
+			assert.ok(error instanceof KeyVaultAccessError);
+			assert.match(error.message, /returned no access token/);
+			return true;
 		},
-		fetchImpl,
-	});
-	const tokenCall = fetchImpl.calls.find((c) => c.url.includes("/oauth2/"));
-	assert.equal(
-		tokenCall.url,
-		"https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token",
 	);
 });

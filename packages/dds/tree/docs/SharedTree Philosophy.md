@@ -103,7 +103,7 @@ For example SharedTree can introduce a new version of editing primitives and/or 
 which applications can opt into in their schema in a compatible way.
 
 SharedTree is also designed to ensure applications using it can also adopt this same compatibility approach while minimizing the frequency and difficulty of doing so.
-For example the APIs SharedTree exposes for working with schema are designed to help guide their users into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schema.
+For example the APIs SharedTree exposes for working with schemas are designed to help guide their users into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schemas.
 
 ## Data Model and Editing
 
@@ -311,7 +311,7 @@ There are several different sizes which SharedTree performance scales with:
     Performance related to number of fields has the same requirements as lengths of fields, at least when it come to map nodes.
 
 -   Amount of Schema.
-    Scaling to very large schema is not a priority.
+    Scaling to very large schemas is not a priority.
     The cost/size of the schema should be amortized over the session:
     no schema proportional costs should be incurred during normal usage as part of any operation a client may do many times in a session.
     This means that in typical use, ops and summaries should not have to copy the schema.

@@ -622,6 +622,7 @@ export async function captureFullContainerState({
 		logger: captureLogger,
 		active: () => false,
 		containerDirty: () => false,
+		containerOpDirty: () => false,
 		client,
 		reconnectAllowed: true,
 	});

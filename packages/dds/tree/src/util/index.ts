@@ -6,6 +6,7 @@
 export {
 	collectContiguousRanges,
 	type IndexRange,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -22,7 +23,7 @@ export {
 	strictEnum,
 	unbrand,
 } from "./brand.js";
-export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { brandedIntegerType, brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
 	brandOpaque,
 	extractFromOpaque,
@@ -46,7 +47,12 @@ export {
 	nestedMapFromFlatList,
 	getOrCreateInNestedMap,
 } from "./nestedMap.js";
-export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
+export {
+	addToNestedSet,
+	type NestedSet,
+	nestedSetContains,
+	populatedNestedSet,
+} from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
 export type {
 	areSafelyAssignable,

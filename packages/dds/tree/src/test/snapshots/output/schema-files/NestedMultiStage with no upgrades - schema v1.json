@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.null": {
+      "leaf": 4
+    },
+    "test.NestedMultiStage": {
+      "object": {
+        "a": {
+          "kind": "Optional",
+          "types": []
+        },
+        "b": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.null"
+          ]
+        },
+        "c": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.null"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.NestedMultiStage"
+    ]
+  }
+}

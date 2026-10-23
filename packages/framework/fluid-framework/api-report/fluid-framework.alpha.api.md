@@ -161,6 +161,9 @@ export interface ArrayPlaceAnchor {
 export function asAlpha(tree: ITree): ITreeAlpha;
 
 // @alpha
+export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
+
+// @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
@@ -183,10 +186,22 @@ export enum AttachState {
 }
 
 // @alpha @sealed
+export interface CapturedTreeLocation extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {
+}
+
+// @alpha @sealed
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
+// @beta @sealed
+export type ChangeMetadataBeta = CommitMetadata & ({
+    readonly isLocal: true;
+    readonly events: Listenable<LocalCommitEvents>;
+} | {
+    readonly isLocal: false;
+});
+
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -224,7 +239,7 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @alpha
+// @beta
 export enum CommitOutcome {
     FullyApplied = 0,
     FullyDropped = 1,
@@ -268,7 +283,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
 
 // @alpha
 export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
@@ -321,7 +336,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTreeAlpha;
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
@@ -332,19 +347,25 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewT
 }));
 
 // @beta
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+export function createIndependentTreeBeta<const Unused = unknown>(options?: ForestOptions): ViewableTree;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
+export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions): TreeViewBeta<TSchema>;
+
+// @alpha
+export function createIndependentTreeViewAlpha<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, keyFieldSelector: TreeIndexKeyFieldSelector, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, keyFieldSelector: TreeIndexKeyFieldSelector<TSchema>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
-// @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
+// @alpha @sealed
+export interface CustomMetadataTree {
+    readonly children: readonly CustomMetadataTree[];
+    readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+}
 
 // @alpha @sealed
 export interface DataStoreContext extends SharedObjectCreator {
@@ -468,6 +489,9 @@ export type FactoryContentObject = {
     readonly [P in string]?: InsertableContent;
 };
 
+// @alpha
+export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`): `${major}.${minor}.0`;
+
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
 FieldSchema<FieldKind.Optional | FieldKind.Identifier>
@@ -503,6 +527,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown> extends FieldProps<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
     readonly stagedOptionalUpgrade?: SchemaUpgrade;
+    readonly summarizeIncrementally?: boolean;
 }
 
 // @public @sealed
@@ -536,6 +561,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
 
 // @alpha @sealed @system
 export interface FieldSchemaAlphaUnsafe<out Kind extends FieldKind, out Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown, out TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined> extends FieldSchemaAlpha<Kind, any, TCustomMetadata, TProps>, System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
+    // (undocumented)
     readonly allowedTypes: Types;
 }
 
@@ -567,6 +593,7 @@ export const FluidClientVersion: {
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
     readonly v2_80: "2.80.0";
+    readonly v2_117: "2.117.0";
 };
 
 // @alpha @sealed
@@ -732,13 +759,14 @@ export namespace FormattedText {
     }
     // @sealed
     export type FormattedTextSchema<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = Statics<ErasedNode<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
+    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
     const // @sealed
     StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
-    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    export type FormatUpdate<TFormat> = TFormat extends FluidReadonlyMap<string, infer TValue> ? FluidReadonlyMap<string, TValue | undefined> | Readonly<Record<string, TValue | undefined>> : Partial<TFormat>;
     // @sealed
     export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
         charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
-        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
+        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
         getString(startIndex: number, endIndex?: number): string;
         getUniformRun(startIndex: number, endIndex?: number): number;
         // @override
@@ -771,6 +799,9 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {
 
 // @alpha
 export const FormatValidatorBasic: FormatValidator;
+
+// @alpha
+export const FormatValidatorInterpreted: FormatValidator;
 
 // @alpha
 export const FormatValidatorNoOp: FormatValidator;
@@ -812,6 +843,11 @@ export type ICriticalContainerError = IErrorBase;
 
 // @beta
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
+
+// @alpha
+export function identifySchemaAlpha(options?: {
+    readonly expectedHash?: string;
+}): SchemaIdentity;
 
 // @public @sealed
 export interface IDisposable {
@@ -1077,7 +1113,7 @@ export const incrementalSummaryHint: unique symbol;
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
-// @alpha
+// @alpha @deprecated
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
@@ -1220,10 +1256,10 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @public
+// @public @input
 export interface ITelemetryBaseLogger {
     minLogLevel?: LogLevel | undefined;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -1241,10 +1277,8 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @alpha @sealed
-export interface ITreeAlpha extends ITree {
+export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
     createSharedBranch(name?: string): string;
-    exportSimpleSchema(): SimpleTreeSchema;
-    exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
@@ -1263,6 +1297,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaIdentity?: SchemaIdentity;
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
@@ -1407,16 +1442,16 @@ export type Listeners<T extends object> = {
 };
 
 // @alpha @sealed
-export interface LocalChangeMetadata extends CommitMetadata {
-    readonly events: Listenable<LocalCommitEvents>;
+export interface LocalChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: true;
+}> {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
-    readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface LocalCommitEvents {
     settled(outcome: CommitOutcome): void;
 }
@@ -1482,7 +1517,7 @@ export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
 
-// @alpha
+// @beta
 export interface NoChangeConstraint {
     // (undocumented)
     readonly type: "noChange";
@@ -1616,6 +1651,7 @@ export namespace PlainText {
         createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
@@ -1658,6 +1694,27 @@ export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
+// @alpha
+export interface RebaseValidation {
+    readonly currentLevel: RebaseValidationLevel;
+    readonly Level: typeof RebaseValidationLevel;
+    readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
+    readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
+}
+
+// @alpha
+export const RebaseValidation: RebaseValidation;
+
+// @alpha
+export const RebaseValidationLevel: {
+    readonly None: 0;
+    readonly Cheap: 1;
+    readonly Strict: 2;
+};
+
+// @alpha
+export type RebaseValidationLevel = (typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
+
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {
 }
@@ -1687,10 +1744,11 @@ export interface RegistryKey<TOut, TIn = unknown> {
 }
 
 // @alpha @sealed
-export interface RemoteChangeMetadata extends CommitMetadata {
+export interface RemoteChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: false;
+}> {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
-    readonly isLocal: false;
     readonly label?: undefined;
     readonly labels: TransactionLabels;
 }
@@ -1708,6 +1766,25 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 
 // @alpha
 export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: HandleConverter<T>): VerboseTree<T>;
+
+// @alpha @sealed
+export interface ResolvedTreeLocation {
+    readonly location: {
+        readonly kind: "node";
+        readonly node: TreeNode;
+    } | {
+        readonly kind: "sequence";
+        readonly node: TreeArrayNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
+    } | {
+        readonly kind: "text";
+        readonly node: TextLocationNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
+    };
+    readonly status: "resolved";
+}
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -1732,6 +1809,11 @@ export interface Revertible {
 // @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
     clone: (view: UntypedTreeView) => RevertibleAlpha;
+    // (undocumented)
+    revert(): void;
+    // (undocumented)
+    revert(dispose: boolean): void;
+    revert(options: RevertOptionsAlpha): void;
 }
 
 // @alpha @sealed
@@ -1744,6 +1826,17 @@ export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible)
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
+}
+
+// @alpha @sealed
+export interface RevertOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
+    readonly dispose?: boolean;
+}
+
+// @alpha @sealed
+export interface RevertToOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 // @public
@@ -1768,13 +1861,47 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
-    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+    readonly preconditions?: readonly TransactionConstraintBeta[];
+}
+
+// @alpha
+export namespace Sandboxing {
+    export function createGuest(options: GuestOptions): Promise<Guest>;
+    export function createHost(options: HostOptions): Host;
+    // @input
+    export interface EndpointOptions {
+        readonly handleProtocolError?: (error: Error) => void;
+        readonly logger?: ITelemetryBaseLogger;
+        readonly port: InstanceType<typeof MessagePort>;
+    }
+    // @sealed
+    export interface Guest {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly tree: ViewableTree;
+        readonly updateHostPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface GuestOptions extends EndpointOptions {
+        readonly treeOptions: ForestOptions & ICodecOptions;
+    }
+    // @sealed
+    export interface Host {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly updateGuestPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface HostOptions extends EndpointOptions {
+        readonly main: UntypedTreeView;
+    }
 }
 
 // @public @sealed
@@ -1784,6 +1911,43 @@ export interface SchemaCompatibilityStatus {
     readonly canView: boolean;
     readonly isEquivalent: boolean;
 }
+
+// @beta @sealed
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+    readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+// @beta @sealed
+export type SchemaDiscrepancy = {
+    readonly mismatch: "allowedTypes";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: readonly string[];
+    readonly stagedView?: readonly string[];
+    readonly stored: readonly string[];
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "fieldKind";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: string;
+    readonly stored: string;
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
+} | {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly view: string;
+    readonly stored: string;
+};
 
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
@@ -1872,6 +2036,10 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
+// @alpha @sealed
+export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
+}
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -1938,7 +2106,8 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+    readonly logger?: ITelemetryBaseLogger;
+    readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed
@@ -2095,6 +2264,10 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly rejectVersionsWithNoSchemaChange?: true;
     readonly schema: TreeViewConfiguration;
     readonly snapshotDirectory: string;
+    readonly snapshotFileNameFormat?: {
+        readonly prefix?: string;
+        readonly suffix?: string;
+    };
     readonly snapshotUnchangedVersions?: true;
     readonly version: string;
     readonly versionComparer?: (a: string, b: string) => number;
@@ -2102,6 +2275,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
+    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }
@@ -2193,8 +2367,11 @@ export namespace System_Unsafe {
     export type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
     // @sealed @system
     export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
+        // (undocumented)
         readonly allowedTypes: Types;
+        // (undocumented)
         readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+        // (undocumented)
         readonly kind: Kind;
     }
     // @system
@@ -2346,26 +2523,32 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @alpha @sealed
+export type TextLocationNode = TreeNode & PlainText.Members;
+
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
 // @alpha @input
-export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-    readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-};
+export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;
 
 // @beta @input
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
     readonly rollback: true;
-});
+})) & {
+    readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+export type TransactionConstraintAlpha = TransactionConstraintBeta;
+
+// @beta @sealed
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
 
 // @alpha @sealed
 export type TransactionLabels = Set<unknown> & {
@@ -2476,6 +2659,7 @@ export interface TreeArrayNodeAlpha<TAllowedTypes extends System_Unsafe.Implicit
 // @beta @sealed
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    context(node: TreeNode): TreeContextBeta;
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
@@ -2494,13 +2678,21 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
+    readonly custom: JsonCompatibleReadOnlyObject | undefined;
+    readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
+    revertTo?(options?: RevertToOptionsAlpha): void;
     readonly revision: CommitRevision;
 }
 
 // @alpha @sealed
-export interface TreeBranchEvents {
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @beta @sealed
+export interface TreeBranchEventsBeta {
+    changed(data: ChangeMetadataBeta): void;
 }
 
 // @alpha @sealed
@@ -2528,15 +2720,28 @@ export enum TreeCompressionStrategy {
     Uncompressed = 1
 }
 
-// @alpha
-export interface TreeContextAlpha {
+// @alpha @sealed
+export interface TreeContextAlpha extends TreeContextBeta {
     // @deprecated
     isBranch(): this is UntypedTreeViewAlpha;
     isView(): this is UntypedTreeViewAlpha;
+    // (undocumented)
     runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TValue, TValue>;
+    // (undocumented)
     runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
+    // (undocumented)
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
+    // (undocumented)
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
+}
+
+// @beta @sealed
+export interface TreeContextBeta {
+    isView(): this is UntypedTreeView;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsBeta): TransactionValueResult<TValue, TValue>;
+    runTransaction(transaction: () => void, params?: RunTransactionParamsBeta): TransactionVoidResult;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsBeta): Promise<TransactionValueResult<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsBeta): Promise<TransactionVoidResult>;
 }
 
 // @alpha @input
@@ -2556,6 +2761,12 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
+// @alpha @input
+export interface TreeGapCaptureOptions {
+    readonly affinity?: "before" | "after" | undefined;
+    readonly movePolicy?: "follow" | undefined;
+}
+
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
@@ -2574,10 +2785,43 @@ export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> 
 export type TreeIndexKey = TreeLeafValue;
 
 // @beta
+export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeSchema> = ((schema: TSchema) => string | undefined) | {
+    get(schema: TSchema): string | undefined;
+};
+
+// @beta
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+// @alpha @input
+export type TreeLocation = {
+    readonly kind: "node";
+    readonly node: TreeNode;
+} | (TreeGapCaptureOptions & {
+    readonly kind: "sequence";
+    readonly node: TreeArrayNode | TextLocationNode;
+    readonly index: number;
+});
+
+// @alpha @sealed
+export type TreeLocationResolution = ResolvedTreeLocation | {
+    readonly status: "unavailable";
+    readonly reason: "target-deleted" | "invalid-location";
+} | {
+    readonly status: "revision-unavailable";
+};
+
+// @alpha @sealed
+export interface TreeLocationResolver {
+    capture(location: TreeLocation): CapturedTreeLocation;
+    capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+    captureGap(node: TreeArrayNode | TextLocationNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    captureNode(node: TreeNode): CapturedTreeLocation;
+    resolve(capture: CapturedTreeLocation): TreeLocationResolution;
+    resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
+}
 
 // @public @sealed
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
@@ -2654,7 +2898,7 @@ export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;
 
 // @beta
-export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
     [Symbol.iterator](): FluidIterableIterator<[
     string,
     TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
@@ -2662,7 +2906,7 @@ export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = Imp
 }
 
 // @beta @sealed @system
-export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
+export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes> | undefined>, TreeNode {
     // (undocumented)
     [Symbol.iterator](): FluidIterableIterator<[
     string,
@@ -2672,7 +2916,9 @@ export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.Implic
 
 // @alpha @sealed (undocumented)
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
+    // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
+    // (undocumented)
     readonly root: FieldSchemaAlpha;
 }
 
@@ -2701,11 +2947,11 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync">, UntypedTreeViewAlpha {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
-    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+    fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
     initialize(content: InsertableField<TSchema>): void;
     isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
     // (undocumented)
@@ -2716,9 +2962,10 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
+    readonly compatibility: SchemaCompatibilityStatusBeta;
+    readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
+    // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
-    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
-    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
 
 // @public @sealed
@@ -2738,6 +2985,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
@@ -2779,21 +3027,35 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
 
 // @alpha
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T>;
+
+// @alpha
 export const UnsafeUnknownSchema: unique symbol;
 
 // @alpha
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @beta @sealed
-export interface UntypedTreeView extends IDisposable {
+export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEventsBeta>;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;
+    // (undocumented)
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsBeta): TransactionValueResult<TValue, TValue>;
+    // (undocumented)
+    runTransaction(transaction: () => void, params?: RunTransactionParamsBeta): TransactionVoidResult;
+    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
+    // (undocumented)
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsBeta): Promise<TransactionValueResult<TValue, TValue>>;
+    // (undocumented)
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsBeta): Promise<TransactionVoidResult>;
+    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
 
 // @alpha @sealed
-export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
+export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransaction" | "runTransactionAsync" | "isView">, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
     readonly branchHistory: TreeBranchHistory;
     computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
@@ -2802,7 +3064,8 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
-    revertTo(revision: CommitRevision): void;
+    readonly locations: TreeLocationResolver;
+    revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
     rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
@@ -2861,6 +3124,12 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 // @public @sealed @system
 export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
+
+// @alpha @sealed
+export interface ViewableTreeAlpha extends ViewableTree {
+    exportSimpleSchema(): SimpleTreeSchema;
+    exportVerbose(): VerboseTree | undefined;
 }
 
 // @alpha

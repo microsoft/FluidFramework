@@ -3,7 +3,7 @@
 # .azurecr.io) and <IMAGE_TAG> with the unique immutable release tag created in README
 # Phase 1. The image is built from source and pushed to ACR.
 #
-# The Cosmos connection string and Redis password are mounted via the Secrets Store CSI driver
+# The Cosmos connection string and Redis access key are mounted via the Secrets Store CSI driver
 # from Key Vault (azure/secretproviderclass.yaml). An init container reads
 # /mnt/secrets/cosmos-connection-string and /mnt/secrets/redis-password and injects them as
 # environment variables at pod startup (see azure/README.md Phase 5). Never commit live keys or
@@ -159,19 +159,19 @@ zookeeper:
 # phase5_helm in azure/deploy.sh for the actual wiring.
 redis:
   url: <REDIS_HOSTNAME>
-  port: 6380
+  port: 10000
   tls: true
 redis2:
   url: <REDIS_HOSTNAME>
-  port: 6380
+  port: 10000
   tls: true
 redisForThrottling:
   url: <REDIS_HOSTNAME>
-  port: 6380
+  port: 10000
   tls: true
 redisForTenantCache:
   url: <REDIS_HOSTNAME>
-  port: 6380
+  port: 10000
   tls: true
 
 # Client access tokens (Fluid JWTs signed with a tenant key).

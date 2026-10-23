@@ -185,9 +185,6 @@ export class DataVisualizerGraph
 		this._disposed = false;
 	}
 
-	/**
-	 * {@inheritDoc IDisposable.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
@@ -357,9 +354,6 @@ export class DataVisualizerGraph
 		}
 	}
 
-	/**
-	 * {@inheritDoc IDisposable.dispose}
-	 */
 	public dispose(): void {
 		if (!this._disposed) {
 			// Dispose visualizer nodes.
@@ -457,9 +451,6 @@ export class VisualizerNode
 		this._disposed = false;
 	}
 
-	/**
-	 * {@inheritDoc IDisposable.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}

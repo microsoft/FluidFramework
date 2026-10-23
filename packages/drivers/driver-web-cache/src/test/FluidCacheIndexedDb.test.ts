@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+// eslint-disable-next-line import-x/no-internal-modules -- fake-indexeddb has no clean API surface
+import FDBFactoryModule from "fake-indexeddb/build/FDBFactory.js";
 import { openDB } from "idb";
 import sinon from "sinon";
 
@@ -16,6 +18,8 @@ import {
 	oldVersionNameMapping,
 } from "../FluidCacheIndexedDb.js";
 import { FluidCacheErrorEvent } from "../fluidCacheTelemetry.js";
+
+const FDBFactory = FDBFactoryModule.default;
 
 class MockLogger {
 	public readonly NamespaceLogger = this;
@@ -40,8 +44,6 @@ describe("getFluidCacheIndexedDbInstance", () => {
 
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
-		// eslint-disable-next-line @typescript-eslint/no-require-imports, import-x/no-internal-modules
-		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 		(window.indexedDB as unknown) = new FDBFactory();
 	});
 

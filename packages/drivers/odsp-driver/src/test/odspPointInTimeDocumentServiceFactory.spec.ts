@@ -5,13 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
-import type {
-	IOdspResolvedUrl,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import {
+	OdspErrorTypes,
+	type IOdspResolvedUrl,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTracker, type ICacheAndTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -48,7 +51,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		} as unknown as IOdspResolvedUrl;
 	}
 
-	function fakeDocumentService(): IDocumentService {
+	function fakeDocumentService(onDispose?: () => void): IDocumentService {
 		const service = {
 			on() {
 				return service;
@@ -56,7 +59,9 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			off() {
 				return service;
 			},
-			dispose() {},
+			dispose() {
+				onDispose?.();
+			},
 		};
 		return service as unknown as IDocumentService;
 	}
@@ -105,10 +110,12 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 	function makeImplementationProps(
 		resolvedUrl: IOdspResolvedUrl,
 		createDocumentService: IOdspPointInTimeDocumentServiceImplementationProps["createDocumentService"],
+		logger?: ITelemetryBaseLogger,
 	): IOdspPointInTimeDocumentServiceImplementationProps {
 		return {
 			resolvedUrl,
 			targetSequenceNumber: 8,
+			...(logger === undefined ? {} : { logger }),
 			persistedCache: new LocalPersistentCache(),
 			getStorageToken,
 			createDocumentService,
@@ -118,6 +125,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 	it("shares one epoch tracker across version selection and both document services", async () => {
 		const resolvedUrl = await makeResolvedUrl();
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
+		const logger = new MockLogger();
 		let versionManagerEpochTracker: EpochTracker | undefined;
 		const manager: IOdspVersionManager = {
 			findBaseForSeq: async (): Promise<BaseForSeq> => ({
@@ -127,14 +135,20 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 					sequenceNumber: 5,
 					lastModifiedDateTime: "2026-01-01T00:00:00Z",
 				},
+				versionsProbed: 2,
+				sequenceNumberFetchCount: 2,
 			}),
 		};
 		const capturedCacheAndTrackers: ICacheAndTracker[] = [];
 		const result = await createPointInTimeDocumentServiceCore(
-			makeImplementationProps(resolvedUrl, async (_url, _logger, cacheAndTracker) => {
-				capturedCacheAndTrackers.push(cacheAndTracker);
-				return fakeDocumentService();
-			}),
+			makeImplementationProps(
+				resolvedUrl,
+				async (_url, _logger, cacheAndTracker) => {
+					capturedCacheAndTrackers.push(cacheAndTracker);
+					return fakeDocumentService();
+				},
+				logger,
+			),
 			{
 				createVersionManager: (_url, _logger, epochTracker) => {
 					versionManagerEpochTracker = epochTracker;
@@ -148,6 +162,100 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedCacheAndTrackers.length, 2);
 		assert.equal(capturedCacheAndTrackers[0], capturedCacheAndTrackers[1]);
 		assert.equal(versionManagerEpochTracker, capturedCacheAndTrackers[0]?.epochTracker);
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:VersionMarkBaseVersionSelection",
+				outcome: "succeeded",
+				versionsProbed: 2,
+				sequenceNumberFetchCount: 2,
+			},
+		]);
+	});
+
+	it("reports classified failures during base-version selection", async () => {
+		const resolvedUrl = await makeResolvedUrl();
+		const logger = new MockLogger();
+		const error = new NonRetryableError(
+			"lineage mismatch",
+			OdspErrorTypes.fileOverwrittenInStorage,
+			{
+				driverVersion: undefined,
+				versionMarkAvailabilityOutcome: "lineageMismatch",
+			},
+		);
+
+		await assert.rejects(
+			createPointInTimeDocumentServiceCore(
+				makeImplementationProps(
+					resolvedUrl,
+					async () => assert.fail("document services must not be created"),
+					logger,
+				),
+				{
+					createVersionManager: () => ({
+						findBaseForSeq: async () => {
+							throw error;
+						},
+					}),
+				},
+			),
+			(candidate) => candidate === error,
+		);
+
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:VersionMarkBaseVersionSelection",
+				category: "error",
+				outcome: "failed",
+				error: "lineage mismatch",
+				errorType: OdspErrorTypes.fileOverwrittenInStorage,
+				availabilityOutcome: "lineageMismatch",
+			},
+		]);
+	});
+
+	it("disposes the recoverable service when live service creation fails", async () => {
+		const resolvedUrl = await makeResolvedUrl();
+		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
+		const liveServiceError = new Error("live service creation failed");
+		let createDocumentServiceCalls = 0;
+		let recoverableDisposeCount = 0;
+
+		await assert.rejects(
+			createPointInTimeDocumentServiceCore(
+				makeImplementationProps(resolvedUrl, async () => {
+					createDocumentServiceCalls++;
+					if (createDocumentServiceCalls === 1) {
+						return fakeDocumentService(() => {
+							recoverableDisposeCount++;
+						});
+					}
+					throw liveServiceError;
+				}),
+				{
+					createVersionManager: () => ({
+						findBaseForSeq: async (): Promise<BaseForSeq> => ({
+							kind: "found",
+							base: {
+								versionId: "42.0",
+								sequenceNumber: 5,
+								lastModifiedDateTime: "2026-01-01T00:00:00Z",
+							},
+							versionsProbed: 2,
+							sequenceNumberFetchCount: 2,
+						}),
+					}),
+					resolveFileVersion: () => recoverableResolvedUrl,
+				},
+			),
+			(error: unknown) => {
+				assert.equal(error, liveServiceError, "the live service error should be preserved");
+				return true;
+			},
+		);
+
+		assert.equal(createDocumentServiceCalls, 2);
+		assert.equal(recoverableDisposeCount, 1);
 	});
 
 	it("preserves routing metadata when resolving a recoverable version", async () => {
@@ -171,6 +279,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 							sequenceNumber: 5,
 							lastModifiedDateTime: "2026-01-01T00:00:00Z",
 						},
+						versionsProbed: 2,
+						sequenceNumberFetchCount: 2,
 					}),
 				}),
 			},
@@ -188,20 +298,34 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			oldestResolvedSeq === undefined ? "" : " and includes the oldest sequence"
 		}`, async () => {
 			const resolvedUrl = await makeResolvedUrl();
+			const logger = new MockLogger();
 			let createDocumentServiceCalls = 0;
 			await assert.rejects(
 				async () =>
 					createPointInTimeDocumentServiceCore(
-						makeImplementationProps(resolvedUrl, async () => {
-							createDocumentServiceCalls++;
-							return fakeDocumentService();
-						}),
+						makeImplementationProps(
+							resolvedUrl,
+							async () => {
+								createDocumentServiceCalls++;
+								return fakeDocumentService();
+							},
+							logger,
+						),
 						{
 							createVersionManager: () => ({
 								findBaseForSeq: async (): Promise<BaseForSeq> =>
 									oldestResolvedSeq === undefined
-										? { kind: "noBaseVersion" }
-										: { kind: "noBaseVersion", oldestResolvedSeq },
+										? {
+												kind: "noBaseVersion",
+												versionsProbed: 0,
+												sequenceNumberFetchCount: 0,
+											}
+										: {
+												kind: "noBaseVersion",
+												oldestResolvedSeq,
+												versionsProbed: 3,
+												sequenceNumberFetchCount: 3,
+											},
 							}),
 						},
 					),
@@ -216,6 +340,17 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 				},
 			);
 			assert.equal(createDocumentServiceCalls, 0);
+			logger.assertMatch([
+				{
+					eventName: "OdspDriver:VersionMarkBaseVersionSelection",
+					category: "error",
+					outcome: "failed",
+					availabilityOutcome: "baseVersionMissing",
+					oldestResolvedSequenceNumber: oldestResolvedSeq,
+					versionsProbed: oldestResolvedSeq === undefined ? 0 : 3,
+					sequenceNumberFetchCount: oldestResolvedSeq === undefined ? 0 : 3,
+				},
+			]);
 		});
 	}
 

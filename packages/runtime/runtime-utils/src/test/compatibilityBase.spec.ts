@@ -20,10 +20,10 @@ import {
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
 	validateMinimumVersionForCollab,
+	isValidMinVersionForCollab,
 	getConfigForMinVersionForCollab,
 	selectVersionRoundedDown,
 } from "../compatibilityBase.js";
-import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	it("cleanedPackageVersion", () => {
@@ -33,18 +33,25 @@ describe("compatibilityBase", () => {
 	// The getConfigsForMinVersionForCollab tests provide a lot of coverage for this function as well.
 	describe("getConfigForMinVersionForCollab", () => {
 		it("minimal", () => {
-			const config = getConfigForMinVersionForCollab("2.2.0", { "1.0.0": "X" });
+			const config = getConfigForMinVersionForCollab("2.2.0", {
+				[lowestMinVersionForCollab]: "X",
+			});
 			assert.equal(config, "X");
 		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
-			const config = { "1.0.0": "A", "1.500.0": "D", "1.58.0": "B", "1.60.0": "C" };
-			assert.equal(getConfigForMinVersionForCollab("1.50.0", config), "A");
-			assert.equal(getConfigForMinVersionForCollab("1.58.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("1.59.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("1.60.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("1.400.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("1.500.0", config), "D");
+			const config = {
+				[lowestMinVersionForCollab]: "A",
+				"2.100.0": "D",
+				"2.58.0": "B",
+				"2.60.0": "C",
+			};
+			assert.equal(getConfigForMinVersionForCollab("2.50.0", config), "A");
+			assert.equal(getConfigForMinVersionForCollab("2.58.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("2.59.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("2.60.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("2.99.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("2.100.0", config), "D");
 		});
 	});
 
@@ -61,19 +68,17 @@ describe("compatibilityBase", () => {
 		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
 				"2.0.0": "a2",
-				"2.0.0-defaults": "a1",
 				"2.50.0": "a4",
 				"2.40.0": "a3",
-				"1.0.0": "a0",
 			},
 			featureB: {
-				"1.0.0": "b1",
+				"2.0.0": "b1",
 				"2.30.0": "b2",
 				"2.60.0": "b4",
 				"2.46.0": "b3",
 			},
 			featureC: {
-				"1.0.0": "c1",
+				"2.0.0": "c1",
 				"2.40.0": "c2",
 				"2.70.0": "c4",
 				"2.50.0": "c3",
@@ -82,18 +87,17 @@ describe("compatibilityBase", () => {
 				"2.46.0": "d3",
 				"2.5.0": "d2",
 				"2.55.0": "d4",
-				"1.0.0": "d1",
+				"2.0.0": "d1",
 			},
 			featureE: {
 				"2.35.0": "e2",
 				"2.73.0": "e4",
 				"2.65.0": "e3",
-				"1.0.0": "e1",
+				"2.0.0": "e1",
 			},
 			featureF: {
-				"1.0.0": 0,
+				"2.0.0": 1,
 				"2.45.0": 2,
-				"1.5.0": 1,
 				"2.71.0": 4,
 				"2.65.0": 3,
 			},
@@ -103,39 +107,6 @@ describe("compatibilityBase", () => {
 			minVersionForCollab: OldestSupportedClientVersion;
 			expectedConfig: ITestConfigMap;
 		}[] = [
-			{
-				minVersionForCollab: "1.0.0",
-				expectedConfig: {
-					featureA: "a0",
-					featureB: "b1",
-					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					featureF: 0,
-				},
-			},
-			{
-				minVersionForCollab: "1.5.0",
-				expectedConfig: {
-					featureA: "a0",
-					featureB: "b1",
-					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					featureF: 1,
-				},
-			},
-			{
-				minVersionForCollab: "2.0.0-defaults",
-				expectedConfig: {
-					featureA: "a1",
-					featureB: "b1",
-					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					featureF: 1,
-				},
-			},
 			{
 				minVersionForCollab: "2.0.0",
 				expectedConfig: {
@@ -354,7 +325,7 @@ describe("compatibilityBase", () => {
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
 			},
 			{
-				minVersionForCollab: "1.0.0",
+				minVersionForCollab: "2.0.0",
 				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
 			},
 		];
@@ -432,46 +403,154 @@ describe("compatibilityBase", () => {
 	});
 
 	describe("minVersionForCollab validation", () => {
+		it("rejects patch versions for major version 3", () => {
+			// Note that these tests can't be covered by the test suite below since some of the details will change as the package version changes.
+			// Thus we test they error here, but not exactly which error message is thrown.
+			const version = "3.0.1";
+			assert.equal(isValidMinVersionForCollab(version), false);
+			assert.throws(
+				() => validateMinimumVersionForCollab(version),
+				(error: Error) => {
+					assert(isFluidError(error));
+					return error.message.startsWith(
+						`Version ${version} is not a valid OldestSupportedClientVersion`,
+					);
+				},
+			);
+		});
+
+		it("rejects prerelease versions", () => {
+			for (const version of ["2.116.1-beta.1", "3.0.0-test"] as const) {
+				assert.equal(isValidMinVersionForCollab(version), false);
+				assert.throws(
+					() => validateMinimumVersionForCollab(version),
+					(error: Error) => {
+						assert(isFluidError(error));
+						return error.message.startsWith(
+							`Version ${version} is not a valid OldestSupportedClientVersion`,
+						);
+					},
+				);
+			}
+		});
+
 		const testCases: {
-			version: OldestSupportedClientVersion;
+			version: SemanticVersion;
 			checks: {
 				isValidSemver: boolean;
 				isGteLowestMinVersion: boolean;
 				isLtePkgVersion: boolean;
+				isValidOldestSupportedClientVersion: boolean;
 			};
 		}[] = [
 			{
-				version: pkgVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				version: cleanedPackageVersion,
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: true,
+				},
 			},
 			{
 				version: lowestMinVersionForCollab,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: true,
+				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "0.0.0" as OldestSupportedClientVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
+				version: "3.999999.1",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+					isValidOldestSupportedClientVersion: false,
+				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "1000000.0.0" as OldestSupportedClientVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
+				version: "3.999999.0-test",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+					isValidOldestSupportedClientVersion: false,
+				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion and is not a valid semver.
-				version: "1.2" as OldestSupportedClientVersion,
-				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
+				version: "2.0.0-defaults",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: false,
+				},
+			},
+			{
+				version: "2.116.1-beta.1",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: false,
+				},
+			},
+			{
+				version: "1.99.0",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: false,
+				},
+			},
+			{
+				version: "0.0.0",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: true,
+					isValidOldestSupportedClientVersion: false,
+				},
+			},
+			{
+				version: "1000000.0.0",
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+					isValidOldestSupportedClientVersion: false,
+				},
+			},
+			{
+				// @ts-expect-error This intentionally exercises runtime validation of an invalid semantic-version shape.
+				version: "1.2",
+				checks: {
+					isValidSemver: false,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: false,
+					isValidOldestSupportedClientVersion: false,
+				},
 			},
 		];
 
 		for (const testCase of testCases) {
 			it(`checkValidMinVersionForCollabVerbose return value for ${testCase.version} matches expected result.`, () => {
-				const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
-					checkValidMinVersionForCollabVerbose(testCase.version);
+				const {
+					isValidSemver,
+					isGteLowestMinVersion,
+					isLtePkgVersion,
+					isValidOldestSupportedClientVersion,
+				} = checkValidMinVersionForCollabVerbose(testCase.version);
 				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
 				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
 				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
+				assert.deepEqual(
+					isValidOldestSupportedClientVersion,
+					testCase.checks.isValidOldestSupportedClientVersion,
+				);
 			});
 		}
 	});

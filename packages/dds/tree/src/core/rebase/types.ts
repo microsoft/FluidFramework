@@ -15,6 +15,7 @@ import * as Type from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -128,7 +129,20 @@ export function taggedOptAtomId(
 }
 
 export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
-	return { ...id, localId: brand(id.localId + offset) };
+	return { ...id, localId: offsetChangesetLocalId(id.localId, offset) };
+}
+
+/**
+ * Offsets a changeset local ID by the specified amount.
+ * @param value - The original changeset local ID.
+ * @param offset - The amount by which to offset the local ID.
+ * @returns The offset changeset local ID.
+ */
+export function offsetChangesetLocalId(
+	value: ChangesetLocalId,
+	offset: number,
+): ChangesetLocalId {
+	return brand(value + offset);
 }
 
 // #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
@@ -164,8 +178,87 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/** The parent of this commit, on whose change this commit's change is based */
+	/**
+	 * The parent of this commit, on whose change this commit's change is based.
+	 * @remarks
+	 * This property is only `undefined` for the trunk base commit, which is the root of the commit graph.
+	 */
 	readonly parent?: GraphCommit<TChange>;
+	/**
+	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
+	 * @remarks
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. This is a tree rather than a single
+	 * object because a commit may be produced by nested transactions.
+	 * @privateRemarks
+	 * Always copy this property when copying a commit.
+	 */
+	readonly customMetadata: CustomMetadataTree | undefined;
+
+	/**
+	 * Indicates whether this commit was trimmed from the history.
+	 * @remarks
+	 * During trunk trimming, this property is set to `true` on all trimmed commits (including the new trunk base).
+	 */
+	readonly wasTrimmed?: true;
+}
+
+/**
+ * A tree representing the nesting structure of transaction metadata.
+ *
+ * @remarks
+ * Each transaction contributes a node whose {@link CustomMetadataTree.metadata} is its
+ * {@link RunTransactionParamsAlpha.customMetadata | metadata} (or `undefined` if none was provided).
+ * When transactions are nested, inner transaction nodes become
+ * {@link CustomMetadataTree.children | children} of outer ones.
+ *
+ * @sealed @alpha
+ */
+export interface CustomMetadataTree {
+	/**
+	 * The metadata supplied by this transaction, or `undefined` if it supplied none.
+	 */
+	readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The metadata trees of any nested transactions within this one.
+	 */
+	readonly children: readonly CustomMetadataTree[];
+}
+
+/**
+ * Flattens a {@link CustomMetadataTree} into a single object.
+ * @remarks
+ * Where two transactions used the same property, the outermost one wins. Among siblings, the later one
+ * wins. Returns `undefined` if no transaction in the tree supplied any metadata.
+ */
+export function flattenCustomMetadata(
+	tree: CustomMetadataTree | undefined,
+): JsonCompatibleReadOnlyObject | undefined {
+	if (tree === undefined) {
+		return undefined;
+	}
+	let flattened: Record<string, JsonCompatibleReadOnly | undefined> | undefined;
+	const visit = (node: CustomMetadataTree): void => {
+		// Descendants first, so that a containing transaction's metadata wins on conflict.
+		for (const child of node.children) {
+			visit(child);
+		}
+		if (node.metadata !== undefined) {
+			flattened ??= {};
+			// `defineProperty` rather than assignment: assigning the valid JSON key "__proto__" would
+			// invoke the inherited setter and set the prototype instead of creating a property.
+			for (const key of Object.keys(node.metadata)) {
+				Object.defineProperty(flattened, key, {
+					value: node.metadata[key],
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			}
+		}
+	};
+	visit(tree);
+	return flattened;
 }
 
 /**
@@ -202,11 +295,8 @@ export interface CommitMetadata {
  * Information about a change that has been applied by the local client.
  * @sealed @alpha
  */
-export interface LocalChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: true;
+export interface LocalChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: true }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for local changes.
@@ -272,16 +362,11 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * ```
 	 */
 	readonly labels: TransactionLabels;
-
-	/**
-	 * Events related to a local change that has been applied.
-	 */
-	readonly events: Listenable<LocalCommitEvents>;
 }
 
 /**
  * Events related to a local commit that has been applied.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface LocalCommitEvents {
 	/**
@@ -297,8 +382,8 @@ export interface LocalCommitEvents {
 	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
 	 * @example Notifying the user of the outcome and allowing them to retry:
 	 * ```typescript
-	 * // Use `asAlpha` API to access the settled event API
-	 * const view = asAlpha(tree.viewWith(config));
+	 * // Use `asBeta` API to access the noChange precondition
+	 * const view = asBeta(tree.viewWith(config));
 	 *
 	 * // Function to clear all contents of the tree, with a precondition that no changes have occurred.
 	 * const clearAllContents = () => {
@@ -380,7 +465,7 @@ export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
 
 /**
  * Details about what changes from a commit were applied or not.
- * @alpha
+ * @beta
  */
 export enum CommitOutcome {
 	/**
@@ -406,8 +491,8 @@ export enum CommitOutcome {
 	 * (and no implicit constraints were violated.)
 	 *
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 *
 	 * The new content may be edited (and potentially inserted) by subsequent commits,
 	 * assuming those commits are not themselves subject to constraint violations.
@@ -428,11 +513,8 @@ export enum CommitOutcome {
  * Information about a change that has been applied by a remote client.
  * @sealed @alpha
  */
-export interface RemoteChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: false;
+export interface RemoteChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: false }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
@@ -456,6 +538,33 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 }
 
 /**
+ * Information about a local or remote change that has been applied.
+ * @remarks
+ * For local changes, use {@link LocalCommitEvents.settled | the settled event} to observe the outcome after sequencing.
+ * See {@link ChangeMetadata} for additional alpha APIs.
+ * @sealed @beta
+ */
+export type ChangeMetadataBeta = CommitMetadata &
+	(
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: true;
+				/**
+				 * Events related to a local change that has been applied.
+				 */
+				readonly events: Listenable<LocalCommitEvents>;
+		  }
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: false;
+		  }
+	);
+
+/**
  * Information about a {@link LocalChangeMetadata | local} or {@link RemoteChangeMetadata | remote} change that has been applied.
  * @sealed @alpha
  */
@@ -473,11 +582,12 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change } = commit;
+	const { revision, change, customMetadata } = commit;
 	return {
 		revision,
 		change,
 		parent,
+		customMetadata,
 	};
 }
 
@@ -487,6 +597,10 @@ export function newChangeAtomIdRangeMap<V>(
 	offsetValue?: (value: V, offset: number) => V,
 ): ChangeAtomIdRangeMap<V> {
 	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetValue);
+}
+
+export function newChangeAtomIdTransform(): ChangeAtomIdRangeMap<ChangeAtomId> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetChangeAtomId);
 }
 
 export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {

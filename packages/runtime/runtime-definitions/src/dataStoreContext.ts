@@ -50,6 +50,7 @@ import type {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary.js";
+import type { IVersionMarkResolver } from "./versionMarks.js";
 
 /**
  * Runtime flush mode handling
@@ -241,6 +242,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
+	/**
+	 * Host-facing resolver for app-stored version mark locators.
+	 */
+	readonly versionMarkResolver: IVersionMarkResolver;
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered

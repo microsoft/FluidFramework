@@ -227,7 +227,7 @@ data:
             }
         },
         "usage": {
-            "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
+            "clientConnectivityCountingEnabled": {{ .Values.usage.clientConnectivityCountingEnabled }},
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }},
             "httpUsageCountingEnabled": {{ .Values.usage.httpUsageCountingEnabled }}
         },

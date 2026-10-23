@@ -57,10 +57,7 @@ export class TinyliciousClient {
 	public constructor(properties?: TinyliciousClientProps) {
 		this.logger = properties?.logger;
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
-		this.urlResolver = new InsecureTinyliciousUrlResolver(
-			properties?.connection?.port,
-			properties?.connection?.domain,
-		);
+		this.urlResolver = new InsecureTinyliciousUrlResolver(properties?.connection);
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
 			properties?.connection?.tokenProvider ?? tokenProvider,
 		);

@@ -5,14 +5,21 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { minimizeModularChangeset } from "../feature-libraries/index.js";
+import {
+	buildForest,
+	fieldKinds,
+	minimizeModularChangeset,
+} from "../feature-libraries/index.js";
 import { ChangeProcessorApplicability } from "../shared-tree-core/index.js";
 import type { TransactionPostProcessor } from "../simple-tree/index.js";
 
-import { mapDataChanges } from "./sharedTreeChangeFamily.js";
+import {
+	mapDataChanges,
+	type SharedTreeChangeProcessingContext,
+} from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
-import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
+import { Breakable } from "../util/index.js";
 
 /**
  * "Minimizes" a {@link SharedTreeChange} so that it contains no extraneous
@@ -40,7 +47,9 @@ function minimizeSharedTreeChange(
 		);
 	}
 	return mapDataChanges(change, (dataChange) =>
-		minimizeModularChangeset(dataChange, context.modularChangeFamily),
+		minimizeModularChangeset(dataChange, fieldKinds, () =>
+			buildForest(new Breakable("minimizeSharedTreeChange")),
+		),
 	);
 }
 

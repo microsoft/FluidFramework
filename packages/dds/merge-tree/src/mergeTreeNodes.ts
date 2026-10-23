@@ -694,13 +694,3 @@ export class CollaborationWindow {
 		};
 	}
 }
-
-/**
- * Compares two numbers.
- */
-export const compareNumbers = (a: number, b: number): number => a - b;
-
-/**
- * Compares two strings.
- */
-export const compareStrings = (a: string, b: string): number => a.localeCompare(b);

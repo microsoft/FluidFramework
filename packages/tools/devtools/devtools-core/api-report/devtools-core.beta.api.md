@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta @sealed @input
+// @beta @input
 export interface ContainerDevtoolsProps extends HasContainerKey {
     readonly container: IContainer;
     readonly containerData?: Record<string, IFluidLoadable>;

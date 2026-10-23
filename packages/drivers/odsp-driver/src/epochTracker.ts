@@ -51,6 +51,7 @@ import {
 	getOdspResolvedUrl,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { copyRequestHeaders, mergeRequestHeaders } from "./requestHeaders.js";
 
 /**
  * @legacy
@@ -100,6 +101,7 @@ export const Odsp409Error = "Odsp409Error";
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
+	private readonly requestHeaders: Readonly<Record<string, string>> | undefined;
 
 	private readonly snapshotCacheExpiryTimeoutMs: number;
 	public readonly rateLimiter: RateLimiter;
@@ -112,8 +114,10 @@ export class EpochTracker implements IPersistedFileCache {
 		protected readonly fileEntry: IFileEntry,
 		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
+		requestHeaders?: Readonly<Record<string, string>>,
 	) {
 		this.loggerInternal = extractTelemetryLoggerExt(logger);
+		this.requestHeaders = copyRequestHeaders(requestHeaders);
 
 		// Limits the max number of concurrent requests to 24.
 		this.rateLimiter = new RateLimiter(24);
@@ -298,6 +302,7 @@ export class EpochTracker implements IPersistedFileCache {
 		const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
 		// Add epoch in fetch request.
 		this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
+		fetchOptions.headers = mergeRequestHeaders(this.requestHeaders, fetchOptions.headers);
 		let epochFromResponse: string | undefined;
 		return this.rateLimiter
 			.schedule(async () => fetcher(url, fetchOptions))
@@ -523,8 +528,9 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		protected readonly fileEntry: IFileEntry,
 		logger: TelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
+		requestHeaders?: Readonly<Record<string, string>>,
 	) {
-		super(cache, fileEntry, toITelemetryLoggerExt(logger), clientIsSummarizer);
+		super(cache, fileEntry, toITelemetryLoggerExt(logger), clientIsSummarizer, requestHeaders);
 		// Handles the rejected promise within treesLatestDeferral.
 		this.treesLatestDeferral.promise.catch(() => {});
 	}
@@ -656,12 +662,14 @@ export function createOdspCacheAndTracker(
 	fileEntry: IFileEntry,
 	logger: TelemetryLoggerExt,
 	clientIsSummarizer?: boolean,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): ICacheAndTracker {
 	const epochTracker = new EpochTrackerWithRedemption(
 		persistedCacheArg,
 		fileEntry,
 		logger,
 		clientIsSummarizer,
+		requestHeaders,
 	);
 	return {
 		cache: {

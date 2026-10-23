@@ -17,6 +17,7 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     protected applyStashedOp(content: unknown): void;
     // (undocumented)
     keys(): string[];
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -40,6 +41,7 @@ export class ConsensusRegisterCollectionFactory implements IChannelFactory<ICons
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
+    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
     // (undocumented)
     static Type: string;

@@ -23,8 +23,6 @@ import {
 	createDetachedLocalReferencePosition,
 	createMap,
 	getSlideToSegoff,
-	maxReferencePosition,
-	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
@@ -60,22 +58,6 @@ function compareSides(sideA: Side, sideB: Side): number {
 	}
 
 	return -1;
-}
-
-function minSide(sideA: Side, sideB: Side): Side {
-	if (sideA === Side.After && sideB === Side.After) {
-		return Side.After;
-	}
-
-	return Side.Before;
-}
-
-function maxSide(sideA: Side, sideB: Side): Side {
-	if (sideA === Side.Before && sideB === Side.Before) {
-		return Side.Before;
-	}
-
-	return Side.After;
 }
 
 const reservedIntervalIdKey = "intervalId";
@@ -230,16 +212,10 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.getIntervalId}
-	 */
 	public getIntervalId(): string {
 		return this.#id;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compare}
-	 */
 	public compare(b: SequenceInterval) {
 		const startResult = this.compareStart(b);
 		if (startResult === 0) {
@@ -262,9 +238,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		}
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compareStart}
-	 */
 	public compareStart(b: SequenceInterval) {
 		this.verifyNotDispose();
 
@@ -277,9 +250,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		return dist;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compareEnd}
-	 */
 	public compareEnd(b: SequenceInterval): number {
 		this.verifyNotDispose();
 
@@ -292,9 +262,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		return dist;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.overlaps}
-	 */
 	public overlaps(b: SequenceInterval) {
 		this.verifyNotDispose();
 
@@ -315,10 +282,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		fail(0xcd8 /* clone not supported on BaseSequenceInterval */);
 	}
 
-	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		fail(0xcd9 /* union not supported on BaseSequenceInterval */);
-	}
-
 	protected verifyNotDispose(): void {
 		// No-op: transient intervals are not disposable.
 	}
@@ -333,9 +296,6 @@ export class SequenceIntervalClass
 		properties: PropertySet;
 	} = { properties: createMap<any>() };
 
-	/**
-	 * {@inheritDoc ISerializableInterval.properties}
-	 */
 	public override get properties(): Readonly<PropertySet> {
 		this.verifyNotDispose();
 		return this.#props.properties;
@@ -432,9 +392,6 @@ export class SequenceIntervalClass
 		}
 	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.serialize}
-	 */
 	public serialize(): ISerializedInterval {
 		this.verifyNotDispose();
 
@@ -478,9 +435,6 @@ export class SequenceIntervalClass
 		} satisfies SerializedIntervalDelta;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.clone}
-	 */
 	public clone(): SequenceIntervalClass {
 		this.verifyNotDispose();
 
@@ -494,44 +448,6 @@ export class SequenceIntervalClass
 			this.properties,
 			this.startSide,
 			this.endSide,
-		);
-	}
-
-	/**
-	 * {@inheritDoc IInterval.union}
-	 */
-	public union(b: SequenceIntervalClass) {
-		this.verifyNotDispose();
-
-		const newStart = minReferencePosition(this.start, b.start);
-		const newEnd = maxReferencePosition(this.end, b.end);
-
-		let startSide: Side;
-
-		if (this.start === b.start) {
-			startSide = minSide(this.startSide, b.startSide);
-		} else {
-			startSide = this.start === newStart ? this.startSide : b.startSide;
-		}
-
-		let endSide: Side;
-
-		if (this.end === b.end) {
-			endSide = maxSide(this.endSide, b.endSide);
-		} else {
-			endSide = this.end === newEnd ? this.endSide : b.endSide;
-		}
-
-		return new SequenceIntervalClass(
-			this.client,
-			uuid(),
-			this.label,
-			newStart,
-			newEnd,
-			this.intervalType,
-			undefined,
-			startSide,
-			endSide,
 		);
 	}
 

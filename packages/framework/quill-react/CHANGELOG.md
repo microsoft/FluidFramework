@@ -1,5 +1,56 @@
 # @fluidframework/quill-react
 
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+### Minor Changes
+
+- The Quill views now use quill-next and no longer need a DOM at import time ([#28318](https://github.com/microsoft/FluidFramework/pull/28318)) [8c7da38b6ad](https://github.com/microsoft/FluidFramework/commit/8c7da38b6ad01791e0535e54281753479f4a5924)
+
+  The Quill-based views now depend on `quill-next` instead of `quill`, and on `@quill-next/delta-es` instead of `quill-delta`.
+  Unlike `quill`, `quill-next` does not access the DOM when it is imported.
+  You no longer need to set up JSDOM before you import this package in Node.js tests or server-side code.
+
+  If your application imports Quill assets, such as theme stylesheets, from `quill`, import them from `quill-next` instead.
+
+## 3.2.0
+
+Dependency updates only.
+
+## 3.1.0
+
+Dependency updates only.
+
+## 3.0.0
+
+### Minor Changes
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
 ## 2.116.0
 
 Dependency updates only.

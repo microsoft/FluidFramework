@@ -88,6 +88,7 @@ website/**/*.mdx
 # Generated
 website/.doc-models
 website/.docusaurus
+website/.generated
 website/build
 website/versions.json
 website/docs/api/*

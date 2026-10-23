@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, skipInProduction } from "@fluidframework/core-utils/internal";
 import {
+	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
+	RebaseValidation,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -13,7 +16,7 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 } from "../../core/index.js";
-import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import { brand, hasSome, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
@@ -32,12 +35,16 @@ import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	newCrossFieldKeyTable,
+	type CrossFieldKey,
+	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldChangeMap,
+	type FieldId,
 	type ModularChangeset,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 
 export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
@@ -274,18 +281,26 @@ export function updateConstraintsForFields(
 	parentInputAttachState: NodeAttachState,
 	constraintState: ConstraintState,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
 	for (const field of fields.values()) {
 		const handler = getChangeHandler(fieldKinds, field.fieldKind);
-		for (const [nodeId, inputIndex, _outputIndex] of handler.getNestedChanges(field.change)) {
-			const isInputDetached = inputIndex === undefined;
+		for (const { nodeId, inputRootId } of handler.getNestedChanges(field.change)) {
+			const isInputDetached = inputRootId !== undefined;
 			const inputAttachState =
 				parentInputAttachState === NodeAttachState.Detached || isInputDetached
 					? NodeAttachState.Detached
 					: NodeAttachState.Attached;
 
-			updateConstraintsForNode(nodeId, inputAttachState, nodes, constraintState, fieldKinds);
+			updateConstraintsForNode(
+				nodeId,
+				inputAttachState,
+				nodes,
+				nodeAliases,
+				constraintState,
+				fieldKinds,
+			);
 		}
 	}
 }
@@ -294,11 +309,11 @@ function updateConstraintsForNode(
 	nodeId: NodeId,
 	inputAttachState: NodeAttachState,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	constraintState: ConstraintState,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
-	const node =
-		nodes.get([nodeId.revision, nodeId.localId]) ?? fail(0xb24 /* Unknown node ID */);
+	const node = nodeChangeFromId(nodes, nodeId, nodeAliases);
 	if (node.nodeExistsConstraint !== undefined) {
 		const isNowViolated = inputAttachState === NodeAttachState.Detached;
 		if (node.nodeExistsConstraint.violated !== isNowViolated) {
@@ -316,6 +331,7 @@ function updateConstraintsForNode(
 			inputAttachState,
 			constraintState,
 			nodes,
+			nodeAliases,
 			fieldKinds,
 		);
 	}
@@ -324,8 +340,337 @@ function updateConstraintsForNode(
 export function nodeChangeFromId(
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	id: NodeId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): NodeChangeset {
-	const node = getFromChangeAtomIdMap(nodes, id);
+	const normalizedId = normalizeNodeId(id, nodeAliases);
+	const node = getFromChangeAtomIdMap(nodes, normalizedId);
 	assert(node !== undefined, 0x9ca /* Unknown node ID */);
 	return node;
+}
+
+/**
+ * @returns The canonical form of nodeId, according to nodeAliases
+ */
+export function normalizeNodeId(
+	nodeId: NodeId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): NodeId {
+	const visited = newChangeAtomIdBTree<true>();
+	let currentId = nodeId;
+
+	while (true) {
+		visited.set([currentId.revision, currentId.localId], true);
+		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
+		if (dealiased === undefined) {
+			return currentId;
+		}
+		assert(!visited.has([dealiased.revision, dealiased.localId]), 0xd42 /* Node alias loop */);
+
+		currentId = dealiased;
+	}
+}
+
+/**
+ * Updates `nodeAliases` so that `alias1` and `alias2` are considered equivalent.
+ * @param nodeAliases - The set of aliases to update.
+ * @param alias1 - The first node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
+ * @param alias2 - The second node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
+ * @returns The normalized ID that both `alias1` and `alias2` map to as a result of unification.
+ */
+export function unifyAliases(
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	alias1: NodeId,
+	alias2: NodeId,
+): NodeId {
+	const normalizedAlias1 = normalizeNodeId(alias1, nodeAliases);
+	const normalizedAlias2 = normalizeNodeId(alias2, nodeAliases);
+	if (!areEqualChangeAtomIds(normalizedAlias1, normalizedAlias2)) {
+		nodeAliases.set([normalizedAlias1.revision, normalizedAlias1.localId], normalizedAlias2);
+	}
+	return normalizedAlias2;
+}
+
+export function makeChangesetInversions(
+	fields: FieldChangeMap,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): { crossFieldKeys: CrossFieldKeyTable; nodeToParent: ChangeAtomIdBTree<FieldId> } {
+	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	const nodeToParent: ChangeAtomIdBTree<FieldId> = newChangeAtomIdBTree();
+	populateInversionsFromFieldMap(
+		fields,
+		undefined,
+		fieldKinds,
+		crossFieldKeys,
+		nodeToParent,
+		nodeAliases,
+	);
+
+	nodes.forEachPair(([revision, localId], node) => {
+		if (node.fieldChanges !== undefined) {
+			populateInversionsFromFieldMap(
+				node.fieldChanges,
+				{
+					revision,
+					localId,
+				},
+				fieldKinds,
+				crossFieldKeys,
+				nodeToParent,
+				nodeAliases,
+			);
+		}
+	});
+
+	return { crossFieldKeys, nodeToParent };
+}
+
+function populateInversionsFromFieldMap(
+	fields: FieldChangeMap,
+	parent: NodeId | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	crossFieldKeys: CrossFieldKeyTable,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): void {
+	for (const [fieldKey, fieldChange] of fields) {
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		for (const { key, count } of handler.getCrossFieldKeys(fieldChange.change)) {
+			crossFieldKeys.set(key, count, { nodeId: parent, field: fieldKey });
+		}
+
+		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
+			nodeToParent.set([normalizedNodeId.revision, normalizedNodeId.localId], {
+				nodeId: parent,
+				field: fieldKey,
+			});
+		}
+	}
+}
+
+export function fieldKindsFromConfiguration(
+	configuration: FieldKindConfiguration,
+): ReadonlyMap<FieldKindIdentifier, FlexFieldKind> {
+	return new Map(Array.from(configuration.values(), ({ kind }) => [kind.identifier, kind]));
+}
+
+export interface ValidationOptions {
+	/**
+	 * When set to true, the cross field table will not be validated.
+	 * @defaultValue `false`
+	 */
+	ignoreCrossFieldTable?: boolean;
+}
+
+export function validateChangeset(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options: ValidationOptions = {},
+): void {
+	const result = isChangesetValid(change, fieldKinds, options);
+	if (result !== true) {
+		throw new Error(`Malformed changeset: ${result}`);
+	}
+}
+
+/**
+ * Debug-only validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns In production builds, always returns `true`.
+ * In debug builds, returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * Using this function over {@link isSharedTreeChangeValid} allows tree-shaking of the validation logic in production builds.
+ */
+export let debugOnlyChangesetValidator: (
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options?: ValidationOptions,
+) => true | string = () => true;
+skipInProduction(() => {
+	debugOnlyChangesetValidator = isChangesetValid;
+});
+
+export function isChangesetValid(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options: ValidationOptions = {},
+): true | string {
+	for (const [revision, localId] of change.nodeChanges.keys()) {
+		if (change.nodeAliases.has([revision, localId])) {
+			return `Node change table contains a non-normalized NodeId key: ${JSON.stringify({ revision, localId })}`;
+		}
+	}
+	for (const [revision, localId] of change.nodeToParent.keys()) {
+		if (change.nodeAliases.has([revision, localId])) {
+			return `Node parentage table contains a non-normalized NodeId key: ${JSON.stringify({ revision, localId })}`;
+		}
+	}
+	const unreachableNodes: ChangeAtomIdBTree<FieldId> = brand(change.nodeToParent.clone());
+
+	const rootFieldResult = validateFieldChanges(
+		change,
+		change.fieldChanges,
+		undefined,
+		fieldKinds,
+		unreachableNodes,
+		options,
+	);
+	if (rootFieldResult !== true) {
+		return rootFieldResult;
+	}
+
+	for (const [[revision, localId], node] of change.nodeChanges.entries()) {
+		if (node.fieldChanges === undefined) {
+			continue;
+		}
+
+		const nodeId: NodeId = { revision, localId };
+		const fieldResult = validateFieldChanges(
+			change,
+			node.fieldChanges,
+			nodeId,
+			fieldKinds,
+			unreachableNodes,
+			options,
+		);
+		if (fieldResult !== true) {
+			return fieldResult;
+		}
+	}
+
+	if (unreachableNodes.size > 0) {
+		return `${unreachableNodes.size} unreachable nodes found`;
+	}
+
+	for (const [revision, localId] of change.nodeChanges.keys()) {
+		if (!change.nodeToParent.has([revision, localId])) {
+			return `Node change table contains unparented NodeId ${JSON.stringify({ revision, localId })}`;
+		}
+	}
+	for (const [revision, localId] of change.nodeToParent.keys()) {
+		if (!change.nodeChanges.has([revision, localId])) {
+			return `Node to parent table contains NodeId with no entry in the node change table: ${JSON.stringify({ revision, localId })}`;
+		}
+	}
+	return true;
+}
+
+/**
+ * Checks that each child and cross field key in each field has a correct entry in
+ * `nodeToParent` or `crossFieldKeyTable`.
+ * @returns `true` if that's the case, otherwise a string describing the validation error.
+ */
+function validateFieldChanges(
+	change: ModularChangeset,
+	fieldChanges: FieldChangeMap,
+	nodeParent: NodeId | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	unreachableNodes: ChangeAtomIdBTree<FieldId>,
+	options: ValidationOptions = {},
+): true | string {
+	for (const [field, fieldChange] of fieldChanges.entries()) {
+		const fieldId = normalizeFieldId({ nodeId: nodeParent, field }, change.nodeAliases);
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
+			const parentFieldId = getFromChangeAtomIdMap(change.nodeToParent, normalizedNodeId);
+			if (parentFieldId === undefined) {
+				return `NodeId ${JSON.stringify(normalizedNodeId)} is missing from the nodeToParent table`;
+			}
+			const normalizedParentFieldId = normalizeFieldId(parentFieldId, change.nodeAliases);
+			if (!areEqualFieldIds(normalizedParentFieldId, fieldId)) {
+				return "Inconsistent node location";
+			}
+
+			if (!unreachableNodes.has([normalizedNodeId.revision, normalizedNodeId.localId])) {
+				return `Node ${JSON.stringify(normalizedNodeId)} is either missing from the nodeToParent table or is reachable in multiple locations`;
+			}
+			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
+		}
+
+		if (!(options.ignoreCrossFieldTable ?? false)) {
+			const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
+			for (const keyRange of keysInChange) {
+				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+				if (!hasSome(fields)) {
+					return `Cross-field key ${JSON.stringify(keyRange.key)} is missing in the cross-field key table`;
+				}
+				if (fields.some((f) => !areEqualFieldIds(f, fieldId))) {
+					return `Cross-field key table is pointing to the wrong field for key ${JSON.stringify(keyRange.key)}`;
+				}
+			}
+
+			// This check is disabled because inserts often cause mismatches between the cross-field key table and the field changeset.
+			// These mismatches are considered harmless, though its possible that other issues left undetected due to this being disabled.
+			// They will be addressed by PR 26206
+			skipInProduction(() => {
+				// This check is linear in the size of the changeset, and can be called linearly many times.
+				// It is therefore only run in strict validation mode
+				if (RebaseValidation.currentLevel === RebaseValidation.Level.Strict) {
+					const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
+					const keysInTable = change.crossFieldKeys
+						.entries()
+						.filter(({ value }) =>
+							areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
+						);
+					const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
+					if (countInChange !== countInTable) {
+						return `Mismatch between cross-field key table and changeset for field ${JSON.stringify(fieldId)}`;
+					}
+				}
+			});
+		}
+	}
+	return true;
+}
+
+/**
+ * Retrieves the normalized field ID of the parent field containing the specified node.
+ * @param changeset - The modular changeset containing the node.
+ * @param nodeId - The ID of the node whose parent field ID is to be retrieved. This ID need not be normalized.
+ * @returns The normalized field ID of the parent field containing the specified node.
+ */
+export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): FieldId {
+	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
+	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
+	assert(parentId !== undefined, 0x9cb /* Parent field should be defined */);
+	return normalizeFieldId(parentId, changeset.nodeAliases);
+}
+
+export function normalizeFieldId(
+	fieldId: FieldId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): FieldId {
+	return fieldId.nodeId === undefined
+		? fieldId
+		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
+}
+
+/**
+ * Retrieves the list of normalized field IDs associated with a given cross-field key.
+ * @param changeset - The modular changeset containing the cross-field key table.
+ * @param key - The cross-field key for which to retrieve the associated fields.
+ * @param count - The number of contiguous IDs to retrieve the fields for.
+ * @returns The list of normalized field IDs where the cross-field key is present.
+ * The same field ID may appear multiple times in the list.
+ */
+export function getFieldsForCrossFieldKey(
+	changeset: ModularChangeset,
+	key: CrossFieldKey,
+	count: number,
+): FieldId[] {
+	const fieldIds: FieldId[] = [];
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+		if (fieldId !== undefined) {
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		}
+	}
+
+	return fieldIds;
+}
+
+function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
+	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }

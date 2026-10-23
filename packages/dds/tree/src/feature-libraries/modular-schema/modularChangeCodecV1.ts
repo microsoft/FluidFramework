@@ -14,17 +14,19 @@ import {
 	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -71,6 +73,11 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import {
+	fieldKindsFromConfiguration,
+	isChangesetValid,
+	nodeChangeFromId,
+} from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -112,14 +119,14 @@ export function encodeFieldChangesForJson(
 	change: FieldChangeMap,
 	context: ChangeEncodingContext,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const fieldContext: FieldChangeEncodingContext = {
 		baseContext: context,
 
 		encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-			const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
-			assert(node !== undefined, 0x92e /* Unknown node ID */);
+			const node = nodeChangeFromId(nodeChanges, nodeId, nodeAliases);
 			return encodeNodeChangesForJson(node, fieldContext, fieldChangesetCodecs);
 		},
 	};
@@ -490,6 +497,7 @@ export function encodeChange(
 			change.fieldChanges,
 			context,
 			change.nodeChanges,
+			change.nodeAliases,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -650,17 +658,21 @@ export function makeModularChangeCodecV1(
 	);
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) =>
-			encodeChange(
+		encode: (change, context) => {
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
-		decode: (encodedChange, context) =>
-			decodeChange(
+			);
+		},
+		decode: (encodedChange, context) => {
+			const decoded = decodeChange(
 				encodedChange,
 				context,
 				fieldKinds,
@@ -668,7 +680,12 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return decoded;
+		},
 	};
 
 	return withSchemaValidation(

@@ -1,0 +1,9 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export default (env) => ({
+	extension: "mjs",
+	mode: env.production ? "production" : "development",
+});

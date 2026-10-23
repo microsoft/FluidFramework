@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type NestedMap, getOrDefaultInNestedMap, setInNestedMap } from "./nestedMap.js";
+import {
+	type NestedMap,
+	getOrDefaultInNestedMap,
+	populateNestedMap,
+	setInNestedMap,
+} from "./nestedMap.js";
 
 export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, true>;
 
@@ -21,4 +26,11 @@ export function nestedSetContains<Key1, Key2>(
 	key2: Key2,
 ): boolean {
 	return getOrDefaultInNestedMap(set, key1, key2, false);
+}
+
+export function populatedNestedSet<Key1, Key2>(
+	source: NestedSet<Key1, Key2>,
+	destination: NestedSet<Key1, Key2>,
+): void {
+	populateNestedMap(source, destination, true);
 }

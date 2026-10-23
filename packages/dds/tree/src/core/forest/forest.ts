@@ -6,7 +6,7 @@
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Breakable } from "../../util/index.js";
+import type { Breakable, WithBreakable } from "../../util/index.js";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
@@ -61,7 +61,7 @@ export interface ForestEvents {
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
-export interface IForestSubscription {
+export interface IForestSubscription extends WithBreakable {
 	/**
 	 * Events for this forest.
 	 */

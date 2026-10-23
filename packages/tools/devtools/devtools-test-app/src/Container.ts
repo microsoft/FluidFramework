@@ -40,17 +40,11 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(AppData.getFactory().type);
 		await dataStore.trySetAlias(collaborativeObjId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,

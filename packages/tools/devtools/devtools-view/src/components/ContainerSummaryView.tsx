@@ -3,28 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Badge,
-	Button,
-	InfoLabel,
-	Table,
-	TableBody,
-	TableCell,
-	TableCellLayout,
-	type TableColumnDefinition,
-	type TableColumnSizingOptions,
-	TableRow,
-	createTableColumn,
-	makeStyles,
-	shorthands,
-	useTableColumnSizing_unstable,
-	useTableFeatures,
+import type {
+	TableColumnDefinition,
+	TableColumnSizingOptions,
 } from "@fluentui/react-components";
-import {
-	Delete20Regular,
-	PlugConnected20Regular,
-	PlugDisconnected20Regular,
-} from "@fluentui/react-icons";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -43,6 +25,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 
 import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -53,6 +36,24 @@ import {
 	userIdTooltipText,
 } from "./TooltipTexts.js";
 import { Waiting } from "./Waiting.js";
+
+const {
+	Badge,
+	Button,
+	InfoLabel,
+	Table,
+	TableBody,
+	TableCell,
+	TableCellLayout,
+	TableRow,
+	createTableColumn,
+	makeStyles,
+	shorthands,
+	useTableColumnSizing_unstable,
+	useTableFeatures,
+} = FluentReactComponents;
+const { Delete20Regular, PlugConnected20Regular, PlugDisconnected20Regular } =
+	FluentReactIcons;
 
 /**
  * {@link ContainerSummaryView} input props.
@@ -110,6 +111,14 @@ interface DataRowProps {
 	columnProps: unknown;
 }
 
+const useDataRowStyles = makeStyles({
+	info: {
+		// Fluent clears inline widths during automatic sizing.
+		width: "max-content",
+		whiteSpace: "normal",
+	},
+});
+
 /**
  * Displays a row with basic stats about the Container.
  *
@@ -117,6 +126,7 @@ interface DataRowProps {
  */
 function DataRow(props: DataRowProps): ReactElement {
 	const { label, infoTooltipContent, value, columnProps } = props;
+	const styles = useDataRowStyles();
 
 	return (
 		<TableRow>
@@ -129,7 +139,20 @@ function DataRow(props: DataRowProps): ReactElement {
 				{infoTooltipContent === undefined ? (
 					<b>{label}</b>
 				) : (
-					<InfoLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
+					<InfoLabel
+						info={{ children: infoTooltipContent, className: styles.info }}
+						infoButton={{
+							popover: {
+								positioning: {
+									position: "below",
+									align: "start",
+									pinned: true,
+									autoSize: true,
+								},
+							},
+						}}
+						style={{ whiteSpace: "nowrap" }}
+					>
 						<b>{label}</b>
 					</InfoLabel>
 				)}

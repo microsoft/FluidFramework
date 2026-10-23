@@ -56,7 +56,7 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCodecBuilder<
 	EditManagerCodecOptions<TChangeset>,
 	SummaryData<TChangeset>,
-	EditManagerEncodingContext,
+	EditManagerEncodingContext<TChangeset>,
 	EditManagerFormatVersion,
 	typeof editManagerCodecName,
 	EditManagerDecodingContext
@@ -64,7 +64,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 	// See EditManagerFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		SummaryData<TChangeset>,
-		EditManagerEncodingContext,
+		EditManagerEncodingContext<TChangeset>,
 		EditManagerFormatVersion,
 		EditManagerCodecOptions<TChangeset>,
 		EditManagerDecodingContext
@@ -106,6 +106,18 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v6,
+				),
+		},
+		{
+			minVersionForCollab: FluidClientVersion.v2_117,
+			formatVersion: EditManagerFormatVersion.v7,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v7),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v7,
 				),
 		},
 		{

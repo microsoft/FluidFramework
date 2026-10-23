@@ -206,6 +206,7 @@ describe("ChildLogger", () => {
 		assert(!sent, "info event should not be sent");
 
 		sent = false;
+		// @ts-expect-error - Testing with undefined logLevel for back-compat.
 		childLogger1.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event with undefined logLevel should be sent");
 	});
@@ -228,6 +229,7 @@ describe("ChildLogger", () => {
 		assert(sent, "verbose event should be sent");
 
 		sent = false;
+		// @ts-expect-error - Testing with undefined logLevel for back-compat.
 		childLogger1.send({ category: "error", eventName: "testEvent" });
 		assert(sent, "event with undefined logLevel should be sent");
 	});
@@ -244,6 +246,7 @@ describe("ChildLogger", () => {
 		};
 		const childLogger1 = createChildLogger({ logger });
 
+		// @ts-expect-error - Testing with undefined logLevel for back-compat.
 		childLogger1.send({ category: "error", eventName: "testEvent" });
 		assert(sent, "event with undefined logLevel should be sent");
 

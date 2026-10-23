@@ -46,6 +46,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
@@ -64,10 +65,13 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidHandleContext(): this;
     readonly ILayerCompatDetails?: unknown;
+    // (undocumented)
     get inStagingMode(): boolean;
     // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
     get isDirty(): boolean;
+    // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
@@ -111,9 +115,12 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 // @beta @legacy
 export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
+    // (undocumented)
     readonly absolutePath: string;
+    // (undocumented)
     attachGraph(): void;
     get(): Promise<any>;
+    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;

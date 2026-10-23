@@ -389,6 +389,7 @@ export interface ILayerIncompatibilityError extends IErrorBase {
     readonly actualDifferenceInMonths: number;
     readonly compatibilityRequirementsInMonths: number;
     readonly details: string;
+    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
     readonly incompatibleLayer: string;
     readonly incompatibleLayerVersion: string;
@@ -472,10 +473,10 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @public
+// @public @input
 export interface ITelemetryBaseLogger {
     minLogLevel?: LogLevel | undefined;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -485,6 +486,7 @@ export interface ITelemetryBaseProperties {
 
 // @beta @legacy
 export interface IThrottlingWarning extends IErrorBase {
+    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;

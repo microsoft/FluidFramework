@@ -6,7 +6,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { assert } from "@fluidframework/core-utils/legacy";
 import {
 	createGroupOp,
 	createRemoveRangeOp,
@@ -122,7 +121,9 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 							nodeStack.push(newNode);
 						} else if (stackType === stackTypeEnd) {
 							const popped = nodeStack.pop();
-							assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
+							if (popped?.type !== nodeType) {
+								throw new Error("NestEnd top-node type has wrong type");
+							}
 						} else {
 							// TODO consolidate the text segment and simple references
 							const nodeJson: IProseMirrorNode = {

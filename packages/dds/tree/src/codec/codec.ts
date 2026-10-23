@@ -29,8 +29,41 @@ export interface IEncoder<TDecoded, TEncoded, TContext> {
 export interface IDecoder<TDecoded, TEncoded, TContext> {
 	/**
 	 * Decodes `obj` from some encoded format.
+	 *
+	 * @param obj - The encoded data to decode.
+	 * @param context - The context required to decode the data.
+	 * @param onError - A callback that receives a description of the invalid data and throws a custom error.
 	 */
-	decode(obj: TEncoded, context: TContext): TDecoded;
+	decode(obj: TEncoded, context: TContext, onError?: DecodeErrorHandler): TDecoded;
+}
+
+/**
+ * Throws a custom error when encoded data cannot be decoded because it is invalid.
+ *
+ * @remarks
+ * Codecs invoke this callback only for recognized invalid input.
+ * Unexpected errors are not passed to this callback.
+ *
+ * When not specified, the default behavior is to assert.
+ * Use with {@link throwDecodeError}.
+ */
+export type DecodeErrorHandler = (message?: string) => never;
+
+/**
+ * Throws an error when encoded data cannot be decoded because it is invalid.
+ *
+ * @remarks
+ * When `onError` is not specified, the default behavior is to assert.
+ *
+ * @param onError - A callback that receives a description of the invalid data and throws a custom error.
+ * @param message - A description of the invalid data.
+ */
+export function throwDecodeError(onError?: DecodeErrorHandler, message?: string): never {
+	onError?.(message);
+	fail(
+		0xac1 /* Data being decoded should validate */,
+		message === undefined ? undefined : () => message,
+	);
 }
 
 /**
@@ -52,7 +85,8 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
  * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
  * In such cases, a format validator can help catch issues.
  *
- * Current options are {@link FormatValidatorNoOp} and {@link FormatValidatorBasic}.
+ * Current options are {@link FormatValidatorNoOp}, {@link FormatValidatorBasic}, and
+ * {@link FormatValidatorInterpreted}.
  * @privateRemarks
  * Implement using {@link toFormatValidator}.
  * Consume using {@link extractJsonValidator}.
@@ -121,7 +155,8 @@ export interface ICodecOptions {
 	 * {@link FormatValidator} which SharedTree uses to validate persisted data it reads & writes
 	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
 	 * @remarks
-	 * See {@link FormatValidatorNoOp} and {@link FormatValidatorBasic} for out-of-the-box implementations.
+	 * See {@link FormatValidatorNoOp}, {@link FormatValidatorBasic}, and
+	 * {@link FormatValidatorInterpreted} for out-of-the-box implementations.
 	 *
 	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
 	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.
@@ -461,11 +496,15 @@ export function withSchemaValidation<
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TDecodeContext): TInMemoryFormat => {
+		decode: (
+			encoded: TValidate,
+			context: TDecodeContext,
+			onError?: DecodeErrorHandler,
+		): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac1 /* Data being decoded should validate */);
+				throwDecodeError(onError, "Encoded data does not match the expected schema.");
 			}
-			return codec.decode(encoded, context);
+			return codec.decode(encoded, context, onError);
 		},
 		encodedSchema: schema,
 	};
@@ -540,6 +579,25 @@ export const FluidClientVersion = {
 	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
 	 */
 	v2_80: "2.80.0",
+
+	/**
+	 * Fluid Framework Client 2.117 and newer.
+	 * @remarks
+	 * New formats introduced in 2.117:
+	 * - MessageFormatVersion.v7 - written when minVersionForCollab \>= 2.117
+	 * - EditManagerFormatVersion.v7 - written when minVersionForCollab \>= 2.117
+	 *
+	 * @privateRemarks
+	 * These formats are gated at 2.117.0 rather than 3.0.0 so that they can also be carried by a
+	 * 2.117.0 minor cut from the last pre-3.0 commit on main, should one be needed for consumers
+	 * that cannot yet absorb the 3.0 breaking changes. Since 3.0.0 \> 2.117.0, 3.x clients select
+	 * these formats for any minVersionForCollab at or above 2.117.0 whether or not that release
+	 * ever ships.
+	 *
+	 * Every client at or above 2.117.0 must therefore be able to read and write these formats. A
+	 * client that maps 2.117.0 to an older format would silently strip metadata when encoding.
+	 */
+	v2_117: "2.117.0",
 } as const satisfies Record<string, OldestSupportedClientVersion>;
 
 /**

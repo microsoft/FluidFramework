@@ -25,6 +25,7 @@ import { directiveToMarkdown } from "mdast-util-directive";
 import path from "path";
 
 import { cleanIgnored } from "../clean-ignored.mjs";
+import { createApiLinkManifest } from "./api-link-manifest.mjs";
 import { layoutContent } from "./api-documentation-layout.mjs";
 
 const generatedContentNotice =
@@ -41,16 +42,35 @@ function isPackage(apiItem) {
 }
 
 /**
- * Generates a documentation suite for the API model saved under `inputDir`, saving the output to `outputDir`.
+ * Generates the Markdown documentation suite and API link manifest for an API model.
  *
- * @param {string} inputDir - The directory path containing the API model to be processed.
- * @param {string} outputDir - The directory path under which the generated documentation suite will be saved.
- * @param {string} uriRootDir - The base for all links between API members.
- * @param {string} apiVersion - The "version" of the API model being processed, represented as a string.
- * E.g. "1", "2", "2.1", etc.
- * Used for some policy decisions, and for logging purposes.
+ * The documentation suite mirrors the configured document hierarchy. Each generated Markdown file includes
+ * Docusaurus front matter and uses `uriRootDir` for links to other API items. Existing generated Markdown under
+ * `outputDir` is removed before rendering, while manually authored files excluded by the cleanup rules are
+ * preserved. Package filters and the other transformation settings in this function determine which API items
+ * appear in the suite.
+ *
+ * The link manifest is generated from the same loaded model and normalized transformation configuration as the
+ * Markdown. It maps each included API item's unscoped package name and qualified API name to its extension-less
+ * document path and, for items rendered as sections, its heading ID. Candidate entries retain the API item kind
+ * and one-based overload index when applicable so callers can resolve declarations that share a name. The
+ * manifest contains relative document targets only; consumers are responsible for applying the version-specific
+ * URI root.
+ *
+ * @param {string} inputDir - The directory containing the API model files to process.
+ * @param {string} outputDir - The directory where the generated Markdown documentation suite will be written.
+ * @param {string} uriRootDir - The version-specific URI root used for links between generated API documents.
+ * @param {string} apiVersion - The API model version, such as "1", "2", or "local". Used for version-specific
+ * generation policy and progress logging.
+ * @param {string} manifestPath - The file path where the generated API link manifest JSON will be written.
  */
-export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersion) {
+export async function renderApiDocumentation(
+	inputDir,
+	outputDir,
+	uriRootDir,
+	apiVersion,
+	manifestPath,
+) {
 	/**
 	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
 	 * @param {string} message - The progress message to log.
@@ -185,6 +205,10 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		logErrorAndRethrow("Encountered error while processing API model", error);
 	}
 
+	// Generate API link manifest for the API model.
+	// This is later written to disk to ensure the Docusaurus build has sufficient information to resolve API links.
+	const apiLinkManifest = createApiLinkManifest(apiModel, config);
+
 	logProgress("Writing API documents to disk...");
 
 	await Promise.all(
@@ -245,6 +269,11 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			}
 		}),
 	);
+
+	// Write API link manifest to disk.
+	logProgress("Writing API link manifest to disk...");
+	await fs.ensureFile(manifestPath);
+	await fs.writeFile(manifestPath, `${JSON.stringify(apiLinkManifest, undefined, 2)}\n`);
 }
 
 /**

@@ -8,7 +8,8 @@
  *
  * Designated checkpoints drive the runtime test matrix. Future / TBD checkpoints are
  * listed below for documentation purposes only. Both sets populate the table in
- * `CompatibilityCheckpoints.md` at the repo root; run
+ * `CompatibilityCheckpoints.md` at the repo root; from a sufficiently built repo
+ * (`pnpm exec fluid-build --task build:esm /test-version-utils$`), run
  * `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions`
  * after any change to regenerate that table (and the compat workspaces).
  *
@@ -102,6 +103,12 @@ export const checkpoints: readonly Checkpoint[] = [
 		lowerBoundVersion: "2.80.0",
 		startDate: "2026-01-06",
 	},
+	{
+		name: "CC#5",
+		index: 5,
+		lowerBoundVersion: "3.0.0",
+		startDate: "2026-09-03",
+	},
 ];
 
 /**
@@ -112,13 +119,6 @@ export const checkpoints: readonly Checkpoint[] = [
  * {@link checkpoints} above (and update its `startDate` to the actual release date).
  */
 const futureCheckpoints: readonly DocumentedCheckpoint[] = [
-	{
-		name: "CC#5",
-		index: 5,
-		lowerBoundVersion: "3.0.0",
-		startDate: "2026-08-24",
-		status: "tbd",
-	},
 	{
 		name: "CC#6",
 		index: 6,
@@ -193,17 +193,28 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 
 /**
  * Returns the prior in-window checkpoints relative to `current` from newest
- * to oldest. May return fewer than `fullCompatibilityWindowSize` entries when `current`
+ * to oldest.
+ *
+ * @param minimumVersion - When provided, checkpoints below this deployed-client
+ * compatibility floor are omitted.
+ *
+ * May return fewer than `fullCompatibilityWindowSize` entries when `current`
  * is near the start of the checkpoint list (e.g., `current === CC#1` returns
- * `[]`).
+ * `[]`) or when older checkpoints fall below `minimumVersion`.
  *
  * @internal
  */
-export function getInWindowPriorCheckpoints(current: Checkpoint): Checkpoint[] {
+export function getInWindowPriorCheckpoints(
+	current: Checkpoint,
+	minimumVersion?: string,
+): Checkpoint[] {
 	const result: Checkpoint[] = [];
 	for (let i = 1; i <= fullCompatibilityWindowSize; i++) {
 		const target = checkpoints.find((c) => c.index === current.index - i);
-		if (target) {
+		if (
+			target !== undefined &&
+			(minimumVersion === undefined || semver.gte(target.lowerBoundVersion, minimumVersion))
+		) {
 			result.push(target);
 		}
 	}

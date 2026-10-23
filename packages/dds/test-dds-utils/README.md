@@ -2,18 +2,18 @@
 
 Utilities for writing unit tests for DDS in Fluid Framework.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
-
+<!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
-**It is not published, and therefore may only be used in packages within the same pnpm workspace in this repo using the [workspace:*](https://pnpm.io/workspaces#workspace-protocol-workspace) schema.**
-**Since this package is not published, it may also only be used as a dev dependency, or as a dependency in packages that are not published.**
+**This package is not published.**
+**Use it only in packages in the same pnpm workspace.**
+**Specify [`workspace:*`](https://pnpm.io/workspaces#workspace-protocol-workspace) as the version.**
+**Use this package only as a development dependency or as a dependency of an unpublished package.**
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 ## Garbage Collection (GC) unit tests
 
@@ -55,6 +55,53 @@ See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
 The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)
 including the reconnect flow.
 
+### Per-client configuration
+
+Set `DDSFuzzModel.factory` to a `DDSFuzzClientFactory` provider to construct clients with different DDS options or package versions.
+You define the configuration values and supply a callback that resolves each value to an `IChannelFactory`.
+The factories must expose a common channel API that your model can use.
+
+Use `generateClientConfiguration(random, client)` to select a configuration with seeded randomness.
+The client context includes `clientId` and `isSummarizer`, so you can give the summarizer a specific configuration.
+Use `getFactory(clientConfiguration)` to resolve the recorded value without making new random choices.
+Configuration values use the same Fluid serialization as other fuzz operations, including support for `IFluidHandle` values.
+Use the same serializable shapes as operation data; a configuration provider must return a value other than `undefined`.
+Do not mutate configurations after they are generated.
+
+For example, a model with an existing workload can select between two compatible factories:
+
+```typescript
+type ClientConfiguration = { version: "current" | "previous" };
+type Factory = typeof currentFactory | typeof previousFactory;
+type State = DDSFuzzTestState<Factory, ClientConfiguration>;
+
+const model: DDSFuzzModel<Factory, Operation, State> = {
+	...existingModel,
+	factory: {
+		generateClientConfiguration: (random, { isSummarizer }) => ({
+			version: isSummarizer ? "current" : random.pick(["current", "previous"]),
+		}),
+		getFactory: ({ version }) =>
+			version === "current" ? currentFactory : previousFactory,
+	},
+};
+```
+
+Your resolver can also construct a factory from options stored in the configuration.
+The provider is the model's factory; no separate default factory is needed.
+For a single configuration, continue to pass an `IChannelFactory` directly as `model.factory`.
+Use `isChannelFactory(model.factory)` to narrow the factory type when integrating a model with code that requires a direct `IChannelFactory`.
+
+The harness records the initial clients in an `initialize` operation.
+It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.
+Each created client exposes its configuration as `client.clientConfiguration`, including in `clientCreate` listeners.
+The `testStart` event occurs once, after the starting clients are created and before the workload generator is created.
+This lifecycle is the same for both factory forms and for replay.
+Rehydration and stash restoration retain the original client's configuration, even if the client gets a new name.
+
+If you pass an `IChannelFactory` directly, the harness omits details about configuration for each client in its operations.
+The same configuration mechanism is available in `SquashFuzzModel`.
+
 ### Future Improvements
 
 The generic aspects of this model could be improved to fuzz test correctness a few other general concerns DDS authors have:
@@ -62,24 +109,24 @@ The generic aspects of this model could be improved to fuzz test correctness a f
 -   Summarization correctness
 -   Offline (`applyStashedOp` implementation)
 
-<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
-
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
--   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
--   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+- Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+- [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+- Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+- [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -87,13 +134,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for?
-Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 
@@ -104,5 +147,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

@@ -12,13 +12,18 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
+export { computeSchemaHash, identifySchemaAlpha } from "./schemaHash.js";
+export { type SchemaIdentity, SchemaIdentityInternal } from "./schemaIdentity.js";
 export type {
 	CommitRevision,
 	ITree,
 	TreeView,
 	ViewableTree,
+	ViewableTreeAlpha,
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
+	SchemaCompatibilityStatusBeta,
+	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
 	UntypedTreeView,
@@ -26,12 +31,23 @@ export type {
 	TreeBranchAlpha,
 	UntypedTreeViewAlpha,
 	TreeBranchEvents,
+	TreeBranchEventsBeta,
 	TreeBranchCommitMetadata,
 	TreeBranchHistory,
+	TreeContextBeta,
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export type {
+	TreeLocation,
+	TextLocationNode,
+	CapturedTreeLocation,
+	TreeGapCaptureOptions,
+	ResolvedTreeLocation,
+	TreeLocationResolution,
+	TreeLocationResolver,
+} from "./locations.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
@@ -107,7 +123,7 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
@@ -155,12 +171,7 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export {
-	borrowCursorFromTreeNodeOrValue,
-	exportConcise,
-	importConcise,
-	TreeBeta,
-} from "./treeBeta.js";
+export { cloneTree } from "./cloneTree.js";
 export type {
 	ArrayNodeDeltaOp,
 	ArrayNodeInsertOp,
@@ -174,7 +185,11 @@ export type {
 	NodeChangedDataTreeDelta,
 	TreeChangeEventsBeta,
 } from "./treeChangeEventsBeta.js";
-export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
+export {
+	createTreeIndex,
+	type TreeIndexKeyFieldSelector,
+	type TreeIndexKey,
+} from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,
@@ -195,6 +210,7 @@ export {
 	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
+	type TransactionConstraintBeta,
 	type TransactionPostProcessor,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,

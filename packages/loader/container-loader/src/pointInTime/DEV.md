@@ -45,6 +45,8 @@ The result is a historical view with these invariants:
 3. `PointInTimeDocumentServiceFactory` adapts that capability to the normal `createDocumentService` call used by container loading, preserving the requested target sequence number.
 4. The driver creates a point-in-time document service:
    - storage serves a recoverable snapshot whose sequence number is at or before the target;
+   - the initial snapshot read bypasses persistent and in-memory prefetched snapshot caches so they
+     cannot replace the selected recoverable snapshot with a newer snapshot;
    - delta storage serves the live document's retained ops, bounded so replay cannot pass the target;
    - the service is storage-only, preventing a live delta-stream connection.
 5. `loadContainerPaused` loads the selected snapshot with automatic op processing disabled and forces the container into read-only mode.
@@ -208,7 +210,7 @@ Detailed ODSP version selection, lineage validation, and bounded replay are docu
 - A newer-than-target snapshot is rejected by `loadContainerPaused`.
 - Missing or trimmed bridging ops fail the load rather than returning a container short of the target.
 - An ODSP epoch mismatch fails non-retryably rather than combining a historical snapshot with ops from a different file lineage.
-- An `AbortSignal` cancels replay, closes the partially loaded container, and rejects the load.
+- An `AbortSignal` cancels replay, disposes the partially loaded container, and rejects the load.
 
 Like normal storage catch-up, retriable network failures may retry for an extended period. Callers that need bounded waiting should supply an `AbortSignal`.
 
@@ -229,7 +231,7 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 
 Loader unit coverage:
 
-- `src/test/loadContainerToSequenceNumber.spec.ts` covers target validation order and the capability error boundary.
+- `src/test/loadContainerToSequenceNumber.spec.ts` covers target validation order, the capability error boundary, lifecycle interruption, listener cleanup, and cancellation with an already-aborted signal.
 - `src/test/pointInTimeServices.spec.ts` covers structural capability detection, target forwarding, argument forwarding, and rejecting container creation through the adapter.
 
 ODSP unit coverage exercises base selection, no-base failures, version URL resolution, bounded delta reads, storage routing, storage-only behavior, and shared epoch/cache construction.
@@ -237,7 +239,9 @@ ODSP unit coverage exercises base selection, no-base failures, version URL resol
 Real-service ODSP coverage lives under [`packages/test/test-end-to-end-tests/src/test/pointInTime/`](../../../../test/test-end-to-end-tests/src/test/pointInTime/):
 
 - `loadToSequenceNumber.spec.ts` covers exact version boundaries, replay to a mid-stream target, and distinct historical targets.
-- `loadSuccess.spec.ts` covers the earliest recoverable state, deterministic repeated loads, a frozen read-only result, and deep-history replay.
+- `loadSuccess.spec.ts` covers the earliest recoverable state, deterministic repeated loads, a
+  first historical load with a newer live snapshot already in persistent cache, a frozen read-only
+  result, and deep-history replay.
 - `epochMismatch.spec.ts` and `loadFailure.spec.ts` cover lineage changes, unavailable ops, malformed targets, and cancellation during replay.
 - `odspVersionApi.spec.ts` verifies the real-service version-history test setup.
 - `pointInTimeTestUtils.ts` supplies the shared counter runtime, summarizer, version-snapshot helpers, and point-in-time load wrapper.
@@ -251,7 +255,10 @@ The following loading behaviors are covered by unit or integration tests, inferr
 1. **Boundary targets:** Load sequence number `0` and the current live tip. Existing successful tests use a non-zero recoverable point and advance the document past the target before loading.
 2. **Complex runtime op representations:** Load across grouped, compressed, and chunked batches, including a large payload that genuinely uses the chunk-reassembly path. The current `SharedCounter` scenarios generate small operations. This is separate from delta-fetch page batching below.
 3. **Attachment and blob state:** Create an attachment or blob-backed handle after the base snapshot, load to a target after its attach op, and verify the historical container can read the expected content.
-4. **Cache and load isolation:** Run concurrent loads to different targets, then perform a normal live load with the same factory credentials. Verify each historical view remains pinned to its own target and no historical snapshot leaks through shared or persisted caches.
+4. **Cache and load isolation:** A first historical load with a newer live snapshot already in the
+   same persistent cache is covered. Still run concurrent loads to different targets, then perform a
+   normal live load with the same factory credentials. Verify each historical view remains pinned to
+   its own target and no historical snapshot leaks through shared or persisted caches.
 5. **Cancellation entry and propagation:** Pass an already-aborted signal and verify no storage work begins. During replay, propagate cancellation through the delta-storage fetch rather than only rejecting the loader's wait promise, and verify retries and network reads stop promptly. The existing cancellation test aborts only after replay has begun and observes that storage retries can continue racing teardown.
 6. **Read-only enforcement:** Attempt a DDS mutation and call `connect()` on the returned historical container, then verify no op is submitted, no live connection is established, and the view does not advance. Existing coverage checks the exposed read-only and disconnected state without attempting either action.
 7. **Mid-load lineage change:** Trigger a file restore after base-version discovery but before or during live-op replay and verify the shared `EpochTracker` rejects the mixed lineage. Existing epoch tests restore before the point-in-time load starts.
@@ -260,7 +267,7 @@ The following loading behaviors are covered by unit or integration tests, inferr
 10. **Complete mark-to-load flow:** Obtain the target from `sealAndCaptureVersionMark()` and `resolve()` rather than reading `deltaManager.lastSequenceNumber`, then load and verify the marked state. The detailed marker scenarios are tracked in the runtime version-mark DEV document.
 11. **Targets inside atomic batches:** Exercise targets on the first, middle, and last sequence number of ordinary multi-op, grouped, compressed, and chunked batches. Runtime batch processing can advance `lastSequenceNumber` to the batch end atomically, so define whether a non-boundary target is rejected or normalized to the batch end; never return a container whose sequence number silently overshot the requested target. Version marks intentionally resolve to a batch's last op and should remain a safe input.
 12. **Protocol and system-op targets:** Load to sequence numbers occupied by attach, summarize/summary-ack, join/leave, and other non-runtime messages. Verify the loader still stops exactly at the requested global sequence number even when the application state does not change at that op.
-13. **Cleanup and error preservation:** Abort, close, or fail delta replay while completion is racing. Verify listeners are removed, the partial container is closed exactly once, and cleanup does not replace the original cancellation or op-availability error. Today `disconnect()` after the container has already closed can surface `"The Container is closed and cannot be disconnected"` and mask the real failure.
+13. **Cleanup and error preservation:** Abort, close, dispose, or fail delta replay while completion is racing. Verify listeners are removed, the partial container is disposed, and cleanup preserves the original cancellation or op-availability error. Loader unit tests cover close and dispose races and cancellation with an already-aborted signal; real-service coverage should exercise the corresponding delta-replay failures.
 14. **Numeric limits:** Reject non-safe sequence numbers, not only negative and fractional values. Driver implementations commonly compute `target + 1` for an exclusive upper bound, so `Number.MAX_SAFE_INTEGER` and nearby values need an explicit contract that cannot lose precision.
 15. **Nested routes and historical code:** Load requests with a data-store path and code hint, and load a target whose document state requires objects or schema introduced at a different code proposal. Verify request routing and code loading remain deterministic for the historical view.
 16. **Resource cleanup on construction failure:** Fail URL resolution, base selection, storage connection, code loading, and delta-storage connection after progressively more resources have been created. Verify every partially created service/container is disposed without masking the initiating error.

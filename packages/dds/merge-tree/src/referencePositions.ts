@@ -104,22 +104,6 @@ export interface ReferencePosition {
 export const DetachedReferencePosition = -1;
 
 /**
- * Finds the minimum reference position.
- * @internal
- */
-export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-	return compareReferencePositions(a, b) < 0 ? a : b;
-}
-
-/**
- * Finds the maximum reference position.
- * @internal
- */
-export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-	return compareReferencePositions(a, b) > 0 ? a : b;
-}
-
-/**
  * Compares two reference positions.
  * @internal
  */

@@ -13,7 +13,7 @@ If you're looking for a reference implementation of the Fluid service, don't loo
 You can build this service by running the following in the /server/routerlicious directory (NOT in this directory):
 
 ```sh
-npm i -g pnpm
+npm i -g pnpm@11.27.0
 pnpm i
 pnpm build
 ```

@@ -86,6 +86,7 @@ SOURCE_SHA="$(jq -r '.resolvedCommitSha' "$SOURCE_FILE")"
 # --- Check out the pinned SHA in the dedicated FluidFramework clone ----------
 ensure_fluid_checkout "$SOURCE_SHA" "$SOURCE_REPO"
 WORKDIR="$FLUID_DIR"
+validate_selfhost_source_compatibility "$WORKDIR"
 
 for svc in "${BUILT_IMAGES[@]}"; do
   [ -f "$WORKDIR/server/$svc/Dockerfile" ] || fail "checkout at $SOURCE_SHA has no server/$svc/Dockerfile."

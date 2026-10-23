@@ -10,9 +10,9 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -27,8 +27,8 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
-	type SchemaCompatibilityStatus,
-	type TreeView,
+	type SchemaCompatibilityStatusBeta,
+	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
@@ -55,52 +55,58 @@ import {
 	type FieldSchema,
 	tryDisposeTreeNode,
 	FieldSchemaAlpha,
-	TreeViewConfigurationAlpha,
+	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchHistory,
+	type TreeLocationResolver,
+	type TreeLocation,
+	type CapturedTreeLocation,
+	type TreeLocationResolution,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	getSchemaCompatibilityError,
+	type ITreeViewConfigurationAlpha,
+	SchemaIdentityInternal,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	isReadonlyArray,
 	type JsonCompatibleReadOnly,
+	throwIfBroken,
 	type WithBreakable,
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
  */
-export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
+export const ViewSlot = anchorSlot<TreeContextAlpha>();
 
-function throwIfSchemaIsIncompatible(
-	compatibility: SchemaCompatibilityStatus,
-	viewSchema: TreeSchema,
-	storedSchema: TreeCheckout["storedSchema"],
-): void {
+function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatusBeta): void {
 	if (compatibility.canView) {
 		return;
 	}
 
-	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
-	const details =
-		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
 	const resolution = compatibility.canInitialize
 		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
 		: compatibility.canUpgrade
 			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
-			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
 	throw new UsageError(
-		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
+		tagSchemaArtifacts({
+			schemaIncompatibilityDetails:
+				compatibility.discrepancies === undefined
+					? undefined
+					: JSON.stringify(compatibility.discrepancies),
+		}),
 	);
 }
 
@@ -122,7 +128,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Undefined if and only if uninitialized or disposed.
 	 */
-	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	private currentCompatibility: SchemaCompatibilityStatusBeta | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -169,26 +175,52 @@ export class SchematizingSimpleTreeView<
 	public readonly breaker: Breakable;
 
 	public constructor(
-		public readonly checkout: TreeCheckout,
+		/**
+		 * The checkout that supplies the tree content and branch operations for the view.
+		 */
+		public readonly checkout: CheckoutBase,
+		/**
+		 * The schema and behavior configuration for the view.
+		 */
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
+		/**
+		 * The manager that generates and stabilizes node identifiers.
+		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
+		/**
+		 * An optional callback to invoke when the view is disposed.
+		 */
 		private readonly onDispose?: () => void,
+		/**
+		 * Whether disposing the view also disposes its checkout.
+		 * Defaults to the checkout's {@link CheckoutBase.disposesWithView} policy.
+		 */
+		private readonly disposeCheckoutOnDispose: boolean = checkout.disposesWithView,
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
-		checkout.forest.anchors.slots.set(ViewSlot, this);
-
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const stagedUpgradePolicy =
-			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
-		const configAlpha = new TreeViewConfigurationAlpha({
-			...config,
-			stagedUpgradePolicy,
-		});
+		// All TreeViewConfigurations are TreeViewConfigurationAlpha
+		const configAlpha = config as TreeViewConfigurationAlpha<ReadSchema<TRootSchema>>;
+
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
+		const identity =
+			configAlpha.schemaIdentity === undefined
+				? undefined
+				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
+		if (identity?.expectedHash !== undefined) {
+			const { expectedHash, schemaHasher: hasher } = identity;
+			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			if (actualHash !== expectedHash) {
+				throw new UsageError(
+					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
+				);
+			}
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
@@ -198,6 +230,7 @@ export class SchematizingSimpleTreeView<
 			canUpgrade: true,
 			isEquivalent: false,
 			canInitialize: true,
+			discrepancies: undefined,
 		};
 		this.currentEnabledUpgrades = new Map();
 		this.update();
@@ -219,7 +252,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.checkout.applySerializedChange(change);
+		this.checkout.applyChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
@@ -240,8 +273,9 @@ export class SchematizingSimpleTreeView<
 			throw new UsageError("Tree cannot be initialized more than once.");
 		}
 
+		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -294,12 +328,19 @@ export class SchematizingSimpleTreeView<
 				);
 			});
 		});
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaInitialized",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
 	}
 
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const upgradePolicy = this.effectiveUpgradePolicy;
+		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -311,7 +352,26 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
+		const schemaHash = this.computeSchemaHash(upgradePolicy);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		if (schemaHash !== undefined) {
+			this.breaker.logger?.sendTelemetryEvent({
+				eventName: "SchemaUpgraded",
+				...tagSchemaArtifacts({ schemaHash }),
+			});
+		}
+	}
+
+	private computeSchemaHash(
+		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
+	): string | undefined {
+		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
+		return identity === undefined
+			? undefined
+			: SchemaIdentityInternal.extract(identity).schemaHasher(
+					this.config.schema,
+					stagedUpgradePolicy,
+				);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -319,6 +379,28 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
+	}
+
+	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
+		const configuredPolicy = this.stagedUpgradePolicy;
+		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
+			return configuredPolicy;
+		}
+		const enabledUpgrades = this.currentEnabledUpgrades;
+		assert(
+			enabledUpgrades !== undefined,
+			0xd3e /* Enabled upgrades must be available for an active view */,
+		);
+		if (enabledUpgrades.size === 0) {
+			return configuredPolicy;
+		}
+
+		return {
+			includeStaged: (upgrade) =>
+				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
+			includeStagedOptional: (upgrade) =>
+				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
+		};
 	}
 
 	/**
@@ -481,7 +563,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
 	 */
-	private computeCompatibility(): SchemaCompatibilityStatus {
+	private computeCompatibility(): SchemaCompatibilityStatusBeta {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
@@ -526,7 +608,7 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get compatibility(): SchemaCompatibilityStatus {
+	public get compatibility(): SchemaCompatibilityStatusBeta {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}
@@ -535,6 +617,7 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		this.disposed = true;
+		this.checkout.disposeLocations();
 		this.disposeFlexView();
 		for (const unregister of this.unregisterCallbacks) {
 			unregister();
@@ -543,19 +626,18 @@ export class SchematizingSimpleTreeView<
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
-		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
-			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
+			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed
+			// when the view is disposed. Multi-view checkouts (BranchCheckout, shared branches) opt out
+			// via `disposesWithView` so that disposing one view does not invalidate the checkout for
+			// other callers.
 			this.checkout.dispose();
 		}
 	}
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		throwIfSchemaIsIncompatible(this.compatibility);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -572,11 +654,7 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		throwIfSchemaIsIncompatible(this.compatibility);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,
@@ -590,31 +668,36 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.fork().viewWith(this.config);
+		return this.checkout.fork().viewWithInternal(this.config, true);
 	}
 
+	@throwIfBroken
 	public rewindTo(revision: string): void {
+		assert(
+			this.checkout instanceof TreeCheckout,
+			"Rewinding requires a checkout that supports branch replacement",
+		);
 		this.checkout.rewindTo(revision);
 	}
 
-	public revertTo(revision: string): void {
-		this.checkout.revertTo(revision);
+	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
+		this.checkout.revertTo(revision, options);
 	}
 
-	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
+	public merge(context: UntypedTreeViewAlpha | CheckoutBase, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: UntypedTreeViewAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha | CheckoutBase): void {
 		this.checkout.rebaseOnto(context);
 	}
 
-	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha | CheckoutBase): boolean {
 		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		context: UntypedTreeViewAlpha,
+		context: UntypedTreeViewAlpha | CheckoutBase,
 	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
@@ -624,4 +707,43 @@ export class SchematizingSimpleTreeView<
 	public get branchHistory(): TreeBranchHistory {
 		return this.checkout.branchHistory;
 	}
+
+	public readonly locations: TreeLocationResolver = (() => {
+		const getCheckout = (): CheckoutBase => {
+			this.ensureUndisposed();
+			return this.checkout;
+		};
+		const checkSchema = (): void => throwIfSchemaIsIncompatible(this.compatibility);
+		// Keep usage errors outside breakingClass's method wrappers, as with the other view helpers.
+		function capture(location: TreeLocation): CapturedTreeLocation;
+		function capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+		function capture(
+			locations: TreeLocation | readonly TreeLocation[],
+		): CapturedTreeLocation | CapturedTreeLocation[] {
+			const checkout = getCheckout();
+			return isReadonlyArray(locations)
+				? checkout.locations.capture(locations)
+				: checkout.locations.capture(locations);
+		}
+
+		function resolve(captured: CapturedTreeLocation): TreeLocationResolution;
+		function resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
+		function resolve(
+			captures: CapturedTreeLocation | readonly CapturedTreeLocation[],
+		): TreeLocationResolution | TreeLocationResolution[] {
+			const checkout = getCheckout();
+			checkSchema();
+			return isReadonlyArray(captures)
+				? checkout.locations.resolve(captures)
+				: checkout.locations.resolve(captures);
+		}
+
+		return {
+			capture,
+			resolve,
+			captureNode: (node) => capture({ kind: "node", node }),
+			captureGap: (node, index, options) =>
+				capture({ kind: "sequence", node, index, ...options }),
+		};
+	})();
 }

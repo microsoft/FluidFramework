@@ -6,18 +6,24 @@
 import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
 
 /**
- * an array of nodes that is guaranteed to have at least one element
+ * A non-empty array of nodes associated with the same key in a {@link TreeIndex}.
+ *
+ * @remarks
+ * This is the input provided to the value-generating callback of {@link (createTreeIndex:1)}.
+ * The callback can use the first node, return all nodes, or otherwise combine nodes that have the same key.
  *
  * @beta
  */
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 /**
- * An index allows lookup content from a tree using keys.
+ * A live, in-memory index for looking up content from a tree by key.
  * @remarks
  * The index will be kept up to date with the {@link UntypedTreeViewAlpha} it is associated with.
  * Keeping an index up to date incurs overhead.
  * Therefore, indexes should only be created when needed and disposed when no longer needed.
+ *
+ * Use {@link (createTreeIndex:1)} to create a custom index, or {@link createIdentifierIndex} to index nodes by identifier.
  * @privateRemarks
  * We have various disposable interfaces. Perhaps this should extend one.
  * Currently all of these indexes are generated on load and exist only in memory (do not persist anything to the document).

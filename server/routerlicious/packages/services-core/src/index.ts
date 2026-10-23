@@ -46,7 +46,7 @@ export type {
 	IScribe,
 	IAdditionalQueryParams,
 } from "./document";
-export type { IDocumentManager } from "./documentManager";
+export type { IDocumentManager, IReadDocumentOptions } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export type {
 	IHttpServer,

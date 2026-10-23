@@ -72,6 +72,11 @@ export {
 	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
+	IVersionMarkResolver,
+	ResolveResult,
+	VersionMarkCapture,
+} from "./versionMarks.js";
+export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,

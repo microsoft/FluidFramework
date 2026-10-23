@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -20,7 +21,6 @@ import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	TreeBeta,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
@@ -269,6 +269,79 @@ describe("array node delta in nodeChanged", () => {
 			assert.equal(deltas.length, 1);
 			assert.notEqual(deltas[0], undefined, "delta should be defined");
 		});
+	});
+
+	// Overlapping range moves must preserve content in both hydrated and unhydrated implementations.
+	// Any emitted delta must replay to that same content, even though notification counts can differ.
+	// Check both event APIs: correct final content alone does not prove that subscribers can replay it.
+	describeHydration("overlapping range moves", (init, hydrated) => {
+		for (const event of ["nodeChanged", "treeChanged"] as const) {
+			it(`preserves content and ${event} deltas when the destination is inside the range`, () => {
+				const initialState = [0, 1, 2, 3, 4, 5];
+				// Only ranges with at least two items contain a strictly interior destination gap.
+				for (let sourceStart = 0; sourceStart < initialState.length; sourceStart++) {
+					for (
+						let sourceEnd = sourceStart + 2;
+						sourceEnd <= initialState.length;
+						sourceEnd++
+					) {
+						for (
+							let destinationGap = sourceStart + 1;
+							destinationGap < sourceEnd;
+							destinationGap++
+						) {
+							const myArray = init(MyArray, initialState);
+							let eventCount = 0;
+							TreeBeta.on(
+								myArray,
+								event,
+								({ delta }: { delta: readonly ArrayNodeDeltaOp[] | undefined }) => {
+									eventCount++;
+									assert(delta !== undefined);
+									// Retains/removes consume the pre-edit sequence; inserts advance only the output.
+									// Insert ops contain counts, not values, so read values from the post-edit array.
+									let preEditIndex = 0;
+									const replayed: number[] = [];
+									for (const op of delta) {
+										switch (op.type) {
+											case "retain": {
+												replayed.push(
+													...initialState.slice(preEditIndex, preEditIndex + op.count),
+												);
+												preEditIndex += op.count;
+												break;
+											}
+											case "remove": {
+												preEditIndex += op.count;
+												break;
+											}
+											case "insert": {
+												replayed.push(
+													...myArray.slice(replayed.length, replayed.length + op.count),
+												);
+												break;
+											}
+											default: {
+												assert.fail("Unexpected array delta operation");
+											}
+										}
+									}
+									assert.deepEqual(replayed, initialState);
+								},
+							);
+							myArray.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+							assert.deepEqual([...myArray], initialState);
+							// Hydrated no-op moves can emit remove/insert ops with no net content change.
+							// Require correct replay above, not an empty delta or matching event counts.
+							// The unhydrated shortcut should avoid emitting events entirely.
+							if (!hydrated) {
+								assert.equal(eventCount, 0);
+							}
+						}
+					}
+				}
+			});
+		}
 	});
 
 	it("delta is defined for a single unbuffered edit", () => {

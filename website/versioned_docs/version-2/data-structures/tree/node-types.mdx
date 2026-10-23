@@ -1,0 +1,40 @@
+---
+title: Node Types
+sidebar_position: 2
+---
+
+Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of the types described below.
+
+## Leaf Nodes
+
+A [leaf](../../api/fluid-framework/nodekind-enum.md#leaf-enummember) holds an atomic value. The available leaf types are:
+
+-   [**boolean**](../../api/fluid-framework/schemastatics-interface.md#boolean-propertysignature): a JavaScript boolean.
+-   [**number**](../../api/fluid-framework/schemastatics-interface.md#number-propertysignature): a JavaScript number, but does not support `-0` (normalized to 0), `NaN`, or `Infinity` (normalized to `null` where allowed).
+-   [**string**](../../api/fluid-framework/schemastatics-interface.md#string-propertysignature): a JavaScript string, but does not support unpaired UTF-16 surrogate pairs.
+-   [**null**](../../api/fluid-framework/schemastatics-interface.md#null-propertysignature): JavaScript `null`.
+-   [**FluidHandle**](../../api/fluid-framework/schemastatics-interface.md#handle-propertysignature): a handle to a Fluid DDS or Data Object. See [Handles](../../concepts/handles.mdx).
+
+## TreeNodes
+
+There are multiple [kinds](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) of [TreeNode](../../api/fluid-framework/treenode-class.md), each of which manage and expose their children differently.
+
+### Object Nodes
+
+An [object node](../../api/fluid-framework/treeobjectnode-typealias.md) has zero or more named child [fields](../../api/fluid-framework/fieldschema-class.md) exposed as properties.
+Different object nodes in the same tree can have different schemas.
+The schema specifies whether each property is
+[required](../../api/fluid-framework/schemastatics-interface.md#required-propertysignature),
+[optional](../../api/fluid-framework/schemastatics-interface.md#optional-propertysignature),
+or an [identifier](../../api/fluid-framework/schemafactory-class.md#identifier-property),
+and which node types are allowed (e.g., a property could allow `number` or `string`).
+
+### Map Nodes
+
+A map node holds zero or more string-keyed values, similar to a JavaScript `Map` with string keys.
+The schema specifies which node types are allowed as values; all keys share the same allowed types and there is no way to constrain individual key names or the number of entries.
+
+### Array Nodes
+
+An array node is an indexed sequence of zero or more values, like a JavaScript array.
+The schema specifies which node types are allowed as items.

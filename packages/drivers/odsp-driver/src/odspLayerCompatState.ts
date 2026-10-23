@@ -40,13 +40,13 @@ export const odspDriverCompatDetailsForLoader: ILayerCompatDetails = {
 export const odspDriverCompatRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Loader must be at to be compatible with this Driver. This is calculated based on the
-	 * LayerCompatibilityPolicyWindowMonths.DriverLoader value which defines how many months old can the Loader layer
-	 * be compared to the Driver layer for them to still be considered compatible.
+	 * LayerCompatibilityPolicyWindowMonths.NewDriverOldLoader value which defines how many months old can the Loader
+	 * layer be compared to the Driver layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
-		generation - LayerCompatibilityPolicyWindowMonths.DriverLoader,
+		generation - LayerCompatibilityPolicyWindowMonths.NewDriverOldLoader,
 	),
 	/**
 	 * The features that the Loader must support to be compatible with this Driver.

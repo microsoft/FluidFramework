@@ -249,7 +249,7 @@ test("the wrapper passes the CLI output through unmodified", () => {
 test("tenant keys travel over kubectl exec, never Pod logs", () => {
 	assert.match(
 		WRAPPER,
-		/k exec "\$POD_NAME" -- node \/app\/bin\/tenant-admin\.js/,
+		/k exec "\$POD_NAME" -- node \/opt\/tenant-admin\/tenant-admin\.cjs/,
 		"the CLI result should be streamed directly to the requesting terminal",
 	);
 	assert.ok(

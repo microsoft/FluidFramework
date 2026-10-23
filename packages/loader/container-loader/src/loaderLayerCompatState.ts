@@ -64,13 +64,14 @@ export const loaderCompatDetailsForDriver: ILayerCompatDetails = {
 export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Runtime must be at to be compatible with this Loader. This is calculated
-	 * based on the LayerCompatibilityPolicyWindowMonths.LoaderRuntime value which defines how many months old can
-	 * the Runtime layer be compared to the Loader layer for them to still be considered compatible.
+	 * based on the LayerCompatibilityPolicyWindowMonths.NewLoaderOldRuntime value which defines how many months
+	 * old can the Runtime layer be compared to the Loader layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
-		loaderCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.LoaderRuntime,
+		loaderCoreCompatDetails.generation -
+			LayerCompatibilityPolicyWindowMonths.NewLoaderOldRuntime,
 	),
 	/**
 	 * The features that the Runtime must support to be compatible with Loader.
@@ -85,13 +86,14 @@ export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirement
 export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Driver must be at to be compatible with this Loader. This is calculated
-	 * based on the LayerCompatibilityPolicyWindowMonths.LoaderDriver value which defines how many months old can
-	 * the Driver layer be compared to the Loader layer for them to still be considered compatible.
+	 * based on the LayerCompatibilityPolicyWindowMonths.NewLoaderOldDriver value which defines how many months
+	 * old can the Driver layer be compared to the Loader layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
-		loaderCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.LoaderDriver,
+		loaderCoreCompatDetails.generation -
+			LayerCompatibilityPolicyWindowMonths.NewLoaderOldDriver,
 	),
 	/**
 	 * The features that the Driver must support to be compatible with Loader.

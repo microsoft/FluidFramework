@@ -253,7 +253,82 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 }
 
+/**
+ * Minimum observed field length for activating a {@link LazySequence} length cache.
+ * @remarks
+ * Computing a field's length can require scanning its chunks.
+ * For small sequences, avoiding that work may not justify allocating cache state and an event subscription.
+ * The threshold limits those costs to larger sequences without adding storage to chunks.
+ * Once activated, caching continues until disposal, even if the sequence shrinks.
+ * This is a heuristic, not a change to the field's length semantics.
+ */
+export const sequenceLengthCacheThreshold = 128;
+
+/**
+ * State retained from activation of a {@link LazySequence} length cache until the field is disposed.
+ * @remarks
+ * Allocated only when the field reaches {@link sequenceLengthCacheThreshold}, to avoid cache and subscription overhead for small sequences.
+ * Invalidating the cached length does not remove the subscription.
+ */
+interface SequenceLengthCache {
+	/**
+	 * The cached field length, or `undefined` if invalidated by a change to the parent's direct children.
+	 * The next length read recomputes and stores the value.
+	 */
+	length: number | undefined;
+	/**
+	 * Unregisters the parent anchor's `childrenChanging` listener when the field is disposed.
+	 */
+	readonly unsubscribe: () => void;
+}
+
 export class LazySequence extends LazyField implements FlexTreeSequenceField {
+	/**
+	 * Length-cache state, or `undefined` if caching has not been activated.
+	 * @remarks
+	 * Each sequence has a property slot, but the cache entry and subscription are allocated only when
+	 * the field reaches {@link sequenceLengthCacheThreshold}, since caching short sequences may cost more than recomputing their lengths.
+	 * An own property avoids a WeakMap lookup on every length read without adding storage to chunks.
+	 * Activated entries and their subscriptions are retained until field disposal, even if the field shrinks.
+	 */
+	private lengthCache: SequenceLengthCache | undefined;
+
+	public override get length(): number {
+		const cached = this.lengthCache;
+		if (cached?.length !== undefined) {
+			return cached.length;
+		}
+
+		const length = super.length;
+		// Detached fields have no parent anchor, and their creation/destruction does not
+		// consistently emit childrenChanging. Leave these (including the root) uncached.
+		if (
+			cached === undefined &&
+			length >= sequenceLengthCacheThreshold &&
+			this.anchor.parent !== undefined
+		) {
+			const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+			assert(parent !== undefined, "A sequence field must have a live parent anchor");
+			const entry: SequenceLengthCache = {
+				length,
+				unsubscribe: parent.events.on("childrenChanging", () => {
+					// Descendant edits may change chunk layout but cannot change this field's length.
+					entry.length = undefined;
+				}),
+			};
+			this.lengthCache = entry;
+		} else if (cached !== undefined) {
+			cached.length = length;
+		}
+		return length;
+	}
+
+	protected override forgetAnchor(): void {
+		this.lengthCache?.unsubscribe();
+		this.lengthCache = undefined;
+		super.forgetAnchor();
+	}
+
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 

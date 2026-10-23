@@ -12,6 +12,7 @@
  *
  * - loading at the earliest recoverable point (the oldest, not just a middle, version),
  * - determinism: loading the same target twice yields identical materialized state,
+ * - first-load correctness when a newer live snapshot is already present in persistent cache,
  * - the returned container's contract: a disconnected, read-only, still-open historical view pinned
  *   exactly at the target sequence number (never advancing to the live tip), and
  * - correctness across a deep history: many versions between the base and the live tip still replay
@@ -28,8 +29,11 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 
+import { TestPersistedCache } from "../../testPersistedCache.js";
+
 import {
 	createPointInTimeTestContext,
+	loadLiveContainerWithPersistedCache,
 	loadPointInTimeContainer,
 	setupPointInTimeSuite,
 	type IPointInTimeTestObject,
@@ -149,6 +153,55 @@ describeCompat(
 				second.value,
 				first.value,
 				"loading the same target twice must yield identical state",
+			);
+		});
+
+		it("loads the target on the first attempt when the persisted cache contains a newer live snapshot", async () => {
+			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
+			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
+
+			await incrementAndSync(2);
+			await snapVersion("base");
+			await incrementAndSync(2);
+			const targetSequenceNumber = container.deltaManager.lastSequenceNumber;
+			const expectedValue = dataObject.value;
+
+			await incrementAndSync(3);
+			await snapVersion("newer-live-snapshot");
+
+			const persistedCache = new TestPersistedCache();
+			const liveContainer = await loadLiveContainerWithPersistedCache(
+				suite.provider(),
+				suite.runtimeFactory(),
+				suite.tracker,
+				ctx.documentId,
+				persistedCache,
+			);
+			assert(
+				liveContainer.deltaManager.initialSequenceNumber > targetSequenceNumber,
+				"the warmed live snapshot must be newer than the historical target",
+			);
+
+			const historicalContainer = await loadPointInTimeContainer(
+				suite.provider(),
+				suite.runtimeFactory(),
+				ctx.documentId,
+				targetSequenceNumber,
+				undefined,
+				undefined,
+				persistedCache,
+			);
+			const historicalObject =
+				(await historicalContainer.getEntryPoint()) as IPointInTimeTestObject;
+			assert.strictEqual(
+				historicalContainer.deltaManager.lastSequenceNumber,
+				targetSequenceNumber,
+				"the first historical load should stop exactly at the target",
+			);
+			assert.strictEqual(
+				historicalObject.value,
+				expectedValue,
+				"the first historical load should ignore the newer cached live state",
 			);
 		});
 

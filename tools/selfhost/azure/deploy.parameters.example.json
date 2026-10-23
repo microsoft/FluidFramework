@@ -15,12 +15,14 @@
 		"name": "myfluidacr"
 	},
 
+	"_aksComment": "tier: free/standard/premium -- standard (the default) adds the Uptime SLA; premium also extends Kubernetes version support lifecycle. nodeOsUpgradeChannel (None/Unmanaged/SecurityPatch/NodeImage) and upgradeChannel (none/patch/stable/rapid) are two separate, easily-confused settings: the former patches only the node OS image, the latter auto-upgrades the Kubernetes version (control plane, then node pools one by one) -- both, when enabled, roll node pools via the same rolling-upgrade/max-surge mechanism. If omitted, deploy.sh defaults nodeOsUpgradeChannel to None and upgradeChannel to none (fully manual), NOT Azure's own defaults (NodeImage / none respectively) -- live testing confirmed an unattended NodeImage rotation on a small node pool with no configured surge capacity can take every node NotReady near-simultaneously. The values below (NodeImage/stable) match a known-good reference deployment's configuration, not a resolution of that surge/headroom risk -- decide based on your own node pool size and configured max-surge, or omit both fields (or set them back to None/none) to keep OS and Kubernetes-version upgrades fully manual.",
 	"aks": {
 		"name": "my-fluid-aks",
 		"location": "",
 		"kubernetesVersion": "1.35",
 		"tier": "standard",
-		"nodeOsUpgradeChannel": "None",
+		"nodeOsUpgradeChannel": "NodeImage",
+		"upgradeChannel": "stable",
 		"osSku": "AzureLinux",
 		"availabilityZones": [1, 2, 3],
 		"systemNodeVmSize": "Standard_D8as_v5",
@@ -51,11 +53,8 @@
 	"redis": {
 		"clusterName": "my-fluid-redis",
 		"location": "",
-		"sku": "Premium",
-		"vmSize": "p1",
-		"version": "6.0",
-		"replicasPerMaster": 3,
-		"zones": [1, 2, 3]
+		"sku": "Balanced_B5",
+		"highAvailability": "Enabled"
 	},
 
 	"storage": {
@@ -83,7 +82,7 @@
 		"responseTimeoutSeconds": 240
 	},
 
-	"_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
+	"_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Azure Managed Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
 	"network": {
 		"vnetName": "",
 		"addressSpace": "10.20.0.0/16",

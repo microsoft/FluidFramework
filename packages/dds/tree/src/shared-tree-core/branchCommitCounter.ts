@@ -96,7 +96,7 @@ export class BranchCommitCounter<
 
 		assert(
 			this.cachedCommitCount >= trimmedRevisions.length,
-			"Trimmed more commits than exist in the branch",
+			0xd35 /* Trimmed more commits than exist in the branch */,
 		);
 		this.cachedCommitCount = this.cachedCommitCount - trimmedRevisions.length;
 	};

@@ -151,7 +151,7 @@ export class UnhydratedFlexTreeNode
 		/**
 		 * The {@link Context} for this node.
 		 * @remarks
-		 * Provides access to all schema reachable from this node.
+		 * Provides access to all schemas reachable from this node.
 		 * See {@link getUnhydratedContext}.
 		 */
 		public readonly simpleContext: Context,
@@ -652,6 +652,10 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
+				// A destination gap inside the moved range leaves the sequence unchanged.
+				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+					return;
+				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
@@ -684,7 +688,11 @@ export class UnhydratedSequenceField
 		if (i === undefined) {
 			return undefined;
 		}
-		return this.unboxed(i);
+		return this.atIndex(i);
+	}
+
+	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		return this.unboxed(index);
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -698,6 +706,8 @@ export class UnhydratedSequenceField
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
  * @remarks
+ * The destination gap must not be strictly inside the moved range.
+ *
  * Forward move (`sourceIndex < destIndex`):
  * `[retain(src), detach(n), retain(mid), attach(n)]`
  *

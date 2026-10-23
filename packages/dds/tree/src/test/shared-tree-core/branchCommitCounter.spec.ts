@@ -9,7 +9,7 @@ import {
 	type BranchTrimmingEvents,
 	SharedTreeBranch,
 } from "../../shared-tree-core/index.js";
-import type { GraphCommit, RevisionTag } from "../../core/index.js";
+import { CommitKind, type GraphCommit, type RevisionTag } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeProcessingContext,
@@ -36,22 +36,24 @@ function mintCommit(revision?: RevisionTag): GraphCommit<DefaultChangeset> {
 	return {
 		change: defaultChangeFamily.rebaser.compose([]),
 		revision: revision ?? mintRevisionTag(),
+		customMetadata: undefined,
 	};
 }
 
 function createBranch(
 	branchTrimmer?: ReturnType<typeof createEmitter<BranchTrimmingEvents>>,
 ): DefaultBranch {
-	return new SharedTreeBranch(
+	const branch = new SharedTreeBranch(
 		mintCommit("root"),
 		defaultChangeFamily,
 		mintRevisionTag,
-		branchTrimmer,
 	);
+	branch.trimmer = branchTrimmer;
+	return branch;
 }
 
 function edit(branch: DefaultBranch): void {
-	branch.apply(mintCommit());
+	branch.apply(mintCommit(), CommitKind.Default, undefined);
 }
 
 describe("BranchCommitCounter", () => {

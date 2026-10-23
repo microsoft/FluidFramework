@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Tree as FluentTree } from "@fluentui/react-components";
 import {
 	GetRootDataVisualizations,
 	type HasContainerKey,
@@ -15,10 +14,13 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { Waiting } from "./Waiting.js";
 import { TreeDataView } from "./data-visualization/index.js";
+
+const { Tree: FluentTree } = FluentReactComponents;
 
 const loggingContext = "INLINE(VIEW)";
 

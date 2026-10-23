@@ -74,9 +74,6 @@ export class DeltaFactory implements IChannelFactory {
 		return DeltaFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,

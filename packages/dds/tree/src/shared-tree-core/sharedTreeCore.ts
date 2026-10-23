@@ -30,6 +30,7 @@ import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../c
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
@@ -543,6 +544,11 @@ export class SharedTreeCore<
 		return this.editManager.getLocalBranch("main");
 	}
 
+	/** Gets the head of the main branch's sequenced trunk. */
+	public getTrunkHead(): GraphCommit<TChange> {
+		return this.editManager.getTrunkHead("main");
+	}
+
 	public getSharedBranchIds(): string[] {
 		return this.editManager
 			.getSharedBranchIds()
@@ -669,10 +675,12 @@ export class SharedTreeCore<
 		switch (type) {
 			case "commit": {
 				const {
-					commit: { revision, change },
+					commit: { revision, change, customMetadata },
 					branchId,
 				} = message;
-				this.editManager.getLocalBranch(branchId).apply({ change, revision });
+				this.editManager
+					.getLocalBranch(branchId)
+					.apply({ change, revision }, CommitKind.Default, customMetadata);
 				break;
 			}
 			case "branch": {

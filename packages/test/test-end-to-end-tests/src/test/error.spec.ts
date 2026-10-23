@@ -126,6 +126,12 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider, apis) => {
 			(await cache?.get?.(cacheFileEntry)) !== undefined,
 			"create container should have cached the snapshot",
 		);
+		provider.tracker?.registerExpectedEvent({
+			eventName: "fluid:telemetry:Container:ContainerClose",
+			error: "Injected error",
+			errorType: ContainerErrorTypes.genericError,
+			category: "error",
+		});
 		try {
 			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 				provider.documentServiceFactory,

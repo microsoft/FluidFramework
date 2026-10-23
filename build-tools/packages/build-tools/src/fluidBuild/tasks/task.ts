@@ -116,12 +116,14 @@ export abstract class Task {
 			return this._transitiveDependentLeafTasks;
 		} catch (e) {
 			if (Array.isArray(e)) {
+				// The thrown value is the dependency chain being unrolled (see `throw [this]` above).
+				const dependencyChain = e as Task[];
 				// Add to the dependency chain
-				e.push(this);
-				if (e[0] === this) {
+				dependencyChain.push(this);
+				if (dependencyChain[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency in dependent tasks: ${e
+						`Circular dependency in dependent tasks: ${dependencyChain
 							.map((v) => v.nameColored)
 							.join("->")}`,
 					);

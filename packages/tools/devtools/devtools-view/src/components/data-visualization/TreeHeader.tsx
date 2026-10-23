@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
-import { Info20Regular } from "@fluentui/react-icons";
 import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useContext } from "react";
 
+import { FluentReactComponents, FluentReactIcons } from "../../FluentUi.cjs";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
 import { ToolTipContentsView } from "./ToolTipContentsView.js";
+
+const { Tooltip, makeStyles, tokens } = FluentReactComponents;
+const { Info20Regular } = FluentReactIcons;
 
 /**
  * Input props to {@link TreeHeader}
@@ -93,6 +95,7 @@ export function TreeHeader(props: TreeHeaderProps): ReactElement {
 						className: styles.tooltip,
 					}}
 					relationship="description"
+					positioning={{ position: "below", align: "start", pinned: true }}
 				>
 					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>

@@ -13,9 +13,9 @@ import {
 	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
-import Quill from "quill";
-import type { Op } from "quill-delta";
+} from "@fluidframework/tree/alpha";
+import Quill from "quill-next";
+import type { Op } from "@quill-next/delta-es";
 import { type FC, useEffect, useReducer, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
@@ -189,7 +189,7 @@ const TextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) =
 							quillPos += utf16Count;
 						}
 					}
-					quill.updateContents({ ops: quillOps }, "api");
+					quill.updateContents(quillOps, "api");
 				}
 			});
 			// Refresh undo/redo button state.
