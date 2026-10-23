@@ -16,20 +16,26 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
-export const lowestMinVersionForCollab =
+export const oldestSupportedClientVersionFloor =
 	"2.0.0" as const satisfies OldestSupportedClientVersion;
+
+/**
+ * Compatibility alias for {@link oldestSupportedClientVersionFloor}.
+ * @internal
+ */
+export const lowestMinVersionForCollab = oldestSupportedClientVersionFloor;
 
 /**
  * Default oldest supported client for APIs that still permit the setting to be omitted.
  *
  * @remarks
- * This aliases {@link lowestMinVersionForCollab} in Client 3.0. Remove this fallback when
+ * This aliases {@link oldestSupportedClientVersionFloor} in Client 3.0. Remove this fallback when
  * customer-facing APIs require `oldestSupportedClient` in Client 3.10.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27180}.
  *
  * @internal
  */
-export const defaultMinVersionForCollab = lowestMinVersionForCollab;
+export const defaultOldestSupportedClient = oldestSupportedClientVersionFloor;
 
 /**
  * String in a valid semver format specifying the bottom of a minor version.
@@ -60,7 +66,7 @@ export type SemanticVersion =
  * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
  * that does not exceed the given {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}.
  *
- * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}.
+ * Use {@link getConfigsForOldestSupportedClient} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}.
  *
  * See the remarks on {@link MinimumMinorSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
  * @internal
@@ -72,18 +78,18 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 /**
  * Entry in {@link ConfigMap} associating {@link MinimumMinorSemanticVersion} with configuration values that became supported in that version.
  * @remarks
- * All entries must at least provide an entry for {@link lowestMinVersionForCollab}.
+ * All entries must at least provide an entry for {@link oldestSupportedClientVersionFloor}.
  * @internal
  */
 export interface ConfigMapEntry<T> {
 	// This index signature (See https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures) requires all properties on this type to to have keys that are a MinimumMinorSemanticVersion and values of type T.
 	// Note that the "version" part of this syntax is really just documentation and has no impact on the type checking (other than some identifier being required to the syntax here to differentiate it from the computed property syntax).
 	[version: MinimumMinorSemanticVersion]: T;
-	// Require an entry for lowestMinVersionForCollab:
+	// Require an entry for oldestSupportedClientVersionFloor:
 	// this ensures that every supported deployed-client version has a specified value in the ConfigMap.
 	// Note that this is NOT an index signature.
 	// This is a regular property with a computed name (See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names).
-	[lowestMinVersionForCollab]: T;
+	[oldestSupportedClientVersionFloor]: T;
 }
 
 /**
@@ -96,23 +102,23 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
 };
 
 /**
- * Returns a default configuration given minVersionForCollab and configuration version map.
+ * Returns a default configuration given oldestSupportedClient and configuration version map.
  *
  * @privateRemarks
  * The extra `Record` type for the `configMap` is just used to allow the body of this function to be more type-safe due to limitations of generic types in TypeScript.
  * It should have no impact on the user of this function.
  * @internal
  */
-export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
-	minVersionForCollab: OldestSupportedClientVersion,
+export function getConfigsForOldestSupportedClient<T extends Record<SemanticVersion, unknown>>(
+	oldestSupportedClient: OldestSupportedClientVersion,
 	configMap: ConfigMap<T> & Record<keyof T, unknown>,
 ): T {
-	validateMinimumVersionForCollab(minVersionForCollab);
+	validateOldestSupportedClient(oldestSupportedClient);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {
-		defaultConfigs[key] = getConfigForMinVersionForCollab(
-			minVersionForCollab,
+		defaultConfigs[key] = getConfigForOldestSupportedClient(
+			oldestSupportedClient,
 			config as ConfigMapEntry<unknown>,
 		);
 	}
@@ -121,24 +127,24 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 }
 
 /**
- * Returns a default configuration given minVersionForCollab and {@link ConfigMapEntry}.
+ * Returns a default configuration given oldestSupportedClient and {@link ConfigMapEntry}.
  *
  * @internal
  */
-export function getConfigForMinVersionForCollab<T>(
-	minVersionForCollab: OldestSupportedClientVersion,
+export function getConfigForOldestSupportedClient<T>(
+	oldestSupportedClient: OldestSupportedClientVersion,
 	config: ConfigMapEntry<T>,
 ): T {
-	return getConfigForMinVersionForCollabIterable(
-		minVersionForCollab,
+	return getConfigForOldestSupportedClientIterable(
+		oldestSupportedClient,
 		Object.entries(config) as [MinimumMinorSemanticVersion, T][],
 	);
 }
 
 /**
- * Returns a default configuration given minVersionForCollab and the contents of a {@link ConfigMapEntry} in an Iterable.
+ * Returns a default configuration given oldestSupportedClient and the contents of a {@link ConfigMapEntry} in an Iterable.
  * @remarks
- * See also {@link getConfigForMinVersionForCollab} for consuming a ConfigMapEntry directly.
+ * See also {@link getConfigForOldestSupportedClient} for consuming a ConfigMapEntry directly.
  *
  * `ConfigMapEntry` is a nice type safe format for developers to directly author this data,
  * but it is messy and less type safe to work with it in this format programmatically.
@@ -146,33 +152,33 @@ export function getConfigForMinVersionForCollab<T>(
  * like cases which transform a ConfigMapEntry before selecting a value from it.
  * @internal
  */
-export function getConfigForMinVersionForCollabIterable<T>(
-	minVersionForCollab: OldestSupportedClientVersion,
-	entries: Iterable<readonly [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T]>, // [[typeof lowestMinVersionForCollab, T], ...[OldestSupportedClientVersion, T][]],
+export function getConfigForOldestSupportedClientIterable<T>(
+	oldestSupportedClient: OldestSupportedClientVersion,
+	entries: Iterable<readonly [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T]>, // [[typeof oldestSupportedClientVersionFloor, T], ...[OldestSupportedClientVersion, T][]],
 ): T {
 	// Validate and strongly type the versions from the configMap.
 	const versions: [OldestSupportedClientVersion, T][] = Array.from(
 		entries,
 		([version, value]) => {
-			validateMinimumVersionForCollab(version);
+			validateOldestSupportedClient(version);
 			return [version, value];
 		},
 	);
-	return (selectVersionRoundedDown(minVersionForCollab, versions) ??
+	return (selectVersionRoundedDown(oldestSupportedClient, versions) ??
 		fail(0xcb8 /* No config map entry for version */))[1];
 }
 
 /**
- * Finds the entry for the highest version that is less than or equal to the provided minVersionForCollab.
+ * Finds the entry for the highest version that is less than or equal to the provided oldestSupportedClient.
  * @remarks
  * If none is found, returns undefined.
  *
- * When used with Fluid client versions, use the stricter {@link getConfigForMinVersionForCollabIterable} instead.
+ * When used with Fluid client versions, use the stricter {@link getConfigForOldestSupportedClientIterable} instead.
  *
  * @internal
  */
 export function selectVersionRoundedDown<T>(
-	minVersionForCollab: string,
+	oldestSupportedClient: string,
 	entries: Iterable<readonly [string, T]>,
 	compareVersions: (a: string, b: string) => number = compare,
 ): readonly [string, T] | undefined {
@@ -180,11 +186,11 @@ export function selectVersionRoundedDown<T>(
 	const versions: (readonly [string, T])[] = [...entries];
 	versions.sort((a, b) => compareVersions(b[0], a[0]));
 
-	// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
+	// For each config, we iterate over the keys and check if oldestSupportedClient is greater than or equal to the version.
 	// If so, we set it as the default value for the option.
 	for (const pair of versions) {
 		const [version, _] = pair;
-		if (compareVersions(minVersionForCollab, version) >= 0) {
+		if (compareVersions(oldestSupportedClient, version) >= 0) {
 			return pair;
 		}
 	}
@@ -192,23 +198,25 @@ export function selectVersionRoundedDown<T>(
 }
 
 /**
- * Returns detailed information about the validity of a minVersionForCollab.
- * @param minVersionForCollab - The minVersionForCollab to validate.
+ * Returns detailed information about the validity of a oldestSupportedClient.
+ * @param oldestSupportedClient - The oldestSupportedClient to validate.
  * @returns An object containing the validity information.
  *
  * @internal
  */
-export function checkValidMinVersionForCollabVerbose(minVersionForCollab: SemanticVersion): {
+export function checkValidOldestSupportedClientVerbose(
+	oldestSupportedClient: SemanticVersion,
+): {
 	isValidSemver: boolean;
 	isGteLowestMinVersion: boolean;
 	isLtePkgVersion: boolean;
 	isValidOldestSupportedClientVersion: boolean;
 } {
-	const parsed = parse(minVersionForCollab);
+	const parsed = parse(oldestSupportedClient);
 	const isValidSemver = parsed !== null && parsed.build.length === 0;
 	const isGteLowestMinVersion =
-		isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab);
-	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, cleanedPackageVersion);
+		isValidSemver && gte(oldestSupportedClient, oldestSupportedClientVersionFloor);
+	const isLtePkgVersion = isValidSemver && lte(oldestSupportedClient, cleanedPackageVersion);
 	const isValidOldestSupportedClientVersion =
 		isGteLowestMinVersion &&
 		isLtePkgVersion &&
@@ -224,15 +232,59 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 }
 
 /**
- * Checks if the minVersionForCollab is valid.
- * A valid minVersionForCollab is a OldestSupportedClientVersion that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
+ * Compatibility alias for {@link defaultOldestSupportedClient}.
+ * @internal
+ */
+export const defaultMinVersionForCollab = defaultOldestSupportedClient;
+
+/**
+ * Compatibility alias for {@link getConfigsForOldestSupportedClient}.
+ * @internal
+ */
+export const getConfigsForMinVersionForCollab = getConfigsForOldestSupportedClient;
+
+/**
+ * Compatibility alias for {@link getConfigForOldestSupportedClient}.
+ * @internal
+ */
+export const getConfigForMinVersionForCollab = getConfigForOldestSupportedClient;
+
+/**
+ * Compatibility alias for {@link getConfigForOldestSupportedClientIterable}.
+ * @internal
+ */
+export const getConfigForMinVersionForCollabIterable =
+	getConfigForOldestSupportedClientIterable;
+
+/**
+ * Compatibility alias for {@link isValidOldestSupportedClient}.
+ * @internal
+ */
+export const isValidMinVersionForCollab = isValidOldestSupportedClient;
+
+/**
+ * Compatibility alias for {@link validateOldestSupportedClient}.
+ * @internal
+ */
+export const validateMinimumVersionForCollab: typeof validateOldestSupportedClient =
+	validateOldestSupportedClient;
+
+/**
+ * Compatibility alias for {@link configValueToOldestSupportedClient}.
+ * @internal
+ */
+export const configValueToMinVersionForCollab = configValueToOldestSupportedClient;
+
+/**
+ * Checks if the oldestSupportedClient is valid.
+ * A valid oldestSupportedClient is a OldestSupportedClientVersion that is at least `oldestSupportedClientVersionFloor` and less than or equal to the current package version.
  *
  * @internal
  */
-export function isValidMinVersionForCollab(
-	minVersionForCollab: SemanticVersion,
-): minVersionForCollab is OldestSupportedClientVersion {
-	return checkValidMinVersionForCollabVerbose(minVersionForCollab)
+export function isValidOldestSupportedClient(
+	oldestSupportedClient: SemanticVersion,
+): oldestSupportedClient is OldestSupportedClientVersion {
+	return checkValidOldestSupportedClientVerbose(oldestSupportedClient)
 		.isValidOldestSupportedClientVersion;
 }
 
@@ -247,7 +299,7 @@ export function isValidMinVersionForCollab(
  * {@link @fluidframework/driver-definitions#featureVersion}.
  *
  * @privateRemarks
- * This value is validated against {@link validateMinimumVersionForCollab} by a test.
+ * This value is validated against {@link validateOldestSupportedClient} by a test.
  *
  * @internal
  */
@@ -266,21 +318,21 @@ export const cleanedPackageVersion = featureVersion(
  *
  * @internal
  */
-export function validateMinimumVersionForCollab(
+export function validateOldestSupportedClient(
 	semanticVersion: string,
 ): asserts semanticVersion is OldestSupportedClientVersion {
-	const minVersionForCollab = semanticVersion as OldestSupportedClientVersion;
+	const oldestSupportedClient = semanticVersion as OldestSupportedClientVersion;
 	const {
 		isValidSemver,
 		isGteLowestMinVersion,
 		isLtePkgVersion,
 		isValidOldestSupportedClientVersion,
-	} = checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	} = checkValidOldestSupportedClientVerbose(oldestSupportedClient);
 
 	if (!isValidOldestSupportedClientVersion) {
 		throw new UsageError(
-			`Version ${minVersionForCollab} is not a valid OldestSupportedClientVersion. ` +
-				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
+			`Version ${oldestSupportedClient} is not a valid OldestSupportedClientVersion. ` +
+				`It must be in a valid semver format, at least ${oldestSupportedClientVersionFloor}, ` +
 				`less than or equal to the current package version ${cleanedPackageVersion}, ` +
 				`have no prerelease component, and use patch version 0 for major version 3 and later. ` +
 				`Use "featureVersion" to normalize a package version to the correct format. ` +
@@ -293,7 +345,7 @@ export function validateMinimumVersionForCollab(
  * Validates the given `overrides`.
  *
  * Checks that for keys which are in both the `validationMap` and the `overrides`,
- * that the `validationMap` function for that key either returns undefined or a version less than or equal to `minVersionForCollab`.
+ * that the `validationMap` function for that key either returns undefined or a version less than or equal to `oldestSupportedClient`.
  * @privateRemarks
  * This design seems odd, and might want to be revisited.
  * Currently it only permits opting out of features, not into them (unless validationMap returns undefined),
@@ -302,7 +354,7 @@ export function validateMinimumVersionForCollab(
  * @internal
  */
 export function validateConfigMapOverrides<T extends Record<string, unknown>>(
-	minVersionForCollab: SemanticVersion,
+	oldestSupportedClient: SemanticVersion,
 	overrides: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
 ): void {
@@ -318,11 +370,11 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 		}
 
 		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
-		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
+		if (requiredVersion !== undefined && gt(requiredVersion, oldestSupportedClient)) {
 			throw new UsageError(
 				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} requires ` +
-					`runtime version ${requiredVersion}. Please update minVersionForCollab ` +
-					`(currently ${minVersionForCollab}) to ${requiredVersion} or later to proceed.`,
+					`runtime version ${requiredVersion}. Please update oldestSupportedClient ` +
+					`(currently ${oldestSupportedClient}) to ${requiredVersion} or later to proceed.`,
 			);
 		}
 	}
@@ -330,11 +382,11 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 
 /**
  * Helper function to map ContainerRuntimeOptionsInternal config values to
- * minVersionForCollab in, e.g., {@link @fluidframework/container-runtime#runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ * oldestSupportedClient in, e.g., {@link @fluidframework/container-runtime#runtimeOptionsAffectingDocSchemaConfigValidationMap}.
  *
  * @internal
  */
-export function configValueToMinVersionForCollab<
+export function configValueToOldestSupportedClient<
 	T extends string | number | boolean | undefined | object,
 	Arr extends readonly [T, SemanticVersion][],
 >(configToMinVer: Arr): (configValue: T) => SemanticVersion | undefined {
@@ -366,11 +418,11 @@ export function configValueToMinVersionForCollab<
 			}
 		}
 		if (matchingVersions.length > 0) {
-			// Return the latest minVersionForCollab among all matches.
+			// Return the latest oldestSupportedClient among all matches.
 			return matchingVersions.sort((a, b) => compare(b, a))[0];
 		}
 		// If no matches then we return undefined. This means that the config value passed in
-		// does not require a specific minVersionForCollab to be valid.
+		// does not require a specific oldestSupportedClient to be valid.
 		return undefined;
 	};
 }

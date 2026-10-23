@@ -4,7 +4,7 @@
  */
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import { oldestSupportedClientVersionFloor } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
 
 import {
@@ -351,7 +351,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 		deltaVersions.set(currentCheckpointVersion, current.name);
 	}
 
-	for (const c of getInWindowPriorCheckpoints(current, lowestMinVersionForCollab)) {
+	for (const c of getInWindowPriorCheckpoints(current, oldestSupportedClientVersionFloor)) {
 		const v = resolveRangeViaManifest(checkpointResolutionRange(c));
 		deltaVersions.set(v, c.name);
 	}

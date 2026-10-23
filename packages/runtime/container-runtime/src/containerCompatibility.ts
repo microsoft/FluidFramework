@@ -8,8 +8,8 @@ import {
 	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	configValueToMinVersionForCollab,
-	getConfigsForMinVersionForCollab,
+	configValueToOldestSupportedClient,
+	getConfigsForOldestSupportedClient,
 	validateConfigMapOverrides,
 	type ConfigMap,
 	type ConfigValidationMap,
@@ -139,7 +139,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 		},
 		gcOptions: {
 			"2.0.0": {},
-			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
+			// Although sweep is supported in 2.x, it is disabled by default until oldestSupportedClient>=3.0.0 to be extra safe.
 			// Note that enabling this is a significant change, that should likely be announced in the relevant version:
 			// It would be bad if this simple caused the enablement when when the current package version passed this point without anyone being aware.
 			// This is configuration targeting a future versions, which is not supported.
@@ -171,60 +171,60 @@ export const runtimeOptionKeysThatRequireExplicitSchemaControl = (
 // A lot of the information in this seems redundant with whats defined above. Might be nice to combine them somehow.
 const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
 	{
-		enableGroupedBatching: configValueToMinVersionForCollab([
+		enableGroupedBatching: configValueToOldestSupportedClient([
 			[false, "2.0.0"],
 			[true, "2.0.0"],
 		]),
-		compressionOptions: configValueToMinVersionForCollab([
+		compressionOptions: configValueToOldestSupportedClient([
 			[{ ...disabledCompressionConfig }, "2.0.0"],
 			[{ ...enabledCompressionConfig }, "2.0.0"],
 		]),
-		enableRuntimeIdCompressor: configValueToMinVersionForCollab([
+		enableRuntimeIdCompressor: configValueToOldestSupportedClient([
 			[undefined, "2.0.0"],
 			["on", "2.0.0"],
 			["delayed", "2.0.0"],
 		]),
-		explicitSchemaControl: configValueToMinVersionForCollab([
+		explicitSchemaControl: configValueToOldestSupportedClient([
 			[false, "2.0.0"],
 			[true, "2.0.0"],
 		]),
-		flushMode: configValueToMinVersionForCollab([
+		flushMode: configValueToOldestSupportedClient([
 			[FlushMode.Immediate, "2.0.0"],
 			[FlushMode.TurnBased, "2.0.0"],
 		]),
-		gcOptions: configValueToMinVersionForCollab([
+		gcOptions: configValueToOldestSupportedClient([
 			[{ enableGCSweep: undefined }, "2.0.0"],
 			[{ enableGCSweep: true }, "2.0.0"],
 		]),
-		createBlobPayloadPending: configValueToMinVersionForCollab([
+		createBlobPayloadPending: configValueToOldestSupportedClient([
 			[undefined, "2.0.0"],
 			[true, "2.40.0"],
 		]),
 	};
 
 /**
- * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
+ * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given oldestSupportedClient.
  */
-export function getMinVersionForCollabDefaults(
-	minVersionForCollab: OldestSupportedClientVersion,
+export function getOldestSupportedClientDefaults(
+	oldestSupportedClient: OldestSupportedClientVersion,
 ): RuntimeOptionsAffectingDocSchema {
-	return getConfigsForMinVersionForCollab(
-		minVersionForCollab,
+	return getConfigsForOldestSupportedClient(
+		oldestSupportedClient,
 		runtimeOptionsAffectingDocSchemaConfigMap,
 	);
 }
 
 /**
- * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
+ * Validates if the runtime options passed in from the user are compatible with the oldestSupportedClient.
  * For example, if a user enables an option introduced in 2.40.0 while the
- * minVersionForCollab is set to "2.0.0", then we should throw a UsageError.
+ * oldestSupportedClient is set to "2.0.0", then we should throw a UsageError.
  * */
 export function validateRuntimeOptions(
-	minVersionForCollab: OldestSupportedClientVersion,
+	oldestSupportedClient: OldestSupportedClientVersion,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
 	validateConfigMapOverrides<RuntimeOptionsAffectingDocSchema>(
-		minVersionForCollab,
+		oldestSupportedClient,
 		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
 	);

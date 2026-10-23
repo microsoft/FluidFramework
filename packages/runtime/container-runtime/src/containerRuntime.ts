@@ -140,13 +140,13 @@ import {
 	addSummarizeResultToSummary,
 	calculateStats,
 	create404Response,
-	defaultMinVersionForCollab,
+	defaultOldestSupportedClient,
 	exceptionToResponse,
 	GCDataBuilder,
-	isValidMinVersionForCollab,
+	isValidOldestSupportedClient,
 	RequestParser,
 	RuntimeHeaders,
-	validateMinimumVersionForCollab,
+	validateOldestSupportedClient,
 	seqFromTree,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -201,7 +201,7 @@ import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
-	getMinVersionForCollabDefaults,
+	getOldestSupportedClientDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
 	runtimeOptionKeysThatRequireExplicitSchemaControl,
@@ -1012,7 +1012,7 @@ export class ContainerRuntime
 		const minVersionForCollab =
 			oldestSupportedClientParam ??
 			deprecatedMinVersionForCollab ??
-			defaultMinVersionForCollab;
+			defaultOldestSupportedClient;
 
 		if (context.taggedLogger === undefined) {
 			const error = new UsageError("Loader must provide a tagged logger");
@@ -1036,7 +1036,7 @@ export class ContainerRuntime
 		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
 		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		if (!isValidMinVersionForCollab(minVersionForCollab)) {
+		if (!isValidOldestSupportedClient(minVersionForCollab)) {
 			throw new UsageError(
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
@@ -1045,7 +1045,7 @@ export class ContainerRuntime
 		// were manually set.
 		validateRuntimeOptions(minVersionForCollab, runtimeOptions);
 
-		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
+		const defaultsAffectingDocSchema = getOldestSupportedClientDefaults(minVersionForCollab);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
 		const defaultsNotAffectingDocSchema: Omit<
@@ -1330,7 +1330,7 @@ export class ContainerRuntime
 			disableSchemaUpgrade,
 		};
 
-		validateMinimumVersionForCollab(updatedMinVersionForCollab);
+		validateOldestSupportedClient(updatedMinVersionForCollab);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
