@@ -9,8 +9,9 @@ Map and record reads now access field content without allocating field wrappers 
 Their caches no longer retain empty fields after edits, including merged changes and undo.
 Retained internal field references remain usable after cache eviction.
 Constructing leaf nodes also avoids map-field schema classification.
+Unhydrated maps and records use specialized node and field implementations, keeping empty-field reclamation and retained-reference redirection off fixed-field read paths.
 
-The measurements below compare the original baseline with the map and record cache implementation before the leaf-construction fast path.
+The measurements below compare the original baseline with the map and record cache implementation before the leaf-construction fast path and storage specialization.
 Both versions were remeasured for these tables.
 
 SharedTree navigation benchmarks on trees nested ten levels deep measured these reductions in elapsed time:

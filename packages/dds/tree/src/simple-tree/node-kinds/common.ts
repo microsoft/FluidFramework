@@ -9,7 +9,7 @@ import type { FieldKey } from "../../core/index.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
-	createField,
+	UnhydratedMapField,
 	type UnhydratedFlexTreeField,
 	normalizeAllowedTypes,
 	type FlexContent,
@@ -48,7 +48,12 @@ export function recordLikeDataToFlexContent(
 				value,
 				allowedChildTypes.evaluateSet(),
 			);
-			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
+			const field = new UnhydratedMapField(
+				context,
+				FieldKinds.optional.identifier,
+				brand(key),
+				[child],
+			);
 			transformedFields.set(brand(key), field);
 		}
 	}

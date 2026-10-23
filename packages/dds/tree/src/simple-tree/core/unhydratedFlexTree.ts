@@ -96,6 +96,26 @@ type LocationInField = FlexTreeNode["parentField"];
 const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 
 /**
+ * Selects field-storage behavior without looking up the schema for leaf nodes.
+ */
+export function createUnhydratedFlexTreeNode(
+	data: NodeData,
+	fields: Map<FieldKey, UnhydratedFlexTreeField>,
+	context: Context,
+	storedSchema?: TreeNodeStoredSchema,
+): UnhydratedFlexTreeNode {
+	const schema =
+		data.value === undefined
+			? (storedSchema ??
+				context.flexContext.schema.nodeSchema.get(data.type) ??
+				fail("Missing schema for unhydrated node"))
+			: undefined;
+	return schema instanceof MapNodeStoredSchema
+		? new UnhydratedMapNode(data, fields, context)
+		: new UnhydratedFlexTreeNode(data, fields, context);
+}
+
+/**
  * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
  */
 export class UnhydratedFlexTreeNode
@@ -106,11 +126,6 @@ export class UnhydratedFlexTreeNode
 	}
 
 	private location = unparentedLocation;
-
-	/**
-	 * Whether empty fields can be removed from this node's field storage.
-	 */
-	public readonly hasDynamicFields: boolean;
 
 	public get storedSchema(): TreeNodeStoredSchema {
 		return (
@@ -154,7 +169,7 @@ export class UnhydratedFlexTreeNode
 		 * For fixed-field nodes, this also includes empty fields which have been previously requested.
 		 * Map and record nodes retain only non-empty fields.
 		 */
-		private readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
+		protected readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
 		/**
 		 * The {@link Context} for this node.
 		 * @remarks
@@ -163,13 +178,8 @@ export class UnhydratedFlexTreeNode
 		 */
 		public readonly simpleContext: Context,
 	) {
-		this.hasDynamicFields =
-			data.value === undefined && this.storedSchema instanceof MapNodeStoredSchema;
-		for (const [key, field] of this.fieldsAll) {
+		for (const field of this.fieldsAll.values()) {
 			field.parent = this;
-			if (this.hasDynamicFields && !field.pendingDefault && field.length === 0) {
-				this.fieldsAll.delete(key);
-			}
 		}
 	}
 
@@ -205,7 +215,7 @@ export class UnhydratedFlexTreeNode
 		return this.data.type;
 	}
 
-	private getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
+	protected getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
 		const existing = this.fieldsAll.get(key);
 		if (existing !== undefined) {
 			return existing;
@@ -213,9 +223,7 @@ export class UnhydratedFlexTreeNode
 		const stored = this.storedSchema.getFieldSchema(key).kind;
 		const field = createField(this.context, stored, key, []);
 		field.parent = this;
-		if (!this.hasDynamicFields) {
-			this.fieldsAll.set(key, field);
-		}
+		this.fieldsAll.set(key, field);
 		return field;
 	}
 
@@ -227,17 +235,10 @@ export class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Registers a changed dynamic field, omitting empty fields.
+	 * Updates field storage before change notifications.
+	 * Fixed-field nodes retain their fields even when empty.
 	 */
-	public updateField(field: UnhydratedFlexTreeField): void {
-		if (this.hasDynamicFields) {
-			if (field.length === 0) {
-				this.fieldsAll.delete(field.key);
-			} else {
-				this.fieldsAll.set(field.key, field);
-			}
-		}
-	}
+	public updateField(_field: UnhydratedFlexTreeField): void {}
 
 	/**
 	 * Set this node's parentage (see {@link FlexTreeNode.parentField}).
@@ -420,6 +421,48 @@ export class UnhydratedFlexTreeNode
 }
 
 /**
+ * Map and record storage which retains only non-empty fields.
+ */
+export class UnhydratedMapNode extends UnhydratedFlexTreeNode {
+	public constructor(
+		data: NodeData,
+		fields: Map<FieldKey, UnhydratedFlexTreeField>,
+		context: Context,
+	) {
+		super(data, fields, context);
+		for (const [key, field] of fields) {
+			assert(field instanceof UnhydratedMapField, "Expected a dynamic map field");
+			if (!field.pendingDefault && field.length === 0) {
+				fields.delete(key);
+			}
+		}
+	}
+
+	protected override getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
+		const existing = this.fieldsAll.get(key);
+		if (existing !== undefined) {
+			return existing;
+		}
+		const field = new UnhydratedMapField(
+			this.context,
+			this.storedSchema.getFieldSchema(key).kind,
+			key,
+			[],
+		);
+		field.parent = this;
+		return field;
+	}
+
+	public override updateField(field: UnhydratedFlexTreeField): void {
+		if (field.length === 0) {
+			this.fieldsAll.delete(field.key);
+		} else {
+			this.fieldsAll.set(field.key, field);
+		}
+	}
+}
+
+/**
  * Implementation of `FlexTreeContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
@@ -486,7 +529,7 @@ export class UnhydratedFlexTreeField
 		 */
 		private lazyChildren: UnhydratedFlexTreeNode[] | ContextualFieldProvider,
 	) {
-		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
+		// When a field is created, its children become parented for the first time.
 		// "Adopt" each child by updating its parent information to point to this field.
 		if (Array.isArray(lazyChildren)) {
 			for (const [i, child] of lazyChildren.entries()) {
@@ -527,12 +570,6 @@ export class UnhydratedFlexTreeField
 	}
 
 	public get children(): UnhydratedFlexTreeNode[] {
-		if (this.parent?.hasDynamicFields === true) {
-			const current = this.parent.getStoredField(this.key);
-			if (current !== undefined && current !== this) {
-				return current.children;
-			}
-		}
 		const provider = this.getPendingDefault();
 		if (provider) {
 			const content = provider("UseGlobalContext");
@@ -579,13 +616,6 @@ export class UnhydratedFlexTreeField
 		 */
 		marks?: readonly DeltaMark[],
 	): void {
-		if (this.parent?.hasDynamicFields === true) {
-			const current = this.parent.getStoredField(this.key);
-			if (current !== undefined && current !== this) {
-				current.edit(edit, marks);
-				return;
-			}
-		}
 		// Clear parents for all old map trees.
 		for (const tree of this.children) {
 			tree.adoptBy(undefined);
@@ -651,6 +681,30 @@ export class UnhydratedOptionalField
 		}
 
 		return undefined;
+	}
+}
+
+/**
+ * An optional map field which remains usable after eviction and replacement.
+ * Fixed-field wrappers do not need this canonical-field lookup.
+ */
+export class UnhydratedMapField extends UnhydratedOptionalField {
+	public override get children(): UnhydratedFlexTreeNode[] {
+		const current = this.parent?.getStoredField(this.key);
+		return current !== undefined && current !== this ? current.children : super.children;
+	}
+
+	protected override edit(
+		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		marks?: readonly DeltaMark[],
+	): void {
+		const current = this.parent?.getStoredField(this.key);
+		if (current !== undefined && current !== this) {
+			assert(current instanceof UnhydratedMapField, "Expected a dynamic map field");
+			current.edit(edit, marks);
+		} else {
+			super.edit(edit, marks);
+		}
 	}
 }
 

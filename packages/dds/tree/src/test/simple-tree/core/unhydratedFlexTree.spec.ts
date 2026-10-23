@@ -12,6 +12,7 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type MapTree,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type Value,
 } from "../../../core/index.js";
@@ -19,10 +20,15 @@ import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/ind
 // eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {
+	createUnhydratedFlexTreeNode,
+	UnhydratedContext,
 	UnhydratedFlexTreeNode,
+	UnhydratedMapNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { Context } from "../../../simple-tree/core/context.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
@@ -89,8 +95,8 @@ describe("unhydratedFlexTree", () => {
 	assert(arrayNode instanceof UnhydratedFlexTreeNode);
 
 	describe("leaf construction", () => {
-		class LeafNode extends UnhydratedFlexTreeNode {
-			public override get storedSchema(): TreeNodeStoredSchema {
+		class NoSchemaLookup extends Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+			public override get(_key: TreeNodeSchemaIdentifier): TreeNodeStoredSchema | undefined {
 				return assert.fail("Leaf construction must not look up its stored schema");
 			}
 		}
@@ -103,21 +109,29 @@ describe("unhydratedFlexTree", () => {
 			[schemaFactory.handle, new MockHandle("leaf")],
 		] as const) {
 			it(`skips schema lookup for ${schema.identifier}`, () => {
-				const leaf = new LeafNode(
+				const original = getUnhydratedContext(schema);
+				const contextWithoutLookup = new Context(
+					new UnhydratedContext(original.flexContext.schemaPolicy, {
+						...original.flexContext.schema,
+						nodeSchema: new NoSchemaLookup(),
+					}),
+					original.schema,
+				);
+				const leaf = createUnhydratedFlexTreeNode(
 					{ type: brand(schema.identifier), value },
 					new Map(),
-					getUnhydratedContext(schema),
+					contextWithoutLookup,
 				);
-				assert.equal(leaf.hasDynamicFields, false);
+				assert(!(leaf instanceof UnhydratedMapNode));
 				assert.equal(leaf.value, value);
 			});
 		}
 	});
 
 	it("classifies non-leaf fields using their schema", () => {
-		assert.equal(map.hasDynamicFields, true);
-		assert.equal(arrayNode.hasDynamicFields, false);
-		assert.equal(object.hasDynamicFields, false);
+		assert(map instanceof UnhydratedMapNode);
+		assert(!(arrayNode instanceof UnhydratedMapNode));
+		assert(!(object instanceof UnhydratedMapNode));
 	});
 
 	it("can get their type", () => {
