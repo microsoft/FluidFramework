@@ -165,10 +165,6 @@ export class SharedTreeBranch<
 	 */
 	private logicalCommitCount?: number;
 	/**
-	 * The trim offset at disposal, so later trims do not change the cached count.
-	 */
-	private trimmedCommitCountAtDisposal?: number;
-	/**
 	 * The event source that notifies this branch when its ancestry is trimmed.
 	 * See {@link BranchTrimmingEvents} for details on trimming.
 	 * Set through {@link SharedTreeBranch.trimmer} and cleared when this branch is disposed.
@@ -295,10 +291,11 @@ export class SharedTreeBranch<
 	 * @remarks
 	 * The first call walks the history to initialize a cached count.
 	 * Subsequent reads and count updates take constant time, including when ancestry is trimmed.
+	 * Cannot be called after this branch is disposed.
 	 */
 	public getCommitCount(): number {
-		const trimmedCommitCount =
-			this.trimmedCommitCountAtDisposal ?? this.trimState.trimmedCommitCount;
+		this.assertNotDisposed();
+		const trimmedCommitCount = this.trimState.trimmedCommitCount;
 		if (this.logicalCommitCount === undefined) {
 			let count = -1; // Exclude the sentinel commit at the root.
 			for (
@@ -484,10 +481,11 @@ export class SharedTreeBranch<
 	}
 
 	/**
-	 * Dispose this branch, freezing its state.
+	 * Dispose this branch, preventing further mutations and commit count reads.
 	 *
 	 * @remarks
 	 * Attempts to further mutate the branch will error.
+	 * Shared ancestry may still be trimmed after disposal.
 	 * Any transactions in progress will be aborted.
 	 * Calling dispose more than once has no effect.
 	 */
@@ -497,7 +495,6 @@ export class SharedTreeBranch<
 		}
 
 		this.trimmer = undefined;
-		this.trimmedCommitCountAtDisposal = this.trimState.trimmedCommitCount;
 
 		this.disposed = true;
 		this.#events.emit("dispose");

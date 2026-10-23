@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createEmitter } from "@fluid-internal/client-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { FluidClientVersion } from "../../codec/index.js";
 import { CommitKind, type GraphCommit } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -121,25 +122,35 @@ describe("Branch commit counts", () => {
 		assert.equal(branch.getCommitCount(), 1);
 	});
 
-	it("freezes a disposed branch's count while live branches keep tracking trims", () => {
-		const trimState = { trimmedCommitCount: 0 };
-		const branch = createBranch(trimState);
-		edit(branch);
-		edit(branch);
-		const newBase = branch.getHead() as Mutable<GraphCommit<DefaultChangeset>>;
-		edit(branch);
-		assert.equal(branch.getCommitCount(), 3);
-		const fork = branch.fork();
-		assert.equal(fork.getCommitCount(), 3);
-		fork.dispose();
+	for (const cached of [false, true]) {
+		it(`rejects disposed branch count reads with ${cached ? "a cached" : "an unread"} count`, () => {
+			const trimState = { trimmedCommitCount: 0 };
+			const branch = createBranch(trimState);
+			edit(branch);
+			edit(branch);
+			const newBase = branch.getHead() as Mutable<GraphCommit<DefaultChangeset>>;
+			edit(branch);
+			const fork = branch.fork();
+			if (cached) {
+				assert.equal(fork.getCommitCount(), 3);
+			}
+			assert.equal(branch.getCommitCount(), 3);
+			fork.events.on("dispose", () => {
+				assert.throws(
+					() => fork.getCommitCount(),
+					validateAssertionError("Branch is disposed"),
+				);
+				delete newBase.parent;
+				trimState.trimmedCommitCount += 2;
+			});
+			fork.dispose();
 
-		delete newBase.parent;
-		trimState.trimmedCommitCount += 2;
-		assert.equal(branch.getCommitCount(), 1);
-		assert.equal(fork.getCommitCount(), 3);
-		fork.dispose();
-		assert.equal(fork.getCommitCount(), 3);
-	});
+			assert.equal(branch.getCommitCount(), 1);
+			assert.throws(() => fork.getCommitCount(), validateAssertionError("Branch is disposed"));
+			fork.dispose();
+			assert.throws(() => fork.getCommitCount(), validateAssertionError("Branch is disposed"));
+		});
+	}
 
 	it("matches the branch state inside change callbacks", () => {
 		const branch = createBranch();

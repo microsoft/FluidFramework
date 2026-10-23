@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { SessionId } from "@fluidframework/id-compressor";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { FluidClientVersion, FormatValidatorNoOp } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { fieldBatchCodecBuilder } from "../../../feature-libraries/index.js";
@@ -256,7 +257,7 @@ describe("TreeBranchHistoryImpl", () => {
 		manager.advanceMinimumSequenceNumber(brand(6));
 		child.rebaseOnto(manager.getLocalBranch("main"));
 		assert.equal(childHistory.length, 1);
-		assert.equal(history.length, 1);
+		assert.throws(() => history.length, validateAssertionError("Branch is disposed"));
 		child.dispose();
 	});
 
