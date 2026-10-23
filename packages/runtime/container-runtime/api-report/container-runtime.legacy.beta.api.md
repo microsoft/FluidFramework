@@ -353,8 +353,6 @@ export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
-    // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion;
     oldestSupportedClient?: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;

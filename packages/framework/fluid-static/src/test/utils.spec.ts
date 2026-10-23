@@ -11,7 +11,6 @@ import {
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
@@ -199,28 +198,24 @@ describe("createTreeContainerRuntimeFactory", () => {
 		);
 	});
 
-	it("continues to accept minVersionForCollaboration", () => {
-		assert.doesNotThrow(
-			// eslint-disable-next-line import-x/no-deprecated -- verifies the compatibility overload
+	it("rejects minVersionForCollaboration", () => {
+		assert.throws(
+			// @ts-expect-error The removed beta property is rejected at compile time and runtime.
 			() => createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration: "2.0.0" }),
+			/minVersionForCollaboration is no longer supported/,
 		);
 	});
 
 	it("rejects multiple version options", () => {
-		const createWithVersionOptions = createTreeContainerRuntimeFactory as unknown as (props: {
-			readonly schema: TreeContainerSchema;
-			readonly oldestSupportedClient?: OldestSupportedClientVersion;
-			readonly minVersionForCollaboration?: OldestSupportedClientVersion;
-		}) => unknown;
+		const props = {
+			schema,
+			oldestSupportedClient: "2.0.0",
+			minVersionForCollaboration: "2.0.0",
+		} as const;
 
 		assert.throws(
-			() =>
-				createWithVersionOptions({
-					schema,
-					oldestSupportedClient: "2.0.0",
-					minVersionForCollaboration: "2.0.0",
-				}),
-			/Specify exactly one/,
+			() => createTreeContainerRuntimeFactory(props),
+			/minVersionForCollaboration is no longer supported/,
 		);
 	});
 });
