@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
@@ -73,9 +73,11 @@ export function initialize(
 		}
 	}
 
-	assert(
-		allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema),
-		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
+	// The construction above only relaxes the root field, so this should always hold.
+	debugAssert(
+		() =>
+			allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema) ||
+			"Incremental schema during update should allow a superset of the final schema",
 	);
 
 	checkout.updateSchema(intermediateSchema);
