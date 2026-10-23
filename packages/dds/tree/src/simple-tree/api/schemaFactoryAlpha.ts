@@ -52,6 +52,7 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import type { SchemaFactoryAlphaOptions } from "./schemaFactoryOptions.js";
 import { schemaStatics } from "./schemaStatics.js";
 import { cloneTree } from "./cloneTree.js";
 import type {
@@ -362,11 +363,38 @@ export class SchemaFactoryAlpha<
 	TName extends number | string = string,
 > extends SchemaFactoryBeta<TScope, TName> {
 	/**
-	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
+	 * The options used by this factory, excluding its {@link SchemaFactory.scope | scope}.
 	 *
-	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
-	 * @param options - Additional options for the schema.
+	 * @remarks
+	 * Use {@link composeSchemaFactoryAlphaOptions} with
+	 * {@link SchemaFactoryAlpha.withOptionsAlpha} to extend these options.
+	 */
+	public readonly settings: SchemaFactoryAlphaOptions;
+
+	/**
+	 * Creates a schema factory with optional defaults for object schemas.
+	 *
+	 * @param scopeOrOptions - the scope, or an options object that includes the scope
+	 */
+	public constructor(
+		scopeOrOptions: TScope | (SchemaFactoryAlphaOptions & { readonly scope: TScope }),
+	) {
+		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
+		this.settings =
+			typeof scopeOrOptions === "object"
+				? { objectOptionDefaults: scopeOrOptions.objectOptionDefaults }
+				: {};
+	}
+
+	/**
+	 * Defines a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
+	 *
+	 * @param name - the schema identifier within this factory's scope
+	 * @param fields - the schemas for the object's fields
+	 * @param options - additional options for the schema
+	 *
+	 * @remarks
+	 * {@link SchemaFactoryAlphaOptions.objectOptionDefaults} can provide factory-wide defaults.
 	 */
 	public objectAlpha<
 		const Name extends TName,
@@ -377,9 +405,11 @@ export class SchemaFactoryAlpha<
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+		const resolvedOptions =
+			this.settings.objectOptionDefaults?.(name, fields, options) ?? options;
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...options,
+			...resolvedOptions,
 		});
 	}
 
@@ -769,12 +799,56 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaFactoryBeta.scopedFactory}
+	 * Creates a {@link SchemaFactoryAlpha} in a child scope.
+	 *
+	 * @param name - the name to append to this factory's scope
+	 *
+	 * @returns a factory with the child scope and this factory's settings
+	 *
+	 * @remarks
+	 * A child scope keeps related schemas separate from schemas in the parent scope.
+	 * The returned factory inherits this factory's {@link SchemaFactoryAlpha.settings}.
 	 */
 	public scopedFactoryAlpha<
 		const T extends TName,
 		TNameInner extends number | string = string,
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
-		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
+		return new SchemaFactoryAlpha({
+			...this.settings,
+			scope: scoped<TScope, TName, T>(this, name),
+		});
+	}
+
+	/**
+	 * Creates a {@link SchemaFactoryAlpha} with the same scope and new settings.
+	 *
+	 * @param settings - the settings to use instead of this factory's settings
+	 *
+	 * @returns a new factory with the same scope and the provided settings
+	 *
+	 * @remarks
+	 * This does not change the original factory.
+	 * Use {@link composeSchemaFactoryAlphaOptions} with this factory's
+	 * {@link SchemaFactoryAlpha.settings} to extend the existing settings.
+	 *
+	 * @example
+	 * ```typescript
+	 * const extended = sf.withOptionsAlpha(
+	 *     composeSchemaFactoryAlphaOptions(sf.settings, {
+	 *         objectOptionDefaults: (_name, _fields, options) => ({
+	 *             allowUnknownOptionalFields: true,
+	 *             ...options,
+	 *         }),
+	 *     }),
+	 * );
+	 * ```
+	 */
+	public withOptionsAlpha(
+		settings: SchemaFactoryAlphaOptions,
+	): SchemaFactoryAlpha<TScope, TName> {
+		return new SchemaFactoryAlpha({
+			scope: this.scope,
+			objectOptionDefaults: settings.objectOptionDefaults,
+		});
 	}
 }

@@ -66,6 +66,10 @@ export {
 	type NodeProvider,
 } from "./schemaFactoryAlpha.js";
 export {
+	type SchemaFactoryAlphaOptions,
+	composeSchemaFactoryAlphaOptions,
+} from "./schemaFactoryOptions.js";
+export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
 } from "./eraseSchemaDetails.js";

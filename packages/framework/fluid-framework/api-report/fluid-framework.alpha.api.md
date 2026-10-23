@@ -277,6 +277,9 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
+// @alpha
+export function composeSchemaFactoryAlphaOptions(base: SchemaFactoryAlphaOptions, override: SchemaFactoryAlphaOptions): SchemaFactoryAlphaOptions;
+
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -1975,6 +1978,9 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @alpha
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactoryBeta<TScope, TName> {
+    constructor(scopeOrOptions: TScope | (SchemaFactoryAlphaOptions & {
+        readonly scope: TScope;
+    }));
     arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaAlpha<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchemaAlpha<FieldKind.Identifier, StringSchema, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
@@ -1996,6 +2002,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
+    readonly settings: SchemaFactoryAlphaOptions;
     readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     static readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly stagedOptionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
@@ -2012,6 +2019,12 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly withDefaultRecursive: <Kind extends FieldKind, Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, TCustomMetadata = unknown>(fieldSchema: System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata>, defaultValue: Unenforced<NodeProvider<System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<System_Unsafe.FieldSchemaUnsafe<Kind, Types>>>>) => FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;
+    withOptionsAlpha(settings: SchemaFactoryAlphaOptions): SchemaFactoryAlpha<TScope, TName>;
+}
+
+// @alpha @sealed
+export interface SchemaFactoryAlphaOptions {
+    readonly objectOptionDefaults?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined) => ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined;
 }
 
 // @beta
