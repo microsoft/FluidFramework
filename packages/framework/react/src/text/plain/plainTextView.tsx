@@ -6,7 +6,6 @@
 import { TreeAlpha, type PlainText } from "@fluidframework/tree/internal";
 import {
 	type ChangeEvent,
-	type FC,
 	type SyntheticEvent,
 	useCallback,
 	useLayoutEffect,
@@ -14,6 +13,7 @@ import {
 } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
+import type { FC } from "../../reactTypes.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 
 import { syncTextToTree } from "./plainUtils.js";
