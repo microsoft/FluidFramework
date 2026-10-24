@@ -36,6 +36,8 @@ ingress:
 alfred:
   replicas: 4
   host: alfred.local
+  # Migration preserves existing document IDs and uses them for rerun/existence checks.
+  enforceServerGeneratedDocumentId: false
   # Substituted by deploy.sh. The real hostname does not exist until Front Door is created, so
   # this renders as the in-cluster URL on the first pass and is replaced with the Front Door
   # hostname once phase12_frontdoor re-runs phase5_helm. Left pointing at a name that does not

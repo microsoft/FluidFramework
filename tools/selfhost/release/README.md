@@ -14,6 +14,31 @@ than editing files under `release-artifacts/<id>/` by hand.
 `generate-release.sh` creates a complete release bundle. `create-and-deploy-release.sh` provisions or
 reuses a build registry, generates the release bundle, and deploys it with `azure/deploy.sh`.
 
+## Recommended path
+
+Configure `azure/deploy.parameters.json` first, including `fluidRepoDir` pointing to a dedicated, clean checkout outside this repository.
+Run from `tools/selfhost`:
+
+```bash
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
+```
+
+The first argument selects source; the second names your immutable release bundle.
+The combined command defaults `FLUID_DIR` to the parameters file's `fluidRepoDir`.
+You can override the build checkout with `FLUID_DIR=/path/to/separate/clone`.
+It validates the checkout and deployment configuration before provisioning the build registry or building images.
+It creates/reuses the build registry and authenticates automatically, then builds, pins, and deploys the bundle.
+The deployment repeats preflight against the deployment checkout and current Azure state.
+You do not need to run the manual release steps or preflight separately.
+
+After a deployment failure, reuse a **completed** bundle:
+
+```bash
+./release/create-and-deploy-release.sh r0.1.0 --skip-build
+```
+
+If generation failed, rerun with the same release ID without `--skip-build`.
+
 ## Prerequisites
 
 - Bash, `git`, `jq`, `shasum`, and network access to the FluidFramework repository.
@@ -24,6 +49,54 @@ reuses a build registry, generates the release bundle, and deploys it with `azur
   example `ACR_LOGIN_SERVER=myacr.azurecr.io` after `az acr login -n myacr`.
 - Optional registry provisioning: Azure CLI logged in with permission to create or reuse the target
   resource group and ACR.
+
+## Registry authentication
+
+The combined command creates/reuses `.buildAcr.name` and runs `az acr login` before pushing images.
+Deployment creates/reuses `.deployAcr.name` and runs its own login.
+No manual ACR login is required before either registry exists.
+If you supply `ACR_LOGIN_SERVER`, provisioning is skipped; create and log into that build registry first.
+For standalone build commands, also log into the existing build ACR first.
+An expired build login can be refreshed with `az acr login -n <build-acr-name>`.
+
+Docker Hub is a separate upstream registry.
+`az acr login` does not authenticate requests to Docker Hub.
+You can optionally sign in with your Docker Hub username and a read-only access token to reduce unauthenticated pull throttling:
+
+```bash
+docker login --username <docker-hub-username>
+```
+
+Enter the access token at the password prompt.
+This login works for local builds and image inspection.
+The deployment also reads the saved Docker Hub credentials, including credentials stored by Docker Desktop, and passes them to Azure for server-side image imports.
+Browser-based `docker login` can store an identity token that the deployment cannot reuse; use the username and access-token login above for imports.
+
+Alternatively, wait for Docker Hub's rate-limit window to reset before retrying.
+If your organization's policy permits it, disconnecting from a shared VPN may help local requests avoid a shared, throttled public IP address.
+Neither option guarantees that a retry will succeed; see [Docker Hub pull limits](https://docs.docker.com/docker-hub/usage/pulls/).
+
+**Azure-side imports are separate.**
+`az acr import` does not read your Docker login itself; the deployment helper supplies saved credentials through `--username` and `--password`.
+The token is passed as a process argument; do not run the deployment with shell tracing (`bash -x`) or Azure CLI debug logging.
+Changing your local VPN connection does not change Azure's import traffic.
+If a Docker Hub import is throttled, wait for the rate-limit window to reset or sign in as shown above.
+You can instead provide credentials directly to the deployment; these take priority over your saved Docker login:
+
+```bash
+read -r -p "Docker Hub username: " DOCKERHUB_USERNAME
+read -r -s -p "Docker Hub read-only access token: " DOCKERHUB_TOKEN
+printf '\n'
+export DOCKERHUB_USERNAME DOCKERHUB_TOKEN
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
+unset DOCKERHUB_USERNAME DOCKERHUB_TOKEN
+```
+
+Use a Docker Hub access token with pull/read permission; do not put it in the parameters file.
+Without explicit credentials or a compatible saved Docker login, imports use anonymous Docker Hub access.
+If saved credentials cannot be read or reused, the deployment prints a warning and uses anonymous access.
+Authenticated accounts still have their own rate limits.
+See [Azure Container Registry imports from Docker Hub](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-import-images#import-container-images-from-docker-hub) for source authentication requirements.
 
 ## Generate a release bundle
 
@@ -165,6 +238,9 @@ Options:
 
 - `--skip-build` - deploy an existing release id instead of generating a new bundle.
 - `--skip-deploy` - generate the bundle only.
+- `--skip-preflight` - explicitly bypass Azure preflight in both orchestration and deployment.
+  Local argument, checkout, and release-bundle validation still runs.
+  Do not use this to hide unsupported settings after changing your configuration.
 - `-p, --parameters <file>` - deploy parameters file; the script defaults to
   `azure/deploy.parameters.json`.
 

@@ -7,31 +7,28 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateToken } from "@fluidframework/server-services-client";
 import { loadConfiguration } from "../configuration/configuration.mjs";
+import { verifyDeployment } from "../configuration/check-deployment.mjs";
 import {
 	withAzureFluidRelayTenantKey2,
 	withSelfHostTenantKey2,
 } from "../configuration/credentials.mjs";
-import { classifyError, createFailure, logAndAddError } from "../configuration/errors.mjs";
+import { createFailure, safeErrorMessage, StageError } from "../configuration/errors.mjs";
+import { confirmIgnoreLogTail, parseCopyOptions } from "../configuration/options.mjs";
+import { createMetrics } from "../configuration/metrics.mjs";
+import { prepareRun } from "../configuration/resume.mjs";
+import { retry } from "../configuration/retry.mjs";
+import { CopyError, requestJson } from "./requests.mjs";
 import {
-	createResults,
 	recordSuccess,
 	recordWarning,
 	writeStageResults,
+	withResultsLock,
 } from "../configuration/results.mjs";
 
 // The Azure Fluid Relay summary read and self-hosted document creation need these document-scoped permissions.
 const scopes = ["doc:read", "doc:write", "summary:write"];
 const tokenLifetimeSeconds = 60;
-
-// Carries only safe HTTP and endpoint metadata into results and console output.
-class CopyError extends Error {
-	constructor(message, status, endpoint) {
-		super(message);
-		this.name = "CopyError";
-		this.status = status;
-		this.endpoint = endpoint;
-	}
-}
+const unresolvedCreateReasons = new Set(["ambiguous-create", "document-id-mismatch"]);
 
 // Historian Git API Authorization
 function azureFluidRelayAuthorization(tenantId, documentId, key) {
@@ -76,77 +73,22 @@ function selfHostAuthorization(tenantId, documentId, key) {
 	}
 }
 
-// Make a JSON request without retaining or reporting raw response/error data.
-async function requestJson(url, authorization, endpoint, fetchImplementation, options = {}) {
-	const { expectedStatuses, headers, ...requestOptions } = options;
-	let response;
-	try {
-		// Supply credentials only for this request; callers never receive the header value.
-		response = await fetchImplementation(url, {
-			...requestOptions,
-			headers: { Authorization: authorization, ...headers },
-		});
-	} catch {
-		// Do not include transport error details because they may contain request metadata.
-		throw new CopyError("Copy API request failed", undefined, endpoint);
-	}
-	if (!response || !Number.isInteger(response.status) || typeof response.json !== "function") {
-		throw new CopyError(
-			"Copy API response did not include the expected status or JSON body",
-			undefined,
-			endpoint,
-		);
-	}
-	// Preserve only the HTTP status for a non-successful API response.
-	if (!expectedStatuses.includes(response.status)) {
-		throw new CopyError(
-			`Copy API request failed with HTTP ${response.status}`,
-			response.status,
-			endpoint,
-		);
-	}
-	try {
-		return await response.json();
-	} catch {
-		throw new CopyError("Copy API response could not be parsed as JSON", undefined, endpoint);
-	}
-}
-
-async function documentExists(url, authorization, fetchImplementation) {
-	let response;
-	try {
-		response = await fetchImplementation(url, { headers: { Authorization: authorization } });
-	} catch {
-		throw new CopyError("Copy API request failed", undefined, "self-host");
-	}
-	if (!response || !Number.isInteger(response.status)) {
-		throw new CopyError(
-			"Copy API response did not include an HTTP status",
-			undefined,
-			"self-host",
-		);
-	}
-	if (response.status === 200) return true;
-	if (response.status === 404) return false;
-	throw new CopyError(
-		`Copy API request failed with HTTP ${response.status}`,
-		response.status,
-		"self-host",
-	);
-}
-
-async function selfHostDocumentExists(
+export async function selfHostDocumentExists(
 	selfHostEndpoint,
 	selfHostTenantId,
 	documentId,
 	selfHostKey,
+	fetchImplementation = fetch,
+	options = {},
 ) {
-	const authorization = selfHostAuthorization(selfHostTenantId, documentId, selfHostKey);
-	return documentExists(
+	const response = await requestJson(
 		`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,
-		authorization,
-		fetch,
+		() => selfHostAuthorization(selfHostTenantId, documentId, selfHostKey),
+		"self-host",
+		fetchImplementation,
+		{ ...options, expectedStatuses: [200, 404], parseBody: false, stage: "existence-check" },
 	);
+	return response.status === 200;
 }
 
 // Build the tenant-scoped Historian repository base URL.
@@ -161,6 +103,7 @@ async function discoverAzureFluidRelayHistorian(
 	documentId,
 	key,
 	fetchImplementation,
+	options,
 ) {
 	try {
 		const endpoint = new URL(discoveryEndpoint);
@@ -172,40 +115,13 @@ async function discoverAzureFluidRelayHistorian(
 			"azure-fluid-relay-discovery",
 		);
 	}
-	const authorization = discoveryAuthorization(tenantId, documentId, key);
-	let response;
-	try {
-		response = await fetchImplementation(
-			`${discoveryEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(tenantId)}/session/${encodeURIComponent(documentId)}`,
-			{
-				method: "GET",
-				headers: { Authorization: authorization },
-			},
-		);
-	} catch {
-		throw new CopyError(
-			"Azure Fluid Relay session discovery request failed",
-			undefined,
-			"azure-fluid-relay-discovery",
-		);
-	}
-	if (response.status !== 200) {
-		throw new CopyError(
-			"Azure Fluid Relay session discovery request failed",
-			response.status,
-			"azure-fluid-relay-discovery",
-		);
-	}
-	let session;
-	try {
-		session = await response.json();
-	} catch {
-		throw new CopyError(
-			"Azure Fluid Relay session discovery response could not be parsed as JSON",
-			undefined,
-			"azure-fluid-relay-discovery",
-		);
-	}
+	const session = await requestJson(
+		`${discoveryEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(tenantId)}/session/${encodeURIComponent(documentId)}`,
+		() => discoveryAuthorization(tenantId, documentId, key),
+		"azure-fluid-relay-discovery",
+		fetchImplementation,
+		{ ...options, method: "GET", stage: "discovery" },
+	);
 
 	if (typeof session?.historianUrl !== "string")
 		throw new CopyError(
@@ -293,7 +209,7 @@ function makeWholeTree(entries, blobs, pathPrefix = "") {
 }
 
 // Generate the request to create the new document
-function buildCreateRequest(summary, documentId) {
+function buildCreateRequest(summary, documentId, ignoreLogTail = false) {
 	// Historian returns one flat root tree for a whole summary.
 	const tree = summary?.trees?.[0];
 	if (!tree || !Array.isArray(tree.entries) || !Array.isArray(summary.blobs)) {
@@ -355,21 +271,92 @@ function buildCreateRequest(summary, documentId) {
 			"azure-fluid-relay-historian",
 		);
 	}
-	if (!Number.isInteger(sequenceNumber) || !Array.isArray(values)) {
+	if (!Number.isInteger(sequenceNumber) || sequenceNumber < 0 || !Array.isArray(values)) {
 		throw new CopyError(
 			"Azure Fluid Relay summary protocol metadata was incomplete",
 			undefined,
 			"azure-fluid-relay-historian",
 		);
 	}
+	if (!tree.entries.some((entry) => entry.path === ".app" || entry.path.startsWith(".app/")))
+		throw new CopyError(
+			"Azure Fluid Relay summary is missing its application tree",
+			undefined,
+			"azure-fluid-relay-historian",
+		);
+	let ignoredLogTailOperations = 0;
+	const logTailEntry = tree.entries.find((entry) => entry.path === ".logTail/logTail");
+	if (logTailEntry || tree.entries.some((entry) => entry.path === ".logTail")) {
+		const tailBlob = blobs.get(logTailEntry?.id);
+		if (logTailEntry?.type !== "blob" || !tailBlob)
+			throw new CopyError(
+				"Azure Fluid Relay summary is missing its operation tail blob",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		let operations;
+		try {
+			operations = JSON.parse(
+				tailBlob.encoding === "base64"
+					? Buffer.from(tailBlob.content, "base64").toString("utf8")
+					: tailBlob.content,
+			);
+		} catch {
+			throw new CopyError(
+				"Azure Fluid Relay operation tail could not be parsed",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		}
+		if (
+			!Array.isArray(operations) ||
+			operations.some(
+				(op) =>
+					!Number.isInteger(op?.sequenceNumber) ||
+					op.sequenceNumber < 0 ||
+					typeof op.type !== "string",
+			)
+		)
+			throw new CopyError(
+				"Azure Fluid Relay operation tail is malformed",
+				undefined,
+				"azure-fluid-relay-historian",
+			);
+		// Client summaries can include their own summary/ack and membership traffic after the snapshot.
+		const protocolOnly = new Set([
+			"noop",
+			"join",
+			"leave",
+			"noClient",
+			"summarize",
+			"summaryAck",
+			"summaryNack",
+		]);
+		const unappliedOperations = operations.reduce(
+			(count, op) =>
+				count + (op.sequenceNumber > sequenceNumber && !protocolOnly.has(op.type) ? 1 : 0),
+			0,
+		);
+		if (unappliedOperations > 0 && ignoreLogTail !== true)
+			throw new CopyError(
+				"Copy refused: the latest summary contains operations not incorporated into its application snapshot. Stop source writes, load the source document, and wait for an acknowledged client summary before retrying. This tool does not replay the operation tail. Use --ignore-logtail only to accept a snapshot-only copy that can omit recent changes.",
+				undefined,
+				"azure-fluid-relay-historian",
+				"unsafe-summary",
+			);
+		ignoredLogTailOperations = unappliedOperations;
+	}
 	// Send only `.app`; Alfred creates a new `.protocol` tree for the self-hosted deployment.
 	return {
-		id: documentId,
-		summary: makeWholeTree(tree.entries, blobs, ".app/"),
-		sequenceNumber,
-		values,
-		enableDiscovery: true,
-		enableAnyBinaryBlobOnFirstSummary: true,
+		request: {
+			id: documentId,
+			summary: makeWholeTree(tree.entries, blobs, ".app/"),
+			sequenceNumber,
+			values,
+			enableDiscovery: true,
+			enableAnyBinaryBlobOnFirstSummary: true,
+		},
+		ignoredLogTailOperations,
 	};
 }
 
@@ -382,8 +369,14 @@ export async function copyDocument({
 	documentId,
 	azureFluidRelayKey,
 	selfHostKey,
+	ignoreLogTail = false,
 	fetchImplementation = fetch,
+	policy = {},
+	metrics,
+	onAttempt,
+	maxBytes = 64 * 1024 ** 2,
 }) {
+	const requestOptions = { policy, metrics, maxBytes, onAttempt };
 	let step = "azure-fluid-relay-discovery";
 	try {
 		// Discover the Azure Fluid Relay storage host, then load the most recent summary commit and payload.
@@ -393,13 +386,11 @@ export async function copyDocument({
 			documentId,
 			azureFluidRelayKey,
 			fetchImplementation,
+			requestOptions,
 		);
 		step = "azure-fluid-relay-authorization";
-		const azureFluidRelayAuth = azureFluidRelayAuthorization(
-			azureFluidRelayTenantId,
-			documentId,
-			azureFluidRelayKey,
-		);
+		const azureFluidRelayAuth = () =>
+			azureFluidRelayAuthorization(azureFluidRelayTenantId, documentId, azureFluidRelayKey);
 		// Request only this document's ref, which points to its latest summary commit.
 		step = "azure-fluid-relay-ref-read";
 		const refName = `heads/${documentId}`;
@@ -408,7 +399,7 @@ export async function copyDocument({
 			azureFluidRelayAuth,
 			"azure-fluid-relay-historian",
 			fetchImplementation,
-			{ expectedStatuses: [200] },
+			{ ...requestOptions, expectedStatuses: [200], stage: "ref-read" },
 		);
 		const commitSha = ref?.object?.sha;
 		if (typeof commitSha !== "string")
@@ -424,26 +415,96 @@ export async function copyDocument({
 			azureFluidRelayAuth,
 			"azure-fluid-relay-historian",
 			fetchImplementation,
-			{ expectedStatuses: [200] },
+			{ ...requestOptions, expectedStatuses: [200], stage: "summary-download" },
 		);
 
 		// Convert the flat Historian summary into Alfred's nested initial-summary payload.
 		step = "summary-conversion";
-		const createRequest = buildCreateRequest(summary, documentId);
+		const convert = async () => {
+			const converted = buildCreateRequest(summary, documentId, ignoreLogTail);
+			const body = JSON.stringify(converted.request);
+			if (Buffer.byteLength(body) > maxBytes)
+				throw new CopyError(
+					"Create payload exceeds --max-summary-mib",
+					undefined,
+					"self-host",
+					"payload-too-large",
+				);
+			return { body, ignoredLogTailOperations: converted.ignoredLogTailOperations };
+		};
+		const { body, ignoredLogTailOperations } = await (metrics
+			? metrics.measure("summary-conversion", convert)
+			: convert());
 		step = "self-host-create";
-		const created = await requestJson(
-			`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}`,
-			selfHostAuthorization(selfHostTenantId, undefined, selfHostKey),
-			"self-host",
-			fetchImplementation,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(createRequest),
-				expectedStatuses: [201],
+		const created = await retry(
+			async (attempt) => {
+				try {
+					const response = await requestJson(
+						`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}`,
+						() => selfHostAuthorization(selfHostTenantId, undefined, selfHostKey),
+						"self-host",
+						fetchImplementation,
+						{
+							...requestOptions,
+							onAttempt: (event) => onAttempt?.({ ...event, attempt }),
+							policy: { ...policy, attempts: 1 },
+							method: "POST",
+							stage: "destination-create",
+							headers: { "Content-Type": "application/json" },
+							body,
+							expectedStatuses: [201],
+						},
+					);
+					return response;
+				} catch (error) {
+					error.attempts = attempt;
+					const mayHaveCreated =
+						error.retryable ||
+						["conflict", "invalid-summary"].includes(error.reason) ||
+						(error.status >= 200 && error.status < 300) ||
+						error.status >= 500;
+					if (!mayHaveCreated) throw error;
+					let exists;
+					try {
+						exists = await selfHostDocumentExists(
+							selfHostEndpoint,
+							selfHostTenantId,
+							documentId,
+							selfHostKey,
+							fetchImplementation,
+							requestOptions,
+						);
+					} catch {
+						throw new CopyError(
+							"Create outcome could not be reconciled; verify the destination before retrying",
+							undefined,
+							"self-host",
+							"ambiguous-create",
+							{ attempts: attempt },
+						);
+					}
+					if (exists)
+						throw new CopyError(
+							"Destination exists after an uncertain create; its state is NOT verified and it was not overwritten",
+							error.status,
+							"self-host",
+							"ambiguous-create",
+							{ attempts: attempt },
+						);
+					if (error.reason !== "throttled" && error.reason !== "conflict")
+						throw new CopyError(
+							"Create outcome is uncertain even though the destination is not yet visible; creation was NOT repeated",
+							error.status,
+							"self-host",
+							"ambiguous-create",
+							{ attempts: attempt },
+						);
+					throw error;
+				}
 			},
+			{ ...policy, onRetry: () => metrics?.retry() },
 		);
-		// Support both the legacy string response and modern response object to retain any self-host remapping.
+		// Accept both response formats, but require the ID used for safe rerun detection.
 		step = "self-host-response-validation";
 		const selfHostDocumentId = typeof created === "string" ? created : created?.id;
 		if (typeof selfHostDocumentId !== "string" || selfHostDocumentId === "") {
@@ -451,9 +512,21 @@ export async function copyDocument({
 				"Self-hosted create response is missing the document ID",
 				undefined,
 				"self-host",
+				"ambiguous-create",
 			);
 		}
-		return { result: "success", documentId: selfHostDocumentId };
+		if (selfHostDocumentId !== documentId)
+			throw new CopyError(
+				"Destination returned a different document ID; verify the deployment and do not repeat creation",
+				undefined,
+				"self-host",
+				"document-id-mismatch",
+			);
+		return {
+			result: "success",
+			documentId: selfHostDocumentId,
+			...(ignoredLogTailOperations > 0 ? { ignoredLogTailOperations } : {}),
+		};
 	} catch (error) {
 		if (error instanceof CopyError) throw error;
 		const endpoint = step.startsWith("self-host")
@@ -465,125 +538,308 @@ export async function copyDocument({
 	}
 }
 
-// Require an execution flag before creating the documents
-function parseArgs(argv) {
-	const options = {
-		configPath: path.join(
-			import.meta.dirname,
-			"..",
-			"configuration",
-			"parameters",
-			"copy-data.config.json",
-		),
-		execute: false,
-	};
-	for (let index = 0; index < argv.length; index++) {
-		switch (argv[index]) {
-			case "--config":
-				options.configPath = argv[++index];
-				break;
-			case "--execute":
-				options.execute = true;
-				break;
-			case "--help":
-			case "-h":
-				console.log("Usage: node copy.mjs [--config <path>] --execute");
-				return undefined;
-			default:
-				throw new Error(`Unknown argument: ${argv[index]}`);
-		}
-	}
-	if (!options.execute) throw new Error("Use --execute to copy documents");
-	return options;
+async function workers(items, limit, operation) {
+	let cursor = 0;
+	let fatal;
+	await Promise.all(
+		Array.from({ length: Math.min(limit, items.length) }, async () => {
+			while (!fatal && cursor < items.length) {
+				const item = items[cursor++];
+				try {
+					await operation(item);
+				} catch (error) {
+					fatal ??= error;
+				}
+			}
+		}),
+	);
+	if (fatal) throw fatal;
 }
 
-// Copy every inventoried document and write only non-sensitive outcomes after each attempt.
-export async function main(argv) {
-	const options = parseArgs(argv);
-	if (options === undefined) return;
-	const { config, configDirectory, inventory, warnings } = await loadConfiguration(
-		options.configPath,
+/** Copy a reviewed inventory with tenant-scoped keys, bounded workers, and a single results writer. */
+export async function copyInventory(
+	{ config, inventory, resultsDirectory, options = {} },
+	dependencies = {},
+) {
+	const settings = { ...parseCopyOptions(["--execute"]), ...options };
+	const limit = Math.min(
+		settings.concurrency,
+		Math.floor(settings.memoryBudgetBytes / (2 * settings.maxSummaryBytes)),
 	);
-	const resultsDirectory = path.resolve(configDirectory, config.resultsDirectory);
-	for (const warning of warnings) console.warn(`Warning: ${warning}`);
-	const results = createResults(inventory);
-	let resultsPath;
-	// Process one tenant and document at a time so keys have the shortest practical lifetime.
-	for (const [azureFluidRelayTenantId, tenant] of Object.entries(inventory.tenants)) {
-		const azureFluidRelayTenant = config.azureFluidRelayTenants[azureFluidRelayTenantId];
-		const selfHostTenantId = (
-			tenant.selfHostTenantId || azureFluidRelayTenantId
-		).toLowerCase();
-		for (const documentId of tenant.documents) {
-			let failureContext = { endpoint: "self-host-credentials" };
+	const {
+		sourceKey = withAzureFluidRelayTenantKey2,
+		destinationKey = withSelfHostTenantKey2,
+		fetchImplementation = fetch,
+		log = console.log,
+		metrics = createMetrics(),
+		persist = writeStageResults,
+		retryPolicy = {},
+	} = dependencies;
+	const policy = {
+		attempts: settings.attempts,
+		timeoutMs: settings.timeoutMs,
+		...retryPolicy,
+	};
+	const withKey = async (stage, acquire, parameters, operation) => {
+		const stop = metrics.start(stage);
+		try {
+			return await acquire(parameters, async (key) => {
+				stop();
+				return operation(key);
+			});
+		} finally {
+			stop();
+		}
+	};
+	return withResultsLock(resultsDirectory, async () => {
+		const { results, work, priorStages } = await prepareRun(
+			config,
+			inventory,
+			settings.failedOnly,
+		);
+		if (settings.ignoreLogTail === true)
+			log(
+				"WARNING: --ignore-logtail copies application snapshots without replaying unapplied tail operations. Recent changes may be lost; existing destinations are not overwritten or repaired.",
+			);
+		let processed = 0;
+		let resultsPath;
+		const save = async () => {
+			results.metrics = metrics.snapshot(processed);
 			try {
-				// Check if the self-hosted document already exists
-				const copyResult = await withSelfHostTenantKey2(
+				resultsPath = await metrics.measure("results-persistence", () =>
+					persist(resultsDirectory, "document-copy", results, { priorStages }),
+				);
+			} catch {
+				throw new StageError(
+					"Results persistence failed; migration stopped. Review the last durable results and destination state before resuming.",
+				);
+			}
+		};
+		const previousFailures = new Map(
+			Object.entries(results.tenants).map(([id, tenant]) => [
+				id,
+				new Map(tenant.failed.map((failure) => [failure.documentId, failure.reason])),
+			]),
+		);
+		// Persist pending work before requests, so an interrupted run can select unfinished documents.
+		for (const [id, tenant] of Object.entries(work.tenants)) {
+			const outcomes = results.tenants[id];
+			for (const documentId of tenant.documents) {
+				const priorReason = previousFailures.get(id)?.get(documentId);
+				for (const key of ["successful", "warnings", "failed"])
+					outcomes[key] = outcomes[key].filter((entry) => entry.documentId !== documentId);
+				outcomes.failed.push({
+					documentId,
+					stage: "document-copy",
+					reason: unresolvedCreateReasons.has(priorReason) ? priorReason : "interrupted",
+					message: "Document has not completed in this run",
+				});
+			}
+		}
+		await save();
+		log(
+			`Document workers: ${limit} (requested ${settings.concurrency}); payload reservation ${(2 * settings.maxSummaryBytes * limit) / 1024 ** 2} MiB.`,
+		);
+		for (const [id, tenant] of Object.entries(work.tenants)) {
+			const source = config.azureFluidRelayTenants[id];
+			const selfHostTenantId = (tenant.selfHostTenantId || id).toLowerCase();
+			const outcomes = results.tenants[id];
+			const finished = new Set();
+			const requestHistory = new Map(tenant.documents.map((documentId) => [documentId, []]));
+			const complete = async (documentId, result, error, endpoint) => {
+				outcomes.failed = outcomes.failed.filter(
+					(failure) => failure.documentId !== documentId,
+				);
+				let status;
+				if (error) {
+					const priorReason = previousFailures.get(id)?.get(documentId);
+					const failure = {
+						...createFailure(documentId, "document-copy", error, { endpoint }),
+						message: safeErrorMessage(error),
+					};
+					status = failure.reason;
+					// A later request failure does not reconcile an earlier uncertain create.
+					if (unresolvedCreateReasons.has(priorReason)) failure.reason = priorReason;
+					outcomes.failed.push(failure);
+					log(`Failed ${id}/${documentId}: ${failure.reason}: ${failure.message}`);
+				} else if (result.result === "success") {
+					recordSuccess(
+						results,
+						id,
+						documentId,
+						result.documentId,
+						result.ignoredLogTailOperations,
+					);
+					status = "success";
+					if (result.ignoredLogTailOperations > 0)
+						log(
+							`WARNING: ${id}/${documentId} ignored ${result.ignoredLogTailOperations} unapplied log-tail operation(s); copied snapshot only, so recent changes may be lost.`,
+						);
+					log(`Copied ${id}/${documentId} as ${result.documentId}.`);
+				} else {
+					recordWarning(results, id, documentId, result);
+					status = "unverified-existing";
+					log(`Skipped ${id}/${documentId}: destination data was NOT verified or repaired.`);
+				}
+				results.history[id] ??= {};
+				results.history[id][documentId] ??= [];
+				results.history[id][documentId].push({
+					completedAt: new Date().toISOString(),
+					outcome: status,
+					requests: requestHistory.get(documentId),
+					...(result?.ignoredLogTailOperations > 0
+						? { ignoredLogTailOperations: result.ignoredLogTailOperations }
+						: {}),
+				});
+				requestHistory.delete(documentId);
+				finished.add(documentId);
+				processed++;
+				await save();
+				log(`Tenant ${id}: ${finished.size}/${tenant.documents.length} processed.`);
+			};
+			log(
+				`Starting tenant ${id} -> ${selfHostTenantId}: ${tenant.documents.length} document(s).`,
+			);
+			try {
+				await withKey(
+					"destination-key",
+					destinationKey,
 					{
 						...config.selfHost,
 						selfHostNamespace: config.selfHostNamespace,
 						selfHostTenantId,
 					},
 					async (selfHostKey) => {
-						failureContext = { endpoint: "self-host" };
-						// This requires `alfred.enforceServerGeneratedDocumentId` to be `false`.
-						if (
-							await selfHostDocumentExists(
-								config.selfHost.alfredEndpoint,
-								selfHostTenantId,
-								documentId,
-								selfHostKey,
-							)
-						) {
-							return {
-								result: "warning",
-								documentId,
-								message: "The self-hosted document already exists",
-							};
-						}
-
-						failureContext = { endpoint: "azure-fluid-relay-credentials" };
-						return withAzureFluidRelayTenantKey2(
-							azureFluidRelayTenant,
-							(azureFluidRelayKey) => {
-								failureContext = { endpoint: "self-host" };
-								return copyDocument({
-									azureFluidRelayEndpoint: azureFluidRelayTenant.azureFluidRelayEndpoint,
-									azureFluidRelayTenantId,
-									selfHostEndpoint: config.selfHost.alfredEndpoint,
+						const pending = [];
+						await workers(tenant.documents, limit, async (documentId) => {
+							let result;
+							let failure;
+							try {
+								const exists = await selfHostDocumentExists(
+									config.selfHost.alfredEndpoint,
 									selfHostTenantId,
 									documentId,
-									azureFluidRelayKey,
 									selfHostKey,
+									fetchImplementation,
+									{
+										policy,
+										metrics,
+										maxBytes: settings.maxSummaryBytes,
+										onAttempt: (event) => requestHistory.get(documentId).push(event),
+									},
+								);
+								const priorReason = previousFailures.get(id)?.get(documentId);
+								if (
+									unresolvedCreateReasons.has(priorReason) ||
+									(priorReason === "interrupted" && exists)
+								)
+									throw new CopyError(
+										"Earlier create outcome is unresolved; creation was NOT repeated. Verify destination state and review a separate inventory before another attempt.",
+										undefined,
+										"self-host",
+										"ambiguous-create",
+									);
+								if (!exists) {
+									pending.push(documentId);
+									return;
+								}
+								result = {
+									result: "warning",
+									message: "Destination already exists; its data was NOT verified or repaired",
+								};
+							} catch (error) {
+								failure = error;
+							}
+							await complete(documentId, result, failure, "self-host");
+						});
+						if (pending.length === 0) return;
+						try {
+							await withKey("source-key", sourceKey, source, async (azureFluidRelayKey) => {
+								await workers(pending, limit, async (documentId) => {
+									let result;
+									let failure;
+									metrics.enter();
+									try {
+										result = await copyDocument({
+											azureFluidRelayEndpoint: source.azureFluidRelayEndpoint,
+											azureFluidRelayTenantId: id,
+											selfHostEndpoint: config.selfHost.alfredEndpoint,
+											selfHostTenantId,
+											documentId,
+											azureFluidRelayKey,
+											selfHostKey,
+											ignoreLogTail: settings.ignoreLogTail,
+											fetchImplementation,
+											policy,
+											metrics,
+											onAttempt: (event) => requestHistory.get(documentId).push(event),
+											maxBytes: settings.maxSummaryBytes,
+										});
+									} catch (error) {
+										failure = error;
+									} finally {
+										metrics.leave();
+									}
+									await complete(documentId, result, failure, "self-host");
 								});
-							},
-						);
+							});
+						} catch (error) {
+							if (error.name !== "CredentialError") throw error;
+							for (const documentId of pending)
+								if (!finished.has(documentId))
+									await complete(
+										documentId,
+										undefined,
+										error,
+										"azure-fluid-relay-credentials",
+									);
+						}
 					},
 				);
-				if (copyResult.result === "success") {
-					recordSuccess(results, azureFluidRelayTenantId, documentId, copyResult.documentId);
-					console.log(`Copied document ${documentId} as ${copyResult.documentId}.`);
-				} else if (copyResult.result === "warning") {
-					recordWarning(results, azureFluidRelayTenantId, documentId, copyResult);
-					console.warn(`Warning: ${copyResult.message}.`);
-				}
 			} catch (error) {
-				const failure = createFailure(documentId, "document-copy", error, failureContext);
-				const tenantResults = results.tenants[azureFluidRelayTenantId];
-				logAndAddError(
-					tenantResults.failed,
-					error,
-					failure,
-					`Failed to copy document ${documentId}: ${failure.reason} from ${failure.endpoint}`,
-				);
+				if (error.name !== "CredentialError") throw error;
+				for (const documentId of tenant.documents)
+					if (!finished.has(documentId))
+						await complete(documentId, undefined, error, "self-host-credentials");
 			}
-			// Write the result to the result file
-			resultsPath = await writeStageResults(resultsDirectory, "document-copy", results);
+			log(
+				`Completed tenant ${id} (cumulative outcomes): ${outcomes.successful.length} copied, ${outcomes.warnings.length} unverified existing, ${outcomes.failed.length} failed.`,
+			);
 		}
-	}
-	console.log(`Wrote copy results to ${resultsPath}`);
-	if (Object.values(results.tenants).some((tenant) => tenant.failed.length > 0))
-		process.exitCode = 1;
+		await save();
+		const totals = Object.values(results.tenants).reduce(
+			(total, tenant) => ({
+				copied: total.copied + tenant.successful.length,
+				skipped: total.skipped + tenant.warnings.length,
+				failed: total.failed + tenant.failed.length,
+			}),
+			{ copied: 0, skipped: 0, failed: 0 },
+		);
+		log(
+			`Migration cumulative totals: ${totals.copied} copied, ${totals.skipped} unverified existing, ${totals.failed} failed. Wrote ${resultsPath}`,
+		);
+		return { ...totals, results };
+	});
+}
+
+export async function main(argv) {
+	const options = parseCopyOptions(argv, { command: "copy.mjs" });
+	if (!options) return;
+	await confirmIgnoreLogTail(options);
+	const { config, configDirectory, inventory, warnings } = await loadConfiguration(
+		options.configPath,
+	);
+	await prepareRun(config, inventory, options.failedOnly);
+	await verifyDeployment(config);
+	for (const warning of warnings) console.warn(`Warning: ${warning}`);
+	const outcome = await copyInventory({
+		config,
+		inventory,
+		resultsDirectory: path.resolve(configDirectory, config.resultsDirectory),
+		options,
+	});
+	if (outcome.failed > 0) process.exitCode = 1;
+	return outcome;
 }
 
 // Run the CLI only when this file is invoked directly, not when tests import its functions.
@@ -592,7 +848,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 	try {
 		await main(process.argv.slice(2));
 	} catch (error) {
-		console.error(`Document copy failed: ${classifyError(error)}.`);
+		console.error(`Document copy failed: ${safeErrorMessage(error)}`);
 		process.exitCode = 1;
 	}
 }

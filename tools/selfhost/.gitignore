@@ -8,9 +8,10 @@ deploy-validate/.deployment-config.json
 
 # Node
 node_modules/
-# These sub-projects intentionally don't pin an npm lockfile (see policy-check's
-# extraneous-lockfiles rule); regenerate locally with `npm install` as needed.
+# These sub-projects do not pin package-manager lockfiles (see the policy-check
+# extraneous-lockfiles rule); regenerate locally during installation.
 package-lock.json
+pnpm-lock.yaml
 
 # Fetched FluidFramework source
 .fluidframework/

@@ -4,11 +4,7 @@ Reads each selected document's latest summary from Azure Fluid Relay and creates
 it through the self-hosted Alfred public API, requesting the same
 document ID.
 
-The self-hosted service writes its own Gitrest summary, document metadata,
-operations state, and checkpoints. The copy does not copy Git objects or
-refs, write Cosmos DB records, or copy Azure Fluid Relay deli/scribe state. If
-the self-hosted service cannot preserve the requested document ID, the results
-file records the Azure Fluid Relay-to-self-hosted ID mapping.
+If the service returns a different document ID, copying fails explicitly and creation is not repeated.
 
 If the self-hosted document already exists, the copy is skipped and recorded as a
 warning instead of attempting to create it.
@@ -22,8 +18,14 @@ warning instead of attempting to create it.
 - Ensure Alfred sets `alfred.enforceServerGeneratedDocumentId` to `false`.
 	The self-hosted document ID must match the requested Azure Fluid Relay ID so
 	the copy tool can detect documents that were already copied.
+- To copy the intended current state, stop source writes and verify an acknowledged client summary incorporates that state.
+	The copy tool does not replay later operations or copy unsummarized writes.
+- Install dependencies as described in the [copy-data prerequisites](../README.md#prerequisites).
 
 ## Commands
+
+Prefer the [combined copy-data command](../README.md#command), which checks deployment settings before tenant creation and then runs this stage.
+This individual stage also checks every Alfred replica before copying; it does not create missing tenants.
 
 Validate the shared configuration before running this phase:
 
@@ -44,13 +46,23 @@ node copy.mjs --config ../configuration/parameters/copy-data.config.json --execu
 ```
 
 `azureFluidRelayEndpoint` is the Azure Fluid Relay discovery endpoint, not a
-direct Historian endpoint. For each document, the tool discovers its session,
-uses the returned Historian URL to read the newest summary, then submits the
-application summary, sequence number, and quorum values to self-hosted Alfred.
-The self-hosted document creation request asks to preserve the
-Azure Fluid Relay ID. It retrieves Azure Fluid Relay and self-hosted
-`key2` values only for each document operation and does not log or write either
-key or its JWT.
+direct Historian endpoint.
+
+To [retry failed documents](../README.md#retry-failed-documents), use the same source/destination configuration and reviewed inventory:
+
+```bash
+node copy.mjs --execute --concurrency 2 --failed-only ../results/copy-data-results.json
+```
+
+To explicitly accept the application snapshot without unapplied tail operations:
+
+```bash
+node copy.mjs --execute --failed-only ../results/copy-data-results.json --ignore-logtail
+```
+
+**`--ignore-logtail` can omit recent document changes; it does not replay or recover the tail.**
+Use it only if you accept losing those changes.
+It does not bypass malformed summaries or overwrite existing destinations.
 
 ## Next step
 
