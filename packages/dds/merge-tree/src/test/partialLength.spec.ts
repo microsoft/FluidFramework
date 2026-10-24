@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { MergeTree } from "../mergeTree.js";
+import { MergeBlock } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import { PartialSequenceLengths } from "../partialLengths.js";
 import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -39,11 +43,95 @@ describe("partial lengths", () => {
 			undefined,
 		);
 
+		// The initial "hello world!" supplies the 12-character baseline at sequence 0.
 		mergeTree.startCollaboration(localClientId, /* minSeq: */ 0, /* currentSeq: */ 0);
 	});
 
 	it("passes with no additional ops", () => {
 		validatePartialLengths(localClientId, mergeTree, [{ seq: refSeq, len: 12 }]);
+	});
+
+	describe("scalar queries", () => {
+		it("reports zero count and baseline for empty partial lengths", () => {
+			for (const computeLocalPartials of [false, true]) {
+				const partials = new PartialSequenceLengths(refSeq, computeLocalPartials);
+				assert.equal(partials.getSegmentCount(), 0);
+				assert.equal(partials.getBaselineLength(), 0);
+			}
+		});
+
+		it("preserves the count and baseline when aggregating child partials", () => {
+			mergeTree.insertSegments(
+				5,
+				[TextSegment.make("more ")],
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: 1 }),
+				undefined,
+			);
+			mergeTree.root.partialLengths = PartialSequenceLengths.combine(
+				mergeTree.root,
+				mergeTree.collabWindow,
+			);
+			const parent = new MergeBlock(1);
+			parent.children[0] = mergeTree.root;
+			const combined = PartialSequenceLengths.combine(parent, mergeTree.collabWindow);
+
+			// Both levels cover "hello" (5), "more " (5), and " world!" (7).
+			for (const partials of [mergeTree.root.partialLengths, combined]) {
+				assert.equal(partials.getSegmentCount(), 3);
+				assert.equal(partials.getBaselineLength(), 12); // minSeq 0 excludes the insertion.
+				assert.equal(partials.getPartialLength(1, remoteClientId), 17); // 12 + 5 characters.
+			}
+		});
+
+		it("reports the baseline at the current minimum sequence", () => {
+			mergeTree.insertSegments(
+				5,
+				[TextSegment.make("more ")],
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: 1 }),
+				undefined,
+			);
+			mergeTree.collabWindow.currentSeq = 1;
+			mergeTree.collabWindow.minSeq = 1;
+			const partials = PartialSequenceLengths.combine(mergeTree.root, mergeTree.collabWindow);
+
+			assert.equal(partials.getSegmentCount(), 3);
+			// minSeq 1 now includes the 12 original + 5 inserted characters in the baseline.
+			assert.equal(partials.getBaselineLength(), 17);
+			assert.equal(partials.getPartialLength(1, remoteClientId), 17);
+		});
+	});
+
+	it("propagates only the last invalidation without changing calculated lengths", () => {
+		const childPartials = mergeTree.root.partialLengths;
+		assert(childPartials !== undefined);
+		const parent = new MergeBlock(1);
+		parent.children[0] = mergeTree.root;
+		const parentPartials = PartialSequenceLengths.combine(parent, mergeTree.collabWindow);
+		parent.partialLengths = parentPartials;
+		const ancestor = new MergeBlock(1);
+		ancestor.children[0] = parent;
+		const ancestorPartials = PartialSequenceLengths.combine(ancestor, mergeTree.collabWindow);
+		ancestor.partialLengths = ancestorPartials;
+
+		// No edits here: each level still represents one 12-character text segment.
+		childPartials.invalidateIncrementalPropagation(1);
+		childPartials.invalidateIncrementalPropagation(2); // Only sequence 2 remains invalidated.
+		assert.equal(childPartials.getPartialLength(2, remoteClientId), 12);
+
+		parentPartials.update(parent, 1, remoteClientId, mergeTree.collabWindow);
+		assert.equal(parent.partialLengths, parentPartials);
+		assert.equal(parent.partialLengths.getSegmentCount(), 1);
+		assert.equal(parent.partialLengths.getPartialLength(1, remoteClientId), 12);
+
+		parentPartials.update(parent, 2, remoteClientId, mergeTree.collabWindow);
+		assert.notEqual(parent.partialLengths, parentPartials);
+		assert.equal(parent.partialLengths.getPartialLength(2, remoteClientId), 12);
+
+		ancestorPartials.update(ancestor, 2, remoteClientId, mergeTree.collabWindow);
+		assert.notEqual(ancestor.partialLengths, ancestorPartials);
+		assert.equal(ancestor.partialLengths.getPartialLength(2, remoteClientId), 12);
 	});
 
 	describe("a single inserted element", () => {

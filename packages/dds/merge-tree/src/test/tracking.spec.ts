@@ -6,8 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
-import { TrackingGroup } from "../mergeTreeTracking.js";
+import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 
@@ -27,6 +28,23 @@ describe("MergeTree.tracking", () => {
 		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 
 		assert(segmentInfo?.segment?.trackingCollection.empty);
+	});
+
+	it("matches tracking groups by identity regardless of insertion order or implementation", () => {
+		const first = TextSegment.make("a").trackingCollection;
+		const second = TextSegment.make("b").trackingCollection;
+		const ordered = new TrackingGroup();
+		const unordered = new UnorderedTrackingGroup();
+
+		assert(first.matches(second));
+		first.link(ordered);
+		assert(!first.matches(second));
+		second.link(unordered);
+		assert(!first.matches(second));
+		first.link(unordered);
+		second.link(ordered);
+		assert(first.matches(second));
+		assert(second.matches(first));
 	});
 
 	it("Insert single segment with single tracking group", () => {
