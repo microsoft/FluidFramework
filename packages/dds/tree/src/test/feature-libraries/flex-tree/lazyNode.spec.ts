@@ -11,6 +11,7 @@ import { asAlpha } from "../../../api.js";
 import {
 	type Anchor,
 	type AnchorNode,
+	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
@@ -216,6 +217,53 @@ describe("LazyNode", () => {
 			assert.throws(() => field.parent);
 			assert.throws(() => field.content);
 			assert.throws(() => field.editor.set(undefined, true));
+			checkout.dispose();
+		});
+
+		it(`preserves map field indexing, iteration and cursor positions across eviction (${name})`, () => {
+			const sf = new SchemaFactory("map-field-contract");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({});
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyMapNode);
+			const key: FieldKey = brand("key");
+			const field = node.getBoxed(key);
+			assert(field.is(FieldKinds.optional));
+			const checkContent = (value: number | undefined): void => {
+				const child = field.boxedAt(0);
+				const children = child === undefined ? [] : [child];
+				assert.equal(field.content, value);
+				assert.equal(field.length, value === undefined ? 0 : 1);
+				for (const index of [0, -1, 1, -2, 0.5, -0.5, Number.NaN, Infinity, -Infinity]) {
+					assert.equal(field.boxedAt(index), children.at(index));
+				}
+				assert.deepEqual([...field], children);
+				const cursor = field.borrowCursor();
+				assert.equal(cursor.mode, CursorLocationType.Fields);
+				assert.equal(cursor.getFieldKey(), key);
+				assert.equal(cursor.getFieldLength(), children.length);
+				if (value !== undefined) {
+					cursor.enterNode(0);
+					assert.equal(cursor.value, value);
+					cursor.exitNode();
+				}
+				assert.equal(node.cursor.mode, CursorLocationType.Nodes);
+			};
+			checkContent(undefined);
+			map.set(key, 0);
+			checkContent(0);
+			map.delete(key);
+			checkContent(undefined);
+			map.set(key, 1);
+			assert.notEqual(node.getBoxed(key), field);
+			checkContent(1);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => field.borrowCursor(), /Cannot access a freed FlexTree entity/);
 			checkout.dispose();
 		});
 

@@ -96,7 +96,20 @@ type LocationInField = FlexTreeNode["parentField"];
 const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 
 /**
- * Selects field-storage behavior without looking up the schema for leaf nodes.
+ * Creates an unhydrated node with the field-storage policy selected by its stored schema.
+ * @param data - The node's type and value, consistent with the context's schema.
+ * A defined value identifies a leaf, including falsy values and null.
+ * @param fields - The node's initial fields, whose ownership transfers to the new node.
+ * The constructor assigns their parent to the new node, so they must not belong to another node.
+ * Optional map schemas require {@link UnhydratedMapField} entries.
+ * Leaves must have no fields.
+ * @param context - Supplies the view and stored schemas reachable from this node.
+ * @param storedSchema - The stored schema for `data.type` from `context.flexContext.schema.nodeSchema`.
+ * Supply it when already resolved to avoid another lookup; otherwise the factory resolves it for non-leaf nodes.
+ * This is not a schema override and must agree with the context's schema.
+ * Leaf construction neither uses this argument nor looks up the schema.
+ * @remarks
+ * Prefer this factory over constructing {@link UnhydratedFlexTreeNode} directly so maps and records use the appropriate storage policy.
  */
 export function createUnhydratedFlexTreeNode(
 	data: NodeData,
@@ -168,7 +181,7 @@ export class UnhydratedFlexTreeNode
 		 * All {@link UnhydratedFlexTreeField} for this node that have been created so far.
 		 * @remarks
 		 * For fixed-field nodes, this also includes empty fields which have been previously requested.
-		 * Map and record nodes retain only non-empty fields.
+		 * Map and record nodes retain non-empty fields and fields with pending defaults.
 		 */
 		protected readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
 		/**
@@ -422,7 +435,7 @@ export class UnhydratedFlexTreeNode
 }
 
 /**
- * Map and record storage which retains only non-empty fields.
+ * Map and record storage which retains non-empty fields and fields with pending defaults.
  */
 export class UnhydratedMapNode extends UnhydratedFlexTreeNode {
 	public constructor(

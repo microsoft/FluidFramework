@@ -159,6 +159,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	/**
 	 * Gets or creates a field at the supplied cursor's location.
 	 * The cursor must be in a field of this node, and the caller must validate this node's lifetime.
+	 * @param cursor - A cursor in this node's forest, positioned on the requested field.
 	 * @param createField - Creates a field which owns its navigation resources.
 	 * Implementations whose fields borrow this node's resources do not call this factory.
 	 */

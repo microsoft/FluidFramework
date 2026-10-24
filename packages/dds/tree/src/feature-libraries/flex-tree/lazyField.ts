@@ -69,6 +69,18 @@ export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField
 	return node.fieldCache?.get(key);
 }
 
+/**
+ * Gets a field wrapper, reusing the owning node's cache when appropriate.
+ * @param context - Owns the field's lifetime and supplies its forest and schema policy.
+ * @param schema - The field kind for the cursor's current field under the context's stored schema.
+ * @param cursor - A cursor in the context's forest, positioned in fields mode.
+ * Remains positioned on the same field; ownership stays with the caller.
+ * @remarks
+ * Fields without a parent node own their navigation resources and are not cached here.
+ * Other fields use the parent node's storage policy, creating its wrapper if necessary.
+ * Resource-owning field wrappers take ownership of the temporary parent anchor.
+ * Cache hits and resource-free map fields release that temporary anchor instead.
+ */
 export function makeField(
 	context: Context,
 	schema: FieldKindIdentifier,
