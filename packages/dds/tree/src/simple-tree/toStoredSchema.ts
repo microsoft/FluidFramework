@@ -68,34 +68,70 @@ import { getSchemaDerivedData } from "./treeSchema.js";
 // The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
 
 /**
- * Caches stored-schema conversions by {@link (StagedSchemaUpgradePolicy:interface)} and root identity.
+ * Owns {@link StoredSchemaCache} entries by {@link (StagedSchemaUpgradePolicy:interface) | policy} identity.
  * @remarks
  * {@link getSchemaDerivedData} separately shares the unfiltered graph, staging analysis, and optional unhydrated context.
- * This cache retains policy-specific results because staged roots can produce different stored schemas.
- * Roots without staging use {@link toUnhydratedSchema} as a common key so all policies share one result.
  * Policy keys are weak to avoid retaining short-lived effective upgrade policies.
- * Completed filtered components share immutable node definitions and lazily materialized reachable maps.
- * Components with no transitively reachable staging use the common permissive entry even within staged roots.
- * This decision uses unfiltered staging analysis, never the graph after policy filtering.
- * Root fields and result wrappers remain root-specific.
+ * Schema definitions and policy decisions must remain unchanged while their cached results are reused.
  */
 const viewToStoredCache = new WeakMap<StagedSchemaUpgradePolicy, StoredSchemaCache>();
 
+/**
+ * Completed stored-schema conversions associated with one policy in {@link viewToStoredCache}.
+ * @remarks
+ * Roots and components without transitively reachable staging use the {@link toUnhydratedSchema} entry across policies.
+ * Root normalization also accounts for root-field staging; component normalization excludes root-field annotations.
+ * Both decisions use unfiltered staging analysis, not the absence of staging after policy filtering.
+ * This cache does not own contexts or replace the identifier validation performed by {@link getSchemaDerivedData}.
+ */
 interface StoredSchemaCache {
+	/**
+	 * Successful whole-root conversions, keyed by the original node, field, or union identity.
+	 * Root fields and result wrappers are root-specific; their node-definition maps may be shared.
+	 * Published only after root conversion and reachable-map construction succeed.
+	 */
 	readonly roots: WeakMap<ImplicitFieldSchema, TreeStoredSchema>;
+	/**
+	 * Maps every member schema identity to its shared {@link StoredSchemaComponent}.
+	 * An entry certifies that the whole filtered component and its outgoing dependencies converted successfully.
+	 * This is the caller-owned knowledge supplied to the incremental walk's `wasComponentVisited` predicate.
+	 * Completed dependencies remain reusable if a later component or root conversion fails.
+	 */
 	readonly components: WeakMap<TreeNodeSchema, StoredSchemaComponent>;
 }
 
 /**
- * A successfully converted component under one policy, retaining only outgoing dependencies.
- * Complete reachable maps are built only for requested roots, not eagerly for every component.
+ * A successfully converted strongly connected component of the policy-filtered schema graph.
+ * @remarks
+ * All members have the same reachable stored definitions and can share {@link StoredSchemaComponent.definitions}.
+ * Retains only converted nodes and outgoing dependencies, not requesting roots, contexts, or view-schema graphs.
+ * A record is published for all members only after their conversions and dependency resolution succeed.
  */
 interface StoredSchemaComponent {
+	/**
+	 * Immutable converted definitions for this component's members only, excluding other components.
+	 */
 	readonly nodes: TreeStoredSchema["nodeSchema"];
+	/**
+	 * Completed components directly referenced by {@link StoredSchemaComponent.nodes}, excluding this component.
+	 * References are read from transformed schema so edges removed by the policy are absent.
+	 * Staging-free dependencies may belong to the common {@link toUnhydratedSchema} cache.
+	 */
 	readonly dependencies: ReadonlySet<StoredSchemaComponent>;
+	/**
+	 * Immutable definitions for this component and all its transitive dependencies.
+	 * Aliases {@link StoredSchemaComponent.nodes} when there are no dependencies.
+	 * Otherwise populated by {@link toStoredSchema} only when a requested root needs this component's reachable map.
+	 * Leaving descendant maps lazy avoids eagerly retaining quadratic entries for an acyclic chain.
+	 */
 	definitions?: TreeStoredSchema["nodeSchema"];
 }
 
+/**
+ * Gets or creates an empty {@link StoredSchemaCache} for exactly the supplied policy identity.
+ * Does not normalize the policy, traverse schema, or perform conversions.
+ * {@link toStoredSchema} selects the appropriate cache separately for each root and component.
+ */
 function getStoredSchemaCache(policy: StagedSchemaUpgradePolicy): StoredSchemaCache {
 	return getOrCreate(viewToStoredCache, policy, () => ({
 		roots: new WeakMap(),
@@ -186,6 +222,8 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
  * Roots without {@link hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
  * including {@link toUnhydratedSchema} for unhydrated contexts.
+ * Different roots can share converted nodes; roots in the same policy-filtered component also share a node-definition map.
+ * Root fields remain separate because their allowed types, kind, and metadata can differ.
  * Treat the returned schema as immutable.
  *
  * @privateRemarks
@@ -204,8 +242,7 @@ export function toStoredSchema(
 ): TreeStoredSchema {
 	const data = getSchemaDerivedData(root);
 
-	// Without staging, all policies produce the same schema.
-	// To better reused cached schema, normalize such cases to the unhydrated schema policy.
+	// Root staging includes root-field annotations as well as transitively reachable node staging.
 	const policy = data.hasStagedSchema ? options : toUnhydratedSchema;
 
 	const cache = getStoredSchemaCache(policy);
@@ -214,6 +251,11 @@ export function toStoredSchema(
 			filterFieldAllowedTypes(data.treeSchema.root, policy),
 		);
 		const commonCache = getStoredSchemaCache(toUnhydratedSchema);
+		/**
+		 * Selects storage for this node's conversion using its completed unfiltered staging analysis.
+		 * A staging-free descendant uses the common cache even when the requesting root contains staging.
+		 * Never infer policy equivalence from the filtered result, since filtering can remove staged edges.
+		 */
 		function componentCache(schema: TreeNodeSchema): StoredSchemaCache {
 			if (cache === commonCache) {
 				return cache;
@@ -225,11 +267,19 @@ export function toStoredSchema(
 			);
 			return component.hasStagedSchema ? cache : commonCache;
 		}
+		/**
+		 * Retrieves a completed conversion from the cache selected by {@link componentCache}.
+		 * Used only after dependency completion or after the filtered walk has finished.
+		 */
 		function getComponent(schema: TreeNodeSchema): StoredSchemaComponent {
 			const component = componentCache(schema).components.get(schema);
 			assert(component !== undefined, "Expected a completed stored schema component");
 			return component;
 		}
+		/**
+		 * Selects reference edges for component discovery using the same policy as node conversion.
+		 * Root-field filtering is handled separately before choosing the walk's roots.
+		 */
 		const includes = (type: AnnotatedAllowedType<TreeNodeSchema>): boolean =>
 			type.metadata.stagedSchemaUpgrade === undefined ||
 			policy.includeStaged(type.metadata.stagedSchemaUpgrade);
@@ -265,6 +315,7 @@ export function toStoredSchema(
 				if (dependencies.size === 0) {
 					component.definitions = nodes;
 				}
+				// Do not let a partially converted cycle satisfy wasComponentVisited on a later request.
 				for (const schema of members) {
 					componentCache(schema).components.set(schema, component);
 				}
@@ -281,8 +332,13 @@ export function toStoredSchema(
 }
 
 /**
+ * Builds a fresh map of all definitions reachable from the supplied completed components.
+ * @remarks
  * Visits each reachable component once, avoiding repeated merging along diamond paths.
+ * Shares the converted node objects; does not convert nodes, evaluate policies, or materialize descendant maps.
+ * Input components must come from an identifier-validated root graph and compatible policy results.
  * Different acyclic roots still have overlapping maps, but share the converted node definitions.
+ * Returns an empty map for empty roots. The caller owns publication and sharing of the returned map.
  */
 function collectStoredDefinitions(
 	roots: Iterable<StoredSchemaComponent>,
@@ -368,6 +424,11 @@ export function transformSimpleSchema(
 	return { root, definitions };
 }
 
+/**
+ * Enumerates direct child type identifiers from a simple node schema without traversing or filtering them.
+ * Object fields are visited in map order and can yield the same identifier more than once.
+ * Callers use transformed schema to enumerate only references retained by their policy.
+ */
 function* referencedTypes(schema: SimpleNodeSchema): IterableIterator<string> {
 	switch (schema.kind) {
 		case NodeKind.Leaf: {
@@ -496,7 +557,8 @@ export function transformSimpleNodeSchema(
 /**
  * TODO: Persist node metadata once schema FormatV2 is supported.
  *
- * This is only exported for use by tests: if other users need them more overloads could be provided, but this is currently sufficient.
+ * Performs a shallow transformation: child types remain identifiers and referenced node definitions are not converted.
+ * Used by both whole-schema transformation and component-based stored conversion.
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema,
@@ -580,10 +642,17 @@ export function filterAllowedTypes(
 	return filtered;
 }
 
+/**
+ * Copies a view field into stored form, applying the policy to allowed types and staged optionality.
+ */
 function filterFieldAllowedTypes(
 	f: SimpleFieldSchema<SchemaType.View>,
 	options: StagedSchemaUpgradePolicy,
 ): SimpleFieldSchema<SchemaType.Stored>;
+/**
+ * Copies and transforms a field's annotations and allowed types without traversing referenced schemas.
+ * View-only data is retained or removed according to the transformation options.
+ */
 function filterFieldAllowedTypes(
 	f: SimpleFieldSchema,
 	options: SimpleSchemaTransformationOptions,
