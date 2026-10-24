@@ -43,25 +43,24 @@ export function walkAllowedTypes(
  * Walks without a component callback allocate no component state.
  * Nodes already in `visited` are outside this walk's graph.
  *
- * `isComplete` is reserved for unfiltered derived-state analysis: it certifies completed transitive topology.
- * In this mode only new components are reported, but an `allowedTypes` callback still visits cached schemas.
- * It cannot be combined with node callbacks or filtering.
- * Ordinary visitor entry points do not use this cache and report every visited component.
- * Failed walks discard unfinished components; completed dependencies can remain cached.
+ * An {@link IncrementalSchemaVisitor} can omit component visits already completed by the caller.
+ * Ordinary {@link SchemaVisitor}s report every visited component, independently of caller-owned results.
+ * The walker retains no state between calls. Failed walks discard unfinished components;
+ * results from successfully completed component callbacks remain the caller's responsibility.
  * @internal
  */
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
-	visitor: SchemaVisitor,
+	visitor: SchemaVisitor | IncrementalSchemaVisitor,
 	visited: Set<TreeNodeSchema> = new Set(),
-	isComplete?: (schema: TreeNodeSchema) => boolean,
 ): void {
+	const { wasComponentVisited } = visitor;
 	assert(
-		isComplete === undefined ||
+		wasComponentVisited === undefined ||
 			(visitor.stronglyConnectedComponent !== undefined &&
 				visitor.node === undefined &&
 				visitor.allowedTypeFilter === undefined),
-		"Cached analysis requires unfiltered component traversal without node callbacks",
+		"Incremental component visits require a component callback without node callbacks or filtering",
 	);
 	interface ComponentState {
 		readonly schema: TreeNodeSchema;
@@ -83,16 +82,18 @@ export function walkSchema(
 					stack: new Array<ComponentState>(),
 				};
 	const pending: Frame[] = [];
-	const pruneCompleted = isComplete !== undefined && visitor.allowedTypes === undefined;
-	const referenceVisitor: SchemaVisitor = pruneCompleted
-		? { allowedTypeFilter: ({ type }) => !isComplete(type) }
-		: visitor;
+	const pruneVisitedComponents =
+		wasComponentVisited !== undefined && visitor.allowedTypes === undefined;
+	const referenceVisitor: Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter"> =
+		pruneVisitedComponents
+			? { allowedTypeFilter: ({ type }) => !wasComponentVisited(type) }
+			: visitor;
 
 	function* references(schema: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
 		// Do not initialize contexts: this walk is itself used during node initialization.
 		for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
 			const types = normalizeAndEvaluateAnnotatedAllowedTypes(field);
-			// Preserve the full annotation sequence, but do not yield completed dependencies into the DFS loop.
+			// Preserve the full annotation sequence, but prune previously visited components before yielding.
 			yield* visitAllowedTypes(types, referenceVisitor);
 		}
 	}
@@ -102,14 +103,17 @@ export function walkSchema(
 			return;
 		}
 		visited.add(schema);
-		// Cached topology needs no new component state, but field callbacks still require traversal.
-		if (pruneCompleted && isComplete(schema)) {
+		// Previously visited components need no new component state, but field callbacks still require traversal.
+		if (pruneVisitedComponents && wasComponentVisited(schema)) {
 			return;
 		}
 		markSchemaMostDerived(schema, false);
 		let componentState: ComponentState | undefined;
 		// Without field callbacks, the cutoff above already established that this node is new.
-		if (analysis !== undefined && (pruneCompleted || !(isComplete?.(schema) ?? false))) {
+		if (
+			analysis !== undefined &&
+			(pruneVisitedComponents || !(wasComponentVisited?.(schema) ?? false))
+		) {
 			componentState = {
 				schema,
 				index: analysis.states.size,
@@ -174,7 +178,7 @@ export function walkSchema(
 
 function* visitAllowedTypes(
 	annotatedAllowedTypes: AllowedTypesFullEvaluated,
-	visitor: SchemaVisitor,
+	visitor: Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter">,
 ): IterableIterator<TreeNodeSchema> {
 	for (const allowedType of annotatedAllowedTypes.types) {
 		const filter = visitor.allowedTypeFilter;
@@ -186,10 +190,16 @@ function* visitAllowedTypes(
 }
 
 /**
- * Callbacks and options for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ * Callbacks and options for ordinary schema walks.
+ * Used by {@link walkFieldSchema}, {@link walkAllowedTypes}, {@link walkNodeSchema}, and the package-private `walkSchema`.
  * @internal
  */
 export interface SchemaVisitor {
+	/**
+	 * Ordinary walks cannot suppress previously completed component visits.
+	 * Use the package-private `IncrementalSchemaVisitor` with `walkSchema` instead.
+	 */
+	wasComponentVisited?: never;
 	/**
 	 * Called once for each node schema reached, after walking its fields.
 	 */
@@ -228,4 +238,52 @@ export interface SchemaVisitor {
 	 * It would be possible to combine this with `allowedTypes` into a single callback, but for the current usage this separation is more convenient.
 	 */
 	allowedTypeFilter?: (allowedType: AnnotatedAllowedType<TreeNodeSchema>) => boolean;
+}
+
+/**
+ * A visitor for incrementally visiting components of the unfiltered schema graph with {@link walkSchema}.
+ * @remarks
+ * Reuses {@link SchemaVisitor}'s component and allowed-type callbacks.
+ * Unlike an ordinary visitor, it reports only components not covered by {@link IncrementalSchemaVisitor.wasComponentVisited}.
+ * Outgoing dependency components have either completed their callback in this walk or are covered by that predicate.
+ *
+ * Use this when component callbacks produce reusable caller-owned results, while allowed-type callbacks perform
+ * checks required on every pass, such as configuration-specific validation.
+ * No cache is maintained by the walker, and retaining cached results is not required by this interface.
+ * Node callbacks and edge filtering are excluded: this mode relies on completed visits of whole unfiltered components.
+ * Neither the callbacks nor the predicate may initialize node contexts during schema discovery.
+ * @internal
+ */
+export interface IncrementalSchemaVisitor
+	extends Pick<SchemaVisitor, "allowedTypes">,
+		Required<Pick<SchemaVisitor, "stronglyConnectedComponent">> {
+	/**
+	 * Returns whether the caller has successfully completed a {@link SchemaVisitor.stronglyConnectedComponent}
+	 * visit for this schema's component and all its reachable dependency components.
+	 * @remarks
+	 * The caller owns this knowledge. It may come from earlier walks or callbacks completed earlier in this walk.
+	 * The predicate need not track the current traversal: the walker handles repeat references and cycles.
+	 * Discovering a node, calling its node visitor, or starting a component callback does not constitute a completed visit.
+	 *
+	 * A `true` answer must cover the entire component and its transitive dependencies, never part of a cycle
+	 * or in-progress work. Completed visits must remain valid while the walk runs.
+	 * The predicate may be called multiple times for a schema; it must not depend on call count or cause traversal side effects.
+	 *
+	 * Returning `true` suppresses component callbacks for that completed subgraph.
+	 * Without an {@link SchemaVisitor.allowedTypes} callback, traversal stops at that schema.
+	 * With that callback, the walker still traverses its fields and dependencies in ordinary visitor order.
+	 *
+	 * Unlike prepopulating `walkSchema`'s visited set, this promises completed component visits
+	 * rather than merely excluding nodes from the traversal graph.
+	 * A previsited node receives no field callbacks; this predicate does not suppress requested field callbacks.
+	 */
+	wasComponentVisited: (schema: TreeNodeSchema) => boolean;
+	/**
+	 * Incremental component visits do not support node callbacks.
+	 */
+	node?: never;
+	/**
+	 * Previous component visits must describe the same unfiltered topology.
+	 */
+	allowedTypeFilter?: never;
 }

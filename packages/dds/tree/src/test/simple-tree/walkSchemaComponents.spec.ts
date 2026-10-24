@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -18,6 +21,8 @@ import {
 	walkSchema,
 	walkNodeSchema,
 	type AllowedTypesFullEvaluated,
+	type IncrementalSchemaVisitor,
+	type SchemaVisitor,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
@@ -41,8 +46,27 @@ import {
 	getSchemaDerivedData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
+import type {
+	areSafelyAssignable,
+	isAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Exercise the field-root visitor entry point.
 import { walkFieldSchema } from "../../simple-tree/walkFieldSchema.js";
+
+type _sharedFieldCallback = requireTrue<
+	areSafelyAssignable<IncrementalSchemaVisitor["allowedTypes"], SchemaVisitor["allowedTypes"]>
+>;
+type _sharedComponentCallback = requireTrue<
+	areSafelyAssignable<
+		IncrementalSchemaVisitor["stronglyConnectedComponent"],
+		NonNullable<SchemaVisitor["stronglyConnectedComponent"]>
+	>
+>;
+type _incrementalIsNotOrdinary = requireFalse<
+	isAssignableTo<IncrementalSchemaVisitor, SchemaVisitor>
+>;
 
 function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 	const sf = new SchemaFactoryAlpha("components");
@@ -60,6 +84,63 @@ function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 }
 
 describe("schema component visitor", () => {
+	it("rejects invalid incremental visitor combinations in types and at runtime", () => {
+		const incremental: IncrementalSchemaVisitor = {
+			wasComponentVisited: () => false,
+			stronglyConnectedComponent: () => {},
+		};
+		walkSchema([], incremental);
+		const missingCallback = { wasComponentVisited: () => false };
+		const withNode = { ...incremental, node: () => {} };
+		const withFilter = { ...incremental, allowedTypeFilter: () => true };
+		type _missingComponentCallback = requireFalse<
+			isAssignableTo<typeof missingCallback, Parameters<typeof walkSchema>[1]>
+		>;
+		type _nodeCallbackExcluded = requireFalse<
+			isAssignableTo<typeof withNode, Parameters<typeof walkSchema>[1]>
+		>;
+		type _filterExcluded = requireFalse<
+			isAssignableTo<typeof withFilter, Parameters<typeof walkSchema>[1]>
+		>;
+		for (const visitor of [missingCallback, withNode, withFilter]) {
+			assert.throws(
+				// @ts-expect-error Invalid combinations are rejected even through variables.
+				() => walkSchema([], visitor),
+				validateAssertionError(/Incremental component visits require/),
+			);
+		}
+		// @ts-expect-error An ordinary visitor cannot hide a previous-component predicate.
+		const ordinary: SchemaVisitor = incremental;
+		assert.strictEqual(ordinary, incremental);
+	});
+
+	it("does not require the caller to record component visits during this walk", () => {
+		const [a, b, c] = graph([[1, 1, 2], [0, 2], []]);
+		assert(a !== undefined && b !== undefined && c !== undefined);
+		const earlierVisits = new Set([c]);
+		for (const observeFields of [false, true]) {
+			const components: (readonly TreeNodeSchema[])[] = [];
+			const fields: AllowedTypesFullEvaluated[] = [];
+			const visitor: IncrementalSchemaVisitor = {
+				wasComponentVisited: (schema) => earlierVisits.has(schema),
+				stronglyConnectedComponent: (members) => components.push(members),
+				allowedTypes: observeFields ? (types) => fields.push(types) : undefined,
+			};
+			walkSchema([a, b, c], visitor);
+			assert.deepEqual(
+				components.map((members) => new Set(members)),
+				[new Set([a, b])],
+			);
+			assert.equal(fields.length, observeFields ? 3 : 0);
+			assert.deepEqual(earlierVisits, new Set([c]));
+			if (observeFields) {
+				fields.length = 0;
+				walkSchema([a, b, c], visitor, new Set([c]));
+				assert.equal(fields.length, 2);
+			}
+		}
+	});
+
 	it("uses schema identity rather than identifiers without populating analysis caches", () => {
 		const sf = new SchemaFactoryAlpha("componentIdentity");
 		class A extends sf.object("Duplicate", {}) {}
@@ -217,20 +298,16 @@ describe("schema component visitor", () => {
 			return result;
 		};
 		try {
-			walkSchema(
-				[Parent],
-				{
-					stronglyConnectedComponent: (members) => {
-						assert.equal(members.length, 1);
-						assert.equal(members[0], Parent);
-						fields = getTreeNodeSchemaPrivateData(Parent).childAllowedTypes.map((field) =>
-							field.evaluate(),
-						);
-					},
+			walkSchema([Parent], {
+				wasComponentVisited: (schema) => schema === sf.number,
+				stronglyConnectedComponent: (members) => {
+					assert.equal(members.length, 1);
+					assert.equal(members[0], Parent);
+					fields = getTreeNodeSchemaPrivateData(Parent).childAllowedTypes.map((field) =>
+						field.evaluate(),
+					);
 				},
-				new Set(),
-				(schema) => schema === sf.number,
-			);
+			});
 		} finally {
 			prototype.next = next;
 		}
@@ -244,7 +321,7 @@ describe("schema component visitor", () => {
 		}
 	});
 
-	it("validates most-derived identity before querying the cache on validating walks", () => {
+	it("validates most-derived identity before querying previous visits on validating walks", () => {
 		const sf = new SchemaFactoryAlpha("validationBeforeCache");
 		const Base = sf.object("Base", {});
 		class Used extends Base {}
@@ -253,15 +330,14 @@ describe("schema component visitor", () => {
 		let queries = 0;
 		assert.throws(
 			() =>
-				walkSchema(
-					[Invalid],
-					{ stronglyConnectedComponent: () => {}, allowedTypes: () => {} },
-					new Set(),
-					() => {
+				walkSchema([Invalid], {
+					stronglyConnectedComponent: () => {},
+					allowedTypes: () => {},
+					wasComponentVisited: () => {
 						queries++;
-						throw new Error("Cache queried before schema validation");
+						throw new Error("Previous visit queried before schema validation");
 					},
-				),
+				}),
 			validateUsageError(/Two schema classes were used/),
 		);
 		assert.equal(queries, 0);
@@ -282,12 +358,12 @@ describe("schema component visitor", () => {
 				getSchemaDerivedData(cachedRoot);
 			}
 			const actual: AllowedTypesFullEvaluated[] = [];
-			walkSchema(
-				[a],
-				{ stronglyConnectedComponent: () => {}, allowedTypes: (types) => actual.push(types) },
-				new Set(),
-				(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
-			);
+			walkSchema([a], {
+				stronglyConnectedComponent: () => {},
+				allowedTypes: (types) => actual.push(types),
+				wasComponentVisited: (schema) =>
+					getTreeNodeSchemaPrivateData(schema).component !== undefined,
+			});
 			assert.deepEqual(actual, expected);
 		}
 	});
@@ -341,19 +417,15 @@ describe("schema component visitor", () => {
 		const completed = new Set<TreeNodeSchema>();
 		const visits: TreeNodeSchema[] = [];
 		for (const root of [sf.number, Parent, Parent]) {
-			walkSchema(
-				[root],
-				{
-					stronglyConnectedComponent: (members) => {
-						for (const schema of members) {
-							visits.push(schema);
-							completed.add(schema);
-						}
-					},
+			walkSchema([root], {
+				wasComponentVisited: (schema) => completed.has(schema),
+				stronglyConnectedComponent: (members) => {
+					for (const schema of members) {
+						visits.push(schema);
+						completed.add(schema);
+					}
 				},
-				new Set(),
-				(schema) => completed.has(schema),
-			);
+			});
 		}
 		assert.deepEqual(visits, [sf.number, Parent]);
 	});

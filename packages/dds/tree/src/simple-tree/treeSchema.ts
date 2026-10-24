@@ -137,6 +137,8 @@ export function analyzeSchema(
 		types.types.map((type) => type.type),
 		{
 			allowedTypes,
+			wasComponentVisited: (schema) =>
+				getTreeNodeSchemaPrivateData(schema).component !== undefined,
 			stronglyConnectedComponent: (members) => {
 				const identities = new Set(members);
 				const referenced = new Set<TreeNodeSchema>();
@@ -176,8 +178,6 @@ export function analyzeSchema(
 				}
 			},
 		},
-		new Set(),
-		(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
 	);
 	allowedTypes?.(types);
 	return root;

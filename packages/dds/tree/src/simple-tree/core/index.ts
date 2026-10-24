@@ -91,6 +91,7 @@ export {
 	walkNodeSchema,
 	walkSchema,
 	type SchemaVisitor,
+	type IncrementalSchemaVisitor,
 } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
