@@ -185,15 +185,12 @@ export class EditManager<
 	 * If this method is never called, extra retention is disabled (`false`).
 	 * Each call replaces the current policy; there is no separate fallback policy.
 	 *
-	 * Collaboration and registered branches can require retaining history even when extra retention is disabled,
-	 * or retaining more commits than a numeric limit.
-	 * Summaries include the main-branch history still required by registered branches.
-	 * Each commit counts separately, including commits in the same batch.
-	 * Unsequenced local commits do not count toward the limit.
+	 * Collaboration and local branches can require retaining more commits than the policy specifies.
+	 * Commits that are sequenced in batches are individually counted toward the retention limit.
+	 * Unsequenced local commits do not count toward the retention limit.
 	 *
-	 * Setting the policy immediately checks for history that can be trimmed.
+	 * Calling this method immediately checks for history that can be trimmed.
 	 * Increasing retention preserves available history but does not recover trimmed commits.
-	 * This setting is not serialized; callers must configure each manager independently.
 	 */
 	public setHistoryRetention(value: boolean | number): void {
 		assert(
@@ -533,6 +530,10 @@ export class EditManager<
 				this.addSharedBranch(branchId, branch);
 			}
 		}
+		// Summaries do not currently include a minimum sequence number,so the loader must conservatively retain all revisions from the summary.
+		// This prevents the trimming of superfluous commits when the summarizer's history retention policy is more generous than the loader's policy.
+		// If this changes, uncomment the next line to trim superfluous commits.
+		// this.trimHistory();
 	}
 
 	public getTrunkHead(branchId: BranchId): GraphCommit<TChangeset> {
