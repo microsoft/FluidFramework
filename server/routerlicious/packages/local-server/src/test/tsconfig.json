@@ -1,6 +1,8 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
+		"moduleResolution": "Node16",
+		"module": "Node16",
 		"paths": {
 			"@fluidframework/server-local-server": ["../index.ts"],
 		},

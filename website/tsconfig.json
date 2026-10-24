@@ -5,11 +5,11 @@
 		"strict": true,
 		"strictNullChecks": true,
 		"forceConsistentCasingInFileNames": true,
-		"baseUrl": ".",
+		// Clear Docusaurus's inherited baseUrl and resolve aliases relative to this config.
+		"baseUrl": null,
+		"paths": {
+			"@site/*": ["./*"],
+		},
 	},
 	"exclude": ["test"],
-	"imports": {
-		"@site/src/*": "./src/*",
-		"@site/static/*": "./static/*",
-	},
 }

@@ -72,7 +72,7 @@ describe("tscUtils", () => {
 				makeConfig({ incremental: true, outFile: "/pkg/out/bundle.js" }),
 				configFile,
 			);
-			assert.equal(result, "/pkg/out/bundle.js.tsbuildinfo");
+			assert.equal(result, "/pkg/out/bundle.tsbuildinfo");
 		});
 
 		it("derives the build info file from the legacy out option", () => {
@@ -80,7 +80,7 @@ describe("tscUtils", () => {
 				makeConfig({ incremental: true, out: "/pkg/out/bundle.js" }),
 				configFile,
 			);
-			assert.equal(result, "/pkg/out/bundle.js.tsbuildinfo");
+			assert.equal(result, "/pkg/out/bundle.tsbuildinfo");
 		});
 
 		it("defaults to the config file name beside the config (.json extension)", () => {
@@ -89,6 +89,20 @@ describe("tscUtils", () => {
 				configFile,
 			);
 			assert.equal(result, path.join("/pkg", "tsconfig.tsbuildinfo"));
+		});
+
+		it("treats composite builds as incremental unless explicitly disabled", () => {
+			assert.equal(
+				getTsBuildInfoFileFromConfig(makeConfig({ composite: true }), configFile),
+				"/pkg/tsconfig.tsbuildinfo",
+			);
+			assert.equal(
+				getTsBuildInfoFileFromConfig(
+					makeConfig({ composite: true, incremental: false }),
+					configFile,
+				),
+				undefined,
+			);
 		});
 
 		it("keeps a non-.json config extension in the default name", () => {

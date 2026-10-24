@@ -46,6 +46,11 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # Use TypeScript 6-compatible versions of the lint tooling.
+  "@typescript-eslint/eslint-plugin@>=8 <8.58.0": ~8.58.0
+  "@typescript-eslint/parser@>=8 <8.58.0": ~8.58.0
+  "@typescript-eslint/utils@>=8 <8.58.0": ~8.58.0
+  typescript-eslint@>=8 <8.58.0: ~8.58.0
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3

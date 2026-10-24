@@ -38,6 +38,9 @@ interface ITsBuildInfo {
 		emitDiagnosticsPerFile?: unknown[] | undefined;
 		semanticDiagnosticsPerFile?: unknown[] | undefined;
 		changeFileSet?: number[] | undefined;
+		errors?: boolean | undefined;
+		checkPending?: boolean | undefined;
+		pendingEmit?: number | false | undefined;
 		/**
 		 * The compiler options that tsc serialized into the build info. Typed as the oldest
 		 * supported TypeScript version's options so that it can be passed to the version agnostic
@@ -74,7 +77,12 @@ function isNumberArray(value: unknown): value is number[] {
 	return Array.isArray(value) && value.every((item) => typeof item === "number");
 }
 
-function isBuildInfoProgram(value: unknown): value is ITsBuildInfo["program"] {
+function isBuildInfoProgram(value: unknown): value is Omit<
+	ITsBuildInfo["program"],
+	"options"
+> & {
+	options?: ts54Types.CompilerOptions;
+} {
 	if (!isRawJsonObject(value)) {
 		return false;
 	}
@@ -84,7 +92,12 @@ function isBuildInfoProgram(value: unknown): value is ITsBuildInfo["program"] {
 		value["fileNames"].every((item) => typeof item === "string") &&
 		Array.isArray(value["fileInfos"]) &&
 		value["fileInfos"].every(isFileInfo) &&
-		isRawJsonObject(value["options"]) &&
+		(value["options"] === undefined || isRawJsonObject(value["options"])) &&
+		(value["errors"] === undefined || typeof value["errors"] === "boolean") &&
+		(value["checkPending"] === undefined || typeof value["checkPending"] === "boolean") &&
+		(value["pendingEmit"] === undefined ||
+			value["pendingEmit"] === false ||
+			typeof value["pendingEmit"] === "number") &&
 		isOptionalArray(value["affectedFilesPendingEmit"]) &&
 		isOptionalArray(value["emitDiagnosticsPerFile"]) &&
 		isOptionalArray(value["semanticDiagnosticsPerFile"]) &&
@@ -95,7 +108,7 @@ function isBuildInfoProgram(value: unknown): value is ITsBuildInfo["program"] {
 /**
  * Normalizes a raw tsbuildinfo JSON object into the canonical {@link ITsBuildInfo} shape.
  *
- * TypeScript 5.x stores build info under a `program` wrapper, while TypeScript 6+
+ * TypeScript versions before 5.6 store build info under a `program` wrapper, while newer versions
  * places the same keys at the top level. This function detects which format is present
  * and returns a unified structure, or `undefined` if the input is not recognizable.
  */
@@ -103,22 +116,32 @@ export function normalizeTsBuildInfo(raw: unknown): ITsBuildInfo | undefined {
 	if (!isRawJsonObject(raw)) {
 		return undefined;
 	}
-	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
+	// Older format: { program: { fileNames, fileInfos, options, ... }, version }
 	const program = raw["program"];
 	if (isBuildInfoProgram(program) && typeof raw["version"] === "string") {
-		return { program, version: raw["version"] };
+		return {
+			program: { ...program, options: program.options ?? {} },
+			version: raw["version"],
+		};
 	}
-	// TS6 format: { fileNames, fileInfos, options, ..., version }
+	// Current format: { fileNames, fileInfos, options, ..., version }
 	if (isBuildInfoProgram(raw) && typeof raw["version"] === "string") {
 		return {
 			program: {
 				fileNames: raw.fileNames,
 				fileInfos: raw.fileInfos,
-				options: raw.options,
+				options: raw.options ?? {},
 				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
 				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
 				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
 				changeFileSet: raw.changeFileSet,
+				errors: raw.errors,
+				// In the newer format, numeric entries mean diagnostics have not been computed.
+				// In the wrapped format, they instead mean that checking succeeded.
+				checkPending:
+					raw.checkPending ||
+					raw.semanticDiagnosticsPerFile?.some((item) => typeof item === "number"),
+				pendingEmit: raw.pendingEmit,
 			},
 			version: raw["version"],
 		};
@@ -157,7 +180,7 @@ export class TscTask extends LeafTask {
 	}
 	protected get isIncremental(): boolean {
 		const config = this.readTsConfig();
-		return config?.options.incremental ?? false;
+		return config?.options.incremental ?? config?.options.composite ?? false;
 	}
 
 	protected async checkLeafIsUpToDate(): Promise<boolean> {
@@ -235,14 +258,18 @@ export class TscTask extends LeafTask {
 		const noEmit = config.options.noEmit ?? false;
 		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
 		const hasEmitErrorsOrPending =
+			program.pendingEmit !== undefined ||
 			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
 			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
 		const hasSemanticErrors =
 			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
 
-		const previousBuildError = noEmit
-			? hasChangedFiles || hasSemanticErrors
-			: hasChangedFiles || hasSemanticErrors || hasEmitErrorsOrPending;
+		const previousBuildError =
+			program.errors ||
+			(program.checkPending && !config.options.noCheck) ||
+			hasChangedFiles ||
+			hasSemanticErrors ||
+			(!noEmit && hasEmitErrorsOrPending);
 
 		// Check previous build errors
 		if (previousBuildError) {
@@ -483,10 +510,11 @@ export class TscTask extends LeafTask {
 	}
 
 	protected get useWorker(): boolean {
-		// TODO: Worker doesn't implement all mode.  This is not comprehensive filtering yet.
+		// The worker compiles one project; build mode requires TypeScript's solution builder.
 		const parsed = this.parsedCommandLine;
 		return (
 			parsed !== undefined &&
+			!parsed.options.build &&
 			(parsed.fileNames.length === 0 || parsed.options.project === undefined) &&
 			!parsed.watchOptions
 		);

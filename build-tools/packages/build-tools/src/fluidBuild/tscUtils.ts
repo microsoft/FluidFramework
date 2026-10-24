@@ -122,6 +122,7 @@ function convertOptionPaths<
 		"baseUrl",
 		"configFilePath",
 		"declarationDir",
+		"outFile",
 		"outDir",
 		"rootDir",
 		"project",
@@ -160,13 +161,17 @@ function createGetCanonicalFileName(tsLib: tsTypes): (x: string) => string {
 }
 
 /**
- * The TypeScript compiler internals used by {@link createGetSourceFileVersion}.
+ * The TypeScript compiler internals used for incremental build checks.
  *
  * @remarks
  * `getSourceFileVersionAsHashFromText` is an internal (non public) TypeScript API added in
  * TypeScript 5.0. It is absent from the published typings, and callers must handle its absence.
  */
 interface TsInternals {
+	optionDeclarations?: readonly {
+		name: string;
+		affectsBuildInfo?: boolean;
+	}[];
 	getSourceFileVersionAsHashFromText?: (
 		host: { createHash: (data: string) => string },
 		text: string,
@@ -265,6 +270,13 @@ export interface TscUtil<TSTypes extends tsTypes = tsTypes> {
 }
 
 function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes> {
+	// The serialized options change between compiler versions.
+	// Use the same metadata as the installed compiler rather than a fixed historical list.
+	const buildInfoOptions =
+		(tsLib as TsInternals).optionDeclarations
+			?.filter((option) => option.affectsBuildInfo)
+			.map((option) => option.name)
+			.sort() ?? incrementalOptions;
 	return {
 		tsLib,
 		parseCommandLine: (
@@ -362,7 +374,12 @@ function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes
 			}
 			return configFile.config;
 		},
-		filterIncrementalOptions,
+		filterIncrementalOptions: (options) =>
+			Object.fromEntries(
+				buildInfoOptions
+					.filter((name) => options[name] !== undefined)
+					.map((name) => [name, options[name]]),
+			),
 		convertOptionPaths,
 		getCanonicalFileName: createGetCanonicalFileName(tsLib),
 		getSourceFileVersion: createGetSourceFileVersion(tsLib),
@@ -516,7 +533,7 @@ export function getTsBuildInfoFileFromConfig(
 	options: ResolvedTsConfig,
 	configFileFullPath: string,
 ): string | undefined {
-	if (!options.options.incremental) {
+	if (!(options.options.incremental ?? options.options.composite)) {
 		return undefined;
 	}
 
@@ -526,7 +543,7 @@ export function getTsBuildInfoFileFromConfig(
 
 	const outFile = options.options.out ? options.options.out : options.options.outFile;
 	if (outFile) {
-		return `${outFile}.tsbuildinfo`;
+		return `${outFile.slice(0, outFile.length - path.extname(outFile).length)}.tsbuildinfo`;
 	}
 
 	const tsBuildInfoFileName = getTsBuildInfoFileName(configFileFullPath);

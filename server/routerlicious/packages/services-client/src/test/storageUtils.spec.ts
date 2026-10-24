@@ -185,7 +185,7 @@ describe("Storage Utils", () => {
 	});
 
 	describe("convertWholeFlatSummaryToSnapshotTreeAndBlobs()", () => {
-		const blobs = new Map<string, ArrayBuffer>();
+		const blobs = new Map<string, ArrayBufferLike>();
 		let flatSummaryTree: IWholeFlatSummaryTree;
 		let sequenceNumber: number;
 
