@@ -157,6 +157,7 @@ describe("TreeNodeValid", () => {
 	it("multiple subclass valid", () => {
 		const log: string[] = [];
 
+		// This mock permits independent most-derived schemas, each of which must own separate private data.
 		const privateData = new WeakMap<object, TreeNodeSchemaPrivateData>();
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;

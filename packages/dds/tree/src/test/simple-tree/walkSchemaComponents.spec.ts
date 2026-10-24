@@ -75,6 +75,9 @@ type _incrementalIsNotOrdinary = requireFalse<
 	isAssignableTo<IncrementalSchemaVisitor, SchemaVisitor>
 >;
 
+/**
+ * Creates fresh schema identities from adjacency lists, with lazy references supporting forward edges and cycles.
+ */
 function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 	const sf = new SchemaFactoryAlpha("components");
 	const nodes: TreeNodeSchema[] = [];
@@ -345,6 +348,8 @@ describe("schema component visitor", () => {
 			Object.fromEntries(Array.from({ length: 32 }, (_, i) => [`field${i}`, types])),
 		) {}
 		types.evaluate();
+		// Count yielded cached references, not just discovered nodes: redundant iterator work must also be avoided.
+		// The generator prototype is restored in finally so this instrumentation does not affect later tests.
 		const prototype = Object.getPrototypeOf(
 			Object.getPrototypeOf((function* () {})()),
 		) as Generator<unknown, unknown, unknown>;
@@ -415,7 +420,7 @@ describe("schema component visitor", () => {
 		walkAllowedTypes(root.allowedTypesFull.evaluate(), {
 			allowedTypes: (types) => expected.push(types),
 		});
-		// The component walker visits node fields, not the root field itself.
+		// walkSchema starts at node roots, so it does not report the field wrapper used by walkAllowedTypes.
 		expected.pop();
 		for (const cachedRoot of [undefined, c, a]) {
 			if (cachedRoot !== undefined) {
@@ -534,7 +539,7 @@ describe("component-derived schema state", () => {
 				new Set(aData.treeSchema.definitions.keys()),
 				new Set([a.identifier, b.identifier]),
 			);
-			// Captured with the same schema identities and structure at pre-refactor commit 1099dc048df.
+			// Captured from schemas with these identifiers and structure at pre-refactor commit 1099dc048df.
 			assert.equal(computeSchemaHash(a), "0aec93b1d34f96c13c2a92a5e494939e");
 			assert.equal(computeSchemaHash(b), "0458eb955807e91b2f7e1db31fa60da6");
 			const codec = schemaCodecBuilder.build({

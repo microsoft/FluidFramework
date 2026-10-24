@@ -12,6 +12,8 @@ import type { UnionToIntersection } from "../../util/index.js";
 import type { getUnhydratedContext } from "../createContext.js";
 import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	analyzeSchema,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	getSchemaDerivedData,
 	SchemaComponent,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
@@ -384,8 +386,8 @@ export interface TreeNodeSchemaCorePrivate<
  */
 export interface TreeNodeSchemaPrivateData {
 	/**
-	 * Completed topology and staging analysis, shared with every member of this schema's component.
-	 * Populated by {@link getSchemaDerivedData} without initializing a context.
+	 * Completed unfiltered topology and staging analysis, shared with every member of this schema's component.
+	 * Populated by {@link analyzeSchema} without initializing a context; absent until that component completes.
 	 * Does not certify root identifier uniqueness or configuration-specific validity.
 	 */
 	component?: SchemaComponent;
@@ -413,7 +415,7 @@ export interface TreeNodeSchemaPrivateData {
  * @remarks
  * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
  * Unlike the root analysis cached by {@link getSchemaDerivedData}, this data includes node-specific conversion handlers and initializes a context.
- * Schema walks must use the root analysis or {@link TreeNodeSchemaPrivateData.childAllowedTypes} instead of triggering this initialization.
+ * Schema walks must use {@link TreeNodeSchemaPrivateData.childAllowedTypes} and completed component data instead of triggering this initialization.
  */
 export interface TreeNodeSchemaInitializedData {
 	/**

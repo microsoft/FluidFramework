@@ -37,6 +37,8 @@ export class Context {
 		 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
 		 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.
 		 * Having this map in the context addresses this use-case.
+		 * This is immutable lookup data that may be shared across roots and hydrated or unhydrated contexts.
+		 * Sharing the map does not share the context's tree or document state.
 		 * @privateRemarks
 		 * This design mirrors how {@link FlexTreeSchema} are accessed off the {@link FlexTreeContext}, making the migration away from them simpler.
 		 */

@@ -28,7 +28,8 @@ let getUnhydratedContextIsRunning = false;
  * @remarks
  * The resulting context will not allow any unknown optional fields.
  * {@link getSchemaDerivedData} owns the shared root cache; this function fills its context slot only after construction succeeds.
- * The cached graph supplies the context's node lookup map without another recursive schema walk.
+ * The cached graph supplies the context's node lookup map without another traversal or map copy.
+ * Contexts remain root-specific even when their immutable schema lookup maps are shared.
  *
  * {@link toStoredSchema} uses the same analysis but a separate policy-specific result cache.
  * Analysis must not initialize contexts because context construction calls stored-schema generation.

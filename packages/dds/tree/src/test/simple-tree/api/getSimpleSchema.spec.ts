@@ -89,7 +89,7 @@ function copySimpleTreeSchemaWithoutMetadata(simpleTree: SimpleTreeSchema): Simp
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
 
-	it("reuses recursive graph discovery while returning independent copies", () => {
+	it("reuses recursive graph discovery while returning fresh schema structures", () => {
 		const sf = new SchemaFactoryAlpha("simpleSchemaReuse");
 		class A extends sf.objectRecursive("A", {
 			child: sf.optionalRecursive([() => B]),

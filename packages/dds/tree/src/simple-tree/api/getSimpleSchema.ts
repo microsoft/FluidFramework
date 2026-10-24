@@ -10,10 +10,12 @@ import { transformSimpleSchema } from "../toStoredSchema.js";
 import { getSchemaDerivedData } from "../treeSchema.js";
 
 /**
- * Copies data from {@link ImplicitFieldSchema} to create a {@link SimpleTreeSchema} out of new plain JavaScript objects, Sets and Maps.
+ * Copies the schema structure from an {@link ImplicitFieldSchema} into a {@link SimpleTreeSchema} with plain JavaScript objects and maps.
  *
  * @remarks
  * See also {@link TreeViewConfigurationAlpha} which implements {@link SimpleTreeSchema} as a way to get a `SimpleTreeSchema` without copying the node and field schema and without losing as much type information.
+ * Each call creates new schema objects and maps.
+ * Custom metadata and persisted metadata values are retained by reference, not deep-copied.
  *
  * @privateRemarks
  * In the future, we may wish to move this to a more discoverable API location.
@@ -21,6 +23,7 @@ import { getSchemaDerivedData } from "../treeSchema.js";
  *
  * Reuses the internal schema-derived graph without initializing node contexts.
  * The returned simple schema is copied on every call; it is not the shared graph.
+ * Consider accepting a precomputed schema graph directly instead of requiring an implicit root.
  *
  * @alpha
  */

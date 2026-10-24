@@ -35,6 +35,8 @@ import * as Format from "../simpleSchemaFormatV1.js";
  *
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
+ * Definition order is independent of the input map's iteration order.
+ * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the schema.
  *

@@ -30,7 +30,11 @@ import { walkFieldSchema } from "./walkFieldSchema.js";
 
 /**
  * Uncached reference graph construction, retaining the visitor walk's postorder.
- * Independent of component analysis and stored-schema result caches.
+ * @remarks
+ * Includes references with staged upgrades, resolves lazy references, and rejects conflicting identifiers.
+ * Does not populate derived-state or stored-schema result caches or initialize node contexts.
+ * Lazy-reference evaluation retains its own existing memoization.
+ * This independent graph-construction path supports reference conversions in tests.
  */
 export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
 	const root = normalizeFieldSchema(rootSchema);
@@ -47,11 +51,26 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
  * Reachable definitions are materialized only for requested components, not eagerly for every descendant.
  */
 export interface SchemaComponent {
+	/**
+	 * Every schema identity in this unfiltered component, including non-class leaf schemas.
+	 * Member order is unspecified.
+	 */
 	readonly members: readonly TreeNodeSchema[];
+	/**
+	 * Completed components directly referenced by members, excluding this component.
+	 * Includes staged references and retains no reverse dependents.
+	 */
 	readonly dependencies: ReadonlySet<SchemaComponent>;
+	/**
+	 * Whether any member or transitively reachable schema contains staged allowed types or staged optional fields.
+	 * Staging on a reference belongs to the referencing schema, not its target.
+	 * Root-field annotations are excluded; `false` permits policy-independent stored conversion.
+	 */
 	readonly hasStagedSchema: boolean;
 	/**
-	 * Shared, identifier-validated lookup data, published only after successful materialization.
+	 * Complete unfiltered definitions reachable from any member, shared by roots within this component.
+	 * Published only after reachable identifier uniqueness is validated.
+	 * Remains absent until a root requests this map; discovering a component does not materialize its map.
 	 * Iteration order is unspecified; serializers that require stable ordering must canonicalize it.
 	 */
 	definitions?: TreeSchema["definitions"];
@@ -62,10 +81,19 @@ export interface SchemaComponent {
  * Root field kind, annotations and metadata remain distinct even when definitions are shared.
  */
 export interface SchemaDerivedData {
+	/**
+	 * Root field and complete, identifier-validated unfiltered definitions.
+	 * Treat this graph as immutable; its definitions may also serve other roots and context lookups.
+	 */
 	readonly treeSchema: TreeSchema;
+	/**
+	 * Whether the root field has staging or reaches a component with {@link SchemaComponent.hasStagedSchema}.
+	 * `false` permits root-result sharing across policies; `true` does not guarantee that policy results differ.
+	 */
 	readonly hasStagedSchema: boolean;
 	/**
-	 * The component containing all root allowed types, if there is exactly one.
+	 * The component containing all root allowed types, if they belong to exactly one component.
+	 * Absent for empty roots and roots spanning multiple components.
 	 * Root fields remain separate from component-owned view definitions.
 	 */
 	readonly component: SchemaComponent | undefined;
@@ -77,7 +105,9 @@ export interface SchemaDerivedData {
 }
 
 /**
+ * Caches successful {@link SchemaDerivedData} records by original root identity.
  * Root identity owns validated graphs and lazy contexts; components own topology and shared definitions.
+ * Failed requests do not publish root records, but already completed component analysis remains reusable.
  * Policy-specific converted results remain owned by {@link toStoredSchema}.
  */
 const schemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, SchemaDerivedData>();
@@ -117,7 +147,13 @@ export function getSchemaDerivedData(rootSchema: ImplicitFieldSchema): SchemaDer
 
 /**
  * Completes topology and staging analysis without constructing reachable maps or contexts.
- * The optional callback visits every allowed-type list, including in cached components, in visitor order.
+ * @param rootSchema - Schema whose lazy references are ready to be evaluated.
+ * @param allowedTypes - Optional per-request callback for every allowed-type list, including lists in previously analyzed components and the root field.
+ * Receives the original evaluated sequence, preserving duplicates for configuration validation.
+ * @returns The normalized root field.
+ * @remarks
+ * Publishes component data through {@link getTreeNodeSchemaPrivateData} only after each unfiltered component's dependencies are complete.
+ * Root-field staging is not attributed to the referenced node components.
  * Root identifier validation remains separate so configurations can preserve their validation phases.
  */
 export function analyzeSchema(
@@ -176,10 +212,17 @@ export function analyzeSchema(
 	return root;
 }
 
+/**
+ * Detects a staged optional field without applying a policy.
+ * Both omitted staging data and explicit `false` mean no staged optionality.
+ */
 function isStagedOptional(field: { readonly isStagedOptional?: unknown }): boolean {
 	return field.isStagedOptional !== undefined && field.isStagedOptional !== false;
 }
 
+/**
+ * Retrieves completed unfiltered analysis; callers must first discover the schema's component.
+ */
 function getComponent(schema: TreeNodeSchema): SchemaComponent {
 	const component = getTreeNodeSchemaPrivateData(schema).component;
 	assert(component !== undefined, "Expected completed schema component");
@@ -188,7 +231,8 @@ function getComponent(schema: TreeNodeSchema): SchemaComponent {
 
 /**
  * Visits each reachable component once, avoiding repeated unions along diamonds.
- * Uses O(V + E) traversal, retaining O(V) entries only for this requested closure.
+ * Work is linear in reachable nodes and component edges, retaining one entry per reachable node for this requested closure.
+ * Checks identifier uniqueness without materializing descendant maps or initializing contexts.
  * Different acyclic roots can still retain overlapping maps.
  */
 function materializeDefinitions(roots: Iterable<SchemaComponent>): TreeSchema["definitions"] {
@@ -205,6 +249,9 @@ function materializeDefinitions(roots: Iterable<SchemaComponent>): TreeSchema["d
 	return definitions;
 }
 
+/**
+ * Adds a schema to an identity-deduplicated graph, rejecting identifier collisions.
+ */
 function addDefinition(
 	definitions: Map<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>,
 	schema: TreeNodeSchema,

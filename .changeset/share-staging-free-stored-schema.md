@@ -5,18 +5,16 @@
 ---
 Reduce repeated schema conversion for SharedTree
 
-SharedTree reuses derived stored schemas across staged-upgrade policies when the view schema contains no staging.
-Schemas with staged upgrades continue to use policy-specific stored schemas.
-Unhydrated node contexts reuse the cached schema analysis instead of traversing the schema again.
-Mutually recursive node schemas share completed staging analysis and one lazily constructed definitions map.
-Unhydrated contexts reuse that map without copying it.
-Roots share converted node definitions through components computed under each staged-upgrade policy.
-Roots in the same policy-filtered component also share their stored node-definition map.
-Components with no reachable staging reuse common conversions across policies, including when referenced by staged schemas.
-Root fields, contexts, and policy-specific stored-schema wrappers remain root-specific.
-Configuration validation and component discovery share one iterative traversal.
-Configuration-specific checks still run when component analysis is cached.
-Hydrated contexts and index setup also reuse the cached reachable definitions instead of walking the schema again.
-Simple-schema copies and compatibility snapshots reuse those definitions while still returning fresh output on each call.
+SharedTree reuses schema analysis and converted node definitions across overlapping schema roots.
+Mutually recursive schemas also share lazily constructed maps of their reachable definitions.
+Hydrated and unhydrated context creation, index setup, simple-schema copies, and compatibility snapshots reuse this analysis instead of repeating schema discovery.
+
+Components with no transitively reachable staging share stored conversions across staged-upgrade policies, including when referenced by staged schemas.
+Other components share conversions within each policy; filtering can change which schemas remain mutually reachable.
+Root-field staging and stored-schema result wrappers remain root-specific.
+Unhydrated contexts remain root-specific, and hydrated contexts remain document-specific; only their immutable schema lookup data is shared.
+
+Configuration validation and unfiltered component discovery share a traversal, while configuration-specific checks still run on every construction.
+Simple-schema copies and compatibility snapshots still return fresh output structures.
 Definition map iteration order is unspecified.
 Compatibility snapshots canonicalize definition order; schema hashes and persisted schema encoding are unchanged.

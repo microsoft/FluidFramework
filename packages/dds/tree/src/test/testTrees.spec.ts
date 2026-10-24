@@ -125,7 +125,7 @@ describe("test tree catalogs", () => {
 			for (const permissiveFirst of [false, true]) {
 				it(`${testCase.name}: ${permissiveFirst ? "permissive" : "restrictive"} first`, () => {
 					const original = normalizeFieldSchema(testCase.schema);
-					// A fresh root ensures neither lookup order is hidden by earlier cache population.
+					// A fresh field wrapper avoids root-result cache hits, but deliberately retains reusable component analysis.
 					const root = createFieldSchema(
 						original.kind,
 						original.allowedTypes,

@@ -2988,6 +2988,7 @@ describe("TableFactory unit tests", () => {
 				requireFieldsWithDefaults: false,
 				keys: KeyEncodingOptions.usePropertyKeys,
 			});
+			// Snapshot ordering must not depend on which root first populated a shared definitions map.
 			takeJsonSnapshot({
 				...schema,
 				$defs: Object.fromEntries(

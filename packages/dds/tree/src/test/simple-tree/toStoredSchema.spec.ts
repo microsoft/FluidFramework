@@ -80,6 +80,9 @@ function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
 
 describe("toStoredSchema", () => {
 	describe("policy component reuse", () => {
+		/**
+		 * Converts through the uncached graph and transformation path, independently of policy-result caches.
+		 */
 		function reference(
 			root: ImplicitFieldSchema,
 			policy: StagedSchemaUpgradePolicy,
@@ -291,7 +294,7 @@ describe("toStoredSchema", () => {
 					assert(isObjectNodeSchema(cSchema));
 					const bFields = bSchema.fields;
 					const cFields = cSchema.fields;
-					// Count annotation inspections, not schema discovery, which must still validate every root.
+					// Count staging-annotation inspections. Root identifier checks still run, but reuse completed component analysis.
 					Object.defineProperty(B, "fields", {
 						get() {
 							bReads++;

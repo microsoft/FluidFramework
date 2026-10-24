@@ -31,7 +31,7 @@ import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 const schema = new SchemaFactory("com.example");
 
 describe("simple-tree configuration", () => {
-	it("validates and discovers each node once, then revalidates cached components", () => {
+	it("reuses completed analysis while revalidating each configuration", () => {
 		const sf = new SchemaFactoryAlpha("singleWalk");
 		class Leaf extends sf.object("Leaf", { value: sf.number }) {}
 		class A extends sf.objectRecursive("A", {
@@ -103,7 +103,7 @@ describe("simple-tree configuration", () => {
 	}
 
 	for (const strictFirst of [false, true]) {
-		it(`validates cached unions with ${strictFirst ? "strict" : "permissive"} configuration first`, () => {
+		it(`validates cached unions with preventAmbiguity=${strictFirst} first`, () => {
 			const sf = new SchemaFactoryAlpha("cachedValidation");
 			class A extends sf.array("A", sf.number) {}
 			class B extends sf.array("B", sf.number) {}

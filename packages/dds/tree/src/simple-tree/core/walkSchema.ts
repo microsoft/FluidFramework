@@ -15,6 +15,9 @@ import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSch
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ * @remarks
+ * Includes `schema` itself unless it is already in `visitedSet`; filtering applies to its child references.
+ * Updates `visitedSet` as nodes are discovered, including when a later callback or schema evaluation throws.
  * @internal
  */
 export function walkNodeSchema(
@@ -26,7 +29,10 @@ export function walkNodeSchema(
 }
 
 /**
- * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
+ * Traverses all {@link TreeNodeSchema} schema reachable from `annotatedAllowedTypes`, applying the visitor pattern.
+ * @remarks
+ * Applies {@link SchemaVisitor.allowedTypeFilter} to root references as well as child references.
+ * The root allowed-type callback runs after its selected node roots have been walked.
  * @internal
  */
 export function walkAllowedTypes(
@@ -38,14 +44,18 @@ export function walkAllowedTypes(
 }
 
 /**
- * Traverses node roots using iterative DFS with optional Tarjan bookkeeping.
+ * Traverses node roots using iterative depth-first search, with optional Tarjan strongly connected component analysis.
+ * @param roots - Node roots to visit. The allowed-type filter applies to child references, not these explicit roots.
+ * @param visitor - Callbacks and filtering for this walk, optionally including caller-owned knowledge of previous component visits.
+ * @param visited - Schema identities excluded from discovery, updated as new nodes are discovered.
+ * Entries added before an error are not rolled back; use a fresh set to retry a complete walk.
  * @remarks
  * Walks without a component callback allocate no component state.
- * Nodes already in `visited` are outside this walk's graph.
+ * Nodes already in `visited` are outside this walk's graph, which can split components.
  *
  * An {@link IncrementalSchemaVisitor} can omit component visits already completed by the caller.
- * Ordinary {@link SchemaVisitor}s report every visited component, independently of caller-owned results.
- * The walker retains no state between calls. Failed walks discard unfinished components;
+ * Ordinary {@link SchemaVisitor}s report every visited component when requested, independently of caller-owned results.
+ * The walker retains no internal state between calls. Failed walks discard unfinished component analysis;
  * results from successfully completed component callbacks remain the caller's responsibility.
  * @internal
  */
@@ -60,17 +70,48 @@ export function walkSchema(
 			(visitor.stronglyConnectedComponent !== undefined && visitor.node === undefined),
 		"Incremental component visits require a component callback without node callbacks",
 	);
+	/**
+	 * Temporary Tarjan state for a node not covered by a previous component visit.
+	 */
 	interface ComponentState {
+		/**
+		 * Identity of the node, independent of its schema identifier.
+		 */
 		readonly schema: TreeNodeSchema;
+		/**
+		 * Discovery index among nodes included in this walk's component analysis.
+		 */
 		readonly index: number;
+		/**
+		 * Lowest discovery index propagated from depth-first-search children or edges to unfinished nodes.
+		 */
 		lowLink: number;
+		/**
+		 * Whether this node still belongs to an unfinished component.
+		 * Can remain true after its traversal frame has finished.
+		 */
 		onStack: boolean;
 	}
+	/**
+	 * A suspended node visit, retaining its reference iterator until its children have been walked.
+	 */
 	interface Frame {
+		/**
+		 * Node whose fields are being visited.
+		 */
 		readonly schema: TreeNodeSchema;
+		/**
+		 * Remaining selected references; resuming the iterator also completes allowed-type callbacks.
+		 */
 		readonly references: Iterator<TreeNodeSchema>;
+		/**
+		 * Absent for ordinary walks without component callbacks and for previously visited components.
+		 */
 		readonly componentState: ComponentState | undefined;
 	}
+	/**
+	 * Per-walk component bookkeeping, separate from the caller's knowledge of previous component visits.
+	 */
 	const analysis =
 		visitor.stronglyConnectedComponent === undefined
 			? undefined
@@ -91,6 +132,10 @@ export function walkSchema(
 				}
 			: visitor;
 
+	/**
+	 * Evaluates fields in declaration order without initializing contexts.
+	 * Preserves complete allowed-type lists for field callbacks while filtering yielded references.
+	 */
 	function* references(schema: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
 		// Do not initialize contexts: this walk is itself used during node initialization.
 		for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
@@ -100,6 +145,10 @@ export function walkSchema(
 		}
 	}
 
+	/**
+	 * Starts an unvisited node unless its previous component visit permits pruning.
+	 * When field callbacks require traversal, most-derived validation precedes querying previous component visits.
+	 */
 	function discover(schema: TreeNodeSchema): void {
 		if (visited.has(schema)) {
 			return;
@@ -109,6 +158,7 @@ export function walkSchema(
 		if (pruneVisitedComponents && wasComponentVisited(schema)) {
 			return;
 		}
+		// Reject conflicting subclasses of a factory-generated base, including conflicts with constructed nodes.
 		markSchemaMostDerived(schema, false);
 		let componentState: ComponentState | undefined;
 		// Without field callbacks, the cutoff above already established that this node is new.
@@ -132,6 +182,10 @@ export function walkSchema(
 		});
 	}
 
+	/**
+	 * Reports a component when its earliest-discovered member finishes, then propagates the low-link value to its parent.
+	 * Called after the node callback and after removing the node's traversal frame.
+	 */
 	function finishComponentFrame(
 		componentAnalysis: NonNullable<typeof analysis>,
 		componentState: ComponentState,
@@ -178,6 +232,10 @@ export function walkSchema(
 	}
 }
 
+/**
+ * Yields selected references, then reports the full evaluated allowed-type list.
+ * The traversal driver walks each yielded reference before requesting the next one.
+ */
 function* visitAllowedTypes(
 	annotatedAllowedTypes: AllowedTypesFullEvaluated,
 	visitor: Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter">,
@@ -204,6 +262,9 @@ export interface SchemaVisitor {
 	wasComponentVisited?: never;
 	/**
 	 * Called once for each node schema reached, after walking its fields.
+	 * @remarks
+	 * Inner nodes are reported first so errors in dependencies can be addressed before schemas that refer to them.
+	 * Cycles prevent a strict dependency order between individual nodes; use component callbacks when that order is required.
 	 */
 	node?: (schema: TreeNodeSchema) => void;
 	/**
@@ -220,20 +281,20 @@ export interface SchemaVisitor {
 	 */
 	stronglyConnectedComponent?: (schemas: readonly TreeNodeSchema[]) => void;
 	/**
-	 * Called once for each set of allowed types.
+	 * Called after each encountered allowed-type list has been walked.
 	 * @remarks
 	 * This includes every field, as well as the allowed types for maps and arrays nodes and the root if starting at {@link walkAllowedTypes}.
 	 *
-	 * Each allowed types in the schema is visited as it was in the original schema except for normalization.
+	 * Receives the full normalized, evaluated list, including entries rejected by the filter and duplicate entries.
+	 * A list reused by multiple fields is reported for each field occurrence.
 	 *
 	 * Called after walking the allowed types selected by {@link SchemaVisitor.allowedTypeFilter}.
 	 */
 	allowedTypes?: (allowedTypes: AllowedTypesFullEvaluated) => void;
 	/**
-	 * If true, will walk into this `allowedType`.
-	 * If false, the `allowedType` will not be walked into.
+	 * Selects whether to follow this allowed-type reference.
 	 *
-	 * If not provided, all allowedTypes will be walked into.
+	 * If omitted, all references are included.
 	 * @remarks
 	 * Called before walking each reference, including references to already visited nodes.
 	 * @privateRemarks

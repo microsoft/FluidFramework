@@ -248,7 +248,8 @@ export class TreeViewConfiguration<
 		this.enableSchemaValidation = config.enableSchemaValidation;
 		this.preventAmbiguity = config.preventAmbiguity;
 
-		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
+		// Collect ambiguity errors so validation failures encountered during this walk take priority.
+		// Reachable identifier uniqueness is checked later when the derived root graph is requested.
 		const ambiguityErrors: string[] = [];
 
 		// Analyze and validate in one walk. Configuration-specific checks run even for cached components.

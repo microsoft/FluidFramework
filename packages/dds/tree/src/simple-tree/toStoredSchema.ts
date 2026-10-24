@@ -128,7 +128,7 @@ interface StoredSchemaComponent {
 }
 
 /**
- * Gets or creates an empty {@link StoredSchemaCache} for exactly the supplied policy identity.
+ * Returns the {@link StoredSchemaCache} for exactly the supplied policy identity, creating an empty cache if absent.
  * Does not normalize the policy, traverse schema, or perform conversions.
  * {@link toStoredSchema} selects the appropriate cache separately for each root and component.
  */
@@ -555,9 +555,10 @@ export function transformSimpleNodeSchema(
 ): SimpleNodeSchema;
 
 /**
- * TODO: Persist node metadata once schema FormatV2 is supported.
- *
+ * Copies a node's fields and metadata according to the transformation options.
+ * @remarks
  * Performs a shallow transformation: child types remain identifiers and referenced node definitions are not converted.
+ * Persisted metadata values are retained by reference; view-only metadata follows the selected transformation options.
  * Used by both whole-schema transformation and component-based stored conversion.
  */
 export function transformSimpleNodeSchema(
