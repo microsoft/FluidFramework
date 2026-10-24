@@ -13,6 +13,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { stub } from "sinon";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -116,6 +117,38 @@ describe("Odsp Create Container Test", () => {
 			snapshotUrl,
 			"Snapshot url should match",
 		);
+	});
+
+	it("passes progId from the create request to the ODSP create-file URL", async () => {
+		const progId = "Cowork Prog/Id";
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+			undefined /* createShareLinkType */,
+			undefined /* containerPackageInfo */,
+			progId,
+		);
+		const resolved = await resolver.resolve(request);
+		const summary = createSummary(true, true);
+		const fetchStub = stub(globalThis, "fetch");
+		fetchStub.callsFake(async (url) => {
+			const requestUrl = new URL(url as string);
+			assert.strictEqual(requestUrl.searchParams.get("progId"), progId, "ProgID should match");
+			return okResponse(
+				{ "x-fluid-epoch": "epoch1" },
+				expectedResponse,
+			) as unknown as Promise<Response>;
+		});
+
+		try {
+			const docService = await createService(summary, resolved);
+			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
+			assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
+		} finally {
+			fetchStub.restore();
+		}
 	});
 
 	it("No App Summary", async () => {

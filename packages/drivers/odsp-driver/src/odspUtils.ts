@@ -311,6 +311,7 @@ export interface INewFileInfo extends IFileInfoBase {
 	type: "New";
 	filename: string;
 	filePath: string;
+	progId?: string;
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
