@@ -76,6 +76,7 @@ export interface IncrementalEncoder {
 	 * The chunks for this field are encoded separately from the main buffer.
 	 * @param cursor - The cursor pointing to the field to encode.
 	 * @param chunkEncoder - A function that encodes the contents of the passed chunk in the field.
+	 * The encoded batch uses a {@link FieldBatchFormatVersion} for which {@link supportsIncrementalEncoding} is true.
 	 * @returns The reference IDs of the encoded chunks in the field.
 	 * This is used to retrieve the encoded chunks later.
 	 */
@@ -97,6 +98,7 @@ export interface IncrementalDecoder {
 	 * Called to decode an incremental chunk with the given reference ID.
 	 * @param referenceId - The reference ID of the chunk to decode.
 	 * @param chunkDecoder - A function that decodes the chunk.
+	 * The encoded batch uses a {@link FieldBatchFormatVersion} for which {@link supportsIncrementalEncoding} is true.
 	 * @returns The decoded chunk.
 	 */
 	decodeIncrementalChunk(
