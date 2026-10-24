@@ -15,12 +15,12 @@ import {
 	getTreeNodeSchemaPrivateData,
 	StagedSchemaUpgradePolicy,
 	walkAllowedTypes,
+	walkSchema,
+	walkNodeSchema,
 	type AllowedTypesFullEvaluated,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { walkSchemaComponents } from "../../simple-tree/core/walkSchemaComponents.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
@@ -41,6 +41,8 @@ import {
 	getSchemaDerivedData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Exercise the field-root visitor entry point.
+import { walkFieldSchema } from "../../simple-tree/walkFieldSchema.js";
 
 function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 	const sf = new SchemaFactoryAlpha("components");
@@ -57,7 +59,214 @@ function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 	return nodes;
 }
 
-describe("walkSchemaComponents", () => {
+describe("schema component visitor", () => {
+	it("uses schema identity rather than identifiers without populating analysis caches", () => {
+		const sf = new SchemaFactoryAlpha("componentIdentity");
+		class A extends sf.object("Duplicate", {}) {}
+		class B extends sf.object("Duplicate", {}) {}
+		const components: (readonly TreeNodeSchema[])[] = [];
+		walkFieldSchema([A, B, A], {
+			stronglyConnectedComponent: (members) => components.push(members),
+		});
+		assert.deepEqual(components, [[A], [B]]);
+		assert.equal(getTreeNodeSchemaPrivateData(A).component, undefined);
+		assert.equal(getTreeNodeSchemaPrivateData(B).component, undefined);
+	});
+
+	it("does not report unfinished components after a visitor throws", () => {
+		const [a, b, leaf] = graph([[2, 1], [0], []]);
+		assert(a !== undefined && b !== undefined && leaf !== undefined);
+		const components: (readonly TreeNodeSchema[])[] = [];
+		const error = new Error("node visitor failed");
+		assert.throws(
+			() =>
+				walkFieldSchema(a, {
+					node: (schema) => {
+						if (schema === b) {
+							throw error;
+						}
+					},
+					stronglyConnectedComponent: (members) => components.push(members),
+				}),
+			(thrown: unknown) => thrown === error,
+		);
+		assert.deepEqual(components, [[leaf]]);
+		const retry: (readonly TreeNodeSchema[])[] = [];
+		walkFieldSchema(a, {
+			stronglyConnectedComponent: (members) => retry.push(members),
+		});
+		assert.deepEqual(
+			retry.map((members) => new Set(members)),
+			[new Set([leaf]), new Set([a, b])],
+		);
+	});
+
+	it("reports cached components on every ordinary walk and respects filtered topology", () => {
+		const sf = new SchemaFactoryAlpha("componentNotifications");
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+			leaf: sf.number,
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
+		}) {}
+		getSchemaDerivedData(A);
+		for (const filtered of [false, true, false]) {
+			const components: TreeNodeSchema[][] = [];
+			const visited = new Set<TreeNodeSchema>();
+			walkFieldSchema(B, {
+				allowedTypeFilter: (type) =>
+					!filtered || type.metadata.stagedSchemaUpgrade === undefined,
+				node: (schema) => visited.add(schema),
+				stronglyConnectedComponent: (members) => {
+					assert(members.every((member) => visited.has(member)));
+					components.push([...members]);
+				},
+			});
+			assert.deepEqual(
+				components.map((members) => new Set(members)),
+				filtered ? [new Set([B])] : [new Set([sf.number]), new Set([A, B])],
+			);
+			assert.equal(components.flat().length, visited.size);
+		}
+		assert.equal(getSchemaDerivedData(A).unhydratedContext, undefined);
+	});
+
+	it("preserves node and field event order when component callbacks are enabled", () => {
+		const [a, b, c] = graph([[1], [0, 2], []]);
+		assert(a !== undefined && b !== undefined && c !== undefined);
+		const ordinary: unknown[] = [];
+		const withComponents: unknown[] = [];
+		const completed = new Set<TreeNodeSchema>();
+		walkNodeSchema(
+			a,
+			{
+				node: (schema) => ordinary.push(schema),
+				allowedTypes: (types) => ordinary.push(types),
+			},
+			new Set(),
+		);
+		walkNodeSchema(
+			a,
+			{
+				node: (schema) => withComponents.push(schema),
+				allowedTypes: (types) => withComponents.push(types),
+				stronglyConnectedComponent: (members) => {
+					assert(members.every((member) => withComponents.includes(member)));
+					if (members.includes(a)) {
+						assert(completed.has(c));
+						assert(members.includes(b));
+					}
+					for (const member of members) {
+						assert(!completed.has(member));
+						completed.add(member);
+					}
+				},
+			},
+			new Set(),
+		);
+		assert.deepEqual(withComponents, ordinary);
+		assert.deepEqual(completed, new Set([a, b, c]));
+	});
+
+	it("excludes previously visited nodes and handles empty roots", () => {
+		const [a, b] = graph([[1], [0]]);
+		assert(a !== undefined && b !== undefined);
+		const seen = new Set([b]);
+		let calls = 0;
+		walkNodeSchema(
+			a,
+			{
+				stronglyConnectedComponent: (members) => {
+					calls++;
+					// The visited-set boundary removes B and its edges from this walk.
+					assert.deepEqual(members, [a]);
+				},
+			},
+			seen,
+		);
+		walkFieldSchema([], {
+			stronglyConnectedComponent: () => assert.fail("Empty roots have no components"),
+		});
+		assert.equal(calls, 1);
+		assert.deepEqual(seen, new Set([a, b]));
+	});
+
+	it("prunes completed references before yielding them, without dropping annotations", () => {
+		const sf = new SchemaFactoryAlpha("prunedReferences");
+		const types = sf.types([sf.number, sf.staged(sf.number)]);
+		class Parent extends sf.objectAlpha(
+			"Parent",
+			Object.fromEntries(Array.from({ length: 32 }, (_, i) => [`field${i}`, types])),
+		) {}
+		types.evaluate();
+		const prototype = Object.getPrototypeOf(
+			Object.getPrototypeOf((function* () {})()),
+		) as Generator<unknown, unknown, unknown>;
+		const next = prototype.next;
+		let cachedYields = 0;
+		let fields: readonly AllowedTypesFullEvaluated[] | undefined;
+		prototype.next = function (
+			this: Generator<unknown, unknown, unknown>,
+			...args: [] | [unknown]
+		): IteratorResult<unknown, unknown> {
+			const result = next.apply(this, args);
+			if (result.done !== true && result.value === sf.number) {
+				cachedYields++;
+			}
+			return result;
+		};
+		try {
+			walkSchema(
+				[Parent],
+				{
+					stronglyConnectedComponent: (members) => {
+						assert.equal(members.length, 1);
+						assert.equal(members[0], Parent);
+						fields = getTreeNodeSchemaPrivateData(Parent).childAllowedTypes.map((field) =>
+							field.evaluate(),
+						);
+					},
+				},
+				new Set(),
+				(schema) => schema === sf.number,
+			);
+		} finally {
+			prototype.next = next;
+		}
+		assert.equal(cachedYields, 0);
+		assert.equal(fields?.length, 32);
+		for (const field of fields ?? assert.fail()) {
+			assert.equal(field.types.length, 2);
+			assert.equal(field.types[0]?.type, sf.number);
+			assert.equal(field.types[1]?.type, sf.number);
+			assert.notEqual(field.types[1]?.metadata.stagedSchemaUpgrade, undefined);
+		}
+	});
+
+	it("validates most-derived identity before querying the cache on validating walks", () => {
+		const sf = new SchemaFactoryAlpha("validationBeforeCache");
+		const Base = sf.object("Base", {});
+		class Used extends Base {}
+		class Invalid extends Base {}
+		getSchemaDerivedData(Used);
+		let queries = 0;
+		assert.throws(
+			() =>
+				walkSchema(
+					[Invalid],
+					{ stronglyConnectedComponent: () => {}, allowedTypes: () => {} },
+					new Set(),
+					() => {
+						queries++;
+						throw new Error("Cache queried before schema validation");
+					},
+				),
+			validateUsageError(/Two schema classes were used/),
+		);
+		assert.equal(queries, 0);
+	});
+
 	it("visits cached and uncached fields in the same order as the ordinary walk", () => {
 		const [a, b, c, d] = graph([[1, 2, 1], [0], [3], []]);
 		assert(a !== undefined && b !== undefined && c !== undefined && d !== undefined);
@@ -73,11 +282,11 @@ describe("walkSchemaComponents", () => {
 				getSchemaDerivedData(cachedRoot);
 			}
 			const actual: AllowedTypesFullEvaluated[] = [];
-			walkSchemaComponents(
+			walkSchema(
 				[a],
-				() => {},
+				{ stronglyConnectedComponent: () => {}, allowedTypes: (types) => actual.push(types) },
+				new Set(),
 				(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
-				(types) => actual.push(types),
 			);
 			assert.deepEqual(actual, expected);
 		}
@@ -103,22 +312,24 @@ describe("walkSchemaComponents", () => {
 			const nodes = graph(edges);
 			const completed = new Set<TreeNodeSchema>();
 			const components: number[][] = [];
-			walkSchemaComponents(nodes, (members) => {
-				const identities = new Set(members.map((member) => member.schema));
-				for (const { fields } of members) {
-					for (const field of fields) {
-						for (const type of field.types) {
-							assert(identities.has(type.type) || completed.has(type.type));
+			walkAllowedTypes(normalizeFieldSchema(nodes).allowedTypesFull.evaluate(), {
+				stronglyConnectedComponent: (members) => {
+					const identities = new Set(members);
+					for (const schema of members) {
+						for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
+							for (const type of field.evaluate().types) {
+								assert(identities.has(type.type) || completed.has(type.type));
+							}
 						}
 					}
-				}
-				components.push(
-					members.map((member) => nodes.indexOf(member.schema)).sort((a, b) => a - b),
-				);
-				for (const member of identities) {
-					assert(!completed.has(member));
-					completed.add(member);
-				}
+					components.push(
+						members.map((member) => nodes.indexOf(member)).sort((a, b) => a - b),
+					);
+					for (const member of identities) {
+						assert(!completed.has(member));
+						completed.add(member);
+					}
+				},
 			});
 			assert.deepEqual(components, expected);
 		});
@@ -130,14 +341,17 @@ describe("walkSchemaComponents", () => {
 		const completed = new Set<TreeNodeSchema>();
 		const visits: TreeNodeSchema[] = [];
 		for (const root of [sf.number, Parent, Parent]) {
-			walkSchemaComponents(
+			walkSchema(
 				[root],
-				(members) => {
-					for (const { schema } of members) {
-						visits.push(schema);
-						completed.add(schema);
-					}
+				{
+					stronglyConnectedComponent: (members) => {
+						for (const schema of members) {
+							visits.push(schema);
+							completed.add(schema);
+						}
+					},
 				},
+				new Set(),
 				(schema) => completed.has(schema),
 			);
 		}
@@ -265,6 +479,13 @@ describe("component-derived schema state", () => {
 			toStoredSchema(A, customPermissive).nodeSchema,
 			toStoredSchema(B, customPermissive).nodeSchema,
 		);
+		const visited: TreeNodeSchema[] = [];
+		walkAllowedTypes(normalizeFieldSchema(B).allowedTypesFull.evaluate(), {
+			allowedTypeFilter: (type) => type.metadata.stagedSchemaUpgrade === undefined,
+			node: (schema) => visited.push(schema),
+		});
+		assert.deepEqual(visited, [B]);
+		assert.strictEqual(a.component, getTreeNodeSchemaPrivateData(B).component);
 	});
 
 	it("reuses permissive conversion while preserving root field kind and metadata", () => {
@@ -334,16 +555,20 @@ describe("component-derived schema state", () => {
 			other: sf.number,
 		}) {}
 		let visits = 0;
-		walkSchemaComponents([Root], (members) => {
-			for (const member of members) {
-				visits++;
-				if (member.schema === Root) {
-					assert.deepEqual(
-						member.fields.map((field) => field.types.length),
-						[2, 1],
-					);
+		walkFieldSchema(Root, {
+			stronglyConnectedComponent: (members) => {
+				for (const member of members) {
+					visits++;
+					if (member === Root) {
+						assert.deepEqual(
+							getTreeNodeSchemaPrivateData(member).childAllowedTypes.map(
+								(field) => field.evaluate().types.length,
+							),
+							[2, 1],
+						);
+					}
 				}
-			}
+			},
 		});
 		assert.equal(visits, 2);
 		assert.equal(getSchemaDerivedData(Root).hasStagedSchema, true);

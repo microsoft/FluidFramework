@@ -12,7 +12,7 @@ import { getOrCreate } from "../util/index.js";
 import {
 	NodeKind,
 	getTreeNodeSchemaPrivateData,
-	walkSchemaComponents,
+	walkSchema,
 	type AllowedTypesFullEvaluated,
 	type Context,
 	type TreeNodeSchema,
@@ -133,48 +133,51 @@ export function analyzeSchema(
 ): FieldSchemaAlpha {
 	const root = normalizeFieldSchema(rootSchema);
 	const types = root.allowedTypesFull.evaluate();
-	walkSchemaComponents(
+	walkSchema(
 		types.types.map((type) => type.type),
-		(members) => {
-			const identities = new Set(members.map((member) => member.schema));
-			const referenced = new Set<TreeNodeSchema>();
-			const dependencies = new Set<SchemaComponent>();
-			let hasStagedSchema = false;
-			for (const { schema, fields } of members) {
-				for (const field of fields) {
-					for (const type of field.types) {
-						if (type.metadata.stagedSchemaUpgrade !== undefined) {
-							hasStagedSchema = true;
+		{
+			allowedTypes,
+			stronglyConnectedComponent: (members) => {
+				const identities = new Set(members);
+				const referenced = new Set<TreeNodeSchema>();
+				const dependencies = new Set<SchemaComponent>();
+				let hasStagedSchema = false;
+				for (const schema of members) {
+					for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
+						for (const type of field.evaluate().types) {
+							if (type.metadata.stagedSchemaUpgrade !== undefined) {
+								hasStagedSchema = true;
+							}
+							if (!identities.has(type.type)) {
+								referenced.add(type.type);
+							}
 						}
-						if (!identities.has(type.type)) {
-							referenced.add(type.type);
+					}
+					// Optional-field staging is not an allowed-type annotation.
+					const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
+					if (view.kind === NodeKind.Object) {
+						for (const field of view.fields.values()) {
+							hasStagedSchema ||= isStagedOptional(field);
 						}
 					}
 				}
-				// Optional-field staging is not an allowed-type annotation.
-				const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
-				if (view.kind === NodeKind.Object) {
-					for (const field of view.fields.values()) {
-						hasStagedSchema ||= isStagedOptional(field);
-					}
+				for (const schema of referenced) {
+					const dependency = getComponent(schema);
+					dependencies.add(dependency);
+					hasStagedSchema ||= dependency.hasStagedSchema;
 				}
-			}
-			for (const schema of referenced) {
-				const dependency = getComponent(schema);
-				dependencies.add(dependency);
-				hasStagedSchema ||= dependency.hasStagedSchema;
-			}
-			const component: SchemaComponent = {
-				members: [...identities],
-				dependencies,
-				hasStagedSchema,
-			};
-			for (const schema of identities) {
-				getTreeNodeSchemaPrivateData(schema).component = component;
-			}
+				const component: SchemaComponent = {
+					members: [...identities],
+					dependencies,
+					hasStagedSchema,
+				};
+				for (const schema of identities) {
+					getTreeNodeSchemaPrivateData(schema).component = component;
+				}
+			},
 		},
+		new Set(),
 		(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
-		allowedTypes,
 	);
 	allowedTypes?.(types);
 	return root;

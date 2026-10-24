@@ -67,7 +67,6 @@ describe("walk schema", () => {
 		const name = (schema: TreeNodeSchema): string =>
 			schema === A ? "A" : schema === B ? "B" : schema === sf.number ? "number" : "string";
 		walkAllowedTypes(normalizeFieldSchema([A, B]).allowedTypesFull.evaluate(), {
-			enterNode: (schema) => events.push(`enter ${name(schema)}`),
 			node: (schema) => events.push(`exit ${name(schema)}`),
 			allowedTypes: ({ types }) =>
 				events.push(`types ${types.map((type) => name(type.type)).join(",")}`),
@@ -78,9 +77,7 @@ describe("walk schema", () => {
 		});
 		assert.deepEqual(events, [
 			"edge A",
-			"enter A",
 			"edge B",
-			"enter B",
 			"edge A",
 			"types A",
 			"edge string",
@@ -88,7 +85,6 @@ describe("walk schema", () => {
 			"exit B",
 			"types B",
 			"edge number",
-			"enter number",
 			"exit number",
 			"types number",
 			"edge B",
