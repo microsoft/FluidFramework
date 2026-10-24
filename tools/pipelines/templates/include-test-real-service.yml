@@ -294,26 +294,18 @@ stages:
         # These tools are internal and not part of the FluidFramework lockfile. The test process resolves
         # @ff-internal/aria-logger after it is linked into $(FluidFrameworkDirectory)/node_modules below,
         # using Node's standard module resolution from the test working directory.
-        - task: Bash@3
-          displayName: Install ff_pipeline_host dependencies
-          retryCountOnTaskFailure: 4
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-            script: |
-              set -eu -o pipefail
-              pnpm i --frozen-lockfile
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: $(FFPipelineHostDirectory)
+            installDependenciesDescription: Install ff_pipeline_host dependencies
+            installPnpm: false
 
         # Install FluidFramework dependencies from the committed lockfile.
-        - task: Bash@3
-          displayName: Install FluidFramework dependencies
-          retryCountOnTaskFailure: 4
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
-            script: |
-              set -eu -o pipefail
-              pnpm i --frozen-lockfile
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: $(FluidFrameworkDirectory)
+            installDependenciesDescription: Install FluidFramework dependencies
+            installPnpm: false
 
         # Make @ff-internal/aria-logger available to the test via the FluidFramework workspace's
         # node_modules, so Node's standard ESM/CJS resolution finds it from the test working
