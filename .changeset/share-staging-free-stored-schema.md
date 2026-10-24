@@ -15,5 +15,6 @@ Root fields, contexts, and policy-specific stored-schema wrappers remain root-sp
 Configuration validation and component discovery share one iterative traversal.
 Configuration-specific checks still run when component analysis is cached.
 Hydrated contexts and index setup also reuse the cached reachable definitions instead of walking the schema again.
+Simple-schema copies and compatibility snapshots reuse those definitions while still returning fresh output on each call.
 Definition map iteration order is unspecified.
 Compatibility snapshots canonicalize definition order; schema hashes and persisted schema encoding are unchanged.

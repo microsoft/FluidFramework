@@ -7,7 +7,7 @@ import { Unchanged } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SchemaType, SimpleTreeSchema } from "../simpleSchema.js";
 import { transformSimpleSchema } from "../toStoredSchema.js";
-import { createTreeSchema } from "../treeSchema.js";
+import { getSchemaDerivedData } from "../treeSchema.js";
 
 /**
  * Copies data from {@link ImplicitFieldSchema} to create a {@link SimpleTreeSchema} out of new plain JavaScript objects, Sets and Maps.
@@ -19,17 +19,14 @@ import { createTreeSchema } from "../treeSchema.js";
  * In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
  *
- * Note that all TreeNodeSchema get a {@link Context} cached on them as part of one time initialization which contains a map from identifier to all transitively referenced schema.
- * Perhaps exposing access to that would cover this use-case as well.
+ * Reuses the internal schema-derived graph without initializing node contexts.
+ * The returned simple schema is copied on every call; it is not the shared graph.
  *
  * @alpha
  */
 export function getSimpleSchema(
 	schema: ImplicitFieldSchema,
 ): SimpleTreeSchema<SchemaType.View> {
-	// Convert the input into a TreeSchema: This API should probably be updated to take in a TreeSchema directly
-	// (and maybe a clean way to make TreeSchema from ImplicitFieldSchema other than TreeViewConfigurationAlpha should be provided).
-	const treeSchema = createTreeSchema(schema);
-	// Do the actual copy into clean simple schema objects.
+	const { treeSchema } = getSchemaDerivedData(schema);
 	return transformSimpleSchema(treeSchema, Unchanged);
 }

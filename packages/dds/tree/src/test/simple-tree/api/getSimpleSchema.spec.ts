@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { FormatValidator } from "../../../codec/index.js";
 import { ValueSchema } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
+import {
+	createSchemaUpgrade,
+	getTreeNodeSchemaPrivateData,
+	Unchanged,
+	// eslint-disable-next-line import-x/no-internal-modules -- Inspect discovery without adding package APIs.
+} from "../../../simple-tree/core/index.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
 	FieldKind,
@@ -29,6 +33,8 @@ import {
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Check graph reuse without initializing contexts.
+import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
@@ -82,6 +88,48 @@ function copySimpleTreeSchemaWithoutMetadata(simpleTree: SimpleTreeSchema): Simp
 
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
+
+	it("reuses recursive graph discovery while returning independent copies", () => {
+		const sf = new SchemaFactoryAlpha("simpleSchemaReuse");
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive([() => A]),
+			value: sf.stagedOptional(sf.number),
+		}) {}
+		const expected = transformSimpleSchema(createTreeSchema(A), Unchanged);
+		let reads = 0;
+		for (const node of [A, B]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads++;
+					return types;
+				},
+			});
+		}
+		const first = getSimpleSchema(A);
+		const afterDiscovery = reads;
+		assert(afterDiscovery > 0);
+		const second = getSimpleSchema(A);
+		getSimpleSchema(B);
+		assert.equal(reads, afterDiscovery);
+		assert.deepEqual(first, expected);
+		assert.deepEqual(second, expected);
+		assert.notStrictEqual(first, second);
+		assert.notStrictEqual(first.root, second.root);
+		assert.notStrictEqual(first.definitions, second.definitions);
+		for (const [identifier, node] of first.definitions) {
+			assert.notStrictEqual(node, second.definitions.get(identifier));
+		}
+		assert(first.definitions instanceof Map);
+		first.definitions.clear();
+		assert.deepEqual(getSimpleSchema(A), expected);
+		assert.equal(getSchemaDerivedData(A).unhydratedContext, undefined);
+		assert.equal(getSchemaDerivedData(B).unhydratedContext, undefined);
+	});
 
 	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
