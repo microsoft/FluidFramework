@@ -4033,15 +4033,26 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
+		let inboundPause: Promise<void> | undefined;
+		const verifyStageControls = (): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
+		};
+		const resumeInbound = (): void => {
+			if (inboundPause !== undefined) {
+				inboundPause = undefined;
+				this._deltaManager.inbound.resume();
+			}
+		};
+
 		// Note: `silent` is captured from the enclosing `enterStagingModeCore` call.
 		// When `true`, both enter and exit events are suppressed (see orderSequentially).
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
-			if (this.stageControls !== stageControls) {
-				throw new UsageError("Not in staging mode");
-			}
+			verifyStageControls();
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
@@ -4054,6 +4065,7 @@ export class ContainerRuntime
 						this.outbox.flush();
 
 						this.stageControls = undefined;
+						resumeInbound();
 
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
@@ -4072,6 +4084,9 @@ export class ContainerRuntime
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
 				throw normalizedError;
+			} finally {
+				// Also release the pause if the final flush fails before staging mode is cleared.
+				resumeInbound();
 			}
 			if (!silent) {
 				this.emit("stagingModeChanged", {
@@ -4082,6 +4097,15 @@ export class ContainerRuntime
 		};
 
 		const stageControls: StageControlsInternal = {
+			pauseInbound: () => {
+				verifyStageControls();
+				inboundPause ??= this._deltaManager.inbound.pause();
+				return inboundPause;
+			},
+			resumeInbound: () => {
+				verifyStageControls();
+				resumeInbound();
+			},
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
