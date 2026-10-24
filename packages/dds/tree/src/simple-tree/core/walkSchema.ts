@@ -24,31 +24,28 @@ export function walkNodeSchema(
 		return;
 	}
 
-	visitedSet.add(schema);
-
-	// Ensure all reachable schemas are marked as most derived.
-	// This ensures if multiple schemas extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
-	// an error is reported.
-	markSchemaMostDerived(schema, false);
-
-	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
-	// Avoid depending on it here to avoid circular dependencies for recursive schema.
-	// Instead normalize/evaluate the allowed types as needed.
-	const annotatedAllowedTypes = getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
-
-	for (const fieldAllowedTypes of annotatedAllowedTypes) {
-		walkAllowedTypes(
-			normalizeAndEvaluateAnnotatedAllowedTypes(fieldAllowedTypes),
-			visitor,
-			visitedSet,
-		);
+	function* visit(node: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
+		visitedSet.add(node);
+		markSchemaMostDerived(node, false);
+		visitor.enterNode?.(node);
+		// Do not initialize contexts: this walk is itself used during node initialization.
+		for (const field of getTreeNodeSchemaPrivateData(node).childAllowedTypes) {
+			yield* visitAllowedTypes(normalizeAndEvaluateAnnotatedAllowedTypes(field), visitor);
+		}
+		visitor.node?.(node);
 	}
 
-	// This visit is done at the end so the traversal order is most inner types first.
-	// This was picked since when fixing errors,
-	// working from the inner types out to the types that use them will probably go better than the reverse.
-	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
-	visitor.node?.(schema);
+	const pending = [visit(schema)];
+	let current = pending.at(-1);
+	while (current !== undefined) {
+		const next = current.next();
+		if (next.done === true) {
+			pending.pop();
+		} else if (!visitedSet.has(next.value)) {
+			pending.push(visit(next.value));
+		}
+		current = pending.at(-1);
+	}
 }
 
 /**
@@ -60,9 +57,19 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
+	for (const schema of visitAllowedTypes(annotatedAllowedTypes, visitor)) {
+		walkNodeSchema(schema, visitor, visitedSet);
+	}
+}
+
+function* visitAllowedTypes(
+	annotatedAllowedTypes: AllowedTypesFullEvaluated,
+	visitor: SchemaVisitor,
+): IterableIterator<TreeNodeSchema> {
 	for (const allowedType of annotatedAllowedTypes.types) {
-		if ((visitor.allowedTypeFilter ?? (() => true))(allowedType)) {
-			walkNodeSchema(allowedType.type, visitor, visitedSet);
+		const filter = visitor.allowedTypeFilter;
+		if (filter === undefined || filter(allowedType)) {
+			yield allowedType.type;
 		}
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
@@ -74,7 +81,11 @@ export function walkAllowedTypes(
  */
 export interface SchemaVisitor {
 	/**
-	 * Called once for each node schema reached.
+	 * Called once per reached node, after most-derived validation and before evaluating its fields.
+	 */
+	enterNode?: (schema: TreeNodeSchema) => void;
+	/**
+	 * Called once for each node schema reached, after walking its fields.
 	 */
 	node?: (schema: TreeNodeSchema) => void;
 	/**
@@ -84,7 +95,7 @@ export interface SchemaVisitor {
 	 *
 	 * Each allowed types in the schema is visited as it was in the original schema except for normalization.
 	 *
-	 * After this is called {@link SchemaVisitor.allowedTypeFilter} is applied to each allowed type in the schema to determine which of them are walked into.
+	 * Called after walking the allowed types selected by {@link SchemaVisitor.allowedTypeFilter}.
 	 */
 	allowedTypes?: (allowedTypes: AllowedTypesFullEvaluated) => void;
 	/**
@@ -93,7 +104,7 @@ export interface SchemaVisitor {
 	 *
 	 * If not provided, all allowedTypes will be walked into.
 	 * @remarks
-	 * Called after {@link SchemaVisitor.allowedTypes}.
+	 * Called before walking each reference, including references to already visited nodes.
 	 * @privateRemarks
 	 * It would be possible to combine this with `allowedTypes` into a single callback, but for the current usage this separation is more convenient.
 	 */

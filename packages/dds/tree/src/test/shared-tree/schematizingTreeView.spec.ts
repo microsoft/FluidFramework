@@ -25,6 +25,8 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify that hydration reuses completed analysis.
+import { getTreeNodeSchemaPrivateData } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
@@ -90,6 +92,46 @@ const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("construction", () => {
+		it("shares lookup definitions without sharing hydrated contexts or walking schema", () => {
+			const sf = new SchemaFactoryAlpha("hydratedLookupReuse");
+			class Child extends sf.object("Child", { value: sf.number }) {}
+			class Root extends sf.object("Root", { child: Child }) {}
+			const viewConfig = new TreeViewConfigurationAlpha({ schema: Root });
+			const firstRoot = new Root({ child: new Child({ value: 1 }) });
+			const secondRoot = new Root({ child: new Child({ value: 2 }) });
+			const unhydrated = getKernel(firstRoot.child).context;
+			assert.notStrictEqual(unhydrated.schema, viewConfig.definitions);
+			let reads = 0;
+			for (const node of [Root, Child]) {
+				const data = getTreeNodeSchemaPrivateData(node);
+				const types = data.childAllowedTypes;
+				Object.defineProperty(data, "childAllowedTypes", {
+					get() {
+						reads++;
+						return types;
+					},
+				});
+			}
+			const first = getView(viewConfig);
+			const second = getView(viewConfig);
+			try {
+				first.initialize(firstRoot);
+				second.initialize(secondRoot);
+				const firstContext = getKernel(first.root).context;
+				const secondContext = getKernel(second.root).context;
+				assert(firstContext.flexContext.isHydrated());
+				assert(secondContext.flexContext.isHydrated());
+				assert.notStrictEqual(firstContext, secondContext);
+				assert.strictEqual(firstContext.schema, viewConfig.definitions);
+				assert.strictEqual(secondContext.schema, viewConfig.definitions);
+				assert.strictEqual(getKernel(first.root.child).context, firstContext);
+				assert.equal(reads, 0);
+			} finally {
+				first.dispose();
+				second.dispose();
+			}
+		});
+
 		describe("schema hash", () => {
 			const root = schema.required(schema.number, {
 				persistedMetadata: { description: "view schema" },
