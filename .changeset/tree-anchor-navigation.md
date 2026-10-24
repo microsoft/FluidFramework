@@ -5,19 +5,11 @@
 ---
 Improve performance of SharedTree reads and parent queries
 
-Map and record reads now access field content without allocating field wrappers or boxing leaf nodes.
-Unhydrated map `forEach` traversal remains live when callbacks add or remove entries.
-Their caches no longer retain empty fields after edits, including merged changes and undo.
-Retained internal field references remain usable after cache eviction.
-Constructing leaf nodes also avoids map-field schema classification.
-Unhydrated maps and records use specialized node and field implementations, keeping empty-field reclamation and retained-reference redirection off fixed-field read paths.
-Hydrated maps and records own their dynamic-field caches and cleanup subscriptions in a specialized node implementation.
+SharedTree reads and parent/key queries have lower overhead, particularly on hydrated trees.
+Map and record reads allocate less memory, and edits no longer cause cached empty entries to accumulate.
+These optimizations require no application code changes.
 
-The measurements below compare the original baseline (`fa1bc2feadf`) with the current implementation (`b42b460a2ad` plus the local unhydrated map `forEach` fix).
-They include the leaf-construction fast path, node-owned caches, storage specialization, and shared-helper cleanup.
-Both versions were remeasured on October 24, 2026, for every table below.
-
-Hydrated SharedTree navigation benchmarks on trees nested ten levels deep measured these reductions in elapsed time:
+Benchmarks comparing performance before and after these optimizations measured the following reductions in elapsed time on hydrated trees nested ten levels deep:
 
 | Forest | Workload | Before (microseconds/iteration) | After (microseconds/iteration) | Less elapsed time |
 | --- | --- | --- | --- | --- |
@@ -33,9 +25,9 @@ These are workload-specific results, not whole-application speedups.
 
 #### Full navigation benchmark results
 
-The complete navigation suite includes shallow trees as well as trees nested ten levels deep, with the same workloads run on hydrated and unhydrated nodes.
+The navigation benchmarks use the same workloads on shallow trees and trees nested ten levels deep.
 ChunkedForest and ObjectForest identify hydrated configurations; unhydrated nodes do not use a forest.
-The unhydrated cases were measured in a separate balanced batch on the same host, also using four fresh processes per version.
+Hydrated and unhydrated configurations were measured in separate batches using the same methodology.
 Times below are microseconds per benchmark iteration; positive percentages mean less elapsed time.
 Each reads iteration includes object-field, optional-field, and array-element access.
 Each parent/key iteration queries both the parent and the key.
@@ -69,20 +61,17 @@ Each parent/key iteration queries both the parent and the key.
 
 The cached-field case measures a single internal lookup, not a complete read or edit.
 The other cases use the public tree API; read and query timings also include assertions.
-Hydrated edit means improve by 12.0-17.5%, with non-overlapping process ranges and improvements in all four balanced pairs for every hydrated edit case.
-Hydrated edit measurements are noisier: the benchmark reporter's within-process relative margins of error reach 11%, so treat the smaller edit differences with caution.
-Unhydrated cached-field means improve by 43.7-44.1%, with non-overlapping process ranges and improvements in all four pairs at both depths.
-Every other unhydrated navigation case has overlapping process ranges and mixed paired directions, so this batch does not establish consistent improvements for those cases.
-Unhydrated edits do not include checkout or collaboration-history costs, so their absolute times measure less work than hydrated edits.
+Hydrated edit means improve by 12.0-17.5%, with non-overlapping process ranges.
+Their within-process relative margins of error reach 11%, so treat the smaller edit differences with caution.
+Unhydrated cached-field lookup improves, but the other unhydrated navigation cases have overlapping process ranges and mixed results across processes.
+Unhydrated edits exclude collaboration and undo-history overhead, so their absolute times are not directly comparable with hydrated edits.
 
 #### Text workload results
 
-Existing text benchmarks measure full-document reads, typing one character in the middle, document construction followed by a full read, and formatting the whole document.
-These comparisons use the same Node.js version, production emulation, and serial balanced process order as the navigation measurements.
-The benchmark code is identical before and after.
-The unhydrated cases use the same document sizes and read, typing, and formatting workloads, with document construction excluded from those timings.
-They were collected in the separate unhydrated batch described above.
-Unhydrated construction creates and reads the nodes without a forest; hydrated construction also creates a view and hydrates the nodes before reading.
+The text benchmarks measure full-document reads, typing one character in the middle, construction followed by a full read, and formatting the whole document.
+They use the same measurement methodology as the navigation benchmarks.
+Read, typing, and formatting timings exclude document construction.
+The construction workload includes hydration for the forest-backed configurations and leaves nodes unhydrated for the unhydrated configuration.
 
 Times below are milliseconds per operation, shown as the mean followed by the minimum and maximum process means in parentheses.
 All results use four fresh processes per version.
@@ -116,17 +105,11 @@ Positive percentages mean less elapsed time; negative percentages mean more elap
 | Formatted | Unhydrated | Construct and read | 1,000 | 28.6373 (25.2443-30.6000) | 30.0071 (28.9476-32.6257) | -4.8% |
 
 For hydrated documents, plain-text typing means improve by 9.9-11.2%, and whole-document formatting means improve by 9.9-19.0%, with non-overlapping process ranges in these cases.
-Formatted-text typing means improve by 1.2-7.0%; the ChunkedForest process ranges overlap and its paired results are mixed.
-Plain-text construction means are 2.1-3.7% slower.
-Formatted-text construction is 2.5% slower with ChunkedForest and 3.4% faster with ObjectForest.
-All hydrated construction process ranges overlap, and the paired results are mixed, so this batch does not establish a consistent hydrated construction improvement or regression.
-ObjectForest full-read means are 13.5% slower for plain text and 25.9% slower for formatted text.
-Both slower means are driven by the same one of the four current-version processes; the other three paired comparisons are faster for plain text and mixed for formatted text.
-All full-read process ranges overlap, so those means should not be interpreted as precise or consistent read regressions.
+Construction and full-read process ranges overlap in every configuration, so these measurements do not establish consistent improvements or regressions for those workloads.
+The slower ObjectForest full-read means are dominated by one of the four after-change processes.
 The 10,000-character ObjectForest formatting case has a within-process relative margin of error as high as 19%; its mean improvement should not be read as a precise guarantee.
 
-For unhydrated documents, full-read means improve by 1.2-2.5%, and typing means improve by 1.1-1.2%, with mixed paired directions.
-Plain-text construction is 5.3% faster in the mean and faster in all four pairs; formatted-text construction is 4.8% slower in the mean with mixed paired directions.
-Whole-document formatting is 3.2% slower at 1,000 characters, with all four pairs slower, and 3.4% faster at 10,000 characters with mixed paired directions.
-All unhydrated text process ranges overlap, so these observations should not be read as precise or general speedups or regressions.
+All unhydrated text process ranges overlap.
+The results include slower formatting at 1,000 characters in all four paired comparisons, while formatted construction and formatting at 10,000 characters have mixed results across processes.
+These observations should not be read as precise or general speedups or regressions.
 These workload-specific measurements do not rule out regressions in these or unmeasured workloads.
