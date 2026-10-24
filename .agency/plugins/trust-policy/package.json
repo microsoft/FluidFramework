@@ -1,0 +1,55 @@
+{
+	"name": "@fluidframework/agency-trust-policy",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Standalone dependency trust and package provenance checker for the Agency plugin.",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"check-trust-policy": "./lib/trust-policy.js"
+	},
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"pretest": "npm run build",
+		"test": "node --test lib/test/*.test.js",
+		"check": "tsc --project tsconfig.json --noEmit",
+		"format": "biome check --write .",
+		"lint": "biome check ."
+	},
+	"engines": {
+		"node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+	},
+	"dependencies": {
+		"@npmcli/redact": "^5.0.0",
+		"@oclif/core": "^4.10.5",
+		"@pnpm/config.version-policy": "^1100.2.9",
+		"@pnpm/find-workspace-dir": "^1000.1.5",
+		"@yarnpkg/lockfile": "^1.1.0",
+		"@yarnpkg/parsers": "^3.1.0",
+		"empathic": "^2.1.0",
+		"npm-package-arg": "^14.0.0",
+		"npm-registry-fetch": "^20.0.1",
+		"pacote": "^22.0.0",
+		"semver": "^7.7.3",
+		"validate-npm-package-name": "^8.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@pnpm/resolving.registry.types": "^1100.2.4",
+		"@types/node": "~22.19.17",
+		"@types/npm-package-arg": "^6.1.4",
+		"@types/npm-registry-fetch": "^8.0.9",
+		"@types/pacote": "^11.1.8",
+		"@types/semver": "^7.7.1",
+		"@types/validate-npm-package-name": "^4.0.2",
+		"@types/yarnpkg__lockfile": "^1.1.9",
+		"typescript": "~5.9.3"
+	},
+	"oclif": {
+		"bin": "check-trust-policy",
+		"commands": {
+			"strategy": "single",
+			"target": "./lib/trust-policy.js"
+		}
+	}
+}
