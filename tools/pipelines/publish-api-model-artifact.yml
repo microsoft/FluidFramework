@@ -113,6 +113,11 @@ stages:
           path: ${{ variables.FluidFrameworkDirectory }}
           submodules: false
           clean: true
+          # flub check latestVersions uses release tags to decide whether this version should deploy.
+          # Full history is conservative; validate fetchDepth: 1 with tags retained.
+          # Removing the tag dependency requires another source of published-version information.
+          fetchDepth: 0
+          fetchTags: true
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
