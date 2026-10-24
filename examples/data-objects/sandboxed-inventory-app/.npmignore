@@ -1,0 +1,6 @@
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+lib/test
+tests
