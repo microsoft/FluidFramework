@@ -17,7 +17,6 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
-	MapNodeStoredSchema,
 	type NodeData,
 	type NormalizedFieldUpPath,
 	type SchemaPolicy,
@@ -39,6 +38,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
 	indexForAt,
+	isOptionalMapSchema,
 	type FlexTreeHydratedContext,
 	type FlexFieldKind,
 	FieldKinds,
@@ -111,8 +111,7 @@ export function createUnhydratedFlexTreeNode(
 		storedSchema ??
 		context.flexContext.schema.nodeSchema.get(data.type) ??
 		fail("Missing schema for unhydrated node");
-	return schema instanceof MapNodeStoredSchema &&
-		schema.mapFields.kind === FieldKinds.optional.identifier
+	return isOptionalMapSchema(schema)
 		? new UnhydratedMapNode(data, fields, context)
 		: new UnhydratedFlexTreeNode(data, fields, context);
 }

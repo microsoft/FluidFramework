@@ -384,6 +384,47 @@ describe("LazyNode", () => {
 			checkout.dispose();
 		});
 
+		it(`validates edits consistently for owned and borrowed fields (${name})`, () => {
+			const sf = new SchemaFactory("shared-field-editing");
+			class Values extends sf.map("Values", sf.number) {}
+			class Item extends sf.object("Item", { map: Values, value: sf.optional(sf.number) }) {}
+			class Items extends sf.array("Items", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Items }),
+			);
+			view.initialize([{ map: { key: 1 }, value: 1 }]);
+			const item = view.root[0];
+			const node = getInnerNode(item);
+			assert(node instanceof LazyTreeNode);
+			const fields = [
+				node.getBoxed(brand("value")),
+				getInnerNode(item.map).getBoxed(brand("key")),
+			].map((field) => {
+				assert(field.is(FieldKinds.optional));
+				return field;
+			});
+			for (const field of fields) {
+				field.editor.set(undefined, false);
+				assert.equal(field.length, 0);
+			}
+			view.root.removeAt(0);
+			for (const field of fields) {
+				assert.throws(
+					() => field.editor.set(undefined, true),
+					/Editing only allowed on fields with TreeStatus.InDocument status/,
+				);
+			}
+			const checkout = node.context.checkout;
+			view.dispose();
+			for (const field of fields) {
+				assert.throws(
+					() => field.editor.set(undefined, true),
+					/Editing only allowed on fields with TreeStatus.InDocument status/,
+				);
+			}
+			checkout.dispose();
+		});
+
 		for (const compatible of [true, false]) {
 			it(`invalidates node-owned map caches after ${compatible ? "compatible" : "incompatible"} schema replacement (${name})`, () => {
 				const sf = new SchemaFactory("schema-dependent-cache");

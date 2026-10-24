@@ -9,7 +9,6 @@ import {
 	type Anchor,
 	type AnchorNode,
 	CursorLocationType,
-	MapNodeStoredSchema,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
@@ -37,6 +36,7 @@ import {
 import { LazyEntity } from "./lazyEntity.js";
 import { getCachedField, makeField, MapField, unboxedFlexNode } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
+import { isOptionalMapSchema } from "./utilities.js";
 
 /**
  * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
@@ -59,11 +59,7 @@ export function getOrCreateHydratedFlexTreeNode(
 		return cached;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("Missing node schema");
-	const NodeClass =
-		schema instanceof MapNodeStoredSchema &&
-		schema.mapFields.kind === FieldKinds.optional.identifier
-			? LazyMapNode
-			: LazyTreeNode;
+	const NodeClass = isOptionalMapSchema(schema) ? LazyMapNode : LazyTreeNode;
 	return new NodeClass(context, cursor.type, cursor, anchorNode, anchor, schema);
 }
 

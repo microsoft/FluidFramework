@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
-	MapNodeStoredSchema,
 	forbiddenFieldKindIdentifier,
 	mapCursorField,
 	mapCursorFields,
@@ -18,8 +17,8 @@ import {
 } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
-	FieldKinds,
 	isFieldInSchema,
+	isOptionalMapSchema,
 	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
 import {
@@ -90,12 +89,10 @@ export function unhydratedFlexTreeFromCursor(
 	const storedSchema =
 		context.flexContext.schema.nodeSchema.get(identifier) ?? unknownTypeError(identifier);
 
-	const createNodeField =
-		storedSchema instanceof MapNodeStoredSchema &&
-		storedSchema.mapFields.kind === FieldKinds.optional.identifier
-			? (...args: ConstructorParameters<typeof UnhydratedMapField>) =>
-					new UnhydratedMapField(...args)
-			: createField;
+	const createNodeField = isOptionalMapSchema(storedSchema)
+		? (...args: ConstructorParameters<typeof UnhydratedMapField>) =>
+				new UnhydratedMapField(...args)
+		: createField;
 	const fields = new Map(
 		mapCursorFields(cursor, () => {
 			const fieldSchema = storedSchema.getFieldSchema(cursor.getFieldKey());
