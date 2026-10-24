@@ -955,7 +955,6 @@ export function testCorrectness(): void {
 								[4, 2],
 								[2, 2],
 							]) {
-								const mf = Math.max(retainedByMsn, retainedByFork);
 								for (const policy1 of [2, 1, 0, false] as const) {
 									it(`P2:${policy2} >= M/F:max(${retainedByMsn},${retainedByFork}) >= P1:${policy1}`, () => {
 										const manager = setup({
