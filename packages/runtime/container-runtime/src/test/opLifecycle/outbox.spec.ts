@@ -273,6 +273,7 @@ describe("Outbox", () => {
 			},
 			opReentrancy: () => state.isReentrant,
 			generateIdAllocationOp: params.generateIdAllocationOp ?? (() => undefined),
+			generateExtensionOpMessages: () => [],
 		});
 	};
 
