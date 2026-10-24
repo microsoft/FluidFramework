@@ -35,6 +35,7 @@ import {
 	isObjectNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type ImplicitFieldSchema,
 	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
 import {
@@ -45,10 +46,11 @@ import {
 	toStoredSchema,
 	transformSimpleNodeSchema,
 	filterAllowedTypes,
+	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getSchemaDerivedData } from "../../simple-tree/treeSchema.js";
+import { createTreeSchema, getSchemaDerivedData } from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";
 import {
 	getStagedSchemaUpgrades,
@@ -77,6 +79,200 @@ function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
 }
 
 describe("toStoredSchema", () => {
+	describe("policy component reuse", () => {
+		function reference(
+			root: ImplicitFieldSchema,
+			policy: StagedSchemaUpgradePolicy,
+		): TreeStoredSchema {
+			return simpleStoredSchemaToStoredSchema(
+				transformSimpleSchema(createTreeSchema(root), policy),
+			);
+		}
+
+		for (const reverse of [false, true]) {
+			it(`shares filtered-cycle maps within a policy, not between policies (${reverse})`, () => {
+				const sf = new SchemaFactoryAlpha("filteredPolicyCycle");
+				class A extends sf.objectRecursive("A", {
+					child: sf.optionalRecursive([() => B]),
+				}) {}
+				class B extends sf.objectRecursive("B", {
+					child: sf.optionalRecursive([() => A]),
+					value: sf.stagedOptional(sf.number),
+				}) {}
+				const policies = [
+					{ ...StagedSchemaUpgradePolicy.restrictive },
+					{ ...StagedSchemaUpgradePolicy.permissive },
+				];
+				const roots = reverse ? [B, A] : [A, B];
+				getSchemaDerivedData(A);
+				const expected = policies.map((policy) =>
+					roots.map((root) => reference(root, policy)),
+				);
+				let reads = 0;
+				for (const node of roots) {
+					const fields = node.fields;
+					Object.defineProperty(node, "fields", {
+						get() {
+							reads++;
+							return fields;
+						},
+					});
+				}
+				for (const [i, policy] of policies.entries()) {
+					const first = toStoredSchema(roots[0] ?? assert.fail(), policy);
+					assert.equal(reads, (i + 1) * 2);
+					const second = toStoredSchema(roots[1] ?? assert.fail(), policy);
+					assert.equal(reads, (i + 1) * 2);
+					assert.notStrictEqual(first, second);
+					assert.strictEqual(first.nodeSchema, second.nodeSchema);
+					assert.deepEqual(first, expected[i]?.[0]);
+					assert.deepEqual(second, expected[i]?.[1]);
+				}
+				assert.notStrictEqual(
+					toStoredSchema(A, policies[0] ?? assert.fail()).nodeSchema,
+					toStoredSchema(A, policies[1] ?? assert.fail()).nodeSchema,
+				);
+			});
+		}
+
+		it("shares staging-free descendants across policy caches and root wrappers", () => {
+			const sf = new SchemaFactoryAlpha("commonPolicyComponent");
+			class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+			class Staged extends sf.objectAlpha("Staged", {
+				child: Leaf,
+				future: sf.stagedOptional(sf.string),
+			}) {}
+			getSchemaDerivedData(Staged);
+			const leafSchema = Leaf;
+			assert(isObjectNodeSchema(leafSchema));
+			const fields = leafSchema.fields;
+			let reads = 0;
+			Object.defineProperty(Leaf, "fields", {
+				get() {
+					reads++;
+					return fields;
+				},
+			});
+			const restrictive = toStoredSchema(Staged, { ...StagedSchemaUpgradePolicy.restrictive });
+			const permissive = toStoredSchema(Staged, { ...StagedSchemaUpgradePolicy.permissive });
+			const leaf = toStoredSchema(Leaf, StagedSchemaUpgradePolicy.permissive);
+			assert.equal(reads, 1);
+			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
+			assert.strictEqual(restrictive.nodeSchema.get(id), permissive.nodeSchema.get(id));
+			assert.strictEqual(leaf.nodeSchema.get(id), restrictive.nodeSchema.get(id));
+			const stagedRoot = sf.stagedOptional(Leaf);
+			const strictField = toStoredSchema(stagedRoot, StagedSchemaUpgradePolicy.restrictive);
+			const permissiveField = toStoredSchema(stagedRoot, StagedSchemaUpgradePolicy.permissive);
+			assert.notEqual(strictField.rootFieldSchema.kind, permissiveField.rootFieldSchema.kind);
+			assert.strictEqual(strictField.nodeSchema, leaf.nodeSchema);
+			assert.strictEqual(permissiveField.nodeSchema, leaf.nodeSchema);
+			assert.equal(reads, 1);
+		});
+
+		it("shares converted descendants across diamonds without sharing unrelated root maps", () => {
+			const sf = new SchemaFactoryAlpha("policyDiamond");
+			class Leaf extends sf.object("Leaf", { value: sf.stagedOptional(sf.number) }) {}
+			class Left extends sf.object("Left", { child: Leaf }) {}
+			class Right extends sf.object("Right", { child: Leaf }) {}
+			class Root extends sf.object("Root", { left: Left, right: Right }) {}
+			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
+			getSchemaDerivedData(Root);
+			const expected = reference(Root, policy);
+			let reads = 0;
+			for (const node of [Root, Left, Right, Leaf]) {
+				assert(isObjectNodeSchema(node));
+				const fields = node.fields;
+				Object.defineProperty(node, "fields", {
+					get() {
+						reads++;
+						return fields;
+					},
+				});
+			}
+			const root = toStoredSchema(Root, policy);
+			assert.equal(reads, 4);
+			assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);
+			const left = toStoredSchema(Left, policy);
+			const right = toStoredSchema(Right, policy);
+			const leaf = toStoredSchema(Leaf, policy);
+			assert.equal(reads, 4);
+			assert.deepEqual(root, expected);
+			assert.equal(left.nodeSchema.size, 3);
+			assert.equal(right.nodeSchema.size, 3);
+			assert.notStrictEqual(left.nodeSchema, right.nodeSchema);
+			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
+			assert.strictEqual(left.nodeSchema.get(id), leaf.nodeSchema.get(id));
+			assert.strictEqual(right.nodeSchema.get(id), leaf.nodeSchema.get(id));
+			assert.equal(getSchemaDerivedData(Root).unhydratedContext, undefined);
+		});
+
+		it("does not normalize a component merely because filtering removed its staging", () => {
+			const sf = new SchemaFactoryAlpha("filteredNotNormalized");
+			class Child extends sf.object("Child", {}) {}
+			class Root extends sf.objectAlpha("Root", {
+				future: sf.optional(sf.types([sf.staged(Child)])),
+			}) {}
+			const restrictive = toStoredSchema(Root, StagedSchemaUpgradePolicy.restrictive);
+			assert.equal(restrictive.nodeSchema.size, 1);
+			const permissive = toStoredSchema(Root, StagedSchemaUpgradePolicy.permissive);
+			assert.equal(permissive.nodeSchema.size, 2);
+			assert.notStrictEqual(restrictive.nodeSchema, permissive.nodeSchema);
+			assert.deepEqual(restrictive, reference(Root, StagedSchemaUpgradePolicy.restrictive));
+			assert.deepEqual(permissive, reference(Root, StagedSchemaUpgradePolicy.permissive));
+			const empty = toStoredSchema(
+				sf.types([sf.staged(Root)]),
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			assert.equal(empty.nodeSchema.size, 0);
+		});
+
+		it("does not publish partial policy components, but keeps completed dependencies", () => {
+			const sf = new SchemaFactoryAlpha("policyFailure");
+			class Good extends sf.object("Good", { value: sf.stagedOptional(sf.number) }) {}
+			class A extends sf.objectRecursive("A", {
+				good: Good,
+				child: sf.optionalRecursive([() => B]),
+			}) {}
+			class B extends sf.objectRecursive("B", {
+				child: sf.optionalRecursive([() => A]),
+			}) {}
+			getSchemaDerivedData(A);
+			const goodSchema = Good;
+			assert(isObjectNodeSchema(goodSchema));
+			const fields = goodSchema.fields;
+			let goodReads = 0;
+			Object.defineProperty(Good, "fields", {
+				get() {
+					goodReads++;
+					return fields;
+				},
+			});
+			let shouldThrow = true;
+			Object.defineProperty(B, "persistedMetadata", {
+				get() {
+					if (shouldThrow) throw new Error("conversion failure");
+					return undefined;
+				},
+			});
+			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
+			for (const node of [A, B, A]) {
+				assert.throws(() => toStoredSchema(node, policy), /conversion failure/);
+				assert.equal(getSchemaDerivedData(node).unhydratedContext, undefined);
+			}
+			const good = toStoredSchema(Good, policy);
+			assert.equal(goodReads, 1);
+			shouldThrow = false;
+			const a = toStoredSchema(A, policy);
+			const b = toStoredSchema(B, policy);
+			assert.strictEqual(a.nodeSchema, b.nodeSchema);
+			assert.strictEqual(
+				a.nodeSchema.get(brand(Good.identifier)),
+				good.nodeSchema.get(brand(Good.identifier)),
+			);
+			assert.deepEqual(a, reference(A, policy));
+		});
+	});
+
 	describe("staging reachability", () => {
 		for (const staged of [false, true]) {
 			for (const descendantFirst of [false, true]) {

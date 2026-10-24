@@ -39,6 +39,10 @@ import {
 	SchemaUpgrade,
 	StagedSchemaUpgradePolicy,
 	Unchanged,
+	getTreeNodeSchemaPrivateData,
+	walkSchema,
+	type TreeNodeSchema,
+	type AnnotatedAllowedType,
 	type SimpleSchemaTransformationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
@@ -70,13 +74,34 @@ import { getSchemaDerivedData } from "./treeSchema.js";
  * This cache retains policy-specific results because staged roots can produce different stored schemas.
  * Roots without staging use {@link toUnhydratedSchema} as a common key so all policies share one result.
  * Policy keys are weak to avoid retaining short-lived effective upgrade policies.
- * The permissive policy also shares immutable node definitions through the root's component.
+ * Completed filtered components share immutable node definitions and lazily materialized reachable maps.
+ * Components with no transitively reachable staging use the common permissive entry even within staged roots.
+ * This decision uses unfiltered staging analysis, never the graph after policy filtering.
  * Root fields and result wrappers remain root-specific.
  */
-const viewToStoredCache = new WeakMap<
-	StagedSchemaUpgradePolicy,
-	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
->();
+const viewToStoredCache = new WeakMap<StagedSchemaUpgradePolicy, StoredSchemaCache>();
+
+interface StoredSchemaCache {
+	readonly roots: WeakMap<ImplicitFieldSchema, TreeStoredSchema>;
+	readonly components: WeakMap<TreeNodeSchema, StoredSchemaComponent>;
+}
+
+/**
+ * A successfully converted component under one policy, retaining only outgoing dependencies.
+ * Complete reachable maps are built only for requested roots, not eagerly for every component.
+ */
+interface StoredSchemaComponent {
+	readonly nodes: TreeStoredSchema["nodeSchema"];
+	readonly dependencies: ReadonlySet<StoredSchemaComponent>;
+	definitions?: TreeStoredSchema["nodeSchema"];
+}
+
+function getStoredSchemaCache(policy: StagedSchemaUpgradePolicy): StoredSchemaCache {
+	return getOrCreate(viewToStoredCache, policy, () => ({
+		roots: new WeakMap(),
+		components: new WeakMap(),
+	}));
+}
 
 /**
  * Reports whether a root field or any transitively reachable schema contains staging.
@@ -183,33 +208,96 @@ export function toStoredSchema(
 	// To better reused cached schema, normalize such cases to the unhydrated schema policy.
 	const policy = data.hasStagedSchema ? options : toUnhydratedSchema;
 
-	const cache = getOrCreate(viewToStoredCache, policy, () => new WeakMap());
-	return getOrCreate(cache, root, () => {
-		if (policy === toUnhydratedSchema) {
-			const rootFieldSchema = convertField(
-				filterFieldAllowedTypes(data.treeSchema.root, policy),
-			);
-			let nodeSchema = data.component?.permissiveStoredDefinitions;
-			if (nodeSchema === undefined) {
-				// Permissive conversion preserves every edge, so the validated unfiltered graph
-				// already contains exactly the reachable definitions. No filtered walk is needed.
-				const definitions = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
-				for (const [identifier, schema] of data.treeSchema.definitions) {
-					definitions.set(
-						brand(identifier),
-						getStoredSchema(transformSimpleNodeSchema(schema, policy)),
-					);
-				}
-				nodeSchema = definitions;
-				if (data.component !== undefined) {
-					data.component.permissiveStoredDefinitions = nodeSchema;
-				}
+	const cache = getStoredSchemaCache(policy);
+	return getOrCreate(cache.roots, root, () => {
+		const rootFieldSchema = convertField(
+			filterFieldAllowedTypes(data.treeSchema.root, policy),
+		);
+		const commonCache = getStoredSchemaCache(toUnhydratedSchema);
+		function componentCache(schema: TreeNodeSchema): StoredSchemaCache {
+			if (cache === commonCache) {
+				return cache;
 			}
-			return { rootFieldSchema, nodeSchema };
+			const component = getTreeNodeSchemaPrivateData(schema).component;
+			assert(
+				component !== undefined,
+				"Stored conversion requires completed unfiltered analysis",
+			);
+			return component.hasStagedSchema ? cache : commonCache;
 		}
-		const simpleSchema = transformSimpleSchema(data.treeSchema, policy);
-		return simpleStoredSchemaToStoredSchema(simpleSchema);
+		function getComponent(schema: TreeNodeSchema): StoredSchemaComponent {
+			const component = componentCache(schema).components.get(schema);
+			assert(component !== undefined, "Expected a completed stored schema component");
+			return component;
+		}
+		const includes = (type: AnnotatedAllowedType<TreeNodeSchema>): boolean =>
+			type.metadata.stagedSchemaUpgrade === undefined ||
+			policy.includeStaged(type.metadata.stagedSchemaUpgrade);
+		const roots = [...rootFieldSchema.types].map((identifier) => {
+			const schema = data.treeSchema.definitions.get(identifier);
+			assert(schema !== undefined, "Root type must belong to the validated graph");
+			return schema;
+		});
+		walkSchema(roots, {
+			allowedTypeFilter: includes,
+			wasComponentVisited: (schema) => componentCache(schema).components.has(schema),
+			stronglyConnectedComponent: (members) => {
+				const identities = new Set(members);
+				const nodes = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
+				const dependencies = new Set<StoredSchemaComponent>();
+				for (const schema of members) {
+					const view = data.treeSchema.definitions.get(schema.identifier);
+					assert(view !== undefined, "Component member must belong to the validated graph");
+					const transformed = transformSimpleNodeSchema(view, policy);
+					nodes.set(brand(schema.identifier), getStoredSchema(transformed));
+					for (const identifier of referencedTypes(transformed)) {
+						const dependency = data.treeSchema.definitions.get(identifier);
+						assert(
+							dependency !== undefined,
+							"Stored reference must belong to the validated graph",
+						);
+						if (!identities.has(dependency)) {
+							dependencies.add(getComponent(dependency));
+						}
+					}
+				}
+				const component: StoredSchemaComponent = { nodes, dependencies };
+				if (dependencies.size === 0) {
+					component.definitions = nodes;
+				}
+				for (const schema of members) {
+					componentCache(schema).components.set(schema, component);
+				}
+			},
+		});
+		const components = new Set(roots.map(getComponent));
+		const [only] = components;
+		const nodeSchema =
+			components.size === 1 && only !== undefined
+				? (only.definitions ??= collectStoredDefinitions(components))
+				: collectStoredDefinitions(components);
+		return { rootFieldSchema, nodeSchema };
 	});
+}
+
+/**
+ * Visits each reachable component once, avoiding repeated merging along diamond paths.
+ * Different acyclic roots still have overlapping maps, but share the converted node definitions.
+ */
+function collectStoredDefinitions(
+	roots: Iterable<StoredSchemaComponent>,
+): TreeStoredSchema["nodeSchema"] {
+	const components = new Set(roots);
+	const definitions = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
+	for (const component of components) {
+		for (const [identifier, node] of component.nodes) {
+			definitions.set(identifier, node);
+		}
+		for (const dependency of component.dependencies) {
+			components.add(dependency);
+		}
+	}
+	return definitions;
 }
 
 /**
@@ -259,26 +347,8 @@ export function transformSimpleSchema(
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
-			const kind = transformed.kind;
-			switch (kind) {
-				case NodeKind.Leaf: {
-					break;
-				}
-				case NodeKind.Array:
-				case NodeKind.Map:
-				case NodeKind.Record: {
-					queue.push(...transformed.simpleAllowedTypes.keys());
-					break;
-				}
-				case NodeKind.Object: {
-					for (const fieldSchema of transformed.fields.values()) {
-						queue.push(...fieldSchema.simpleAllowedTypes.keys());
-					}
-					break;
-				}
-				default: {
-					unreachableCase(kind);
-				}
+			for (const type of referencedTypes(transformed)) {
+				queue.push(type);
 			}
 			return transformed;
 		});
@@ -296,6 +366,29 @@ export function transformSimpleSchema(
 		0xcaa /* Reachable schema missing from input TreeSchema */,
 	);
 	return { root, definitions };
+}
+
+function* referencedTypes(schema: SimpleNodeSchema): IterableIterator<string> {
+	switch (schema.kind) {
+		case NodeKind.Leaf: {
+			break;
+		}
+		case NodeKind.Array:
+		case NodeKind.Map:
+		case NodeKind.Record: {
+			yield* schema.simpleAllowedTypes.keys();
+			break;
+		}
+		case NodeKind.Object: {
+			for (const field of schema.fields.values()) {
+				yield* field.simpleAllowedTypes.keys();
+			}
+			break;
+		}
+		default: {
+			unreachableCase(schema);
+		}
+	}
 }
 
 /**

@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeStoredSchema } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
 
 import {
@@ -56,12 +55,6 @@ export interface SchemaComponent {
 	 * Iteration order is unspecified; serializers that require stable ordering must canonicalize it.
 	 */
 	definitions?: TreeSchema["definitions"];
-	/**
-	 * Immutable converted node definitions for the permissive policy only.
-	 * Populated by {@link toStoredSchema} after conversion succeeds.
-	 * Filtering under other policies can split this component, so their maps cannot use this slot.
-	 */
-	permissiveStoredDefinitions?: TreeStoredSchema["nodeSchema"];
 }
 
 /**
@@ -73,7 +66,7 @@ export interface SchemaDerivedData {
 	readonly hasStagedSchema: boolean;
 	/**
 	 * The component containing all root allowed types, if there is exactly one.
-	 * Root fields remain separate from component-owned view and permissive stored definitions.
+	 * Root fields remain separate from component-owned view definitions.
 	 */
 	readonly component: SchemaComponent | undefined;
 	/**

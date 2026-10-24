@@ -21,6 +21,7 @@ import {
 	walkSchema,
 	walkNodeSchema,
 	type AllowedTypesFullEvaluated,
+	type AnnotatedAllowedType,
 	type IncrementalSchemaVisitor,
 	type SchemaVisitor,
 	type TreeNodeSchema,
@@ -58,6 +59,12 @@ import { walkFieldSchema } from "../../simple-tree/walkFieldSchema.js";
 type _sharedFieldCallback = requireTrue<
 	areSafelyAssignable<IncrementalSchemaVisitor["allowedTypes"], SchemaVisitor["allowedTypes"]>
 >;
+type _sharedTypeFilter = requireTrue<
+	areSafelyAssignable<
+		IncrementalSchemaVisitor["allowedTypeFilter"],
+		SchemaVisitor["allowedTypeFilter"]
+	>
+>;
 type _sharedComponentCallback = requireTrue<
 	areSafelyAssignable<
 		IncrementalSchemaVisitor["stronglyConnectedComponent"],
@@ -84,6 +91,62 @@ function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 }
 
 describe("schema component visitor", () => {
+	it("filters references before querying previous component visits", () => {
+		const sf = new SchemaFactoryAlpha("filterBeforePreviousVisit");
+		class Parent extends sf.array("Parent", [sf.number, sf.string]) {}
+		const components: (readonly TreeNodeSchema[])[] = [];
+		walkSchema([Parent], {
+			allowedTypeFilter: ({ type }) => type !== sf.string,
+			wasComponentVisited: (schema) => {
+				assert.notStrictEqual(schema, sf.string);
+				return schema === sf.number;
+			},
+			stronglyConnectedComponent: (members) => components.push(members),
+		});
+		assert.deepEqual(components, [[Parent]]);
+	});
+
+	for (const observeFields of [false, true]) {
+		it(`reuses components only for the matching filtered graph (fields: ${observeFields})`, () => {
+			const sf = new SchemaFactoryAlpha("incrementalFiltering");
+			class A extends sf.objectRecursive("A", {
+				child: sf.optionalRecursive([() => B]),
+			}) {}
+			class B extends sf.objectRecursive("B", {
+				child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
+			}) {}
+			for (const includeStaged of [false, true]) {
+				const completed = new Set<TreeNodeSchema>();
+				const components: (readonly TreeNodeSchema[])[] = [];
+				const fields: AllowedTypesFullEvaluated[] = [];
+				const filter = (type: AnnotatedAllowedType<TreeNodeSchema>): boolean =>
+					includeStaged || type.metadata.stagedSchemaUpgrade === undefined;
+				const visitor: IncrementalSchemaVisitor = {
+					allowedTypeFilter: filter,
+					wasComponentVisited: (schema) => completed.has(schema),
+					allowedTypes: observeFields ? (types) => fields.push(types) : undefined,
+					stronglyConnectedComponent: (members) => {
+						components.push(members);
+						for (const member of members) {
+							completed.add(member);
+						}
+					},
+				};
+				walkSchema([B], visitor);
+				const count = components.length;
+				walkSchema([A], visitor);
+				assert.equal(components.length, includeStaged ? count : count + 1);
+				assert.deepEqual(
+					components.map((members) => new Set(members)),
+					includeStaged ? [new Set([A, B])] : [new Set([B]), new Set([A])],
+				);
+				fields.length = 0;
+				walkSchema([A], visitor);
+				assert.equal(fields.length, observeFields ? 2 : 0);
+			}
+		});
+	}
+
 	it("rejects invalid incremental visitor combinations in types and at runtime", () => {
 		const incremental: IncrementalSchemaVisitor = {
 			wasComponentVisited: () => false,
@@ -99,10 +162,11 @@ describe("schema component visitor", () => {
 		type _nodeCallbackExcluded = requireFalse<
 			isAssignableTo<typeof withNode, Parameters<typeof walkSchema>[1]>
 		>;
-		type _filterExcluded = requireFalse<
+		type _filterAllowed = requireTrue<
 			isAssignableTo<typeof withFilter, Parameters<typeof walkSchema>[1]>
 		>;
-		for (const visitor of [missingCallback, withNode, withFilter]) {
+		walkSchema([], withFilter);
+		for (const visitor of [missingCallback, withNode]) {
 			assert.throws(
 				// @ts-expect-error Invalid combinations are rejected even through variables.
 				() => walkSchema([], visitor),
@@ -547,7 +611,7 @@ describe("component-derived schema state", () => {
 			toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 		);
 		const customPermissive = { ...StagedSchemaUpgradePolicy.permissive };
-		assert.notStrictEqual(
+		assert.strictEqual(
 			toStoredSchema(A, customPermissive).nodeSchema,
 			toStoredSchema(B, customPermissive).nodeSchema,
 		);
@@ -596,7 +660,6 @@ describe("component-derived schema state", () => {
 		const [a, b] = graph([[1], [0]]);
 		assert(a !== undefined && b !== undefined);
 		const data = getSchemaDerivedData(a);
-		const component = data.component ?? assert.fail();
 		let throwOnConversion = true;
 		Object.defineProperty(a, "persistedMetadata", {
 			get() {
@@ -608,7 +671,7 @@ describe("component-derived schema state", () => {
 		});
 		for (let i = 0; i < 2; i++) {
 			assert.throws(() => getUnhydratedContext(a), /conversion failure/);
-			assert.equal(component.permissiveStoredDefinitions, undefined);
+			assert.throws(() => getUnhydratedContext(b), /conversion failure/);
 			assert.equal(data.unhydratedContext, undefined);
 		}
 		throwOnConversion = false;

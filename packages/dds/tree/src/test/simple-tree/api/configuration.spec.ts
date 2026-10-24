@@ -53,11 +53,11 @@ describe("simple-tree configuration", () => {
 			});
 		}
 		const config = new TreeViewConfigurationAlpha({ schema: A });
-		// Discovery visits each node once; component finalization reads its already-evaluated fields.
-		assert.deepEqual([...reads.values()], [2, 2, 2]);
+		// View discovery, view-component finalization, and stored-component discovery each read the fields.
+		assert.deepEqual([...reads.values()], [3, 3, 3]);
 		const component = getTreeNodeSchemaPrivateData(A).component;
 		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
-		assert.deepEqual([...reads.values()], [3, 3, 3]);
+		assert.deepEqual([...reads.values()], [4, 4, 4]);
 		assert.strictEqual(config.definitions, strict.definitions);
 		assert.strictEqual(component, getTreeNodeSchemaPrivateData(A).component);
 		assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);

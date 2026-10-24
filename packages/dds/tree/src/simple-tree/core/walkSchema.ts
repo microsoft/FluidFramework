@@ -54,13 +54,11 @@ export function walkSchema(
 	visitor: SchemaVisitor | IncrementalSchemaVisitor,
 	visited: Set<TreeNodeSchema> = new Set(),
 ): void {
-	const { wasComponentVisited } = visitor;
+	const { wasComponentVisited, allowedTypeFilter } = visitor;
 	assert(
 		wasComponentVisited === undefined ||
-			(visitor.stronglyConnectedComponent !== undefined &&
-				visitor.node === undefined &&
-				visitor.allowedTypeFilter === undefined),
-		"Incremental component visits require a component callback without node callbacks or filtering",
+			(visitor.stronglyConnectedComponent !== undefined && visitor.node === undefined),
+		"Incremental component visits require a component callback without node callbacks",
 	);
 	interface ComponentState {
 		readonly schema: TreeNodeSchema;
@@ -86,7 +84,11 @@ export function walkSchema(
 		wasComponentVisited !== undefined && visitor.allowedTypes === undefined;
 	const referenceVisitor: Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter"> =
 		pruneVisitedComponents
-			? { allowedTypeFilter: ({ type }) => !wasComponentVisited(type) }
+			? {
+					allowedTypeFilter: (type) =>
+						(allowedTypeFilter === undefined || allowedTypeFilter(type)) &&
+						!wasComponentVisited(type.type),
+				}
 			: visitor;
 
 	function* references(schema: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
@@ -241,21 +243,21 @@ export interface SchemaVisitor {
 }
 
 /**
- * A visitor for incrementally visiting components of the unfiltered schema graph with {@link walkSchema}.
+ * A visitor for incrementally visiting components of a schema graph with {@link walkSchema}.
  * @remarks
- * Reuses {@link SchemaVisitor}'s component and allowed-type callbacks.
+ * Reuses {@link SchemaVisitor}'s component, allowed-type, and filtering callbacks.
  * Unlike an ordinary visitor, it reports only components not covered by {@link IncrementalSchemaVisitor.wasComponentVisited}.
  * Outgoing dependency components have either completed their callback in this walk or are covered by that predicate.
  *
  * Use this when component callbacks produce reusable caller-owned results, while allowed-type callbacks perform
  * checks required on every pass, such as configuration-specific validation.
  * No cache is maintained by the walker, and retaining cached results is not required by this interface.
- * Node callbacks and edge filtering are excluded: this mode relies on completed visits of whole unfiltered components.
+ * Node callbacks are excluded: this mode omits previously completed component visits.
  * Neither the callbacks nor the predicate may initialize node contexts during schema discovery.
  * @internal
  */
 export interface IncrementalSchemaVisitor
-	extends Pick<SchemaVisitor, "allowedTypes">,
+	extends Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter">,
 		Required<Pick<SchemaVisitor, "stronglyConnectedComponent">> {
 	/**
 	 * Returns whether the caller has successfully completed a {@link SchemaVisitor.stronglyConnectedComponent}
@@ -267,6 +269,10 @@ export interface IncrementalSchemaVisitor
 	 *
 	 * A `true` answer must cover the entire component and its transitive dependencies, never part of a cycle
 	 * or in-progress work. Completed visits must remain valid while the walk runs.
+	 * Previous visits must describe the same graph selected by {@link SchemaVisitor.allowedTypeFilter},
+	 * including the same filtering decisions and compatible visited-set boundaries.
+	 * Filter function identity alone is insufficient if its captured state changes.
+	 * Dependencies excluded by the filter do not need completed visits.
 	 * The predicate may be called multiple times for a schema; it must not depend on call count or cause traversal side effects.
 	 *
 	 * Returning `true` suppresses component callbacks for that completed subgraph.
@@ -282,8 +288,4 @@ export interface IncrementalSchemaVisitor
 	 * Incremental component visits do not support node callbacks.
 	 */
 	node?: never;
-	/**
-	 * Previous component visits must describe the same unfiltered topology.
-	 */
-	allowedTypeFilter?: never;
 }
