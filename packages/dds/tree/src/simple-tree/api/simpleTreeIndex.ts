@@ -35,7 +35,7 @@ import {
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
 import { convertFieldKind } from "../toStoredSchema.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
+import { getSchemaDerivedData } from "../treeSchema.js";
 
 import type { TreeView } from "./tree.js";
 import { treeNodeApi } from "./treeNodeApi.js";
@@ -74,7 +74,7 @@ export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeS
  * Creates a {@link TreeIndex}, selecting the key field for each schema in the view.
  *
  * @remarks
- * This overload discovers the schemas to consider by walking the view's schema.
+ * This overload considers every schema reachable from the view's schema.
  * When multiple nodes have the same key, they are passed together to `getValue`.
  * For every selected schema, the selected property must be a required field that only allows leaf values.
  * Invalid properties and values rejected by `isKeyValid` cause a `UsageError`.
@@ -173,7 +173,7 @@ export function createTreeIndex<
  * Creates a {@link TreeIndex}, selecting the key field for an explicit set of schemas.
  *
  * @remarks
- * Supplying `indexableSchema` avoids schema discovery and narrows the nodes passed to `getValue` to
+ * Supplying `indexableSchema` restricts the schemas to consider and narrows the nodes passed to `getValue` to
  * {@link NodeFromSchema} of the supplied schema types. Schemas omitted from `indexableSchema` are not indexed.
  * When multiple nodes have the same key, they are passed together to `getValue`.
  * For every selected schema, the selected property must be a required field that only allows leaf values.
@@ -266,16 +266,10 @@ export function createTreeIndexWithDependencyScope<
 	keyFinderDependencyScope: KeyFinderDependencyScope,
 	indexableSchema?: readonly TreeNodeSchema[],
 ): TreeIndex<TKey, TValue> {
-	const indexableSchemaMap = new Map<string, TreeNodeSchema>();
-	if (indexableSchema === undefined) {
-		walkFieldSchema(view.schema, {
-			node: (schema) => indexableSchemaMap.set(schema.identifier, schema),
-		});
-	} else {
-		for (const schema of indexableSchema) {
-			indexableSchemaMap.set(schema.identifier, schema);
-		}
-	}
+	const indexableSchemaMap =
+		indexableSchema === undefined
+			? getSchemaDerivedData(view.schema).treeSchema.definitions
+			: new Map(indexableSchema.map((schema) => [schema.identifier, schema]));
 
 	const keyFieldSelectorFunction =
 		typeof keyFieldSelector === "function"

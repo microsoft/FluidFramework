@@ -14,5 +14,6 @@ Mutually recursive roots also share immutable converted node definitions under t
 Root fields, contexts, and policy-specific stored-schema wrappers remain root-specific.
 Configuration validation and component discovery share one iterative traversal.
 Configuration-specific checks still run when component analysis is cached.
+Hydrated contexts and index setup also reuse the cached reachable definitions instead of walking the schema again.
 Definition map iteration order is unspecified.
 Compatibility snapshots canonicalize definition order; schema hashes and persisted schema encoding are unchanged.
