@@ -32,6 +32,7 @@ import {
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	generateSchemaFromSimpleSchema,
+	isObjectNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	type SimpleAllowedTypeAttributes,
@@ -77,6 +78,55 @@ function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
 
 describe("toStoredSchema", () => {
 	describe("staging reachability", () => {
+		for (const staged of [false, true]) {
+			for (const descendantFirst of [false, true]) {
+				it(`reuses descendant analysis (${staged ? "staged" : "unstaged"}, ${descendantFirst ? "C" : "B"} first)`, () => {
+					const sf = new SchemaFactoryAlpha("stagingDescendants");
+					class C extends sf.object("C", {
+						value: staged ? sf.stagedOptional(sf.number) : sf.optional(sf.number),
+					}) {}
+					class B extends sf.object("B", { child: C }) {}
+					class A extends sf.object("A", { child: B }) {}
+					let bReads = 0;
+					let cReads = 0;
+					const bSchema = B;
+					const cSchema = C;
+					assert(isObjectNodeSchema(bSchema));
+					assert(isObjectNodeSchema(cSchema));
+					const bFields = bSchema.fields;
+					const cFields = cSchema.fields;
+					// Count annotation inspections, not schema discovery, which must still validate every root.
+					Object.defineProperty(B, "fields", {
+						get() {
+							bReads++;
+							return bFields;
+						},
+					});
+					Object.defineProperty(C, "fields", {
+						get() {
+							cReads++;
+							return cFields;
+						},
+					});
+
+					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, undefined);
+					assert.equal(getTreeNodeSchemaPrivateData(C).hasStagedSchema, undefined);
+					if (descendantFirst) {
+						assert.equal(hasStagedSchema(C), staged);
+					}
+					assert.equal(hasStagedSchema(B), staged);
+					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, staged);
+					assert.equal(getTreeNodeSchemaPrivateData(C).hasStagedSchema, staged);
+					assert.equal(getSchemaDerivedData(B).unhydratedContext, undefined);
+					assert.equal(hasStagedSchema(C), staged);
+					assert.equal(hasStagedSchema(A), staged);
+					assert.equal(getTreeNodeSchemaPrivateData(A).hasStagedSchema, staged);
+					assert.equal(bReads, 1);
+					assert.equal(cReads, 1);
+				});
+			}
+		}
+
 		for (const reverse of [false, true]) {
 			it(`detects staging through a cycle (${reverse ? "B" : "A"} first)`, () => {
 				const sf = new SchemaFactoryAlpha("stagingCycle");
@@ -91,6 +141,8 @@ describe("toStoredSchema", () => {
 				// Both roots reach A's staged field; visiting the cycle must not cache an incomplete negative answer for B.
 				for (const root of reverse ? [B, A] : [A, B]) {
 					assert.equal(hasStagedSchema(root), true);
+					assert.equal(getTreeNodeSchemaPrivateData(A).hasStagedSchema, true);
+					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, true);
 					assert.notDeepEqual(
 						toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive),
 						toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
@@ -98,6 +150,54 @@ describe("toStoredSchema", () => {
 				}
 			});
 		}
+
+		it("resolves unstaged cycles separately from staged ancestors and cycles", () => {
+			const sf = new SchemaFactoryAlpha("stagingComponents");
+			class Unstaged extends sf.objectRecursive("Unstaged", {
+				child: sf.optionalRecursive([() => Unstaged]),
+			}) {}
+			class A extends sf.objectRecursive("A", {
+				child: sf.optionalRecursive([() => B]),
+				unstaged: sf.optional(Unstaged),
+			}) {}
+			class B extends sf.objectRecursive("B", {
+				child: sf.optionalRecursive([() => A]),
+				staged: sf.stagedOptional(sf.number),
+			}) {}
+			class Parent extends sf.object("Parent", { child: A }) {}
+
+			assert.equal(hasStagedSchema(Parent), true);
+			for (const node of [Parent, A, B]) {
+				assert.equal(getTreeNodeSchemaPrivateData(node).hasStagedSchema, true);
+			}
+			assert.equal(getTreeNodeSchemaPrivateData(Unstaged).hasStagedSchema, false);
+			assert.equal(hasStagedSchema(Unstaged), false);
+		});
+
+		it("attributes staged references to the parent, not the referenced class", () => {
+			const sf = new SchemaFactoryAlpha("stagingReference");
+			class Child extends sf.object("Child", {}) {}
+			class Parent extends sf.objectAlpha("Parent", {
+				child: sf.types([sf.staged(Child)]),
+			}) {}
+
+			assert.equal(hasStagedSchema(Parent), true);
+			assert.equal(getTreeNodeSchemaPrivateData(Parent).hasStagedSchema, true);
+			assert.equal(getTreeNodeSchemaPrivateData(Child).hasStagedSchema, false);
+			assert.equal(hasStagedSchema(Child), false);
+		});
+
+		it("still validates identifier conflicts between previously analyzed classes", () => {
+			const sf = new SchemaFactoryAlpha("stagingConflicts");
+			class A extends sf.object("Duplicate", {}) {}
+			class B extends sf.object("Duplicate", {}) {}
+			assert.equal(hasStagedSchema(A), false);
+			assert.equal(hasStagedSchema(B), false);
+			assert.throws(
+				() => hasStagedSchema([A, B]),
+				validateUsageError(/Multiple schema encountered with the identifier/),
+			);
+		});
 
 		// Context creation calls toStoredSchema, so staging detection must not initialize contexts itself.
 		for (const initializeContextFirst of [false, true]) {

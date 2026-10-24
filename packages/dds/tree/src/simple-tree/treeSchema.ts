@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate } from "../util/index.js";
 
 import {
 	NodeKind,
+	getTreeNodeSchemaPrivateData,
 	type Context,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- Used by TSDoc links.
 	type StagedSchemaUpgradePolicy,
 	type TreeNodeSchema,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	type TreeNodeSchemaInitializedData,
 } from "./core/index.js";
@@ -29,7 +32,6 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	SimpleAllowedTypeAttributes,
 	SimpleAllowedTypes,
-	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
@@ -99,7 +101,8 @@ const schemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, SchemaDerivedDat
  * Keeps the unfiltered graph for stored-schema conversion and unhydrated-context lookup maps.
  * As with {@link toStoredSchema} caching, schema definitions must remain unchanged after evaluation.
  *
- * Does not cache intermediate answers for descendants: a recursive back-edge can hide staging until the traversal completes.
+ * Staging reachability is also cached per node in {@link TreeNodeSchemaPrivateData.hasStagedSchema},
+ * so overlapping roots reuse completed descendant analysis without initializing their contexts.
  */
 export function getSchemaDerivedData(root: ImplicitFieldSchema): SchemaDerivedData {
 	return getOrCreate(schemaDerivedDataCache, root, () => {
@@ -109,38 +112,72 @@ export function getSchemaDerivedData(root: ImplicitFieldSchema): SchemaDerivedDa
 }
 
 /**
- * Checks staging annotations in a complete, unfiltered graph produced by {@link createTreeSchema}.
+ * Resolves staging reachability using a complete, validated graph from {@link createTreeSchema}.
  * @remarks
- * The graph already contains all reachable definitions, so this scan does not recurse or initialize node contexts.
+ * Discovers uncached nodes and temporary reverse reference edges, stopping at completed per-node answers.
+ * Nodes with direct staging or references to cached staging seed a reverse flood-fill.
+ * After propagation, all remaining discovered nodes are staging-free, including cycles with no staging.
+ * Only completed answers are published; no parent edges are retained in the per-node cache.
+ *
+ * Work and temporary storage are linear in the newly inspected annotations, nodes, and references.
+ * Tarjan's strongly connected components algorithm could also resolve cycles and may be more efficient,
+ * particularly by avoiding the temporary reverse-edge storage.
+ *
+ * Root-field annotations affect only the root answer, not the referenced nodes' cached answers.
+ * The unfiltered graph includes staged references and remains separately validated even when node analysis is cached.
+ * This analysis must not initialize contexts, whose construction depends on stored-schema generation.
  * When adding a staging mechanism, update this check and add an observable staged case to the test-schema catalog.
  */
 function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
+	const dependents = new Map<TreeNodeSchema, Set<TreeNodeSchema>>();
+	const pending: (SimpleNodeSchema<SchemaType.View> & TreeNodeSchema)[] = [];
+	const staged = new Set<TreeNodeSchema>();
+	const roots = new Set<TreeNodeSchema>();
+	let rootHasStaging =
+		schema.root.isStagedOptional !== undefined && schema.root.isStagedOptional !== false;
+
 	/**
-	 * Checks {@link SimpleAllowedTypeAttributes.isStaged} on allowed-type references, not on the referenced node definitions.
+	 * Records dependencies and attributes {@link SimpleAllowedTypeAttributes.isStaged | staging} on a reference to its parent, never to the referenced node.
+	 * Omitting the parent denotes the root field, whose annotations are not cached on node schemas.
 	 */
-	function allowedTypesHaveStaging(types: SimpleAllowedTypes<SchemaType.View>): boolean {
-		for (const attributes of types.values()) {
+	function visitAllowedTypes(
+		types: SimpleAllowedTypes<SchemaType.View>,
+		parent?: TreeNodeSchema,
+	): void {
+		for (const [identifier, attributes] of types) {
 			if (attributes.isStaged !== false) {
-				return true;
+				if (parent === undefined) {
+					rootHasStaging = true;
+				} else {
+					staged.add(parent);
+				}
+			}
+
+			const node = schema.definitions.get(identifier);
+			assert(node !== undefined, "Staging analysis requires a complete schema graph");
+			if (parent === undefined) {
+				roots.add(node);
+			}
+			const cached = getTreeNodeSchemaPrivateData(node).hasStagedSchema;
+			if (cached !== undefined) {
+				if (cached && parent !== undefined) {
+					staged.add(parent);
+				}
+				continue;
+			}
+			const parents = getOrCreate(dependents, node, () => {
+				pending.push(node);
+				return new Set<TreeNodeSchema>();
+			});
+			if (parent !== undefined) {
+				parents.add(parent);
 			}
 		}
-		return false;
 	}
 
-	/**
-	 * Includes {@link SimpleFieldSchema.isStagedOptional}, which is not represented by allowed-type annotations.
-	 */
-	function fieldHasStaging(field: SimpleFieldSchema<SchemaType.View>): boolean {
-		return (
-			(field.isStagedOptional !== undefined && field.isStagedOptional !== false) ||
-			allowedTypesHaveStaging(field.simpleAllowedTypes)
-		);
-	}
-
-	if (fieldHasStaging(schema.root)) {
-		return true;
-	}
-	for (const node of schema.definitions.values()) {
+	visitAllowedTypes(schema.root.simpleAllowedTypes);
+	// Array iteration includes newly discovered nodes without recursing through the schema graph.
+	for (const node of pending) {
 		switch (node.kind) {
 			case NodeKind.Leaf: {
 				break;
@@ -148,16 +185,15 @@ function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
 			case NodeKind.Array:
 			case NodeKind.Map:
 			case NodeKind.Record: {
-				if (allowedTypesHaveStaging(node.simpleAllowedTypes)) {
-					return true;
-				}
+				visitAllowedTypes(node.simpleAllowedTypes, node);
 				break;
 			}
 			case NodeKind.Object: {
 				for (const field of node.fields.values()) {
-					if (fieldHasStaging(field)) {
-						return true;
+					if (field.isStagedOptional !== undefined && field.isStagedOptional !== false) {
+						staged.add(node);
 					}
+					visitAllowedTypes(field.simpleAllowedTypes, node);
 				}
 				break;
 			}
@@ -166,7 +202,22 @@ function treeSchemaHasStagedSchema(schema: TreeSchema): boolean {
 			}
 		}
 	}
-	return false;
+
+	// Set iteration includes newly marked parents, propagating through cycles without provisional negative answers.
+	for (const node of staged) {
+		for (const parent of dependents.get(node) ?? []) {
+			staged.add(parent);
+		}
+	}
+	for (const node of dependents.keys()) {
+		getTreeNodeSchemaPrivateData(node).hasStagedSchema = staged.has(node);
+	}
+	for (const root of roots) {
+		if (getTreeNodeSchemaPrivateData(root).hasStagedSchema === true) {
+			return true;
+		}
+	}
+	return rootHasStaging;
 }
 
 /**

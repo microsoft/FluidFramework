@@ -378,6 +378,14 @@ export interface TreeNodeSchemaCorePrivate<
  */
 export interface TreeNodeSchemaPrivateData {
 	/**
+	 * Whether this node schema or any transitively referenced schema contains staging.
+	 * Populated by {@link getSchemaDerivedData} only after reachability is fully resolved, including cycles.
+	 * `undefined` means not yet analyzed; root-field annotations are excluded.
+	 * Unlike {@link TreeNodeSchemaInitializedData}, this cache does not require a context.
+	 */
+	hasStagedSchema?: boolean;
+
+	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.

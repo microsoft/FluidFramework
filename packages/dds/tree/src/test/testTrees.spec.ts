@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 import { isDeepStrictEqual } from "node:util";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import { getTreeNodeSchemaPrivateData } from "../simple-tree/core/index.js";
 import {
 	normalizeFieldSchema,
 	StagedSchemaUpgradePolicy,
@@ -111,6 +113,13 @@ describe("test tree catalogs", () => {
 				const convertedHasStagedSchema = !isDeepStrictEqual(restrictive, permissive);
 				assert.equal(convertedHasStagedSchema, testCase.hasStagedSchema === true);
 				assert.equal(hasStagedSchema(testCase.schema), testCase.hasStagedSchema === true);
+				for (const node of treeSchema.definitions.values()) {
+					assert.equal(
+						getTreeNodeSchemaPrivateData(node).hasStagedSchema,
+						getStagedSchemaUpgrades(node).size > 0,
+						`Incorrect cached staging reachability for ${node.identifier}`,
+					);
+				}
 			});
 
 			for (const permissiveFirst of [false, true]) {
