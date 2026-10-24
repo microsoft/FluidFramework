@@ -17,6 +17,7 @@ import {
 	brand,
 	count,
 	isReadonlyArray,
+	mapIterable,
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
@@ -393,7 +394,11 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const [key, value] of this.entries()) {
+		const node = getInnerNode(this);
+		// Preserve live unhydrated traversal without allocating hydrated field wrappers.
+		const keys = node.isHydrated() ? node.keys() : mapIterable(node.fields, ([key]) => key);
+		for (const key of keys) {
+			const value = getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, value, key, this);
 		}
 	}

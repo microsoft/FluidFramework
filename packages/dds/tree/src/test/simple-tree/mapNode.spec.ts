@@ -386,6 +386,38 @@ describeHydration(
 		});
 	},
 	() => {
+		describe("unhydrated forEach callback mutations", () => {
+			class Values extends schemaFactory.map("forEach-mutations", schemaFactory.number) {}
+
+			it("skips deleted entries and visits entries added by a callback", () => {
+				const map = new Values({ a: 1, b: 2 });
+				const visited: [string, number][] = [];
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing mutation during forEach.
+				map.forEach((value, key) => {
+					visited.push([key, value]);
+					if (key === "a") {
+						map.delete("b");
+						map.set("c", 3);
+					}
+				});
+				assert.deepEqual(visited, [
+					["a", 1],
+					["c", 3],
+				]);
+			});
+
+			it("stops visiting entries after a callback clears the map", () => {
+				const map = new Values({ a: 1, b: 2 });
+				const visited: [string, number][] = [];
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing mutation during forEach.
+				map.forEach((value, key) => {
+					visited.push([key, value]);
+					asAlpha(map).clear();
+				});
+				assert.deepEqual(visited, [["a", 1]]);
+			});
+		});
+
 		it("explicit construction", () => {
 			class Schema extends schemaFactory.map("x", schemaFactory.number) {}
 			const data = [["x", 5]] as const;
