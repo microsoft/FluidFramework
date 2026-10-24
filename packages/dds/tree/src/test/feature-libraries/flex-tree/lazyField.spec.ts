@@ -12,6 +12,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	EmptyKey,
 	type FieldAnchor,
+	CursorLocationType,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type TreeFieldStoredSchema,
@@ -27,6 +28,7 @@ import {
 	LazyValueField,
 	sequenceLengthCacheThreshold,
 	unboxedFlexNode,
+	unboxedFlexField,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
@@ -36,6 +38,7 @@ import {
 	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
+	flexTreeSlot,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
@@ -76,6 +79,37 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
+	it("gets editing paths without recovering cursors or materializing parents", () => {
+		const factory = new SchemaFactory("anchor-path");
+		class Struct extends factory.object("Struct", { value: factory.number }) {}
+		const { context, cursor } = readonlyTreeWithContent({
+			schema: Struct,
+			initialTree: { value: 1 },
+		});
+		cursor.enterNode(0);
+		cursor.enterField(brand("value"));
+		const anchor = cursor.buildFieldAnchor();
+		assert(anchor.parent !== undefined);
+		const parent = context.checkout.forest.anchors.locate(anchor.parent);
+		assert(parent !== undefined);
+		const field = new TestLazyField(context, FieldKinds.required.identifier, cursor, anchor);
+		cursor.free();
+		field.prepareForEdit();
+		assert.equal(parent.slots.get(flexTreeSlot), undefined);
+		assert.deepEqual(field.getFieldPathForEditing(), {
+			parent,
+			field: "value",
+		});
+		assert.equal(context.withCursors.size, 0);
+		assert.equal(parent.slots.get(flexTreeSlot), undefined);
+		context[disposeSymbol]();
+		assert.throws(() => field.getFieldPath());
+		assert.throws(
+			() => field.getFieldPathForEditing(),
+			/only allowed on fields with TreeStatus.InDocument status/,
+		);
+	});
+
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const schema = toInitialSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
@@ -217,6 +251,7 @@ describe("LazyField", () => {
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
 		assert(field.isFreed());
+		assert.throws(() => holder.getBoxed(brand("f")));
 
 		// Should not double free.
 		context[disposeSymbol]();
@@ -243,6 +278,46 @@ describe("LazyField", () => {
 		// Should not double free.
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
+	});
+
+	describe("unboxedFlexField", () => {
+		const sf = new SchemaFactory("unboxed-field");
+		for (const [name, value] of [
+			["empty", undefined],
+			["zero", 0],
+			["false", false],
+			["empty string", ""],
+			["null", null],
+		] as const) {
+			it(`preserves ${name} without allocating wrappers`, () => {
+				const { context, cursor } = readonlyTreeWithContent({
+					schema: sf.optional([sf.number, sf.boolean, sf.string, sf.null]),
+					initialTree: value,
+				});
+				const resources = context.withAnchors.size;
+				assert.equal(unboxedFlexField(context, cursor, rootFieldAnchor), value);
+				assert.equal(context.withAnchors.size, resources);
+				assert.equal(cursor.mode, CursorLocationType.Fields);
+				assert.equal(cursor.getFieldKey(), rootFieldKey);
+				cursor.free();
+				context[disposeSymbol]();
+			});
+		}
+
+		it("reuses non-leaf wrappers and restores the cursor", () => {
+			const { context, cursor } = readonlyTreeWithContent({
+				schema: JsonAsTree.JsonObject,
+				initialTree: { x: 1 },
+			});
+			const first = unboxedFlexField(context, cursor, rootFieldAnchor);
+			assert(first !== undefined);
+			assert(isFlexTreeNode(first));
+			assert.equal(unboxedFlexField(context, cursor, rootFieldAnchor), first);
+			assert.equal(cursor.mode, CursorLocationType.Fields);
+			assert.equal(cursor.getFieldKey(), rootFieldKey);
+			cursor.free();
+			context[disposeSymbol]();
+		});
 	});
 
 	describe("unboxedFlexNode", () => {

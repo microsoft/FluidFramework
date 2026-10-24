@@ -96,7 +96,38 @@ export const ContextSlot = anchorSlot<Context>();
  * A {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  *
- * This context and the trees it produces observe the kinds of fields from the schema
+ * Schema changes and wrapper lifetime:
+ *
+ * {@link Context.schema} reads the current stored schema, but existing node and field wrappers do not refresh their captured schema-dependent behavior.
+ * This context does not subscribe to schema changes.
+ * Callers currently clear or dispose it on every stored-schema change, before accessing its trees again.
+ * Clearing cursors for a forest edit does not invalidate or refresh these wrappers.
+ *
+ * FlexTree can tolerate changes limited to allowed child-type sets or persisted metadata without rebuilding wrappers.
+ * It can also tolerate adding schema definitions for previously unused node identifiers.
+ * Replacing schema objects with equivalent definitions does not itself require invalidation.
+ * This assumes the accessed content remains valid, its node types have schema definitions,
+ * and the following constraints are preserved:
+ *
+ * - Each existing node wrapper retains its node schema for field-kind lookup.
+ * The field kind must remain unchanged for every possible key on that node type, not just populated fields or cached wrappers.
+ * For example, adding an optional object field changes its kind from forbidden to optional:
+ * an existing node would still use the old schema even if that field had never been accessed.
+ *
+ * - Node implementation selection must remain valid.
+ * Optional map fields, including records, use specialized node storage and resource-free field wrappers.
+ * Switching between this policy and fixed-field storage requires invalidation;
+ * the existing wrappers cannot change their cache ownership, cleanup subscriptions, or navigation strategy in place.
+ *
+ * - Existing field wrappers retain their field kind, implementation, and editor behavior.
+ * Changes such as optional to sequence, or a change to the root field kind, require invalidating those wrappers.
+ * Include retained root and detached-field wrappers when checking this constraint.
+ *
+ * Any conditional invalidation must account for retained removed or detached content, not just the in-document tree.
+ * These are FlexTree implementation constraints, not permission to perform a schema edit.
+ * A valid schema upgrade or continued view-schema compatibility alone does not establish that existing FlexTree wrappers can be retained.
+ * If these FlexTree constraints are not preserved, call {@link Context.clear} or dispose the context before using trees under the new schema.
+ * Higher-level views must also preserve their own schema-dependent state before skipping invalidation.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();

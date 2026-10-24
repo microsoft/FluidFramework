@@ -23,7 +23,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { configureBenchmarkHooks } from "../../utils.js";
 
-// These benchmarks support FlexTree tuning, mostly through the public simple-tree API.
+// These benchmarks compare hydrated and unhydrated FlexTree navigation, mostly through the public simple-tree API.
 // Their timings include the simple-tree layer and assertions, rather than isolating FlexTree costs.
 // The cached-field case accesses FlexTree directly to measure reuse of a boxed field.
 describe("FlexTree navigation benchmarks", () => {
@@ -42,6 +42,7 @@ describe("FlexTree navigation benchmarks", () => {
 	for (const [name, forest] of [
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
+		["Unhydrated", undefined],
 	] as const) {
 		// Vary ancestor depth while keeping the accessed subtree and operations unchanged.
 		for (const depth of [0, 10]) {
@@ -55,10 +56,12 @@ describe("FlexTree navigation benchmarks", () => {
 							const items = new Items([item, 1, { value: 2 }]);
 							let content: Items | Wrapper = items;
 							for (let i = 0; i < depth; i++) content = new Wrapper({ child: content });
-							const view = createIndependentTreeAlpha({ forest }).viewWith(
-								new TreeViewConfiguration({ schema: [Items, Wrapper] }),
-							);
-							view.initialize(content);
+							if (forest !== undefined) {
+								const view = createIndependentTreeAlpha({ forest }).viewWith(
+									new TreeViewConfiguration({ schema: [Items, Wrapper] }),
+								);
+								view.initialize(content);
+							}
 							const inner = getInnerNode(item);
 							// Populate the field cache before timing so lookups measure the cached path.
 							const field = inner.getBoxed(brand("value"));

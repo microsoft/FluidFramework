@@ -39,7 +39,7 @@ export {
 
 export { getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 
-export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
+export { getSchemaAndPolicy, indexForAt, isOptionalMapSchema } from "./utilities.js";
 
 export { treeStatusFromAnchorCache } from "./utilities.js";
 

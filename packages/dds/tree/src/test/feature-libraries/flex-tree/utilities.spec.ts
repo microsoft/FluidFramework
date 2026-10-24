@@ -8,20 +8,49 @@ import { strict as assert } from "node:assert";
 import {
 	AnchorSet,
 	type FieldKey,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	ValueSchema,
 	keyAsDetachedField,
 	rootFieldKey,
 } from "../../../core/index.js";
 import {
 	detachedFieldSlot,
+	isOptionalMapSchema,
 	treeStatusFromAnchorCache,
 	treeStatusFromDetachedField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/flex-tree/utilities.js";
-import { TreeStatus } from "../../../feature-libraries/index.js";
+import { FieldKinds, TreeStatus } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { applyTestDelta } from "../../utils.js";
 
 describe("flex-tree utilities", () => {
+	describe("isOptionalMapSchema", () => {
+		for (const kind of [
+			FieldKinds.optional,
+			FieldKinds.required,
+			FieldKinds.sequence,
+			FieldKinds.forbidden,
+			FieldKinds.identifier,
+		]) {
+			it(`classifies maps with ${kind.identifier} fields`, () => {
+				const schema = new MapNodeStoredSchema({
+					kind: kind.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				});
+				assert.equal(isOptionalMapSchema(schema), kind === FieldKinds.optional);
+			});
+		}
+
+		it("excludes objects and leaves", () => {
+			assert.equal(isOptionalMapSchema(new ObjectNodeStoredSchema(new Map())), false);
+			assert.equal(isOptionalMapSchema(new LeafNodeStoredSchema(ValueSchema.Number)), false);
+		});
+	});
+
 	describe("treeStatusFromAnchorCache", () => {
 		it("root detachedField returns TreeStatus.InDocument", () => {
 			const anchors = new AnchorSet();
