@@ -115,7 +115,7 @@ describe("test tree catalogs", () => {
 				assert.equal(hasStagedSchema(testCase.schema), testCase.hasStagedSchema === true);
 				for (const node of treeSchema.definitions.values()) {
 					assert.equal(
-						getTreeNodeSchemaPrivateData(node).hasStagedSchema,
+						getTreeNodeSchemaPrivateData(node).component?.hasStagedSchema,
 						getStagedSchemaUpgrades(node).size > 0,
 						`Incorrect cached staging reachability for ${node.identifier}`,
 					);

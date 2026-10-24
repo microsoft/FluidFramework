@@ -13,7 +13,7 @@ import {
 	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
-import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type {
@@ -51,7 +51,9 @@ export function encodeSchemaCompatibilitySnapshot(
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
-	for (const [identifier, schema] of simpleSchema.definitions) {
+	for (const [identifier, schema] of [...simpleSchema.definitions].sort(([a], [b]) =>
+		compareStrings(a, b),
+	)) {
 		const encodedDefinition = encodeNodeSchema(schema);
 		encodedDefinitions[identifier] = encodedDefinition;
 	}

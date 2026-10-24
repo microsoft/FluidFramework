@@ -2984,12 +2984,16 @@ describe("TableFactory unit tests", () => {
 		useSnapshotDirectory("table-schema-json");
 
 		it("schema", () => {
-			takeJsonSnapshot(
-				getJsonSchema(Table, {
-					requireFieldsWithDefaults: false,
-					keys: KeyEncodingOptions.usePropertyKeys,
-				}) as unknown as JsonCompatibleReadOnly,
-			);
+			const schema = getJsonSchema(Table, {
+				requireFieldsWithDefaults: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
+			});
+			takeJsonSnapshot({
+				...schema,
+				$defs: Object.fromEntries(
+					Object.entries(schema.$defs).sort(([a], [b]) => a.localeCompare(b)),
+				),
+			} as unknown as JsonCompatibleReadOnly);
 		});
 
 		it("data (verbose)", () => {

@@ -5,9 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
-import { brand } from "../util/index.js";
 
 import {
 	Context,
@@ -51,11 +49,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 				defaultSchemaPolicy,
 				toStoredSchema(schema, toUnhydratedSchema),
 			);
-			const nodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
-			for (const node of data.treeSchema.definitions.values()) {
-				nodeSchema.set(brand(node.identifier), node);
-			}
-			data.unhydratedContext = new Context(flexContext, nodeSchema);
+			data.unhydratedContext = new Context(flexContext, data.treeSchema.definitions);
 		}
 		return data.unhydratedContext;
 	} finally {

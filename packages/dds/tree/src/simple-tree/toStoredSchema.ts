@@ -70,6 +70,8 @@ import { getSchemaDerivedData } from "./treeSchema.js";
  * This cache retains policy-specific results because staged roots can produce different stored schemas.
  * Roots without staging use {@link toUnhydratedSchema} as a common key so all policies share one result.
  * Policy keys are weak to avoid retaining short-lived effective upgrade policies.
+ * The permissive policy also shares immutable node definitions through the root's component.
+ * Root fields and result wrappers remain root-specific.
  */
 const viewToStoredCache = new WeakMap<
 	StagedSchemaUpgradePolicy,
@@ -183,6 +185,28 @@ export function toStoredSchema(
 
 	const cache = getOrCreate(viewToStoredCache, policy, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
+		if (policy === toUnhydratedSchema) {
+			const rootFieldSchema = convertField(
+				filterFieldAllowedTypes(data.treeSchema.root, policy),
+			);
+			let nodeSchema = data.component?.permissiveStoredDefinitions;
+			if (nodeSchema === undefined) {
+				// Permissive conversion preserves every edge, so the validated unfiltered graph
+				// already contains exactly the reachable definitions. No filtered walk is needed.
+				const definitions = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
+				for (const [identifier, schema] of data.treeSchema.definitions) {
+					definitions.set(
+						brand(identifier),
+						getStoredSchema(transformSimpleNodeSchema(schema, policy)),
+					);
+				}
+				nodeSchema = definitions;
+				if (data.component !== undefined) {
+					data.component.permissiveStoredDefinitions = nodeSchema;
+				}
+			}
+			return { rootFieldSchema, nodeSchema };
+		}
 		const simpleSchema = transformSimpleSchema(data.treeSchema, policy);
 		return simpleStoredSchemaToStoredSchema(simpleSchema);
 	});
@@ -463,6 +487,14 @@ export function filterAllowedTypes(
 	return filtered;
 }
 
+function filterFieldAllowedTypes(
+	f: SimpleFieldSchema<SchemaType.View>,
+	options: StagedSchemaUpgradePolicy,
+): SimpleFieldSchema<SchemaType.Stored>;
+function filterFieldAllowedTypes(
+	f: SimpleFieldSchema,
+	options: SimpleSchemaTransformationOptions,
+): SimpleFieldSchema;
 function filterFieldAllowedTypes(
 	f: SimpleFieldSchema,
 	options: SimpleSchemaTransformationOptions,

@@ -26,6 +26,24 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
+	for (const fieldAllowedTypes of nodeSchemaFields(schema)) {
+		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
+	}
+
+	// This visit is done at the end so the traversal order is most inner types first.
+	// This was picked since when fixing errors,
+	// working from the inner types out to the types that use them will probably go better than the reverse.
+	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
+	visitor.node?.(schema);
+}
+
+/**
+ * Evaluates fields in declaration order without initializing node contexts.
+ * Shared by the visitor walk and component analysis.
+ */
+export function* nodeSchemaFields(
+	schema: TreeNodeSchema,
+): IterableIterator<AllowedTypesFullEvaluated> {
 	// Ensure all reachable schemas are marked as most derived.
 	// This ensures if multiple schemas extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
 	// an error is reported.
@@ -37,18 +55,8 @@ export function walkNodeSchema(
 	const annotatedAllowedTypes = getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
-		walkAllowedTypes(
-			normalizeAndEvaluateAnnotatedAllowedTypes(fieldAllowedTypes),
-			visitor,
-			visitedSet,
-		);
+		yield normalizeAndEvaluateAnnotatedAllowedTypes(fieldAllowedTypes);
 	}
-
-	// This visit is done at the end so the traversal order is most inner types first.
-	// This was picked since when fixing errors,
-	// working from the inner types out to the types that use them will probably go better than the reverse.
-	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
-	visitor.node?.(schema);
 }
 
 /**

@@ -109,18 +109,18 @@ describe("toStoredSchema", () => {
 						},
 					});
 
-					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, undefined);
-					assert.equal(getTreeNodeSchemaPrivateData(C).hasStagedSchema, undefined);
+					assert.equal(getTreeNodeSchemaPrivateData(B).component?.hasStagedSchema, undefined);
+					assert.equal(getTreeNodeSchemaPrivateData(C).component?.hasStagedSchema, undefined);
 					if (descendantFirst) {
 						assert.equal(hasStagedSchema(C), staged);
 					}
 					assert.equal(hasStagedSchema(B), staged);
-					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, staged);
-					assert.equal(getTreeNodeSchemaPrivateData(C).hasStagedSchema, staged);
+					assert.equal(getTreeNodeSchemaPrivateData(B).component?.hasStagedSchema, staged);
+					assert.equal(getTreeNodeSchemaPrivateData(C).component?.hasStagedSchema, staged);
 					assert.equal(getSchemaDerivedData(B).unhydratedContext, undefined);
 					assert.equal(hasStagedSchema(C), staged);
 					assert.equal(hasStagedSchema(A), staged);
-					assert.equal(getTreeNodeSchemaPrivateData(A).hasStagedSchema, staged);
+					assert.equal(getTreeNodeSchemaPrivateData(A).component?.hasStagedSchema, staged);
 					assert.equal(bReads, 1);
 					assert.equal(cReads, 1);
 				});
@@ -141,8 +141,8 @@ describe("toStoredSchema", () => {
 				// Both roots reach A's staged field; visiting the cycle must not cache an incomplete negative answer for B.
 				for (const root of reverse ? [B, A] : [A, B]) {
 					assert.equal(hasStagedSchema(root), true);
-					assert.equal(getTreeNodeSchemaPrivateData(A).hasStagedSchema, true);
-					assert.equal(getTreeNodeSchemaPrivateData(B).hasStagedSchema, true);
+					assert.equal(getTreeNodeSchemaPrivateData(A).component?.hasStagedSchema, true);
+					assert.equal(getTreeNodeSchemaPrivateData(B).component?.hasStagedSchema, true);
 					assert.notDeepEqual(
 						toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive),
 						toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
@@ -168,9 +168,9 @@ describe("toStoredSchema", () => {
 
 			assert.equal(hasStagedSchema(Parent), true);
 			for (const node of [Parent, A, B]) {
-				assert.equal(getTreeNodeSchemaPrivateData(node).hasStagedSchema, true);
+				assert.equal(getTreeNodeSchemaPrivateData(node).component?.hasStagedSchema, true);
 			}
-			assert.equal(getTreeNodeSchemaPrivateData(Unstaged).hasStagedSchema, false);
+			assert.equal(getTreeNodeSchemaPrivateData(Unstaged).component?.hasStagedSchema, false);
 			assert.equal(hasStagedSchema(Unstaged), false);
 		});
 
@@ -182,8 +182,8 @@ describe("toStoredSchema", () => {
 			}) {}
 
 			assert.equal(hasStagedSchema(Parent), true);
-			assert.equal(getTreeNodeSchemaPrivateData(Parent).hasStagedSchema, true);
-			assert.equal(getTreeNodeSchemaPrivateData(Child).hasStagedSchema, false);
+			assert.equal(getTreeNodeSchemaPrivateData(Parent).component?.hasStagedSchema, true);
+			assert.equal(getTreeNodeSchemaPrivateData(Child).component?.hasStagedSchema, false);
 			assert.equal(hasStagedSchema(Child), false);
 		});
 

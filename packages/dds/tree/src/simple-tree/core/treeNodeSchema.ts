@@ -10,8 +10,13 @@ import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnionToIntersection } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 import type { getUnhydratedContext } from "../createContext.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-import type { getSchemaDerivedData, SchemaDerivedData } from "../treeSchema.js";
+import type {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	getSchemaDerivedData,
+	SchemaComponent,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	SchemaDerivedData,
+} from "../treeSchema.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
@@ -373,17 +378,17 @@ export interface TreeNodeSchemaCorePrivate<
  * Package private data provided by all {@link TreeNodeSchema}.
  * @remarks
  * This data needs to be available before lazy schema references are resolved.
+ * Each most-derived schema identity owns its own instance.
  * For data which is only available after lazy schema references are resolved,
  * see {@link TreeNodeSchemaInitializedData}, which can be accessed via {@link TreeNodeSchemaPrivateData.idempotentInitialize}.
  */
 export interface TreeNodeSchemaPrivateData {
 	/**
-	 * Whether this node schema or any transitively referenced schema contains staging.
-	 * Populated by {@link getSchemaDerivedData} only after reachability is fully resolved, including cycles.
-	 * `undefined` means not yet analyzed; root-field annotations are excluded.
-	 * Unlike {@link TreeNodeSchemaInitializedData}, this cache does not require a context.
+	 * Completed topology and staging analysis, shared with every member of this schema's component.
+	 * Populated by {@link getSchemaDerivedData} without initializing a context.
+	 * Does not certify root identifier uniqueness or configuration-specific validity.
 	 */
-	hasStagedSchema?: boolean;
+	component?: SchemaComponent;
 
 	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
