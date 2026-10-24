@@ -13,6 +13,7 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	runtimeMessagesHaveIndexInBatch,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
@@ -85,7 +86,11 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, notifiesReadOnlyState]),
+	supportedFeatures: new Set<string>([
+		encodeHandlesInContainerRuntime,
+		notifiesReadOnlyState,
+		runtimeMessagesHaveIndexInBatch,
+	]),
 };
 
 /**
