@@ -95,6 +95,25 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	 */
 	public fieldCache: Map<FieldKey, FlexTreeField> | undefined;
 
+	/**
+	 * Creates a wrapper for an existing node in the context's forest.
+	 * @param context - Owns the wrapper's lifetime and supplies the forest, stored schema, and editing services.
+	 * @param type - The node's stored type identifier. Must equal `cursor.type`.
+	 * @param cursor - A cursor from the context's forest, positioned on the node in nodes mode.
+	 * The wrapper forks this cursor; the caller retains ownership of the supplied cursor.
+	 * @param anchorNode - The anchor-set node for the same node as `cursor` and `anchor`.
+	 * Its {@link flexTreeSlot} must not already contain a wrapper.
+	 * @param anchor - An owned anchor for the node in the context's forest.
+	 * Ownership transfers to this wrapper, which forgets the anchor when disposed.
+	 * @param storedSchema - The current stored schema for `type`, as obtained from `context.schema.nodeSchema`.
+	 * Supply it when the caller has already resolved it, such as when selecting the node implementation,
+	 * to avoid a second lookup. Omit it to have the constructor perform that lookup.
+	 * This is not a schema override: it must describe the same type under the context's current schema
+	 * and match the selected implementation's storage policy.
+	 * The wrapper retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
+	 * @remarks
+	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing wrappers and selects the schema-dependent implementation.
+	 */
 	public constructor(
 		context: Context,
 		public readonly type: TreeNodeSchemaIdentifier,
