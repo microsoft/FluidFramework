@@ -13,6 +13,7 @@ import {
 	NodeKind,
 	getTreeNodeSchemaPrivateData,
 	walkSchemaComponents,
+	type AllowedTypesFullEvaluated,
 	type Context,
 	type TreeNodeSchema,
 } from "./core/index.js";
@@ -102,50 +103,8 @@ const schemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, SchemaDerivedDat
  */
 export function getSchemaDerivedData(rootSchema: ImplicitFieldSchema): SchemaDerivedData {
 	return getOrCreate(schemaDerivedDataCache, rootSchema, () => {
-		const root = normalizeFieldSchema(rootSchema);
+		const root = analyzeSchema(rootSchema);
 		const types = root.allowedTypesFull.evaluate().types;
-		walkSchemaComponents(
-			types.map((type) => type.type),
-			(members) => {
-				const identities = new Set(members.map((member) => member.schema));
-				const referenced = new Set<TreeNodeSchema>();
-				const dependencies = new Set<SchemaComponent>();
-				let hasStagedSchema = false;
-				for (const { schema, fields } of members) {
-					for (const field of fields) {
-						for (const type of field.types) {
-							if (type.metadata.stagedSchemaUpgrade !== undefined) {
-								hasStagedSchema = true;
-							}
-							if (!identities.has(type.type)) {
-								referenced.add(type.type);
-							}
-						}
-					}
-					// Optional-field staging is not an allowed-type annotation.
-					const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
-					if (view.kind === NodeKind.Object) {
-						for (const field of view.fields.values()) {
-							hasStagedSchema ||= isStagedOptional(field);
-						}
-					}
-				}
-				for (const schema of referenced) {
-					const dependency = getComponent(schema);
-					dependencies.add(dependency);
-					hasStagedSchema ||= dependency.hasStagedSchema;
-				}
-				const component: SchemaComponent = {
-					members: [...identities],
-					dependencies,
-					hasStagedSchema,
-				};
-				for (const schema of identities) {
-					getTreeNodeSchemaPrivateData(schema).component = component;
-				}
-			},
-			(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
-		);
 		const components = new Set(types.map((type) => getComponent(type.type)));
 		const [only] = components;
 		const definitions =
@@ -161,6 +120,64 @@ export function getSchemaDerivedData(rootSchema: ImplicitFieldSchema): SchemaDer
 				[...components].some((component) => component.hasStagedSchema),
 		};
 	});
+}
+
+/**
+ * Completes topology and staging analysis without constructing reachable maps or contexts.
+ * The optional callback visits every allowed-type list, including in cached components, in visitor order.
+ * Root identifier validation remains separate so configurations can preserve their validation phases.
+ */
+export function analyzeSchema(
+	rootSchema: ImplicitFieldSchema,
+	allowedTypes?: (types: AllowedTypesFullEvaluated) => void,
+): FieldSchemaAlpha {
+	const root = normalizeFieldSchema(rootSchema);
+	const types = root.allowedTypesFull.evaluate();
+	walkSchemaComponents(
+		types.types.map((type) => type.type),
+		(members) => {
+			const identities = new Set(members.map((member) => member.schema));
+			const referenced = new Set<TreeNodeSchema>();
+			const dependencies = new Set<SchemaComponent>();
+			let hasStagedSchema = false;
+			for (const { schema, fields } of members) {
+				for (const field of fields) {
+					for (const type of field.types) {
+						if (type.metadata.stagedSchemaUpgrade !== undefined) {
+							hasStagedSchema = true;
+						}
+						if (!identities.has(type.type)) {
+							referenced.add(type.type);
+						}
+					}
+				}
+				// Optional-field staging is not an allowed-type annotation.
+				const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
+				if (view.kind === NodeKind.Object) {
+					for (const field of view.fields.values()) {
+						hasStagedSchema ||= isStagedOptional(field);
+					}
+				}
+			}
+			for (const schema of referenced) {
+				const dependency = getComponent(schema);
+				dependencies.add(dependency);
+				hasStagedSchema ||= dependency.hasStagedSchema;
+			}
+			const component: SchemaComponent = {
+				members: [...identities],
+				dependencies,
+				hasStagedSchema,
+			};
+			for (const schema of identities) {
+				getTreeNodeSchemaPrivateData(schema).component = component;
+			}
+		},
+		(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
+		allowedTypes,
+	);
+	allowedTypes?.(types);
+	return root;
 }
 
 function isStagedOptional(field: { readonly isStagedOptional?: unknown }): boolean {

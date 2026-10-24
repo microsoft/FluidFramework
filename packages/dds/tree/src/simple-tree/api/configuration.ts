@@ -31,8 +31,7 @@ import {
 	toUnhydratedSchema,
 	transformSimpleSchema,
 } from "../toStoredSchema.js";
-import { getSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
+import { analyzeSchema, getSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
@@ -252,17 +251,13 @@ export class TreeViewConfiguration<
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
 
-		// Validate the schema and collect ambiguity errors.
-		// This does a lot of validation (throwing usage errors as a side effect) in addition to just collecting ambiguity errors.
-		// ambiguityErrors are considered a lower priority, so only thrown if no other errors are found.
-		walkFieldSchema(config.schema, {
-			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
-				checkUnion(
-					types.map((t) => t.type),
-					config.preventAmbiguity,
-					ambiguityErrors,
-				);
-			},
+		// Analyze and validate in one walk. Configuration-specific checks run even for cached components.
+		analyzeSchema(config.schema, ({ types }: AllowedTypesFullEvaluated): void => {
+			checkUnion(
+				types.map((t) => t.type),
+				config.preventAmbiguity,
+				ambiguityErrors,
+			);
 		});
 
 		if (ambiguityErrors.length > 0) {

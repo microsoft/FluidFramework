@@ -14,6 +14,8 @@ import { schemaCodecBuilder } from "../../feature-libraries/schema-index/codec.j
 import {
 	getTreeNodeSchemaPrivateData,
 	StagedSchemaUpgradePolicy,
+	walkAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
@@ -24,6 +26,7 @@ import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	encodeSchemaCompatibilitySnapshot,
 	computeSchemaHash,
+	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
@@ -55,6 +58,31 @@ function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 }
 
 describe("walkSchemaComponents", () => {
+	it("visits cached and uncached fields in the same order as the ordinary walk", () => {
+		const [a, b, c, d] = graph([[1, 2, 1], [0], [3], []]);
+		assert(a !== undefined && b !== undefined && c !== undefined && d !== undefined);
+		const root = normalizeFieldSchema(a);
+		const expected: AllowedTypesFullEvaluated[] = [];
+		walkAllowedTypes(root.allowedTypesFull.evaluate(), {
+			allowedTypes: (types) => expected.push(types),
+		});
+		// The component walker visits node fields, not the root field itself.
+		expected.pop();
+		for (const cachedRoot of [undefined, c, a]) {
+			if (cachedRoot !== undefined) {
+				getSchemaDerivedData(cachedRoot);
+			}
+			const actual: AllowedTypesFullEvaluated[] = [];
+			walkSchemaComponents(
+				[a],
+				() => {},
+				(schema) => getTreeNodeSchemaPrivateData(schema).component !== undefined,
+				(types) => actual.push(types),
+			);
+			assert.deepEqual(actual, expected);
+		}
+	});
+
 	for (const [name, edges, expected] of [
 		["single", [[]], [[0]]],
 		["self-cycle", [[0]], [[0]]],
@@ -129,6 +157,10 @@ describe("walkSchemaComponents", () => {
 			assert.equal(
 				getTreeNodeSchemaPrivateData(root).component?.members.length,
 				cycle ? depth : 1,
+			);
+			assert.strictEqual(
+				new TreeViewConfigurationAlpha({ schema: root }).definitions,
+				data.treeSchema.definitions,
 			);
 		});
 	}

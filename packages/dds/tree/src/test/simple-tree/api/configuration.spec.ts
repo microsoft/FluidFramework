@@ -12,6 +12,8 @@ import {
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIndependentTreeViewAlpha } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect analysis reuse without adding public APIs.
+import { getTreeNodeSchemaPrivateData } from "../../../simple-tree/core/index.js";
 import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -29,6 +31,76 @@ import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 const schema = new SchemaFactory("com.example");
 
 describe("simple-tree configuration", () => {
+	it("validates and discovers each node once, then revalidates cached components", () => {
+		const sf = new SchemaFactoryAlpha("singleWalk");
+		class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+			leaf: Leaf,
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive([() => A]),
+		}) {}
+		const reads = new Map<TreeNodeSchema, number>();
+		for (const node of [A, B, Leaf]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads.set(node, (reads.get(node) ?? 0) + 1);
+					return types;
+				},
+			});
+		}
+		const config = new TreeViewConfigurationAlpha({ schema: A });
+		assert.deepEqual([...reads.values()], [1, 1, 1]);
+		const component = getTreeNodeSchemaPrivateData(A).component;
+		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
+		assert.deepEqual([...reads.values()], [2, 2, 2]);
+		assert.strictEqual(config.definitions, strict.definitions);
+		assert.strictEqual(component, getTreeNodeSchemaPrivateData(A).component);
+		assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);
+		assert.equal(getSchemaDerivedData(A).unhydratedContext, undefined);
+	});
+
+	it("reports duplicate allowed types before evaluating later fields", () => {
+		const sf = new SchemaFactoryAlpha("validationOrder");
+		let laterEvaluations = 0;
+		class Root extends sf.objectRecursive("Root", {
+			duplicate: sf.optional([sf.number, sf.number]),
+			later: sf.optionalRecursive([
+				() => {
+					laterEvaluations++;
+					throw new Error("later evaluation");
+				},
+			]),
+		}) {}
+		for (let i = 0; i < 2; i++) {
+			assert.throws(
+				() => new TreeViewConfigurationAlpha({ schema: Root }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+			assert.equal(laterEvaluations, 0);
+			assert.equal(getTreeNodeSchemaPrivateData(Root).component, undefined);
+		}
+	});
+
+	for (const strictFirst of [false, true]) {
+		it(`preserves ambiguity-before-identifier validation phases (${strictFirst} first)`, () => {
+			const sf = new SchemaFactoryAlpha("validationPhases");
+			class A extends sf.array("Duplicate", sf.number) {}
+			class B extends sf.array("Duplicate", sf.number) {}
+			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
+				assert.throws(
+					() => new TreeViewConfigurationAlpha({ schema: [A, B], preventAmbiguity }),
+					validateUsageError(
+						preventAmbiguity ? /Ambiguous schema/ : /Multiple schema encountered/,
+					),
+				);
+			}
+		});
+	}
+
 	for (const strictFirst of [false, true]) {
 		it(`validates cached unions with ${strictFirst ? "strict" : "permissive"} configuration first`, () => {
 			const sf = new SchemaFactoryAlpha("cachedValidation");
