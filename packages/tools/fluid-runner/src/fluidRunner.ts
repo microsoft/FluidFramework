@@ -7,7 +7,7 @@ import yargs from "yargs";
 // eslint-disable-next-line import-x/no-internal-modules
 import { hideBin } from "yargs/helpers";
 
-import type { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type { FluidFileConverter } from "./codeLoaderBundle.js";
 import { exportFile } from "./exportFile.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { validateAndParseTelemetryOptions } from "./logger/loggerUtils.js";
@@ -20,7 +20,7 @@ import { validateCommandLineArgs } from "./utils.js";
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */
-export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Promise<void> {
+export async function fluidRunner(fluidFileConverter?: FluidFileConverter): Promise<void> {
 	await yargs(hideBin(process.argv))
 		.command(
 			"exportFile",
@@ -40,7 +40,7 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 					})
 					.option("outputFile", {
 						describe:
-							"Path of output file (cannot already exist).\nExecution result will be written here",
+							"Path of output file or directory (cannot already exist).\nExecution result will be written here",
 						type: "string",
 						demandOption: true,
 					})
