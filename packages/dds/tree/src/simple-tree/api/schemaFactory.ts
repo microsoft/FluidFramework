@@ -71,6 +71,8 @@ import { scoped, structuralName, type ScopedSchemaName } from "./schemaFactoryUt
 import { SchemaFactory_base, schemaStatics } from "./schemaStatics.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep inferred return types named to preserve API report indentation.
+	FieldSchemaAlphaUnsafe,
 	InsertableObjectFromSchemaRecordAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,

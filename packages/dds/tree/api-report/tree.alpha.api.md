@@ -1445,10 +1445,10 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
         defaultProvider: DefaultProvider;
     }>;
     readonly withDefaultRecursive: <Kind extends FieldKind, Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, TCustomMetadata = unknown>(fieldSchema: System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata>, defaultValue: Unenforced<NodeProvider<System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<System_Unsafe.FieldSchemaUnsafe<Kind, Types>>>>) => FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
-    defaultProvider: DefaultProvider;
+        defaultProvider: DefaultProvider;
     }>;
     static readonly withDefaultRecursive: <Kind extends FieldKind, Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, TCustomMetadata = unknown>(fieldSchema: System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata>, defaultValue: Unenforced<NodeProvider<System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<System_Unsafe.FieldSchemaUnsafe<Kind, Types>>>>) => FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
-    defaultProvider: DefaultProvider;
+        defaultProvider: DefaultProvider;
     }>;
 }
 
