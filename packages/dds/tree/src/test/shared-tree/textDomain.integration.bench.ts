@@ -679,6 +679,132 @@ describe("Text benchmarks", () => {
 				const makeUnhydratedRoot = (size: number): TextRoot =>
 					adapter.fromString(makeTestString(size));
 
+				/**
+				 * Registers the same read and edit workloads for each storage configuration.
+				 * @param forest - The hydrated forest implementation, or undefined to leave nodes unhydrated.
+				 */
+				function benchmarkReadsAndEdits(forest: ForestType | undefined): void {
+					const buildRoot = (size: number): TextRoot =>
+						forest === undefined
+							? makeUnhydratedRoot(size)
+							: adapter.buildDocument(makeTestString(size), forest).root;
+
+					// Time to read the whole document's content via `fullString`.
+					// Each call traverses the whole document, using a forest cursor for hydrated trees.
+					// The document is built once and read repeatedly, so this measures that repeated read in isolation, excluding the build cost.
+					describe("Read (fullString)", () => {
+						for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+							benchmarkIt({
+								type: benchmarkType,
+								title: `${size}-character document`,
+								...benchmarkDurationBatchless({
+									benchmarkFn: (state) => {
+										const expected = makeTestString(size);
+										const root = buildRoot(size);
+										let content: string | undefined;
+										let running: boolean;
+										do {
+											running = state.time(() => {
+												content = root.fullString();
+											});
+											assert.equal(content, expected);
+										} while (running);
+									},
+									maxBenchmarkDurationSeconds,
+								}),
+							});
+						}
+					});
+
+					// Time per keystroke when typing into the middle of a document of N characters.
+					// Each timed sample types one character and an untimed remove restores the document to `size`.
+					// Rebuild every `size` edits to discard the removed roots retained for undo in hydrated documents.
+					describe("Insert 1 character in the middle", () => {
+						for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+							benchmarkIt({
+								type: benchmarkType,
+								title: `${size}-character document`,
+								...benchmarkDurationBatchless({
+									benchmarkFn: (state) => {
+										const expected = makeTestString(size);
+										let root = buildRoot(size);
+										let editsSinceBuild = 0;
+										let running: boolean;
+										do {
+											let typedIndex = -1;
+											running = state.time(() => {
+												typedIndex = typeMiddle(root, 1);
+											});
+											assert.equal(root.characterCount(), size + 1);
+											// Untimed restore: remove the just-typed character to hold the document at `size`.
+											root.removeRange(typedIndex, typedIndex + 1);
+											assert.equal(root.characterCount(), size);
+											if (++editsSinceBuild >= size) {
+												// Check full content before discarding a document, rather than traversing it after every edit.
+												assert.equal(root.fullString(), expected);
+												// Rebuild to flush the removed roots the restores accumulate in hydrated documents.
+												root = buildRoot(size);
+												editsSinceBuild = 0;
+											}
+										} while (running);
+										assert.equal(root.fullString(), expected);
+									},
+									maxBenchmarkDurationSeconds,
+								}),
+							});
+						}
+					});
+
+					if (adapter === formattedTextAdapter) {
+						// Each timed sample toggles bold across the whole document so every sample changes the formatting.
+						// Rebuild the document periodically, outside the timed region, to bound its edit history when hydrated.
+						describe("Formatting (formatRange)", () => {
+							/** Samples between document rebuilds, to bound the edit log the reused hydrated document accumulates. */
+							const samplesPerRebuild = 16;
+							for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+								benchmarkIt({
+									type: benchmarkType,
+									title: `${size}-character document`,
+									...benchmarkDurationBatchless({
+										benchmarkFn: (state) => {
+											const buildFormattedRoot = () =>
+												forest === undefined
+													? formattedTextAdapter.fromString(makeTestString(size))
+													: formattedTextAdapter.buildDocument(makeTestString(size), forest)
+															.root;
+											let root = buildFormattedRoot();
+											let bold = true;
+											let samplesSinceBuild = 0;
+											let running: boolean;
+											do {
+												running = state.time(() => {
+													root.formatRange(undefined, undefined, { bold });
+												});
+												bold = !bold;
+												if (++samplesSinceBuild >= samplesPerRebuild) {
+													root = buildFormattedRoot();
+													bold = true;
+													samplesSinceBuild = 0;
+												}
+											} while (running);
+										},
+										maxBenchmarkDurationSeconds,
+										// The largest size of these tests is quite slow but is realistic and needs to be optimized.
+										// ChunkedForest has shown worse-than-linear scaling with respect to string length.
+										// Keeping this test is valuable, but slow, so save some time with a reduced minimum sample count.
+										// TODO: optimize this scenario, and remove this reduced sample count setting.
+										minSampleCount: 3,
+									}),
+								});
+							}
+						});
+					}
+				}
+
+				describe("Unhydrated", () => {
+					benchmarkReadsAndEdits(undefined);
+				});
+
 				// Unhydrated nodes do not use a forest, so measure them once per text implementation.
 				describe("Unhydrated construction and read", () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
@@ -761,106 +887,7 @@ describe("Text benchmarks", () => {
 							}
 						});
 
-						// Time to read the whole document's content via `fullString`. Each call re-walks the forest cursor over
-						// the whole document. The document is built once and read repeatedly, so this measures that repeated
-						// read in isolation, excluding the build cost.
-						describe("Read (fullString)", () => {
-							for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
-								benchmarkIt({
-									type: benchmarkType,
-									title: `${size}-character document`,
-									...benchmarkDurationBatchless({
-										benchmarkFn: (state) => {
-											const root = buildDocument(size).root;
-											let running: boolean;
-											do {
-												running = state.time(() => {
-													root.fullString();
-												});
-											} while (running);
-										},
-										maxBenchmarkDurationSeconds,
-									}),
-								});
-							}
-						});
-
-						// Time per keystroke when typing into the middle of a document of N characters. The document is built
-						// once; each timed sample types one character and an untimed remove restores the document to `size`.
-						// Rebuild every `size` edits to discard the removed roots retained for undo.
-						describe("Insert 1 character in the middle", () => {
-							for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
-								benchmarkIt({
-									type: benchmarkType,
-									title: `${size}-character document`,
-									...benchmarkDurationBatchless({
-										benchmarkFn: (state) => {
-											let root = buildDocument(size).root;
-											let editsSinceBuild = 0;
-											let running: boolean;
-											do {
-												let typedIndex = -1;
-												running = state.time(() => {
-													typedIndex = typeMiddle(root, 1);
-												});
-												// Untimed restore: remove the just-typed character to hold the document at `size`.
-												root.removeRange(typedIndex, typedIndex + 1);
-												if (++editsSinceBuild >= size) {
-													// Rebuild to flush the removed roots the restores accumulate.
-													root = buildDocument(size).root;
-													editsSinceBuild = 0;
-												}
-											} while (running);
-										},
-										maxBenchmarkDurationSeconds,
-									}),
-								});
-							}
-						});
-
-						if (adapter === formattedTextAdapter) {
-							// Each timed sample toggles bold across the whole document so every sample changes the formatting.
-							// Rebuild the document periodically, outside the timed region, to bound its edit history.
-							describe("Formatting (formatRange)", () => {
-								/** Samples between document rebuilds, to bound the edit log the reused document accumulates. */
-								const samplesPerRebuild = 16;
-								for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
-									benchmarkIt({
-										type: benchmarkType,
-										title: `${size}-character document`,
-										...benchmarkDurationBatchless({
-											benchmarkFn: (state) => {
-												const buildRoot = () =>
-													formattedTextAdapter.buildDocument(makeTestString(size), forest)
-														.root;
-												let root = buildRoot();
-
-												let bold = true;
-												let samplesSinceBuild = 0;
-												let running: boolean;
-												do {
-													running = state.time(() => {
-														root.formatRange(undefined, undefined, { bold });
-													});
-													bold = !bold;
-													if (++samplesSinceBuild >= samplesPerRebuild) {
-														root = buildRoot();
-														bold = true;
-														samplesSinceBuild = 0;
-													}
-												} while (running);
-											},
-											maxBenchmarkDurationSeconds,
-											// The largest size of these tests is quite slow but is realistic and needs to be optimized.
-											// As the scaling for chunked forest is showing to be worse than linear with respect to string length,
-											// Keeping this test is valuable, but slow, so save some time with a reduced minimum sample count.
-											// TODO: optimize this scenario, and remove this reduced sample count setting.
-											minSampleCount: 3,
-										}),
-									});
-								}
-							});
-						}
+						benchmarkReadsAndEdits(forest);
 
 						// Time construction and fullString together for a hydrated document.
 						describe("Hydrated construction and read", () => {
