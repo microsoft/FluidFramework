@@ -80,6 +80,13 @@ export function walkSchema(
 		"Incremental component visits require a component callback without node callbacks",
 	);
 	/**
+	 * Zero-based ordinal assigned when a node enters this walk's component analysis.
+	 * Smaller values identify earlier discoveries.
+	 * Local to one walk; not a schema identifier or an index into the traversal stack.
+	 */
+	type DiscoveryIndex = number;
+
+	/**
 	 * Temporary Tarjan state for a node not covered by a previous component visit.
 	 */
 	interface ComponentState {
@@ -88,13 +95,13 @@ export function walkSchema(
 		 */
 		readonly schema: TreeNodeSchema;
 		/**
-		 * Discovery index among nodes included in this walk's component analysis.
+		 * This node's {@link DiscoveryIndex}.
 		 */
-		readonly index: number;
+		readonly index: DiscoveryIndex;
 		/**
-		 * Lowest discovery index propagated from depth-first-search children or edges to unfinished nodes.
+		 * Lowest {@link DiscoveryIndex} propagated from depth-first-search children or edges to unfinished nodes.
 		 */
-		lowLink: number;
+		lowLink: DiscoveryIndex;
 		/**
 		 * Whether this node still belongs to an unfinished component.
 		 * Can remain true after its traversal frame has finished.
