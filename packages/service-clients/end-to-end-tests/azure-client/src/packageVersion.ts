@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/azure-end-to-end-tests";
-export const pkgVersion = "3.8.0";
+export const pkgVersion = "3.10.0";

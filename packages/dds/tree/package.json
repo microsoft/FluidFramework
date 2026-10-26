@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "3.8.0",
+	"version": "3.10.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
