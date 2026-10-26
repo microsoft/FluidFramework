@@ -280,8 +280,7 @@ export class TreeViewConfiguration<
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
  *
- * @remarks
- * See {@link (asAlpha:4)} for an API to downcast from {@link TreeViewConfiguration} to this type.
+ * @see {@link (asAlpha:4)} to access these APIs on an existing {@link TreeViewConfiguration}
  *
  * @sealed @alpha
  */
