@@ -5,7 +5,7 @@
 ---
 Configure how much SharedTree edit history to retain
 
-The existing alpha SharedTree `retainHistory` option now accepts a number in addition to a boolean.
+The existing alpha SharedTree [`retainHistory`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface#retainhistory-propertysignature) option now accepts a number in addition to a boolean.
 Pass a nonnegative safe integer to retain the newest specified number of available sequenced main-branch commits, `true` to retain all available history, or `false` or `0` to disable extra retention.
 
 ```typescript

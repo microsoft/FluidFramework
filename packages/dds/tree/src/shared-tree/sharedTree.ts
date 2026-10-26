@@ -672,7 +672,7 @@ export interface SharedTreeOptions
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 
 	/**
-	 * Configures how much sequenced edit history this SharedTree instance retains.
+	 * Configures the minimum amount of available sequenced edit history this SharedTree instance retains.
 	 *
 	 * @defaultValue `false`
 	 *
