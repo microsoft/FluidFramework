@@ -235,8 +235,7 @@ export function validateRefCount(collection?: LocalReferenceCollection): void {
 
 	const expectedLength = [...collection].length;
 
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	assert.equal(collection["refCount"], expectedLength);
+	assert.equal(collection.size, expectedLength);
 }
 
 /**
