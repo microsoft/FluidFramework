@@ -85,6 +85,7 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	hasUnknownOptionalFieldsDocument,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -1520,11 +1521,7 @@ describe("treeNodeApi", () => {
 				});
 
 				it("is true for a test document with unknown optional fields at the root", () => {
-					const testCase = testDocuments.find(
-						(document) => document.name === "HasUnknownOptionalFields",
-					);
-					assert(testCase !== undefined);
-					const root = getRoot(testCase);
+					const root = getRoot(hasUnknownOptionalFieldsDocument);
 					assert(isTreeNode(root));
 					assert.equal(TreeAlpha.hasUnknownChildren(root), true);
 				});
