@@ -52,11 +52,22 @@ export function walkAllowedTypes(
  * See {@link SchemaVisitor.stronglyConnectedComponent} for the schema graph model and component semantics.
  * Components are identified using Tarjan's strongly connected components algorithm.
  * See https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
+ *
+ * Standard Tarjan traversal uses the presence of a discovery index to detect previously discovered nodes.
+ * Here, `visited` tracks discovery separately from `analysis.states`, which contains only nodes participating in this walk's component analysis.
+ * Walks without component callbacks still need cycle detection but allocate no Tarjan state.
+ * Incremental walks may also traverse previously completed components to report field callbacks without analyzing those components again.
+ *
+ * The `pending` stack replaces recursive depth-first-search calls.
+ * The separate `analysis.stack` is Tarjan's stack of unfinished component members, which can outlive their traversal frames.
  */
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
 	visitor: SchemaVisitor | IncrementalSchemaVisitor,
 ): void {
+	/**
+	 * Schema identities discovered during this walk, whether or not they participate in component analysis.
+	 */
 	const visited = new Set<TreeNodeSchema>();
 	const { wasComponentVisited, allowedTypeFilter } = visitor;
 	assert(
@@ -119,8 +130,8 @@ export function walkSchema(
 		 */
 		readonly completed: NonNullable<SchemaVisitor["stronglyConnectedComponent"]>;
 		/**
-		 * Discovered nodes participating in this walk's component analysis, including completed components.
-		 * Excludes nodes covered by the caller's previous component visits.
+		 * Discovery indices and Tarjan state for nodes analyzed in this walk, including completed components.
+		 * Unlike `visited`, excludes nodes covered by the caller's previous component visits.
 		 */
 		readonly states: Map<TreeNodeSchema, ComponentState>;
 		/**
