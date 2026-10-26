@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const path = require("path");
-const webpack = require("webpack");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import webpack from "webpack";
 
 const mode = "development";
 
-module.exports = {
+export default {
 	entry: {
-		"fluid-loader": path.resolve(__dirname, "./src/loader.ts"),
+		"fluid-loader": path.resolve(import.meta.dirname, "./src/loader.ts"),
 	},
 	mode,
 	devtool: "inline-source-map",
@@ -29,7 +31,7 @@ module.exports = {
 			},
 			{
 				test: /\.[cm]?js$/,
-				use: [require.resolve("source-map-loader")],
+				use: [fileURLToPath(import.meta.resolve("source-map-loader"))],
 				enforce: "pre",
 			},
 		],
@@ -43,7 +45,7 @@ module.exports = {
 	],
 	output: {
 		filename: "[name].bundle.js",
-		path: path.resolve(__dirname, "bundle"),
+		path: path.resolve(import.meta.dirname, "bundle"),
 		library: { name: "FluidLoader", type: "umd" },
 	},
 };
