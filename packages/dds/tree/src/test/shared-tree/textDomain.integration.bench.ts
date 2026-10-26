@@ -699,12 +699,15 @@ describe("Text benchmarks", () => {
 								title: `${size}-character document`,
 								...benchmarkDurationBatchless({
 									benchmarkFn: (state) => {
+										const expected = makeTestString(size);
 										const root = buildRoot(size);
+										let content: string | undefined;
 										let running: boolean;
 										do {
 											running = state.time(() => {
-												root.fullString();
+												content = root.fullString();
 											});
+											assert.equal(content, expected);
 										} while (running);
 									},
 									maxBenchmarkDurationSeconds,
@@ -723,6 +726,7 @@ describe("Text benchmarks", () => {
 								title: `${size}-character document`,
 								...benchmarkDurationBatchless({
 									benchmarkFn: (state) => {
+										const expected = makeTestString(size);
 										let root = buildRoot(size);
 										let editsSinceBuild = 0;
 										let running: boolean;
@@ -731,14 +735,19 @@ describe("Text benchmarks", () => {
 											running = state.time(() => {
 												typedIndex = typeMiddle(root, 1);
 											});
+											assert.equal(root.characterCount(), size + 1);
 											// Untimed restore: remove the just-typed character to hold the document at `size`.
 											root.removeRange(typedIndex, typedIndex + 1);
+											assert.equal(root.characterCount(), size);
 											if (++editsSinceBuild >= size) {
+												// Check full content before discarding a document, rather than traversing it after every edit.
+												assert.equal(root.fullString(), expected);
 												// Rebuild to flush the removed roots the restores accumulate in hydrated documents.
 												root = buildRoot(size);
 												editsSinceBuild = 0;
 											}
 										} while (running);
+										assert.equal(root.fullString(), expected);
 									},
 									maxBenchmarkDurationSeconds,
 								}),
