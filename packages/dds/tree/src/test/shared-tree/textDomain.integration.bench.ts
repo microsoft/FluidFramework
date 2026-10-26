@@ -689,7 +689,9 @@ describe("Text benchmarks", () => {
 							? makeUnhydratedRoot(size)
 							: adapter.buildDocument(makeTestString(size), forest).root;
 
-					// Build outside the timed region to isolate repeated full-document reads.
+					// Time to read the whole document's content via `fullString`.
+					// Each call traverses the whole document, using a forest cursor for hydrated trees.
+					// The document is built once and read repeatedly, so this measures that repeated read in isolation, excluding the build cost.
 					describe("Read (fullString)", () => {
 						for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 							benchmarkIt({
@@ -711,7 +713,9 @@ describe("Text benchmarks", () => {
 						}
 					});
 
-					// Untimed restores hold the document size constant; rebuilds bound hydrated undo history.
+					// Time per keystroke when typing into the middle of a document of N characters.
+					// Each timed sample types one character and an untimed remove restores the document to `size`.
+					// Rebuild every `size` edits to discard the removed roots retained for undo in hydrated documents.
 					describe("Insert 1 character in the middle", () => {
 						for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 							benchmarkIt({
@@ -727,8 +731,10 @@ describe("Text benchmarks", () => {
 											running = state.time(() => {
 												typedIndex = typeMiddle(root, 1);
 											});
+											// Untimed restore: remove the just-typed character to hold the document at `size`.
 											root.removeRange(typedIndex, typedIndex + 1);
 											if (++editsSinceBuild >= size) {
+												// Rebuild to flush the removed roots the restores accumulate in hydrated documents.
 												root = buildRoot(size);
 												editsSinceBuild = 0;
 											}
@@ -741,9 +747,10 @@ describe("Text benchmarks", () => {
 					});
 
 					if (adapter === formattedTextAdapter) {
-						// Toggle bold so each sample changes formatting; rebuilds bound hydrated edit history.
+						// Each timed sample toggles bold across the whole document so every sample changes the formatting.
+						// Rebuild the document periodically, outside the timed region, to bound its edit history when hydrated.
 						describe("Formatting (formatRange)", () => {
-							/** Samples between document rebuilds, to bound the hydrated edit log. */
+							/** Samples between document rebuilds, to bound the edit log the reused hydrated document accumulates. */
 							const samplesPerRebuild = 16;
 							for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 								benchmarkIt({
@@ -773,7 +780,9 @@ describe("Text benchmarks", () => {
 											} while (running);
 										},
 										maxBenchmarkDurationSeconds,
-										// The largest size is realistic but slow, especially with ChunkedForest.
+										// The largest size of these tests is quite slow but is realistic and needs to be optimized.
+										// ChunkedForest has shown worse-than-linear scaling with respect to string length.
+										// Keeping this test is valuable, but slow, so save some time with a reduced minimum sample count.
 										// TODO: optimize this scenario, and remove this reduced sample count setting.
 										minSampleCount: 3,
 									}),
