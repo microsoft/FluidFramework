@@ -62,6 +62,7 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  * Preparing for an edit clears the cursor, but does not dispose the wrapper or release its parent anchor and listener.
  * Without reuse, repeated boxing of the same field would accumulate wrappers, even across edits.
  * This cache limits that accumulation to one wrapper per field key on each cached parent.
+ * Reuse is safe because these field wrappers remain alive until their parent is destroyed or their context is cleared.
  *
  * This does not bound retention by the current document size for map nodes:
  * public map `get`, `delete`, and `set` operations box fields even for missing keys.
@@ -76,6 +77,7 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  *
  * Fields without a parent node or a cached parent wrapper are not cached here.
  * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
+ * Reuse also reduces repeated field-access costs by avoiding wrapper allocation, cursor creation, and listener registration.
  */
 const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
@@ -264,7 +266,9 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			const path = this.getFieldPath();
 			if (
 				path.parent === undefined
+					// Only allow editing if we are the root document field...
 					? path.field === rootFieldKey
+					// ...or are under a node in the document.
 					: treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
 			) {
 				return path;
