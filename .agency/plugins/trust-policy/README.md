@@ -69,7 +69,8 @@ The checker differs from `npm audit signatures` in these ways:
 
 - **It checks before install.**
   It takes one exact `name@version` and checks it without installing anything.
-  `npm audit signatures` only checks packages that are already installed, by which time any install scripts have run.
+  **npm has no way at all to verify signatures before installation.**
+  `npm install` never verifies attestations, and `npm audit signatures` only checks packages that are already installed in `node_modules`, by which time any install scripts have run.
 - **It rejects missing provenance.**
   `npm audit signatures` verifies attestations that exist but passes packages that have none.
   Under the default `cryptographic` policy, a version without verifiable SLSA provenance is rejected.
@@ -89,6 +90,22 @@ The checker differs from `npm audit signatures` in these ways:
 - **It distinguishes unusable results.**
   It treats deprecated versions as rejected and reports network or Sigstore failures as `inconclusive` rather than as a pass.
   It refuses Azure Artifacts feeds, which do not serve attestations.
+
+### pnpm and Yarn
+
+Neither pnpm nor Yarn verifies provenance attestations cryptographically, at install time or on demand.
+Neither has an equivalent of `npm audit signatures`.
+
+- **pnpm** (checked in 11.27.0) offers `trustPolicy: no-downgrade`, which rejects a version whose trust evidence is weaker than an earlier release's.
+  It reads that evidence only from registry metadata (`_npmUser.trustedPublisher` and `dist.attestations.provenance`) and never verifies a signature, certificate, or transparency-log entry.
+  A registry that reports provenance it cannot prove therefore passes.
+  This checker's `no-downgrade` policy applies the same rule, so its results agree with pnpm's, and it also cryptographically verifies any alternative it suggests.
+- **Yarn** (checked in 1.22.22 and 4.18.1) does not read or verify provenance attestations when installing.
+  Yarn 4 uses Sigstore only to generate provenance when publishing.
+
+The checker works for projects that use either package manager, because it queries the npm package registry directly rather than going through the project's package manager.
+
+### Limitations
 
 The checker does not scan for known vulnerabilities, as `npm audit` does, or audit a whole lockfile.
 Provenance shows where and how a package was built, not that its code is safe.
