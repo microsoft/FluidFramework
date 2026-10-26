@@ -14,8 +14,7 @@ In CI, this phase is split into two parts separated by human actions:
 - **Step 6 (human):** A human creates the release branch if needed, queues the ADO release build, then queues the ADO publish pipeline after the build succeeds.
 - **Step 7 (automatable):** CI creates the patch bump PR after the release tag exists.
 
-Use the supplied release version and public progress checks in SKILL.md.
-If publication is not verified, require a human to identify the build/publish checkpoint.
+CI should auto-detect which step is needed (see SKILL.md auto-detection logic).
 
 ## Step 6: Run and Publish the Release Build
 
