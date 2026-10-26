@@ -27,7 +27,7 @@ It does not audit a project's existing dependencies or lockfile.
 ## Prerequisites
 
 - Network access to the registry and to Sigstore.
-- A built checker; step 1 of the procedure builds it if needed.
+- A built checker, which the user builds once; step 1 of the procedure detects whether it is missing.
 
 The checker itself reports unsupported Node.js versions.
 
@@ -45,12 +45,18 @@ If the public registry is also unreachable, report that a trust check is not pos
 
 ## Procedure
 
-1. Build the plugin if `<absolute-plugin-directory>/lib/trust-policy.js` does not exist.
-   Confirm with the user before installing the plugin's dependencies.
-   If `<absolute-plugin-directory>/node_modules` does not exist, install them with `npm ci --engine-strict --prefix "<absolute-plugin-directory>"`.
-   Then run `npm run build --prefix "<absolute-plugin-directory>"`.
-   This uses the plugin's own compiler, not build-tools.
-   If installation or the build fails, report the error and stop.
+1. Determine whether the checker needs to be built.
+   It does if either `<absolute-plugin-directory>/node_modules` or `<absolute-plugin-directory>/lib/trust-policy.js` does not exist.
+   Check with a file-viewing or file-search tool; do not run the build or install commands yourself.
+   If the checker needs to be built, stop and give the user these commands to run in a terminal, with the absolute plugin directory filled in:
+
+   ```sh
+   npm ci --engine-strict --prefix "<absolute-plugin-directory>"
+   npm run build --prefix "<absolute-plugin-directory>"
+   ```
+
+   Explain that this installs the plugin's own dependencies and compiler, not Fluid Framework build-tools, and does not touch the user's project.
+   Ask the user to repeat the request once the build succeeds, and do not continue with the remaining steps.
 
    > [!NOTE]
    > Building from source is temporary.
