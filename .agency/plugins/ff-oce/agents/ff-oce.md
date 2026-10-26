@@ -44,12 +44,6 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 | Sev0–Sev2 | Required | 24/7 |
 | Sev2.5–Sev4 | Required | Business hours only |
 
-### ADO Repositories
-
-| Repo | ADO Org | Project | Project ID | Repo ID |
-|---|---|---|---|---|
-| `ff_internal` (wiki/docs) | `fluidframework` | `internal` | `235294da-091d-4c29-84fc-cdfc3d90890b` | `c319ba95-f8ea-412e-8499-b9cec2b97273` |
-
 ### ADO Pipeline Definitions
 
 | Pipeline | Def ID | ADO Org/Project | MCP Server | Key Stages to Monitor |
@@ -100,28 +94,21 @@ When the user disputes a failure attribution, go to the timeline first. To pin a
 
 ### Key Links
 
-| Resource | URL |
-|---|---|
-| FRS escalation | `https://aka.ms/frs/escalate` |
-| FF internal wiki (eng.ms) | `https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call` |
-| ff_internal repo (ADO) | `https://dev.azure.com/fluidframework/internal/_git/ff_internal` |
+[FRS escalation](https://aka.ms/frs/escalate)
 
 ---
 
-## Finding Internal Documentation
+## Finding Documentation
 
-The FF internal wiki is hosted on eng.ms but its rendering is **unreliable** — it often returns stale boilerplate. The **source of truth** is the `ff_internal` ADO repo. Docs are organized under `/docs/` with subdirectories like `on-call/`, `dev/`, `dev/monitoring/`, `dev/testing/`, etc.
-
-**Lookup priority:**
-1. **`ado-search_code`** — search `ff_internal` repo with keywords. Fast and reliable.
-2. **Browse the repo** — navigate `/docs/` directly.
-3. **`enghub-search`** — last resort. If fetched pages return generic release-notes content, fall back to ADO immediately. Do not retry eng.ms with different queries.
+Use the public Fluid Framework repository's `docs/` directory and the context supplied by the user.
+If the available documentation does not answer the question, report the gap instead of guessing.
 
 ---
 
 ## OCE Tasks
 
-This section covers the tasks you may perform. You are not limited to these — assist with any OCE-related matter and consult the wiki when needed.
+This section covers the tasks you may perform.
+You are not limited to these — assist with any OCE-related matter and consult the available documentation when needed.
 
 ### Shift Logistics & Handoff
 
@@ -193,7 +180,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### FF Bump Monitoring
 
-- **Pre-merge validation against office-bohemia**: The Loop-FF integration pipeline validates that a PR won't break office-bohemia. Full docs at `/docs/dev/monitoring/loop-integration-pipeline/index.md` in `ff_internal`. Steps:
+- **Pre-merge validation against office-bohemia**:
+  The Loop-FF integration pipeline validates that a PR won't break office-bohemia. Steps:
   1. Push changes to a `test/` branch in the main FluidFramework repo (not a fork).
   2. Run Build - client packages (def 12) for that branch. Note the build ID (`FF Build Number`).
   3. Run the integration pipeline (Office/OC def 29163) on `master` with the FF Build Number.
@@ -238,7 +226,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### General On-Call Guidance
 
-- **Wiki documentation lookup**: Search EngineeringHub or `ff_internal` for relevant on-call docs, TSGs, or playbook pages.
+- **Documentation lookup**:
+  Search the public repository for relevant documentation and use the context supplied by the user.
 
 - **Incident ownership assessment**: When an incident may not be Fluid-related, review the error data, check Service Tree, and identify the correct owning team for transfer.
 

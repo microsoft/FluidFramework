@@ -14,7 +14,8 @@ In CI, this phase is split into two parts separated by human actions:
 - **Step 6 (human):** A human creates the release branch if needed, queues the ADO release build, then queues the ADO publish pipeline after the build succeeds.
 - **Step 7 (automatable):** CI creates the patch bump PR after the release tag exists.
 
-CI should auto-detect which step is needed (see SKILL.md auto-detection logic).
+Use the supplied release version and public progress checks in SKILL.md.
+If publication is not verified, require a human to identify the build/publish checkpoint.
 
 ## Step 6: Run and Publish the Release Build
 
@@ -129,6 +130,8 @@ For the first release of a new minor (X.X0.0), this PR can optionally be combine
 > **Phase complete.**
 > - Patch bump PR created: [link]
 > - Release `<VERSION>` was verified on GitHub and public npm before the patch bump.
-> - **Next step:** Announce it in Teams. Then wait until tomorrow for npm feeds to update, and re-invoke for type test updates.
+> - **Next step:** Announce it in Teams.
+>   Re-invoke for type test updates once the exact published packages are available to the workspace.
 
-After the release, proceed to [type test updates](type-test-updates.md) **the next day**.
+After the release, proceed to [type test updates](type-test-updates.md)
+once the published packages are available to the workspace.

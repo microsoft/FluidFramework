@@ -62,8 +62,8 @@ Tell the user whether their change requires API Council approval:
 | `@alpha` only (not `@legacy`) | No — but early engagement with the council is encouraged |
 | `@internal` only | No |
 
-Tell the user: council approval is a separate sign-off from the area owner review. To engage the council, they can reach out to the API Council member on their EM team or tag `@FF API` on Teams. Share this link with the user for more details:
-https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/resources/api-council
+Tell the user: council approval is a separate sign-off from the area owner review.
+To engage the council, request review from `fluid-cr-api` on the GitHub PR.
 
 ---
 

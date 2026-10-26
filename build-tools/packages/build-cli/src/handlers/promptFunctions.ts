@@ -516,7 +516,7 @@ export const promptToGenerateReleaseNotes: StateHandlerFunction = async (
 			{
 				title: "REFER TO: See the release documentation for more details",
 				message:
-					"See the release documentation for more details:\nhttps://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release-prep",
+					"See the release documentation for more details:\nhttps://github.com/microsoft/FluidFramework/blob/main/.claude/skills/fluid-release/references/minor-release-prep.md",
 			},
 		],
 	};
