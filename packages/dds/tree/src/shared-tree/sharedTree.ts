@@ -680,7 +680,9 @@ export interface SharedTreeOptions
 	 * A positive safe integer retains the newest specified number of available main-branch commits.
 	 * Each sequenced commit counts separately, including commits in the same batch.
 	 * Set to `true` to retain all available history, or `false` or zero to disable extra retention.
-	 * Collaboration and existing branches can require retaining additional commits, so a numeric value is not a hard cap.
+	 * Collaboration and existing branches can require retaining additional commits, so the policy is not a hard cap. There are two other situations that can cause the number of retained commits to temporarily exceed the limit set by the policy:
+	 * - While the container is detached, commits are only trimmed when a summary is generated.
+	 * - When a summary is loaded, no trimming is performed until the client receives information about the current collaboration window from the service.
 	 *
 	 * This policy is local to each SharedTree instance; it is not stored in the document or propagated to other clients.
 	 * Increasing retention cannot recover history that has already been removed.

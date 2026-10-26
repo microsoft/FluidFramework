@@ -1229,7 +1229,7 @@ describe("SharedTree", () => {
 		}
 
 		// Example: `retainHistory: 3` on a tree that has sequenced more than 3 commits outside the collaboration window.
-		// Every peer keeps the collaboration window plus enough older commits to reach at least 3 commits in total,
+		// The client keeps commits in the collaboration window plus enough older commits to reach at least 3 commits in total,
 		// and a client loaded from that tree's summary holds the same commits.
 		// A limit smaller than the collaboration window (such as 0 or 1) does not trim below the window,
 		// and a very large limit (such as Number.MAX_SAFE_INTEGER) keeps every available commit.
