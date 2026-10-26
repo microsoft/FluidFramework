@@ -336,12 +336,18 @@ const registryKeys: RegistryKey[] = [{ keyid: "SHA256:key", pemkey: "PEM", expir
 
 /**
  * Builds an attestation as pacote returns it, whose signed statement has the given predicate type.
+ * Its bundle is signed with a Fulcio certificate unless other verification material is given.
  */
-function attestation(signedPredicateType: string, listedPredicateType = signedPredicateType) {
+function attestation(
+	signedPredicateType: string,
+	listedPredicateType = signedPredicateType,
+	verificationMaterial: unknown = { certificate: { rawBytes: "CERT" } },
+) {
 	const statement = { predicateType: signedPredicateType };
 	return {
 		predicateType: listedPredicateType,
 		bundle: {
+			verificationMaterial,
 			dsseEnvelope: { payload: Buffer.from(JSON.stringify(statement)).toString("base64") },
 		},
 	};
@@ -404,6 +410,36 @@ test("publish attestations alone, relabeled attestations, and pacote verificatio
 	for (const code of ["EATTESTATIONVERIFY", "EATTESTATIONSUBJECT", "EEXPIREDSIGNATUREKEY"]) {
 		assert.match(await reject(attestationError(code, "bad")), /Invalid attestation: bad/);
 	}
+});
+
+test("SLSA provenance signed with a registry-supplied key is rejected", async () => {
+	// A malicious registry can serve its own key at /-/npm/v1/keys and sign a forged SLSA statement, which pacote accepts.
+	const keySigned = attestation(predicateType, predicateType, {
+		publicKey: { hint: "SHA256:key" },
+	});
+	for (const bundles of [
+		[keySigned],
+		[
+			attestation(publishPredicateType, publishPredicateType, {
+				publicKey: { hint: "SHA256:key" },
+			}),
+			keySigned,
+		],
+		[attestation(predicateType, predicateType, {})],
+	]) {
+		const result = await verifyNpmSlsaProvenance(semverPin, registry, pacoteStub({ bundles }));
+		assert.equal(result.verified, false);
+		assert.match(result.reason, /registry-supplied key/);
+	}
+	const chain = attestation(predicateType, predicateType, {
+		x509CertificateChain: { certificates: [{ rawBytes: "CERT" }] },
+	});
+	const accepted = await verifyNpmSlsaProvenance(
+		semverPin,
+		registry,
+		pacoteStub({ bundles: [keySigned, chain] }),
+	);
+	assert.equal(accepted.verified, true);
 });
 
 test("provenance verification throws for operational failures and registries without signing keys", async () => {

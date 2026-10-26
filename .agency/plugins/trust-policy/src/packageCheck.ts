@@ -718,6 +718,7 @@ export interface ProvenanceVerificationServices {
  *
  * pacote checks each attestation's Sigstore bundle, and that its signed subject names the requested package URL and matches the version's registry SHA-512 integrity, which installers check when they download the tarball.
  * This function additionally requires a signed statement with an SLSA provenance predicate, since pacote also accepts registry-signed publish attestations alone, which are not build provenance.
+ * The SLSA statement must also be signed with a Sigstore certificate rather than a registry-supplied key; see {@link isCertificateSigned}.
  *
  * @remarks
  * npm's `npm audit signatures`
@@ -770,12 +771,20 @@ export async function verifyNpmSlsaProvenance(
 	const bundles = Array.isArray(manifest._attestationBundles)
 		? manifest._attestationBundles
 		: [];
-	if (
-		!bundles.some((bundle) => slsaProvenancePredicateTypes.has(signedPredicateType(bundle)))
-	) {
+	const slsaBundles = bundles.filter((bundle) =>
+		slsaProvenancePredicateTypes.has(signedPredicateType(bundle)),
+	);
+	if (slsaBundles.length === 0) {
 		return {
 			verified: false,
 			reason: "No verified SLSA provenance; publish attestations alone are insufficient.",
+		};
+	}
+	if (!slsaBundles.some((bundle) => isCertificateSigned(bundle))) {
+		return {
+			verified: false,
+			reason:
+				"SLSA provenance is signed with a registry-supplied key rather than a Sigstore certificate, which legitimate npm provenance never is.",
 		};
 	}
 	return {
@@ -783,6 +792,41 @@ export async function verifyNpmSlsaProvenance(
 		reason:
 			"Sigstore provenance verified for this package version and its registry SHA-512 integrity.",
 	};
+}
+
+/**
+ * Returns whether an attestation's Sigstore bundle is signed with a Fulcio certificate (keyless) rather than a public key.
+ *
+ * @remarks
+ * npm serves two kinds of attestation for a version from `/-/npm/v1/attestations/<name>@<version>`:
+ *
+ * - SLSA build provenance, which the publishing CI job creates and signs keylessly with a short-lived Fulcio certificate bound to its OIDC identity.
+ * The bundle carries that certificate, which Sigstore validates against its trusted root.
+ *
+ * - The publish attestation, which the registry creates at upload and signs with its long-lived key.
+ * Its bundle carries only a public key hint, and pacote verifies it with the key of that `keyid` from the registry's `/-/npm/v1/keys`.
+ *
+ * pacote selects the registry key for any bundle whose DSSE signature has a `keyid`, regardless of predicate type.
+ * Because the keys come from the same registry as the attestations, a malicious registry could publish its own key, sign a forged SLSA statement with it, and pass pacote's verification.
+ * The registry never signs build provenance, so a key-signed SLSA bundle is never legitimate, even with npm's genuine key.
+ * Requiring a certificate therefore blocks the forgery without checking the key against Sigstore's TUF repository.
+ *
+ * sigstore-js chooses the verification key from the bundle's `verificationMaterial`, using the certificate for `x509CertificateChain` or `certificate`, and the supplied key for `publicKey`.
+ *
+ * @param attestation - Attestation whose bundle pacote has verified.
+ */
+function isCertificateSigned(attestation: unknown): boolean {
+	const material = (
+		attestation as { bundle?: { verificationMaterial?: unknown } } | null | undefined
+	)?.bundle?.verificationMaterial;
+	if (typeof material !== "object" || material === null) {
+		return false;
+	}
+	const { publicKey, certificate, x509CertificateChain } = material as Record<string, unknown>;
+	return (
+		publicKey === undefined &&
+		(certificate !== undefined || x509CertificateChain !== undefined)
+	);
 }
 
 /**
