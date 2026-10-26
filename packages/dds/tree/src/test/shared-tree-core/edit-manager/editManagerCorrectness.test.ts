@@ -1246,9 +1246,11 @@ export function testCorrectness(): void {
 			describe("Updates the policy when passed valid policy values", () => {
 				for (const policy of [false, 0, 1, 3, true, Number.MAX_SAFE_INTEGER] as const) {
 					it(`${policy}`, () => {
+						// Setup
 						const { manager } = testChangeEditManagerFactory({});
-
+						// Act
 						manager.setHistoryRetention(policy);
+						// Verify
 						assert.equal(manager.getHistoryRetention(), policy);
 					});
 				}
@@ -1264,18 +1266,22 @@ export function testCorrectness(): void {
 					Number.MAX_SAFE_INTEGER + 1,
 				]) {
 					it(`${policy}`, () => {
+						// Setup
 						const message = "historyRetention must be a boolean or a nonnegative safe integer";
 						const { manager } = testChangeEditManagerFactory({ historyRetention: 3 });
+						// Act & Verify
 						assert.throws(
 							() => manager.setHistoryRetention(policy),
 							validateAssertionError(message),
 						);
+						// Verify that the policy remains unchanged
 						assert.equal(manager.getHistoryRetention(), 3);
 					});
 				}
 			});
 
 			it("trims sequenced history without discarding pending local commits", () => {
+				// Setup
 				const { manager } = testChangeEditManagerFactory({ historyRetention: 2 });
 				sequencePeerCommits(manager, 5, 1, 1);
 				manager.advanceMinimumSequenceNumber(brand(5));
@@ -1283,8 +1289,9 @@ export function testCorrectness(): void {
 				applyLocalCommit(manager, [1, 2, 3, 4, 5, 6], 7);
 				const expectedLocalCommits = [...manager.getLocalCommits("main")];
 				const expected = [manager.getTrunkHead("main")];
-
+				// Act
 				manager.setHistoryRetention(1);
+				// Verify
 				assert.deepEqual(manager.getTrunkCommits("main"), expected);
 				assert.deepEqual(manager.getLocalCommits("main"), expectedLocalCommits);
 			});
@@ -1294,6 +1301,7 @@ export function testCorrectness(): void {
 					for (const newPolicy of [true, 3, 2, 1, 0, false] as const) {
 						for (const retainedByFork of [3, 2, 1, 0]) {
 							for (const retainedByMsn of [3, 2, 1, 0]) {
+								// Setup
 								const manager = setupManager({
 									commitCount: 3,
 									startingPolicy,
@@ -1308,7 +1316,9 @@ export function testCorrectness(): void {
 								const expectedCount = Math.max(retainedByMsn, retainedByFork, maxHistoryAfter);
 								const trimCount = Math.max(0, commitsBefore.length - expectedCount);
 								const expectedCommits = commitsBefore.slice(trimCount);
+								// Act
 								manager.setHistoryRetention(newPolicy);
+								// Verify
 								assert.deepEqual(manager.getTrunkCommits("main"), expectedCommits);
 							}
 						}
@@ -1326,6 +1336,7 @@ export function testCorrectness(): void {
 							retainedByAdvancedMsn >= 0;
 							retainedByAdvancedMsn -= 1
 						) {
+							// Setup
 							const manager = setupManager({
 								commitCount: 3,
 								startingPolicy,
@@ -1344,7 +1355,9 @@ export function testCorrectness(): void {
 							);
 							const trimCount = Math.max(0, commitsBefore.length - expectedCount);
 							const expectedCommits = commitsBefore.slice(trimCount);
+							// Act
 							manager.advanceMinimumSequenceNumber(brand(3 - retainedByAdvancedMsn));
+							// Verify
 							assert.deepEqual(manager.getTrunkCommits("main"), expectedCommits);
 						}
 					}
@@ -1366,6 +1379,7 @@ export function testCorrectness(): void {
 							retainedByMsn -= 1
 						) {
 							for (const addedCommitCount of [3, 2, 1]) {
+								// Setup
 								const manager = setupManager({
 									commitCount: initialCommitCount,
 									startingPolicy,
@@ -1397,6 +1411,7 @@ export function testCorrectness(): void {
 								);
 								const expectedRevisions = allRevisions.slice(-expectedCount);
 
+								// Act
 								manager.addSequencedChanges(
 									addedCommits,
 									peer2,
@@ -1404,6 +1419,7 @@ export function testCorrectness(): void {
 									brand(initialMsn),
 									"main",
 								);
+								// Verify
 								const actualRevisions = manager
 									.getTrunkCommits("main")
 									.map((commit) => commit.revision);
@@ -1416,13 +1432,16 @@ export function testCorrectness(): void {
 		});
 
 		it("branch.apply does not count or discard unsequenced local commits", () => {
+			// Setup
 			const { manager } = testChangeEditManagerFactory({ historyRetention: 2 });
 			sequencePeerCommits(manager, 5, 1, 1);
 			manager.advanceMinimumSequenceNumber(brand(5));
 			const expected = manager.getTrunkCommits("main");
 			assert.equal(expected.length, 2);
 
+			// Act
 			applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+			// Verify
 			assert.deepEqual(manager.getTrunkCommits("main"), expected);
 			assert.deepEqual(manager.getLocalCommits("main"), [
 				manager.getLocalBranch("main").getHead(),
@@ -1433,6 +1452,7 @@ export function testCorrectness(): void {
 			for (const startingPolicy of [true, 3, 2, 1, 0, false] as const) {
 				for (const retainedByFork of [3, 2, 1, 0]) {
 					for (const retainedByMsn of [3, 2, 1, 0]) {
+						// Setup
 						const manager = setupManager({
 							commitCount: 3,
 							startingPolicy,
@@ -1446,7 +1466,9 @@ export function testCorrectness(): void {
 							.map((commit) => commit.revision);
 						// TODO: investigate why the trunk length is at least 1 even when the policy is 0
 						const expectedRevisions = allRevisions.slice(-Math.max(1, expectedCount));
+						// Act
 						const summary = manager.getSummaryData();
+						// Verify
 						const actualRevisions = summary.main.trunk.map((commit) => commit.revision);
 						assert.deepEqual(actualRevisions, expectedRevisions);
 					}
@@ -1457,6 +1479,7 @@ export function testCorrectness(): void {
 		it("summary load only keep commits required by MSN and the history retention policy", () => {
 			for (const summarizerPolicy of [true, 3, 2, 1, 0, false] as const) {
 				for (const retainedByMsn of [3, 2, 1, 0]) {
+					// Setup
 					const manager = setupManager({
 						commitCount: 3,
 						startingPolicy: summarizerPolicy,
@@ -1479,7 +1502,9 @@ export function testCorrectness(): void {
 						const { manager: loader } = testChangeEditManagerFactory({
 							historyRetention: loaderPolicy,
 						});
+						// Act
 						loader.loadSummaryData(summary);
+						// Verify
 						const actualRevisions = loader
 							.getTrunkCommits("main")
 							.map((commit) => commit.revision);

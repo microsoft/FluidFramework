@@ -202,7 +202,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns an inclusive upper bound for trimming based on the retention policy,
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the retention policy,
 	 * @remarks
 	 * The bound need not identify an existing commit.
 	 */
@@ -228,7 +228,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns an inclusive upper bound for trimming based on local forks (excluding peer branches maintained by EditManager),
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on local forks (excluding peer branches maintained by EditManager),
 	 * @remarks
 	 * The bound need not identify an existing commit.
 	 */
@@ -240,7 +240,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns an inclusive upper bound for trimming based on the minimum sequence number,
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the minimum sequence number,
 	 * @remarks
 	 * The bound need not identify an existing commit.
 	 */
