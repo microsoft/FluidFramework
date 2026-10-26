@@ -144,7 +144,25 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ConsensusOrderedCollection": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Class_ConsensusQueueClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusOrderedCollection": {
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusQueueClass": {
+				"backCompat": false
+			},
+			"TypeAlias_ConsensusQueue": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
