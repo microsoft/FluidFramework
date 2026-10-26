@@ -26,22 +26,22 @@ It does not audit a project's existing dependencies or lockfile.
 
 ## Prerequisites
 
-- Network access to the registry and to Sigstore.
+- Network access to the npm package registry and to Sigstore.
 - A built checker, which the user builds once; step 1 of the procedure detects whether it is missing.
 
 The checker itself reports unsupported Node.js versions.
 
 ## Network access
 
-The checker probes the registry and, for the `cryptographic` and `no-downgrade` policies, Sigstore, and reports the results in `endpointAccess`.
+The checker probes the npm package registry and, for the `cryptographic` and `no-downgrade` policies, Sigstore, and reports the results in `endpointAccess`.
 Each entry states its `purpose` and whether it was `reachable`.
-Probes are diagnostic only and never stop the check: a registry can serve package metadata while rejecting its probe, and Sigstore verification can use cached metadata.
+Probes are diagnostic only and never stop the check: an npm package registry can serve package metadata while rejecting its probe, and Sigstore verification can use cached metadata.
 Always tell the user which endpoints were unreachable, if any.
-If the verdict is `inconclusive` and an endpoint was unreachable, report that as the likely cause and ask whether the user has an alternative registry or proxy.
+If the verdict is `inconclusive` and an endpoint was unreachable, report that as the likely cause and ask whether the user has an alternative npm package registry or proxy.
 
 If the command stops because `--registry` is an Azure Artifacts feed, explain that Azure Artifacts does not serve provenance attestations, so results through it would be meaningless.
-Ask whether to rerun against the public registry by omitting `--registry`; never edit the user's `.npmrc`.
-If the public registry is also unreachable, report that a trust check is not possible from this network.
+Ask whether to rerun against the public npm package registry (registry.npmjs.org) by omitting `--registry`; never edit the user's `.npmrc`.
+If the public npm package registry is also unreachable, report that a trust check is not possible from this network.
 
 ## Procedure
 
@@ -66,12 +66,12 @@ If the public registry is also unreachable, report that a trust check is not pos
    If the user asked for a tag or range (for example `latest` or `^1.2.0`), resolve it to the exact version the package manager would install, and check that version.
    Do not replace an exact-version check with a tag or semver range.
 3. If the user has not selected a policy and the session is interactive, use `ask_user` to offer:
-   - `cryptographic` (recommended default): verify the SLSA provenance signature, signing certificate, transparency log, and signed package name, version, and registry integrity digest.
-   - `metadata`: check only the registry's provenance claim, without cryptographic verification.
+   - `cryptographic` (recommended default): verify the SLSA provenance signature, signing certificate, transparency log, and signed package name, version, and npm package registry integrity digest.
+   - `metadata`: check only the npm package registry's provenance claim, without cryptographic verification.
    - `no-downgrade`: check publishing history for decreased trust; a pass may have no provenance. Suggested alternatives must also pass cryptographic verification.
    Do not silently choose a weaker policy.
    In noninteractive mode with no supplied policy, use `cryptographic` and state that default.
-4. Confirm permission for registry and Sigstore access.
+4. Confirm permission for npm package registry and Sigstore access.
    Dispatch a separate subagent for each checker invocation: one per exact `name@version`, in parallel when checking several packages.
    Complete all user prompts (policy selection and permissions) before dispatching; subagents must not prompt the user.
    Give each subagent the absolute checker path, the exact `name@version`, the selected policy, any `--registry` value, and instructions to run
@@ -82,7 +82,7 @@ If the public registry is also unreachable, report that a trust check is not pos
 5. Report `requested.verdict`, `requested.provenanceVerified`, the reason, and any `alternative`.
    An `inconclusive` verdict means the check could not complete (for example, a network or Sigstore failure); it is neither acceptance nor rejection.
    If an alternative is suggested, disclose that it may be from a different major version and require code changes.
-   An alternative passes the same policy as the requested version, and always has registry-reported provenance.
+   An alternative passes the same policy as the requested version, and always has provenance reported by the npm package registry.
    Under `no-downgrade`, an alternative is also cryptographically verified, so its `provenanceVerified` is true.
    Metadata-only results must never be described as cryptographically verified.
 6. Report `auditIncomplete`, `searchTruncated`, and `errors`.
