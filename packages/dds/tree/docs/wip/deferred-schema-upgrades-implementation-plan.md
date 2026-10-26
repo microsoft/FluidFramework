@@ -40,6 +40,38 @@ Do not implement Options A, B, or C1 in parallel.
 Use the [design's scenario matrix](./deferred-schema-upgrades.md#remote-upgrade-scenario-matrix) and full validation plan as the behavioral specification.
 Do not weaken these requirements to simplify an intermediate implementation.
 
+## Implementation progress
+
+### M0: baseline and primitive feasibility
+
+The [branch primitive integration tests](../../src/test/shared-tree/deferredSchemaUpgrade.integration.ts) establish:
+
+- A private upgrade enables its view without changing base history or submitting an op.
+- Ordinary merge preserves separate schema and data commits.
+- Composition and revision replacement can publish an earlier schema change and a later data change as one ordered commit.
+- Ordinary reconciliation of that composed history currently replaces view nodes.
+  The initial identity-preservation assertion failed; a characterization test records the current limitation.
+  M3/M4 must prevent that replacement rather than weaken the public identity contract.
+- A retained branch preserves the original application change when another branch's rebase drops it.
+- For the tested schema expansion and concurrent array insertion, the existing data rebaser can transform the retained application change before a fresh schema prefix is added.
+- Inverting the data portion of the controlled compound commit leaves the upgraded schema intact.
+
+These proofs establish the primitive paths, not complete retry, notification, or undo APIs.
+Use one publication revision and retain the original private history until reconciliation has completed.
+Keep reconstruction limited to contexts that the adapter can prove safe.
+The controller must not publish from edit-locked application callbacks or infer remote outcomes from private-branch events alone.
+Keep base ownership, application-fork ownership, and private controller ownership distinct.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep 'deferred schema upgrades: branch primitives' --reporter spec`: 7 passed.
+- `pnpm --dir packages/dds/tree exec eslint src/test/shared-tree/deferredSchemaUpgrade.integration.ts`: passed.
+- `pnpm --dir packages/dds/tree exec biome check --write src/test/shared-tree/deferredSchemaUpgrade.integration.ts`: passed after formatting.
+
+No public deferred-upgrade option is exposed by M0.
+
 ## 1. Development method
 
 ### Documentation-driven and test-driven increments
