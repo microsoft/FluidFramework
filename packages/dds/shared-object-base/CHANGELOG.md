@@ -1,5 +1,9 @@
 # @fluidframework/shared-object-base
 
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 Dependency updates only.

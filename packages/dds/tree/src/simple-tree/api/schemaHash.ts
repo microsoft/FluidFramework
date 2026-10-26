@@ -110,7 +110,7 @@ function serializeNode(schema: TreeNodeStoredSchema): JsonCompatibleReadOnly {
 			metadata: schema.metadata,
 		};
 	}
-	fail("Unsupported schema node kind.");
+	fail(0xd7b /* Unsupported schema node kind. */);
 }
 
 /**

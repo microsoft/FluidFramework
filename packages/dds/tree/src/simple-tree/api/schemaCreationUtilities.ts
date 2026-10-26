@@ -16,8 +16,11 @@ import type {
 	TreeNodeSchemaClass,
 } from "../core/index.js";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import {
+	type SchemaFactory,
+	SchemaFactoryBeta,
+	type ScopedSchemaName,
+} from "./schemaFactory.js";
 
 /*
  * This file does two things:
@@ -42,7 +45,11 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
-	class SingletonSchema extends factory.object(name, {}) {
+	class SingletonSchema extends new SchemaFactoryBeta<TScope, TName>(factory.scope).object(
+		name,
+		{},
+		{ allowUnknownOptionalFields: false },
+	) {
 		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}

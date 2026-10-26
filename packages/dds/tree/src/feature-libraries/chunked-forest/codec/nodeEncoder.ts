@@ -186,7 +186,7 @@ export class SpecializedNodeShapeEncoder
 		// Duplicate field keys would produce a wire format the decoder rejects.
 		assert(
 			overrideMap.size === fieldOverrides.length,
-			"duplicate field key in SpecializedNodeShapeEncoder fieldOverrides",
+			0xd7c /* duplicate field key in SpecializedNodeShapeEncoder fieldOverrides */,
 		);
 		const baseKeys = new Set(base.specializedFieldEncoders.map((field) => field.key));
 		const mergedFields: KeyedFieldEncoder[] = base.specializedFieldEncoders.map(
@@ -213,7 +213,7 @@ export class SpecializedNodeShapeEncoder
 		// Older formats cannot represent the `f` shape that this encoder writes.
 		assert(
 			supportsSpecializedNodeShapes(context.version),
-			"SpecializedNodeShapeEncoder requires a format that supports specialized shapes",
+			0xd7d /* SpecializedNodeShapeEncoder requires a format that supports specialized shapes */,
 		);
 		this.inner.encodeNode(cursor, context, outputBuffer);
 	}
@@ -224,7 +224,7 @@ export class SpecializedNodeShapeEncoder
 	): EncodedChunkShapeVTextExperimental {
 		const baseIndex =
 			shapes.valueToIndex.get(this.base) ??
-			fail("SpecializedNodeShapeEncoder: base shape missing from shapes table");
+			fail(0xd7e /* SpecializedNodeShapeEncoder: base shape missing from shapes table */);
 		return {
 			f: {
 				base: baseIndex,
