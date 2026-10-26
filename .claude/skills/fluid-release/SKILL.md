@@ -1,6 +1,6 @@
 ---
 name: fluid-release
-description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. Uses explicit release inputs and public repository state to select or resume a phase, and falls back to a GitHub issue on execution failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
+description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. In autonomous mode, auto-detects state from the repo, attempts to execute, and falls back to a GitHub issue on failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
 ---
 
 # Fluid Framework Client Release
@@ -28,107 +28,89 @@ Run commands autonomously but pause before creating PRs, pushing branches, or tr
 
 ### Autonomous Mode
 
-Run the entire selected phase end-to-end without pausing.
-Use the release inputs provided upfront and inspect public repository state to find prior progress.
+Run the entire selected phase end-to-end without pausing. Auto-detect the release state from the repo (see below). If the user provides version info upfront, skip the version questions entirely.
 
 Requirements:
 
-- **Release inputs upfront:**
-  The user must provide the target release version and the phase or release type before starting,
-  plus the next version on `main` for minor release prep.
-  If required inputs are missing or conflict with repository state, stop and report what is needed before making changes.
-  Do not select a release version or date on the user's behalf.
+- **Version detection:** Infer version numbers from repo state by default (see below).
+  If the user provides versions, use them unless they conflict with repo state.
 - **No confirmation pauses:** Create PRs, push branches, and run `flub release` without asking. Include clear commit messages and PR descriptions.
 - **Phase-scoped execution:** Each phase runs to completion, then reports what the user needs to do next (e.g., "queue the ADO release build", "queue the ADO publish pipeline", or "wait for npm feeds, then re-invoke for type test updates").
 - **Fallback to issues:** If any step fails (permission errors, CI-safe command failures, git push rejected, or any other error that prevents progress), **stop and open a GitHub issue** in `microsoft/FluidFramework` describing what was completed, what failed, and what remains. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode.
 
-#### Checking progress for an explicit release
+#### Auto-detecting release state (autonomous mode and CI)
 
-Use these checks only after the target release version is known.
-For a generic request such as "do the release", collect the required release inputs first.
-In autonomous mode and CI, report missing inputs and stop without creating a release-blocking issue.
+Auto-detect the release state from the repo using the detection steps below. In interactive mode, this detection also runs when the user gives a generic request like "do the release" without specifying a version or phase.
 
-**Step 1: Verify the supplied release inputs.**
+**Step 1: Identify the most recent release.**
 
 ```bash
-# Inspect the development version and published tags on the selected remote
-git show <REMOTE>/main:package.json
-git ls-remote --tags <REMOTE> 'refs/tags/client_v*'
+# Get the latest client release tag
+git tag -l 'client_v*' --sort=-version:refname | head -1
 ```
 
-Fetch the selected remote before inspecting its branch state.
-Use the remote selected in Key Context for `<REMOTE>`.
-Check the supplied version against the relevant branch and tags.
-Do not treat the version on `main` or the latest tag as an instruction to start a release.
-When resuming prep after the version bump has merged, inspect the pre-bump commit to verify the release version.
+**Step 2: Identify the release version from repo state.**
 
-**Step 2: Check public progress for the supplied `<VERSION>`.**
+Inspect release-prep branches/PRs, release branches, and tags for a release already in progress.
+Use the version on `main` for a new minor release and increment its minor version by 1 for the next development version.
+If the version bump has already merged, use the release-prep PR or pre-bump commit to recover the release version.
 
 ```bash
-# Check for release-prep branches for the supplied release version
-git ls-remote --heads <REMOTE> 'release-prep/<VERSION>/*'
+# Inspect the development version and existing release branches
+git show upstream/main:package.json
+git ls-remote --heads upstream 'release-prep/*' 'release/client/*'
+```
+
+Ask for clarification only when repo state is ambiguous or conflicts with user-provided versions or phase.
+In CI, report the ambiguity or conflict and stop instead of prompting.
+
+**Step 3: Check if a release is in progress.**
+
+```bash
+# Check for release-prep branches for the next version
+git ls-remote --heads upstream 'release-prep/<NEXT_VERSION>/*'
 # Check for the release branch
-git ls-remote --heads <REMOTE> 'release/client/<MAJOR>.<MINOR>'
-# Check the exact GitHub release and public npm version
-gh release view client_v<VERSION> --repo microsoft/FluidFramework
-pnpm view @fluidframework/container-loader@<VERSION> version --registry=https://registry.npmjs.org/
-# Check release-prep, patch bump, and type test PRs and their merge status
-gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
-gh pr list --repo microsoft/FluidFramework --base 'release/client/<MAJOR>.<MINOR>' --state all
-gh pr list --repo microsoft/FluidFramework --base main --search '"<VERSION>"' --state all
+git ls-remote --heads upstream 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
+# Check for a release tag
+git tag -l 'client_v<NEXT_VERSION>'
+# Check for open PRs
+gh pr list --repo microsoft/FluidFramework --search "release-prep/<NEXT_VERSION>" --state all
 ```
 
-Distinguish a missing release or package from a command failure, such as an authentication or network error.
-Inspect PR diffs and branch history before treating a step as complete; a search result alone is not proof.
-Public repository state does not establish whether the ADO release build or publish pipeline has completed.
-If publication is not verified, report that a human must identify the current pipeline checkpoint
-before continuing [release execution](references/release-execution.md).
+For a release branch with no completed release, also inspect ADO pipeline state:
 
-**Step 3: Select or resume the requested phase.**
+1. Find the **Build - client packages** (definition 12) run for the release branch tip with `releaseBuildOverride: release`.
+2. If that run succeeded, find the **Publish - client packages** (definition 219) run that selected it as the `candidate` and used `publishToPublicNpm: true`.
+3. If ADO pipeline state cannot be queried, do not infer which action is next. Report that a human must identify whether the release build or publish pipeline has completed.
+
+**Step 4: Determine the phase and act.**
 
 | State | Action |
 |-------|--------|
-| Minor release prep requested, no release-prep branches or release branch, exact release not published | Start **minor release prep** (Steps 1-5) using the supplied release and next versions |
+| No release-prep branches, no release branch | Start **minor release prep** (Steps 1-5) |
 | Release-prep branches/PRs exist, some not merged | Resume **minor release prep** from where it left off |
-| Release execution requested, release branch missing | Report that the release branch must be created before execution |
-| Release branch exists, exact GitHub/npm release not verified | Report the public state and require a human to identify the build/publish checkpoint |
-| Exact GitHub/npm release verified, neither an open nor a merged patch bump PR exists | Resume **release execution** — verify the publication prerequisites before the patch bump (Step 7) |
-| Exact release verified, patch bump done, no type test PRs | Start **type test updates** (Steps 8-9) once the published packages are available to the workspace |
-| All phases complete | Report completion for the supplied version; do not choose another release |
-
-Only act when the supplied inputs and observed state identify an unambiguous next step.
-Otherwise, ask for clarification in interactive mode, or report the ambiguity and stop in autonomous mode and CI.
+| Release branch exists, no successful release build | Resume **release execution** — queue the ADO release build |
+| Successful release build exists, no successful public publish run | Resume **release execution** — queue the ADO publish pipeline using that build as the candidate |
+| Successful public publish run exists, exact GitHub/npm release not yet available | Wait for publication to propagate; investigate the publish run if it does not appear |
+| Exact GitHub/npm release verified, no patch bump PR | Resume **release execution** — do the patch bump (Step 7) |
+| Release tag exists, patch bump done, no type test PRs | Start **type test updates** (Steps 8-9) |
+| All phases complete | Report that the release is fully done and show the next release version from `main` |
 
 Present the detected state and chosen action to the user (or in the issue body). Example:
 
-> **Inputs:** Minor release prep for 2.91.0, with 2.92.0 as the next version on `main`.
-> **Observed state:** `main` is at 2.91.0. No release-prep branches, release branch, or published release found for 2.91.0.
-> **Action:** Start minor release prep for the supplied versions.
-
-## Required Release Inputs
-
-- **Minor release prep:** Release version and next development version on `main`.
-- **Release execution:**
-  Release version and the existing `release/client/<major>.<minor>` branch.
-- **Type test updates:** Published release version and its release branch.
-
-Derive the release branch name from the supplied version when needed.
-In interactive mode, confirm these inputs with the user.
-In autonomous mode and CI, require them upfront.
-Use public branches, tags, package versions, and PRs to verify progress,
-not to infer release dates or authorization to release.
+> **Detected state:** `main` is at 2.91.0. No release-prep branches found. The most recent release is 2.90.0.
+> **Action:** Minor release prep needed for 2.91.0 (next version on main: 2.92.0).
 
 ## Workflow Selection
 
-Use the requested phase or release type and the progress checks above.
-If the phase is unclear, ask the user in interactive mode.
-In autonomous mode and CI, report the missing input and stop.
+Use the requested phase, or auto-detect it from repo state as described above.
+Ask only if the phase is ambiguous or conflicts with the request; in CI, report the blocker and stop.
 
 | Phase | When to use | CI-automatable? | Reference |
 |-------|-------------|-----------------|-----------|
 | **Minor release prep** | Starting a new minor release from `main` (Steps 1-5) | Yes (Steps 1-4 create PRs; Step 5 is a human step) | [minor-release-prep.md](references/minor-release-prep.md) |
 | **Release execution** | Running and publishing the release build + patch bump (Steps 6-7). Also used for **patch releases** on existing branches. | Partially (Step 6 = human queues ADO build and publish pipelines; Step 7 = CI-automatable) | [release-execution.md](references/release-execution.md) |
-| **Type test updates** | After published packages are available: update baselines on main and release branch (Steps 8-9) | Yes (must be resilient to failure if npm packages not yet available) | [type-test-updates.md](references/type-test-updates.md) |
+| **Type test updates** | After release: update baselines on main and release branch (Steps 8-9) | Yes (must be resilient to failure if npm packages not yet available) | [type-test-updates.md](references/type-test-updates.md) |
 
 For **patch releases**, skip directly to release execution on an existing release branch.
 
@@ -226,7 +208,7 @@ Use the `build:` conventional commit prefix for all release PR titles (e.g., `bu
 | Creating PRs | Pause and confirm | Create automatically with descriptive titles/bodies |
 | Pushing branches | Pause and confirm | Push automatically |
 | Running `flub release` | Pause and confirm | Run automatically |
-| Version determination | Ask user to confirm | Require the release inputs upfront; verify against public repository state |
+| Version determination | Infer from repo state; ask only if ambiguous or conflicting | Use version provided upfront or auto-detect |
 | Announcing releases | Remind user | Remind user (never auto-announce) |
 | ADO release/publish pipeline queuing | Instruct user | Instruct user (cannot be automated) |
 
@@ -236,8 +218,7 @@ At the end of each autonomous phase, provide a summary:
 
 1. **What was done** — list all PRs created, branches pushed, commands run
 2. **What to do next** — specific manual steps needed (e.g., queue ADO build, merge PRs in order)
-3. **When to continue** — report observable prerequisites for the next phase.
-   Examples: "after PRs merge" or "after the exact published packages are available to the workspace".
+3. **When to continue** — timing guidance for the next phase (e.g., "after PRs merge" or "tomorrow, after npm feeds update")
 
 ### Autonomous Mode: Fallback to Issues
 

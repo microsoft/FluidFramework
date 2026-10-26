@@ -129,8 +129,6 @@ For the first release of a new minor (X.X0.0), this PR can optionally be combine
 > **Phase complete.**
 > - Patch bump PR created: [link]
 > - Release `<VERSION>` was verified on GitHub and public npm before the patch bump.
-> - **Next step:** Announce it in Teams.
->   Re-invoke for type test updates once the exact published packages are available to the workspace.
+> - **Next step:** Announce it in Teams. Then wait until tomorrow for npm feeds to update, and re-invoke for type test updates.
 
-After the release, proceed to [type test updates](type-test-updates.md)
-once the published packages are available to the workspace.
+After the release, proceed to [type test updates](type-test-updates.md) **the next day**.

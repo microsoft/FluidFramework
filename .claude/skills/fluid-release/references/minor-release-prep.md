@@ -5,12 +5,8 @@ Prepare the `main` branch and create the release branch for a new minor release.
 ## Autonomous Mode Notes
 
 In autonomous mode, the user provides two versions upfront:
-
-- **Release version**: the version to release
-  Verify it against root `package.json` on `main` or the pre-bump commit when resuming.
+- **Release version**: the current version being released (read from root `package.json`)
 - **Next version**: the version to bump `main` to after the release
-
-If either version is missing or conflicts with repository state, report the required input and stop before making changes.
 
 Run all steps sequentially. Create PRs automatically. At the end, report all PRs created and remind the user to merge them in order (version bump PR last).
 
@@ -65,8 +61,7 @@ This generates changes only if 33+ days have passed since the last update for a 
 Check the current version in the root `package.json`. This is the version being released (the bump hasn't happened yet at this point).
 
 - **Interactive:** Ask the user to confirm the version.
-- **Autonomous:** Use the version provided upfront and verify it against `package.json`.
-  If none was provided, report the missing input and stop.
+- **Autonomous:** Use the version provided upfront. If none was provided, read it from `package.json` and proceed.
 
 ### Generate release notes
 

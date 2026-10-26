@@ -1,23 +1,19 @@
 # Type Test Updates (Steps 8-9)
 
-Update type test baselines on both `main` and the release branch
-once the exact published packages are available to the workspace.
+Update type test baselines on both `main` and the release branch. Do this **the day after** the release to allow npm feeds to pick up the published packages.
 
 ## Autonomous Mode Notes
 
 In autonomous mode, run both steps sequentially and create both PRs automatically. Report both PRs at the end.
 
-The user must provide the published release version upfront in autonomous mode.
-Derive the release branch name from that version (e.g., `release/client/2.90` for 2.90.0),
-or use the branch supplied by the user.
-If the version is missing or conflicts with the branch, report the required input and stop before making changes.
+The user should provide the release branch name (e.g., `release/client/2.90`) upfront in autonomous mode, or it can be inferred from context if the user mentions the version.
 
 ## CI Resilience
 
 The `flub typetests --reset --previous` command fetches the previously released packages from npm. If the packages are not yet available (e.g., npm feeds haven't updated), this step will fail. In CI:
 
 - If `flub typetests` fails, open a GitHub issue titled `Release <VERSION>: type test update failed — npm packages not yet available` with the error output, and exit gracefully.
-- Retry only after the exact published packages are available to the workspace.
+- The scheduled workflow will retry on the next run and succeed once packages are available.
 
 ## Step 8: Update Type Test Baselines on Main
 
