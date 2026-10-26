@@ -27,6 +27,9 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	validator: () => {
+		throw new Error("validator");
+	},
 	hasSchemaChange: () => {
 		throw new Error("hasSchemaChange");
 	},
@@ -73,6 +76,7 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	},
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	validator: (change) => (change === "valid" ? true : "invalid change"),
 	hasSchemaChange: () => false,
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
@@ -129,6 +133,11 @@ const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
 const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
+	it("preserves validation results and exceptions", () => {
+		assert.equal(mitigatedReturningFamily.validator("valid"), true);
+		assert.equal(mitigatedReturningFamily.validator("invalid"), "invalid change");
+		assert.throws(() => mitigatedThrowingFamily.validator("invalid"), /validator/);
+	});
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(
 			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1),

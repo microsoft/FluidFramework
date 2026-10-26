@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeCheckout } from "../../shared-tree/index.js";
+import type { CheckoutBase } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView, Tree } from "../../shared-tree/index.js";
 import {
 	isTreeNode,
@@ -138,7 +138,7 @@ export function pretty(arg: unknown): number | string {
  */
 export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
-): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
+): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: CheckoutBase } {
 	const forkCheckout = originalView.checkout.fork();
 	return {
 		forkView: new SchematizingSimpleTreeView<TSchema>(

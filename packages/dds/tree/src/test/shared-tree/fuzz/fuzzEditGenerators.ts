@@ -24,7 +24,7 @@ import type {
 	UpPath,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ITreePrivate, type TreeCheckout } from "../../../shared-tree/index.js";
+import { Tree, type ITreePrivate, type CheckoutBase } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { getInnerNode, type CommitRevision } from "../../../simple-tree/index.js";
@@ -149,7 +149,7 @@ export function viewFromState(
 	return rootView;
 }
 
-function fuzzViewFromCheckout(checkout: TreeCheckout): FuzzView {
+function fuzzViewFromCheckout(checkout: CheckoutBase): FuzzView {
 	const schema = simpleSchemaFromStoredSchema(checkout.storedSchema);
 	const view = checkout.viewWith(new TreeViewConfiguration({ schema }));
 	assert(view.compatibility.isEquivalent);

@@ -352,6 +352,7 @@ export function testChangeFamilyFactory(
 		buildProcessor: (): never => {
 			assert.fail("Unexpected buildProcessor call");
 		},
+		validator: (change: TestChange): true | string => true,
 	};
 	return family;
 }

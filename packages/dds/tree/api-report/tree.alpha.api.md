@@ -270,9 +270,6 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
-// @alpha
-export function computeSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy): string;
-
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -639,7 +636,7 @@ export interface ICodecOptions {
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
-export function identifySchema(options?: {
+export function identifySchemaAlpha(options?: {
     readonly expectedHash?: string;
 }): SchemaIdentity;
 
@@ -1148,6 +1145,27 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends Flu
 export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
+
+// @alpha
+export interface RebaseValidation {
+    readonly currentLevel: RebaseValidationLevel;
+    readonly Level: typeof RebaseValidationLevel;
+    readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
+    readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
+}
+
+// @alpha
+export const RebaseValidation: RebaseValidation;
+
+// @alpha
+export const RebaseValidationLevel: {
+    readonly None: 0;
+    readonly Cheap: 1;
+    readonly Strict: 2;
+};
+
+// @alpha
+export type RebaseValidationLevel = (typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
 
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {
@@ -2387,6 +2405,9 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 
 // @beta @system
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
+
+// @alpha
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T>;
 
 // @alpha
 export const UnsafeUnknownSchema: unique symbol;

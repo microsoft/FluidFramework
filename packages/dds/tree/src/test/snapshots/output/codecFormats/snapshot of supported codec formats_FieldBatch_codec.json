@@ -261,6 +261,220 @@
               "e": {
                 "const": 0,
                 "type": "number"
+              },
+              "f": {
+                "not": {}
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ]
+    }
+  },
+  {
+    "version": "text",
+    "schema": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "version": {
+          "const": "text",
+          "type": "string"
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
+            "type": "object",
+            "properties": {
+              "a": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "b": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "length": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "shape": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "length",
+                  "shape"
+                ]
+              },
+              "c": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
+                      },
+                      {
+                        "const": 0,
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "minimum": 0,
+                              "type": "integer"
+                            }
+                          ]
+                        },
+                        {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  },
+                  "extraFields": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                }
+              },
+              "d": {
+                "const": 0,
+                "type": "number"
+              },
+              "e": {
+                "const": 0,
+                "type": "number"
+              },
+              "f": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "base": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "minimum": 0,
+                              "type": "integer"
+                            }
+                          ]
+                        },
+                        {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "minItems": 1,
+                            "maxItems": 1,
+                            "type": "array",
+                            "items": {}
+                          },
+                          {
+                            "const": 0,
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "extraFields": {
+                    "anyOf": [
+                      {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "base"
+                ]
               }
             }
           }

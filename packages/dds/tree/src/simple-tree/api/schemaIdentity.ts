@@ -15,7 +15,7 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
 /**
  * Enables schema hash telemetry and optional checks when constructing a view.
  * @remarks
- * Create with {@link identifySchema}.
+ * Create with {@link identifySchemaAlpha}.
  * @sealed @alpha
  */
 export interface SchemaIdentity
@@ -48,7 +48,7 @@ export class SchemaIdentityInternal
 
 	public static extract(identity: SchemaIdentity): SchemaIdentityInternal {
 		if (!(identity instanceof SchemaIdentityInternal)) {
-			throw new UsageError("schemaIdentity must be created with identifySchema.");
+			throw new UsageError("schemaIdentity must be created with identifySchemaAlpha.");
 		}
 		return identity;
 	}

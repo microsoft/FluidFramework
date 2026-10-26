@@ -55,7 +55,7 @@ import {
 	type FieldSchema,
 	tryDisposeTreeNode,
 	FieldSchemaAlpha,
-	TreeViewConfigurationAlpha,
+	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchHistory,
@@ -76,11 +76,12 @@ import {
 	disposeSymbol,
 	isReadonlyArray,
 	type JsonCompatibleReadOnly,
+	throwIfBroken,
 	type WithBreakable,
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -177,7 +178,7 @@ export class SchematizingSimpleTreeView<
 		/**
 		 * The checkout that supplies the tree content and branch operations for the view.
 		 */
-		public readonly checkout: TreeCheckout,
+		public readonly checkout: CheckoutBase,
 		/**
 		 * The schema and behavior configuration for the view.
 		 */
@@ -192,7 +193,7 @@ export class SchematizingSimpleTreeView<
 		private readonly onDispose?: () => void,
 		/**
 		 * Whether disposing the view also disposes its checkout.
-		 * Defaults to the checkout's {@link TreeCheckout.disposesWithView} policy.
+		 * Defaults to the checkout's {@link CheckoutBase.disposesWithView} policy.
 		 */
 		private readonly disposeCheckoutOnDispose: boolean = checkout.disposesWithView,
 	) {
@@ -202,12 +203,9 @@ export class SchematizingSimpleTreeView<
 		}
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const stagedUpgradePolicy =
-			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
-		const configAlpha = new TreeViewConfigurationAlpha({
-			...config,
-			stagedUpgradePolicy,
-		});
+		// All TreeViewConfigurations are TreeViewConfigurationAlpha
+		const configAlpha = config as TreeViewConfigurationAlpha<ReadSchema<TRootSchema>>;
+
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 		const identity =
 			configAlpha.schemaIdentity === undefined
@@ -629,7 +627,10 @@ export class SchematizingSimpleTreeView<
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
-			// Branch views normally own their checkout, unlike views created for a retained checkout.
+			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed
+			// when the view is disposed. Multi-view checkouts (BranchCheckout, shared branches) opt out
+			// via `disposesWithView` so that disposing one view does not invalidate the checkout for
+			// other callers.
 			this.checkout.dispose();
 		}
 	}
@@ -667,10 +668,15 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.fork().viewWith(this.config);
+		return this.checkout.fork().viewWithInternal(this.config, true);
 	}
 
+	@throwIfBroken
 	public rewindTo(revision: string): void {
+		assert(
+			this.checkout instanceof TreeCheckout,
+			"Rewinding requires a checkout that supports branch replacement",
+		);
 		this.checkout.rewindTo(revision);
 	}
 
@@ -678,20 +684,20 @@ export class SchematizingSimpleTreeView<
 		this.checkout.revertTo(revision, options);
 	}
 
-	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
+	public merge(context: UntypedTreeViewAlpha | CheckoutBase, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: UntypedTreeViewAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha | CheckoutBase): void {
 		this.checkout.rebaseOnto(context);
 	}
 
-	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha | CheckoutBase): boolean {
 		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		context: UntypedTreeViewAlpha,
+		context: UntypedTreeViewAlpha | CheckoutBase,
 	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
@@ -703,7 +709,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public readonly locations: TreeLocationResolver = (() => {
-		const getCheckout = (): TreeCheckout => {
+		const getCheckout = (): CheckoutBase => {
 			this.ensureUndisposed();
 			return this.checkout;
 		};

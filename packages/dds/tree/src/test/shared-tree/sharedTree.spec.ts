@@ -41,6 +41,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 	EmptyKey,
+	RebaseValidation,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -171,15 +172,21 @@ describe("SharedTree", () => {
 
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
-			const tree = treeTestFactory();
-			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+			// Smoke tests run with debug assertions disabled, so rebase validation cannot be enabled.
+			RebaseValidation.runWithLevel(RebaseValidation.Level.None, () => {
+				const tree = treeTestFactory();
+				assert.deepEqual(
+					tree.contentSnapshot().schema.rootFieldSchema,
+					storedEmptyFieldSchema,
+				);
 
-			const config = new TreeViewConfiguration({
-				schema: numberSchema,
+				const config = new TreeViewConfiguration({
+					schema: numberSchema,
+				});
+				const view = tree.viewWith(config);
+				view.initialize(10);
+				assert.equal(view.root, 10);
 			});
-			const view = tree.viewWith(config);
-			view.initialize(10);
-			assert.equal(view.root, 10);
 		});
 
 		it("initialize-dispose-view with primitive schema", () => {
