@@ -1,6 +1,7 @@
 ---
 name: check-trust-policy
 description: Check whether an exact package version has trustworthy provenance and find an attested alternative. Use before adding, upgrading, or installing any npm package version that is not already in the project's lockfile (npm, Yarn, or pnpm), or when asked whether a package version is safe or to verify its provenance.
+allowed-tools: Bash(node:*)
 ---
 
 # Check package trust policy
