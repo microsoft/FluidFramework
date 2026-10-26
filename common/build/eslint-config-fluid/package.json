@@ -19,7 +19,7 @@
 	"scripts": {
 		"build": "npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"build:test:examples": "tsc --project ./src/rules/test/test-cases/tsconfig.json",
+		"build:test:examples": "tsc --project ./src/rules/test/test-cases/tsconfig.json && tsc --project ./src/test/test-cases/tsconfig.json",
 		"clean": "rimraf --glob dist \"**/*.build.log\" nyc",
 		"format": "npm run prettier:fix",
 		"install-no-frozen": "pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile",
