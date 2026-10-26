@@ -213,21 +213,18 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		const historyRetention = optionsParam.historyRetention;
+		const retainHistory = optionsParam.retainHistory;
 		if (
-			historyRetention !== undefined &&
-			typeof historyRetention !== "boolean" &&
-			(!Number.isSafeInteger(historyRetention) || historyRetention < 0)
+			retainHistory !== undefined &&
+			typeof retainHistory !== "boolean" &&
+			(!Number.isSafeInteger(retainHistory) || retainHistory < 0)
 		) {
-			throw new UsageError("historyRetention must be a boolean or a nonnegative safe integer");
+			throw new UsageError("retainHistory must be a boolean or a nonnegative safe integer");
 		}
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
-			historyRetention:
-				historyRetention ??
-				optionsParam.retainHistory ??
-				defaultSharedTreeOptions.historyRetention,
+			retainHistory: retainHistory ?? defaultSharedTreeOptions.retainHistory,
 		};
 		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
@@ -677,36 +674,23 @@ export interface SharedTreeOptions
 	/**
 	 * Configures how much sequenced edit history this SharedTree instance retains.
 	 *
-	 * @defaultValue The value of {@link SharedTreeOptions.retainHistory}, or `false` if neither option is provided.
+	 * @defaultValue `false`
 	 *
 	 * @remarks
 	 * A positive safe integer retains the newest specified number of available main-branch commits.
 	 * Each sequenced commit counts separately, including commits in the same batch.
 	 * Set to `true` to retain all available history, or `false` or zero to disable extra retention.
 	 * Collaboration and existing branches can require retaining additional commits, so a numeric value is not a hard cap.
-	 * After loading a summary, trimming waits for the collaboration boundary to be reported.
 	 *
 	 * This policy is local to each SharedTree instance; it is not stored in the document or propagated to other clients.
 	 * Increasing retention cannot recover history that has already been removed.
-	 * This option takes precedence over {@link SharedTreeOptions.retainHistory}, including when set to `false` or zero.
-	 */
-	readonly historyRetention?: boolean | number;
-
-	/**
-	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
-	 * the collaboration window.
-	 *
-	 * @defaultValue `false`
-	 *
-	 * @remarks
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
 	 * local branches), to bound memory usage and document size.
-	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * Setting this option to `true` retains all available trunk commits - this increases memory usage and document size
 	 * over time and should be used with care.
-	 * {@link SharedTreeOptions.historyRetention} takes precedence when both options are provided.
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
@@ -775,7 +759,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
-	historyRetention: false,
 	retainHistory: false,
 	validateCommitsOnFirstSubmission: false,
 	validateRebasedCommitsBeforeResubmission: false,

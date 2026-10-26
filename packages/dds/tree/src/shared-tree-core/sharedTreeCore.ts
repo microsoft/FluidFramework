@@ -82,14 +82,9 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 
 	/**
-	 * {@inheritDoc SharedTreeOptions.historyRetention}
-	 */
-	readonly historyRetention?: boolean | number;
-
-	/**
 	 * {@inheritDoc SharedTreeOptions.retainHistory}
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
@@ -211,9 +206,7 @@ export class SharedTreeCore<
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
 		);
-		this.editManager.setHistoryRetention(
-			coreOptions.historyRetention ?? coreOptions.retainHistory ?? false,
-		);
+		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
 		this.registerSharedBranch("main");
 

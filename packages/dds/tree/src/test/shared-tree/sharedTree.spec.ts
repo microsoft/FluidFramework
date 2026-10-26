@@ -1207,11 +1207,11 @@ describe("SharedTree", () => {
 		 * summarizing client's compressor rather than creating an empty one.
 		 */
 		async function loadFreshClient(
-			tree: ISharedTree,
+			tree: ITree,
 			factory: IChannelFactory<ITree>,
 			idCompressor: IIdCompressor,
 		): Promise<ISharedTree> {
-			const { summary } = await tree.summarize();
+			const { summary } = await (tree as unknown as IChannel).summarize();
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			return (await factory.load(
 				runtime,
@@ -1228,36 +1228,14 @@ describe("SharedTree", () => {
 			return tree.kernel.checkout.branchHistory.length;
 		}
 
-		describe("numeric limits and option precedence", () => {
-			for (const { options, effectiveRetention } of [
-				{ options: { historyRetention: false }, effectiveRetention: false },
-				{ options: { historyRetention: 0 }, effectiveRetention: 0 },
-				{ options: { historyRetention: 1 }, effectiveRetention: 1 },
-				{ options: { historyRetention: 3 }, effectiveRetention: 3 },
-				{ options: { historyRetention: 5 }, effectiveRetention: 5 },
-				{ options: { historyRetention: true }, effectiveRetention: true },
-				{
-					options: { historyRetention: Number.MAX_SAFE_INTEGER },
-					effectiveRetention: Number.MAX_SAFE_INTEGER,
-				},
-				{
-					options: { historyRetention: false, retainHistory: true },
-					effectiveRetention: false,
-				},
-				{
-					options: { historyRetention: 0, retainHistory: true },
-					effectiveRetention: 0,
-				},
-				{
-					options: { historyRetention: 3, retainHistory: true },
-					effectiveRetention: 3,
-				},
-				{
-					options: { historyRetention: true, retainHistory: false },
-					effectiveRetention: true,
-				},
-			] as const) {
-				it(`retains and persists history for ${JSON.stringify(options)}`, async () => {
+		// Example: `retainHistory: 3` on a tree that has sequenced more than 3 commits outside the collaboration window.
+		// Every peer keeps the collaboration window plus enough older commits to reach at least 3 commits in total,
+		// and a client loaded from that tree's summary holds the same commits.
+		// A limit smaller than the collaboration window (such as 0 or 1) does not trim below the window,
+		// and a very large limit (such as Number.MAX_SAFE_INTEGER) keeps every available commit.
+		describe("numeric limits", () => {
+			for (const retainHistory of [0, 1, 3, 5, Number.MAX_SAFE_INTEGER] as const) {
+				it(`retains and persists history for retainHistory: ${retainHistory}`, async () => {
 					const { retainedCommitCount: collaborationWindowCount } = generateHistory(
 						configuredSharedTree({ jsonValidator: FormatValidatorBasic }).getFactory(),
 					);
@@ -1267,19 +1245,14 @@ describe("SharedTree", () => {
 							retainHistory: true,
 						}).getFactory(),
 					);
-					let expectedCount = collaborationWindowCount;
-					if (effectiveRetention === true) {
-						expectedCount = availableCommitCount;
-					} else if (typeof effectiveRetention === "number") {
-						expectedCount = Math.max(
-							collaborationWindowCount,
-							Math.min(effectiveRetention, availableCommitCount),
-						);
-					}
+					const expectedCount = Math.max(
+						collaborationWindowCount,
+						Math.min(retainHistory, availableCommitCount),
+					);
 
 					const factory = configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						...options,
+						retainHistory,
 					}).getFactory();
 					const { provider } = generateHistory(factory);
 					for (const peerTree of provider.trees) {
@@ -1294,8 +1267,12 @@ describe("SharedTree", () => {
 			}
 		});
 
+		// Example: `configuredSharedTree({ retainHistory: -1 })` throws a UsageError when the tree is created,
+		// as do 0.5, NaN, Infinity and values above Number.MAX_SAFE_INTEGER.
+		// Values that TypeScript rejects but a JavaScript caller could pass, such as the string "3", null or {},
+		// are rejected at runtime in the same way.
 		describe("invalid limits", () => {
-			for (const historyRetention of [
+			for (const retainHistory of [
 				-1,
 				0.5,
 				Number.NaN,
@@ -1303,34 +1280,33 @@ describe("SharedTree", () => {
 				Number.NEGATIVE_INFINITY,
 				Number.MAX_SAFE_INTEGER + 1,
 			]) {
-				it(`rejects ${historyRetention}`, () => {
+				it(`rejects ${retainHistory}`, () => {
 					assert.throws(
 						() =>
 							new TestTreeProviderLite(
 								1,
-								configuredSharedTree({ historyRetention }).getFactory(),
+								configuredSharedTree({ retainHistory }).getFactory(),
 							),
 						validateUsageError(
-							"historyRetention must be a boolean or a nonnegative safe integer",
+							"retainHistory must be a boolean or a nonnegative safe integer",
 						),
 					);
 				});
 			}
 
-			for (const historyRetention of ["3", null, {}]) {
-				it(`rejects type-erased input ${JSON.stringify(historyRetention)}`, () => {
+			for (const retainHistory of ["3", null, {}]) {
+				it(`rejects type-erased input ${JSON.stringify(retainHistory)}`, () => {
 					assert.throws(
 						() =>
 							new TestTreeProviderLite(
 								1,
 								configuredSharedTree({
 									// @ts-expect-error Exercise runtime validation of type-erased application input.
-									historyRetention,
-									retainHistory: true,
+									retainHistory,
 								}).getFactory(),
 							),
 						validateUsageError(
-							"historyRetention must be a boolean or a nonnegative safe integer",
+							"retainHistory must be a boolean or a nonnegative safe integer",
 						),
 					);
 				});
@@ -1367,6 +1343,10 @@ describe("SharedTree", () => {
 			);
 		});
 
+		// Example: a summary written with `retainHistory: true` holds every commit, say 12.
+		// A client that loads it with `retainHistory: 3` starts with all of them, because it does not yet know the collaboration boundary.
+		// When it receives its first message, which reports the boundary, it trims down to 3 commits without needing new edits.
+		// The client that wrote the summary is unaffected and keeps all of its commits.
 		it("applies a numeric policy to loaded history when the collaboration boundary advances", async () => {
 			const { provider, retainedCommitCount } = generateHistory(
 				configuredSharedTree({
@@ -1377,7 +1357,7 @@ describe("SharedTree", () => {
 			const tree = provider.trees[0];
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				historyRetention: 3,
+				retainHistory: 3,
 			}).getFactory();
 			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
 			assert.equal(trunkCommitCount(loaded), retainedCommitCount);
