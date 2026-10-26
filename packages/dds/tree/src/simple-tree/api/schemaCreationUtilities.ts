@@ -42,7 +42,6 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
-	// `SchemaFactory.object` does not take options, so use a `SchemaFactoryBeta` with the same scope.
 	class SingletonSchema extends new SchemaFactoryBeta<TScope, TName>(factory.scope).object(
 		name,
 		{},
