@@ -1,4 +1,7 @@
 {
+	"$schema": "https://raw.githubusercontent.com/agency-microsoft/.github-private/main/agency.schema.json",
+	"pluginId": "b5b79440-8028-4ffa-8128-c29a521a6285",
+	"authors": [{ "name": "Tommy Brosman", "email": "tbrosman@microsoft.com" }],
 	"engines": ["copilot", "claude"],
 	"category": "developer-tools",
 	"governance": {
