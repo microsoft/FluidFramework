@@ -419,6 +419,33 @@ export interface IRevertible {
     revert(): any;
 }
 
+// @alpha @sealed
+export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
+    applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+    applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
+    applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
+    attributeNodeId(id: NodeId): AttributionId;
+    readonly attributionId: AttributionId;
+    readonly currentView: RevisionView;
+    readonly edits: OrderedEditSet<InternalizedChange>;
+    equals(sharedTree: ISharedTree): boolean;
+    getRuntime(): IFluidDataStoreRuntime;
+    getWriteFormat(): WriteFormat;
+    internalizeChange(change: Change): ChangeInternal;
+    loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
+    loadSummary(summary: SharedTreeSummaryBase): void;
+    readonly logger: ITelemetryLoggerExt;
+    readonly logViewer: LogViewer;
+    mergeEditsFrom(other: ISharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
+    revert(editId: EditId): EditId | undefined;
+    revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
+    saveSerializedSummary(options?: {
+        serializer?: IFluidSerializer;
+    }): string;
+    saveSummary(): SharedTreeSummaryBase;
+    summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+}
+
 // @alpha
 export interface ISharedTreeEvents extends ISharedObjectEvents {
     // (undocumented)
