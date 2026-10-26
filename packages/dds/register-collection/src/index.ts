@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
 export {
 	ConsensusRegisterCollectionFactory,
 	ConsensusRegisterCollection,
