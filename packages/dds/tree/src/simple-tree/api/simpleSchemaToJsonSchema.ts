@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ValueSchema } from "../../core/index.js";
-import { copyProperty, hasSingle, type Mutable } from "../../util/index.js";
+import { compareStrings, copyProperty, hasSingle, type Mutable } from "../../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { FieldKind } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
@@ -75,12 +75,15 @@ export function toJsonSchema(
 			};
 }
 
+/**
+ * Converts definitions in order sorted by identifier so shared map insertion order does not affect JSON output.
+ */
 function convertDefinitions(
 	definitions: ReadonlyMap<string, TreeNodeSchema>,
 	options: Required<TreeSchemaEncodingOptions>,
 ): Record<string, JsonNodeSchema> {
 	const result: Record<string, JsonNodeSchema> = {};
-	for (const [key, value] of definitions) {
+	for (const [key, value] of [...definitions].sort(([a], [b]) => compareStrings(a, b))) {
 		result[key] = convertNodeSchema(value, options);
 	}
 	return result;

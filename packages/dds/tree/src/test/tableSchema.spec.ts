@@ -2984,17 +2984,12 @@ describe("TableFactory unit tests", () => {
 		useSnapshotDirectory("table-schema-json");
 
 		it("schema", () => {
-			const schema = getJsonSchema(Table, {
-				requireFieldsWithDefaults: false,
-				keys: KeyEncodingOptions.usePropertyKeys,
-			});
-			// Snapshot ordering must not depend on which root first populated a shared definitions map.
-			takeJsonSnapshot({
-				...schema,
-				$defs: Object.fromEntries(
-					Object.entries(schema.$defs).sort(([a], [b]) => a.localeCompare(b)),
-				),
-			} as unknown as JsonCompatibleReadOnly);
+			takeJsonSnapshot(
+				getJsonSchema(Table, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}) as unknown as JsonCompatibleReadOnly,
+			);
 		});
 
 		it("data (verbose)", () => {

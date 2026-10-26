@@ -14,8 +14,7 @@ import {
 	toStoredSchema,
 	type SchemaUpgrade,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../simple-tree/createContext.js";
+import { getUnhydratedContext, createTreeSchema } from "../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../simple-tree/fieldSchema.js";
 import {
@@ -25,7 +24,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createTreeSchema, getSchemaDerivedData } from "../simple-tree/treeSchema.js";
+import { getSchemaDerivedData } from "../simple-tree/treeSchema.js";
 
 import {
 	getStagedSchemaUpgrades,
