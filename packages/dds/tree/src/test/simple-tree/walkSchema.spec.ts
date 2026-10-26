@@ -50,6 +50,7 @@ function recordWalkAllowedTypes(
 	return [visitedNodes, visitedAllowedTypes];
 }
 
+// Component and incremental traversal coverage is in walkSchemaComponents.spec.ts.
 describe("walk schema", () => {
 	const sf = new SchemaFactoryAlpha("walk schema tests");
 

@@ -12,7 +12,6 @@ import {
 
 import {
 	getTreeNodeSchemaPrivateData,
-	walkAllowedTypes,
 	walkSchema,
 	walkNodeSchema,
 	type AllowedTypesFullEvaluated,
@@ -22,31 +21,11 @@ import {
 	type TreeNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import { SchemaFactoryAlpha } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Exercise the field-root visitor entry point.
 import { walkFieldSchema } from "../../simple-tree/walkFieldSchema.js";
-import type {
-	areSafelyAssignable,
-	isAssignableTo,
-	requireFalse,
-	requireTrue,
-} from "../../util/index.js";
+import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
 
-type _sharedFieldCallback = requireTrue<
-	areSafelyAssignable<IncrementalSchemaVisitor["allowedTypes"], SchemaVisitor["allowedTypes"]>
->;
-type _sharedTypeFilter = requireTrue<
-	areSafelyAssignable<
-		IncrementalSchemaVisitor["allowedTypeFilter"],
-		SchemaVisitor["allowedTypeFilter"]
-	>
->;
-type _sharedComponentCallback = requireTrue<
-	areSafelyAssignable<
-		IncrementalSchemaVisitor["stronglyConnectedComponent"],
-		NonNullable<SchemaVisitor["stronglyConnectedComponent"]>
-	>
->;
 type _incrementalIsNotOrdinary = requireFalse<
 	isAssignableTo<IncrementalSchemaVisitor, SchemaVisitor>
 >;
@@ -69,6 +48,7 @@ function graph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
 	return nodes;
 }
 
+// Tests component and incremental traversal; ordinary traversal coverage is in walkSchema.spec.ts.
 describe("schema component visitor", () => {
 	it("filters references before querying previous component visits", () => {
 		const sf = new SchemaFactoryAlpha("filterBeforePreviousVisit");
@@ -369,13 +349,10 @@ describe("schema component visitor", () => {
 	it("visits cached and uncached fields in the same order as the ordinary walk", () => {
 		const [a, b, c, d] = graph([[1, 2, 1], [0], [3], []]);
 		assert(a !== undefined && b !== undefined && c !== undefined && d !== undefined);
-		const root = normalizeFieldSchema(a);
 		const expected: AllowedTypesFullEvaluated[] = [];
-		walkAllowedTypes(root.allowedTypesFull.evaluate(), {
+		walkSchema([a], {
 			allowedTypes: (types) => expected.push(types),
 		});
-		// walkSchema starts at node roots, so it does not report the field wrapper used by walkAllowedTypes.
-		expected.pop();
 		for (const cachedRoot of [undefined, c, a]) {
 			const completed = new Set<TreeNodeSchema>();
 			if (cachedRoot !== undefined) {
@@ -417,13 +394,13 @@ describe("schema component visitor", () => {
 			const nodes = graph(edges);
 			const completed = new Set<TreeNodeSchema>();
 			const components: number[][] = [];
-			walkAllowedTypes(normalizeFieldSchema(nodes).allowedTypesFull.evaluate(), {
+			walkSchema(nodes, {
 				stronglyConnectedComponent: (members) => {
 					const identities = new Set(members);
 					for (const schema of members) {
 						for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-							for (const type of field.evaluate().types) {
-								assert(identities.has(type.type) || completed.has(type.type));
+							for (const dependency of field.evaluateSet()) {
+								assert(identities.has(dependency) || completed.has(dependency));
 							}
 						}
 					}

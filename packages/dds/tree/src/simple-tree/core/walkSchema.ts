@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type AllowedTypesFullEvaluated,
 	markSchemaMostDerived,
@@ -162,7 +161,7 @@ export function walkSchema(
 	function* references(schema: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
 		// Do not initialize contexts: this walk is itself used during node initialization.
 		for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-			const types = normalizeAndEvaluateAnnotatedAllowedTypes(field);
+			const types = field.evaluate();
 			// Preserve the full annotation sequence, but prune previously visited components before yielding.
 			yield* visitAllowedTypes(types, referenceVisitor);
 		}
