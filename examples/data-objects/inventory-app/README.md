@@ -28,6 +28,18 @@ Complete these steps to run the example:
 npm run test
 ```
 
+After building the example and its dependencies, run the browser tests:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:playwright
+```
+
+The tests start the app on port 8091 and cover inventory controls and session-backed reloads.
+To also test collaboration and reopening with independent browser contexts, start `pnpm tinylicious` in a separate terminal, then run `INVENTORY_TEST_TINYLICIOUS=1 pnpm test:playwright`.
+Tinylicious must listen on port 7070.
+Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to use an installed Chromium executable instead of Playwright's downloaded browser.
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
