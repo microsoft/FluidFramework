@@ -17,9 +17,11 @@ The `flub typetests --reset --previous` command fetches the previously released 
 
 ## Step 8: Update Type Test Baselines on Main
 
+For Steps 8–9, use working branches based on each Microsoft target. In an app-managed worktree, use session branches based on those targets instead of switching branches.
+
 ```bash
-git checkout main
-git pull
+git fetch <CANONICAL_REMOTE> main
+git switch -c <TYPE_TEST_MAIN_BRANCH> FETCH_HEAD
 ```
 
 ### Reset and regenerate
@@ -57,11 +59,11 @@ Commit and create a PR targeting `main`.
 
 ## Step 9: Update Type Test Baselines on Release Branch
 
-Switch to the release branch and repeat the same process:
+Start a separate working branch from the Microsoft release branch. In an app-managed worktree, use a session branch based on this tip.
 
 ```bash
-git checkout release/client/<MAJOR>.<MINOR>
-git pull
+git fetch <CANONICAL_REMOTE> release/client/<MAJOR>.<MINOR>
+git switch -c <TYPE_TEST_RELEASE_BRANCH> FETCH_HEAD
 ```
 
 ```bash

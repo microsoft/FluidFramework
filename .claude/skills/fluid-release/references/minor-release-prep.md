@@ -12,17 +12,17 @@ Run all steps sequentially. Create PRs automatically. At the end, report all PRs
 
 If any step fails (permission error, git push rejected, etc.), fall back to opening a GitHub issue describing what was completed, what failed, and the remaining steps with exact commands. Label with `release-blocking`.
 
-**Branch naming:** Use the standard `release-prep/<VERSION>/<step>` convention (see SKILL.md). NOT `release/`, which is protected on upstream.
-**Push target:** Push working branches to `upstream` if configured, otherwise `origin`.
+**Branch naming:** Use the standard `release-prep/<VERSION>/<step>` convention (see SKILL.md). NOT `release/`, which is protected on Microsoft.
+**Push target:** Push working branches to `origin` (the engineer's fork, or Microsoft in CI). Create PRs targeting Microsoft `main` using the fluid-pr skill.
 
 Before starting, check for existing progress:
 
 ```bash
-git ls-remote --heads upstream 'release-prep/<VERSION>/*'
+git ls-remote --heads origin 'release-prep/<VERSION>/*'
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
 ```
 
-Skip any steps that already have merged PRs or open branches.
+Check the PR head, base, and merge state before skipping a step.
 
 ## Overview
 
@@ -40,7 +40,7 @@ Then create the release branch from the commit before the version bump.
 pnpm run policy-check:asserts
 ```
 
-If there are changes, create branch `release-prep/<VERSION>/1-tag-asserts`, commit, push to upstream, and create a PR. This PR must merge before the version bump PR.
+If there are changes, create branch `release-prep/<VERSION>/1-tag-asserts`, commit, push to `origin`, and create a PR. This PR must merge before the version bump PR.
 
 Timing note: do this close to release to minimize untagged asserts being merged afterward.
 
@@ -50,7 +50,7 @@ Timing note: do this close to release to minimize untagged asserts being merged 
 pnpm -r run layerGeneration:gen
 ```
 
-This often produces no changes. If there are changes, create branch `release-prep/<VERSION>/2-compat-gen`, commit, push to upstream, and create a PR. Must merge before the version bump PR.
+This often produces no changes. If there are changes, create branch `release-prep/<VERSION>/2-compat-gen`, commit, push to `origin`, and create a PR. Must merge before the version bump PR.
 
 This generates changes only if 33+ days have passed since the last update for a given package (tracked in `fluidCompatMetadata` in package.json).
 
@@ -77,7 +77,7 @@ pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/<VERS
 pnpm flub generate changelog -g client
 ```
 
-Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR. Must merge before the version bump PR.
+Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to `origin`, and create a PR. Must merge before the version bump PR.
 
 ### If changeset edits are needed after generation
 
@@ -99,6 +99,7 @@ If the release notes PR has already merged but needs to be redone (e.g., new cha
 
 2. For each affected changeset, find the original commit that introduced it:
    ```bash
+   git fetch upstream
    git log upstream/main --reverse --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
    ```
 
@@ -149,14 +150,14 @@ This regenerates:
 
 If the bump doesn't cross a compatibility checkpoint and the newly released version isn't yet on npm, this is often a no-op — but **always run it** so the next release doesn't conflate changes. The script will be re-run during [type test updates](type-test-updates.md) Step 8 to pick up the freshly published version as N-1.
 
-Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
+Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to `origin`, and create a PR. **This PR must merge LAST.**
 
 ## Step 5: Create the Release Branch
 
 **CI note:** This step requires elevated permissions to create `release/` branches. In CI, skip this step and report it as a required human action.
 
 ### Pre-checks
-- Verify all four PRs are merged
+- Verify all required prep PRs are merged; merge the version bump last
 - Check again for release-blocking issues:
 
 ```bash
@@ -177,10 +178,11 @@ If the user has indicated that PRs are already merged (e.g., re-invoked after me
 
 ### Find the correct commit
 
-The release branch is created from the commit **immediately before** the version bump commit. Use:
+The release branch is created from the commit **immediately before** the version bump commit on Microsoft `main`. Fetch that branch first:
 
 ```bash
-git log --oneline -10
+git fetch upstream
+git log upstream/main --oneline -10
 ```
 
 Identify the version bump commit and use the commit before it.
@@ -193,13 +195,10 @@ Branch name format: `release/client/<major>.<minor>` (e.g., `release/client/2.90
 git checkout -b release/client/<MAJOR>.<MINOR> <COMMIT_BEFORE_BUMP>
 ```
 
-Push to `upstream` if available (check `git remote -v`), otherwise `origin`:
+Push to `upstream` (check `git remote -v`):
 
 ```bash
-# Preferred (if upstream remote exists):
 git push upstream release/client/<MAJOR>.<MINOR>
-# Fallback:
-git push --set-upstream origin release/client/<MAJOR>.<MINOR>
 ```
 
 - **Interactive:** Pause and confirm before pushing. The user may not have permissions to create release branches.
