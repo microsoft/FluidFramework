@@ -44,7 +44,7 @@ export function walkAllowedTypes(
 }
 
 /**
- * Traverses node roots using iterative depth-first search, with optional Tarjan strongly connected component analysis.
+ * Traverses the schema graph reachable from node roots, applying the supplied visitor.
  * @param roots - Node roots to visit. The allowed-type filter applies to child references, not these explicit roots.
  * @param visitor - Callbacks and filtering for this walk, optionally including caller-owned knowledge of previous component visits.
  * @param visited - Schema identities excluded from discovery, updated as new nodes are discovered.
@@ -57,7 +57,16 @@ export function walkAllowedTypes(
  * Ordinary {@link SchemaVisitor}s report every visited component when requested, independently of caller-owned results.
  * The walker retains no internal state between calls. Failed walks discard unfinished component analysis;
  * results from successfully completed component callbacks remain the caller's responsibility.
- * @internal
+ *
+ * @privateRemarks
+ * TreeNodeSchema references form a directed graph, which may contain cycles.
+ * To handle this, we use Tarjan's strongly connected components algorithm.
+ * See https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
+ *
+ * The strongly connected components are passed to {@link SchemaVisitor.stronglyConnectedComponent},
+ * but also used to more generally handle the cycles and ensure we visit each node exactly once.
+ * There are simpler ways to visit each node exactly once, but there are some use-cases of this traversal
+ * that benefit from knowing the strongly connected components explicitly, so that analysis is included here.
  */
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
@@ -112,7 +121,23 @@ export function walkSchema(
 	/**
 	 * Per-walk component bookkeeping, separate from the caller's knowledge of previous component visits.
 	 */
-	const analysis =
+	interface ComponentAnalysis {
+		/**
+		 * Visitor callback invoked when a component completes.
+		 */
+		readonly completed: NonNullable<SchemaVisitor["stronglyConnectedComponent"]>;
+		/**
+		 * Discovered nodes participating in this walk's component analysis, including completed components.
+		 * Excludes nodes covered by the caller's previous component visits.
+		 */
+		readonly states: Map<TreeNodeSchema, ComponentState>;
+		/**
+		 * Nodes in unfinished components, in discovery order.
+		 * Unlike the traversal frame stack, retains nodes whose fields have finished until their component completes.
+		 */
+		readonly stack: ComponentState[];
+	}
+	const analysis: ComponentAnalysis | undefined =
 		visitor.stronglyConnectedComponent === undefined
 			? undefined
 			: {
@@ -187,7 +212,7 @@ export function walkSchema(
 	 * Called after the node callback and after removing the node's traversal frame.
 	 */
 	function finishComponentFrame(
-		componentAnalysis: NonNullable<typeof analysis>,
+		componentAnalysis: ComponentAnalysis,
 		componentState: ComponentState,
 		parentState: ComponentState | undefined,
 	): void {
@@ -315,7 +340,6 @@ export interface SchemaVisitor {
  * No cache is maintained by the walker, and retaining cached results is not required by this interface.
  * Node callbacks are excluded: this mode omits previously completed component visits.
  * Neither the callbacks nor the predicate may initialize node contexts during schema discovery.
- * @internal
  */
 export interface IncrementalSchemaVisitor
 	extends Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter">,
