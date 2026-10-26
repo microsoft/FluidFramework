@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
+import { exampleAppConfig } from "@fluid-example/webpack-fluid-loader";
 
-module.exports = (env) =>
-	fluidRoute.exampleAppConfig(__dirname, env, {
+export default (env) =>
+	exampleAppConfig(import.meta.dirname, env, {
 		html: { title: "Fluid Inventory" },
 	});
