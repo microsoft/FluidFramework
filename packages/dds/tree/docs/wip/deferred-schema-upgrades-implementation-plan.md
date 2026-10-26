@@ -72,6 +72,25 @@ Validation:
 
 No public deferred-upgrade option is exposed by M0.
 
+### M1: pure schema and publication decisions
+
+[viewBranch.ts](../../src/shared-tree/viewBranch.ts) now contains read-only decisions for received schema and publication outcomes.
+The schema decision uses the actual received schema; a viewable covering schema ends deferral without requiring upgrade permission.
+Publication decisions accept a definitive initial failure once, require a new retry revision, ignore stale/duplicate outcomes, and fail after a rejected retry or violated constraints.
+Application cancellation and ordinary transport resubmission are explicitly outside this outcome input.
+
+[deferredSchemaRebase.ts](../../src/shared-tree/deferredSchemaRebase.ts) defines the isolated temporary adapter boundary.
+It does not implement reconstruction yet.
+The controller must own retained history, publication, and error handling; the adapter cannot report an unsafe transformation as an empty successful change.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|deferred schema upgrades: branch primitives' --reporter dot`: 16 passed.
+- `pnpm --dir packages/dds/tree exec eslint src/shared-tree/viewBranch.ts src/shared-tree/deferredSchemaRebase.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree exec biome check --write src/shared-tree/viewBranch.ts src/shared-tree/deferredSchemaRebase.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
+
 ## 1. Development method
 
 ### Documentation-driven and test-driven increments
