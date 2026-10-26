@@ -84,6 +84,7 @@ describe("Summarizer Client Election", () => {
 			this.notImplemented();
 		}
 		public get cancelled() {
+			// Approximation, as ideally it should become cancelled immediately after stop() call
 			return this.state !== "running";
 		}
 		public close() {}
@@ -383,8 +384,8 @@ describe("Summarizer Client Election", () => {
 				["b", 2, true],
 			]);
 			addClient("s", 3, false, summarizerClientType);
-			addClient("other", 4, false, summarizerClientType);
-			election.resetElectedClient(4);
+			addClient("other", 4, false, summarizerClientType); // Ignored join.
+			election.resetElectedClient(4); // Ignored reset.
 			removeClient("a");
 			removeClient("s");
 			const transitions = mockLogger.events.filter(
