@@ -18,16 +18,19 @@ import type {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep type names stable in API reports. */
 import {
 	FieldKind,
 	type FieldSchema,
 	type ImplicitFieldSchema,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep API report references named FieldProps rather than FieldProps_2.
 	type FieldProps,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep API report references named FieldPropsAlpha rather than FieldPropsAlpha_2.
 	type FieldPropsAlpha,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep API report references named FieldSchemaAlpha rather than FieldSchemaAlpha_2.
 	type FieldSchemaAlpha,
 	createFieldSchema,
 } from "../fieldSchema.js";
+// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep API report references named LeafSchema rather than LeafSchema_2.
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	arraySchema,
@@ -50,9 +53,9 @@ import {
 import type {
 	SchemaType,
 	SimpleObjectNodeSchema,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars -- Keep API report references named SimpleLeafNodeSchema rather than SimpleLeafNodeSchema_2.
 	SimpleLeafNodeSchema,
 } from "../simpleSchema.js";
-/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 
 import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import { schemaStaticsAlpha } from "./schemaFactoryAlpha.js";
