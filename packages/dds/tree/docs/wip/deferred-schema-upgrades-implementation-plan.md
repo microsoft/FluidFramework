@@ -91,6 +91,28 @@ Validation:
 - `pnpm --dir packages/dds/tree exec eslint src/shared-tree/viewBranch.ts src/shared-tree/deferredSchemaRebase.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
 - `pnpm --dir packages/dds/tree exec biome check --write src/shared-tree/viewBranch.ts src/shared-tree/deferredSchemaRebase.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
 
+### M2: persistent synchronization foundation
+
+The controller now publishes local branch changes and rebases received base changes without disposing the authoring checkout.
+An internal completed-operation event is emitted only after edit locks and transaction-branch work have completed.
+This avoids publishing or rebasing midway through transaction cleanup.
+Source disposal unregisters controller listeners without disposing the base.
+Explicit base synchronization forwards remote-change origin, and base sequencing forwards local commit outcomes.
+
+The initial synchronization tests failed because the private edits and remote updates were not propagated.
+They now pass, including an asynchronous transaction that receives remote data while open.
+The event-forwarding regression failed independently before remote origin and settled outcomes were connected.
+The public one-view reservation and deferred-mode factory wiring remain part of M3/M8; no opt-in is exposed yet.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|deferred schema upgrades: branch primitives' --reporter dot`: 264 passed.
+- `pnpm --dir packages/dds/tree exec biome check --write src/shared-tree/treeCheckout.ts src/shared-tree/viewBranch.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree exec eslint src/shared-tree/treeCheckout.ts src/shared-tree/viewBranch.ts src/test/shared-tree/viewBranch.spec.ts`: passed with three existing warnings in checkout code.
+- `pnpm --dir packages/dds/tree run depcruise` reported zero modules examined, so it is not treated as layering evidence.
+
 ## 1. Development method
 
 ### Documentation-driven and test-driven increments

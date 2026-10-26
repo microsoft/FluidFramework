@@ -253,6 +253,14 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
+	 * A change operation has completed, with no active transaction branch or edit lock.
+	 * @remarks
+	 * Internal coordination can use this boundary to synchronize checkouts.
+	 * Unlike `afterBatch`, this event is not raised for intermediate transaction edits.
+	 */
+	afterOperation(): void;
+
+	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
@@ -573,6 +581,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private editLock: EditLock;
+	private synchronizingFromBase = false;
 
 	/**
 	 * Root of the mutable label tree tracking transaction nesting.
@@ -854,6 +863,7 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
+				this.emitAfterOperation();
 			};
 		});
 	}
@@ -1050,7 +1060,25 @@ export class TreeCheckout implements ITreeCheckout {
 				this.validateCommit(commit);
 			}
 		}
+		this.emitAfterOperation();
 	};
+
+	/**
+	 * Whether another checkout may synchronize with this checkout without observing a partial edit.
+	 */
+	public get canSynchronize(): boolean {
+		return (
+			!this.editLock.isLocked &&
+			this.#transaction.size === 0 &&
+			this.#transaction.activeBranch === this.#transaction.branch
+		);
+	}
+
+	private emitAfterOperation(): void {
+		if (this.canSynchronize) {
+			this.#events.emit("afterOperation");
+		}
+	}
 
 	/**
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
@@ -1538,6 +1566,7 @@ export class TreeCheckout implements ITreeCheckout {
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+		this.emitAfterOperation();
 	}
 
 	public rewindTo(revisionString: string): void {
@@ -1643,6 +1672,23 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(view: UntypedTreeView): void {
 		getCheckout(view).rebase(this);
+	}
+
+	/**
+	 * Rebases an internal authoring checkout over its base and reports received changes as remote.
+	 * @remarks The caller must use a completed-operation boundary on both checkouts.
+	 */
+	public synchronizeFrom(base: TreeCheckout): void {
+		assert(
+			this.canSynchronize && base.canSynchronize,
+			"Checkout synchronization requires completed operations.",
+		);
+		this.synchronizingFromBase = true;
+		try {
+			this.rebaseOnto(base);
+		} finally {
+			this.synchronizingFromBase = false;
+		}
 	}
 
 	public isMissingEditsFrom(view: UntypedTreeView): boolean {
@@ -1887,8 +1933,8 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
-			// Remote changes are only ever applied to shared branches
-			this.isSharedBranch &&
+			// Internal authoring checkouts receive base changes through explicit synchronization.
+			(this.isSharedBranch || this.synchronizingFromBase) &&
 			// Remote changes are applied to the branch by rebasing it onto the trunk.
 			// No other rebases are allowed on shared branches, so we can use this to detect remote changes.
 			event.type === "rebase"
@@ -2105,6 +2151,10 @@ class EditLock {
 	private status:
 		| { readonly isLocked: false }
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
+
+	public get isLocked(): boolean {
+		return this.status.isLocked;
+	}
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.

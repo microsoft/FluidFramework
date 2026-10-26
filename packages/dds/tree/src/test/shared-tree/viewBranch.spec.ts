@@ -11,17 +11,138 @@ import {
 	retryViewPublication,
 	settleViewPublication,
 	type ViewPublicationState,
+	ViewBranch,
 	// eslint-disable-next-line import-x/no-internal-modules -- Tests the internal view-branch decisions.
 } from "../../shared-tree/viewBranch.js";
 import {
 	SchemaFactoryBeta,
+	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 
-import { mintRevisionTag } from "../utils.js";
+import { mintRevisionTag, TestTreeProviderLite } from "../utils.js";
 
 describe("viewBranch", () => {
+	describe("persistent synchronization", () => {
+		const sf = new SchemaFactoryBeta("viewBranchSynchronization");
+		const config = new TreeViewConfiguration({ schema: sf.array("Root", sf.string) });
+
+		function createSynchronizedViews() {
+			const provider = new TestTreeProviderLite(2);
+			const remote = provider.trees[0].kernel.viewWith(config);
+			remote.initialize([]);
+			provider.synchronizeMessages();
+			const base = provider.trees[1].kernel.checkout;
+			const branch = new ViewBranch(base);
+			const view = branch.checkout.viewWith(config);
+			return { provider, remote, base, branch, view };
+		}
+
+		it("publishes successive local edits without replacing the authoring view", () => {
+			const { provider, remote, branch, view } = createSynchronizedViews();
+			const root = view.root;
+			try {
+				root.insertAtEnd("first");
+				provider.synchronizeMessages();
+				root.insertAtEnd("second");
+				provider.synchronizeMessages();
+
+				assert.deepEqual([...remote.root], ["first", "second"]);
+				assert.deepEqual([...root], ["first", "second"]);
+				assert.equal(view.root === root, true, "Synchronization replaced the root node.");
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("rebases remote edits into the view without echoing them to the base", () => {
+			const { provider, remote, branch, view } = createSynchronizedViews();
+			try {
+				remote.root.insertAtEnd("remote");
+				provider.synchronizeMessages();
+
+				assert.deepEqual([...view.root], ["remote"]);
+				assert.equal(provider.peekNextMessage(), undefined, "A remote edit was echoed back.");
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps transaction edits private and does not publish an abort", () => {
+			const { provider, remote, branch, view } = createSynchronizedViews();
+			try {
+				const result = view.runTransaction(() => {
+					view.root.insertAtEnd("cancelled");
+					assert.equal(provider.peekNextMessage(), undefined);
+					return { rollback: true };
+				});
+
+				assert.equal(result.success, false);
+				assert.deepEqual([...view.root], []);
+				assert.equal(provider.peekNextMessage(), undefined);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("reports remote changes once and forwards the settled outcome of local edits", () => {
+			const { provider, remote, branch, view } = createSynchronizedViews();
+			const origins: boolean[] = [];
+			const outcomes: CommitOutcome[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				origins.push(metadata.isLocal);
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			try {
+				view.root.insertAtEnd("local");
+				provider.synchronizeMessages();
+				remote.root.insertAtEnd("remote");
+				provider.synchronizeMessages();
+
+				assert.deepEqual(origins, [true, false], "Change origins were lost or duplicated.");
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied]);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("reconciles remote changes after an asynchronous transaction completes", async () => {
+			const { provider, remote, branch, view } = createSynchronizedViews();
+			try {
+				await view.runTransactionAsync(async () => {
+					view.root.insertAtEnd("local");
+					remote.root.insertAtStart("remote");
+					provider.synchronizeMessages();
+					await Promise.resolve();
+					assert.deepEqual([...view.root], ["local"], "The transaction was not isolated.");
+				});
+				provider.synchronizeMessages();
+
+				assert.deepEqual([...view.root], [...remote.root]);
+				assert.equal(view.root.length, 2, "A transaction or remote edit was lost.");
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("disposes the private checkout without disposing the base", () => {
+			const { remote, base, branch } = createSynchronizedViews();
+			branch.dispose();
+			assert.equal(branch.checkout.disposed, true);
+			assert.equal(base.disposed, false);
+			remote.dispose();
+		});
+	});
+
 	describe("decideViewSchema", () => {
 		const sf = new SchemaFactoryBeta("viewBranch");
 		const v1 = sf.object("Root", { title: sf.string });

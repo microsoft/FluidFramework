@@ -5,9 +5,17 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { CommitOutcome, type RevisionTag, type TreeStoredSchema } from "../core/index.js";
+import {
+	CommitOutcome,
+	type GraphCommit,
+	type RevisionTag,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { checkSchemaCompatibility, type TreeSchema } from "../simple-tree/index.js";
+
+import type { TreeCheckout } from "./treeCheckout.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 export type {
 	DeferredSchemaRebase,
@@ -113,4 +121,63 @@ export function retryViewPublication(
 ): ViewPublicationState {
 	assert(revision !== state.revision, "A retry must use a new publication revision.");
 	return { type: "pending", revision, attempt: "retry" };
+}
+
+/**
+ * Owns a persistent authoring checkout backed by a borrowed base checkout.
+ * @remarks Disposing the controller releases the private checkout, not the base.
+ */
+export class ViewBranch {
+	public readonly checkout: TreeCheckout;
+	private synchronizedHead: GraphCommit<SharedTreeChange>;
+	private readonly unsubscribe: (() => void)[];
+	private synchronizing = false;
+	private disposed = false;
+
+	public constructor(private readonly base: TreeCheckout) {
+		this.checkout = base.fork();
+		this.synchronizedHead = this.checkout.mainBranch.getHead();
+		this.unsubscribe = [
+			base.events.on("afterOperation", () => this.synchronize()),
+			this.checkout.events.on("afterOperation", () => this.synchronize()),
+			this.checkout.events.on("dispose", () => this.dispose()),
+			base.mainBranch.events.on("commitSequenced", (commit) =>
+				this.checkout.mainBranch.commitWasSequenced(commit),
+			),
+		];
+	}
+
+	private synchronize(): void {
+		if (
+			this.disposed ||
+			this.synchronizing ||
+			!this.base.canSynchronize ||
+			!this.checkout.canSynchronize
+		) {
+			return;
+		}
+		this.synchronizing = true;
+		try {
+			if (this.checkout.mainBranch.getHead() !== this.synchronizedHead) {
+				this.base.merge(this.checkout, false);
+			}
+			this.checkout.synchronizeFrom(this.base);
+			this.synchronizedHead = this.checkout.mainBranch.getHead();
+		} finally {
+			this.synchronizing = false;
+		}
+	}
+
+	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
+		this.disposed = true;
+		for (const off of this.unsubscribe) {
+			off();
+		}
+		if (!this.checkout.disposed) {
+			this.checkout.dispose();
+		}
+	}
 }
