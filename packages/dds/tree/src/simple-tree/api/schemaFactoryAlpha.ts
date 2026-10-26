@@ -104,6 +104,37 @@ export type NodeProvider<T> = T | (() => T);
  */
 export interface SchemaStaticsAlpha {
 	/**
+	 * Defines an experimental additive numeric object field.
+	 * @remarks
+	 * Constructor input is a number; property reads return a {@link TreeCounter} with `value` and `add`.
+	 * Requires an initializer unless a default is supplied with {@link SchemaStaticsAlpha.withDefault}.
+	 * Use {@link SchemaFactoryAlpha.objectAlpha} for constructor types that recognize defaulted fields.
+	 * Counter fields are not supported at the root.
+	 *
+	 * Hydrated use requires explicitly selecting the experimental counter format for both messages and edit-manager history.
+	 * Default formats do not support counters; this proof of concept is not a production or mixed-version compatibility guarantee.
+	 *
+	 * Direct property assignment is rejected at runtime; use the accessor's `add` method.
+	 * Assigning another accessor can still type-check because counter properties are not compile-time readonly.
+	 * @param types - The built-in numeric leaf schema.
+	 * @param props - Field metadata, stored key, and other field options.
+	 * @returns The counter field schema.
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryAlpha("example");
+	 * class Score extends sf.objectAlpha("Score", {
+	 *     points: sf.withDefault(sf.counter(sf.number), 0),
+	 * }) {}
+	 * const score = new Score({});
+	 * score.points.add(3); // Returns 3.
+	 * const points = score.points.value; // 3.
+	 * ```
+	 */
+	readonly counter: <TCustomMetadata = unknown>(
+		types: typeof SchemaFactoryAlpha.number,
+		props?: FieldPropsAlpha<TCustomMetadata>,
+	) => FieldSchemaAlpha<FieldKind.Counter, typeof SchemaFactoryAlpha.number, TCustomMetadata>;
+	/**
 	 * Creates a field schema with a default value.
 	 *
 	 * @remarks
@@ -342,6 +373,7 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 };
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	counter: (types, props) => createFieldSchema(FieldKind.Counter, types, props ?? {}),
 	withDefault,
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
 	stagedOptional,
@@ -361,6 +393,15 @@ export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > extends SchemaFactoryBeta<TScope, TName> {
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.counter}
+	 */
+	public readonly counter = schemaStaticsAlpha.counter;
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.counter}
+	 */
+	public static readonly counter = schemaStaticsAlpha.counter;
+
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
 	 *

@@ -113,6 +113,7 @@ export {
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
 	cloneTree,
+	assertTreeContent,
 	type TreeChangeEventsBeta,
 	type IdentifierIndex,
 	createTreeIndex,
@@ -266,6 +267,8 @@ export type {
 export {
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
+	type TreeRootFromImplicitField,
+	type TreeCounter,
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,

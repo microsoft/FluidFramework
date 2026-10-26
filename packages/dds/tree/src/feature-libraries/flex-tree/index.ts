@@ -10,6 +10,7 @@ export {
 	type FlexTreeTypedField,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
+	type FlexTreeCounterField,
 	type FlexTreeSequenceField,
 	TreeStatus,
 	type FlexTreeUnknownUnboxed,

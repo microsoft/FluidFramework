@@ -593,6 +593,45 @@ export class UnhydratedOptionalField
 	}
 }
 
+/**
+ * Counter field backed by unhydrated nodes; additions replace the leaf through the normal event-emitting edit path.
+ * Numeric validation is performed by the Simple-tree accessor before calling this editor.
+ */
+class UnhydratedCounterField extends UnhydratedFlexTreeField {
+	/**
+	 * The unboxed current value.
+	 */
+	public get content(): number {
+		const value = this.unboxed(0);
+		assert(typeof value === "number", "Counter field must contain a number");
+		return value;
+	}
+
+	/**
+	 * Applies additions locally without creating collaborative changesets.
+	 * Returns the value after the addition.
+	 */
+	public readonly editor = {
+		/**
+		 * Adds to the current value and notifies the owning node through the normal edit path.
+		 * @param amount - The contribution; callers must validate finite input and result.
+		 * @returns The new local value.
+		 */
+		add: (amount: number): number => {
+			const child = this.children[0] ?? oob();
+			const value = this.content + amount;
+			this.edit(() => [
+				new UnhydratedFlexTreeNode(
+					{ type: child.type, value },
+					new Map(),
+					child.simpleContext,
+				),
+			]);
+			return value;
+		},
+	};
+}
+
 class UnhydratedRequiredField
 	extends UnhydratedOptionalField
 	implements FlexTreeRequiredField
@@ -744,6 +783,9 @@ export function createField(
 	...args: ConstructorParameters<typeof UnhydratedFlexTreeField>
 ): UnhydratedFlexTreeField {
 	switch (args[1]) {
+		case FieldKinds.counter.identifier: {
+			return new UnhydratedCounterField(...args);
+		}
 		case FieldKinds.required.identifier:
 		case FieldKinds.identifier.identifier: {
 			return new UnhydratedRequiredField(...args);

@@ -33,6 +33,7 @@ import {
 	isObjectNodeSchema,
 	isMapNodeSchema,
 	isRecordNodeSchema,
+	assertTreeContent,
 	eraseSchemaDetailsSubclassable,
 	NodeKind,
 } from "../simple-tree/index.js";
@@ -212,6 +213,7 @@ export namespace FormattedText {
 			format: TreeFieldFromImplicitField<FormatSchema>,
 		): TreeFieldFromImplicitField<FormatSchema> &
 			TreeNodeFromImplicitAllowedTypes<FormatSchema> {
+			assertTreeContent(format);
 			const clone: TreeFieldFromImplicitField<FormatSchema> =
 				TreeBeta.clone<FormatSchema>(format);
 			// TypeScript fails to prove that cloning a node gives a node, and not possible undefined (like cloning a empty field could).

@@ -14,3 +14,7 @@ export const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
 export const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
 export const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
 export const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
+/**
+ * Persisted identity for the experimental additive numeric field, distinct from replaceable value fields.
+ */
+export const counterFieldIdentifier = brandConst("ExperimentalCounter")<FieldKindIdentifier>();

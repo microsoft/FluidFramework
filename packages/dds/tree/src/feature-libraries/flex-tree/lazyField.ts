@@ -39,6 +39,7 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeCounterField,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -375,6 +376,30 @@ export class LazyValueField extends LazyField implements FlexTreeRequiredField {
 	}
 }
 
+/**
+ * Hydrated counter field that submits additive changes against its current forest value.
+ */
+class LazyCounterField extends LazyField implements FlexTreeCounterField {
+	/**
+	 * {@inheritDoc FlexTreeCounterField.content}
+	 */
+	public get content(): number {
+		const value = this.atIndex(0);
+		assert(typeof value === "number", "Counter field must contain a number");
+		return value;
+	}
+	/**
+	 * {@inheritDoc FlexTreeCounterField.editor}
+	 */
+	public readonly editor = {
+		add: (amount: number): number => {
+			const before = this.content;
+			this.getEditor().counterField(this.getFieldPathForEditing()).add(before, amount);
+			return this.content;
+		},
+	};
+}
+
 export class LazyOptionalField extends LazyField implements FlexTreeOptionalField {
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
@@ -412,6 +437,7 @@ const builderList: [FieldKindIdentifier, Builder][] = [
 	[FieldKinds.sequence.identifier, LazySequence],
 	[FieldKinds.required.identifier, LazyValueField],
 	[FieldKinds.identifier.identifier, LazyValueField],
+	[FieldKinds.counter.identifier, LazyCounterField],
 ];
 
 const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);

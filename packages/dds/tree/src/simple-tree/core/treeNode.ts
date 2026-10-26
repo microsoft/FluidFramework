@@ -27,7 +27,7 @@ import type { WithType, schemaIdentifierBrand, typeSchemaSymbol } from "./withTy
  *
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass|TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
- * There are also higher level APIs which wrap these, including {@link (TreeBeta:interface).create}, {@link (TreeBeta:interface).clone},
+ * There are also higher level APIs which wrap these, including {@link (TreeBeta:interface).create}, {@link (TreeBeta:interface).(clone:1)},
  * and import APIs like {@link (TreeBeta:interface).importConcise}, {@link (TreeAlpha:interface).importVerbose}, and {@link (TreeAlpha:interface).importCompressed}.
  *
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.

@@ -51,7 +51,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
-	type TreeFieldFromImplicitField,
+	type TreeRootFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
 	applySchemaToParserOptions,
@@ -74,6 +74,7 @@ import {
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
 	isTreeNode,
+	assertTreeContent,
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
@@ -223,7 +224,7 @@ export interface TreeIdentifierUtils {
  * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
  * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
- * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
+ * Note that {@link (TreeBeta:interface).(clone:1)} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
  * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
  * if they are using {@link KeyEncodingOptions.allStoredKeys}.
@@ -268,7 +269,7 @@ export interface TreeAlpha {
 		data: InsertableField<TSchema>,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
+			? TreeRootFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	>;
 
@@ -282,7 +283,7 @@ export interface TreeAlpha {
 		data: ConciseTree | undefined,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
+			? TreeRootFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	>;
 
@@ -318,7 +319,7 @@ export interface TreeAlpha {
 		schema: TSchema,
 		data: VerboseTree | undefined,
 		options?: TreeParsingOptions,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	): Unhydrated<TreeRootFromImplicitField<TSchema>>;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
@@ -380,7 +381,7 @@ export interface TreeAlpha {
 		schema: TSchema,
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	): Unhydrated<TreeRootFromImplicitField<TSchema>>;
 
 	/**
 	 * APIs for creating, converting, and retrieving identifiers.
@@ -836,7 +837,7 @@ export const TreeAlpha: TreeAlpha = {
 		data: InsertableField<TSchema>,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
+			? TreeRootFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
 		const mapTree = unhydratedFlexTreeFromInsertable(
@@ -846,7 +847,7 @@ export const TreeAlpha: TreeAlpha = {
 		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 		return result as Unhydrated<
 			TSchema extends ImplicitFieldSchema
-				? TreeFieldFromImplicitField<TSchema>
+				? TreeRootFromImplicitField<TSchema>
 				: TreeNode | TreeLeafValue | undefined
 		>;
 	},
@@ -858,7 +859,7 @@ export const TreeAlpha: TreeAlpha = {
 		data: ConciseTree | undefined,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
+			? TreeRootFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
 		return importConcise(schema, data);
@@ -870,7 +871,7 @@ export const TreeAlpha: TreeAlpha = {
 		schema: TSchema,
 		data: VerboseTree | undefined,
 		options?: TreeParsingOptions,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	): Unhydrated<TreeRootFromImplicitField<TSchema>> {
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
@@ -879,7 +880,7 @@ export const TreeAlpha: TreeAlpha = {
 			if (field.kind !== FieldKind.Optional) {
 				throw new UsageError("undefined provided for non-optional field.");
 			}
-			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+			return undefined as Unhydrated<TreeRootFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
 		return createFromCursor(
@@ -939,7 +940,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: {
 			idCompressor?: IIdCompressor;
 		} & CodecWriteOptions,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	): Unhydrated<TreeRootFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
 			// Always use a v1 schema codec for consistency.
@@ -949,7 +950,9 @@ export const TreeAlpha: TreeAlpha = {
 			idCompressor: options.idCompressor ?? createIdCompressor(SerializationVersion.V3),
 		};
 		const view = independentInitializedView(config, options, content);
-		return TreeBeta.clone<TSchema>(view.root);
+		const root: TreeRootFromImplicitField<TSchema> = view.root;
+		assertTreeContent(root);
+		return TreeBeta.clone<typeof root>(root);
 	},
 
 	identifier,

@@ -14,6 +14,8 @@ import {
 	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type ReadableField,
 } from "@fluidframework/tree/alpha";
 
 import { createContext, createTreeAgent, executeSemanticEditing } from "../agent.js";
@@ -21,12 +23,37 @@ import type {
 	SharedTreeChatModel,
 	TreeAgentChatMessage,
 	TreeAgentChatResponse,
+	TreeView,
 } from "../api.js";
 
 const sf = new SchemaFactory(undefined);
 const editToolName = "EditTreeTool";
 
 describe("Context", () => {
+	it("preserves generic raw-root replacement, including empty optional roots", () => {
+		function replaceRoot<TSchema extends ImplicitFieldSchema>(
+			targetView: TreeView<TSchema>,
+			value: ReadableField<TSchema>,
+		): void {
+			createContext(targetView).root = value;
+		}
+
+		const view = independentView(
+			new TreeViewConfiguration({ schema: sf.optional(sf.number) }),
+		);
+		view.initialize(1);
+		try {
+			replaceRoot(view, 2);
+			assert.equal(view.root, 2);
+			replaceRoot(view, undefined);
+			assert.equal(view.root, undefined);
+			replaceRoot(view, 3);
+			assert.equal(view.root, 3);
+		} finally {
+			view.dispose();
+		}
+	});
+
 	it("context provides helpers for editing", async () => {
 		const sfLocal = new SchemaFactory("ContextHelpers");
 		class Child extends sfLocal.object("Child", {

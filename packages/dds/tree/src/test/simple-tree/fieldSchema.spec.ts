@@ -13,6 +13,7 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
+	type TreeCounter,
 	areImplicitFieldSchemaEqual,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
@@ -49,7 +50,7 @@ describe("fieldSchema", () => {
 			// Output
 			type N3 = TreeFieldFromImplicitField;
 			type _check6 = requireTrue<
-				areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
+				areSafelyAssignable<N3, TreeNode | TreeLeafValue | TreeCounter | undefined>
 			>;
 		}
 

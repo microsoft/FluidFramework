@@ -134,6 +134,18 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					EditManagerFormatVersion.vSharedBranches,
 				),
 		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.counter,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.counter),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.counter,
+				),
+		},
 	];
 
 	return VersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
