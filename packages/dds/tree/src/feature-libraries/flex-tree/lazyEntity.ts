@@ -71,6 +71,26 @@ export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, I
 		return this.#lazyCursor.state === ITreeSubscriptionCursorState.Freed;
 	}
 
+	/**
+	 * Checks whether this entity can be accessed without using its cursor.
+	 * @remarks
+	 * Call this before accessing cached or anchor-derived data that bypasses the cursor getter's lifetime and broken-forest checks.
+	 * This check is redundant when the access uses {@link LazyEntity.cursor}.
+	 *
+	 * A current cursor permits access even when the forest is broken.
+	 * Otherwise, this checks the forest's breaker, as cursor recovery would.
+	 * This method does not recover or reposition the cursor.
+	 *
+	 * @throws If this entity has been freed.
+	 * @throws A usage error if the cursor is not current and the forest is broken.
+	 */
+	protected ensureValidForAccess(): void {
+		assert(!this.isFreed(), "Cannot access a freed FlexTree entity");
+		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
+			this.context.checkout.forest.breaker.use();
+		}
+	}
+
 	public get cursor(): ITreeSubscriptionCursor {
 		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
