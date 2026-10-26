@@ -45,7 +45,11 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
-	class SingletonSchema extends factory.object(name, {}) {
+	class SingletonSchema extends new SchemaFactoryBeta<TScope, TName>(factory.scope).object(
+		name,
+		{},
+		{ allowUnknownOptionalFields: false },
+	) {
 		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}
