@@ -205,7 +205,7 @@ extends:
               buildDirectory: '${{ parameters.buildDirectory }}'
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
-              dependencyInstallCommand: pnpm install --frozen-lockfile
+              installWorkspaceRootOnly: false
 
       # Build Stage
       - stage: build
