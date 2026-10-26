@@ -53,6 +53,48 @@ function recordWalkAllowedTypes(
 describe("walk schema", () => {
 	const sf = new SchemaFactoryAlpha("walk schema tests");
 
+	it("preserves callback order across cycles, repeated edges and filtered types", () => {
+		class A extends sf.objectRecursive("orderedA", {
+			first: sf.optionalRecursive([() => B]),
+			shared: sf.number,
+			again: sf.optionalRecursive([() => B]),
+		}) {}
+		class B extends sf.objectRecursive("orderedB", {
+			back: sf.optionalRecursive([() => A]),
+			filtered: sf.string,
+		}) {}
+		const events: string[] = [];
+		const name = (schema: TreeNodeSchema): string =>
+			schema === A ? "A" : schema === B ? "B" : schema === sf.number ? "number" : "string";
+		walkAllowedTypes(normalizeFieldSchema([A, B]).allowedTypesFull.evaluate(), {
+			node: (schema) => events.push(`exit ${name(schema)}`),
+			allowedTypes: ({ types }) =>
+				events.push(`types ${types.map((type) => name(type.type)).join(",")}`),
+			allowedTypeFilter: ({ type }) => {
+				events.push(`edge ${name(type)}`);
+				return type !== sf.string;
+			},
+		});
+		assert.deepEqual(events, [
+			"edge A",
+			"edge B",
+			"edge A",
+			"types A",
+			"edge string",
+			"types string",
+			"exit B",
+			"types B",
+			"edge number",
+			"exit number",
+			"types number",
+			"edge B",
+			"types B",
+			"exit A",
+			"edge B",
+			"types A,B",
+		]);
+	});
+
 	it("calls visitor on single allowed type", () => {
 		const annotated = makeAnnotated(sf.string);
 		const annotatedTypes = AnnotatedAllowedTypesInternal.create([annotated]);
