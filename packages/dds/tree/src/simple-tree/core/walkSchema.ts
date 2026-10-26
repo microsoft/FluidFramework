@@ -49,14 +49,9 @@ export function walkAllowedTypes(
  * results from successfully completed component callbacks remain the caller's responsibility.
  *
  * @privateRemarks
- * TreeNodeSchema references form a directed graph, which may contain cycles.
- * To handle this, we use Tarjan's strongly connected components algorithm.
+ * See {@link SchemaVisitor.stronglyConnectedComponent} for the schema graph model and component semantics.
+ * Components are identified using Tarjan's strongly connected components algorithm.
  * See https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
- *
- * The strongly connected components are passed to {@link SchemaVisitor.stronglyConnectedComponent},
- * but also used to more generally handle the cycles and ensure we visit each node exactly once.
- * There are simpler ways to visit each node exactly once, but there are some use-cases of this traversal
- * that benefit from knowing the strongly connected components explicitly, so that analysis is included here.
  */
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
@@ -292,8 +287,16 @@ export interface SchemaVisitor {
 	/**
 	 * Called once for each strongly connected component, with all its node schemas.
 	 * @remarks
+	 * Schema references form a directed graph, which may contain cycles.
+	 * Vertices are schema identities, and directed edges are references to allowed child schemas selected by
+	 * {@link SchemaVisitor.allowedTypeFilter}.
+	 * A strongly connected component is a maximal group of vertices in which every vertex can reach every other vertex
+	 * by following directed edges.
+	 * See {@link https://en.wikipedia.org/wiki/Strongly_connected_component | strongly connected components}.
+	 *
 	 * Each visited schema identity belongs to exactly one component, including singleton leaf and non-recursive schemas.
-	 * Components describe the graph selected by {@link SchemaVisitor.allowedTypeFilter}.
+	 * A singleton component does not require a self-reference.
+	 * Treating each component as a single vertex produces a directed acyclic graph.
 	 *
 	 * Called after every member's {@link SchemaVisitor.node} callback and after all outgoing dependency components.
 	 * Member order is unspecified. Node and allowed-type callbacks retain their ordinary traversal order.
