@@ -144,7 +144,22 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_SharedObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Class_SharedObjectCore": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_SharedObject": {
+				"backCompat": false
+			},
+			"ClassStatics_SharedObjectCore": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

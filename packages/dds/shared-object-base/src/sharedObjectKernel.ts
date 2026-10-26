@@ -52,7 +52,7 @@ import type { IChannelView } from "./utils.js";
  * {@link makeSharedObjectKind} is then used to wrap up the kernel into a full {@link ISharedObject} implementation.
  * The runtime specific APIs are then type erased into a {@link SharedObjectKind}.
  * @privateRemarks
- * Unlike the `SharedObject` class, this interface is internal, and thus can be adjusted more easily.
+ * This interface is internal, as are the `SharedObject` and `SharedObjectCore` classes.
  * Therefore this interface is not intended to address all needs, and will likely need small changes as it gets more adoption.
  *
  * @internal
