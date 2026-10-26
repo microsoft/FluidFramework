@@ -125,7 +125,7 @@ export enum ChangeTypeInternal {
 
 // @alpha
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
-    protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler);
+    protected constructor(tree: ISharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
     applyChanges(changes: readonly Change[]): void;
     // (undocumented)
@@ -147,7 +147,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     revert(editId: EditId): void;
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
     protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
     // (undocumented)
     protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
@@ -256,7 +256,7 @@ export interface DetachInternal_0_0_2 {
 
 // @alpha @sealed
 export class EagerCheckout extends Checkout {
-    constructor(tree: SharedTree);
+    constructor(tree: ISharedTree);
     // (undocumented)
     protected get latestCommittedView(): RevisionView;
     // (undocumented)
@@ -289,7 +289,7 @@ export interface EditBase<TChange> {
 export interface EditCommittedEventArguments {
     readonly editId: EditId;
     readonly local: boolean;
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
 }
 
 // @alpha
@@ -435,6 +435,7 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
     equals(sharedTree: ISharedTree): boolean;
     getRuntime(): IFluidDataStoreRuntime;
     getWriteFormat(): WriteFormat;
+    readonly handle: IFluidHandle<ISharedTree>;
     initializeLocal(): void;
     internalizeChange(change: Change): ChangeInternal;
     load(services: IChannelServices): Promise<void>;
@@ -622,7 +623,7 @@ export interface SequencedEditAppliedEventArguments {
     readonly logger: ITelemetryLoggerExt;
     readonly outcome: EditApplicationOutcome;
     readonly reconciliationPath: ReconciliationPath;
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
     readonly wasLocal: boolean;
 }
 
@@ -663,82 +664,15 @@ export interface SetValueInternal_0_0_2 {
 }
 
 // @alpha
-export class SharedTree extends SharedObject<ISharedTreeEvents> implements ISharedTree {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
-    constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
-    // (undocumented)
-    applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
-    // (undocumented)
-    applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
-    // (undocumented)
-    applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
-    protected applyStashedOp(op: unknown): void;
-    // (undocumented)
-    attributeNodeId(id: NodeId): AttributionId;
-    // (undocumented)
-    get attributionId(): AttributionId;
-    // (undocumented)
-    convertToNodeId(id: StableNodeId): NodeId;
-    // (undocumented)
-    convertToStableNodeId(id: NodeId): StableNodeId;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
-    // (undocumented)
-    get currentView(): RevisionView;
-    // (undocumented)
-    get edits(): OrderedEditSet<InternalizedChange>;
-    // (undocumented)
-    equals(sharedTree: SharedTree): boolean;
-    // (undocumented)
-    generateNodeId(override?: string): NodeId;
-    // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
-    static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
-    // (undocumented)
-    static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
-    static getFactory(): SharedTreeFactory;
-    // (undocumented)
-    getRuntime(): IFluidDataStoreRuntime;
-    // (undocumented)
-    getWriteFormat(): WriteFormat;
-    // (undocumented)
-    internalizeChange(change: Change): ChangeInternal;
-    // (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
-    // (undocumented)
-    loadSummary(summary: SharedTreeSummaryBase): void;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
-    // (undocumented)
-    get logViewer(): LogViewer;
-    // (undocumented)
-    mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
-    // (undocumented)
-    protected onDisconnect(): void;
-    // (undocumented)
-    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
-    // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
-    protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
-    // (undocumented)
-    revert(editId: EditId): EditId | undefined;
-    // (undocumented)
-    revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
-    // (undocumented)
-    saveSerializedSummary(options?: {
-        serializer?: IFluidSerializer;
-    }): string;
-    // (undocumented)
-    saveSummary(): SharedTreeSummaryBase;
-    // (undocumented)
-    summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
-    tryConvertToNodeId(id: StableNodeId): NodeId | undefined;
-    // (undocumented)
-    tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined;
-}
+export const SharedTree: {
+    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedTree;
+    getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
+    getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
+    getFactory(): SharedTreeFactory;
+};
+
+// @alpha
+export type SharedTree = ISharedTree;
 
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
@@ -764,9 +698,9 @@ export class SharedTreeFactory implements IChannelFactory {
     static Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): SharedTree;
+    create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<SharedTree>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     static Type: string;
     // (undocumented)
     get type(): string;
@@ -799,8 +733,8 @@ export interface SharedTreeSummaryBase {
 // @alpha
 export class SharedTreeUndoRedoHandler {
     constructor(stackManager: IUndoConsumer);
-    attachTree(tree: SharedTree): void;
-    detachTree(tree: SharedTree): void;
+    attachTree(tree: ISharedTree): void;
+    detachTree(tree: ISharedTree): void;
 }
 
 // @alpha
@@ -947,7 +881,7 @@ export type TraitNodeIndex = number & {
 
 // @alpha
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
-    constructor(tree: SharedTree);
+    constructor(tree: ISharedTree);
     apply(...changes: readonly Change[]): EditStatus;
     // (undocumented)
     apply(changes: readonly Change[]): EditStatus;
@@ -957,7 +891,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
     readonly startingView: TreeView;
     get status(): EditStatus;
     // (undocumented)
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
 }
 
 // @alpha

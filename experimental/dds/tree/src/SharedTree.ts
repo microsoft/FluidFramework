@@ -6,7 +6,8 @@
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils/internal';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import { assert, compareArrays } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -76,6 +77,7 @@ import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtili
 import { ReconciliationPath } from './ReconciliationPath.js';
 import { RevisionView } from './RevisionView.js';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { registerSharedTreeInternals } from './SharedTreeInternals.js';
 import { MutableStringInterner } from './StringInterner.js';
 import { SummaryContents, serialize } from './Summary.js';
 import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
@@ -254,7 +256,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<SharedTree> {
+	): Promise<ISharedTree> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
@@ -265,7 +267,7 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param runtime - data store runtime that owns the new SharedTree
 	 * @param id - optional name for the SharedTree
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
 		const sharedTree = this.createSharedTree(runtime, id);
 		sharedTree.initializeLocal();
 		return sharedTree;
@@ -304,7 +306,7 @@ export interface EditCommittedEventArguments {
 	/** Whether or not this is a local edit. */
 	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 }
 
 /**
@@ -317,7 +319,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** Whether or not this was a local edit. */
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
 	readonly logger: ITelemetryLoggerExt;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
@@ -391,9 +393,12 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
- * @alpha
+ * @internal
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements ISharedTree {
+	// SharedObject creates this handle for the same instance.
+	public declare readonly handle: IFluidHandleInternal<SharedTree>;
+
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */
@@ -600,6 +605,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		this.cachingLogViewer = cachingLogViewer;
 		this.encoder_0_0_2 = new SharedTreeEncoder_0_0_2(this.summarizeHistory);
 		this.encoder_0_1_1 = new SharedTreeEncoder_0_1_1(this.summarizeHistory);
+		registerSharedTreeInternals(this, {
+			emitError: (error) => this.emit('error', error),
+			getEditLogSummary: () => this.editLog.getEditLogSummary(),
+			onSequencedEditApplied: (listener) => {
+				this.on(SharedTreeEvent.SequencedEditApplied, listener);
+			},
+			offSequencedEditApplied: (listener) => {
+				this.off(SharedTreeEvent.SequencedEditApplied, listener);
+			},
+		});
 	}
 
 	public getWriteFormat(): WriteFormat {
@@ -883,12 +898,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return { editLog, cachingLogViewer: logViewer };
 	}
 
-	public equals(sharedTree: SharedTree): boolean {
+	public equals(sharedTree: ISharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
 
-		return this.editLog.equals(sharedTree.editLog);
+		return compareArrays(this.edits.editIds, sharedTree.edits.editIds);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -1105,7 +1120,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 	}
 
 	public mergeEditsFrom(
-		other: SharedTree,
+		other: ISharedTree,
 		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {

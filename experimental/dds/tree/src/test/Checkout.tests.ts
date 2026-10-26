@@ -9,13 +9,13 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
+import { SharedTree } from '../SharedTree.js';
 import {
 	Change,
 	Checkout,
 	CheckoutEvent,
 	EditStatus,
 	EditValidationResult,
-	SharedTree,
 	SharedTreeEvent,
 	Side,
 	StablePlace,
@@ -616,10 +616,10 @@ export function checkoutTests(
 		});
 
 		it('can dispose and remove listeners', async () => {
-			const { checkout } = await setUpTestCheckout();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
+			const { checkout, tree } = await setUpTestCheckout();
+			expect(tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
 			checkout.dispose();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
+			expect(tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 
 		additionalTests?.();
