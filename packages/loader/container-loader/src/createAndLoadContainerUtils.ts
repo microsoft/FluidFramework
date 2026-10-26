@@ -227,7 +227,7 @@ export interface ILoadExistingContainerProps
 
 /**
  * Props used to load summarizer container.
- * @legacy @alpha
+ * @legacy @beta
  */
 export type ILoadSummarizerContainerProps = Omit<
 	ILoadExistingContainerProps,
@@ -765,7 +765,7 @@ async function waitForCatchUp(
  * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
  * Returns success/failure and an optional error for host-side handling.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
