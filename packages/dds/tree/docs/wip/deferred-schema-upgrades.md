@@ -3,6 +3,7 @@
 ## Status and recommendation
 
 This document is a design proposal, not a description of a supported feature.
+See the [C2 implementation plan](./deferred-schema-upgrades-implementation-plan.md) for documentation-first, test-driven milestones and temporary-workaround isolation.
 It is based on source inspection at commit `762ef9aa310`, on 2026-10-22, with follow-up checks on 2026-10-26.
 The supplied checkout snapshot matches the source at this revision.
 No feature implementation was done.
