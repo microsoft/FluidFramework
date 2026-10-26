@@ -31,7 +31,7 @@
 - Adds debug-only checks to facilitate root cause analysis of SharedTree bugs ([#28435](https://github.com/microsoft/FluidFramework/pull/28435)) [2e08a3a09ad](https://github.com/microsoft/FluidFramework/commit/2e08a3a09adc8c4765656bb0bcad7ad305f53338)
 
   This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
-  These checks can be used application authors when faced with a SharedTree rebasing bug.
+  These checks can be used by application authors when faced with a SharedTree rebasing bug.
   For example:
 
   ```typescript
