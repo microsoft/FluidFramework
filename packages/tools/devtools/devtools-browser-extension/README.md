@@ -122,6 +122,7 @@ You should now see the Devtools usage telemetry events appear!
 ### Publishing
 
 Note: The browser extensions may only be published by Microsoft employees.
+For details on the steps required, see [here](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/infrastructure/devtools/publishing-the-browser-extension) (Microsoft only).
 
 #### Store Assets
 

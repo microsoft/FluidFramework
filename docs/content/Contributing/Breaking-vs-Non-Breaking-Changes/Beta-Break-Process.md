@@ -8,7 +8,7 @@ They are supported under an agreement that allows them to be carefully changed a
 
 _ONLY_ if the API deprecation does not have an issue per [API Deprecation](../API-Deprecation.md) (preferred), use these steps to track without duplicating a lot of information.
 
-1. Search partner repositories yourself or have a Fluid Framework team member do so.
+1. Search partner repositories yourself or have Fluid Framework team member do so. See [partner info](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/partnerinfo/partner-info) (Microsoft internal).
 
 1. Go to applicable issue from table:
 

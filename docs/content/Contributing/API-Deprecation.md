@@ -19,6 +19,7 @@ If an API is marked as deprecated without a clear plan, then it can become diffi
 Additionally, there are many cases where the additional discussion and planning will determine that the API should not have been deprecated in the first place.
 
 Search both the FluidFramework and partner repositories to understand impact and identify partners to inform/consult.
+See [partner info](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/partnerinfo/partner-info) (Microsoft internal).
 (Fluid Framework team member can perform search for non-Msft contributors.)
 
 ### Compatibility and Versioning
