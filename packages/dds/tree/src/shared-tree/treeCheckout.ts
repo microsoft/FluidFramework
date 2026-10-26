@@ -1184,6 +1184,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				const metadata: ChangeMetadata = {
 					kind,
 					isLocal: true,
+					commits: [this.branchHistory.getCommitMetadata(commit)],
 					getChange: () => {
 						assert(
 							commit.parent !== undefined,
@@ -1213,12 +1214,17 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			for (const commit of event.removedCommits) {
 				this.revertibles.get(commit.revision)?.dispose();
 			}
-		} else if (this.isRemoteChangeEvent(event)) {
+		} else if (event.type === "rebase" && this.isRemoteChangeEvent(event)) {
+			const existingRevisions = new Set(event.removedCommits.map((commit) => commit.revision));
+			const commits = event.newCommits
+				.filter((commit) => !existingRevisions.has(commit.revision))
+				.map((commit) => this.branchHistory.getCommitMetadata(commit));
 			// TODO: figure out how to plumb through commit kind info for remote changes
 			this.emitChangedLocked(() => {
 				this.#events.emit("changed", {
 					isLocal: false,
 					kind: CommitKind.Default,
+					commits,
 					labels: new Set<unknown>(),
 				});
 			});

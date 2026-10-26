@@ -24,6 +24,7 @@ import {
 	comparePartialStrings,
 } from "../../util/index.js";
 import type { RevertibleAlpha } from "../revertible.js";
+import type { TreeBranchCommitMetadata } from "../../simple-tree/index.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -298,6 +299,17 @@ export interface CommitMetadata {
 export interface LocalChangeMetadata
 	extends Extract<ChangeMetadataBeta, { readonly isLocal: true }> {
 	/**
+	 * The commits newly applied to this branch, in application order.
+	 *
+	 * @remarks
+	 * Each entry exposes the same metadata as {@link TreeBranchHistory}, including
+	 * {@link TreeBranchCommitMetadata.custom | custom metadata} and its
+	 * {@link TreeBranchCommitMetadata.customTree | transaction nesting}.
+	 * Commits already present on the branch are excluded, even if they were rebased or deduplicated.
+	 */
+	readonly commits: readonly TreeBranchCommitMetadata[];
+
+	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for local changes.
 	 * This change object can be {@link UntypedTreeViewAlpha.applyChange | applied to another view} in the same state as the one which generated it.
@@ -515,6 +527,11 @@ export enum CommitOutcome {
  */
 export interface RemoteChangeMetadata
 	extends Extract<ChangeMetadataBeta, { readonly isLocal: false }> {
+	/**
+	 * {@inheritDoc LocalChangeMetadata.commits}
+	 */
+	readonly commits: readonly TreeBranchCommitMetadata[];
+
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
