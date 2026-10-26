@@ -16,8 +16,11 @@ import type {
 	TreeNodeSchemaClass,
 } from "../core/index.js";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import {
+	type SchemaFactory,
+	SchemaFactoryBeta,
+	type ScopedSchemaName,
+} from "./schemaFactory.js";
 
 /*
  * This file does two things:
