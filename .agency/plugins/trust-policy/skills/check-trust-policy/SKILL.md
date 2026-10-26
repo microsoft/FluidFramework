@@ -1,6 +1,8 @@
 ---
 name: check-trust-policy
 description: Check whether an exact package version has trustworthy provenance and find an attested alternative. Use before adding, upgrading, or installing any npm package version that is not already in the project's lockfile (npm, Yarn, or pnpm), or when asked whether a package version is safe or to verify its provenance.
+# Interim: this pre-approves every `node` command, not just the checker.
+# Copilot permission rules match only the program name for interpreters, and neither Copilot nor Agency expands the plugin root in skill frontmatter, so a rule scoped to this plugin's script is not currently possible.
 allowed-tools: Bash(node:*)
 ---
 
