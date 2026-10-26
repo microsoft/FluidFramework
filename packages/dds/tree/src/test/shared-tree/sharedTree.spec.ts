@@ -969,6 +969,44 @@ describe("SharedTree", () => {
 	});
 
 	describe("Trunk Trimming", () => {
+		it("does not trim merged commits during detached change events", () => {
+			const tree = DefaultTestSharedTreeKind.getFactory().create(
+				new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+					idCompressor: createSnapshotCompressor(),
+				}),
+				"tree",
+			);
+			assert.equal(tree.isAttached(), false);
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- The edit manager is private.
+			tree.kernel["editManager"].setHistoryRetention(1);
+
+			const fork = view.fork();
+			fork.root.insertAtEnd("A");
+			fork.root.insertAtEnd("B");
+			fork.root.insertAtEnd("C");
+
+			const branch = tree.kernel.checkout.mainBranch;
+			let observedCommitCount = 0;
+			branch.events.on("afterChange", (event) => {
+				if (event.type === "append") {
+					for (const commit of event.newCommits) {
+						assert.equal(commit.wasTrimmed, undefined);
+						observedCommitCount++;
+					}
+				}
+			});
+
+			view.merge(fork);
+
+			assert.equal(observedCommitCount, 3);
+			assert.deepEqual([...view.root], ["A", "B", "C"]);
+		});
+
 		it("has bounded memory growth in EditManager", () => {
 			const provider = new TestTreeProviderLite(2);
 			const viewInit = provider.trees[0].viewWith(
