@@ -16,16 +16,11 @@ import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSch
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
  * @remarks
- * Includes `schema` itself unless it is already in `visitedSet`; filtering applies to its child references.
- * Updates `visitedSet` as nodes are discovered, including when a later callback or schema evaluation throws.
+ * Includes `schema` itself; filtering applies to its child references.
  * @internal
  */
-export function walkNodeSchema(
-	schema: TreeNodeSchema,
-	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema>,
-): void {
-	walkSchema([schema], visitor, visitedSet);
+export function walkNodeSchema(schema: TreeNodeSchema, visitor: SchemaVisitor): void {
+	walkSchema([schema], visitor);
 }
 
 /**
@@ -38,20 +33,16 @@ export function walkNodeSchema(
 export function walkAllowedTypes(
 	annotatedAllowedTypes: AllowedTypesFullEvaluated,
 	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	walkSchema(visitAllowedTypes(annotatedAllowedTypes, visitor), visitor, visitedSet);
+	walkSchema(visitAllowedTypes(annotatedAllowedTypes, visitor), visitor);
 }
 
 /**
  * Traverses the schema graph reachable from node roots, applying the supplied visitor.
  * @param roots - Node roots to visit. The allowed-type filter applies to child references, not these explicit roots.
  * @param visitor - Callbacks and filtering for this walk, optionally including caller-owned knowledge of previous component visits.
- * @param visited - Schema identities excluded from discovery, updated as new nodes are discovered.
- * Entries added before an error are not rolled back; use a fresh set to retry a complete walk.
  * @remarks
  * Walks without a component callback allocate no component state.
- * Nodes already in `visited` are outside this walk's graph, which can split components.
  *
  * An {@link IncrementalSchemaVisitor} can omit component visits already completed by the caller.
  * Ordinary {@link SchemaVisitor}s report every visited component when requested, independently of caller-owned results.
@@ -71,8 +62,8 @@ export function walkAllowedTypes(
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
 	visitor: SchemaVisitor | IncrementalSchemaVisitor,
-	visited: Set<TreeNodeSchema> = new Set(),
 ): void {
+	const visited = new Set<TreeNodeSchema>();
 	const { wasComponentVisited, allowedTypeFilter } = visitor;
 	assert(
 		wasComponentVisited === undefined ||
@@ -304,7 +295,6 @@ export interface SchemaVisitor {
 	 * @remarks
 	 * Each visited schema identity belongs to exactly one component, including singleton leaf and non-recursive schemas.
 	 * Components describe the graph selected by {@link SchemaVisitor.allowedTypeFilter}.
-	 * Nodes already in the walk's visited set are excluded.
 	 *
 	 * Called after every member's {@link SchemaVisitor.node} callback and after all outgoing dependency components.
 	 * Member order is unspecified. Node and allowed-type callbacks retain their ordinary traversal order.
@@ -362,7 +352,7 @@ export interface IncrementalSchemaVisitor
 	 * A `true` answer must cover the entire component and its transitive dependencies, never part of a cycle
 	 * or in-progress work. Completed visits must remain valid while the walk runs.
 	 * Previous visits must describe the same graph selected by {@link SchemaVisitor.allowedTypeFilter},
-	 * including the same filtering decisions and compatible visited-set boundaries.
+	 * including the same filtering decisions.
 	 * Filter function identity alone is insufficient if its captured state changes.
 	 * Dependencies excluded by the filter do not need completed visits.
 	 * The predicate may be called multiple times for a schema; it must not depend on call count or cause traversal side effects.
@@ -370,10 +360,6 @@ export interface IncrementalSchemaVisitor
 	 * Returning `true` suppresses component callbacks for that completed subgraph.
 	 * Without an {@link SchemaVisitor.allowedTypes} callback, traversal stops at that schema.
 	 * With that callback, the walker still traverses its fields and dependencies in ordinary visitor order.
-	 *
-	 * Unlike prepopulating `walkSchema`'s visited set, this promises completed component visits
-	 * rather than merely excluding nodes from the traversal graph.
-	 * A previsited node receives no field callbacks; this predicate does not suppress requested field callbacks.
 	 */
 	wasComponentVisited: (schema: TreeNodeSchema) => boolean;
 	/**

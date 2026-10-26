@@ -176,11 +176,6 @@ describe("schema component visitor", () => {
 			);
 			assert.equal(fields.length, observeFields ? 3 : 0);
 			assert.deepEqual(earlierVisits, new Set([c]));
-			if (observeFields) {
-				fields.length = 0;
-				walkSchema([a, b, c], visitor, new Set([c]));
-				assert.equal(fields.length, 2);
-			}
 		}
 	});
 
@@ -258,58 +253,45 @@ describe("schema component visitor", () => {
 		const ordinary: unknown[] = [];
 		const withComponents: unknown[] = [];
 		const completed = new Set<TreeNodeSchema>();
-		walkNodeSchema(
-			a,
-			{
-				node: (schema) => ordinary.push(schema),
-				allowedTypes: (types) => ordinary.push(types),
+		walkNodeSchema(a, {
+			node: (schema) => ordinary.push(schema),
+			allowedTypes: (types) => ordinary.push(types),
+		});
+		walkNodeSchema(a, {
+			node: (schema) => withComponents.push(schema),
+			allowedTypes: (types) => withComponents.push(types),
+			stronglyConnectedComponent: (members) => {
+				assert(members.every((member) => withComponents.includes(member)));
+				if (members.includes(a)) {
+					assert(completed.has(c));
+					assert(members.includes(b));
+				}
+				for (const member of members) {
+					assert(!completed.has(member));
+					completed.add(member);
+				}
 			},
-			new Set(),
-		);
-		walkNodeSchema(
-			a,
-			{
-				node: (schema) => withComponents.push(schema),
-				allowedTypes: (types) => withComponents.push(types),
-				stronglyConnectedComponent: (members) => {
-					assert(members.every((member) => withComponents.includes(member)));
-					if (members.includes(a)) {
-						assert(completed.has(c));
-						assert(members.includes(b));
-					}
-					for (const member of members) {
-						assert(!completed.has(member));
-						completed.add(member);
-					}
-				},
-			},
-			new Set(),
-		);
+		});
 		assert.deepEqual(withComponents, ordinary);
 		assert.deepEqual(completed, new Set([a, b, c]));
 	});
 
-	it("excludes previously visited nodes and handles empty roots", () => {
+	it("visits complete cycles independently on each walk and handles empty roots", () => {
 		const [a, b] = graph([[1], [0]]);
 		assert(a !== undefined && b !== undefined);
-		const seen = new Set([b]);
 		let calls = 0;
-		walkNodeSchema(
-			a,
-			{
+		for (let i = 0; i < 2; i++) {
+			walkNodeSchema(a, {
 				stronglyConnectedComponent: (members) => {
 					calls++;
-					// The visited-set boundary removes B and its edges from this walk.
-					assert.deepEqual(members, [a]);
+					assert.deepEqual(new Set(members), new Set([a, b]));
 				},
-			},
-			seen,
-		);
+			});
+		}
 		walkFieldSchema([], {
 			stronglyConnectedComponent: () => assert.fail("Empty roots have no components"),
 		});
-		assert.equal(calls, 1);
-		assert.deepEqual(seen, new Set([a, b]));
+		assert.equal(calls, 2);
 	});
 
 	it("prunes completed references before yielding them, without dropping annotations", () => {
