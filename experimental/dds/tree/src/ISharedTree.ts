@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { IFluidHandle, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidSerializer, ISharedObject } from '@fluidframework/shared-object-base/internal';
@@ -36,6 +36,11 @@ import type {
  * @alpha
  */
 export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
+	/**
+	 * The handle that resolves to this tree.
+	 */
+	readonly handle: IFluidHandle<ISharedTree>;
+
 	/**
 	 * The attribution ID for nodes that this tree creates.
 	 * Trees with write format 0.0.2 use the nil UUID.

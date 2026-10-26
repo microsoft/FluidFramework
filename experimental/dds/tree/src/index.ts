@@ -136,7 +136,6 @@ export {
 	SharedTreeOptions_0_0_2,
 	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
-	SharedTree,
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
 	EditCommittedEventArguments,
@@ -145,6 +144,7 @@ export {
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
+export { SharedTree } from './SharedTreeKind.js';
 export { StringInterner } from './StringInterner.js';
 export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
