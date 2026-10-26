@@ -393,6 +393,8 @@ export class SharedTreeCore<
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
+			// Prevent sequencing from trimming the new commits before all event handlers
+			// that might read them have completed.
 			this.editManager.addSequencedChanges(
 				[commit],
 				this.editManager.localSessionId,
@@ -401,6 +403,8 @@ export class SharedTreeCore<
 				branchId,
 				false,
 			);
+			// Advancing the MSN also triggers trimming, so suppress it here as well
+			// to keep the new commits readable by the remaining event handlers.
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}

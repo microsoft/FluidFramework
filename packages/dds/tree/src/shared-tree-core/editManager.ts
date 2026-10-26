@@ -105,6 +105,12 @@ export class EditManager<
 	 */
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
+	/**
+	 * Local retention policy, always a boolean or a nonnegative safe integer.
+	 * `false` or zero disables extra retention; `true` retains all available history.
+	 * A positive safe integer retains the newest specified number of available sequenced main-branch commits.
+	 * Collaboration and registered branches can require retaining additional history.
+	 */
 	private historyRetention: boolean | number = false;
 
 	/**
@@ -162,6 +168,14 @@ export class EditManager<
 	}
 
 	/**
+	 * Gets this manager's current local history retention policy.
+	 * @returns The configured boolean or nonnegative safe integer, defaulting to `false`.
+	 */
+	public getHistoryRetention(): boolean | number {
+		return this.historyRetention;
+	}
+
+	/**
 	 * Sets this manager's local retention policy for sequenced main-branch commits.
 	 *
 	 * @param value - `true` to retain all available history, `false` or zero to disable extra retention,
@@ -171,15 +185,12 @@ export class EditManager<
 	 * If this method is never called, extra retention is disabled (`false`).
 	 * Each call replaces the current policy; there is no separate fallback policy.
 	 *
-	 * Collaboration and registered branches can require retaining history even when extra retention is disabled,
-	 * or retaining more commits than a numeric limit.
-	 * Summaries include the main-branch history still required by registered branches.
-	 * Each commit counts separately, including commits in the same batch.
-	 * Unsequenced local commits do not count toward the limit.
+	 * Collaboration and local branches can require retaining more commits than the policy specifies.
+	 * Commits that are sequenced in batches are individually counted toward the retention limit.
+	 * Unsequenced local commits do not count toward the retention limit.
 	 *
-	 * Setting the policy immediately checks for history that can be trimmed.
+	 * Calling this method immediately checks for history that can be trimmed.
 	 * Increasing retention preserves available history but does not recover trimmed commits.
-	 * This setting is not serialized; callers must configure each manager independently.
 	 */
 	public setHistoryRetention(value: boolean | number): void {
 		assert(
@@ -191,46 +202,53 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns an inclusive upper bound for trimming and summary selection based on the retention policy,
-	 * collaboration window, and registered branch bases.
-	 *
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the retention policy,
 	 * @remarks
 	 * The bound need not identify an existing commit.
-	 * With extra retention disabled, the bound is the collaboration bound unless a registered branch requires an earlier one.
-	 * Unlimited retention or an unfilled numeric window returns {@link minimumPossibleSequenceId}.
-	 * This also handles empty history.
 	 */
-	private getHistoryTrimmingBound(): SequenceId {
-		let trimmingBound: SequenceId = {
-			sequenceNumber: this.minimumSequenceNumber,
-			indexInBatch: Number.POSITIVE_INFINITY,
-		};
-		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
-		if (minimumBranchBaseSequenceId !== undefined) {
-			// A branch's base must remain in the trunk, not become the trimmed sentinel.
-			trimmingBound = minSequenceId(
-				trimmingBound,
-				getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId),
-			);
-		}
-		if (this.historyRetention === false || this.historyRetention === 0) {
-			return trimmingBound;
-		}
+	private getUpperTrimmingBoundForHistory(): SequenceId {
 		if (this.historyRetention === true) {
 			return minimumPossibleSequenceId;
 		}
-		let remaining = this.historyRetention;
-		for (const [sequenceId, commit] of this.getSharedBranch(
-			"main",
-		).sequenceIdToCommit.entriesReversed()) {
-			if (commit === this.trunkBase) {
-				break;
-			}
-			if (--remaining === 0) {
-				return minSequenceId(trimmingBound, getUpperBoundOfPreviousSequenceId(sequenceId));
+		const sequenceIdToCommit = this.getSharedBranch("main").sequenceIdToCommit;
+		if (this.historyRetention === false || this.historyRetention === 0) {
+			return sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId;
+		}
+		// The map includes the trimmed base, which does not count toward retention.
+		if (this.historyRetention < sequenceIdToCommit.size - 1) {
+			let remaining = this.historyRetention;
+			for (const [sequenceId] of sequenceIdToCommit.entriesReversed()) {
+				remaining--;
+				if (remaining === 0) {
+					return getUpperBoundOfPreviousSequenceId(sequenceId);
+				}
 			}
 		}
 		return minimumPossibleSequenceId;
+	}
+
+	/**
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on local forks (excluding peer branches maintained by EditManager),
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForLocalForks(): SequenceId {
+		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
+		return minimumBranchBaseSequenceId === undefined
+			? (this.getSharedBranch("main").sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId)
+			: getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId);
+	}
+
+	/**
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the minimum sequence number,
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForMinimumSequenceNumber(): SequenceId {
+		return {
+			sequenceNumber: this.minimumSequenceNumber,
+			indexInBatch: Number.POSITIVE_INFINITY,
+		};
 	}
 
 	public getLocalBranch(
@@ -340,12 +358,13 @@ export class EditManager<
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
 	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
 	public advanceMinimumSequenceNumber(
 		minimumSequenceNumber: SeqNumber,
-		trimHistory = true,
+		allowHistoryTrimming = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
 			return;
@@ -357,7 +376,7 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
-		if (trimHistory) {
+		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
 	}
@@ -367,7 +386,13 @@ export class EditManager<
 	 * to evict trunk commits that are no longer needed.
 	 */
 	private trimHistory(): void {
-		const trunkTailSequenceId = this.getHistoryTrimmingBound();
+		const msnBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
+		const forkBound = this.getUpperTrimmingBoundForLocalForks();
+		const historyBound = this.getUpperTrimmingBoundForHistory();
+		const trunkTailSequenceId = minSequenceId(
+			msnBound,
+			minSequenceId(forkBound, historyBound),
+		);
 		const mainBranch = this.getSharedBranch("main");
 
 		const [sequenceId, latestEvicted] = mainBranch.getClosestTrunkCommit(
@@ -458,10 +483,10 @@ export class EditManager<
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
+		const historyBound = this.getUpperTrimmingBoundForHistory();
 		let minBaseSeqId = minSequenceId(
 			minSeqNumberToSummarize,
-			mainBranch.sequenceIdToCommit.nextHigherKey(this.getHistoryTrimmingBound()) ??
-				minSeqNumberToSummarize,
+			mainBranch.sequenceIdToCommit.nextHigherKey(historyBound) ?? minSeqNumberToSummarize,
 		);
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
@@ -505,6 +530,10 @@ export class EditManager<
 				this.addSharedBranch(branchId, branch);
 			}
 		}
+		// Summaries do not currently include a minimum sequence number,so the loader must conservatively retain all revisions from the summary.
+		// This prevents the trimming of superfluous commits when the summarizer's history retention policy is more generous than the loader's policy.
+		// If this changes, uncomment the next line to trim superfluous commits.
+		// this.trimHistory();
 	}
 
 	public getTrunkHead(branchId: BranchId): GraphCommit<TChangeset> {
@@ -649,7 +678,7 @@ export class EditManager<
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
 	 *
-	 * @param trimHistory - Whether to reevaluate numeric retention after sequencing the entire bunch.
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy after sequencing the entire bunch.
 	 * Set to false for detached edits to defer trimming.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
@@ -659,7 +688,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
-		trimHistory = true,
+		allowHistoryTrimming = true,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
@@ -714,12 +743,7 @@ export class EditManager<
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
-		if (
-			trimHistory &&
-			branchId === "main" &&
-			typeof this.historyRetention === "number" &&
-			this.historyRetention > 0
-		) {
+		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
 	}
