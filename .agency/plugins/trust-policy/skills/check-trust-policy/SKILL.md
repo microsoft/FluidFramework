@@ -33,7 +33,7 @@ The checker itself reports unsupported Node.js versions.
 
 ## Network access
 
-The checker probes the registry and, for the `cryptographic` policy, Sigstore, and reports the results in `endpointAccess`.
+The checker probes the registry and, for the `cryptographic` and `no-downgrade` policies, Sigstore, and reports the results in `endpointAccess`.
 Each entry states its `purpose` and whether it was `reachable`.
 Probes are diagnostic only and never stop the check: a registry can serve package metadata while rejecting its probe, and Sigstore verification can use cached metadata.
 Always tell the user which endpoints were unreachable, if any.
@@ -62,7 +62,7 @@ If the public registry is also unreachable, report that a trust check is not pos
 3. If the user has not selected a policy and the session is interactive, use `ask_user` to offer:
    - `cryptographic` (recommended default): verify the SLSA provenance signature, signing certificate, transparency log, and signed package name, version, and registry integrity digest.
    - `metadata`: check only the registry's provenance claim, without cryptographic verification.
-   - `no-downgrade`: check publishing history for decreased trust; a pass may have no provenance.
+   - `no-downgrade`: check publishing history for decreased trust; a pass may have no provenance. Suggested alternatives must also pass cryptographic verification.
    Do not silently choose a weaker policy.
    In noninteractive mode with no supplied policy, use `cryptographic` and state that default.
 4. Confirm permission for registry and Sigstore access.
@@ -77,6 +77,7 @@ If the public registry is also unreachable, report that a trust check is not pos
    An `inconclusive` verdict means the check could not complete (for example, a network or Sigstore failure); it is neither acceptance nor rejection.
    If an alternative is suggested, disclose that it may be from a different major version and require code changes.
    An alternative passes the same policy as the requested version, and always has registry-reported provenance.
+   Under `no-downgrade`, an alternative is also cryptographically verified, so its `provenanceVerified` is true.
    Metadata-only results must never be described as cryptographically verified.
 6. Report `auditIncomplete`, `searchTruncated`, and `errors`.
    A zero exit status in JSON mode does not establish acceptance.

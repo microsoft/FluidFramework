@@ -117,16 +117,40 @@ test("alternatives must pass the requested policy, not only cryptographic verifi
 	};
 	data.time = { "1.0.0": "2020-01-01", "2.0.0": "2020-02-01", "3.0.0": "2020-03-01" };
 
+	const verified: string[] = [];
+	const recordVerify =
+		(verifiedResult: boolean): PackageServices["verify"] =>
+		async (pin) => {
+			verified.push(pin.version);
+			return {
+				verified: verifiedResult,
+				reason: verifiedResult ? "verified" : "bad signature",
+			};
+		};
 	const result = await checkPackage(
 		"example@2.0.0",
 		{ policy: "no-downgrade" },
-		services(data),
+		services(data, recordVerify(true)),
 	);
 	assert.equal(result.requested.verdict, "rejected");
-	// 3.0.0 is newer but is also a downgrade, so the search skips it.
+	// 3.0.0 is newer but is also a downgrade, so the search skips it without verifying it.
 	assert.equal(result.alternative?.version, "1.0.0");
+	assert.equal(result.alternative?.provenanceVerified, true);
 	assert.equal(result.candidatesChecked, 2);
+	assert.deepEqual(verified, ["1.0.0"]);
 
+	// An alternative that passes the history check but fails verification is not suggested.
+	verified.length = 0;
+	const unverified = await checkPackage(
+		"example@2.0.0",
+		{ policy: "no-downgrade" },
+		services(data, recordVerify(false)),
+	);
+	assert.equal(unverified.alternative, null);
+	assert.equal(unverified.candidatesChecked, 2);
+	assert.deepEqual(verified, ["1.0.0"]);
+
+	// The requested version is checked with no-downgrade alone; services() fails any verification attempt.
 	const recheck = await checkPackage(
 		"example@1.0.0",
 		{ policy: "no-downgrade" },
@@ -147,19 +171,27 @@ test("metadata is opt-in and never claims cryptographic verification", async () 
 });
 
 test("no-downgrade follows pnpm: publication order, trust evidence ranking, and prerelease exclusion", async () => {
-	// no-downgrade never verifies signatures; services() fails any verification attempt.
+	// Requested versions are never verified under no-downgrade; services() fails any verification attempt.
+	// Alternatives are verified, so this stub accepts them.
+	const verifyAlternative: PackageServices["verify"] = async () => ({
+		verified: true,
+		reason: "verified",
+	});
 	const check = async (spec: string, data: PackageMeta) =>
+		checkPackage(spec, { policy: "no-downgrade" }, services(data, verifyAlternative));
+	const checkRequested = async (spec: string, data: PackageMeta) =>
 		checkPackage(spec, { policy: "no-downgrade" }, services(data));
 
 	const republished = packument();
 	republished.time["1.0.0"] = "2020-03-15";
 	const downgrade = await check("example@1.0.0", republished);
 	assert.equal(downgrade.requested.verdict, "rejected");
+	assert.equal(downgrade.requested.provenanceVerified, false);
 	assert.match(downgrade.requested.reason, /provenance attestation.*no trust evidence/);
 	assert.equal(downgrade.alternative?.version, "2.0.0");
-	assert.equal(downgrade.alternative?.provenanceVerified, false);
+	assert.equal(downgrade.alternative?.provenanceVerified, true);
 
-	const first = await check("example@1.0.0", packument());
+	const first = await checkRequested("example@1.0.0", packument());
 	assert.equal(first.requested.verdict, "accepted");
 	assert.equal(first.requested.provenanceVerified, false);
 

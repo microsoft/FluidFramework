@@ -25,6 +25,7 @@ export interface PinnedVersion {
  * - `cryptographic`: the version must have SLSA provenance that verifies against Sigstore and binds to the registry's integrity hash.
  * - `metadata`: the registry must report SLSA provenance. Nothing is verified.
  * - `no-downgrade`: the version's trust evidence must not be weaker than any earlier release's, as pnpm's `trustPolicy: no-downgrade` evaluates it.
+ *   Suggested alternatives must also pass the `cryptographic` checks.
  */
 export type PackagePolicy = "cryptographic" | "metadata" | "no-downgrade";
 
@@ -291,7 +292,8 @@ export function getTrustEvidence(manifest: PackageInRegistry): TrustEvidence {
 
 /**
  * Checks one exact package version and, if it is rejected, searches the newest stable, non-deprecated, provenance-bearing releases for an alternative.
- * The requested version and every alternative are assessed by the same function against the same policy, so an alternative passes exactly the checks the requested version failed.
+ * The requested version and every alternative are assessed by the same function against the same policy, so an alternative passes the checks the requested version failed.
+ * Under `no-downgrade`, alternatives must also pass cryptographic verification, so that a suggestion never rests on unverified registry metadata.
  * Alternatives are not guaranteed to be API-compatible or harmless.
  * @param spec - Exact package version, such as `name@1.2.3`.
  * @param options - Policy, registry, and search options.
@@ -362,10 +364,12 @@ interface AssessmentContext {
  *
  * @param context - Assessment state, including the policy.
  * @param manifest - Version manifest from the context's packument.
+ * @param isAlternative - Whether the version is a suggested alternative, which under `no-downgrade` must also pass cryptographic verification.
  */
 async function assessVersion(
 	context: AssessmentContext,
 	manifest: PackageInRegistry,
+	isAlternative = false,
 ): Promise<PackageAssessment> {
 	const { packument, policy } = context;
 	if (manifest.name !== packument.name || packument.versions[manifest.version] !== manifest) {
@@ -378,21 +382,49 @@ async function assessVersion(
 		return { ...base, verdict: "rejected", reason: `Deprecated: ${manifest.deprecated}` };
 	}
 	if (policy === "no-downgrade") {
-		return { ...base, ...assessNoDowngrade(packument, manifest.version) };
-	}
-	if (
-		!slsaProvenancePredicateTypes.has(
-			manifest.dist?.attestations?.provenance?.predicateType ?? "",
-		)
-	) {
-		return { ...base, verdict: "rejected", reason: "No registry-reported SLSA provenance." };
+		const history = { ...base, ...assessNoDowngrade(packument, manifest.version) };
+		if (!isAlternative || history.verdict !== "accepted") {
+			return history;
+		}
+		const verified = await verifyProvenance(context, manifest, base);
+		return verified.verdict === "accepted"
+			? { ...verified, reason: `${history.reason} ${verified.reason}` }
+			: verified;
 	}
 	if (policy === "metadata") {
-		return {
-			...base,
-			verdict: "accepted",
-			reason: "Registry reports provenance; signature and artifact were not verified.",
-		};
+		return hasProvenanceMetadata(manifest)
+			? {
+					...base,
+					verdict: "accepted",
+					reason: "Registry reports provenance; signature and artifact were not verified.",
+				}
+			: { ...base, verdict: "rejected", reason: noProvenanceMetadataReason };
+	}
+	return verifyProvenance(context, manifest, base);
+}
+
+const noProvenanceMetadataReason = "No registry-reported SLSA provenance.";
+
+function hasProvenanceMetadata(manifest: PackageInRegistry): boolean {
+	return slsaProvenancePredicateTypes.has(
+		manifest.dist?.attestations?.provenance?.predicateType ?? "",
+	);
+}
+
+/**
+ * Applies the `cryptographic` policy's checks to one version: registry-reported SLSA provenance whose signature verifies.
+ * @param context - Assessment state.
+ * @param manifest - Version manifest from the context's packument.
+ * @param base - Identity fields of the assessment.
+ */
+async function verifyProvenance(
+	context: AssessmentContext,
+	manifest: PackageInRegistry,
+	base: Pick<PackageAssessment, "name" | "version" | "provenanceVerified">,
+): Promise<PackageAssessment> {
+	const { packument } = context;
+	if (!hasProvenanceMetadata(manifest)) {
+		return { ...base, verdict: "rejected", reason: noProvenanceMetadataReason };
 	}
 	try {
 		const checked = await context.services.verify(
@@ -570,7 +602,7 @@ async function findAlternative(
 			return { alternative: null, candidatesChecked, searchTruncated: true };
 		}
 		candidatesChecked++;
-		const candidate = await assessVersion(context, manifest);
+		const candidate = await assessVersion(context, manifest, true);
 		if (candidate.verdict === "accepted") {
 			return { alternative: candidate, candidatesChecked, searchTruncated: false };
 		}
