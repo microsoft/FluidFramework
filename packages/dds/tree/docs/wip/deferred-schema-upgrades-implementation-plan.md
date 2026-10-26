@@ -113,6 +113,27 @@ Validation:
 - `pnpm --dir packages/dds/tree exec eslint src/shared-tree/treeCheckout.ts src/shared-tree/viewBranch.ts src/test/shared-tree/viewBranch.spec.ts`: passed with three existing warnings in checkout code.
 - `pnpm --dir packages/dds/tree run depcruise` reported zero modules examined, so it is not treated as layering evidence.
 
+### M3: explicit local upgrade and remote schema lifecycle
+
+The internal controller can now create a view with an intercepted explicit upgrade.
+The upgrade remains private, and the base's single-view slot is reserved until disposal.
+The temporary schema-only refresh is isolated in `deferredSchemaRebase.ts` and asserts that application work has not been added.
+View reconciliation suppresses intermediate schema notifications and retains a compatible context.
+FlexTree node schema lookup and cached field kinds now follow the current context schema, allowing that retained context to remain correct.
+
+The new tests first failed on premature base publication, missing remote data, and missing view reservation.
+They now pass, including equivalent, insufficient, and viewable covering remote schema updates.
+After a sufficient remote upgrade, subsequent application edits use the data-only path.
+Atomic first publication while an upgrade is still pending remains M4 work; the public opt-in remains unexposed.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^SchematizingSimpleTreeView|^LazyNode|^LazyField|^simple-tree proxies|^SharedTreeObject|^ArrayNode Proxy|deferred schema upgrades: branch primitives' --reporter dot`: 468 passed, 2 existing pending tests.
+- Focused Biome checks on the eight changed TypeScript files passed.
+- Focused ESLint checks found one new condition-style error, which was fixed; existing checkout and FlexTree warnings were left unchanged.
+
 ## 1. Development method
 
 ### Documentation-driven and test-driven increments

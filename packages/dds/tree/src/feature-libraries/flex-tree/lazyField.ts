@@ -109,6 +109,12 @@ export function makeField(
 		cacheKey,
 		() => new Map<FieldKey, FlexTreeField>(),
 	);
+	const cachedField = innerCache.get(fieldAnchor.fieldKey);
+	if (cachedField !== undefined && cachedField.schema !== schema) {
+		assert(cachedField instanceof LazyField, "Expected a hydrated cached field.");
+		cachedField[disposeSymbol]();
+		innerCache.delete(fieldAnchor.fieldKey);
+	}
 	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
 	if (!usedAnchor) {
 		// The anchor must be disposed to avoid leaking. In the case of a cache hit,

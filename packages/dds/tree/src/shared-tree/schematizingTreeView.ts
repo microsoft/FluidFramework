@@ -12,7 +12,13 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
+import {
+	anchorSlot,
+	rootFieldKey,
+	type ChangeMetadata,
+	type TreeStoredSchema,
+	type RevertToOptionsAlpha,
+} from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -157,6 +163,9 @@ export class SchematizingSimpleTreeView<
 	 * which are implementation details and should not be exposed to the user.
 	 */
 	private midUpgrade = false;
+	private reconcilingSchema = false;
+	private readonly reconciledChanges: ChangeMetadata[] = [];
+	private lastRoot: FlexTreeUnknownUnboxed | undefined;
 
 	/**
 	 * Hydration work deferred until Context has been created.
@@ -188,6 +197,8 @@ export class SchematizingSimpleTreeView<
 		 * Defaults to true for checkouts that are not shared branches.
 		 */
 		private readonly disposeCheckoutOnDispose: boolean = !checkout.isSharedBranch,
+		/** Overrides publication of an explicit schema upgrade for an internal view controller. */
+		private readonly onSchemaUpgrade?: (schema: TreeStoredSchema) => void,
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
@@ -220,6 +231,12 @@ export class SchematizingSimpleTreeView<
 
 		this.unregisterCallbacks.add(
 			this.checkout.events.on("changed", (data, getRevertible) => {
+				if (this.reconcilingSchema) {
+					if (!data.isLocal) {
+						this.reconciledChanges.push(data);
+					}
+					return;
+				}
 				this.events.emit("changed", data, getRevertible);
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
@@ -327,7 +344,13 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
-		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		this.runSchemaEdit(() => {
+			if (this.onSchemaUpgrade === undefined) {
+				this.checkout.updateSchema(newSchema);
+			} else {
+				this.onSchemaUpgrade(newSchema);
+			}
+		});
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -442,6 +465,9 @@ export class SchematizingSimpleTreeView<
 	 * If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 	 */
 	private update(): void {
+		if (this.reconcilingSchema) {
+			return;
+		}
 		this.disposeFlexView();
 
 		const compatibility = this.computeCompatibility();
@@ -481,9 +507,7 @@ export class SchematizingSimpleTreeView<
 
 				// Track what the root was before to be able to detect changes.
 				// This uses the flex tree root to avoid demanding the simple-tree TreeNode when it might not be hydrated yet.
-				let lastRoot: FlexTreeUnknownUnboxed | undefined = (
-					this.flexTreeContext.root as FlexTreeOptionalField
-				).content;
+				this.lastRoot = (this.flexTreeContext.root as FlexTreeOptionalField).content;
 
 				this.flexTreeViewUnregisterCallbacks.add(
 					this.checkout.events.on("afterBatch", () => {
@@ -492,8 +516,12 @@ export class SchematizingSimpleTreeView<
 						// - The rootChanged event will already be raised at the end of the current upgrade
 						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
 						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-						if (!this.midUpgrade && lastRoot !== this.flexRoot.content) {
-							lastRoot = this.flexRoot.content;
+						if (
+							!this.midUpgrade &&
+							!this.reconcilingSchema &&
+							this.lastRoot !== this.flexRoot.content
+						) {
+							this.lastRoot = this.flexRoot.content;
 							this.events.emit("rootChanged");
 						}
 					}),
@@ -514,6 +542,45 @@ export class SchematizingSimpleTreeView<
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
+	}
+
+	/**
+	 * Reconciles internal schema transitions without disposing a still-compatible view.
+	 * @remarks The action must complete at a consistent checkout state before notifications resume.
+	 */
+	public reconcileSchema(action: () => void): void {
+		assert(!this.reconcilingSchema, "Schema reconciliation must not be reentrant.");
+		const previousSchema = this.checkout.storedSchema.clone();
+		this.reconcilingSchema = true;
+		try {
+			action();
+		} finally {
+			this.reconcilingSchema = false;
+		}
+		const compatibility = this.computeCompatibility();
+		this.currentCompatibility = compatibility;
+		const changes = this.reconciledChanges.splice(0);
+		this.checkout.notifyView(() => {
+			if (this.flexTreeContext === undefined || !compatibility.canView) {
+				this.update();
+			} else {
+				const schema = this.checkout.storedSchema;
+				if (
+					!allowsRepoSuperset(defaultSchemaPolicy, previousSchema, schema) ||
+					!allowsRepoSuperset(defaultSchemaPolicy, schema, previousSchema)
+				) {
+					this.events.emit("schemaChanged");
+				}
+				if (this.lastRoot !== this.flexRoot.content) {
+					this.lastRoot = this.flexRoot.content;
+					this.events.emit("rootChanged");
+				}
+			}
+			for (const change of changes) {
+				this.events.emit("changed", change);
+				this.events.emit("commitApplied", change);
+			}
+		});
 	}
 
 	/**

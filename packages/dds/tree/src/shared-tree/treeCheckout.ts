@@ -1023,6 +1023,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
 	 * The `try`/`finally` ensures the lock is released even if a listener throws.
 	 */
+	/**
+	 * Emits view notifications at a consistent point while preventing reentrant edits.
+	 */
+	public notifyView(emit: () => void): void {
+		this.emitChangedLocked(emit);
+	}
+
 	private emitChangedLocked(
 		emit: () => void,
 		reason: string = "a change event callback",
@@ -1454,6 +1461,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 		disposeCheckoutOnViewDispose?: boolean,
+		onSchemaUpgrade?: (schema: TreeStoredSchema) => void,
 	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,
@@ -1463,6 +1471,7 @@ export class TreeCheckout implements ITreeCheckout {
 				this.views.delete(view);
 			},
 			disposeCheckoutOnViewDispose,
+			onSchemaUpgrade,
 		);
 		this.views.add(view);
 		return view;

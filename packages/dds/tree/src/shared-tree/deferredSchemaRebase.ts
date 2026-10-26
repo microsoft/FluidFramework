@@ -4,8 +4,10 @@
  */
 
 import type { GraphCommit, TreeStoredSchema } from "../core/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Retained input for reconciling a view branch before full schema/data rebase support.
@@ -43,3 +45,28 @@ export type DeferredSchemaRebaseResult =
 export type DeferredSchemaRebase = (
 	input: DeferredSchemaRebaseInput,
 ) => DeferredSchemaRebaseResult;
+
+/**
+ * Refreshes known schema-only private history under the current rebase limitation.
+ * @remarks
+ * Unlike reconstruction of application work, this executor deliberately mutates the private checkout.
+ * The owner must suppress intermediate schema notifications and must provide the last schema-only head.
+ * No user edits may have been added after that head.
+ * Remove this workaround when standard schema/data rebase preserves the private upgrade.
+ */
+export function refreshSchemaOnlyView(
+	checkout: TreeCheckout,
+	base: TreeCheckout,
+	schemaOnlyHead: GraphCommit<SharedTreeChange>,
+	target: TreeStoredSchema | undefined,
+): void {
+	assert(
+		checkout.mainBranch.getHead() === schemaOnlyHead,
+		"Schema-only refresh must not discard application changes.",
+	);
+	checkout.synchronizeFrom(base);
+	checkout.mainBranch.removeAfter(base.mainBranch.getHead());
+	if (target !== undefined) {
+		checkout.updateSchema(target);
+	}
+}

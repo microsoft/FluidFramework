@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CommitOutcome,
@@ -12,10 +13,18 @@ import {
 	type TreeStoredSchema,
 } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../feature-libraries/index.js";
-import { checkSchemaCompatibility, type TreeSchema } from "../simple-tree/index.js";
+import {
+	checkSchemaCompatibility,
+	type ImplicitFieldSchema,
+	type TreeSchema,
+	type TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+} from "../simple-tree/index.js";
 
 import type { TreeCheckout } from "./treeCheckout.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { type SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { refreshSchemaOnlyView } from "./deferredSchemaRebase.js";
 
 export type {
 	DeferredSchemaRebase,
@@ -133,6 +142,10 @@ export class ViewBranch {
 	private readonly unsubscribe: (() => void)[];
 	private synchronizing = false;
 	private disposed = false;
+	private pendingSchema: TreeStoredSchema | undefined;
+	private viewSchema: TreeSchema | undefined;
+	private reconcileView: ((action: () => void) => void) | undefined;
+	private releaseView: (() => void) | undefined;
 
 	public constructor(private readonly base: TreeCheckout) {
 		this.checkout = base.fork();
@@ -145,6 +158,40 @@ export class ViewBranch {
 				this.checkout.mainBranch.commitWasSequenced(commit),
 			),
 		];
+	}
+
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> {
+		if (this.base.forest.anchors.slots.has(ViewSlot)) {
+			throw new UsageError("Cannot create a second tree view from the same checkout");
+		}
+		const view = this.checkout.viewWithInternal(config, undefined, (schema) =>
+			this.upgradeLocally(schema),
+		);
+		this.viewSchema =
+			config instanceof TreeViewConfigurationAlpha
+				? config
+				: new TreeViewConfigurationAlpha(config);
+		this.reconcileView = (action) => view.reconcileSchema(action);
+		this.base.forest.anchors.slots.set(ViewSlot, view);
+		this.releaseView = () => {
+			if (this.base.forest.anchors.slots.get(ViewSlot) === view) {
+				this.base.forest.anchors.slots.delete(ViewSlot);
+			}
+		};
+		return view;
+	}
+
+	private upgradeLocally(schema: TreeStoredSchema): void {
+		this.synchronizing = true;
+		try {
+			this.checkout.updateSchema(schema);
+			this.pendingSchema = schema;
+			this.synchronizedHead = this.checkout.mainBranch.getHead();
+		} finally {
+			this.synchronizing = false;
+		}
 	}
 
 	private synchronize(): void {
@@ -161,7 +208,31 @@ export class ViewBranch {
 			if (this.checkout.mainBranch.getHead() !== this.synchronizedHead) {
 				this.base.merge(this.checkout, false);
 			}
-			this.checkout.synchronizeFrom(this.base);
+			const reconcile = (): void => {
+				if (this.pendingSchema === undefined) {
+					this.checkout.synchronizeFrom(this.base);
+				} else {
+					assert(this.viewSchema !== undefined, "A pending upgrade requires a view schema.");
+					const decision = decideViewSchema(
+						this.viewSchema,
+						this.base.storedSchema,
+						this.pendingSchema,
+					);
+					if (decision.type === "incompatible") {
+						this.checkout.synchronizeFrom(this.base);
+						this.pendingSchema = undefined;
+					} else {
+						const target = decision.type === "upgrade" ? decision.schema : undefined;
+						refreshSchemaOnlyView(this.checkout, this.base, this.synchronizedHead, target);
+						this.pendingSchema = target;
+					}
+				}
+			};
+			if (this.reconcileView === undefined) {
+				reconcile();
+			} else {
+				this.reconcileView(reconcile);
+			}
 			this.synchronizedHead = this.checkout.mainBranch.getHead();
 		} finally {
 			this.synchronizing = false;
@@ -173,6 +244,7 @@ export class ViewBranch {
 			return;
 		}
 		this.disposed = true;
+		this.releaseView?.();
 		for (const off of this.unsubscribe) {
 			off();
 		}

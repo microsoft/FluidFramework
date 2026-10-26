@@ -16,12 +16,14 @@ import {
 } from "../../shared-tree/viewBranch.js";
 import {
 	SchemaFactoryBeta,
+	SchemaFactoryAlpha,
+	type ImplicitFieldSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 
-import { mintRevisionTag, TestTreeProviderLite } from "../utils.js";
+import { expectSchemaEqual, mintRevisionTag, TestTreeProviderLite } from "../utils.js";
 
 describe("viewBranch", () => {
 	describe("persistent synchronization", () => {
@@ -198,6 +200,161 @@ describe("viewBranch", () => {
 				),
 				{ type: "incompatible" },
 			);
+		});
+	});
+
+	describe("local schema upgrades", () => {
+		const sf = new SchemaFactoryAlpha("viewBranchUpgrade");
+		const configV1 = new TreeViewConfiguration({ schema: sf.array("Root", sf.string) });
+		const configV2 = new TreeViewConfiguration({
+			schema: sf.array("Root", [sf.string, sf.number]),
+		});
+		const configV3 = new TreeViewConfiguration({
+			schema: sf.array("Root", [sf.string, sf.number, sf.boolean]),
+		});
+
+		function createUpgradableViews<TRoot extends ImplicitFieldSchema>(
+			config: TreeViewConfiguration<TRoot>,
+		) {
+			const provider = new TestTreeProviderLite(2);
+			const remote = provider.trees[0].kernel.viewWith(configV1);
+			remote.initialize(["initial"]);
+			provider.synchronizeMessages();
+			const base = provider.trees[1].kernel.checkout;
+			const branch = new ViewBranch(base);
+			const view = branch.viewWith(config);
+			return { provider, remote, base, branch, view };
+		}
+
+		it("applies an explicit upgrade locally without changing the base", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			const baseHead = base.mainBranch.getHead();
+			try {
+				assert.equal(view.compatibility.canView, false);
+				view.upgradeSchema();
+
+				assert.equal(view.compatibility.isEquivalent, true);
+				assert.deepEqual([...view.root], ["initial"]);
+				assert.equal(
+					base.mainBranch.getHead() === baseHead,
+					true,
+					"The base history changed.",
+				);
+				assert.equal(provider.peekNextMessage(), undefined);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps the upgraded root stable while receiving remote data", () => {
+			const { provider, remote, branch, view } = createUpgradableViews(configV2);
+			try {
+				view.upgradeSchema();
+				const root = view.root;
+				remote.root.insertAtEnd("remote");
+				provider.synchronizeMessages();
+
+				assert.equal(view.compatibility.canView, true);
+				assert.equal(view.root === root, true, "A schema-only refresh replaced the root.");
+				assert.deepEqual([...root], ["initial", "remote"]);
+				assert.equal(provider.peekNextMessage(), undefined);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("reserves the base's single view until the controller is disposed", () => {
+			const { remote, base, branch } = createUpgradableViews(configV2);
+			try {
+				assert.throws(() => base.viewWith(configV1), /second tree view/);
+				branch.dispose();
+				const replacement = base.viewWith(configV1);
+				replacement.dispose();
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("adopts an equivalent remote upgrade and publishes later edits without schema", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const root = view.root;
+			remote.dispose();
+			const updatedRemote = provider.trees[0].kernel.viewWith(configV2);
+			try {
+				updatedRemote.upgradeSchema();
+				provider.synchronizeMessages();
+				assert.equal(view.root === root, true);
+				assert.equal(provider.peekNextMessage(), undefined);
+
+				root.insertAtEnd(2);
+				assert.deepEqual(
+					base.mainBranch.getHead().change.changes.map((change) => change.type),
+					["data"],
+				);
+				provider.synchronizeMessages();
+				assert.deepEqual([...updatedRemote.root], ["initial", 2]);
+			} finally {
+				branch.dispose();
+				updatedRemote.dispose();
+			}
+		});
+
+		it("keeps a larger local upgrade pending after an insufficient remote upgrade", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV3);
+			view.upgradeSchema();
+			const root = view.root;
+			remote.dispose();
+			const updatedRemote = provider.trees[0].kernel.viewWith(configV2);
+			try {
+				updatedRemote.upgradeSchema();
+				provider.synchronizeMessages();
+
+				assert.equal(view.root === root, true);
+				assert.equal(view.compatibility.isEquivalent, true);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+				expectSchemaEqual(branch.checkout.storedSchema, toUpgradeSchema(configV3.schema));
+				assert.equal(provider.peekNextMessage(), undefined);
+			} finally {
+				branch.dispose();
+				updatedRemote.dispose();
+			}
+		});
+
+		it("adopts a viewable covering remote schema without downgrading it", () => {
+			const config = new TreeViewConfiguration({
+				schema: sf.arrayAlpha(
+					"Root",
+					sf.types([sf.string, sf.number, SchemaFactoryAlpha.staged(sf.boolean)]),
+				),
+			});
+			const { provider, remote, base, branch, view } = createUpgradableViews(config);
+			view.upgradeSchema();
+			const root = view.root;
+			remote.dispose();
+			const updatedRemote = provider.trees[0].kernel.viewWith(configV3);
+			try {
+				updatedRemote.upgradeSchema();
+				provider.synchronizeMessages();
+
+				assert.equal(view.root === root, true);
+				assert.equal(view.compatibility.canView, true);
+				assert.equal(view.compatibility.isEquivalent, false);
+				assert.equal(provider.peekNextMessage(), undefined);
+				root.insertAtEnd(2);
+				assert.deepEqual(
+					base.mainBranch.getHead().change.changes.map((change) => change.type),
+					["data"],
+				);
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV3.schema));
+			} finally {
+				branch.dispose();
+				updatedRemote.dispose();
+			}
 		});
 	});
 

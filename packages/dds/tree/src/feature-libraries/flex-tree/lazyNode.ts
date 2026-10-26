@@ -76,7 +76,9 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
-	private readonly storedSchema: TreeNodeStoredSchema;
+	private get storedSchema(): TreeNodeStoredSchema {
+		return this.context.schema.nodeSchema.get(this.type) ?? fail("Missing node schema.");
+	}
 
 	public constructor(
 		context: Context,
@@ -86,8 +88,6 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		anchor: Anchor,
 	) {
 		super(context, cursor, anchor);
-		this.storedSchema =
-			context.schema.nodeSchema.get(this.type) ?? fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);

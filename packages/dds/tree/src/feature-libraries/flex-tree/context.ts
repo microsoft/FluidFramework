@@ -22,7 +22,7 @@ import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import type { LazyEntity } from "./lazyEntity.js";
-import { makeField } from "./lazyField.js";
+import { LazyField, makeField } from "./lazyField.js";
 
 /**
  * Context for FlexTrees.
@@ -202,6 +202,14 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 
+		if (
+			this.lazyRootCache !== undefined &&
+			this.lazyRootCache.schema !== this.schema.rootFieldSchema.kind
+		) {
+			assert(this.lazyRootCache instanceof LazyField, "Expected a hydrated root field.");
+			this.lazyRootCache[disposeSymbol]();
+			this.lazyRootCache = undefined;
+		}
 		this.lazyRootCache ??= this.detachedField(rootField, this.schema.rootFieldSchema.kind);
 		return this.lazyRootCache;
 	}
