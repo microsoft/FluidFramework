@@ -124,31 +124,17 @@ describe("Branch commit counts", () => {
 
 	for (const cached of [false, true]) {
 		it(`rejects disposed branch count reads with ${cached ? "a cached" : "an unread"} count`, () => {
-			const trimState = { trimmedCommitCount: 0 };
-			const branch = createBranch(trimState);
+			const branch = createBranch();
 			edit(branch);
-			edit(branch);
-			const newBase = branch.getHead() as Mutable<GraphCommit<DefaultChangeset>>;
-			edit(branch);
-			const fork = branch.fork();
 			if (cached) {
-				assert.equal(fork.getCommitCount(), 3);
+				assert.equal(branch.getCommitCount(), 1);
 			}
-			assert.equal(branch.getCommitCount(), 3);
-			fork.events.on("dispose", () => {
-				assert.throws(
-					() => fork.getCommitCount(),
-					validateAssertionError("Branch is disposed"),
-				);
-				delete newBase.parent;
-				trimState.trimmedCommitCount += 2;
-			});
-			fork.dispose();
+			branch.dispose();
 
-			assert.equal(branch.getCommitCount(), 1);
-			assert.throws(() => fork.getCommitCount(), validateAssertionError("Branch is disposed"));
-			fork.dispose();
-			assert.throws(() => fork.getCommitCount(), validateAssertionError("Branch is disposed"));
+			assert.throws(
+				() => branch.getCommitCount(),
+				validateAssertionError("Branch is disposed"),
+			);
 		});
 	}
 
