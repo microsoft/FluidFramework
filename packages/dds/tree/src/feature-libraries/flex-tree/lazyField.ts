@@ -266,10 +266,10 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			const path = this.getFieldPath();
 			if (
 				path.parent === undefined
-					// Only allow editing if we are the root document field...
-					? path.field === rootFieldKey
-					// ...or are under a node in the document.
-					: treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
+					? // Only allow editing if we are the root document field...
+						path.field === rootFieldKey
+					: // ...or are under a node in the document.
+						treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
 			) {
 				return path;
 			}
