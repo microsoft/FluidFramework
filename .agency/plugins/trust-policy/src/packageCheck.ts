@@ -233,7 +233,10 @@ export function isOperationalError(error: unknown): boolean {
 	);
 }
 
-const defaultRegistry = "https://registry.npmjs.org";
+/**
+ * Registry queried when none is specified.
+ */
+export const defaultRegistry = "https://registry.npmjs.org";
 
 const disclaimer =
 	"Provenance verifies publishing/build evidence, not absence of malware or vulnerabilities. Alternatives may require breaking API changes. No package is downloaded into the target project or installed.";

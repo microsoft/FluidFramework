@@ -31,14 +31,15 @@ The checker itself reports unsupported Node.js versions.
 
 ## Network access
 
-The checker probes the registry and Sigstore endpoints the selected policy needs, and the public registries for information, and reports them in `endpointAccess` (or, if the command stops because a required endpoint is blocked, in the error message).
-Each entry states its `purpose` and whether it is `required`.
-Always tell the user which endpoints are blocked, if any.
-If the command stops because a required endpoint is blocked, report that and ask whether the user has an alternative registry or proxy; do not retry with `--no-registry-check` unless the user says the endpoint is reachable through a proxy.
+The checker probes the registry and, for the `cryptographic` policy, Sigstore, and reports the results in `endpointAccess`.
+Each entry states its `purpose` and whether it was `reachable`.
+Probes are diagnostic only and never stop the check: a registry can serve package metadata while rejecting its probe, and Sigstore verification can use cached metadata.
+Always tell the user which endpoints were unreachable, if any.
+If the verdict is `inconclusive` and an endpoint was unreachable, report that as the likely cause and ask whether the user has an alternative registry or proxy.
 
 If the command stops because `--registry` is an Azure Artifacts feed, explain that Azure Artifacts does not serve provenance attestations, so results through it would be meaningless.
 Ask whether to rerun against the public registry by omitting `--registry`; never edit the user's `.npmrc`.
-If the public registry is also blocked, report that a trust check is not possible from this network.
+If the public registry is also unreachable, report that a trust check is not possible from this network.
 
 ## Procedure
 

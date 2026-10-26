@@ -4,16 +4,11 @@
  */
 
 /**
- * Public npm registries that some corporate networks block.
- */
-export const publicRegistries = [
-	"https://registry.npmjs.org",
-	"https://registry.yarnpkg.com",
-	"https://registry.npmmirror.com",
-] as const;
-
-/**
  * A network endpoint that a command uses, and how to test whether it is reachable.
+ *
+ * @remarks
+ * Probes are diagnostic only.
+ * A registry can serve package metadata while rejecting its probe path, and Sigstore verification can use cached TUF metadata when the repository is unreachable, so an unreachable probe does not establish that the command will fail.
  */
 export interface Endpoint {
 	/**
@@ -28,11 +23,6 @@ export interface Endpoint {
 	 * What the command uses the endpoint for.
 	 */
 	purpose: string;
-	/**
-	 * Whether the command stops when the endpoint is unreachable.
-	 * Optional endpoints are reported, and failures that depend on them become inconclusive results.
-	 */
-	required: boolean;
 }
 
 /**
@@ -53,47 +43,26 @@ export interface EndpointAccess extends Endpoint {
  * Describes an npm registry endpoint, probed with npm's `/-/ping` endpoint.
  * @param registry - Registry URL. Credentials are removed.
  * @param purpose - What the command uses the registry for.
- * @param required - Whether the command stops when the registry is unreachable.
  */
-export function npmRegistryEndpoint(
-	registry: string,
-	purpose: string,
-	required = true,
-): Endpoint {
-	return { url: normalizeEndpointUrl(registry), probePath: "/-/ping", purpose, required };
+export function npmRegistryEndpoint(registry: string, purpose: string): Endpoint {
+	return { url: normalizeEndpointUrl(registry), probePath: "/-/ping", purpose };
 }
 
 /**
  * Sigstore's public-good TUF repository, from which sigstore-js refreshes the trusted root used for cryptographic verification.
  * TUF clients fetch `timestamp.json` on every refresh.
  * @param purpose - What the command uses the trusted root for.
- * @param required - Whether the command stops when the repository is unreachable.
  */
-export function sigstoreTufEndpoint(purpose: string, required: boolean): Endpoint {
+export function sigstoreTufEndpoint(purpose: string): Endpoint {
 	return {
 		url: "https://tuf-repo-cdn.sigstore.dev",
 		probePath: "/timestamp.json",
 		purpose,
-		required,
 	};
 }
 
 /**
- * Lists the endpoints a command needs, followed by the public registries that it does not need, which are probed for information only.
- * @param needed - Endpoints the command uses.
- */
-export function planEndpoints(needed: readonly Endpoint[]): Endpoint[] {
-	const urls = new Set(needed.map(({ url }) => url));
-	return [
-		...needed,
-		...publicRegistries
-			.filter((registry) => !urls.has(registry))
-			.map((registry) => npmRegistryEndpoint(registry, "not used (informational)", false)),
-	];
-}
-
-/**
- * Probes each endpoint concurrently. Any network error or non-2xx response counts as blocked.
+ * Probes each endpoint concurrently. Any network error or non-2xx response counts as unreachable.
  * @param endpoints - Endpoints to probe.
  * @param fetcher - Fetch implementation.
  * @param timeoutMs - Per-endpoint timeout.
@@ -120,11 +89,18 @@ export async function probeEndpoints(
 }
 
 /**
- * Returns the required endpoints that are unreachable.
+ * Describes the unreachable endpoints in probe results, if any, as a warning that does not stop the command.
  * @param access - Probe results.
+ * @returns The warning, or `undefined` if every endpoint is reachable.
  */
-export function findBlockedEndpoints(access: readonly EndpointAccess[]): EndpointAccess[] {
-	return access.filter(({ required, reachable }) => required && !reachable);
+export function describeUnreachableEndpoints(
+	access: readonly EndpointAccess[],
+): string | undefined {
+	const unreachable = access.filter(({ reachable }) => !reachable);
+	if (unreachable.length === 0) {
+		return undefined;
+	}
+	return `WARNING: ${unreachable.map(({ url, detail }) => `${url} did not respond to its probe (${detail})`).join("; ")}. Continuing; if the check is inconclusive, pass --registry with a reachable HTTPS registry that serves npm attestations, or check access to Sigstore.`;
 }
 
 /**
@@ -141,7 +117,7 @@ export function formatEndpointAccess(access: readonly EndpointAccess[]): string[
 }
 
 function formatStatus({ reachable, detail }: EndpointAccess): string {
-	return `${reachable ? "reachable" : "BLOCKED"} (${detail})`;
+	return `${reachable ? "reachable" : "UNREACHABLE"} (${detail})`;
 }
 
 /**

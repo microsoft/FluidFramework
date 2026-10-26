@@ -6,12 +6,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-	findBlockedEndpoints,
+	describeUnreachableEndpoints,
 	formatEndpointAccess,
 	isAzureArtifactsRegistry,
 	normalizeEndpointUrl,
 	npmRegistryEndpoint,
-	planEndpoints,
 	probeEndpoints,
 	sigstoreTufEndpoint,
 } from "../registryAccess.js";
@@ -37,12 +36,11 @@ test("classifies endpoint probe outcomes", async () => {
 	const access = await probeEndpoints(
 		[
 			npmRegistryEndpoint("https://ok.example/", "metadata"),
-			npmRegistryEndpoint("https://denied.example", "metadata", false),
+			npmRegistryEndpoint("https://denied.example", "metadata"),
 			{
 				url: "https://slow.example",
 				probePath: "/timestamp.json",
 				purpose: "trust",
-				required: true,
 			},
 			npmRegistryEndpoint("https://missing.example", "metadata"),
 		],
@@ -64,19 +62,33 @@ test("classifies endpoint probe outcomes", async () => {
 		],
 	);
 	assert.deepEqual(formatEndpointAccess(access), [
-		"  https://ok.example       reachable (HTTP 200)  metadata",
-		"  https://denied.example   BLOCKED (HTTP 403)    metadata",
-		"  https://slow.example     BLOCKED (timed out)   trust",
-		"  https://missing.example  BLOCKED (ENOTFOUND)   metadata",
+		"  https://ok.example       reachable (HTTP 200)     metadata",
+		"  https://denied.example   UNREACHABLE (HTTP 403)   metadata",
+		"  https://slow.example     UNREACHABLE (timed out)  trust",
+		"  https://missing.example  UNREACHABLE (ENOTFOUND)  metadata",
 	]);
-	// Only required endpoints stop the command.
-	assert.deepEqual(
-		findBlockedEndpoints(access).map(({ url }) => url),
-		["https://slow.example", "https://missing.example"],
-	);
 });
 
-test("treats redirects as blocked", async () => {
+test("describes unreachable endpoints as a warning that lets the check continue", () => {
+	const reachable = { ...sigstoreTufEndpoint("trust"), reachable: true, detail: "HTTP 200" };
+	assert.equal(describeUnreachableEndpoints([reachable]), undefined);
+	const warning = describeUnreachableEndpoints([
+		{
+			...npmRegistryEndpoint("https://mirror.example/", "metadata"),
+			reachable: false,
+			detail: "HTTP 404",
+		},
+		reachable,
+	]);
+	assert.match(
+		warning ?? "",
+		/https:\/\/mirror\.example did not respond to its probe \(HTTP 404\)/,
+	);
+	assert.doesNotMatch(warning ?? "", /tuf-repo-cdn/);
+	assert.match(warning ?? "", /Continuing/);
+});
+
+test("treats redirects as unreachable", async () => {
 	const [access] = await probeEndpoints(
 		[npmRegistryEndpoint("https://proxy.example", "metadata")],
 		async () => new Response(null, { status: 302, headers: { location: "https://login" } }),
@@ -85,24 +97,7 @@ test("treats redirects as blocked", async () => {
 	assert.equal(access?.detail, "HTTP 302");
 });
 
-test("plans only the endpoints a mode needs as required, with public registries as information", () => {
-	const plan = planEndpoints([
-		npmRegistryEndpoint("https://registry.npmjs.org/", "package metadata"),
-		sigstoreTufEndpoint("trusted root", true),
-	]);
-	assert.deepEqual(
-		plan.map(({ url, required }) => [url, required]),
-		[
-			["https://registry.npmjs.org", true],
-			["https://tuf-repo-cdn.sigstore.dev", true],
-			["https://registry.yarnpkg.com", false],
-			["https://registry.npmmirror.com", false],
-		],
-	);
-	assert.deepEqual(
-		planEndpoints([]).map(({ required }) => required),
-		[false, false, false],
-	);
+test("normalizes endpoint URLs", () => {
 	assert.equal(
 		normalizeEndpointUrl("https://user:pass@mirror.example/npm/?q=1#x"),
 		"https://mirror.example/npm",

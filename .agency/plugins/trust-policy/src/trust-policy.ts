@@ -10,17 +10,20 @@ import { fileURLToPath } from "node:url";
 import { redact } from "@npmcli/redact";
 import { Command, Flags, execute } from "@oclif/core";
 import semver from "semver";
-import { checkPackage, type PackageCheckResult, type Verdict } from "./packageCheck.js";
+import {
+	checkPackage,
+	defaultRegistry,
+	type PackageCheckResult,
+	type Verdict,
+} from "./packageCheck.js";
 import {
 	azureArtifactsReason,
+	describeUnreachableEndpoints,
 	type EndpointAccess,
-	findBlockedEndpoints,
 	formatEndpointAccess,
 	isAzureArtifactsRegistry,
 	npmRegistryEndpoint,
-	planEndpoints,
 	probeEndpoints,
-	publicRegistries,
 	sigstoreTufEndpoint,
 } from "./registryAccess.js";
 
@@ -50,7 +53,7 @@ export default class CheckTrustPolicyCommand extends Command {
 		}),
 		"registry-check": Flags.boolean({
 			description:
-				"Probe the registry and Sigstore endpoints the check needs, and public registries for information, before starting. Stop early if a required endpoint is blocked.",
+				"Probe the registry and Sigstore endpoints the check needs and report whether they are reachable. Probes are diagnostic only and do not stop the check.",
 			default: true,
 			allowNo: true,
 		}),
@@ -75,30 +78,23 @@ export default class CheckTrustPolicyCommand extends Command {
 		if (flags["registry-check"]) {
 			const needed = [
 				npmRegistryEndpoint(
-					flags.registry ?? publicRegistries[0],
+					flags.registry ?? defaultRegistry,
 					"package metadata and attestations",
 				),
 			];
 			if (policy === "cryptographic") {
-				needed.push(sigstoreTufEndpoint("Sigstore trusted root for verification", true));
+				needed.push(sigstoreTufEndpoint("Sigstore trusted root for verification"));
 			}
-			endpointAccess = await probeEndpoints(planEndpoints(needed));
-			const lines = formatEndpointAccess(endpointAccess);
+			endpointAccess = await probeEndpoints(needed);
 			if (!flags.quiet) {
 				this.log("Network access (from Node.js):");
-				for (const line of lines) {
+				for (const line of formatEndpointAccess(endpointAccess)) {
 					this.log(line);
 				}
-			}
-			const blocked = findBlockedEndpoints(endpointAccess);
-			if (blocked.length > 0) {
-				// Text mode has already printed the table; JSON errors carry no result object.
-				const summary = this.jsonEnabled()
-					? ` Network access: ${lines.map((line) => line.trim().replace(/\s+/g, " ")).join("; ")}.`
-					: "";
-				this.error(
-					`${blocked.map(({ url, detail }) => `${url} is blocked (${detail})`).join("; ")}. Pass --registry with a reachable HTTPS registry that serves npm attestations, or check access to Sigstore.${summary}`,
-				);
+				const warning = describeUnreachableEndpoints(endpointAccess);
+				if (warning !== undefined) {
+					this.logToStderr(warning);
+				}
 			}
 		}
 		const result = await checkPackage(flags.package, {
