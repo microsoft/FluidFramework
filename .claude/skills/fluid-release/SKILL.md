@@ -14,6 +14,15 @@ Check the `CI` environment variable at the start of every session:
 - **`CI=true`**: Running in a GitHub Actions workflow. Use only `origin` (no `upstream`). Use CI-safe commands (see [CI-safe alternatives](#ci-safe-command-alternatives)). Never prompt for input. Log blockers and phase completions to workflow output for human review.
 - **`CI` unset or false**: Running locally. Use `upstream`/`origin` detection as described in Key Context.
 
+Select the remote once for repository-state checks:
+
+```bash
+release_remote=origin
+if [ "$CI" != "true" ] && git remote get-url upstream >/dev/null 2>&1; then
+    release_remote=upstream
+fi
+```
+
 ## Mode Selection
 
 At the start of every release session, ask the user:
@@ -57,8 +66,9 @@ If the version bump has already merged, use the release-prep PR or pre-bump comm
 
 ```bash
 # Inspect the development version and existing release branches
-git show upstream/main:package.json
-git ls-remote --heads upstream 'release-prep/*' 'release/client/*'
+git fetch "$release_remote" main
+git show "${release_remote}/main:package.json"
+git ls-remote --heads "$release_remote" 'release-prep/*' 'release/client/*'
 ```
 
 Ask for clarification only when repo state is ambiguous or conflicts with user-provided versions or phase.
@@ -68,9 +78,9 @@ In CI, report the ambiguity or conflict and stop instead of prompting.
 
 ```bash
 # Check for release-prep branches for the next version
-git ls-remote --heads upstream 'release-prep/<NEXT_VERSION>/*'
+git ls-remote --heads "$release_remote" 'release-prep/<NEXT_VERSION>/*'
 # Check for the release branch
-git ls-remote --heads upstream 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
+git ls-remote --heads "$release_remote" 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
 # Check for a release tag
 git tag -l 'client_v<NEXT_VERSION>'
 # Check for open PRs
@@ -168,8 +178,8 @@ Example for releasing 2.90.0 with next version 2.91.0:
 Before starting any phase, check for existing progress by looking at branches and PRs:
 
 ```bash
-# Check for existing release-prep branches on upstream
-git ls-remote --heads upstream 'release-prep/<VERSION>/*'
+# Check for existing release-prep branches on the selected remote
+git ls-remote --heads "$release_remote" 'release-prep/<VERSION>/*'
 # Check for open release-prep PRs
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
 ```
