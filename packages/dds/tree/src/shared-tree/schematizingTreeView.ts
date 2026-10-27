@@ -45,6 +45,8 @@ import {
 	type TreeBranchEvents,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
+	type VoidTransactionCallbackStatusBeta,
 	type TransactionVoidResult,
 	type TransactionValueResult,
 	type RunTransactionParamsAlpha,
@@ -412,14 +414,21 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	public runTransaction<TSuccessValue, TFailureValue>(
+	public runTransaction<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionValueResult<TSuccessValue, TFailureValue>;
-	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+	public runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
 		params?: RunTransactionParamsAlpha,
-	): TransactionVoidResult;
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -431,14 +440,23 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.runTransaction(transaction, params);
 	}
 
-	public runTransactionAsync<TSuccessValue, TFailureValue>(
+	public runTransactionAsync<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
-	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+	public runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionVoidResult>;
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
+	>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
