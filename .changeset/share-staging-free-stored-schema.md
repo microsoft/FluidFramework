@@ -17,8 +17,4 @@ Unhydrated contexts remain root-specific, and hydrated contexts remain document-
 Configuration validation and unfiltered component discovery share a traversal, while configuration-specific checks still run on every construction.
 Simple-schema copies and compatibility snapshots still return fresh output structures.
 Definition map iteration order is unspecified.
-JSON Schema exports use stable definition ordering; schema hashes and persisted schema encoding are unchanged.
-
-Schema compatibility snapshots now write node definitions in a stable identifier order.
-Newly generated snapshots may differ in definition ordering from older snapshots.
-Existing snapshots remain usable without regeneration, and ordering alone does not change schema compatibility results.
+Schema hashes and persisted schema encoding are unchanged.

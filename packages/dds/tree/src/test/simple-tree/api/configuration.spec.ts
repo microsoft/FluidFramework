@@ -30,6 +30,7 @@ import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
 
+// Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {
 	it("reuses completed analysis while revalidating each configuration", () => {
 		const sf = new SchemaFactoryAlpha("singleWalk");

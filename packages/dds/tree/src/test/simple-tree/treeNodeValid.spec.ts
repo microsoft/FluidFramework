@@ -40,6 +40,7 @@ import {
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand, getOrCreate } from "../../util/index.js";
 
+// Node initialization exercises getTreeNodeSchemaInitializedData; context caching is covered in createContext.spec.ts.
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {
 		public constructor(public readonly simpleSchema: TreeNodeSchema) {

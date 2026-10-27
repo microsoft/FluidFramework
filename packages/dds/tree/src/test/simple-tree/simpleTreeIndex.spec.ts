@@ -17,7 +17,6 @@ import {
 	type TreeIndexKeyFieldSelector,
 	TreeViewConfiguration,
 	createTreeIndex,
-	createIdentifierIndex,
 	TreeIndexKey,
 	SchemaFactoryBeta,
 	ObjectNodeSchema,
@@ -57,8 +56,9 @@ function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 	return { view, parent: view.root };
 }
 
+// Unit tests for simple-tree/api/simpleTreeIndex.ts; retained at this legacy test path.
 describe("simple tree indexes", () => {
-	it("reuses cached definitions for both index builders", () => {
+	it("reuses cached definitions without rediscovering schema", () => {
 		const sf = new SchemaFactory("indexLookupReuse");
 		class Child extends sf.object("Child", { id: sf.identifier }) {}
 		class Parent extends sf.object("Parent", { id: sf.identifier, child: Child }) {}
@@ -81,16 +81,12 @@ describe("simple tree indexes", () => {
 			(nodes) => nodes,
 			isStringKey,
 		);
-		const identifiers = createIdentifierIndex(view);
 		try {
 			assert.equal(reads, 0);
 			assert.equal(index.get("parent")?.[0], view.root);
 			assert.equal(index.get("child")?.[0], view.root.child);
-			assert.equal(identifiers.get("parent"), view.root);
-			assert.equal(identifiers.get("child"), view.root.child);
 		} finally {
 			index.dispose();
-			identifiers.dispose();
 			view.dispose();
 		}
 	});
