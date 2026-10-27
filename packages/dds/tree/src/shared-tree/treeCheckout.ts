@@ -116,6 +116,9 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
+	type SchemaType,
+	type SimpleObjectFieldSchema,
+	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -1332,6 +1335,16 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		_schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
 		return false;
+	}
+
+	/**
+	 * This is always empty, because a checkout has no view schema.
+	 */
+	public get unknownOptionalFields(): ReadonlyMap<
+		TreeNodeSchema,
+		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+	> {
+		return new Map();
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(

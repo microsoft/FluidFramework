@@ -229,6 +229,9 @@ describe("schematizeTree", () => {
 			): this is TreeViewAlpha<TSchema> {
 				return false;
 			},
+			get unknownOptionalFields(): never {
+				throw new Error("Function not implemented.");
+			},
 			revertTo(): void {
 				throw new Error("Function not implemented.");
 			},

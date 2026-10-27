@@ -12,7 +12,12 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
+import {
+	anchorSlot,
+	rootFieldKey,
+	type RevertToOptionsAlpha,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -69,9 +74,16 @@ import {
 	type StagedUpgradeStatus,
 	type ITreeViewConfigurationAlpha,
 	SchemaIdentityInternal,
+	isObjectNodeSchema,
+	FieldKind,
+	NodeKind,
+	type SchemaType,
+	type SimpleObjectFieldSchema,
+	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
+	brand,
 	breakingClass,
 	disposeSymbol,
 	isReadonlyArray,
@@ -81,7 +93,49 @@ import {
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
+import { exportSimpleSchema } from "./sharedTree.js";
 import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
+
+/**
+ * Gets the {@link TreeContextAlpha.unknownOptionalFields | unknown optional fields} of `viewSchema` in `storedSchema`.
+ */
+function getUnknownOptionalFields(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+): ReadonlyMap<
+	TreeNodeSchema,
+	ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+> {
+	const result = new Map<
+		TreeNodeSchema,
+		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+	>();
+	const simpleStoredSchema = exportSimpleSchema(storedSchema);
+	for (const nodeSchema of viewSchema.definitions.values()) {
+		if (!isObjectNodeSchema(nodeSchema) || !nodeSchema.allowUnknownOptionalFields) {
+			continue;
+		}
+		const storedNodeSchema = simpleStoredSchema.definitions.get(nodeSchema.identifier);
+		if (storedNodeSchema?.kind !== NodeKind.Object) {
+			continue;
+		}
+		const fields = new Map<string, SimpleObjectFieldSchema<SchemaType.Stored>>();
+		for (const [storedKey, fieldSchema] of storedNodeSchema.fields) {
+			// Forbidden fields are exported as optional with no allowed types, so skip them.
+			if (
+				!nodeSchema.storedKeyToPropertyKey.has(brand(storedKey)) &&
+				fieldSchema.kind === FieldKind.Optional &&
+				fieldSchema.simpleAllowedTypes.size > 0
+			) {
+				fields.set(storedKey, fieldSchema);
+			}
+		}
+		if (fields.size > 0) {
+			result.set(nodeSchema, fields);
+		}
+	}
+	return result;
+}
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -134,6 +188,16 @@ export class SchematizingSimpleTreeView<
 	 * @remarks Undefined if and only if uninitialized or disposed.
 	 */
 	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
+	/**
+	 * Cached {@link SchematizingSimpleTreeView.unknownOptionalFields}.
+	 * @remarks Computed on first access and cleared whenever the stored schema changes.
+	 */
+	private currentUnknownOptionalFields:
+		| ReadonlyMap<
+				TreeNodeSchema,
+				ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+		  >
+		| undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -488,6 +552,7 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
+		this.currentUnknownOptionalFields = undefined;
 		const compatibility = this.computeCompatibility();
 		this.currentCompatibility = compatibility;
 
@@ -608,6 +673,18 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
+	public get unknownOptionalFields(): ReadonlyMap<
+		TreeNodeSchema,
+		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+	> {
+		this.ensureUndisposed();
+		this.currentUnknownOptionalFields ??= getUnknownOptionalFields(
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
+		return this.currentUnknownOptionalFields;
+	}
+
 	public get compatibility(): SchemaCompatibilityStatusBeta {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
@@ -625,6 +702,7 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
+		this.currentUnknownOptionalFields = undefined;
 		this.onDispose?.();
 		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
 			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed

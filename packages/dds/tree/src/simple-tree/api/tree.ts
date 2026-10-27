@@ -30,6 +30,7 @@ import type {
 } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -38,7 +39,11 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleObjectFieldSchema,
+	SimpleTreeSchema,
+} from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
@@ -594,6 +599,24 @@ export interface UntypedTreeViewAlpha
 	hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 	): this is TreeViewAlpha<TSchema>;
+
+	/**
+	 * The {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} of each object node schema in this view.
+	 *
+	 * @remarks
+	 * Maps each object node schema in the view schema that has unknown optional fields to the schema of those fields, keyed by {@link SimpleObjectFieldSchema.storedKey | stored key}.
+	 *
+	 * The value can change when the stored schema changes, for example when another client upgrades the schema.
+	 * To be notified of these changes, listen to {@link TreeViewEvents.schemaChanged} on the {@link TreeViewAlpha | view}, then read this property again.
+	 * Reading this property is not tracked by {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce},
+	 * so a stored schema change does not invalidate their results.
+	 *
+	 * To read the content of these fields, use {@link (TreeAlpha:interface).(exportVerbose:1)} with {@link KeyEncodingOptions.allStoredKeys}.
+	 */
+	readonly unknownOptionalFields: ReadonlyMap<
+		TreeNodeSchema,
+		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+	>;
 
 	// Override the base fork method to return the alpha variant.
 	fork(): UntypedTreeViewAlpha;
