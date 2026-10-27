@@ -149,6 +149,19 @@ describe("component-derived schema state", () => {
 		assert.equal(empty.hasStagedSchema, false);
 	});
 
+	it("deduplicates dependencies on different members of the same component", () => {
+		const [root, a, b] = createSchemaGraph([[1, 2, 1], [2], [1]]);
+		assert(root !== undefined && a !== undefined && b !== undefined);
+		getSchemaDerivedData(root);
+		const rootComponent = getTreeNodeSchemaPrivateData(root).component ?? assert.fail();
+		const dependency = getTreeNodeSchemaPrivateData(a).component ?? assert.fail();
+		assert.strictEqual(dependency, getTreeNodeSchemaPrivateData(b).component);
+		assert.deepEqual(rootComponent.members, [root]);
+		assert.deepEqual(new Set(dependency.members), new Set([a, b]));
+		assert.deepEqual(rootComponent.dependencies, new Set([dependency]));
+		assert.equal(dependency.dependencies.size, 0);
+	});
+
 	it("keeps policy-specific topology separate when a staged edge splits a component", () => {
 		const sf = new SchemaFactoryAlpha("split");
 		class A extends sf.objectRecursive("A", {
@@ -178,7 +191,10 @@ describe("component-derived schema state", () => {
 			node: (schema) => visited.push(schema),
 		});
 		assert.deepEqual(visited, [B]);
-		assert.strictEqual(a.component, getTreeNodeSchemaPrivateData(B).component);
+		assert.strictEqual(
+			getTreeNodeSchemaPrivateData(A).component,
+			getTreeNodeSchemaPrivateData(B).component,
+		);
 	});
 
 	it("reuses permissive conversion while preserving root field kind and metadata", () => {

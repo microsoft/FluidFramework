@@ -92,12 +92,6 @@ export interface SchemaDerivedData {
 	 */
 	readonly hasStagedSchema: boolean;
 	/**
-	 * The component containing all root allowed types, if they belong to exactly one component.
-	 * Absent for empty roots and roots spanning multiple components.
-	 * Root fields remain separate from component-owned view definitions.
-	 */
-	readonly component: SchemaComponent | undefined;
-	/**
 	 * Populated by {@link getUnhydratedContext} only after construction succeeds.
 	 * Analysis and stored conversion must not initialize contexts.
 	 */
@@ -136,7 +130,6 @@ export function getSchemaDerivedData(rootSchema: ImplicitFieldSchema): SchemaDer
 				: materializeDefinitions(components);
 		return {
 			treeSchema: { root, definitions },
-			component: components.size === 1 ? only : undefined,
 			hasStagedSchema:
 				isStagedOptional(root) ||
 				types.some((type) => type.metadata.stagedSchemaUpgrade !== undefined) ||
@@ -170,7 +163,6 @@ export function analyzeSchema(
 				getTreeNodeSchemaPrivateData(schema).component !== undefined,
 			stronglyConnectedComponent: (members) => {
 				const identities = new Set(members);
-				const referenced = new Set<TreeNodeSchema>();
 				const dependencies = new Set<SchemaComponent>();
 				let hasStagedSchema = false;
 				for (const schema of members) {
@@ -180,7 +172,7 @@ export function analyzeSchema(
 								hasStagedSchema = true;
 							}
 							if (!identities.has(type.type)) {
-								referenced.add(type.type);
+								dependencies.add(getComponent(type.type));
 							}
 						}
 					}
@@ -192,17 +184,15 @@ export function analyzeSchema(
 						}
 					}
 				}
-				for (const schema of referenced) {
-					const dependency = getComponent(schema);
-					dependencies.add(dependency);
+				for (const dependency of dependencies) {
 					hasStagedSchema ||= dependency.hasStagedSchema;
 				}
 				const component: SchemaComponent = {
-					members: [...identities],
+					members,
 					dependencies,
 					hasStagedSchema,
 				};
-				for (const schema of identities) {
+				for (const schema of members) {
 					getTreeNodeSchemaPrivateData(schema).component = component;
 				}
 			},
