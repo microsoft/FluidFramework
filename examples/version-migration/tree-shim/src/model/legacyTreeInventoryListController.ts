@@ -8,7 +8,6 @@ import {
 	BuildNode,
 	Change,
 	EagerCheckout,
-	// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
@@ -70,7 +69,6 @@ export class LegacyTreeInventoryItem
 }
 
 export class LegacyTreeInventoryListController extends EventEmitter implements IInventoryList {
-	// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 	public static initializeTree(tree: LegacySharedTree): void {
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
@@ -128,7 +126,6 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
-	// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 	public constructor(private readonly _tree: LegacySharedTree) {
 		super();
 		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
