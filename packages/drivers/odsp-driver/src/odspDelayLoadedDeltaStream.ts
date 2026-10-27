@@ -39,6 +39,7 @@ import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
+import { checkJoinSessionDisposed, getJoinSessionThrottle } from "./joinSessionThrottle.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
@@ -64,6 +65,8 @@ export class OdspDelayLoadedDeltaStream {
 	private _relayServiceTenantAndSessionId: string | undefined;
 
 	private firstConnectionAttempt = true;
+	private hasAttemptedJoinSession = false;
+	private readonly joinSessionAbortController = new AbortController();
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
 	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
@@ -413,6 +416,24 @@ export class OdspDelayLoadedDeltaStream {
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
+		const signal = this.joinSessionAbortController.signal;
+		checkJoinSessionDisposed(signal);
+		const throttle = getJoinSessionThrottle(this.cache);
+		const throttleKey = JSON.stringify([
+			new URL(this.odspResolvedUrl.siteUrl).origin,
+			this.joinSessionKey,
+		]);
+		const caller = isRefreshingJoinSession
+			? "periodicRefresh"
+			: options.refresh
+				? requestSocketToken
+					? "socketTokenRefresh"
+					: "storageTokenRefresh"
+				: this.hasAttemptedJoinSession
+					? "reconnect"
+					: "initialConnect";
+		this.hasAttemptedJoinSession = true;
+		await throttle.wait(throttleKey, signal, this.mc.logger, caller);
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
@@ -432,7 +453,14 @@ export class OdspDelayLoadedDeltaStream {
 				disableJoinSessionRefresh,
 				isRefreshingJoinSession,
 				displayName,
+				{
+					signal,
+					beforeRequest: async () =>
+						throttle.wait(throttleKey, signal, this.mc.logger, caller),
+					onError: (error) => throttle.record(throttleKey, error, this.mc.logger),
+				},
 			);
+			checkJoinSessionDisposed(signal);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
 				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
@@ -465,11 +493,13 @@ export class OdspDelayLoadedDeltaStream {
 			};
 		};
 		let response = await getResponseAndRefreshAfterDeltaMs();
+		checkJoinSessionDisposed(signal);
 		// This means that the cached entry has expired(This should not be possible if the response is fetched
 		// from the network call). In this case we remove the cached entry and fetch the new response.
 		if (response.refreshAfterDeltaMs <= 0) {
 			this.cache.sessionJoinCache.remove(this.joinSessionKey);
 			response = await getResponseAndRefreshAfterDeltaMs();
+			checkJoinSessionDisposed(signal);
 		}
 		if (!disableJoinSessionRefresh) {
 			const props = {
@@ -575,6 +605,7 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	public dispose(): void {
+		this.joinSessionAbortController.abort();
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
 		delete this.currentConnection;
