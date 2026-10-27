@@ -195,7 +195,7 @@ export class EditManager<
 	public setHistoryRetention(value: boolean | number): void {
 		assert(
 			typeof value === "boolean" || (Number.isSafeInteger(value) && value >= 0),
-			"historyRetention must be a boolean or a nonnegative safe integer",
+			0xd79 /* historyRetention must be a boolean or a nonnegative safe integer */,
 		);
 		this.historyRetention = value;
 		this.trimHistory();

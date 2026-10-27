@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -31,6 +32,7 @@ interface ISequencedOpInfo<TOp> {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export abstract class SharedOT<TState, TOp> extends SharedObject {
 	/**
 	 * Queue of sequenced ops that are above minSeq.  Used by 'processCore' to

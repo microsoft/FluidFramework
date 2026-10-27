@@ -675,7 +675,7 @@ export class SchematizingSimpleTreeView<
 	public rewindTo(revision: string): void {
 		assert(
 			this.checkout instanceof TreeCheckout,
-			"Rewinding requires a checkout that supports branch replacement",
+			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
 		);
 		this.checkout.rewindTo(revision);
 	}
