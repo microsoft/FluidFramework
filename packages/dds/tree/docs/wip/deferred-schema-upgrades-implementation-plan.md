@@ -50,6 +50,39 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### M6: native physical history and logical notifications
+
+M5 is committed as `283d2a6acf9`.
+Its object-identity, native undo/redo, and eligible undo-clone tests pass.
+
+The user resolved the history contract in favor of native physical history.
+The existing [history API](../../src/simple-tree/api/tree.ts) describes actual commits and their revision UUIDs, not logical application operations.
+With history retained, a rejected data commit and its accepted retry both remain in that history, with distinct revisions and the same application metadata.
+The native `revertTo` guard rejects the original revision when the later retry schema commit is between that revision and the head.
+This follows the existing physical-history contract.
+The M6 requirement now prohibits duplicate logical change notifications and undo handles, not distinct physical attempts in retained history.
+
+The characterization in [viewBranch.spec.ts](../../src/test/shared-tree/viewBranch.spec.ts) proves these results.
+It tests `TreeCheckout.revertTo` directly so that the existing typed-view error wrapper does not obscure the history behavior.
+Additional tests preserve one logical change notification and settled outcome, transaction labels, application metadata, and replay of the serialized edit in its original context.
+Accepted physical revisions work with `revertTo` and with `rewindTo` on an application fork.
+M5 already supplies the native undo/redo and eligible clone transitions; M6 needs no additional production changes.
+
+The current commit and summary formats do not store a relationship between an original revision and a retry revision.
+A local-only history projection would therefore differ after loading or on another client.
+Do not hide commits, redirect physical revision arguments, store internal data in application metadata, or change formats for this feature.
+Keep revision-based operations tied to the commits identified by their arguments.
+The application's retained undo handle instead follows the logical edit to its replacement attempt.
+This decision does not affect the verified forest-preserving recovery transition.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree exec biome check src/test/shared-tree/viewBranch.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree exec eslint --quiet src/test/shared-tree/viewBranch.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^TreeBranchHistoryImpl|^custom commit metadata|^Undo and redo|^SchematizingSimpleTreeView' --reporter dot`: 199 passed; 40 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch' --reporter dot`: 38 passed.
+
 ### M5: coordinated recovery and retry-only identity transition
 
 The controller correlates separate schema/data outcomes and retains dependent edits.
@@ -810,7 +843,9 @@ Document history and serialization behavior without exposing internal attempt bo
 - Redo restores the data without another schema upgrade.
 - Undo works after intervening data edits, a successful retry, and remote-schema cancellation of deferral.
 - A revertible can be cloned to an eligible application fork and disposed normally.
-- History traversal, labels, custom metadata, and outcomes do not duplicate internal attempts.
+- History traversal preserves physical attempts and their actual revision IDs.
+  The original rejected commit and the accepted retry may both carry the same application metadata.
+- Logical change notifications, labels, undo handles, and settled outcomes are not duplicated by internal recovery.
 - Supported `revertTo` and `rewindTo` operations preserve their documented semantics.
 - Schema-only edits and arbitrary mixed-schema operations retain their existing restrictions where those are already part of the API.
 
@@ -824,6 +859,8 @@ Preserve the synchronous revertible-factory lifetime inside the change event.
 
 Preserve separate history through serialization and loading using existing commit formats.
 Internal attempt bookkeeping belongs in the controller, not user metadata.
+Do not add a logical history projection or reinterpret revision arguments.
+An original revision can remain before a retry schema commit; the normal cross-schema `revertTo` restriction still applies.
 The gate is an executable data-only undo/redo sequence through the real publication path.
 
 ### M7. Complete every operation path and persistence boundary

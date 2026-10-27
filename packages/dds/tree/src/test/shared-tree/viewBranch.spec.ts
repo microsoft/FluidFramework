@@ -31,6 +31,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 import {
 	expectSchemaEqual,
@@ -714,6 +715,136 @@ describe("viewBranch", () => {
 				assert.deepEqual([...view.root], ["remote", "initial", 1]);
 			} finally {
 				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("characterizes physical retry revisions in retained branch history", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			// Keep the rejected commits in the native history instead of letting trimming hide them.
+			const retained = base.mainBranch.fork();
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd(1);
+					},
+					{ customMetadata: { edit: "first" } },
+				);
+				const original = branch.checkout.branchHistory.getHead();
+				assert(original !== undefined);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+
+				const matchingRevisions: string[] = [];
+				for (
+					let commit = branch.checkout.branchHistory.getHead();
+					commit !== undefined;
+					commit = commit.getParent()
+				) {
+					if (commit.custom?.edit === "first") {
+						matchingRevisions.push(commit.revision);
+					}
+				}
+				assert.equal(matchingRevisions.length, 2);
+				assert.equal(matchingRevisions[1], original.revision);
+				assert.notEqual(matchingRevisions[0], original.revision);
+				assert.throws(
+					() => branch.checkout.revertTo(original.revision),
+					/schema changed at intermediate commit/,
+				);
+				assert.deepEqual([...view.root], ["remote", "initial", 1]);
+			} finally {
+				retained.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("preserves logical notifications, labels, metadata, and serialized changes through retry", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			const outcomes: CommitOutcome[] = [];
+			const changes: JsonCompatibleReadOnly[] = [];
+			const labels: unknown[][] = [];
+			let undo: RevertibleAlpha | undefined;
+			const off = view.events.on("changed", (metadata) => {
+				if (
+					metadata.isLocal &&
+					metadata.kind === CommitKind.Default &&
+					metadata.label === "first"
+				) {
+					changes.push(metadata.getChange());
+					labels.push([...metadata.labels]);
+					undo = metadata.getRevertible();
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			view.upgradeSchema();
+			const replay = view.fork();
+			try {
+				remote.root.insertAtStart("remote");
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd(1);
+					},
+					{ label: "first", customMetadata: { edit: "first" } },
+				);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+
+				assert.equal(changes.length, 1, "Recovery emitted another local application change.");
+				assert.deepEqual(labels, [["first"]]);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied]);
+				assert.deepEqual(branch.checkout.branchHistory.getHead()?.custom, { edit: "first" });
+				// Serialization still describes the original edit in its authoring context,
+				// just as it does after ordinary rebase. Replay must not repeat its callback.
+				replay.applyChange(changes[0]);
+				assert.deepEqual([...replay.root], ["initial", 1]);
+				assert.deepEqual([...view.root], ["remote", "initial", 1]);
+				assert(undo !== undefined);
+				undo.revert();
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["remote", "initial"]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				off();
+				if (undo?.status === RevertibleStatus.Valid) {
+					undo.dispose();
+				}
+				replay.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("uses accepted physical revisions for revertTo and application-fork rewindTo", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				view.root.insertAtEnd(1);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				const accepted = branch.checkout.branchHistory.getHead();
+				assert(accepted !== undefined);
+				view.root.insertAtEnd(2);
+				provider.synchronizeMessages();
+				const fork = view.fork();
+				try {
+					fork.rewindTo(accepted.revision);
+					assert.deepEqual([...fork.root], ["remote", "initial", 1]);
+					assert.deepEqual([...view.root], ["remote", "initial", 1, 2]);
+					assert.equal(provider.peekNextMessage(), undefined);
+				} finally {
+					fork.dispose();
+				}
+				view.revertTo(accepted.revision);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["remote", "initial", 1]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
 				branch.dispose();
 				remote.dispose();
 			}

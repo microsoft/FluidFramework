@@ -1227,6 +1227,14 @@ Rerunning a transaction callback can repeat effects outside SharedTree.
 Map internal attempts to the logical application edit without duplicate application or misleading success notifications.
 Revision mapping, commit outcomes, labels, undo, and custom metadata need an explicit design for this mapping.
 
+Branch history continues to expose physical commits and their actual revision IDs.
+Retained history can contain both a rejected attempt and its accepted retry, with the same application metadata on each.
+Revision-based history operations keep their existing meaning and restrictions.
+For example, reverting to an original revision can be prohibited when a retry schema commit lies after it.
+Do not hide these commits or reinterpret the revision argument as a logical edit ID.
+Change notifications and retained undo handles are correlated to the logical edit instead: recovery does not emit another application-originated change or require a replacement undo handle.
+This distinction needs no additional wire or summary metadata.
+
 Separate ordered commits preserve inserted-object identity during normal publication, but recovery needs an additional identity-preserving transition.
 Normal reconciliation with fresh retry revisions can replace inserted objects and invalidate application references.
 The temporary adapter instead prepares the data-only net change for the existing forest, followed by mappings for detached-content identifiers and native revertibles.
