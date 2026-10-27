@@ -38,7 +38,6 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
-	type ISummaryAccessContext,
 	getReusableDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
@@ -532,29 +531,37 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
 
-	const candidateProof = existingAccessProof ?? summaryAccessContext;
-	const reusableProof = getReusableDocumentAccessProof(candidateProof, {
-		tenantId,
-		documentId: tokenDocumentId,
-		operation: accessOperation,
-		lifecycleVersion: candidateProof?.lifecycleVersion,
-	});
-	const containerTypeHint =
-		isEphemeralContainer === undefined
+	if (documentAccessAuthorizer !== undefined && accessOperation === undefined) {
+		throw new NetworkError(
+			500,
+			"Document access operation is required when an authorizer is configured.",
+		);
+	}
+	const candidateProof = existingAccessProof;
+	const reusableProof =
+		accessOperation === undefined
 			? undefined
-			: isEphemeralContainer
-			? "ephemeral"
-			: "durable";
+			: getReusableDocumentAccessProof(candidateProof, {
+					tenantId,
+					documentId: tokenDocumentId,
+					operation: accessOperation,
+					lifecycleVersion: candidateProof?.lifecycleVersion,
+			  });
+	const isEphemeralHint = isEphemeralContainer ?? summaryAccessContext?.isEphemeralContainer;
+	const containerTypeHint =
+		isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable";
 	const accessProof =
 		reusableProof ??
-		(await documentAccessAuthorizer?.authorize({
-			tenantId,
-			documentId: tokenDocumentId,
-			operation: accessOperation,
-			containerTypeHint,
-			trustedCreateContext,
-			existingProof: candidateProof,
-		}));
+		(accessOperation === undefined
+			? undefined
+			: await documentAccessAuthorizer?.authorize({
+					tenantId,
+					documentId: tokenDocumentId,
+					operation: accessOperation,
+					containerTypeHint,
+					trustedCreateContext,
+					existingProof: candidateProof,
+			  }));
 	if (
 		documentAccessAuthorizer !== undefined &&
 		(accessProof === undefined ||
@@ -573,11 +580,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
 	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
-	const accessSummaryContext =
-		summaryAccessContext ??
-		(accessProof !== undefined && "isEphemeralContainer" in accessProof
-			? (accessProof as ISummaryAccessContext)
-			: undefined);
 
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
@@ -589,7 +591,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
 	const isEphemeral =
-		accessSummaryContext?.isEphemeralContainer ??
+		summaryAccessContext?.isEphemeralContainer ??
 		(accessProof?.source === "ec-lifecycle-redis" ? true : undefined) ??
 		(ignoreEphemeralFlag
 			? false
@@ -620,14 +622,14 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		calculatedStorageName = accessProof.storageAccountName;
 	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
-	} else if (accessSummaryContext?.isEphemeralContainer === true) {
+	} else if (summaryAccessContext?.isEphemeralContainer === true) {
 		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
 		// applies only to durable containers. Calling the retriever for a local EC hit would
 		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
 		calculatedStorageName = undefined;
 	} else {
 		calculatedStorageName =
-			accessSummaryContext?.storageName ??
+			summaryAccessContext?.storageName ??
 			(await storageNameRetriever?.get(tenantId, documentId)) ??
 			customData?.storageName;
 	}

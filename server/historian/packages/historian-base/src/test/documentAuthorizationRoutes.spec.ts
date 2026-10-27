@@ -39,6 +39,16 @@ const authorization = getAuthorizationTokenFromCredentials({
 });
 
 function createProof(operation: DocumentAccessOperation): IDocumentAccessProof {
+	if (operation === "create") {
+		return {
+			tenantId,
+			documentId,
+			operation,
+			source: "trusted-create",
+			lifecycleVersion: "generation-1",
+			state: "pending",
+		};
+	}
 	return {
 		tenantId,
 		documentId,

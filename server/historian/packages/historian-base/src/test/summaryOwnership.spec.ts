@@ -528,6 +528,141 @@ describe("summary ownership", function () {
 		sinon.assert.notCalled(getTenant);
 	});
 
+	for (const testCase of [
+		{
+			name: "active initial-create state",
+			accessOperation: "create" as const,
+			trustedCreateContext: {
+				tenantId,
+				documentId,
+				lifecycleVersion: "generation-1",
+				expiresAtMs: Date.now() + 60_000,
+			},
+			proof: {
+				tenantId,
+				documentId,
+				operation: "create",
+				source: "trusted-create",
+				lifecycleVersion: "generation-1",
+				state: "active",
+			},
+		},
+		{
+			name: "pending read state",
+			accessOperation: "read" as const,
+			trustedCreateContext: undefined,
+			proof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "dc-v2-metadata",
+				lifecycleVersion: "generation-1",
+				state: "pending",
+			},
+		},
+		{
+			name: "mismatched initial-create generation",
+			accessOperation: "create" as const,
+			trustedCreateContext: {
+				tenantId,
+				documentId,
+				lifecycleVersion: "generation-1",
+				expiresAtMs: Date.now() + 60_000,
+			},
+			proof: {
+				tenantId,
+				documentId,
+				operation: "create",
+				source: "trusted-create",
+				lifecycleVersion: "generation-2",
+				state: "pending",
+			},
+		},
+	]) {
+		it(`rejects ${testCase.name}`, async () => {
+			const tenantService = new TestTenantService();
+			const getTenant = sandbox.spy(tenantService, "getTenant");
+
+			await assert.rejects(
+				createGitService({
+					config: new nconf.Provider({}).defaults({
+						ignoreEphemeralFlag: true,
+						storageUrl: "http://localhost",
+					}),
+					tenantId,
+					authorization,
+					tenantService,
+					documentManager: new TestDocumentManager(),
+					accessOperation: testCase.accessOperation,
+					trustedCreateContext: testCase.trustedCreateContext,
+					documentAccessAuthorizer: {
+						authorize: sandbox.stub().resolves(testCase.proof),
+					},
+				}),
+				/Document access authorizer returned an invalid proof/,
+			);
+
+			sinon.assert.notCalled(getTenant);
+		});
+	}
+
+	it("uses proof storage instead of caller, retriever, or tenant-default routing", async () => {
+		const tenantService = new TestTenantService();
+		const tenant = await tenantService.getTenant(tenantId, accessToken);
+		sandbox.stub(tenantService, "getTenant").resolves({
+			...tenant,
+			customData: { storageName: "tenant-default-storage" },
+		});
+		const storageNameRetriever = {
+			get: sandbox.stub().resolves("retrieved-storage"),
+		};
+		const info = sandbox.spy(Lumberjack, "info");
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: true,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager: new TestDocumentManager(),
+			initialUpload: true,
+			storageName: "caller-storage",
+			accessOperation: "create",
+			documentAccessAuthorizer: {
+				authorize: sandbox.stub().resolves({
+					tenantId,
+					documentId,
+					operation: "create",
+					source: "trusted-create",
+					storageAccountName: "authorized-storage",
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					layoutVersion: "v2",
+					lifecycleVersion: "generation-1",
+					state: "pending",
+				}),
+			},
+		});
+
+		sinon.assert.notCalled(storageNameRetriever.get);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Storage-Name":"authorized-storage"/);
+		assert.doesNotMatch(
+			creationEvent.args[0],
+			/caller-storage|retrieved-storage|tenant-default-storage/,
+		);
+	});
+
 	it("emits structured allowed ownership telemetry", async () => {
 		const info = sandbox.spy(Lumberjack, "info");
 		const documentManager = new TestDocumentManager();

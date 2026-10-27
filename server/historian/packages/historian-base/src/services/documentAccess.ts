@@ -13,32 +13,86 @@ import type { ICache, ISimplifiedCustomDataRetriever } from "./definitions";
 
 export type DocumentAccessOperation = "read" | "write" | "delete" | "create";
 
-export interface ITrustedCreateContext {
+type IDocumentStorageRouting =
+	| {
+			/**
+			 * A storage account may be selected without overriding the physical container for
+			 * legacy layouts.
+			 */
+			storageAccountName?: string;
+			physicalContainerName?: undefined;
+			layoutVersion?: undefined;
+	  }
+	| {
+			/**
+			 * Physical container routing is atomic: the storage account, container, and layout
+			 * must be supplied together.
+			 */
+			storageAccountName: string;
+			physicalContainerName: string;
+			layoutVersion: "v1" | "v2";
+	  };
+
+interface ITrustedCreateContextBase {
 	tenantId: string;
 	documentId: string;
-	storageAccountName?: string;
-	physicalContainerName?: string;
-	layoutVersion?: "v1" | "v2";
+	/**
+	 * Identifies the document generation authorized for creation.
+	 */
 	lifecycleVersion: string;
 	expiresAtMs: number;
 }
 
-export interface IDocumentAccessProof {
+/**
+ * Trusted context for one initial summary upload.
+ *
+ * When a physical container is specified, its storage account and layout must also be present.
+ */
+export type ITrustedCreateContext = ITrustedCreateContextBase & IDocumentStorageRouting;
+
+interface IDocumentAccessProofBase {
 	tenantId: string;
 	documentId: string;
-	operation: DocumentAccessOperation;
 	source:
 		| "ec-lifecycle-redis"
 		| "dc-v2-metadata"
 		| "dc-v1-metadata"
 		| "alfred-fallback"
 		| "trusted-create";
-	storageAccountName?: string;
-	physicalContainerName?: string;
-	layoutVersion?: "v1" | "v2";
+	/**
+	 * Identifies the authorized document generation. It must be non-empty and must match a
+	 * trusted creation context when one is supplied.
+	 */
 	lifecycleVersion: string;
-	state: "active" | "pending";
 }
+
+type IDocumentAccessState =
+	| {
+			/**
+			 * Creation is authorized only while its durable lifecycle is pending.
+			 */
+			operation: "create";
+			state: "pending";
+	  }
+	| {
+			/**
+			 * Existing-document operations require an active lifecycle.
+			 */
+			operation: Exclude<DocumentAccessOperation, "create">;
+			state: "active";
+	  };
+
+/**
+ * Request-scoped authorization proof returned by an {@link IDocumentAccessAuthorizer}.
+ *
+ * The tenant, document, operation, lifecycle generation, and state must match the request.
+ * Physical container routing is atomic: when a physical container is present, the storage
+ * account and layout are required with it. A storage account without a physical container is
+ * allowed for legacy storage selection.
+ */
+export type IDocumentAccessProof = IDocumentAccessProofBase &
+	IDocumentAccessState &
+	IDocumentStorageRouting;
 
 export interface IAuthorizeDocumentAccessInput {
 	tenantId: string;
@@ -46,10 +100,17 @@ export interface IAuthorizeDocumentAccessInput {
 	operation: DocumentAccessOperation;
 	containerTypeHint?: "ephemeral" | "durable";
 	trustedCreateContext?: ITrustedCreateContext;
+	/**
+	 * A proof previously returned by this authorization boundary during the current request.
+	 */
 	existingProof?: IDocumentAccessProof;
 }
 
 export interface IDocumentAccessAuthorizer {
+	/**
+	 * Authorizes one operation and returns the complete lifecycle and physical storage proof that
+	 * Historian must use for the request.
+	 */
 	authorize(input: IAuthorizeDocumentAccessInput): Promise<IDocumentAccessProof>;
 }
 

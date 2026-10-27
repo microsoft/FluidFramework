@@ -93,13 +93,18 @@ describe("summary access resolver", () => {
 		assert.deepStrictEqual(context, {
 			tenantId,
 			documentId,
-			operation: "read",
-			source: "ec-lifecycle-redis",
-			lifecycleVersion: String(activeDocument.createTime),
-			state: "active",
 			isEphemeralContainer: true,
 			createTime: activeDocument.createTime,
 			storageName: undefined,
+			source: "localEphemeral",
+			accessProof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "ec-lifecycle-redis",
+				lifecycleVersion: String(activeDocument.createTime),
+				state: "active",
+			},
 		});
 		sinon.assert.notCalled(readDocument);
 		sinon.assert.calledWithMatch(
@@ -150,9 +155,16 @@ describe("summary access resolver", () => {
 
 		const context = await resolveSummaryAccess(getArgs());
 
-		assert.strictEqual(context.source, "alfred-fallback");
+		assert.strictEqual(context.source, "alfred");
 		assert.strictEqual(context.isEphemeralContainer, true);
-		assert.strictEqual(context.storageAccountName, undefined);
+		assert.deepStrictEqual(context.accessProof, {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			lifecycleVersion: String(activeDocument.createTime),
+			state: "active",
+		});
 		sinon.assert.calledOnceWithExactly(
 			activate,
 			tenantId,
@@ -212,7 +224,7 @@ describe("summary access resolver", () => {
 		const context = await resolveSummaryAccess(getArgs());
 
 		assert.strictEqual(context.isEphemeralContainer, false);
-		assert.strictEqual(context.source, "alfred-fallback");
+		assert.strictEqual(context.source, "alfred");
 	});
 
 	it("rejects an EC when the local store read fails", async () => {
@@ -240,7 +252,7 @@ describe("summary access resolver", () => {
 		const logError = sandbox.spy(Lumberjack, "error");
 		const info = sandbox.spy(Lumberjack, "info");
 
-		assert.strictEqual((await resolveSummaryAccess(getArgs())).source, "alfred-fallback");
+		assert.strictEqual((await resolveSummaryAccess(getArgs())).source, "alfred");
 		sinon.assert.calledWithMatch(
 			logError,
 			"HistorianSummaryDocumentOwnershipValidation",
@@ -358,7 +370,7 @@ describe("summary access resolver", () => {
 
 		const context = await resolveSummaryAccess(getArgs());
 
-		assert.strictEqual(context.source, "alfred-fallback");
+		assert.strictEqual(context.source, "alfred");
 		sinon.assert.calledWithMatch(
 			logError,
 			"HistorianSummaryDocumentOwnershipValidation",
@@ -455,7 +467,7 @@ describe("summary access resolver", () => {
 
 		const resolution = resolveSummaryAccess(getArgs());
 		await clock.runAllAsync();
-		assert.strictEqual((await resolution).source, "alfred-fallback");
+		assert.strictEqual((await resolution).source, "alfred");
 		sinon.assert.callCount(readDocument, 4);
 	});
 
@@ -516,7 +528,7 @@ describe("summary access resolver", () => {
 		const context = await resolveSummaryAccess(getArgs({ ignoreEphemeralFlag: true }));
 
 		assert.strictEqual(context.isEphemeralContainer, false);
-		assert.strictEqual(context.source, "alfred-fallback");
+		assert.strictEqual(context.source, "alfred");
 		sinon.assert.notCalled(readLocal);
 	});
 
@@ -535,7 +547,7 @@ describe("summary access resolver", () => {
 				getArgs({ operation, routeType: "notApplicable" }),
 			);
 
-			assert.strictEqual(context.source, "alfred-fallback");
+			assert.strictEqual(context.source, "alfred");
 			sinon.assert.notCalled(readLocal);
 		});
 	}
@@ -545,6 +557,6 @@ describe("summary access resolver", () => {
 
 		const context = await resolveSummaryAccess(getArgs({ accessStore: undefined }));
 
-		assert.strictEqual(context.source, "alfred-fallback");
+		assert.strictEqual(context.source, "alfred");
 	});
 });

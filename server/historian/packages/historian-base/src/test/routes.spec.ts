@@ -1625,6 +1625,51 @@ describe("summary ownership routes", () => {
 		sinon.assert.calledOnce(getSummary);
 	});
 
+	it("uses the configured authorizer to resolve durable Alfred storage routing", async () => {
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			storageAccountName: "authorized-storage",
+			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			layoutVersion: "v2",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(), { authorize });
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const info = sandbox.spy(Lumberjack, "info");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithMatch(authorize, {
+			tenantId,
+			documentId,
+			operation: "read",
+		});
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Storage-Name":"authorized-storage"/);
+	});
+
 	it("normalizes an Alfred storageName null before trusted fallback", async () => {
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
 			...activeDocument,
@@ -1947,7 +1992,17 @@ describe("summary ownership routes", () => {
 	it("forwards the customer access token on protected summary routes when enabled", async () => {
 		const authorize = sandbox
 			.stub()
-			.rejects(new Error("the summary access proof should be reused"));
+			.callsFake(async ({ operation }: { operation: "read" | "write" | "delete" }) => ({
+				tenantId,
+				documentId,
+				operation,
+				source: "dc-v2-metadata" as const,
+				storageAccountName: "authorized-storage",
+				physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				layoutVersion: "v2" as const,
+				lifecycleVersion: "generation-1",
+				state: "active" as const,
+			}));
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(true), { authorize });
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
@@ -1989,7 +2044,11 @@ describe("summary ownership routes", () => {
 		assert.ok(readDocument.getCall(1).calledBefore(getSummary.getCall(1)));
 		assert.ok(readDocument.getCall(2).calledBefore(createSummary.getCall(0)));
 		assert.ok(readDocument.getCall(3).calledBefore(deleteSummary.getCall(0)));
-		sinon.assert.notCalled(authorize);
+		sinon.assert.callCount(authorize, 4);
+		assert.ok(readDocument.getCall(0).calledBefore(authorize.getCall(0)));
+		assert.ok(readDocument.getCall(1).calledBefore(authorize.getCall(1)));
+		assert.ok(readDocument.getCall(2).calledBefore(authorize.getCall(2)));
+		assert.ok(readDocument.getCall(3).calledBefore(authorize.getCall(3)));
 	});
 
 	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {

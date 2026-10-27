@@ -45,10 +45,18 @@ export interface IEphemeralSummaryAccessRecord {
 	createTime: number;
 }
 
-export interface ISummaryAccessContext extends IDocumentAccessProof {
+export interface ISummaryAccessContext {
+	tenantId: string;
+	documentId: string;
 	isEphemeralContainer: boolean;
 	createTime: number;
 	storageName?: string;
+	source: "localEphemeral" | "alfred";
+	/**
+	 * Reusable proof produced by the ephemeral lifecycle fast path. Durable Alfred validation is
+	 * only an ownership hint and must still pass through the configured document authorizer.
+	 */
+	accessProof?: IDocumentAccessProof;
 }
 
 export class MalformedEphemeralSummaryAccessRecordError extends Error {}
@@ -103,7 +111,15 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 	query?: Query;
-	accessOperation: DocumentAccessOperation;
+	/**
+	 * Required when documentAccessAuthorizer is configured. It remains optional so callers that do
+	 * not enable document authorization retain the existing createGitService contract.
+	 */
+	accessOperation?: DocumentAccessOperation;
+	/**
+	 * A proof already returned by the configured authorizer during the current request. Ownership
+	 * contexts or other routing hints must not be passed as proofs.
+	 */
 	existingAccessProof?: IDocumentAccessProof;
 	trustedCreateContext?: ITrustedCreateContext;
 	documentAccessAuthorizer?: IDocumentAccessAuthorizer;

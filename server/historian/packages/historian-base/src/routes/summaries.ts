@@ -154,7 +154,7 @@ export function create(
 			query,
 			accessOperation:
 				operation === "get" ? "read" : operation === "post" ? "write" : "delete",
-			existingAccessProof: access,
+			existingAccessProof: access.accessProof,
 			documentAccessAuthorizer,
 			summaryAccessContext: access,
 		});
@@ -298,8 +298,7 @@ export function create(
 					"dependencyError",
 					error,
 					{
-						source:
-							access.source === "ec-lifecycle-redis" ? "localEphemeral" : "alfred",
+						source: access.source,
 					},
 				);
 				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
