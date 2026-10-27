@@ -163,7 +163,7 @@ export class SharedTreeBranch<
 	private disposed = false;
 	/**
 	 * The cached commit count before subtracting {@link BranchTrimState.trimmedCommitCount}.
-	 * Undefined until the count is first requested or inherited from a fork's parent.
+	 * @remarks `undefined` until the count is first requested or inherited from a fork's parent.
 	 */
 	private logicalCommitCount?: number;
 	/**
