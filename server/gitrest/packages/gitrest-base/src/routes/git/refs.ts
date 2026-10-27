@@ -21,6 +21,7 @@ import {
 	type IFileSystemManagerFactories,
 	type IRepositoryManagerFactory,
 	logAndThrowApiError,
+	validateGitSha,
 } from "../../utils";
 
 /**
@@ -108,6 +109,7 @@ export function create(
 			repoPerDocEnabled,
 		)
 			.then(async (repoManager) => {
+				validateGitSha(createRefParams?.sha);
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer ?? false,
@@ -138,6 +140,7 @@ export function create(
 			repoPerDocEnabled,
 		)
 			.then(async (repoManager) => {
+				validateGitSha(patchRefParams?.sha);
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer ?? false,
