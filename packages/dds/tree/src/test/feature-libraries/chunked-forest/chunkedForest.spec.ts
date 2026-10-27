@@ -214,6 +214,91 @@ describe("ChunkedForest", () => {
 		[],
 	);
 
+	describe("acquireVisitor", () => {
+		function setupForest() {
+			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
+			return buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+			);
+		}
+
+		it("retains an exclusively owned root across visitor acquisitions", () => {
+			const forest = setupForest();
+			const root = forest.roots;
+
+			for (let i = 0; i < 2; i++) {
+				forest.acquireVisitor().free();
+				assert.equal(forest.roots, root);
+				assert.equal(root.isShared(), false);
+				assert.equal(root.isUnreferenced(), false);
+			}
+		});
+
+		for (const editClone of [false, true]) {
+			it(`releases the old root when editing the ${editClone ? "clone" : "original"}`, () => {
+				const forest = setupForest();
+				const root = forest.roots;
+				const child = new BasicChunk(numberShape.type, new Map(), 0);
+				root.fields.set(rootFieldKey, [child]);
+				const clone = forest.clone(forest.schema);
+				assert.equal(clone.roots, root);
+				assert.equal(root.isShared(), true);
+
+				const edited = editClone ? clone : forest;
+				const remaining = editClone ? forest : clone;
+				const visitor = edited.acquireVisitor();
+				visitor.destroy(rootFieldKey, 1);
+				visitor.free();
+
+				assert.notEqual(edited.roots, root);
+				assert.equal(edited.roots.isShared(), false);
+				assert.equal(edited.roots.isUnreferenced(), false);
+				assert.equal(edited.isEmpty, true);
+				assert.equal(remaining.roots, root);
+				assert.equal(root.isShared(), false);
+				assert.equal(root.isUnreferenced(), false);
+				assert.deepEqual(root.fields.get(rootFieldKey), [child]);
+				assert.equal(child.isShared(), false);
+				assert.equal(child.isUnreferenced(), false);
+
+				const remainingVisitor = remaining.acquireVisitor();
+				// The child should now be exclusively owned by the remaining forest.
+				remainingVisitor.enterField(rootFieldKey);
+				remainingVisitor.enterNode(0);
+				remainingVisitor.exitNode(0);
+				remainingVisitor.exitField(rootFieldKey);
+				remainingVisitor.free();
+
+				assert.equal(remaining.roots, root);
+				assert.equal(root.fields.get(rootFieldKey)?.[0], child);
+				assert.equal(child.isShared(), false);
+			});
+		}
+
+		it("eagerly copies the root if and only if the root is shared", () => {
+			const forest = setupForest();
+			const root = forest.roots;
+			const firstClone = forest.clone(forest.schema);
+			const secondClone = forest.clone(forest.schema);
+
+			firstClone.acquireVisitor().free();
+			assert.notEqual(firstClone.roots, root);
+			assert.equal(firstClone.roots.isShared(), false);
+			assert.equal(root.isShared(), true);
+
+			secondClone.acquireVisitor().free();
+			assert.notEqual(secondClone.roots, root);
+			assert.notEqual(secondClone.roots, firstClone.roots);
+			assert.equal(secondClone.roots.isShared(), false);
+			assert.equal(root.isShared(), false);
+			assert.equal(root.isUnreferenced(), false);
+
+			forest.acquireVisitor().free();
+			assert.equal(forest.roots, root);
+			assert.equal(root.isUnreferenced(), false);
+		});
+	});
+
 	describe("locateNodeInChunks", () => {
 		it("locates nodes by chunk index and offset", () => {
 			const first = new BasicChunk(numberShape.type, new Map(), 0);
