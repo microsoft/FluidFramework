@@ -95,6 +95,7 @@ export function TreeHeader(props: TreeHeaderProps): ReactElement {
 						className: styles.tooltip,
 					}}
 					relationship="description"
+					positioning={{ position: "below", align: "start", pinned: true }}
 				>
 					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>

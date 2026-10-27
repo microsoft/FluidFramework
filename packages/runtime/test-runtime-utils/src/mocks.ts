@@ -49,6 +49,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	SerializationVersion,
 	createIdCompressor,
 	toIdCompressorWithCore,
 	type IdCreationRange,
@@ -253,7 +254,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange): void {
+	private finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
@@ -894,7 +895,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;

@@ -83,7 +83,7 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			EditManagerEncodingContext,
+			EditManagerEncodingContext<TChangeset>,
 			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
@@ -109,9 +109,10 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const context: EditManagerEncodingContext = {
+		const context: EditManagerEncodingContext<TChangeset> = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
+			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);

@@ -12,13 +12,12 @@ import {
 } from "@fluidframework/react/internal";
 import {
 	codePointCount,
-	FormattedTextDefault,
 	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
-import Quill, { type EmitterSource } from "quill";
-import DeltaPackage from "quill-delta";
+} from "@fluidframework/tree/alpha";
+import Quill, { type EmitterSource } from "quill-next";
+import type { Op as QuillDeltaOp } from "@quill-next/delta-es";
 import {
 	forwardRef,
 	useEffect,
@@ -31,8 +30,10 @@ import * as ReactDOM from "react-dom";
 
 import { runGuarded } from "../shared/index.js";
 
+import { FormattedTextDefault } from "./formattedTextDefault.js";
 import {
 	clipboardFormatMatcher,
+	Delta,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	lineTagToQuillAttributes,
@@ -48,11 +49,6 @@ export {
 	parseCssFontSize,
 	parseLineTag,
 } from "./quillAttributeUtils.js";
-
-// Workaround for quill-delta's export style not working well with node16 module resolution.
-type Delta = DeltaPackage.default;
-type QuillDeltaOp = DeltaPackage.Op;
-const Delta = DeltaPackage.default;
 
 /**
  * Props for the FormattedMainView component.
@@ -72,7 +68,7 @@ export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 /**
  * A React component for formatted text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#FormattedText.Tree} for the data-model and Quill for the rich text editor UI.
+ * Uses {@link FormattedTextDefault.Tree} for the data-model and Quill for the rich text editor UI.
  * @internal
  */
 export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
@@ -263,7 +259,7 @@ function contentOpsToQuillDelta(
 }
 
 /**
- * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link @fluidframework/tree#FormattedText.Tree}.
+ * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link FormattedTextDefault.Tree}.
  *
  * @remarks
  * This is the inverse of {@link contentOpsToQuillDelta}: Quill produces a Delta of `retain`/`insert`/`delete`
@@ -533,11 +529,6 @@ const FormattedTextEditorView = forwardRef<
 		// We process delta operations to make targeted edits, preserving collaboration integrity.
 		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode code points.
 		// We must convert between them to handle emoji and other non-BMP characters correctly.
-		//
-		// The typing here is very fragile: if no parameter types are given,
-		// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
-		// This is likely related to the node16 module resolution issues with quill-delta.
-		// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
 		const handleTextChange = (delta: Delta, _oldDelta: Delta, source: EmitterSource): void => {
 			if (source !== "user") return;
 			runGuarded(isUpdating, () => {

@@ -84,7 +84,7 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * {@inheritDoc SharedTreeOptions.retainHistory}
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
@@ -205,8 +205,8 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			coreOptions.retainHistory ?? false,
 		);
+		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
 		this.registerSharedBranch("main");
 
@@ -393,13 +393,18 @@ export class SharedTreeCore<
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
+			// Prevent sequencing from trimming the new commits before all event handlers
+			// that might read them have completed.
 			this.editManager.addSequencedChanges(
 				[commit],
 				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
 				branchId,
+				false,
 			);
+			// Advancing the MSN also triggers trimming, so suppress it here as well
+			// to keep the new commits readable by the remaining event handlers.
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}
@@ -542,6 +547,11 @@ export class SharedTreeCore<
 
 	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch("main");
+	}
+
+	/** Gets the head of the main branch's sequenced trunk. */
+	public getTrunkHead(): GraphCommit<TChange> {
+		return this.editManager.getTrunkHead("main");
 	}
 
 	public getSharedBranchIds(): string[] {

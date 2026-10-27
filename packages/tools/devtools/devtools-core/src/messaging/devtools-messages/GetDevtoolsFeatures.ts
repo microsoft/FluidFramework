@@ -25,9 +25,6 @@ export namespace GetDevtoolsFeatures {
 	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
-		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
-		 */
 		type: typeof MessageType;
 	}
 

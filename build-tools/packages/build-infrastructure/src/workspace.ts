@@ -26,29 +26,14 @@ import type {
  * {@inheritDoc IWorkspace}
  */
 export class Workspace implements IWorkspace {
-	/**
-	 * {@inheritDoc IWorkspace.name}
-	 */
 	public readonly name: WorkspaceName;
 
-	/**
-	 * {@inheritDoc IWorkspace.releaseGroups}
-	 */
 	public readonly releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
-	/**
-	 * {@inheritDoc IWorkspace.rootPackage}
-	 */
 	public readonly rootPackage: IPackage;
 
-	/**
-	 * {@inheritDoc IWorkspace.packages}
-	 */
 	public readonly packages: IPackage[];
 
-	/**
-	 * {@inheritDoc IWorkspace.directory}
-	 */
 	public readonly directory: string;
 
 	private readonly packageManager: IPackageManager;
@@ -163,9 +148,6 @@ export class Workspace implements IWorkspace {
 		}
 	}
 
-	/**
-	 * {@inheritDoc Installable.checkInstall}
-	 */
 	public async checkInstall(): Promise<true | string[]> {
 		const errors: string[] = [];
 		for (const buildPackage of this.packages) {
@@ -181,9 +163,6 @@ export class Workspace implements IWorkspace {
 		return true;
 	}
 
-	/**
-	 * {@inheritDoc Installable.install}
-	 */
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const commandArgs = this.packageManager.getInstallCommandWithArgs(updateLockfile);
 

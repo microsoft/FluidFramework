@@ -79,6 +79,11 @@ export function extractTelemetryLoggerExt<
  *
  * @privateRemarks Please do not modify existing entries, to maintain backwards compatibility.
  *
+ * TODO: This enum provides critical application facing information that all applications need to use to
+ * ensure their telemetry is compliant.
+ * Having it be internal seems like it may cause problems for that use.
+ * Additionally {@link Tagged} supporting one tag at a time for any given data is pretty limiting,
+ * see the notes below on {@link UserData} and {@link SandboxGuestData}.
  * @internal
  */
 export enum TelemetryDataTag {
@@ -94,13 +99,49 @@ export enum TelemetryDataTag {
 	 * Data containing identifiers or other metadata from a DDS's schema (e.g. SharedTree schema
 	 * identifiers) that may have been dynamically defined by application code.
 	 * @remarks
-	 * Note: only log schema artifacts that do not contain user data, or that have been sanitized to remove user data.
+	 * Note: Whether schema artifacts contain user data or not depends on the application.
+	 * Thus it is up to the application to ensure their telemetry logging policies handle this tag correctly.
 	 */
 	SchemaArtifact = "SchemaArtifact",
 	/**
-	 * Personal data of a variety of classifications that pertains to the user
+	 * Personal data of a variety of classifications that pertains to the user.
+	 * @remarks
+	 * This is the strictest classification:
+	 * since we lack the ability to tag data as containing multiple categories,
+	 * combinations of other tags which which don't have a way to be clearly expressed
+	 * may fall back to `UserData` for tagging purposes.
 	 */
 	UserData = "UserData",
+	/**
+	 * Data from a SharedTree's sandboxed guest environment.
+	 * @remarks
+	 * If using SharedTree's sandboxing feature as a security boundary,
+	 * all data logged under this tag should be treated as originating from the guest environment.
+	 * If the guest environment is used as a security boundary, and compromised,
+	 * the data may be untrusted (and possibly contain anything the sandbox has access to)
+	 * and should be treated accordingly.
+	 *
+	 * Due to limitations of our current tagging system,
+	 * only one tag can be applied to a given property at a time.
+	 * Therefore, if a property might contain `UserData` or even just `SchemaArtifact` or some other category,
+	 * even when a sandbox is not compromised, it should be tagged as `UserData`.
+	 *
+	 * It is not ok to simply tag such cases as `SandboxGuestData` nor their other categories,
+	 * since depending on how the sandbox is used,
+	 * either case could lead to logging of data which should not be logged.
+	 *
+	 * For example, an application might be using the Sandbox feature, but not as a security boundary,
+	 * and thus be ok logging data under the `SandboxGuestData` tag,
+	 * but might be filtering out some other tags like `SchemaArtifact`.
+	 * Or another application might be using the Sandbox feature as a strict security boundary,
+	 * and thus must log no data under the `SandboxGuestData` tag:
+	 * in such cases logging schema data from the sandbox as `SchemaArtifact` results in misclassification of telemetry data.
+	 * We must avoid causing such applications to inadvertently misclassify telemetry data.
+	 *
+	 * This tag should only be used on the Host for values received from the Guest:
+	 * it is unnecessary for data inside the guest.
+	 */
+	SandboxGuestData = "SandboxGuestData",
 }
 
 /**
@@ -359,61 +400,6 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 			}
 		}
 		return toExtend;
-	}
-}
-
-/**
- * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
- * container-runtime. Issue: #8191
- * TaggedLoggerAdapter class can add tag handling to your logger.
- *
- * @internal
- */
-export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
-	public constructor(private readonly logger: ITelemetryBaseLogger) {}
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
-	 */
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel: LogLevel): void {
-		const newEvent: ITelemetryBaseEvent = {
-			category: eventWithTagsMaybe.category,
-			eventName: eventWithTagsMaybe.eventName,
-		};
-		for (const [key, taggableProp] of Object.entries(eventWithTagsMaybe)) {
-			const { value, tag } =
-				typeof taggableProp === "object"
-					? taggableProp
-					: { value: taggableProp, tag: undefined };
-			switch (tag) {
-				case undefined: {
-					// No tag means we can log plainly
-					newEvent[key] = value;
-					break;
-				}
-				case "PackageData": // For back-compat
-				case TelemetryDataTag.CodeArtifact:
-				case TelemetryDataTag.SchemaArtifact: {
-					// For Microsoft applications, CodeArtifact and SchemaArtifact are safe for now
-					// (we don't load 3P code or schema in 1P apps)
-					newEvent[key] = value;
-					break;
-				}
-				case TelemetryDataTag.UserData: {
-					// Strip out anything tagged explicitly as UserData.
-					// Alternate strategy would be to hash these props
-					newEvent[key] = "REDACTED (UserData)";
-					break;
-				}
-				default: {
-					// If we encounter a tag we don't recognize
-					// then we must assume we should scrub.
-					newEvent[key] = "REDACTED (unknown tag)";
-					break;
-				}
-			}
-		}
-		this.logger.send(newEvent, logLevel);
 	}
 }
 

@@ -4,7 +4,10 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import type { UnhydratedFlexTreeNode } from "../core/index.js";
@@ -18,7 +21,7 @@ import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInser
  * The identifiers allocated by this will never be compressed to Short Ids.
  * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
  */
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor(SerializationVersion.V3);
 
 /**
  * Provides identifiers using the tree's identifier compressor when available, or a global allocator otherwise.

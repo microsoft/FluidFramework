@@ -6,6 +6,7 @@
 export {
 	collectContiguousRanges,
 	type IndexRange,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -22,7 +23,7 @@ export {
 	strictEnum,
 	unbrand,
 } from "./brand.js";
-export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { brandedIntegerType, brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
 	brandOpaque,
 	extractFromOpaque,

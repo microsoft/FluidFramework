@@ -37,16 +37,11 @@
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.1.0",
-		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
 		"@fluidframework/server-routerlicious-base": "workspace:~",
 		"@fluidframework/server-services": "workspace:~",
-		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",

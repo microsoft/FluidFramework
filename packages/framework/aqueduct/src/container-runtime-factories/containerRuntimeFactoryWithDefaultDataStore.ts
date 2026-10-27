@@ -85,9 +85,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		this.defaultFactory = props.defaultFactory;
 	}
 
-	/**
-	 * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
 		await dataStore.trySetAlias(defaultDataStoreId);

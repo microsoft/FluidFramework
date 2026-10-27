@@ -36,23 +36,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return SharedSummaryBlockFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return SharedSummaryBlockFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -65,9 +56,6 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 		return sharedSummaryBlock;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedSummaryBlock {
 		const sharedSummaryBlock = new SharedSummaryBlockClass(
 			id,

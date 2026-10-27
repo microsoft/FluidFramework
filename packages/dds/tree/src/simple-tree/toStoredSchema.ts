@@ -135,7 +135,7 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * a staged allowed type has been upgraded and if so, include it in the conversion.
  *
  * Even if this took in a SimpleTreeSchema,
- * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
+ * it would still need to walk the schema to avoid including schemas that become unreachable due to filtered out staged schema.
  *
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.

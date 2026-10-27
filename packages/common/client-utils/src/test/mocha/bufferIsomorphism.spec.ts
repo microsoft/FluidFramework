@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { Buffer } from "node:buffer";
 
 import * as BufferBrowser from "../../bufferBrowser.js";
 import * as BufferNode from "../../bufferNode.js";
@@ -22,6 +23,55 @@ describe("Buffer isomorphism", () => {
 		// BufferBrowser should create our partial Buffer polyfill.
 		const browserBuffer = BufferBrowser.IsoBuffer.from("", "utf8");
 		assert.equal(browserBuffer.constructor.name, "IsoBuffer");
+	});
+
+	/**
+	 * A hypothetical bug involving base64 encoded content in a Node environment. Allocates a
+	 * buffer for the same content using the Node and browser variants (in a Node test environment),
+	 * slices them both to clone the data. In the Node case this does not actually clone anything
+	 * but creates an alias. Later the "original" content is modified. In the case of Node this
+	 * corrupts the "clone" as it is merely pointing to the old array.
+	 */
+	it("reproduces an IdCompressor alignment failure from an aliased Node.js Buffer body", () => {
+		const serialized = BufferBrowser.bufferToString(
+			new Float64Array([2, 0, 0, 0]).buffer,
+			"base64",
+		);
+		const content = JSON.stringify(serialized);
+		const nodeBody = BufferNode.IsoBuffer.from(content, "utf8");
+		const browserBody = BufferBrowser.IsoBuffer.from(content, "utf8");
+
+		// Fetch shims can use slice(0) to clone typed-array response bodies.
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const nodeClone = nodeBody.slice(0);
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const browserClone = browserBody.slice(0);
+		// Overwrite a byte in both originals. In the browser case `browserClone` is a true copy,
+		// so it is unaffected. In the Node.js case `Buffer#slice` returns a view over the same
+		// memory, so `nodeClone` is an alias and this write corrupts it as well.
+		nodeBody[9] = "=".codePointAt(0) ?? oob();
+		browserBody[9] = "=".codePointAt(0) ?? oob();
+
+		const nodeSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(nodeClone, "utf8"),
+		);
+		const browserSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(browserClone, "utf8"),
+		);
+		assert(typeof nodeSerialized === "string");
+		assert(typeof browserSerialized === "string");
+		assert.equal(nodeClone.byteLength, browserClone.byteLength);
+		assert.equal(browserSerialized, serialized);
+
+		const nodeDecoded = BufferBrowser.stringToBuffer(nodeSerialized, "base64");
+		const browserDecoded = BufferBrowser.stringToBuffer(browserSerialized, "base64");
+		assert.equal(nodeDecoded.byteLength, 6);
+		assert.equal(browserDecoded.byteLength, 32);
+		assert.throws(() => new Float64Array(nodeDecoded), {
+			name: "RangeError",
+			message: "byte length of Float64Array should be a multiple of 8",
+		});
+		assert.doesNotThrow(() => new Float64Array(browserDecoded));
 	});
 
 	it("from string utf-8/16 is compatible", () => {
@@ -225,6 +275,97 @@ describe("Buffer isomorphism", () => {
 		const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
 		const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
 		assert.equal(nodeStringBase64, browserStringBase64);
+	});
+
+	describe("partial views over a larger buffer", () => {
+		const content = "比特币 payload";
+		const padding = "!!!!";
+
+		/**
+		 * Creates views of `content` that do not start at offset 0 nor span their whole backing
+		 * buffer: a Node.js `Buffer` subarray, a pooled Node.js `Buffer`, and a plain `Uint8Array`.
+		 */
+		function createViews(): [string, Uint8Array][] {
+			const backing = Buffer.from(`${padding}${content}${padding}`, "utf8");
+			const contentByteLength = Buffer.byteLength(content, "utf8");
+			const nodeSubarray = backing.subarray(
+				padding.length,
+				padding.length + contentByteLength,
+			);
+			const pooled = Buffer.from(content, "utf8");
+			const plainView = new Uint8Array(
+				nodeSubarray.buffer,
+				nodeSubarray.byteOffset,
+				nodeSubarray.byteLength,
+			);
+			for (const view of [nodeSubarray, pooled, plainView]) {
+				// Precondition: each view covers only part of its backing buffer.
+				assert(view.buffer.byteLength > view.byteLength);
+			}
+			return [
+				["Node.js Buffer subarray", nodeSubarray],
+				["pooled Node.js Buffer", pooled],
+				["Uint8Array view", plainView],
+			];
+		}
+
+		const expectedBase64 = Buffer.from(content, "utf8").toString("base64");
+
+		for (const [name, view] of createViews()) {
+			it(`Uint8ArrayToString respects ${name}`, () => {
+				assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferNode.Uint8ArrayToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "base64"), expectedBase64);
+			});
+
+			it(`bufferToString respects ${name}`, () => {
+				assert.equal(BufferNode.bufferToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.bufferToString(view, "utf8"), content);
+				assert.equal(BufferNode.bufferToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.bufferToString(view, "base64"), expectedBase64);
+			});
+
+			it(`IsoBuffer.from copies only the logical bytes of ${name}`, () => {
+				for (const iso of [
+					BufferNode.IsoBuffer.from(view),
+					BufferBrowser.IsoBuffer.from(view),
+				]) {
+					assert.equal(iso.byteLength, view.byteLength);
+					assert.equal(iso.toString("utf8"), content);
+					// Node.js `Buffer.from(array)` copies into the shared internal pool whenever the
+					// size is less than `Buffer.poolSize >>> 1` (`poolSize` defaults to 8 KiB), per
+					// https://nodejs.org/api/buffer.html#static-method-bufferfromarray and
+					// https://nodejs.org/api/buffer.html#static-method-bufferallocunsafesize.
+					// The copy can therefore share a backing `ArrayBuffer` with a pooled `view`, so
+					// check for independence by mutation rather than by comparing backing buffers.
+					iso.fill(0);
+					assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				}
+			});
+		}
+	});
+
+	it("stringToBuffer returns only the encoded bytes for pooled Node.js Buffers", () => {
+		for (const { input, encoding, expectedByteLength } of [
+			// 5 ASCII characters, 1 UTF-8 byte each.
+			{ input: "hello", encoding: "utf8", expectedByteLength: 5 },
+			// 3 CJK characters, 3 UTF-8 bytes each.
+			{ input: "比特币", encoding: "utf8", expectedByteLength: 9 },
+			// Base64 for "hello": 8 characters (including 1 padding character) decode to 5 bytes.
+			{ input: "aGVsbG8=", encoding: "base64", expectedByteLength: 5 },
+		] as const) {
+			// Precondition: Node.js allocates this small Buffer from a larger shared pool.
+			const pooled = BufferNode.IsoBuffer.from(input, encoding);
+			assert(pooled.buffer.byteLength > pooled.byteLength);
+
+			const nodeBuffer = BufferNode.stringToBuffer(input, encoding);
+			const browserBuffer = BufferBrowser.stringToBuffer(input, encoding);
+			assert.equal(nodeBuffer.byteLength, expectedByteLength);
+			assert.equal(browserBuffer.byteLength, expectedByteLength);
+			assert.deepEqual(new Uint8Array(nodeBuffer), new Uint8Array(browserBuffer));
+			assert.equal(BufferNode.bufferToString(nodeBuffer, encoding), input);
+		}
 	});
 
 	it("stringToBuffer is compatible", () => {

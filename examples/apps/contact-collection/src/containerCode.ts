@@ -32,9 +32,6 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(
 			ContactCollectionInstantiationFactory.type,
@@ -42,9 +39,6 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 		await dataStore.trySetAlias(contactCollectionId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,

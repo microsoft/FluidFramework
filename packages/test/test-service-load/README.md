@@ -6,16 +6,13 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 
 ## Pre-requisites
 
--   Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
+-   Run the `@ff-internal/tenant-setup` script to check out a test tenant.
+    It populates the `login__odsp__fic__test__users` environment variable with the test usernames
+    available to the run, along with the supporting token-fetching entrypoint.
+    The orchestrator reads that list and assigns one user to each test runner, so load is
+    distributed evenly across the available users.
+-   For non-ODSP drivers, run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve the required secrets.
     _You do not need to run it more than once, it will persist the keys for future sessions._
--   If you are using a username not already present in `testConfig.json`,
-    then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
-
-```json
-{"user@foo.com": "pwd_foo", "user@bar.com": "pwd_bar", ...}
-```
-
-If you intend to check in the new username, please reach out to someone on the team who can add the creds to Azure Key Vault.
 
 ## Usage
 
@@ -68,6 +65,11 @@ If present, the test will load an existing data store for the given test id rath
 
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
+
+#### --username
+
+Test Runner mode only. The ODSP test user the runner connects as.
+The orchestrator assigns this automatically from `login__odsp__fic__test__users`; it isn't typically passed manually.
 
 #### --debug, -dbg
 

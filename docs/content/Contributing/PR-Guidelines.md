@@ -31,6 +31,7 @@ When creating a non-draft PR it should:
 3. Be clear about what feedback is desired from reviewers.
 4. Pass the CI pipelines.
 5. Be able to merge cleanly into main.
+6. Document user-facing changes through the [release process for each affected package](../../../.changeset/README.md#when-should-i-use-a-changeset).
 
 From there the process proceeds as follows:
 

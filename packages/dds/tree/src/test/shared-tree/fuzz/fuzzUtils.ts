@@ -15,6 +15,7 @@ import {
 	deserializeIdCompressor,
 	toIdCompressorWithCore,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -40,14 +41,13 @@ import type {
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
 	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import { assertUnique, expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 
 import type { FuzzView } from "./fuzzEditGenerators.js";
 
@@ -94,58 +94,72 @@ type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
 export type FuzzNodeSchema = typeof FuzzNode;
 
-export const initialFuzzSchema = createTreeViewSchema([]);
+export const initialFuzzSchema = createFuzzSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
- * Returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
- * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
- * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
+ * Creates the complete fuzz root schema from node-type identifiers.
+ * The schema includes the recursive fuzz node, its array children, and the built-in string, number, and handle types.
+ * Each dynamically added object schema has one required string field named `value`.
+ *
+ * @param nodeTypes - Unique, fully qualified node-type identifiers.
+ * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are already included.
+ * @returns The tree's schema used for the fuzz view.
  */
-function createFuzzNodeSchema(
-	nodeTypes: TreeNodeSchema[],
-	schemaFactory: SchemaFactory<"treeFuzz">,
-): FuzzNodeSchema {
-	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
-		() => Node,
+export function createFuzzSchema(nodeTypes: readonly string[]): typeof fuzzFieldSchema {
+	assertUnique(nodeTypes, "Duplicate fuzz node schema identifier");
+
+	const fuzzNodeTypePrefix = `${builder.scope}.`;
+	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
+	// Schemas that are present in all fuzz tests and don't require dynamic creation.
+	const shortIdentifierOf = (fullIdentifier: string) =>
+		fullIdentifier.slice(fuzzNodeTypePrefix.length);
+	const commonNodes = new Set<string>([FuzzNode.identifier, ArrayChildren.identifier]);
+
+	const schemaFactory = new SchemaFactory(builder.scope);
+	const guidNodeSchemas = [];
+	for (const nodeType of nodeTypes) {
+		assert(
+			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
+			"Expected a treeFuzz or built-in leaf schema identifier",
+		);
+		if (nodeType.startsWith(fluidLeafTypePrefix) || commonNodes.has(nodeType)) {
+			continue;
+		}
+		class GuidNode extends schemaFactory.object(shortIdentifierOf(nodeType), {
+			value: schemaFactory.required(schemaFactory.string),
+		}) {}
+		guidNodeSchemas.push(GuidNode);
+	}
+
+	const leafTypes = [
 		schemaFactory.string,
 		schemaFactory.number,
 		schemaFactory.handle,
-		...nodeTypes,
-	]) {}
-	class Node extends schemaFactory.objectRecursive("node", {
-		requiredChild: [
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...nodeTypes,
-		],
-		optionalChild: schemaFactory.optionalRecursive([
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...nodeTypes,
-		]),
-		arrayChildren: ArrayChildren2,
-	}) {}
+	] as const;
+	// All fields in fuzz schema can have any of the leaf types, recursive nodes, or dynamically created GUID nodes.
+	const allowedTypes = [() => UpgradedNode, ...leafTypes, ...guidNodeSchemas] as const;
+	// The class names have "Upgraded" to reflect the fact that they are widenings of the original node and array types
+	// used at the start of a given fuzz test. This also avoids shadowing the original `Node` and `ArrayChildren` classes.
+	// Note that they should still use the original identifiers, since we're simulating a scenario where a data model has
+	// expanded over time.
+	class UpgradedArrayChildren extends schemaFactory.arrayRecursive(
+		shortIdentifierOf(ArrayChildren.identifier),
+		allowedTypes,
+	) {}
+	class UpgradedNode extends schemaFactory.objectRecursive(
+		shortIdentifierOf(FuzzNode.identifier),
+		{
+			requiredChild: allowedTypes,
+			optionalChild: schemaFactory.optionalRecursive(allowedTypes),
+			arrayChildren: UpgradedArrayChildren,
+		},
+	) {}
 
 	{
-		type _check = ValidateRecursiveSchema<typeof Node>;
+		type _check = ValidateRecursiveSchema<typeof UpgradedNode>;
 	}
-	return Node as unknown as FuzzNodeSchema;
-}
-
-/**
- * This function is used to create a new schema which is a superset of the previous tree's schema.
- * @param allowedTypes - additional allowedTypes outside of the {@link initialAllowedTypes} for the {@link FuzzNode}
- * @returns the tree's schema used for the fuzzView.
- */
-export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
-	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
-	return node as unknown as typeof fuzzFieldSchema;
+	return UpgradedNode.info.optionalChild as unknown as typeof fuzzFieldSchema;
 }
 
 export function nodeSchemaFromTreeSchema(
@@ -258,10 +272,14 @@ export const createOrDeserializeCompressor = (
 ): IIdCompressor & IIdCompressorCore => {
 	return toIdCompressorWithCore(
 		summary === undefined
-			? createIdCompressor(sessionId)
+			? createIdCompressor(sessionId, SerializationVersion.V3)
 			: summary.withSession
-				? deserializeIdCompressor(summary.serializedCompressor)
-				: deserializeIdCompressor(summary.serializedCompressor, sessionId),
+				? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
+				: deserializeIdCompressor(
+						summary.serializedCompressor,
+						sessionId,
+						SerializationVersion.V3,
+					),
 	);
 };
 

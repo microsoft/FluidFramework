@@ -10,7 +10,19 @@ export type {
 	SerializedIdCompressorWithOngoingSession,
 } from "./persisted-types/index.js";
 
-export type { IIdCompressorCore, IIdCompressor } from "./idCompressor.js";
+export type {
+	IIdCompressorCore,
+	IIdCompressor,
+	ShardToken,
+	ShardSynchronizationToken,
+	SerializedIdCompressorShard,
+	ParentShardSynchronizationToken,
+	IdCompressorEvents,
+} from "./idCompressor.js";
+export {
+	SerializationVersion,
+	type SerializationVersion as SerializationVersionType,
+} from "./idCompressor.js";
 
 export type {
 	SessionSpaceCompressedId,

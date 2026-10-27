@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
@@ -54,7 +54,8 @@ export function initialize(
 		const rootKind = rootSchema.kind;
 		if (
 			rootKind === FieldKinds.sequence.identifier ||
-			rootKind === FieldKinds.optional.identifier
+			rootKind === FieldKinds.optional.identifier ||
+			rootKind === FieldKinds.forbidden.identifier
 		) {
 			// These kinds are known to tolerate empty, so use the schema as is:
 			intermediateSchema = newSchema;
@@ -72,9 +73,11 @@ export function initialize(
 		}
 	}
 
-	assert(
-		allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema),
-		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
+	// The construction above only relaxes the root field, so this should always hold.
+	debugAssert(
+		() =>
+			allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema) ||
+			"Incremental schema during update should allow a superset of the final schema",
 	);
 
 	checkout.updateSchema(intermediateSchema);
@@ -112,6 +115,14 @@ function initializeFromChunk(
 	},
 	contentChunk: TreeChunk,
 ): void {
+	if (checkout.storedSchema.rootFieldSchema.kind === FieldKinds.forbidden.identifier) {
+		assert(
+			contentChunk.topLevelLength === 0,
+			0xd67 /* Cannot initialize a forbidden root with content */,
+		);
+		return;
+		// No further initialization needed for forbidden root.
+	}
 	const field = { field: rootFieldKey, parent: undefined };
 	assert(
 		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,

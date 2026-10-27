@@ -1,5 +1,32 @@
 # @fluidframework/fluid-telemetry
 
+## 3.7.0
+
+### Minor Changes
+
+- Containers passed to startTelemetry are no longer kept in memory after they are disposed ([#28515](https://github.com/microsoft/FluidFramework/pull/28515)) [917bf636d85](https://github.com/microsoft/FluidFramework/commit/917bf636d853e548dbf2ac23d4cbea5b6ea048ed)
+
+  Previously, `startTelemetry` started a heartbeat timer that was never stopped.
+  That timer kept the container, along with its telemetry producer and consumers, in memory for the lifetime of the process, even after the container was disposed.
+  In Node.js, it also stopped the process from exiting.
+  The heartbeat timer now stops when the container is disposed.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
 ## 3.2.0
 
 Dependency updates only.

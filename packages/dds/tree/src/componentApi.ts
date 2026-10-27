@@ -20,7 +20,7 @@ import { getOrCreate } from "./util/index.js";
  *
  * This basically amounts to dependency injection, where the "injection" is done at "composition" time to build the schema.
  *
- * Tree's schema do not natively support open polymorphism: all possible implementations must be explicitly listed.
+ * Tree's schemas do not natively support open polymorphism: all possible implementations must be explicitly listed.
  * These tools work around these limitations by carefully controlling evaluation order:
  * the source code can be structured in an open polymorphism style which at runtime evaluates into closed polymorphism
  * by having each component register its implementations into a central collection (typically an

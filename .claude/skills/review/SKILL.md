@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Use when asked to review code, review a branch, or do a code review. Spawns Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents while the orchestrator reviews architecture, tests, performance, and security."
+description: "Review changes relative to a prior state, such as a diff, pull request, branch, commit, or working-tree changes. Use for change-focused code review and regression analysis. Do not use to assess an existing file, API, design, implementation, or other artifact without a comparison; if the request is ambiguous, ask whether the user wants a change review and what prior state to compare against."
 argument-hint: "[branch-name]"
 ---
 ```text
@@ -11,6 +11,18 @@ argument-hint: "[branch-name]"
 Spawns dedicated Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents in parallel while the orchestrator performs the Inspector pass (architecture, tests, performance, security). Depth is user-selected.
 
 Optimize for high-confidence, concise findings. Silence is better than speculation.
+
+## Scope Gate
+
+This skill reviews a change set relative to a prior state.
+Use it only when the request identifies or clearly implies changes to review, such as a diff, pull request, branch, commit, patch, or working-tree changes.
+
+Do not use this skill for a general assessment of an existing file, API, architecture, design, implementation, document, or other artifact when no comparison is requested.
+Handle that request directly using the relevant domain guidance instead.
+
+If "review" could mean either a general assessment or a change review, ask the user which they want.
+If they want a change review but have not identified the comparison, ask what prior state or base should be used.
+Do not proceed to Step 1 until the request is confirmed as a change review.
 
 ## Input
 

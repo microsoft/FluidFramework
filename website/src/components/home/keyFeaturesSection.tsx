@@ -37,7 +37,6 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				bodyLabel="Easy to use"
 				bodyText={easyToUseText}
 				learnMoreLinkHref="/docs/start/quick-start"
-				learnMoreLinkAltText="Easy to use, Learn More"
 			/>
 			<KeyFeatureCard
 				imageSrc="https://storage.fluidframework.com/static/images/website/home/open-source.png"
@@ -45,7 +44,6 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				bodyLabel="Open Source"
 				bodyText={openSourceText}
 				learnMoreLinkHref="/community"
-				learnMoreLinkAltText="Open Source, Learn More"
 			/>
 			<KeyFeatureCard
 				imageSrc="https://storage.fluidframework.com/static/images/website/home/performance.png"
@@ -53,7 +51,6 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				bodyLabel="Industry-leading speed & performance"
 				bodyText={performanceText}
 				learnMoreLinkHref="/docs/concepts/architecture"
-				learnMoreLinkAltText="Industry-leading speed & performance, Learn More"
 			/>
 		</div>
 	);

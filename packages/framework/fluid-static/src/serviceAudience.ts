@@ -97,9 +97,6 @@ class ServiceAudience<TMember extends IMember = IMember>
 		this.container.on("connected", () => this.emit("membersChanged"));
 	}
 
-	/**
-	 * {@inheritDoc IServiceAudience.getMembers}
-	 */
 	public getMembers(): Map<string, TMember> {
 		const users = new Map<string, TMember>();
 		const clientMemberMap = new Map<string, TMember>();
@@ -123,9 +120,6 @@ class ServiceAudience<TMember extends IMember = IMember>
 		return users;
 	}
 
-	/**
-	 * {@inheritDoc IServiceAudience.getMyself}
-	 */
 	public getMyself(): Myself<TMember> | undefined {
 		const clientId = this.container.clientId;
 		if (clientId === undefined) {

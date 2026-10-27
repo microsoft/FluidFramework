@@ -230,7 +230,7 @@ describe("toStoredSchema", () => {
 			it("partially includes staged schema by upgrade identity", () => {
 				// Test that the filtering logic in `toStoredSchema` works correctly.
 				// These test trees compare the upgrade identity of the staged schema to implement the filter.
-				// Schema that are included by the filter should be present in the resulting stored schema, and any other staged schema should not.
+				// Schemas that are included by the filter should be present in the resulting stored schema, and any other staged schema should not.
 				// See testTrees.ts for the test cases: "NestedMultiStage with one upgrade" and "NestedStagedOptional with one upgrade".
 				const allowedTypesNode = getObjectNodeSchema(
 					getTestDocumentSchemaData("NestedMultiStage with one upgrade"),

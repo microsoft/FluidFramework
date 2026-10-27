@@ -54,6 +54,10 @@ export type BaseForSeq =
 			/** A recoverable version with `sequenceNumber <= target` was found. */
 			readonly kind: "found";
 			readonly base: ResolvedVersion;
+			/** Number of sealed version candidates examined before selecting the base. */
+			readonly versionsProbed: number;
+			/** Number of candidate sequence numbers that required an uncached ODSP fetch. */
+			readonly sequenceNumberFetchCount: number;
 	  }
 	| {
 			/**
@@ -63,6 +67,10 @@ export type BaseForSeq =
 			readonly kind: "noBaseVersion";
 			/** The oldest sequence number that was resolved while searching, if any. */
 			readonly oldestResolvedSeq?: number;
+			/** Number of sealed version candidates examined before exhausting retained history. */
+			readonly versionsProbed: number;
+			/** Number of candidate sequence numbers that required an uncached ODSP fetch. */
+			readonly sequenceNumberFetchCount: number;
 	  };
 
 /**
@@ -111,8 +119,13 @@ export class OdspVersionManager implements IOdspVersionManager {
 		const candidates = versions.slice(1);
 
 		let oldestResolvedSeq: number | undefined;
+		let versionsProbed = 0;
+		let sequenceNumberFetchCount = 0;
 		for (const version of candidates) {
-			const sequenceNumber = await this.resolveSeq(version.versionId);
+			versionsProbed++;
+			const sequenceNumber = await this.resolveSeq(version.versionId, () => {
+				sequenceNumberFetchCount++;
+			});
 			oldestResolvedSeq =
 				oldestResolvedSeq === undefined
 					? sequenceNumber
@@ -121,10 +134,15 @@ export class OdspVersionManager implements IOdspVersionManager {
 				const base = { ...version, sequenceNumber };
 				// Confirm the chosen base shares the live document's lineage before handing it back
 				await this.validateLineageEpoch(base);
-				return { kind: "found", base };
+				return { kind: "found", base, versionsProbed, sequenceNumberFetchCount };
 			}
 		}
-		return { kind: "noBaseVersion", oldestResolvedSeq };
+		return {
+			kind: "noBaseVersion",
+			oldestResolvedSeq,
+			versionsProbed,
+			sequenceNumberFetchCount,
+		};
 	}
 
 	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
@@ -159,6 +177,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 					driverVersion,
 					serverEpoch: liveEpoch,
 					clientEpoch: baseEpoch,
+					versionMarkAvailabilityOutcome: "lineageMismatch",
 				},
 			);
 		}
@@ -181,12 +200,13 @@ export class OdspVersionManager implements IOdspVersionManager {
 		);
 	}
 
-	private async resolveSeq(versionId: string): Promise<number> {
+	private async resolveSeq(versionId: string, onCacheMiss?: () => void): Promise<number> {
 		// Cached indefinitely (a sealed version's number is fixed); concurrent calls coalesce and a failed
 		// resolution is evicted so a later call retries.
-		return this.seqCache.addOrGet(versionId, async () =>
-			this.fetcher.resolveSequenceNumber(versionId),
-		);
+		return this.seqCache.addOrGet(versionId, async () => {
+			onCacheMiss?.();
+			return this.fetcher.resolveSequenceNumber(versionId);
+		});
 	}
 
 	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {

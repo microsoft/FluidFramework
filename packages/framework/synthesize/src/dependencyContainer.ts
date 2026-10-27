@@ -61,9 +61,6 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		}
 	}
 
-	/**
-	 * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
-	 */
 	public synthesize<O, R = undefined | Record<string, never>>(
 		optionalTypes: FluidObjectSymbolProvider<O>,
 		requiredTypes: Required<FluidObjectSymbolProvider<R>>,

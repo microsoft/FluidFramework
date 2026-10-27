@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	ChangeMetadata,
+	ChangeMetadataBeta,
 	CommitMetadata,
 	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -20,6 +21,8 @@ import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	createViewableTreeAlpha,
 } from "../../shared-tree/index.js";
 import type {
 	JsonCompatibleReadOnly,
@@ -39,6 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
@@ -56,10 +60,17 @@ import type { VerboseTree } from "./verboseTree.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
+ * @remarks
+ * For experimental APIs that access tree content and stored schema without a view schema, see {@link ViewableTreeAlpha}.
+ *
+ * @see {@link (asAlpha:2)} to access alpha APIs on this tree
+ *
  * @privateRemarks
+ * Use {@link createViewableTreeAlpha} to implement this interface.
+ *
  * TODO:
- * Add stored key versions of {@link (TreeAlpha:interface).(exportVerbose:2)}, {@link (TreeAlpha:interface).(exportConcise:2)} and {@link (TreeAlpha:interface).exportCompressed} here so tree content can be accessed without a view schema.
- * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
+ * Add stored key versions of {@link (TreeAlpha:interface).(exportConcise:2)} and {@link (TreeAlpha:interface).exportCompressed} here so tree content can be accessed without a view schema.
+ * Add an exportJsonSchema method, which should exactly match the concise format and the free function for exporting view schema.
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of createIndependentTreeViewAlpha can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
@@ -92,17 +103,26 @@ export interface ViewableTree {
 
 /**
  * Channel for a Fluid Tree DDS.
+ *
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
+ *
+ * @see {@link ITreeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:1)} to access alpha APIs on this tree
+ *
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
- * {@link ITree} extended with some alpha APIs.
- * @sealed @alpha
+ * A {@link ViewableTree} with experimental APIs.
+ *
+ * @see {@link (asAlpha:2)} to access these APIs on an existing {@link ViewableTree}
+ *
+ * @sealed
+ * @alpha
  */
-export interface ITreeAlpha extends ITree {
+export interface ViewableTreeAlpha extends ViewableTree {
 	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
@@ -116,7 +136,16 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+}
 
+/**
+ * {@link ITree} extended with some alpha APIs.
+ *
+ * @see {@link (asAlpha:1)} to access these APIs on an existing {@link ITree}
+ *
+ * @sealed @alpha
+ */
+export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
 	/**
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
@@ -152,15 +181,24 @@ export interface ITreeAlpha extends ITree {
 }
 
 /**
- * An untyped view of a (version-control-style) branch of a SharedTree.
- * @remarks An `UntypedTreeView` allows for the {@link UntypedTreeView.fork | creation of branches} and for those branches to later be {@link UntypedTreeView.merge | merged}.
+ * An untyped view of a git-style branch of a SharedTree.
+ * @remarks
+ * Use `UntypedTreeView` to work with a SharedTree branch when you do not know, or do not need, the schema of the tree.
+ * This is the primary public API for application code that needs branch-style editing of a SharedTree: an application can {@link UntypedTreeView.fork | fork} a new branch,
+ * make changes on it in isolation, and later {@link UntypedTreeView.merge | merge} those changes back.
  *
- * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
+ * Every {@link ITree | SharedTree} has one "main" branch.
+ * All other branches fork from the main branch, either directly or through another branch.
  *
- * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
+ * @see {@link UntypedTreeViewAlpha} for more experimental APIs.
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
+	/**
+	 * Events for the view's underlying branch.
+	 */
+	readonly events: Listenable<TreeBranchEventsBeta>;
+
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 		params?: RunTransactionParamsBeta,
@@ -465,6 +503,28 @@ export interface TreeBranchCommitMetadata {
 	 * This method may return a different value over time if the parent commit is trimmed from the branch's history.
 	 */
 	getParent(): TreeBranchCommitMetadata | undefined;
+
+	/**
+	 * Applies a new change that reverts all changes made after this commit on the branch from which it was obtained.
+	 * This is a no-op if this commit is the head of that branch.
+	 *
+	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 *
+	 * @remarks
+	 * This method is `undefined` when the commit is no longer reachable on its original branch, the branch has
+	 * been replaced or disposed, a later commit contains a schema change, or reverting is temporarily disallowed
+	 * (for example, during a transaction). Its availability can change as the branch's history changes.
+	 * A schema change in this commit does not prevent reverting later data changes.
+	 *
+	 * Access this method on the metadata before each call; do not retain references to it.
+	 * Each obtained function is single-use and throws a `UsageError` if reused or if the branch changes before it is called.
+	 *
+	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 */
+	revertTo?(options?: RevertToOptionsAlpha): void;
 }
 
 /**
@@ -493,11 +553,15 @@ export interface TreeBranchHistory {
 }
 
 /**
- * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
+ * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
- * The untyped view for a specific {@link TreeNode} may be acquired by calling {@link (TreeAlpha:interface).context} and checking {@link TreeContextAlpha.isView | isView()}.
+ * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly.
  *
- * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
+ * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context}
+ * and check {@link TreeContextAlpha.isView | isView()}.
+ *
+ * An untyped view does not necessarily know the schema of its SharedTree.
+ * To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
 export interface UntypedTreeViewAlpha
@@ -512,6 +576,11 @@ export interface UntypedTreeViewAlpha
 	 * APIs for querying the history of the branch being viewed.
 	 */
 	readonly branchHistory: TreeBranchHistory;
+
+	/**
+	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.
+	 */
+	readonly locations: TreeLocationResolver;
 
 	/**
 	 * Returns true if this view has the given schema as its root schema.
@@ -555,12 +624,14 @@ export interface UntypedTreeViewAlpha
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 * @throws a `UsageError` (without applying changes) if any commit after the given revision contains a schema change.
 	 *
 	 * @remarks
 	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 * For new code, use {@link TreeBranchCommitMetadata.revertTo} on a commit from this view's branch history instead.
 	 */
 	revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
 
@@ -664,7 +735,9 @@ export interface UntypedTreeViewAlpha
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link (asAlpha:1)}
+ * @see {@link TreeViewBeta}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ * @see {@link asBeta} to access beta APIs on this view
  *
  * @sealed @public
  */
@@ -686,7 +759,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
-	 * Description of the current compatibility status between the view schema and stored schema.
+	 * Describes whether this view's configuration permits viewing, upgrading, or initializing the document.
 	 * @remarks
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status of the document's stored schema changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
@@ -705,7 +778,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
-	 * staged schema upgrades matching the configured policy are included in the target stored schema.
+	 * staged schema upgrades matching the configured policy are included in the derived stored schema.
 	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
 	 * also include staged upgrades that are already enabled in the document.
 	 *
@@ -780,10 +853,13 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
- * A discrepancy between a view schema and a document's stored schema.
+ * A discrepancy that prevents a view schema from providing read/write access to a tree, based on that tree's existing stored schema.
  *
  * @remarks
  * The `mismatch` property discriminates the different discrepancy shapes.
+ * These entries explain {@link SchemaCompatibilityStatus.canView}, not whether the stored schema can be upgraded.
+ * They compare schema constraints, not the document's current content nor the resulting stored schema generated for an upgrade.
+ * Staging annotations can provide context within an entry without themselves preventing access.
  *
  * @sealed @beta
  */
@@ -904,12 +980,19 @@ export type SchemaDiscrepancy =
  */
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
-	 * Details about the schema discrepancies that prevent this view from accessing the tree.
+	 * Differences that prevent a view schema from providing read/write access to a tree, based on that tree's stored schema.
 	 *
 	 * @remarks
-	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * This property is `undefined` when {@link SchemaCompatibilityStatus.canView} is true and present
 	 * when `canView` is false.
-	 * It can include application-defined schema identifiers and field keys.
+	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
+	 *
+	 * It does not report all schema differences nor discrepancies that would prevent
+	 * {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 *
+	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
+	 *
+	 * This data may include application-defined schema identifiers and field keys.
 	 *
 	 * @example Interpreting an allowed-types discrepancy
 	 *
@@ -939,15 +1022,22 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 
 /**
  * {@link TreeView} with additional beta APIs.
+ *
+ * @see {@link TreeViewAlpha} for additional alpha APIs
+ * @see {@link asBeta} to access these APIs on an existing {@link TreeView}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ *
  * @sealed @beta
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
-	/**
-	 * {@inheritDoc TreeView.compatibility}
-	 */
 	readonly compatibility: SchemaCompatibilityStatusBeta;
+
+	/**
+	 * {@inheritDoc TreeView.events}
+	 */
+	readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
@@ -955,6 +1045,11 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 
 /**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ *
+ * @see {@link TreeViewBeta} for beta APIs
+ * @see {@link (asAlpha:3)} to access these APIs on an existing {@link TreeView}
+ * @see {@link asBeta} to access beta APIs on a {@link TreeView}
+ *
  * @sealed @alpha
  */
 export interface TreeViewAlpha<
@@ -992,7 +1087,7 @@ export interface TreeViewAlpha<
 	 * Use this to determine whether a document has already been upgraded, for example when deciding
 	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
 	 *
-	 * Results are derived from this view's schema and the current stored schema.
+	 * Results are derived from this view's schema and the existing stored schema.
 	 * The full schema is checked even when the view is incompatible with the stored schema, so the
 	 * result includes all locations declared by the view schema.
 	 */
@@ -1001,11 +1096,12 @@ export interface TreeViewAlpha<
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+	// Keep the alpha view first so event listeners infer alpha metadata.
+	fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
 }
 
 /**
- * Information about a view schema's compatibility with the document's stored schema.
+ * Information about whether a view's configuration permits viewing, upgrading, or initializing a document, and whether its schemas are equivalent.
  *
  * @see
  * See SharedTree's README for more information about choosing a compatibility policy.
@@ -1017,31 +1113,41 @@ export interface TreeViewAlpha<
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view schema allows exactly the same set of documents as the stored schema.
+	 * Whether the view schema would generate an equivalent stored schema to the existing one.
+	 * That is, whether both the existing stored schema and the stored schema derived
+	 * from the view allow the same subset of documents.
 	 *
 	 * @remarks
-	 * Equivalence here is defined in terms of allowed documents because there are some degenerate cases where schemas are not
-	 * exact matches in a strict (schema-based) sense but still allow the same documents, and the document notion is more useful to applications.
 	 *
-	 * Examples which are expressible where this may occur include:
+	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
+	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
-	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
+	 * Equivalence does not require the schemas to be identical.
+	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (for example: an object node type containing a required field with no allowed types)
+	 * This check compares the existing stored schema with the stored schema that would
+	 * be generated from the current view schema with its corresponding configuration.
+	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
+	 * This policy determines which staged changes are included, including whether to
+	 * retain upgrades already enabled in the document.
 	 *
-	 * These cases are typically not interesting to applications.
+	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
+	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
 	 *
-	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
+	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
-	 * For the computation of this equivalence, {@link SchemaStaticsBeta.staged | staged} schemas are not included.
-	 * If there are any unknown optional fields, even if allowed by {@link ObjectSchemaOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
+	 * A `false` value does not by itself mean that viewing or upgrading will throw.
+	 * Check {@link SchemaCompatibilityStatus.canView} before accessing {@link TreeView.root},
+	 * and {@link SchemaCompatibilityStatus.canUpgrade} before calling {@link TreeView.upgradeSchema}.
 	 */
 	readonly isEquivalent: boolean;
 
 	/**
-	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
-	 * If false, {@link TreeView.root} will throw upon access.
+	 * Whether the view schema can provide read/write access to a tree, based on the tree's existing stored schema.
+	 *
 	 * @remarks
+	 * If false, accessing {@link TreeView.root} throws.
+	 *
 	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
 	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
 	 *
@@ -1069,9 +1175,21 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * True when {@link TreeView.upgradeSchema} can add support for all content required to be supported by the view schema.
+	 * Whether the document's stored schema can be upgraded to be compatible with the view schema.
+	 * That is, whether the existing stored schema can be modified to allow all documents permitted by the view schema while adhering to the schema upgrade rules.
+	 *
 	 * @remarks
-	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
+	 * If false, calling {@link TreeView.upgradeSchema} throws a `UsageError`.
+	 *
+	 * When true, it is valid to call {@link TreeView.upgradeSchema}.
+	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
+	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
+	 *
+	 * This check compares the existing stored schema with the stored schema that would
+	 * be generated from the current view schema with its corresponding configuration.
+	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
+	 * This policy determines which staged upgrades are enabled, including whether to
+	 * retain upgrades already enabled in the document.
 	 *
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
 	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
@@ -1082,13 +1200,19 @@ export interface SchemaCompatibilityStatus {
 	readonly canUpgrade: boolean;
 
 	/**
-	 * True iff the document is uninitialized (i.e. it has no schema and no content).
-	 *
-	 * To initialize the document, call {@link TreeView.initialize}.
+	 * Whether the document is uninitialized: it has neither stored schema nor tree content.
 	 *
 	 * @remarks
-	 * It's not necessary to check this field before calling {@link TreeView.initialize} in most scenarios; application authors typically know from
-	 * branch that they're in a flow which creates a new `SharedTree` and would like to initialize it.
+	 * If false, calling {@link TreeView.initialize} throws a `UsageError`.
+	 *
+	 * This checks only the document's state, independently of the view schema and staged upgrade policy.
+	 * An initialized document with no tree content is considered initialized if it has stored schema.
+	 *
+	 * When true, you can call {@link TreeView.initialize} to set the initial stored schema and content.
+	 * The initial stored schema is generated from the view's configuration, including its staged upgrade policy.
+	 * This flag does not validate proposed initial content; the content supplied to `initialize` must be valid for that schema.
+	 *
+	 * You do not need to check this flag when your application already knows that it is initializing a new `SharedTree`.
 	 */
 	readonly canInitialize: boolean;
 
@@ -1099,12 +1223,25 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link UntypedTreeView}.
- * @sealed @alpha
+ * @sealed @beta
  */
-export interface TreeBranchEvents {
+export interface TreeBranchEventsBeta {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change, including settlement events for local changes
+	 */
+	changed(data: ChangeMetadataBeta): void;
+}
+
+/**
+ * Events for {@link UntypedTreeView}.
+ * @sealed @alpha
+ */
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
+	/**
+	 * Fired as described by {@link TreeBranchEventsBeta.changed}, with alpha change metadata and revertible support.
 	 *
 	 * @param data - information about the change
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,

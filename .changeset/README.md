@@ -1,6 +1,8 @@
 # Changesets
 
-We use a modified version of the [changesets][] workflow to track changes that we want to communicate to customers or partners.
+We use a modified version of the [changesets][] workflow in the client and server release groups to track changes that we want to communicate to customers or partners.
+
+## What is a changeset?
 
 A changeset is a Markdown file with YAML front matter stored in the `.changeset` folder. It carries two key bits of information:
 
@@ -11,6 +13,20 @@ This is useful because it breaks change tracking into two steps:
 
 1. **Adding a changeset** — done in a PR, by a contributor, while the change is fresh in mind.
 2. **Releasing/versioning** — combines all changesets and writes changelogs, which can then be reviewed in aggregate.
+
+## When should I use a changeset?
+
+For user-facing changes, use the release process for each affected package.
+You can find release group membership in [fluidBuild.config.cjs](../fluidBuild.config.cjs) and the workspace configuration.
+
+| Release group | How to document a user-facing change |
+| --- | --- |
+| Client (`client`) | Add a changeset in the root `.changeset` directory. |
+| Routerlicious (`server`) | Add a changeset in [server/routerlicious/.changeset](../server/routerlicious/.changeset/README.md). |
+| Build-tools (`build-tools`), including flub | Use [conventional commits](../build-tools/README.md#documenting-build-tools-changes), not changesets. |
+
+For other release groups or independent packages, follow the package's documented release process.
+If none is documented, ask the package owner.
 
 ## Changeset format
 
@@ -94,19 +110,31 @@ You can add a changeset manually or by using the `pnpm flub changeset add` comma
 
 ### Using the CLI
 
-Run `pnpm flub changeset add --releaseGroup <releaseGroup>` from the root of the release group. You will be prompted to select affected packages. By default the CLI shows packages changed relative to `main`; use `--branch <BRANCH>` to compare with a different branch. The output is fully editable after creation.
+Run `pnpm flub changeset add --releaseGroup <releaseGroup>` from the repository root.
+Use `client` or `server` to select the changeset directory.
+The default is `client`, regardless of your working directory.
+Select the affected packages when prompted.
+By default, the CLI shows packages changed relative to `main`.
+Use `--branch <BRANCH>` to compare with a different branch.
+You can edit the generated file.
 
 ### Manually
 
-Add a markdown file to the `.changeset` folder with a descriptive kebab-case name (e.g. `add-batch-operations.md`). Include the YAML frontmatter with affected packages and metadata.
+Add a Markdown file to the release group's `.changeset` directory.
+Use a descriptive kebab-case name, such as `add-batch-operations.md`.
+Include the YAML front matter with affected packages and metadata.
 
 ### Empty changeset
 
-Use `pnpm flub changeset add --empty` to create an empty changeset, then fill in the details.
+Use `pnpm flub changeset add --releaseGroup <releaseGroup> --empty` to create an empty changeset, then fill in the details.
 
 ### How do I know what packages to include?
 
-Each package listed in a changeset will get a changelog entry with the changeset's contents. Only include packages where the change is **meaningful to consumers**. You don't need to list every package that was modified. For example, if you deprecate a class in packageA and update packageB to stop using it, only packageA needs the changeset.
+Only list packages from the selected release group.
+Each package listed in a changeset will get a changelog entry with the changeset's contents.
+Only include packages where the change is **meaningful to consumers**.
+You don't need to list every package that was modified.
+For example, if you deprecate a class in packageA and update packageB to stop using it, only packageA needs the changeset.
 
 If the change modifies a customer-facing (`@public`/`@beta`/`@alpha`) API that another package re-exports, list that package in the frontmatter too — otherwise the change won't appear in that package's changelog or release notes.
 This mostly applies to `fluid-framework` which re-exports most of the customer-facing surface of `@fluidframework/tree` (and several other client packages).
@@ -217,7 +245,8 @@ const config: ISummaryConfiguration = { maxOps: 100 };
 
 ## Which PRs require changesets?
 
-Any change that should be communicated to customers or partners should have a changeset. Changes without a changeset are "invisible" to customers. Add a changeset with every communicable change, even if empty — the contents can be updated before release. The presence of the changeset signals that something needs to be communicated.
+If your [release process](#when-should-i-use-a-changeset) uses changesets, add one for each change that customers or partners need to know about.
+You can start with an empty changeset and complete it before release.
 
 ## More information
 

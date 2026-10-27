@@ -88,7 +88,11 @@ function makeCheckout(
 
 describe("schematizeTree", () => {
 	describe("initialize", () => {
-		function testInitialize(name: string, content: TreeStoredContentStrict): void {
+		function testInitialize(
+			name: string,
+			content: TreeStoredContentStrict,
+			expectedContentEdits: number = 1,
+		): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
@@ -99,7 +103,7 @@ describe("schematizeTree", () => {
 						content.schema,
 						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
 					);
-					assert.equal(count, 1);
+					assert.equal(count, expectedContentEdits);
 					expectSchema(storedSchema, content.schema);
 				});
 
@@ -151,12 +155,22 @@ describe("schematizeTree", () => {
 						log,
 						content.schema.rootFieldSchema.kind === FieldKinds.required.identifier
 							? ["schema", "content", "schema"]
-							: ["schema", "content"],
+							: expectedContentEdits === 0
+								? ["schema"]
+								: ["schema", "content"],
 					);
 				});
 			});
 		}
 
+		testInitialize(
+			"forbidden-empty",
+			{
+				schema: new TreeStoredSchemaRepository(),
+				initialTree: fieldJsonCursor([]),
+			},
+			0,
+		);
 		testInitialize("optional-empty", {
 			schema: toInitialSchema(builder.optional(schema)),
 			initialTree: fieldJsonCursor([]),
@@ -168,6 +182,23 @@ describe("schematizeTree", () => {
 		testInitialize("value", {
 			schema: toInitialSchema(schemaValueRoot),
 			initialTree: fieldJsonCursor([6]),
+		});
+
+		it("rejects content for a forbidden root", () => {
+			const storedSchema = new TreeStoredSchemaRepository();
+			let count = 0;
+			const checkout = makeCheckout(storedSchema, () => count++);
+
+			assert.throws(
+				() =>
+					initialize(
+						checkout,
+						new TreeStoredSchemaRepository(),
+						initializerFromChunk(checkout, () => treeChunkFromCursor(fieldJsonCursor([5]))),
+					),
+				/0xd67/ /* Cannot initialize a forbidden root with content */,
+			);
+			assert.equal(count, 0);
 		});
 
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
@@ -197,9 +228,6 @@ describe("schematizeTree", () => {
 			): this is TreeViewAlpha<TSchema> {
 				return false;
 			},
-			rewindTo(): void {
-				throw new Error("Function not implemented.");
-			},
 			revertTo(): void {
 				throw new Error("Function not implemented.");
 			},
@@ -225,6 +253,9 @@ describe("schematizeTree", () => {
 				throw new Error("Function not implemented.");
 			},
 			branchHistory: undefined as unknown as TreeBranchHistory,
+			get locations(): never {
+				throw new Error("Function not implemented.");
+			},
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

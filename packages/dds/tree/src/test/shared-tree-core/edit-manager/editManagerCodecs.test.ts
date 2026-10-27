@@ -8,10 +8,11 @@ import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import { DependentFormatVersion, makeCodecFamily } from "../../../codec/index.js";
-import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EditManagerEncodingContext } from "../../../shared-tree-core/editManagerCodecsCommons.js";
 import {
 	EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
@@ -64,8 +65,13 @@ const dummyContext = {
 	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
+	hasSchemaChange: () => false,
 };
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
+const testCases: EncodingTestData<
+	SummaryData<TestChange>,
+	unknown,
+	EditManagerEncodingContext<TestChange>
+> = {
 	successes: [
 		[
 			"empty",

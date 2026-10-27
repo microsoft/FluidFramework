@@ -25,7 +25,7 @@ import {
 import type {
 	NodeSchemaOptionsAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by TSDoc {@link} in this file.
-	RunTransactionParamsAlpha,
+	RunTransactionParamsBeta,
 } from "../../api/index.js";
 import {
 	CompatibilityLevel,
@@ -74,6 +74,9 @@ import type {
 
 /**
  * A map of string keys to tree objects.
+ *
+ * @see {@link TreeMapNodeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:6)} to access alpha APIs on this node
  *
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
@@ -163,6 +166,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
  * instead of the built-in `ReadonlyMap`, insulating against breaking changes
  * in TypeScript's standard library iterator types.
  *
+ * @see {@link (asAlpha:6)} to access these APIs on an existing {@link TreeMapNode}
+ *
  * @sealed @alpha
  */
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
@@ -209,7 +214,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 *
 	 * These last two points mean that, upon sequencing of an edit made with this API,
 	 * there is no guarantee that the entry for the given key will be the current one (if any) or the fallback one.
-	 * If such a guarantee is important, then consider using {@link RunTransactionParamsAlpha.preconditions}
+	 * If such a guarantee is important, then consider using {@link RunTransactionParamsBeta.preconditions}
 	 * to ensure the edit only applies when appropriate.
 	 *
 	 * This API is **not** equivalent to the following alternative:
@@ -268,7 +273,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
-// TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
+// TreeMapNode is invariant over schema type, so for this handler to work with all schemas, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {

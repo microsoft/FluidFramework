@@ -71,7 +71,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): ReactElement
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
-						<TableCell key={columnIndex}>
+						<TableCell key={columnIndex} role="columnheader">
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}

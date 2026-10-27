@@ -41,7 +41,7 @@ export interface FlexTreeContext {
 
 	/**
 	 * If true, this context is the canonical context instance for a given view,
-	 * and its schema include all schema from the document.
+	 * and its schema include all schemas from the document.
 	 *
 	 * If false, this context was created for use in a unhydrated tree, and the full document schema is unknown.
 	 */

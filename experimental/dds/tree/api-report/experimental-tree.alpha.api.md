@@ -649,6 +649,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get edits(): OrderedEditSet<InternalizedChange>;
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
+    // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
     // (undocumented)
@@ -658,15 +659,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     getRuntime(): IFluidDataStoreRuntime;
     getWriteFormat(): WriteFormat;
     internalizeChange(change: Change): ChangeInternal;
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
     loadSummary(summary: SharedTreeSummaryBase): void;
     readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
+    // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)
     protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
+    // (undocumented)
     protected registerCore(): void;
     // (undocumented)
     protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
@@ -676,6 +680,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
         serializer?: IFluidSerializer;
     }): string;
     saveSummary(): SharedTreeSummaryBase;
+    // (undocumented)
     summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     tryConvertToNodeId(id: StableNodeId): NodeId | undefined;
     tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined;
@@ -703,10 +708,13 @@ export enum SharedTreeEvent {
 export class SharedTreeFactory implements IChannelFactory {
     constructor(...args: SharedTreeArgs);
     static Attributes: IChannelAttributes;
+    // (undocumented)
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): SharedTree;
+    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<SharedTree>;
     static Type: string;
+    // (undocumented)
     get type(): string;
 }
 
@@ -1092,6 +1100,7 @@ export type UuidString = string & {
 // @alpha
 export interface ValidEditingResult extends EditingResultBase {
     readonly after: RevisionView;
+    // (undocumented)
     readonly status: EditStatus.Applied;
 }
 

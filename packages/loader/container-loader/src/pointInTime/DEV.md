@@ -210,7 +210,7 @@ Detailed ODSP version selection, lineage validation, and bounded replay are docu
 - A newer-than-target snapshot is rejected by `loadContainerPaused`.
 - Missing or trimmed bridging ops fail the load rather than returning a container short of the target.
 - An ODSP epoch mismatch fails non-retryably rather than combining a historical snapshot with ops from a different file lineage.
-- An `AbortSignal` cancels replay, closes the partially loaded container, and rejects the load.
+- An `AbortSignal` cancels replay, disposes the partially loaded container, and rejects the load.
 
 Like normal storage catch-up, retriable network failures may retry for an extended period. Callers that need bounded waiting should supply an `AbortSignal`.
 
@@ -231,7 +231,7 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 
 Loader unit coverage:
 
-- `src/test/loadContainerToSequenceNumber.spec.ts` covers target validation order and the capability error boundary.
+- `src/test/loadContainerToSequenceNumber.spec.ts` covers target validation order, the capability error boundary, lifecycle interruption, listener cleanup, and cancellation with an already-aborted signal.
 - `src/test/pointInTimeServices.spec.ts` covers structural capability detection, target forwarding, argument forwarding, and rejecting container creation through the adapter.
 
 ODSP unit coverage exercises base selection, no-base failures, version URL resolution, bounded delta reads, storage routing, storage-only behavior, and shared epoch/cache construction.
@@ -267,7 +267,7 @@ The following loading behaviors are covered by unit or integration tests, inferr
 10. **Complete mark-to-load flow:** Obtain the target from `sealAndCaptureVersionMark()` and `resolve()` rather than reading `deltaManager.lastSequenceNumber`, then load and verify the marked state. The detailed marker scenarios are tracked in the runtime version-mark DEV document.
 11. **Targets inside atomic batches:** Exercise targets on the first, middle, and last sequence number of ordinary multi-op, grouped, compressed, and chunked batches. Runtime batch processing can advance `lastSequenceNumber` to the batch end atomically, so define whether a non-boundary target is rejected or normalized to the batch end; never return a container whose sequence number silently overshot the requested target. Version marks intentionally resolve to a batch's last op and should remain a safe input.
 12. **Protocol and system-op targets:** Load to sequence numbers occupied by attach, summarize/summary-ack, join/leave, and other non-runtime messages. Verify the loader still stops exactly at the requested global sequence number even when the application state does not change at that op.
-13. **Cleanup and error preservation:** Abort, close, or fail delta replay while completion is racing. Verify listeners are removed, the partial container is closed exactly once, and cleanup does not replace the original cancellation or op-availability error. Today `disconnect()` after the container has already closed can surface `"The Container is closed and cannot be disconnected"` and mask the real failure.
+13. **Cleanup and error preservation:** Abort, close, dispose, or fail delta replay while completion is racing. Verify listeners are removed, the partial container is disposed, and cleanup preserves the original cancellation or op-availability error. Loader unit tests cover close and dispose races and cancellation with an already-aborted signal; real-service coverage should exercise the corresponding delta-replay failures.
 14. **Numeric limits:** Reject non-safe sequence numbers, not only negative and fractional values. Driver implementations commonly compute `target + 1` for an exclusive upper bound, so `Number.MAX_SAFE_INTEGER` and nearby values need an explicit contract that cannot lose precision.
 15. **Nested routes and historical code:** Load requests with a data-store path and code hint, and load a target whose document state requires objects or schema introduced at a different code proposal. Verify request routing and code loading remain deterministic for the historical view.
 16. **Resource cleanup on construction failure:** Fail URL resolution, base selection, storage connection, code loading, and delta-storage connection after progressively more resources have been created. Verify every partially created service/container is disposed without masking the initiating error.

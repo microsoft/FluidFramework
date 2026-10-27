@@ -40,23 +40,14 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return DirectoryFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return DirectoryFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -69,9 +60,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 		return directory;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
 		const directory = new SharedDirectoryInternal(id, runtime, DirectoryFactory.Attributes);
 		directory.initializeLocal();
