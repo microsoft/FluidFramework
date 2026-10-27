@@ -629,7 +629,7 @@ export interface SetValueInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.SetValue;
 }
 
-// @alpha @deprecated
+// @alpha
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);

@@ -1,6 +1,5 @@
 ---
 "@fluidframework/shared-object-base": minor
-"@fluid-experimental/tree": minor
 "__section": deprecation
 ---
 Deprecate shared object implementation classes
@@ -17,10 +16,5 @@ function getSharedObjectId(sharedObject: ISharedObject): string {
 	return sharedObject.id;
 }
 ```
-
-The `SharedTree` implementation class from `@fluid-experimental/tree` is also deprecated.
-This class will be removed from the package's exports in a future release.
-A replacement interface for this experimental tree is not yet available.
-This notice does not apply to `SharedTree` from `@fluidframework/tree`.
 
 See [issue #26691](https://github.com/microsoft/FluidFramework/issues/26691) for details.
