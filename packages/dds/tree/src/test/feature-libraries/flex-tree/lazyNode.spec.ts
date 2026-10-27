@@ -20,7 +20,11 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
-import { LazyMapNode, LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import {
+	LazyMapNode,
+	LazyObjectNode,
+	LazyTreeNode,
+} from "../../../feature-libraries/flex-tree/lazyNode.js";
 import { getCachedField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import {
@@ -47,11 +51,6 @@ import { brand, disposeSymbol } from "../../../util/index.js";
 import { SharedTreeTestFactory, TestTreeProviderLite } from "../../utils.js";
 
 import { readonlyTreeWithContent } from "./utils.js";
-
-/**
- * Test {@link LazyTreeNode} implementation.
- */
-class TestLazyTree extends LazyTreeNode {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -84,12 +83,13 @@ describe("LazyNode", () => {
 			const root = view.root;
 			assert(getInnerNode(root.map) instanceof LazyMapNode);
 			assert(getInnerNode(root.record) instanceof LazyMapNode);
-			assert(!(getInnerNode(root) instanceof LazyMapNode));
-			assert(!(getInnerNode(root.items) instanceof LazyMapNode));
+			assert(!(getInnerNode(root.map) instanceof LazyObjectNode));
+			assert(!(getInnerNode(root.record) instanceof LazyObjectNode));
+			assert(getInnerNode(root) instanceof LazyObjectNode);
+			assert(getInnerNode(root.items) instanceof LazyObjectNode);
 			const map = getInnerNode(root.map);
 			const leaf = map.getBoxed(brand("key")).boxedAt(0);
-			assert(leaf instanceof LazyTreeNode);
-			assert(!(leaf instanceof LazyMapNode));
+			assert(leaf instanceof LazyObjectNode);
 			assert.equal(leaf.fieldCache, undefined);
 			const checkout = leaf.context.checkout;
 			view.dispose();
@@ -668,7 +668,7 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(
+			const node = new LazyMapNode(
 				context,
 				brand(ParentNode.identifier),
 				cursor,
@@ -688,7 +688,7 @@ describe("LazyNode", () => {
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(
+				const node = new LazyMapNode(
 					context,
 					brand(JsonAsTree.JsonObject.identifier),
 					cursor,
@@ -704,7 +704,7 @@ describe("LazyNode", () => {
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(
+				const node = new LazyMapNode(
 					context,
 					brand(JsonAsTree.JsonObject.identifier),
 					cursor,
@@ -724,7 +724,7 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new LazyTreeNode(
+			const node = new LazyObjectNode(
 				context,
 				brand(stringSchema.identifier),
 				cursor,

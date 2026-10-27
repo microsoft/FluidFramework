@@ -59,7 +59,7 @@ export function getOrCreateHydratedFlexTreeNode(
 		return cached;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("Missing node schema");
-	const NodeClass = isOptionalMapSchema(schema) ? LazyMapNode : LazyTreeNode;
+	const NodeClass = isOptionalMapSchema(schema) ? LazyMapNode : LazyObjectNode;
 	return new NodeClass(context, cursor.type, cursor, anchorNode, anchor, schema);
 }
 
@@ -71,12 +71,12 @@ function cleanupTree(anchor: AnchorNode): void {
 }
 
 /**
- * Lazy implementation of {@link FlexTreeNode}.
+ * Shared implementation of hydrated {@link FlexTreeNode} wrappers.
  * @remarks
  * Node implementations capture schema-dependent behavior.
  * See {@link Context} for the schema changes that can preserve wrappers and those that require invalidation.
  */
-export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
+export abstract class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}
@@ -88,7 +88,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	/**
 	 * Node-owned field storage, read directly by cache lookups.
 	 * @remarks
-	 * Fixed-field nodes retain wrappers until disposal because those wrappers own cursors,
+	 * {@link LazyObjectNode} retains wrappers until disposal because those wrappers own cursors,
 	 * anchors, and lifetime registrations.
 	 * {@link LazyMapNode} instead caches only populated fields and evicts them when they become empty.
 	 * The Map is allocated on demand, so leaves and unboxed field reads do not allocate one.
@@ -163,16 +163,10 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	 * @param createField - Creates a field which owns its navigation resources.
 	 * Implementations whose fields borrow this node's resources do not call this factory.
 	 */
-	public getOrCreateField(
+	public abstract getOrCreateField(
 		cursor: ITreeSubscriptionCursor,
 		createField: () => FlexTreeField,
-	): FlexTreeField {
-		return getOrCreate(
-			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()),
-			cursor.getFieldKey(),
-			createField,
-		);
-	}
+	): FlexTreeField;
 
 	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
 		{
@@ -309,6 +303,23 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this.cursor, (cursor) => cursor.getFieldKey()).values();
+	}
+}
+
+/**
+ * A node whose field wrappers own their navigation resources and remain cached until disposal.
+ * Used for objects, arrays, leaves, and other schemas without optional-map storage.
+ */
+export class LazyObjectNode extends LazyTreeNode {
+	public override getOrCreateField(
+		cursor: ITreeSubscriptionCursor,
+		createField: () => FlexTreeField,
+	): FlexTreeField {
+		return getOrCreate(
+			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()),
+			cursor.getFieldKey(),
+			createField,
+		);
 	}
 }
 
