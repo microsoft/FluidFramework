@@ -65,7 +65,7 @@ describe("isomorphic-git manager", () => {
 		undefined /* apiSamplingPeriod */,
 		gitMaxBlobSizeBytes,
 	);
-	const repoManagerParams: Required<IRepoManagerParams> = {
+	const repoManagerParams: IRepoManagerParams = {
 		repoOwner: "fluid",
 		repoName: "test",
 		storageRoutingId: {
@@ -81,6 +81,41 @@ describe("isomorphic-git manager", () => {
 
 	afterEach(() => {
 		fsFactory.volume.reset();
+	});
+
+	it("uses the authorized physical container as the repository root", async () => {
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		const repoManager = await repoManagerFactory.create({
+			...repoManagerParams,
+			repoName: "physical-root-test",
+			storageRoutingId: {
+				tenantId: "fluid",
+				documentId: "physical-root-test",
+			},
+			fileSystemManagerParams: {
+				...repoManagerParams.fileSystemManagerParams,
+				physicalContainerName,
+				storageLayoutVersion: "v2",
+				storageLifecycleVersion: "generation-1",
+			},
+		});
+
+		assert.strictEqual(repoManager.path, `${physicalContainerName}/physical-root-test`);
+	});
+
+	it("rejects an invalid physical container supplied directly to the factory", async () => {
+		await assert.rejects(
+			repoManagerFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName: "../victim",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			/Invalid physical container name/,
+		);
 	});
 
 	it("should create/read a blob", async () => {

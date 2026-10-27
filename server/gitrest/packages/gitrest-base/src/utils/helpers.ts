@@ -78,6 +78,14 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 	const storageName: string | undefined = request.get(Constants.StorageNameHeader);
 	const storageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
 	const simplifiedCustomData = request.get(Constants.SimplifiedCustomDataHeader);
+	const physicalContainerName = request.get(Constants.DocumentContainerNameHeader);
+	const storageLayoutVersion = request.get(Constants.DocumentStorageLayoutHeader);
+	const storageLifecycleVersion = request.get(Constants.DocumentLifecycleVersionHeader);
+	const documentStorageProofError = getDocumentStorageProofError(
+		physicalContainerName,
+		storageLayoutVersion,
+		storageLifecycleVersion,
+	);
 
 	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 
@@ -91,7 +99,14 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		fileSystemManagerParams: {
 			storageName,
 			simplifiedCustomData,
+			physicalContainerName,
+			storageLayoutVersion:
+				storageLayoutVersion === "v1" || storageLayoutVersion === "v2"
+					? storageLayoutVersion
+					: undefined,
+			storageLifecycleVersion,
 		},
+		documentStorageProofError,
 		isEphemeralContainer,
 	};
 }
@@ -217,6 +232,57 @@ export function isInvalidRepoPathComponent(value: string): boolean {
 	);
 }
 
+function isValidPhysicalContainerName(value: string): boolean {
+	return (
+		value.length >= 3 &&
+		value.length <= 63 &&
+		/^[\da-z-]+$/.test(value) &&
+		/^[\da-z]/.test(value) &&
+		/[\da-z]$/.test(value) &&
+		!value.includes("--")
+	);
+}
+
+function getDocumentStorageProofError(
+	physicalContainerName: string | undefined,
+	storageLayoutVersion: string | undefined,
+	storageLifecycleVersion: string | undefined,
+): string | undefined {
+	const hasDocumentStorageProof =
+		physicalContainerName !== undefined ||
+		storageLayoutVersion !== undefined ||
+		storageLifecycleVersion !== undefined;
+	if (
+		hasDocumentStorageProof &&
+		(physicalContainerName === undefined ||
+			(storageLayoutVersion !== "v1" && storageLayoutVersion !== "v2") ||
+			storageLifecycleVersion === undefined ||
+			storageLifecycleVersion.length === 0)
+	) {
+		return "Invalid document storage proof headers.";
+	}
+	if (
+		physicalContainerName !== undefined &&
+		!isValidPhysicalContainerName(physicalContainerName)
+	) {
+		return `Invalid physical container name: ${physicalContainerName}`;
+	}
+	return undefined;
+}
+
+export function validateDocumentStorageProof(params: IRepoManagerParams): void {
+	const error =
+		params.documentStorageProofError ??
+		getDocumentStorageProofError(
+			params.fileSystemManagerParams?.physicalContainerName,
+			params.fileSystemManagerParams?.storageLayoutVersion,
+			params.fileSystemManagerParams?.storageLifecycleVersion,
+		);
+	if (error !== undefined) {
+		throw new NetworkError(400, error);
+	}
+}
+
 /**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
@@ -237,6 +303,18 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 	}
 
 	return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
+}
+
+export function getRepositoryRoot(params: IRepoManagerParams, includeRepoOwner = false): string {
+	validateDocumentStorageProof(params);
+	if (!params.storageRoutingId?.tenantId || !params.storageRoutingId.documentId) {
+		throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
+	}
+	return getRepoPath(
+		params.fileSystemManagerParams?.physicalContainerName ?? params.storageRoutingId.tenantId,
+		params.storageRoutingId.documentId,
+		includeRepoOwner ? params.repoOwner : undefined,
+	);
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {

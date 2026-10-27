@@ -31,6 +31,7 @@ import * as winston from "winston";
 import { Constants, getRequestErrorTranslator } from "../utils";
 
 import type { ICache } from "./definitions";
+import type { IDocumentAccessProof } from "./documentAccess";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -78,6 +79,7 @@ export class RestGitService {
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
 		private readonly simplifiedCustomData?: string,
+		private readonly accessProof?: IDocumentAccessProof,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -98,6 +100,15 @@ export class RestGitService {
 		}
 		if (this.simplifiedCustomData) {
 			defaultHeaders[Constants.SimplifiedCustomData] = this.simplifiedCustomData;
+		}
+		if (this.accessProof?.physicalContainerName !== undefined) {
+			if (this.accessProof.layoutVersion === undefined) {
+				throw new NetworkError(500, "Document storage layout is missing.");
+			}
+			defaultHeaders[Constants.DocumentContainerName] =
+				this.accessProof.physicalContainerName;
+			defaultHeaders[Constants.DocumentStorageLayout] = this.accessProof.layoutVersion;
+			defaultHeaders[Constants.DocumentLifecycleVersion] = this.accessProof.lifecycleVersion;
 		}
 
 		// We set the flag only for ephemeral containers

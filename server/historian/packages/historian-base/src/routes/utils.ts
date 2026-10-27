@@ -625,6 +625,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
+		accessProof,
 	);
 }
 

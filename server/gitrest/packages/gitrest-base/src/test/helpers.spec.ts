@@ -4,7 +4,14 @@
  */
 
 import assert from "node:assert";
-import { getRepoPath, sizeof } from "../utils";
+import type { Request } from "express";
+import {
+	Constants,
+	getRepoManagerParamsFromRequest,
+	getRepositoryRoot,
+	getRepoPath,
+	sizeof,
+} from "../utils";
 
 describe("helpers", () => {
 	describe("getRepoPath", () => {
@@ -44,6 +51,128 @@ describe("helpers", () => {
 		});
 		it("rejects an empty tenantId", () => {
 			assert.throws(() => getRepoPath(""), /Invalid repo name \(tenantId\)/);
+		});
+	});
+
+	describe("authorized repository root", () => {
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+		function createRequest(headers: Record<string, string | undefined>): Request {
+			return {
+				params: {
+					owner: "owner",
+					repo: "repository",
+				},
+				get: (name: string) => headers[name],
+			} as unknown as Request;
+		}
+
+		it("uses an authorized physical container when all proof headers are valid", () => {
+			const params = getRepoManagerParamsFromRequest(
+				createRequest({
+					[Constants.StorageRoutingIdHeader]: "tenant:document",
+					[Constants.DocumentContainerNameHeader]: physicalContainerName,
+					[Constants.DocumentStorageLayoutHeader]: "v2",
+					[Constants.DocumentLifecycleVersionHeader]: "generation-1",
+				}),
+			);
+
+			assert.strictEqual(getRepositoryRoot(params), `${physicalContainerName}/document`);
+			assert.deepStrictEqual(params.fileSystemManagerParams, {
+				storageName: undefined,
+				simplifiedCustomData: undefined,
+				physicalContainerName,
+				storageLayoutVersion: "v2",
+				storageLifecycleVersion: "generation-1",
+			});
+		});
+
+		for (const invalidPhysicalContainerName of [
+			"../victim",
+			"victim/path",
+			"victim\\path",
+			"victim%2fpath",
+			"victim%5cpath",
+			"ab",
+			"-victim",
+			"victim-",
+			"victim--container",
+			"Victim",
+		]) {
+			it(`rejects invalid physical container ${invalidPhysicalContainerName}`, () => {
+				assert.throws(
+					() =>
+						getRepositoryRoot(
+							getRepoManagerParamsFromRequest(
+								createRequest({
+									[Constants.StorageRoutingIdHeader]: "tenant:document",
+									[Constants.DocumentContainerNameHeader]:
+										invalidPhysicalContainerName,
+									[Constants.DocumentStorageLayoutHeader]: "v2",
+									[Constants.DocumentLifecycleVersionHeader]: "generation-1",
+								}),
+							),
+						),
+					/Invalid physical container name/,
+				);
+			});
+		}
+
+		for (const testCase of [
+			{
+				name: "missing physical container",
+				headers: {
+					[Constants.DocumentStorageLayoutHeader]: "v2",
+					[Constants.DocumentLifecycleVersionHeader]: "generation-1",
+				},
+			},
+			{
+				name: "missing storage layout",
+				headers: {
+					[Constants.DocumentContainerNameHeader]: physicalContainerName,
+					[Constants.DocumentLifecycleVersionHeader]: "generation-1",
+				},
+			},
+			{
+				name: "invalid storage layout",
+				headers: {
+					[Constants.DocumentContainerNameHeader]: physicalContainerName,
+					[Constants.DocumentStorageLayoutHeader]: "v3",
+					[Constants.DocumentLifecycleVersionHeader]: "generation-1",
+				},
+			},
+			{
+				name: "missing lifecycle version",
+				headers: {
+					[Constants.DocumentContainerNameHeader]: physicalContainerName,
+					[Constants.DocumentStorageLayoutHeader]: "v2",
+				},
+			},
+		]) {
+			it(`rejects ${testCase.name} proof headers`, () => {
+				assert.throws(
+					() =>
+						getRepositoryRoot(
+							getRepoManagerParamsFromRequest(
+								createRequest({
+									[Constants.StorageRoutingIdHeader]: "tenant:document",
+									...testCase.headers,
+								}),
+							),
+						),
+					/Invalid document storage proof headers/,
+				);
+			});
+		}
+
+		it("preserves the tenant-qualified root when proof headers are absent", () => {
+			const params = getRepoManagerParamsFromRequest(
+				createRequest({
+					[Constants.StorageRoutingIdHeader]: "tenant:document",
+				}),
+			);
+
+			assert.strictEqual(getRepositoryRoot(params), "tenant/document");
 		});
 	});
 

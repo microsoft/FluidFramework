@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 
 import { NetworkError } from "@fluidframework/server-services-client";
 import type { ITenantStorage } from "@fluidframework/server-services-core";
 import * as sinon from "sinon";
 
-import { RestGitService } from "../services";
+import { type IDocumentAccessProof, RestGitService } from "../services";
 import { TestCache } from "./utils";
 
 const tenantId = "tenant";
@@ -111,5 +113,67 @@ describe("RestGitService Git object SHA validation", () => {
 		assert.strictEqual(await service.getCommit(canonicalSha, true), commit);
 
 		sinon.assert.calledOnceWithExactly(cacheGet, canonicalSha);
+	});
+
+	it("sends the authorized physical root to GitRest", async () => {
+		let capturedHeaders: Record<string, string | string[] | undefined> = {};
+		const server = createServer((request, response) => {
+			capturedHeaders = request.headers;
+			response.writeHead(200, { "Content-Type": "application/json" });
+			response.end(JSON.stringify({ id: canonicalSha, trees: [], blobs: [] }));
+		});
+		await new Promise<void>((resolve, reject) => {
+			server.once("error", reject);
+			server.listen(0, "127.0.0.1", resolve);
+		});
+		const address = server.address() as AddressInfo;
+		const proof: IDocumentAccessProof = {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			storageAccountName: "document-storage",
+			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			layoutVersion: "v2",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		};
+		const routedStorage = {
+			...storage,
+			url: `http://127.0.0.1:${address.port}`,
+			credentials: undefined,
+		};
+
+		try {
+			const routedService = new RestGitService(
+				routedStorage,
+				false,
+				tenantId,
+				documentId,
+				undefined,
+				proof.storageAccountName,
+				undefined,
+				false,
+				undefined,
+				undefined,
+				proof,
+			);
+
+			await routedService.getSummary("latest", false);
+		} finally {
+			await new Promise<void>((resolve, reject) => {
+				server.close((error) => (error === undefined ? resolve() : reject(error)));
+			});
+		}
+
+		assert.strictEqual(
+			capturedHeaders["fluid-document-container-name"],
+			proof.physicalContainerName,
+		);
+		assert.strictEqual(capturedHeaders["fluid-document-storage-layout"], proof.layoutVersion);
+		assert.strictEqual(
+			capturedHeaders["fluid-document-lifecycle-version"],
+			proof.lifecycleVersion,
+		);
 	});
 });

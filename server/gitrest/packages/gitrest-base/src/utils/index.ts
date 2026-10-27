@@ -47,6 +47,7 @@ export {
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
+	getRepositoryRoot,
 	getRepoPath,
 	getRequestPathCategory,
 	getSoftDeletedMarkerPath,
