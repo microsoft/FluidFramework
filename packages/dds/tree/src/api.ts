@@ -85,9 +85,9 @@ export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(
  * @typeParam TFactory - the input factory type
  *
  * @privateRemarks
- * Read the scope and name types from the factory to support overridden generic methods.
- * Two type parameters preserve existing calls with explicit schema type arguments.
- * Keep the map overload last so callbacks keep their existing inferred types.
+ * The scope comes from `scope`, while allowed schema names come from the first parameter of `object`.
+ * This avoids name-inference failures when `object` is overridden with additional type parameters.
+ * Two required type parameters prevent this overload from affecting existing `asAlpha<TSchema>` specializations.
  *
  * @alpha
  */
@@ -131,7 +131,8 @@ export function asAlpha(view: unknown): unknown {
  * @typeParam TInput - the input view or factory type
  *
  * @privateRemarks
- * A single call signature preserves type inference when this function is used as a callback.
+ * Keep a single public call signature so `views.map(asBeta)` preserves the view's schema type.
+ * Separate overloads widen the inferred schema to `ImplicitFieldSchema`, even with the view overload last.
  * The separate schema parameter preserves existing calls with explicit schema type arguments.
  * Infer the factory type from its properties to support overridden generic methods.
  *
@@ -160,7 +161,7 @@ export function asBeta<
 	: TreeViewBeta<TSchema>;
 
 /**
- * Implementation of overloads for {@link asBeta}.
+ * Implementation of the call signature for {@link asBeta}.
  */
 export function asBeta(value: unknown): unknown {
 	return value;

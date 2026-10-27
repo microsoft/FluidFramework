@@ -264,7 +264,7 @@ export class SchemaFactory<
 		public readonly scope: TScope,
 	) {
 		super();
-		if (new.target === SchemaFactory || new.target === SchemaFactoryBeta) {
+		if (new.target !== SchemaFactoryAlpha) {
 			// All supported factory instances implement the alpha API so conversions can preserve identity.
 			return new SchemaFactoryAlpha<TScope, TName>(scope);
 		}
