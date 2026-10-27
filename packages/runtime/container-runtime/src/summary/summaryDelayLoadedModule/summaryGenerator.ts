@@ -211,8 +211,8 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
-					// Startup estimates use sequence numbers, which do not bound the number of logical
-					// ops (or changed data stores) in grouped batches. Only validate observed counts.
+					// Sequence gaps cannot recover missing logical op counts: grouped ops share sequence
+					// numbers. Only validate when the counts cover all ops since the acknowledged baseline.
 					!this.heuristicData.hasMissingOpData &&
 					summarizedDataStoreCount >
 						gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary

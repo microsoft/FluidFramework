@@ -191,9 +191,12 @@ describe("Runtime", () => {
 				await flushPromises(); // let summarize run
 			}
 
-			async function emitNack(retryAfterSeconds?: number) {
+			async function emitNack(
+				retryAfterSeconds?: number,
+				summarySequenceNumber = lastSummarySeq,
+			) {
 				const summaryProposal: ISummaryProposal = {
-					summarySequenceNumber: lastSummarySeq,
+					summarySequenceNumber,
 				};
 				const contents: ISummaryNack & { retryAfter?: number } = {
 					summaryProposal,
@@ -1595,6 +1598,79 @@ describe("Runtime", () => {
 			});
 
 			describe("Summary Start", () => {
+				for (const acknowledgeCoveringSummary of [false, true]) {
+					it(`detects pre-listener history independently of grouped op counts (covering ack: ${acknowledgeCoveringSummary})`, async () => {
+						sinon.stub(mockDeltaManager, "lastSequenceNumber").get(() => lastRefSeq);
+						// Model a missed grouped batch changing ten stores at seq 1, then a proposal at seq 2.
+						lastRefSeq = 1;
+						emitBroadcast();
+						const pendingSummarySeq = lastSummarySeq;
+						const startP = startRunningSummarizer(true, async () => {
+							const result = await successfulSubmitSummary();
+							assert(result.stage === "submit");
+							return {
+								...result,
+								// Inject serialization stats; the native fixture tests actual store handle reuse.
+								summaryStats: { ...emptySummaryStats, summarizedDataStoreCount: 10 },
+							};
+						});
+						await flushPromises();
+						assert.deepEqual(
+							[heuristicData.numRuntimeOps, heuristicData.numNonRuntimeOps],
+							[0, 0],
+						);
+
+						// While waitStart waits for the proposal, observe three logical ops at seq 3.
+						const sequenceNumber = ++lastRefSeq;
+						const op = { sequenceNumber, timestamp: Date.now(), type: MessageType.Operation };
+						mockDeltaManager.emit("op", op);
+						for (let i = 0; i < 3; i++) {
+							mockRuntime.emit("op", op, true);
+						}
+						assert.deepEqual([heuristicData.numRuntimeOps], [3]);
+
+						if (acknowledgeCoveringSummary) {
+							// Ack a newer summary with ref seq 3, covering the pre-listener boundary at seq 2.
+							emitBroadcast();
+							await emitNack(undefined, pendingSummarySeq);
+							await emitAck();
+						} else {
+							await emitNack();
+						}
+						await startP;
+						assert.equal(heuristicData.hasMissingOpData, !acknowledgeCoveringSummary);
+						if (acknowledgeCoveringSummary) {
+							assert.equal(heuristicData.lastSuccessfulSummary.refSequenceNumber, 3);
+						} else {
+							assert.equal(lastRefSeq, 4);
+							assert.equal(heuristicData.lastSuccessfulSummary.refSequenceNumber, 0);
+							assert.equal(
+								heuristicData.numRuntimeOps + heuristicData.numNonRuntimeOps,
+								4,
+								"logical counts must mask the missed history in the old sequence-gap calculation",
+							);
+						}
+						mockLogger.clear();
+						const summary = summarizer.summarizeOnDemand({ reason: "startup coverage" });
+						const submit = await summary.summarySubmitted;
+						assert(submit.success);
+						if (acknowledgeCoveringSummary) {
+							mockLogger.assertMatchAny([
+								{ eventName: "Running:IncrementalSummaryViolation" },
+							]);
+						} else {
+							mockLogger.assertMatchNone([
+								{ eventName: "Running:IncrementalSummaryViolation" },
+							]);
+						}
+						await emitAck();
+						const ack = await summary.receivedSummaryAckOrNack;
+						assert(ack.success);
+						assert.equal(heuristicData.hasMissingOpData, false);
+						summarizer.dispose();
+					});
+				}
+
 				it("Should summarize immediately if summary ack is missing at startup", async () => {
 					assertRunCounts(0, 0);
 					// Simulate as summary op was in op stream.

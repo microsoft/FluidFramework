@@ -85,6 +85,9 @@ export class RunningSummarizer
 
 		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
+		// The constructor installs the op listener synchronously. Keep the pre-listener
+		// sequence boundary separate from logical op counts, since grouped ops share a sequence number.
+		const sequenceNumberBeforeListening = runtime.deltaManager.lastSequenceNumber;
 		const summarizer = new RunningSummarizer(
 			logger,
 			summaryWatcher,
@@ -124,21 +127,21 @@ export class RunningSummarizer
 			);
 		});
 
-		// Update heuristic counts
-		// By the time we get here, there are potentially ops missing from the heuristic summary counts
-		// Examples of where this could happen:
-		// 1. Op is processed during the time that we are initiating the RunningSummarizer instance but before we
-		//    listen for the op events (will get missed by the handlers in the current workflow)
-		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
+		// Approximate missing counts for scheduling. This mixes sequence positions with logical op counts,
+		// so grouped ops observed during startup can hide earlier missed ops in this calculation.
 		const diff =
 			runtime.deltaManager.lastSequenceNumber -
 			(heuristicData.lastSuccessfulSummary.refSequenceNumber +
 				heuristicData.numNonRuntimeOps +
 				heuristicData.numRuntimeOps);
-		heuristicData.hasMissingOpData = diff > 0;
+		// waitStart may advance the acknowledged baseline. Counts remain unreliable if that baseline
+		// does not cover all pre-listener history, regardless of how many logical ops we observed.
+		heuristicData.hasMissingOpData =
+			sequenceNumberBeforeListening > heuristicData.lastSuccessfulSummary.refSequenceNumber;
 
-		if (heuristicData.hasMissingOpData) {
-			// Split the diff 50-50 and increment the counts appropriately
+		if (diff > 0) {
+			// Approximate additional activity for scheduling. The runtime/non-runtime breakdown is unknown,
+			// so divide the positive diff roughly equally between the two counters.
 			heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
 			heuristicData.numRuntimeOps += Math.floor(diff / 2);
 		}
