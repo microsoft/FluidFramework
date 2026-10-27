@@ -21,6 +21,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
@@ -52,6 +53,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedArrayClass<T extends SerializableTypeForSharedArray>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedArrayEvents>
 	implements ISharedArray<T>, ISharedArrayRevertible
 {
