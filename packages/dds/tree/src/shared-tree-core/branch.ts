@@ -125,6 +125,7 @@ export interface BranchTrimmingEvents {
 
 /**
  * Count bookkeeping for branches whose ancestry is trimmed together.
+ * @remarks
  * Branches share a reference to the same trim state, allowing implicit updating to all of their commit counts without O(branch count) updates.
  */
 export interface BranchTrimState {
