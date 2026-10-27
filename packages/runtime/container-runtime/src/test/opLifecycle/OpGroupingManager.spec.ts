@@ -219,18 +219,21 @@ describe("OpGroupingManager", () => {
 			assert.deepStrictEqual(result, [
 				{
 					clientSequenceNumber: 1,
+					indexInBatch: 0,
 					contents: "1",
 					compression: undefined,
 					metadata: undefined,
 				},
 				{
 					clientSequenceNumber: 2,
+					indexInBatch: 1,
 					contents: "2",
 					compression: undefined,
 					metadata: undefined,
 				},
 				{
 					clientSequenceNumber: 3,
+					indexInBatch: 2,
 					contents: "3",
 					compression: undefined,
 					metadata: undefined,

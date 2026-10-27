@@ -15,6 +15,7 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	mixinMonitoringContext,
@@ -65,8 +66,10 @@ describe("Runtime batching", () => {
 	/**
 	 * Overwrites channelCollection property to make process a no-op
 	 */
-	function patchContainerRuntime(cr: ContainerRuntime): sinon.SinonStub {
-		const fakeProcess: () => void = () => {};
+	function patchContainerRuntime(
+		cr: ContainerRuntime,
+		fakeProcess: (messages: IRuntimeMessageCollection) => void = () => {},
+	): sinon.SinonStub {
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
@@ -194,6 +197,27 @@ describe("Runtime batching", () => {
 				() => processBatch(batch, containerRuntime),
 				"Batch from a single client should be processed successfully",
 			);
+		});
+
+		it("preserves runtime batch indexes across runtime-only message bunches", () => {
+			const batch = getMessages(3);
+			const runtimeMessage = batch[1].contents as {
+				type: ContainerMessageType;
+				contents: unknown;
+			};
+			runtimeMessage.type = ContainerMessageType.Rejoin;
+			runtimeMessage.contents = undefined;
+
+			const receivedIndexes: (number | undefined)[][] = [];
+			containerRuntimeStub.callsFake((collection: IRuntimeMessageCollection) => {
+				receivedIndexes.push(
+					collection.messagesContent.map((message) => message.indexInBatch),
+				);
+			});
+
+			processBatch(batch, containerRuntime);
+
+			assert.deepStrictEqual(receivedIndexes, [[0], [2]]);
 		});
 
 		it("fails processing a batch with batch end but no batch start", async () => {

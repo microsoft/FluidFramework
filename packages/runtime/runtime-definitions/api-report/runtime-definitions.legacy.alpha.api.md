@@ -295,8 +295,10 @@ export interface IRuntimeMessageCollection {
 
 // @beta @sealed @legacy
 export interface IRuntimeMessagesContent {
+    // @deprecated
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
+    readonly indexInBatch?: number | undefined;
     readonly localOpMetadata: unknown;
 }
 
@@ -307,6 +309,13 @@ export interface IRuntimeStorageService {
 
 // @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+
+// @beta @legacy
+export interface ISequencedRuntimeMessage extends ISequencedDocumentMessage {
+    // @deprecated
+    readonly clientSequenceNumber: number;
+    readonly indexInBatch?: number | undefined;
+}
 
 // @beta @legacy
 export interface ISummarizeInternalResult extends ISummarizeResult {

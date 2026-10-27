@@ -873,6 +873,13 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 }
 
 // @beta @legacy
+export interface ISequencedRuntimeMessage extends ISequencedDocumentMessage {
+    // @deprecated
+    readonly clientSequenceNumber: number;
+    readonly indexInBatch?: number | undefined;
+}
+
+// @beta @legacy
 export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
     // (undocumented)
     [Symbol.iterator](): Iterator<SequenceInterval>;
@@ -994,9 +1001,9 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 // @beta @legacy
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
-    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "pre-op", listener: (op: ISequencedRuntimeMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // @eventProperty
-    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "op", listener: (op: ISequencedRuntimeMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @beta @legacy
@@ -1272,6 +1279,9 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSche
 
 // @public
 export type Off = () => void;
+
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
 
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;

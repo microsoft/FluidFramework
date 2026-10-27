@@ -36,7 +36,8 @@ export interface BatchStartInfo {
 	 * Used to compute Batch ID if needed
 	 *
 	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk).
-	 * For grouped batches, clientSequenceNumber on messages is overwritten, so we track this original value here.
+	 * For grouped batches, the logical messages currently use synthetic client sequence numbers for
+	 * compatibility and use `indexInBatch` for their position, so the original CSN is tracked here.
 	 */
 	readonly batchStartCsn: number;
 	/**
@@ -93,6 +94,7 @@ function assertHasClientId(
  */
 export class RemoteMessageProcessor {
 	private batchInProgress: boolean = false;
+	private currentBatchMessageIndex: number = 0;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -203,33 +205,43 @@ export class RemoteMessageProcessor {
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
 				this.batchInProgress = true;
+				this.currentBatchMessageIndex = 0;
+				const batchStartMessage = {
+					...message,
+					indexInBatch: this.currentBatchMessageIndex,
+				};
 				return {
 					type: "batchStartingMessage",
 					batchStart: {
 						batchId: asBatchMetadata(message.metadata)?.batchId,
 						clientId: message.clientId,
 						batchStartCsn: message.clientSequenceNumber,
-						keyMessage: message,
+						keyMessage: batchStartMessage,
 					},
-					nextMessage: message,
+					nextMessage: batchStartMessage,
 				};
 			}
 
 			// Single-message batch (Since metadata flag is undefined)
+			const singletonMessage = { ...message, indexInBatch: 0 };
 			return {
 				type: "fullBatch",
-				messages: [message],
+				messages: [singletonMessage],
 				batchStart: {
 					batchStartCsn: message.clientSequenceNumber,
 					clientId: message.clientId,
 					batchId: asBatchMetadata(message.metadata)?.batchId,
-					keyMessage: message,
+					keyMessage: singletonMessage,
 				},
 				length: 1,
 				groupedBatch: false,
 			};
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
+		const nextMessage = {
+			...message,
+			indexInBatch: ++this.currentBatchMessageIndex,
+		};
 
 		// Clear batchInProgress state if the batch is ending
 		if (batchMetadataFlag === false) {
@@ -238,7 +250,7 @@ export class RemoteMessageProcessor {
 
 		return {
 			type: "nextBatchMessage",
-			nextMessage: message,
+			nextMessage,
 			batchEnd: batchMetadataFlag === false,
 		};
 	}

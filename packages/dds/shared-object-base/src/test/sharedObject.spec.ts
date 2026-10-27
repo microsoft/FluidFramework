@@ -17,11 +17,15 @@ import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
+	ISequencedMessageEnvelope,
+	ISequencedRuntimeMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
+	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockHandle,
+	MockObjectStorageService,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
@@ -64,18 +68,22 @@ class MySharedObjectCore extends SharedObjectCore {
 		attributes = { type: "test" } as unknown as IChannelAttributes,
 		submitFnOverride = sinon.fake(),
 		attached = false,
+		initializeServices = true,
 	}: {
 		id: string;
 		runtime?: IFluidDataStoreRuntime;
 		attributes?: IChannelAttributes;
 		submitFnOverride?: sinon.SinonSpy;
 		attached?: boolean;
+		initializeServices?: boolean;
 	}) {
 		super(id, runtime, attributes);
 
 		this.attached = attached;
-		// See call site in SharedObjectCore.submitLocalMessage
-		Object.assign(this, { services: { deltaConnection: { submit: submitFnOverride } } });
+		if (initializeServices) {
+			// See call site in SharedObjectCore.submitLocalMessage
+			Object.assign(this, { services: { deltaConnection: { submit: submitFnOverride } } });
+		}
 	}
 
 	// Make submitLocalMessage public for testing
@@ -102,7 +110,7 @@ class MySharedObjectCore extends SharedObjectCore {
 		throw new Error("Method not implemented.");
 	}
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
-		throw new Error("Method not implemented.");
+		// No-op for tests that exercise the base class message processing behavior.
 	}
 	protected onDisconnect(): void {
 		throw new Error("Method not implemented.");
@@ -137,6 +145,60 @@ describe("SharedObjectCore", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
 		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
+	});
+
+	it("emits the runtime batch index for processed ops", () => {
+		const sharedObject = new MySharedObjectCore({ id: "test", initializeServices: false });
+		const deltaConnection = new MockDeltaConnection(
+			() => 0,
+			() => {},
+		);
+		sharedObject.connect({
+			deltaConnection,
+			objectStorage: new MockObjectStorageService({}),
+		});
+
+		const emittedPreOpMessages: ISequencedRuntimeMessage[] = [];
+		const emittedOpMessages: ISequencedRuntimeMessage[] = [];
+		sharedObject.on("pre-op", (message) => emittedPreOpMessages.push(message));
+		sharedObject.on("op", (message) => emittedOpMessages.push(message));
+		deltaConnection.processMessages({
+			envelope: {
+				type: "other",
+			} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+			local: false,
+			messagesContent: [
+				{
+					contents: { value: "new producer" },
+					localOpMetadata: undefined,
+					clientSequenceNumber: 42,
+					indexInBatch: 0,
+				},
+				{
+					contents: { value: "legacy producer" },
+					localOpMetadata: undefined,
+					clientSequenceNumber: 43,
+				},
+			],
+		});
+
+		const expectedOrderingMetadata = [
+			{ clientSequenceNumber: 42, indexInBatch: 0 },
+			{ clientSequenceNumber: 43, indexInBatch: undefined },
+		];
+		const getOrderingMetadata = (
+			messages: ISequencedRuntimeMessage[],
+		): Pick<ISequencedRuntimeMessage, "clientSequenceNumber" | "indexInBatch">[] =>
+			messages.map(({ clientSequenceNumber, indexInBatch }) => ({
+				clientSequenceNumber,
+				indexInBatch,
+			}));
+
+		assert.deepStrictEqual(
+			getOrderingMetadata(emittedPreOpMessages),
+			expectedOrderingMetadata,
+		);
+		assert.deepStrictEqual(getOrderingMetadata(emittedOpMessages), expectedOrderingMetadata);
 	});
 
 	describe("handle encoding in submitLocalMessage", () => {
