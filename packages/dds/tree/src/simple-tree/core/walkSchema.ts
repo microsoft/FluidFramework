@@ -45,7 +45,7 @@ export function walkAllowedTypes(
  *
  * An {@link IncrementalSchemaVisitor} can omit component visits already completed by the caller.
  * Ordinary {@link SchemaVisitor}s report every visited component when requested, independently of caller-owned results.
- * The walker retains no internal state between calls. Failed walks discard unfinished component analysis;
+ * The walker retains no internal state between calls. Failed walks discard all per-walk component analysis state;
  * results from successfully completed component callbacks remain the caller's responsibility.
  *
  * @privateRemarks
@@ -59,7 +59,10 @@ export function walkAllowedTypes(
  * Incremental walks may also traverse previously completed components to report field callbacks without analyzing those components again.
  *
  * The `pending` stack replaces recursive depth-first-search calls.
- * The separate `analysis.stack` is Tarjan's stack of unfinished component members, which can outlive their traversal frames.
+ * The separate `analysis.stack` is Tarjan's stack of discovered nodes not yet assigned to an identified strongly connected component.
+ * A node can remain on this stack after its traversal frame has finished.
+ * Identifying a component and removing its members from the stack precedes invoking its component callback;
+ * this does not imply that the callback has completed successfully.
  */
 export function walkSchema(
 	roots: Iterable<TreeNodeSchema>,
@@ -85,7 +88,7 @@ export function walkSchema(
 	/**
 	 * Temporary Tarjan state for a node not covered by a previous component visit.
 	 */
-	interface ComponentState {
+	interface TarjanNodeState {
 		/**
 		 * Identity of the node, independent of its schema identifier.
 		 */
@@ -95,11 +98,12 @@ export function walkSchema(
 		 */
 		readonly index: DiscoveryIndex;
 		/**
-		 * Lowest {@link DiscoveryIndex} of all unfinished nodes known to be reachable from this node. This is computed over the course of the depth-first-search.
+		 * Lowest {@link DiscoveryIndex} of all nodes on Tarjan's stack known to be reachable from this node.
+		 * This is computed over the course of the depth-first-search.
 		 */
 		lowLink: DiscoveryIndex;
 		/**
-		 * Whether this node still belongs to an unfinished component.
+		 * Whether this node is on Tarjan's stack, awaiting identification of its component.
 		 * Can remain true after its traversal frame has finished.
 		 */
 		onStack: boolean;
@@ -119,34 +123,34 @@ export function walkSchema(
 		/**
 		 * Absent for ordinary walks without component callbacks and for previously visited components.
 		 */
-		readonly componentState: ComponentState | undefined;
+		readonly nodeState: TarjanNodeState | undefined;
 	}
 	/**
 	 * Per-walk component bookkeeping, separate from the caller's knowledge of previous component visits.
 	 */
 	interface ComponentAnalysis {
 		/**
-		 * Visitor callback invoked when a component completes.
+		 * Visitor callback invoked after a component is identified and its members are removed from Tarjan's stack.
 		 */
 		readonly completed: NonNullable<SchemaVisitor["stronglyConnectedComponent"]>;
 		/**
-		 * Discovery indices and Tarjan state for nodes analyzed in this walk, including completed components.
+		 * Discovery indices and Tarjan state for nodes analyzed in this walk, including identified components.
 		 * Unlike `visited`, excludes nodes covered by the caller's previous component visits.
 		 */
-		readonly states: Map<TreeNodeSchema, ComponentState>;
+		readonly states: Map<TreeNodeSchema, TarjanNodeState>;
 		/**
-		 * Nodes in unfinished components, in discovery order.
-		 * Unlike the traversal frame stack, retains nodes whose fields have finished until their component completes.
+		 * Discovered nodes not yet assigned to an identified component, in discovery order.
+		 * Unlike the traversal frame stack, retains nodes whose fields have finished until their component is identified.
 		 */
-		readonly stack: ComponentState[];
+		readonly stack: TarjanNodeState[];
 	}
 	const analysis: ComponentAnalysis | undefined =
 		visitor.stronglyConnectedComponent === undefined
 			? undefined
 			: {
 					completed: visitor.stronglyConnectedComponent,
-					states: new Map<TreeNodeSchema, ComponentState>(),
-					stack: new Array<ComponentState>(),
+					states: new Map<TreeNodeSchema, TarjanNodeState>(),
+					stack: new Array<TarjanNodeState>(),
 				};
 	const pending: Frame[] = [];
 	const pruneVisitedComponents =
@@ -182,30 +186,30 @@ export function walkSchema(
 			return;
 		}
 		visited.add(schema);
-		// Previously visited components need no new component state, but field callbacks still require traversal.
+		// Previously visited components need no new Tarjan node state, but field callbacks still require traversal.
 		if (pruneVisitedComponents && wasComponentVisited(schema)) {
 			return;
 		}
 		// Reject conflicting subclasses of a factory-generated base, including conflicts with constructed nodes.
 		markSchemaMostDerived(schema, false);
-		let componentState: ComponentState | undefined;
+		let nodeState: TarjanNodeState | undefined;
 		// Without field callbacks, the cutoff above already established that this node is new.
 		if (
 			analysis !== undefined &&
 			(pruneVisitedComponents || !(wasComponentVisited?.(schema) ?? false))
 		) {
-			componentState = {
+			nodeState = {
 				schema,
 				index: analysis.states.size,
 				lowLink: analysis.states.size,
 				onStack: true,
 			};
-			analysis.states.set(schema, componentState);
-			analysis.stack.push(componentState);
+			analysis.states.set(schema, nodeState);
+			analysis.stack.push(nodeState);
 		}
 		pending.push({
 			schema,
-			componentState,
+			nodeState,
 			references: references(schema),
 		});
 	}
@@ -214,25 +218,25 @@ export function walkSchema(
 	 * Reports a component when its earliest-discovered member finishes, then propagates the low-link value to its parent.
 	 * Called after the node callback and after removing the node's traversal frame.
 	 */
-	function finishComponentFrame(
+	function finishNodeAnalysis(
 		componentAnalysis: ComponentAnalysis,
-		componentState: ComponentState,
-		parentState: ComponentState | undefined,
+		nodeState: TarjanNodeState,
+		parentState: TarjanNodeState | undefined,
 	): void {
-		if (componentState.lowLink === componentState.index) {
+		if (nodeState.lowLink === nodeState.index) {
 			const members: TreeNodeSchema[] = [];
-			let member: ComponentState;
+			let member: TarjanNodeState;
 			do {
 				const popped = componentAnalysis.stack.pop();
 				assert(popped !== undefined, "Expected a component member");
 				member = popped;
 				member.onStack = false;
 				members.push(member.schema);
-			} while (member !== componentState);
+			} while (member !== nodeState);
 			componentAnalysis.completed(members);
 		}
 		if (parentState !== undefined) {
-			parentState.lowLink = Math.min(parentState.lowLink, componentState.lowLink);
+			parentState.lowLink = Math.min(parentState.lowLink, nodeState.lowLink);
 		}
 	}
 
@@ -241,17 +245,17 @@ export function walkSchema(
 		let current = pending.at(-1);
 		while (current !== undefined) {
 			const next = current.references.next();
-			const componentState = current.componentState;
+			const nodeState = current.nodeState;
 			if (next.done === true) {
 				pending.pop();
 				visitor.node?.(current.schema);
-				if (componentState !== undefined && analysis !== undefined) {
-					finishComponentFrame(analysis, componentState, pending.at(-1)?.componentState);
+				if (nodeState !== undefined && analysis !== undefined) {
+					finishNodeAnalysis(analysis, nodeState, pending.at(-1)?.nodeState);
 				}
 			} else {
 				const child = analysis?.states.get(next.value);
-				if (componentState !== undefined && child?.onStack === true) {
-					componentState.lowLink = Math.min(componentState.lowLink, child.index);
+				if (nodeState !== undefined && child?.onStack === true) {
+					nodeState.lowLink = Math.min(nodeState.lowLink, child.index);
 				}
 				discover(next.value);
 			}
@@ -312,7 +316,7 @@ export interface SchemaVisitor {
 	 * Called after every member's {@link SchemaVisitor.node} callback and after all outgoing dependency components.
 	 * Member order is unspecified. Node and allowed-type callbacks retain their ordinary traversal order.
 	 * Previously cached schema analysis does not suppress these notifications.
-	 * A throwing walk need not report unfinished components.
+	 * If traversal or a visitor callback throws, remaining component callbacks are not invoked.
 	 */
 	stronglyConnectedComponent?: (schemas: readonly TreeNodeSchema[]) => void;
 	/**
