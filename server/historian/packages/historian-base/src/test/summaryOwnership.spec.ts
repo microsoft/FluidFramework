@@ -492,6 +492,42 @@ describe("summary ownership", function () {
 		sinon.assert.notCalled(readStaticProperties);
 	});
 
+	it("rejects a proof that does not exactly match the authorized request", async () => {
+		const tenantService = new TestTenantService();
+		const getTenant = sandbox.spy(tenantService, "getTenant");
+
+		await assert.rejects(
+			createGitService({
+				config: new nconf.Provider({}).defaults({
+					ignoreEphemeralFlag: true,
+					storageUrl: "http://localhost",
+				}),
+				tenantId,
+				authorization,
+				tenantService,
+				documentManager: new TestDocumentManager(),
+				accessOperation: "read",
+				documentAccessAuthorizer: {
+					authorize: sandbox.stub().resolves({
+						tenantId: "other-tenant",
+						documentId,
+						operation: "read",
+						source: "dc-v2-metadata",
+						storageAccountName: "document-storage",
+						physicalContainerName:
+							"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						layoutVersion: "v2",
+						lifecycleVersion: "generation-1",
+						state: "active",
+					}),
+				},
+			}),
+			/Document access authorizer returned an invalid proof/,
+		);
+
+		sinon.assert.notCalled(getTenant);
+	});
+
 	it("emits structured allowed ownership telemetry", async () => {
 		const info = sandbox.spy(Lumberjack, "info");
 		const documentManager = new TestDocumentManager();

@@ -555,6 +555,23 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 			trustedCreateContext,
 			existingProof: candidateProof,
 		}));
+	if (
+		documentAccessAuthorizer !== undefined &&
+		(accessProof === undefined ||
+			accessProof.tenantId !== tenantId ||
+			accessProof.documentId !== tokenDocumentId ||
+			accessProof.operation !== accessOperation ||
+			accessProof.lifecycleVersion.length === 0 ||
+			accessProof.state !== (accessOperation === "create" ? "pending" : "active") ||
+			(trustedCreateContext !== undefined &&
+				accessProof.lifecycleVersion !== trustedCreateContext.lifecycleVersion) ||
+			(accessProof.physicalContainerName === undefined) !==
+				(accessProof.layoutVersion === undefined) ||
+			(accessProof.physicalContainerName !== undefined &&
+				accessProof.storageAccountName === undefined))
+	) {
+		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
+	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
 	const accessSummaryContext =
 		summaryAccessContext ??
