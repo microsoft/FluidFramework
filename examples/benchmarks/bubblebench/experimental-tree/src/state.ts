@@ -12,6 +12,7 @@ import {
 	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import type { FluidIterable } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 
 import { type TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
@@ -31,6 +32,7 @@ export class AppState implements IAppState {
 	private readonly deferredChanges: Change[] = [];
 
 	constructor(
+		// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 		private readonly tree: SharedTree,
 		private _width: number,
 		private _height: number,

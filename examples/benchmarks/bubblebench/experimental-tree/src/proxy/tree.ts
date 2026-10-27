@@ -7,6 +7,7 @@ import {
 	Change,
 	type ChangeNode,
 	type NodeId,
+	// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 	type SharedTree,
 	StablePlace,
 	StableRange,
@@ -17,6 +18,7 @@ import type { Serializable } from "@fluidframework/datastore-definitions/legacy"
 import { NodeKind, fromJson } from "./treeutils.js";
 
 function getChild(
+	// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 	tree: SharedTree,
 	nodeId: NodeId,
 	update: (...change: Change[]) => void,
@@ -38,6 +40,7 @@ function getChild(
 
 // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
 export const TreeObjectProxy = <T extends Object>(
+	// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 	tree: SharedTree,
 	nodeId: NodeId,
 	update: (...change: Change[]) => void,
@@ -83,6 +86,7 @@ export const TreeObjectProxy = <T extends Object>(
 
 export class TreeArrayProxy<T> {
 	constructor(
+		// eslint-disable-next-line import-x/no-deprecated -- This benchmark measures the deprecated experimental SharedTree.
 		private readonly tree: SharedTree,
 		private readonly nodeId: NodeId,
 		private readonly update: (...change: Change[]) => void,

@@ -7,6 +7,7 @@ import type { BuildNode, TraitLabel, TreeView, TreeViewNode } from "@fluid-exper
 import {
 	Change,
 	EagerCheckout,
+	// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
@@ -69,9 +70,11 @@ export class LegacyTreeInventoryItem
 }
 
 export class LegacyTreeInventoryList extends DataObject implements IInventoryList {
+	// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 	private _tree: LegacySharedTree | undefined;
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
+	// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 	private get tree(): LegacySharedTree {
 		if (this._tree === undefined) {
 			throw new Error("Not initialized properly");
@@ -120,7 +123,9 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	protected async initializingFirstTime(): Promise<void> {
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
+			// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 			LegacySharedTree.getFactory().type,
+			// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 		) as LegacySharedTree;
 
 		const inventoryNode: BuildNode = {
@@ -186,6 +191,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._tree = await this.root
+			// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();
 
@@ -301,6 +307,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 export const LegacyTreeInventoryListFactory = new DataObjectFactory<LegacyTreeInventoryList>(
 	"legacy-tree-inventory-list",
 	LegacyTreeInventoryList,
+	// eslint-disable-next-line import-x/no-deprecated -- This comparison requires the deprecated experimental SharedTree.
 	[LegacySharedTree.getFactory()],
 	{},
 );

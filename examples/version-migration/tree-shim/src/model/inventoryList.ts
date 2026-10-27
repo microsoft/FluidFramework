@@ -4,6 +4,7 @@
  */
 
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 	SharedTree as LegacySharedTree,
 	MigrationShim,
 	MigrationShimFactory,
@@ -36,6 +37,7 @@ const DEBUG_migrateSlowly = false;
 
 const newTreeFactory = SharedTree.getFactory();
 
+// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 function migrate(legacyTree: LegacySharedTree, newTree: ITree): void {
 	// Revert local edits - otherwise we will be eventually inconsistent
 	const edits = legacyTree.edits;
@@ -61,6 +63,7 @@ function migrate(legacyTree: LegacySharedTree, newTree: ITree): void {
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 const legacyTreeFactory = LegacySharedTree.getFactory();
 const migrationShimFactory = new MigrationShimFactory(
 	legacyTreeFactory,
@@ -116,6 +119,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			undefined,
 			migrationShimFactory.type,
 		) as MigrationShim;
+		// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 		const legacySharedTree = migrationShim.currentTree as LegacySharedTree;
 
 		LegacyTreeInventoryListController.initializeTree(legacySharedTree);
@@ -151,6 +155,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			.get<IFluidHandle<MigrationShim | SharedTreeShim>>(treeKey)!
 			.get();
 		if (this.shim.attributes.type === legacyTreeFactory.type) {
+			// eslint-disable-next-line import-x/no-deprecated -- This example migrates data from the deprecated experimental SharedTree.
 			const tree = this.shim.currentTree as LegacySharedTree;
 			this._model = new LegacyTreeInventoryListController(tree);
 			const migrationShim = this.shim as MigrationShim;
