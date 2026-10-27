@@ -6,14 +6,14 @@
 
 # 1.1.2
 
-- Reject messages from other windows.
-- Release data visualization subscriptions when the extension no longer displays the data, with compatible client libraries.
-- Remove temporary data-change highlighting from container menu items.
-- Keep navigation selection visible in Windows High Contrast.
-- Announce navigation selections to screen readers.
-- Associate the Events button group with the Telemetry heading for screen readers.
-- Expose column headers in the Audience State and Audience History tables to screen readers.
-- Keep information popovers and tooltips below their controls so they do not cover headings.
+- Reject messages from other windows. [#28503](https://github.com/microsoft/FluidFramework/pull/28503)
+- Release data visualization subscriptions when the extension no longer displays the data, with compatible client libraries. [#27591](https://github.com/microsoft/FluidFramework/pull/27591)
+- Remove temporary data-change highlighting from container menu items. [#27591](https://github.com/microsoft/FluidFramework/pull/27591)
+- Keep navigation selection visible in Windows High Contrast. [#28334](https://github.com/microsoft/FluidFramework/pull/28334)
+- Announce navigation selections to screen readers. [#28372](https://github.com/microsoft/FluidFramework/pull/28372)
+- Associate the Events button group with the Telemetry heading for screen readers. [#28341](https://github.com/microsoft/FluidFramework/pull/28341)
+- Expose column headers in the Audience State and Audience History tables to screen readers. [#28400](https://github.com/microsoft/FluidFramework/pull/28400)
+- Keep information popovers and tooltips below their controls so they do not cover headings. [#28373](https://github.com/microsoft/FluidFramework/pull/28373)
 
 # 1.1.1
 
