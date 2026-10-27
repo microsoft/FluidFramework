@@ -214,7 +214,8 @@ describe("ChunkedForest", () => {
 		[],
 	);
 
-	describe("acquireVisitor", () => {
+	// See testForest for general purpose acquireVisitor tests
+	describe("acquireVisitor optimizations", () => {
 		function setupForest() {
 			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
 			return buildChunkedForest(
