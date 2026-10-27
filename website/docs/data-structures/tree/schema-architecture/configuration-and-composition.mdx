@@ -115,10 +115,13 @@ You may need additional configuration APIs so one library release can support ap
 
 -   Separate schema factory APIs for supported model variants.
 -   Explicit feature flags that select which schema changes or new writes are enabled.
--   A compatibility threshold, such as the oldest client version the application must support, that selects the features safe for that deployment.
+-   A compatibility threshold specifying the oldest version of the schema library with which the configured model must support collaboration. The library uses that threshold to select compatible features.
+
+Fluid Framework's <ApiLink package="container-runtime" api="LoadContainerRuntimeParams.oldestSupportedClient" /> illustrates this threshold pattern.
+For a schema library, define the threshold in terms of that library's versions instead of Fluid Framework versions.
 
 These are library API design choices, not automatic client-version detection.
-Document which versions support each variant or feature and, for thresholds, which version scheme they use and how they map to feature support.
+Document which library versions support each variant or feature and how compatibility thresholds map to feature support.
 Let the application opt in when its deployment and rollback requirements permit it; upgrading the library dependency alone should not silently enable incompatible writes.
 These controls supplement the schema-evolution mechanisms, not bypass them.
 See [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx) for package compatibility, rollout ownership, and support for existing documents.
