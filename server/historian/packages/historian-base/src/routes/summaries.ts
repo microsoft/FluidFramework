@@ -41,6 +41,8 @@ import type {
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	RestGitService,
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
 } from "../services";
 import { isEphemeralSummaryAccessStore } from "../services";
 import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
@@ -61,6 +63,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
+	_documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	_trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const {
 		router,
