@@ -205,35 +205,53 @@ export class ViewBranch {
 		}
 		this.synchronizing = true;
 		try {
-			if (this.checkout.mainBranch.getHead() !== this.synchronizedHead) {
-				this.base.merge(this.checkout, false);
-			}
-			const reconcile = (): void => {
-				if (this.pendingSchema === undefined) {
-					this.checkout.synchronizeFrom(this.base);
-				} else {
-					assert(this.viewSchema !== undefined, "A pending upgrade requires a view schema.");
-					const decision = decideViewSchema(
-						this.viewSchema,
-						this.base.storedSchema,
-						this.pendingSchema,
-					);
-					if (decision.type === "incompatible") {
-						this.checkout.synchronizeFrom(this.base);
-						this.pendingSchema = undefined;
-					} else {
-						const target = decision.type === "upgrade" ? decision.schema : undefined;
-						refreshSchemaOnlyView(this.checkout, this.base, this.synchronizedHead, target);
-						this.pendingSchema = target;
+			// Submission can fail after its schema member was sent. Both the borrowed base
+			// and the application-facing checkout must stop rather than continue divergent.
+			this.checkout.breaker.run(() =>
+				this.base.breaker.run(() => {
+					const publishing = this.checkout.mainBranch.getHead() !== this.synchronizedHead;
+					if (publishing) {
+						this.base.merge(this.checkout, false);
 					}
-				}
-			};
-			if (this.reconcileView === undefined) {
-				reconcile();
-			} else {
-				this.reconcileView(reconcile);
-			}
-			this.synchronizedHead = this.checkout.mainBranch.getHead();
+					const reconcile = (): void => {
+						if (this.pendingSchema === undefined) {
+							this.checkout.synchronizeFrom(this.base);
+						} else {
+							assert(
+								this.viewSchema !== undefined,
+								"A pending upgrade requires a view schema.",
+							);
+							const decision = decideViewSchema(
+								this.viewSchema,
+								this.base.storedSchema,
+								this.pendingSchema,
+							);
+							if (publishing) {
+								// The base now contains the same commits. Do not use the schema-only
+								// refresh, which is allowed to discard only internal preparation.
+								if (decision.type !== "adopt") {
+									throw new Error("The schema publication could not be applied to its base.");
+								}
+								this.pendingSchema = undefined;
+								this.checkout.synchronizeFrom(this.base);
+							} else if (decision.type === "incompatible") {
+								this.checkout.synchronizeFrom(this.base);
+								this.pendingSchema = undefined;
+							} else {
+								const target = decision.type === "upgrade" ? decision.schema : undefined;
+								refreshSchemaOnlyView(this.checkout, this.base, this.synchronizedHead, target);
+								this.pendingSchema = target;
+							}
+						}
+					};
+					if (this.reconcileView === undefined) {
+						reconcile();
+					} else {
+						this.reconcileView(reconcile);
+					}
+					this.synchronizedHead = this.checkout.mainBranch.getHead();
+				}),
+			);
 		} finally {
 			this.synchronizing = false;
 		}

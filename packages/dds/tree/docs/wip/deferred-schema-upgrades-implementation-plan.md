@@ -50,6 +50,26 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### Revised M4: ordered controller publication
+
+The approved cleanup is recorded in the branch's existing commits.
+The controller now publishes the first application edit as separate schema/data commits and reconciles the resulting shared history without invoking schema-only refresh on application work.
+An aborted application transaction keeps the local upgrade available for the next committed edit.
+Native data undo retains the schema.
+
+Publication uses the existing ordered merge/submission path, without promising one grouped batch or all-or-nothing acceptance.
+If submission fails after one member was sent, both the base and authoring checkout enter a broken state and the original error propagates.
+This avoids claiming that an already submitted schema can be retracted.
+Sequenced rejection and retry are M5 work; this internal entry point is not yet the supported opt-in.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^deferred schema upgrades: ordered publication|^SchematizingSimpleTreeView' --reporter dot`: 344 passed.
+- `pnpm --dir packages/dds/tree exec biome check src/shared-tree/viewBranch.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree exec eslint --quiet src/shared-tree/viewBranch.ts src/test/shared-tree/viewBranch.spec.ts`: passed.
+
 The M0-M3 entries below record work completed under the earlier plan.
 Their validation results remain historical evidence, not proof that the revised publication path is implemented.
 Resume with the revised M4 sequence after the requested pause; do not commit or retain compaction solely because its experiment passed.

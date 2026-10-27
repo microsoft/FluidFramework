@@ -5,7 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { CommitOutcome } from "../../core/index.js";
+import {
+	CommitKind,
+	CommitOutcome,
+	RevertibleStatus,
+	type Revertible,
+	type RevisionTag,
+} from "../../core/index.js";
 import {
 	decideViewSchema,
 	retryViewPublication,
@@ -261,6 +267,105 @@ describe("viewBranch", () => {
 				assert.equal(provider.peekNextMessage(), undefined);
 			} finally {
 				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes the first edit as separate ordered commits and keeps native undo", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			const revisions: RevisionTag[] = [];
+			const kinds: string[][] = [];
+			const revertibles: Revertible[] = [];
+			const offBase = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					for (const commit of event.newCommits) {
+						revisions.push(commit.revision);
+						kinds.push(commit.change.changes.map((inner) => inner.type));
+					}
+				}
+			});
+			const offView = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal && metadata.kind === CommitKind.Default) {
+					const revertible = metadata.getRevertible();
+					if (revertible !== undefined) revertibles.push(revertible);
+				}
+			});
+			try {
+				view.upgradeSchema();
+				const schemaRevision = branch.checkout.mainBranch.getHead().revision;
+				const root = view.root;
+				root.insertAtEnd(1);
+				const dataRevision = branch.checkout.mainBranch.getHead().revision;
+				assert.deepEqual(revisions, [schemaRevision, dataRevision]);
+				assert.deepEqual(kinds, [["schema"], ["data"]]);
+				provider.synchronizeMessages();
+				assert.equal(view.root === root, true);
+				assert.equal(revertibles.length, 1);
+				revertibles[0].revert();
+				provider.synchronizeMessages();
+				assert.deepEqual([...root], ["initial"]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				offBase();
+				offView();
+				for (const revertible of revertibles) {
+					if (revertible.status === RevertibleStatus.Valid) revertible.dispose();
+				}
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps an earlier local upgrade after abort and publishes it with the next commit", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			try {
+				const before = base.mainBranch.getHead();
+				view.upgradeSchema();
+				const root = view.root;
+				view.runTransaction(() => {
+					root.insertAtEnd(1);
+					return { rollback: true };
+				});
+				assert.equal(provider.peekNextMessage(), undefined);
+				assert.equal(base.mainBranch.getHead() === before, true);
+				assert.equal(view.compatibility.isEquivalent, true);
+				view.runTransaction(() => root.insertAtEnd(2));
+				provider.synchronizeMessages();
+				assert.equal(view.root === root, true);
+				assert.deepEqual([...root], ["initial", 2]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("does not leave either checkout usable if submission fails between the two commits", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const kernel = provider.trees[1].kernel;
+			const originalSubmit = kernel.submitLocalMessage;
+			const descriptor = Object.getOwnPropertyDescriptor(kernel, "submitLocalMessage");
+			assert(descriptor !== undefined);
+			const failure = new Error("Data submission failed.");
+			let submitted = 0;
+			const submit: typeof originalSubmit = (content, metadata) => {
+				submitted++;
+				if (submitted === 2) throw failure;
+				originalSubmit(content, metadata);
+			};
+			Object.defineProperty(kernel, "submitLocalMessage", { ...descriptor, value: submit });
+			try {
+				assert.throws(
+					() => view.root.insertAtEnd(1),
+					(error: unknown) => error === failure,
+				);
+				assert.equal(submitted, 2, "The test must fail after the schema submission.");
+				assert.throws(() => base.breaker.use(), /invalid state/);
+				assert.throws(() => branch.checkout.breaker.use(), /invalid state/);
+			} finally {
+				Object.defineProperty(kernel, "submitLocalMessage", descriptor);
+				// The checkouts are deliberately broken and cannot perform normal view disposal.
 				remote.dispose();
 			}
 		});
