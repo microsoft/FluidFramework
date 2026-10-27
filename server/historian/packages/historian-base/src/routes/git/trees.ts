@@ -39,7 +39,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
-	_documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
 	_trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler } =
@@ -60,6 +60,8 @@ export function create(
 			cache,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
+			accessOperation: "write",
+			documentAccessAuthorizer,
 		});
 		return service.createTree(params);
 	}
@@ -79,6 +81,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
+			accessOperation: "read",
+			documentAccessAuthorizer,
 		});
 		return service.getTree(sha, recursive, useCache);
 	}

@@ -12,6 +12,13 @@ import type {
 import type { Query } from "express-serve-static-core";
 import type * as nconf from "nconf";
 
+import type {
+	DocumentAccessOperation,
+	IDocumentAccessAuthorizer,
+	IDocumentAccessProof,
+	ITrustedCreateContext,
+} from "./documentAccess";
+
 /**
  * Interface for a git object cache
  */
@@ -38,13 +45,10 @@ export interface IEphemeralSummaryAccessRecord {
 	createTime: number;
 }
 
-export interface ISummaryAccessContext {
-	tenantId: string;
-	documentId: string;
+export interface ISummaryAccessContext extends IDocumentAccessProof {
 	isEphemeralContainer: boolean;
 	createTime: number;
 	storageName?: string;
-	source: "localEphemeral" | "alfred";
 }
 
 export class MalformedEphemeralSummaryAccessRecordError extends Error {}
@@ -99,6 +103,10 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 	query?: Query;
+	accessOperation: DocumentAccessOperation;
+	existingAccessProof?: IDocumentAccessProof;
+	trustedCreateContext?: ITrustedCreateContext;
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer;
 	summaryAccessContext?: ISummaryAccessContext;
 }
 

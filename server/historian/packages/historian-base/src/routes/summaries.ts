@@ -43,6 +43,7 @@ import type {
 	RestGitService,
 	IDocumentAccessAuthorizer,
 	ITrustedCreateContextResolver,
+	ITrustedCreateContext,
 } from "../services";
 import { isEphemeralSummaryAccessStore } from "../services";
 import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
@@ -63,8 +64,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
-	_documentAccessAuthorizer?: IDocumentAccessAuthorizer,
-	_trustedCreateContextResolver?: ITrustedCreateContextResolver,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const {
 		router,
@@ -151,6 +152,10 @@ export function create(
 			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
 			query,
+			accessOperation:
+				operation === "get" ? "read" : operation === "post" ? "write" : "delete",
+			existingAccessProof: access,
+			documentAccessAuthorizer,
 			summaryAccessContext: access,
 		});
 		return { service, access };
@@ -183,21 +188,52 @@ export function create(
 		storageName?: string,
 		isEphemeralContainer?: boolean,
 		query?: Query,
+		opaqueCreateContext?: string,
 	): Promise<IWriteSummaryResponse> {
 		let service: RestGitService;
 		if (initial === true) {
-			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
-				[BaseTelemetryProperties.correlationId]:
-					getGlobalTelemetryContext().getProperties().correlationId,
-				[BaseTelemetryProperties.tenantId]: tenantId,
-				[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-					tenantId,
-					authorization,
-				),
-				operation: "post",
-				routeType: "notApplicable",
-				outcome: "exempted",
-			});
+			const documentId = getDocumentIdFromRequest(tenantId, authorization);
+			let trustedCreateContext: ITrustedCreateContext | undefined;
+			if (documentAccessAuthorizer === undefined) {
+				Lumberjack.info("HistorianInitialSummaryUploadExemption", {
+					[BaseTelemetryProperties.correlationId]:
+						getGlobalTelemetryContext().getProperties().correlationId,
+					[BaseTelemetryProperties.tenantId]: tenantId,
+					[BaseTelemetryProperties.documentId]: documentId,
+					operation: "post",
+					routeType: "notApplicable",
+					outcome: "exempted",
+				});
+			} else {
+				if (
+					trustedCreateContextResolver === undefined ||
+					opaqueCreateContext === undefined
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				try {
+					trustedCreateContext = await trustedCreateContextResolver.resolve({
+						tenantId,
+						documentId,
+						opaqueToken: opaqueCreateContext,
+						containerTypeHint:
+							isEphemeralContainer === undefined
+								? undefined
+								: isEphemeralContainer
+								? "ephemeral"
+								: "durable",
+					});
+				} catch {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				if (
+					trustedCreateContext.tenantId !== tenantId ||
+					trustedCreateContext.documentId !== documentId ||
+					trustedCreateContext.expiresAtMs <= Date.now()
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+			}
 			service = await utils.createGitService({
 				config,
 				tenantId,
@@ -213,6 +249,9 @@ export function create(
 				simplifiedCustomDataRetriever,
 				postEphemeralContainerChecker,
 				query,
+				accessOperation: "create",
+				trustedCreateContext,
+				documentAccessAuthorizer,
 			});
 		} else {
 			({ service } = await createProtectedSummaryService(
@@ -258,7 +297,10 @@ export function create(
 					"notApplicable",
 					"dependencyError",
 					error,
-					{ source: access.source },
+					{
+						source:
+							access.source === "ec-lifecycle-redis" ? "localEphemeral" : "alfred",
+					},
 				);
 				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
 			}
@@ -353,6 +395,7 @@ export function create(
 				request.get("StorageName"),
 				isEphemeralContainer,
 				request.query,
+				request.get("Fluid-Create-Context"),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

@@ -17,6 +17,7 @@ import * as nconf from "nconf";
 import * as sinon from "sinon";
 
 import { createGitService, validateSummaryDocument } from "../routes/utils";
+import type { IDocumentAccessProof } from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant/a";
@@ -418,6 +419,7 @@ describe("summary ownership", function () {
 			cache,
 			ephemeralDocumentTTLSec: 24 * 60 * 60,
 			postEphemeralContainerChecker: { postEphemeralContainerCheck },
+			accessOperation: "read",
 		});
 
 		sinon.assert.calledOnceWithMatch(
@@ -428,6 +430,66 @@ describe("summary ownership", function () {
 			sinon.match.object,
 		);
 		sinon.assert.notCalled(cacheSet);
+	});
+
+	it("reuses an exact access proof without a second authorization call", async () => {
+		const authorizer = {
+			authorize: sandbox.stub().rejects(new Error("proof should be reused")),
+		};
+		const proof: IDocumentAccessProof = {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "alfred-fallback",
+			storageAccountName: "document-storage",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		};
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: true,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			accessOperation: "read",
+			existingAccessProof: proof,
+			documentAccessAuthorizer: authorizer,
+		});
+
+		sinon.assert.notCalled(authorizer.authorize);
+	});
+
+	it("fails authorization before tenant lookup or document storage access", async () => {
+		const denial = new NetworkError(404, "Document is deleted and cannot be accessed.");
+		const tenantService = new TestTenantService();
+		const getTenant = sandbox.spy(tenantService, "getTenant");
+		const documentManager = new TestDocumentManager();
+		const readStaticProperties = sandbox.spy(documentManager, "readStaticProperties");
+
+		await assert.rejects(
+			createGitService({
+				config: new nconf.Provider({}).defaults({
+					ignoreEphemeralFlag: false,
+					storageUrl: "http://localhost",
+				}),
+				tenantId,
+				authorization,
+				tenantService,
+				documentManager,
+				accessOperation: "read",
+				documentAccessAuthorizer: {
+					authorize: sandbox.stub().rejects(denial),
+				},
+			}),
+			(error: unknown) => error === denial,
+		);
+
+		sinon.assert.notCalled(getTenant);
+		sinon.assert.notCalled(readStaticProperties);
 	});
 
 	it("emits structured allowed ownership telemetry", async () => {
@@ -500,6 +562,7 @@ describe("summary ownership", function () {
 				documentManager,
 				cache,
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				accessOperation: "read",
 			});
 		}
 
@@ -539,6 +602,7 @@ describe("summary ownership", function () {
 			documentManager,
 			cache,
 			ephemeralDocumentTTLSec: 24 * 60 * 60,
+			accessOperation: "read",
 		});
 
 		sinon.assert.calledWith(cacheGet, "isEphemeralContainer:tenant-a:shared%3Aid");

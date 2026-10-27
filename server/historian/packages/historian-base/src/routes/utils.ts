@@ -38,6 +38,8 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
+	type ISummaryAccessContext,
+	getReusableDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -518,14 +520,47 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		accessOperation,
+		existingAccessProof,
+		trustedCreateContext,
+		documentAccessAuthorizer,
 		summaryAccessContext,
 	} = createArgs;
-	const documentId =
-		summaryAccessContext?.documentId ?? getTokenDocumentId(tenantId, authorization);
+	const tokenDocumentId = getTokenDocumentId(tenantId, authorization);
 	const token = parseToken(tenantId, authorization);
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
+
+	const candidateProof = existingAccessProof ?? summaryAccessContext;
+	const reusableProof = getReusableDocumentAccessProof(candidateProof, {
+		tenantId,
+		documentId: tokenDocumentId,
+		operation: accessOperation,
+		lifecycleVersion: candidateProof?.lifecycleVersion,
+	});
+	const containerTypeHint =
+		isEphemeralContainer === undefined
+			? undefined
+			: isEphemeralContainer
+			? "ephemeral"
+			: "durable";
+	const accessProof =
+		reusableProof ??
+		(await documentAccessAuthorizer?.authorize({
+			tenantId,
+			documentId: tokenDocumentId,
+			operation: accessOperation,
+			containerTypeHint,
+			trustedCreateContext,
+			existingProof: candidateProof,
+		}));
+	const documentId = accessProof?.documentId ?? tokenDocumentId;
+	const accessSummaryContext =
+		summaryAccessContext ??
+		(accessProof !== undefined && "isEphemeralContainer" in accessProof
+			? (accessProof as ISummaryAccessContext)
+			: undefined);
 
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
@@ -537,7 +572,8 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
 	const isEphemeral =
-		summaryAccessContext?.isEphemeralContainer ??
+		accessSummaryContext?.isEphemeralContainer ??
+		(accessProof?.source === "ec-lifecycle-redis" ? true : undefined) ??
 		(ignoreEphemeralFlag
 			? false
 			: await checkAndCacheIsEphemeral({
@@ -563,16 +599,18 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 
 	let calculatedStorageName: string | undefined;
-	if (initialUpload && storageName) {
+	if (accessProof?.storageAccountName !== undefined) {
+		calculatedStorageName = accessProof.storageAccountName;
+	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
-	} else if (summaryAccessContext?.isEphemeralContainer === true) {
+	} else if (accessSummaryContext?.isEphemeralContainer === true) {
 		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
 		// applies only to durable containers. Calling the retriever for a local EC hit would
 		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
 		calculatedStorageName = undefined;
 	} else {
 		calculatedStorageName =
-			summaryAccessContext?.storageName ??
+			accessSummaryContext?.storageName ??
 			(await storageNameRetriever?.get(tenantId, documentId)) ??
 			customData?.storageName;
 	}
