@@ -1,5 +1,9 @@
 # @fluid-example/multiview-triangle-view
 
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 Dependency updates only.

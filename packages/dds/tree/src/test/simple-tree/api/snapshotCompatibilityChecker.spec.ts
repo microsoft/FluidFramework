@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";
+import { ValueSchema } from "../../../core/index.js";
 import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
@@ -36,6 +37,8 @@ import {
 	createTreeSchema,
 	encodeSchemaCompatibilitySnapshot,
 	SchemaFactoryAlpha,
+	FieldKind,
+	NodeKind,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Count discovery rather than just comparing snapshot contents.
 import { getTreeNodeSchemaPrivateData } from "../../../simple-tree/core/index.js";
@@ -76,6 +79,45 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(JSON.stringify(second), JSON.stringify(expected));
 		assert.equal(getSchemaDerivedData(Root).unhydratedContext, undefined);
 		assert.equal(getTreeNodeSchemaPrivateData(Child).component?.definitions, undefined);
+	});
+
+	it("accepts existing snapshots with unsorted definitions without changing compatibility", () => {
+		const snapshot = {
+			version: 1,
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: {
+					[stringSchema.identifier]: { isStaged: false },
+					[numberSchema.identifier]: { isStaged: false },
+				},
+			},
+			definitions: {
+				[stringSchema.identifier]: {
+					leaf: { kind: NodeKind.Leaf, leafKind: ValueSchema.String },
+				},
+				[numberSchema.identifier]: {
+					leaf: { kind: NodeKind.Leaf, leafKind: ValueSchema.Number },
+				},
+			},
+		};
+		const current = new TreeViewConfigurationAlpha({
+			schema: [stringSchema, numberSchema],
+		});
+		const original = importCompatibilitySchemaSnapshot(snapshot);
+		const regenerated = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(current),
+		);
+
+		for (const parsed of [original, regenerated]) {
+			const result = getCompatibility(current, parsed);
+			assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+			assert.equal(result.identicalCompatibility, true);
+		}
+		assert.deepEqual(Object.keys(snapshot.definitions), [
+			stringSchema.identifier,
+			numberSchema.identifier,
+		]);
 	});
 
 	it("parse and snapshot can roundtrip schema", () => {

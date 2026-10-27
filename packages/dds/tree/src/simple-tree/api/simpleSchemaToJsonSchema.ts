@@ -76,7 +76,7 @@ export function toJsonSchema(
 }
 
 /**
- * Converts definitions in order sorted by identifier so shared map insertion order does not affect JSON output.
+ * Converts definitions in order sorted by identifier so map insertion order does not affect JSON output.
  */
 function convertDefinitions(
 	definitions: ReadonlyMap<string, TreeNodeSchema>,

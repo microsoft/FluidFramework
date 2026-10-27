@@ -711,6 +711,35 @@ export class HasStagedOptionalFieldAfterUpdate extends factory.objectAlpha(
 // TODO: AB#45711: add recursive staged schema tests documents
 
 /**
+ * A {@link TestDocument} whose root node has content in unknown optional fields.
+ * @remarks
+ * The view schema is {@link AllowsUnknownOptionalFields} while the content was created with {@link AllowsUnknownOptionalFieldsV2},
+ * so the root node has fields the view schema does not know about.
+ * Also included in {@link testDocuments}.
+ */
+export const hasUnknownOptionalFieldsDocument: TestDocument = {
+	ambiguous: false,
+	name: "HasUnknownOptionalFields",
+	schema: AllowsUnknownOptionalFields,
+	hasUnknownOptionalFields: true,
+	hasUnknownOptionalFieldSchema: true,
+	policy: defaultSchemaPolicy,
+	schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
+	treeFactory: () =>
+		jsonableTreeFromFieldCursor(
+			fieldCursorFromInsertable(
+				AllowsUnknownOptionalFieldsV2,
+				new AllowsUnknownOptionalFieldsV2({
+					recursive: new AllowsUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
+					minimal: {},
+					hasMinimalValueField: { field: {} },
+					leaf: "leaf",
+				}),
+			),
+		),
+};
+
+/**
  * Collection of {@link TestDocument|TestDocuments}.
  * @remarks
  * Use these test documents to test import and export APIs.
@@ -749,27 +778,7 @@ export const testDocuments: readonly TestDocument[] = [
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(AllowsUnknownOptionalFields, {})),
 	},
-	{
-		ambiguous: false,
-		name: "HasUnknownOptionalFields",
-		schema: AllowsUnknownOptionalFields,
-		hasUnknownOptionalFields: true,
-		hasUnknownOptionalFieldSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(
-				fieldCursorFromInsertable(
-					AllowsUnknownOptionalFieldsV2,
-					new AllowsUnknownOptionalFieldsV2({
-						recursive: new AllowsUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
-						minimal: {},
-						hasMinimalValueField: { field: {} },
-						leaf: "leaf",
-					}),
-				),
-			),
-	},
+	hasUnknownOptionalFieldsDocument,
 	{
 		ambiguous: false,
 		name: "HasStagedAllowedTypesAfterUpdate",

@@ -131,6 +131,30 @@ describe("getSimpleSchema", () => {
 		assert.equal(getSchemaDerivedData(B).unhydratedContext, undefined);
 	});
 
+	it("encodes snapshot definitions independently of insertion order and locale", () => {
+		const sf = new SchemaFactoryAlpha("snapshotOrdering");
+		class Lower extends sf.object("a", {}) {}
+		class Upper extends sf.object("Z", {}) {}
+		class Accented extends sf.object("\u00E4", {}) {}
+		const schema = createTreeSchema([Accented, Lower, Upper]);
+		const expectedOrder = [Upper.identifier, Lower.identifier, Accented.identifier];
+		const forward = encodeSchemaCompatibilitySnapshot(schema);
+		const reverse = encodeSchemaCompatibilitySnapshot({
+			root: schema.root,
+			definitions: new Map([...schema.definitions].reverse()),
+		});
+
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(forward, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(reverse, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.equal(JSON.stringify(forward), JSON.stringify(reverse));
+	});
+
 	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.optional(schemaFactory.string, {

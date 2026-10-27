@@ -1,5 +1,9 @@
 # @fluidframework/sequence
 
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 ### Minor Changes
