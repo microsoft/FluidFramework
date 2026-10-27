@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "3.7.0",
+	"version": "3.10.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
