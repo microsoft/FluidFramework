@@ -87,6 +87,10 @@ See [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx) 
 
 ### Schema factory examples
 
+For a compact library walkthrough, start with the [configurable schema library example](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts).
+Its library contracts and implementation preserve consumer-selected child types behind an explicit public return type.
+The application test configures two box schemas with distinct scopes, embeds both in one root, and constructs and edits their content.
+
 Start with <ApiLink package="fluid-framework" api="SchemaFactory" /> itself: it is a collection of methods that return schemas based on configuration such as names, fields, and allowed types.
 The [schema definition guide](../schema-definition/index.mdx) shows how to use those methods to produce schemas that the rest of an application can consume directly.
 
@@ -205,14 +209,18 @@ The [tree package's typing FAQ](https://github.com/microsoft/FluidFramework/blob
 
 ## Runnable composition examples
 
-The [open-polymorphism integration tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) include:
+Start with the [component composition walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts) for the recommended cached-factory pattern.
+Read its sections in order: shared contracts, a text library, a group library, then application consumers.
+Text attachments can contain groups, and groups can contain text items, without either implementation importing the other.
+The tests exercise construction, editing, schema reuse, independent compositions, and rejection of unregistered item types.
+
+For alternative patterns and additional edge cases, the [open-polymorphism integration tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) include:
 
 -   `components`: composition without the `Component` utilities.
 -   `Component library` / `Example2`: memoized schema construction, recursive contributions, and component-specific exports.
 -   `minimal open polymorphism with static factory`: shared static requirements for contributed schemas.
 -   `Component library edge cases`: contributions to multiple collections and configuration-dependent exports.
 
-When you need `Component`, start with `Example2` for the recommended cached-factory pattern.
 The skipped mutable-static-registry examples document an unsupported approach, not an alternative to copy.
 For a checkout of the repository, follow the [tree package development workflow](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#recommended-developer-workflow) to build and run these tests.
 

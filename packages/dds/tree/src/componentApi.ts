@@ -35,10 +35,11 @@ import { getOrCreate } from "./util/index.js";
  * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/configuration-and-composition | Configuration and Composition}
  * for consumer-provided schemas, schema caching, and mutually recursive libraries.
  *
- * See {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts|openPolymorphism.integration.ts} for worked examples of this pattern.
+ * Start with {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts | components.integration.ts} for a focused, executable walkthrough.
+ * See {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts|openPolymorphism.integration.ts} for alternative patterns and additional edge cases.
  *
  * @privateRemarks
- * The examples and integration tests for this pattern live in `openPolymorphism.integration.ts`.
+ * The examples and integration tests for this pattern live in `components.integration.ts` and `openPolymorphism.integration.ts`.
  * Those tests and the docs here should be kept in sync.
  *
  * @alpha

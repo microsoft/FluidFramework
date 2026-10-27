@@ -32,6 +32,7 @@ import {
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 import { getView } from "../../utils.js";
 
+// For a library-author walkthrough with top-level exports and application consumers, see ../../schemaErasure.integration.ts.
 describe("eraseSchemaDetails", () => {
 	describe("eraseSchemaDetails", () => {
 		it("example", () => {

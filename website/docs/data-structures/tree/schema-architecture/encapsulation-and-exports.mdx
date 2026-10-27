@@ -59,49 +59,18 @@ The [schema-erasure tests](https://github.com/microsoft/FluidFramework/blob/main
 
 ### Explicit public types
 
-This example keeps its schema implementation local while exporting a node type, a schema value, and a static factory.
+Start with the executable [schema-erasure library example](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts).
+Its top-level library API exports a node type, a schema value, and a static factory while keeping the implementation class local.
 The erasure helpers are alpha APIs, imported from `@fluidframework/tree/alpha`.
 
-```typescript
-import { SchemaFactory } from "@fluidframework/tree";
-import { eraseSchemaDetails, type ErasedNode, type ErasedSchema } from "@fluidframework/tree/alpha";
-
-export interface SquareMembers {
-	readonly area: number;
-}
-
-export type Square = ErasedNode<SquareMembers, "com.example.geometry.Square">;
-
-export interface SquareStatics {
-	create(sideLength: number): Square;
-}
-
-const schemaFactory = new SchemaFactory("com.example.geometry");
-
-class SquareImplementation
-	extends schemaFactory.object("Square", { sideLength: schemaFactory.number })
-	implements SquareMembers
-{
-	public get area(): number {
-		return this.sideLength * this.sideLength;
-	}
-
-	public static create(sideLength: number): SquareImplementation {
-		return new SquareImplementation({ sideLength });
-	}
-}
-
-export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
-	Square,
-	SquareStatics
->()(SquareImplementation);
-```
-
 Consumers use `Square` as a runtime schema when composing a parent and as a type when working with a node.
-They create nodes with `Square.create(3)` and read `area`, without depending on the stored `sideLength` field.
+The example's application tests create nodes with `Square.create(3)`, obtain existing nodes through the view, call `resize`, and observe changes with event subscriptions.
+Consumers read `area` without depending on the stored `sideLength` field.
+These tests run in the same file to keep the walkthrough together; they do not replace testing an installed package's exports and declarations.
 
 For a generic factory, explicitly annotate the return type with the public schema type parameterized by the inputs you intend to preserve.
 Keep its public node and static interfaces independent of the local implementation class.
+The [configurable schema library example](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts) applies this pattern to consumer-provided child schemas and scopes.
 See <ApiLink package="fluid-framework" api="FormattedText.FormattedTextSchema" /> and its [implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/text/textDomainFormatted.ts) for an example that preserves a scope, formatting schema, and additional atom schemas.
 
 ### Obtain new and existing instances
