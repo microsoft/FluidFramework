@@ -7,7 +7,10 @@ import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeMessageCollection,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
@@ -345,6 +348,14 @@ export class SharedTreeKernel
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
 		this.checkouts.set(branchId, checkout);
+	}
+
+	public override processMessagesCore(messages: IRuntimeMessageCollection): void {
+		super.processMessagesCore(messages);
+		// Recovery must not submit replacement ops from inside EditManager's sequencing loop.
+		for (const checkout of this.checkouts.values()) {
+			checkout.completeSequencedBatch();
+		}
 	}
 
 	public exportVerbose(): VerboseTree | undefined {

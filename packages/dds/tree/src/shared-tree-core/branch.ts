@@ -20,6 +20,7 @@ import {
 	type CustomMetadataTree,
 	type GraphCommit,
 	type RevisionTag,
+	type RevisionReplacer,
 	type TaggedChange,
 	findAncestor,
 	makeAnonChange,
@@ -29,6 +30,17 @@ import {
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+
+/**
+ * A prepared change from the source state to the target state of a rebase.
+ * @remarks
+ * The caller must prove that this change produces the target state without losing source work.
+ * Apply the identifier mappings to retained repair data after applying the change.
+ */
+export interface BranchReconciliation<TChange> {
+	readonly change: TChange;
+	readonly revisionReplacers: readonly RevisionReplacer[];
+}
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;
@@ -57,6 +69,8 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** Identifier mappings to apply after the net change, without moving forest nodes. */
+			revisionReplacers?: readonly RevisionReplacer[];
 			/** The commits removed from the head of the branch by this operation */
 			removedCommits: readonly GraphCommit<TChange>[];
 			/** The commits appended to the head of the branch by this operation */
@@ -283,11 +297,14 @@ export class SharedTreeBranch<
 	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
+	 * @param reconciliation - A separately prepared net change for adopting the target history.
+	 * Only valid when no source commits remain after the rebase.
 	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = branch.getHead(),
+		reconciliation?: BranchReconciliation<TChange>,
 	): void {
 		this.assertNotDisposed();
 
@@ -301,16 +318,23 @@ export class SharedTreeBranch<
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 		assert(hasSome(targetCommits), 0xa83 /* Expected commit(s) for a non no-op rebase */);
+		assert(
+			reconciliation === undefined || newSourceHead === upTo,
+			"Prepared reconciliation must adopt the target history without remaining source commits.",
+		);
 
 		const newCommits = [...targetCommits, ...sourceCommits];
 		const changeEvent = {
 			type: "rebase",
 			get change() {
-				const change = rebaseResult.sourceChange;
+				const change = reconciliation?.change ?? rebaseResult.sourceChange;
 				return change === undefined ? undefined : makeAnonChange(change);
 			},
 			removedCommits: deletedSourceCommits,
 			newCommits,
+			...(reconciliation === undefined
+				? {}
+				: { revisionReplacers: reconciliation.revisionReplacers }),
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);

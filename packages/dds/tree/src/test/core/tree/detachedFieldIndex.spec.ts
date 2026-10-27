@@ -33,6 +33,7 @@ import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js"
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { DefaultRevisionReplacer } from "../../../feature-libraries/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
@@ -349,6 +350,50 @@ describe("DetachedFieldIndex Codecs", () => {
 });
 
 describe("DetachedFieldIndex methods", () => {
+	describe("replaceRevisions", () => {
+		it("preserves forest roots while updating identifiers and retention revisions", () => {
+			const index = makeDetachedFieldIndex("recovery");
+			const oldRevision = mintRevisionTag();
+			const newRevision = mintRevisionTag();
+			const unaffectedRevision = mintRevisionTag();
+			const oldId = makeDetachedNodeId(oldRevision, 0);
+			const unaffectedId = makeDetachedNodeId(unaffectedRevision, 0);
+			const retainedRoot = index.createEntry(oldId, oldRevision);
+			const unaffectedRoot = index.createEntry(unaffectedId, unaffectedRevision);
+			const restore = index.createCheckpoint();
+			const mapping = new DefaultRevisionReplacer(newRevision, new Set([oldRevision]));
+
+			index.replaceRevisions(mapping);
+
+			assert.equal(index.getEntry(makeDetachedNodeId(newRevision, 0)), retainedRoot);
+			assert.equal(index.tryGetEntry(oldId), undefined);
+			assert.equal(index.getEntry(unaffectedId), unaffectedRoot);
+			assert.deepEqual([...index.getRootsLastTouchedByRevision(oldRevision)], []);
+			assert.deepEqual([...index.getRootsLastTouchedByRevision(newRevision)], [retainedRoot]);
+			const clone = index.clone();
+			restore();
+			assert.equal(index.getEntry(oldId), retainedRoot);
+			assert.equal(clone.getEntry(makeDetachedNodeId(newRevision, 0)), retainedRoot);
+		});
+
+		it("rejects colliding identifiers without partially changing the index", () => {
+			const index = makeDetachedFieldIndex("recovery");
+			const original = mintRevisionTag();
+			const replacement = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(original, 0), original);
+			index.createEntry(makeDetachedNodeId(replacement, 0), replacement);
+			const before = [...index.entries()];
+			assert.throws(
+				() =>
+					index.replaceRevisions(
+						new DefaultRevisionReplacer(replacement, new Set([original])),
+					),
+				/Revision replacement must not merge distinct detached roots/,
+			);
+			assert.deepEqual([...index.entries()], before);
+		});
+	});
+
 	describe("createEntry", () => {
 		it("can retrieve entries after creating", () => {
 			const detachedIndex = makeDetachedFieldIndex();

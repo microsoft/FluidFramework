@@ -5,15 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	CommitKind,
 	CommitOutcome,
 	RevertibleStatus,
 	type Revertible,
+	type RevertibleAlpha,
 	type RevisionTag,
 } from "../../core/index.js";
 import {
 	decideViewSchema,
+	getPublicationStatus,
 	retryViewPublication,
 	settleViewPublication,
 	type ViewPublicationState,
@@ -29,7 +32,12 @@ import {
 	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 
-import { expectSchemaEqual, mintRevisionTag, TestTreeProviderLite } from "../utils.js";
+import {
+	expectSchemaEqual,
+	mintRevisionTag,
+	SharedTreeTestFactory,
+	TestTreeProviderLite,
+} from "../utils.js";
 
 describe("viewBranch", () => {
 	describe("persistent synchronization", () => {
@@ -221,8 +229,8 @@ describe("viewBranch", () => {
 
 		function createUpgradableViews<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
+			provider = new TestTreeProviderLite(2),
 		) {
-			const provider = new TestTreeProviderLite(2);
 			const remote = provider.trees[0].kernel.viewWith(configV1);
 			remote.initialize(["initial"]);
 			provider.synchronizeMessages();
@@ -370,6 +378,347 @@ describe("viewBranch", () => {
 			}
 		});
 
+		it("retries a rejected schema/data publication once without rerunning application code", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			const submitted: string[][] = [];
+			const outcomes: CommitOutcome[] = [];
+			let callbacks = 0;
+			const offBase = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append")
+					submitted.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+			});
+			const offView = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal)
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+			});
+			try {
+				view.upgradeSchema();
+				const root = view.root;
+				remote.root.insertAtStart("remote");
+				view.runTransaction(() => {
+					callbacks++;
+					root.insertAtEnd(1);
+				});
+				provider.synchronizeMessages();
+				// The first delivery schedules the retry; the next delivery settles it.
+				provider.synchronizeMessages();
+
+				assert.equal(callbacks, 1);
+				assert.equal(view.root === root, true);
+				assert.deepEqual([...root], ["remote", "initial", 1]);
+				assert.deepEqual(submitted, [["schema"], ["data"], ["schema"], ["data"]]);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied, CommitOutcome.FullyApplied]);
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				offBase();
+				offView();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("recovers dependent edits and omits schema when an equivalent remote upgrade wins", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			remote.dispose();
+			const upgradedRemote = provider.trees[0].kernel.viewWith(configV2);
+			const submissions: string[][] = [];
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append")
+					submissions.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+			});
+			try {
+				view.upgradeSchema();
+				upgradedRemote.upgradeSchema();
+				view.root.insertAtEnd(1);
+				view.root.insertAtEnd(2);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+
+				assert.deepEqual([...view.root], ["initial", 1, 2]);
+				assert.deepEqual([...upgradedRemote.root], ["initial", 1, 2]);
+				assert.deepEqual(submissions, [["schema"], ["data"], ["data"], ["data"], ["data"]]);
+			} finally {
+				off();
+				branch.dispose();
+				upgradedRemote.dispose();
+			}
+		});
+
+		it("preserves inserted objects and dependent edits through recovery", () => {
+			class Note extends sf.object("Note", { text: sf.string }) {}
+			const config = new TreeViewConfiguration({
+				schema: sf.array("Root", [sf.string, Note]),
+			});
+			const { provider, remote, base, branch, view } = createUpgradableViews(config);
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				const note = new Note({ text: "initial note" });
+				view.root.insertAtEnd(note);
+				// This second commit refers to a node created by the rejected first attempt.
+				note.text = "edited note";
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+
+				assert.equal(
+					view.root[2] === note,
+					true,
+					"Recovery replaced an application-owned object.",
+				);
+				assert.equal(note.text, "edited note");
+				note.text = "after recovery";
+				provider.synchronizeMessages();
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps detached objects and native undo/redo usable after recovery", () => {
+			class Note extends sf.object("DetachedNote", { text: sf.string }) {}
+			const config = new TreeViewConfiguration({
+				schema: sf.array("Root", [sf.string, Note]),
+			});
+			const { provider, remote, base, branch, view } = createUpgradableViews(config);
+			const revertibles: Revertible[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					const revertible = metadata.getRevertible();
+					if (revertible !== undefined) {
+						revertibles.push(revertible);
+					}
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				const note = new Note({ text: "kept for undo" });
+				view.root.insertAtEnd(note);
+				view.root.removeAt(1);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+
+				assert.equal(revertibles.length, 2, "Recovery exposed additional undo handles.");
+				assert.equal(note.text, "kept for undo");
+				revertibles[1].revert();
+				assert.equal(view.root[2] === note, true, "Undo did not restore the same object.");
+				provider.synchronizeMessages();
+				revertibles[2].revert();
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["remote", "initial"]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(config.schema));
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				off();
+				for (const revertible of revertibles) {
+					if (revertible.status === RevertibleStatus.Valid) {
+						revertible.dispose();
+					}
+				}
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		for (const forkBeforeRetry of [true, false]) {
+			it(`clones a recovered undo handle to a fork created ${forkBeforeRetry ? "before" : "after"} retry`, () => {
+				const { provider, remote, branch, view } = createUpgradableViews(configV2);
+				let undo: RevertibleAlpha | undefined;
+				const off = view.events.on("changed", (metadata) => {
+					if (metadata.isLocal && metadata.kind === CommitKind.Default) {
+						undo = metadata.getRevertible();
+					}
+				});
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				view.root.insertAtEnd(1);
+				assert(undo !== undefined);
+				off();
+				let fork = forkBeforeRetry ? branch.checkout.fork() : undefined;
+				try {
+					provider.synchronizeMessages();
+					provider.synchronizeMessages();
+					fork ??= branch.checkout.fork();
+					const forkView = fork.viewWith(configV2);
+					const cloned = undo.clone(fork);
+					cloned.revert();
+					assert.deepEqual(
+						[...forkView.root],
+						forkBeforeRetry ? ["initial"] : ["remote", "initial"],
+					);
+					assert.deepEqual([...view.root], ["remote", "initial", 1]);
+					undo.revert();
+					provider.synchronizeMessages();
+					assert.deepEqual([...view.root], ["remote", "initial"]);
+				} finally {
+					if (undo.status === RevertibleStatus.Valid) {
+						undo.dispose();
+					}
+					fork?.dispose();
+					branch.dispose();
+					remote.dispose();
+				}
+			});
+		}
+
+		it("fails after a rejected retry without submitting a third attempt", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			let submitted = 0;
+			let sequenced = 0;
+			const offChanges = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") submitted += event.newCommits.length;
+			});
+			const offSequenced = base.mainBranch.events.on("commitSequenced", () => {
+				if (++sequenced === 2) {
+					// Queue a second concurrent edit before the post-sequencing recovery runs.
+					remote.root.insertAtStart("second remote");
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("first remote");
+				view.root.insertAtEnd(1);
+				provider.synchronizeMessages();
+				assert.equal(submitted, 4);
+				assert.throws(() => provider.synchronizeMessages(), /failed after retry/);
+				assert.equal(submitted, 4, "The controller submitted a third attempt.");
+				assert.throws(() => branch.checkout.breaker.use(), /invalid state/);
+				assert.throws(() => base.breaker.use(), /invalid state/);
+			} finally {
+				offChanges();
+				offSequenced();
+				remote.dispose();
+			}
+		});
+
+		it("fails before retry submission when reconstruction violates an application constraint", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(
+				configV2,
+				new TestTreeProviderLite(
+					2,
+					new SharedTreeTestFactory(() => {}, undefined, {
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}),
+				),
+			);
+			let submitted = 0;
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					submitted += event.newCommits.length;
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				view.runTransaction(() => {
+					branch.checkout.editor.addNoChangeConstraint();
+					view.root.insertAtEnd(1);
+				});
+				assert.throws(
+					() => provider.synchronizeMessages(),
+					/recovery is unsafe: constraintViolation/,
+				);
+				assert.equal(submitted, 2, "An unsafe retry reached submission.");
+				assert.throws(() => branch.checkout.breaker.use(), /invalid state/);
+				assert.throws(() => base.breaker.use(), /invalid state/);
+			} finally {
+				off();
+				remote.dispose();
+			}
+		});
+
+		it("retains rejected work through reconnect without treating resubmission as a retry", () => {
+			class Note extends sf.object("OfflineNote", { text: sf.string }) {}
+			const config = new TreeViewConfiguration({
+				schema: sf.array("Root", [sf.string, Note]),
+			});
+			const { provider, remote, base, branch, view } = createUpgradableViews(config);
+			const runtime = provider.trees[1].containerRuntime;
+			const submitted: string[][] = [];
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					submitted.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			try {
+				runtime.connected = false;
+				view.upgradeSchema();
+				const note = new Note({ text: "offline edit" });
+				view.root.insertAtEnd(note);
+				for (let index = 0; index < 10; index++) {
+					remote.root.insertAtStart(`remote ${index}`);
+					provider.synchronizeMessages();
+				}
+				assert.deepEqual(submitted, [["schema"], ["data"]]);
+				runtime.connected = true;
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				assert.equal(view.root[11] === note, true);
+				assert.equal(note.text, "offline edit");
+				assert.deepEqual(submitted, [["schema"], ["data"], ["schema"], ["data"]]);
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("waits for an open transaction and excludes its aborted edits from recovery", async () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			let submitted = 0;
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					submitted += event.newCommits.length;
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				view.root.insertAtEnd(1);
+				const result = await view.runTransactionAsync(async () => {
+					view.root.insertAtEnd(2);
+					provider.synchronizeMessages();
+					await Promise.resolve();
+					assert.equal(submitted, 2, "Recovery ran inside an unfinished transaction.");
+					return { rollback: true };
+				});
+				assert.equal(result.success, false);
+				provider.synchronizeMessages();
+				assert.equal(submitted, 4);
+				assert.deepEqual([...view.root], ["remote", "initial", 1]);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
 		it("reserves the base's single view until the controller is disposed", () => {
 			const { remote, base, branch } = createUpgradableViews(configV2);
 			try {
@@ -464,6 +813,23 @@ describe("viewBranch", () => {
 	});
 
 	describe("publication outcomes", () => {
+		it("waits for every member and retains failure after the schema was accepted", () => {
+			const schema = initialPublication();
+			const data = initialPublication();
+			const acceptedSchema = settleViewPublication(
+				schema,
+				schema.revision,
+				CommitOutcome.FullyApplied,
+			);
+			assert.equal(getPublicationStatus([acceptedSchema, data]), "pending");
+			const rejectedData = settleViewPublication(
+				data,
+				data.revision,
+				CommitOutcome.FullyDropped,
+			);
+			assert.equal(getPublicationStatus([acceptedSchema, rejectedData]), "retryRequired");
+		});
+
 		function initialPublication(): Extract<ViewPublicationState, { type: "pending" }> {
 			return Object.freeze({
 				type: "pending",

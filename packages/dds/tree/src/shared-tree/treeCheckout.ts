@@ -25,13 +25,13 @@ import {
 	type FormatValidator,
 } from "../codec/index.js";
 import {
+	type CommitOutcome,
 	type Anchor,
 	type AnchorLocator,
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
-	CommitOutcome,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -93,6 +93,7 @@ import {
 	type SharedTreeBranchChange,
 	type SquashingTransactionOptions,
 	type Transactor,
+	type BranchReconciliation,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -134,9 +135,8 @@ import { DefaultTreeBranchHistory } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
-	ConstraintStatus,
 	SharedTreeChangeFamily,
-	getConstraintStatus,
+	getCommitOutcome,
 	hasSchemaChange,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -259,6 +259,11 @@ export interface CheckoutEvents {
 	 * Unlike `afterBatch`, this event is not raised for intermediate transaction edits.
 	 */
 	afterOperation(): void;
+
+	/**
+	 * Incoming operations and their sequencing bookkeeping have completed.
+	 */
+	afterSequencedBatch(): void;
 
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
@@ -737,7 +742,7 @@ export class TreeCheckout implements ITreeCheckout {
 		// to stop descending past committed nodes.
 		let node: LabelTree = this.labelTreeNode;
 		while (node.sublabels.length > 0) {
-			const lastChild = node.sublabels[node.sublabels.length - 1];
+			const lastChild = node.sublabels.at(-1);
 			assert(lastChild !== undefined, 0xcdc /* Expected label tree node to have children */);
 			if (lastChild === this.mostRecentlyClosedLabelNode) {
 				break;
@@ -770,7 +775,7 @@ export class TreeCheckout implements ITreeCheckout {
 				parent.sublabels.pop();
 				// Point to the parent's new last child (guaranteed closed if it exists),
 				// or undefined if the parent has no more children.
-				const newLastChild = parent.sublabels[parent.sublabels.length - 1];
+				const newLastChild = parent.sublabels.at(-1);
 				this.mostRecentlyClosedLabelNode = newLastChild;
 			}
 		} else {
@@ -887,38 +892,51 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 	}
 
+	/**
+	 * Optional owner for sequencing notifications on an internal authoring checkout.
+	 * The owner must eventually report the logical outcome or fail the checkout.
+	 */
+	public commitSequenceHandler: ((commit: GraphCommit<SharedTreeChange>) => void) | undefined;
+
 	private readonly onCommitSequenced = (commit: GraphCommit<SharedTreeChange>): void => {
-		const emitter = this.localCommitEventEmitters.get(commit.revision);
+		if (this.commitSequenceHandler === undefined) {
+			this.reportCommitOutcome(commit.revision, getCommitOutcome(commit.change));
+		} else {
+			this.commitSequenceHandler(commit);
+		}
+	};
+
+	/**
+	 * Reports a logical commit outcome once, including after an internal recovery attempt.
+	 */
+	public reportCommitOutcome(revision: RevisionTag, outcome: CommitOutcome): void {
+		const emitter = this.localCommitEventEmitters.get(revision);
 		if (emitter === undefined) {
 			// If the commit predates the creation of this checkout, there will be no emitter associated with the commit.
 			// In that case, we don't need to emit any events.
 			return;
 		}
-		const constraintStatus = getConstraintStatus(commit.change);
-		let outcome: CommitOutcome;
-		switch (constraintStatus) {
-			case ConstraintStatus.Satisfied: {
-				outcome = CommitOutcome.FullyApplied;
-				break;
-			}
-			case ConstraintStatus.ImplicitViolation: {
-				outcome = CommitOutcome.FullyDropped;
-				break;
-			}
-			case ConstraintStatus.ExplicitViolation: {
-				outcome = CommitOutcome.NewContentOnly;
-				break;
-			}
-			default: {
-				unreachableCase(constraintStatus);
-			}
-		}
 		this.emitChangedLocked(() => {
 			emitter.emit("settled", outcome);
 		}, "a commit settled event callback");
 		// No more events will be emitted for this commit, so we can remove the emitter from the map.
-		this.localCommitEventEmitters.delete(commit.revision);
-	};
+		this.localCommitEventEmitters.delete(revision);
+	}
+
+	/**
+	 * Allocates a revision for a newly authored recovery attempt.
+	 */
+	public mintRevision(): RevisionTag {
+		this.checkNotDisposed();
+		return this.mintRevisionTag();
+	}
+
+	/**
+	 * Called by the runtime owner after incoming message bookkeeping has finished.
+	 */
+	public completeSequencedBatch(): void {
+		this.#events.emit("afterSequencedBatch");
+	}
 
 	private readonly onAfterBranchChange = (
 		event: SharedTreeBranchChange<SharedTreeChange>,
@@ -1059,6 +1077,29 @@ export class TreeCheckout implements ITreeCheckout {
 					: event.change.revision;
 
 			this.applyInternalChange(event.change.change, revision);
+		}
+		if (event.type === "rebase" && event.revisionReplacers !== undefined) {
+			for (const replacer of event.revisionReplacers) {
+				this._removedRoots.replaceRevisions(replacer);
+				for (const [logicalRevision, retained] of this.revertibleCommitBranches) {
+					if (replacer.isObsolete(retained.getHead().revision)) {
+						const replacement = event.newCommits.find(
+							(commit) => commit.revision === replacer.updatedRevision,
+						);
+						assert(
+							replacement !== undefined,
+							"A recovered revertible needs its replacement commit.",
+						);
+						// Handles keep their logical key; only the commit they invert changes.
+						// Pin the replacement before releasing the original repair-data history.
+						this.revertibleCommitBranches.set(
+							logicalRevision,
+							this.mainBranch.fork(replacement),
+						);
+						retained.dispose();
+					}
+				}
+			}
 		}
 		this.#events.emit("afterBatch");
 		this.editLock.unlock();
@@ -1404,12 +1445,24 @@ export class TreeCheckout implements ITreeCheckout {
 				const branchHead = targetCheckout.#transaction.branch.getHead();
 
 				if (isAncestor(commitToRevert, branchHead, true) === false) {
-					throw new UsageError(
-						"Cannot clone revertible for a commit that is not present on the given branch.",
+					// A fork made before recovery still owns the original edit and its identifiers.
+					// Clone that edit, not the parent's replacement attempt.
+					const original =
+						commitToRevert.revision === revision
+							? undefined
+							: findAncestor(branchHead, (commit) => commit.revision === revision);
+					if (original === undefined) {
+						throw new UsageError(
+							"Cannot clone revertible for a commit that is not present on the given branch.",
+						);
+					}
+					targetCheckout.revertibleCommitBranches.set(
+						revision,
+						targetCheckout.mainBranch.fork(original),
 					);
+				} else {
+					targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 				}
-
-				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
 				return this.createRevertible(
 					revision,
@@ -1686,15 +1739,27 @@ export class TreeCheckout implements ITreeCheckout {
 	/**
 	 * Rebases an internal authoring checkout over its base and reports received changes as remote.
 	 * @remarks The caller must use a completed-operation boundary on both checkouts.
+	 * A prepared reconciliation replaces the ordinary net change, not the target commit history.
+	 * Its caller must prove that it preserves the source work and produces the target's state.
 	 */
-	public synchronizeFrom(base: TreeCheckout): void {
+	public synchronizeFrom(
+		base: TreeCheckout,
+		reconciliation?: BranchReconciliation<SharedTreeChange>,
+	): void {
 		assert(
 			this.canSynchronize && base.canSynchronize,
 			"Checkout synchronization requires completed operations.",
 		);
 		this.synchronizingFromBase = true;
 		try {
-			this.rebaseOnto(base);
+			if (reconciliation === undefined) {
+				this.rebaseOnto(base);
+			} else {
+				this.checkNotDisposed();
+				base.checkNotDisposed();
+				assert(!this.isSharedBranch, "Prepared reconciliation is only for private checkouts.");
+				this.mainBranch.rebaseOnto(base.mainBranch, base.mainBranch.getHead(), reconciliation);
+			}
 		} finally {
 			this.synchronizingFromBase = false;
 		}

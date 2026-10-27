@@ -50,6 +50,49 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### M5: coordinated recovery and retry-only identity transition
+
+The controller correlates separate schema/data outcomes and retains dependent edits.
+It waits until incoming-message bookkeeping finishes before preparing a retry.
+Multi-client tests pass for recovery over remote data, data-only recovery after an equivalent remote upgrade, and fatal failure after rejection of the retry.
+Application callbacks run once.
+
+The first inserted-object regression failed.
+The test inserts an object, edits it in a dependent commit, and forces rejection of the initial schema/data publication.
+The retry reconstructs the data, but normal reconciliation replaces the inserted object instead of preserving the application's reference.
+Keeping separate commits avoids this problem during normal publication, but recovery still needs fresh commit revisions and correct content identifiers.
+
+A bounded experiment changed the commit revision while keeping the old atom identifiers.
+It did not preserve object identity.
+It also caused the alias allocator's `0xd40` assertion during a subsequent rejection.
+That experiment was removed; do not treat revision-only retagging as a safe recovery path.
+
+The approved retry-only investigation resolved this regression without compaction.
+The adapter now prepares the data-only net change from the retained view state to the reconstructed state.
+The checkout applies that change to the existing forest and then maps detached-content identifiers and native revertibles to the new history.
+It does not apply the ordinary mixed-history net change, which would remove and rebuild the inserted objects.
+The branch validates that prepared reconciliation adopts the target history without leaving source commits.
+All special transformation remains in the temporary adapter; ordinary publication and ordinary rebase use their existing paths.
+
+The regressions remain enabled in [viewBranch.spec.ts](../../src/test/shared-tree/viewBranch.spec.ts).
+They cover inserted-object references, dependent edits, detached objects, undo/redo, and undo-handle clones on forks created before or after retry.
+Reconstruction that violates an application constraint fails before submission.
+Reconnect does not consume another application retry.
+An open application transaction delays recovery, and its aborted edits are not recovered.
+Detached-index tests check root preservation, retention revisions, checkpoints, and collision rejection before mutation.
+
+M6 still covers the remaining logical history and metadata surfaces.
+M7 still covers runtime cancellation, all application-fork merge/rebase paths, and the full persistence and retention-pressure matrix.
+The public opt-in remains M8 work.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^deferred schema upgrades: ordered publication|^SchematizingSimpleTreeView|^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager' --reporter dot`: 621 passed.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch|^deferred schema upgrades: ordered publication' --reporter dot`: 51 passed.
+- Biome and ESLint passed for the ten changed TypeScript files.
+
 ### Revised M4: ordered controller publication
 
 The approved cleanup is recorded in the branch's existing commits.

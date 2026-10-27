@@ -15,7 +15,7 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import type { RevisionTag } from "../rebase/index.js";
+import type { RevisionTag, RevisionReplacer, ChangesetLocalId } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
@@ -276,6 +276,37 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			root,
 			latestRelevantRevision: revision,
 		});
+	}
+
+	/**
+	 * Replaces change identifiers and retention revisions without moving the detached forest roots.
+	 * @remarks The mapping must be injective over the index. Validation finishes before mutation.
+	 */
+	public replaceRevisions(replacer: RevisionReplacer): void {
+		const nodes: NestedMap<Major, Minor, DetachedField> = new Map();
+		const revisions: NestedMap<RevisionTag | undefined, ForestRootId, Delta.DetachedNodeId> =
+			new Map();
+		for (const { id, root, latestRelevantRevision } of this.entries()) {
+			const updated = replacer.getUpdatedAtomId({
+				revision: id.major,
+				localId: brand<ChangesetLocalId>(id.minor),
+			});
+			const updatedId = { major: updated.revision, minor: updated.localId };
+			assert(
+				tryGetFromNestedMap(nodes, updatedId.major, updatedId.minor) === undefined,
+				"Revision replacement must not merge distinct detached roots.",
+			);
+			const revision = replacer.isObsolete(latestRelevantRevision)
+				? replacer.updatedRevision
+				: latestRelevantRevision;
+			setInNestedMap(nodes, updatedId.major, updatedId.minor, {
+				root,
+				latestRelevantRevision: revision,
+			});
+			setInNestedMap(revisions, revision, root, updatedId);
+		}
+		this.detachedNodeToField = nodes;
+		this.latestRelevantRevisionToFields = revisions;
 	}
 
 	public getSummaryData(): DetachedFieldSummaryData {

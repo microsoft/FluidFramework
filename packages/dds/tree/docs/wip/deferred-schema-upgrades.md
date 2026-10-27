@@ -1227,6 +1227,14 @@ Rerunning a transaction callback can repeat effects outside SharedTree.
 Map internal attempts to the logical application edit without duplicate application or misleading success notifications.
 Revision mapping, commit outcomes, labels, undo, and custom metadata need an explicit design for this mapping.
 
+Separate ordered commits preserve inserted-object identity during normal publication, but recovery needs an additional identity-preserving transition.
+Normal reconciliation with fresh retry revisions can replace inserted objects and invalidate application references.
+The temporary adapter instead prepares the data-only net change for the existing forest, followed by mappings for detached-content identifiers and native revertibles.
+This keeps application objects in place while adopting the retry's commit history.
+Changing only the commit revision while retaining old atom identifiers is not a safe substitute: that experiment failed an alias-allocation invariant.
+The [implementation progress](./deferred-schema-upgrades-implementation-plan.md#m5-coordinated-recovery-and-retry-only-identity-transition) records the regression and validation.
+Normal publication does not use this special transition or combine schema and data commits.
+
 This design needs a policy for edits made after the first submission but before its settled outcome.
 Retain them with the failed work if publication is dropped.
 Any internal buffering must preserve the public editing contract; it must not require polling a publication status.

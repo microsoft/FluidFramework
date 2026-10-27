@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type { BranchReconciliation } from "./branch.js";
+
 export {
 	onForkTransitive,
 	SharedTreeBranch,

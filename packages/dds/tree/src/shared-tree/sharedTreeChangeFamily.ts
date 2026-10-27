@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
@@ -12,6 +12,7 @@ import {
 	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
+	CommitOutcome,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
 	type RevisionReplacer,
@@ -420,4 +421,25 @@ export function getConstraintStatus(change: SharedTreeChange): ConstraintStatus 
 		return ConstraintStatus.ExplicitViolation;
 	}
 	return ConstraintStatus.Satisfied;
+}
+
+/**
+ * Maps the settled constraint state to the outcome reported by a checkout.
+ */
+export function getCommitOutcome(change: SharedTreeChange): CommitOutcome {
+	const status = getConstraintStatus(change);
+	switch (status) {
+		case ConstraintStatus.Satisfied: {
+			return CommitOutcome.FullyApplied;
+		}
+		case ConstraintStatus.ImplicitViolation: {
+			return CommitOutcome.FullyDropped;
+		}
+		case ConstraintStatus.ExplicitViolation: {
+			return CommitOutcome.NewContentOnly;
+		}
+		default: {
+			return unreachableCase(status);
+		}
+	}
 }
