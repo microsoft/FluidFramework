@@ -4,6 +4,17 @@
 
 <!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
+# 1.1.2
+
+- Reject messages from other windows.
+- Release data visualization subscriptions when the extension no longer displays the data, with compatible client libraries.
+- Remove temporary data-change highlighting from container menu items.
+- Keep navigation selection visible in Windows High Contrast.
+- Announce navigation selections to screen readers.
+- Associate the Events button group with the Telemetry heading for screen readers.
+- Expose column headers in the Audience State and Audience History tables to screen readers.
+- Keep information popovers and tooltips below their controls so they do not cover headings.
+
 # 1.1.1
 
 Fix accessibility issues in the Refresh buttons
