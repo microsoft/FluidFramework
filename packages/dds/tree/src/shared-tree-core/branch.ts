@@ -131,7 +131,7 @@ export interface BranchTrimmingEvents {
 export interface BranchTrimState {
 	/**
 	 * The cumulative number of commits trimmed from the shared ancestry.
-	 * The owner must update this before emitting any notifications.
+	 * @remarks The owner must update this before emitting any notifications.
 	 */
 	readonly trimmedCommitCount: number;
 }
