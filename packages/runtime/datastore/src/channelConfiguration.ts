@@ -27,7 +27,8 @@ export function supportsChannelConfiguration(
 
 /**
  * Returns whether the attributes contain channel configuration.
- * Validates the persisted configuration's required properties, version, and revision.
+ * Validates the generic persisted format, including that the values are an object.
+ * The channel implementation validates the values' contents.
  */
 export function hasChannelConfiguration(
 	attributes: IChannelAttributes,

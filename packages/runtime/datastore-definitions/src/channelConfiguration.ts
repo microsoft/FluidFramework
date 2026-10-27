@@ -9,7 +9,8 @@ import type { IChannelAttributes } from "./storage.js";
 
 /**
  * Immutable JSON settings shared by all clients of one channel instance.
- * The channel author defines the keys and their meaning; different instances can have different settings.
+ * The channel implementation owns the schema and meaning of these values.
+ * Runtime code treats their contents as opaque.
  * @internal
  */
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
@@ -32,14 +33,20 @@ export interface ChannelConfigurationSnapshotV1<
 	readonly revision: number;
 	/**
 	 * The channel-defined configuration values for this snapshot.
+	 * The channel implementation is responsible for validating their contents.
+	 * Because these values are persistent, the DDS author is responsible for maintaining
+	 * compatibility with values written by supported older versions.
 	 */
 	readonly values: TConfig;
 }
 
 /**
  * Attributes for an instance using the configuration protocol.
- * The configuration is stored with these attributes so a reader can select the protocol and
- * initialize the channel's settings before it loads channel data or processes buffered ops.
+ *
+ * The DDS owns the configuration values.
+ * They are stored with the channel attributes so the runtime can verify protocol support and
+ * make the values available to the channel factory before constructing the channel or processing
+ * buffered operations.
  * @internal
  */
 export interface ConfiguredChannelAttributes extends IChannelAttributes {

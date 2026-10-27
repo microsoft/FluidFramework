@@ -181,6 +181,13 @@ describe("Channel configuration compatibility", () => {
 				{ ...snapshot, revision: Number.MAX_SAFE_INTEGER + 1 },
 			],
 		],
+		[
+			"Configuration values must be an object",
+			[
+				{ ...snapshot, values: JSON.parse("null") as unknown },
+				{ ...snapshot, values: [] },
+			],
+		],
 	] as const) {
 		it(`rejects malformed persisted configuration: ${message}`, () => {
 			for (const configuration of configurations) {
