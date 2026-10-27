@@ -5,12 +5,16 @@
 This plan implements the agreed [deferred schema upgrade design](./deferred-schema-upgrades.md).
 It follows **C2: a persistent internal view branch**.
 The source inspection for this plan used commit `24c481e3906` on 2026-10-26.
+The publication strategy was revised on 2026-10-27 after the ordered two-commit investigation.
 This document is a plan, not an implemented feature or a report of passing feature tests.
 
 Proceed with C2 first.
 Keep the application on one view checkout while a base checkout owns shared history and operation submission.
 Publish application changes from view to base, and reconcile base changes into the view.
 Keep this arrangement after the schema upgrade is accepted or becomes unnecessary.
+Publish a still-needed schema commit before the application data commit, preserving their separate identities.
+Use native data revertibles rather than combining the automatic upgrade into a data commit.
+Compaction is no longer part of the selected C2 publication path.
 
 The initial delivery must support the current rebase implementation.
 Isolate the temporary workarounds so that the planned full schema/data rebase support can replace them.
@@ -25,6 +29,10 @@ Do not implement Options A, B, or C1 in parallel.
   Add no public pending-upgrade state.
 - Publish any still-needed upgrade with the first application-originated change that would otherwise commit.
   Do not filter by content effect.
+- Keep schema and data as separate ordered commits.
+  Publish neither before the application transaction succeeds.
+  Correlate outcomes, but do not promise all-or-nothing acceptance across them.
+  An accepted schema remains when later data fails.
 - An application-requested abort discards its edits, not the previously applied local upgrade.
 - A sufficient remote schema ends schema deferral.
   Use ordinary viewability against the received schema, not equality with the local target.
@@ -42,22 +50,27 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+The M0-M3 entries below record work completed under the earlier plan.
+Their validation results remain historical evidence, not proof that the revised publication path is implemented.
+Resume with the revised M4 sequence after the requested pause; do not commit or retain compaction solely because its experiment passed.
+
 ### M0: baseline and primitive feasibility
 
-The [branch primitive integration tests](../../src/test/shared-tree/deferredSchemaUpgrade.integration.ts) establish:
+The original M0 branch primitive integration tests established the following.
+The same [integration test file](../../src/test/shared-tree/deferredSchemaUpgrade.integration.ts) now covers the selected ordered-publication strategy.
 
 - A private upgrade enables its view without changing base history or submitting an op.
 - Ordinary merge preserves separate schema and data commits.
 - Composition and revision replacement can publish an earlier schema change and a later data change as one ordered commit.
 - Ordinary reconciliation of that composed history currently replaces view nodes.
   The initial identity-preservation assertion failed; a characterization test records the current limitation.
-  M3/M4 must prevent that replacement rather than weaken the public identity contract.
+  The revised M4 avoids this normalization path by retaining separate commit identities.
 - A retained branch preserves the original application change when another branch's rebase drops it.
 - For the tested schema expansion and concurrent array insertion, the existing data rebaser can transform the retained application change before a fresh schema prefix is added.
 - Inverting the data portion of the controlled compound commit leaves the upgraded schema intact.
 
 These proofs establish the primitive paths, not complete retry, notification, or undo APIs.
-Use one publication revision and retain the original private history until reconciliation has completed.
+The original experiment used one publication revision; the revised strategy preserves separate schema and data revisions and retains their history until outcomes are resolved.
 Keep reconstruction limited to contexts that the adapter can prove safe.
 The controller must not publish from edit-locked application callbacks or infer remote outcomes from private-branch events alone.
 Keep base ownership, application-fork ownership, and private controller ownership distinct.
@@ -78,6 +91,8 @@ No public deferred-upgrade option is exposed by M0.
 The schema decision uses the actual received schema; a viewable covering schema ends deferral without requiring upgrade permission.
 Publication decisions accept a definitive initial failure once, require a new retry revision, ignore stale/duplicate outcomes, and fail after a rejected retry or violated constraints.
 Application cancellation and ordinary transport resubmission are explicitly outside this outcome input.
+The current reducer tracks one revision.
+Revise it for per-member schema/data outcomes before using it for the selected publication sequence.
 
 [deferredSchemaRebase.ts](../../src/shared-tree/deferredSchemaRebase.ts) defines the isolated temporary adapter boundary.
 It does not implement reconstruction yet.
@@ -124,7 +139,7 @@ FlexTree node schema lookup and cached field kinds now follow the current contex
 The new tests first failed on premature base publication, missing remote data, and missing view reservation.
 They now pass, including equivalent, insufficient, and viewable covering remote schema updates.
 After a sufficient remote upgrade, subsequent application edits use the data-only path.
-Atomic first publication while an upgrade is still pending remains M4 work; the public opt-in remains unexposed.
+Ordered first publication while an upgrade is still pending remains M4 work; the public opt-in remains unexposed.
 
 Validation:
 
@@ -133,6 +148,197 @@ Validation:
 - `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^SchematizingSimpleTreeView|^LazyNode|^LazyField|^simple-tree proxies|^SharedTreeObject|^ArrayNode Proxy|deferred schema upgrades: branch primitives' --reporter dot`: 468 passed, 2 existing pending tests.
 - Focused Biome checks on the eight changed TypeScript files passed.
 - Focused ESLint checks found one new condition-style error, which was fixed; existing checkout and FlexTree warnings were left unchanged.
+
+### Superseded M4 experiment: compaction primitive
+
+This section records the uncommitted single-commit experiment and its validation.
+The user selected ordered two-commit publication on 2026-10-27.
+The compaction primitive is not a dependency of the revised M4 or native data-only undo.
+The subsequent ordered-publication cleanup removed its code and compaction-only tests.
+The description and results here are historical evidence, not APIs that remain in the working tree.
+
+The inserted-object regression exposed a distinct identity problem:
+
+- Publishing a composed change under a fresh revision while retaining its original change-atom revisions fails the current codec assertion: a tagged change must contain only the tagged revision.
+- Normalizing those revisions makes the publication encodable, but ordinary source-branch rebase removes and recreates the inserted node.
+  Suppressing intermediate schema notifications does not prevent this data-level identity replacement.
+
+The regression now passes through an explicit compaction operation before publication.
+The live forest, schema, anchors, and inserted object remain in place.
+No new wire format is used.
+
+The superseded review changes were:
+
+- [DetachedFieldIndex.replaceRevisions](../../src/core/tree/detachedFieldIndex.ts) remaps detached-node identifiers and retention revisions with the same mapping used by the normalized change.
+  Forest root locations and allocation remain unchanged.
+  A collision fails before the index is modified.
+- [SharedTreeBranch.compact](../../src/shared-tree-core/branch.ts) composes a nonempty private suffix under a fresh revision and emits a history-only rebase event containing the revision mapping.
+  Existing branch counters and ancestry tracking receive the history replacement.
+  Original commits and other forks are not rewritten.
+- [TreeCheckout.compactUnpublishedHistory](../../src/shared-tree/treeCheckout.ts) checks ownership and operation boundaries, pins the original history, and coordinates repair-data remapping.
+  Its result exposes the original commits and revision mapping and provides a disposal method for the retained history.
+  Original local change-event emitters are associated with the compacted commit's eventual settlement.
+- [ModularChangeFamily.changeRevision](../../src/feature-libraries/modular-schema/modularChangeFamily.ts) now raises the changeset's `maxId` when normalization allocates larger local identifiers.
+  A new regression first failed with an identifier above the recorded bound.
+  The fix preserves existing revision-only retagging behavior.
+
+This is a low-level internal primitive, not complete C2 publication integration.
+The caller must ensure the suffix is unpublished and must coordinate external references before releasing the retained history.
+The primitive rejects active suffix revertibles rather than invalidate their commit contexts.
+The active-revertible guard and cross-history translation were costs of this experiment, not requirements to carry into the two-commit path.
+The revised path must preserve native data revertibles and existing application-fork identity.
+Retry can still require explicit mappings when rejected work receives new revisions.
+These historical tests exercise a data-only inverse directly; the later two-commit probes also exercised a native revertible.
+
+Coverage includes the original inserted-node failure, successive edits after publication, repeated compaction, inserts/moves/removals, restoration of an earlier root, repair-data cleanup, retained forks, history counts, metadata, settled outcomes, and invalid compaction boundaries.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager|^SquashingTransactionStack|^TransactionStack|^sharedTreeView|^viewBranch|deferred schema upgrades: branch primitives|^SharedTreeChangeFamily|^sharedTreeChangeCodec|^SharedTreeCore|^DefaultResubmitMachine|^Summary load regression tests|^ModularChangeFamily|^DefaultRevisionReplacer' --reporter dot`: 765 passed.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^DetachedFieldIndex methods replaceRevisions|^Branches compact|deferred schema upgrades: branch primitives|^SharedTreeChangeFamily changeRevision' --reporter dot`: 29 passed.
+- Focused Biome and ESLint checks passed; existing unrelated lint warnings were left unchanged.
+
+The compaction experiment was not committed.
+The remaining ordered-publication cleanup changes are paused for review before controller integration, further milestones, or a commit.
+M4 as a whole is not yet complete.
+
+#### Review follow-up: separate identifier-bound fix
+
+The `maxId` regression also fails on upstream `main` at `35d5837a65e`, independently of C2.
+The fix, regression, explanatory comments, and changeset are isolated in local branch `fix/tree-change-revision-max-id`, commit `2e9936d1688`.
+That branch contains no C2 commits and is available in the separate `/workspaces/FluidFramework-maxid-fix` worktree.
+Its focused validation passed: 129 normalization/rebase tests, 3 production-style tests, compilation, formatting, lint, package policy, dependency consistency, and version checks.
+The user will push the branch; automated push attempts could not authenticate.
+The matching fix remains in this working tree independently of the removed compaction experiment.
+
+Compaction was not a workaround for schema rebase alone.
+It supported the superseded choice to normalize separately authored edits into one publication commit.
+The selected two-commit strategy removes that need by preserving their identities; it does not depend on future rebase work making ordinary merge squash them.
+Additional inline comments explain this history/content distinction, repair-data remapping, retention, settlement forwarding, and the associated tests.
+
+### Ordered-publication cleanup: complete, awaiting review
+
+The cleanup removes the uncommitted compaction APIs, event mapping, repair-data remapping, settlement fan-out, and compaction-only tests.
+The branch, checkout, detached-field index, and their dedicated test files now match their pre-compaction state.
+Committed M1-M3 C2 synchronization, schema reconciliation, and temporary refresh code are unchanged.
+The independent `maxId` fix and its regression remain.
+
+[The ordered-publication integration suite](../../src/test/shared-tree/deferredSchemaUpgrade.integration.ts) now provides 16 permanent tests for the selected primitive behavior:
+
+- A private schema upgrade survives an aborted application transaction without publication.
+- Ordinary merge publishes the original schema and data revisions in order, preserves an inserted object, and does not republish earlier commits.
+- Native data undo and redo retain the schema and restore the original node.
+- Separate-message and turn-based delivery preserve independent outcomes and order.
+- The current rebaser drops data following a rejected schema, including data valid under the old schema or an equivalent winning remote schema.
+- Reconnect preserves order and does not revive dropped data.
+- Runtime rollback removes queued data before schema.
+- An accepted schema remains when later data is rolled back or violates a constraint.
+
+The tests use the existing three-client mock runtime, optimized forest, and branch APIs.
+They do not claim that C2's per-member retry tracking or publication controller is complete.
+No outcome reducer or controller behavior was changed in this cleanup.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager|^SquashingTransactionStack|^TransactionStack|^sharedTreeView|^viewBranch|^deferred schema upgrades: ordered publication|^SharedTreeChangeFamily|^sharedTreeChangeCodec|^SharedTreeCore|^DefaultResubmitMachine|^Summary load regression tests|^ModularChangeFamily|^DefaultRevisionReplacer' --reporter dot`: 755 passed.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^deferred schema upgrades: ordered publication|^SharedTreeChangeFamily changeRevision' --reporter dot`: 19 passed.
+- `pnpm --dir packages/dds/tree exec biome check src/feature-libraries/modular-schema/modularChangeFamily.ts src/test/shared-tree/deferredSchemaUpgrade.integration.ts src/test/shared-tree/sharedTreeChangeFamily.spec.ts`: passed.
+- `pnpm --dir packages/dds/tree exec eslint --quiet src/feature-libraries/modular-schema/modularChangeFamily.ts src/test/shared-tree/deferredSchemaUpgrade.integration.ts src/test/shared-tree/sharedTreeChangeFamily.spec.ts`: passed.
+
+Stop here for review.
+No cleanup commit has been created, and the remaining M4 publication and M5 outcome/retry work has not started.
+
+### Investigation: ordered two-commit publication
+
+The 2026-10-27 investigation established the ordered two-commit alternative, which the user selected.
+The milestone sequence below now follows that strategy.
+The probes establish behavior of the underlying primitives, not a completed controller implementation.
+
+#### Ordering and rejection are separate guarantees
+
+- The loader's [connection manager](../../../../loader/container-loader/src/connectionManager.ts) assigns increasing client sequence numbers.
+  Its [delta manager](../../../../loader/container-loader/src/deltaManager.ts) delivers sequenced messages in order and checks client sequence consistency.
+- The Routerlicious sequencer's [order check](../../../../../server/routerlicious/packages/lambdas/src/deli/lambda.ts) ignores duplicates and rejects gaps.
+  This prevents a later op from silently skipping a missing earlier op from the same client.
+- [Grouped batches](../../../../runtime/runtime-definitions/src/protocol.ts) additionally keep their messages contiguous and free from other clients' interleaving.
+  Same-client ordering alone does not promise identical batch boundaries or one shared commit outcome.
+- The runtime's [pending-state replay](../../../../runtime/container-runtime/src/pendingStateManager.ts) preserves queued order and batch grouping on reconnect.
+  Transport resubmission is distinct from a new application recovery attempt.
+- A service NACK is not a SharedTree schema conflict.
+  The connection manager reconnects or closes the container; the rebaser, not the ordering service, decides whether a schema change has an effect.
+
+#### Current schema-rejection cascade
+
+With private history `B -> S -> D1 -> D2` and a concurrent remote change `R`, the current [branch rebase algorithm](../../src/core/rebase/utils.ts) rebases each later change over the rollback of its predecessors as well as the new base.
+If `S` loses, reconciling `D1` includes the inverse of `S`.
+The current [SharedTree change family](../../src/shared-tree/sharedTreeChangeFamily.ts) returns an empty change whenever either nonempty input contains a schema change.
+That causes both `D1` and `D2` to be dropped as well.
+
+This happens even if the data edit is valid under the old schema, or if an equivalent remote schema upgrade has already made it valid.
+The resulting `FullyDropped` outcomes are per commit.
+The original changes must still be retained for the one-retry policy.
+This conservative cascade is current implementation behavior, not a permanent grouping guarantee that can be assumed after full schema/data rebase support lands.
+
+Runtime rollback uses a different path.
+The runtime's [batch checkpoint](../../../../runtime/container-runtime/src/opLifecycle/batchManager.ts) visits queued changes in reverse order.
+[SharedTreeCore.rollback](../../src/shared-tree-core/sharedTreeCore.ts) only rolls back the latest commit and asserts if asked to roll back an earlier one.
+Thus, rolling back an unflushed schema/data batch removes data before schema.
+The schema rollback method does not independently search for and cancel arbitrary later commits.
+
+#### Probe results
+
+Sixteen temporary deterministic probes used three clients, the optimized forest, and real SharedTree changes.
+All passed after correcting the no-change-constraint fixture's minimum client version.
+The first five scenarios below each ran with separate-message and turn-based bunched delivery.
+The remaining six each ran once.
+The probes were removed after the investigation.
+
+| Scenario | Observed result |
+| --- | --- |
+| Ordered schema then data, no conflict | Both commits applied in order. A native data revertible undid data without reverting schema. |
+| Concurrent data edit sequenced before schema | Schema and both following local data commits became empty and reported `FullyDropped`; all clients converged on the old schema. |
+| Equivalent remote schema wins | The local schema and following data were still dropped, although the local view was compatible afterward. |
+| Reconnect with no conflict | Both original commits applied in order. |
+| Reconnect over conflicting remote data | Schema and dependent commits remained dropped after resubmission. |
+| Merge private schema/data history without compaction | Publication and later synchronization preserved an inserted object's identity; another edit through that object reached peers. |
+| Roll back unflushed schema/data/data | Rollback order was data, data, schema; no data op remained queued. |
+| Accepted local prefix before failed upgrade | The prefix remained; edits after the failed schema were dropped. |
+| Process the schema message before the separate data message | A peer could observe the upgraded schema before the content edit arrived. |
+| Accepted schema followed by rollback of unflushed data | Schema remained upgraded; data was removed. |
+| Accepted schema followed by a constrained data edit | Schema remained applied while the data reported `NewContentOnly` and did not enter document content. |
+
+The last two cases show that two commits are not an all-or-nothing publication transaction.
+Ordering and a current forward rejection cascade do not undo an already accepted schema when later data fails.
+For application-requested abort, C2 must keep both changes private until the application transaction completes.
+
+Additional existing-suite validation passed:
+
+- Loader client sequence-number validation: 3 tests.
+- Runtime batching, `orderSequentially`, pending replay, and rollback: 63 tests.
+- SharedTree schema-conflict and runtime rollback tests: 16 tests.
+
+These were local unit/integration checks with mock delivery plus production-source tracing.
+No live Fluid service or deployed driver was tested.
+
+#### Implications for the design
+
+An ordered schema commit followed by a data commit is the selected C2 strategy.
+It preserves original edit revisions and avoids initial-publication normalization and special data-only undo projection from a mixed commit.
+It still needs:
+
+- Submission only after the application transaction succeeds, with explicit handling of failure between the two submissions.
+- A real runtime batch if non-interleaving or batch rollback is part of the intended contract; do not assume it merely from two adjacent method calls.
+- Correlation of separate schema/data outcomes and retained work for one coordinated retry.
+- Care when schema succeeds but data fails, and when a sufficient remote schema removes the need for a schema retry.
+- An explicit contract and tests for what happens to dependent data when future schema rebase rules change.
+
+Single-commit publication is an implementation strategy, not a separately agreed user-facing requirement.
+The investigation does not justify discarding user changes or relaxing the retry-or-fail-stop contract.
+Implementation remains paused; this update changes the plan only.
 
 ## 1. Development method
 
@@ -241,7 +447,7 @@ Start with two internal implementation units under [shared-tree](../../src/share
 2. A temporary rebase adapter, provisionally named `deferredSchemaRebase.ts`.
    It owns the workaround-specific reconciliation and reconstruction.
 
-These are proposed filenames, not existing modules or new public APIs.
+The first implementation increments introduced these internal modules; they are not new public APIs.
 Add matching unit tests under [test/shared-tree](../../src/test/shared-tree).
 Extract further files only when a cohesive responsibility or a demonstrated reuse case warrants it.
 Keep schema/data composition helpers beside the existing change-family code when that is their natural owner.
@@ -251,6 +457,8 @@ The permanent controller must own:
 - The borrowed base checkout and the owned view checkout.
 - Internal schema-deferral state, separately from publication attempts and transaction state.
 - Logical-edit records that link private changes, published revisions, retry revisions, and outcomes.
+- An ordered list of publication members, identifying the schema commit and application commits, with each member's submission and settled state.
+  One logical attempt owns the retry allowance even though several commits can report outcomes.
 - Event subscriptions, retained history, and disposal.
 - Origin tracking that distinguishes application changes from synchronization and preparation.
 
@@ -290,14 +498,15 @@ Write each contract and its first tests in milestone M0.
 | --- | --- |
 | Creation and ownership | Determine where deferred-mode views obtain their persistent checkout. Preserve the one-view restriction on the base, even if the public view uses a different anchor set. Define ownership for shared, independent, and application-forked views. |
 | Synchronization boundary | Identify a safe internal point for publication and base-to-view updates. Prove that locks and event ordering remain correct without a microtask that changes submission timing. |
-| Commit identity | Define how an earlier private schema commit and later application changes become one new publication. Map history and align the view so the original changes cannot be published again. |
+| Commit identity | Preserve the earlier private schema commit and later application commits during normal publication. Track their order and published membership without compaction. Map new identities only when recovery requires a new attempt. |
+| Submission boundary | Submit only after application commit. Identify a supported runtime batch/rollback boundary where needed, and test failure between submitting schema and data. Do not assume joint acceptance. |
 | Local and remote event identity | A private checkout is not a shared branch. Its current event logic cannot simply be assumed to provide the same remote-change and settled events as the base. Define forwarding without duplicate logical notifications. |
 | Retained work | Retain original changes, their base, constraints, detached content, and dependent edits before a lossy rebase. Define who owns each retained reference and when it is released. |
-| Retry safety | Prove a safe reconstruction path for representative schema/data conflicts. An empty rebase result or a serialized change alone is not proof that the original intent can be recovered. |
-| Undo projection | Define the data-only inverse in the correct upgraded context. Distinguish application abort from user undo and preserve revertible cloning, disposal, and history identity. |
+| Retry safety | Prove a safe reconstruction path using each member's actual outcome. Do not replay accepted schema or data, retry on an unknown acknowledgement, or reset the logical attempt's allowance. |
+| Native data undo | Preserve the separate data commit's revertible, cloning, disposal, and history identity. Translate only where recovery changes the data revision; do not add mixed-commit undo projection for the automatic upgrade. |
 | Fatal propagation | A private fork has its own breaker. Prove that a fatal synchronization failure stops the affected public tree/view and reaches the runtime or independent-view caller. Logging alone is insufficient. |
 
-Use small executable proofs for atomic publication, retry, and undo.
+Use small executable proofs for ordered publication, partial outcomes, retry, and native data undo.
 Keep the useful tests as regression coverage.
 If a proof cannot satisfy its contract, revise the implementation design before exposing the opt-in.
 Do not hide an unresolved mechanism behind a success result or a general "pending upgrade" error.
@@ -314,9 +523,9 @@ Complete validation and create the milestone's Conventional Commit, including ne
 | M1 | M0 | Pure decisions and isolated rebase-adapter contract. |
 | M2 | M1 | Persistent synchronization for already-compatible schemas. |
 | M3 | M2 | Explicit local upgrade, read-only behavior, and remote-schema handling. |
-| M4 | M3 | Atomic publication and transaction integration. |
+| M4 | M3 | Ordered schema/data publication, submission failure handling, and transaction integration. |
 | M5 | M4 | One safe retry and end-to-end fatal failure. |
-| M6 | M5 | Data-only undo and correct logical history. |
+| M6 | M5 | Native data revertibles, retry identity, and correct logical history. |
 | M7 | M6 | Complete public-operation and persistence coverage. |
 | M8 | M7 | Public opt-in, final documentation, and release validation. |
 | M9 | M8 and deployed full rebase support | Removal of temporary workarounds. |
@@ -334,7 +543,9 @@ Complete validation and create the milestone's Conventional Commit, including ne
 
 - Confirm immediate mode remains the baseline.
 - Convert relevant prior branch probes into concise permanent tests where coverage is missing.
-- Prove that a local fork upgrade sends no op, ordinary merge preserves separate commits, and a compound change can encode schema before data.
+- Prove that a local fork upgrade sends no op, ordinary merge publishes separate commits in order, and initial publication preserves inserted-node identity without compaction.
+- Convert the relevant two-commit investigation probes into permanent tests.
+  Include native undo, rejection cascade, reconnect, reverse-order batch rollback, and schema-accepted/data-failed outcomes.
 - Write focused tests that demonstrate the identity, retry, and undo gaps before adding new coordination.
 
 **Implementation and gate**
@@ -351,6 +562,7 @@ The gate is a documented, test-backed implementation path for the three high-ris
 Specify the private state transitions, origin categories, and adapter inputs and results.
 Keep schema-deferral state separate from "initial attempt in flight", "retry in flight", accepted, failed, and disposed states.
 Ending schema deferral must not erase a retry count or outstanding outcome tracking.
+Record schema and application outcomes per member; schema acceptance alone does not accept the whole logical publication.
 
 **Tests first**
 
@@ -360,6 +572,8 @@ Ending schema deferral must not erase a retry count or outstanding outcome track
 - A new revision, remote schema, or dependent edit does not reset the allowance.
 - Application-requested abort does not retry.
 - Duplicate or stale notifications cannot advance the same logical operation twice.
+- A failed schema acknowledgement does not by itself prove every later member's final outcome.
+- Accepted members are excluded from recovery, and an unknown member outcome prevents unsafe duplicate replay.
 
 **Implementation and gate**
 
@@ -422,38 +636,54 @@ Avoid exposing intermediate downgrade/re-upgrade states to callbacks.
 Keep identifiers, anchors, and object identity stable; do not reconstruct the tree from exported JSON.
 The gate includes optimized and debug forests, not only the reference forest.
 
-### M4. Publish one compound change and preserve transaction semantics
+### M4. Publish ordered commits and preserve transaction semantics
 
 **Documentation first**
 
-Specify the publication boundary, revision mapping, and the lifecycle of the private schema commit.
+Specify the publication boundary, preserved schema/data identities, and lifecycle of the private schema commit.
 Document the distinction between local application, submission, and accepted outcome.
 Specify the event trace for a single edit and an enclosing transaction.
+Document that an accepted schema can remain after later data failure.
+Identify the exact runtime boundary used for non-interleaving or rollback if the implementation relies on those guarantees.
 
 **Tests first**
 
-- The first generated application change publishes one schema-before-data commit.
+- The first generated application change publishes a schema commit followed by a separate data commit.
+- The initial pair retains its revisions and inserted-node identity without compaction.
 - Edits already valid under the old schema still trigger publication.
 - Constraint-only and net-zero committed changes count; calls that generate no change do not.
 - An application-requested inner or outer abort sends neither schema nor data and leaves the local upgraded view usable.
 - An earlier successful inner edit is not erased by aborting a later inner transaction.
 - A later edit after abort publishes the still-needed upgrade without another upgrade call.
-- A sufficient remote schema arriving during a transaction cancels the obsolete prefix without losing application work.
+- A sufficient remote schema arriving during a transaction cancels the unpublished schema commit without losing application work.
 - Post-processors preserve the agreed trigger and constraint semantics.
 - The second and later edits never republish the original private schema or data.
+- Separate-message and grouped-batch delivery both preserve schema-before-data order.
+- A failure between submissions rolls back the complete queued scope where supported, or causes explicit fatal failure; it never reports success after losing work.
+- Reverse-order runtime rollback removes data before schema when both are queued.
+- An already accepted schema remains when later data is rolled back or rejected.
 
 **Implementation and gate**
 
-Reuse change-family composition and revision-replacement helpers.
-Do not treat an ordinary merge of separate schema and data commits as atomic.
-The existing transaction squasher assumes its own revision allocation; do not concatenate arbitrary commits and assume that contract holds.
+The targeted compaction cleanup and ordered-publication primitive tests are complete and awaiting review, as recorded above.
+Keep the independent `maxId` fix and regression separate from C2's publication design.
+Do not reintroduce compaction APIs merely to preserve the superseded approach.
 
 Retain the original work before publishing.
-Reconcile the view's private history with the published revision without rebuilding nodes or mutating an already published edit's identity.
+Use the existing branch merge path to publish a committed suffix in schema-then-data order without normalizing it into one revision.
+Application transactions still use the existing stack for their own data changes.
+Do not leave a transaction open across the read-only period to capture the earlier schema commit.
 Preserve labels, custom metadata, and the original transaction grouping.
-Exercise the normal encoding, enrichment, and submission path rather than call the runtime directly.
+Exercise normal encoding, enrichment, and submission.
+Add only the runtime-boundary wiring needed for ordered publication and defined failure handling.
+Do not fabricate batching guarantees inside the tree or bypass runtime pending-state tracking.
 
-The gate requires assertions on the actual submitted commit shape, the view/base history relationship, and a subsequent edit.
+Record schema and application commits as members of one logical publication attempt.
+Preserve multiple application commits when an existing operation transfers a longer history.
+Do not implement this as exactly two ops for every possible API path.
+
+The gate requires assertions on actual submitted commit identities and order, transaction-abort behavior, partial submission, the view/base history relationship, and a subsequent edit.
+A runtime batch does not turn separate SharedTree outcomes into one atomic acceptance result.
 A matching final JSON tree alone is not sufficient.
 
 ### M5. Retry once safely, then fail-stop
@@ -473,6 +703,9 @@ Document why transport resubmission is not a new application attempt.
 - Delayed acknowledgement does not trigger an extra attempt.
 - Remote schema changes and dependent local edits do not reset the retry allowance.
 - A sufficient remote schema leads to data-only recovery without the cancelled upgrade.
+- Schema rejection currently drops following data, including edits valid under the old schema; retain and correlate all affected outcomes.
+- Schema acceptance followed by data rejection preserves the schema and retries only failed work when safe.
+- No retry starts while relevant member outcomes or runtime bookkeeping remain unresolved.
 - Retained work survives history trimming and detached-content cleanup pressure.
 - Application callbacks with external side effects run only once.
 - A fatal error reaches the host and prevents later access through the affected view/tree.
@@ -484,21 +717,23 @@ Preserve application constraints and stable target identity.
 Do not simply replay old indexes, strip all schema changes, or feed the same mixed change into the rebaser that dropped it.
 
 Start with a proof for monotonic local expansion over remote data edits.
-Investigate separating the known internal schema prefix from application changes only where their contexts and identifiers can be transformed safely.
+Retain the schema and data commits separately and transform application changes only where their contexts and identifiers can be reconciled safely.
 Use existing data rebase machinery for proven compatible contexts.
 For remote schema changes or mixed histories, check schema compatibility and data interpretation explicitly before taking that path.
 If the checks cannot prove a safe reconstruction, return a terminal failure result rather than an empty success.
 The plan does not assume this transformation is already provided by the codebase.
 
 Retain dependent edits until the publication outcome is resolved.
-Route one new attempt through normal submission, with its own attempt identity linked to the original logical edit.
+Route one new ordered attempt through normal submission, with its member revisions linked to the original logical operation.
+Omit accepted or remotely satisfied schema work and any already accepted application member.
+Do not replay the full pair solely because one member failed.
 Keep the retry count independent of pending-schema state.
 
 The gate is real multi-client rejection and recovery, plus the fatal path.
 Injecting an outcome is useful for unit tests but is not sufficient integration evidence.
 Do not clear a broken-state marker to keep a failed scenario running.
 
-### M6. Provide data-only undo and stable history
+### M6. Preserve native data undo and stable history
 
 **Documentation first**
 
@@ -518,13 +753,14 @@ Document history and serialization behavior without exposing internal attempt bo
 
 **Implementation and gate**
 
-Create the data inverse in the upgraded context and retain its repair data.
-Do not remove `hasSchemaChange` guards globally or blindly invert the whole compound commit.
-Recognize the controlled deferred-upgrade operation without conflating it with an arbitrary schema/data transaction.
+Use the separate data commit's existing revertible and retain its repair data.
+Do not remove `hasSchemaChange` guards or introduce special inverse projection for the automatic upgrade.
+Forward data outcomes and preserve or translate the revertible's identity if a successful retry replaces the data revision.
+Do not apply a data inverse to the schema commit or change existing behavior for arbitrary application-authored mixed transactions.
 Preserve the synchronous revertible-factory lifetime inside the change event.
 
-Resolve whether recognition is local or must survive serialized replay and history loading.
-If durable identification is required, handle it through an approved compatibility design, not user metadata or a manually edited codec format.
+Preserve separate history through serialization and loading using existing commit formats.
+Internal attempt bookkeeping belongs in the controller, not user metadata.
 The gate is an executable data-only undo/redo sequence through the real publication path.
 
 ### M7. Complete every operation path and persistence boundary
@@ -543,7 +779,7 @@ No "unsupported while upgrade pending" category is allowed.
 | Import and export | Imports trigger only when inserted; view exports reflect the local upgrade; base summaries exclude unpublished private state. |
 | Transactions and constraints | Synchronous, nested, asynchronous, abort, labels, post-processing, and constraints on revert. |
 | Application forks, merge, and rebase | Preserve isolation and history identity; no accidental direct publication from an application fork; no echo when merged through C2. |
-| Serialized `applyChange` and history replay | A first imported application change can trigger atomic publication without rewriting its existing revision to mean a different authored edit. |
+| Serialized `applyChange` and history replay | Precede the existing application commits with a still-needed schema commit without rewriting their revisions into a combined commit. |
 | Undo, redo, `revertTo`, and `rewindTo` | Exercise both pending and completed deferral with existing API restrictions unchanged. |
 | Named shared branches and independent views | No assumption that the base is the main shared branch or has a runtime that emits sequencing events. |
 | Uninitialized or detached trees | Initialization remains explicit; attach and load use consistent base state; no fabricated acknowledgement wait. |
@@ -584,7 +820,8 @@ An intermediate internal implementation is not a supported partial feature.
 When full schema/data rebase support is available for the supported collaboration baseline:
 
 1. Run the common behavior tests against the standard rebase path.
-2. Cover both directions, concurrent schemas, separate upgrade/edit history, and compound publication commits.
+2. Cover both directions, concurrent schemas, ordered schema/data publication, and application-authored mixed transactions.
+   Verify dependency and partial-outcome behavior instead of assuming the old rejection cascade remains.
 3. Verify node lifetime, constraints, encoding, resubmit, and mixed-version behavior.
 4. Replace the adapter selection at its single construction point.
 5. Delete obsolete schema reconstruction and retry transformations.
@@ -601,6 +838,9 @@ Do not remove a workaround while another supported path still requires it.
 
 The temporary adapter receives an explicitly retained base, a current base snapshot, local schema intent, and retained application changes.
 It returns a valid reconciliation/publication plan or an explicit reason that safe recovery is impossible.
+Revise the initial single-change result type to describe the ordered members needed by the selected strategy.
+Preserve member identity where possible, identify new retry revisions explicitly, and exclude accepted work.
+Do not hide another schema/data composition inside the adapter merely to fit the old result type.
 It must not publish, emit application events, reset retry state, or select public view behavior.
 The permanent controller owns those actions.
 
@@ -621,7 +861,7 @@ Do not introduce a public workaround switch.
 | Schema over data before application work | Refresh the private schema-only state while preserving the view. | Standard rebase retains the upgrade and produces a consistent view update. |
 | Concurrent schemas before application work | Check received-schema viewability first; cancel obsolete deferral or compute a valid remaining target. | Standard schema/schema reconciliation works; retain the permanent viewability exit rule. |
 | Data over schema with retained user work | Safely transform retained edits or fail-stop; never discard them through schema-only refresh. | Standard data/schema rebase handles the same edits and constraints. |
-| Compound publication or separate upgrade/edit history | Reconstruct one valid retry when possible, without replaying callbacks. | Both forms work through the standard rebase, sequencing, and resubmit paths. |
+| Ordered schema/data publication and mixed application history | Reconstruct one valid ordered retry when possible, without replaying accepted members or callbacks. | Standard rebase, sequencing, and resubmit preserve dependency and partial-outcome contracts. |
 | Concurrent upgrades with dependent edits | Reconcile schema and retained data together, within the one-retry budget. | Complete schema/schema and mixed-change coverage passes. |
 
 Document each workaround with:
@@ -665,7 +905,7 @@ Name top-level unit suites after the module.
 Example test names:
 
 - `keeps the base schema unchanged after a local upgrade`
-- `publishes schema before data in the first application commit`
+- `publishes the schema commit before the first data commit`
 - `keeps the local upgrade after an inner transaction abort`
 - `stops preparing the upgrade after a viewable remote schema`
 - `retries a rejected publication once without rerunning the callback`
@@ -678,7 +918,8 @@ Example test names:
 | Question | Evidence |
 | --- | --- |
 | Did reading mutate the shared document? | Base head, base stored schema, submitted commit count, and summary content. |
-| Was publication atomic? | One submitted tree commit containing ordered schema/data subchanges. Do not equate transport-envelope count with commit count. |
+| Was publication ordered and transaction-safe? | Separate schema/data commits in order, no submission on application abort, and explicit partial-submission and reverse-rollback tests. Do not equate transport batching with atomic acceptance. |
+| Were partial outcomes handled safely? | Per-member schema/data results, no replay of accepted work, and no false joint success on the first acknowledgement. |
 | Were edits duplicated? | Logical edit identity, publication records, node identity, and final data on all clients. |
 | Did retry stay bounded? | Initial/retry application attempts, callback count, fatal-error observation, and proof that no third attempt was submitted. |
 | Did undo preserve schema? | Data before/after undo and schema on each client, including after retry. |
