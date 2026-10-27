@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
-const webpack = require("webpack");
+import { commonExampleConfig } from "@fluid-example/webpack-fluid-loader";
+import webpack from "webpack";
 
-module.exports = (env) => ({
-	...fluidRoute.commonExampleConfig(__dirname, env),
+export default (env) => ({
+	...commonExampleConfig(import.meta.dirname, env),
 	plugins: [
 		new webpack.ProvidePlugin({
 			process: "process/browser.js",

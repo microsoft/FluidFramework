@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
+import {
+	NetworkError,
+	type ICreateRefParamsExternal,
+	type IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import { handleResponse } from "@fluidframework/server-services-shared";
+import { containsPathTraversal, handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import type nconf from "nconf";
 
@@ -25,7 +26,10 @@ import {
 /**
  * Simple method to convert from a path id to the git reference ID
  */
-function getRefId(id): string {
+function getRefId(id: string): string {
+	if (!id || containsPathTraversal(id)) {
+		throw new NetworkError(400, `Invalid ref: ${id}`);
+	}
 	return `refs/${id}`;
 }
 
