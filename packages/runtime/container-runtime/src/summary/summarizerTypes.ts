@@ -471,8 +471,8 @@ export interface ISummarizeHeuristicData {
 	totalOpsSize: number;
 
 	/**
-	 * Whether operation data since the last successful summary is missing, making the counts unreliable.
-	 * Cleared when an acknowledged attempt covers the missing history.
+	 * Whether operation counts are unreliable for the current summary baseline.
+	 * Cleared when this client's summary attempt is acknowledged and its counts are retired.
 	 */
 	hasMissingOpData: boolean;
 

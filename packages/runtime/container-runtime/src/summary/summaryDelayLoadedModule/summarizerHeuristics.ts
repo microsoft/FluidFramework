@@ -95,7 +95,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;
 
-		// The acknowledged attempt covers the missing startup history and retires any estimated counts.
+		// The acknowledged attempt retires the captured counts and establishes a reliable baseline.
 		// All remaining ops were observed, so incremental summary validation is reliable again.
 		this.hasMissingOpData = false;
 	}

@@ -31,6 +31,7 @@ import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-ut
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
+import { opSize } from "../../opProperties.js";
 import {
 	type IGeneratedSummaryStats,
 	type ISummarizeHeuristicData,
@@ -191,12 +192,9 @@ describe("Runtime", () => {
 				await flushPromises(); // let summarize run
 			}
 
-			async function emitNack(
-				retryAfterSeconds?: number,
-				summarySequenceNumber = lastSummarySeq,
-			) {
+			async function emitNack(retryAfterSeconds?: number) {
 				const summaryProposal: ISummaryProposal = {
-					summarySequenceNumber,
+					summarySequenceNumber: lastSummarySeq,
 				};
 				const contents: ISummaryNack & { retryAfter?: number } = {
 					summaryProposal,
@@ -282,6 +280,16 @@ describe("Runtime", () => {
 					refSequenceNumber: 0,
 					summaryTime: Date.now(),
 				});
+				// Model the accounting listener owned by Summarizer, installed before RunningSummarizer.
+				mockRuntime.on("op", (op, runtimeMessage) => {
+					heuristicData.lastOpSequenceNumber = op.sequenceNumber;
+					if (runtimeMessage === true) {
+						heuristicData.numRuntimeOps++;
+					} else {
+						heuristicData.numNonRuntimeOps++;
+					}
+					heuristicData.totalOpsSize += opSize(op);
+				});
 				summarizer = await RunningSummarizer.start(
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
@@ -360,6 +368,8 @@ describe("Runtime", () => {
 								},
 							};
 						});
+						// Inject uncertainty to exercise SummaryGenerator's diagnostic guard.
+						heuristicData.hasMissingOpData = missingStartupOps;
 						assert.equal(heuristicData.hasMissingOpData, missingStartupOps);
 						let first = summarizer.summarizeOnDemand({ reason: "test" });
 						const firstSubmit = await first.summarySubmitted;
@@ -1598,78 +1608,59 @@ describe("Runtime", () => {
 			});
 
 			describe("Summary Start", () => {
-				for (const acknowledgeCoveringSummary of [false, true]) {
-					it(`detects pre-listener history independently of grouped op counts (covering ack: ${acknowledgeCoveringSummary})`, async () => {
-						sinon.stub(mockDeltaManager, "lastSequenceNumber").get(() => lastRefSeq);
-						// Model a missed grouped batch changing ten stores at seq 1, then a proposal at seq 2.
-						lastRefSeq = 1;
-						emitBroadcast();
-						const pendingSummarySeq = lastSummarySeq;
-						const startP = startRunningSummarizer(true, async () => {
-							const result = await successfulSubmitSummary();
-							assert(result.stage === "submit");
-							return {
-								...result,
-								// Inject serialization stats; the native fixture tests actual store handle reuse.
-								summaryStats: { ...emptySummaryStats, summarizedDataStoreCount: 10 },
-							};
-						});
-						await flushPromises();
-						assert.deepEqual(
-							[heuristicData.numRuntimeOps, heuristicData.numNonRuntimeOps],
-							[0, 0],
-						);
-
-						// While waitStart waits for the proposal, observe three logical ops at seq 3.
-						const sequenceNumber = ++lastRefSeq;
-						const op = { sequenceNumber, timestamp: Date.now(), type: MessageType.Operation };
-						mockDeltaManager.emit("op", op);
-						for (let i = 0; i < 3; i++) {
-							mockRuntime.emit("op", op, true);
-						}
-						assert.deepEqual([heuristicData.numRuntimeOps], [3]);
-
-						if (acknowledgeCoveringSummary) {
-							// Ack a newer summary with ref seq 3, covering the pre-listener boundary at seq 2.
-							emitBroadcast();
-							await emitNack(undefined, pendingSummarySeq);
-							await emitAck();
-						} else {
-							await emitNack();
-						}
-						await startP;
-						assert.equal(heuristicData.hasMissingOpData, !acknowledgeCoveringSummary);
-						if (acknowledgeCoveringSummary) {
-							assert.equal(heuristicData.lastSuccessfulSummary.refSequenceNumber, 3);
-						} else {
-							assert.equal(lastRefSeq, 4);
-							assert.equal(heuristicData.lastSuccessfulSummary.refSequenceNumber, 0);
-							assert.equal(
-								heuristicData.numRuntimeOps + heuristicData.numNonRuntimeOps,
-								4,
-								"logical counts must mask the missed history in the old sequence-gap calculation",
-							);
-						}
-						mockLogger.clear();
-						const summary = summarizer.summarizeOnDemand({ reason: "startup coverage" });
-						const submit = await summary.summarySubmitted;
-						assert(submit.success);
-						if (acknowledgeCoveringSummary) {
-							mockLogger.assertMatchAny([
-								{ eventName: "Running:IncrementalSummaryViolation" },
-							]);
-						} else {
-							mockLogger.assertMatchNone([
-								{ eventName: "Running:IncrementalSummaryViolation" },
-							]);
-						}
-						await emitAck();
-						const ack = await summary.receivedSummaryAckOrNack;
-						assert(ack.success);
-						assert.equal(heuristicData.hasMissingOpData, false);
-						summarizer.dispose();
+				it("marks external-ack counts unreliable until an own summary is acknowledged", async () => {
+					// An external proposal covers seq 1. Its ack arrives while startup is waiting.
+					lastRefSeq = 1;
+					emitBroadcast();
+					const startP = startRunningSummarizer(true, async () => {
+						const result = await successfulSubmitSummary();
+						assert(result.stage === "submit");
+						return {
+							...result,
+							summaryStats: {
+								...emptySummaryStats,
+								summarizedDataStoreCount: heuristicData.opsSinceLastSummary + 1,
+							},
+						};
 					});
-				}
+					await flushPromises();
+					await emitNextOp();
+					await emitAck();
+					await startP;
+					assert.equal(heuristicData.lastSuccessfulSummary.refSequenceNumber, 1);
+					assert.equal(heuristicData.hasMissingOpData, true);
+					mockLogger.clear();
+
+					const first = summarizer.summarizeOnDemand({ reason: "after external ack" });
+					const firstSubmit = await first.summarySubmitted;
+					assert(firstSubmit.success);
+					mockLogger.assertMatchNone([{ eventName: "Running:IncrementalSummaryViolation" }]);
+					assert.equal(
+						heuristicData.hasMissingOpData,
+						true,
+						"submission must not restore validation",
+					);
+					await emitNextOp();
+					await emitAck();
+					const firstAck = await first.receivedSummaryAckOrNack;
+					assert(firstAck.success);
+					assert.equal(heuristicData.hasMissingOpData, false);
+					assert.equal(
+						heuristicData.numRuntimeOps,
+						1,
+						"retain ops received after the attempt snapshot",
+					);
+					mockLogger.clear();
+
+					const second = summarizer.summarizeOnDemand({ reason: "reliable baseline" });
+					const secondSubmit = await second.summarySubmitted;
+					assert(secondSubmit.success);
+					mockLogger.assertMatchAny([{ eventName: "Running:IncrementalSummaryViolation" }]);
+					await emitAck();
+					const secondAck = await second.receivedSummaryAckOrNack;
+					assert(secondAck.success);
+					summarizer.dispose();
+				});
 
 				it("Should summarize immediately if summary ack is missing at startup", async () => {
 					assertRunCounts(0, 0);

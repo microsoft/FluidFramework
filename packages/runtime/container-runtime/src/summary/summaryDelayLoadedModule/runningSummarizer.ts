@@ -26,7 +26,6 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { opSize } from "../../opProperties.js";
 import type {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -85,9 +84,6 @@ export class RunningSummarizer
 
 		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
-		// The constructor installs the op listener synchronously. Keep the pre-listener
-		// sequence boundary separate from logical op counts, since grouped ops share a sequence number.
-		const sequenceNumberBeforeListening = runtime.deltaManager.lastSequenceNumber;
 		const summarizer = new RunningSummarizer(
 			logger,
 			summaryWatcher,
@@ -126,28 +122,6 @@ export class RunningSummarizer
 				error,
 			);
 		});
-
-		// Approximate missing counts for scheduling. This mixes sequence positions with logical op counts,
-		// so grouped ops observed during startup can hide earlier missed ops in this calculation.
-		const diff =
-			runtime.deltaManager.lastSequenceNumber -
-			(heuristicData.lastSuccessfulSummary.refSequenceNumber +
-				heuristicData.numNonRuntimeOps +
-				heuristicData.numRuntimeOps);
-		// waitStart may advance the acknowledged baseline. Counts remain unreliable if that baseline
-		// does not cover all pre-listener history, regardless of how many logical ops we observed.
-		heuristicData.hasMissingOpData =
-			sequenceNumberBeforeListening > heuristicData.lastSuccessfulSummary.refSequenceNumber;
-
-		if (diff > 0) {
-			// Approximate additional activity for scheduling. The runtime/non-runtime breakdown is unknown,
-			// so divide the positive diff roughly equally between the two counters.
-			heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
-			heuristicData.numRuntimeOps += Math.floor(diff / 2);
-		}
-
-		// Update last seq number (in case the handlers haven't processed anything yet)
-		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
@@ -446,16 +420,7 @@ export class RunningSummarizer
 	private heuristicRunnerMicroTaskExists = false;
 
 	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
-		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
-
-		if (runtimeMessage) {
-			this.heuristicData.numRuntimeOps++;
-		} else {
-			this.heuristicData.numNonRuntimeOps++;
-		}
-
-		this.heuristicData.totalOpsSize += opSize(op);
-
+		// Summarizer's listener updates the shared counts before this scheduling listener runs.
 		// Check for enqueued on-demand summaries; Intentionally do nothing otherwise
 		if (
 			this.initialized &&
@@ -562,6 +527,14 @@ export class RunningSummarizer
 		this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
 		if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
+			// Counts are collected from the loaded checkpoint. Rebasing them to an external
+			// summary's reference sequence requires historical counter snapshots.
+			if (
+				waitStartResult.value.summaryOp.referenceSequenceNumber >
+				this.heuristicData.lastSuccessfulSummary.refSequenceNumber
+			) {
+				this.heuristicData.hasMissingOpData = true;
+			}
 			this.heuristicData.updateWithLastSummaryAckInfo({
 				refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
 				// This will be the Summarizer starting point so only use timestamps from client's machine.

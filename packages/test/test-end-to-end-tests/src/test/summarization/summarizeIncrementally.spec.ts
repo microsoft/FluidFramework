@@ -271,7 +271,7 @@ describeCompat(
 	"Incremental summary startup accounting",
 	"NoCompat",
 	(getTestObjectProvider) => {
-		it("reuses unchanged stores after catching up on grouped attaches before counting ops", async function () {
+		it("counts grouped catch-up ops before RunningSummarizer starts and reuses unchanged stores", async function () {
 			const provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();
@@ -318,8 +318,8 @@ describeCompat(
 				"attaches must share a sequence number",
 			);
 
-			// Load a fresh summarizer from the acknowledged checkpoint. Catch-up happens before
-			// RunningSummarizer begins tracking logical operations.
+			// Load a fresh summarizer from the acknowledged checkpoint. Summarizer counts catch-up
+			// ops before RunningSummarizer starts scheduling summaries.
 			const logger = new MockLogger();
 			const second = await createSummarizer(
 				provider,
@@ -340,7 +340,19 @@ describeCompat(
 			);
 			assert(generated !== undefined, "summary generation telemetry is required");
 			assert.equal(generated.fullTree, false);
-			assert.equal(generated.hasMissingOpData, true, "must exercise missing startup op data");
+			assert.equal(
+				generated.hasMissingOpData,
+				false,
+				"catch-up ops must be counted, not estimated",
+			);
+			assert(
+				Number(generated.runtimeOpsSinceLastSummary) >= newStores.length * 2,
+				"must count each attach and root update within the grouped batch",
+			);
+			assert(
+				Number(generated.runtimeOpsSinceLastSummary) > Number(generated.opsSinceLastSummary),
+				"logical op count must exceed the server sequence gap",
+			);
 			assert(
 				Number(generated.summarizedDataStoreCount) >
 					Number(generated.opsSinceLastSummary) +
@@ -350,6 +362,19 @@ describeCompat(
 			logger.assertMatchNone([
 				{ eventName: "fluid:telemetry:Summarizer:Running:IncrementalSummaryViolation" },
 			]);
+			logger.clear();
+			root._root.set("afterAck", "value");
+			await provider.ensureSynchronized();
+			await summarizeNow(second.summarizer);
+			const nextGenerated = logger.events.find((event) =>
+				event.eventName.endsWith("Summarize_generate"),
+			);
+			assert(nextGenerated !== undefined);
+			assert.equal(
+				nextGenerated.runtimeOpsSinceLastSummary,
+				1,
+				"must retire acknowledged catch-up counts and count subsequent ops exactly once",
+			);
 			second.container.close();
 		});
 	},
