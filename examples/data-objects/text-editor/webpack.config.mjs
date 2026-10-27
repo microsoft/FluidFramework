@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
+import { exampleAppConfig } from "@fluid-example/webpack-fluid-loader";
 
-module.exports = (env = {}) => {
-	const config = fluidRoute.exampleAppConfig(__dirname, env, {
+export default (env = {}) => {
+	const config = exampleAppConfig(import.meta.dirname, env, {
 		html: { title: "Multi-View Text Editor" },
 	});
 

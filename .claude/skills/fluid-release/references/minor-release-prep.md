@@ -4,9 +4,13 @@ Prepare the `main` branch and create the release branch for a new minor release.
 
 ## Autonomous Mode Notes
 
-In autonomous mode, the user provides two versions upfront:
-- **Release version**: the current version being released (read from root `package.json`)
-- **Next version**: the version to bump `main` to after the release
+Use the versions supplied or inferred by [SKILL.md](../SKILL.md).
+- **Release version**: the version selected from repository state
+- **Next version**: the next development version selected by the same detection
+
+User-supplied versions are optional in autonomous mode.
+Ask for clarification only if repository state is ambiguous or conflicts with them.
+In CI, report the ambiguity or conflict and stop instead of prompting.
 
 Run all steps sequentially. Create PRs automatically. At the end, report all PRs created and remind the user to merge them in order (version bump PR last).
 
@@ -16,9 +20,10 @@ If any step fails (permission error, git push rejected, etc.), fall back to open
 **Push target:** Push working branches to `upstream` if configured, otherwise `origin`.
 
 Before starting, check for existing progress:
+Use `release_remote` selected by SKILL.md for repository-state checks.
 
 ```bash
-git ls-remote --heads upstream 'release-prep/<VERSION>/*'
+git ls-remote --heads "$release_remote" 'release-prep/<VERSION>/*'
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
 ```
 
@@ -58,10 +63,12 @@ This generates changes only if 33+ days have passed since the last update for a 
 
 ### Determine the version being released
 
-Check the current version in the root `package.json`. This is the version being released (the bump hasn't happened yet at this point).
+Use the release version selected by the release-state detection in SKILL.md.
+For a new release, this is the root `package.json` version before the bump.
+If the bump has merged, use the release-prep PR or pre-bump commit instead.
 
 - **Interactive:** Ask the user to confirm the version.
-- **Autonomous:** Use the version provided upfront. If none was provided, read it from `package.json` and proceed.
+- **Autonomous:** Use the supplied or inferred release version.
 
 ### Generate release notes
 
@@ -99,7 +106,7 @@ If the release notes PR has already merged but needs to be redone (e.g., new cha
 
 2. For each affected changeset, find the original commit that introduced it:
    ```bash
-   git log upstream/main --reverse --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
+   git log "${release_remote}/main" --reverse --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
    ```
 
 3. Replace the incorrect PR number and commit hash with the correct ones from step 2. Match the SHA display length used by existing entries in the file (typically 10 characters) for consistency.
@@ -111,7 +118,7 @@ Note: only changesets that were _restored by the revert_ are affected. New chang
 ### Determine the next version
 
 - **Interactive:** Ask the user what the next version should be.
-- **Autonomous:** Use the next version provided upfront.
+- **Autonomous:** Use the supplied or inferred next version from SKILL.md.
 
 Default suggestion: increment the minor version by 1 (e.g., 2.90.0 -> 2.91.0). Trust the user-provided version if different; only flag it if it's more than 7-8 minor versions away from the current version.
 

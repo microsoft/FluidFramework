@@ -93,20 +93,24 @@ const formatKey: FieldKey = brand("format");
  * This is outside the namespace so it can be exported for testing, but not package exported.
  */
 export class StringTextAtomNode
-	extends sfStatic.object("StringTextAtom", {
-		/**
-		 * The underlying text content of this atom.
-		 * @remarks
-		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
-		 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
-		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
-		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
-		 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
-		 * @privateRemarks
-		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
-		 */
-		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
-	})
+	extends sfStatic.object(
+		"StringTextAtom",
+		{
+			/**
+			 * The underlying text content of this atom.
+			 * @remarks
+			 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
+			 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
+			 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
+			 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
+			 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+			 * @privateRemarks
+			 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
+			 */
+			content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements FormattedText.TextAtom
 {
 	public static fromCharacter(value: string): StringTextAtomNode {
@@ -220,9 +224,13 @@ export namespace FormattedText {
 		}
 
 		class TextNode
-			extends sf.object("Text", {
-				content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-			})
+			extends sf.object(
+				"Text",
+				{
+					content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+				},
+				{ allowUnknownOptionalFields: false },
+			)
 			implements Members<FormatSchema, ExtraAtomsSchema>
 		{
 			/**
@@ -696,10 +704,14 @@ export namespace FormattedText {
 		 * A unit of the text, with formatting.
 		 */
 		class StringAtom
-			extends sf.object("StringAtom", {
-				content: SchemaFactory.required(atoms, { key: EmptyKey }),
-				format: SchemaFactory.required(formatSchema),
-			})
+			extends sf.object(
+				"StringAtom",
+				{
+					content: SchemaFactory.required(atoms, { key: EmptyKey }),
+					format: SchemaFactory.required(formatSchema),
+				},
+				{ allowUnknownOptionalFields: false },
+			)
 			implements
 				FormattedAtom<
 					TreeNodeFromImplicitAllowedTypes<FormatSchema>,

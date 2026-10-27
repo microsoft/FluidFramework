@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "3.7.0",
+	"version": "3.10.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
