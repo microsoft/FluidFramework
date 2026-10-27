@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { strict as assert } from "assert";
 import * as async from "async";
+import { readFile, writeFile } from "fs/promises";
 import lorem from "lorem-ipsum";
 import sillyname from "sillyname";
 import request from "supertest";
@@ -452,6 +453,13 @@ testModes.forEach((mode) => {
 				});
 
 				describe("Refs", () => {
+					const getTraversalRef = (): string =>
+						mode.repoPerDocEnabled
+							? "../../../../outside-secret"
+							: "../../../outside-secret";
+					const encodeRefForUrl = (ref: string): string =>
+						ref.replaceAll("..", "%2e%2e").replaceAll("/", "%2f");
+
 					it("Can create and retrieve a reference", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						await createBlob(
@@ -599,6 +607,68 @@ testModes.forEach((mode) => {
 								config: { enabled: true },
 							})
 							.expect(200);
+					});
+
+					it("Rejects path traversal when retrieving a reference", async () => {
+						await initBaseRepo(
+							supertest,
+							testOwnerName,
+							testRepoName,
+							testDocId,
+							testBlob,
+							testTree,
+							testCommit,
+							testRef,
+						);
+						await writeFile(
+							"/tmp/historian/outside-secret",
+							"deadbeef00112233445566778899aabbccddeef0",
+						);
+
+						return supertest
+							.get(
+								`/repos/${testOwnerName}/${testRepoName}/git/refs/${encodeRefForUrl(
+									getTraversalRef(),
+								)}`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.expect(400);
+					});
+
+					it("Rejects path traversal when deleting a reference", async () => {
+						await initBaseRepo(
+							supertest,
+							testOwnerName,
+							testRepoName,
+							testDocId,
+							testBlob,
+							testTree,
+							testCommit,
+							testRef,
+						);
+						const outsideFilePath = "/tmp/historian/outside-secret";
+						const outsideFileContent = "not-a-ref";
+						await writeFile(outsideFilePath, outsideFileContent);
+
+						await supertest
+							.delete(
+								`/repos/${testOwnerName}/${testRepoName}/git/refs/${encodeRefForUrl(
+									getTraversalRef(),
+								)}`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.expect(400);
+
+						assert.strictEqual(
+							await readFile(outsideFilePath, "utf8"),
+							outsideFileContent,
+						);
 					});
 
 					it("Can delete a reference", async () => {
