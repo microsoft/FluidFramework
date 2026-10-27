@@ -488,6 +488,30 @@ describe("typetests catalog integration", () => {
 		);
 	});
 
+	it("shares one catalog editor for relative workspace-root and release-group selections", async () => {
+		await createPackage("server", "server-root");
+		const result = await runCommand(["--dir", "server", "-g", "server", "--exact", "5.0.0"]);
+		assert.equal(result.exitCode, 0, result.stdout + result.stderr);
+		const workspace = YAML.parseDocument(
+			await readFile(path.join(testDir, "server", "pnpm-workspace.yaml"), "utf8"),
+		);
+		const catalog = workspace.getIn(["catalogs", "typeTest-previous"]);
+		assert(YAML.isMap(catalog));
+		assert.deepEqual(catalog.toJSON(), {
+			"server-root-previous": "npm:server-root@5.0.0",
+			"third-previous": "npm:third@5.0.0",
+		});
+		for (const [directory, name] of [
+			["server", "server-root"],
+			[path.join("server", "packages", "third"), "third"],
+		] as const) {
+			assert.equal(
+				(await readPackage(directory)).devDependencies?.[`${name}-previous`],
+				"catalog:typeTest-previous",
+			);
+		}
+	});
+
 	it("keeps catalogs separate when selecting multiple release groups", async () => {
 		const result = await runCommand(["-g", "client", "server", "--previous"]);
 		assert.equal(result.exitCode, 0, result.stdout + result.stderr);

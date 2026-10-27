@@ -121,8 +121,9 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				if (workspacePackage.packageManager !== "pnpm") {
 					continue;
 				}
-				const workspaceRoot =
-					workspacePackage.monoRepo?.repoPath ?? workspacePackage.directory;
+				const workspaceRoot = realpathSync.native(
+					workspacePackage.monoRepo?.repoPath ?? workspacePackage.directory,
+				);
 				let catalog = workspaceCatalogs.get(workspaceRoot);
 				if (catalog === undefined) {
 					catalog = new PnpmCatalogEditor(workspaceRoot, previousCatalogName);
