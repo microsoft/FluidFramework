@@ -456,6 +456,67 @@ describe("treeNodeApi", () => {
 		},
 	);
 
+	describe("unknown optional fields", () => {
+		// The newer schema has the `extra` field. The older schema does not.
+		const factoryNew = new SchemaFactoryAlpha("unknownOptionalFields");
+		class PersonNew extends factoryNew.object("Person", {
+			known: factoryNew.optional(factoryNew.string),
+			extra: factoryNew.optional(factoryNew.string),
+		}) {}
+		const factoryOld = new SchemaFactoryAlpha("unknownOptionalFields");
+		class PersonOld extends factoryOld.object(
+			"Person",
+			{ known: factoryOld.optional(factoryOld.string) },
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		/**
+		 * Creates a client with the newer schema and a client with the older schema, sharing the same document.
+		 */
+		function createClients() {
+			const provider = new TestTreeProviderLite(2);
+			const viewNew = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: PersonNew }),
+			);
+			viewNew.initialize(new PersonNew({}));
+			provider.synchronizeMessages();
+			const viewOld = provider.trees[1].viewWith(
+				new TreeViewConfiguration({ schema: PersonOld }),
+			);
+			return { provider, viewNew, viewOld };
+		}
+
+		it("reports a changed unknown optional field as a placeholder in nodeChanged", () => {
+			const { provider, viewNew, viewOld } = createClients();
+			const changedProperties: string[][] = [];
+			TreeBeta.on(viewOld.root, "nodeChanged", (data) =>
+				changedProperties.push([...data.changedProperties]),
+			);
+
+			viewNew.root.extra = "x";
+			provider.synchronizeMessages();
+
+			assert.deepEqual(changedProperties, [
+				["unknown: one or more unknown optional fields changed"],
+			]);
+		});
+
+		it("invalidates hasUnknownChildren when an unknown optional field changes", () => {
+			const { provider, viewNew, viewOld } = createClients();
+			let invalidations = 0;
+			const { result } = TreeAlpha.trackObservations(
+				() => (invalidations += 1),
+				() => TreeAlpha.hasUnknownChildren(viewOld.root),
+			);
+			assert.equal(result, false);
+
+			viewNew.root.extra = "x";
+			provider.synchronizeMessages();
+
+			assert.equal(invalidations, 1);
+		});
+	});
+
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });

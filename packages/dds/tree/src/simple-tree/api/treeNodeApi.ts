@@ -147,6 +147,13 @@ export interface TreeNodeApi {
 }
 
 /**
+ * Placeholder reported in `changedProperties` for changes to unknown optional fields, since they have no property key.
+ * @remarks
+ * This is long and descriptive so that it is unlikely to collide with a real property key.
+ */
+const unknownOptionalFieldsChangedKey = "unknown: one or more unknown optional fields changed";
+
+/**
  * {@inheritDoc TreeNodeApi}
  */
 export const treeNodeApi: TreeNodeApi = {
@@ -190,12 +197,16 @@ export const treeNodeApi: TreeNodeApi = {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						// Use each field's property key.
+						// A field without one is reported as a placeholder if the schema allows unknown optional fields, and fails otherwise.
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(0xb36 /* Could not find stored key in schema. */),
+									(nodeSchema.allowUnknownOptionalFields
+										? unknownOptionalFieldsChangedKey
+										: fail(0xb36 /* Could not find stored key in schema. */)),
 							),
 						);
 						listener({ changedProperties });
