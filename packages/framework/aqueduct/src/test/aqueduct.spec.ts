@@ -43,6 +43,16 @@ const createContainerRuntimeFactoryWithDefaultDataStore = (
 	new ContainerRuntimeFactoryWithDefaultDataStore(props);
 
 describe("BaseContainerRuntimeFactory compatibility parameter", () => {
+	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
+		it(`rejects null for ${property}`, () => {
+			assert.throws(() => {
+				// @ts-expect-error A compatibility version must not be null.
+				// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+				new BaseContainerRuntimeFactory({ ...commonProps, [property]: null });
+			}, /Compatibility version must not be null/);
+		});
+	}
+
 	it("keeps the canonical construction properties extendable", () => {
 		interface ExtendedProps extends BaseContainerRuntimeFactoryProps {
 			readonly customProperty: boolean;
@@ -85,6 +95,20 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 });
 
 describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", () => {
+	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
+		it(`rejects null for ${property}`, () => {
+			assert.throws(() => {
+				// @ts-expect-error A compatibility version must not be null.
+				new ContainerRuntimeFactoryWithDefaultDataStore({
+					...commonProps,
+					defaultFactory,
+					// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+					[property]: null,
+				});
+			}, /Compatibility version must not be null/);
+		});
+	}
+
 	it("preserves the canonical construction overload", () => {
 		const props: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,

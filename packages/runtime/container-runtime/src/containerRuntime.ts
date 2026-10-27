@@ -914,6 +914,9 @@ export function validateExplicitOldestSupportedClient(
 	}>,
 ): OldestSupportedClientVersion {
 	const { oldestSupportedClient, minVersionForCollab } = params;
+	if (oldestSupportedClient === null || minVersionForCollab === null) {
+		throw new UsageError("Compatibility version must not be null.");
+	}
 	if (oldestSupportedClient === undefined) {
 		if (minVersionForCollab !== undefined) {
 			return minVersionForCollab;
@@ -948,7 +951,7 @@ function validateAlphaOldestSupportedClient(
 			"minVersionForCollab is not supported by loadContainerRuntimeAlpha. Use oldestSupportedClient instead.",
 		);
 	}
-	if (params.oldestSupportedClient === undefined) {
+	if (params.oldestSupportedClient === undefined || params.oldestSupportedClient === null) {
 		throw new UsageError("oldestSupportedClient must be specified.");
 	}
 }

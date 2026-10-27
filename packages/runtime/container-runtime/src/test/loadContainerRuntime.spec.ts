@@ -38,6 +38,17 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		);
 	});
 
+	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
+		it(`rejects null for ${property} at runtime`, async () => {
+			await assert.rejects(
+				// @ts-expect-error A compatibility version must not be null.
+				// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+				loadContainerRuntime({ ...commonParams, [property]: null }),
+				/Compatibility version must not be null/,
+			);
+		});
+	}
+
 	it("accepts the deprecated compatibility parameter at the public boundary", async () => {
 		const context = {
 			taggedLogger: { send: () => {} },
@@ -60,6 +71,18 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		await assert.rejects(
 			// @ts-expect-error The alpha API requires oldestSupportedClient.
 			loadContainerRuntimeAlpha(commonParams),
+			/oldestSupportedClient must be specified/,
+		);
+	});
+
+	it("rejects a null canonical compatibility parameter at runtime for alpha", async () => {
+		await assert.rejects(
+			loadContainerRuntimeAlpha({
+				...commonParams,
+				// @ts-expect-error A compatibility version must not be null.
+				// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+				oldestSupportedClient: null,
+			}),
 			/oldestSupportedClient must be specified/,
 		);
 	});
