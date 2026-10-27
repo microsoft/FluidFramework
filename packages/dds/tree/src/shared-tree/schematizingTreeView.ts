@@ -102,10 +102,7 @@ import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 function getUnknownOptionalFields(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
-): ReadonlyMap<
-	TreeNodeSchema,
-	ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
-> {
+): UntypedTreeViewAlpha["unknownOptionalFields"] {
 	const result = new Map<
 		TreeNodeSchema,
 		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
@@ -121,7 +118,7 @@ function getUnknownOptionalFields(
 		}
 		const fields = new Map<string, SimpleObjectFieldSchema<SchemaType.Stored>>();
 		for (const [storedKey, fieldSchema] of storedNodeSchema.fields) {
-			// Forbidden fields are exported as optional with no allowed types, so skip them.
+			// Skip fields with no allowed types, such as forbidden fields: they can never have content.
 			if (
 				!nodeSchema.storedKeyToPropertyKey.has(brand(storedKey)) &&
 				fieldSchema.kind === FieldKind.Optional &&
@@ -193,10 +190,7 @@ export class SchematizingSimpleTreeView<
 	 * @remarks Computed on first access and cleared whenever the stored schema changes.
 	 */
 	private currentUnknownOptionalFields:
-		| ReadonlyMap<
-				TreeNodeSchema,
-				ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
-		  >
+		| UntypedTreeViewAlpha["unknownOptionalFields"]
 		| undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
@@ -673,10 +667,7 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get unknownOptionalFields(): ReadonlyMap<
-		TreeNodeSchema,
-		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
-	> {
+	public get unknownOptionalFields(): UntypedTreeViewAlpha["unknownOptionalFields"] {
 		this.ensureUndisposed();
 		this.currentUnknownOptionalFields ??= getUnknownOptionalFields(
 			this.viewSchema,

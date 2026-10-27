@@ -116,9 +116,6 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
-	type SchemaType,
-	type SimpleObjectFieldSchema,
-	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -1340,10 +1337,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	/**
 	 * This is always empty, because a checkout has no view schema.
 	 */
-	public get unknownOptionalFields(): ReadonlyMap<
-		TreeNodeSchema,
-		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
-	> {
+	public get unknownOptionalFields(): UntypedTreeViewAlpha["unknownOptionalFields"] {
 		return new Map();
 	}
 
