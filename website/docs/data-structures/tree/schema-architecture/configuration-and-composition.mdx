@@ -101,6 +101,28 @@ For separately configurable parts, see <ApiLink package="fluid-framework" api="T
 The [implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/tableSchema.ts) and [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/tableSchema.spec.ts) show how those parts form a table schema.
 Check the public API docs and release tags before using these patterns; internal implementation helpers are not consumer extension points.
 
+## Versioning configurable libraries
+
+Follow [Schema Evolution](../schema-evolution/index.mdx) for compatibility checks and schema rollout patterns.
+For a configurable library, apply those checks to concrete configurations, not just to the factory's API.
+Create representative test configurations with dummy child schemas and stable scopes when the library has no application configuration of its own.
+Use them with <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility" /> and for tests of construction, editing, and supported feature combinations.
+Keep these fixtures stable across releases so snapshots detect library changes rather than incidental changes to the test inputs.
+Consumers must also test their actual composed schemas; see [Testing Schema Libraries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries).
+
+If library releases and consuming application deployments are independent, a single schema rollout tied to the library's release schedule may not be sufficient.
+You may need additional configuration APIs so one library release can support applications at different rollout stages:
+
+-   Separate schema factory APIs for supported model variants.
+-   Explicit feature flags that select which schema changes or new writes are enabled.
+-   A compatibility threshold, such as the oldest client version the application must support, that selects the features safe for that deployment.
+
+These are library API design choices, not automatic client-version detection.
+Document which versions support each variant or feature and, for thresholds, which version scheme they use and how they map to feature support.
+Let the application opt in when its deployment and rollback requirements permit it; upgrading the library dependency alone should not silently enable incompatible writes.
+These controls supplement the schema-evolution mechanisms, not bypass them.
+See [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx) for package compatibility, rollout ownership, and support for existing documents.
+
 ## Composition of independently authored schemas
 
 Use composition when the application must select a set of independently authored schema contributions.
