@@ -59,7 +59,7 @@ function endsWith(value: string, endings: string[]): boolean {
 }
 
 function validateGitSha(sha: string): void {
-	if (!canonicalGitShaRegex.test(sha)) {
+	if (typeof sha !== "string" || sha.length !== 40 || !canonicalGitShaRegex.test(sha)) {
 		throw new NetworkError(400, "Invalid Git object SHA.");
 	}
 }
@@ -259,6 +259,7 @@ export class RestGitService {
 	}
 
 	public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
+		validateGitSha(params.sha);
 		// We modify this param to prevent writes to external storage if tenant is not linked
 		if (!this.writeToExternalStorage) {
 			params.config = { ...params.config, enabled: false };
@@ -361,6 +362,7 @@ export class RestGitService {
 	}
 
 	public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
+		validateGitSha(params.sha);
 		// We modify this param to prevent writes to external storage if tenant is not linked
 		if (!this.writeToExternalStorage) {
 			params.config = { ...params.config, enabled: false };

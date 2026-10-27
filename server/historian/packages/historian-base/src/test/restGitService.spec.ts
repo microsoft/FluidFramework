@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { NetworkError } from "@fluidframework/server-services-client";
+import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
 import type { ITenantStorage } from "@fluidframework/server-services-core";
 import * as sinon from "sinon";
 
@@ -44,6 +44,70 @@ describe("RestGitService Git object SHA validation", () => {
 	});
 
 	afterEach(() => sandbox.restore());
+
+	describe("ref SHA validation", () => {
+		for (const testCase of [
+			{
+				name: "create",
+				method: "post",
+				write: (sha: string) => service.createRef({ ref: "refs/heads/main", sha }),
+			},
+			{
+				name: "update",
+				method: "patch",
+				write: (sha: string) => service.updateRef("heads/main", { sha, force: true }),
+			},
+		] as const) {
+			for (const sha of [
+				"refs/heads/main",
+				"../heads/main",
+				"",
+				canonicalSha.slice(1),
+				`${canonicalSha}0`,
+				canonicalSha.toUpperCase(),
+				`g${canonicalSha.slice(1)}`,
+				`${canonicalSha}\n`,
+			]) {
+				it(`rejects ${testCase.name} with noncanonical SHA ${JSON.stringify(
+					sha,
+				)} before forwarding`, async () => {
+					const downstream = sandbox
+						.stub(BasicRestWrapper.prototype, testCase.method)
+						.resolves();
+
+					await assert.rejects(testCase.write(sha), invalidGitShaError);
+
+					sinon.assert.notCalled(downstream);
+				});
+			}
+
+			it(`forwards ${testCase.name} with a canonical SHA`, async () => {
+				const ref = {
+					ref: "refs/heads/main",
+					url: "http://storage/ref",
+					object: { sha: canonicalSha, type: "", url: "" },
+				};
+				const downstream = sandbox
+					.stub(BasicRestWrapper.prototype, testCase.method)
+					.resolves(ref);
+
+				assert.strictEqual(await testCase.write(canonicalSha), ref);
+
+				const expectedPath =
+					testCase.method === "post"
+						? "/repos/owner/repository/git/refs"
+						: "/repos/owner/repository/git/refs/heads/main";
+				sinon.assert.calledOnce(downstream);
+				assert.strictEqual(downstream.firstCall.args[0], expectedPath);
+				assert.deepStrictEqual(
+					downstream.firstCall.args[1],
+					testCase.method === "post"
+						? { ref: "refs/heads/main", sha: canonicalSha, config: { enabled: false } }
+						: { sha: canonicalSha, force: true, config: { enabled: false } },
+				);
+			});
+		}
+	});
 
 	for (const testCase of [
 		{

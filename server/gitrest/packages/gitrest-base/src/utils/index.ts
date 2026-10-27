@@ -59,6 +59,7 @@ export {
 	sizeof,
 	validateBlobContent,
 	validateBlobEncoding,
+	validateGitSha,
 } from "./helpers";
 export {
 	IsomorphicGitManagerFactory,
