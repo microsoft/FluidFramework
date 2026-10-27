@@ -181,6 +181,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		) => Promise<void> | never,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
+		if (params.fileSystemManagerParams?.physicalContainerName !== undefined) {
+			throw new NetworkError(
+				400,
+				"Physical-container routing requires repo-per-document mode.",
+			);
+		}
 		const repoPath = helpers.getRepoPath(
 			params.repoName,
 			undefined,

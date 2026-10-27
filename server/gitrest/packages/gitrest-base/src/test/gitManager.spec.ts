@@ -103,6 +103,35 @@ describe("isomorphic-git manager", () => {
 		assert.strictEqual(repoManager.path, `${physicalContainerName}/physical-root-test`);
 	});
 
+	it("rejects physical-container routing when repo-per-document mode is disabled", async () => {
+		const repoPerTenantFactory = new IsomorphicGitManagerFactory(
+			{ useRepoOwner: false },
+			{ defaultFileSystemManagerFactory: fsFactory },
+			new NullExternalStorageManager(),
+			false /* repoPerDocEnabled */,
+			false /* enableRepositoryManagerMetrics */,
+			true /* enableSlimGitInit */,
+			undefined /* apiSamplingPeriod */,
+			gitMaxBlobSizeBytes,
+		);
+
+		await assert.rejects(
+			repoPerTenantFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			(error: unknown) =>
+				error instanceof Error &&
+				error.message === "Physical-container routing requires repo-per-document mode.",
+		);
+	});
+
 	it("rejects an invalid physical container supplied directly to the factory", async () => {
 		await assert.rejects(
 			repoManagerFactory.create({

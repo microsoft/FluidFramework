@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
+	BasicRestWrapper,
 	generateToken,
 	getAuthorizationTokenFromCredentials,
 	NetworkError,
@@ -432,18 +433,17 @@ describe("summary ownership", function () {
 		sinon.assert.notCalled(cacheSet);
 	});
 
-	it("reuses an exact access proof without a second authorization call", async () => {
-		const authorizer = {
-			authorize: sandbox.stub().rejects(new Error("proof should be reused")),
-		};
+	it("authorizes a lifecycle-derived proof before using it", async () => {
 		const proof: IDocumentAccessProof = {
 			tenantId,
 			documentId,
 			operation: "read",
-			source: "alfred-fallback",
-			storageAccountName: "document-storage",
+			source: "ec-lifecycle-redis",
 			lifecycleVersion: "generation-1",
 			state: "active",
+		};
+		const authorizer = {
+			authorize: sandbox.stub().resolves(proof),
 		};
 
 		await createGitService({
@@ -460,7 +460,61 @@ describe("summary ownership", function () {
 			documentAccessAuthorizer: authorizer,
 		});
 
-		sinon.assert.notCalled(authorizer.authorize);
+		sinon.assert.calledOnceWithExactly(authorizer.authorize, {
+			tenantId,
+			documentId,
+			operation: "read",
+			containerTypeHint: undefined,
+			trustedCreateContext: undefined,
+			existingProof: proof,
+		});
+	});
+
+	it("keeps legacy summary cache identity when no authorizer is configured", async () => {
+		const summary = {
+			id: "summary-1",
+			trees: [],
+			blobs: [],
+		};
+		sandbox.stub(BasicRestWrapper.prototype, "get").resolves(summary);
+		const cache = new TestCache();
+		const proof: IDocumentAccessProof = {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		};
+
+		const service = await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: false,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			cache,
+			accessOperation: "read",
+			existingAccessProof: proof,
+			summaryAccessContext: {
+				tenantId,
+				documentId,
+				isEphemeralContainer: true,
+				createTime: activeDocument.createTime,
+				source: "localEphemeral",
+				accessProof: proof,
+			},
+		});
+
+		await service.getSummary("latest", false);
+
+		assert.deepStrictEqual(
+			await cache.get(`${tenantId}:${documentId}:summary:container`),
+			summary,
+		);
 	});
 
 	it("fails authorization before tenant lookup or document storage access", async () => {

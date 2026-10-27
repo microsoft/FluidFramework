@@ -38,7 +38,6 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
-	getReusableDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -537,31 +536,20 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 			"Document access operation is required when an authorizer is configured.",
 		);
 	}
-	const candidateProof = existingAccessProof;
-	const reusableProof =
-		accessOperation === undefined
-			? undefined
-			: getReusableDocumentAccessProof(candidateProof, {
-					tenantId,
-					documentId: tokenDocumentId,
-					operation: accessOperation,
-					lifecycleVersion: candidateProof?.lifecycleVersion,
-			  });
 	const isEphemeralHint = isEphemeralContainer ?? summaryAccessContext?.isEphemeralContainer;
 	const containerTypeHint =
 		isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable";
 	const accessProof =
-		reusableProof ??
-		(accessOperation === undefined
+		accessOperation === undefined || documentAccessAuthorizer === undefined
 			? undefined
-			: await documentAccessAuthorizer?.authorize({
+			: await documentAccessAuthorizer.authorize({
 					tenantId,
 					documentId: tokenDocumentId,
 					operation: accessOperation,
 					containerTypeHint,
 					trustedCreateContext,
-					existingProof: candidateProof,
-			  }));
+					existingProof: existingAccessProof,
+			  });
 	if (
 		documentAccessAuthorizer !== undefined &&
 		(accessProof === undefined ||

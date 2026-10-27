@@ -101,7 +101,8 @@ export interface IAuthorizeDocumentAccessInput {
 	containerTypeHint?: "ephemeral" | "durable";
 	trustedCreateContext?: ITrustedCreateContext;
 	/**
-	 * A proof previously returned by this authorization boundary during the current request.
+	 * Candidate lifecycle or storage proof resolved earlier in the request. The authorizer must
+	 * validate it before returning it as the request's authorization proof.
 	 */
 	existingProof?: IDocumentAccessProof;
 }

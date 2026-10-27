@@ -53,8 +53,9 @@ export interface ISummaryAccessContext {
 	storageName?: string;
 	source: "localEphemeral" | "alfred";
 	/**
-	 * Reusable proof produced by the ephemeral lifecycle fast path. Durable Alfred validation is
-	 * only an ownership hint and must still pass through the configured document authorizer.
+	 * Candidate proof produced by the ephemeral lifecycle fast path. A configured document
+	 * authorizer must validate and return it before Historian uses it for routing or cache
+	 * isolation. It is ignored when document authorization is disabled.
 	 */
 	accessProof?: IDocumentAccessProof;
 }
@@ -117,8 +118,8 @@ export interface ICreateGitServiceArgs {
 	 */
 	accessOperation?: DocumentAccessOperation;
 	/**
-	 * A proof already returned by the configured authorizer during the current request. Ownership
-	 * contexts or other routing hints must not be passed as proofs.
+	 * Candidate lifecycle or storage proof resolved earlier in the request. A configured
+	 * authorizer must validate and return it before Historian uses it.
 	 */
 	existingAccessProof?: IDocumentAccessProof;
 	trustedCreateContext?: ITrustedCreateContext;

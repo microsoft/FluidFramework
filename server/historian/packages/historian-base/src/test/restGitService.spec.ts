@@ -324,4 +324,105 @@ describe("RestGitService Git object SHA validation", () => {
 			`${container2}:generation-2`,
 		]);
 	});
+
+	for (const testCase of [
+		{
+			name: "document",
+			targetDocumentId: "other-document",
+			targetPhysicalContainer: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			targetLifecycleVersion: "generation-1",
+		},
+		{
+			name: "physical container",
+			targetDocumentId: documentId,
+			targetPhysicalContainer: "pd2-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+			targetLifecycleVersion: "generation-1",
+		},
+		{
+			name: "lifecycle generation",
+			targetDocumentId: documentId,
+			targetPhysicalContainer: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			targetLifecycleVersion: "generation-2",
+		},
+	] as const) {
+		it(`does not reuse cached Git objects across an authorized ${testCase.name}`, async () => {
+			const cachedCommit = {
+				sha: canonicalSha,
+				url: "http://storage/commit",
+				author: {
+					name: "author",
+					email: "author@example.com",
+					date: "2026-08-07T00:00:00.000Z",
+				},
+				committer: {
+					name: "committer",
+					email: "committer@example.com",
+					date: "2026-08-07T00:00:00.000Z",
+				},
+				message: "source document commit",
+				tree: {
+					sha: canonicalSha,
+					url: "http://storage/tree",
+				},
+				parents: [],
+			};
+			const notFound = new NetworkError(404, "Commit does not exist in authorized root.");
+			const downstream = sandbox
+				.stub(BasicRestWrapper.prototype, "get")
+				.onFirstCall()
+				.resolves(cachedCommit)
+				.onSecondCall()
+				.rejects(notFound);
+			const sourceProof: IDocumentAccessProof = {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "dc-v2-metadata",
+				storageAccountName: "document-storage",
+				physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				layoutVersion: "v2",
+				lifecycleVersion: "generation-1",
+				state: "active",
+			};
+			const targetProof: IDocumentAccessProof = {
+				...sourceProof,
+				documentId: testCase.targetDocumentId,
+				physicalContainerName: testCase.targetPhysicalContainer,
+				lifecycleVersion: testCase.targetLifecycleVersion,
+			};
+			const sourceService = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				sourceProof.storageAccountName,
+				undefined,
+				false,
+				undefined,
+				undefined,
+				sourceProof,
+			);
+			const targetService = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				testCase.targetDocumentId,
+				cache,
+				targetProof.storageAccountName,
+				undefined,
+				false,
+				undefined,
+				undefined,
+				targetProof,
+			);
+
+			assert.strictEqual(await sourceService.getCommit(canonicalSha, true), cachedCommit);
+			await assert.rejects(
+				targetService.getCommit(canonicalSha, true),
+				(error: unknown) => error === notFound,
+			);
+			sinon.assert.calledTwice(downstream);
+		});
+	}
 });
