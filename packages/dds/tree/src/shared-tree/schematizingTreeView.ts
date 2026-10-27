@@ -97,7 +97,7 @@ import { exportSimpleSchema } from "./sharedTree.js";
 import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Gets the {@link TreeContextAlpha.unknownOptionalFields | unknown optional fields} of `viewSchema` in `storedSchema`.
+ * Gets the {@link UntypedTreeViewAlpha.unknownOptionalFields | unknown optional fields} of `viewSchema` in `storedSchema`.
  */
 function getUnknownOptionalFields(
 	viewSchema: TreeSchema,
