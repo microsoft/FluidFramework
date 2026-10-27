@@ -1,7 +1,9 @@
 # Persisted DDS configuration
 
-**Status:** Standalone infrastructure extraction. The configuration protocol is opt-in; no production distributed data structure (DDS) adopts it in this change.
-Mixed-version protection is deferred.
+**Status:** Kernel-focused persisted-configuration infrastructure.
+The configuration protocol is opt-in through `SharedObjectFromKernel`;
+no production distributed data structure (DDS) adopts it in this change.
+This change does not provide mixed-version protection.
 
 ## Summary and agreed requirements
 
@@ -19,7 +21,7 @@ The following decisions were clarified for this proposal:
 | Topic | Decision |
 | --- | --- |
 | Barrier semantics | Sequenced CAS, not consensus or a wait for all clients to acknowledge. |
-| Ordinary ops authored before a configuration change | Delivered normally, without configuration revision metadata. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
+| Ordinary ops authored before a configuration change | Delivered normally, without configuration revision metadata. Any invalidation policy and related events are DDS responsibilities and are outside this design. |
 | Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Attached configuration changes wait for sequencing; unattached configuration changes apply locally. |
 | Configuration values | Full replacement is allowed, including disabling or removing settings. |
 | Adoption | A DDS declares stable defaults. New or existing instances start persisting configuration on their first accepted change, or at creation when explicit initial values are supplied. |
@@ -56,11 +58,16 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
 state, CAS decisions, and configuration-request completion tracking.
-A configuration-specific message layer, `ChannelConfigurationDeltaHandler`, composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
+A configuration-specific message layer, `ChannelConfigurationDeltaHandler`,
+composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
 It owns configuration routing, initialization, attribute persistence, and disposal.
-Both inheritance-based DDSes and kernel factories use the same internal `initializeSharedObjectConfiguration` helper.
-Kernel implementations receive its typed facet in `KernelArgs`, before the kernel factory constructs or loads the kernel.
-They do not need to extend `SharedObject`.
+`SharedObjectFromKernel` constructs this layer when its kernel factory supplies a configuration definition.
+Kernel implementations receive the typed facet in `KernelArgs` before the kernel factory constructs or loads the kernel.
+The generic `SharedObject` inheritance path does not construct configuration support.
+
+The integration is intentionally limited to the kernel-based path instead of adding configuration registration to the broad `SharedObject` inheritance path.
+`SharedObjectCore` provides only a package-internal, protocol-neutral routing seam.
+The seam lets `SharedObjectFromKernel` compose configuration with the existing lifecycle without adding a protected or public API for external subclasses.
 
 The DDS owns the meaning and validation of its configuration, how it reacts to an accepted change,
 and how it processes ordinary ops, including optimistic local state and acknowledgements. It does
@@ -73,38 +80,41 @@ The datastore runtime continues to own channel routing, summary scheduling, and 
 It validates persisted configuration before loading a configured channel and checks instance support before buffered replay or connection.
 The shared controller validates the configuration format and the local DDS definition's reader support.
 
-Version 1 supports DDSes using `makeSharedObjectKind` or extending `SharedObjectCore`, including through `SharedObject`.
-Adapting a direct `IChannel` implementation is a separate integration, not permission to bypass the shared controller.
+Version 1 of this integration supports DDSes created with `makeSharedObjectKind`.
+Supporting direct `SharedObjectCore`, `SharedObject`, or `IChannel` implementations requires a separate integration.
+Such an integration must use the shared controller and preserve the same lifecycle requirements.
 
 Non-goals are application schema management, general consensus, cross-channel transactions,
 ordinary-op invalidation or its reconciliation/event APIs, automatic retries of rejected edits,
 asynchronous data migrations during a configuration callback.
-Production DDS adoption and enforcement of mixed-version compatibility are also outside this extraction.
+Production DDS adoption and enforcement of mixed-version compatibility are also outside this change.
 
-### Inheritance-based DDSes
+### Kernel-based DDSes
 
-A participating factory supplies an explicit creation or load mode to the DDS constructor.
-The initializer declares `channelConfigurationProtocolVersion: 1` on the instance, even before configuration is persisted.
-A factory can also declare support, but loading does not require a factory marker.
-After `super()`, the constructor registers its definition before configuration-dependent setup:
+A participating `SharedKernelFactory` supplies a `configurationDefinition`.
+`SharedObjectFromKernel` constructs the controller and message layer before it calls `factory.create` or `factory.loadCore`.
+The resulting `KernelArgs.configuration` facet is readable during kernel construction.
+Requests cannot change configuration until local initialization or loading completes.
+
+The factory reads the initial snapshot and registers change handling through the facet:
 
 ```typescript
-this.configuration = initializeSharedObjectConfiguration(this, {
-    definition,
-    initialization,
-});
-this.initializeSettings(this.configuration.current.values);
-this.configuration.on("changed", (change) => {
-    this.applySettings(change.current.values);
-});
+function create(args: KernelArgs<MyConfiguration>): FactoryOut<MyView> {
+    const configuration = args.configuration;
+    assert(configuration !== undefined);
+    const kernel = new MyKernel(configuration.current.values);
+    configuration.on("changed", (change) => {
+        kernel.applyConfiguration(change.current.values);
+    });
+    return { kernel, view: kernel.view };
+}
 ```
 
-`initialization` is `{ kind: "create", initialConfiguration? }` or `{ kind: "load" }`.
+`SharedObjectOptions.initialConfiguration` applies only when the factory creates a new channel.
 Load reads the instance's channel attributes, never the factory's creation settings.
-Registration is allowed once, before initialization, loading, connection, or binding starts.
-The facet is readable immediately, but requests cannot change configuration until `initializeLocalCore` or `loadCore` completes.
-The same controller, message layer, disposal, and attribute persistence serve inheritance-based and kernel-based DDSes.
-Custom asynchronous summaries still store configuration in the channel attributes written by the datastore.
+The wrapper declares `channelConfigurationProtocolVersion: 1` when the factory supports configuration,
+even before configuration is persisted.
+The datastore continues to write per-instance configuration through channel attributes.
 
 ## Persisted state
 
@@ -407,7 +417,7 @@ using existing pending local-op metadata; completion metadata is not part of the
 
 ### Applying changes to a live DDS
 
-The facet is initialized once, before kernel construction or during an inheritance-based DDS's constructor.
+The facet is initialized once, before kernel construction.
 For load it exposes the snapshot's validated configuration, or the definition's defaults when unmarked, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
 The configuration layer distinguishes creation settings from configuration read from channel attributes on load.
@@ -489,21 +499,28 @@ CAS remains entirely in the shared configuration mechanism.
 
 ### Shared wrapper integration
 
-`SharedObjectCore` adapts its protected ordinary processing, stash, resubmission, rollback, and connection hooks once into an `IDeltaHandler`.
-Without configuration, the runtime connects directly to that endpoint and ordinary submissions go directly to transport preparation and submission.
-There is no default protocol object, per-call protocol lookup, or generic interception interface.
+`SharedObjectCore` adapts its ordinary processing, stash, resubmission, rollback, and connection hooks once into an `IDeltaHandler`.
+It exposes that endpoint and the lower-level transport through a package-internal routing accessor.
+The accessor is not part of the protected or public `SharedObjectCore` API.
 
-Configuration registration composes that endpoint with `ChannelConfigurationDeltaHandler` before initialization or service connection.
-The runtime connects to the configuration layer, which routes control ops to the controller and ordinary collections to the original endpoint.
+`SharedObjectFromKernel` installs an ordinary-message routing guard before initialization or service connection.
+For a factory without a configuration definition,
+this layer validates the reserved configuration marker and forwards ordinary traffic unchanged.
+For a supporting factory, it composes the ordinary endpoint with `ChannelConfigurationDeltaHandler`.
+The runtime connects to the configuration layer,
+which routes control ops to the controller and ordinary collections to the original endpoint.
 It splits ordinary runs around control ops, preserving the original envelope, message metadata, and synchronous ordering.
-Both legacy subclass hooks and kernel hooks remain downstream of ordinary handle decoding and DDS events.
+Kernel hooks remain downstream of ordinary handle decoding and DDS events.
 The layer routes configuration requests during resubmission, stashed-op restoration, and rollback,
 but delegates ordinary payloads to the stable DDS endpoint.
 `submitLocalMessage` remains the ordinary submission entry point.
-SharedObject guards ordinary submission, receive, stash, resubmit, and rollback against an own top-level `isChannelConfigurationOp` property.
-It throws `DataProcessingError` for any value of this reserved property, even on unconfigured channels, to prevent future collisions.
+Kernel-based channels guard ordinary submission, receive, stash, resubmit, and rollback
+against an own top-level `isChannelConfigurationOp` property.
+They throw `DataProcessingError` for any value of this reserved property,
+including when their factory does not support configuration, to prevent future collisions.
+Direct `SharedObject` subclasses are outside this integration and retain their existing ordinary dispatch behavior.
 The guard does not inspect nested application data or impose a DDS payload schema.
-This reserved-key policy is part of the full configuration feature, not the behavior-preserving endpoint extraction alone.
+This reserved-key policy is part of kernel-based persisted configuration, not generic `SharedObject` dispatch.
 
 The layer has distinct ordinary and control submission entries.
 Controller proposals go directly to the control entry, never through `submitLocalMessage` or a subclass override of it.
@@ -519,18 +536,20 @@ Nested replay scopes restore the previous state, so a nested call cannot enable 
 Incoming delivery alone does not flush deferred requests, but a fresh edit from an ordinary `pre-op` or `op` callback outside replay still does.
 This is not a queue for detached edits; existing DDS state is included in the attach summary without trailing replay.
 
-The core retains a narrow private installation helper, lifecycle notifications, and the ordinary protected-hook adapters.
-The configuration layer receives attachment and closed-state checks, transport preparation and submission, runtime disposal and read-only state, a disposal subscription, attributes, and a logger.
+The core retains a narrow package-internal installation accessor, lifecycle notifications, and the ordinary hook adapters.
+The configuration layer receives attachment and closed-state checks,
+transport preparation and submission, runtime disposal and read-only state,
+a disposal subscription, attributes, and a logger.
 It does not receive the entire runtime or protected subclass API.
-It prepares the readable facet and per-instance attributes before `initializeLocalCore`, `loadCore`, or kernel construction.
+It prepares the readable facet and per-instance attributes before kernel construction and before `factory.create` or `factory.loadCore`.
 The core records its first close error before notifying the layer to reject requests.
 The public channel object and its Fluid handle identity do not change.
 
 An `IDeltaConnection` decorator alone would be too late for outbound validation and handle preparation, and would miss detached edits before services exist.
-A kernel-only wrapper would also be too late for inbound handle decoding and events, and would exclude inheritance-based DDSes.
-The composed message layer spans those boundaries without proxying the public channel object.
+A router implemented only in `SharedKernel.processMessagesCore` would be too late for inbound handle decoding and DDS events.
+Installing routing in `SharedObjectFromKernel` through the core's internal seam spans those boundaries without proxying the public channel object or duplicating lifecycle handling.
 
-Integrate at the `SharedObjectCore` dispatch boundary: configured dispatch identifies configuration ops before
+Integrate at the `SharedObjectCore` dispatch boundary: configured kernel dispatch identifies configuration ops before
 handle decoding and DDS `pre-op`/`op` events.
 All ordinary ops, including those authored before a configuration change, use the existing handle serializer and event/error machinery.
 Configuration control messages do not become DDS data-op events. Runtime-level raw-op observability may still report
@@ -571,7 +590,7 @@ does not introduce a separate local-commit handler or result for ordinary edits.
 A bound channel in an attaching or attached datastore submits configuration ops, including while disconnected.
 An unbound channel or a channel in a detached datastore applies configuration changes locally.
 There is no separate publication flag, callback, or submission queue.
-The central SharedObject initializer installs configuration routing and declares instance support together.
+The `SharedObjectFromKernel` constructor installs configuration routing and declares instance support together.
 Summary and local connection paths do not repeat that check.
 This change does not address the existing attach re-entrancy issue caused by synchronous DDS edits from dirty callbacks during incomplete binding.
 
@@ -656,14 +675,14 @@ cancels an op that might already have reached the service.
 
 ## Compatibility limitations
 
-This extraction does not ensure that all clients write channel attributes correctly.
+This change does not ensure that all clients write channel attributes correctly.
 An older summarizer can omit persisted configuration.
 On a subsequent load, a supporting DDS then uses `definition.defaultConfiguration` at revision zero and remains unmarked, even if its creation-time `initialConfiguration` was different.
 Missing configuration is not rejected, automatically migrated, or reconstructed from creation settings.
-This loss of configuration is an accepted limitation of the standalone infrastructure.
+Until mixed-version safeguards are added, persisted configuration must not be enabled when an older summarizer can write the channel.
 
-Mixed-version protection is deferred.
-There is no document-level gate, runtime readiness plumbing, cross-layer feature advertisement, or generation/release enforcement in this extraction.
+This change does not provide mixed-version protection.
+There is no document-level gate, runtime readiness plumbing, cross-layer feature advertisement, or generation/release enforcement in this change.
 Preserving ordinary DDS wire formats does not mean arbitrary older clients understand configuration-control ops or configuration-dependent data formats.
 No production DDS adopter is introduced.
 
@@ -685,13 +704,15 @@ instances, not evidence that every configuration value is supported.
 `supportsChannelConfiguration`, exported from `datastore/internal`, checks the marker on a channel or factory.
 The runtime does not require a factory marker before `factory.load`.
 It requires a returned configured instance to declare support before connecting/replaying it.
-The central SharedObject initializer installs the controller and declares that support together.
+`SharedObjectFromKernel` installs the controller and declares that support together.
 These checks apply only in runtimes that contain the reader safeguards, and a channel can be loaded lazily.
 They do not establish peer readiness or provide an automatic saturation gate before configuration-op submission.
 
 Supporting factories expose stable defaults on unmarked instances without changing their summaries.
 The first accepted configuration replacement activates persistence.
-With this shared infrastructure, a SharedObject without a configuration definition rejects the first configuration op instead of passing it to its DDS.
+With this shared infrastructure,
+a kernel-based channel without a configuration definition rejects a configuration op
+instead of passing it to its kernel.
 Lazy replay must apply activation before exposing or summarizing the channel.
 A changed channel cannot reuse a summary handle that omits activation.
 
@@ -705,17 +726,17 @@ DDS-specific invalidation events and telemetry are outside this design.
 
 ## Implementation boundaries
 
-| Area | Proposed changes |
+| Area | Current implementation |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state and wire-format types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Shared-core configuration initializer and kernel facet; per-instance configuration attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
+| `shared-object-base` | Package-internal SharedObject routing seam; optional configuration composition in `SharedObjectFromKernel`; kernel facet; per-instance configuration attributes; kernel configuration-op dispatch and reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
 | Existing datastore/runtime paths | Retain instance-attribute persistence, lazy replay ordering, ordinary stashed-op handling, pending accounting, and summary invalidation; no compatibility gates are added. |
-| Test DDSes | Exercise stable defaults and configuration validation for new and existing instances, with a synchronous change callback. Preserve existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
+| Test kernels | Exercise configured and unconfigured kernel factories, stable defaults, creation values, loaded state, synchronous change callbacks, and ordinary lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through
-targeted hooks. Do not duplicate the whole `SharedObjectCore` implementation or change the
-legacy dispatch path's semantics apart from the shared reserved-key guards. Generated API reports are regenerated through existing build
-tasks, never hand-edited.
+the package-internal routing seam.
+Do not duplicate the `SharedObjectCore` lifecycle or change the legacy inheritance dispatch path.
+Generated API reports are regenerated through existing build tasks, never hand-edited.
 
 ## Infrastructure coverage
 
@@ -743,7 +764,7 @@ The key scenarios are:
 | Staging rollback and disposal | Configuration requests receive explicit cancellation/error outcomes; ordinary DDS squash/rollback remains functional without crossing configuration-op boundaries. |
 | Future expected revision, malformed configuration op, unsupported winning config | Predictable failure before dependent state is processed. |
 | Ordinary primitive, array, and object payloads | Preserve the existing payload shapes; ordinary validation remains the DDS's responsibility. |
-| Reserved own top-level property | Any value identifies a configuration candidate only on configured dispatch; parsing requires `true`. Ordinary submission, receive, stash, resubmit, and rollback reject the property with `DataProcessingError`, even on unconfigured channels. |
+| Reserved own top-level property | Any value identifies a configuration candidate only on configured dispatch; parsing requires `true`. Kernel-based ordinary submission, receive, stash, resubmit, and rollback reject the property with `DataProcessingError`, including for an unconfigured kernel factory. Direct `SharedObject` subclasses retain ordinary dispatch. |
 | Nested application property with the reserved name | Remains ordinary application data; no configuration dispatch or shared rejection. |
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Unsupported persisted configuration | Controller validation fails for malformed state, unknown protocol versions, or locally unsupported values before DDS state is read. |

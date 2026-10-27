@@ -59,16 +59,9 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import type {
-	ChannelConfiguration,
-	ChannelConfigurationFacet,
-} from "./channelConfiguration.js";
-import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
-import { ChannelConfigurationDeltaHandler } from "./channelConfigurationDeltaHandler.js";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
-import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -81,30 +74,43 @@ interface ProcessTelemetryProperties {
 	sequenceDifference: number;
 }
 
-// Initialized by SharedObjectCore so the internal helper can use its private implementation
-// without adding configuration methods to the legacy subclass API.
-let initializeConfiguration: <TConfig extends ChannelConfiguration>(
-	sharedObject: SharedObjectCore,
-	options: SharedObjectConfigurationOptions<TConfig>,
-) => ChannelConfigurationFacet<TConfig>;
-
 /**
- * Registers configuration support once during a SharedObjectCore subclass's construction.
- * @remarks
- * Call after super() and before configuration-dependent setup or any load, initialization,
- * connection, or binding. The returned facet is readable immediately. Requests are allowed only
- * after initializeLocalCore or loadCore completes. Loading reads the instance's attributes;
- * unmarked instances use the definition's defaults without activating persistence.
- *
- * Registration declares channelConfigurationProtocolVersion: 1 on the instance, including when unmarked.
- * The factory may also advertise support, but loading does not require a factory declaration.
+ * Message transport exposed to internal SharedObject subclasses that compose an optional protocol.
  * @internal
  */
-export function initializeSharedObjectConfiguration<TConfig extends ChannelConfiguration>(
+export interface SharedObjectTransport {
+	isAttached(): boolean;
+	verifyNotClosed(): void;
+	prepareMessage(content: unknown): unknown;
+	submitMessage(content: unknown, metadata: unknown): void;
+}
+
+/**
+ * Package-internal access to the message-routing state of a SharedObject.
+ * @internal
+ */
+export interface SharedObjectMessageRouting {
+	readonly ordinary: Required<IDeltaHandler>;
+	readonly transport: SharedObjectTransport;
+	install(deltaHandler: Required<IDeltaHandler>, close?: (error: unknown) => void): void;
+}
+
+let accessSharedObjectMessageRouting:
+	| ((sharedObject: SharedObjectCore) => SharedObjectMessageRouting)
+	| undefined;
+
+/**
+ * Gets package-internal message-routing access for a SharedObject.
+ * @internal
+ */
+export function getSharedObjectMessageRouting(
 	sharedObject: SharedObjectCore,
-	options: SharedObjectConfigurationOptions<TConfig>,
-): ChannelConfigurationFacet<TConfig> {
-	return initializeConfiguration(sharedObject, options);
+): SharedObjectMessageRouting {
+	assert(
+		accessSharedObjectMessageRouting !== undefined,
+		"SharedObject message routing access has not been initialized",
+	);
+	return accessSharedObjectMessageRouting(sharedObject);
 }
 
 /**
@@ -132,6 +138,26 @@ export abstract class SharedObjectCore<
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
+	static {
+		accessSharedObjectMessageRouting = (sharedObject) => ({
+			ordinary: sharedObject.#deltaHandler,
+			transport: {
+				isAttached: () => sharedObject.isAttached(),
+				verifyNotClosed: () => sharedObject.verifyNotClosed(),
+				prepareMessage: (content) => sharedObject.#prepareMessage(content),
+				submitMessage: (content, metadata) => sharedObject.#submitMessage(content, metadata),
+			},
+			install: (deltaHandler, close) => {
+				assert(
+					sharedObject.services === undefined,
+					"Message routing must be installed before connecting",
+				);
+				sharedObject.#deltaHandler = deltaHandler;
+				sharedObject.#messageRoutingClose = close;
+			},
+		});
+	}
+
 	public get IFluidLoadable(): this {
 		return this;
 	}
@@ -172,43 +198,7 @@ export abstract class SharedObjectCore<
 	 * Tracks error that closed this object.
 	 */
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
-
-	#configurationRegistrationClosed = false;
-	#configurationLifecycle:
-		| Pick<
-				ChannelConfigurationDeltaHandler<ChannelConfiguration>,
-				"beginInitialization" | "completeInitialization" | "close"
-		  >
-		| undefined;
-
-	// Adapt protected DDS hooks once. Configuration routing composes this ordinary endpoint.
-	#deltaHandler: Required<IDeltaHandler> = {
-		processMessages: (messages) => this.processMessages(messages),
-		setConnectionState: (connected) => this.setConnectionState(connected),
-		reSubmit: (content: unknown, metadata, squash = false) =>
-			this.reSubmit(content, metadata, squash),
-		applyStashedOp: (content: unknown) => {
-			verifyOrdinaryChannelMessage(content);
-			this.applyStashedOp(parseHandles(content, this.serializer));
-		},
-		rollback: (content: unknown, metadata) => {
-			verifyOrdinaryChannelMessage(content);
-			this.rollback(content, metadata);
-		},
-	};
-
-	#submitOrdinaryMessage = (content: unknown, metadata: unknown): void => {
-		this.verifyNotClosed();
-		verifyOrdinaryChannelMessage(content);
-		if (this.isAttached()) {
-			this.#submitMessage(this.#prepareMessage(content), metadata);
-		}
-	};
-
-	static {
-		initializeConfiguration = (sharedObject, options) =>
-			sharedObject.#initializeConfiguration(options);
-	}
+	#messageRoutingClose: ((error: unknown) => void) | undefined;
 
 	/**
 	 * Gets the connection state
@@ -257,48 +247,6 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
-	}
-
-	#initializeConfiguration<TConfig extends ChannelConfiguration>(
-		options: SharedObjectConfigurationOptions<TConfig>,
-	): ChannelConfigurationFacet<TConfig> {
-		assert(
-			!this.#configurationRegistrationClosed,
-			"Configuration must be initialized before the shared object lifecycle starts",
-		);
-		assert(
-			this.#configurationLifecycle === undefined,
-			"Shared object configuration is already initialized",
-		);
-		const configuration = new ChannelConfigurationDeltaHandler(
-			options,
-			this.#deltaHandler,
-			{
-				isAttached: () => this.isAttached(),
-				verifyNotClosed: () => this.verifyNotClosed(),
-				prepareMessage: (content) => this.#prepareMessage(content),
-				submitMessage: (content, metadata) => this.#submitMessage(content, metadata),
-			},
-			{
-				attributes: this.attributes,
-				logger: extractTelemetryLoggerExt(this.logger),
-				isDisposed: () => this.runtime.disposed,
-				isReadOnly: () => this.runtime.isReadOnly(),
-				onDispose: (listener) => this.runtime.once("dispose", listener),
-			},
-		);
-		this.#configurationLifecycle = configuration;
-		this.#deltaHandler = configuration;
-		this.#submitOrdinaryMessage = (content, metadata) =>
-			configuration.submitOrdinaryMessage(content, metadata);
-		Object.defineProperty(this, "attributes", { value: configuration.attributes });
-		Object.defineProperty(this, "channelConfigurationProtocolVersion", { value: 1 });
-		return configuration.controller;
-	}
-
-	#beginInitialization(kind: "create" | "load"): void {
-		this.#configurationRegistrationClosed = true;
-		this.#configurationLifecycle?.beginInitialization(kind);
 	}
 
 	/**
@@ -362,7 +310,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
-			this.#configurationLifecycle?.close(error);
+			this.#messageRoutingClose?.(error);
 		}
 	}
 
@@ -421,13 +369,11 @@ export abstract class SharedObjectCore<
 	 * @param services - Services used by the shared object
 	 */
 	public async load(services: IChannelServices): Promise<void> {
-		this.#beginInitialization("load");
 		this.services = services;
 		// set this before load so that isAttached is true
 		// for attached runtimes when load core is running
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
-		this.#configurationLifecycle?.completeInitialization();
 		this.attachDeltaHandler();
 		this.setBoundAndHandleAttach();
 	}
@@ -437,13 +383,10 @@ export abstract class SharedObjectCore<
 	 * it is attached to the document.
 	 */
 	public initializeLocal(): void {
-		this.#beginInitialization("create");
 		this.initializeLocalCore();
-		this.#configurationLifecycle?.completeInitialization();
 	}
 
 	public bindToContext(): void {
-		this.#configurationRegistrationClosed = true;
 		// ensure the method only runs once by removing the implementation
 		// without this the method suffers from re-entrancy issues
 		this.bindToContext = () => {};
@@ -456,7 +399,6 @@ export abstract class SharedObjectCore<
 	}
 
 	public connect(services: IChannelServices): void {
-		this.#configurationRegistrationClosed = true;
 		// handle the case where load is called
 		// before connect; loading detached data stores
 		if (this.services === undefined) {
@@ -540,7 +482,11 @@ export abstract class SharedObjectCore<
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
-		this.#submitOrdinaryMessage(content, localOpMetadata);
+		this.verifyNotClosed();
+		if (this.isAttached()) {
+			const contentToSubmit = this.#prepareMessage(content);
+			this.#submitMessage(contentToSubmit, localOpMetadata);
+		}
 	}
 
 	#prepareMessage(content: unknown): unknown {
@@ -643,6 +589,24 @@ export abstract class SharedObjectCore<
 		});
 	}
 
+	#deltaHandler: Required<IDeltaHandler> = {
+		processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+			this.processMessages(messagesCollection);
+		},
+		setConnectionState: (connected: boolean) => {
+			this.setConnectionState(connected);
+		},
+		reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			this.reSubmit(content, localOpMetadata, squash);
+		},
+		applyStashedOp: (content: unknown): void => {
+			this.applyStashedOp(parseHandles(content, this.serializer));
+		},
+		rollback: (content: unknown, localOpMetadata: unknown) => {
+			this.rollback(content, localOpMetadata);
+		},
+	};
+
 	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
 		assert(
@@ -703,12 +667,11 @@ export abstract class SharedObjectCore<
 
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const messageContent of messagesContent) {
-			verifyOrdinaryChannelMessage(messageContent.contents);
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
-				contents: parseHandles(messageContent.contents, this.serializer),
-				localOpMetadata: messageContent.localOpMetadata,
-				clientSequenceNumber: messageContent.clientSequenceNumber,
+				contents: parseHandles(contents, this.serializer),
+				localOpMetadata,
+				clientSequenceNumber,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
 		}
@@ -754,7 +717,6 @@ export abstract class SharedObjectCore<
 	 * the legacy behavior (no squashing) will be used.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		verifyOrdinaryChannelMessage(content);
 		if (squash) {
 			this.reSubmitSquashed(content, localOpMetadata);
 		} else {

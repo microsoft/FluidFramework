@@ -20,19 +20,8 @@ import {
 	parseChannelConfigurationMessage,
 	verifyOrdinaryChannelMessage,
 } from "./channelConfigurationFormat.js";
+import type { SharedObjectTransport } from "./sharedObject.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
-
-/**
- * Shared transport for ordinary and configuration ops.
- * Preparation binds or encodes handles before a lazy configuration flush can submit anything.
- * Submission uses the channel's existing runtime connection, including stashed-op capture.
- */
-export interface SharedObjectTransport {
-	isAttached(): boolean;
-	verifyNotClosed(): void;
-	prepareMessage(content: unknown): unknown;
-	submitMessage(content: unknown, metadata: unknown): void;
-}
 
 /**
  * State available before services are connected, without exposing the runtime or subclass hooks.

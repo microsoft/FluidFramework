@@ -12,6 +12,7 @@ import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IDeltaHandler,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
@@ -31,14 +32,17 @@ import type {
 	ChannelConfigurationDefinition,
 	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
+import { ChannelConfigurationDeltaHandler } from "./channelConfigurationDeltaHandler.js";
+import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
-	initializeSharedObjectConfiguration,
+	getSharedObjectMessageRouting,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
+	type SharedObjectMessageRouting,
 } from "./sharedObject.js";
 import type { SharedObjectConfigurationInitialization } from "./sharedObjectConfiguration.js";
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
@@ -113,6 +117,36 @@ export interface SharedKernel {
  */
 export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 
+function installOrdinaryKernelMessageRouting(
+	messageRouting: SharedObjectMessageRouting,
+): void {
+	const { ordinary } = messageRouting;
+	const deltaHandler: Required<IDeltaHandler> = {
+		setConnectionState: (connected: boolean): void => {
+			ordinary.setConnectionState(connected);
+		},
+		processMessages: (messages: IRuntimeMessageCollection): void => {
+			for (const message of messages.messagesContent) {
+				verifyOrdinaryChannelMessage(message.contents);
+			}
+			ordinary.processMessages(messages);
+		},
+		applyStashedOp: (content: unknown): void => {
+			verifyOrdinaryChannelMessage(content);
+			ordinary.applyStashedOp(content);
+		},
+		reSubmit: (content: unknown, metadata: unknown, squash: boolean): void => {
+			verifyOrdinaryChannelMessage(content);
+			ordinary.reSubmit(content, metadata, squash);
+		},
+		rollback: (content: unknown, metadata: unknown): void => {
+			verifyOrdinaryChannelMessage(content);
+			ordinary.rollback(content, metadata);
+		},
+	};
+	messageRouting.install(deltaHandler);
+}
+
 /**
  * SharedObject implementation that delegates to a SharedKernel.
  * @typeParam TOut - The type of the object exposed to the app.
@@ -140,6 +174,7 @@ class SharedObjectFromKernel<
 	#lazyData: FactoryOut<TOut> | undefined = undefined;
 
 	readonly #kernelArgs: KernelArgs<TConfig>;
+	readonly #configurationHandler: ChannelConfigurationDeltaHandler<TConfig> | undefined;
 
 	public constructor(
 		id: string,
@@ -160,10 +195,18 @@ class SharedObjectFromKernel<
 			!hasConfiguration || definition !== undefined,
 			"Factory does not support channel configuration",
 		);
-		const configuration =
-			definition === undefined
-				? undefined
-				: initializeSharedObjectConfiguration(this, { definition, initialization });
+		const messageRouting = getSharedObjectMessageRouting(this);
+		if (definition === undefined) {
+			this.#configurationHandler = undefined;
+			installOrdinaryKernelMessageRouting(messageRouting);
+		} else {
+			this.#configurationHandler = this.#installConfigurationHandler(
+				definition,
+				initialization,
+				messageRouting,
+			);
+		}
+		const configuration = this.#configurationHandler?.controller;
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
@@ -192,6 +235,46 @@ class SharedObjectFromKernel<
 		};
 	}
 
+	#installConfigurationHandler(
+		definition: ChannelConfigurationDefinition<TConfig>,
+		initialization: SharedObjectConfigurationInitialization<TConfig>,
+		messageRouting: SharedObjectMessageRouting,
+	): ChannelConfigurationDeltaHandler<TConfig> {
+		const handler = new ChannelConfigurationDeltaHandler(
+			{ definition, initialization },
+			messageRouting.ordinary,
+			messageRouting.transport,
+			{
+				attributes: this.attributes,
+				logger: extractTelemetryLoggerExt(this.logger),
+				isDisposed: () => this.runtime.disposed,
+				isReadOnly: () => this.runtime.isReadOnly(),
+				onDispose: (listener) => this.runtime.once("dispose", listener),
+			},
+		);
+		handler.beginInitialization(initialization.kind);
+		messageRouting.install(handler, (error) => handler.close(error));
+		Object.defineProperty(this, "attributes", {
+			value: handler.attributes,
+		});
+		Object.defineProperty(this, "channelConfigurationProtocolVersion", {
+			value: 1,
+		});
+		return handler;
+	}
+
+	protected override submitLocalMessage(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
+		if (this.#configurationHandler === undefined) {
+			verifyOrdinaryChannelMessage(content);
+			super.submitLocalMessage(content, localOpMetadata);
+		} else {
+			this.#configurationHandler.submitOrdinaryMessage(content, localOpMetadata);
+		}
+	}
+
 	protected override summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -208,6 +291,7 @@ class SharedObjectFromKernel<
 
 	protected override initializeLocalCore(): void {
 		this.#initializeData(this.factory.create(this.#kernelArgs));
+		this.#configurationHandler?.completeInitialization();
 	}
 
 	#initializeData(data: FactoryOut<TOut>): void {
@@ -227,6 +311,7 @@ class SharedObjectFromKernel<
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
 		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
+		this.#configurationHandler?.completeInitialization();
 	}
 
 	protected override onDisconnect(): void {
