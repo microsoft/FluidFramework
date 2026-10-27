@@ -59,44 +59,9 @@ If you supply `ACR_LOGIN_SERVER`, provisioning is skipped; create and log into t
 For standalone build commands, also log into the existing build ACR first.
 An expired build login can be refreshed with `az acr login -n <build-acr-name>`.
 
-Docker Hub is a separate upstream registry.
-`az acr login` does not authenticate requests to Docker Hub.
-You can optionally sign in with your Docker Hub username and a read-only access token to reduce unauthenticated pull throttling:
-
-```bash
-docker login --username <docker-hub-username>
-```
-
-Enter the access token at the password prompt.
-This login works for local builds and image inspection.
-The deployment also reads the saved Docker Hub credentials, including credentials stored by Docker Desktop, and passes them to Azure for server-side image imports.
-Browser-based `docker login` can store an identity token that the deployment cannot reuse; use the username and access-token login above for imports.
-
-Alternatively, wait for Docker Hub's rate-limit window to reset before retrying.
-If your organization's policy permits it, disconnecting from a shared VPN may help local requests avoid a shared, throttled public IP address.
-Neither option guarantees that a retry will succeed; see [Docker Hub pull limits](https://docs.docker.com/docker-hub/usage/pulls/).
-
-**Azure-side imports are separate.**
-`az acr import` does not read your Docker login itself; the deployment helper supplies saved credentials through `--username` and `--password`.
-The token is passed as a process argument; do not run the deployment with shell tracing (`bash -x`) or Azure CLI debug logging.
-Changing your local VPN connection does not change Azure's import traffic.
-If a Docker Hub import is throttled, wait for the rate-limit window to reset or sign in as shown above.
-You can instead provide credentials directly to the deployment; these take priority over your saved Docker login:
-
-```bash
-read -r -p "Docker Hub username: " DOCKERHUB_USERNAME
-read -r -s -p "Docker Hub read-only access token: " DOCKERHUB_TOKEN
-printf '\n'
-export DOCKERHUB_USERNAME DOCKERHUB_TOKEN
-./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
-unset DOCKERHUB_USERNAME DOCKERHUB_TOKEN
-```
-
-Use a Docker Hub access token with pull/read permission; do not put it in the parameters file.
-Without explicit credentials or a compatible saved Docker login, imports use anonymous Docker Hub access.
-If saved credentials cannot be read or reused, the deployment prints a warning and uses anonymous access.
-Authenticated accounts still have their own rate limits.
-See [Azure Container Registry imports from Docker Hub](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-import-images#import-container-images-from-docker-hub) for source authentication requirements.
+To optionally authenticate Docker Hub image imports and reduce unauthenticated throttling, set both `DOCKERHUB_USERNAME` (your Docker Hub username) and `DOCKERHUB_TOKEN` (your read-only access token) in your environment before deployment.
+Without these variables, imports use anonymous access.
+See [Docker Hub access tokens](https://docs.docker.com/security/access-tokens/) for token information.
 
 ## Generate a release bundle
 

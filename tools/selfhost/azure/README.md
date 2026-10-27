@@ -50,8 +50,8 @@ tool check and then fails partway through the image build:
 docker buildx version
 ```
 
-Optionally, run `docker login --username <docker-hub-username>` and enter a read-only Docker Hub access token at the password prompt.
-This is not required, but helps avoid Docker Hub throttling limits for unauthenticated users during deployment.
+Optionally, set `DOCKERHUB_USERNAME` (your Docker Hub username) and `DOCKERHUB_TOKEN` (your read-only access token) in your environment to reduce unauthenticated Docker Hub throttling during deployment.
+See [Docker Hub access tokens](https://docs.docker.com/security/access-tokens/) for token information.
 
 Run everything from **Bash** — Git Bash, WSL, macOS, or Linux. Zsh and PowerShell will not work.
 

@@ -46,6 +46,7 @@ echo "az $*" >> "$CALLS"
 case "$*" in
   *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
     [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
+  *"acr repository show"*"example/service"*) exit 1 ;;
   "acr import "*)
     jq -n --args '$ARGS.positional' -- "$@" > "$CALLS.import-args.json"
     if [[ "${MOCK_IMPORT_FAILURE:-0}" = 1 ]]; then
@@ -387,81 +388,43 @@ assert_eq "Azure CLI handles completion without custom digest polling" \
   "$(grep -c 'acr repository show.*busybox@sha256:' "$CALLS")" "1"
 assert_eq "authenticated image is imported exactly once" "$(grep -c '^az acr import ' "$CALLS")" "1"
 
-: > "$CALLS"
-out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
-[[ "$rc" != 0 ]] && ok "partial Docker Hub credentials are rejected" || no "partial Docker Hub credentials are rejected"
-
-cat > "$BIN/docker-credential-selfhost-test" <<'STUB'
-#!/usr/bin/env bash
-read -r server
-printf 'credential-helper %s %s\n' "$1" "$server" >> "$CALLS"
-if [[ "${MOCK_CREDENTIAL_FAILURE:-0}" = 1 ]]; then
-  echo "test-only-secret-must-not-be-logged" >&2
-  exit 1
-fi
-printf '%s\n' "${MOCK_DOCKER_CREDENTIALS}"
-STUB
-chmod +x "$BIN/docker-credential-selfhost-test"
-export MOCK_DOCKER_CREDENTIALS='{"Username":"saved-user","Secret":"saved-token:with-colon"}'
-
-for config in \
-  '{"credsStore":"selfhost-test"}' \
-  '{"credsStore":"missing-helper","credHelpers":{"https://index.docker.io/v1/":"selfhost-test"}}' \
-  '{"credsStore":"selfhost-test","auths":{"https://index.docker.io/v1/":{"auth":"d3Jvbmc6d3Jvbmc="}}}' \
-  '{"credHelpers":{"docker.io":"selfhost-test"}}' \
-  '{"auths":{"https://index.docker.io/v1/":{"auth":"c2F2ZWQtdXNlcjpzYXZlZC10b2tlbjp3aXRoLWNvbG9u"}}}' \
-  '{"auths":{"docker.io":{"auth":"c2F2ZWQtdXNlcjpzYXZlZC10b2tlbjp3aXRoLWNvbG9u"}}}'; do
-  printf '%s\n' "$config" > "$DOCKER_CONFIG/config.json"
+for missing in username token; do
   : > "$CALLS"
-  out="$(run_phase 'phase1_images')"; rc=$?
-  assert_eq "saved Docker credentials import successfully: $config" "$rc" "0"
-  assert_has "saved Docker credentials use az acr import" "$CALLS" "acr import --name mockacr"
-  assert_eq "saved credentials preserve the username and full secret" \
-    "$(jq -r '.[index("--username") + 1] + ":" + .[index("--password") + 1]' "$CALLS.import-args.json")" \
-    "saved-user:saved-token:with-colon"
-  if [[ "$out" == *saved-token* ]]; then
-    no "saved credentials stay out of deployment output"
+  if [[ "$missing" == username ]]; then
+    out="$(DOCKERHUB_USERNAME= DOCKERHUB_TOKEN=test-only-token run_phase 'phase1_images')"; rc=$?
   else
-    ok "saved credentials stay out of deployment output"
+    out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
+  fi
+  [[ "$rc" != 0 ]] && ok "missing Docker Hub $missing is rejected" || no "missing Docker Hub $missing is rejected"
+  assert_has "partial credentials explain which variables are needed" <(printf '%s' "$out") \
+    "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
+  if grep -q '^az acr ' "$CALLS"; then
+    no "partial credentials fail before registry login or import"
+  else
+    ok "partial credentials fail before registry login or import"
   fi
 done
 
-printf '%s\n' '{"credsStore":"selfhost-test"}' > "$DOCKER_CONFIG/config.json"
+printf '%s\n' '{"credsStore":"must-not-be-read","auths":{"https://index.docker.io/v1/":{"auth":"dXNlcjp0b2tlbg=="}}}' \
+  > "$DOCKER_CONFIG/config.json"
 : > "$CALLS"
-out="$(run_phase 'phase1_images; [[ -z "${DOCKERHUB_USERNAME:-}" && -z "${DOCKERHUB_TOKEN:-}" ]]')"; rc=$?
-assert_eq "saved credentials remain scoped to the import helper" "$rc" "0"
-assert_has "credential store receives the Docker Hub server on stdin" "$CALLS" \
-  "credential-helper get https://index.docker.io/v1/"
-mkdir -p "$WORK/docker-home/.docker"
-cp "$DOCKER_CONFIG/config.json" "$WORK/docker-home/.docker/config.json"
-: > "$CALLS"
-out="$(HOME="$WORK/docker-home" DOCKER_CONFIG= run_phase 'phase1_images')"; rc=$?
-assert_eq "saved credentials default to the home Docker configuration" "$rc" "0"
-assert_has "home Docker configuration supplies credentials for Azure import" "$CALLS" \
-  "--username saved-user --password saved-token:with-colon"
+out="$(run_phase 'phase1_images')"; rc=$?
+assert_eq "saved Docker configuration is not needed for imports" "$rc" "0"
+assert_eq "saved Docker credentials are ignored without environment credentials" \
+  "$(jq 'index("--username") == null and index("--password") == null' "$CALLS.import-args.json")" "true"
+rm "$DOCKER_CONFIG/config.json"
 
 : > "$CALLS"
-out="$(MOCK_IMPORT_FAILURE=1 run_phase 'phase1_images')"; rc=$?
+out="$(MOCK_IMPORT_FAILURE=1 DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+  run_phase 'phase1_images')"; rc=$?
 [[ "$rc" != 0 ]] && ok "authenticated import failures stop deployment" \
   || no "authenticated import failures stop deployment"
 assert_eq "rejected source credentials never silently retry anonymously" \
   "$(grep -c '^az acr import ' "$CALLS")" "1"
-assert_has "rejected import used the saved credentials" "$CALLS" "--username saved-user --password saved-token:with-colon"
+assert_has "rejected import used the environment credentials" "$CALLS" "--username test-user --password test-only-token"
 [[ "$out" == *"Mock registry rejected source credentials"* ]] \
   && ok "authenticated import failure remains visible" \
   || no "authenticated import failure remains visible"
-
-: > "$CALLS"
-out="$(DOCKERHUB_USERNAME=explicit-user DOCKERHUB_TOKEN=explicit-token run_phase 'phase1_images')"; rc=$?
-assert_eq "explicit environment credentials take priority" "$rc" "0"
-assert_eq "explicit credentials replace saved credentials" \
-  "$(jq -r '.[index("--username") + 1] + ":" + .[index("--password") + 1]' "$CALLS.import-args.json")" \
-  "explicit-user:explicit-token"
-if grep -q 'credential-helper' "$CALLS"; then
-  no "explicit credentials do not query the Docker credential store"
-else
-  ok "explicit credentials do not query the Docker credential store"
-fi
 
 : > "$CALLS"
 out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN='test token * --flag' run_phase 'phase1_images')"; rc=$?
@@ -469,69 +432,37 @@ assert_eq "source credentials with shell metacharacters import successfully" "$r
 assert_eq "the source token remains one literal command argument" \
   "$(jq -r '.[index("--password") + 1]' "$CALLS.import-args.json")" "test token * --flag"
 
-: > "$CALLS"
-out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
-[[ "$rc" != 0 ]] && ok "partial explicit credentials do not fall back to saved credentials" \
-  || no "partial explicit credentials do not fall back to saved credentials"
-
-: > "$CALLS"
-out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
-  run_phase 'import_release_image example.com/image:tag image:tag')"; rc=$?
-assert_eq "non-Docker-Hub imports still use az acr import" "$rc" "0"
-if grep -q 'credential-helper\|--username\|--password' "$CALLS"; then
-  no "Docker Hub credentials are never used for another registry"
-else
-  ok "Docker Hub credentials are never used for another registry"
-fi
-
-for credentials in \
-  '{"Username":"<token>","Secret":"test-only-secret-must-not-be-logged"}' \
-  '{"Username":"saved-user","Secret":""}' \
-  '{"Username":42,"Secret":"test-only-secret-must-not-be-logged"}' \
-  'invalid-test-only-secret-must-not-be-logged'; do
-  : > "$CALLS"
-  out="$(MOCK_DOCKER_CREDENTIALS="$credentials" run_phase 'phase1_images')"; rc=$?
-  assert_eq "incompatible helper credentials allow anonymous import" "$rc" "0"
-  assert_has "incompatible helper credentials use anonymous az acr import" "$CALLS" "acr import --name mockacr"
-  [[ "$out" == *WARNING:* && "$out" != *test-only-secret-must-not-be-logged* ]] \
-    && ok "incompatible credentials warn without leaking secrets" \
-    || no "incompatible credentials warn without leaking secrets"
+CUSTOM_IMAGES="$WORK/custom-import-images.json"
+for kind in built dependency; do
+  for registry in docker.io registry.hub.docker.com index.docker.io example.azurecr.io; do
+    jq --arg repository "$registry/example/service" --arg kind "$kind" '
+      if $kind == "built" then
+        .builtImages[0].repository = $repository |
+        .builtImages[0].digest = .dependencyImages[0].digest |
+        .dependencyImages = []
+      else .dependencyImages[0].name = $repository end
+    ' "$REL_DIR/images.json" > "$CUSTOM_IMAGES"
+    : > "$CALLS"
+    out="$(TEST_IMAGES_FILE="$CUSTOM_IMAGES" DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+      run_phase 'IMAGES_FILE="$TEST_IMAGES_FILE"; phase1_images')"; rc=$?
+    assert_eq "$kind image from $registry imports successfully" "$rc" "0"
+    if [[ "$registry" == example.azurecr.io ]]; then expected_auth=false; else expected_auth=true; fi
+    assert_eq "$kind image only receives Docker Hub credentials for Docker Hub sources" \
+      "$(jq 'index("--username") != null and index("--password") != null' "$CALLS.import-args.json")" "$expected_auth"
+    assert_has "$kind image preserves its source registry" "$CALLS" "--source $registry/example/service@sha256:"
+  done
 done
 
+jq '.dependencyImages = [
+  (.dependencyImages[0] | .name = "docker.io/example/service"),
+  (.dependencyImages[0] | .name = "example.azurecr.io/example/service")
+]' "$REL_DIR/images.json" > "$CUSTOM_IMAGES"
 : > "$CALLS"
-out="$(MOCK_CREDENTIAL_FAILURE=1 run_phase 'phase1_images')"; rc=$?
-assert_eq "credential helper failure permits anonymous import" "$rc" "0"
-assert_has "failed credential lookup uses anonymous az acr import" "$CALLS" "acr import --name mockacr"
-[[ "$out" == *WARNING:* && "$out" != *test-only-secret-must-not-be-logged* ]] \
-  && ok "credential helper failure warns without exposing its output" \
-  || no "credential helper failure warns without exposing its output"
-
-for config in \
-  '{invalid-json' \
-  'null' \
-  '{"credsStore":"missing-helper"}' \
-  '{"credsStore":"invalid/helper"}' \
-  '{"credsStore":42}' \
-  '{"auths":{"https://index.docker.io/v1/":{"auth":"not-base64!"}}}' \
-  '{"auths":{"https://index.docker.io/v1/":{"auth":"bm8tY29sb24="}}}' \
-  '{"auths":{"https://index.docker.io/v1/":{"auth":"dXNlcjo="}}}' \
-  '{"auths":{"https://index.docker.io/v1/":{"identitytoken":"test-only-secret-must-not-be-logged"}}}'; do
-  printf '%s\n' "$config" > "$DOCKER_CONFIG/config.json"
-  : > "$CALLS"
-  out="$(run_phase 'phase1_images')"; rc=$?
-  assert_eq "unusable Docker configuration allows anonymous import: $config" "$rc" "0"
-  assert_has "unusable Docker configuration uses anonymous az acr import" "$CALLS" "acr import --name mockacr"
-  [[ "$out" == *WARNING:* && "$out" != *test-only-secret-must-not-be-logged* ]] \
-    && ok "unusable configuration warns without exposing secrets" \
-    || no "unusable configuration warns without exposing secrets"
-done
-
-printf '%s\n' '{"auths":{"example.com":{"auth":"unrelated"}}}' > "$DOCKER_CONFIG/config.json"
-: > "$CALLS"
-out="$(run_phase 'phase1_images')"; rc=$?
-assert_eq "Docker configuration without a Hub login permits anonymous import" "$rc" "0"
-assert_has "unrelated registry credentials are not used" "$CALLS" "acr import --name mockacr"
-rm "$DOCKER_CONFIG/config.json"
+out="$(TEST_IMAGES_FILE="$CUSTOM_IMAGES" DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+  run_phase 'IMAGES_FILE="$TEST_IMAGES_FILE"; phase1_images')"; rc=$?
+assert_eq "mixed-registry dependencies import successfully" "$rc" "0"
+assert_eq "Docker Hub credentials are cleared before the next non-Hub import" \
+  "$(jq 'index("--username") == null and index("--password") == null' "$CALLS.import-args.json")" "true"
 
 : > "$CALLS"; export MOCK_BUSYBOX_DIGEST_EXISTS=1
 out="$(run_phase 'phase1_images')"; rc=$?
