@@ -508,6 +508,37 @@ describe("LazyNode", () => {
 			});
 		}
 
+		for (const compatible of [true, false]) {
+			it(`invalidates cached fields after ${compatible ? "compatible" : "incompatible"} schema replacement (${name})`, () => {
+				const sf = new SchemaFactory("schema-dependent-cache");
+				class Item extends sf.object("Item", { value: sf.number }) {}
+				const view = createIndependentTreeAlpha({ forest }).viewWith(
+					new TreeViewConfiguration({ schema: Item }),
+				);
+				view.initialize({ value: 1 });
+				const item = view.root;
+				const node = getInnerNode(item);
+				assert(node instanceof LazyTreeNode);
+				const key: FieldKey = brand("value");
+				const field = node.getBoxed(key);
+				const checkout = node.context.checkout;
+				checkout.updateSchema(toUpgradeSchema(compatible ? Item : [Item, sf.string]));
+				assert.throws(() => node.getBoxed(key));
+				assert.throws(() => field.length);
+				assert.throws(() => item.value);
+				assert.equal(view.compatibility.canView, compatible);
+				if (!compatible) {
+					checkout.updateSchema(toUpgradeSchema(Item), true);
+				}
+				const replacement = getInnerNode(view.root);
+				assert.notEqual(replacement, node);
+				assert.notEqual(replacement.getBoxed(key), field);
+				assert.equal(view.root.value, 1);
+				view.dispose();
+				checkout.dispose();
+			});
+		}
+
 		for (const kind of ["map", "record"] as const) {
 			it(`invalidates node-owned ${kind} caches after a remote schema change (${name})`, () => {
 				const sf = new SchemaFactoryAlpha("remote-schema-dependent-cache");
@@ -545,6 +576,37 @@ describe("LazyNode", () => {
 				target.dispose();
 			});
 		}
+
+		it(`invalidates cached fields after a remote schema change (${name})`, () => {
+			const sf = new SchemaFactory("remote-schema-dependent-cache");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			const config = new TreeViewConfiguration({ schema: Item });
+			const provider = new TestTreeProviderLite(
+				2,
+				new SharedTreeTestFactory(() => {}, undefined, { forest }),
+			);
+			const [sourceTree, targetTree] = provider.trees;
+			assert(sourceTree !== undefined && targetTree !== undefined);
+			const source = sourceTree.viewWith(config);
+			source.initialize({ value: 1 });
+			provider.synchronizeMessages();
+			const target = targetTree.viewWith(config);
+			const item = target.root;
+			const node = getInnerNode(item);
+			assert(node instanceof LazyTreeNode);
+			const key: FieldKey = brand("value");
+			const field = node.getBoxed(key);
+			const sourceNode = getInnerNode(source.root);
+			assert(sourceNode instanceof LazyTreeNode);
+			sourceNode.context.checkout.updateSchema(toUpgradeSchema([Item, sf.string]));
+			provider.synchronizeMessages();
+			assert.equal(target.compatibility.canView, false);
+			assert.throws(() => node.getBoxed(key));
+			assert.throws(() => field.length);
+			assert.throws(() => item.value);
+			source.dispose();
+			target.dispose();
+		});
 	}
 
 	it("cached fields preserve current reads but reject recovery in a broken forest", () => {

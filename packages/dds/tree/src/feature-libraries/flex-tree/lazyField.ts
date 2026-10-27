@@ -424,7 +424,10 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 			this.anchor.parent !== undefined
 		) {
 			const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
-			assert(parent !== undefined, "A sequence field must have a live parent anchor");
+			assert(
+				parent !== undefined,
+				0xd7a /* A sequence field must have a live parent anchor */,
+			);
 			const entry: SequenceLengthCache = {
 				length,
 				unsubscribe: parent.events.on("childrenChanging", () => {

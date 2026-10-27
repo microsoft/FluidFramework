@@ -321,6 +321,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		createRefParams: resources.ICreateRefParams & { force?: boolean },
 		externalWriterConfig?: IExternalWriterConfig,
 	): Promise<resources.IRef> {
+		helpers.validateGitSha(createRefParams.sha);
 		await isomorphicGit.writeRef({
 			fs: this.fileSystemManager,
 			gitdir: this.directory,
@@ -336,6 +337,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		patchRefParams: resources.IPatchRefParams,
 		externalWriterConfig?: IExternalWriterConfig,
 	): Promise<resources.IRef> {
+		helpers.validateGitSha(patchRefParams.sha);
 		await isomorphicGit.writeRef({
 			fs: this.fileSystemManager,
 			gitdir: this.directory,

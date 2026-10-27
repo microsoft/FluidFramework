@@ -1157,7 +1157,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["B", "A"]);
 		});
 
-		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// This covers in-memory retention only. See the "History retention configuration" suite below for the
 		// summary round-trip behavior.
 		it("does not evict trunk commits when retainHistory is enabled", () => {
 			const provider = new TestTreeProviderLite(
@@ -1207,7 +1207,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Persists retained history", () => {
+	describe("History retention configuration", () => {
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past most of them.
@@ -1273,6 +1273,91 @@ describe("SharedTree", () => {
 			return tree.kernel.checkout.branchHistory.length;
 		}
 
+		// Example: `retainHistory: 3` on a tree that has sequenced more than 3 commits outside the collaboration window.
+		// The client keeps commits in the collaboration window plus enough older commits to reach at least 3 commits in total,
+		// and a client loaded from that tree's summary holds the same commits.
+		// A limit smaller than the collaboration window (such as 0 or 1) does not trim below the window,
+		// and a very large limit (such as Number.MAX_SAFE_INTEGER) keeps every available commit.
+		describe("numeric limits", () => {
+			for (const retainHistory of [0, 1, 3, 5, Number.MAX_SAFE_INTEGER] as const) {
+				it(`retains and persists history for retainHistory: ${retainHistory}`, async () => {
+					const { retainedCommitCount: collaborationWindowCount } = generateHistory(
+						configuredSharedTree({ jsonValidator: FormatValidatorBasic }).getFactory(),
+					);
+					const { retainedCommitCount: availableCommitCount } = generateHistory(
+						configuredSharedTree({
+							jsonValidator: FormatValidatorBasic,
+							retainHistory: true,
+						}).getFactory(),
+					);
+					const expectedCount = Math.max(
+						collaborationWindowCount,
+						Math.min(retainHistory, availableCommitCount),
+					);
+
+					const factory = configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						retainHistory,
+					}).getFactory();
+					const { provider } = generateHistory(factory);
+					for (const peerTree of provider.trees) {
+						assert.equal(trunkCommitCount(peerTree), expectedCount);
+					}
+
+					const tree = provider.trees[0];
+					const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+					assert.equal(trunkCommitCount(loaded), expectedCount);
+					validateTreeConsistency(tree, loaded);
+				});
+			}
+		});
+
+		// Example: `configuredSharedTree({ retainHistory: -1 })` throws a UsageError when the tree is created,
+		// as do 0.5, NaN, Infinity and values above Number.MAX_SAFE_INTEGER.
+		// Values that TypeScript rejects but a JavaScript caller could pass, such as the string "3", null or {},
+		// are rejected at runtime in the same way.
+		describe("invalid limits", () => {
+			for (const retainHistory of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.NEGATIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				it(`rejects ${retainHistory}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({ retainHistory }).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+
+			for (const retainHistory of ["3", null, {}]) {
+				it(`rejects type-erased input ${JSON.stringify(retainHistory)}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({
+									// @ts-expect-error Exercise runtime validation of type-erased application input.
+									retainHistory,
+								}).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+		});
+
 		it("persists the retained trunk when retainHistory is enabled", async () => {
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -1301,6 +1386,44 @@ describe("SharedTree", () => {
 				retainedCommitCount,
 				"The default path must persist exactly the collaboration window",
 			);
+		});
+
+		// Example: a summary written with `retainHistory: true` holds every commit, say 12.
+		// A client that loads it with `retainHistory: 3` starts with all of them, because it does not yet know the collaboration boundary.
+		// When it receives its first message, which reports the boundary, it trims down to 3 commits without needing new edits.
+		// The client that wrote the summary is unaffected and keeps all of its commits.
+		it("applies a numeric policy to loaded history when the collaboration boundary advances", async () => {
+			const { provider, retainedCommitCount } = generateHistory(
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const tree = provider.trees[0];
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: 3,
+			}).getFactory();
+			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			assert.equal(trunkCommitCount(loaded), retainedCommitCount);
+
+			// Loading does not supply the collaboration boundary. Receiving it permits trimming without new edits.
+			loaded.kernel.processMessagesCore({
+				envelope: {
+					type: "op",
+					clientId: "test-client",
+					timestamp: 0,
+					sequenceNumber: provider.sequenceNumber + 1,
+					referenceSequenceNumber: provider.sequenceNumber,
+					minimumSequenceNumber: provider.minimumSequenceNumber,
+				},
+				local: false,
+				messagesContent: [],
+			});
+
+			assert.equal(trunkCommitCount(loaded), 3);
+			assert.equal(trunkCommitCount(tree), retainedCommitCount);
+			validateTreeConsistency(tree, loaded);
 		});
 	});
 
