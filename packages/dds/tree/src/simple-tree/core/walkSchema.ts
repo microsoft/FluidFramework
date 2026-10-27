@@ -76,9 +76,9 @@ export function walkSchema(
 		"Incremental component visits require a component callback without node callbacks",
 	);
 	/**
-	 * Zero-based ordinal assigned when a node enters this walk's component analysis.
+	 * Zero-based ordinal assigned when a node is first analyzed.
 	 * Smaller values identify earlier discoveries.
-	 * Local to one walk; not a schema identifier or an index into the traversal stack.
+	 * Vertices are assigned unique values.
 	 */
 	type DiscoveryIndex = number;
 
@@ -95,7 +95,7 @@ export function walkSchema(
 		 */
 		readonly index: DiscoveryIndex;
 		/**
-		 * Lowest {@link DiscoveryIndex} propagated from depth-first-search children or edges to unfinished nodes.
+		 * Lowest {@link DiscoveryIndex} of all unfinished nodes known to be reachable from this node. This is computed over the course of the depth-first-search.
 		 */
 		lowLink: DiscoveryIndex;
 		/**
