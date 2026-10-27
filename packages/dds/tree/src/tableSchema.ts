@@ -1616,7 +1616,8 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
- * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/schema-libraries | Reusable Schema Libraries} for configurable model boundaries and consumer-supplied schemas.
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/configuration-and-composition | Configuration and Composition} for consumer-supplied schemas.
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports | Encapsulation and Exports} for model boundaries.
  * @beta
  */
 export namespace TableSchema {

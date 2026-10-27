@@ -10,9 +10,9 @@ A small, deliberate public API can make typing, testing, and schema evolution ea
 This guide assumes you can [define a schema](../schema-definition/index.mdx) and [read and edit nodes](../reading-and-editing.mdx).
 It covers application architecture and reusable libraries, including libraries that accept schemas from their consumers.
 
--   [Reusable Schema Libraries](./schema-libraries.mdx): public types, erasure, subclassing, and consumer configuration.
--   [Composition and Recursive Dependencies](./composition.mdx): extension points and mutually recursive libraries.
--   [TypeScript and Package Exports](./typescript-exports.mdx): explicit declarations and constrained builds.
+-   [Encapsulation and Exports](./encapsulation-and-exports.mdx): root-node contracts, type erasure, subclassing, layered boundaries, and adapters.
+-   [Configuration and Composition](./configuration-and-composition.mdx): consumer-provided schemas, multiple configurations, extension points, and mutually recursive libraries.
+-   [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md): compiler options and declaration-build strategies.
 -   [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx): package, document, and deployment compatibility.
 -   [Testing Schema Libraries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries): isolated, package, compatibility, and application tests.
 

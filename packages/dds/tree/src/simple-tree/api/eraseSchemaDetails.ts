@@ -28,10 +28,10 @@ import type {
  * Typically construction is done via static functions on the schema which can be included in `ExtraSchemaProperties`,
  * and access to contents is done via properties of TNode (usually methods).
  *
- * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/schema-libraries | Reusable Schema Libraries}
- * for guidance on choosing this boundary and managing consumer-specific schema configurations.
- * For explicit exported types and declaration builds, see
- * {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/typescript-exports | TypeScript and Package Exports}.
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports | Encapsulation and Exports}
+ * for guidance on root-node contracts, layered boundaries, and adapting models to existing interfaces.
+ * That guide also includes an {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports#explicit-public-types | example with explicit public types}.
+ * For declaration builds, see {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md | Isolated declarations}.
  *
  * @example
  * ```typescript

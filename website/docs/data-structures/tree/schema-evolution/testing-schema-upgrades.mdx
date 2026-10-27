@@ -193,11 +193,16 @@ Verify that repeated lookups within one composition return the same schema class
 
 ### Package and type contracts
 
-Compile and execute a consumer against the built package's public entry points.
-Test schema composition, static factories, instance methods, and supported subclassing.
-Include expected compile-time errors for hidden members and unsupported inputs.
-Run declaration emission with the compiler settings that the library claims to support.
-See [TypeScript and Package Exports](../schema-architecture/typescript-exports.mdx#test-the-published-contract) for the full boundary checklist.
+Test an installed or packed build of the library, not only its source tree.
+For each supported package entry point:
+
+- Compile a consumer that imports that entry point, embeds the schema, constructs nodes, and calls domain APIs. Include supported subclassing.
+- Check expected compile-time errors for hidden members, unsupported inputs, and unsupported construction paths.
+- Run declaration emission with the compiler settings the library claims to support, including `isolatedDeclarations` in a consumer that re-exports or specializes its schemas.
+- Inspect emitted declarations for references to stripped declarations, local source paths, and unavailable dependencies.
+- Execute runtime imports and model construction too. Type-only tests cannot detect a missing JavaScript export or a duplicate configured schema class.
+
+See [Package export boundaries](../schema-architecture/encapsulation-and-exports.mdx#package-export-boundaries) for choosing the public surface and [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md) for build configuration.
 
 ### Persisted compatibility
 

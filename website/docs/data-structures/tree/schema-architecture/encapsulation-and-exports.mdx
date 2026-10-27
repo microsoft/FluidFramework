@@ -1,0 +1,217 @@
+---
+title: Encapsulation and Exports
+sidebar_position: 2
+---
+
+import { ApiLink } from "@site/src/components/shortLinks";
+
+Encapsulation lets callers use a model without depending on how its data is stored.
+Choose the contract those callers need, then keep representation-specific code behind it.
+This page uses _component_ to mean a part of your application with its own model and behavior; the patterns do not require the <ApiLink package="fluid-framework" api="Component" /> utilities.
+
+See [Schema Architecture and Libraries](./index.mdx) for choosing an overall architecture.
+Use [Configuration and Composition](./configuration-and-composition.mdx) when consumers need to supply child schemas or other dependencies.
+
+## Choose what to expose
+
+A concrete schema class is a good export when consumers need its fields, constructor, and schema information.
+Preserve its inferred type rather than annotating it as a broad <ApiLink package="fluid-framework" api="TreeNodeSchema" />: broad annotations lose information needed for typed construction and insertion.
+For collections of allowed types known at compile time, preserve tuple types with `as const`.
+Use the [schema definition guide](../schema-definition/index.mdx) for the underlying syntax.
+
+Encapsulation is useful when you want to:
+
+-   Give callers domain operations instead of requiring them to understand stored fields and collections.
+-   Keep logic for interpreting and editing the representation in one place.
+-   Change implementation details without changing every caller.
+-   Keep public types small enough to understand and explicitly describe at package boundaries.
+
+Do not erase details that consumers need to do their work.
+For a data-modeling library, schema composition or direct field access may be an intentional part of the public API.
+Distinguish code that embeds the model in a larger tree from code that only uses its domain operations.
+They may need different views of the same implementation.
+
+## Encapsulate a component root
+
+When your component owns a subtree, a useful default is a single root schema whose node implements the component's domain contract.
+Keep operations that understand that subtree alongside its schemas, often as methods on the root node.
+Consumers can embed the root in their own schemas without needing to name each internal node type.
+
+For example, a text component can expose text operations without exposing the array and atom nodes used to store its content.
+If the root has a required child field containing the implementation's data, that field can also provide a place to introduce additional representations through supported schema evolution.
+This structure is useful, not mandatory: a component that operates on several independently owned subtrees may need a different boundary.
+
+For an embeddable but encapsulated model, expose:
+
+-   An interface for domain operations and observable state.
+-   A node type that retains its SharedTree identity while exposing those members.
+-   A runtime schema value for use in a parent's allowed types.
+-   Explicit factory methods for constructing nodes without exposing their stored representation.
+
+Use <ApiLink package="fluid-framework" api="eraseSchemaDetails" /> to retain the chosen instance and static APIs while hiding other details from the schema's TypeScript type.
+Use <ApiLink package="fluid-framework" api="ErasedNode" /> for the public node type and <ApiLink package="fluid-framework" api="ErasedSchema" /> for an explicit schema type.
+Keep the identifier literal in the public type aligned with the runtime identifier.
+Retain a domain factory such as `create` or `fromString`, since erasure removes ordinary typed construction from the stored object shape.
+
+The helper returns the same runtime schema; it does not create a wrapper or enforce access control.
+Its API documentation owns the exact erasure contract and includes the component-root pattern.
+The [schema-erasure tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/eraseSchemaDetails.spec.ts) exercise construction, embedding in a view, events, recursion, and compile-time restrictions.
+
+### Explicit public types
+
+This example keeps its schema implementation local while exporting a node type, a schema value, and a static factory.
+The erasure helpers are alpha APIs, imported from `@fluidframework/tree/alpha`.
+
+```typescript
+import { SchemaFactory } from "@fluidframework/tree";
+import { eraseSchemaDetails, type ErasedNode, type ErasedSchema } from "@fluidframework/tree/alpha";
+
+export interface SquareMembers {
+	readonly area: number;
+}
+
+export type Square = ErasedNode<SquareMembers, "com.example.geometry.Square">;
+
+export interface SquareStatics {
+	create(sideLength: number): Square;
+}
+
+const schemaFactory = new SchemaFactory("com.example.geometry");
+
+class SquareImplementation
+	extends schemaFactory.object("Square", { sideLength: schemaFactory.number })
+	implements SquareMembers
+{
+	public get area(): number {
+		return this.sideLength * this.sideLength;
+	}
+
+	public static create(sideLength: number): SquareImplementation {
+		return new SquareImplementation({ sideLength });
+	}
+}
+
+export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
+	Square,
+	SquareStatics
+>()(SquareImplementation);
+```
+
+Consumers use `Square` as a runtime schema when composing a parent and as a type when working with a node.
+They create nodes with `Square.create(3)` and read `area`, without depending on the stored `sideLength` field.
+
+For a generic factory, explicitly annotate the return type with the public schema type parameterized by the inputs you intend to preserve.
+Keep its public node and static interfaces independent of the local implementation class.
+See <ApiLink package="fluid-framework" api="FormattedText.FormattedTextSchema" /> and its [implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/text/textDomainFormatted.ts) for an example that preserves a scope, formatting schema, and additional atom schemas.
+
+### Obtain new and existing instances
+
+For new content, call the model's public factory and insert the resulting node into an allowed parent field or use it to initialize a new view.
+Keep the factory's input in domain terms so callers do not reconstruct hidden fields themselves.
+
+For existing content, obtain the node through the configured view's root or through its parent in the tree.
+Its schema supplies the node implementation, including the domain methods.
+Do not call a creation factory to load existing content: that creates a new node rather than giving you access to the stored one.
+See [Reading and Editing](../reading-and-editing.mdx) for accessing nodes and [the initialization flow](../recommended-init-flow.mdx) for opening a document.
+
+## Decide whether to allow subclassing
+
+Prefer a non-subclassable export unless consumers need to extend the schema class.
+Use <ApiLink package="fluid-framework" api="eraseSchemaDetailsSubclassable" /> and <ApiLink package="fluid-framework" api="ErasedSchemaSubclassable" /> when subclassing is part of your extension contract.
+This lets you hide representation details while retaining a base class for consumer-defined behavior.
+
+Type erasure does not remove internal fields or methods at runtime.
+A consumer's subclass can collide with an internal member that its TypeScript type cannot see.
+Follow the collision mitigations in the helper's API documentation and document any reserved names.
+TypeScript's `private` modifier alone does not provide the runtime isolation of JavaScript `#private` members or non-exported symbols.
+
+Define how consumers construct subclasses.
+A static factory implemented with `new this(...)` can construct the derived class, while a factory that names the implementation class always constructs that class.
+Runtime subclass construction does not automatically give an inherited factory a more specific TypeScript return type.
+Test both the runtime instance and the public return type you promise.
+
+## Package export boundaries
+
+Exporting a declaration from a source file does not necessarily make it part of your package's public API.
+However, a declaration emitter can still process that file, and an inferred public type can indirectly expose its implementation types.
+Keep the full inferred schema type inside the implementation when callers only need an encapsulated contract.
+
+Identify the runtime values and types reachable from each package entry point.
+Publish declarations whose imports resolve in the installed package, and avoid exposing SharedTree system types merely because they appear in inferred implementation types.
+See [Testing Schema Libraries](../schema-evolution/testing-schema-upgrades.mdx#package-and-type-contracts) for testing the built entry points rather than source-relative imports.
+
+If your build requires explicit declaration boundaries, use the public types illustrated above and follow [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md).
+That guide covers compiler options, internal declarations, two-pass builds, and alternatives when schema inference conflicts with isolated declaration emission.
+
+## Apply boundaries at multiple layers
+
+You can encapsulate a model more than once, as different consumers need different contracts.
+A general-purpose library might expose an erased schema and domain methods.
+An application component can configure that library, embed it inside its own root, and expose a smaller application-specific contract.
+UI code can then depend on that contract rather than the underlying library's schemas or configuration options.
+
+Each boundary should hide a meaningful implementation decision.
+If a wrapper only repeats the same fields and methods, it adds maintenance without giving the implementation much freedom to change.
+Decide explicitly whether returning a child node is part of the contract: doing so exposes that node's public API even when its parent's representation is hidden.
+
+### Package a vertical component
+
+When one component owns its schema, domain operations, construction, and dependency configuration, keep those responsibilities together.
+This is a vertical organization: related behavior and storage live behind one component boundary rather than being distributed across application-wide technical layers.
+The boundary can be a module; it does not require a separate package.
+
+With the <ApiLink package="fluid-framework" api="Component" /> utilities, you can expose a <ApiLink package="fluid-framework" api="Component.Factory" /> as the implementation entry point instead of exporting all internal schema classes separately.
+Its returned contribution can expose the runtime root schema needed for composition and domain-typed factories or adapters needed to use the model.
+Keep any public contract types available to consumers, even if the component factory is the only runtime export.
+
+Application composition retrieves the configured component through <ApiLink package="fluid-framework" api="Component.Composed.getComponent" />.
+It uses the component's schema contribution to assemble the application schema and its public operations to create new content or expose nodes obtained from an existing view.
+The application does not need direct imports of the component's internal schemas.
+Keep configuration-dependent schema creation lazy until composition completes; see [Configuration and Composition](./configuration-and-composition.mdx#component-composition-lifecycle) for evaluation order and caching.
+
+## Adapt to existing interfaces and layers
+
+An existing architecture may separate schema ownership, domain logic, and UI services into different modules or packages.
+You may not be able to put everything behind one vertical boundary.
+Keep a deliberate schema-facing integration surface between those layers rather than exporting every implementation detail to every caller.
+An erased schema can cross that surface while ordinary feature code consumes only domain interfaces.
+
+When implementing an existing interface, consider both of these approaches:
+
+| Approach                                                       | When it fits                                                                                                                  | How callers obtain an instance                                                                                                                                           |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A schema node implements the interface                         | The interface describes one node or its owned subtree, and its lifetime naturally follows that node.                          | Create new content with the model's factory, or obtain the existing node through the view. Return it using the domain interface where callers do not need node identity. |
+| An adapter object refers to nodes and implements the interface | The interface combines several nodes, depends on application services, or needs a lifetime independent of an individual node. | Obtain the nodes from the view and pass them to an adapter factory. Keep that factory at a layer that can see both the node implementation and the domain contract.      |
+
+For an adapter, separate creating stored content from wrapping existing content.
+Define whether repeated requests for the same model return the same adapter and, if identity matters, manage that reuse in the owning layer.
+Also define what happens when the underlying node is removed or replaced, or the view is disposed.
+Forward the relevant change notifications and provide cleanup for subscriptions and other local resources.
+
+Neither approach is universally better.
+A node implementation avoids an extra wrapper and keeps behavior with storage.
+An adapter can preserve an established interface without forcing that interface or its consumers to depend on SharedTree types.
+
+## Preserve compatibility and invariants
+
+Encapsulation can centralize version-specific interpretation and editing, but it does not make incompatible stored-schema changes safe.
+Follow [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx) when changing the persisted representation, even if the domain interface is unchanged.
+
+Likewise, hiding fields does not ensure invariants under concurrent edits or prevent other clients from editing the same data.
+Use the applicable [transaction](../transactions.mdx) mechanisms and test domain operations under collaboration.
+See [Testing Schema Libraries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries) for checks at the model, package, and application boundaries.
+
+## Learn from the built-in domains
+
+These implementations illustrate different encapsulation boundaries, not templates to copy in full.
+Some APIs are alpha or beta, and repository source can be newer than your installed release.
+Check the API release tags before adopting a pattern.
+
+| Domain                                                    | Encapsulation pattern                                                                                             | Implementation and runnable tests                                                                                                                                                                                                                     |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <ApiLink package="fluid-framework" api="PlainText" />     | A root node exposes text operations and construction while hiding its backing array.                              | [Implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/text/textDomain.ts), [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/text/textDomain.spec.ts)                   |
+| <ApiLink package="fluid-framework" api="FormattedText" /> | Public member and static interfaces describe an erased schema while retaining subclassability.                    | [Implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/text/textDomainFormatted.ts), [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/text/textDomainFormatted.spec.ts) |
+| <ApiLink package="fluid-framework" api="TableSchema" />   | Table operations control structural edits, while different parts of the model expose different amounts of detail. | [Implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/tableSchema.ts), [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/tableSchema.spec.ts)                           |
+
+Use the public API docs for the supported contract.
+Internal casts, system types, and implementation helpers in these files are not additional extension points for your library.

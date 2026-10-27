@@ -6,7 +6,8 @@ sidebar_position: 6
 import { ApiLink } from "@site/src/components/shortLinks";
 
 A library release, an application deployment, and a document's stored schema can change independently.
-Treat them as separate compatibility contracts when publishing a [reusable schema library](../schema-architecture/schema-libraries.mdx).
+Treat them as separate compatibility contracts when publishing a reusable schema library.
+Use [Encapsulation and Exports](../schema-architecture/encapsulation-and-exports.mdx) to choose its public boundary and [Configuration and Composition](../schema-architecture/configuration-and-composition.mdx) to manage consumer-provided schemas.
 This page describes library and application responsibilities; [Schema Evolution](./index.mdx) describes the schema mechanisms.
 
 ## Keep the contracts separate

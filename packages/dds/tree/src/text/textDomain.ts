@@ -383,7 +383,7 @@ export function processCharactersChangedDelta(
  *
  * Part of that work will be establishing and documenting those patterns so other components with complex encodings can follow them,
  * in addition to implementing them for text.
- * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/schema-libraries | Reusable Schema Libraries} for the encapsulated model pattern used by this API.
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports | Encapsulation and Exports} for the encapsulated model pattern used by this API.
  * @alpha
  */
 export namespace PlainText {

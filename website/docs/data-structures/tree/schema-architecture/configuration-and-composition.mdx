@@ -1,0 +1,195 @@
+---
+title: Configuration and Composition
+sidebar_position: 3
+---
+
+import { ApiLink } from "@site/src/components/shortLinks";
+
+Prefer exporting one fixed schema configuration that all consumers can use.
+When consumers do not need to choose schemas or dependencies, avoid introducing configuration or composition APIs.
+Consumer-configurable schemas add significant complexity to types, schema identity, compatibility, and testing.
+Introduce that flexibility only where consumers need it.
+
+## Fixed schemas as the default
+
+Define your schemas once and export the values or model entry point your consumers need.
+All consumers can then reuse the same schema classes without selecting scopes, supplying child schemas, or coordinating schema factories.
+A fixed schema can still describe many documents with different data: ordinary content belongs in node construction or editing, not in schema configuration.
+
+For example, a text model does not need a different schema for every string it stores.
+The <ApiLink package="fluid-framework" api="PlainText" /> domain illustrates a fixed model with domain operations and construction APIs.
+See [Encapsulation and Exports](./encapsulation-and-exports.mdx) for hiding its representation without making its schema configurable.
+
+If your library uses schema factories internally, it can still export one configured result.
+Using a factory to implement the library does not require exposing that factory or its options to every consumer.
+
+## Minimal configuration boundaries
+
+When a fixed configuration cannot meet your consumers' needs, keep the configurable portion as small as practical.
+Separate schemas and behavior that are common to every consumer from the parts that depend on consumer choices.
+Keep a generic factory limited to those dependent parts instead of making the entire library generic.
+For example, consumer-provided child schemas may require a configurable parent schema, but unrelated model types and operations can remain fixed.
+
+Distinguish configuration that changes stored schema from options that only change local behavior.
+Keep local behavior options out of schema factories when they can be supplied to ordinary operations or adapters instead.
+Each persisted-schema option adds configurations whose compatibility and behavior need to be understood and tested.
+
+With multiple layers of encapsulation, resolve options at the layer that knows which choices are needed.
+A reusable library might accept a child schema, while an application-specific component selects that schema once and exposes only its configured model.
+The component's consumers should not need to forward the same options through every layer.
+Expose an option through another boundary only when callers at that boundary need to control it.
+
+## Schema factory functions
+
+Use a factory when consumers supply child schemas, formatting, metadata, or another part of the persisted model.
+Pass configuration explicitly instead of mutating a process-wide registry during imports.
+For a published factory, document:
+
+-   Which child node behaviors the library requires and which schema kinds it accepts.
+-   Which configuration inputs affect stored schema, and which only affect local behavior.
+-   How the caller provides a scope and how the library derives identifiers from it.
+-   Whether callers can subclass the result, and how they construct nodes.
+-   Which combinations of options and child schemas the library supports and tests.
+
+Keep generic parameters that preserve consumer-selected child types through the public API.
+Use schema-to-node and schema-to-insertable utilities such as <ApiLink package="fluid-framework" api="TreeNodeFromImplicitAllowedTypes" /> and <ApiLink package="fluid-framework" api="InsertableTreeNodeFromImplicitAllowedTypes" /> rather than substituting plain objects or `any`.
+An existing node and the data accepted to construct a node are different contracts.
+
+Create each configured schema once per composition and distribute that result to its users.
+Repeated factory calls can create different JavaScript classes even when their schema identifiers match.
+Reusing the result avoids mixing those classes in one view schema.
+Do not use a single global cache for a factory whose result depends on the consumer's configuration.
+
+### Avoiding Schema Identifier Collisions
+
+For schemas that consumers do not customize, use fixed identifiers in a scope owned by the library.
+This is the simplest approach when consumers do not need to combine schemas from multiple versions of that library in the same larger schema.
+See <ApiLink package="fluid-framework" api="SchemaFactory.scope" /> for choosing a library scope and combining it with individual schema names.
+
+For customized schemas, let the consumer supply a scope that distinguishes each configuration that must coexist in the same larger schema.
+Typically the consumer passes a schema factory, often created with <ApiLink package="fluid-framework" api="SchemaFactoryBeta.scopedFactory" /> to give that configuration a nested scope.
+The factory's `scope` property contains the scope string.
+The library can use it in either of two ways:
+
+1. **Create schemas in the caller's scope.** The library supplies the individual schema names, while the caller reserves a scope for that use of the helper.
+   The <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" /> helpers follow this pattern: enum values become schema names in the supplied factory's scope.
+   Give separate enums their own nested scopes so shared values such as `Active` do not produce identifier collisions.
+2. **Use the caller's scope to distinguish configurations within a library-owned scope.** The library retains its own namespace and incorporates the supplied scope into the identifiers it generates.
+   For example, <ApiLink package="fluid-framework" api="TableSchema" /> uses identifiers such as `com.fluidframework.table<user-scope>.Table`, and <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> uses `com.fluidframework.text.formatted<user-scope>.Text`.
+   This separates library-owned names from caller-owned names while allowing multiple configurations of the library's schemas to coexist.
+
+Document which pattern your factory uses and which names it creates, so consumers can allocate scopes without collisions.
+Keep those scopes and the identifier construction stable when reopening existing documents.
+Different scopes distinguish configurations; they do not make configuration changes compatible with existing data.
+Likewise, matching identifiers do not prove two configurations are interchangeable.
+Treat changes to an existing configuration as schema-evolution decisions, not as a reason to automatically include the package version in every identifier.
+See [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx) for compatibility and versioning guidance.
+
+### Schema factory examples
+
+Start with <ApiLink package="fluid-framework" api="SchemaFactory" /> itself: it is a collection of methods that return schemas based on configuration such as names, fields, and allowed types.
+The [schema definition guide](../schema-definition/index.mdx) shows how to use those methods to produce schemas that the rest of an application can consume directly.
+
+For smaller schema-creation utilities, see <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" />.
+These enum helpers illustrate deriving schemas from a focused input without introducing a component-composition system.
+Use their API examples as a starting point before studying the more general domain factories below.
+
+Use <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> as an example of accepting formatting and extra atom schemas while preserving the consumer's choices in public types.
+Its [implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/text/textDomainFormatted.ts) and [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/text/textDomainFormatted.spec.ts) also show how a caller-provided scope identifies the configured model.
+
+For separately configurable parts, see <ApiLink package="fluid-framework" api="TableSchema" />, whose factories accept cell schemas and row and column customizations.
+The [implementation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/tableSchema.ts) and [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/tableSchema.spec.ts) show how those parts form a table schema.
+Check the public API docs and release tags before using these patterns; internal implementation helpers are not consumer extension points.
+
+## Composition of independently authored schemas
+
+Use composition when the application must select a set of independently authored schema contributions.
+For dependencies that do not refer back to each other, ordinary factory calls and explicit aggregation of their results are often enough.
+Do not add a component system just to pass parameters or concatenate allowed-type collections.
+
+SharedTree requires an explicit set of allowed types for each field or collection.
+An extensible application can select that set during composition, but the resulting schema still has a fixed set of allowed types.
+Installing another plugin is not permission to mutate an existing schema's allowed-types array.
+Changes to the composed set for existing documents need a [schema rollout](../schema-evolution/index.mdx).
+
+Put shared instance and static contracts in a module that does not import their implementations.
+For example, an item contract might require a rendering description and a static factory as well as an instance operation.
+Each library contributes schemas that implement that contract.
+The application imports the libraries and assembles the allowed types.
+
+This inverts the dependency that otherwise makes a container library import every kind of item it can hold.
+If your existing component system already performs this composition, use it with the same evaluation rules below.
+
+## Mutually recursive libraries
+
+For mutually recursive dependencies between independently authored libraries, use the alpha <ApiLink package="fluid-framework" api="Component" /> API.
+Coordinating these dependencies is the main reason to adopt these utilities: each library needs access to a final composition that includes contributions which may refer back to it.
+The explicit lifecycle and lazy configuration become worth the extra structure in this case.
+Simpler configuration and aggregation do not usually need that machinery.
+
+Two libraries can define mutually recursive schemas without having mutually dependent packages.
+For example, a group can contain items, and one item implementation can contain another group.
+Both implementations depend on shared contracts and receive lazy references to the final composition.
+Neither needs to import the other's concrete class.
+
+Keep three kinds of recursion separate:
+
+-   **Package dependencies:** use shared contracts and application-level composition to avoid a cycle between implementation packages.
+-   **Runtime schema references:** defer references until all required contributions are available.
+-   **TypeScript type definitions:** use explicit named contracts and the appropriate recursive schema APIs where inference would be circular.
+
+Laziness addresses evaluation order, not every TypeScript recursion or declaration-emission constraint.
+See <ApiLink package="fluid-framework" api="SchemaFactory.objectRecursive" /> for recursive object schemas, [Package export boundaries](./encapsulation-and-exports.mdx#package-export-boundaries) for public types, and [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md) for declaration-build constraints.
+
+### Component composition lifecycle
+
+The `Component` utilities compose configuration; they are not a UI component system or a runtime plugin loader.
+Their API documentation owns the exact caching and evaluation contracts.
+
+1. Define a contribution interface. A <ApiLink package="fluid-framework" api="Component.LazyArray" /> property can provide lazy schema references.
+2. Implement <ApiLink package="fluid-framework" api="Component.Factory" /> functions. Capture the lazy configuration, but do not evaluate it while those factories run.
+3. Call <ApiLink package="fluid-framework" api="Component.(compose:1)" /> in application composition code with the selected factories.
+4. Read aggregated contributions with <ApiLink package="fluid-framework" api="Component.Composed.getComposed" />. Use <ApiLink package="fluid-framework" api="Component.Composed.getComponent" /> for a particular component's exports.
+5. Once composition is complete, construct the root schema and <ApiLink package="fluid-framework" api="TreeViewConfiguration" />. Creating a view configuration evaluates schema references, so do not do it from a component factory that is still waiting for composition.
+
+Cache any schema-producing callback that can be reached through more than one path.
+For example, the same schema may be contributed to an allowed-types collection and exposed as a component-specific export.
+Both paths must return the same schema class within that composition.
+
+Use <ApiLink package="fluid-framework" api="Component.memoize" /> for this case.
+Create that callback inside the component factory so separate compositions do not accidentally share a schema built from one consumer's configuration.
+
+For additional configuration-dependent results, see <ApiLink package="fluid-framework" api="Component.Configurable" /> and <ApiLink package="fluid-framework" api="Component.Composed.getConfigured" />.
+Keep schema creation separate from node construction: exposing a factory is safe during composition, but calling it can force schema evaluation too early.
+The [vertical component pattern](./encapsulation-and-exports.mdx#package-a-vertical-component) explains how to package the implementation behind this entry point.
+
+## Types at composition boundaries
+
+When the concrete set of schemas is known, keep its precise types.
+When it is intentionally open to independently authored components, expose the operations and construction methods promised by the shared contract.
+Do not promise that an arbitrary node implementing a TypeScript interface is allowed by the runtime schema.
+Structural assignability and membership in an allowed-types set are different checks.
+
+Broad schema collections can lose the information required to type insertable content, sometimes reducing it to `never`.
+Do not spread casts throughout the application to work around that loss.
+Prefer a typed factory and insertion boundary owned by the composition or model implementation, retaining runtime schema checks.
+Any unavoidable cast belongs at that boundary with focused tests for both registered and unregistered types.
+
+The [tree package's typing FAQ](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#why-is-my-insertable-content-getting-typed-as-never) explains tuple inference and its limitations.
+`satisfies` can check a contribution while preserving its more specific inferred exports, but it does not replace explicit annotations required by isolated declaration emission.
+
+## Runnable composition examples
+
+The [open-polymorphism integration tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) include:
+
+-   `components`: composition without the `Component` utilities.
+-   `Component library` / `Example2`: memoized schema construction, recursive contributions, and component-specific exports.
+-   `minimal open polymorphism with static factory`: shared static requirements for contributed schemas.
+-   `Component library edge cases`: contributions to multiple collections and configuration-dependent exports.
+
+When you need `Component`, start with `Example2` for the recommended cached-factory pattern.
+The skipped mutable-static-registry examples document an unsupported approach, not an alternative to copy.
+For a checkout of the repository, follow the [tree package development workflow](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#recommended-developer-workflow) to build and run these tests.
+
+Test each library on its own and test the application's actual composition.
+In particular, exercise two independent configurations, mutual recursion, repeated schema lookups, and attempts to insert an unregistered type.

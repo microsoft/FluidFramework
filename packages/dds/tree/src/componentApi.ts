@@ -32,8 +32,8 @@ import { getOrCreate } from "./util/index.js";
  * other components, as long as nothing evaluates the lazy references until composition has completed.
  * Use {@link Component.(compose:1)} to combine a set of components into a {@link Component.Composed}.
  *
- * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/composition | Composition and Recursive Dependencies}
- * for application and package architecture recommendations, including schema caching and mutually recursive libraries.
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/configuration-and-composition | Configuration and Composition}
+ * for consumer-provided schemas, schema caching, and mutually recursive libraries.
  *
  * See {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts|openPolymorphism.integration.ts} for worked examples of this pattern.
  *
