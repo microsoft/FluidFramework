@@ -233,13 +233,12 @@ describe("TreeBranchHistoryImpl", () => {
 		);
 	});
 
-	it("keeps tracking trimmed ancestry after its trim subscription is cleared", () => {
+	it("keeps child history accurate after the parent is disposed", () => {
 		const manager = createEditManager();
 		sequenceCommits(manager);
 		const fork = manager.getLocalBranch("main").fork();
 		const history = new DefaultTreeBranchHistory(fork, testIdCompressor, () => undefined);
 		assert.equal(history.length, 3);
-		fork.trimmer = undefined;
 
 		manager.advanceMinimumSequenceNumber(brand(3));
 
