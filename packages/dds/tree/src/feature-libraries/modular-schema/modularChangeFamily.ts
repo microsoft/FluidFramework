@@ -1343,15 +1343,32 @@ export class ModularChangeFamily
 			isChangesetValid(change, this.fieldKinds),
 		);
 
-		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
-		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
-			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
+		// Combining revisions can move colliding local IDs above the input's allocation bound.
+		// Track replacements across every component while sharing the caller's ID mapping.
+		let maxId = change.maxId ?? -1;
+		const trackedReplacer: RevisionReplacer = {
+			updatedRevision: replacer.updatedRevision,
+			isObsolete: (revision) => replacer.isObsolete(revision),
+			getUpdatedAtomId: (id, count = 1) => {
+				const updatedId = replacer.getUpdatedAtomId(id, count);
+				// Revision-only re-tagging does not change the existing allocation bound.
+				if (updatedId.localId > id.localId) {
+					maxId = Math.max(maxId, updatedId.localId + count - 1);
+				}
+				return updatedId;
+			},
+		};
+		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, trackedReplacer);
+		const updatedNodes = replaceIdMapRevisions(
+			change.nodeChanges,
+			trackedReplacer,
+			(nodeChangeset) => this.replaceNodeChangesetRevisions(nodeChangeset, trackedReplacer),
 		);
 		const updatedNodeToParent = replaceIdMapRevisions(
 			change.nodeToParent,
-			replacer,
+			trackedReplacer,
 			(fieldId) =>
-				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), replacer),
+				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), trackedReplacer),
 		);
 
 		const updated: Mutable<ModularChangeset> = {
@@ -1364,23 +1381,26 @@ export class ModularChangeFamily
 			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
-				replacer,
+				trackedReplacer,
 				change.nodeAliases,
 			),
 		};
 
 		if (change.builds !== undefined) {
-			updated.builds = replaceIdMapRevisions(change.builds, replacer);
+			updated.builds = replaceIdMapRevisions(change.builds, trackedReplacer);
 		}
 
 		if (change.destroys !== undefined) {
-			updated.destroys = replaceIdMapRevisions(change.destroys, replacer);
+			updated.destroys = replaceIdMapRevisions(change.destroys, trackedReplacer);
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, replacer);
+			updated.refreshers = replaceIdMapRevisions(change.refreshers, trackedReplacer);
 		}
 
+		if (maxId >= 0) {
+			updated.maxId = brand(maxId);
+		}
 		updated.revisions = [{ revision: replacer.updatedRevision }];
 
 		strictRebaseValidation("Malformed changeRevision output", () =>
