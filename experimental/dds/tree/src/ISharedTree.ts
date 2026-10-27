@@ -30,7 +30,6 @@ import type {
  *
  * @remarks
  * Use `SharedTree.create(runtime)` or `SharedTree.getFactory()` to create an instance.
- * This interface describes the experimental tree, not `@fluidframework/tree`.
  *
  * @sealed
  * @alpha
@@ -38,7 +37,8 @@ import type {
 export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
 	/**
 	 * The attribution ID for nodes that this tree creates.
-	 * Trees with write format 0.0.2 use the nil UUID.
+	 * With write format 0.1.1 or later, the constructor can configure this ID.
+	 * Trees with write format 0.0.2 use the nil UUID instead.
 	 */
 	readonly attributionId: AttributionId;
 
@@ -64,7 +64,8 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 
 	/**
 	 * Applies changes to the most recent revision.
-	 * Use {@link Checkout} for snapshot isolation.
+	 * Because this revision can change as remote edits arrive, use {@link Checkout} when you need snapshot isolation.
+	 *
 	 * @param changes - The changes to apply.
 	 * @returns The new edit.
 	 */
@@ -72,14 +73,17 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 
 	/**
 	 * Applies an array of changes to the most recent revision.
+	 * Because this revision can change as remote edits arrive, use {@link Checkout} when you need snapshot isolation.
+	 *
 	 * @param changes - The changes to apply.
 	 * @returns The new edit.
 	 */
 	applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
 
 	/**
-	 * Applies internal changes or an edit.
-	 * Prefer `applyEdit` for application code.
+	 * Applies internal changes or an edit to the most recent revision.
+	 * This method is for internal use only, so application code must use `applyEdit` instead.
+	 *
 	 * @param editOrChanges - The edit or internal changes to apply.
 	 * @returns The applied edit.
 	 */
@@ -87,14 +91,23 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 
 	/**
 	 * Gets the attribution ID of the tree that generated a node ID.
+	 * Attribution requires write format 0.1.1 or later.
+	 * With write format 0.0.2, attribution is unavailable and this method returns the nil UUID instead.
+	 *
 	 * @param id - The node ID to inspect.
 	 * @returns The attribution ID, or the nil UUID for write format 0.0.2.
 	 */
 	attributeNodeId(id: NodeId): AttributionId;
 
 	/**
-	 * Compares semantic views and ordered edit IDs, independent of local or sequenced status.
-	 * Use this method for correctness tests.
+	 * Compares semantic views and ordered edit IDs for internal correctness tests.
+	 * This comparison ignores whether edits are local or sequenced, and it also excludes:
+	 *
+	 * - Open edits.
+	 * - Tree IDs.
+	 * - Event listeners.
+	 * - Cache state.
+	 *
 	 * @param sharedTree - The tree to compare.
 	 * @returns Whether the trees have equal views and edit IDs.
 	 */
@@ -107,20 +120,26 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 	getRuntime(): IFluidDataStoreRuntime;
 
 	/**
-	 * Gets the current write format, which can upgrade during collaboration or summary load.
+	 * Gets the write format that this tree currently uses.
+	 * The constructor sets the initial format, but the tree can upgrade it during collaboration or summary load.
+	 *
 	 * @returns The current write format.
 	 */
 	getWriteFormat(): WriteFormat;
 
 	/**
-	 * Converts a public change to its internal representation.
+	 * Converts a public change to the internal representation used by `applyEditInternal`.
+	 * Like `applyEditInternal`, this method is for internal use only.
+	 *
 	 * @param change - The change to convert.
 	 * @returns The internal change.
 	 */
 	internalizeChange(change: Change): ChangeInternal;
 
 	/**
-	 * Loads a serialized summary before local state exists.
+	 * Initializes the tree from a serialized summary for tests.
+	 * Because this method initializes the tree, call it before local state exists.
+	 *
 	 * @param blobData - The serialized summary.
 	 * @returns Statistics about the loaded summary.
 	 */
@@ -134,10 +153,11 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 
 	/**
 	 * Applies edits from another tree, with optional stable ID conversion.
-	 * Edit payloads remain unchanged.
+	 * This conversion changes references to stable IDs but leaves edit payloads unchanged.
+	 *
 	 * @param other - The source tree.
 	 * @param edits - The source edits to apply, in order.
-	 * @param stableIdRemapper - An optional function to convert stable IDs.
+	 * @param stableIdRemapper - An optional function that replaces each reference to a stable ID `id` from `other` with `stableIdRemapper(id)`.
 	 * @returns The IDs of the new edits.
 	 */
 	mergeEditsFrom(
@@ -162,7 +182,9 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 	revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
 
 	/**
-	 * Saves a serialized summary when no local edits remain.
+	 * Saves the tree as a serialized summary for tests.
+	 * The tree must have no local edits before it can create this summary.
+	 *
 	 * @param options - An optional serializer. The tree serializer is the default.
 	 * @returns The serialized summary.
 	 */

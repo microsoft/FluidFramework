@@ -131,18 +131,14 @@ Note that this example isn't meant to be taken verbatim as valid code -- it chea
 SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a Fluid runtime instance:
 
 ```typescript
-const tree = SharedTree.create(runtime);
-```
-
-The package exports `ISharedTree` for instance annotations. The existing `SharedTree` class export and factory results remain unchanged. The interface retains the inherited handle type in this preparation release.
-
-```typescript
 import { SharedTree, type ISharedTree } from "@fluid-experimental/tree";
 
 const tree: ISharedTree = SharedTree.create(runtime);
 ```
 
-This interface describes the experimental tree, not modern `@fluidframework/tree`. It preserves the existing views, edits, events, ID conversions, and revision history.
+In this example, `ISharedTree` describes an instance of the experimental tree from `@fluid-experimental/tree`, not the modern tree from `@fluidframework/tree`.
+The annotation lets you use the interface while the existing `SharedTree` class export and factory results remain unchanged.
+These unchanged contracts include the handle type and access to views, edits, events, ID conversions, and revision history.
 
 Upon creation, the tree will contain a single node: the [initialTree](./src/InitialTree.ts). All SharedTrees begin with this initial node as their root node, which cannot be deleted or moved. It provides an anchor for new nodes to be inserted underneath it.
 
