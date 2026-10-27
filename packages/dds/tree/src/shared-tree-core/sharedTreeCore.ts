@@ -84,7 +84,7 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * {@inheritDoc SharedTreeOptions.retainHistory}
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
