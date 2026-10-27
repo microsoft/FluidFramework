@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  concurrently@10.0.3>shell-quote: ^1.11.0
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
   brace-expansion@>=5 <6: ^5.0.8
@@ -2624,8 +2625,8 @@ packages:
     resolution: {integrity: sha512-HqD3yTBfnBxIrbnM1DoD6Pcq8NECnh8d4As1Qgh0z5Gg3jRRIqijury0CL3ghu/edArpUYiYqQiDUQBIs4np3Q==}
     engines: {node: '>=10.0.0'}
 
-  engine.io@6.6.6:
-    resolution: {integrity: sha512-U2SN0w3OpjFRVlrc17E6TMDmH58Xl9rai1MblNjAdwWp07Kk+llmzX0hjDpQdrDGzwmvOtgM5yI+meYX6iZ2xA==}
+  engine.io@6.6.11:
+    resolution: {integrity: sha512-z34mGpLoY/82ZbkX1LqGMIaf3wjVMPL6gVC681QDqnmzJ26synI8qAE32P+a7UazmpJZ8UGrFIeAavgRfXzYrg==}
     engines: {node: '>=10.2.0'}
 
   enhanced-resolve@5.20.1:
@@ -4955,8 +4956,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.8.4:
-    resolution: {integrity: sha512-VsC6n6vz1ihYYyZZwX7YZSF5l5x36ca17OC+a69h94YqB7X6XLwf+5MOgynYir2SLFUbl8gIYvBo8K8RoNQ6bQ==}
+  shell-quote@1.12.0:
+    resolution: {integrity: sha512-PcByqNyT/38F2kDNi006HAMRJaULuBzq/FOsw3qdZvX/GA9W/jamDaRskgHjubHiftXK5sIFxLNkvrXUwcof6Q==}
     engines: {node: '>= 0.4'}
 
   shelljs@0.10.0:
@@ -5466,8 +5467,8 @@ packages:
   unbzip2-stream@1.4.3:
     resolution: {integrity: sha512-mlExGW4w71ebDJviH16lQLtZS32VKqsSfk80GCfUlwT/4/hNRFsoscrF/c++9xinkMzECL1uL9DDwXqFWkruPg==}
 
-  underscore@1.13.6:
-    resolution: {integrity: sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==}
+  underscore@1.13.8:
+    resolution: {integrity: sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==}
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
@@ -8779,7 +8780,7 @@ snapshots:
     dependencies:
       chalk: 5.6.2
       rxjs: 7.8.2
-      shell-quote: 1.8.4
+      shell-quote: 1.12.0
       supports-color: 10.2.2
       tree-kill: 1.2.2
       yargs: 18.0.0
@@ -9121,13 +9122,12 @@ snapshots:
 
   engine.io-parser@5.2.3: {}
 
-  engine.io@6.6.6(supports-color@10.2.2):
+  engine.io@6.6.11(supports-color@10.2.2):
     dependencies:
       '@types/cors': 2.8.13
       '@types/node': 22.19.17
       '@types/ws': 8.18.1
       accepts: 1.3.8
-      base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.5
       debug: 4.4.3(supports-color@10.2.2)
@@ -9138,13 +9138,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  engine.io@6.6.6(supports-color@8.1.1):
+  engine.io@6.6.11(supports-color@8.1.1):
     dependencies:
       '@types/cors': 2.8.13
       '@types/node': 22.19.17
       '@types/ws': 8.18.1
       accepts: 1.3.8
-      base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.5
       debug: 4.4.3(supports-color@8.1.1)
@@ -12188,7 +12187,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.4: {}
+  shell-quote@1.12.0: {}
 
   shelljs@0.10.0:
     dependencies:
@@ -12348,7 +12347,7 @@ snapshots:
       base64id: 2.0.0
       cors: 2.8.5
       debug: 4.4.3(supports-color@10.2.2)
-      engine.io: 6.6.6(supports-color@10.2.2)
+      engine.io: 6.6.11(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.7(supports-color@10.2.2)
     transitivePeerDependencies:
@@ -12362,7 +12361,7 @@ snapshots:
       base64id: 2.0.0
       cors: 2.8.5
       debug: 4.4.3(supports-color@8.1.1)
-      engine.io: 6.6.6(supports-color@8.1.1)
+      engine.io: 6.6.11(supports-color@8.1.1)
       socket.io-adapter: 2.5.6(supports-color@8.1.1)
       socket.io-parser: 4.2.7(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -12821,7 +12820,7 @@ snapshots:
     dependencies:
       qs: 6.15.3
       tunnel: 0.0.6
-      underscore: 1.13.6
+      underscore: 1.13.8
 
   typescript-eslint@8.54.0(eslint@9.39.3(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.1.6):
     dependencies:
@@ -12865,7 +12864,7 @@ snapshots:
       buffer: 5.7.1
       through: 2.3.8
 
-  underscore@1.13.6: {}
+  underscore@1.13.8: {}
 
   undici-types@6.21.0: {}
 
