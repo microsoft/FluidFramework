@@ -645,6 +645,15 @@ export class RestGitService {
 
 	private getSummaryCacheKey(type: IWholeSummaryPayloadType, extraIdentifier?: string): string {
 		const key: string[] = [this.tenantId, this.documentId, "summary", type];
+		if (this.accessProof !== undefined) {
+			key.push(
+				"authorized",
+				encodeURIComponent(this.storageName ?? ""),
+				encodeURIComponent(this.accessProof.physicalContainerName ?? ""),
+				encodeURIComponent(this.accessProof.layoutVersion ?? ""),
+				encodeURIComponent(this.accessProof.lifecycleVersion),
+			);
+		}
 		if (extraIdentifier) {
 			key.push(extraIdentifier);
 		}

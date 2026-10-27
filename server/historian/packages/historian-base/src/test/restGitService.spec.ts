@@ -240,4 +240,88 @@ describe("RestGitService Git object SHA validation", () => {
 			proof.lifecycleVersion,
 		);
 	});
+
+	it("namespaces cached summaries by authorized storage identity", async () => {
+		const requestedStorageIdentities: string[] = [];
+		const server = createServer((request, response) => {
+			const physicalContainerName = String(request.headers["fluid-document-container-name"]);
+			const lifecycleVersion = String(request.headers["fluid-document-lifecycle-version"]);
+			const storageIdentity = `${physicalContainerName}:${lifecycleVersion}`;
+			requestedStorageIdentities.push(storageIdentity);
+			response.writeHead(200, { "Content-Type": "application/json" });
+			response.end(JSON.stringify({ id: storageIdentity, trees: [], blobs: [] }));
+		});
+		await new Promise<void>((resolve, reject) => {
+			server.once("error", reject);
+			server.listen(0, "127.0.0.1", resolve);
+		});
+		const address = server.address() as AddressInfo;
+		const routedStorage = {
+			...storage,
+			url: `http://127.0.0.1:${address.port}`,
+			credentials: undefined,
+		};
+		const createProof = (
+			physicalContainerName: string,
+			lifecycleVersion: string,
+		): IDocumentAccessProof => ({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			storageAccountName: "document-storage",
+			physicalContainerName,
+			layoutVersion: "v2",
+			lifecycleVersion,
+			state: "active",
+		});
+		const createService = (proof: IDocumentAccessProof): RestGitService =>
+			new RestGitService(
+				routedStorage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				proof.storageAccountName,
+				undefined,
+				false,
+				undefined,
+				undefined,
+				proof,
+			);
+		const container1 = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		const container2 = "pd2-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+		const generation1 = createService(createProof(container1, "generation-1"));
+		const generation2 = createService(createProof(container1, "generation-2"));
+		const differentRoot = createService(createProof(container2, "generation-2"));
+
+		try {
+			assert.strictEqual(
+				(await generation1.getSummary("latest", false)).id,
+				`${container1}:generation-1`,
+			);
+			assert.strictEqual(
+				(await generation2.getSummary("latest", false)).id,
+				`${container1}:generation-2`,
+			);
+			assert.strictEqual(
+				(await differentRoot.getSummary("latest", false)).id,
+				`${container2}:generation-2`,
+			);
+			assert.strictEqual(
+				(await generation1.getSummary("latest", false)).id,
+				`${container1}:generation-1`,
+			);
+		} finally {
+			await new Promise<void>((resolve, reject) => {
+				server.close((error) => (error === undefined ? resolve() : reject(error)));
+			});
+		}
+
+		assert.deepStrictEqual(requestedStorageIdentities, [
+			`${container1}:generation-1`,
+			`${container1}:generation-2`,
+			`${container2}:generation-2`,
+		]);
+	});
 });
