@@ -141,7 +141,7 @@ export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
     readonly readOnly?: boolean;
 } & AllOrNone<IContainerLoadDriverProps>;
 
-// @beta @legacy
+// @beta @legacy @input
 export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
 
 // @beta @legacy
@@ -220,7 +220,7 @@ export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerF
 // @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
 
-// @beta @legacy
+// @beta @sealed @legacy
 export type LoadSummarizerSummaryResult = {
     readonly success: true;
     readonly summaryResults: OnDemandSummaryResults;
@@ -229,7 +229,7 @@ export type LoadSummarizerSummaryResult = {
     readonly error: IErrorBase;
 };
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface OnDemandSummaryResults {
     readonly summaryInfo: {
         readonly stage?: SummaryStage;

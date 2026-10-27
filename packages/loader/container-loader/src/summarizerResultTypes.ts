@@ -27,6 +27,8 @@ export const summarizerRequestUrl = "_summarizer";
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  *
+ * "unknown" indicates that the stage reached by the summary process could not be determined.
+ *
  * @legacy @beta
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
@@ -72,6 +74,7 @@ export interface SummarizeOnDemandResults {
 
 /**
  * Results from an on-demand summary request.
+ * @sealed
  * @legacy @beta
  */
 export interface OnDemandSummaryResults {
@@ -102,6 +105,7 @@ export interface OnDemandSummaryResults {
 
 /**
  * Outcome from {@link loadSummarizerContainerAndMakeSummary}.
+ * @sealed
  * @legacy @beta
  */
 export type LoadSummarizerSummaryResult =

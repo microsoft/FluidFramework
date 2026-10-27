@@ -112,7 +112,7 @@ export interface ILoadExistingContainerProps extends IContainerHostProps, IConta
     readonly request: IRequest;
 }
 
-// @beta @legacy
+// @beta @legacy @input
 export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
 
 // @beta @legacy
@@ -188,7 +188,7 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 // @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
 
-// @beta @legacy
+// @beta @sealed @legacy
 export type LoadSummarizerSummaryResult = {
     readonly success: true;
     readonly summaryResults: OnDemandSummaryResults;
@@ -197,7 +197,7 @@ export type LoadSummarizerSummaryResult = {
     readonly error: IErrorBase;
 };
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface OnDemandSummaryResults {
     readonly summaryInfo: {
         readonly stage?: SummaryStage;
