@@ -16,12 +16,19 @@ import {
 } from "@fluidframework/server-services-client";
 import { strict as assert } from "assert";
 import * as async from "async";
+import { readFile, writeFile } from "fs/promises";
 import lorem from "lorem-ipsum";
 import sillyname from "sillyname";
+import * as sinon from "sinon";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
-import { Constants, IsomorphicGitManagerFactory, NodeFsManagerFactory } from "../utils";
+import {
+	Constants,
+	IsomorphicGitManagerFactory,
+	IsomorphicGitRepositoryManager,
+	NodeFsManagerFactory,
+} from "../utils";
 import * as testUtils from "./utils";
 import { StartupCheck } from "@fluidframework/server-services-shared";
 
@@ -452,6 +459,72 @@ testModes.forEach((mode) => {
 				});
 
 				describe("Refs", () => {
+					describe("body SHA validation", () => {
+						const sandbox = sinon.createSandbox();
+						afterEach(() => sandbox.restore());
+
+						for (const sha of [
+							"refs/heads/main",
+							"../heads/main",
+							"",
+							"0123456789abcdef0123456789abcdef0123456",
+							"0123456789abcdef0123456789abcdef012345678",
+							"0123456789ABCDEF0123456789ABCDEF01234567",
+							"0123456789abcdef0123456789abcdef01234567\n",
+							null,
+							["0123456789abcdef0123456789abcdef01234567"],
+						]) {
+							it(`rejects POST with noncanonical SHA ${JSON.stringify(
+								sha,
+							)} before creating a ref`, async () => {
+								await createRepo(supertest, testOwnerName, testRepoName);
+								const create = sandbox
+									.stub(IsomorphicGitRepositoryManager.prototype, "createRef")
+									.resolves();
+
+								await supertest
+									.post(`/repos/${testOwnerName}/${testRepoName}/git/refs`)
+									.set(
+										Constants.StorageRoutingIdHeader,
+										getStorageRoutingHeaderValue(testRepoName, testDocId),
+									)
+									.send({ ref: "refs/heads/other", sha })
+									.expect(400);
+
+								sinon.assert.notCalled(create);
+							});
+
+							it(`rejects PATCH with noncanonical SHA ${JSON.stringify(
+								sha,
+							)} before patching a ref`, async () => {
+								await createRepo(supertest, testOwnerName, testRepoName);
+								const patch = sandbox
+									.stub(IsomorphicGitRepositoryManager.prototype, "patchRef")
+									.resolves();
+
+								await supertest
+									.patch(
+										`/repos/${testOwnerName}/${testRepoName}/git/refs/heads/main`,
+									)
+									.set(
+										Constants.StorageRoutingIdHeader,
+										getStorageRoutingHeaderValue(testRepoName, testDocId),
+									)
+									.send({ sha, force: true })
+									.expect(400);
+
+								sinon.assert.notCalled(patch);
+							});
+						}
+					});
+
+					const getTraversalRef = (): string =>
+						mode.repoPerDocEnabled
+							? "../../../../outside-secret"
+							: "../../../outside-secret";
+					const encodeRefForUrl = (ref: string): string =>
+						ref.replaceAll("..", "%2e%2e").replaceAll("/", "%2f");
+
 					it("Can create and retrieve a reference", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						await createBlob(
@@ -599,6 +672,68 @@ testModes.forEach((mode) => {
 								config: { enabled: true },
 							})
 							.expect(200);
+					});
+
+					it("Rejects path traversal when retrieving a reference", async () => {
+						await initBaseRepo(
+							supertest,
+							testOwnerName,
+							testRepoName,
+							testDocId,
+							testBlob,
+							testTree,
+							testCommit,
+							testRef,
+						);
+						await writeFile(
+							"/tmp/historian/outside-secret",
+							"deadbeef00112233445566778899aabbccddeef0",
+						);
+
+						return supertest
+							.get(
+								`/repos/${testOwnerName}/${testRepoName}/git/refs/${encodeRefForUrl(
+									getTraversalRef(),
+								)}`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.expect(400);
+					});
+
+					it("Rejects path traversal when deleting a reference", async () => {
+						await initBaseRepo(
+							supertest,
+							testOwnerName,
+							testRepoName,
+							testDocId,
+							testBlob,
+							testTree,
+							testCommit,
+							testRef,
+						);
+						const outsideFilePath = "/tmp/historian/outside-secret";
+						const outsideFileContent = "not-a-ref";
+						await writeFile(outsideFilePath, outsideFileContent);
+
+						await supertest
+							.delete(
+								`/repos/${testOwnerName}/${testRepoName}/git/refs/${encodeRefForUrl(
+									getTraversalRef(),
+								)}`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.expect(400);
+
+						assert.strictEqual(
+							await readFile(outsideFilePath, "utf8"),
+							outsideFileContent,
+						);
 					});
 
 					it("Can delete a reference", async () => {
