@@ -112,6 +112,72 @@ function createNonLeafNode<
 }
 
 describe("schema validation", () => {
+	it("validates homogeneous virtual leaves without expanding them", () => {
+		const { node, schema } = createLeafNode("packedString", "", ValueSchema.String);
+		const schemaAndPolicy: SchemaAndPolicy = {
+			schema: { nodeSchema: new Map([[node.type, schema]]) },
+			policy: defaultSchemaPolicy,
+		};
+		const field = {
+			length: 1000,
+			uniformLeaf: node,
+			[Symbol.iterator](): Iterator<MapTree> {
+				throw new Error("Validation must not expand homogeneous leaves");
+			},
+		};
+		assert.equal(
+			isFieldInSchema(
+				field,
+				getFieldSchema(FieldKinds.sequence, [node.type]),
+				schemaAndPolicy,
+				getError,
+			),
+			undefined,
+		);
+		assert.equal(
+			isFieldInSchema(
+				field,
+				getFieldSchema(FieldKinds.required, [node.type]),
+				schemaAndPolicy,
+				getError,
+			),
+			SchemaValidationError.Field_MultipleChildrenNotAllowed,
+		);
+		assert.equal(
+			isFieldInSchema(
+				field,
+				getFieldSchema(FieldKinds.sequence, []),
+				schemaAndPolicy,
+				getError,
+			),
+			SchemaValidationError.Field_NodeTypeNotAllowed,
+		);
+		const wrongSchema: SchemaAndPolicy = {
+			...schemaAndPolicy,
+			schema: {
+				nodeSchema: new Map([[node.type, new LeafNodeStoredSchema(ValueSchema.Number)]]),
+			},
+		};
+		assert.equal(
+			isFieldInSchema(
+				field,
+				getFieldSchema(FieldKinds.sequence, [node.type]),
+				wrongSchema,
+				getError,
+			),
+			isNodeInSchema(node, wrongSchema, getError),
+		);
+		assert.equal(
+			isFieldInSchema(
+				{ ...field, length: 0 },
+				getFieldSchema(FieldKinds.sequence, []),
+				wrongSchema,
+				getError,
+			),
+			undefined,
+		);
+	});
+
 	describe("compliesWithMultiplicity", () => {
 		const multiplicityTestCases: [
 			kind: Multiplicity,

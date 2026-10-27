@@ -9,6 +9,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	CursorLocationType,
 	CursorMarker,
+	cursorChunk,
+	type TreeChunk,
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
@@ -81,6 +83,8 @@ export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "leng
  * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
  */
 export interface CursorAdapter<TNode> {
+	/** Optional borrowed, single-root snapshot of a node. */
+	chunk?(node: TNode): TreeChunk | undefined;
 	/**
 	 * @returns the value of the given node.
 	 */
@@ -127,6 +131,10 @@ export abstract class SynchronousCursor {
  * 2. Support for cursors which are field cursors at the root.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
+	public get [cursorChunk](): TreeChunk | undefined {
+		return this.adapter.chunk?.(this.getNode());
+	}
+
 	public override readonly [CursorMarker] = true;
 	/**
 	 * Might start at special root where fields are detached sequences.

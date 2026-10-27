@@ -79,7 +79,7 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
  * Reuse also reduces repeated field-access costs by avoiding wrapper allocation, cursor creation, and listener registration.
  */
-const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
+const fieldCache: WeakMap<HydratedFlexTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
 /**
  * Looks up a field without navigating a cursor.
@@ -364,6 +364,11 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		this.lengthCache?.unsubscribe();
 		this.lengthCache = undefined;
 		super.forgetAnchor();
+	}
+
+	/** Inserts already validated content without creating MapTrees or public node wrappers. */
+	public insertCursor(index: number, content: ITreeCursorSynchronous): void {
+		this.sequenceEditor().insert(index, content);
 	}
 
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
