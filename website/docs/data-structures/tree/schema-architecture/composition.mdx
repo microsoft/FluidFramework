@@ -1,0 +1,94 @@
+---
+title: Composition and Recursive Dependencies
+sidebar_position: 3
+---
+
+import { ApiLink } from "@site/src/components/shortLinks";
+
+An application can combine independently authored model libraries without requiring each library to import the others' implementations.
+Define shared contracts for contributions, then let the application select and compose the implementations.
+Use a simple factory parameter when that is sufficient; a component framework is not a prerequisite.
+
+## Close the set of types during composition
+
+SharedTree requires an explicit set of allowed types for each field or collection.
+An extensible application can select that set during composition, but the resulting schema still has a fixed set of allowed types.
+Installing another plugin is not permission to mutate an existing schema's allowed-types array.
+Changes to the composed set for existing documents need a [schema rollout](../schema-evolution/index.mdx).
+
+Put shared instance and static contracts in a module that does not import their implementations.
+For example, an item contract might require a rendering description and a static factory as well as an instance operation.
+Each library contributes schemas that implement that contract.
+The application imports the libraries and assembles the allowed types.
+
+This inverts the dependency that otherwise makes a container library import every kind of item it can hold.
+If your existing component system already performs this composition, use it with the same evaluation rules below.
+
+## Handle mutually recursive libraries
+
+Two libraries can define mutually recursive schemas without having mutually dependent packages.
+For example, a group can contain items, and one item implementation can contain another group.
+Both implementations depend on shared contracts and receive lazy references to the final composition.
+Neither needs to import the other's concrete class.
+
+Keep three kinds of recursion separate:
+
+-   **Package dependencies:** use shared contracts and application-level composition to avoid a cycle between implementation packages.
+-   **Runtime schema references:** defer references until all required contributions are available.
+-   **TypeScript type definitions:** use explicit named contracts and the appropriate recursive schema APIs where inference would be circular.
+
+Laziness addresses evaluation order, not every TypeScript recursion or declaration-emission constraint.
+See <ApiLink package="fluid-framework" api="SchemaFactory.objectRecursive" /> for recursive object schemas and [TypeScript and Package Exports](./typescript-exports.mdx) for public declaration boundaries.
+
+## Use Component when it fits
+
+The alpha <ApiLink package="fluid-framework" api="Component" /> namespace provides utilities for this pattern.
+It composes configuration; it is not a UI component system or a runtime plugin loader.
+Its API documentation owns the exact caching and evaluation contracts.
+
+1. Define a contribution interface. A <ApiLink package="fluid-framework" api="Component.LazyArray" /> property can provide lazy schema references.
+2. Implement <ApiLink package="fluid-framework" api="Component.Factory" /> functions. Capture the lazy configuration, but do not evaluate it while those factories run.
+3. Call <ApiLink package="fluid-framework" api="Component.(compose:1)" /> in application composition code with the selected factories.
+4. Read aggregated contributions with <ApiLink package="fluid-framework" api="Component.Composed.getComposed" />. Use <ApiLink package="fluid-framework" api="Component.Composed.getComponent" /> for a particular component's exports.
+5. Once composition is complete, construct the root schema and `TreeViewConfiguration`. Creating a view configuration evaluates schema references, so do not do it from a component factory that is still waiting for composition.
+
+Cache any schema-producing callback that can be reached through more than one path.
+For example, the same schema may be contributed to an allowed-types collection and exposed as a component-specific export.
+Both paths must return the same schema class within that composition.
+
+Use <ApiLink package="fluid-framework" api="Component.memoize" /> for this case.
+Create that callback inside the component factory so separate compositions do not accidentally share a schema built from one consumer's configuration.
+
+For additional configuration-dependent results, see <ApiLink package="fluid-framework" api="Component.Configurable" /> and <ApiLink package="fluid-framework" api="Component.Composed.getConfigured" />.
+Keep schema creation separate from node construction: exposing a factory is safe during composition, but calling it can force schema evaluation too early.
+
+## Preserve useful types at the boundary
+
+When the concrete set of schemas is known, keep its precise types.
+When it is intentionally open to independently authored components, expose the operations and construction methods promised by the shared contract.
+Do not promise that an arbitrary node implementing a TypeScript interface is allowed by the runtime schema.
+Structural assignability and membership in an allowed-types set are different checks.
+
+Broad schema collections can lose the information required to type insertable content, sometimes reducing it to `never`.
+Do not spread casts throughout the application to work around that loss.
+Prefer a typed factory and insertion boundary owned by the composition or model implementation, retaining runtime schema checks.
+Any unavoidable cast belongs at that boundary with focused tests for both registered and unregistered types.
+
+The [tree package's typing FAQ](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#why-is-my-insertable-content-getting-typed-as-never) explains tuple inference and its limitations.
+`satisfies` can check a contribution while preserving its more specific inferred exports, but it does not replace explicit annotations required by isolated declaration emission.
+
+## Runnable examples
+
+The [open-polymorphism integration tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) include:
+
+-   `components`: composition without the `Component` utilities.
+-   `Component library` / `Example2`: memoized schema construction, recursive contributions, and component-specific exports.
+-   `minimal open polymorphism with static factory`: shared static requirements for contributed schemas.
+-   `Component library edge cases`: contributions to multiple collections and configuration-dependent exports.
+
+Start with `Example2` for the recommended cached-factory pattern.
+The skipped mutable-static-registry examples document an unsupported approach, not an alternative to copy.
+For a checkout of the repository, follow the [tree package development workflow](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#recommended-developer-workflow) to build and run these tests.
+
+Test each library on its own and test the application's actual composition.
+In particular, exercise two independent configurations, mutual recursion, repeated schema lookups, and attempts to insert an unregistered type.

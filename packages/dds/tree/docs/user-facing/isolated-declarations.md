@@ -2,6 +2,13 @@
 
 This document covers TypeScript's `isolatedDeclarations` option, its use in optimizing large TypeScript builds, and the complications that arise in such setups when using SharedTree schema.
 
+Start with [TypeScript and Package Exports](https://fluidframework.com/docs/data-structures/tree/schema-architecture/typescript-exports) for recommendations on your public schema boundary.
+This document provides the detailed build strategies referenced by that guide.
+
+`isolatedDeclarations` is distinct from `isolatedModules`, which concerns single-file JavaScript transpilation.
+`stripInternal` controls declaration output; it does not validate that the remaining declarations are self-contained or remove runtime exports.
+Test the emitted package declarations with your actual compiler or third-party emitter.
+
 The approaches described in this document can be applied to other TypeScript types that are problematic for use with `isolatedDeclarations`: only some minor details are actually specific to SharedTree schema.
 
 ## TypeScript background

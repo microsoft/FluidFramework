@@ -1,0 +1,85 @@
+---
+title: Schema Architecture and Libraries
+sidebar_position: 4
+---
+
+Your SharedTree schema defines both a persisted data model and the types used to access it.
+Decide which parts of that model other modules need to depend on before exporting schema classes from a library.
+A small, deliberate public API can make typing, testing, and schema evolution easier.
+
+This guide assumes you can [define a schema](../schema-definition/index.mdx) and [read and edit nodes](../reading-and-editing.mdx).
+It covers application architecture and reusable libraries, including libraries that accept schemas from their consumers.
+
+-   [Reusable Schema Libraries](./schema-libraries.mdx): public types, erasure, subclassing, and consumer configuration.
+-   [Composition and Recursive Dependencies](./composition.mdx): extension points and mutually recursive libraries.
+-   [TypeScript and Package Exports](./typescript-exports.mdx): explicit declarations and constrained builds.
+-   [Schema Libraries and Versioning](../schema-evolution/schema-libraries.mdx): package, document, and deployment compatibility.
+-   [Testing Schema Libraries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries): isolated, package, compatibility, and application tests.
+
+## Choose the simplest boundary
+
+| Your requirement                                                      | Recommended starting point                                                                                                                  |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| One application owns the model and its callers                        | Use concrete schema classes and inferred types. Keep schema-dependent operations with the model.                                            |
+| Callers need domain behavior, not the stored representation           | Expose a domain interface implemented by a node or an adapter. Keep representation-specific code behind it.                                 |
+| A library owns a fixed schema that applications embed in larger trees | Export the schema needed for composition, but expose only the node members and construction APIs that consumers need.                       |
+| Consumers supply child schemas or need different model configurations | Export a schema factory with an explicit configuration and a stable scope contract. Construct each configuration once and share the result. |
+| Independently authored libraries contribute mutually recursive types  | Compose their contributions in the application, using lazy schema references and shared contracts.                                          |
+| Your build requires isolated declaration emission                     | First minimize the exported schema surface, then explicitly type that surface or isolate its declaration build.                             |
+
+Do not add an abstraction only to avoid exporting a class.
+Exporting concrete schema classes is useful when consumers deliberately need the full data model and can accept its compatibility commitments.
+Encapsulation is most valuable when it gives the implementation room to change without changing its callers.
+
+## Keep schema and behavior together
+
+Keep code that understands the stored representation close to the schema that defines it.
+For example, a model can expose an operation to rename an item without requiring its UI to know which fields store the name.
+Use schema class methods when they provide a natural home for this behavior.
+Use a separate adapter when an existing application interface or service layer should not depend on SharedTree node types.
+
+Prefer interfaces expressed in domain terms over interfaces that reproduce every stored field.
+Otherwise, a field rename or a change from one stored node to several nodes still requires changes throughout the application.
+Keep subscriptions and resource cleanup explicit in an adapter's contract so callers can observe collaborative changes and dispose of listeners.
+
+An interface alone does not enforce application invariants against other collaborators.
+All clients that edit the document must follow compatible rules.
+Use [transactions](../transactions.mdx) where an operation needs a transactional boundary, and test concurrent operations separately from local method behavior.
+
+## Separate composition from ordinary use
+
+The code that assembles a tree needs runtime schemas, even when most of the application uses domain interfaces.
+Give that composition code access to a schema export or factory without requiring every UI or business-logic module to use it.
+
+A useful dependency structure is:
+
+1. Domain contracts describe the behavior and extension points consumers need.
+2. Model implementations define schemas and implement those contracts.
+3. Application composition selects implementations, configures schemas, and creates the root schema and view configuration.
+4. Application features use the composed model through the appropriate contracts.
+
+These are responsibilities, not a requirement to create four packages.
+Keep them in one module or package until independent reuse, ownership, or build requirements justify a split.
+When adapting an existing layered application, place SharedTree-dependent code in its persistence or model implementation layer and perform composition at a layer that can depend on all implementations.
+
+For a data-modeling library, schema composition may itself be the product.
+In that case, document its runtime schema exports and supported customizations as public contracts instead of trying to hide them entirely.
+Distinguish consumers who embed or configure the model from consumers who only operate on its nodes.
+
+## Plan for persistent data
+
+Hiding schema details from TypeScript callers does not remove compatibility requirements for stored documents.
+Keep schema identifiers and stored field keys stable unless you are deliberately introducing a schema change.
+Do not derive them from a build number, a randomly generated value on each run, or the current package version.
+
+Keep version-specific reading and editing logic inside the model where practical.
+The application still owns when to enable a schema upgrade because it controls which client versions must collaborate.
+See [Schema Evolution](../schema-evolution/index.mdx) for the compatibility and rollout mechanisms.
+
+## Public and experimental APIs
+
+Start with stable schema APIs where they meet your needs.
+Advanced schema-erasure and component-composition helpers discussed in this guide include alpha APIs.
+Check the linked API's release tag and import path before adopting it in a published library.
+An exported type that refers to an alpha API makes your library's consumers depend on that API too.
+See [API support levels](../../../build/releases-and-apitags.mdx#api-support-levels) for the associated support guarantees.

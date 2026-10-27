@@ -28,6 +28,11 @@ import type {
  * Typically construction is done via static functions on the schema which can be included in `ExtraSchemaProperties`,
  * and access to contents is done via properties of TNode (usually methods).
  *
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/schema-libraries | Reusable Schema Libraries}
+ * for guidance on choosing this boundary and managing consumer-specific schema configurations.
+ * For explicit exported types and declaration builds, see
+ * {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/typescript-exports | TypeScript and Package Exports}.
+ *
  * @example
  * ```typescript
  * const schema = new SchemaFactory("com.example");
@@ -177,6 +182,7 @@ export type ErasedNode<TExtra, Identifier extends string> = TExtra &
  * @remarks
  * Provides an {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}
  * compatible way to explicitly type the return value from {@link eraseSchemaDetailsSubclassable}.
+ * Retaining subclassability also retains the internal-member collision risks documented on {@link eraseSchemaDetailsSubclassable}.
  * @example
  * ```typescript
  * export const SquareSubclassable: SquareSchema &

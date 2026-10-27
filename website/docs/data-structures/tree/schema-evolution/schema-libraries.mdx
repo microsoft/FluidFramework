@@ -1,0 +1,84 @@
+---
+title: Schema Libraries and Versioning
+sidebar_position: 6
+---
+
+import { ApiLink } from "@site/src/components/shortLinks";
+
+A library release, an application deployment, and a document's stored schema can change independently.
+Treat them as separate compatibility contracts when publishing a [reusable schema library](../schema-architecture/schema-libraries.mdx).
+This page describes library and application responsibilities; [Schema Evolution](./index.mdx) describes the schema mechanisms.
+
+## Keep the contracts separate
+
+| Contract                                             | What you need to preserve or explicitly change                                                                            |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Library API and package semantic versioning (semver) | Supported imports, TypeScript types, runtime behavior, construction paths, and configuration options.                     |
+| Persisted schema and data                            | The ability to interpret existing documents, preserve their data, and perform supported edits.                            |
+| Application deployment                               | The set of client versions that must collaborate, the time to enable new writes, and the versions available for rollback. |
+
+A package major version does not convert documents or make an incompatible stored-schema change safe.
+A package minor version can add support for a new schema state without immediately enabling writes in that state.
+A schema can also remain unchanged while the package makes a breaking API change.
+
+Do not encode every package or application version into schema identifiers.
+Keep identifiers stable for the same persisted type.
+When a new persisted type is required, introduce it deliberately and follow the applicable [schema-change and rollout rules](./types-of-changes.mdx).
+Likewise, a field's public property name and its stored key have different compatibility implications.
+
+## Encapsulate representation changes
+
+Keep version-specific interpretation and editing behind domain operations where practical.
+For example, a stable component root can contain a required child field whose allowed types can be expanded through a supported rollout.
+The public operation can then handle the supported child representations without exposing that distinction to every caller.
+See <ApiLink package="fluid-framework" api="eraseSchemaDetails" /> for the component-root pattern.
+
+This is an abstraction technique, not an automatic migration mechanism.
+You still need compatible schemas, implementations that understand the supported representations, and tests of edits and concurrent behavior.
+Type erasure does not change stored schema or make old clients understand a new representation.
+
+## Responsibilities of library authors
+
+Publish a compatibility policy that tells consumers:
+
+-   Which persisted schema states each library release can read and edit.
+-   Which release first supports a new state and which explicit option enables it for new writes.
+-   Which child-schema configurations and customizations that policy covers.
+-   Which changes require application rollout work, even when the package API remains source-compatible.
+-   How long deprecated write modes remain available and what consumers must deploy before upgrading past them.
+
+Separate support for a new representation from the default behavior that starts writing it.
+Prefer explicit application selection of write-affecting options so updating a dependency does not silently make documents incompatible with older deployed clients.
+Changing default writes or removing a supported write mode is a breaking library behavior change and needs both versioning communication and rollout instructions.
+
+Retain support for existing persisted data according to the library's documented compatibility commitment.
+Do not interpret a package major version as permission to abandon it.
+The repository's [schema-versioning principles](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/SchemaVersioning.md#libraries) explain the reasoning behind separating format support from write enablement.
+
+For configurable libraries, an unchanged factory signature does not imply an unchanged schema.
+New defaults, additional contributed types, and changed child schemas can all alter the composed model.
+Document which settings are part of the persisted contract, and provide representative configurations for compatibility testing.
+
+## Responsibilities of applications
+
+The application owns the final schema composition and the deployment policy.
+A library cannot know whether the application's older clients, offline clients, or rollback builds can handle an upgrade.
+
+1. Update to a library release that understands the new schema state while retaining the previous write behavior.
+2. Test that release with existing documents and with the future schema state, including the actual injected schemas and component set.
+3. Deploy support to the client versions that must remain compatible. Establish how unsupported clients will be handled.
+4. Enable new writes or schema upgrades only when the application's rollout and rollback requirements permit it.
+5. Retire old write modes only after their consumers have completed the required transition. Keep the required support for older persisted data.
+
+Use [staged allowed types](./allowed-types-rollout.mdx) and [feature-controlled schema upgrades](./feature-flag-schema-upgrades.mdx) where they apply.
+Follow the [recommended initialization flow](../recommended-init-flow.mdx) for compatibility checks when opening a document.
+
+Disabling an upgrade flag does not undo an upgrade already persisted in a document.
+A rollback build must understand documents already written during the rollout, not just the state the application now prefers to write.
+Check <ApiLink package="fluid-framework" api="TreeView.compatibility" /> and handle incompatibility explicitly rather than assuming matching package versions imply compatibility.
+
+## Verify the final composition
+
+Keep library-level compatibility tests, but do not use them as a substitute for testing the application root schema.
+The application's child schemas, scopes, component selection, and upgrade policy can change the result.
+See [Testing Schema Libraries](./testing-schema-upgrades.mdx#testing-schema-libraries) for a layered test strategy.

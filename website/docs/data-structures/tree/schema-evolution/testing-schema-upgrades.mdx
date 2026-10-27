@@ -174,6 +174,52 @@ This is useful for verifying that each phase of your rollout maintains the expec
 - **Combine with** <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">**`snapshotSchemaCompatibility`**</ApiLink> tests to catch regressions when your schema changes across releases.
 - **Test edge cases**: What happens when a staged field is absent? When a staged type appears in a sequence? Ensure your application logic handles these gracefully.
 
+## Testing Schema Libraries
+
+A reusable library needs tests at several boundaries.
+An isolated model test cannot establish that the application's full schema or deployed client versions are compatible.
+See [Schema Libraries and Versioning](./schema-libraries.mdx) for the compatibility commitments these tests should enforce.
+
+### Library behavior
+
+Test domain operations on newly constructed nodes and on nodes in a view.
+Use <ApiLink package="fluid-framework" api="independentView" /> for isolated view tests that do not require a Fluid service.
+Verify initialization, editing, events, and any invariants maintained by the public operations.
+Test adapters' subscriptions and cleanup where those are part of the library contract.
+
+For configurable libraries, cover representative child schemas and every supported configuration feature.
+Include an empty extension set when supported, more than one child type, recursive contributions, and two differently scoped configurations in the same application schema.
+Verify that repeated lookups within one composition return the same schema class, while independent compositions do not share configuration-dependent state.
+
+### Package and type contracts
+
+Compile and execute a consumer against the built package's public entry points.
+Test schema composition, static factories, instance methods, and supported subclassing.
+Include expected compile-time errors for hidden members and unsupported inputs.
+Run declaration emission with the compiler settings that the library claims to support.
+See [TypeScript and Package Exports](../schema-architecture/typescript-exports.mdx#test-the-published-contract) for the full boundary checklist.
+
+### Persisted compatibility
+
+Use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility" /> to track schema compatibility across releases for representative configurations.
+Review snapshot changes as changes to a persisted contract, not as formatting updates.
+Pair schema snapshots with documents containing representative data: compatible schemas alone do not prove that domain operations still interpret old data correctly.
+
+Test old stored data with the current library and future schema states with the library release intended to precede their rollout.
+Exercise the actual domain operations after loading, including absent optional fields and all supported representation variants.
+Use the staged-upgrade tests above to verify both disabled and enabled writes.
+Simulating a future schema with current code complements, but does not replace, tests involving the actual older library versions that the application supports.
+
+### Application composition and collaboration
+
+The application should repeat compatibility checks for its complete root schema with its actual scopes, injected child schemas, component set, and upgrade policy.
+Test all client-version combinations promised by the application's deployment policy, including the intended rollback build against already-upgraded documents.
+Include concurrent domain operations and a schema upgrade observed by another client.
+Check both the resulting shared data and how domain operations and UI adapters respond.
+
+These integration tests require multiple collaborating clients; `independentView` alone does not exercise message delivery or merging between clients.
+Use the application's normal [Fluid testing setup](../../../testing/testing.mdx) for that layer.
+
 ## See Also
 
 - [Schema Evolution](./index.mdx) — Overview of schema changes and compatibility
