@@ -32,7 +32,7 @@ import {
 	type SchemaType,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { transformSimpleSchema } from "../../../simple-tree/schemaConversion.js";
+import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";

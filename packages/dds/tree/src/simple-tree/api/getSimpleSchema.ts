@@ -6,7 +6,7 @@
 import { Unchanged } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SchemaType, SimpleTreeSchema } from "../simpleSchema.js";
-import { transformSimpleSchema } from "../schemaConversion.js";
+import { transformSimpleSchema } from "../toStoredSchema.js";
 import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 /**

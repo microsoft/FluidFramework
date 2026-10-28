@@ -12,7 +12,7 @@ import {
 	simpleStoredSchemaToStoredSchema,
 	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../simple-tree/schemaConversion.js";
+} from "../simple-tree/toStoredSchema.js";
 
 import {
 	getStagedSchemaUpgrades,

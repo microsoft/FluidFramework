@@ -50,22 +50,18 @@ import {
 	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
 import {
-	toInitialSchema,
-	toStoredSchema,
-
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/toStoredSchema.js";
-import {
 	getStoredSchema,
 	simpleStoredSchemaToStoredSchema,
 	transformSimpleNodeSchema,
 	filterAllowedTypes,
 	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/schemaConversion.js";
+} from "../../simple-tree/toStoredSchema.js";
 import {
 	createTreeSchema,
 	getRootSchemaDerivedData,
+	toInitialSchema,
+	toStoredSchema,
 	// eslint-disable-next-line import-x/no-internal-modules -- Tests cached view-schema conversion.
 } from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";

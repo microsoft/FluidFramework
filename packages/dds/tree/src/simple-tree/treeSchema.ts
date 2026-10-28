@@ -17,6 +17,7 @@ import {
 	UnhydratedContext,
 	getTreeNodeSchemaPrivateData,
 	walkSchema,
+	type SchemaUpgrade,
 	type TreeNodeSchema,
 } from "./core/index.js";
 import {
@@ -26,11 +27,12 @@ import {
 } from "./fieldSchema.js";
 import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import {
+	resolveStoredSchemaGenerationOptions,
 	simpleStoredSchemaToStoredSchema,
 	transformSimpleSchema,
-} from "./schemaConversion.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-import type { toStoredSchema } from "./toStoredSchema.js";
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	type toUnhydratedSchema,
+} from "./toStoredSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
 /**
@@ -374,6 +376,57 @@ export function getRootSchemaDerivedData(
 			return data;
 		});
 	});
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
+ */
+export function toUpgradeSchema(
+	root: ImplicitFieldSchema,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
+ */
+export function toInitialSchema(
+	root: ImplicitFieldSchema,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ *
+ * @remarks
+ * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
+ * Roots without {@link RootSchemaDerivedData.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
+ * including {@link toUnhydratedSchema} for unhydrated contexts.
+ * Conversion reuses cached view-schema analysis and follows only references retained by the policy.
+ * Different root identities have separate result caches, even when they share view-schema definitions.
+ * Treat the returned schema as immutable.
+ * Callbacks may reuse completed cached schema data, but must not start nested derived-schema initialization or conversion.
+ * If schema evaluation or conversion throws, continued use of the affected schemas is unsupported.
+ *
+ * @privateRemarks
+ * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
+ * a staged allowed type has been upgraded and if so, include it in the conversion.
+ *
+ * Even if this took in a SimpleTreeSchema,
+ * it would still need to walk the schema to avoid including schemas that become unreachable due to filtered out staged schema.
+ *
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
+ * Throws a `UsageError` if a callback starts nested schema initialization.
+ */
+export function toStoredSchema(
+	root: ImplicitFieldSchema,
+	options: StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	return getRootSchemaDerivedData(root).getStoredSchema(options);
 }
 
 /**

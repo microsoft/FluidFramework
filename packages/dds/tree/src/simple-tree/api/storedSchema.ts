@@ -10,7 +10,7 @@ import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { toStoredSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";

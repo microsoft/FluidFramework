@@ -21,20 +21,16 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 import {
-	toStoredSchema,
-
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/toStoredSchema.js";
-import {
 	simpleStoredSchemaToStoredSchema,
 	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/schemaConversion.js";
+} from "../../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import {
 	createTreeSchema,
 	getRootSchemaDerivedData,
 	SchemaComponent,
+	toStoredSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
 import { testSchema } from "../testTrees.js";

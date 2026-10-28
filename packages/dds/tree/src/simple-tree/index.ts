@@ -333,13 +333,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export {
-	toStoredSchema,
-	toUpgradeSchema,
-	toInitialSchema,
-	toUnhydratedSchema,
-} from "./toStoredSchema.js";
-export { convertFieldKind } from "./schemaConversion.js";
+export { toUnhydratedSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -353,4 +347,7 @@ export {
 	type TransitiveSchemaInfo,
 	createTreeSchema,
 	SchemaComponent,
+	toStoredSchema,
+	toUpgradeSchema,
+	toInitialSchema,
 } from "./treeSchema.js";

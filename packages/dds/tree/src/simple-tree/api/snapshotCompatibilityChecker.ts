@@ -9,8 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as semver from "semver-ts";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { toInitialSchema } from "../toStoredSchema.js";
-import { getRootSchemaDerivedData } from "../treeSchema.js";
+import { getRootSchemaDerivedData, toInitialSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";

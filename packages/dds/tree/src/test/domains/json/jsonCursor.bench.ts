@@ -40,7 +40,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
+import { toInitialSchema } from "../../../simple-tree/treeSchema.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
 import { initializeForest } from "../../feature-libraries/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";

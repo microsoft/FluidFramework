@@ -44,7 +44,7 @@ import {
 	isRecordNodeSchema,
 	type ObjectNodeSchemaPrivate,
 } from "../node-kinds/index.js";
-import { convertFieldKind } from "../schemaConversion.js";
+import { convertFieldKind } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { tryStoredSchemaAsArray } from "./customTree.js";

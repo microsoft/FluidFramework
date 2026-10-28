@@ -34,7 +34,7 @@ import {
 } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
-import { convertFieldKind } from "../schemaConversion.js";
+import { convertFieldKind } from "../toStoredSchema.js";
 import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 import type { TreeView } from "./tree.js";
