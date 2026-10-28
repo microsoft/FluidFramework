@@ -50,11 +50,43 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### M7b: private upgrade state and transaction scope
+
+The controller now separates private preparation from submitted application work.
+A later request is not cleared by an earlier acknowledgement or included early in its retry.
+When multiple schema requirements have already triggered publication, one recovery schema op covers their latest compatible target.
+The retry does not resubmit accepted work or combine application data commits.
+
+Staged-upgrade policies remain pure and cached, as required by their existing contract.
+Do not mutate a policy's captured state to test repeated upgrades.
+Tests use fixed policies and legitimate view replacement instead.
+Closing a view cancels its unused preparation but does not discard submitted work.
+The controller keeps that work until its outcome is resolved; a replacement view can request its own pending upgrade.
+No new public pending state is introduced.
+
+Transaction frames record upgrade requests without moving them outside their transaction scope.
+An abort rolls back inside requests; a committed schema-only transaction stays private.
+Nested transactions and redundant upgrade calls preserve these rules.
+Explicit mixed schema/data transactions retain their existing grouping and undo restrictions.
+Immediate-mode behavior is unchanged.
+
+The schema-only removal guard remains in the temporary rebase adapter.
+The controller owns request lifetime, outcome correlation, metadata, cancellation, and publication.
+Runtime cancellation can remove earlier queued work while retaining a later private upgrade.
+
+Validation:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- Biome and ESLint passed for all five changed TypeScript files.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^SharedTree |^SchematizingSimpleTreeView|^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager|^TreeBranchHistoryImpl|^runtime schema upgrade API' --reporter dot`: 801 passed; 3 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch|^deferred schema upgrades: ordered publication' --reporter dot`: 93 passed.
+
 ### M7a: operation coverage and schema-change discrimination
 
 M6 is committed as `c500499657c`.
-The operation/lifecycle checkpoint is validated.
-The remaining M7b state work is listed below; M7 as a whole is not yet complete.
+The operation/lifecycle checkpoint is committed as `249fb0d6d16`.
+The M7b state work listed below is completed in the newer progress entry above.
 
 The current implementation covers these additional paths:
 

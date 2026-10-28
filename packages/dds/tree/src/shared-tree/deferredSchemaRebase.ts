@@ -21,7 +21,7 @@ import { SharedTreeBranch, type BranchReconciliation } from "../shared-tree-core
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { TreeCheckout } from "./treeCheckout.js";
-import { getCommitOutcome } from "./sharedTreeChangeFamily.js";
+import { getCommitOutcome, isSchemaOnlyChange } from "./sharedTreeChangeFamily.js";
 
 /**
  * Retained input for reconciling a view branch before full schema/data rebase support.
@@ -35,7 +35,7 @@ export interface DeferredSchemaRebaseInput {
 	readonly localHead: GraphCommit<SharedTreeChange>;
 	readonly targetSchema: TreeStoredSchema;
 	readonly authoringSchema: TreeStoredSchema;
-	readonly schemaRevision: RevisionTag;
+	readonly schemaRevisions: ReadonlySet<RevisionTag>;
 	readonly rejectedRevisions: ReadonlySet<RevisionTag>;
 	readonly changeFamily: TreeCheckout["mainBranch"]["changeFamily"];
 	readonly mintRevision: () => RevisionTag;
@@ -131,7 +131,7 @@ export const rebaseDeferredChanges: DeferredSchemaRebase = (input) => {
 		localHead,
 		targetSchema,
 		authoringSchema,
-		schemaRevision,
+		schemaRevisions,
 		rejectedRevisions,
 		changeFamily,
 		mintRevision,
@@ -152,7 +152,7 @@ export const rebaseDeferredChanges: DeferredSchemaRebase = (input) => {
 	const target = new SharedTreeBranch(originalBase, changeFamily, mintRevision);
 	try {
 		for (const commit of local) {
-			if (commit.revision === schemaRevision) {
+			if (schemaRevisions.has(commit.revision)) {
 				continue;
 			}
 			if (commit.change.changes.some((change) => change.type === "schema")) {
@@ -161,7 +161,7 @@ export const rebaseDeferredChanges: DeferredSchemaRebase = (input) => {
 			source.apply(commit, CommitKind.Default, commit.customMetadata);
 		}
 		for (const commit of remote) {
-			if (rejectedRevisions.has(commit.revision) || commit.revision === schemaRevision) {
+			if (rejectedRevisions.has(commit.revision) || schemaRevisions.has(commit.revision)) {
 				continue;
 			}
 			for (const change of commit.change.changes) {
@@ -362,7 +362,7 @@ export class DeferredSchemaForkRebaser {
 			localHead: source.mainBranch.getHead(),
 			authoringSchema: source.storedSchema.clone(),
 			targetSchema: target.storedSchema.clone(),
-			schemaRevision: schema.revision,
+			schemaRevisions: new Set([schema.revision]),
 			rejectedRevisions: new Set(),
 			changeFamily: target.mainBranch.changeFamily,
 			mintRevision: () => target.mintRevision(),
@@ -449,26 +449,27 @@ export class DeferredSchemaForkRebaser {
 }
 
 /**
- * Refreshes known schema-only private history under the current rebase limitation.
+ * Removes known schema-only private preparation before reconciliation or coalescing.
  * @remarks
  * Unlike reconstruction of application work, this executor deliberately mutates the private checkout.
- * The owner must suppress intermediate schema notifications and must provide the last schema-only head.
- * No user edits may have been added after that head.
+ * The owner must suppress intermediate schema notifications and provide the complete preparation suffix.
+ * The suffix must not contain application data or constraints.
  * Remove this workaround when standard schema/data rebase preserves the private upgrade.
  */
-export function refreshSchemaOnlyView(
+export function removeSchemaPreparation(
 	checkout: TreeCheckout,
-	base: TreeCheckout,
+	base: GraphCommit<SharedTreeChange>,
 	schemaOnlyHead: GraphCommit<SharedTreeChange>,
-	target: TreeStoredSchema | undefined,
 ): void {
 	assert(
 		checkout.mainBranch.getHead() === schemaOnlyHead,
 		"Schema-only refresh must not discard application changes.",
 	);
-	checkout.synchronizeFrom(base);
-	checkout.mainBranch.removeAfter(base.mainBranch.getHead());
-	if (target !== undefined) {
-		checkout.updateSchema(target);
-	}
+	const suffix: GraphCommit<SharedTreeChange>[] = [];
+	assert(
+		findAncestor([schemaOnlyHead, suffix], (commit) => commit === base) !== undefined &&
+			suffix.every((commit) => isSchemaOnlyChange(commit.change)),
+		"Removing preparation must not discard application changes.",
+	);
+	checkout.mainBranch.removeAfter(base);
 }

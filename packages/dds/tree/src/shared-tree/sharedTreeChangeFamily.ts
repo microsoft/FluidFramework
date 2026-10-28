@@ -270,6 +270,13 @@ export function hasSchemaChange(change: SharedTreeChange): boolean {
 }
 
 /**
+ * Whether the change contains schema preparation and no application data or constraints.
+ */
+export function isSchemaOnlyChange(change: SharedTreeChange): boolean {
+	return change.changes.length > 0 && change.changes.every((inner) => inner.type === "schema");
+}
+
+/**
  * Applies a mapping function to all data changes within a {@link SharedTreeChange}.
  * @param change - The change to map over.
  * @param map - The mapping function to apply to each data change.

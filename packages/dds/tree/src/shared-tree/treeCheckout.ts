@@ -1565,6 +1565,7 @@ export class TreeCheckout implements ITreeCheckout {
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 		disposeCheckoutOnViewDispose?: boolean,
 		onSchemaUpgrade?: (schema: TreeStoredSchema) => void,
+		onViewDispose?: () => void,
 	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,
@@ -1572,6 +1573,7 @@ export class TreeCheckout implements ITreeCheckout {
 			createNodeIdentifierManager(this.idCompressor),
 			() => {
 				this.views.delete(view);
+				onViewDispose?.();
 			},
 			disposeCheckoutOnViewDispose,
 			onSchemaUpgrade,

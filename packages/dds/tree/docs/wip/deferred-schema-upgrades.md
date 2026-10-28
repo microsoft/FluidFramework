@@ -434,6 +434,13 @@ An upgrade requested inside an aborted transaction rolls back with that transact
 This does not roll back an upgrade applied before the transaction began.
 Keep the existing semantics and restrictions for application-authored transactions that contain both schema and data changes.
 
+Staged-upgrade policy functions keep their existing purity requirement.
+Changing a captured mutable value is not a supported way to change a view's policy.
+An application can dispose its old view and open a replacement view with another fixed policy.
+Closing the old view cancels preparation that has not triggered publication, but does not cancel submitted application edits.
+Retain and recover those edits independently of the typed view's lifetime.
+The replacement view can keep its own later upgrade private while that recovery completes.
+
 Distinguish an application-requested abort from a commit dropped during reconciliation.
 An abort does not remove a local upgrade applied before the transaction or publish the aborted work.
 A rejected commit requires safe internal retry or fail-stop behavior as described in Section 7.

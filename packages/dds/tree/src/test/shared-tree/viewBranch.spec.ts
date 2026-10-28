@@ -269,6 +269,38 @@ describe("viewBranch", () => {
 			return { provider, remote, base, branch, view };
 		}
 
+		function createStagedScenario(provider?: TestTreeProviderLite) {
+			const stagedNumber = SchemaFactoryAlpha.staged(sf.number);
+			const stagedBoolean = SchemaFactoryAlpha.staged(sf.boolean);
+			const numberUpgrade = stagedNumber.metadata.stagedSchemaUpgrade;
+			const booleanUpgrade = stagedBoolean.metadata.stagedSchemaUpgrade;
+			assert(numberUpgrade !== undefined && booleanUpgrade !== undefined);
+			const schema = sf.optional(sf.types([sf.string, stagedNumber, stagedBoolean]));
+			const scenario = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.optional(sf.string) }),
+				new TreeViewConfigurationAlpha({
+					schema,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(numberUpgrade),
+				}),
+				"initial",
+				provider,
+			);
+			return {
+				...scenario,
+				numberUpgrade,
+				booleanUpgrade,
+				fullConfig: new TreeViewConfigurationAlpha({
+					schema,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+						numberUpgrade,
+						booleanUpgrade,
+					),
+				}),
+				numberSchema: toUpgradeSchema(sf.optional([sf.string, sf.number])),
+				fullSchema: toUpgradeSchema(sf.optional([sf.string, sf.number, sf.boolean])),
+			};
+		}
+
 		it("applies an explicit upgrade locally without changing the base", () => {
 			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
 			const baseHead = base.mainBranch.getHead();
@@ -1590,6 +1622,373 @@ describe("viewBranch", () => {
 				provider.synchronizeMessages();
 				assert.equal(view.root, "remote");
 				assert.equal(view.isStagedUpgradeEnabled(upgrade), "enabled");
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("replaces obsolete private preparation when the view changes", () => {
+			const { provider, remote, base, branch, view, fullConfig, fullSchema } =
+				createStagedScenario();
+			const published: string[][] = [];
+			const outcomes: CommitOutcome[] = [];
+			const offBase = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					published.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			const offView = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			let offNewView = (): void => {};
+			try {
+				view.upgradeSchema();
+				view.dispose();
+				const newer = branch.viewWith(fullConfig);
+				offNewView = newer.events.on("changed", (metadata) => {
+					if (metadata.isLocal)
+						metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				});
+				newer.upgradeSchema();
+				assert.equal(provider.peekNextMessage(), undefined);
+				newer.root = true;
+				provider.synchronizeMessages();
+				assert.deepEqual(published, [["schema"], ["data"]]);
+				expectSchemaEqual(base.storedSchema, fullSchema);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied, CommitOutcome.FullyApplied]);
+			} finally {
+				offBase();
+				offView();
+				offNewView();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps an upgrade-only transaction private in deferred mode", () => {
+			const { provider, remote, base, branch, view, numberUpgrade, numberSchema } =
+				createStagedScenario();
+			try {
+				view.runTransaction(() => view.upgradeSchema());
+				assert.equal(provider.peekNextMessage(), undefined);
+				assert.equal(view.isStagedUpgradeEnabled(numberUpgrade), "enabled");
+				view.root = 1;
+				provider.synchronizeMessages();
+				assert.equal(view.root, 1);
+				expectSchemaEqual(base.storedSchema, numberSchema);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("rolls back inside upgrade requests without rolling back earlier requests", () => {
+			const { provider, remote, base, branch, view, numberUpgrade, numberSchema } =
+				createStagedScenario();
+			try {
+				view.runTransaction(() => {
+					view.upgradeSchema();
+					view.root = 1;
+					return { rollback: true };
+				});
+				assert.equal(provider.peekNextMessage(), undefined);
+				assert.equal(view.root, "initial");
+				assert.equal(view.isStagedUpgradeEnabled(numberUpgrade), "disabled");
+				view.upgradeSchema();
+				view.runTransaction(() => {
+					view.upgradeSchema();
+					view.root = 1;
+					return { rollback: true };
+				});
+				assert.equal(view.isStagedUpgradeEnabled(numberUpgrade), "enabled");
+				view.root = 1;
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, numberSchema);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("preserves native grouping and undo restrictions for an explicit mixed transaction", () => {
+			const { provider, remote, base, branch, view } = createStagedScenario();
+			const published: string[][] = [];
+			const undo: Revertible[] = [];
+			const offBase = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					published.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			const offView = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					const revertible = metadata.getRevertible();
+					if (revertible !== undefined) undo.push(revertible);
+				}
+			});
+			try {
+				view.runTransaction(() => {
+					view.upgradeSchema();
+					view.root = 1;
+				});
+				provider.synchronizeMessages();
+				assert.deepEqual(published, [["schema", "data"]]);
+				assert.equal(
+					undo.length,
+					0,
+					"A mixed application transaction gained a data-only undo handle.",
+				);
+				assert.equal(view.root, 1);
+			} finally {
+				offBase();
+				offView();
+				for (const revertible of undo) revertible.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps a later upgrade pending after an earlier publication is acknowledged", () => {
+			const {
+				provider,
+				remote,
+				base,
+				branch,
+				view,
+				fullConfig,
+				booleanUpgrade,
+				numberSchema,
+				fullSchema,
+			} = createStagedScenario();
+			view.upgradeSchema();
+			view.root = 1;
+			view.dispose();
+			const newer = branch.viewWith(fullConfig);
+			newer.upgradeSchema();
+			provider.synchronizeMessages();
+			remote.dispose();
+			const peer = provider.trees[0].kernel.viewWith(
+				new TreeViewConfiguration({
+					schema: sf.optional([sf.string, sf.number]),
+				}),
+			);
+			try {
+				assert.equal(newer.isStagedUpgradeEnabled(booleanUpgrade), "enabled");
+				expectSchemaEqual(base.storedSchema, numberSchema);
+				// The next publication must still be managed, including recovery if it loses.
+				peer.root = "remote";
+				newer.root = true;
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				assert.equal(newer.root, true);
+				expectSchemaEqual(base.storedSchema, fullSchema);
+			} finally {
+				branch.dispose();
+				peer.dispose();
+			}
+		});
+
+		it("coalesces already-triggered upgrades into one recovery schema op", () => {
+			const { provider, remote, base, branch, view, fullConfig, fullSchema } =
+				createStagedScenario();
+			const submissions: string[][] = [];
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					submissions.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root = "remote";
+				view.root = 1;
+				view.dispose();
+				const newer = branch.viewWith(fullConfig);
+				newer.upgradeSchema();
+				newer.root = true;
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				assert.equal(newer.root, true);
+				expectSchemaEqual(base.storedSchema, fullSchema);
+				assert.deepEqual(submissions, [
+					["schema"],
+					["data"],
+					["schema"],
+					["data"],
+					["schema"],
+					["data"],
+					["data"],
+				]);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("retries committed work without publishing a later untriggered upgrade", () => {
+			const {
+				provider,
+				remote,
+				base,
+				branch,
+				view,
+				fullConfig,
+				booleanUpgrade,
+				numberSchema,
+				fullSchema,
+			} = createStagedScenario();
+			const submissions: string[][] = [];
+			const off = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					submissions.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root = "remote";
+				view.root = 1;
+				view.dispose();
+				const newer = branch.viewWith(fullConfig);
+				newer.upgradeSchema();
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				assert.equal(newer.root, 1);
+				assert.equal(newer.isStagedUpgradeEnabled(booleanUpgrade), "enabled");
+				expectSchemaEqual(base.storedSchema, numberSchema);
+				assert.deepEqual(submissions, [["schema"], ["data"], ["schema"], ["data"]]);
+				newer.root = true;
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, fullSchema);
+				assert.deepEqual(submissions, [
+					["schema"],
+					["data"],
+					["schema"],
+					["data"],
+					["schema"],
+					["data"],
+				]);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("recovers committed work even after its typed view is closed", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			remote.root.insertAtStart("remote");
+			view.root.insertAtEnd(1);
+			view.dispose();
+			try {
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+				const reopened = branch.viewWith(configV2);
+				assert.deepEqual([...reopened.root], ["remote", "initial", 1]);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("does not revive an upgrade from an aborted inner transaction", () => {
+			const { provider, remote, branch, view, numberUpgrade } = createStagedScenario();
+			try {
+				view.runTransaction(() => {
+					view.runTransaction(() => {
+						view.upgradeSchema();
+						return { rollback: true };
+					});
+					view.root = "outer edit";
+				});
+				provider.synchronizeMessages();
+				assert.equal(view.root, "outer edit");
+				assert.equal(view.isStagedUpgradeEnabled(numberUpgrade), "disabled");
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps nested committed upgrade-only transactions private", () => {
+			const { provider, remote, base, branch, view, numberSchema } = createStagedScenario();
+			try {
+				view.runTransaction(() => {
+					view.runTransaction(() => view.upgradeSchema());
+					view.upgradeSchema();
+				});
+				assert.equal(provider.peekNextMessage(), undefined);
+				view.root = 1;
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, numberSchema);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps the existing immediate-mode upgrade-only transaction behavior", () => {
+			const { provider, remote, base, branch, numberSchema } = createStagedScenario();
+			branch.dispose();
+			const immediate = base.viewWith(
+				new TreeViewConfiguration({
+					schema: sf.optional([sf.string, sf.number]),
+				}),
+			);
+			try {
+				immediate.runTransaction(() => immediate.upgradeSchema());
+				assert.notEqual(provider.peekNextMessage(), undefined);
+				provider.synchronizeMessages();
+				expectSchemaEqual(provider.trees[0].kernel.checkout.storedSchema, numberSchema);
+			} finally {
+				immediate.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("cancels an earlier queued edit without discarding a later private upgrade", () => {
+			const { provider, remote, base, branch, view, fullConfig, booleanUpgrade, fullSchema } =
+				createStagedScenario(
+					new TestTreeProviderLite(
+						2,
+						new SharedTreeTestFactory(() => {}),
+						true,
+						FlushMode.TurnBased,
+					),
+				);
+			view.upgradeSchema();
+			view.root = 1;
+			view.dispose();
+			const newer = branch.viewWith(fullConfig);
+			newer.upgradeSchema();
+			const runtime = provider.trees[1].containerRuntime;
+			try {
+				assert(runtime instanceof MockContainerRuntime && runtime.rollback !== undefined);
+				runtime.rollback();
+				assert.equal(newer.root, "initial");
+				assert.equal(newer.isStagedUpgradeEnabled(booleanUpgrade), "enabled");
+				newer.root = true;
+				provider.synchronizeMessages();
+				expectSchemaEqual(base.storedSchema, fullSchema);
 			} finally {
 				branch.dispose();
 				remote.dispose();

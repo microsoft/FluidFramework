@@ -13,6 +13,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 	type TreeStoredSchema,
+	type CustomMetadataTree,
 } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../feature-libraries/index.js";
 import {
@@ -27,11 +28,16 @@ import type { TreeCheckout } from "./treeCheckout.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { type SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import {
-	refreshSchemaOnlyView,
 	rebaseDeferredChanges,
 	DeferredSchemaForkRebaser,
+	removeSchemaPreparation,
 } from "./deferredSchemaRebase.js";
-import { getCommitOutcome, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import type { BranchReconciliation } from "../shared-tree-core/index.js";
+import {
+	getCommitOutcome,
+	hasSchemaChange,
+	isSchemaOnlyChange,
+} from "./sharedTreeChangeFamily.js";
 
 export type {
 	DeferredSchemaRebase,
@@ -158,20 +164,71 @@ export function getPublicationStatus(
 	return "accepted";
 }
 
+interface PublicationRequest {
+	readonly revision: RevisionTag;
+	readonly customMetadata: CustomMetadataTree | undefined;
+	readonly viewId: number | undefined;
+}
+
+interface PendingSchemaPreparation {
+	readonly base: GraphCommit<SharedTreeChange>;
+	readonly head: GraphCommit<SharedTreeChange>;
+	readonly schema: TreeStoredSchema;
+	readonly viewSchema: TreeSchema;
+	readonly generation: number;
+	readonly requests: readonly PublicationRequest[];
+	readonly viewId: number | undefined;
+	readonly cancelled: boolean;
+}
+
+type PublicationMember = {
+	state: ViewPublicationState;
+	readonly requests: readonly PublicationRequest[];
+} & (
+	| {
+			readonly kind: "schema";
+			readonly schema: TreeStoredSchema;
+			readonly viewSchema: TreeSchema;
+			readonly generation: number;
+	  }
+	| { readonly kind: "application" }
+);
+
 interface PendingViewPublication {
 	readonly originalBase: GraphCommit<SharedTreeChange>;
-	readonly authoringSchema: TreeStoredSchema;
-	readonly schemaRevision: RevisionTag;
+	authoringSchema: TreeStoredSchema;
+	viewSchema: TreeSchema;
+	generation: number;
+	readonly schemaRevisions: Set<RevisionTag>;
 	readonly retained: TreeCheckout["mainBranch"];
-	readonly members: Map<
-		RevisionTag,
-		{
-			readonly logicalRevision: RevisionTag;
-			state: ViewPublicationState;
-		}
-	>;
+	readonly members: Map<RevisionTag, PublicationMember>;
 	originalHead: GraphCommit<SharedTreeChange>;
 	attempt: "initial" | "retry";
+}
+
+interface SchemaTransactionFrame {
+	readonly before: GraphCommit<SharedTreeChange>;
+	request?: { readonly viewSchema: TreeSchema; readonly viewId: number };
+}
+
+function requestForCommit(
+	commit: GraphCommit<SharedTreeChange>,
+	viewId: number | undefined,
+): PublicationRequest {
+	return { revision: commit.revision, customMetadata: commit.customMetadata, viewId };
+}
+
+function schemaMetadata(
+	requests: readonly PublicationRequest[],
+): CustomMetadataTree | undefined {
+	const children = requests.flatMap((request) =>
+		request.customMetadata === undefined ? [] : [request.customMetadata],
+	);
+	return children.length === 0
+		? undefined
+		: children.length === 1
+			? children[0]
+			: { metadata: undefined, children };
 }
 
 /**
@@ -184,17 +241,20 @@ export class ViewBranch {
 	private readonly unsubscribe: (() => void)[];
 	private synchronizing = false;
 	private disposed = false;
-	private pendingSchema: TreeStoredSchema | undefined;
-	private pendingSchemaRevision: RevisionTag | undefined;
-	private pendingSchemaGeneration: number | undefined;
+	private pendingUpgrade: PendingSchemaPreparation | undefined;
 	private receivedSchemaGeneration = 0;
+	private synchronizedSchemaGeneration = 0;
 	private viewSchema: TreeSchema | undefined;
 	private reconcileView: ((action: () => void) => void) | undefined;
 	private releaseView: (() => void) | undefined;
-	private pendingBase: GraphCommit<SharedTreeChange> | undefined;
 	private publication: PendingViewPublication | undefined;
 	private readonly schemaForkRebaser: DeferredSchemaForkRebaser;
 	private readonly cancellations: GraphCommit<SharedTreeChange>[] = [];
+	private readonly schemaTransactions: SchemaTransactionFrame[] = [];
+	private completedSchemaTransaction: SchemaTransactionFrame | undefined;
+	private mixedSchemaTransaction: SchemaTransactionFrame | undefined;
+	private nextViewId = 0;
+	private activeViewId: number | undefined;
 
 	public constructor(private readonly base: TreeCheckout) {
 		this.checkout = base.forkForView();
@@ -209,6 +269,27 @@ export class ViewBranch {
 			base.events.on("dispose", () => this.dispose()),
 			this.checkout.events.on("afterOperation", () => this.synchronize()),
 			this.checkout.events.on("dispose", () => this.dispose()),
+			this.checkout.transaction.events.on("started", () => {
+				this.schemaTransactions.push({ before: this.checkout.mainBranch.getHead() });
+			}),
+			this.checkout.transaction.events.on("committing", () => {
+				const frame = this.schemaTransactions.pop();
+				assert(frame !== undefined, "A committing transaction must have a schema frame.");
+				if (frame.request !== undefined) {
+					const parent = this.schemaTransactions.at(-1);
+					if (parent === undefined) {
+						this.completedSchemaTransaction = frame;
+					} else {
+						parent.request = frame.request;
+					}
+				}
+			}),
+			this.checkout.transaction.events.on("aborting", () => {
+				assert(
+					this.schemaTransactions.pop() !== undefined,
+					"An aborting transaction must have a schema frame.",
+				);
+			}),
 			base.mainBranch.events.on("commitSequenced", (commit) => this.recordOutcome(commit)),
 			base.mainBranch.events.on("beforeChange", (event) => {
 				if (event.type === "rebase") {
@@ -245,16 +326,34 @@ export class ViewBranch {
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): SchematizingSimpleTreeView<TRoot> {
+		if (this.disposed) {
+			throw new UsageError("Cannot create a view from a disposed view-branch controller.");
+		}
 		if (this.base.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
-		const view = this.checkout.viewWithInternal(config, undefined, (schema) =>
-			this.upgradeLocally(schema),
-		);
-		this.viewSchema =
+		const viewSchema =
 			config instanceof TreeViewConfigurationAlpha
 				? config
 				: new TreeViewConfigurationAlpha(config);
+		const viewId = ++this.nextViewId;
+		const view = this.checkout.viewWithInternal(
+			config,
+			false,
+			(schema) => this.upgradeLocally(schema, viewSchema, viewId),
+			() => {
+				this.reconcileView = undefined;
+				this.releaseView?.();
+				this.releaseView = undefined;
+				this.activeViewId = undefined;
+				if (this.pendingUpgrade?.viewId === viewId) {
+					this.pendingUpgrade = { ...this.pendingUpgrade, cancelled: true };
+				}
+				this.synchronize();
+			},
+		);
+		this.viewSchema = viewSchema;
+		this.activeViewId = viewId;
 		this.reconcileView = (action) => view.reconcileSchema(action);
 		this.base.forest.anchors.slots.set(ViewSlot, view);
 		this.releaseView = () => {
@@ -265,17 +364,131 @@ export class ViewBranch {
 		return view;
 	}
 
-	private upgradeLocally(schema: TreeStoredSchema): void {
+	private upgradeLocally(
+		schema: TreeStoredSchema,
+		viewSchema: TreeSchema,
+		viewId: number,
+	): void {
+		const before = this.checkout.mainBranch.getHead();
 		this.synchronizing = true;
 		try {
 			this.checkout.updateSchema(schema);
-			this.pendingSchema = schema;
-			this.pendingBase = this.base.mainBranch.getHead();
-			this.synchronizedHead = this.checkout.mainBranch.getHead();
-			this.pendingSchemaRevision = this.synchronizedHead.revision;
-			this.pendingSchemaGeneration = this.receivedSchemaGeneration;
+			const frame = this.schemaTransactions.at(-1);
+			if (frame === undefined) {
+				this.prepareUpgrade(schema, before, viewSchema, viewId);
+			} else {
+				// The native transaction owns this schema change until its outermost commit.
+				// An abort must not turn it into persistent, out-of-transaction preparation.
+				frame.request = { viewSchema, viewId };
+			}
 		} finally {
 			this.synchronizing = false;
+		}
+		if (this.pendingUpgrade?.cancelled === true) {
+			this.synchronize();
+		}
+	}
+
+	private prepareUpgrade(
+		schema: TreeStoredSchema,
+		before: GraphCommit<SharedTreeChange>,
+		viewSchema: TreeSchema,
+		viewId: number,
+	): void {
+		const requested = this.checkout.mainBranch.getHead();
+		assert(
+			isSchemaOnlyChange(requested.change),
+			"Private preparation must contain only schema.",
+		);
+		const previous = this.pendingUpgrade;
+		const requests = [
+			...(previous?.cancelled === false ? previous.requests : []),
+			requestForCommit(requested, viewId),
+		];
+		const base = previous?.base ?? before;
+		if (previous !== undefined || requested.change.changes.length !== 1) {
+			this.reconcile(() => {
+				removeSchemaPreparation(this.checkout, base, requested);
+				this.applyPreparation(schema, requests);
+			});
+			if (previous?.cancelled === true) {
+				for (const request of previous.requests) {
+					this.checkout.discardCancelledCommit(request.revision);
+				}
+			}
+		}
+		this.pendingUpgrade = {
+			base,
+			head: this.checkout.mainBranch.getHead(),
+			schema,
+			viewSchema,
+			generation: this.synchronizedSchemaGeneration,
+			requests,
+			viewId,
+			cancelled: viewId !== this.activeViewId,
+		};
+		this.schemaForkRebaser.rememberSchema(this.pendingUpgrade.head);
+		if (previous !== undefined) {
+			this.discardPreparationEvent(previous);
+		}
+		this.synchronizedHead = this.checkout.mainBranch.getHead();
+	}
+
+	private applyPreparation(
+		schema: TreeStoredSchema,
+		requests: readonly PublicationRequest[],
+		checkout = this.checkout,
+	): void {
+		assert(
+			allowsRepoSuperset(defaultSchemaPolicy, checkout.storedSchema, schema),
+			"Schema preparation must be an expansion of its authoring base.",
+		);
+		checkout.mainBranch.apply(
+			{
+				revision: checkout.mintRevision(),
+				change: {
+					changes: [
+						{
+							type: "schema",
+							innerChange: {
+								schema: { old: checkout.storedSchema.clone(), new: schema },
+								isInverse: false,
+							},
+						},
+					],
+				},
+			},
+			CommitKind.Default,
+			schemaMetadata(requests),
+		);
+		this.schemaForkRebaser.rememberSchema(checkout.mainBranch.getHead());
+	}
+
+	private discardPreparationEvent(pending: PendingSchemaPreparation): void {
+		if (!pending.requests.some((request) => request.revision === pending.head.revision)) {
+			this.checkout.discardInternalCommitOutcome(pending.head.revision);
+		}
+	}
+
+	private processSchemaTransaction(): void {
+		const frame = this.completedSchemaTransaction;
+		this.completedSchemaTransaction = undefined;
+		if (frame?.request === undefined) {
+			return;
+		}
+		const head = this.checkout.mainBranch.getHead();
+		assert(head !== frame.before, "A committed upgrade transaction must retain its change.");
+		if (isSchemaOnlyChange(head.change)) {
+			this.prepareUpgrade(
+				this.checkout.storedSchema.clone(),
+				frame.before,
+				frame.request.viewSchema,
+				frame.request.viewId,
+			);
+		} else {
+			// Preserve application-authored mixed transactions, including their native undo
+			// restrictions. Do not split their schema changes out of the transaction.
+			this.mixedSchemaTransaction = frame;
 		}
 	}
 
@@ -294,16 +507,23 @@ export class ViewBranch {
 
 	private trackPublication(): void {
 		const head = this.checkout.mainBranch.getHead();
-		if (this.publication === undefined && this.pendingSchema !== undefined) {
+		const pending = this.pendingUpgrade;
+		const mixed = this.mixedSchemaTransaction;
+		this.mixedSchemaTransaction = undefined;
+		if (this.publication === undefined && (pending !== undefined || mixed !== undefined)) {
+			const originalBase = pending?.base ?? mixed?.before;
+			const viewSchema = mixed?.request?.viewSchema ?? pending?.viewSchema ?? this.viewSchema;
 			assert(
-				this.pendingBase !== undefined,
-				"A pending upgrade must retain its original base.",
+				originalBase !== undefined && viewSchema !== undefined,
+				"Publication needs its authoring context.",
 			);
 			this.publication = {
-				originalBase: this.pendingBase,
+				originalBase,
 				authoringSchema: this.checkout.storedSchema.clone(),
-				schemaRevision: this.synchronizedHead.revision,
-				originalHead: head,
+				viewSchema,
+				generation: pending?.generation ?? this.synchronizedSchemaGeneration,
+				schemaRevisions: new Set(),
+				originalHead: originalBase,
 				retained: this.checkout.mainBranch.fork(),
 				members: new Map(),
 				attempt: "initial",
@@ -314,22 +534,46 @@ export class ViewBranch {
 			return;
 		}
 		const commits: GraphCommit<SharedTreeChange>[] = [];
-		const from =
-			publication.members.size === 0 ? publication.originalBase : this.synchronizedHead;
 		assert(
-			findAncestor([head, commits], (commit) => commit === from) !== undefined,
+			findAncestor([head, commits], (commit) => commit === publication.originalHead) !==
+				undefined,
 			"Publication must extend the previously tracked view state.",
 		);
 		for (const commit of commits) {
-			publication.members.set(commit.revision, {
-				logicalRevision:
-					commit.revision === publication.schemaRevision
-						? (this.pendingSchemaRevision ?? commit.revision)
-						: commit.revision,
-				state: { type: "pending", revision: commit.revision, attempt: publication.attempt },
-			});
+			const state: ViewPublicationState = {
+				type: "pending",
+				revision: commit.revision,
+				attempt: publication.attempt,
+			};
+			if (commit === pending?.head) {
+				publication.schemaRevisions.add(commit.revision);
+				publication.members.set(commit.revision, {
+					kind: "schema",
+					schema: pending.schema,
+					viewSchema: pending.viewSchema,
+					generation: pending.generation,
+					requests: pending.requests,
+					state,
+				});
+			} else {
+				publication.members.set(commit.revision, {
+					kind: "application",
+					requests: [requestForCommit(commit, this.activeViewId)],
+					state,
+				});
+			}
 		}
 		publication.originalHead = head;
+		publication.authoringSchema = this.checkout.storedSchema.clone();
+		publication.viewSchema =
+			mixed?.request?.viewSchema ??
+			pending?.viewSchema ??
+			this.viewSchema ??
+			publication.viewSchema;
+		publication.generation = pending?.generation ?? this.synchronizedSchemaGeneration;
+		// Once an application change commits, its preparation belongs to this publication.
+		// A later upgrade request gets a separate pending record and cannot be cleared by its ack.
+		this.pendingUpgrade = undefined;
 	}
 
 	private finishPublication(): boolean {
@@ -372,22 +616,12 @@ export class ViewBranch {
 			// Finish that case now; there will be no new acknowledgement to wake the controller.
 			return this.finishPublication();
 		}
-		this.reconcile(() => this.checkout.synchronizeFrom(this.base));
-		this.synchronizedHead = this.checkout.mainBranch.getHead();
-		this.pendingSchema = undefined;
-		this.pendingSchemaRevision = undefined;
-		this.pendingSchemaGeneration = undefined;
-		this.pendingBase = undefined;
+		this.reconcileTo(this.base);
 		this.publication = undefined;
 		try {
 			for (const [revision, member] of publication.members) {
-				if (this.base.receivesSequencedOutcomes) {
-					this.checkout.reportCommitOutcome(
-						member.logicalRevision,
-						CommitOutcome.FullyApplied,
-					);
-				}
-				if (revision !== member.logicalRevision) {
+				this.settleRequests(member.requests, CommitOutcome.FullyApplied);
+				if (!member.requests.some((request) => request.revision === revision)) {
 					this.checkout.discardInternalCommitOutcome(revision);
 				}
 			}
@@ -399,11 +633,11 @@ export class ViewBranch {
 
 	private retryPublication(publication: PendingViewPublication): void {
 		assert(publication.attempt === "initial", "Only one publication retry is permitted.");
-		assert(this.viewSchema !== undefined, "Recovery requires the original view schema.");
-		const decision = decideViewSchema(
-			this.viewSchema,
-			this.base.storedSchema,
+		const decision = this.selectSchema(
+			publication.viewSchema,
 			publication.authoringSchema,
+			publication.generation,
+			this.base,
 		);
 		if (decision.type === "incompatible") {
 			throw new Error("Deferred schema recovery cannot preserve the view schema.");
@@ -419,7 +653,7 @@ export class ViewBranch {
 			localHead: publication.originalHead,
 			authoringSchema: publication.authoringSchema,
 			targetSchema: decision.schema,
-			schemaRevision: publication.schemaRevision,
+			schemaRevisions: publication.schemaRevisions,
 			rejectedRevisions: rejected,
 			changeFamily: this.base.mainBranch.changeFamily,
 			mintRevision: () => this.base.mintRevision(),
@@ -431,49 +665,54 @@ export class ViewBranch {
 		const previousMembers = new Map(publication.members);
 		publication.attempt = "retry";
 		publication.members.clear();
-		const trackRetry = (revision: RevisionTag, logicalRevision: RevisionTag): void => {
-			publication.members.set(revision, {
-				logicalRevision,
-				state: { type: "pending", revision, attempt: "retry" },
-			});
-		};
 		try {
 			if (decision.type === "upgrade") {
-				candidate.updateSchema(decision.schema);
-				trackRetry(
-					candidate.mainBranch.getHead().revision,
-					previousMembers.get(publication.schemaRevision)?.logicalRevision ??
-						publication.schemaRevision,
+				const requests = [...previousMembers.values()].flatMap((member) =>
+					member.kind === "schema" && member.state.type !== "accepted" ? member.requests : [],
 				);
+				this.applyPreparation(decision.schema, requests, candidate);
+				const revision = candidate.mainBranch.getHead().revision;
+				publication.schemaRevisions.add(revision);
+				publication.members.set(revision, {
+					kind: "schema",
+					schema: decision.schema,
+					viewSchema: publication.viewSchema,
+					generation: this.receivedSchemaGeneration,
+					requests,
+					state: { type: "pending", revision, attempt: "retry" },
+				});
 			}
 			for (const { originalRevision, commit } of prepared.commits) {
 				candidate.mainBranch.apply(commit, CommitKind.Default, commit.customMetadata);
-				trackRetry(
-					commit.revision,
-					previousMembers.get(originalRevision)?.logicalRevision ?? originalRevision,
+				const original = previousMembers.get(originalRevision);
+				assert(
+					original?.kind === "application",
+					"A retry must correspond to retained application work.",
 				);
+				publication.members.set(commit.revision, {
+					...original,
+					state: { type: "pending", revision: commit.revision, attempt: "retry" },
+				});
 			}
 			// Adopt the reconstructed attempt before submission so synchronous acknowledgements
 			// have a live target. Reconciliation does not rerun application callbacks.
-			this.reconcile(() => this.checkout.synchronizeFrom(candidate, prepared.reconciliation));
-			this.synchronizedHead = this.checkout.mainBranch.getHead();
+			this.reconcileTo(candidate, prepared.reconciliation);
 			this.schemaForkRebaser.rememberRevisions(
 				publication.originalHead,
 				prepared.reconciliation.revisionReplacers,
 			);
+			publication.originalHead = candidate.mainBranch.getHead();
+			publication.authoringSchema = candidate.storedSchema.clone();
+			publication.generation = this.receivedSchemaGeneration;
 			this.base.merge(candidate, false);
 			for (const [revision, member] of previousMembers) {
 				if (
-					this.base.receivesSequencedOutcomes &&
-					(member.state.type === "accepted" ||
-						(revision === publication.schemaRevision && decision.type === "adopt"))
+					member.state.type === "accepted" ||
+					(member.kind === "schema" && decision.type === "adopt")
 				) {
-					this.checkout.reportCommitOutcome(
-						member.logicalRevision,
-						CommitOutcome.FullyApplied,
-					);
+					this.settleRequests(member.requests, CommitOutcome.FullyApplied);
 				}
-				if (revision !== member.logicalRevision) {
+				if (!member.requests.some((request) => request.revision === revision)) {
 					this.checkout.discardInternalCommitOutcome(revision);
 				}
 			}
@@ -490,41 +729,162 @@ export class ViewBranch {
 		}
 	}
 
+	private selectSchema(
+		viewSchema: TreeSchema,
+		target: TreeStoredSchema,
+		generation: number,
+		base: TreeCheckout,
+	): ViewSchemaDecision {
+		// Viewability of an unchanged old schema does not cancel requested staged upgrades.
+		return generation !== this.receivedSchemaGeneration ||
+			allowsRepoSuperset(defaultSchemaPolicy, target, base.storedSchema)
+			? decideViewSchema(viewSchema, base.storedSchema, target)
+			: allowsRepoSuperset(defaultSchemaPolicy, base.storedSchema, target)
+				? { type: "upgrade", schema: target }
+				: { type: "incompatible" };
+	}
+
+	private settleRequests(
+		requests: readonly PublicationRequest[],
+		outcome: CommitOutcome | "cancelled",
+	): void {
+		for (const request of requests) {
+			if (outcome === "cancelled") {
+				this.checkout.discardCancelledCommit(request.revision);
+			} else if (this.base.receivesSequencedOutcomes && request.viewId === this.activeViewId) {
+				this.checkout.reportCommitOutcome(request.revision, outcome);
+			} else {
+				this.checkout.discardInternalCommitOutcome(request.revision);
+			}
+		}
+	}
+
+	/**
+	 * Reconciles committed work while keeping newer untriggered schema requests private.
+	 * Only the schema-only suffix is removed; the adapter owns any transformation of data.
+	 */
+	private reconcileTo(
+		target: TreeCheckout,
+		reconciliation?: BranchReconciliation<SharedTreeChange>,
+	): void {
+		const pending = this.pendingUpgrade;
+		let outcome: CommitOutcome | "cancelled" | undefined;
+		this.reconcile(() => {
+			if (pending !== undefined) {
+				removeSchemaPreparation(this.checkout, pending.base, pending.head);
+			}
+			this.pendingUpgrade = undefined;
+			this.checkout.synchronizeFrom(target, reconciliation);
+			if (pending !== undefined) {
+				if (pending.cancelled) {
+					outcome = "cancelled";
+				} else {
+					const decision = this.selectSchema(
+						pending.viewSchema,
+						pending.schema,
+						pending.generation,
+						target,
+					);
+					if (decision.type === "upgrade") {
+						const base = this.checkout.mainBranch.getHead();
+						this.applyPreparation(decision.schema, pending.requests);
+						this.pendingUpgrade = {
+							...pending,
+							base,
+							head: this.checkout.mainBranch.getHead(),
+							schema: decision.schema,
+							generation: this.receivedSchemaGeneration,
+						};
+					} else {
+						outcome =
+							decision.type === "adopt"
+								? CommitOutcome.FullyApplied
+								: CommitOutcome.FullyDropped;
+					}
+				}
+				this.discardPreparationEvent(pending);
+			}
+		});
+		this.synchronizedHead = this.checkout.mainBranch.getHead();
+		this.synchronizedSchemaGeneration = this.receivedSchemaGeneration;
+		if (pending !== undefined && outcome !== undefined) {
+			this.settleRequests(pending.requests, outcome);
+		}
+	}
+
 	private applyCancellations(): void {
 		for (const cancelled of this.cancellations.splice(0)) {
 			const publication = this.publication;
 			const member = publication?.members.get(cancelled.revision);
-			const head = this.checkout.mainBranch.getHead();
-			const commit = findAncestor(
-				head,
-				(candidate) => candidate.revision === cancelled.revision,
-			);
-			if (commit === undefined) {
-				// Schema-only refresh may already have reflected cancellation of earlier base work.
-				assert(member === undefined, "Tracked cancelled work must still be retained.");
-				continue;
-			}
-			assert(
-				head === commit,
-				"Runtime cancellation cannot silently discard later application work.",
-			);
-			if (member !== undefined && member.logicalRevision === this.pendingSchemaRevision) {
-				// Cancel the submission, not the explicit local upgrade. A later application
-				// edit can publish a fresh schema prefix after the runtime finishes rollback.
-				publication?.retained.dispose();
-				this.publication = undefined;
-				this.pendingBase = this.base.mainBranch.getHead();
-			} else {
+			const pending = this.pendingUpgrade;
+			this.reconcile(() => {
+				if (pending !== undefined) {
+					removeSchemaPreparation(this.checkout, pending.base, pending.head);
+					this.discardPreparationEvent(pending);
+				}
+				this.pendingUpgrade = undefined;
+				const head = this.checkout.mainBranch.getHead();
+				const commit = findAncestor(
+					head,
+					(candidate) => candidate.revision === cancelled.revision,
+				);
+				if (commit === undefined) {
+					assert(member === undefined, "Tracked cancelled work must still be retained.");
+					if (pending !== undefined) {
+						this.restorePreparation(pending);
+					}
+					return;
+				}
+				assert(
+					head === commit,
+					"Runtime cancellation cannot silently discard later application work.",
+				);
 				assert(commit.parent !== undefined, "A cancelled commit must have a parent.");
 				this.checkout.mainBranch.removeAfter(commit.parent);
-				this.checkout.discardCancelledCommit(member?.logicalRevision ?? cancelled.revision);
+				let preparation = pending;
+				if (member?.kind === "schema") {
+					// Cancellation retracts this submission, not an earlier explicit upgrade.
+					// A later pending request may already include the cancelled schema capability.
+					preparation =
+						pending === undefined
+							? {
+									base: commit.parent,
+									head: commit,
+									schema: member.schema,
+									viewSchema: member.viewSchema,
+									generation: member.generation,
+									requests: member.requests,
+									viewId: member.requests[0]?.viewId,
+									cancelled: !member.requests.some(
+										(request) => request.viewId === this.activeViewId,
+									),
+								}
+							: { ...pending, requests: [...member.requests, ...pending.requests] };
+				} else if (member === undefined) {
+					this.checkout.discardCancelledCommit(cancelled.revision);
+				} else {
+					this.settleRequests(member.requests, "cancelled");
+				}
 				publication?.members.delete(cancelled.revision);
 				if (publication !== undefined) {
 					publication.originalHead = this.checkout.mainBranch.getHead();
 				}
+				if (preparation !== undefined) {
+					this.restorePreparation(preparation);
+				}
+			});
+			if (publication?.members.size === 0) {
+				this.publication = undefined;
+				publication.retained.dispose();
 			}
 			this.synchronizedHead = this.checkout.mainBranch.getHead();
 		}
+	}
+
+	private restorePreparation(pending: PendingSchemaPreparation): void {
+		const base = this.checkout.mainBranch.getHead();
+		this.applyPreparation(pending.schema, pending.requests);
+		this.pendingUpgrade = { ...pending, base, head: this.checkout.mainBranch.getHead() };
 	}
 
 	private synchronize(): void {
@@ -542,6 +902,7 @@ export class ViewBranch {
 			// and the application-facing checkout must stop rather than continue divergent.
 			this.checkout.breaker.run(() =>
 				this.base.breaker.run(() => {
+					this.processSchemaTransaction();
 					this.applyCancellations();
 					const publishing = this.checkout.mainBranch.getHead() !== this.synchronizedHead;
 					if (publishing) {
@@ -552,77 +913,12 @@ export class ViewBranch {
 					if (!this.finishPublication()) {
 						return;
 					}
-					let schemaOutcome: { revision: RevisionTag; outcome: CommitOutcome } | undefined;
-					const reconcile = (): void => {
-						if (this.pendingSchema === undefined) {
-							this.checkout.synchronizeFrom(this.base);
-						} else {
-							assert(
-								this.viewSchema !== undefined,
-								"A pending upgrade requires a view schema.",
-							);
-							// A staged view can already view the old schema. Data-only changes
-							// must not use that fact to cancel an explicitly requested upgrade.
-							const decision: ViewSchemaDecision =
-								this.pendingSchemaGeneration !== this.receivedSchemaGeneration ||
-								allowsRepoSuperset(
-									defaultSchemaPolicy,
-									this.pendingSchema,
-									this.base.storedSchema,
-								)
-									? decideViewSchema(
-											this.viewSchema,
-											this.base.storedSchema,
-											this.pendingSchema,
-										)
-									: { type: "upgrade", schema: this.pendingSchema };
-							const schemaRevision = this.pendingSchemaRevision;
-							if (publishing) {
-								// The base now contains the same commits. Do not use the schema-only
-								// refresh, which is allowed to discard only internal preparation.
-								if (decision.type !== "adopt") {
-									throw new Error("The schema publication could not be applied to its base.");
-								}
-								this.pendingSchema = undefined;
-								this.checkout.synchronizeFrom(this.base);
-							} else if (decision.type === "incompatible") {
-								this.checkout.synchronizeFrom(this.base);
-								this.pendingSchema = undefined;
-							} else {
-								const target = decision.type === "upgrade" ? decision.schema : undefined;
-								const oldPreparation = this.synchronizedHead.revision;
-								refreshSchemaOnlyView(this.checkout, this.base, this.synchronizedHead, target);
-								if (oldPreparation !== schemaRevision) {
-									this.checkout.discardInternalCommitOutcome(oldPreparation);
-								}
-								this.pendingSchema = target;
-								this.pendingBase =
-									target === undefined ? undefined : this.base.mainBranch.getHead();
-								this.pendingSchemaGeneration =
-									target === undefined ? undefined : this.receivedSchemaGeneration;
-							}
-							if (this.pendingSchema === undefined && schemaRevision !== undefined) {
-								this.pendingSchemaRevision = undefined;
-								this.pendingSchemaGeneration = undefined;
-								this.pendingBase = undefined;
-								schemaOutcome = {
-									revision: schemaRevision,
-									outcome:
-										decision.type === "incompatible"
-											? CommitOutcome.FullyDropped
-											: CommitOutcome.FullyApplied,
-								};
-							}
-						}
-					};
-					if (this.reconcileView === undefined) {
-						reconcile();
-					} else {
-						this.reconcileView(reconcile);
-					}
-					this.synchronizedHead = this.checkout.mainBranch.getHead();
-					if (schemaOutcome !== undefined && this.base.receivesSequencedOutcomes) {
-						this.checkout.reportCommitOutcome(schemaOutcome.revision, schemaOutcome.outcome);
+					if (
+						this.pendingUpgrade?.cancelled === true ||
+						(this.pendingUpgrade?.base ?? this.checkout.mainBranch.getHead()) !==
+							this.base.mainBranch.getHead()
+					) {
+						this.reconcileTo(this.base);
 					}
 				}),
 			);
