@@ -23,12 +23,40 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { runWithRetry } from "./retryUtils.js";
+import { disposeOdspOperations, OdspOperation } from "./odspOperation.js";
+
+interface StorageWithOperation extends IDocumentStorageService {
+	getSnapshotTree(
+		version?: IVersion,
+		scenarioName?: string,
+		operation?: OdspOperation,
+		// eslint-disable-next-line @rushstack/no-new-null
+	): Promise<ISnapshotTree | null>;
+	getSnapshot?(options?: ISnapshotFetchOptions, operation?: OdspOperation): Promise<ISnapshot>;
+	readBlob(id: string, operation?: OdspOperation): Promise<ArrayBufferLike>;
+	getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
+		id: string | null,
+		count: number,
+		scenarioName?: string,
+		source?: FetchSource,
+		operation?: OdspOperation,
+	): Promise<IVersion[]>;
+	uploadSummaryWithContext(
+		summary: ISummaryTree,
+		context: ISummaryContext,
+		operation?: OdspOperation,
+	): Promise<string>;
+	downloadSummary(handle: ISummaryHandle, operation?: OdspOperation): Promise<ISummaryTree>;
+	createBlob(file: ArrayBufferLike, operation?: OdspOperation): Promise<ICreateBlobResponse>;
+}
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
 	constructor(
-		private readonly internalStorageService: IDocumentStorageService,
+		private readonly internalStorageService: StorageWithOperation,
 		private readonly logger: TelemetryLoggerExt,
+		private readonly signal?: AbortSignal,
 	) {}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -39,29 +67,37 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	}
 	public dispose(): void {
 		this._disposed = true;
+		disposeOdspOperations(this);
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.getSnapshotTree(version),
+			async (operation) =>
+				this.internalStorageService.getSnapshotTree(version, undefined, operation),
 			"storage_getSnapshotTree",
+			version?.id,
 		);
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
-		return this.runWithRetry(async () => {
-			if (this.internalStorageService.getSnapshot !== undefined) {
-				return this.internalStorageService.getSnapshot(snapshotFetchOptions);
-			}
-			throw new UsageError("getSnapshot should exist in storage adapter in ODSP driver");
-		}, "storage_getSnapshot");
+		return this.runWithRetry(
+			async (operation) => {
+				if (this.internalStorageService.getSnapshot !== undefined) {
+					return this.internalStorageService.getSnapshot(snapshotFetchOptions, operation);
+				}
+				throw new UsageError("getSnapshot should exist in storage adapter in ODSP driver");
+			},
+			"storage_getSnapshot",
+			JSON.stringify(snapshotFetchOptions?.loadingGroupIds ?? []),
+		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.readBlob(id),
+			async (operation) => this.internalStorageService.readBlob(id, operation),
 			"storage_readBlob",
+			id,
 		);
 	}
 
@@ -73,9 +109,16 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
-			async () =>
-				this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
+			async (operation) =>
+				this.internalStorageService.getVersions(
+					versionId,
+					count,
+					scenarioName,
+					fetchSource,
+					operation,
+				),
 			"storage_getVersions",
+			versionId ?? undefined,
 		);
 	}
 
@@ -85,21 +128,23 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	): Promise<string> {
 		// Creation flow with attachment blobs - need to do retries!
 		return this.runWithRetry(
-			async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
+			async (operation) =>
+				this.internalStorageService.uploadSummaryWithContext(summary, context, operation),
 			"storage_uploadSummaryWithContext",
 		);
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.downloadSummary(handle),
+			async (operation) => this.internalStorageService.downloadSummary(handle, operation),
 			"storage_downloadSummary",
+			handle.handle,
 		);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.createBlob(file),
+			async (operation) => this.internalStorageService.createBlob(file, operation),
 			"storage_createBlob",
 		);
 	}
@@ -113,7 +158,28 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		}
 	}
 
-	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-		return runWithRetry(api, callName, this.logger, () => this.checkStorageDisposed());
+	private async runWithRetry<T>(
+		api: (operation: OdspOperation) => Promise<T>,
+		callName: string,
+		target = "document",
+	): Promise<T> {
+		const operation = new OdspOperation(
+			this.logger,
+			this,
+			callName,
+			target,
+			undefined,
+			this.signal,
+			this.internalStorageService,
+		);
+		return operation.run(async () =>
+			runWithRetry(
+				async () => api(operation),
+				callName,
+				operation.logger,
+				() => this.checkStorageDisposed(),
+				operation,
+			),
+		);
 	}
 }

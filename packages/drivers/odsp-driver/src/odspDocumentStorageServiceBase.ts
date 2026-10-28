@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import type { OdspOperation } from "./odspOperation.js";
 
 class BlobCache {
 	// Save the timeout so we can cancel and reschedule it as needed
@@ -167,25 +168,30 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._snapshotSequenceNumber;
 	}
 
-	public abstract createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+	public abstract createBlob(
+		file: ArrayBufferLike,
+		operation?: OdspOperation,
+	): Promise<ICreateBlobResponse>;
 
-	private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
+	private async readBlobCore(blobId: string, operation?: OdspOperation): Promise<ArrayBuffer> {
 		const { blobContent, evicted } = this.blobCache.getBlob(blobId);
-		return blobContent ?? this.fetchBlobFromStorage(blobId, evicted);
+		return blobContent ?? this.fetchBlobFromStorage(blobId, evicted, operation);
 	}
 
 	protected abstract fetchBlobFromStorage(
 		blobId: string,
 		evicted: boolean,
+		operation?: OdspOperation,
 	): Promise<ArrayBuffer>;
 
-	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		return this.readBlobCore(blobId);
+	public async readBlob(blobId: string, operation?: OdspOperation): Promise<ArrayBufferLike> {
+		return this.readBlobCore(blobId, operation);
 	}
 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		operation?: OdspOperation,
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		let id: string;
@@ -193,7 +199,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			id = version.id;
 		} else {
 			// eslint-disable-next-line unicorn/no-null
-			const versions = await this.getVersions(null, 1, scenarioName);
+			const versions = await this.getVersions(null, 1, scenarioName, undefined, operation);
 			if (!versions || versions.length === 0) {
 				// eslint-disable-next-line unicorn/no-null
 				return null;
@@ -201,7 +207,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			id = versions[0].id;
 		}
 
-		const snapshotTree = await this.readTree(id, scenarioName);
+		const snapshotTree = await this.readTree(id, scenarioName, operation);
 		if (!snapshotTree) {
 			// eslint-disable-next-line unicorn/no-null
 			return null;
@@ -212,6 +218,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 	public abstract getSnapshot(
 		snapshotFetchOptions?: ISnapshotFetchOptions,
+		operation?: OdspOperation,
 	): Promise<ISnapshot>;
 
 	public abstract getVersions(
@@ -220,11 +227,13 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		count: number,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
+		operation?: OdspOperation,
 	): Promise<IVersion[]>;
 
 	public abstract uploadSummaryWithContext(
 		summary: ISummaryTree,
 		context: ISummaryContext,
+		operation?: OdspOperation,
 	): Promise<string>;
 
 	public async downloadSummary(): Promise<ISummaryTree> {
@@ -239,11 +248,15 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		this.blobCache.addBlobs(blobs);
 	}
 
-	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
+	private async readTree(
+		id: string,
+		scenarioName?: string,
+		operation?: OdspOperation,
+	): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!tree) {
-			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
+			tree = await this.fetchTreeFromSnapshot(id, scenarioName, operation);
 		}
 
 		// eslint-disable-next-line unicorn/no-null
@@ -253,6 +266,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected abstract fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
+		operation?: OdspOperation,
 	): Promise<ISnapshotTree | undefined>;
 
 	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {

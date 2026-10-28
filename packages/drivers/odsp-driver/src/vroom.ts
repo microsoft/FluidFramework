@@ -17,10 +17,15 @@ import { v4 as uuid } from "uuid";
 
 import type { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
+import type { OdspOperation } from "./odspOperation.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import type { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
-import { withRequestControl, type RequestControl } from "./requestControl.js";
+import {
+	withOdspOperation,
+	withRequestControl,
+	type RequestControl,
+} from "./requestControl.js";
 
 interface IJoinSessionBody {
 	requestSocketToken?: boolean;
@@ -29,6 +34,7 @@ interface IJoinSessionBody {
 
 interface JoinSessionRequestControl extends RequestControl {
 	readonly signal: AbortSignal;
+	readonly operation?: OdspOperation;
 }
 
 /**
@@ -120,15 +126,20 @@ export const fetchJoinSession = mockify(
 					async () =>
 						epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
 							url,
-							withRequestControl(
-								{ method, headers, body: postBody, signal: requestControl?.signal },
-								requestControl,
+							withOdspOperation(
+								withRequestControl(
+									{ method, headers, body: postBody, signal: requestControl?.signal },
+									requestControl,
+								),
+								requestControl?.operation,
 							),
 							"joinSession",
 							true,
 						),
 					"joinSession",
 					logger,
+					undefined,
+					requestControl?.operation,
 				);
 
 				const socketUrl = response.content.deltaStreamSocketUrl;

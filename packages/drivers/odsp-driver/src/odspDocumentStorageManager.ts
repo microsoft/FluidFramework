@@ -72,6 +72,8 @@ import {
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { OdspOperation } from "./odspOperation.js";
+import { withOdspOperation } from "./requestControl.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
@@ -129,7 +131,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return this._isFirstSnapshotFromNetwork;
 	}
 
-	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+	public async createBlob(
+		file: ArrayBufferLike,
+		operation?: OdspOperation,
+	): Promise<ICreateBlobResponse> {
+		if (operation === undefined) {
+			return this.runOperation("createBlob", "document", async (context) =>
+				this.createBlob(file, context),
+			);
+		}
 		this.checkAttachmentPOSTUrl();
 
 		const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -147,7 +157,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 
 			return PerformanceEvent.timedExecAsync(
-				this.logger,
+				operation.logger,
 				{
 					eventName: "createBlob",
 					size: file.byteLength,
@@ -157,11 +167,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					const res = await this.createBlobRateLimiter.schedule(async () =>
 						this.epochTracker.fetchAndParseAsJSON<ICreateBlobResponse>(
 							url,
-							{
-								body: ArrayBufferLikeToArrayBuffer(file),
-								headers,
-								method,
-							},
+							withOdspOperation(
+								{
+									body: ArrayBufferLikeToArrayBuffer(file),
+									headers,
+									method,
+								},
+								operation,
+							),
 							"createBlob",
 						),
 					);
@@ -180,7 +193,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	protected async fetchBlobFromStorage(
 		blobId: string,
 		evicted: boolean,
+		operation?: OdspOperation,
 	): Promise<ArrayBuffer> {
+		if (operation === undefined) {
+			return this.runOperation("readBlob", blobId, async (context) =>
+				this.fetchBlobFromStorage(blobId, evicted, context),
+			);
+		}
 		this.checkAttachmentGETUrl();
 
 		const blob = await getWithRetryForTokenRefresh(async (options) => {
@@ -193,7 +212,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const headers = getHeadersWithAuth(authHeader);
 
 			return PerformanceEvent.timedExecAsync(
-				this.logger,
+				operation.logger,
 				{
 					eventName: "readDataBlob",
 					blobId,
@@ -201,7 +220,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
-					const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
+					const res = await this.epochTracker.fetchArray(
+						url,
+						withOdspOperation({ headers }, operation),
+						"blob",
+					);
 					event.end({
 						waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 						...res.propsToLog,
@@ -230,13 +253,19 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		operation?: OdspOperation,
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
+		if (operation === undefined) {
+			return this.runOperation("getSnapshotTree", version?.id ?? "document", async (context) =>
+				this.getSnapshotTree(version, scenarioName, context),
+			);
+		}
 		if (!this.snapshotUrl) {
 			// eslint-disable-next-line unicorn/no-null
 			return null;
 		}
-		return super.getSnapshotTree(version, scenarioName);
+		return super.getSnapshotTree(version, scenarioName, operation);
 	}
 
 	/**
@@ -244,15 +273,28 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	 * ungrouped data will be provided.
 	 * @param snapshotFetchOptions - fetch options for snapshot.
 	 */
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+		operation?: OdspOperation,
+	): Promise<ISnapshot> {
+		if (operation === undefined) {
+			return this.runOperation(
+				"getSnapshot",
+				JSON.stringify(snapshotFetchOptions?.loadingGroupIds ?? []),
+				async (context) => this.getSnapshot(snapshotFetchOptions, context),
+			);
+		}
 		// Don't consult cache if request is not for a particular loading group.
-		const { snapshot } = await this.fetchSnapshot({
-			...snapshotFetchOptions,
-			fetchSource: isSnapshotFetchForLoadingGroup(snapshotFetchOptions?.loadingGroupIds)
-				? FetchSource.noCache
-				: snapshotFetchOptions?.fetchSource,
-			loadingGroupIds: snapshotFetchOptions?.loadingGroupIds ?? [],
-		});
+		const { snapshot } = await this.fetchSnapshot(
+			{
+				...snapshotFetchOptions,
+				fetchSource: isSnapshotFetchForLoadingGroup(snapshotFetchOptions?.loadingGroupIds)
+					? FetchSource.noCache
+					: snapshotFetchOptions?.fetchSource,
+				loadingGroupIds: snapshotFetchOptions?.loadingGroupIds ?? [],
+			},
+			operation,
+		);
 
 		return {
 			...snapshot,
@@ -262,6 +304,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async fetchSnapshot(
 		snapshotFetchOptions: ISnapshotFetchOptions,
+		operation?: OdspOperation,
 	): Promise<{ snapshot: ISnapshot; id: string | undefined }> {
 		const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
 		const odspSnapshotCacheValue: ISnapshot = await PerformanceEvent.timedExecAsync(
@@ -285,6 +328,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						snapshotFetchOptions.loadingGroupIds,
 						snapshotFetchOptions.scenarioName,
 						true /* avoidPrefetchSnapshotCache */,
+						operation,
 					);
 					method = "networkOnly";
 				} else {
@@ -352,11 +396,24 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						this.hostPolicy.concurrentSnapshotFetch &&
 						!this.hostPolicy.summarizerClient
 					) {
-						const networkSnapshotP = this.fetchSnapshotFromNetwork(
-							hostSnapshotOptions,
-							snapshotFetchOptions.loadingGroupIds,
-							snapshotFetchOptions.scenarioName,
-							false /* avoidPrefetchSnapshotCache */,
+						const background = new OdspOperation(
+							this.logger,
+							this.epochTracker,
+							"refreshSnapshot",
+							JSON.stringify(snapshotFetchOptions.loadingGroupIds ?? []),
+							undefined,
+							undefined,
+							this,
+						);
+						background.properties.odspParentOperationId = operation?.id;
+						const networkSnapshotP = background.run(async () =>
+							this.fetchSnapshotFromNetwork(
+								hostSnapshotOptions,
+								snapshotFetchOptions.loadingGroupIds,
+								snapshotFetchOptions.scenarioName,
+								false /* avoidPrefetchSnapshotCache */,
+								background,
+							),
 						);
 
 						// Ensure that failures on both paths are ignored initially.
@@ -415,6 +472,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
 								false /* avoidPrefetchSnapshotCache */,
+								operation,
 							);
 						}
 					}
@@ -473,7 +531,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		count: number,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
+		operation?: OdspOperation,
 	): Promise<IVersion[]> {
+		if (operation === undefined) {
+			return this.runOperation("getVersions", blobid ?? "document", async (context) =>
+				this.getVersions(blobid, count, scenarioName, fetchSource, context),
+			);
+		}
 		// Regular load workflow uses blobId === documentID to indicate "latest".
 		if (blobid !== this.documentId && blobid) {
 			// FluidFetch & FluidDebugger tools use empty sting to query for versions
@@ -495,12 +559,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		// If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
 		if (count === 1 && (blobid === null || blobid === this.documentId)) {
-			const { id } = await this.fetchSnapshot({
-				cacheSnapshot: true,
-				scenarioName,
-				versionId: blobid ?? undefined,
-				fetchSource,
-			});
+			const { id } = await this.fetchSnapshot(
+				{
+					cacheSnapshot: true,
+					scenarioName,
+					versionId: blobid ?? undefined,
+					fetchSource,
+				},
+				operation,
+			);
 			return id ? [{ id, treeId: undefined! }] : [];
 		}
 
@@ -515,14 +582,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 			// Fetch the latest snapshot versions for the document
 			const response = await PerformanceEvent.timedExecAsync(
-				this.logger,
+				operation.logger,
 				{
 					eventName: "getVersions",
 				},
 				async () =>
 					this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(
 						url,
-						{ headers },
+						withOdspOperation({ headers }, operation),
 						"versions",
 						undefined,
 						scenarioName,
@@ -557,12 +624,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 		avoidPrefetchSnapshotCache: boolean = false,
+		operation?: OdspOperation,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		return this.fetchSnapshotFromNetworkCore(
 			hostSnapshotOptions,
 			loadingGroupIds,
 			scenarioName,
 			avoidPrefetchSnapshotCache,
+			operation,
 		).catch((error) => {
 			// Issue #5895:
 			// If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
@@ -582,6 +651,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 		avoidPrefetchSnapshotCache: boolean = false,
+		operation?: OdspOperation,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		if (
 			!avoidPrefetchSnapshotCache &&
@@ -640,6 +710,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			loadingGroupId: string[] | undefined,
 			options: ISnapshotOptions | undefined,
 			controller?: AbortController,
+			snapshotOperation?: OdspOperation,
 		): Promise<ISnapshotRequestAndResponseOptions> => {
 			return downloadSnapshot(
 				finalOdspResolvedUrl,
@@ -647,11 +718,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				tokenFetchOptions,
 				loadingGroupId,
 				options,
-				this.logger,
+				snapshotOperation?.logger ?? this.logger,
 				this.snapshotFormatFetchType,
 				controller,
 				this.epochTracker,
 				scenarioName,
+				undefined,
+				snapshotOperation,
 			);
 		};
 		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
@@ -677,6 +750,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
 				this.hostPolicy.hostProvidedRequestHeaders,
+				operation,
 			);
 			return odspSnapshot;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -719,6 +793,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
 					this.hostPolicy.hostProvidedRequestHeaders,
+					operation,
 				);
 				return odspSnapshot;
 			}
@@ -729,7 +804,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async uploadSummaryWithContext(
 		summary: ISummaryTree,
 		context: ISummaryContext,
+		operation?: OdspOperation,
 	): Promise<string> {
+		if (operation === undefined) {
+			return this.runOperation("uploadSummary", "document", async (op) =>
+				this.uploadSummaryWithContext(summary, context, op),
+			);
+		}
 		this.checkSnapshotUrl();
 
 		// Set the module promise right away, so as to not call it twice.
@@ -787,7 +868,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			this.odspSummaryUploadManager !== undefined,
 			0x56e /* summary upload manager should have been initialized */,
 		);
-		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
+		const id = await this.odspSummaryUploadManager.writeSummaryTree(
+			summary,
+			context,
+			operation,
+		);
 		const { pendingRename } = this.odspResolvedUrl;
 		if (
 			pendingRename !== undefined &&
@@ -809,6 +894,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					pendingRename,
 					this.logger,
 					this.epochTracker,
+					operation,
 				),
 			);
 			this.odspResolvedUrl.pendingRename = undefined;
@@ -874,6 +960,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	protected async fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
+		operation?: OdspOperation,
 	): Promise<ISnapshotTree | undefined> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			const snapshotDownloader = async (url: string): Promise<IOdspResponse<unknown>> => {
@@ -884,7 +971,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				const headers = getHeadersWithAuth(authHeader);
 				return this.epochTracker.fetchAndParseAsJSON(
 					url,
-					{ headers },
+					withOdspOperation({ headers }, operation),
 					"snapshotTree",
 					undefined,
 					scenarioName,
@@ -894,7 +981,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.snapshotUrl!,
 				id,
 				this.fetchFullSnapshot,
-				this.logger,
+				operation?.logger ?? this.logger,
 				snapshotDownloader,
 			);
 			let treeId = "";
@@ -913,5 +1000,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			// will be the actual id of tree to be fetched.
 			return this.commitCache.get(id) ?? this.commitCache.get(treeId);
 		});
+	}
+
+	private async runOperation<T>(
+		kind: string,
+		target: string,
+		api: (operation: OdspOperation) => Promise<T>,
+	): Promise<T> {
+		return new OdspOperation(
+			this.logger,
+			this.epochTracker,
+			kind,
+			target,
+			undefined,
+			undefined,
+			this,
+		).run(api);
 	}
 }

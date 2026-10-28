@@ -12,13 +12,21 @@ import {
 	createChildMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { restore, stub, useFakeTimers, type SinonFakeTimers, type SinonStub } from "sinon";
+import {
+	createStubInstance,
+	restore,
+	stub,
+	useFakeTimers,
+	type SinonFakeTimers,
+	type SinonStub,
+} from "sinon";
 
 import { createOdspUrl } from "../createOdspUrl.js";
-import { createOdspCacheAndTracker } from "../epochTracker.js";
+import { createOdspCacheAndTracker, EpochTracker } from "../epochTracker.js";
 import { getJoinSessionThrottle } from "../joinSessionThrottle.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDelayLoadedDeltaStream } from "../odspDelayLoadedDeltaStream.js";
+import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getJoinSessionCacheKey } from "../odspUtils.js";
 
@@ -27,6 +35,7 @@ describe("join-session throttle coordination", () => {
 	let fetchStub: SinonStub<Parameters<typeof fetch>, ReturnType<typeof fetch>>;
 	let cache: NonPersistentCache;
 	let resolvedUrl: IOdspResolvedUrl;
+	let logger: MockLogger;
 	const streams: OdspDelayLoadedDeltaStream[] = [];
 	const response = {
 		deltaStorageUrl: "https://example.invalid/deltas",
@@ -37,8 +46,13 @@ describe("join-session throttle coordination", () => {
 		refreshSessionDurationSeconds: 3600,
 	};
 
-	function createStream(url = resolvedUrl, sharedCache = cache): OdspDelayLoadedDeltaStream {
-		const mc = createChildMonitoringContext({ logger: new MockLogger().toTelemetryLogger() });
+	function createStream(
+		url = resolvedUrl,
+		sharedCache = cache,
+		useBaseTracker = false,
+		getWebsocketToken?: () => Promise<string>,
+	): OdspDelayLoadedDeltaStream {
+		const mc = createChildMonitoringContext({ logger: logger.toTelemetryLogger() });
 		const { cache: odspCache, epochTracker } = createOdspCacheAndTracker(
 			new LocalPersistentCache(),
 			sharedCache,
@@ -49,11 +63,17 @@ describe("join-session throttle coordination", () => {
 			url,
 			{},
 			async () => "Bearer test",
-			undefined,
+			getWebsocketToken,
 			mc,
 			odspCache,
 			{},
-			epochTracker,
+			useBaseTracker
+				? new EpochTracker(
+						odspCache.persistedCache,
+						{ docId: url.hashedDocumentId, resolvedUrl: url },
+						logger.toTelemetryLogger(),
+					)
+				: epochTracker,
 			() => {},
 			() => {},
 		);
@@ -67,7 +87,12 @@ describe("join-session throttle coordination", () => {
 		socketToken = false,
 	): Promise<unknown> {
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		return stream["joinSessionCore"](socketToken, { refresh }, refresh, undefined);
+		return stream["joinSessionCore"](
+			socketToken,
+			{ refresh },
+			refresh && !socketToken,
+			undefined,
+		);
 	}
 
 	function throttle(seconds: number): Response {
@@ -93,6 +118,7 @@ describe("join-session throttle coordination", () => {
 			}),
 		});
 		cache = new NonPersistentCache();
+		logger = new MockLogger();
 		clock = useFakeTimers();
 		fetchStub = stub(globalThis, "fetch");
 		fetchStub.onFirstCall().resolves(throttle(120));
@@ -105,6 +131,206 @@ describe("join-session throttle coordination", () => {
 		}
 		restore();
 		clock.restore();
+	});
+
+	it("correlates independent callers, the shared gate, HTTP attempts, and terminal outcomes", async () => {
+		const stream = createStream();
+		await assert.rejects(join(stream));
+		const next = join(stream, true, true);
+		await clock.tickAsync(120000);
+		await next;
+		const starts = logger.events.filter((event) =>
+			event.eventName.endsWith("OdspRequestStart"),
+		);
+		const ends = logger.events.filter((event) => event.eventName.endsWith("OdspOperationEnd"));
+		assert.equal(starts.length, 2);
+		assert.equal(ends.length, 2);
+		assert.notEqual(starts[0].odspOperationId, starts[1].odspOperationId);
+		assert.equal(starts[0].odspAttemptNumber, 1);
+		assert.equal(starts[1].odspAttemptNumber, 1);
+		assert.equal(starts[0].odspTargetId, starts[1].odspTargetId);
+		assert.equal(starts[0].joinSessionCaller, "initialConnect");
+		assert.equal(starts[1].joinSessionCaller, "socketTokenRefresh");
+		assert.equal(ends[0].outcome, "failed");
+		assert.equal(ends[1].outcome, "succeeded");
+		const waited = logger.events.find((event) =>
+			event.eventName.endsWith("JoinSessionThrottleWait_end"),
+		);
+		assert.equal(waited?.odspOperationId, starts[1].odspOperationId);
+		assert.equal(waited?.scheduledDelayMs, 120000);
+		assert.equal(waited?.observedDelayMs, 120000);
+		const throttled = logger.events.find((event) =>
+			event.eventName.endsWith("JoinSessionThrottle"),
+		);
+		assert.equal(throttled?.odspOperationId, starts[0].odspOperationId);
+		assert.equal(throttled?.odspAttemptId, starts[0].odspAttemptId);
+	});
+
+	it("keeps a connection's join-session token retry in the original caller operation", async () => {
+		fetchStub.onFirstCall().resolves(new Response("{}", { status: 401 }));
+		fetchStub.callsFake(
+			async () =>
+				new Response(
+					JSON.stringify({
+						...response,
+						socketToken: "******",
+					}),
+					{ headers: { "content-type": "application/json", "x-fluid-epoch": "epoch" } },
+				),
+		);
+		const socket = stub(OdspDocumentDeltaConnection, "create").rejects(
+			new Error("synthetic socket failure"),
+		);
+		await assert.rejects(
+			createStream(resolvedUrl, cache, true).connectToDeltaStream({
+				mode: "read",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user: { id: "id" },
+				scopes: [],
+			}),
+			/synthetic socket failure/,
+		);
+		assert.equal(socket.callCount, 1);
+		const requests = logger.events.filter((event) =>
+			event.eventName.endsWith("OdspRequestStart"),
+		);
+		assert.equal(requests.length, 2);
+		assert.equal(requests[0].odspOperationId, requests[1].odspOperationId);
+		assert.deepEqual(
+			requests.map((event) => event.odspAttemptNumber),
+			[1, 2],
+		);
+		assert.deepEqual(
+			requests.map((event) => event.joinSessionCaller),
+			["initialConnect", "initialConnect"],
+		);
+		assert.deepEqual(
+			requests.map((event) => event.joinSessionAttemptCaller),
+			["initialConnect", "socketTokenRefresh"],
+		);
+		assert.equal(
+			logger.events.filter((event) => event.eventName.endsWith("OdspOperationEnd")).length,
+			1,
+		);
+	});
+
+	it("does not start a socket connection after disposal while its token is pending", async () => {
+		fetchStub.onFirstCall().resolves(success());
+		const token = new Deferred<string>();
+		const stream = createStream(resolvedUrl, cache, true, async () => token.promise);
+		const socket = stub(OdspDocumentDeltaConnection, "create").rejects(
+			new Error("unexpected socket connection"),
+		);
+		const connection = assert.rejects(
+			stream.connectToDeltaStream({
+				mode: "read",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user: { id: "id" },
+				scopes: [],
+			}),
+			/disposed/i,
+		);
+		await clock.tickAsync(0);
+		stream.dispose();
+		token.resolve("******");
+		await connection;
+		assert.equal(socket.callCount, 0);
+		const ends = logger.events.filter((event) => event.eventName.endsWith("OdspOperationEnd"));
+		assert.equal(ends.length, 1);
+		assert.equal(ends[0].outcome, "abandoned");
+	});
+
+	it("disposes a socket that completes after its operation was abandoned", async () => {
+		fetchStub.onFirstCall().resolves(
+			new Response(
+				JSON.stringify({
+					...response,
+					socketToken: "******",
+				}),
+				{ headers: { "content-type": "application/json", "x-fluid-epoch": "epoch" } },
+			),
+		);
+		const pending = new Deferred<OdspDocumentDeltaConnection>();
+		const socket = stub(OdspDocumentDeltaConnection, "create").returns(pending.promise);
+		const stream = createStream(resolvedUrl, cache, true);
+		const connection = assert.rejects(
+			stream.connectToDeltaStream({
+				mode: "read",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user: { id: "id" },
+				scopes: [],
+			}),
+			/disposed/i,
+		);
+		await clock.tickAsync(0);
+		assert.equal(socket.callCount, 1);
+		stream.dispose();
+		const lateConnection = createStubInstance(OdspDocumentDeltaConnection);
+		pending.resolve(lateConnection);
+		await connection;
+		assert.equal(lateConnection.dispose.callCount, 1);
+	});
+
+	it("accounts for coalesced callers without inventing HTTP attempts", async () => {
+		const pending = new Deferred<Response>();
+		fetchStub.onFirstCall().returns(pending.promise);
+		const first = join(createStream());
+		await clock.tickAsync(0);
+		const second = join(createStream(), true);
+		await clock.tickAsync(0);
+		pending.resolve(success());
+		await Promise.all([first, second]);
+		const operations = logger.events.filter((event) =>
+			event.eventName.endsWith("OdspOperationStart"),
+		);
+		const requests = logger.events.filter((event) =>
+			event.eventName.endsWith("OdspRequestStart"),
+		);
+		const coalesced = logger.events.find((event) =>
+			event.eventName.endsWith("OdspOperationCoalesced"),
+		);
+		assert.equal(operations.length, 2);
+		assert.equal(requests.length, 1);
+		assert.notEqual(operations[0].odspOperationId, operations[1].odspOperationId);
+		assert.equal(coalesced?.sharedOperationId, operations[0].odspOperationId);
+		assert.equal(coalesced?.odspOperationId, operations[1].odspOperationId);
+	});
+
+	it("retains originating request IDs through error fan-out", async () => {
+		await join(createStream()).catch((error: unknown) => {
+			for (const layer of ["storage", "connection", "container", "runner"]) {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: layer }, error);
+			}
+		});
+		const start = logger.events.find((event) => event.eventName.endsWith("OdspRequestStart"));
+		assert.ok(start?.odspOperationId);
+		assert.ok(start.odspAttemptId);
+		for (const layer of ["storage", "connection", "container", "runner"]) {
+			const event = logger.events.find((entry) => entry.eventName === layer);
+			assert.equal(event?.odspOperationId, start.odspOperationId);
+			assert.equal(event?.odspAttemptId, start.odspAttemptId);
+		}
+	});
+
+	it("records abandonment once and does not claim replacement success as recovery", async () => {
+		const original = createStream();
+		await assert.rejects(join(original));
+		const waiting = assert.rejects(join(original), /disposed/i);
+		await clock.tickAsync(1000);
+		original.dispose();
+		await waiting;
+		const replacement = join(createStream());
+		await clock.tickAsync(119000);
+		await replacement;
+		const ends = logger.events.filter((event) => event.eventName.endsWith("OdspOperationEnd"));
+		assert.equal(ends.length, 3);
+		assert.equal(ends[1].outcome, "abandoned");
+		assert.equal(ends[2].outcome, "succeeded");
+		assert.notEqual(ends[1].odspOperationId, ends[2].odspOperationId);
+		assert.notEqual(ends[1].odspServiceId, ends[2].odspServiceId);
 	});
 
 	for (const [name, refresh, socketToken] of [

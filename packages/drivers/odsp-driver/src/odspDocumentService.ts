@@ -27,6 +27,7 @@ import {
 	createChildMonitoringContext,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";
@@ -42,6 +43,7 @@ import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
+import { disposeOdspOperations } from "./odspOperation.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -59,6 +61,7 @@ export class OdspDocumentService
 	private odspDelayLoadedDeltaStream: OdspDelayLoadedDeltaStream | undefined;
 
 	private odspSocketModuleLoaded: boolean = false;
+	private readonly abortController = new AbortController();
 
 	/**
 	 * Creates a new OdspDocumentService instance.
@@ -172,6 +175,7 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
+		this.checkDisposed();
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.storageManager) {
 			this.storageManager = new OdspDocumentStorageService(
@@ -197,7 +201,11 @@ export class OdspDocumentService
 			);
 		}
 
-		return new RetryErrorsStorageAdapter(this.storageManager, this.mc.logger);
+		return new RetryErrorsStorageAdapter(
+			this.storageManager,
+			this.mc.logger,
+			this.abortController.signal,
+		);
 	}
 
 	/**
@@ -206,6 +214,7 @@ export class OdspDocumentService
 	 * @returns returns the document delta storage service for sharepoint driver.
 	 */
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+		this.checkDisposed();
 		const snapshotOps = this.storageManager?.ops ?? [];
 		const service = new OdspDeltaStorageService(
 			this.odspResolvedUrl.endpoints.deltaStorageUrl,
@@ -248,12 +257,14 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+		this.checkDisposed();
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.socketModuleP === undefined) {
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
 		return this.socketModuleP
 			.then(async (m) => {
+				this.checkDisposed();
 				this.odspSocketModuleLoaded = true;
 				return m.connectToDeltaStream(client);
 			})
@@ -284,6 +295,7 @@ export class OdspDocumentService
 				this.mc.logger.sendErrorEvent({ eventName: "SocketModuleLoadFailed" }, error);
 				throw error;
 			});
+		this.checkDisposed();
 		this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
 			this.odspResolvedUrl,
 			this._policies,
@@ -301,6 +313,8 @@ export class OdspDocumentService
 	}
 
 	public dispose(error?: unknown): void {
+		this.abortController.abort();
+		disposeOdspOperations(this.epochTracker);
 		// Error might indicate mismatch between client & server knowledge about file
 		// (OdspErrorTypes.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
@@ -313,6 +327,14 @@ export class OdspDocumentService
 		this._opsCache?.dispose();
 		// Only need to dipose this, if it is already loaded.
 		this.odspDelayLoadedDeltaStream?.dispose();
+	}
+
+	private checkDisposed(): void {
+		if (this.abortController.signal.aborted) {
+			throw new LoggingError("Document service is disposed. Cannot connect", {
+				canRetry: false,
+			});
+		}
 	}
 
 	protected get opsCache(): OpsCache | undefined {

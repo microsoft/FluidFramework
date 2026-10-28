@@ -12,9 +12,9 @@ import {
 	isFluidError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import type { INonPersistentCache } from "./odspCache.js";
+import { getOdspTargetId } from "./odspOperation.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 interface ThrottleWindow {
@@ -61,6 +61,10 @@ function disposedError(): NonRetryableError<typeof OdspErrorTypes.genericError> 
 export class JoinSessionThrottle {
 	private readonly windows = new Map<string, ThrottleWindow>();
 
+	public getGateId(key: string): string {
+		return getOdspTargetId(this, key);
+	}
+
 	public record(key: string, error: unknown, logger: TelemetryLoggerExt): void {
 		const statusCode = isFluidError(error)
 			? error.getTelemetryProperties().statusCode
@@ -92,7 +96,7 @@ export class JoinSessionThrottle {
 		};
 		const window: ThrottleWindow = {
 			deadline,
-			id: previous?.id ?? uuid(),
+			id: this.getGateId(key),
 			timer: setTimeout(expire, Math.min(retryAfterMs, maximumTimerDelayMs)),
 		};
 		this.windows.set(key, window);
