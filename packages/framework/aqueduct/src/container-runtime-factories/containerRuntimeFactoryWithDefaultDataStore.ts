@@ -49,8 +49,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties using the deprecated
  * compatibility property.
  *
- * @deprecated 2.116.0. To be removed in 3.10.0. Use
- * {@link ContainerRuntimeFactoryWithDefaultDataStoreProps} with `oldestSupportedClient` instead.
+ * @deprecated 2.116.0. To be removed in 3.20.0. Use
+ * {@link ContainerRuntimeFactoryWithDefaultDataStoreProps} with
+ * {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  * @input
  * @legacy
@@ -64,7 +65,8 @@ export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
 	/**
 	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -85,7 +87,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
 	/**
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * Pass {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	public constructor(props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps);

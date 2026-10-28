@@ -831,9 +831,10 @@ export interface LoadContainerRuntimeParams {
 	oldestSupportedClient: OldestSupportedClientVersion;
 
 	/**
-	 * This property must not be provided. Use `oldestSupportedClient` instead.
+	 * This property must not be provided. Use {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * Use {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	minVersionForCollab?: undefined;
@@ -842,8 +843,8 @@ export interface LoadContainerRuntimeParams {
 /**
  * Container runtime load parameters using the deprecated compatibility property.
  *
- * @deprecated 2.116.0. To be removed in 3.10.0. Use {@link LoadContainerRuntimeParams} with
- * `oldestSupportedClient` instead.
+ * @deprecated 2.116.0. To be removed in 3.20.0. Use {@link LoadContainerRuntimeParams} with
+ * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  * @input
  * @legacy
@@ -855,7 +856,8 @@ export type DeprecatedLoadContainerRuntimeParams = Omit<
 > & {
 	readonly oldestSupportedClient?: undefined;
 	/**
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * Pass {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
