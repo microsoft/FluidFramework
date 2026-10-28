@@ -78,7 +78,7 @@ export interface BaseContainerRuntimeFactoryProps {
 	/**
 	 * This property must not be provided. Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 *
-	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * @deprecated 2.116.0. To be removed in 3.10.0.
 	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
@@ -89,7 +89,7 @@ export interface BaseContainerRuntimeFactoryProps {
  * {@link BaseContainerRuntimeFactory} construction properties using the deprecated compatibility
  * property.
  *
- * @deprecated 2.116.0. To be removed in 3.20.0. Use {@link BaseContainerRuntimeFactoryProps}
+ * @deprecated 2.116.0. To be removed in 3.10.0. Use {@link BaseContainerRuntimeFactoryProps}
  * with {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  * @input
@@ -104,7 +104,7 @@ export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
 	/**
 	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *
-	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * @deprecated 2.116.0. To be removed in 3.10.0.
 	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
@@ -137,7 +137,7 @@ export class BaseContainerRuntimeFactory
 
 	public constructor(props: BaseContainerRuntimeFactoryProps);
 	/**
-	 * @deprecated 2.116.0. To be removed in 3.20.0.
+	 * @deprecated 2.116.0. To be removed in 3.10.0.
 	 * Pass {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
