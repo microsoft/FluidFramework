@@ -17,7 +17,6 @@ import {
 	UnhydratedContext,
 	getTreeNodeSchemaPrivateData,
 	walkSchema,
-	type AllowedTypesFullEvaluated,
 	type TreeNodeSchema,
 } from "./core/index.js";
 import {
@@ -134,10 +133,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		);
 		isResolvingComponentData = true;
 		try {
-			if (!schemaComponentCache.has(schema)) {
-				analyzeSchema(schema);
-			}
-			const component = getComponent(schema);
+			const component = getOrCreateSchemaComponent(schema);
 			assert(component.definitions !== undefined, "Expected a validated schema component");
 			return component;
 		} finally {
@@ -374,9 +370,11 @@ export function getRootSchemaDerivedData(
 	isResolvingComponentData = true;
 	try {
 		const data = getOrCreate(rootSchemaDerivedDataCache, rootSchema, () => {
-			const root = analyzeSchema(rootSchema);
+			const root = normalizeFieldSchema(rootSchema);
 			const components = new Set(
-				root.allowedTypesFull.evaluate().types.map((type) => getComponent(type.type)),
+				root.allowedTypesFull
+					.evaluate()
+					.types.map((type) => getOrCreateSchemaComponent(type.type)),
 			);
 			return new RootSchemaDerivedData(root, components);
 		});
@@ -409,62 +407,54 @@ export function hasCachedSchemaComponentForTesting(schema: TreeNodeSchema): bool
 }
 
 /**
- * Completes topology and staging analysis without constructing reachable maps or contexts.
- * @param rootSchema - Schema whose lazy references are ready to be evaluated.
- * @param allowedTypes - Optional per-request callback for every allowed-type list, including lists in previously analyzed components and the root field.
- * Receives the original evaluated sequence, preserving duplicates for configuration validation.
- * @returns The normalized root field.
+ * Returns the component containing a node schema, traversing its reachable graph only on a cache miss.
+ * @param root - Node schema whose lazy references are ready to be evaluated.
  * @remarks
- * Publishes components only after their dependencies are complete, without creating root-derived data.
- * Root-field staging is not attributed to the referenced node components.
- * Root identifier validation remains separate so configurations can preserve their validation phases.
+ * Skips completed components and their dependencies.
+ * Publishes new components only after their dependencies are complete.
+ * Does not create root-derived data, reachable definition maps, or contexts.
+ * Configuration-specific validation and reachable identifier validation are separate operations.
  */
-export function analyzeSchema(
-	rootSchema: ImplicitFieldSchema,
-	allowedTypes?: (types: AllowedTypesFullEvaluated) => void,
-): FieldSchemaAlpha {
-	const root = normalizeFieldSchema(rootSchema);
-	const types = root.allowedTypesFull.evaluate();
-	walkSchema(
-		types.types.map((type) => type.type),
-		{
-			allowedTypes,
-			wasComponentVisited: (schema) => schemaComponentCache.has(schema),
-			stronglyConnectedComponent: (members) => {
-				const identities = new Set(members);
-				const dependencies = new Set<SchemaComponent>();
-				let hasStagedSchema = false;
-				for (const schema of members) {
-					for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-						for (const type of field.evaluate().types) {
-							if (type.metadata.stagedSchemaUpgrade !== undefined) {
-								hasStagedSchema = true;
-							}
-							if (!identities.has(type.type)) {
-								dependencies.add(getComponent(type.type));
-							}
+function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
+	const cached = schemaComponentCache.get(root);
+	if (cached !== undefined) {
+		return cached;
+	}
+	walkSchema([root], {
+		wasComponentVisited: (schema) => schemaComponentCache.has(schema),
+		stronglyConnectedComponent: (members) => {
+			const identities = new Set(members);
+			const dependencies = new Set<SchemaComponent>();
+			let hasStagedSchema = false;
+			for (const schema of members) {
+				for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
+					for (const type of field.evaluate().types) {
+						if (type.metadata.stagedSchemaUpgrade !== undefined) {
+							hasStagedSchema = true;
 						}
-					}
-					// Optional-field staging is not an allowed-type annotation.
-					const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
-					if (view.kind === NodeKind.Object) {
-						for (const field of view.fields.values()) {
-							hasStagedSchema ||= isStagedOptional(field);
+						if (!identities.has(type.type)) {
+							dependencies.add(getCompletedComponent(type.type));
 						}
 					}
 				}
-				for (const dependency of dependencies) {
-					hasStagedSchema ||= dependency.hasStagedSchema;
+				// Optional-field staging is not an allowed-type annotation.
+				const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
+				if (view.kind === NodeKind.Object) {
+					for (const field of view.fields.values()) {
+						hasStagedSchema ||= isStagedOptional(field);
+					}
 				}
-				const component = new SchemaComponent(members, dependencies, hasStagedSchema);
-				for (const schema of members) {
-					schemaComponentCache.set(schema, component);
-				}
-			},
+			}
+			for (const dependency of dependencies) {
+				hasStagedSchema ||= dependency.hasStagedSchema;
+			}
+			const component = new SchemaComponent(members, dependencies, hasStagedSchema);
+			for (const schema of members) {
+				schemaComponentCache.set(schema, component);
+			}
 		},
-	);
-	allowedTypes?.(types);
-	return root;
+	});
+	return getCompletedComponent(root);
 }
 
 /**
@@ -478,7 +468,7 @@ function isStagedOptional(field: { readonly isStagedOptional?: unknown }): boole
 /**
  * Retrieves completed unfiltered analysis; callers must first discover the schema's component.
  */
-function getComponent(schema: TreeNodeSchema): SchemaComponent {
+function getCompletedComponent(schema: TreeNodeSchema): SchemaComponent {
 	const component = schemaComponentCache.get(schema);
 	assert(component !== undefined, "Expected completed schema component");
 	return component;

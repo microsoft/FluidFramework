@@ -36,7 +36,7 @@ const schema = new SchemaFactory("com.example");
 // Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {
 	it("reuses completed analysis while revalidating each configuration", () => {
-		const sf = new SchemaFactoryAlpha("singleWalk");
+		const sf = new SchemaFactoryAlpha("validationAndComponentDiscovery");
 		class Leaf extends sf.object("Leaf", { value: sf.number }) {}
 		class A extends sf.objectRecursive("A", {
 			child: sf.optionalRecursive([() => B]),
@@ -57,14 +57,37 @@ describe("simple-tree configuration", () => {
 			});
 		}
 		const config = new TreeViewConfigurationAlpha({ schema: A });
-		// View discovery and component finalization read the fields; permissive conversion reuses that topology.
-		assert.deepEqual([...reads.values()], [2, 2, 2]);
 		assert.equal(hasCachedSchemaComponentForTesting(A), true);
 		const components = getRootSchemaDerivedData(A).components;
+		const readsAfterFirst = new Map(reads);
 		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
-		assert.deepEqual([...reads.values()], [3, 3, 3]);
+		for (const node of [A, B, Leaf]) {
+			assert.equal(reads.get(node), (readsAfterFirst.get(node) ?? assert.fail()) + 1);
+		}
 		assert.strictEqual(config.definitions, strict.definitions);
 		assert.strictEqual(components, getRootSchemaDerivedData(A).components);
+	});
+
+	it("finishes configuration validation before populating component caches", () => {
+		const sf = new SchemaFactoryAlpha("validationBeforeComponents");
+		class A extends sf.array("A", sf.number) {}
+		class B extends sf.array("B", sf.number) {}
+		class Root extends sf.object("Root", { value: [A, B] }) {}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), false);
+		}
+		new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: false });
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), true);
+		}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
 	});
 
 	it("reports duplicate allowed types before evaluating later fields", () => {

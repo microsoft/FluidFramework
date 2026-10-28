@@ -28,7 +28,8 @@ import {
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 import { toInitialSchema, toUnhydratedSchema } from "../toStoredSchema.js";
 import { transformSimpleSchema } from "../schemaConversion.js";
-import { analyzeSchema, getRootSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
+import { getRootSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
@@ -253,13 +254,15 @@ export class TreeViewConfiguration<
 		// Reachable identifier uniqueness is checked later when the derived root graph is requested.
 		const ambiguityErrors: string[] = [];
 
-		// Analyze and validate in one walk. Configuration-specific checks run even for cached components.
-		analyzeSchema(config.schema, ({ types }: AllowedTypesFullEvaluated): void => {
-			checkUnion(
-				types.map((t) => t.type),
-				config.preventAmbiguity,
-				ambiguityErrors,
-			);
+		// Configuration-specific validation must visit every field, independently of cached component data.
+		walkFieldSchema(config.schema, {
+			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
+				checkUnion(
+					types.map((t) => t.type),
+					config.preventAmbiguity,
+					ambiguityErrors,
+				);
+			},
 		});
 
 		if (ambiguityErrors.length > 0) {

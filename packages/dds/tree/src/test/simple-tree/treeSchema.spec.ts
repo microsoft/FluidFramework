@@ -9,7 +9,6 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import {
 	getTreeNodeSchemaPrivateData,
-	type AllowedTypesFullEvaluated,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
@@ -18,7 +17,6 @@ import {
 	SchemaFactoryAlpha,
 } from "../../simple-tree/index.js";
 import {
-	analyzeSchema,
 	hasCachedRootSchemaDerivedDataForTesting,
 	hasCachedSchemaComponentForTesting,
 	createTreeSchema,
@@ -48,11 +46,11 @@ describe("treeSchema", () => {
 			assert.equal(hasCachedSchemaComponentForTesting(b), false);
 		});
 	});
-	describe("analyzeSchema", () => {
+	describe("SchemaComponent.fromSchema", () => {
 		it("caches node components without allocating root-derived data", () => {
 			const [parent, child] = createSchemaGraph([[1], []]);
 			assert(parent !== undefined && child !== undefined);
-			analyzeSchema(parent);
+			SchemaComponent.fromSchema(parent);
 			for (const node of [parent, child]) {
 				assert.equal(hasCachedSchemaComponentForTesting(node), true);
 				assert.equal(hasCachedRootSchemaDerivedDataForTesting(node), false);
@@ -63,25 +61,22 @@ describe("treeSchema", () => {
 			assert.equal(hasCachedRootSchemaDerivedDataForTesting(parent), true);
 			assert.equal(hasCachedRootSchemaDerivedDataForTesting(child), false);
 		});
-		it("reports full allowed-type lists even after component analysis is cached", () => {
-			const sf = new SchemaFactoryAlpha("repeatedReferences");
-			const value = sf.types([sf.number, sf.staged(sf.number)]);
-			class Root extends sf.objectAlpha("Root", { value, other: sf.number }) {}
-			const root = normalizeFieldSchema(Root);
-			const fields = getTreeNodeSchemaPrivateData(Root).childAllowedTypes.map((field) =>
-				field.evaluate(),
-			);
-			for (let i = 0; i < 2; i++) {
-				const reported: AllowedTypesFullEvaluated[] = [];
-				assert.strictEqual(
-					analyzeSchema(root, (types) => reported.push(types)),
-					root,
-				);
-				assert.deepEqual(reported, [...fields, root.allowedTypesFull.evaluate()]);
-				assert.equal(reported[0]?.types.length, 2);
-				assert.notEqual(reported[0]?.types[1]?.metadata.stagedSchemaUpgrade, undefined);
+		it("skips completed subgraphs when discovering a new ancestor", () => {
+			const [parent, child, leaf] = createSchemaGraph([[1], [2], []]);
+			assert(parent !== undefined && child !== undefined && leaf !== undefined);
+			const childComponent = SchemaComponent.fromSchema(child);
+			for (const node of [child, leaf]) {
+				Object.defineProperty(getTreeNodeSchemaPrivateData(node), "childAllowedTypes", {
+					get: () => assert.fail("Completed components must not be traversed again"),
+				});
 			}
-			assert.equal(getRootSchemaDerivedData(Root).hasStagedSchema, true);
+			const parentComponent = SchemaComponent.fromSchema(parent);
+			assert.deepEqual(parentComponent.dependencies, new Set([childComponent]));
+			assert.deepEqual(
+				new Set(parentComponent.definitions.values()),
+				new Set([parent, child, leaf]),
+			);
+			assert.strictEqual(SchemaComponent.fromSchema(child), childComponent);
 		});
 	});
 	describe("getRootSchemaDerivedData", () => {
@@ -116,6 +111,25 @@ describe("treeSchema", () => {
 			assert.deepEqual(new Set(data.definitions.values()), new Set([a, b, child]));
 			assert.strictEqual(data.treeSchema.definitions, data.definitions);
 			assert.strictEqual(getRootSchemaDerivedData(root), data);
+		});
+		it("resolves repeated roots and cycle members through the component cache", () => {
+			const [a, b, other] = createSchemaGraph([[1], [0], []]);
+			assert(a !== undefined && b !== undefined && other !== undefined);
+			const cold = getRootSchemaDerivedData([a, b, other, a]);
+			assert.equal(cold.components.size, 2);
+			assert.deepEqual(new Set(cold.definitions.values()), new Set([a, b, other]));
+			for (const node of [a, b, other]) {
+				Object.defineProperty(getTreeNodeSchemaPrivateData(node), "childAllowedTypes", {
+					get: () => assert.fail("Cached component lookup must not traverse node fields"),
+				});
+			}
+			const warm = getRootSchemaDerivedData([other, b, a, b]);
+			assert.equal(warm.components.size, cold.components.size);
+			for (const component of cold.components) {
+				assert(warm.components.has(component));
+			}
+			assert.deepEqual(new Set(warm.definitions.values()), new Set([a, b, other]));
+			assert.strictEqual(SchemaComponent.fromSchema(a), SchemaComponent.fromSchema(b));
 		});
 		it("lazily caches component definitions without materializing descendant maps", () => {
 			const [parent, root, child] = createSchemaGraph([[1], [2], []]);
@@ -221,7 +235,10 @@ describe("treeSchema", () => {
 				getRootSchemaDerivedData(node);
 			}
 			class Parent extends sf.object("Parent", { a: A, b: B }) {}
-			analyzeSchema(Parent);
+			assert.throws(
+				() => SchemaComponent.fromSchema(Parent),
+				validateUsageError(/Multiple schema encountered/),
+			);
 			assert.equal(hasCachedSchemaComponentForTesting(Parent), true);
 			assert.equal(hasCachedRootSchemaDerivedDataForTesting(Parent), false);
 			for (let i = 0; i < 2; i++) {
