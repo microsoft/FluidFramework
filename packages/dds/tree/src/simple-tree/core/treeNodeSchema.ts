@@ -15,7 +15,7 @@ import type {
 } from "../treeSchema.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
-import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
+import type { AllowedTypesFull } from "./allowedTypes.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -400,27 +400,12 @@ export interface TreeNodeSchemaPrivateData {
  * Additional data about a given schema which is private to this package.
  * @remarks
  * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
- * Unlike the root analysis cached by {@link getRootSchemaDerivedData}, this data includes node-specific conversion handlers.
- * Schema walks must use {@link TreeNodeSchemaPrivateData.childAllowedTypes} and completed component data instead of triggering this initialization.
+ * This is a cache of derived data about this schema, as well as some required polices/behaviors which
+ * may need access to such data in their implementations.
+ * This is mainly for use by {@link TreeNodeValid}.
+ * External users may find more generally useful data via {@link getRootSchemaDerivedData} and {@link SchemaComponent.fromSchema}.
  */
 export interface TreeNodeSchemaInitializedData {
-	/**
-	 * All possible annotated allowed types that a field under a node with this schema could have.
-	 * @remarks
-	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
-	 * This includes the content field for arrays, and all the fields for map nodes.
-	 * If this node does not have fields (and thus is a leaf), the array will be empty.
-	 *
-	 * This set cannot be used before the schema in it have been defined:
-	 * more specifically, when using lazy schema references (for example to make foreword references to schemas which have not yet been defined),
-	 * users must wait until after the schemas are defined to access this array.
-	 *
-	 * @privateRemarks
-	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
-	 * @system
-	 */
-	readonly childAllowedTypes: readonly AllowedTypesFullEvaluated[];
-
 	/**
 	 * Shared definitions and lazy default context for this schema's component.
 	 */

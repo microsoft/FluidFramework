@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getTreeNodeSchemaPrivateData,
-	type TreeNodeSchema,
-	type TreeNodeSchemaInitializedData,
-} from "./core/index.js";
+import type { TreeNodeSchema, TreeNodeSchemaInitializedData } from "./core/index.js";
 import { SchemaComponent } from "./treeSchema.js";
 
 /**
@@ -21,10 +17,8 @@ export function getTreeNodeSchemaInitializedData(
 	schema: TreeNodeSchema,
 	handler: Pick<TreeNodeSchemaInitializedData, "toFlexContent" | "shallowCompatibilityTest">,
 ): TreeNodeSchemaInitializedData {
-	const data = getTreeNodeSchemaPrivateData(schema);
 	return {
 		...handler,
 		component: SchemaComponent.fromSchema(schema),
-		childAllowedTypes: data.childAllowedTypes.map((t) => t.evaluate()),
 	};
 }
