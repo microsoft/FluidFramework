@@ -181,6 +181,43 @@ describe("GenericField", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	describe("prune", () => {
+		it("removes empty child changes", () => {
+			const change: GenericChangeset = newGenericChangeset([
+				[0, nodeId1],
+				[1, nodeId2],
+				[10, nodeId3],
+			]);
+			const expected: GenericChangeset = newGenericChangeset([
+				[0, nodeId1],
+				[10, nodeId3],
+			]);
+			const actual = genericChangeHandler.rebaser.prune(change, (id) => {
+				if (id === nodeId1) return nodeId1;
+				if (id === nodeId2) return undefined;
+				if (id === nodeId3) return nodeId3;
+				assert.fail("Unexpected node ID");
+			});
+			assert.deepEqual(actual, expected);
+		});
+		it("updates child IDs", () => {
+			const change: GenericChangeset = newGenericChangeset([
+				[0, nodeId1],
+				[10, nodeId2],
+			]);
+			const expected: GenericChangeset = newGenericChangeset([
+				[0, nodeId3],
+				[10, nodeId4],
+			]);
+			const actual = genericChangeHandler.rebaser.prune(change, (id) => {
+				if (id === nodeId1) return nodeId3;
+				if (id === nodeId2) return nodeId4;
+				assert.fail("Unexpected node ID");
+			});
+			assert.deepEqual(actual, expected);
+		});
+	});
+
 	it("intoDelta", () => {
 		const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
 		const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
