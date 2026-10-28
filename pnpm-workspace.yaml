@@ -76,6 +76,10 @@ minimumReleaseAgeExclude:
   # Temporary exceptions go here as needed.
 
 overrides:
+  # concurrently and jsonpath pin vulnerable versions (CVE-2026-13311 and CVE-2026-27601).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+  jsonpath@1.2.1>underscore: ^1.13.8
+
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
   # brace-expansion CVE-2026-13149 (algorithmic complexity DoS) and CVE-2026-14257
