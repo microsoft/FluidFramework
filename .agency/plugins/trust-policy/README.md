@@ -22,11 +22,20 @@ The repository's `agency.toml` registers the plugin in the `trust-policy` profil
 The skill runs the compiled checker from `lib/`, so build the package once, as described in [Setup](#setup), before using the skill.
 If the checker is not built, the skill stops and gives the commands to run.
 
+### Version resolution
+
+When the command line does not name a single exact package version, the agent asks the package manager which versions it would install rather than guessing.
+For commands that change the project's dependencies, it reruns the command against a copy of the project's manifests and lockfile in a temporary directory, in lockfile-only mode, and checks every version that the temporary lockfile adds or changes.
+It then applies that lockfile to the project with a frozen install, so exactly the checked versions are installed.
+With npm and pnpm, this reads only package metadata and does not download any packages.
+Yarn has no metadata-only mode: Yarn 2 and later downloads new packages into its cache without installing them, and Yarn 1 installs them into the temporary directory without running their scripts.
+For commands that run a package, such as `npx`, the agent resolves the version from the registry's metadata and runs that exact version.
+
 ### Autonomous sessions
 
 In autopilot or other noninteractive sessions, the skill does not wait for prompts.
 It uses the `cryptographic` policy unless one was supplied.
-If every checked version is accepted, the agent continues with the install as usual.
+If every checked version is accepted, the agent continues with the install, using exactly the versions that were checked.
 If a version is rejected or inconclusive, the agent does not install it or substitute the suggested alternative; it reports the result and leaves the decision to the user.
 
 The skill is guidance, not enforcement: an agent applies it when it recognizes an upcoming install, and nothing intercepts package manager commands.

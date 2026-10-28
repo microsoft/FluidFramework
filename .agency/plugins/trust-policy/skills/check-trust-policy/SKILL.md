@@ -21,15 +21,63 @@ It covers these commands, including their aliases and abbreviations:
 
 - Adding a dependency: `npm install <name>`, `yarn add <name>`, `pnpm add <name>`.
 - Updating dependencies: `npm update`, `yarn up`, `yarn upgrade`, `yarn upgrade-interactive`, `pnpm update`.
-  Before running one, determine which versions it would change, and check each new version.
 - Running a package that is not installed: `npx`, `npm exec`, `yarn dlx`, `pnpm dlx`, `pnpx`.
 - Installing after editing a dependency version, override, or resolution in `package.json` or a pnpm catalog, with `npm install`, `yarn install`, or `pnpm install`.
 
-Check every new package version you plan to add or upgrade directly, at the exact version you intend to install.
-Do not install the package until the check has finished and you have reported the result to the user.
+Check every package version the command would add to or change in the project, including new transitive dependencies, and every package the command would run.
+Get each exact version in one of only two ways:
+
+1. **From the command line**, when the command names an exact version of a package, such as `pnpm add foo@1.2.3` or `npx foo@1.2.3`.
+   This covers only the named package.
+2. **From [Resolving versions](#resolving-versions)**, for everything else: a package with no version, a tag, or a range; update commands; installs after a manifest edit; and every new transitive dependency of a package added to the project.
+
+Do not determine versions any other way, for example by assuming `latest` or by reading `npm outdated`.
+Do not install or run the package until the check has finished and you have reported the result to the user.
 
 The checker covers one exact version at a time.
 It does not audit a project's existing dependencies or lockfile.
+
+## Resolving versions
+
+Do not assume that a command without a version installs `latest`.
+Catalogs, overrides, pnpm's `minimumReleaseAge`, and ranges used elsewhere in a workspace can all change the version a package manager picks.
+Ask the package manager instead, without changing the user's project, and then install or run exactly the versions that were checked.
+
+### Commands that change the lockfile
+
+This applies to adding a dependency, updating dependencies, and installing after a manifest edit.
+
+1. Copy the project's `package.json`, its lockfile, and its package manager configuration (`.npmrc`, `pnpm-workspace.yaml`, `.yarnrc.yml`) to a new temporary directory.
+   For a workspace, copy the workspace root and every member's `package.json`, preserving their relative paths.
+   Apply any manifest edit there as well.
+2. In the copy, run the intended command with the same arguments and flags, in lockfile-only mode, so that no package code runs:
+   - npm: add `--package-lock-only`, which reads only package metadata.
+   - pnpm: add `--lockfile-only`, which reads only package metadata.
+   - Yarn 2 and later: add `--mode=update-lockfile`, which downloads new packages into Yarn's cache to record their checksums but does not install them.
+   - Yarn 1 has no lockfile-only mode: add `--ignore-scripts`, which installs packages into the copy but runs no package scripts.
+
+   An interactive picker such as `yarn upgrade-interactive` cannot be previewed.
+   Use `yarn up "<name>@<version>"` for each chosen package instead.
+3. Compare the copy's lockfile with the original.
+   Check every `name@version` that is new or changed, including transitive dependencies.
+4. If every version is accepted, copy each file that the command changed in the copy back into the project, and run a frozen install:
+   `npm ci`, `pnpm install --frozen-lockfile`, `yarn install --frozen-lockfile` (Yarn 1), or `yarn install --immutable` (Yarn 2 and later).
+   Do not rerun the original command, which could resolve a version published after the check.
+5. Delete the temporary directory.
+
+### Commands that run a package
+
+This applies to `npx`, `npm exec`, `yarn dlx`, `pnpm dlx`, and `pnpx`, which do not use the project's lockfile.
+
+1. Identify the package name: the command's first argument, or the `-p` or `--package` value.
+   This is not the name of the executable it provides; for example, `npx tsc` fetches the package named `tsc`, not `typescript`.
+2. Resolve the version with `npm view "<name>@<spec>" version --json`, using `latest` when no version is given.
+   For a range, the package manager picks the `latest` version if it satisfies the range, and otherwise the highest matching version.
+3. If the version is accepted, run the command with that exact version, for example `npx "<name>@<version>"` or `pnpm dlx "<name>@<version>"`.
+   Pinning also prevents reuse of an older cached copy.
+
+The run package's own dependencies are not checked unless the user asks.
+To check them, run `npm install "<name>@<version>" --package-lock-only` in an empty temporary directory, and check each version in the resulting lockfile.
 
 ## Prerequisites
 
@@ -69,8 +117,7 @@ If the public npm package registry is also unreachable, report that a trust chec
    > Building from source is temporary.
    > A future version of this skill will download a prebuilt checker package instead.
 
-2. Identify the exact `name@version` to check.
-   If the user asked for a tag or range (for example `latest` or `^1.2.0`), resolve it to the exact version the package manager would install, and check that version.
+2. Identify each exact `name@version` to check, using only the two sources in [When to run](#when-to-run).
    Do not replace an exact-version check with a tag or semver range.
 3. If the user has not selected a policy and the session is interactive, use `ask_user` to offer:
    - `cryptographic` (recommended default): verify the SLSA provenance signature, signing certificate, transparency log, and signed package name, version, and npm package registry integrity digest.
@@ -80,6 +127,7 @@ If the public npm package registry is also unreachable, report that a trust chec
    In noninteractive mode with no supplied policy, use `cryptographic` and state that default.
 4. Confirm permission for npm package registry and Sigstore access.
    Dispatch a separate subagent for each checker invocation: one per exact `name@version`, in parallel when checking several packages.
+   When many versions need checking, such as a dependency's transitive dependencies, a subagent may run the checker for several versions in sequence and return each result.
    Complete all user prompts (policy selection and permissions) before dispatching; subagents must not prompt the user.
    Give each subagent the absolute checker path, the exact `name@version`, the selected policy, any `--registry` value, and instructions to run
    `node "<absolute-plugin-directory>/lib/trust-policy.js" --package "<name@version>" --policy "<selected-policy>" --json`
@@ -95,7 +143,7 @@ If the public npm package registry is also unreachable, report that a trust chec
 6. Report `auditIncomplete`, `searchTruncated`, and `errors`.
    A zero exit status in JSON mode does not establish acceptance.
    Do not describe any result as proving absence of malware or vulnerabilities.
-7. If the version is accepted, continue with the install or command that prompted the check, exactly as planned.
+7. If every checked version is accepted, install or run exactly the checked versions, as described in [Resolving versions](#resolving-versions).
 8. If the version is rejected or inconclusive, do not install it unless the user explicitly accepts the risk.
    Do not install a suggested alternative instead, or otherwise change dependency versions, unless the user separately requests it.
 
@@ -105,7 +153,7 @@ In an autonomous session (such as autopilot or noninteractive mode), the user ma
 
 - Do not wait for policy selection or permission prompts; use the `cryptographic` policy unless the user supplied one, and state the policy used.
 - If the checker needs to be built, do not build it; stop the install and report the build commands from step 1.
-- If every checked version is accepted, report the results and continue with the install.
+- If every checked version is accepted, report the results and install or run exactly the checked versions.
 - If any checked version is rejected or inconclusive, do not run the install or substitute an alternative.
   Report the verdicts and any suggested alternatives, and leave the decision to the user.
   Continue with parts of the task that do not depend on that install, if any.
