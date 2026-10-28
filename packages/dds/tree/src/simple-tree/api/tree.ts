@@ -662,7 +662,7 @@ export interface UntypedTreeViewAlpha
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
-	 * See `TreeViewBeta.runTransaction` for an example of how to do this.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
 	 */
 	runTransaction<
 		TOut extends
@@ -681,7 +681,7 @@ export interface UntypedTreeViewAlpha
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
-	 * See `TreeViewBeta.runTransaction` for an example of how to do this.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -716,13 +716,12 @@ export interface UntypedTreeViewAlpha
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 
-	//
 	/**
 	 * {@inheritDoc UntypedTreeView.(runTransactionAsync:3)}
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
-	 * See `TreeViewBeta.runTransactionAsync` for an example of how to do this.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
 	runTransactionAsync<
 		TOut extends
@@ -743,7 +742,7 @@ export interface UntypedTreeViewAlpha
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
-	 * See `TreeViewBeta.runTransactionAsync` for an example of how to do this.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
