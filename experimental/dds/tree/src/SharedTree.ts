@@ -431,9 +431,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return new SharedTreeFactory(writeFormat, options);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.attributionId}
-	 */
 	public get attributionId(): AttributionId {
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
@@ -482,16 +479,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 	 */
 	private cachingLogViewer: CachingLogViewer;
 
-	/**
-	 * {@inheritDoc ISharedTree.logViewer}
-	 */
 	public get logViewer(): LogViewer {
 		return this.cachingLogViewer;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.logger}
-	 */
 	public readonly logger: ITelemetryLoggerExt;
 	/**
 	 * Internal and only viable logger for SharedTree events.
@@ -611,9 +602,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		this.encoder_0_1_1 = new SharedTreeEncoder_0_1_1(this.summarizeHistory);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.getWriteFormat}
-	 */
 	public getWriteFormat(): WriteFormat {
 		return this.writeFormat;
 	}
@@ -653,51 +641,30 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return true;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.currentView}
-	 */
 	public get currentView(): RevisionView {
 		return this.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 	}
 
-	/**
-	 * {@inheritDoc NodeIdGenerator.generateNodeId}
-	 */
 	public generateNodeId(override?: string): NodeId {
 		return this.idCompressor.generateCompressedId(override) as NodeId;
 	}
 
-	/**
-	 * {@inheritDoc NodeIdConverter.convertToStableNodeId}
-	 */
 	public convertToStableNodeId(id: NodeId): StableNodeId {
 		return (this.idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree');
 	}
 
-	/**
-	 * {@inheritDoc NodeIdConverter.tryConvertToStableNodeId}
-	 */
 	public tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
 		return this.idCompressor.tryDecompress(id) as StableNodeId | undefined;
 	}
 
-	/**
-	 * {@inheritDoc NodeIdConverter.convertToNodeId}
-	 */
 	public convertToNodeId(id: StableNodeId): NodeId {
 		return (this.idCompressor.tryRecompress(id) as NodeId) ?? fail('Stable node id is not known to this SharedTree');
 	}
 
-	/**
-	 * {@inheritDoc NodeIdConverter.tryConvertToNodeId}
-	 */
 	public tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
 		return this.idCompressor.tryRecompress(id) as NodeId | undefined;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.attributeNodeId}
-	 */
 	public attributeNodeId(id: NodeId): AttributionId {
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
@@ -712,16 +679,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		}
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.edits}
-	 */
 	public get edits(): OrderedEditSet<InternalizedChange> {
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.summarizeCore}
-	 */
 	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
@@ -749,26 +710,17 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return super.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.saveSerializedSummary}
-	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
 		const { serializer } = options ?? {};
 		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.loadSerializedSummary}
-	 */
 	public loadSerializedSummary(blobData: string): ITelemetryBaseProperties {
 		const summary = deserialize(blobData, this.serializer);
 		this.loadSummary(summary);
 		return getSummaryStatistics(summary);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.saveSummary}
-	 */
 	public saveSummary(): SharedTreeSummaryBase {
 		assert(this.editLog.numberOfLocalEdits === 0, 0x62f /* generateSummary must not be called with local edits */);
 		return this.generateSummary();
@@ -804,9 +756,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		}
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.loadSummary}
-	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
 		const { version: loadedSummaryVersion } = summary;
 
@@ -934,9 +883,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return { editLog, cachingLogViewer: logViewer };
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.equals}
-	 */
 	public equals(sharedTree: SharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
@@ -1144,13 +1090,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		this.idCompressor = newIdCompressor;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.(applyEdit:1)}
-	 */
 	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
-	/**
-	 * {@inheritDoc ISharedTree.(applyEdit:2)}
-	 */
 	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
 	public applyEdit(...changesOrArray: RestOrArray<Change>): Edit<InternalizedChange> {
 		const changes = unwrapRestOrArray(changesOrArray);
@@ -1164,9 +1104,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return internalEdit as unknown as Edit<InternalizedChange>;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.mergeEditsFrom}
-	 */
 	public mergeEditsFrom(
 		other: SharedTree,
 		edits: Iterable<Edit<InternalizedChange>>,
@@ -1184,9 +1121,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.applyEditInternal}
-	 */
 	public applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal> {
 		let edit: Edit<ChangeInternal>;
 		if (Array.isArray(editOrChanges)) {
@@ -1200,9 +1134,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return edit;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.internalizeChange}
-	 */
 	public internalizeChange(change: Change): ChangeInternal {
 		switch (change.type) {
 			case ChangeType.Insert:
@@ -1286,9 +1217,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.revert}
-	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
 		const edit = this.edits.tryGetEditAtIndex(index) ?? fail('edit not found');
@@ -1301,9 +1229,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return this.applyEditInternal(changes).id;
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.revertChanges}
-	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
 		return revert(changes as unknown as readonly ChangeInternal[], before, this.loggerInternal, this.emit.bind(this));
 	}
@@ -1345,9 +1270,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
-	/**
-	 * {@inheritDoc ISharedTree.getRuntime}
-	 */
 	public getRuntime(): IFluidDataStoreRuntime {
 		return this.runtime;
 	}
