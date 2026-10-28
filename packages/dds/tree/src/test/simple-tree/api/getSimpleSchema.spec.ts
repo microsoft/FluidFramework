@@ -34,7 +34,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Check graph reuse without initializing contexts.
-import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
@@ -127,8 +127,8 @@ describe("getSimpleSchema", () => {
 		assert(first.definitions instanceof Map);
 		first.definitions.clear();
 		assert.deepEqual(getSimpleSchema(A), expected);
-		assert.equal(getSchemaDerivedData(A).unhydratedContext, undefined);
-		assert.equal(getSchemaDerivedData(B).unhydratedContext, undefined);
+		assert.equal(getRootSchemaDerivedData(A).unhydratedContext, undefined);
+		assert.equal(getRootSchemaDerivedData(B).unhydratedContext, undefined);
 	});
 
 	it("encodes snapshot definitions independently of insertion order and locale", () => {

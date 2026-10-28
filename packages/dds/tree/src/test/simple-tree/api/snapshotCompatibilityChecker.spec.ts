@@ -43,7 +43,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules -- Count discovery rather than just comparing snapshot contents.
 import { getTreeNodeSchemaPrivateData } from "../../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Check that snapshots do not initialize contexts.
-import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 import { testSchema } from "../../testTrees.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
@@ -77,7 +77,7 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.notStrictEqual(first, second);
 		assert.equal(JSON.stringify(first), JSON.stringify(expected));
 		assert.equal(JSON.stringify(second), JSON.stringify(expected));
-		assert.equal(getSchemaDerivedData(Root).unhydratedContext, undefined);
+		assert.equal(getRootSchemaDerivedData(Root).unhydratedContext, undefined);
 		assert.equal(getTreeNodeSchemaPrivateData(Child).component?.definitions, undefined);
 	});
 

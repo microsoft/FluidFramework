@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate } from "../util/index.js";
+import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
 	NodeKind,
@@ -77,10 +77,10 @@ export interface SchemaComponent {
 }
 
 /**
- * Root-owned state shared by {@link toStoredSchema} and {@link getUnhydratedContext}.
+ * Data derived from an {@link ImplicitFieldSchema} root, shared by {@link toStoredSchema} and {@link getUnhydratedContext}.
  * Root field kind, annotations and metadata remain distinct even when definitions are shared.
  */
-export interface SchemaDerivedData {
+export interface RootSchemaDerivedData {
 	/**
 	 * Root field and complete, identifier-validated unfiltered definitions.
 	 * Treat this graph as immutable; its definitions may also serve other roots and context lookups.
@@ -99,34 +99,39 @@ export interface SchemaDerivedData {
 }
 
 /**
- * Caches successful {@link SchemaDerivedData} records by original root identity.
+ * Caches successful {@link RootSchemaDerivedData} records by original root identity.
  * Root identity owns validated graphs and lazy contexts; components own topology and shared definitions.
  * Failed requests do not publish root records, but already completed component analysis remains reusable.
+ * Combining reachable components validates identifier uniqueness, even when those components are cached.
  * Policy-specific converted results remain owned by {@link toStoredSchema}.
  */
-const schemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, SchemaDerivedData>();
+const rootSchemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, RootSchemaDerivedData>();
 
 /**
- * Builds or retrieves a validated root graph without initializing contexts.
+ * Derives the complete, unfiltered schema graph and staging reachability from a root schema.
+ * @param rootSchema - The root schema to analyze.
+ * Lazy schema references must be ready to evaluate, and schema definitions must remain unchanged after evaluation.
+ * @returns Data derived from the schema, memoized by the original root identity.
+ * @throws A {@link UsageError} if distinct reachable schemas have the same identifier.
  * @remarks
- * Component completion is independent of root validation: valid dependencies can survive a failed parent request.
- * Identifier conflicts are checked when combining reachable components, even when every component is cached.
- * Configuration-specific validation remains eager in {@link TreeViewConfiguration}.
- *
- * Definition iteration order is unspecified.
- * Components share one map across their root wrappers and unhydrated lookups.
- * Field and union roots spanning components own their combined map.
- * Schema definitions must remain unchanged after evaluation.
+ * Graph and staging analysis are logically pure: they depend only on the supplied schema, not on cache state.
+ * Evaluation of lazy schema references and internal cache population are implementation effects.
+ * This function does not initialize contexts or perform configuration-specific validation; the latter remains the responsibility of {@link TreeViewConfiguration}.
+ * Treat the returned graph as immutable; definitions may be shared across roots, and their iteration order is unspecified.
  */
-export function getSchemaDerivedData(rootSchema: ImplicitFieldSchema): SchemaDerivedData {
-	return getOrCreate(schemaDerivedDataCache, rootSchema, () => {
+export function getRootSchemaDerivedData(
+	rootSchema: ImplicitFieldSchema,
+): RootSchemaDerivedData {
+	return getOrCreate(rootSchemaDerivedDataCache, rootSchema, () => {
 		const root = analyzeSchema(rootSchema);
 		const types = root.allowedTypesFull.evaluate().types;
 		const components = new Set(types.map((type) => getComponent(type.type)));
-		const [only] = components;
+		// If all root types belong to one component, its reachable definitions serve the whole root.
+		// Otherwise, the combined map belongs to this root, not to any individual component.
+		const singleComponent = oneFromIterable(components);
 		const definitions =
-			components.size === 1 && only !== undefined
-				? (only.definitions ??= materializeDefinitions(components))
+			singleComponent !== undefined
+				? (singleComponent.definitions ??= materializeDefinitions(components))
 				: materializeDefinitions(components);
 		return {
 			treeSchema: { root, definitions },

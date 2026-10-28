@@ -7,7 +7,7 @@ import { Unchanged } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SchemaType, SimpleTreeSchema } from "../simpleSchema.js";
 import { transformSimpleSchema } from "../toStoredSchema.js";
-import { getSchemaDerivedData } from "../treeSchema.js";
+import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 /**
  * Copies the schema structure from an {@link ImplicitFieldSchema} into a {@link SimpleTreeSchema} with plain JavaScript objects and maps.
@@ -30,6 +30,6 @@ import { getSchemaDerivedData } from "../treeSchema.js";
 export function getSimpleSchema(
 	schema: ImplicitFieldSchema,
 ): SimpleTreeSchema<SchemaType.View> {
-	const { treeSchema } = getSchemaDerivedData(schema);
+	const { treeSchema } = getRootSchemaDerivedData(schema);
 	return transformSimpleSchema(treeSchema, Unchanged);
 }

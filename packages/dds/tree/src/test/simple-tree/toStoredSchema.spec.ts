@@ -61,7 +61,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createTreeSchema, getSchemaDerivedData } from "../../simple-tree/treeSchema.js";
+import { createTreeSchema, getRootSchemaDerivedData } from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";
 import {
 	getStagedSchemaUpgrades,
@@ -120,7 +120,7 @@ describe("toStoredSchema", () => {
 					{ ...StagedSchemaUpgradePolicy.permissive },
 				];
 				const roots = reverse ? [B, A] : [A, B];
-				getSchemaDerivedData(A);
+				getRootSchemaDerivedData(A);
 				const expected = policies.map((policy) =>
 					roots.map((root) => reference(root, policy)),
 				);
@@ -158,7 +158,7 @@ describe("toStoredSchema", () => {
 				child: Leaf,
 				future: sf.stagedOptional(sf.string),
 			}) {}
-			getSchemaDerivedData(Staged);
+			getRootSchemaDerivedData(Staged);
 			const leafSchema = Leaf;
 			assert(isObjectNodeSchema(leafSchema));
 			const fields = leafSchema.fields;
@@ -192,7 +192,7 @@ describe("toStoredSchema", () => {
 			class Right extends sf.object("Right", { child: Leaf }) {}
 			class Root extends sf.object("Root", { left: Left, right: Right }) {}
 			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
-			getSchemaDerivedData(Root);
+			getRootSchemaDerivedData(Root);
 			const expected = reference(Root, policy);
 			let reads = 0;
 			for (const node of [Root, Left, Right, Leaf]) {
@@ -219,7 +219,7 @@ describe("toStoredSchema", () => {
 			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
 			assert.strictEqual(left.nodeSchema.get(id), leaf.nodeSchema.get(id));
 			assert.strictEqual(right.nodeSchema.get(id), leaf.nodeSchema.get(id));
-			assert.equal(getSchemaDerivedData(Root).unhydratedContext, undefined);
+			assert.equal(getRootSchemaDerivedData(Root).unhydratedContext, undefined);
 		});
 
 		it("does not normalize a component merely because filtering removed its staging", () => {
@@ -252,7 +252,7 @@ describe("toStoredSchema", () => {
 			class B extends sf.objectRecursive("B", {
 				child: sf.optionalRecursive([() => A]),
 			}) {}
-			getSchemaDerivedData(A);
+			getRootSchemaDerivedData(A);
 			const goodSchema = Good;
 			assert(isObjectNodeSchema(goodSchema));
 			const fields = goodSchema.fields;
@@ -273,7 +273,7 @@ describe("toStoredSchema", () => {
 			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
 			for (const node of [A, B, A]) {
 				assert.throws(() => toStoredSchema(node, policy), /conversion failure/);
-				assert.equal(getSchemaDerivedData(node).unhydratedContext, undefined);
+				assert.equal(getRootSchemaDerivedData(node).unhydratedContext, undefined);
 			}
 			const good = toStoredSchema(Good, policy);
 			assert.equal(goodReads, 1);
@@ -323,7 +323,7 @@ describe("toStoredSchema", () => {
 			class B extends sf.objectRecursive("B", {
 				child: sf.optionalRecursive([() => A]),
 			}) {}
-			getSchemaDerivedData(A);
+			getRootSchemaDerivedData(A);
 			let reads = 0;
 			for (const node of [A, B]) {
 				const fields = node.fields;
@@ -350,7 +350,7 @@ describe("toStoredSchema", () => {
 			it(`preserves serialized schema when component analysis starts at root ${first}`, () => {
 				const [a, b, parent] = createSchemaGraph([[1], [0], [1]]);
 				assert(a !== undefined && b !== undefined && parent !== undefined);
-				getSchemaDerivedData([a, b, parent][first] ?? assert.fail());
+				getRootSchemaDerivedData([a, b, parent][first] ?? assert.fail());
 				// Captured from schemas with these identifiers and structure at pre-refactor commit 1099dc048df.
 				assert.equal(computeSchemaHash(a), "0aec93b1d34f96c13c2a92a5e494939e");
 				assert.equal(computeSchemaHash(b), "0458eb955807e91b2f7e1db31fa60da6");
@@ -362,7 +362,7 @@ describe("toStoredSchema", () => {
 					const baseline = createTreeSchema(root);
 					assert.equal(
 						JSON.stringify(
-							encodeSchemaCompatibilitySnapshot(getSchemaDerivedData(root).treeSchema),
+							encodeSchemaCompatibilitySnapshot(getRootSchemaDerivedData(root).treeSchema),
 						),
 						JSON.stringify(encodeSchemaCompatibilitySnapshot(baseline)),
 					);

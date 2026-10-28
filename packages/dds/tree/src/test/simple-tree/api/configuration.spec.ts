@@ -26,7 +26,7 @@ import {
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -62,7 +62,7 @@ describe("simple-tree configuration", () => {
 		assert.strictEqual(config.definitions, strict.definitions);
 		assert.strictEqual(component, getTreeNodeSchemaPrivateData(A).component);
 		assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);
-		assert.equal(getSchemaDerivedData(A).unhydratedContext, undefined);
+		assert.equal(getRootSchemaDerivedData(A).unhydratedContext, undefined);
 	});
 
 	it("reports duplicate allowed types before evaluating later fields", () => {
@@ -109,7 +109,7 @@ describe("simple-tree configuration", () => {
 			class A extends sf.array("A", sf.number) {}
 			class B extends sf.array("B", sf.number) {}
 			const root = [A, B] as const;
-			getSchemaDerivedData(root);
+			getRootSchemaDerivedData(root);
 			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
 				const create = () => new TreeViewConfiguration({ schema: root, preventAmbiguity });
 				if (preventAmbiguity) {
@@ -119,7 +119,7 @@ describe("simple-tree configuration", () => {
 				}
 			}
 			const duplicate = [A, A] as const;
-			getSchemaDerivedData(duplicate);
+			getRootSchemaDerivedData(duplicate);
 			assert.throws(
 				() => new TreeViewConfiguration({ schema: duplicate }),
 				validateUsageError(/Duplicate schema in allowed types/),
@@ -128,7 +128,7 @@ describe("simple-tree configuration", () => {
 				ambiguous: root,
 				invalid: duplicate,
 			}) {}
-			getSchemaDerivedData(Parent);
+			getRootSchemaDerivedData(Parent);
 			assert.throws(
 				() => new TreeViewConfiguration({ schema: Parent, preventAmbiguity: true }),
 				validateUsageError(/Duplicate schema in allowed types/),
@@ -146,11 +146,11 @@ describe("simple-tree configuration", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: root });
 			assert.strictEqual(
 				config.definitions,
-				getSchemaDerivedData(root).treeSchema.definitions,
+				getRootSchemaDerivedData(root).treeSchema.definitions,
 			);
 			new root({ child: root === A ? child : new Child({}) });
 		}
-		assert.equal(getSchemaDerivedData(Child).treeSchema.definitions.size, 1);
+		assert.equal(getRootSchemaDerivedData(Child).treeSchema.definitions.size, 1);
 	});
 
 	it("preventAmbiguity", () => {

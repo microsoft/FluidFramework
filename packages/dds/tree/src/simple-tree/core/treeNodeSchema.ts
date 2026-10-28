@@ -14,10 +14,10 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	analyzeSchema,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	getSchemaDerivedData,
+	getRootSchemaDerivedData,
 	SchemaComponent,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	SchemaDerivedData,
+	RootSchemaDerivedData,
 } from "../treeSchema.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
@@ -414,7 +414,7 @@ export interface TreeNodeSchemaPrivateData {
  * Additional data about a given schema which is private to this package.
  * @remarks
  * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
- * Unlike the root analysis cached by {@link getSchemaDerivedData}, this data includes node-specific conversion handlers and initializes a context.
+ * Unlike the root analysis cached by {@link getRootSchemaDerivedData}, this data includes node-specific conversion handlers and initializes a context.
  * Schema walks must use {@link TreeNodeSchemaPrivateData.childAllowedTypes} and completed component data instead of triggering this initialization.
  */
 export interface TreeNodeSchemaInitializedData {
@@ -437,7 +437,7 @@ export interface TreeNodeSchemaInitializedData {
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.
-	 * Obtained from {@link getUnhydratedContext} and shared with {@link SchemaDerivedData.unhydratedContext}.
+	 * Obtained from {@link getUnhydratedContext} and shared with {@link RootSchemaDerivedData.unhydratedContext}.
 	 */
 	readonly context: Context;
 

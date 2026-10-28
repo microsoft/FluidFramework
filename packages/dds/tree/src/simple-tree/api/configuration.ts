@@ -31,7 +31,7 @@ import {
 	toUnhydratedSchema,
 	transformSimpleSchema,
 } from "../toStoredSchema.js";
-import { analyzeSchema, getSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
+import { analyzeSchema, getRootSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
@@ -308,7 +308,7 @@ export class TreeViewConfigurationAlpha<
 	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
-		const { treeSchema } = getSchemaDerivedData(this.schema);
+		const { treeSchema } = getRootSchemaDerivedData(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 

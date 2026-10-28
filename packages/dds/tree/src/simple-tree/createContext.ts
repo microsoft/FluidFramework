@@ -16,7 +16,7 @@ import {
 } from "./core/index.js";
 import type { ImplicitFieldSchema } from "./fieldSchema.js";
 import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";
-import { getSchemaDerivedData } from "./treeSchema.js";
+import { getRootSchemaDerivedData } from "./treeSchema.js";
 
 /**
  * See note in {@link getUnhydratedContext}.
@@ -27,7 +27,7 @@ let getUnhydratedContextIsRunning = false;
  * Utility for creating {@link Context}s for unhydrated nodes.
  * @remarks
  * The resulting context will not allow any unknown optional fields.
- * {@link getSchemaDerivedData} owns the shared root cache; this function fills its context slot only after construction succeeds.
+ * {@link getRootSchemaDerivedData} owns the shared root cache; this function fills its context slot only after construction succeeds.
  * The cached graph supplies the context's node lookup map without another traversal or map copy.
  * Contexts remain root-specific even when their immutable schema lookup maps are shared.
  *
@@ -44,7 +44,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	);
 	getUnhydratedContextIsRunning = true;
 	try {
-		const data = getSchemaDerivedData(schema);
+		const data = getRootSchemaDerivedData(schema);
 		if (data.unhydratedContext === undefined) {
 			const flexContext = new UnhydratedContext(
 				defaultSchemaPolicy,
@@ -62,7 +62,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
  * Utility for creating {@link TreeNodeSchemaInitializedData}.
  * @remarks
  * Node-specific conversion handlers and evaluated child types belong to this initialization data.
- * Its context is shared through {@link getUnhydratedContext} and {@link getSchemaDerivedData}, which also support field and union roots.
+ * Its context is shared through {@link getUnhydratedContext} and {@link getRootSchemaDerivedData}, which also support field and union roots.
  * Stored-schema generation can access root analysis without invoking node initialization.
  */
 export function getTreeNodeSchemaInitializedData(

@@ -22,7 +22,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createTreeSchema, getSchemaDerivedData } from "../../simple-tree/treeSchema.js";
+import { createTreeSchema, getRootSchemaDerivedData } from "../../simple-tree/treeSchema.js";
 import { testSchema } from "../testTrees.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
 
@@ -33,7 +33,7 @@ describe("createContext", () => {
 		it("shares recursive lookup data without sharing root-specific contexts", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);
 			assert(a !== undefined && b !== undefined);
-			const aComponent = getSchemaDerivedData(a).treeSchema;
+			const aComponent = getRootSchemaDerivedData(a).treeSchema;
 			const aContext = getUnhydratedContext(a);
 			const bContext = getUnhydratedContext(b);
 			assert.notStrictEqual(aContext, bContext);
@@ -48,7 +48,7 @@ describe("createContext", () => {
 		it("does not publish partial permissive conversions or contexts after an error", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);
 			assert(a !== undefined && b !== undefined);
-			const data = getSchemaDerivedData(a);
+			const data = getRootSchemaDerivedData(a);
 			let throwOnConversion = true;
 			Object.defineProperty(a, "persistedMetadata", {
 				get() {
@@ -89,13 +89,13 @@ describe("createContext", () => {
 					if (initializeContextFirst) {
 						getTreeNodeSchemaPrivateData(root).idempotentInitialize();
 					}
-					const data = getSchemaDerivedData(root);
+					const data = getRootSchemaDerivedData(root);
 					if (!initializeContextFirst) {
 						assert.equal(data.unhydratedContext, undefined);
 					}
-					assert.equal(getSchemaDerivedData(root).hasStagedSchema, expected);
+					assert.equal(getRootSchemaDerivedData(root).hasStagedSchema, expected);
 					const context = getUnhydratedContext(root);
-					assert.strictEqual(getSchemaDerivedData(root), data);
+					assert.strictEqual(getRootSchemaDerivedData(root), data);
 					assert.strictEqual(data.unhydratedContext, context);
 					assert.strictEqual(getUnhydratedContext(root), context);
 					assert.strictEqual(
@@ -128,7 +128,7 @@ describe("createContext", () => {
 							StagedSchemaUpgradePolicy.permissive,
 						),
 					);
-					const data = getSchemaDerivedData(root);
+					const data = getRootSchemaDerivedData(root);
 					assert.equal(data.unhydratedContext, undefined);
 					const context = getUnhydratedContext(root);
 					assert.strictEqual(data.unhydratedContext, context);

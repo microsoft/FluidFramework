@@ -30,6 +30,7 @@ import {
 	filterIterable,
 	getOrCreate,
 	mapIterable,
+	oneFromIterable,
 	type JsonCompatibleReadOnlyObject,
 } from "../util/index.js";
 
@@ -60,7 +61,7 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { getSchemaDerivedData } from "./treeSchema.js";
+import { getRootSchemaDerivedData } from "./treeSchema.js";
 
 // TODO: this file, src/simple-tree/api/storedSchema.ts and src/simple-tree/core/toStored.ts should be refactored to group the logic more logically.
 // The content of src/simple-tree/api/storedSchema.ts should probably removed from the API surface, replaced by simple schema snapshotting APIs.
@@ -70,7 +71,7 @@ import { getSchemaDerivedData } from "./treeSchema.js";
 /**
  * Owns {@link StoredSchemaCache} entries by {@link (StagedSchemaUpgradePolicy:interface) | policy} identity.
  * @remarks
- * {@link getSchemaDerivedData} separately shares the unfiltered graph, staging analysis, and optional unhydrated context.
+ * {@link getRootSchemaDerivedData} separately shares the unfiltered graph, staging analysis, and optional unhydrated context.
  * Policy keys are weak to avoid retaining short-lived effective upgrade policies.
  * Schema definitions and policy decisions must remain unchanged while their cached results are reused.
  */
@@ -82,7 +83,7 @@ const viewToStoredCache = new WeakMap<StagedSchemaUpgradePolicy, StoredSchemaCac
  * Roots and components without transitively reachable staging use the {@link toUnhydratedSchema} entry across policies.
  * Root normalization also accounts for root-field staging; component normalization excludes root-field annotations.
  * Both decisions use unfiltered staging analysis, not the absence of staging after policy filtering.
- * This cache does not own contexts or replace the identifier validation performed by {@link getSchemaDerivedData}.
+ * This cache does not own contexts or replace the identifier validation performed by {@link getRootSchemaDerivedData}.
  */
 interface StoredSchemaCache {
 	/**
@@ -153,7 +154,7 @@ function getStoredSchemaCache(policy: StagedSchemaUpgradePolicy): StoredSchemaCa
  * @throws Throws a `UsageError` if reachable node schemas have conflicting identifiers.
  */
 export function hasStagedSchema(root: ImplicitFieldSchema): boolean {
-	return getSchemaDerivedData(root).hasStagedSchema;
+	return getRootSchemaDerivedData(root).hasStagedSchema;
 }
 
 function isStagedSchemaUpgradePolicy(
@@ -240,7 +241,7 @@ export function toStoredSchema(
 	root: ImplicitFieldSchema,
 	options: StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
-	const data = getSchemaDerivedData(root);
+	const data = getRootSchemaDerivedData(root);
 
 	// Root staging includes root-field annotations as well as transitively reachable node staging.
 	const policy = data.hasStagedSchema ? options : toUnhydratedSchema;
@@ -322,10 +323,12 @@ export function toStoredSchema(
 			},
 		});
 		const components = new Set(roots.map(getComponent));
-		const [only] = components;
+		// If all root types belong to one component, its reachable definitions serve the whole root.
+		// Otherwise, the combined map belongs to this root, not to any individual component.
+		const singleComponent = oneFromIterable(components);
 		const nodeSchema =
-			components.size === 1 && only !== undefined
-				? (only.definitions ??= collectStoredDefinitions(components))
+			singleComponent !== undefined
+				? (singleComponent.definitions ??= collectStoredDefinitions(components))
 				: collectStoredDefinitions(components);
 		return { rootFieldSchema, nodeSchema };
 	});

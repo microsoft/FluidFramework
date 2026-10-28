@@ -10,7 +10,7 @@ import * as semver from "semver-ts";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
-import { getSchemaDerivedData } from "../treeSchema.js";
+import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
@@ -127,7 +127,7 @@ export function checkCompatibility(
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
-	const { treeSchema } = getSchemaDerivedData(config.schema);
+	const { treeSchema } = getRootSchemaDerivedData(config.schema);
 	return encodeSchemaCompatibilitySnapshot(treeSchema);
 }
 
