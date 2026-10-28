@@ -28,9 +28,9 @@ import type {
  * Typically construction is done via static functions on the schema which can be included in `ExtraSchemaProperties`,
  * and access to contents is done via properties of TNode (usually methods).
  *
- * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports | Encapsulation and Exports}
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports | Encapsulation and Exports}
  * for guidance on root-node contracts, layered boundaries, and adapting models to existing interfaces.
- * That guide also includes an {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports#explicit-public-types | example with explicit public types}.
+ * That guide also includes an {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports#explicit-public-types | example with explicit public types}.
  * For declaration builds, see {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md | Isolated declarations}.
  *
  * @example

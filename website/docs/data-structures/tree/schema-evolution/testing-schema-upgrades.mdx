@@ -176,54 +176,40 @@ This is useful for verifying that each phase of your rollout maintains the expec
 
 ## Testing Schema Libraries
 
-A reusable library needs tests at several boundaries.
-An isolated model test cannot establish that the application's full schema or deployed client versions are compatible.
-See [Schema Libraries and Versioning](./schema-libraries.mdx) for the compatibility commitments these tests should enforce.
+Test each boundary against the library's [compatibility policy](./schema-libraries.mdx).
 
 ### Library behavior
 
-Test domain operations on newly constructed nodes and on nodes in a view.
-Use <ApiLink package="fluid-framework" api="independentView" /> for isolated view tests that do not require a Fluid service.
-Verify initialization, editing, events, and any invariants maintained by the public operations.
-Test adapters' subscriptions and cleanup where those are part of the library contract.
+Test construction, initialization, edits, events, and invariants on new nodes and nodes in an <ApiLink package="fluid-framework" api="independentView" />.
+Include adapter subscriptions and cleanup where supported.
 
-For configurable libraries, cover representative child schemas and every supported configuration feature.
-Include an empty extension set when supported, more than one child type, recursive contributions, and two differently scoped configurations in the same application schema.
-Verify that repeated lookups within one composition return the same schema class, while independent compositions do not share configuration-dependent state.
+Cover supported configuration features with representative child schemas: empty extension sets where supported, multiple child types, recursion, and two scoped configurations in one root.
+Check schema reuse within a composition and configuration-dependent state isolation between compositions.
 
 ### Package and type contracts
 
-Test an installed or packed build of the library, not only its source tree.
-For each supported package entry point:
+For every installed or packed package entry point, not just source-relative imports:
 
-- Compile a consumer that imports that entry point, embeds the schema, constructs nodes, and calls domain APIs. Include supported subclassing.
-- Check expected compile-time errors for hidden members, unsupported inputs, and unsupported construction paths.
-- Run declaration emission with the compiler settings the library claims to support, including `isolatedDeclarations` in a consumer that re-exports or specializes its schemas.
-- Inspect emitted declarations for references to stripped declarations, local source paths, and unavailable dependencies.
-- Execute runtime imports and model construction too. Type-only tests cannot detect a missing JavaScript export or a duplicate configured schema class.
+-   Compile a consumer that embeds schemas, constructs nodes, calls domain APIs, and subclasses where supported.
+-   Check compile-time rejection of hidden members, unsupported inputs, and construction paths.
+-   Emit declarations with supported settings, including `isolatedDeclarations` for consumer re-exports or specializations. Check for stripped declarations, local paths, and unavailable dependencies.
+-   Execute imports and construction to detect missing runtime exports and duplicate configured schema classes.
 
-See [Package export boundaries](../schema-architecture/encapsulation-and-exports.mdx#package-export-boundaries) for choosing the public surface and [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md) for build configuration.
+See [Package export boundaries](../schema-patterns/encapsulation-and-exports.mdx#package-export-boundaries) and [Isolated declarations](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md).
 
 ### Persisted compatibility
 
-Use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility" /> to track schema compatibility across releases for representative configurations.
-Review snapshot changes as changes to a persisted contract, not as formatting updates.
-Pair schema snapshots with documents containing representative data: compatible schemas alone do not prove that domain operations still interpret old data correctly.
+Use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility" /> with representative configurations whose child schemas and scopes stay stable across releases.
+Review changes as persisted-contract changes, and pair snapshots with representative documents and domain-operation tests.
 
-Test old stored data with the current library and future schema states with the library release intended to precede their rollout.
-Exercise the actual domain operations after loading, including absent optional fields and all supported representation variants.
-Use the staged-upgrade tests above to verify both disabled and enabled writes.
-Simulating a future schema with current code complements, but does not replace, tests involving the actual older library versions that the application supports.
+Test current code on old data, and the pre-rollout library on future schema states, including absent fields and supported representation variants.
+Verify disabled and enabled writes using the staged-upgrade tests above; simulations do not replace testing actual supported older library versions.
 
 ### Application composition and collaboration
 
-The application should repeat compatibility checks for its complete root schema with its actual scopes, injected child schemas, component set, and upgrade policy.
-Test all client-version combinations promised by the application's deployment policy, including the intended rollback build against already-upgraded documents.
-Include concurrent domain operations and a schema upgrade observed by another client.
-Check both the resulting shared data and how domain operations and UI adapters respond.
-
-These integration tests require multiple collaborating clients; `independentView` alone does not exercise message delivery or merging between clients.
-Use the application's normal [Fluid testing setup](../../../testing/testing.mdx) for that layer.
+Repeat compatibility checks on the actual root schema, scopes, child schemas, components, and upgrade policy.
+Test promised client-version combinations, including rollback builds against upgraded documents, concurrent operations, and upgrades observed by another client.
+Check shared data and domain or adapter responses using multiple clients in the application's [Fluid testing setup](../../../testing/testing.mdx); `independentView` does not test message delivery or merging.
 
 ## See Also
 

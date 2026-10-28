@@ -32,7 +32,7 @@ import { getOrCreate } from "./util/index.js";
  * other components, as long as nothing evaluates the lazy references until composition has completed.
  * Use {@link Component.(compose:1)} to combine a set of components into a {@link Component.Composed}.
  *
- * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/configuration-and-composition | Configuration and Composition}
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/configuration-and-composition | Configuration and Composition}
  * for consumer-provided schemas, schema caching, and mutually recursive libraries.
  *
  * Start with {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts | components.integration.ts} for a focused, executable walkthrough.

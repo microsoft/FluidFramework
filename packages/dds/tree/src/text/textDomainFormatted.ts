@@ -135,9 +135,9 @@ export class StringTextAtomNode
  * @remarks
  * This is generic over formatting an embedded object/atom types.
  *
- * See {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/configuration-and-composition | Configuration and Composition}
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/configuration-and-composition | Configuration and Composition}
  * for consumer-provided schemas and scope selection, and
- * {@link https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports | Encapsulation and Exports}
+ * {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports | Encapsulation and Exports}
  * for the type-erasure and subclassing patterns used by this API.
  *
  * @privateRemarks

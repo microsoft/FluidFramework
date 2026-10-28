@@ -2,7 +2,7 @@
 
 This document covers TypeScript's `isolatedDeclarations` option, its use in optimizing large TypeScript builds, and the complications that arise in such setups when using SharedTree schema.
 
-Start with [Encapsulation and Exports](https://fluidframework.com/docs/data-structures/tree/schema-architecture/encapsulation-and-exports#package-export-boundaries) for recommendations on your public schema boundary.
+Start with [Encapsulation and Exports](https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports#package-export-boundaries) for recommendations on your public schema boundary.
 This document provides the detailed build strategies referenced by that guide.
 
 The approaches described in this document can be applied to other TypeScript types that are problematic for use with `isolatedDeclarations`: only some minor details are actually specific to SharedTree schema.

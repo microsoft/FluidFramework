@@ -1,0 +1,48 @@
+---
+title: Schema Patterns
+sidebar_position: 4
+---
+
+Your SharedTree schema defines both a persisted data model and the types used to access it.
+Choose a public boundary based on what consumers need, starting from the [schema definition](../schema-definition/index.mdx) and [editing](../reading-and-editing.mdx) APIs.
+
+## Match boundaries to requirements
+
+Start with concrete schema classes and inferred types.
+Keep them public when the full data model is the intended contract.
+
+Add boundaries where the following requirements apply.
+Several rows can apply to the same library or at different layers of one application.
+
+| Requirement                                                               | Design response                                                           | Read or run                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hide representation details from consumers                                | Expose a root schema and domain operations.                               | [Encapsulation](./encapsulation-and-exports.mdx), [walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts)                                          |
+| Accept consumer-selected child schemas                                    | Provide an explicitly typed factory; configure once and share the result. | [Configuration](./configuration-and-composition.mdx#schema-factory-functions), [walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts) |
+| Compose mutually recursive libraries without implementation import cycles | Use shared contracts and lazy application-level composition.              | [Composition](./configuration-and-composition.mdx#mutually-recursive-libraries), [walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts)              |
+| Fit existing domain interfaces and service layers                         | Implement interfaces on nodes or adapters.                                | [Adapting existing layers](./encapsulation-and-exports.mdx#adapt-to-existing-interfaces-and-layers)                                                                                                                     |
+| Support isolated declaration builds                                       | Use explicit public types or a separate declaration build.                | [Declaration strategies](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/isolated-declarations.md)                                                                             |
+
+## Keep schema and behavior together
+
+Keep representation-specific behavior with the schema implementation.
+Storage structure reflects merge behavior, compatibility requirements, and SharedTree constraints; it need not define the interfaces used throughout the application.
+
+Prefer component boundaries that expose domain operations rather than mirror stored types.
+This makes [hiding representation details](./encapsulation-and-exports.mdx#choose-what-to-expose) a natural part of the architecture, rather than requiring a parallel abstraction for every stored type.
+
+## Separate composition from ordinary use
+
+Shared contracts define behavior; model implementations provide it; application composition selects implementations and builds the root schema; feature code uses the resulting contracts.
+Composition needs runtime schemas even when ordinary callers need only domain interfaces.
+These are responsibilities, not four required packages: split modules only when reuse, ownership, or build needs justify it.
+
+## Plan for persistent data
+
+Keep schema identifiers and stored field keys stable, not derived from build numbers, random values, or package versions.
+The library owns support for persisted representations; the application owns when deployed clients can enable upgrades.
+Before publishing, define a [compatibility policy](../schema-evolution/schema-libraries.mdx) and test the [model, package, and application boundaries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries).
+
+## Public and experimental APIs
+
+Prefer stable APIs; erasure and component-composition helpers include alpha APIs.
+Check [release tags and import paths](../../../build/releases-and-apitags.mdx#api-support-levels): exporting a type that refers to an alpha API makes consumers depend on it too.
