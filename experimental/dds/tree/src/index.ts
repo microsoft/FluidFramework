@@ -130,6 +130,7 @@ export {
 	rangeFromStableRange,
 } from './TreeViewUtilities.js';
 export {
+	createSharedTree,
 	SharedTreeArgs,
 	SharedTreeOptions,
 	SharedTreeBaseOptions,

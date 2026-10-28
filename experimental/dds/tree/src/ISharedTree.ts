@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import type { IChannelServices, IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidSerializer, ISharedObject } from '@fluidframework/shared-object-base/internal';
 // eslint-disable-next-line import-x/no-internal-modules -- Preserve the existing logger contract.
@@ -29,7 +29,7 @@ import type {
  * A distributed tree with transactional edits, stable node identities, and revision history.
  *
  * @remarks
- * Use `SharedTree.create(runtime)` or `SharedTree.getFactory()` to create an instance.
+ * Use {@link createSharedTree} to create an instance through the factory registered with the data store runtime.
  *
  * @sealed
  * @alpha
@@ -41,6 +41,12 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 	 * Trees with write format 0.0.2 use the nil UUID instead.
 	 */
 	readonly attributionId: AttributionId;
+
+	/**
+	 * Whether this tree has an active connection to the delta stream.
+	 * A local tree remains disconnected until it attaches to the document and establishes that connection.
+	 */
+	readonly connected: boolean;
 
 	/**
 	 * The view after all known edits, including local edits.
@@ -135,6 +141,21 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 	 * @returns The internal change.
 	 */
 	internalizeChange(change: Change): ChangeInternal;
+
+	/**
+	 * Initializes a new tree as a local object.
+	 * The tree can later attach to the document and become shared.
+	 */
+	initializeLocal(): void;
+
+	/**
+	 * Loads an existing tree from storage and connects it to the supplied services.
+	 * For a new tree, use `initializeLocal` instead.
+	 *
+	 * @param services - The storage and delta services for the tree.
+	 * @returns A promise that resolves after the tree loads and connects to the services.
+	 */
+	load(services: IChannelServices): Promise<void>;
 
 	/**
 	 * Initializes the tree from a serialized summary for tests.

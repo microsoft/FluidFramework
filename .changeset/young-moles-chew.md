@@ -4,12 +4,15 @@
 ---
 Add an interface for the experimental tree
 
-The package exports `ISharedTree` for instance annotations. Existing `SharedTree` class exports, factory results, and helper signatures remain unchanged. The interface retains the inherited handle type in this preparation release.
+The package exports `createSharedTree` and `ISharedTree` so application code can create and use a tree without the implementation class.
+The new function uses the factory registered with the data store runtime, so it preserves the configured write format and options.
+Existing `SharedTree` class exports, factory results, and helper signatures remain unchanged.
+The interface retains the inherited handle type and exposes the existing connection state and lifecycle methods.
 
 ```typescript
-import { SharedTree, type ISharedTree } from "@fluid-experimental/tree";
+import { createSharedTree, type ISharedTree } from "@fluid-experimental/tree";
 
-const tree: ISharedTree = SharedTree.create(runtime);
+const tree: ISharedTree = createSharedTree(runtime);
 ```
 
 This addition prepares consumers for the replacement of the implementation class.
