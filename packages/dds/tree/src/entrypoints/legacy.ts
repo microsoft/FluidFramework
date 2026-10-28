@@ -147,7 +147,6 @@ export {
 	TransactionValueResult, 
 	TransactionVoidResult, 
 	TreeBeta, 
-	TreeBranch, 
 	TreeBranchEventsBeta, 
 	TreeChangeEventsBeta, 
 	TreeContextBeta, 
