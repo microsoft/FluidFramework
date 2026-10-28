@@ -1343,32 +1343,15 @@ export class ModularChangeFamily
 			isChangesetValid(change, this.fieldKinds),
 		);
 
-		// Combining revisions can move colliding local IDs above the input's allocation bound.
-		// Track replacements across every component while sharing the caller's ID mapping.
-		let maxId = change.maxId ?? -1;
-		const trackedReplacer: RevisionReplacer = {
-			updatedRevision: replacer.updatedRevision,
-			isObsolete: (revision) => replacer.isObsolete(revision),
-			getUpdatedAtomId: (id, count = 1) => {
-				const updatedId = replacer.getUpdatedAtomId(id, count);
-				// Revision-only re-tagging does not change the existing allocation bound.
-				if (updatedId.localId > id.localId) {
-					maxId = Math.max(maxId, updatedId.localId + count - 1);
-				}
-				return updatedId;
-			},
-		};
-		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, trackedReplacer);
-		const updatedNodes = replaceIdMapRevisions(
-			change.nodeChanges,
-			trackedReplacer,
-			(nodeChangeset) => this.replaceNodeChangesetRevisions(nodeChangeset, trackedReplacer),
+		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
+		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
+			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
 		);
 		const updatedNodeToParent = replaceIdMapRevisions(
 			change.nodeToParent,
-			trackedReplacer,
+			replacer,
 			(fieldId) =>
-				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), trackedReplacer),
+				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), replacer),
 		);
 
 		const updated: Mutable<ModularChangeset> = {
@@ -1381,23 +1364,26 @@ export class ModularChangeFamily
 			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
-				trackedReplacer,
+				replacer,
 				change.nodeAliases,
 			),
 		};
 
 		if (change.builds !== undefined) {
-			updated.builds = replaceIdMapRevisions(change.builds, trackedReplacer);
+			updated.builds = replaceIdMapRevisions(change.builds, replacer);
 		}
 
 		if (change.destroys !== undefined) {
-			updated.destroys = replaceIdMapRevisions(change.destroys, trackedReplacer);
+			updated.destroys = replaceIdMapRevisions(change.destroys, replacer);
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, trackedReplacer);
+			updated.refreshers = replaceIdMapRevisions(change.refreshers, replacer);
 		}
 
+		// Read the bound after all replacements, including ranges and detached content.
+		// Keep the input bound when it already covers more IDs than the replacer assigned.
+		const maxId = Math.max(change.maxId ?? -1, replacer.getMaxId());
 		if (maxId >= 0) {
 			updated.maxId = brand(maxId);
 		}

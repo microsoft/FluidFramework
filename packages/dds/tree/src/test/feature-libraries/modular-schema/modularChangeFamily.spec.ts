@@ -722,6 +722,8 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
+				// Cancelling the content does not reset the IDs already allocated by normalization.
+				maxId: brand(0),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -757,6 +759,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
+				maxId: brand(0),
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
 
@@ -819,6 +822,7 @@ describe("ModularChangeFamily", () => {
 					[[tag3, brand(1)], 1],
 					[[tag3, brand(3)], 1],
 				]),
+				maxId: brand(3),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -989,6 +993,7 @@ describe("ModularChangeFamily", () => {
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
+				maxId: brand(0),
 				destroys: newChangeAtomIdBTree([
 					[[tag1 as RevisionTag | undefined, brand(0)], 1],
 					[[tag2, brand(1)], 1],
@@ -996,7 +1001,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: revisionForInvert, rollbackOf: tag1 }],
 			};
 			const expectedUndo: ModularChangeset = tagChangeInline(
-				Change.empty(),
+				{ ...Change.empty(), maxId: brand(0) },
 				revisionForInvert,
 			).change;
 
@@ -1529,6 +1534,28 @@ describe("ModularChangeFamily", () => {
 		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
 			ModularChangeFormatVersion.v5,
 		]);
+	});
+
+	describe("changeRevision", () => {
+		it("does not add an allocation bound when no IDs are assigned", () => {
+			assert.equal(inlineRevision(Change.empty(), tag1).maxId, undefined);
+		});
+
+		it("preserves an input allocation bound larger than the replaced IDs", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				maxId: brand(10),
+				builds: newChangeAtomIdBTree([[[undefined, brand(0)], node1Chunk]]),
+			};
+			assert.equal(inlineRevision(input, tag1).maxId, 10);
+		});
+
+		it("accounts for IDs assigned by an earlier use of the same replacer", () => {
+			const replacer = new DefaultRevisionReplacer(tag1, new Set([undefined]));
+			replacer.getUpdatedAtomId({ localId: brand(5) }, 3);
+			const updated = family.changeRevision(Change.empty(), replacer);
+			assert.equal(updated.maxId, 7);
+		});
 	});
 
 	it("build child change", () => {

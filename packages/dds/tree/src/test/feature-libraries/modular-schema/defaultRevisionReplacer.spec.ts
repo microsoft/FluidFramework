@@ -20,6 +20,38 @@ describe("DefaultRevisionReplacer", () => {
 	const localId1 = brandConst(1)<ChangesetLocalId>();
 	const localId2 = brandConst(2)<ChangesetLocalId>();
 
+	describe("getMaxId", () => {
+		it("returns -1 before any obsolete IDs are replaced", () => {
+			const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
+			assert.equal(replacer.getMaxId(), -1);
+			replacer.getUpdatedAtomId(makeChangeAtomId(localId2, otherRev), 10);
+			assert.equal(replacer.getMaxId(), -1);
+		});
+
+		it("includes the end of a replaced range and does not decrease on reuse", () => {
+			const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
+			const id = makeChangeAtomId(localId1, obsoleteRev1);
+			replacer.getUpdatedAtomId(id, 3);
+			assert.equal(replacer.getMaxId(), 3);
+			replacer.getUpdatedAtomId(id);
+			assert.equal(replacer.getMaxId(), 3);
+		});
+
+		it("includes larger local IDs allocated for a colliding range", () => {
+			const replacer = new DefaultRevisionReplacer(
+				updatedRev,
+				new Set([obsoleteRev1, obsoleteRev2]),
+			);
+			replacer.getUpdatedAtomId(makeChangeAtomId(localId1, obsoleteRev1), 3);
+			const replacement = replacer.getUpdatedAtomId(
+				makeChangeAtomId(localId1, obsoleteRev2),
+				3,
+			);
+			assert.equal(replacement.localId, 4);
+			assert.equal(replacer.getMaxId(), 6);
+		});
+	});
+
 	describe("isObsolete", () => {
 		it("returns true for revisions in the obsolete revision set", () => {
 			const replacer = new DefaultRevisionReplacer(
