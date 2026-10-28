@@ -29,6 +29,7 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
@@ -114,6 +115,7 @@ export interface SharedKernel {
 class SharedObjectFromKernel<
 	TOut extends object,
 	TEvent extends ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 > extends SharedObject<TEvent> {
 	/**
 	 * Lazy init here so kernel can be constructed in loadCore when loading from existing data.

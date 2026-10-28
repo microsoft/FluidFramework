@@ -19,6 +19,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -125,6 +126,7 @@ interface IConsensusRegisterCollectionInternalEvents {
  * @internal
  */
 export class ConsensusRegisterCollection<T>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<IConsensusRegisterCollectionEvents>
 	implements IConsensusRegisterCollection<T>
 {
