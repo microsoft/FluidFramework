@@ -796,7 +796,7 @@ export function normalizeChangesetWithDummyChunks(
 	if (dropRevertConstraint) {
 		delete normal.noChangeConstraintOnRevert;
 	}
-	return normal;
+	return makeModularChangeset(normal);
 }
 
 export function areEquivalent(
