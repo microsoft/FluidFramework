@@ -666,18 +666,29 @@ export interface SetValueInternal_0_0_2 {
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements ISharedTree {
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
+    // (undocumented)
     applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+    // (undocumented)
     applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
+    // (undocumented)
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): void;
+    // (undocumented)
     attributeNodeId(id: NodeId): AttributionId;
+    // (undocumented)
     get attributionId(): AttributionId;
+    // (undocumented)
     convertToNodeId(id: StableNodeId): NodeId;
+    // (undocumented)
     convertToStableNodeId(id: NodeId): StableNodeId;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
+    // (undocumented)
     get currentView(): RevisionView;
+    // (undocumented)
     get edits(): OrderedEditSet<InternalizedChange>;
+    // (undocumented)
     equals(sharedTree: SharedTree): boolean;
+    // (undocumented)
     generateNodeId(override?: string): NodeId;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
@@ -685,15 +696,23 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
     // (undocumented)
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
     static getFactory(): SharedTreeFactory;
+    // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
+    // (undocumented)
     getWriteFormat(): WriteFormat;
+    // (undocumented)
     internalizeChange(change: Change): ChangeInternal;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // (undocumented)
     loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
+    // (undocumented)
     loadSummary(summary: SharedTreeSummaryBase): void;
+    // (undocumented)
     readonly logger: ITelemetryLoggerExt;
+    // (undocumented)
     get logViewer(): LogViewer;
+    // (undocumented)
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)
     protected onDisconnect(): void;
@@ -703,14 +722,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
     protected registerCore(): void;
     // (undocumented)
     protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
+    // (undocumented)
     revert(editId: EditId): EditId | undefined;
+    // (undocumented)
     revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
+    // (undocumented)
     saveSerializedSummary(options?: {
         serializer?: IFluidSerializer;
     }): string;
+    // (undocumented)
     saveSummary(): SharedTreeSummaryBase;
+    // (undocumented)
     summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    // (undocumented)
     tryConvertToNodeId(id: StableNodeId): NodeId | undefined;
+    // (undocumented)
     tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined;
 }
 
