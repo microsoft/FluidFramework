@@ -27,7 +27,7 @@ import {
 } from "../../../simple-tree/index.js";
 import {
 	getRootSchemaDerivedData,
-	hasCachedRootSchemaDerivedDataForTesting,
+	hasCachedSchemaComponentForTesting,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/treeSchema.js";
 
@@ -59,12 +59,12 @@ describe("simple-tree configuration", () => {
 		const config = new TreeViewConfigurationAlpha({ schema: A });
 		// View discovery and component finalization read the fields; permissive conversion reuses that topology.
 		assert.deepEqual([...reads.values()], [2, 2, 2]);
-		assert.equal(hasCachedRootSchemaDerivedDataForTesting(A), true);
-		const component = getRootSchemaDerivedData(A).component;
+		assert.equal(hasCachedSchemaComponentForTesting(A), true);
+		const components = getRootSchemaDerivedData(A).components;
 		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
 		assert.deepEqual([...reads.values()], [3, 3, 3]);
 		assert.strictEqual(config.definitions, strict.definitions);
-		assert.strictEqual(component, getRootSchemaDerivedData(A).component);
+		assert.strictEqual(components, getRootSchemaDerivedData(A).components);
 	});
 
 	it("reports duplicate allowed types before evaluating later fields", () => {
@@ -85,7 +85,7 @@ describe("simple-tree configuration", () => {
 				validateUsageError(/Duplicate schema in allowed types/),
 			);
 			assert.equal(laterEvaluations, 0);
-			assert.equal(hasCachedRootSchemaDerivedDataForTesting(Root), false);
+			assert.equal(hasCachedSchemaComponentForTesting(Root), false);
 		}
 	});
 

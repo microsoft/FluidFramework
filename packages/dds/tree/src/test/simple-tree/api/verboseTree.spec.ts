@@ -18,7 +18,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	KeyEncodingOptions,
 	SchemaFactory,
@@ -154,7 +154,7 @@ describe("simple-tree verboseTree", () => {
 					dataFromCursor: (cursor) =>
 						verboseFromCursor(
 							cursor,
-							SchemaComponent.fromSchema(RootSchema).context,
+							getRootSchemaDerivedData(RootSchema).context,
 							encodeOptions,
 						),
 					testData: testTrees,

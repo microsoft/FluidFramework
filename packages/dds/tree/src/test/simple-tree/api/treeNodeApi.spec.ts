@@ -50,7 +50,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	type ArrayNodeDeltaOp,
 	type ArrayNodeTreeChangedDeltaOp,
@@ -4158,7 +4158,7 @@ describe("treeNodeApi", () => {
 				const dummyContextLimited = SchemaComponent.fromSchema(PointUnknown).context;
 
 				// Context that does know about the unknown field's type
-				const dummyContextFull = SchemaComponent.fromSchema([
+				const dummyContextFull = getRootSchemaDerivedData([
 					PointUnknown,
 					SchemaFactory.number,
 				]).context;

@@ -35,7 +35,7 @@ import {
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
 import { convertFieldKind } from "../schemaConversion.js";
-import { SchemaComponent } from "../treeSchema.js";
+import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 import type { TreeView } from "./tree.js";
 import { treeNodeApi } from "./treeNodeApi.js";
@@ -268,7 +268,7 @@ export function createTreeIndexWithDependencyScope<
 ): TreeIndex<TKey, TValue> {
 	const indexableSchemaMap =
 		indexableSchema === undefined
-			? SchemaComponent.fromSchema(view.schema).definitions
+			? getRootSchemaDerivedData(view.schema).definitions
 			: new Map(indexableSchema.map((schema) => [schema.identifier, schema]));
 
 	const keyFieldSelectorFunction =

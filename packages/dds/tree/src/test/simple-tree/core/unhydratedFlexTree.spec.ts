@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { expectEqualCursors } from "../../utils.js";
@@ -72,7 +72,7 @@ describe("unhydratedFlexTree", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const context = SchemaComponent.fromSchema([
+	const context = getRootSchemaDerivedData([
 		mapSchemaSimple,
 		arrayNodeSchemaSimple,
 		objectSchemaSimple,

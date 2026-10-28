@@ -287,32 +287,68 @@ describe("toStoredSchema", () => {
 			assert.deepEqual(a, reference(A, policy));
 		});
 
-		it("keeps policy-specific topology separate when a staged edge splits a component", () => {
-			const sf = new SchemaFactoryAlpha("split");
-			class A extends sf.objectRecursive("A", {
-				child: sf.optionalRecursive([() => B]),
-			}) {}
-			class B extends sf.objectRecursive("B", {
-				child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
-			}) {}
-			assert.equal(
-				toStoredSchema(A, StagedSchemaUpgradePolicy.restrictive).nodeSchema.size,
-				2,
+		for (const reverse of [false, true]) {
+			it(`keeps policy-specific topology separate when a staged edge splits a component (${reverse})`, () => {
+				const sf = new SchemaFactoryAlpha("split");
+				class A extends sf.objectRecursive("A", {
+					child: sf.optionalRecursive([() => B]),
+				}) {}
+				class B extends sf.objectRecursive("B", {
+					child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
+				}) {}
+				for (const root of reverse ? [B, A] : [A, B]) {
+					assert.deepEqual(
+						toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive),
+						reference(root, StagedSchemaUpgradePolicy.restrictive),
+					);
+				}
+				assert.equal(
+					toStoredSchema(A, StagedSchemaUpgradePolicy.restrictive).nodeSchema.size,
+					2,
+				);
+				assert.equal(
+					toStoredSchema(B, StagedSchemaUpgradePolicy.restrictive).nodeSchema.size,
+					1,
+				);
+				assert.equal(
+					toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema.size,
+					2,
+				);
+				assert.strictEqual(
+					toStoredSchema(A, StagedSchemaUpgradePolicy.permissive).nodeSchema,
+					toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema,
+				);
+				const customPermissive = { ...StagedSchemaUpgradePolicy.permissive };
+				assert.strictEqual(
+					toStoredSchema(A, customPermissive).nodeSchema,
+					toStoredSchema(B, customPermissive).nodeSchema,
+				);
+			});
+		}
+		it("retries failed staging-free conversions and shares the result across policies", () => {
+			const sf = new SchemaFactoryAlpha("unstagedFailure");
+			class Node extends sf.object("Node", {}) {}
+			let shouldThrow = true;
+			Object.defineProperty(Node, "persistedMetadata", {
+				get() {
+					if (shouldThrow) throw new Error("conversion failure");
+					return undefined;
+				},
+			});
+			assert.throws(
+				() => toStoredSchema(Node, StagedSchemaUpgradePolicy.restrictive),
+				/conversion failure/,
 			);
-			assert.equal(
-				toStoredSchema(B, StagedSchemaUpgradePolicy.restrictive).nodeSchema.size,
-				1,
-			);
-			assert.equal(toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema.size, 2);
-			assert.strictEqual(
-				toStoredSchema(A, StagedSchemaUpgradePolicy.permissive).nodeSchema,
-				toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema,
-			);
-			const customPermissive = { ...StagedSchemaUpgradePolicy.permissive };
-			assert.strictEqual(
-				toStoredSchema(A, customPermissive).nodeSchema,
-				toStoredSchema(B, customPermissive).nodeSchema,
-			);
+			shouldThrow = false;
+			const stored = toStoredSchema(Node, StagedSchemaUpgradePolicy.restrictive);
+			const unusedPolicy: StagedSchemaUpgradePolicy = {
+				includeStaged: () => assert.fail("Staging-free conversion must not evaluate policies"),
+				includeStagedOptional: () =>
+					assert.fail("Staging-free conversion must not evaluate policies"),
+			};
+			assert.strictEqual(toStoredSchema(Node, unusedPolicy), stored);
+			assert.strictEqual(toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive), stored);
+			assert.deepEqual(stored, reference(Node, StagedSchemaUpgradePolicy.permissive));
 		});
 		it("reuses permissive conversion while preserving root field kind and metadata", () => {
 			const sf = new SchemaFactoryAlpha("storedComponents");

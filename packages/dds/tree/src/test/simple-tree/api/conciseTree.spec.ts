@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/conciseTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
 import { singleJsonCursor } from "../../json/index.js";
 
 describe("simple-tree conciseTree", () => {
@@ -22,7 +22,7 @@ describe("simple-tree conciseTree", () => {
 		assert.deepEqual(
 			conciseFromCursor(
 				singleJsonCursor({ a: { b: 1 } }),
-				SchemaComponent.fromSchema(JsonAsTree.Tree).context,
+				getRootSchemaDerivedData(JsonAsTree.Tree).context,
 				{},
 			),
 			{

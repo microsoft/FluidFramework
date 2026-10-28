@@ -348,4 +348,9 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
-export { type TreeSchema, createTreeSchema, SchemaComponent } from "./treeSchema.js";
+export {
+	type TreeSchema,
+	type TransitiveSchemaInfo,
+	createTreeSchema,
+	SchemaComponent,
+} from "./treeSchema.js";

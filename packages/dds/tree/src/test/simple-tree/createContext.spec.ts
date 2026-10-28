@@ -53,7 +53,7 @@ describe("createContext", () => {
 			const component = SchemaComponent.fromSchema(root);
 			assert.strictEqual(SchemaComponent.fromSchema(root), component);
 			const data = getRootSchemaDerivedData(root);
-			assert.strictEqual(component, data.component);
+			assert.deepEqual(data.components, new Set([component]));
 			assert.equal(conversions, 0);
 			const context = component.context;
 			const afterConstruction = conversions;
@@ -141,9 +141,9 @@ describe("createContext", () => {
 				bContext.flexContext.schema.nodeSchema,
 			);
 			for (const root of [[a], [a, b], normalizeFieldSchema(b)]) {
-				assert.strictEqual(SchemaComponent.fromSchema(root).context, aContext);
+				assert.strictEqual(getRootSchemaDerivedData(root).context, aContext);
 			}
-			assert.strictEqual(getRootSchemaDerivedData(a).component.context, aContext);
+			assert.strictEqual(getRootSchemaDerivedData(a).context, aContext);
 		});
 		it("keeps root annotations separate from a shared component context", () => {
 			const sf = new SchemaFactoryAlpha("rootContext");
@@ -151,14 +151,14 @@ describe("createContext", () => {
 			const optional = sf.optional(Node, { persistedMetadata: { label: "optional" } });
 			const staged = sf.stagedOptional(Node);
 			const context = SchemaComponent.fromSchema(Node).context;
-			assert.strictEqual(SchemaComponent.fromSchema(optional).context, context);
-			assert.strictEqual(SchemaComponent.fromSchema(staged).context, context);
+			assert.strictEqual(getRootSchemaDerivedData(optional).context, context);
+			assert.strictEqual(getRootSchemaDerivedData(staged).context, context);
 			assert.equal(
 				context.flexContext.schema.rootFieldSchema.kind,
 				FieldKinds.forbidden.identifier,
 			);
 			assert.equal(context.flexContext.schema.rootFieldSchema.types.size, 0);
-			assert.equal(getRootSchemaDerivedData(Node).component.hasStagedSchema, false);
+			assert.equal(SchemaComponent.fromSchema(Node).hasStagedSchema, false);
 			assert.equal(getRootSchemaDerivedData(staged).hasStagedSchema, true);
 			const requiredStored = toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive);
 			const optionalStored = toStoredSchema(optional, StagedSchemaUpgradePolicy.permissive);
@@ -173,20 +173,98 @@ describe("createContext", () => {
 				FieldKinds.required.identifier,
 			);
 		});
-		it("owns union and empty contexts on their synthetic components", () => {
+		it("owns union and empty contexts on root-derived data", () => {
 			const [a, b] = createSchemaGraph([[], []]);
 			assert(a !== undefined && b !== undefined);
 			for (const root of [[], [a, b]]) {
 				const data = getRootSchemaDerivedData(root);
-				const context = SchemaComponent.fromSchema(root).context;
-				assert.strictEqual(context, data.component.context);
-				assert.strictEqual(context.schema, data.component.definitions);
+				const context = data.context;
+				assert.strictEqual(context, getRootSchemaDerivedData(root).context);
+				assert.strictEqual(context.schema, data.definitions);
 				assert.strictEqual(
 					context.flexContext.schema.nodeSchema,
 					toStoredSchema(root, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 				);
 				assert.equal(context.schema.size, root.length);
+				assert.notStrictEqual(context, getRootSchemaDerivedData([...root]).context);
+				for (const component of data.components) {
+					assert.notStrictEqual(context, component.context);
+				}
 			}
+		});
+		for (const contextFirst of [false, true]) {
+			it(`shares root-owned node maps with stored conversion (${contextFirst ? "context" : "stored schema"} first)`, () => {
+				const [a, b] = createSchemaGraph([[], []]);
+				assert(a !== undefined && b !== undefined);
+				for (const root of [[], [a, b]]) {
+					const data = getRootSchemaDerivedData(root);
+					if (contextFirst) {
+						assert(data.context);
+					}
+					const stored = toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
+					assert.strictEqual(data.context.flexContext.schema.nodeSchema, stored.nodeSchema);
+				}
+			});
+		}
+		for (const target of [
+			"component lookup",
+			"root lookup",
+			"root context",
+			"cached root context",
+		] as const) {
+			it(`rejects reentrant ${target} during root-owned context construction and allows retry`, () => {
+				const [a, b] = createSchemaGraph([[], []]);
+				assert(a !== undefined && b !== undefined);
+				const data = getRootSchemaDerivedData([a, b]);
+				const other = getRootSchemaDerivedData([]);
+				if (target === "cached root context") {
+					assert(other.context);
+				}
+				let reenter = true;
+				Object.defineProperty(a, "persistedMetadata", {
+					get() {
+						if (reenter) {
+							switch (target) {
+								case "component lookup": {
+									SchemaComponent.fromSchema(b);
+									break;
+								}
+								case "root lookup": {
+									getRootSchemaDerivedData([]);
+									break;
+								}
+								default: {
+									assert(other.context);
+								}
+							}
+						}
+						return undefined;
+					},
+				});
+				for (let i = 0; i < 2; i++) {
+					assert.throws(() => data.context, validateAssertionError(/reentrant/));
+				}
+				reenter = false;
+				const context = data.context;
+				assert.strictEqual(data.context, context);
+				assert.equal(context.schema.size, 2);
+			});
+		}
+		it("rejects reentrant root lookup during lazy schema evaluation and resets the guard", () => {
+			const sf = new SchemaFactoryAlpha("reentrantRootAnalysis");
+			class Node extends sf.objectRecursive("Node", {
+				child: sf.optionalRecursive([
+					() => {
+						getRootSchemaDerivedData([]);
+						return Node;
+					},
+				]),
+			}) {}
+			assert.throws(
+				() => getRootSchemaDerivedData([Node]),
+				validateAssertionError(/reentrant/),
+			);
+			assert.equal(getRootSchemaDerivedData([]).context.schema.size, 0);
 		});
 		it("lazily constructs contexts even after node initialization", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);
@@ -334,8 +412,8 @@ describe("createContext", () => {
 						),
 					);
 					const data = getRootSchemaDerivedData(root);
-					const context = SchemaComponent.fromSchema(root).context;
-					assert.strictEqual(SchemaComponent.fromSchema(root).context, context);
+					const context = data.context;
+					assert.strictEqual(getRootSchemaDerivedData(root).context, context);
 					assert.strictEqual(context.schema, data.treeSchema.definitions);
 					assert.deepEqual(context.flexContext.schema.nodeSchema, expected.nodeSchema);
 					assert.strictEqual(

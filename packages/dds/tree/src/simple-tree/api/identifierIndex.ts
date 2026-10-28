@@ -13,7 +13,7 @@ import {
 import type { TreeNode } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
-import { SchemaComponent } from "../treeSchema.js";
+import { getRootSchemaDerivedData } from "../treeSchema.js";
 
 import { createTreeIndexWithDependencyScope, type TreeIndexKey } from "./simpleTreeIndex.js";
 import type { TreeView } from "./tree.js";
@@ -59,7 +59,7 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 ): IdentifierIndex {
 	// For each node schema, include it if it has exactly one identifier field.
 	const identifierFields = new Map<string, string>();
-	for (const schema of SchemaComponent.fromSchema(view.schema).definitions.values()) {
+	for (const schema of getRootSchemaDerivedData(view.schema).definitions.values()) {
 		if (isObjectNodeSchema(schema)) {
 			const storedKey = oneFromIterable(schema.identifierFieldKeys);
 			if (storedKey !== undefined) {

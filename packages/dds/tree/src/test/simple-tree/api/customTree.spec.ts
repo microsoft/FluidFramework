@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	numberSchema,
 	SchemaFactoryAlpha,
@@ -40,7 +40,7 @@ const schemaFactory = new SchemaFactoryAlpha("Test");
 describe("simple-tree customTree", () => {
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const context = SchemaComponent.fromSchema(JsonAsTree.Tree).context;
+			const context = getRootSchemaDerivedData(JsonAsTree.Tree).context;
 			const leaf_options = { keys: KeyEncodingOptions.allStoredKeys };
 			assert.equal(
 				customFromCursor(
