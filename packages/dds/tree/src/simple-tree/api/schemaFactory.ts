@@ -266,6 +266,7 @@ export class SchemaFactory<
 		super();
 		if (new.target !== SchemaFactoryAlpha) {
 			// All supported factory instances implement the alpha API so conversions can preserve identity.
+			// Any additional constructor state in SchemaFactoryBeta must also be forwarded here.
 			return new SchemaFactoryAlpha<TScope, TName>(scope);
 		}
 	}
@@ -816,6 +817,10 @@ export class SchemaFactory<
  *
  * @see {@link SchemaFactoryAlpha}
  * @see {@link (asAlpha:6)}
+ *
+ * @privateRemarks
+ * The SchemaFactory constructor redirects construction to SchemaFactoryAlpha.
+ * If SchemaFactoryBeta adds constructor parameters for extra state, update SchemaFactory to forward that state to SchemaFactoryAlpha.
  *
  * @beta
  */
