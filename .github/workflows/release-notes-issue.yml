@@ -30,16 +30,16 @@ jobs:
     steps:
       # Check out the repo and set up node and pnpm.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: "100"
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -88,7 +88,7 @@ jobs:
       - name: Read issue intro template
         id: intro
         # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.1.0
-        uses: Lehoczky/render-nunjucks-template-action@2012ccb3cdcd8503fa86dd9007255c25139b8f44 # v1.1.0
+        uses: Lehoczky/render-nunjucks-template-action@7efc44ca290b0a6e8d536d31a16dc0d916d01b55 # v1.2.0
         with:
           template-path: .github/workflows/data/release-notes-issue-intro.njk
           vars: |
@@ -98,7 +98,7 @@ jobs:
 
       # Replace the issue body with the intro; we'll append the new release notes in the next step.
       - name: Replace issue body with intro
-        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # v1.1.0
+        uses: julien-deramond/update-issue-body@8299eaea55b96a9bbd4c2504428f754ed15aab40 # v1.2.0
         with:
           issue-number: ${{ env.ISSUE }}
           body: ${{ steps.intro.outputs.result }}
@@ -106,7 +106,7 @@ jobs:
 
       # Append the release notes we generated to the issue body.
       - name: Append release notes to issue body
-        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # v1.1.0
+        uses: julien-deramond/update-issue-body@8299eaea55b96a9bbd4c2504428f754ed15aab40 # v1.2.0
         with:
           issue-number: ${{ env.ISSUE }}
           body: ${{ steps.relNotes.outputs.content }}
