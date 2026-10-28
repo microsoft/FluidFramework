@@ -7,7 +7,6 @@ import { ExampleErrorView, ExampleLoadingView } from "@fluid-example/example-uti
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 import type { ReactElement } from "react";
 
-import { GuestFrame } from "./guestFrame.js";
 import type { HostContainer } from "./host.js";
 import { InventoryView } from "./inventoryView.js";
 
@@ -21,9 +20,6 @@ export type HostState =
 
 /**
  * The top-level Host page.
- *
- * @remarks
- * Host inventory controls are available as soon as the container is ready, independently of Guest startup.
  */
 export function HostView({ state }: { state: HostState }): ReactElement {
 	if (state.status === "loading") {
@@ -36,6 +32,7 @@ export function HostView({ state }: { state: HostState }): ReactElement {
 	return (
 		<main style={{ padding: "1rem" }}>
 			<h1>Sandboxed inventory</h1>
+			<p>Tree synchronization is not implemented yet.</p>
 			<div
 				style={{
 					display: "grid",
@@ -49,7 +46,12 @@ export function HostView({ state }: { state: HostState }): ReactElement {
 				</section>
 				<section aria-labelledby="guest-heading">
 					<h2 id="guest-heading">Guest</h2>
-					<GuestFrame view={state.container.data} />
+					<iframe
+						title="Guest inventory"
+						src="./guest.html"
+						sandbox="allow-scripts"
+						style={{ width: "100%", minHeight: "20rem", border: "1px solid #888" }}
+					/>
 				</section>
 			</div>
 		</main>
