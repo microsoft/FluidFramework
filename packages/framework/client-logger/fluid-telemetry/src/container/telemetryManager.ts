@@ -24,6 +24,12 @@ import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 export class ContainerTelemetryManager {
 	private static readonly HEARTBEAT_EMISSION_INTERNAL_MS = 60000;
 
+	/**
+	 * Handle to the heartbeat timer. Cleared when the container is disposed so that the timer callback
+	 * (which references this manager, and transitively the container) does not keep them alive indefinitely.
+	 */
+	private heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+
 	public constructor(
 		private readonly container: IFluidContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
@@ -45,10 +51,12 @@ export class ContainerTelemetryManager {
 		);
 		this.container.on(
 			IFluidContainerSystemEventNames.DISPOSED,
-			(error?: ICriticalContainerError) =>
+			(error?: ICriticalContainerError) => {
+				this.stopHeartbeatTelemetryEmission();
 				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
 					error,
-				}),
+				});
+			},
 		);
 	}
 
@@ -57,7 +65,7 @@ export class ContainerTelemetryManager {
 	 * if and only if the container is in a "connected" state. It is used to keep a pulse check on a live container
 	 */
 	private setupHeartbeatTelemetryEmission(): void {
-		setInterval(() => {
+		this.heartbeatTimer = setInterval(() => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState may not be typed precisely
 			if (this.container.connectionState === ConnectionState.Connected) {
 				const telemetry = this.telemetryProducer.produceHeartbeatTelemetry();
@@ -66,6 +74,16 @@ export class ContainerTelemetryManager {
 				}
 			}
 		}, ContainerTelemetryManager.HEARTBEAT_EMISSION_INTERNAL_MS);
+	}
+
+	/**
+	 * Stops the heartbeat telemetry timer, if running.
+	 */
+	private stopHeartbeatTelemetryEmission(): void {
+		if (this.heartbeatTimer !== undefined) {
+			clearInterval(this.heartbeatTimer);
+			this.heartbeatTimer = undefined;
+		}
 	}
 
 	/**

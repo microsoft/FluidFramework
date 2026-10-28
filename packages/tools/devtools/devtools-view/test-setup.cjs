@@ -13,8 +13,12 @@
 const globalJsdom = require("global-jsdom");
 
 const NativeMessageChannel = globalThis.MessageChannel;
+const nativeCustomEventDescriptor = Object.getOwnPropertyDescriptor(globalThis, "CustomEvent");
 const cleanupJsdom = globalJsdom();
 const jsdom = globalThis.$jsdom;
+
+// global-jsdom preserves Node.js globals, but jsdom rejects Node.js CustomEvent instances.
+globalThis.CustomEvent = jsdom.window.CustomEvent;
 
 /**
  * Browsers do not use message ports to control process lifetime. Node.js does. Unreference ports
@@ -86,5 +90,10 @@ exports.mochaHooks = {
 		jsdom.window.close();
 		cleanupJsdom();
 		globalThis.MessageChannel = NativeMessageChannel;
+		if (nativeCustomEventDescriptor === undefined) {
+			delete globalThis.CustomEvent;
+		} else {
+			Object.defineProperty(globalThis, "CustomEvent", nativeCustomEventDescriptor);
+		}
 	},
 };

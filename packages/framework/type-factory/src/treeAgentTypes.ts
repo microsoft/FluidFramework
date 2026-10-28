@@ -90,9 +90,6 @@ export function isTypeFactoryType(value: unknown): value is TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryString extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "string";
 }
 
@@ -101,9 +98,6 @@ export interface TypeFactoryString extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryNumber extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "number";
 }
 
@@ -112,9 +106,6 @@ export interface TypeFactoryNumber extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryBoolean extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "boolean";
 }
 
@@ -123,9 +114,6 @@ export interface TypeFactoryBoolean extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryDate extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "date";
 }
 
@@ -134,9 +122,6 @@ export interface TypeFactoryDate extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryVoid extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "void";
 }
 
@@ -145,9 +130,6 @@ export interface TypeFactoryVoid extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryUndefined extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "undefined";
 }
 
@@ -156,9 +138,6 @@ export interface TypeFactoryUndefined extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryNull extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "null";
 }
 
@@ -167,9 +146,6 @@ export interface TypeFactoryNull extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryUnknown extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "unknown";
 }
 
@@ -180,9 +156,6 @@ export interface TypeFactoryUnknown extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryArray extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "array";
 	/**
 	 * The type of elements in the array.
@@ -195,9 +168,6 @@ export interface TypeFactoryArray extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryPromise extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "promise";
 	/**
 	 * The type that the Promise resolves to.
@@ -210,9 +180,6 @@ export interface TypeFactoryPromise extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryObject extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "object";
 	/**
 	 * The shape of the object, mapping property names to their types.
@@ -225,9 +192,6 @@ export interface TypeFactoryObject extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryRecord extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "record";
 	/**
 	 * The type of the record's keys.
@@ -244,9 +208,6 @@ export interface TypeFactoryRecord extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryMap extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "map";
 	/**
 	 * The type of the map's keys.
@@ -263,9 +224,6 @@ export interface TypeFactoryMap extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryTuple extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "tuple";
 	/**
 	 * The fixed-length items in the tuple.
@@ -282,9 +240,6 @@ export interface TypeFactoryTuple extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryUnion extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "union";
 	/**
 	 * The possible types in the union.
@@ -297,9 +252,6 @@ export interface TypeFactoryUnion extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryIntersection extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "intersection";
 	/**
 	 * The types to intersect.
@@ -312,9 +264,6 @@ export interface TypeFactoryIntersection extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryLiteral extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "literal";
 	/**
 	 * The specific literal value.
@@ -327,9 +276,6 @@ export interface TypeFactoryLiteral extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryOptional extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "optional";
 	/**
 	 * The inner type that is optional.
@@ -342,9 +288,6 @@ export interface TypeFactoryOptional extends TypeFactoryType {
  * @alpha
  */
 export interface TypeFactoryReadonly extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "readonly";
 	/**
 	 * The inner type that is readonly.
@@ -363,9 +306,6 @@ export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFac
  * @alpha
  */
 export interface TypeFactoryFunction extends TypeFactoryType {
-	/**
-	 * {@inheritDoc TypeFactoryType._kind}
-	 */
 	readonly _kind: "function";
 	/**
 	 * The function parameters.

@@ -40,14 +40,8 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
  * @sealed @alpha
  */
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
-	/**
-	 * {@inheritDoc SimpleTreeSchema.root}
-	 */
 	readonly root: FieldSchemaAlpha;
 
-	/**
-	 * {@inheritDoc SimpleTreeSchema.definitions}
-	 */
 	readonly definitions: ReadonlyMap<
 		string,
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema

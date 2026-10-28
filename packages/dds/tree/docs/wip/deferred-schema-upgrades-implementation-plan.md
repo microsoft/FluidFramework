@@ -51,6 +51,28 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### Upstream main integration
+
+Merged upstream main at `8d11c34deaa` after completing M8.
+Conflict resolutions preserve the deferred-schema feature and the separate `changeRevision` allocation-bound fix while adopting upstream's checkout base/factory refactor, branch-count tracking, and rebase validation.
+Schema-identity validation and upgrade telemetry remain active for deferred views.
+The internal authoring checkout forwards main-view location authority from its base; application forks retain upstream's restriction against location capture and resolution.
+New integration tests cover those location and schema-identity behaviors.
+
+The merged lockfile was regenerated and validated with a frozen install.
+The branch-only sandboxed-inventory example was aligned with upstream's client version, `3.10.0`, using the repository version tool.
+The generated package inventory now includes that example.
+Both conflicting API reports were regenerated from source.
+After a full clean build, their only differences from upstream are the two expected deferred-mode members in each alpha report.
+
+Validation:
+
+- `pnpm clean`: passed.
+- `pnpm build`: passed after correcting the example package version; the first clean build completed its other tasks but failed that version check.
+- `pnpm install --frozen-lockfile --ignore-scripts`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^deferred schema upgrade|^sharedTreeView|^SharedTree |^SchematizingSimpleTreeView|^DetachedFieldIndex|^Branches|^EditManager|^TreeBranchHistoryImpl|^runtime schema upgrade API|^simple-tree configuration|^independentView|^Host and Guest correctness|^TreeLocationResolver|^SharedTreeChangeFamily' --reporter dot`: 1538 passed; 3 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch|^deferred schema upgrade|^simple-tree configuration|^TreeLocationResolver' --reporter dot`: 191 passed.
+
 ### M8: alpha opt-in and final validation
 
 The alpha configuration now exposes `schemaUpgradeMode: "immediate" | "deferred"`, with `"immediate"` as the default.

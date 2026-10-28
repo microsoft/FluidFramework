@@ -17,6 +17,8 @@ import type {
 	TreeArrayNodeAlpha,
 	TreeMapNode,
 	TreeMapNodeAlpha,
+	ViewableTree,
+	ViewableTreeAlpha,
 } from "./simple-tree/index.js";
 
 /**
@@ -33,6 +35,14 @@ import type {
  * @alpha
  */
 export function asAlpha(tree: ITree): ITreeAlpha;
+
+/**
+ * Retrieve the {@link ViewableTreeAlpha | alpha API} for a {@link ViewableTree}.
+ * @param tree - The tree whose alpha API is requested.
+ * @returns The alpha API for `tree`.
+ * @alpha
+ */
+export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.

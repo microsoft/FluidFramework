@@ -41,7 +41,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 	EmptyKey,
-	ValueSchema,
+	RebaseValidation,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -81,11 +81,9 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
-	NodeKind,
-	type SimpleTreeSchema,
 	FieldKind,
-	type SimpleLeafNodeSchema,
 	type TreeBranchCommitMetadata,
+	type ViewableTree,
 } from "../../simple-tree/index.js";
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
@@ -174,15 +172,21 @@ describe("SharedTree", () => {
 
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
-			const tree = treeTestFactory();
-			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+			// Smoke tests run with debug assertions disabled, so rebase validation cannot be enabled.
+			RebaseValidation.runWithLevel(RebaseValidation.Level.None, () => {
+				const tree = treeTestFactory();
+				assert.deepEqual(
+					tree.contentSnapshot().schema.rootFieldSchema,
+					storedEmptyFieldSchema,
+				);
 
-			const config = new TreeViewConfiguration({
-				schema: numberSchema,
+				const config = new TreeViewConfiguration({
+					schema: numberSchema,
+				});
+				const view = tree.viewWith(config);
+				view.initialize(10);
+				assert.equal(view.root, 10);
 			});
-			const view = tree.viewWith(config);
-			view.initialize(10);
-			assert.equal(view.root, 10);
 		});
 
 		it("initialize-dispose-view with primitive schema", () => {
@@ -965,6 +969,44 @@ describe("SharedTree", () => {
 	});
 
 	describe("Trunk Trimming", () => {
+		it("does not trim merged commits during detached change events", () => {
+			const tree = DefaultTestSharedTreeKind.getFactory().create(
+				new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+					idCompressor: createSnapshotCompressor(),
+				}),
+				"tree",
+			);
+			assert.equal(tree.isAttached(), false);
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- The edit manager is private.
+			tree.kernel["editManager"].setHistoryRetention(1);
+
+			const fork = view.fork();
+			fork.root.insertAtEnd("A");
+			fork.root.insertAtEnd("B");
+			fork.root.insertAtEnd("C");
+
+			const branch = tree.kernel.checkout.mainBranch;
+			let observedCommitCount = 0;
+			branch.events.on("afterChange", (event) => {
+				if (event.type === "append") {
+					for (const commit of event.newCommits) {
+						assert.equal(commit.wasTrimmed, undefined);
+						observedCommitCount++;
+					}
+				}
+			});
+
+			view.merge(fork);
+
+			assert.equal(observedCommitCount, 3);
+			assert.deepEqual([...view.root], ["A", "B", "C"]);
+		});
+
 		it("has bounded memory growth in EditManager", () => {
 			const provider = new TestTreeProviderLite(2);
 			const viewInit = provider.trees[0].viewWith(
@@ -1035,7 +1077,13 @@ describe("SharedTree", () => {
 		}
 
 		it("branch history remains safe to read after trunk trimming", () => {
-			const provider = new TestTreeProviderLite(2);
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
 			const viewInit = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -1061,22 +1109,28 @@ describe("SharedTree", () => {
 
 			provider.synchronizeMessages();
 
-			// These two edits will have ref numbers that correspond to the last of the above edits
-			view1.root.insertAtStart("D1");
-			view2.root.insertAtStart("D2");
-
-			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 4);
-			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 4);
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 3);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 3);
 
 			// Capture all commit metadata objects reachable before trimming
 			const view1HistoryBeforeTrimming = getHistory(view1.branchHistory.getHead());
 			const view2HistoryBeforeTrimming = getHistory(view2.branchHistory.getHead());
+			const trimmedCommit = view1HistoryBeforeTrimming.at(-1);
+			assert(trimmedCommit !== undefined);
+			const revertTo = trimmedCommit.revertTo;
+			assert(revertTo !== undefined);
+			const boundaryCommit = view1HistoryBeforeTrimming.at(-2);
+			assert(boundaryCommit !== undefined);
+			const head = provider.trees[0].kernel.checkout.mainBranch.getHead();
 
-			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			// Branch creation advances the minimum sequence number without changing the main branch's head.
+			provider.trees[0].createSharedBranch();
+			provider.trees[1].createSharedBranch();
 			provider.synchronizeMessages();
 			// Test-check: trimming should have occurred
-			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
-			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 1);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 1);
+			assert.equal(provider.trees[0].kernel.checkout.mainBranch.getHead(), head);
 
 			// Check that the newly reachable history post-trimming is safe to read
 			checkHistorySafety(
@@ -1093,9 +1147,17 @@ describe("SharedTree", () => {
 			for (const commit of view2HistoryBeforeTrimming) {
 				checkHistorySafety(commit);
 			}
+
+			assert.equal(trimmedCommit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+			assert.deepEqual([...view1.root], ["C", "B", "A"]);
+
+			assert(boundaryCommit.revertTo !== undefined);
+			boundaryCommit.revertTo();
+			assert.deepEqual([...view1.root], ["B", "A"]);
 		});
 
-		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// This covers in-memory retention only. See the "History retention configuration" suite below for the
 		// summary round-trip behavior.
 		it("does not evict trunk commits when retainHistory is enabled", () => {
 			const provider = new TestTreeProviderLite(
@@ -1145,7 +1207,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Persists retained history", () => {
+	describe("History retention configuration", () => {
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past most of them.
@@ -1211,6 +1273,91 @@ describe("SharedTree", () => {
 			return tree.kernel.checkout.branchHistory.length;
 		}
 
+		// Example: `retainHistory: 3` on a tree that has sequenced more than 3 commits outside the collaboration window.
+		// The client keeps commits in the collaboration window plus enough older commits to reach at least 3 commits in total,
+		// and a client loaded from that tree's summary holds the same commits.
+		// A limit smaller than the collaboration window (such as 0 or 1) does not trim below the window,
+		// and a very large limit (such as Number.MAX_SAFE_INTEGER) keeps every available commit.
+		describe("numeric limits", () => {
+			for (const retainHistory of [0, 1, 3, 5, Number.MAX_SAFE_INTEGER] as const) {
+				it(`retains and persists history for retainHistory: ${retainHistory}`, async () => {
+					const { retainedCommitCount: collaborationWindowCount } = generateHistory(
+						configuredSharedTree({ jsonValidator: FormatValidatorBasic }).getFactory(),
+					);
+					const { retainedCommitCount: availableCommitCount } = generateHistory(
+						configuredSharedTree({
+							jsonValidator: FormatValidatorBasic,
+							retainHistory: true,
+						}).getFactory(),
+					);
+					const expectedCount = Math.max(
+						collaborationWindowCount,
+						Math.min(retainHistory, availableCommitCount),
+					);
+
+					const factory = configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						retainHistory,
+					}).getFactory();
+					const { provider } = generateHistory(factory);
+					for (const peerTree of provider.trees) {
+						assert.equal(trunkCommitCount(peerTree), expectedCount);
+					}
+
+					const tree = provider.trees[0];
+					const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+					assert.equal(trunkCommitCount(loaded), expectedCount);
+					validateTreeConsistency(tree, loaded);
+				});
+			}
+		});
+
+		// Example: `configuredSharedTree({ retainHistory: -1 })` throws a UsageError when the tree is created,
+		// as do 0.5, NaN, Infinity and values above Number.MAX_SAFE_INTEGER.
+		// Values that TypeScript rejects but a JavaScript caller could pass, such as the string "3", null or {},
+		// are rejected at runtime in the same way.
+		describe("invalid limits", () => {
+			for (const retainHistory of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.NEGATIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				it(`rejects ${retainHistory}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({ retainHistory }).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+
+			for (const retainHistory of ["3", null, {}]) {
+				it(`rejects type-erased input ${JSON.stringify(retainHistory)}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({
+									// @ts-expect-error Exercise runtime validation of type-erased application input.
+									retainHistory,
+								}).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+		});
+
 		it("persists the retained trunk when retainHistory is enabled", async () => {
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -1239,6 +1386,44 @@ describe("SharedTree", () => {
 				retainedCommitCount,
 				"The default path must persist exactly the collaboration window",
 			);
+		});
+
+		// Example: a summary written with `retainHistory: true` holds every commit, say 12.
+		// A client that loads it with `retainHistory: 3` starts with all of them, because it does not yet know the collaboration boundary.
+		// When it receives its first message, which reports the boundary, it trims down to 3 commits without needing new edits.
+		// The client that wrote the summary is unaffected and keeps all of its commits.
+		it("applies a numeric policy to loaded history when the collaboration boundary advances", async () => {
+			const { provider, retainedCommitCount } = generateHistory(
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const tree = provider.trees[0];
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: 3,
+			}).getFactory();
+			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			assert.equal(trunkCommitCount(loaded), retainedCommitCount);
+
+			// Loading does not supply the collaboration boundary. Receiving it permits trimming without new edits.
+			loaded.kernel.processMessagesCore({
+				envelope: {
+					type: "op",
+					clientId: "test-client",
+					timestamp: 0,
+					sequenceNumber: provider.sequenceNumber + 1,
+					referenceSequenceNumber: provider.sequenceNumber,
+					minimumSequenceNumber: provider.minimumSequenceNumber,
+				},
+				local: false,
+				messagesContent: [],
+			});
+
+			assert.equal(trunkCommitCount(loaded), 3);
+			assert.equal(trunkCommitCount(tree), retainedCommitCount);
+			validateTreeConsistency(tree, loaded);
 		});
 	});
 
@@ -3278,49 +3463,19 @@ describe("SharedTree", () => {
 		);
 	});
 
-	it("exportVerbose & exportSimpleSchema", () => {
-		const tree = treeTestFactory();
-		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), {
-			definitions: new Map(),
-			root: {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map(),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-		} satisfies SimpleTreeSchema);
-
+	it("exposes ViewableTreeAlpha", () => {
+		const stableTree: ViewableTree = treeTestFactory();
+		const tree = asAlpha(stableTree);
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
 		});
 		const view = tree.viewWith(config);
 		view.initialize(10);
 
-		assert.deepEqual(tree.exportVerbose(), 10);
-
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map([
-					["com.fluidframework.leaf.number", { isStaged: undefined }],
-				]),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-			definitions: new Map([
-				[
-					"com.fluidframework.leaf.number",
-					{
-						kind: NodeKind.Leaf,
-						leafKind: ValueSchema.Number,
-						metadata: {},
-						persistedMetadata: undefined,
-					} satisfies SimpleLeafNodeSchema,
-				],
-			]),
-		};
-		assert.deepEqual(tree.exportSimpleSchema(), expected);
+		assert.equal(tree.exportVerbose(), 10);
+		const schema = tree.exportSimpleSchema();
+		assert.equal(schema.root.kind, FieldKind.Required);
+		assert(schema.definitions.has(numberSchema.identifier));
 	});
 
 	describe("Shared Branches", () => {

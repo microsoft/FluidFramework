@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
@@ -31,7 +31,6 @@ import {
 import {
 	type FieldKey,
 	type GraphCommit,
-	type IEditableForest,
 	type JsonableTree,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -41,7 +40,6 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
 	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
@@ -54,16 +52,12 @@ import {
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
-	buildChunkedForest,
-	buildForest,
-	ComparisonForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeTreeChunker,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
@@ -94,6 +88,8 @@ import {
 	type SimpleNodeSchema,
 	FieldKind,
 	type ITreeAlpha,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	type ViewableTreeAlpha,
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
@@ -106,6 +102,12 @@ import {
 } from "../util/index.js";
 
 import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { buildConfiguredForest, type ForestType } from "./forestType.js";
+import type {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	ForestTypeOptimized,
+} from "./forestTypeOptimized.js";
+import { ForestTypeReference } from "./forestTypeReference.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -115,6 +117,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { createViewableTreeAlpha } from "./viewableTree.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -213,9 +216,18 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
+		const retainHistory = optionsParam.retainHistory;
+		if (
+			retainHistory !== undefined &&
+			typeof retainHistory !== "boolean" &&
+			(!Number.isSafeInteger(retainHistory) || retainHistory < 0)
+		) {
+			throw new UsageError("retainHistory must be a boolean or a nonnegative safe integer");
+		}
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
+			retainHistory: retainHistory ?? defaultSharedTreeOptions.retainHistory,
 		};
 		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
@@ -334,10 +346,8 @@ export class SharedTreeKernel
 		this.registerCheckout("main", this.checkout);
 
 		this.view = {
+			...createViewableTreeAlpha(this.checkout, () => this.exportSimpleSchema()),
 			contentSnapshot: () => this.contentSnapshot(),
-			exportSimpleSchema: () => this.exportSimpleSchema(),
-			exportVerbose: () => this.exportVerbose(),
-			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
@@ -348,6 +358,12 @@ export class SharedTreeKernel
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
 		checkout.receivesSequencedOutcomes = true;
+		if (branchId === "main") {
+			checkout.setLocationRevisionSource(() => ({
+				head: this.getTrunkHead(),
+				isAttached: this.sharedObject.isAttached(),
+			}));
+		}
 		this.checkouts.set(branchId, checkout);
 	}
 
@@ -513,7 +529,7 @@ export function exportSimpleSchema(
 /**
  * A way to parse schema in the persisted format from {@link extractPersistedSchema}.
  * @remarks
- * This behaves identically to {@link ITreeAlpha.exportSimpleSchema},
+ * This behaves identically to {@link ViewableTreeAlpha.exportSimpleSchema},
  * except that it gets the schema from the caller instead of from an existing tree.
  *
  * This can be useful for inspecting the contents of persisted schema,
@@ -674,19 +690,27 @@ export interface SharedTreeOptions
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 
 	/**
-	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
-	 * the collaboration window.
+	 * Configures the minimum amount of available sequenced edit history this SharedTree instance retains.
 	 *
 	 * @defaultValue `false`
 	 *
 	 * @remarks
+	 * A positive safe integer retains the newest specified number of available main-branch commits.
+	 * Each sequenced commit counts separately, including commits in the same batch.
+	 * Set to `true` to retain all available history, or `false` or `0` to disable extra retention.
+	 * Collaboration and existing branches can require retaining additional commits, so the policy is not a hard cap. There are two other situations that can cause the number of retained commits to temporarily exceed the limit set by the policy:
+	 * - While the container is detached, commits are only trimmed when a summary is generated.
+	 * - When a summary is loaded, no trimming is performed until the client receives information about the current collaboration window from the service.
+	 *
+	 * This policy is local to each SharedTree instance; it is not stored in the document or propagated to other clients.
+	 * Increasing retention cannot recover history that has already been removed.
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
 	 * local branches), to bound memory usage and document size.
-	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * Setting this option to `true` retains all available trunk commits - this increases memory usage and document size
 	 * over time and should be used with care.
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
@@ -743,115 +767,6 @@ export interface SharedTreeFormatOptions {
 	 * default: TreeCompressionStrategy.Compressed
 	 */
 	treeEncodeType: TreeCompressionStrategy;
-}
-
-/**
- * Used to distinguish between different forest types.
- * @remarks
- * The "Forest" is the internal data structure used to store all the trees (the main tree and any removed ones) for a given view or branch.
- * ForestTypes should all have the same behavior, but may differ in performance and debuggability.
- *
- * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
- * @privateRemarks
- * Implement using {@link toForestType}.
- * Consume using {@link buildConfiguredForest}.
- * @sealed @beta
- */
-export interface ForestType extends ErasedType<"ForestType"> {}
-
-/**
- * Reference implementation of forest.
- * @remarks
- * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
- * @privateRemarks
- * The "ObjectForest" forest type.
- * @beta
- */
-export const ForestTypeReference = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
-		buildForest(breaker, schema),
-);
-
-/**
- * Optimized implementation of forest.
- * @remarks
- * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
- * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
- * @privateRemarks
- * The "ChunkedForest" forest type.
- * @beta
- */
-export const ForestTypeOptimized = toForestType(
-	(
-		breaker: Breakable,
-		schema: TreeStoredSchemaSubscription,
-		idCompressor: IIdCompressor,
-		shouldEncodeIncrementally: IncrementalEncodingPolicy,
-	) =>
-		buildChunkedForest(
-			makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
-			undefined,
-			idCompressor,
-			breaker,
-		),
-);
-
-/**
- * Slow implementation of forest intended only for debugging.
- * @remarks
- * Includes validation with scales poorly.
- * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
- * @privateRemarks
- * A {@link ComparisonForest} which uses the "ChunkedForest" forest type as its main forest and validates every delta
- * against a reference "ObjectForest" (with expensive asserts enabled for schema validation).
- * This exercises the optimized forest while asserting that its contents stay consistent with the reference implementation.
- * @beta
- */
-export const ForestTypeExpensiveDebug = toForestType(
-	(
-		breaker: Breakable,
-		schema: TreeStoredSchemaSubscription,
-		idCompressor: IIdCompressor,
-		shouldEncodeIncrementally: IncrementalEncodingPolicy,
-	) =>
-		new ComparisonForest(
-			buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
-				undefined,
-				idCompressor,
-				breaker,
-			),
-			buildForest(breaker, schema, undefined, true),
-		),
-);
-
-type ForestFactory = (
-	breaker: Breakable,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-	shouldEncodeIncrementally: IncrementalEncodingPolicy,
-) => IEditableForest;
-
-function toForestType(factory: ForestFactory): ForestType {
-	return factory as unknown as ForestType;
-}
-
-/**
- * Build and return a forest of the requested type.
- */
-export function buildConfiguredForest(
-	breaker: Breakable,
-	factory: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-	shouldEncodeIncrementally: IncrementalEncodingPolicy,
-): IEditableForest {
-	return (factory as unknown as ForestFactory)(
-		breaker,
-		schema,
-		idCompressor,
-		shouldEncodeIncrementally,
-	);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {

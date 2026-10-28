@@ -445,17 +445,8 @@ export namespace System_Unsafe {
 		out Types extends ImplicitAllowedTypesUnsafe,
 		out TCustomMetadata = unknown,
 	> extends FieldSchema<Kind, any, TCustomMetadata> {
-		/**
-		 * {@inheritDoc FieldSchema.kind}
-		 */
 		readonly kind: Kind;
-		/**
-		 * {@inheritDoc FieldSchema.allowedTypes}
-		 */
 		readonly allowedTypes: Types;
-		/**
-		 * {@inheritDoc FieldSchema.allowedTypeSet}
-		 */
 		readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 	}
 }
@@ -473,9 +464,6 @@ export interface FieldSchemaAlphaUnsafe<
 	out TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined,
 > extends FieldSchemaAlpha<Kind, any, TCustomMetadata, TProps>,
 		System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
-	/**
-	 * {@inheritDoc FieldSchema.allowedTypes}
-	 */
 	readonly allowedTypes: Types;
 }
 

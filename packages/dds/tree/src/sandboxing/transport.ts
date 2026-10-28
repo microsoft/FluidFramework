@@ -4,14 +4,15 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
+	type BufferPlaceholder,
 	type HandleToken,
 	createBufferPlaceholder,
 	escapedObjectType,
 	getTransportBuffer,
 	isEscapedObject,
-	isLocalHandle,
 	isSerializedHandle,
 	SandboxProtocolError,
 	type SerializedHandle,
@@ -19,13 +20,57 @@ import {
 } from "./common.js";
 
 /**
- * Copies structured-clone messages and replaces handles without changing the input.
- * {@link TransportCodec.decode} restores authorized handles without binding or resolving them.
- * Decoded buffers remain placeholders until blob-response validation.
- * Callers must perform semantic validation after decoding; this layer checks only transport structure.
+ * Data accepted by the sandbox at the structured-clone boundary.
+ */
+export type MessagePortData =
+	// eslint-disable-next-line @rushstack/no-new-null -- Null is part of the supported transport vocabulary.
+	| null
+	| undefined
+	| boolean
+	| number
+	| string
+	| ArrayBuffer
+	| readonly MessagePortData[]
+	| { readonly [key: string]: MessagePortData };
+
+/**
+ * Data after restricted transport copying and transport unescaping.
+ *
+ * @remarks
+ * Records have null prototypes, buffers are registered placeholders, and authorized handles have
+ * been restored. Protocol schemas and protocol state have not been validated.
+ */
+export type NormalizedTransportData =
+	// eslint-disable-next-line @rushstack/no-new-null -- Null is part of the supported transport vocabulary.
+	| null
+	| undefined
+	| boolean
+	| number
+	| string
+	| IFluidHandle
+	| BufferPlaceholder
+	| readonly NormalizedTransportData[]
+	| { readonly [key: string]: NormalizedTransportData };
+
+/**
+ * Converts sandbox values between their semantic and restricted transport representations.
+ *
+ * @remarks
+ * Subclasses define how local Fluid handles map to transport tokens.
+ * This codec validates transport structure only. Callers must validate message semantics.
  */
 export abstract class TransportCodec {
-	public encode(value: unknown): unknown {
+	/**
+	 * Creates a transport-safe copy of a local value.
+	 *
+	 * @remarks
+	 * Replaces local handles with transport tokens and escapes records that use reserved transport
+	 * markers. The input is not changed.
+	 *
+	 * @param value - The local value to encode.
+	 * @returns A structured-clone-compatible representation of `value`.
+	 */
+	public encode(value: unknown): MessagePortData {
 		return copyTransportData(
 			value,
 			(handle) =>
@@ -41,10 +86,20 @@ export abstract class TransportCodec {
 							entries: Object.entries(record),
 						})
 					: record,
-		);
+		) as MessagePortData;
 	}
 
-	public decode(value: unknown): unknown {
+	/**
+	 * Creates a normalized copy of received transport data.
+	 *
+	 * @remarks
+	 * Restores authorized handles without binding or resolving them. Buffers remain placeholders until
+	 * blob-response validation.
+	 *
+	 * @param value - The received transport data to decode.
+	 * @returns The normalized representation of `value`.
+	 */
+	public decode(value: unknown): NormalizedTransportData {
 		// Restrict the entire graph before schema checks or token restoration.
 		const copied = copyTransportData(value, () => {
 			throw new SandboxProtocolError("Handles must cross the sandbox boundary as tokens.");
@@ -89,10 +144,23 @@ export abstract class TransportCodec {
 			// Do not interpret the reconstructed root as a marker a second time.
 			return record;
 		};
-		return restore(copied);
+		return restore(copied) as NormalizedTransportData;
 	}
 
+	/**
+	 * Converts a local Fluid handle to its transport token.
+	 *
+	 * @param handle - The local Fluid handle to convert.
+	 * @returns The transport token for `handle`.
+	 */
 	protected abstract encodeHandle(handle: IFluidHandle): HandleToken;
+
+	/**
+	 * Restores the Fluid handle identified by a transport token.
+	 *
+	 * @param token - The transport token to restore.
+	 * @returns The Fluid handle identified by `token`.
+	 */
 	protected abstract decodeHandle(token: HandleToken): IFluidHandle;
 }
 
@@ -100,8 +168,8 @@ export abstract class TransportCodec {
  * Copies outgoing semantic data into null-prototype records before validation.
  * Local handles remain opaque leaves; buffers become identity-checked placeholders via {@link createBufferPlaceholder}.
  */
-export function normalizeTransportData(value: unknown): unknown {
-	return copyTransportData(value, (handle) => handle);
+export function normalizeTransportData(value: unknown): NormalizedTransportData {
+	return copyTransportData(value, (handle) => handle) as NormalizedTransportData;
 }
 
 /**
@@ -156,7 +224,7 @@ function copyTransportData(
 		if (typeof item !== "object") {
 			throw new SandboxProtocolError("Unsupported sandbox transport value.");
 		}
-		if (isLocalHandle(item)) {
+		if (isFluidHandle(item)) {
 			return handle(item);
 		}
 		const registeredBuffer = getTransportBuffer(item);

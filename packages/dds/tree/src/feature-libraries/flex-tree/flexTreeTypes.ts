@@ -216,9 +216,6 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
  * A FlexTreeNode that is hydrated, meaning it is associated with a {@link FlexTreeHydratedContext}.
  */
 export interface HydratedFlexTreeNode extends FlexTreeNode {
-	/**
-	 * {@inheritDoc FlexTreeNode.context}
-	 */
 	readonly context: FlexTreeHydratedContext;
 
 	/**
@@ -328,6 +325,20 @@ export type FlexibleNodeContent = MinimalMapTreeNodeView;
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  */
 export interface FlexTreeSequenceField extends FlexTreeField {
+	/**
+	 * Gets a node with unboxing at an already validated index.
+	 * @param index - A non-negative integer strictly less than the field length.
+	 * @remarks
+	 * For valid indexes, this behaves the same as {@link FlexTreeSequenceField.at},
+	 * but may be more efficient because implementations do not need to support negative indexes.
+	 * Prefer this method when negative indexes indicate a caller error rather than an offset from the end.
+	 * This makes the intended index semantics explicit and can help expose bugs that
+	 * {@link FlexTreeSequenceField.at} would mask by interpreting a negative index as a valid offset.
+	 * Callers must still ensure the index is in bounds:
+	 * implementations may assert or throw for invalid indexes, but are not required to detect them.
+	 */
+	atIndex(index: number): FlexTreeUnknownUnboxed;
+
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.

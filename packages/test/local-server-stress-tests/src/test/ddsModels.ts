@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	isChannelFactory,
+} from "@fluid-private/test-dds-utils";
 import { baseClaimsModel } from "@fluid-internal/claims/internal/test";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -34,7 +40,7 @@ function repeatFactoryAsync<T, TState = void>(
 	};
 }
 
-const generateSubModelMap = (
+export const generateSubModelMap = (
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
 ): Map<
 	string,
@@ -59,6 +65,12 @@ const generateSubModelMap = (
 	for (const model of models) {
 		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
 			model;
+		// There's nothing fundamentally wrong with allowing fuzz models that use different channel factory
+		// configurations. The local server stress harness would need to be adjusted to handle it, though.
+		assert(
+			isChannelFactory(factory),
+			"Local server stress tests require DDS models with a fixed channel factory.",
+		);
 		const generator = repeatFactoryAsync(generatorFactory);
 		modelMap.set(factory.attributes.type, {
 			generator,

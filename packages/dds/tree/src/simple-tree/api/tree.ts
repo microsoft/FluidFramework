@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	ChangeMetadata,
+	ChangeMetadataBeta,
 	CommitMetadata,
 	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -20,6 +21,8 @@ import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	createViewableTreeAlpha,
 } from "../../shared-tree/index.js";
 import type {
 	JsonCompatibleReadOnly,
@@ -39,6 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
@@ -56,10 +60,17 @@ import type { VerboseTree } from "./verboseTree.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
+ * @remarks
+ * For experimental APIs that access tree content and stored schema without a view schema, see {@link ViewableTreeAlpha}.
+ *
+ * @see {@link (asAlpha:2)} to access alpha APIs on this tree
+ *
  * @privateRemarks
+ * Use {@link createViewableTreeAlpha} to implement this interface.
+ *
  * TODO:
- * Add stored key versions of {@link (TreeAlpha:interface).(exportVerbose:2)}, {@link (TreeAlpha:interface).(exportConcise:2)} and {@link (TreeAlpha:interface).exportCompressed} here so tree content can be accessed without a view schema.
- * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
+ * Add stored key versions of {@link (TreeAlpha:interface).(exportConcise:2)} and {@link (TreeAlpha:interface).exportCompressed} here so tree content can be accessed without a view schema.
+ * Add an exportJsonSchema method, which should exactly match the concise format and the free function for exporting view schema.
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of createIndependentTreeViewAlpha can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
@@ -92,17 +103,26 @@ export interface ViewableTree {
 
 /**
  * Channel for a Fluid Tree DDS.
+ *
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
+ *
+ * @see {@link ITreeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:1)} to access alpha APIs on this tree
+ *
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
- * {@link ITree} extended with some alpha APIs.
- * @sealed @alpha
+ * A {@link ViewableTree} with experimental APIs.
+ *
+ * @see {@link (asAlpha:2)} to access these APIs on an existing {@link ViewableTree}
+ *
+ * @sealed
+ * @alpha
  */
-export interface ITreeAlpha extends ITree {
+export interface ViewableTreeAlpha extends ViewableTree {
 	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
@@ -116,7 +136,16 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+}
 
+/**
+ * {@link ITree} extended with some alpha APIs.
+ *
+ * @see {@link (asAlpha:1)} to access these APIs on an existing {@link ITree}
+ *
+ * @sealed @alpha
+ */
+export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
 	/**
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
@@ -165,6 +194,11 @@ export interface ITreeAlpha extends ITree {
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
+	/**
+	 * Events for the view's underlying branch.
+	 */
+	readonly events: Listenable<TreeBranchEventsBeta>;
+
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 		params?: RunTransactionParamsBeta,
@@ -477,6 +511,28 @@ export interface TreeBranchCommitMetadata {
 	 * This method may return a different value over time if the parent commit is trimmed from the branch's history.
 	 */
 	getParent(): TreeBranchCommitMetadata | undefined;
+
+	/**
+	 * Applies a new change that reverts all changes made after this commit on the branch from which it was obtained.
+	 * This is a no-op if this commit is the head of that branch.
+	 *
+	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 *
+	 * @remarks
+	 * This method is `undefined` when the commit is no longer reachable on its original branch, the branch has
+	 * been replaced or disposed, a later commit contains a schema change, or reverting is temporarily disallowed
+	 * (for example, during a transaction). Its availability can change as the branch's history changes.
+	 * A schema change in this commit does not prevent reverting later data changes.
+	 *
+	 * Access this method on the metadata before each call; do not retain references to it.
+	 * Each obtained function is single-use and throws a `UsageError` if reused or if the branch changes before it is called.
+	 *
+	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 */
+	revertTo?(options?: RevertToOptionsAlpha): void;
 }
 
 /**
@@ -494,6 +550,7 @@ export interface TreeBranchHistory {
 	 * - A branch that contains commits not already on this branch is merged into this branch.
 	 * - The branch is rebased onto another branch that contains commits not already on this branch.
 	 * This number shrinks when past commits are trimmed from the history.
+	 * Reading this property after the branch is disposed throws an error.
 	 */
 	readonly length: number;
 
@@ -528,6 +585,11 @@ export interface UntypedTreeViewAlpha
 	 * APIs for querying the history of the branch being viewed.
 	 */
 	readonly branchHistory: TreeBranchHistory;
+
+	/**
+	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.
+	 */
+	readonly locations: TreeLocationResolver;
 
 	/**
 	 * Returns true if this view has the given schema as its root schema.
@@ -578,6 +640,7 @@ export interface UntypedTreeViewAlpha
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 * For new code, use {@link TreeBranchCommitMetadata.revertTo} on a commit from this view's branch history instead.
 	 */
 	revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
 
@@ -689,7 +752,9 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link (asAlpha:1)}
+ * @see {@link TreeViewBeta}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ * @see {@link asBeta} to access beta APIs on this view
  *
  * @sealed @public
  */
@@ -977,15 +1042,22 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 
 /**
  * {@link TreeView} with additional beta APIs.
+ *
+ * @see {@link TreeViewAlpha} for additional alpha APIs
+ * @see {@link asBeta} to access these APIs on an existing {@link TreeView}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ *
  * @sealed @beta
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
-	/**
-	 * {@inheritDoc TreeView.compatibility}
-	 */
 	readonly compatibility: SchemaCompatibilityStatusBeta;
+
+	/**
+	 * {@inheritDoc TreeView.events}
+	 */
+	readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
@@ -993,6 +1065,11 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 
 /**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ *
+ * @see {@link TreeViewBeta} for beta APIs
+ * @see {@link (asAlpha:3)} to access these APIs on an existing {@link TreeView}
+ * @see {@link asBeta} to access beta APIs on a {@link TreeView}
+ *
  * @sealed @alpha
  */
 export interface TreeViewAlpha<
@@ -1039,7 +1116,8 @@ export interface TreeViewAlpha<
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+	// Keep the alpha view first so event listeners infer alpha metadata.
+	fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
 }
 
 /**
@@ -1165,12 +1243,25 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link UntypedTreeView}.
- * @sealed @alpha
+ * @sealed @beta
  */
-export interface TreeBranchEvents {
+export interface TreeBranchEventsBeta {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change, including settlement events for local changes
+	 */
+	changed(data: ChangeMetadataBeta): void;
+}
+
+/**
+ * Events for {@link UntypedTreeView}.
+ * @sealed @alpha
+ */
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
+	/**
+	 * Fired as described by {@link TreeBranchEventsBeta.changed}, with alpha change metadata and revertible support.
 	 *
 	 * @param data - information about the change
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,

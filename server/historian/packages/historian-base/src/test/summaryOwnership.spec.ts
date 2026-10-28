@@ -453,8 +453,18 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "sha",
 				outcome: "allowed",
+				source: "alfred",
 			}),
 		);
+		const allowedEvents = info.getCalls().filter((call) => {
+			const properties = call.args[1];
+			return (
+				call.args[0] === "HistorianSummaryDocumentOwnershipValidation" &&
+				!(properties instanceof Map) &&
+				properties?.outcome === "allowed"
+			);
+		});
+		assert.strictEqual(allowedEvents.length, 1);
 	});
 
 	it("does not collide ephemeral cache entries for duplicate document IDs", async () => {

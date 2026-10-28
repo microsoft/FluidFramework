@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	fail,
+	skipInProduction,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
@@ -30,6 +35,7 @@ import {
 	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
+	isModularChangesetValid,
 	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import {
@@ -68,6 +74,8 @@ export class SharedTreeChangeFamily
 		ChangeDecodingContext
 	>;
 	private readonly modularChangeFamily: ModularChangeFamily;
+
+	public readonly validator = debugOnlySharedTreeChangeValidator;
 
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
@@ -396,8 +404,8 @@ export enum ConstraintStatus {
 	 * At least one explicit constraint has been violated.
 	 * @remarks
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 */
 	ExplicitViolation,
 }
@@ -450,3 +458,36 @@ export function getCommitOutcome(change: SharedTreeChange): CommitOutcome {
 		}
 	}
 }
+
+/**
+ * Validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * See {@link debugOnlySharedTreeChangeValidator} for the equivalent debug-only validation function.
+ */
+export function isSharedTreeChangeValid(change: SharedTreeChange): true | string {
+	for (const innerChange of change.changes) {
+		if (innerChange.type === "data") {
+			const result = isModularChangesetValid(innerChange.innerChange, fieldKinds);
+			if (result !== true) {
+				return result;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Debug-only validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns In production builds, always returns `true`.
+ * In debug builds, returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * Using this function over {@link isSharedTreeChangeValid} allows tree-shaking of the validation logic in production builds.
+ */
+export let debugOnlySharedTreeChangeValidator: (change: SharedTreeChange) => true | string =
+	() => true;
+skipInProduction(() => {
+	debugOnlySharedTreeChangeValidator = isSharedTreeChangeValid;
+});

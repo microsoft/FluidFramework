@@ -35,9 +35,6 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
  * @legacy @beta
  */
 export interface IFluidBrowserPackage extends IFluidPackage {
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid}
-	 */
 	fluid: {
 		/**
 		 * The browser specific package information for this package

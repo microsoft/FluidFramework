@@ -24,6 +24,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -84,6 +85,7 @@ const placeholderClientId = "placeholder";
  * @legacy @beta
  */
 export class TaskManagerClass
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ITaskManagerEvents>
 	implements ITaskManager
 {
@@ -303,9 +305,6 @@ export class TaskManagerClass
 		}
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.volunteerForTask}
-	 */
 	public async volunteerForTask(taskId: string): Promise<boolean> {
 		// If we are both queued and assigned, then we have the lock and do not
 		// have any pending abandon/complete ops. In this case we can resolve
@@ -416,9 +415,6 @@ export class TaskManagerClass
 		return lockAcquireP;
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.subscribeToTask}
-	 */
 	public subscribeToTask(taskId: string): void {
 		if (this.subscribed(taskId)) {
 			return;
@@ -530,9 +526,6 @@ export class TaskManagerClass
 		this.subscribedTasks.add(taskId);
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.abandon}
-	 */
 	public abandon(taskId: string): void {
 		// Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
 		// Otherwise, we should check to make sure the client is optimistically queued for the task before trying to abandon.
@@ -552,9 +545,6 @@ export class TaskManagerClass
 		this.abandonWatcher.emit("abandon", taskId);
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.assigned}
-	 */
 	public assigned(taskId: string): boolean {
 		if (this.isAttached() && !this.connected) {
 			return false;
@@ -564,9 +554,6 @@ export class TaskManagerClass
 		return currentAssignee !== undefined && currentAssignee === this.clientId;
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.queued}
-	 */
 	public queued(taskId: string): boolean {
 		if (this.isAttached() && !this.connected) {
 			return false;
@@ -575,16 +562,10 @@ export class TaskManagerClass
 		return this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.subscribed}
-	 */
 	public subscribed(taskId: string): boolean {
 		return this.subscribedTasks.has(taskId);
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.complete}
-	 */
 	public complete(taskId: string): void {
 		if (!this.assigned(taskId)) {
 			throw new Error("Attempted to mark task as complete while not being assigned");
@@ -605,9 +586,6 @@ export class TaskManagerClass
 		this.submitCompleteOp(taskId);
 	}
 
-	/**
-	 * {@inheritDoc ITaskManager.canVolunteer}
-	 */
 	public canVolunteer(): boolean {
 		// A client can volunteer for a task if it's both connected to the delta stream and in write mode.
 		// this.connected reflects that condition, but is unintuitive and may be changed in the future. This API allows
@@ -644,9 +622,6 @@ export class TaskManagerClass
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
 		for (const [taskId, clientIdQueue] of content) {
@@ -658,16 +633,10 @@ export class TaskManagerClass
 	/***/
 	protected initializeLocalCore(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {
 		this.connectionWatcher.emit("disconnect");
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-	 */
 	protected onConnect(): void {
 		this.connectionWatcher.emit("connect");
 	}
@@ -890,9 +859,6 @@ export class TaskManagerClass
 		// unable to be assigned to any tasks, there is no reason to process abandon/complete ops either.
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		assert(
 			typeof localOpMetadata === "number",
@@ -913,9 +879,6 @@ export class TaskManagerClass
 		this.rollbackWatcher.emit("rollback", content.taskId);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.didAttach}
-	 */
 	protected didAttach(): void {
 		this.attachedWatcher.emit("attached");
 	}

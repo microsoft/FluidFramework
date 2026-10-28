@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { independentView, FormattedTextDefault } from "@fluidframework/tree/internal";
+import { independentView } from "@fluidframework/tree/alpha";
 import globalJsdom from "global-jsdom";
 
+import { FormattedTextDefault } from "../formatted/index.js";
 import {
 	clipboardFormatMatcher,
 	defaultFont,

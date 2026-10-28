@@ -19,6 +19,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -60,6 +61,7 @@ const snapshotFileName = "header";
  * @legacy @beta
  */
 export class SharedCounter
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedCounterEvents>
 	implements ISharedCounter
 {
@@ -83,16 +85,10 @@ export class SharedCounter
 	 */
 	private nextPendingMessageId: number = 0;
 
-	/**
-	 * {@inheritDoc ISharedCounter.value}
-	 */
 	public get value(): number {
 		return this._value;
 	}
 
-	/**
-	 * {@inheritDoc ISharedCounter.increment}
-	 */
 	public increment(incrementAmount: number): void {
 		// Incrementing by floating point numbers will be eventually inconsistent, since the order in which the
 		// increments are applied affects the result.  A more-robust solution would be required to support this.
@@ -134,9 +130,6 @@ export class SharedCounter
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 

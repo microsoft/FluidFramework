@@ -26,7 +26,7 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { type SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import {
@@ -258,7 +258,7 @@ export class ViewBranch {
 	private nextViewId = 0;
 	private activeViewId: number | undefined;
 
-	public constructor(private readonly base: TreeCheckout) {
+	public constructor(private readonly base: CheckoutBase) {
 		this.checkout = base.forkForView();
 		this.checkout.viewBase = base;
 		this.schemaForkRebaser = this.checkout.schemaForkRebaser ??=
@@ -441,7 +441,7 @@ export class ViewBranch {
 	private applyPreparation(
 		schema: TreeStoredSchema,
 		requests: readonly PublicationRequest[],
-		checkout = this.checkout,
+		checkout: CheckoutBase = this.checkout,
 	): void {
 		assert(
 			allowsRepoSuperset(defaultSchemaPolicy, checkout.storedSchema, schema),
@@ -737,7 +737,7 @@ export class ViewBranch {
 		viewSchema: TreeSchema,
 		target: TreeStoredSchema,
 		generation: number,
-		base: TreeCheckout,
+		base: CheckoutBase,
 	): ViewSchemaDecision {
 		// Viewability of an unchanged old schema does not cancel requested staged upgrades.
 		return generation !== this.receivedSchemaGeneration ||
@@ -768,7 +768,7 @@ export class ViewBranch {
 	 * Only the schema-only suffix is removed; the adapter owns any transformation of data.
 	 */
 	private reconcileTo(
-		target: TreeCheckout,
+		target: CheckoutBase,
 		reconciliation?: BranchReconciliation<SharedTreeChange>,
 	): void {
 		const pending = this.pendingUpgrade;

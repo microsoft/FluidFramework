@@ -17,6 +17,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,
@@ -25,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
@@ -72,6 +75,7 @@ export {
 	IterableTreeArrayContent,
 	TreeNode,
 	type ViewableTree,
+	type ViewableTreeAlpha,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
@@ -250,8 +254,16 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeLocation,
+	type TextLocationNode,
+	type CapturedTreeLocation,
+	type TreeGapCaptureOptions,
+	type ResolvedTreeLocation,
+	type TreeLocationResolution,
+	type TreeLocationResolver,
 	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
@@ -266,6 +278,7 @@ export {
 	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
+	type TransactionConstraintBeta,
 	type TransactionPostProcessor,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
@@ -346,7 +359,10 @@ export {
 	type CodecName,
 	type FormatVersion,
 } from "./codec/index.js";
-export { FormatValidatorBasic } from "./external-utilities/index.js";
+export {
+	FormatValidatorBasic,
+	FormatValidatorInterpreted,
+} from "./external-utilities/index.js";
 
 export type {
 	// Type Testing
@@ -370,7 +386,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, unsafeArrayToTuple } from "./util/index.js";
 
 import type * as InternalTypes from "./internalTypes.js";
 /**
@@ -399,7 +415,6 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	PlainText,
 	FormattedText,
-	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";
@@ -410,3 +425,7 @@ export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.j
 export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
+export {
+	identifySchemaAlpha,
+	type SchemaIdentity,
+} from "./simple-tree/index.js";

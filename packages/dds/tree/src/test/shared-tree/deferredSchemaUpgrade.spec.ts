@@ -6,6 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	createMockLoggerExt,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { CommitKind, RevertibleStatus, type Revertible } from "../../core/index.js";
 import { createIndependentTreeAlpha, TreeAlpha } from "../../shared-tree/index.js";
@@ -14,6 +18,8 @@ import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
+	computeSchemaHash,
+	identifySchemaAlpha,
 } from "../../simple-tree/index.js";
 import { expectSchemaEqual, TestTreeProviderLite } from "../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Reuse the sandbox session's setup and teardown.
@@ -162,6 +168,72 @@ describe("deferred schema upgrade configuration", () => {
 		reopened.root.insertAtEnd(new Note({ text: "independent" }));
 		assert.equal(reopened.root.length, 2);
 		reopened.dispose();
+	});
+
+	it("preserves main-view location APIs and their pending-edit restrictions", () => {
+		const { provider, remote, view } = createScenario();
+		const capturedRoot = remote.locations.captureNode(remote.root);
+		try {
+			view.upgradeSchema();
+			assert.deepEqual(view.locations.resolve(capturedRoot), {
+				status: "resolved",
+				location: { kind: "node", node: view.root },
+			});
+			assert.throws(
+				() => view.locations.captureNode(view.root),
+				/Cannot capture locations while the main view has pending local edits/,
+			);
+			view.root.insertAtEnd("published");
+			provider.synchronizeMessages();
+			const captured = view.locations.captureNode(view.root);
+			assert.deepEqual(view.locations.resolve(captured), {
+				status: "resolved",
+				location: { kind: "node", node: view.root },
+			});
+			const fork = view.fork();
+			try {
+				assert.throws(
+					() => fork.locations.captureNode(fork.root),
+					/only supported on the main view/,
+				);
+			} finally {
+				fork.dispose();
+			}
+		} finally {
+			view.dispose();
+			remote.dispose();
+		}
+	});
+
+	it("preserves schema-identity checks and telemetry for a private upgrade", () => {
+		const logger = createMockLoggerExt();
+		const tree = createIndependentTreeAlpha({ logger });
+		const initial = tree.viewWith(before);
+		initial.initialize(["initial"]);
+		initial.dispose();
+		const originalSchema = tree.exportSimpleSchema();
+		const hash = computeSchemaHash(after.schema);
+		const view = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				...after,
+				schemaIdentity: identifySchemaAlpha({ expectedHash: hash }),
+			}),
+		);
+		try {
+			view.upgradeSchema();
+			view.upgradeSchema();
+			assert.deepEqual(tree.exportSimpleSchema(), originalSchema);
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: hash,
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+		} finally {
+			view.dispose();
+		}
 	});
 
 	it("releases detached content on both checkouts after forwarded edits are trimmed", () => {

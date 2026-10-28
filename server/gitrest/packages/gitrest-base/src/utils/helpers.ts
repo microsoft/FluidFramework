@@ -35,6 +35,18 @@ import {
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
 
+// eslint-disable-next-line unicorn/better-regex
+const canonicalGitShaRegex = /^[0-9a-f]{40}$/;
+
+/**
+ * Rejects Git object SHAs that are not exactly 40 lowercase hexadecimal characters.
+ */
+export function validateGitSha(sha: unknown): void {
+	if (typeof sha !== "string" || sha.length !== 40 || !canonicalGitShaRegex.test(sha)) {
+		throw new NetworkError(400, "Invalid Git object SHA.");
+	}
+}
+
 /**
  * Validates that the input encoding is valid
  */

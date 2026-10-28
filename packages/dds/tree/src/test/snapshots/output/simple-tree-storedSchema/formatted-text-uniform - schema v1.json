@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "leaf": 2
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.StringArray": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.text.formatted<test.text>.StringAtom"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.StringAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.StringTextAtom",
+            "test.text.LineAtom"
+          ]
+        },
+        "format": {
+          "kind": "Value",
+          "types": [
+            "test.text.TextFormat"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.text>.Text": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted<test.text>.StringArray"
+          ]
+        }
+      }
+    },
+    "test.text.LineAtom": {
+      "object": {
+        "indent": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
+      }
+    },
+    "test.text.TextFormat": {
+      "object": {
+        "bold": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.formatted<test.text>.Text"
+    ]
+  }
+}

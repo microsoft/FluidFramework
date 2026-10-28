@@ -80,7 +80,7 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "disconnected", listener: () => void): void;
 
 	/**
-	 * Emitted when all local changes/edits have been acknowledged by the service.
+	 * Emitted when the container has no local work left outstanding.
 	 *
 	 * @remarks "dirty" event will be emitted when the next local change has been made.
 	 *
@@ -91,7 +91,7 @@ export interface IFluidContainerEvents extends IEvent {
 	/**
 	 * Emitted when the first local change has been made, following a "saved" event.
 	 *
-	 * @remarks "saved" event will be emitted once all local changes have been acknowledged by the service.
+	 * @remarks "saved" event will be emitted once the container has no local work left outstanding.
 	 *
 	 * @see {@link IFluidContainer.isDirty}
 	 */
@@ -127,13 +127,13 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	readonly connectionState: ConnectionState;
 
 	/**
-	 * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
+	 * A container is considered **dirty** if it has local work that has not yet been saved to the service.
 	 *
 	 * @remarks
 	 *
 	 * You should always check the `isDirty` flag before closing the container or navigating away from the page.
-	 * Closing the container while `isDirty === true` may result in the loss of operations that have not yet been
-	 * acknowledged by the service.
+	 * Closing the container while `isDirty === true` may result in the loss of local work that has not yet been
+	 * saved to the service.
 	 *
 	 * A container is considered dirty in the following cases:
 	 *
@@ -145,6 +145,11 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the
 	 * service. In some cases this can be due to lack of network connection. If the network connection is down,
 	 * it needs to be restored for the pending changes to be acknowledged.
+	 *
+	 * 3. An attachment blob is being uploaded or shared, even if no operations are pending.
+	 *
+	 * Failed or cancelled blobs stop contributing even if their handles remain unusable.
+	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for per-blob outcomes.
 	 */
 	readonly isDirty: boolean;
 

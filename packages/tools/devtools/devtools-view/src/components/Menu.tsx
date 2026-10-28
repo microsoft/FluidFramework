@@ -23,6 +23,8 @@ import {
 	type PropsWithChildren,
 	type ReactElement,
 	useEffect,
+	useId,
+	useRef,
 	useState,
 } from "react";
 
@@ -219,6 +221,12 @@ export type MenuSectionProps = PropsWithChildren<{
 	 * Section header.
 	 */
 	header: ReactElement;
+
+	/**
+	 * ID of the visible header that labels the group of child controls.
+	 * If omitted, the section does not create an accessible group.
+	 */
+	headerId?: string;
 }>;
 
 const useMenuSectionStyles = makeStyles({
@@ -235,14 +243,20 @@ const useMenuSectionStyles = makeStyles({
  * Generic component for a section of the menu.
  */
 export function MenuSection(props: MenuSectionProps): ReactElement {
-	const { header, children } = props;
+	const { header, children, headerId } = props;
 
 	const styles = useMenuSectionStyles();
 
 	return (
 		<div className={styles.root}>
 			{header}
-			<div className={styles.item}>{children}</div>
+			<div
+				className={styles.item}
+				role={headerId === undefined ? undefined : "group"}
+				aria-labelledby={headerId}
+			>
+				{children}
+			</div>
 		</div>
 	);
 }
@@ -260,6 +274,11 @@ export interface MenuSectionLabelHeaderProps {
 	 * The icon to display in the header of the menu section.
 	 */
 	icon?: ReactElement;
+
+	/**
+	 * ID of the header element for references through `aria-labelledby`.
+	 */
+	id?: string;
 }
 
 const useMenuSectionLabelHeaderStyles = makeStyles({
@@ -275,11 +294,11 @@ const useMenuSectionLabelHeaderStyles = makeStyles({
  * Simple menu section header with a label.
  */
 export function MenuSectionLabelHeader(props: MenuSectionLabelHeaderProps): ReactElement {
-	const { label, icon } = props;
+	const { label, icon, id } = props;
 	const styles = useMenuSectionLabelHeaderStyles();
 
 	return (
-		<div className={styles.root}>
+		<div className={styles.root} id={id}>
 			{label}
 			{icon}
 		</div>
@@ -306,6 +325,40 @@ export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProp
 	isActive: boolean;
 }
 
+/**
+ * Forced colors can hide the background difference between selected and unselected navigation items.
+ * The shared marker identifies the selection after keyboard focus moves away.
+ */
+const useMenuSelectionStyles = makeStyles({
+	root: {
+		"@media (forced-colors: active)": {
+			position: "relative",
+			paddingInlineStart: "8px",
+		},
+	},
+	active: {
+		color: tokens.colorNeutralForeground1Selected,
+		backgroundColor: tokens.colorNeutralBackground1Selected,
+		"@media (forced-colors: active)": {
+			"::before": {
+				content: '""',
+				position: "absolute",
+				insetInlineStart: "0px",
+				top: "2px",
+				bottom: "2px",
+				borderInlineStartWidth: "3px",
+				borderInlineStartStyle: "solid",
+				borderInlineStartColor: "Highlight",
+				pointerEvents: "none",
+			},
+		},
+	},
+	inactive: {
+		color: tokens.colorNeutralForeground1,
+		backgroundColor: tokens.colorNeutralBackground1,
+	},
+});
+
 const useMenuSectionButtonHeaderStyles = makeStyles({
 	root: {
 		alignItems: "center",
@@ -318,14 +371,6 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
 	},
-	active: {
-		color: tokens.colorNeutralForeground1Selected,
-		backgroundColor: tokens.colorNeutralBackground1Selected,
-	},
-	inactive: {
-		color: tokens.colorNeutralForeground1,
-		backgroundColor: tokens.colorNeutralBackground1,
-	},
 });
 
 /**
@@ -334,7 +379,12 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): ReactElement {
 	const { label, icon, onClick, altText, isActive } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
-	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
+	const selectionStyles = useMenuSelectionStyles();
+	const style = mergeClasses(
+		styles.root,
+		selectionStyles.root,
+		isActive ? selectionStyles.active : selectionStyles.inactive,
+	);
 
 	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
 		if ((event.key === "Enter" || event.key === " ") && onClick) {
@@ -348,6 +398,7 @@ export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): Re
 			onClick={onClick}
 			onKeyDown={handleKeyDown}
 			aria-label={altText}
+			aria-current={isActive ? "page" : undefined}
 			tabIndex={0}
 			role="button"
 		>
@@ -404,14 +455,6 @@ const useMenuItemStyles = makeStyles({
 		},
 	},
 
-	active: {
-		color: tokens.colorNeutralForeground1Selected,
-		backgroundColor: tokens.colorNeutralBackground1Selected,
-	},
-	inactive: {
-		color: tokens.colorNeutralForeground1,
-		backgroundColor: tokens.colorNeutralBackground1,
-	},
 	itemContent: {
 		display: "flex",
 		flexDirection: "column",
@@ -500,9 +543,12 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 	};
 
 	const styles = useMenuItemStyles();
-	const baseStyle = isActive ? styles.active : styles.inactive;
-
-	const style = mergeClasses(styles.root, baseStyle);
+	const selectionStyles = useMenuSelectionStyles();
+	const style = mergeClasses(
+		styles.root,
+		selectionStyles.root,
+		isActive ? selectionStyles.active : selectionStyles.inactive,
+	);
 
 	return (
 		<div className={styles.itemContent}>
@@ -512,6 +558,7 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 					className={mergeClasses(styles.root, style)}
 					onClick={onClick}
 					onKeyDown={handleKeyDown}
+					aria-current={isActive ? "page" : undefined}
 					tabIndex={0}
 				>
 					{stateIcon === undefined && onRemove === undefined ? (
@@ -856,9 +903,32 @@ export function Menu(props: MenuProps): ReactElement {
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
+	const [navigationStatus, setNavigationStatus] = useState("");
+	const announcementTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	useEffect(() => {
+		return (): void => {
+			clearTimeout(announcementTimeout.current);
+		};
+	}, []);
+
+	function selectMenuItem(selection: MenuSelection, label: string): void {
+		setSelection(selection);
+		clearTimeout(announcementTimeout.current);
+		setNavigationStatus("");
+		// Clear the live region before each update so repeated selections also produce an announcement.
+		announcementTimeout.current = setTimeout(() => {
+			setNavigationStatus(`${label} selected.`);
+		}, 100);
+	}
+
+	const telemetrySectionHeaderId = useId();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
-		setSelection({ type: "containerMenuSelection", containerKey });
+		selectMenuItem(
+			{ type: "containerMenuSelection", containerKey },
+			`Container ${containerKey}`,
+		);
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Container" },
@@ -866,7 +936,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onTelemetryClicked(): void {
-		setSelection({ type: "telemetryMenuSelection" });
+		selectMenuItem({ type: "telemetryMenuSelection" }, "Events");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Telemetry" },
@@ -874,7 +944,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onSettingsClicked(): void {
-		setSelection({ type: "settingsMenuSelection" });
+		selectMenuItem({ type: "settingsMenuSelection" }, "Settings");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Settings" },
@@ -882,7 +952,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onHomeClicked(): void {
-		setSelection({ type: "homeMenuSelection" });
+		selectMenuItem({ type: "homeMenuSelection" }, "Home");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Home" },
@@ -890,7 +960,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onOpLatencyClicked(): void {
-		setSelection({ type: "opLatencyMenuSelection" });
+		selectMenuItem({ type: "opLatencyMenuSelection" }, "Op Latency");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_OpLatency" },
@@ -928,7 +998,8 @@ export function Menu(props: MenuProps): ReactElement {
 	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
 			<MenuSection
-				header={<MenuSectionLabelHeader label="Telemetry" />}
+				header={<MenuSectionLabelHeader label="Telemetry" id={telemetrySectionHeaderId} />}
+				headerId={telemetrySectionHeaderId}
 				key="telemetry-menu-section"
 			>
 				<MenuItem
@@ -973,6 +1044,9 @@ export function Menu(props: MenuProps): ReactElement {
 	);
 
 	return (
-		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
+		<nav className={styles.root} aria-label="Developer tools">
+			<ScreenReaderAnnouncement message={navigationStatus} />
+			{menuSections.length === 0 ? <Waiting /> : menuSections}
+		</nav>
 	);
 }

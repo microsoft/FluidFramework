@@ -34,13 +34,11 @@
                       "type": "array",
                       "items": [
                         {
-                          "multipleOf": 1,
-                          "type": "number"
+                          "type": "integer"
                         },
                         {
                           "minimum": -1,
-                          "multipleOf": 1,
-                          "type": "number"
+                          "type": "integer"
                         }
                       ],
                       "additionalItems": false,
@@ -68,13 +66,11 @@
                     ]
                   },
                   {
-                    "multipleOf": 1,
-                    "type": "number"
+                    "type": "integer"
                   },
                   {
                     "minimum": -1,
-                    "multipleOf": 1,
-                    "type": "number"
+                    "type": "integer"
                   }
                 ],
                 "additionalItems": false,
@@ -86,8 +82,7 @@
         },
         "maxId": {
           "minimum": -1,
-          "multipleOf": 1,
-          "type": "number"
+          "type": "integer"
         }
       },
       "required": [
@@ -139,13 +134,11 @@
                       "type": "array",
                       "items": [
                         {
-                          "multipleOf": 1,
-                          "type": "number"
+                          "type": "integer"
                         },
                         {
                           "minimum": -1,
-                          "multipleOf": 1,
-                          "type": "number"
+                          "type": "integer"
                         }
                       ],
                       "additionalItems": false,
@@ -180,13 +173,11 @@
                     ]
                   },
                   {
-                    "multipleOf": 1,
-                    "type": "number"
+                    "type": "integer"
                   },
                   {
                     "minimum": -1,
-                    "multipleOf": 1,
-                    "type": "number"
+                    "type": "integer"
                   }
                 ],
                 "additionalItems": false,
@@ -198,8 +189,7 @@
         },
         "maxId": {
           "minimum": -1,
-          "multipleOf": 1,
-          "type": "number"
+          "type": "integer"
         }
       },
       "required": [

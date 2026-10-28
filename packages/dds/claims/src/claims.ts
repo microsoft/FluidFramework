@@ -20,6 +20,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -68,6 +69,7 @@ const snapshotFileName = "header";
  * {@inheritDoc IClaims}
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	private readonly _events = createEmitter<IClaimsEvents>();
 	public readonly events: Listenable<IClaimsEvents> = this._events;
@@ -99,9 +101,6 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		this.runtime.on("dispose", () => this.abortAllPending());
 	}
 
-	/**
-	 * {@inheritDoc IClaims.trySetClaim}
-	 */
 	public trySetClaim(key: string, value: T): ClaimResult {
 		// Write-once: reject if key already exists.
 		const existing = this.claims.get(key);
@@ -152,16 +151,10 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		return { status: "Pending", promise };
 	}
 
-	/**
-	 * {@inheritDoc IClaims.get}
-	 */
 	public get(key: string): T | undefined {
 		return this.claims.get(key)?.value;
 	}
 
-	/**
-	 * {@inheritDoc IClaims.has}
-	 */
 	public has(key: string): boolean {
 		return this.claims.has(key);
 	}
@@ -278,9 +271,6 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 */
 	protected rollback(content: unknown, _localOpMetadata: unknown): void {
 		const op = content as IClaimOperation<T>;
 		assert(op.type === "claim", 0xd03 /* Claims: unexpected op type in rollback */);

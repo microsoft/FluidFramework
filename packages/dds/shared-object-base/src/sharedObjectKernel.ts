@@ -29,6 +29,7 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
@@ -114,6 +115,7 @@ export interface SharedKernel {
 class SharedObjectFromKernel<
 	TOut extends object,
 	TEvent extends ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 > extends SharedObject<TEvent> {
 	/**
 	 * Lazy init here so kernel can be constructed in loadCore when loading from existing data.
@@ -432,23 +434,14 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 		 */
 		public static readonly Attributes: IChannelAttributes = options.attributes;
 
-		/**
-		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-		 */
 		public get type(): string {
 			return ChannelFactory.Type;
 		}
 
-		/**
-		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-		 */
 		public get attributes(): IChannelAttributes {
 			return ChannelFactory.Attributes;
 		}
 
-		/**
-		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-		 */
 		public async load(
 			runtime: IFluidDataStoreRuntime,
 			id: string,
@@ -466,9 +459,6 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 			return shared as unknown as T & IChannel;
 		}
 
-		/**
-		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-		 */
 		public create(runtime: IFluidDataStoreRuntime, id: string): T & IChannel {
 			const shared = new SharedObjectFromKernel(
 				id,

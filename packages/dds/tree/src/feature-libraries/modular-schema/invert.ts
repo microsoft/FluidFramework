@@ -6,6 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	revisionMetadataSourceFromInfo,
+	strictRebaseValidation,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKindIdentifier,
@@ -30,6 +31,7 @@ import {
 	getChangeHandler,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
+	isChangesetValid,
 	makeChangesetInversions,
 	makeModularChangeset,
 	newConstraintState,
@@ -54,8 +56,9 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(change.change, fieldKinds);
+	strictRebaseValidation("Malformed invert input", () =>
+		isChangesetValid(change.change, fieldKinds),
+	);
 
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
@@ -184,9 +187,9 @@ export function invertModularChange(
 		destroys,
 	});
 
-	// Uncomment the following line to facilitate debugging
-	// validateChangeset(inverse, fieldKinds);
-
+	strictRebaseValidation("Malformed invert output", () =>
+		isChangesetValid(inverse, fieldKinds),
+	);
 	return inverse;
 }
 

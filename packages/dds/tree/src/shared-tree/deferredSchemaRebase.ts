@@ -20,7 +20,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../feature-libraries/in
 import { SharedTreeBranch, type BranchReconciliation } from "../shared-tree-core/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { CheckoutBase } from "./treeCheckout.js";
 import { getCommitOutcome, isSchemaOnlyChange } from "./sharedTreeChangeFamily.js";
 
 /**
@@ -37,7 +37,7 @@ export interface DeferredSchemaRebaseInput {
 	readonly authoringSchema: TreeStoredSchema;
 	readonly schemaRevisions: ReadonlySet<RevisionTag>;
 	readonly rejectedRevisions: ReadonlySet<RevisionTag>;
-	readonly changeFamily: TreeCheckout["mainBranch"]["changeFamily"];
+	readonly changeFamily: CheckoutBase["mainBranch"]["changeFamily"];
 	readonly mintRevision: () => RevisionTag;
 	/** Application-fork reconciliation preserves unpublished commit revisions. */
 	readonly preserveRevisions?: true;
@@ -148,8 +148,12 @@ export const rebaseDeferredChanges: DeferredSchemaRebase = (input) => {
 	) {
 		return { type: "unsafe", reason: "unrelatedHistory" };
 	}
-	const source = new SharedTreeBranch(originalBase, changeFamily, mintRevision);
-	const target = new SharedTreeBranch(originalBase, changeFamily, mintRevision);
+	const source = new SharedTreeBranch(originalBase, changeFamily, mintRevision, {
+		trimmedCommitCount: 0,
+	});
+	const target = new SharedTreeBranch(originalBase, changeFamily, mintRevision, {
+		trimmedCommitCount: 0,
+	});
 	try {
 		for (const commit of local) {
 			if (schemaRevisions.has(commit.revision)) {
@@ -193,7 +197,7 @@ export const rebaseDeferredChanges: DeferredSchemaRebase = (input) => {
 		}
 		const rebased = rebaseBranch(
 			mintRevision,
-			changeFamily.rebaser,
+			changeFamily,
 			source.getHead(),
 			target.getHead(),
 		);
@@ -269,13 +273,13 @@ export class DeferredSchemaForkRebaser {
 			readonly reverse: RevisionReplacer;
 		}
 	>();
-	private readonly observedBranches = new WeakSet<TreeCheckout["mainBranch"]>();
+	private readonly observedBranches = new WeakSet<CheckoutBase["mainBranch"]>();
 
 	/**
 	 * Releases mappings once the corresponding original revisions are trimmed.
 	 * Any fork that can still contain original work pins an earlier common ancestor.
 	 */
-	public observeBranch(branch: TreeCheckout["mainBranch"]): void {
+	public observeBranch(branch: CheckoutBase["mainBranch"]): void {
 		if (this.observedBranches.has(branch)) {
 			return;
 		}
@@ -320,8 +324,8 @@ export class DeferredSchemaForkRebaser {
 	}
 
 	private prepare(
-		source: TreeCheckout,
-		target: TreeCheckout,
+		source: CheckoutBase,
+		target: CheckoutBase,
 	): Extract<DeferredSchemaRebaseResult, { type: "prepared" }> | undefined {
 		const sourceCommits: GraphCommit<SharedTreeChange>[] = [];
 		const targetCommits: GraphCommit<SharedTreeChange>[] = [];
@@ -407,7 +411,7 @@ export class DeferredSchemaForkRebaser {
 		};
 	}
 
-	public merge(source: TreeCheckout, target: TreeCheckout): boolean {
+	public merge(source: CheckoutBase, target: CheckoutBase): boolean {
 		const prepared = this.prepare(source, target);
 		if (prepared === undefined) {
 			return false;
@@ -426,7 +430,7 @@ export class DeferredSchemaForkRebaser {
 		return true;
 	}
 
-	public rebase(source: TreeCheckout, target: TreeCheckout): boolean {
+	public rebase(source: CheckoutBase, target: CheckoutBase): boolean {
 		const prepared = this.prepare(source, target);
 		if (prepared === undefined) {
 			return false;
@@ -457,7 +461,7 @@ export class DeferredSchemaForkRebaser {
  * Remove this workaround when standard schema/data rebase preserves the private upgrade.
  */
 export function removeSchemaPreparation(
-	checkout: TreeCheckout,
+	checkout: CheckoutBase,
 	base: GraphCommit<SharedTreeChange>,
 	schemaOnlyHead: GraphCommit<SharedTreeChange>,
 ): void {

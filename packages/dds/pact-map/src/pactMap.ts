@@ -20,6 +20,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -101,6 +102,7 @@ const snapshotFileName = "header";
  * {@inheritDoc PactMap}
  */
 export class PactMapClass<T = unknown>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<IPactMapEvents>
 	implements IPactMap<T>
 {
@@ -128,16 +130,10 @@ export class PactMapClass<T = unknown>
 		this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.get}
-	 */
 	public get(key: string): T | undefined {
 		return this.values.get(key)?.accepted?.value;
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.getWithDetails}
-	 */
 	public getWithDetails(key: string): IAcceptedPact<T> | undefined {
 		// Note: We return type `IAcceptedPact` instead of `IAcceptedPactInternal` since we may want to diverge
 		// the interfaces in the future.
@@ -151,23 +147,14 @@ export class PactMapClass<T = unknown>
 		};
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.isPending}
-	 */
 	public isPending(key: string): boolean {
 		return this.values.get(key)?.pending !== undefined;
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.getPending}
-	 */
 	public getPending(key: string): T | undefined {
 		return this.values.get(key)?.pending?.value;
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.set}
-	 */
 	public set(key: string, value: T | undefined): void {
 		const currentValue = this.values.get(key);
 		// Early-exit if we can't submit a valid proposal (there's already a pending proposal)
@@ -196,9 +183,6 @@ export class PactMapClass<T = unknown>
 		this.submitLocalMessage(setOp);
 	}
 
-	/**
-	 * {@inheritDoc IPactMap.delete}
-	 */
 	public delete(key: string): void {
 		const currentValue = this.values.get(key);
 		// Early-exit if:
@@ -347,9 +331,6 @@ export class PactMapClass<T = unknown>
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(allEntries));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
 		for (const [key, value] of content) {
@@ -357,19 +338,10 @@ export class PactMapClass<T = unknown>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
-	 */
 	protected initializeLocalCore(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
-	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
-	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
 
