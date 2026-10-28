@@ -84,8 +84,8 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
  * Roots without {@link RootSchemaDerivedData.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
  * including {@link toUnhydratedSchema} for unhydrated contexts.
- * Different roots can share converted nodes; roots in the same policy-filtered component also share a node-definition map.
- * Root fields remain separate because their allowed types, kind, and metadata can differ.
+ * Conversion reuses cached view-schema analysis and follows only references retained by the policy.
+ * Different root identities have separate result caches, even when they share view-schema definitions.
  * Treat the returned schema as immutable.
  *
  * @privateRemarks

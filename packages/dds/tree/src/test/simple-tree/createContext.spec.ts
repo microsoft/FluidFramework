@@ -37,7 +37,7 @@ import { testSchema } from "../testTrees.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
 
 // getTreeNodeSchemaInitializedData is also exercised through TreeNodeValid in treeNodeValid.spec.ts.
-// Stored-component failure/reuse behavior is covered independently in toStoredSchema.spec.ts.
+// Stored-schema failure/reuse behavior is covered independently in toStoredSchema.spec.ts.
 describe("createContext", () => {
 	describe("SchemaComponent", () => {
 		it("constructs contexts only on request and reuses successful results", () => {
@@ -167,7 +167,8 @@ describe("createContext", () => {
 			assert.deepEqual(optionalStored.rootFieldSchema.persistedMetadata, {
 				label: "optional",
 			});
-			assert.strictEqual(context.flexContext.schema.nodeSchema, optionalStored.nodeSchema);
+			assert.strictEqual(context.flexContext.schema.nodeSchema, requiredStored.nodeSchema);
+			assert.deepEqual(context.flexContext.schema.nodeSchema, optionalStored.nodeSchema);
 			assert.equal(
 				toStoredSchema(staged, StagedSchemaUpgradePolicy.restrictive).rootFieldSchema.kind,
 				FieldKinds.required.identifier,
@@ -286,27 +287,25 @@ describe("createContext", () => {
 			assert.equal(conversions, 2);
 		});
 		for (const contextFirst of [false, true]) {
-			it(`converts permissive definitions once (${contextFirst ? "context" : "stored schema"} first)`, () => {
-				const [a, b] = createSchemaGraph([[1], [0]]);
-				assert(a !== undefined && b !== undefined);
+			it(`reuses a singleton component's root conversion (${contextFirst ? "context" : "stored schema"} first)`, () => {
+				const [root] = createSchemaGraph([[0]]);
+				assert(root !== undefined);
 				let conversions = 0;
-				for (const node of [a, b]) {
-					Object.defineProperty(node, "persistedMetadata", {
-						get() {
-							conversions++;
-							return undefined;
-						},
-					});
-				}
+				Object.defineProperty(root, "persistedMetadata", {
+					get() {
+						conversions++;
+						return undefined;
+					},
+				});
 				if (contextFirst) {
-					assert(SchemaComponent.fromSchema(a).context);
+					assert(SchemaComponent.fromSchema(root).context);
 				} else {
-					toStoredSchema(a, StagedSchemaUpgradePolicy.permissive);
+					toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
 				}
-				const context = SchemaComponent.fromSchema(b).context;
-				const stored = toStoredSchema(b, StagedSchemaUpgradePolicy.permissive);
+				const context = SchemaComponent.fromSchema(root).context;
+				const stored = toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
 				assert.strictEqual(context.flexContext.schema.nodeSchema, stored.nodeSchema);
-				assert.equal(conversions, 2);
+				assert.equal(conversions, 1);
 			});
 		}
 		for (const cycle of [false, true]) {
@@ -321,7 +320,7 @@ describe("createContext", () => {
 				const context = SchemaComponent.fromSchema(root).context;
 				assert.equal(context.schema.size, depth);
 				assert.equal(context.flexContext.schema.nodeSchema.size, depth);
-				assert.strictEqual(
+				assert.deepEqual(
 					context.flexContext.schema.nodeSchema,
 					toStoredSchema(root, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 				);
@@ -416,7 +415,7 @@ describe("createContext", () => {
 					assert.strictEqual(getRootSchemaDerivedData(root).context, context);
 					assert.strictEqual(context.schema, data.treeSchema.definitions);
 					assert.deepEqual(context.flexContext.schema.nodeSchema, expected.nodeSchema);
-					assert.strictEqual(
+					assert.deepEqual(
 						context.flexContext.schema.nodeSchema,
 						toStoredSchema(root, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 					);

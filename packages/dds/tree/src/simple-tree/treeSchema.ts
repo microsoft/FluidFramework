@@ -6,13 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-} from "../core/index.js";
+import type { TreeStoredSchema } from "../core/index.js";
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
-import { brand, getOrCreate, oneFromIterable } from "../util/index.js";
+import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
 	Context,
@@ -22,7 +18,6 @@ import {
 	getTreeNodeSchemaPrivateData,
 	walkSchema,
 	type AllowedTypesFullEvaluated,
-	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 } from "./core/index.js";
 import {
@@ -32,11 +27,8 @@ import {
 } from "./fieldSchema.js";
 import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import {
-	convertField,
-	filterFieldAllowedTypes,
-	getStoredSchema,
-	referencedTypes,
-	transformSimpleNodeSchema,
+	simpleStoredSchemaToStoredSchema,
+	transformSimpleSchema,
 } from "./schemaConversion.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 import type { toStoredSchema } from "./toStoredSchema.js";
@@ -97,18 +89,6 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 * Validated reachable definitions, materialized on first access.
 	 */
 	#definitions: TreeSchema["definitions"] | undefined;
-	/**
-	 * Permissive conversion, shared with the default context.
-	 */
-	#storedComponent: StoredSchemaComponent | undefined;
-	/**
-	 * Completed policy-filtered components, indexed by policy and original member identity.
-	 * Filtering can split this component, so different members can map to different stored components.
-	 * Allocated only for policy-dependent conversions; completed entries survive later conversion failures.
-	 */
-	#storedComponents:
-		| WeakMap<StagedSchemaUpgradePolicy, Map<TreeNodeSchema, StoredSchemaComponent>>
-		| undefined;
 	/**
 	 * Default unhydrated context, cached only after successful construction.
 	 */
@@ -180,140 +160,11 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	}
 
 	/**
-	 * Permissive stored conversion shared by this component's roots and default unhydrated context.
-	 * Completes dependencies iteratively without materializing their reachable definition maps.
-	 */
-	public get storedComponent(): StoredSchemaComponent {
-		if (this.#storedComponent !== undefined) {
-			return this.#storedComponent;
-		}
-		const completing: SchemaComponent[] = [this];
-		while (completing.length > 0) {
-			const component = completing.at(-1);
-			assert(component !== undefined, "Expected a schema component to complete");
-			if (component.#storedComponent !== undefined) {
-				completing.pop();
-				continue;
-			}
-			const incomplete = [...component.dependencies].filter(
-				(dependency) => dependency.#storedComponent === undefined,
-			);
-			if (incomplete.length > 0) {
-				for (const dependency of incomplete) {
-					completing.push(dependency);
-				}
-				continue;
-			}
-			const nodes = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
-			for (const schema of component.members) {
-				nodes.set(
-					brand(schema.identifier),
-					getStoredSchema(
-						transformSimpleNodeSchema(
-							schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema,
-							StagedSchemaUpgradePolicy.permissive,
-						),
-					),
-				);
-			}
-			component.#storedComponent = new StoredSchemaComponent(
-				nodes,
-				new Set(
-					[...component.dependencies].map((dependency) => {
-						const converted = dependency.#storedComponent;
-						assert(converted !== undefined, "Expected a converted dependency");
-						return converted;
-					}),
-				),
-			);
-			completing.pop();
-		}
-		const stored = this.#storedComponent;
-		assert(stored !== undefined, "Expected a converted schema component");
-		return stored;
-	}
-
-	/**
-	 * Converts the policy-filtered graph reachable from a member of this component.
-	 * Reuses completed conversions from this component and its dependencies without retaining requesting roots.
-	 * Failed conversions do not publish partial components; completed dependencies remain reusable.
-	 * @param member - A member of this component, after reachable identifiers have been validated.
-	 * @param policy - Policy used to filter staged schema.
-	 * @param definitions - Validated definitions from the requesting root, avoiding materialization of descendant maps.
-	 */
-	public getStoredComponent(
-		member: TreeNodeSchema,
-		policy: StagedSchemaUpgradePolicy,
-		definitions: TreeSchema["definitions"],
-	): StoredSchemaComponent {
-		if (!this.hasStagedSchema || policy === StagedSchemaUpgradePolicy.permissive) {
-			return this.storedComponent;
-		}
-		function cached(schema: TreeNodeSchema): StoredSchemaComponent | undefined {
-			const component = getComponent(schema);
-			return component.hasStagedSchema
-				? component.#storedComponents?.get(policy)?.get(schema)
-				: component.storedComponent;
-		}
-		function completed(schema: TreeNodeSchema): StoredSchemaComponent {
-			const stored = cached(schema);
-			assert(stored !== undefined, "Expected a completed stored schema component");
-			return stored;
-		}
-		const existing = cached(member);
-		if (existing !== undefined) {
-			return existing;
-		}
-		walkSchema([member], {
-			allowedTypeFilter: (type: AnnotatedAllowedType<TreeNodeSchema>) =>
-				type.metadata.stagedSchemaUpgrade === undefined ||
-				policy.includeStaged(type.metadata.stagedSchemaUpgrade),
-			wasComponentVisited: (schema) => {
-				const component = getComponent(schema);
-				return (
-					!component.hasStagedSchema ||
-					component.#storedComponents?.get(policy)?.has(schema) === true
-				);
-			},
-			stronglyConnectedComponent: (members) => {
-				const identities = new Set(members);
-				const nodes = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
-				const dependencies = new Set<StoredSchemaComponent>();
-				for (const schema of members) {
-					const view = definitions.get(schema.identifier);
-					assert(view !== undefined, "Component member must belong to the validated graph");
-					const transformed = transformSimpleNodeSchema(view, policy);
-					nodes.set(brand(schema.identifier), getStoredSchema(transformed));
-					for (const identifier of referencedTypes(transformed)) {
-						const dependency = definitions.get(identifier);
-						assert(
-							dependency !== undefined,
-							"Stored reference must belong to the validated graph",
-						);
-						if (!identities.has(dependency)) {
-							dependencies.add(completed(dependency));
-						}
-					}
-				}
-				const stored = new StoredSchemaComponent(nodes, dependencies);
-				for (const schema of members) {
-					const component = getComponent(schema);
-					getOrCreate(
-						(component.#storedComponents ??= new WeakMap()),
-						policy,
-						() => new Map(),
-					).set(schema, stored);
-				}
-			},
-		});
-		return completed(member);
-	}
-
-	/**
 	 * Default context shared by all roots referencing this component.
 	 * Root-field annotations are not part of an unhydrated node's context.
 	 * @remarks
 	 * Created on first access and cached only after construction succeeds.
+	 * Reuses the permissive root conversion of one member, since every member reaches the same unfiltered nodes.
 	 * Does not allow unknown optional fields.
 	 */
 	public get context(): Context {
@@ -324,12 +175,17 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		if (this.#context !== undefined) {
 			return this.#context;
 		}
+		const member = this.members[0];
+		assert(member !== undefined, "A schema component must contain at least one node");
+		const data = getRootSchemaDerivedData(member);
 		isResolvingComponentData = true;
 		try {
-			const definitions = this.definitions;
 			return (this.#context = new Context(
-				new UnhydratedContext(defaultSchemaPolicy, this.storedComponent.definitions),
-				definitions,
+				new UnhydratedContext(
+					defaultSchemaPolicy,
+					data.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+				),
+				data.definitions,
 			));
 		} finally {
 			isResolvingComponentData = false;
@@ -372,11 +228,6 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		| TreeStoredSchema
 		| WeakMap<StagedSchemaUpgradePolicy, TreeStoredSchema>
 		| undefined;
-	/**
-	 * Permissive node definitions, shared by stored-schema conversion and the default context.
-	 * Combined on demand without materializing descendant components' definition maps.
-	 */
-	#storedDefinitions: TreeStoredSchema["nodeSchema"] | undefined;
 	/**
 	 * Default unhydrated context, cached after successful construction for empty and multi-component roots.
 	 * Single-component roots reuse the component's context instead.
@@ -430,15 +281,6 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	}
 
 	/**
-	 * Permissive node definitions, excluding the root field.
-	 */
-	private get storedDefinitions(): TreeStoredSchema["nodeSchema"] {
-		return (this.#storedDefinitions ??= combineStoredDefinitions(
-			new Set([...this.components].map((component) => component.storedComponent)),
-		));
-	}
-
-	/**
 	 * Default context for this root's reachable nodes, independent of root-field annotations.
 	 * Single-component roots share the component's context even when the root field is staged.
 	 * Empty and multi-component roots create and cache their own contexts after construction succeeds.
@@ -459,7 +301,10 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		try {
 			const definitions = this.definitions;
 			return (this.#context = new Context(
-				new UnhydratedContext(defaultSchemaPolicy, this.storedDefinitions),
+				new UnhydratedContext(
+					defaultSchemaPolicy,
+					this.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+				),
 				definitions,
 			));
 		} finally {
@@ -468,8 +313,9 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	}
 
 	/**
-	 * Converts and caches this root under the supplied policy, sharing component-level converted definitions.
-	 * Failed conversions do not publish results; completed dependencies remain reusable.
+	 * Converts and caches this root under the supplied policy, reusing its cached view schema.
+	 * Roots without staging use the permissive policy for all requests.
+	 * Failed conversions do not publish results.
 	 */
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		if (!this.hasStagedSchema) {
@@ -484,22 +330,10 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	}
 
 	/**
-	 * Combines the converted root field with component-owned stored definitions.
+	 * Converts the cached view schema, following only references retained by the policy.
 	 */
 	private convertStoredSchema(policy: StagedSchemaUpgradePolicy): TreeStoredSchema {
-		const definitions = this.definitions;
-		const rootFieldSchema = convertField(filterFieldAllowedTypes(this.root, policy));
-		if (policy === StagedSchemaUpgradePolicy.permissive) {
-			return { rootFieldSchema, nodeSchema: this.storedDefinitions };
-		}
-		const components = new Set(
-			[...rootFieldSchema.types].map((identifier) => {
-				const schema = definitions.get(identifier);
-				assert(schema !== undefined, "Root type must belong to the validated graph");
-				return getComponent(schema).getStoredComponent(schema, policy, definitions);
-			}),
-		);
-		return { rootFieldSchema, nodeSchema: combineStoredDefinitions(components) };
+		return simpleStoredSchemaToStoredSchema(transformSimpleSchema(this.treeSchema, policy));
 	}
 }
 
@@ -507,7 +341,7 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
  * Caches {@link RootSchemaDerivedData} records by requested root identity.
  * Retrieving root-derived data always validates reachable identifiers before returning.
  * Combining reachable components validates identifier uniqueness, even when those components are cached.
- * Root entries own root-field conversion results; components own converted node definitions.
+ * Root entries own complete stored-schema results; components own shared view-schema data.
  */
 const rootSchemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, RootSchemaDerivedData>();
 
@@ -699,77 +533,4 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 		string,
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
 	>;
-}
-
-/**
- * A successfully converted strongly connected component of the policy-filtered schema graph.
- * @remarks
- * All members have the same reachable stored definitions and can share {@link StoredSchemaComponent.definitions}.
- * Retains only converted nodes and outgoing dependencies, not requesting roots, contexts, or view-schema graphs.
- * A record is published for all members only after their conversions and dependency resolution succeed.
- */
-class StoredSchemaComponent {
-	#definitions: TreeStoredSchema["nodeSchema"] | undefined;
-
-	/**
-	 * Creates a converted component without materializing its reachable definitions.
-	 */
-	public constructor(
-		/**
-		 * Immutable converted definitions for this component's members only, excluding other components.
-		 */
-		public readonly nodes: TreeStoredSchema["nodeSchema"],
-		/**
-		 * Completed components directly referenced by {@link StoredSchemaComponent.nodes}, excluding this component.
-		 * References are read from transformed schema so edges removed by the policy are absent.
-		 * Staging-free dependencies may belong to the common {@link toUnhydratedSchema} cache.
-		 */
-		public readonly dependencies: ReadonlySet<StoredSchemaComponent>,
-	) {}
-
-	/**
-	 * Immutable definitions for this component and all its transitive dependencies.
-	 * Aliases {@link StoredSchemaComponent.nodes} when there are no dependencies.
-	 * Otherwise computed on first access and cached only after construction succeeds.
-	 * Leaving descendant maps lazy avoids eagerly retaining quadratic entries for an acyclic chain.
-	 */
-	public get definitions(): TreeStoredSchema["nodeSchema"] {
-		return (this.#definitions ??=
-			this.dependencies.size === 0 ? this.nodes : collectStoredDefinitions([this]));
-	}
-}
-
-/**
- * Reuses the definition map for a single stored component, or collects a root's combined definitions.
- * Empty roots receive an empty map.
- */
-function combineStoredDefinitions(
-	components: ReadonlySet<StoredSchemaComponent>,
-): TreeStoredSchema["nodeSchema"] {
-	return oneFromIterable(components)?.definitions ?? collectStoredDefinitions(components);
-}
-
-/**
- * Builds a fresh map of all definitions reachable from the supplied completed components.
- * @remarks
- * Visits each reachable component once, avoiding repeated merging along diamond paths.
- * Shares the converted node objects; does not convert nodes, evaluate policies, or materialize descendant maps.
- * Input components must come from an identifier-validated root graph and compatible policy results.
- * Different acyclic roots still have overlapping maps, but share the converted node definitions.
- * Returns an empty map for empty roots. The caller owns publication and sharing of the returned map.
- */
-function collectStoredDefinitions(
-	roots: Iterable<StoredSchemaComponent>,
-): TreeStoredSchema["nodeSchema"] {
-	const components = new Set(roots);
-	const definitions = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
-	for (const component of components) {
-		for (const [identifier, node] of component.nodes) {
-			definitions.set(identifier, node);
-		}
-		for (const dependency of component.dependencies) {
-			components.add(dependency);
-		}
-	}
-	return definitions;
 }

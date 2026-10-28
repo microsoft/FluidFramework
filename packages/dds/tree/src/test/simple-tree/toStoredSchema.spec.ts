@@ -62,8 +62,11 @@ import {
 	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/schemaConversion.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createTreeSchema, getRootSchemaDerivedData } from "../../simple-tree/treeSchema.js";
+import {
+	createTreeSchema,
+	getRootSchemaDerivedData,
+	// eslint-disable-next-line import-x/no-internal-modules -- Tests cached view-schema conversion.
+} from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";
 import {
 	getStagedSchemaUpgrades,
@@ -94,7 +97,7 @@ function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
 
 // Context identity, initialization order, and failed context construction are covered in createContext.spec.ts.
 describe("toStoredSchema", () => {
-	describe("policy component reuse", () => {
+	describe("root and policy caching", () => {
 		/**
 		 * Converts through the uncached graph and transformation path, independently of policy-result caches.
 		 */
@@ -107,8 +110,46 @@ describe("toStoredSchema", () => {
 			);
 		}
 
+		it("reuses cached view-schema data for each policy without materializing descendant maps", () => {
+			const sf = new SchemaFactoryAlpha("cachedViewSchema");
+			class Child extends sf.object("Child", {}) {}
+			class Node extends sf.object("Node", { child: Child }) {}
+			const root = sf.types([sf.staged(Node)]);
+			const data = getRootSchemaDerivedData(root);
+			const components = new Set(data.components);
+			for (const component of components) {
+				for (const dependency of component.dependencies) {
+					components.add(dependency);
+				}
+			}
+			for (const component of components) {
+				Object.defineProperty(component, "definitions", {
+					get: () => assert.fail("Conversion must reuse the root's cached view schema"),
+				});
+				Object.defineProperty(component, "members", {
+					get: () => assert.fail("Conversion must not repeat component traversal"),
+				});
+			}
+			const restrictive = toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive);
+			const permissive = toStoredSchema(root, StagedSchemaUpgradePolicy.permissive);
+			assert.equal(restrictive.nodeSchema.size, 0);
+			assert.deepEqual(
+				new Set(permissive.nodeSchema.keys()),
+				typeSet(Node.identifier, Child.identifier),
+			);
+			assert.strictEqual(
+				toStoredSchema(root, StagedSchemaUpgradePolicy.restrictive),
+				restrictive,
+			);
+			assert.strictEqual(
+				toStoredSchema(root, StagedSchemaUpgradePolicy.permissive),
+				permissive,
+			);
+			assert.strictEqual(getRootSchemaDerivedData(root), data);
+		});
+
 		for (const reverse of [false, true]) {
-			it(`shares filtered-cycle maps within a policy, not between policies (${reverse})`, () => {
+			it(`caches cyclic schemas by root and policy (${reverse})`, () => {
 				const sf = new SchemaFactoryAlpha("filteredPolicyCycle");
 				class A extends sf.objectRecursive("A", {
 					child: sf.optionalRecursive([() => B]),
@@ -138,11 +179,15 @@ describe("toStoredSchema", () => {
 				}
 				for (const [i, policy] of policies.entries()) {
 					const first = toStoredSchema(roots[0] ?? assert.fail(), policy);
-					assert.equal(reads, (i + 1) * 2);
+					const firstReads = reads;
+					assert.strictEqual(toStoredSchema(roots[0] ?? assert.fail(), policy), first);
+					assert.equal(reads, firstReads);
 					const second = toStoredSchema(roots[1] ?? assert.fail(), policy);
-					assert.equal(reads, (i + 1) * 2);
+					const secondReads = reads;
+					assert.strictEqual(toStoredSchema(roots[1] ?? assert.fail(), policy), second);
+					assert.equal(reads, secondReads);
 					assert.notStrictEqual(first, second);
-					assert.strictEqual(first.nodeSchema, second.nodeSchema);
+					assert.deepEqual(first.nodeSchema, second.nodeSchema);
 					assert.deepEqual(first, expected[i]?.[0]);
 					assert.deepEqual(second, expected[i]?.[1]);
 				}
@@ -153,41 +198,28 @@ describe("toStoredSchema", () => {
 			});
 		}
 
-		it("shares staging-free descendants across policy caches and root wrappers", () => {
+		it("preserves staging-free descendants when ancestor and root-field policies differ", () => {
 			const sf = new SchemaFactoryAlpha("commonPolicyComponent");
 			class Leaf extends sf.object("Leaf", { value: sf.number }) {}
 			class Staged extends sf.objectAlpha("Staged", {
 				child: Leaf,
 				future: sf.stagedOptional(sf.string),
 			}) {}
-			getRootSchemaDerivedData(Staged);
-			const leafSchema = Leaf;
-			assert(isObjectNodeSchema(leafSchema));
-			const fields = leafSchema.fields;
-			let reads = 0;
-			Object.defineProperty(Leaf, "fields", {
-				get() {
-					reads++;
-					return fields;
-				},
-			});
 			const restrictive = toStoredSchema(Staged, { ...StagedSchemaUpgradePolicy.restrictive });
 			const permissive = toStoredSchema(Staged, { ...StagedSchemaUpgradePolicy.permissive });
 			const leaf = toStoredSchema(Leaf, StagedSchemaUpgradePolicy.permissive);
-			assert.equal(reads, 1);
 			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
-			assert.strictEqual(restrictive.nodeSchema.get(id), permissive.nodeSchema.get(id));
-			assert.strictEqual(leaf.nodeSchema.get(id), restrictive.nodeSchema.get(id));
+			assert.deepEqual(restrictive.nodeSchema.get(id), permissive.nodeSchema.get(id));
+			assert.deepEqual(leaf.nodeSchema.get(id), restrictive.nodeSchema.get(id));
 			const stagedRoot = sf.stagedOptional(Leaf);
 			const strictField = toStoredSchema(stagedRoot, StagedSchemaUpgradePolicy.restrictive);
 			const permissiveField = toStoredSchema(stagedRoot, StagedSchemaUpgradePolicy.permissive);
 			assert.notEqual(strictField.rootFieldSchema.kind, permissiveField.rootFieldSchema.kind);
-			assert.strictEqual(strictField.nodeSchema, leaf.nodeSchema);
-			assert.strictEqual(permissiveField.nodeSchema, leaf.nodeSchema);
-			assert.equal(reads, 1);
+			assert.deepEqual(strictField.nodeSchema, leaf.nodeSchema);
+			assert.deepEqual(permissiveField.nodeSchema, leaf.nodeSchema);
 		});
 
-		it("shares converted descendants across diamonds without sharing unrelated root maps", () => {
+		it("converts each reachable node once per root in a diamond", () => {
 			const sf = new SchemaFactoryAlpha("policyDiamond");
 			class Leaf extends sf.object("Leaf", { value: sf.stagedOptional(sf.number) }) {}
 			class Left extends sf.object("Left", { child: Leaf }) {}
@@ -209,20 +241,21 @@ describe("toStoredSchema", () => {
 			}
 			const root = toStoredSchema(Root, policy);
 			assert.equal(reads, 4);
+			assert.strictEqual(toStoredSchema(Root, policy), root);
+			assert.equal(reads, 4);
 			const left = toStoredSchema(Left, policy);
 			const right = toStoredSchema(Right, policy);
 			const leaf = toStoredSchema(Leaf, policy);
-			assert.equal(reads, 4);
 			assert.deepEqual(root, expected);
 			assert.equal(left.nodeSchema.size, 3);
 			assert.equal(right.nodeSchema.size, 3);
 			assert.notStrictEqual(left.nodeSchema, right.nodeSchema);
 			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
-			assert.strictEqual(left.nodeSchema.get(id), leaf.nodeSchema.get(id));
-			assert.strictEqual(right.nodeSchema.get(id), leaf.nodeSchema.get(id));
+			assert.deepEqual(left.nodeSchema.get(id), leaf.nodeSchema.get(id));
+			assert.deepEqual(right.nodeSchema.get(id), leaf.nodeSchema.get(id));
 		});
 
-		it("does not normalize a component merely because filtering removed its staging", () => {
+		it("does not normalize a policy merely because filtering removed reachable staging", () => {
 			const sf = new SchemaFactoryAlpha("filteredNotNormalized");
 			class Child extends sf.object("Child", {}) {}
 			class Root extends sf.objectAlpha("Root", {
@@ -242,7 +275,7 @@ describe("toStoredSchema", () => {
 			assert.equal(empty.nodeSchema.size, 0);
 		});
 
-		it("does not publish partial policy components, but keeps completed dependencies", () => {
+		it("does not cache failed conversions or invalidate successful results for other roots", () => {
 			const sf = new SchemaFactoryAlpha("policyFailure");
 			class Good extends sf.object("Good", { value: sf.stagedOptional(sf.number) }) {}
 			class A extends sf.objectRecursive("A", {
@@ -253,16 +286,6 @@ describe("toStoredSchema", () => {
 				child: sf.optionalRecursive([() => A]),
 			}) {}
 			getRootSchemaDerivedData(A);
-			const goodSchema = Good;
-			assert(isObjectNodeSchema(goodSchema));
-			const fields = goodSchema.fields;
-			let goodReads = 0;
-			Object.defineProperty(Good, "fields", {
-				get() {
-					goodReads++;
-					return fields;
-				},
-			});
 			let shouldThrow = true;
 			Object.defineProperty(B, "persistedMetadata", {
 				get() {
@@ -271,20 +294,22 @@ describe("toStoredSchema", () => {
 				},
 			});
 			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
+			const good = toStoredSchema(Good, policy);
 			for (const node of [A, B, A]) {
 				assert.throws(() => toStoredSchema(node, policy), /conversion failure/);
+				assert.strictEqual(toStoredSchema(Good, policy), good);
 			}
-			const good = toStoredSchema(Good, policy);
-			assert.equal(goodReads, 1);
 			shouldThrow = false;
 			const a = toStoredSchema(A, policy);
 			const b = toStoredSchema(B, policy);
-			assert.strictEqual(a.nodeSchema, b.nodeSchema);
-			assert.strictEqual(
+			assert.deepEqual(a.nodeSchema, b.nodeSchema);
+			assert.deepEqual(
 				a.nodeSchema.get(brand(Good.identifier)),
 				good.nodeSchema.get(brand(Good.identifier)),
 			);
 			assert.deepEqual(a, reference(A, policy));
+			assert.strictEqual(toStoredSchema(A, policy), a);
+			assert.strictEqual(toStoredSchema(B, policy), b);
 		});
 
 		for (const reverse of [false, true]) {
@@ -314,12 +339,12 @@ describe("toStoredSchema", () => {
 					toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema.size,
 					2,
 				);
-				assert.strictEqual(
+				assert.deepEqual(
 					toStoredSchema(A, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 					toStoredSchema(B, StagedSchemaUpgradePolicy.permissive).nodeSchema,
 				);
 				const customPermissive = { ...StagedSchemaUpgradePolicy.permissive };
-				assert.strictEqual(
+				assert.deepEqual(
 					toStoredSchema(A, customPermissive).nodeSchema,
 					toStoredSchema(B, customPermissive).nodeSchema,
 				);
@@ -340,18 +365,19 @@ describe("toStoredSchema", () => {
 				/conversion failure/,
 			);
 			shouldThrow = false;
-			const stored = toStoredSchema(Node, StagedSchemaUpgradePolicy.restrictive);
 			const unusedPolicy: StagedSchemaUpgradePolicy = {
 				includeStaged: () => assert.fail("Staging-free conversion must not evaluate policies"),
 				includeStagedOptional: () =>
 					assert.fail("Staging-free conversion must not evaluate policies"),
 			};
+			const stored = toStoredSchema(Node, unusedPolicy);
 			assert.strictEqual(toStoredSchema(Node, unusedPolicy), stored);
+			assert.strictEqual(toStoredSchema(Node, StagedSchemaUpgradePolicy.restrictive), stored);
 			assert.strictEqual(toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive), stored);
 			assert.deepEqual(stored, reference(Node, StagedSchemaUpgradePolicy.permissive));
 		});
-		it("reuses permissive conversion while preserving root field kind and metadata", () => {
-			const sf = new SchemaFactoryAlpha("storedComponents");
+		it("preserves root field kind and metadata in separate root caches", () => {
+			const sf = new SchemaFactoryAlpha("rootCaches");
 			class A extends sf.objectRecursive("A", {
 				child: sf.optionalRecursive([() => B]),
 			}) {}
@@ -371,12 +397,13 @@ describe("toStoredSchema", () => {
 			}
 			const a = toStoredSchema(A, StagedSchemaUpgradePolicy.permissive);
 			assert.equal(reads, 2);
+			assert.strictEqual(toStoredSchema(A, StagedSchemaUpgradePolicy.permissive), a);
+			assert.equal(reads, 2);
 			const b = toStoredSchema(B, StagedSchemaUpgradePolicy.permissive);
 			const optional = sf.optional(A, { persistedMetadata: { description: "optional" } });
 			const field = toStoredSchema(optional, StagedSchemaUpgradePolicy.permissive);
-			assert.equal(reads, 2);
-			assert.strictEqual(a.nodeSchema, b.nodeSchema);
-			assert.strictEqual(a.nodeSchema, field.nodeSchema);
+			assert.deepEqual(a.nodeSchema, b.nodeSchema);
+			assert.deepEqual(a.nodeSchema, field.nodeSchema);
 			assert.notDeepEqual(a.rootFieldSchema, b.rootFieldSchema);
 			assert.notEqual(a.rootFieldSchema.kind, field.rootFieldSchema.kind);
 			assert.deepEqual(field.rootFieldSchema.persistedMetadata, { description: "optional" });
