@@ -56,10 +56,8 @@ import {
 	type TreeNodeSchemaPrivateData,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-} from "../../createContext.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import { SchemaComponent } from "../../treeSchema.js";
 import { nullSchema } from "../../leafNodeSchema.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
@@ -1642,7 +1640,7 @@ function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): Flex
 		arrayChildToFlexTree(child, allowedChildTypes.evaluateSet()),
 	);
 
-	const context = getUnhydratedContext(schema).flexContext;
+	const context = SchemaComponent.fromSchema(schema).context.flexContext;
 
 	// Array nodes have a single `EmptyKey` field:
 	const fieldsEntries =

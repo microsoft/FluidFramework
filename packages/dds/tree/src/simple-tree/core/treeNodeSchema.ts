@@ -8,21 +8,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnionToIntersection } from "../../util/index.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-import type { getUnhydratedContext } from "../createContext.js";
 import type {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	analyzeSchema,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	getRootSchemaDerivedData,
 	SchemaComponent,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	RootSchemaDerivedData,
 } from "../treeSchema.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
-import type { Context } from "./context.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -386,13 +379,6 @@ export interface TreeNodeSchemaCorePrivate<
  */
 export interface TreeNodeSchemaPrivateData {
 	/**
-	 * Completed unfiltered topology and staging analysis, shared with every member of this schema's component.
-	 * Populated by {@link analyzeSchema} without initializing a context; absent until that component completes.
-	 * Does not certify root identifier uniqueness or configuration-specific validity.
-	 */
-	component?: SchemaComponent;
-
-	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
@@ -414,7 +400,7 @@ export interface TreeNodeSchemaPrivateData {
  * Additional data about a given schema which is private to this package.
  * @remarks
  * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
- * Unlike the root analysis cached by {@link getRootSchemaDerivedData}, this data includes node-specific conversion handlers and initializes a context.
+ * Unlike the root analysis cached by {@link getRootSchemaDerivedData}, this data includes node-specific conversion handlers.
  * Schema walks must use {@link TreeNodeSchemaPrivateData.childAllowedTypes} and completed component data instead of triggering this initialization.
  */
 export interface TreeNodeSchemaInitializedData {
@@ -436,10 +422,9 @@ export interface TreeNodeSchemaInitializedData {
 	readonly childAllowedTypes: readonly AllowedTypesFullEvaluated[];
 
 	/**
-	 * A {@link Context} which can be used for unhydrated nodes of this schema.
-	 * Obtained from {@link getUnhydratedContext} and shared with {@link RootSchemaDerivedData.unhydratedContext}.
+	 * Shared definitions and lazy default context for this schema's component.
 	 */
-	readonly context: Context;
+	readonly component: SchemaComponent;
 
 	/**
 	 * Checks if data might be schema-compatible.

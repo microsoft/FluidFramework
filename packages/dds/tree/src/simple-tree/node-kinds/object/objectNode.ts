@@ -51,10 +51,8 @@ import {
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-} from "../../createContext.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import { SchemaComponent } from "../../treeSchema.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -713,7 +711,7 @@ function objectToFlexContent(
 	}
 
 	const fields = new Map<FieldKey, UnhydratedFlexTreeField>();
-	const context = getUnhydratedContext(schema).flexContext;
+	const context = SchemaComponent.fromSchema(schema).context.flexContext;
 
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
 		const value = getFieldProperty(data, key);

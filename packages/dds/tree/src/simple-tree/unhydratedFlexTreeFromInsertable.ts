@@ -20,7 +20,7 @@ import {
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { getUnhydratedContext } from "./createContext.js";
+import { SchemaComponent } from "./treeSchema.js";
 import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 
 /**
@@ -147,7 +147,10 @@ export function unhydratedFlexTreeFromInsertableNode(
 		oneFromIterable(filterIterable(allowedTypes, (s) => s.identifier === result[0].type)) ??
 		fail(0xc9d /* missing schema */);
 
-	return new UnhydratedFlexTreeNode(...result, getUnhydratedContext(finalSchema));
+	return new UnhydratedFlexTreeNode(
+		...result,
+		SchemaComponent.fromSchema(finalSchema).context,
+	);
 }
 
 function getType(

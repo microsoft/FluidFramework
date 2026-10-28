@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { expectEqualCursors } from "../../utils.js";
@@ -72,11 +72,11 @@ describe("unhydratedFlexTree", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const context = getUnhydratedContext([
+	const context = SchemaComponent.fromSchema([
 		mapSchemaSimple,
 		arrayNodeSchemaSimple,
 		objectSchemaSimple,
-	]);
+	]).context;
 
 	const object = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
 	const map = object.getBoxed(objectMapKey).boxedAt(0) ?? assert.fail();

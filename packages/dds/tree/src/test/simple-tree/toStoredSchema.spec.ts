@@ -36,7 +36,6 @@ import {
 import { exportSimpleSchema } from "../../shared-tree/index.js";
 import {
 	ExpectStored,
-	getTreeNodeSchemaPrivateData,
 	StagedSchemaUpgradePolicy,
 	Unchanged,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -207,7 +206,6 @@ describe("toStoredSchema", () => {
 			}
 			const root = toStoredSchema(Root, policy);
 			assert.equal(reads, 4);
-			assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);
 			const left = toStoredSchema(Left, policy);
 			const right = toStoredSchema(Right, policy);
 			const leaf = toStoredSchema(Leaf, policy);
@@ -219,7 +217,6 @@ describe("toStoredSchema", () => {
 			const id = brand<TreeNodeSchemaIdentifier>(Leaf.identifier);
 			assert.strictEqual(left.nodeSchema.get(id), leaf.nodeSchema.get(id));
 			assert.strictEqual(right.nodeSchema.get(id), leaf.nodeSchema.get(id));
-			assert.equal(getRootSchemaDerivedData(Root).unhydratedContext, undefined);
 		});
 
 		it("does not normalize a component merely because filtering removed its staging", () => {
@@ -273,7 +270,6 @@ describe("toStoredSchema", () => {
 			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
 			for (const node of [A, B, A]) {
 				assert.throws(() => toStoredSchema(node, policy), /conversion failure/);
-				assert.equal(getRootSchemaDerivedData(node).unhydratedContext, undefined);
 			}
 			const good = toStoredSchema(Good, policy);
 			assert.equal(goodReads, 1);

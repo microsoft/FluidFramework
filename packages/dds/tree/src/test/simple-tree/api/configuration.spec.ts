@@ -25,8 +25,11 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getRootSchemaDerivedData } from "../../../simple-tree/treeSchema.js";
+import {
+	getRootSchemaDerivedData,
+	getCachedRootSchemaDerivedData,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -54,15 +57,13 @@ describe("simple-tree configuration", () => {
 			});
 		}
 		const config = new TreeViewConfigurationAlpha({ schema: A });
-		// View discovery, view-component finalization, and stored-component discovery each read the fields.
-		assert.deepEqual([...reads.values()], [3, 3, 3]);
-		const component = getTreeNodeSchemaPrivateData(A).component;
+		// View discovery and component finalization read the fields; permissive conversion reuses that topology.
+		assert.deepEqual([...reads.values()], [2, 2, 2]);
+		const component = getCachedRootSchemaDerivedData(A)?.component;
 		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
-		assert.deepEqual([...reads.values()], [4, 4, 4]);
+		assert.deepEqual([...reads.values()], [3, 3, 3]);
 		assert.strictEqual(config.definitions, strict.definitions);
-		assert.strictEqual(component, getTreeNodeSchemaPrivateData(A).component);
-		assert.equal(getTreeNodeSchemaPrivateData(Leaf).component?.definitions, undefined);
-		assert.equal(getRootSchemaDerivedData(A).unhydratedContext, undefined);
+		assert.strictEqual(component, getCachedRootSchemaDerivedData(A)?.component);
 	});
 
 	it("reports duplicate allowed types before evaluating later fields", () => {
@@ -83,7 +84,7 @@ describe("simple-tree configuration", () => {
 				validateUsageError(/Duplicate schema in allowed types/),
 			);
 			assert.equal(laterEvaluations, 0);
-			assert.equal(getTreeNodeSchemaPrivateData(Root).component, undefined);
+			assert.equal(getCachedRootSchemaDerivedData(Root)?.component, undefined);
 		}
 	});
 

@@ -11,7 +11,8 @@ Schema definitions without reachable staged upgrades can also share conversions 
 
 Configuration-specific validation still runs for each configuration.
 Simple-schema copies and compatibility snapshots continue to return fresh output structures.
-Unhydrated contexts remain root-specific, and hydrated contexts remain document-specific.
+Default unhydrated contexts are shared by roots that reference the same schema component.
+Hydrated contexts remain document-specific.
 
 Definition map iteration order is unspecified.
 Schema hashes and persisted schema encoding are unchanged.
