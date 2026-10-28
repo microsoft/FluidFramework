@@ -240,6 +240,38 @@ describe("Channel configuration compatibility", () => {
 		);
 	});
 
+	it("rejects a loaded channel that changes its persisted configuration", async () => {
+		const savedAttributes = {
+			...attributes,
+			configuration: { ...snapshot, revision: 4, values: { enabled: false } },
+		};
+		for (const configuration of [
+			{ ...savedAttributes.configuration, values: { enabled: true } },
+			{ ...savedAttributes.configuration, revision: 0 },
+		]) {
+			await assert.rejects(
+				loadChannel(
+					runtime,
+					savedAttributes,
+					{
+						attributes,
+						channelConfigurationProtocolVersion: 1,
+						load: async () => ({
+							...channel(),
+							attributes: { ...attributes, configuration },
+						}),
+					} as unknown as IChannelFactory,
+					{} as ChannelServiceEndpoints,
+					createMockLoggerExt(),
+					"dds",
+				),
+				validateAssertionError(
+					"Configured channel did not preserve its persisted configuration",
+				),
+			);
+		}
+	});
+
 	it("rejects a factory that activates configuration while loading legacy attributes", async () => {
 		await assert.rejects(
 			loadChannel(

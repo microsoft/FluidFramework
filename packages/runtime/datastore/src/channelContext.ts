@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -209,7 +209,9 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
-	const configured = hasChannelConfiguration(attributes);
+	const savedConfiguration = hasChannelConfiguration(attributes)
+		? attributes.configuration
+		: undefined;
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -226,13 +228,7 @@ export async function loadChannel(
 	}
 
 	const channel = await factory.load(dataStoreRuntime, channelId, services, attributes);
-	if (configured) {
-		requireChannelConfigurationController(channel);
-		assert(
-			hasChannelConfiguration(channel.attributes),
-			"Configured channel lost its persisted attributes",
-		);
-	} else {
+	if (savedConfiguration === undefined) {
 		// Having a factory immediately transition to some "default" configuration under its
 		// attributes on load is problematic for cross-client compatibility, as we are strict
 		// about enforcing only channels that declare support for configuration are allowed to load
@@ -241,6 +237,40 @@ export async function loadChannel(
 			!hasChannelConfiguration(channel.attributes),
 			"Factory should not opt a legacy channel into configuration",
 		);
+	} else {
+		requireChannelConfigurationController(channel);
+		assert(
+			hasChannelConfiguration(channel.attributes),
+			"Configured channel lost its persisted attributes",
+		);
+		assert(
+			areJsonValuesEqual(channel.attributes.configuration, savedConfiguration),
+			"Configured channel did not preserve its persisted configuration",
+		);
 	}
 	return channel;
+}
+
+function areJsonValuesEqual(first: unknown, second: unknown): boolean {
+	if (first === second) {
+		return true;
+	}
+	if (Array.isArray(first) || Array.isArray(second)) {
+		return (
+			Array.isArray(first) &&
+			Array.isArray(second) &&
+			first.length === second.length &&
+			first.every((value, index) => areJsonValuesEqual(value, second[index]))
+		);
+	}
+	if (!isObject(first) || !isObject(second)) {
+		return false;
+	}
+	const keys = Object.keys(first);
+	return (
+		keys.length === Object.keys(second).length &&
+		keys.every(
+			(key) => Object.hasOwn(second, key) && areJsonValuesEqual(first[key], second[key]),
+		)
+	);
 }
