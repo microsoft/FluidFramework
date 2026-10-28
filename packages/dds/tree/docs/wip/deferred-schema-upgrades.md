@@ -420,8 +420,22 @@ If publication is still pending, the next committed user edit includes the schem
 If a remote schema change has ended deferral, an abort must not restore the cancelled pending upgrade.
 Do not retry edits that the application intentionally aborted.
 
+Deferral applies to each new upgrade request, not only the first upgrade on a view.
+Keep a later unpublished request separate from an earlier publication that is awaiting its outcome.
+Acknowledging or retrying the earlier publication must not discard the later request.
+Coalesce compatible upgrades that are still private into one upgrade from the shared schema to the latest requested target.
+Do not attempt to replace an op already submitted to the runtime.
+When reconstructing a retry, coalesce upgrades whose application edits have already triggered publication, without publishing a later untriggered request early.
+
+In deferred mode, a successful transaction that contains only upgrade requests keeps those upgrades private.
+A later application-originated change triggers publication.
+Immediate mode retains its existing publish-on-commit behavior.
+An upgrade requested inside an aborted transaction rolls back with that transaction.
+This does not roll back an upgrade applied before the transaction began.
+Keep the existing semantics and restrictions for application-authored transactions that contain both schema and data changes.
+
 Distinguish an application-requested abort from a commit dropped during reconciliation.
-An abort does not remove the local upgrade or publish the aborted work.
+An abort does not remove a local upgrade applied before the transaction or publish the aborted work.
 A rejected commit requires safe internal retry or fail-stop behavior as described in Section 7.
 Do not require the application to reapply its schema upgrade or manage publication retries.
 

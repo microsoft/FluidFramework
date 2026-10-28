@@ -50,6 +50,68 @@ Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
 
+### M7a: operation coverage and schema-change discrimination
+
+M6 is committed as `c500499657c`.
+The operation/lifecycle checkpoint is validated.
+The remaining M7b state work is listed below; M7 as a whole is not yet complete.
+
+The current implementation covers these additional paths:
+
+| Surface | Implemented and tested behavior |
+| --- | --- |
+| Independent bases | Complete local publication without waiting for service acknowledgements or emitting false settled events. |
+| Application-fork merge and rebase | Project across known private schema preparation before the ordinary schema rebaser can discard fork work. Preserve unpublished data revisions and object identity. |
+| Forks created before retry | Correlate by revision, not commit object identity. Map retry history into the original identifier space for rebase, then map prepared changes back. Release mappings when original revisions are trimmed. |
+| Runtime cancellation | Remove cancelled data without retry, dispose its logical undo state, and retain the earlier local schema upgrade. A later user edit can publish it. |
+| Ownership and failure | Preserve public shared-branch restrictions, keep application forks independent, share the authoring view's breaker with its base, and dispose the authoring view when the base is disposed. |
+| Named shared branches | Route op encoding through the named branch's schema. Do not use main's schema to compress named-branch history. Summary/load tests preserve unpublished-versus-published state. |
+| Editor entry points | Root replacement, object fields, arrays, maps, records, moves, and serialized application changes publish through the controller. Move recovery preserves the moved object. |
+| Transactions and initialization | Empty transactions do not publish. Constraint-only and net-zero commits do publish. Nested transactions with minimization work. Initialization preserves the supplied root object. |
+| Detached trees | Use their actual synchronous sequencing outcomes without waiting for a later runtime message batch. |
+| Upgrade notifications | Preserve the original logical upgrade notification across private schema refreshes. |
+
+A separate diagnostic reproduced assertion `0x8a0` in native data-only rebase, with no C2 controller or schema changes, after two different rebases of the same commit.
+Do not expand this feature to repair that independent rebaser issue.
+As with native merge, the fork adapter does not compute a source net change for a merge that does not need one.
+The temporary diagnostic file was removed.
+
+The staged-upgrade regression is now passing:
+`keeps a requested staged upgrade enabled while receiving data-only changes`.
+A staged view can already view the old schema.
+The controller now distinguishes new schema commits on the base from data updates and rollback of its own schema.
+Only an actual received schema change, or a base that already covers the requested target, can make that cancellation decision.
+
+#### Remaining M7b state work
+
+The user clarified repeated upgrade requests and transaction scope:
+
+- Defer each upgrade request.
+  Prefer one coalesced upgrade to the latest compatible target while requests are still private.
+  Do not replace already-submitted ops.
+- In deferred mode, a successful schema-only upgrade transaction keeps the upgrade private.
+  Immediate mode remains unchanged.
+- Roll back upgrades requested inside an aborted transaction.
+  Keep upgrades applied before that transaction.
+
+The current state model conflates unpublished schema preparation with an in-flight publication.
+It must not lose a later requested upgrade when an earlier publication settles.
+Keep later untriggered requests out of retries for earlier edits.
+Coalesce already-triggered schema requirements when constructing a retry.
+Do not narrow support or claim this milestone is complete while those cases remain unresolved.
+The public opt-in and API reports remain M8 work.
+
+The first M7 commit covers operation/lifecycle integration and data-versus-schema discrimination.
+The next covers separate pending-upgrade and transaction-scope state.
+
+Validation at this checkpoint:
+
+- `pnpm --dir packages/dds/tree run build:esm`: passed.
+- `pnpm --dir packages/dds/tree run build:test:esm`: passed.
+- Biome and ESLint passed for the seven changed TypeScript files.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^sharedTreeView|^SharedTree |^SchematizingSimpleTreeView|^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager|^TreeBranchHistoryImpl' --reporter dot`: 786 passed; 3 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch|^deferred schema upgrades: ordered publication' --reporter dot`: 81 passed.
+
 ### M6: native physical history and logical notifications
 
 M5 is committed as `283d2a6acf9`.

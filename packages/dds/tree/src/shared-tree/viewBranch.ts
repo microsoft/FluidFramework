@@ -26,8 +26,12 @@ import {
 import type { TreeCheckout } from "./treeCheckout.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { type SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { refreshSchemaOnlyView, rebaseDeferredChanges } from "./deferredSchemaRebase.js";
-import { getCommitOutcome } from "./sharedTreeChangeFamily.js";
+import {
+	refreshSchemaOnlyView,
+	rebaseDeferredChanges,
+	DeferredSchemaForkRebaser,
+} from "./deferredSchemaRebase.js";
+import { getCommitOutcome, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 
 export type {
 	DeferredSchemaRebase,
@@ -181,21 +185,59 @@ export class ViewBranch {
 	private synchronizing = false;
 	private disposed = false;
 	private pendingSchema: TreeStoredSchema | undefined;
+	private pendingSchemaRevision: RevisionTag | undefined;
+	private pendingSchemaGeneration: number | undefined;
+	private receivedSchemaGeneration = 0;
 	private viewSchema: TreeSchema | undefined;
 	private reconcileView: ((action: () => void) => void) | undefined;
 	private releaseView: (() => void) | undefined;
 	private pendingBase: GraphCommit<SharedTreeChange> | undefined;
 	private publication: PendingViewPublication | undefined;
+	private readonly schemaForkRebaser: DeferredSchemaForkRebaser;
+	private readonly cancellations: GraphCommit<SharedTreeChange>[] = [];
 
 	public constructor(private readonly base: TreeCheckout) {
-		this.checkout = base.fork();
+		this.checkout = base.forkForView();
+		this.checkout.viewBase = base;
+		this.schemaForkRebaser = this.checkout.schemaForkRebaser ??=
+			new DeferredSchemaForkRebaser();
+		this.schemaForkRebaser.observeBranch(this.checkout.mainBranch);
 		this.synchronizedHead = this.checkout.mainBranch.getHead();
 		this.checkout.commitSequenceHandler = (commit) => this.recordOutcome(commit);
 		this.unsubscribe = [
 			base.events.on("afterOperation", () => this.synchronize()),
+			base.events.on("dispose", () => this.dispose()),
 			this.checkout.events.on("afterOperation", () => this.synchronize()),
 			this.checkout.events.on("dispose", () => this.dispose()),
 			base.mainBranch.events.on("commitSequenced", (commit) => this.recordOutcome(commit)),
+			base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "rebase") {
+					// Incoming data can roll back our own schema. Count new schema commits
+					// on the target, not transient schema changes in that rollback.
+					const replaced = new Set(event.removedCommits.map((commit) => commit.revision));
+					if (
+						event.newCommits.some(
+							(commit) => !replaced.has(commit.revision) && hasSchemaChange(commit.change),
+						)
+					) {
+						this.receivedSchemaGeneration++;
+					}
+				} else if (
+					event.type === "append" &&
+					!this.synchronizing &&
+					event.newCommits.some((commit) => hasSchemaChange(commit.change))
+				) {
+					this.receivedSchemaGeneration++;
+				}
+			}),
+			base.mainBranch.events.on("afterChange", (event) => {
+				if (event.type === "remove") {
+					// Runtime cancellation removes queued commits in reverse order. Rebase
+					// rejection uses sequencing outcomes instead and must not enter this path.
+					this.cancellations.push(...[...event.removedCommits].reverse());
+					this.synchronize();
+				}
+			}),
 			base.events.on("afterSequencedBatch", () => this.synchronize()),
 		];
 	}
@@ -230,6 +272,8 @@ export class ViewBranch {
 			this.pendingSchema = schema;
 			this.pendingBase = this.base.mainBranch.getHead();
 			this.synchronizedHead = this.checkout.mainBranch.getHead();
+			this.pendingSchemaRevision = this.synchronizedHead.revision;
+			this.pendingSchemaGeneration = this.receivedSchemaGeneration;
 		} finally {
 			this.synchronizing = false;
 		}
@@ -278,7 +322,10 @@ export class ViewBranch {
 		);
 		for (const commit of commits) {
 			publication.members.set(commit.revision, {
-				logicalRevision: commit.revision,
+				logicalRevision:
+					commit.revision === publication.schemaRevision
+						? (this.pendingSchemaRevision ?? commit.revision)
+						: commit.revision,
 				state: { type: "pending", revision: commit.revision, attempt: publication.attempt },
 			});
 		}
@@ -289,6 +336,24 @@ export class ViewBranch {
 		const publication = this.publication;
 		if (publication === undefined) {
 			return true;
+		}
+		if (!this.base.receivesSequencedOutcomes) {
+			// A private base finishes publication when the merge applies. It has no service
+			// acknowledgement to await, and this must not fabricate a public settled event.
+			for (const [revision, member] of publication.members) {
+				if (member.state.type === "pending") {
+					const commit = findAncestor(
+						this.base.mainBranch.getHead(),
+						(candidate) => candidate.revision === revision,
+					);
+					assert(commit !== undefined, "A local publication must be present on its base.");
+					member.state = settleViewPublication(
+						member.state,
+						revision,
+						getCommitOutcome(commit.change),
+					);
+				}
+			}
 		}
 		const status = getPublicationStatus(
 			[...publication.members.values()].map((member) => member.state),
@@ -310,11 +375,21 @@ export class ViewBranch {
 		this.reconcile(() => this.checkout.synchronizeFrom(this.base));
 		this.synchronizedHead = this.checkout.mainBranch.getHead();
 		this.pendingSchema = undefined;
+		this.pendingSchemaRevision = undefined;
+		this.pendingSchemaGeneration = undefined;
 		this.pendingBase = undefined;
 		this.publication = undefined;
 		try {
-			for (const member of publication.members.values()) {
-				this.checkout.reportCommitOutcome(member.logicalRevision, CommitOutcome.FullyApplied);
+			for (const [revision, member] of publication.members) {
+				if (this.base.receivesSequencedOutcomes) {
+					this.checkout.reportCommitOutcome(
+						member.logicalRevision,
+						CommitOutcome.FullyApplied,
+					);
+				}
+				if (revision !== member.logicalRevision) {
+					this.checkout.discardInternalCommitOutcome(revision);
+				}
 			}
 		} finally {
 			publication.retained.dispose();
@@ -365,7 +440,11 @@ export class ViewBranch {
 		try {
 			if (decision.type === "upgrade") {
 				candidate.updateSchema(decision.schema);
-				trackRetry(candidate.mainBranch.getHead().revision, publication.schemaRevision);
+				trackRetry(
+					candidate.mainBranch.getHead().revision,
+					previousMembers.get(publication.schemaRevision)?.logicalRevision ??
+						publication.schemaRevision,
+				);
 			}
 			for (const { originalRevision, commit } of prepared.commits) {
 				candidate.mainBranch.apply(commit, CommitKind.Default, commit.customMetadata);
@@ -378,16 +457,24 @@ export class ViewBranch {
 			// have a live target. Reconciliation does not rerun application callbacks.
 			this.reconcile(() => this.checkout.synchronizeFrom(candidate, prepared.reconciliation));
 			this.synchronizedHead = this.checkout.mainBranch.getHead();
+			this.schemaForkRebaser.rememberRevisions(
+				publication.originalHead,
+				prepared.reconciliation.revisionReplacers,
+			);
 			this.base.merge(candidate, false);
 			for (const [revision, member] of previousMembers) {
 				if (
-					member.state.type === "accepted" ||
-					(revision === publication.schemaRevision && decision.type === "adopt")
+					this.base.receivesSequencedOutcomes &&
+					(member.state.type === "accepted" ||
+						(revision === publication.schemaRevision && decision.type === "adopt"))
 				) {
 					this.checkout.reportCommitOutcome(
 						member.logicalRevision,
 						CommitOutcome.FullyApplied,
 					);
+				}
+				if (revision !== member.logicalRevision) {
+					this.checkout.discardInternalCommitOutcome(revision);
 				}
 			}
 		} finally {
@@ -400,6 +487,43 @@ export class ViewBranch {
 			action();
 		} else {
 			this.reconcileView(action);
+		}
+	}
+
+	private applyCancellations(): void {
+		for (const cancelled of this.cancellations.splice(0)) {
+			const publication = this.publication;
+			const member = publication?.members.get(cancelled.revision);
+			const head = this.checkout.mainBranch.getHead();
+			const commit = findAncestor(
+				head,
+				(candidate) => candidate.revision === cancelled.revision,
+			);
+			if (commit === undefined) {
+				// Schema-only refresh may already have reflected cancellation of earlier base work.
+				assert(member === undefined, "Tracked cancelled work must still be retained.");
+				continue;
+			}
+			assert(
+				head === commit,
+				"Runtime cancellation cannot silently discard later application work.",
+			);
+			if (member !== undefined && member.logicalRevision === this.pendingSchemaRevision) {
+				// Cancel the submission, not the explicit local upgrade. A later application
+				// edit can publish a fresh schema prefix after the runtime finishes rollback.
+				publication?.retained.dispose();
+				this.publication = undefined;
+				this.pendingBase = this.base.mainBranch.getHead();
+			} else {
+				assert(commit.parent !== undefined, "A cancelled commit must have a parent.");
+				this.checkout.mainBranch.removeAfter(commit.parent);
+				this.checkout.discardCancelledCommit(member?.logicalRevision ?? cancelled.revision);
+				publication?.members.delete(cancelled.revision);
+				if (publication !== undefined) {
+					publication.originalHead = this.checkout.mainBranch.getHead();
+				}
+			}
+			this.synchronizedHead = this.checkout.mainBranch.getHead();
 		}
 	}
 
@@ -418,6 +542,7 @@ export class ViewBranch {
 			// and the application-facing checkout must stop rather than continue divergent.
 			this.checkout.breaker.run(() =>
 				this.base.breaker.run(() => {
+					this.applyCancellations();
 					const publishing = this.checkout.mainBranch.getHead() !== this.synchronizedHead;
 					if (publishing) {
 						this.trackPublication();
@@ -427,6 +552,7 @@ export class ViewBranch {
 					if (!this.finishPublication()) {
 						return;
 					}
+					let schemaOutcome: { revision: RevisionTag; outcome: CommitOutcome } | undefined;
 					const reconcile = (): void => {
 						if (this.pendingSchema === undefined) {
 							this.checkout.synchronizeFrom(this.base);
@@ -435,11 +561,22 @@ export class ViewBranch {
 								this.viewSchema !== undefined,
 								"A pending upgrade requires a view schema.",
 							);
-							const decision = decideViewSchema(
-								this.viewSchema,
-								this.base.storedSchema,
-								this.pendingSchema,
-							);
+							// A staged view can already view the old schema. Data-only changes
+							// must not use that fact to cancel an explicitly requested upgrade.
+							const decision: ViewSchemaDecision =
+								this.pendingSchemaGeneration !== this.receivedSchemaGeneration ||
+								allowsRepoSuperset(
+									defaultSchemaPolicy,
+									this.pendingSchema,
+									this.base.storedSchema,
+								)
+									? decideViewSchema(
+											this.viewSchema,
+											this.base.storedSchema,
+											this.pendingSchema,
+										)
+									: { type: "upgrade", schema: this.pendingSchema };
+							const schemaRevision = this.pendingSchemaRevision;
 							if (publishing) {
 								// The base now contains the same commits. Do not use the schema-only
 								// refresh, which is allowed to discard only internal preparation.
@@ -453,10 +590,28 @@ export class ViewBranch {
 								this.pendingSchema = undefined;
 							} else {
 								const target = decision.type === "upgrade" ? decision.schema : undefined;
+								const oldPreparation = this.synchronizedHead.revision;
 								refreshSchemaOnlyView(this.checkout, this.base, this.synchronizedHead, target);
+								if (oldPreparation !== schemaRevision) {
+									this.checkout.discardInternalCommitOutcome(oldPreparation);
+								}
 								this.pendingSchema = target;
 								this.pendingBase =
 									target === undefined ? undefined : this.base.mainBranch.getHead();
+								this.pendingSchemaGeneration =
+									target === undefined ? undefined : this.receivedSchemaGeneration;
+							}
+							if (this.pendingSchema === undefined && schemaRevision !== undefined) {
+								this.pendingSchemaRevision = undefined;
+								this.pendingSchemaGeneration = undefined;
+								this.pendingBase = undefined;
+								schemaOutcome = {
+									revision: schemaRevision,
+									outcome:
+										decision.type === "incompatible"
+											? CommitOutcome.FullyDropped
+											: CommitOutcome.FullyApplied,
+								};
 							}
 						}
 					};
@@ -466,6 +621,9 @@ export class ViewBranch {
 						this.reconcileView(reconcile);
 					}
 					this.synchronizedHead = this.checkout.mainBranch.getHead();
+					if (schemaOutcome !== undefined && this.base.receivesSequencedOutcomes) {
+						this.checkout.reportCommitOutcome(schemaOutcome.revision, schemaOutcome.outcome);
+					}
 				}),
 			);
 		} finally {

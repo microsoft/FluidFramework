@@ -81,7 +81,9 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							changeCodec,
 							revisionTagCodec,
 							branch,
-							context,
+							// A named branch need not share main's schema. As with peer histories
+							// that contain schema changes, encode without an inherited schema.
+							{ ...context, schema: undefined },
 							data.originator,
 							true,
 						),

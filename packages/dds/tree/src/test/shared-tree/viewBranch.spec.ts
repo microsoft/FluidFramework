@@ -5,6 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { minimize } from "@fluidframework/tree/alpha";
+import {
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 import { FluidClientVersion } from "../../codec/index.js";
 import {
 	CommitKind,
@@ -27,17 +35,25 @@ import {
 	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type ImplicitFieldSchema,
+	type InsertableField,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
+	StagedSchemaUpgradePolicy,
 } from "../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { createTreeCheckout, SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import { configuredSharedTree, resolveOptions } from "../../treeFactory.js";
 
 import {
 	expectSchemaEqual,
 	mintRevisionTag,
 	SharedTreeTestFactory,
 	TestTreeProviderLite,
+	testIdCompressor,
+	testRevisionTagCodec,
+	TestTreeProvider,
+	SummarizeType,
 } from "../utils.js";
 
 describe("viewBranch", () => {
@@ -232,12 +248,24 @@ describe("viewBranch", () => {
 			config: TreeViewConfiguration<TRoot>,
 			provider = new TestTreeProviderLite(2),
 		) {
-			const remote = provider.trees[0].kernel.viewWith(configV1);
-			remote.initialize(["initial"]);
+			return createSchemaScenario(configV1, config, ["initial"], provider);
+		}
+
+		function createSchemaScenario<
+			TBefore extends ImplicitFieldSchema,
+			TAfter extends ImplicitFieldSchema,
+		>(
+			before: TreeViewConfiguration<TBefore>,
+			after: TreeViewConfiguration<TAfter>,
+			content: InsertableField<TBefore>,
+			provider = new TestTreeProviderLite(2),
+		) {
+			const remote = provider.trees[0].kernel.viewWith(before);
+			remote.initialize(content);
 			provider.synchronizeMessages();
 			const base = provider.trees[1].kernel.checkout;
 			const branch = new ViewBranch(base);
-			const view = branch.viewWith(config);
+			const view = branch.viewWith(after);
 			return { provider, remote, base, branch, view };
 		}
 
@@ -844,6 +872,724 @@ describe("viewBranch", () => {
 				provider.synchronizeMessages();
 				assert.deepEqual([...view.root], ["remote", "initial", 1]);
 				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps independent bases synchronized without waiting for nonexistent acknowledgements", () => {
+			const base = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec);
+			const original = base.viewWith(configV1);
+			original.initialize(["initial"]);
+			original.dispose();
+			const branch = new ViewBranch(base);
+			const view = branch.viewWith(configV2);
+			const outcomes: CommitOutcome[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			try {
+				view.upgradeSchema();
+				view.root.insertAtEnd(1);
+				const other = base.fork().viewWith(configV2);
+				other.root.insertAtEnd(2);
+				base.merge(other);
+				assert.deepEqual([...view.root], ["initial", 1, 2]);
+				assert.deepEqual(outcomes, [], "An independent edit was reported as sequenced.");
+			} finally {
+				off();
+				branch.dispose();
+				base.dispose();
+			}
+		});
+
+		it("settles the original upgrade notification after private schema refreshes", () => {
+			const { provider, remote, branch, view } = createUpgradableViews(configV2);
+			const outcomes: CommitOutcome[] = [];
+			let localChanges = 0;
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					localChanges++;
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			try {
+				view.upgradeSchema();
+				remote.root.insertAtEnd("first");
+				provider.synchronizeMessages();
+				remote.root.insertAtEnd("second");
+				provider.synchronizeMessages();
+				view.root.insertAtEnd(1);
+				provider.synchronizeMessages();
+				assert.equal(
+					localChanges,
+					2,
+					"Private preparation emitted extra application changes.",
+				);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied, CommitOutcome.FullyApplied]);
+			} finally {
+				off();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("cancels queued application edits without retrying and retains the local upgrade", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(
+				configV2,
+				new TestTreeProviderLite(
+					2,
+					new SharedTreeTestFactory(() => {}),
+					true,
+					FlushMode.TurnBased,
+				),
+			);
+			const runtime = provider.trees[1].containerRuntime;
+			const outcomes: CommitOutcome[] = [];
+			const revertibles: Revertible[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+					const revertible = metadata.getRevertible();
+					if (revertible !== undefined) {
+						revertibles.push(revertible);
+					}
+				}
+			});
+			try {
+				view.upgradeSchema();
+				view.root.insertAtEnd(1);
+				assert(runtime instanceof MockContainerRuntime);
+				assert(runtime.rollback !== undefined);
+				runtime.rollback();
+				assert.deepEqual([...view.root], ["initial"]);
+				assert.equal(view.compatibility.canView, true);
+				assert.equal(revertibles[0]?.status, RevertibleStatus.Disposed);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV1.schema));
+				provider.synchronizeMessages();
+				assert.equal(provider.peekNextMessage(), undefined);
+				assert.deepEqual(outcomes, []);
+
+				view.root.insertAtEnd(2);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["initial", 2]);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied, CommitOutcome.FullyApplied]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				off();
+				for (const revertible of revertibles) {
+					if (revertible.status === RevertibleStatus.Valid) {
+						revertible.dispose();
+					}
+				}
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		for (const refreshBeforeMerge of [false, true]) {
+			it(`publishes an application fork ${refreshBeforeMerge ? "after a schema-only refresh" : "without publishing the fork's edits early"}`, () => {
+				const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+				view.upgradeSchema();
+				const fork = view.fork();
+				try {
+					fork.root.insertAtEnd(1);
+					assert.deepEqual([...view.root], ["initial"]);
+					assert.equal(provider.peekNextMessage(), undefined);
+					if (refreshBeforeMerge) {
+						remote.root.insertAtStart("remote");
+						provider.synchronizeMessages();
+					}
+					view.merge(fork, false);
+					provider.synchronizeMessages();
+					provider.synchronizeMessages();
+					assert.deepEqual(
+						[...view.root],
+						refreshBeforeMerge ? ["remote", "initial", 1] : ["initial", 1],
+					);
+					assert.deepEqual(
+						base.exportVerbose(),
+						provider.trees[0].kernel.checkout.exportVerbose(),
+					);
+				} finally {
+					fork.dispose();
+					branch.dispose();
+					remote.dispose();
+				}
+			});
+		}
+
+		it("rebases an application fork across private preparation without replacing its objects", () => {
+			class Note extends sf.object("RebasedForkNote", { text: sf.string }) {}
+			const config = new TreeViewConfiguration({
+				schema: sf.array("Root", [sf.string, Note]),
+			});
+			const { provider, remote, branch, view } = createUpgradableViews(config);
+			view.upgradeSchema();
+			const fork = view.fork();
+			let undo: Revertible | undefined;
+			const off = fork.events.on("changed", (metadata) => {
+				if (metadata.isLocal && metadata.kind === CommitKind.Default) {
+					undo = metadata.getRevertible();
+				}
+			});
+			try {
+				const note = new Note({ text: "fork edit" });
+				fork.root.insertAtEnd(note);
+				assert(undo !== undefined);
+				remote.root.insertAtStart("remote");
+				provider.synchronizeMessages();
+				fork.rebaseOnto(view);
+				assert.equal(fork.root[2] === note, true);
+				assert.deepEqual([...view.root], ["remote", "initial"]);
+				undo.revert();
+				assert.deepEqual([...fork.root], ["remote", "initial"]);
+				assert.equal(provider.peekNextMessage(), undefined);
+			} finally {
+				off();
+				if (undo?.status === RevertibleStatus.Valid) {
+					undo.dispose();
+				}
+				fork.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("reconciles a pre-retry fork without duplicating recovered work", () => {
+			class Note extends sf.object("PreRetryForkNote", { text: sf.string }) {}
+			const config = new TreeViewConfiguration({
+				schema: sf.array("Root", [sf.string, Note]),
+			});
+			const { provider, remote, branch, view } = createUpgradableViews(config);
+			view.upgradeSchema();
+			remote.root.insertAtStart("remote");
+			const parentNote = new Note({ text: "parent edit" });
+			view.root.insertAtEnd(parentNote);
+			const fork = view.fork();
+			const forkNote = fork.root[1];
+			assert(forkNote instanceof Note);
+			let undo: Revertible | undefined;
+			const off = fork.events.on("changed", (metadata) => {
+				if (metadata.isLocal && metadata.kind === CommitKind.Default) {
+					undo = metadata.getRevertible();
+				}
+			});
+			try {
+				forkNote.text = "fork edit";
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				view.merge(fork, false);
+				provider.synchronizeMessages();
+				assert.equal(view.root.length, 3, "Merge duplicated the recovered insertion.");
+				assert.equal(view.root[2] === parentNote, true);
+				assert.equal(parentNote.text, "fork edit");
+				view.merge(fork, false);
+				assert.equal(
+					provider.peekNextMessage(),
+					undefined,
+					"An unchanged fork was republished.",
+				);
+
+				fork.rebaseOnto(view);
+				assert.equal(fork.root[2] === forkNote, true);
+				assert(undo !== undefined);
+				undo.revert();
+				assert.equal(forkNote.text, "parent edit");
+				assert.equal(parentNote.text, "fork edit", "The fork's undo escaped its checkout.");
+			} finally {
+				off();
+				if (undo?.status === RevertibleStatus.Valid) {
+					undo.dispose();
+				}
+				fork.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps retry mappings usable after an application fork's ordinary data rebase", () => {
+			const { provider, remote, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const sibling = view.fork();
+			remote.root.insertAtStart("remote");
+			view.root.insertAtEnd(1);
+			const fork = view.fork();
+			try {
+				sibling.root.insertAtEnd("sibling");
+				// Ordinary rebase replaces commit objects, but preserves their revision IDs.
+				fork.rebaseOnto(sibling);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				view.merge(fork, false);
+				provider.synchronizeMessages();
+				assert.equal([...view.root].filter((value) => value === 1).length, 1);
+				assert.equal([...view.root].filter((value) => value === "sibling").length, 1);
+			} finally {
+				fork.dispose();
+				sibling.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("preserves shared-branch history restrictions on the private authoring checkout", () => {
+			const { remote, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const fork = view.fork();
+			try {
+				const head = branch.checkout.branchHistory.getHead();
+				assert(head !== undefined);
+				assert.throws(
+					() => branch.checkout.rewindTo(head.revision),
+					/Cannot switch a view away from a shared branch/,
+				);
+				assert.throws(() => branch.checkout.rebaseOnto(fork), /0xa5d/);
+				fork.merge(view);
+				assert.equal(
+					view.disposed,
+					false,
+					"Merging a shared source disposed its authoring view.",
+				);
+				assert.deepEqual([...view.root], ["initial"]);
+			} finally {
+				fork.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("retains fork work when schema reconciliation is unsafe", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const fork = branch.checkout.fork().viewWith(configV3);
+			fork.upgradeSchema();
+			fork.root.insertAtEnd(true);
+			remote.root.insertAtStart("remote");
+			provider.synchronizeMessages();
+			assert.throws(() => view.merge(fork, false), /reconciliation is unsafe: schemaConflict/);
+			assert.deepEqual(
+				[...fork.root],
+				["initial", true],
+				"The unsafe merge discarded its source work.",
+			);
+			assert.throws(() => base.breaker.use(), /invalid state/);
+			remote.dispose();
+		});
+
+		it("disposes the authoring view when its borrowed base is disposed", () => {
+			const { remote, base, branch, view } = createUpgradableViews(configV2);
+			base.dispose();
+			assert.equal(branch.checkout.disposed, true);
+			assert.equal(view.disposed, true);
+			branch.dispose();
+			remote.dispose();
+		});
+
+		it("supports deferred upgrades and synchronous outcomes on detached trees", () => {
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const tree = new SharedTreeTestFactory(() => {}).create(runtime, "detached");
+			new MockContainerRuntimeFactory().createContainerRuntime(runtime);
+			const oldView = tree.kernel.viewWith(configV1);
+			oldView.initialize(["initial"]);
+			oldView.dispose();
+			const base = tree.kernel.checkout;
+			const branch = new ViewBranch(base);
+			const view = branch.viewWith(configV2);
+			const outcomes: CommitOutcome[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			try {
+				view.upgradeSchema();
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV1.schema));
+				view.root.insertAtEnd(1);
+				view.root.insertAtEnd(2);
+				assert.deepEqual([...view.root], ["initial", 1, 2]);
+				assert.deepEqual(outcomes, [
+					CommitOutcome.FullyApplied,
+					CommitOutcome.FullyApplied,
+					CommitOutcome.FullyApplied,
+				]);
+			} finally {
+				off();
+				branch.dispose();
+			}
+		});
+
+		it("publishes to a named shared branch without changing the main branch", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({ enableSharedBranches: true }).getFactory(),
+			);
+			const main = provider.trees[0].kernel.viewWith(configV1);
+			main.initialize(["initial"]);
+			provider.synchronizeMessages();
+			const id = provider.trees[0].createSharedBranch("deferred");
+			provider.synchronizeMessages();
+			const initial = provider.trees[1].kernel.viewBranchWith(id, configV1);
+			assert(initial instanceof SchematizingSimpleTreeView);
+			const base = initial.checkout;
+			initial.dispose();
+			assert.equal(
+				base.disposed,
+				false,
+				"Disposing a named-branch view disposed its owned checkout.",
+			);
+			const branch = new ViewBranch(base);
+			const view = branch.viewWith(configV2);
+			const outcomes: CommitOutcome[] = [];
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					metadata.events.on("settled", (outcome) => outcomes.push(outcome));
+				}
+			});
+			try {
+				view.upgradeSchema();
+				view.root.insertAtEnd(1);
+				provider.synchronizeMessages();
+				const peer = provider.trees[0].kernel.viewBranchWith(id, configV2);
+				assert.deepEqual([...peer.root], ["initial", 1]);
+				assert.deepEqual([...main.root], ["initial"]);
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied, CommitOutcome.FullyApplied]);
+				peer.dispose();
+			} finally {
+				off();
+				branch.dispose();
+				main.dispose();
+			}
+		});
+
+		it("summarizes only published named-branch state and reloads its upgraded schema", async () => {
+			const provider = await TestTreeProvider.create(
+				1,
+				SummarizeType.onDemand,
+				new SharedTreeTestFactory(
+					() => {},
+					undefined,
+					resolveOptions({ enableSharedBranches: true }),
+				),
+			);
+			const tree = provider.trees[0];
+			const main = tree.kernel.viewWith(configV1);
+			main.initialize(["initial"]);
+			await provider.ensureSynchronized();
+			const id = tree.createSharedBranch("summary");
+			await provider.ensureSynchronized();
+			const initial = tree.kernel.viewBranchWith(id, configV1);
+			assert(initial instanceof SchematizingSimpleTreeView);
+			const branch = new ViewBranch(initial.checkout);
+			initial.dispose();
+			const view = branch.viewWith(configV2);
+			try {
+				view.upgradeSchema();
+				await provider.summarize();
+				await provider.ensureSynchronized();
+				const before = await provider.createTree();
+				const beforeView = before.kernel.viewBranchWith(id, configV1);
+				assert.deepEqual([...beforeView.root], ["initial"]);
+				beforeView.dispose();
+
+				view.root.insertAtEnd(1);
+				await provider.ensureSynchronized();
+				await provider.summarize();
+				await provider.ensureSynchronized();
+				const after = await provider.createTree();
+				const afterView = after.kernel.viewBranchWith(id, configV2);
+				assert.deepEqual([...afterView.root], ["initial", 1]);
+				assert.deepEqual([...main.root], ["initial"]);
+				afterView.dispose();
+			} finally {
+				branch.dispose();
+				main.dispose();
+			}
+		});
+
+		it("does not publish for an empty application transaction", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			try {
+				view.upgradeSchema();
+				view.runTransaction(() => {});
+				assert.equal(provider.peekNextMessage(), undefined);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV1.schema));
+				assert.deepEqual([...view.root], ["initial"]);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		for (const trigger of ["constraint-only", "net-zero"] as const) {
+			it(`publishes a ${trigger} application commit`, () => {
+				const { provider, remote, base, branch, view } = createUpgradableViews(
+					configV2,
+					new TestTreeProviderLite(
+						2,
+						new SharedTreeTestFactory(() => {}, undefined, {
+							minVersionForCollab: FluidClientVersion.v2_80,
+						}),
+					),
+				);
+				try {
+					view.upgradeSchema();
+					view.runTransaction(() => {
+						if (trigger === "constraint-only") {
+							branch.checkout.editor.addNoChangeConstraint();
+						} else {
+							view.root.insertAtEnd(1);
+							view.root.removeAt(1);
+						}
+					});
+					provider.synchronizeMessages();
+					assert.deepEqual([...view.root], ["initial"]);
+					expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+				} finally {
+					branch.dispose();
+					remote.dispose();
+				}
+			});
+		}
+
+		it("initializes an empty tree immediately and preserves the supplied root object", () => {
+			const provider = new TestTreeProviderLite(2);
+			const branch = new ViewBranch(provider.trees[1].kernel.checkout);
+			const view = branch.viewWith(configV2);
+			try {
+				const root = new configV2.schema(["initial", 1]);
+				view.initialize(root);
+				assert.equal(view.root === root, true);
+				provider.synchronizeMessages();
+				const peer = provider.trees[0].kernel.viewWith(configV2);
+				assert.deepEqual([...peer.root], ["initial", 1]);
+				assert.equal(view.root === root, true);
+				peer.dispose();
+			} finally {
+				branch.dispose();
+			}
+		});
+
+		it("publishes root replacement through the value-field editor", () => {
+			const { provider, remote, base, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.string }),
+				new TreeViewConfiguration({ schema: [sf.string, sf.number] }),
+				"initial",
+			);
+			try {
+				view.upgradeSchema();
+				view.root = 1;
+				provider.synchronizeMessages();
+				assert.equal(view.root, 1);
+				assert.equal(base.exportVerbose(), 1);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes object-field edits using the upgraded schema", () => {
+			const { provider, remote, base, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.object("ObjectRoot", { value: sf.string }) }),
+				new TreeViewConfiguration({
+					schema: sf.object("ObjectRoot", { value: [sf.string, sf.number] }),
+				}),
+				{ value: "initial" },
+			);
+			try {
+				view.upgradeSchema();
+				const root = view.root;
+				root.value = 1;
+				provider.synchronizeMessages();
+				assert.equal(view.root === root, true);
+				assert.equal(root.value, 1);
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes map entries using newly allowed types", () => {
+			const { provider, remote, base, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.map("MapRoot", sf.string) }),
+				new TreeViewConfiguration({ schema: sf.map("MapRoot", [sf.string, sf.number]) }),
+				new Map([["initial", "value"]]),
+			);
+			try {
+				view.upgradeSchema();
+				view.root.set("added", 1);
+				provider.synchronizeMessages();
+				assert.equal(view.root.get("added"), 1);
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes record entries using newly allowed types", () => {
+			const { provider, remote, base, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.record("RecordRoot", sf.string) }),
+				new TreeViewConfiguration({ schema: sf.record("RecordRoot", [sf.string, sf.number]) }),
+				{ initial: "value" },
+			);
+			try {
+				view.upgradeSchema();
+				view.root.added = 1;
+				provider.synchronizeMessages();
+				assert.equal(view.root.added, 1);
+				assert.deepEqual(
+					base.exportVerbose(),
+					provider.trees[0].kernel.checkout.exportVerbose(),
+				);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes serialized application changes after the deferred schema", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(configV2);
+			view.upgradeSchema();
+			const fork = view.fork();
+			let change: JsonCompatibleReadOnly | undefined;
+			const offChange = fork.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					change = metadata.getChange();
+				}
+			});
+			const published: string[][] = [];
+			const offBase = base.mainBranch.events.on("beforeChange", (event) => {
+				if (event.type === "append") {
+					published.push(
+						...event.newCommits.map((commit) =>
+							commit.change.changes.map((inner) => inner.type),
+						),
+					);
+				}
+			});
+			try {
+				fork.root.insertAtEnd(1);
+				assert(change !== undefined);
+				assert.equal(provider.peekNextMessage(), undefined);
+				view.applyChange(change);
+				provider.synchronizeMessages();
+				assert.deepEqual(published, [["schema"], ["data"]]);
+				assert.deepEqual([...view.root], ["initial", 1]);
+			} finally {
+				offChange();
+				offBase();
+				fork.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("recovers a move while preserving the moved node's identity", () => {
+			class Note extends sf.object("MovedNote", { text: sf.string }) {}
+			const { provider, remote, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.array("MoveRoot", Note) }),
+				new TreeViewConfiguration({ schema: sf.array("MoveRoot", [Note, sf.number]) }),
+				[{ text: "a" }, { text: "b" }],
+			);
+			try {
+				view.upgradeSchema();
+				const moved = view.root[0];
+				assert(moved instanceof Note);
+				remote.root.insertAtStart(new Note({ text: "remote" }));
+				view.root.moveToEnd(0);
+				provider.synchronizeMessages();
+				provider.synchronizeMessages();
+				assert.equal(view.root[2] === moved, true);
+				assert.equal(moved.text, "a");
+				assert.deepEqual(
+					[...view.root].map((node) => (node instanceof Note ? node.text : node)),
+					["remote", "b", "a"],
+				);
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("publishes nested transactions with the standard minimization post-processor", () => {
+			const { provider, remote, base, branch, view } = createUpgradableViews(
+				configV2,
+				new TestTreeProviderLite(
+					2,
+					new SharedTreeTestFactory(() => {}, undefined, {
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}),
+				),
+			);
+			try {
+				view.upgradeSchema();
+				view.runTransaction(
+					() => {
+						view.runTransaction(() => view.root.insertAtEnd(1));
+						view.root.insertAtEnd(2);
+						view.root.removeAt(2);
+					},
+					{ postProcessor: minimize },
+				);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["initial", 1]);
+				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
+			} finally {
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("merges a fork that requested its upgrade before the parent did", () => {
+			const { provider, remote, branch, view } = createUpgradableViews(configV2);
+			const fork = view.fork();
+			try {
+				fork.upgradeSchema();
+				fork.root.insertAtEnd(1);
+				view.upgradeSchema();
+				remote.root.insertAtStart("remote");
+				provider.synchronizeMessages();
+				view.merge(fork, false);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["remote", "initial", 1]);
+			} finally {
+				fork.dispose();
+				branch.dispose();
+				remote.dispose();
+			}
+		});
+
+		it("keeps a requested staged upgrade enabled while receiving data-only changes", () => {
+			const stagedNumber = SchemaFactoryAlpha.staged(sf.number);
+			const upgrade = stagedNumber.metadata.stagedSchemaUpgrade;
+			assert(upgrade !== undefined);
+			const { provider, remote, branch, view } = createSchemaScenario(
+				new TreeViewConfiguration({ schema: sf.optional(sf.string) }),
+				new TreeViewConfigurationAlpha({
+					schema: sf.optional(sf.types([sf.string, stagedNumber])),
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+				}),
+				"initial",
+			);
+			try {
+				assert.equal(view.compatibility.canView, true);
+				view.upgradeSchema();
+				assert.equal(view.isStagedUpgradeEnabled(upgrade), "enabled");
+				remote.root = "remote";
+				provider.synchronizeMessages();
+				assert.equal(view.root, "remote");
+				assert.equal(view.isStagedUpgradeEnabled(upgrade), "enabled");
 			} finally {
 				branch.dispose();
 				remote.dispose();

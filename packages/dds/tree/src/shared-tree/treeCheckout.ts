@@ -39,6 +39,7 @@ import {
 	type JsonableTree,
 	RevertibleStatus,
 	type RevisionTag,
+	type RevisionReplacer,
 	type RevisionTagCodec,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -132,6 +133,7 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { DefaultTreeBranchHistory } from "./history.js";
+import type { DeferredSchemaForkRebaser } from "./deferredSchemaRebase.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -587,6 +589,10 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private editLock: EditLock;
 	private synchronizingFromBase = false;
+	/** Shared only by related private checkouts that can contain deferred schema preparation. */
+	public schemaForkRebaser: DeferredSchemaForkRebaser | undefined;
+	/** The public branch represented by a persistent internal authoring checkout. */
+	public viewBase: TreeCheckout | undefined;
 
 	/**
 	 * Root of the mutable label tree tracking transaction nesting.
@@ -657,8 +663,8 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
 		>,
-		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
-		public readonly isSharedBranch: boolean,
+		/** Whether this checkout was created as a main/shared branch rather than an application fork. */
+		private readonly sharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
@@ -687,6 +693,14 @@ export class TreeCheckout implements ITreeCheckout {
 	public get branchHistory(): DefaultTreeBranchHistory {
 		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
 		return this._branchHistory;
+	}
+
+	public get isSharedBranch(): boolean {
+		return this.sharedBranch || this.receivesSequencedOutcomes;
+	}
+
+	private get isSharedForPublicOperations(): boolean {
+		return this.isSharedBranch || this.viewBase?.isSharedBranch === true;
 	}
 
 	/**
@@ -893,6 +907,13 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
+	 * Whether the runtime owner will provide definitive sequencing outcomes for local publications.
+	 * Set before exposing a runtime-owned checkout. Independent trees and application forks leave
+	 * this false, even when they use the same checkout implementation as a shared tree.
+	 */
+	public receivesSequencedOutcomes = false;
+
+	/**
 	 * Optional owner for sequencing notifications on an internal authoring checkout.
 	 * The owner must eventually report the logical outcome or fail the checkout.
 	 */
@@ -921,6 +942,28 @@ export class TreeCheckout implements ITreeCheckout {
 		}, "a commit settled event callback");
 		// No more events will be emitted for this commit, so we can remove the emitter from the map.
 		this.localCommitEventEmitters.delete(revision);
+	}
+
+	/**
+	 * Releases an internal preparation event that will not be published.
+	 * Application outcome events must instead be reported or retained by their owner.
+	 */
+	public discardInternalCommitOutcome(revision: RevisionTag): void {
+		this.localCommitEventEmitters.delete(revision);
+	}
+
+	/**
+	 * Releases notifications and undo state for an application-cancelled logical commit.
+	 * This must not be used for a synchronization rejection that still requires recovery.
+	 */
+	public discardCancelledCommit(revision: RevisionTag): void {
+		this.localCommitEventEmitters.delete(revision);
+		const revertible = this.revertibles.get(revision);
+		if (revertible !== undefined) {
+			revertible.dispose();
+		} else if (this.revertibleCommitBranches.has(revision)) {
+			this.disposeRevertible(revision);
+		}
 	}
 
 	/**
@@ -1081,24 +1124,11 @@ export class TreeCheckout implements ITreeCheckout {
 		if (event.type === "rebase" && event.revisionReplacers !== undefined) {
 			for (const replacer of event.revisionReplacers) {
 				this._removedRoots.replaceRevisions(replacer);
-				for (const [logicalRevision, retained] of this.revertibleCommitBranches) {
-					if (replacer.isObsolete(retained.getHead().revision)) {
-						const replacement = event.newCommits.find(
-							(commit) => commit.revision === replacer.updatedRevision,
-						);
-						assert(
-							replacement !== undefined,
-							"A recovered revertible needs its replacement commit.",
-						);
-						// Handles keep their logical key; only the commit they invert changes.
-						// Pin the replacement before releasing the original repair-data history.
-						this.revertibleCommitBranches.set(
-							logicalRevision,
-							this.mainBranch.fork(replacement),
-						);
-						retained.dispose();
-					}
-				}
+			}
+		}
+		if (event.type === "rebase") {
+			for (const replacer of event.revisionReplacers ?? []) {
+				this.replaceRevertibleRevision(replacer, event.newCommits);
 			}
 		}
 		this.#events.emit("afterBatch");
@@ -1110,6 +1140,26 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 		this.emitAfterOperation();
 	};
+
+	private replaceRevertibleRevision(
+		replacer: RevisionReplacer,
+		commits: readonly GraphCommit<SharedTreeChange>[],
+	): void {
+		for (const [logicalRevision, retained] of this.revertibleCommitBranches) {
+			if (replacer.isObsolete(retained.getHead().revision)) {
+				const replacement = commits.find(
+					(commit) => commit.revision === replacer.updatedRevision,
+				);
+				assert(
+					replacement !== undefined,
+					"A recovered revertible needs its replacement commit.",
+				);
+				// Keep the handle's logical key and pin its replacement before releasing repair data.
+				this.revertibleCommitBranches.set(logicalRevision, this.mainBranch.fork(replacement));
+				retained.dispose();
+			}
+		}
+	}
 
 	/**
 	 * Whether another checkout may synchronize with this checkout without observing a partial edit.
@@ -1565,6 +1615,18 @@ export class TreeCheckout implements ITreeCheckout {
 
 	@throwIfBroken
 	public fork(): TreeCheckout {
+		return this.forkWithBreaker(new Breakable("TreeCheckout", this.logger));
+	}
+
+	/**
+	 * Creates an internal authoring checkout in the base's failure scope.
+	 * Application forks continue to get their own independent breaker.
+	 */
+	public forkForView(): TreeCheckout {
+		return this.forkWithBreaker(this.breaker);
+	}
+
+	private forkWithBreaker(breaker: Breakable): TreeCheckout {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
@@ -1575,8 +1637,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.branch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout", this.logger);
-		const forest = this.forest.clone(storedSchema, forkBreaker);
+		const forest = this.forest.clone(storedSchema, breaker);
 		const checkout = new TreeCheckout(
 			branch,
 			false,
@@ -1589,6 +1650,8 @@ export class TreeCheckout implements ITreeCheckout {
 			this.jsonValidator,
 			this._removedRoots.clone(),
 		);
+		checkout.schemaForkRebaser = this.schemaForkRebaser;
+		checkout.schemaForkRebaser?.observeBranch(checkout.mainBranch);
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}
@@ -1604,7 +1667,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
-		if (this.isSharedBranch) {
+		if (this.isSharedForPublicOperations) {
 			throw new UsageError(
 				"Cannot switch a view away from a shared branch. Consider forking first.",
 			);
@@ -1620,6 +1683,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		this.#transaction = this.createTransactionStack(branch);
 		this.branch = branch;
+		this.schemaForkRebaser?.observeBranch(branch);
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -1646,6 +1710,11 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		if (this.isSharedForPublicOperations) {
+			throw new UsageError(
+				"Cannot switch a view away from a shared branch. Consider forking first.",
+			);
 		}
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
@@ -1725,15 +1794,34 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		assert(
-			!checkout.isSharedBranch,
+			!checkout.isSharedForPublicOperations,
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
-		checkout.#transaction.branch.rebaseOnto(this.#transaction.branch);
+		if (checkout.schemaForkRebaser?.rebase(checkout, this) !== true) {
+			checkout.#transaction.branch.rebaseOnto(this.#transaction.branch);
+		}
 	}
 
 	public rebaseOnto(view: UntypedTreeView): void {
 		getCheckout(view).rebase(this);
+	}
+
+	/**
+	 * Keeps a compatible typed view intact while applying a prepared internal schema transition.
+	 */
+	public reconcileSchema(action: () => void): void {
+		assert(this.views.size <= 1, "A checkout may have at most one typed view.");
+		const [view] = this.views;
+		if (view === undefined) {
+			action();
+		} else {
+			assert(
+				view instanceof SchematizingSimpleTreeView,
+				"Prepared reconciliation requires the checkout's schematizing view.",
+			);
+			view.reconcileSchema(action);
+		}
 	}
 
 	/**
@@ -1752,14 +1840,12 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 		this.synchronizingFromBase = true;
 		try {
-			if (reconciliation === undefined) {
-				this.rebaseOnto(base);
-			} else {
-				this.checkNotDisposed();
-				base.checkNotDisposed();
-				assert(!this.isSharedBranch, "Prepared reconciliation is only for private checkouts.");
-				this.mainBranch.rebaseOnto(base.mainBranch, base.mainBranch.getHead(), reconciliation);
-			}
+			this.checkNotDisposed();
+			base.checkNotDisposed();
+			assert(!this.isSharedBranch, "Checkout synchronization is only for private checkouts.");
+			// Internal synchronization already has its own schema/recovery policy.
+			// Do not route it back through the public application-fork coordinator.
+			this.mainBranch.rebaseOnto(base.mainBranch, base.mainBranch.getHead(), reconciliation);
 		} finally {
 			this.synchronizingFromBase = false;
 		}
@@ -1820,8 +1906,13 @@ export class TreeCheckout implements ITreeCheckout {
 				"Views with an open transaction cannot be merged into another view.",
 			);
 		}
-		this.#transaction.branch.merge(checkout.#transaction.branch);
-		if (disposeMerged && !checkout.isSharedBranch) {
+		if (
+			checkout.viewBase === this ||
+			checkout.schemaForkRebaser?.merge(checkout, this) !== true
+		) {
+			this.#transaction.branch.merge(checkout.#transaction.branch);
+		}
+		if (disposeMerged && !checkout.isSharedForPublicOperations) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
 		}
@@ -1836,6 +1927,9 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
+		if (allowNonSupersetSchema !== true && this.canSynchronize) {
+			this.schemaForkRebaser?.rememberSchema(this.mainBranch.getHead());
+		}
 	}
 
 	public dispose(): void {

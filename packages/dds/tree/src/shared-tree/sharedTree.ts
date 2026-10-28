@@ -347,6 +347,7 @@ export class SharedTreeKernel
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
+		checkout.receivesSequencedOutcomes = true;
 		this.checkouts.set(branchId, checkout);
 	}
 
@@ -483,7 +484,13 @@ export class SharedTreeKernel
 		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
 		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
 		checkout.onCommitValid(commit, () =>
-			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
+			super.submitCommit(
+				branchId,
+				commit,
+				// Named branches can enable types that are absent from the main branch.
+				{ schema: checkout.storedSchema, policy: schemaAndPolicy.policy },
+				isResubmit,
+			),
 		);
 	}
 

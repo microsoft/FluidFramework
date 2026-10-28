@@ -40,6 +40,8 @@ import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 export interface BranchReconciliation<TChange> {
 	readonly change: TChange;
 	readonly revisionReplacers: readonly RevisionReplacer[];
+	/** Known private preparation that the target already satisfies, not application edits. */
+	readonly omittedRevisions?: ReadonlySet<RevisionTag>;
 }
 
 export type BranchId = SessionSpaceCompressedId | "main";
@@ -298,7 +300,7 @@ export class SharedTreeBranch<
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
 	 * @param reconciliation - A separately prepared net change for adopting the target history.
-	 * Only valid when no source commits remain after the rebase.
+	 * Every remaining source commit must be explicitly identified as private preparation to omit.
 	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
@@ -319,11 +321,16 @@ export class SharedTreeBranch<
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 		assert(hasSome(targetCommits), 0xa83 /* Expected commit(s) for a non no-op rebase */);
 		assert(
-			reconciliation === undefined || newSourceHead === upTo,
-			"Prepared reconciliation must adopt the target history without remaining source commits.",
+			reconciliation === undefined ||
+				(targetCommits[targetCommits.length - 1] === upTo &&
+					sourceCommits.every(
+						(commit) => reconciliation.omittedRevisions?.has(commit.revision) === true,
+					)),
+			"Prepared reconciliation must account for every remaining source commit.",
 		);
 
-		const newCommits = [...targetCommits, ...sourceCommits];
+		const newCommits =
+			reconciliation === undefined ? [...targetCommits, ...sourceCommits] : targetCommits;
 		const changeEvent = {
 			type: "rebase",
 			get change() {
@@ -334,11 +341,13 @@ export class SharedTreeBranch<
 			newCommits,
 			...(reconciliation === undefined
 				? {}
-				: { revisionReplacers: reconciliation.revisionReplacers }),
+				: {
+						revisionReplacers: reconciliation.revisionReplacers,
+					}),
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.head = newSourceHead;
+		this.head = reconciliation === undefined ? newSourceHead : upTo;
 		this.#events.emit("afterChange", changeEvent);
 	}
 
