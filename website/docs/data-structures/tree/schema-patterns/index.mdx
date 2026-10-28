@@ -38,7 +38,8 @@ These are responsibilities, not four required packages: split modules only when 
 
 ## Plan for persistent data
 
-Keep schema identifiers and stored field keys stable, not derived from build numbers, random values, or package versions.
+Keep schema identifiers and stored field keys stable, not derived from build numbers, random values generated on each run, or package versions.
+A UUID generated once and retained as a fixed schema scope is valid.
 The library owns support for persisted representations; the application owns when deployed clients can enable upgrades.
 Before publishing, define a [compatibility policy](../schema-evolution/schema-libraries.mdx) and test the [model, package, and application boundaries](../schema-evolution/testing-schema-upgrades.mdx#testing-schema-libraries).
 

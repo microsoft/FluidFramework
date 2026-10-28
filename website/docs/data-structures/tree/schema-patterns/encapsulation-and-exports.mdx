@@ -43,6 +43,27 @@ Erasure returns the same runtime schema; it is not a wrapper or access-control m
 
 Start with the executable [schema-erasure walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts): top-level exports followed by consumer tests for construction, embedding, edits, and events.
 It imports erasure APIs from `@fluidframework/tree/alpha` and keeps the implementation class local.
+This excerpt shows its public contract and erased export; the walkthrough provides the imports and `SquareImplementation` class:
+
+```typescript
+export interface SquareMembers {
+	readonly area: number;
+	resize(sideLength: number): void;
+}
+
+export type Square = ErasedNode<SquareMembers, "com.example.geometry.Square">;
+
+export interface SquareStatics {
+	create(sideLength: number): Square;
+}
+
+export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
+	Square,
+	SquareStatics
+>()(SquareImplementation);
+```
+
+Consumers embed the `Square` schema, construct nodes with `Square.create`, and use `area` and `resize` without depending on the stored `sideLength` field.
 The [API tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/eraseSchemaDetails.spec.ts) cover recursion, subclassing, and compile-time restrictions.
 
 For generic factories, explicitly annotate the return type with public interfaces parameterized by the consumer inputs you preserve, independent of the local class.

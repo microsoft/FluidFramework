@@ -39,6 +39,7 @@ Configuration-dependent results must not share a single global cache.
 ### Avoiding Schema Identifier Collisions
 
 For fixed schemas, use a library-owned <ApiLink package="fluid-framework" api="SchemaFactory.scope" />.
+This assumes consumers do not need to combine distinct schema classes from multiple versions of the library in the same view schema.
 For configurations that must coexist in a view, the consumer supplies distinct scopes, often through a factory created with <ApiLink package="fluid-framework" api="SchemaFactoryBeta.scopedFactory" />.
 Choose these scopes once for the model and reuse them across clients and when reopening documents.
 Two patterns are useful:
@@ -56,7 +57,10 @@ Handle configuration changes through [schema evolution](../schema-evolution/sche
 
 ### Schema factory examples
 
-Start with the executable [configurable library walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts): an explicitly typed factory and two scoped configurations embedded in one root.
+Start with <ApiLink package="fluid-framework" api="SchemaFactory" /> itself: its methods return schemas configured by names, fields, and allowed types.
+For smaller schema-creation utilities, see <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" />, which derive schemas from focused inputs without a component system.
+
+Then see the executable [configurable library walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts): an explicitly typed factory and two scoped configurations embedded in one root.
 For larger examples, see <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> for formatting and extra atom schemas, or <ApiLink package="fluid-framework" api="TableSchema" /> for separately configurable cells, rows, and columns.
 Use their public contracts and release tags, not internal helpers, as extension points.
 
