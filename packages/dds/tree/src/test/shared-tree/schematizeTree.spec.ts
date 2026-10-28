@@ -229,9 +229,6 @@ describe("schematizeTree", () => {
 			): this is TreeViewAlpha<TSchema> {
 				return false;
 			},
-			rewindTo(): void {
-				throw new Error("Function not implemented.");
-			},
 			revertTo(): void {
 				throw new Error("Function not implemented.");
 			},
@@ -257,6 +254,9 @@ describe("schematizeTree", () => {
 				throw new Error("Function not implemented.");
 			},
 			branchHistory: undefined as unknown as TreeBranchHistory,
+			get locations(): never {
+				throw new Error("Function not implemented.");
+			},
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

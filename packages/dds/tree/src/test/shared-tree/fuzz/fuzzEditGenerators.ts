@@ -24,7 +24,7 @@ import type {
 	UpPath,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ITreePrivate, type TreeCheckout } from "../../../shared-tree/index.js";
+import { Tree, type ITreePrivate, type CheckoutBase } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { getInnerNode, type CommitRevision } from "../../../simple-tree/index.js";
@@ -149,7 +149,7 @@ export function viewFromState(
 	return rootView;
 }
 
-function fuzzViewFromCheckout(checkout: TreeCheckout): FuzzView {
+function fuzzViewFromCheckout(checkout: CheckoutBase): FuzzView {
 	const schema = simpleSchemaFromStoredSchema(checkout.storedSchema);
 	const view = checkout.viewWith(new TreeViewConfiguration({ schema }));
 	assert(view.compatibility.isEquivalent);
@@ -660,7 +660,9 @@ export const revertToGenerator = (state: FuzzTestState): RevertTo => {
 		revisionMetadata !== undefined;
 		revisionMetadata = revisionMetadata.getParent()
 	) {
-		allRevisions.push(revisionMetadata.revision);
+		if (revisionMetadata.revertTo !== undefined) {
+			allRevisions.push(revisionMetadata.revision);
+		}
 	}
 	assert(allRevisions.length > 0, "No revisions available to revert to.");
 	const revision = state.random.pick(allRevisions);
@@ -751,13 +753,8 @@ export function makeOpGenerator(
 				[
 					() => revertToGenerator,
 					revertTo,
-					(state: FuzzTestState) => {
-						const view = viewFromState(state);
-						return (
-							view.checkout.transaction.size === 0 &&
-							view.branchHistory.getHead() !== undefined
-						);
-					},
+					(state: FuzzTestState) =>
+						viewFromState(state).branchHistory.getHead()?.revertTo !== undefined,
 				],
 				[
 					() => schemaEditGenerator,

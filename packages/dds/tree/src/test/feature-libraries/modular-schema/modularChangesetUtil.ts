@@ -22,6 +22,7 @@ import {
 	type ModularChangeset,
 	newChangeAtomIdBTree,
 	type NodeId,
+	setInChangeAtomIdMap,
 } from "../../../feature-libraries/index.js";
 import {
 	getChangeHandler,
@@ -110,6 +111,7 @@ interface BuildArgs {
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
+	aliases?: { from: NodeId; to: NodeId }[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -140,6 +142,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.revisions !== undefined) {
 		result.revisions = args.revisions;
+	}
+
+	if (args.aliases !== undefined) {
+		for (const alias of args.aliases) {
+			setInChangeAtomIdMap(result.nodeAliases, alias.from, alias.to);
+		}
 	}
 
 	return result;

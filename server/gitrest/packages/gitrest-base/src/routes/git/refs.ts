@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
+import {
+	NetworkError,
+	type ICreateRefParamsExternal,
+	type IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import { handleResponse } from "@fluidframework/server-services-shared";
+import { containsPathTraversal, handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import type nconf from "nconf";
 
@@ -20,12 +21,16 @@ import {
 	type IFileSystemManagerFactories,
 	type IRepositoryManagerFactory,
 	logAndThrowApiError,
+	validateGitSha,
 } from "../../utils";
 
 /**
  * Simple method to convert from a path id to the git reference ID
  */
-function getRefId(id): string {
+function getRefId(id: string): string {
+	if (!id || containsPathTraversal(id)) {
+		throw new NetworkError(400, `Invalid ref: ${id}`);
+	}
 	return `refs/${id}`;
 }
 
@@ -104,6 +109,7 @@ export function create(
 			repoPerDocEnabled,
 		)
 			.then(async (repoManager) => {
+				validateGitSha(createRefParams?.sha);
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer ?? false,
@@ -134,6 +140,7 @@ export function create(
 			repoPerDocEnabled,
 		)
 			.then(async (repoManager) => {
+				validateGitSha(patchRefParams?.sha);
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer ?? false,

@@ -11,7 +11,7 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * The levels of rebase validation that can be {@link RebaseValidationAlpha.setLevel | set}.
+ * The levels of rebase validation that can be {@link (RebaseValidation:interface).setLevel | set}.
  * @remarks
  * All validation is tree-shaken out of production/optimized builds.
  * @alpha
@@ -26,7 +26,7 @@ export const RebaseValidationLevel = {
 } as const;
 
 /**
- * A level of rebase validation supported by {@link RebaseValidation}.
+ * A level of rebase validation supported by {@link (RebaseValidation:interface)}.
  * @alpha
  */
 export type RebaseValidationLevel =
@@ -38,24 +38,24 @@ export type RebaseValidationLevel =
  *
  * @alpha
  */
-export interface RebaseValidationAlpha {
+export interface RebaseValidation {
 	/**
 	 * The current level of rebase validation.
-	 * Configurable via {@link RebaseValidationAlpha.setLevel}.
+	 * Configurable via {@link (RebaseValidation:interface).setLevel}.
 	 * @remarks
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly currentLevel: RebaseValidationLevel;
 
 	/**
-	 * The levels of rebase validation that can be {@link RebaseValidationAlpha.setLevel | set}.
+	 * The levels of rebase validation that can be {@link (RebaseValidation:interface).setLevel | set}.
 	 * @remarks
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly Level: typeof RebaseValidationLevel;
 
 	/**
-	 * Sets the desired {@link RebaseValidationAlpha.Level | level} of rebase validation.
+	 * Sets the desired {@link (RebaseValidation:interface).Level | level} of rebase validation.
 	 * @param level - The desired level of rebase validation.
 	 * @returns The previous level in effect immediately before this call.
 	 * @throws for levels higher than `RebaseValidation.Level.None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
@@ -67,7 +67,7 @@ export interface RebaseValidationAlpha {
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 
 	/**
-	 * Sets the desired {@link RebaseValidationAlpha.Level | level} of rebase validation until the provided callback returns.
+	 * Sets the desired {@link (RebaseValidation:interface).Level | level} of rebase validation until the provided callback returns.
 	 * Restores the current level of rebase validation after that.
 	 * @param level - The desired level of rebase validation.
 	 * @param callback - The function to execute while the specified validation level is in effect.
@@ -84,7 +84,7 @@ export interface RebaseValidationAlpha {
 let rebaseValidationLevel: RebaseValidationLevel = RebaseValidationLevel.Cheap;
 
 /**
- * Implements {@link RebaseValidationAlpha.setLevel} without referencing the configuration object,
+ * Implements {@link (RebaseValidation:interface).setLevel} without referencing the configuration object,
  * thus making tree-shaking of the validation logic possible.
  */
 function setLevel(level: RebaseValidationLevel): RebaseValidationLevel {
@@ -105,7 +105,7 @@ function setLevel(level: RebaseValidationLevel): RebaseValidationLevel {
  * All validation is tree-shaken out of production/optimized builds.
  * @alpha
  */
-export const RebaseValidation: RebaseValidationAlpha = {
+export const RebaseValidation: RebaseValidation = {
 	get currentLevel(): RebaseValidationLevel {
 		return rebaseValidationLevel;
 	},
@@ -122,7 +122,7 @@ export const RebaseValidation: RebaseValidationAlpha = {
 };
 
 /**
- * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap` or `RebaseValidation.Level.Strict`.
+ * Runs a debug assertion when the validation {@link (RebaseValidation:interface).Level | level} is `RebaseValidation.Level.Cheap` or `RebaseValidation.Level.Strict`.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks
@@ -137,7 +137,7 @@ export function cheapRebaseValidation(prefix: string, predicate: () => true | st
 }
 
 /**
- * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Strict`.
+ * Runs a debug assertion when the validation {@link (RebaseValidation:interface).Level | level} is `RebaseValidation.Level.Strict`.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks

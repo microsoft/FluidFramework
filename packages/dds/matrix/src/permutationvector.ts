@@ -322,13 +322,11 @@ export class PermutationVector extends Client {
 		return builder.getSummaryTree();
 	}
 
-	public async load(
+	public override async load(
 		runtime: IFluidDataStoreRuntime,
 		storage: IChannelStorageService,
 		serializer: IFluidSerializer,
-	): Promise<{
-		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
-	}> {
+	): ReturnType<Client["load"]> {
 		const handleTableData = (await deserializeBlob(
 			storage,
 			SnapshotPath.handleTable,

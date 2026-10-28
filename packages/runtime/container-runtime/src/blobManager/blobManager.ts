@@ -232,6 +232,29 @@ const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolea
 	blobRecord.minTTLInSeconds !== undefined &&
 	Date.now() - blobRecord.uploadTime > (blobRecord.minTTLInSeconds / 2) * 1000;
 
+/**
+ * Events raised by the {@link BlobManager}.
+ */
+export interface IBlobManagerEvents {
+	/**
+	 * Raised when {@link BlobManager.hasOutstandingBlobWork} changes.
+	 *
+	 * @remarks
+	 * This lets the BlobManager's host observe when local blob content becomes fully durable. Uploading
+	 * a blob does not make the service retain it, so it can still be lost until its BlobAttach op is ack'd.
+	 *
+	 * Raised only when the aggregate itself flips, not once per blob: starting a second concurrent upload,
+	 * or finishing one of two, does not raise it. Consumers therefore do not need to de-duplicate. Use the
+	 * observability APIs on the handle (`payloadShared`, `payloadShareFailed`) to track individual blobs.
+	 *
+	 * This reports changes only, and carries no initial state. A BlobManager constructed with pending blobs
+	 * already has outstanding work before any listener can be attached, so that first transition is never
+	 * observable. Subscribers must read {@link BlobManager.hasOutstandingBlobWork} at subscription time to
+	 * seed their own state, rather than assuming it starts out false.
+	 */
+	outstandingBlobWorkChanged: () => void;
+}
+
 interface IBlobManagerInternalEvents {
 	blobExpired: (localId: string) => void;
 	handleAttached: (pending: LocalBlobRecord) => void;
@@ -249,6 +272,14 @@ export class BlobManager {
 	private readonly mc: MonitoringContext;
 
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
+
+	private readonly _events = createEmitter<IBlobManagerEvents>();
+	/**
+	 * Events raised by the BlobManager.
+	 */
+	public get events(): Listenable<IBlobManagerEvents> {
+		return this._events;
+	}
 
 	/**
 	 * Map of local IDs to storage IDs. Also includes identity mappings of storage ID to storage ID for all known
@@ -272,6 +303,16 @@ export class BlobManager {
 	 * Local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
 	 */
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
+
+	/**
+	 * Local IDs of blobs this BlobManager is responsible for sharing but has not shared yet. A blob is
+	 * shared once its BlobAttach op is ack'd, at which point storage keeps it alive and all clients can
+	 * resolve it. See {@link BlobManager.hasOutstandingBlobWork} for the exact begin/end semantics.
+	 *
+	 * @remarks
+	 * A Set rather than a counter keeps membership idempotent per blob across interleaved upload flows.
+	 */
+	private readonly unsharedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachMessage: (localId: string, storageId: string) => void;
 
@@ -358,9 +399,86 @@ export class BlobManager {
 				// in case we need to round-trip them back out again due to another getPendingBlobs() call.
 				this.pendingBlobsWithAttachedHandles.add(localId);
 				this.pendingOnlyLocalIds.add(localId);
+				// Track from load rather than from sharePendingBlobs(), otherwise we would report no
+				// outstanding work in between. The resulting event is necessarily unobservable - the caller
+				// does not hold this instance yet - which is why consumers must seed themselves from
+				// hasOutstandingBlobWork when they subscribe.
+				this.startTrackingUnsharedBlob(localId);
 			}
 		}
 	}
+
+	/**
+	 * Whether this BlobManager has any blob whose sharing has begun but not finished. This is the aggregate
+	 * signal the BlobManager's host observes, paired with the `outstandingBlobWorkChanged` event.
+	 *
+	 * @remarks
+	 * A blob starts counting when the BlobManager takes responsibility for sharing it: when its
+	 * upload/BlobAttach flow starts (during `createBlob()`, or for a pending-payload handle when sharing
+	 * starts via `sharePayload()` or handle attach), or when the BlobManager is constructed with that blob
+	 * restored from pending state.
+	 *
+	 * It stops counting when its BlobAttach op is processed, at which point the service retains the blob
+	 * and all clients can resolve it, or when the flow terminates without sharing it - a non-retriable
+	 * upload failure, or an aborted `AbortSignal`. Terminal failures are reported per-blob through the
+	 * handle's `payloadShareFailed` event and `payloadShareError`; this aggregate reports only liveness.
+	 *
+	 * Retries stay counted throughout: a blob whose storage TTL expires before its BlobAttach lands returns
+	 * to the start of the flow and keeps contributing. This is why a completed upload is not on its own
+	 * enough to stop counting - until BlobAttach is ack'd the blob may be uploaded but still not retained.
+	 */
+	public get hasOutstandingBlobWork(): boolean {
+		return this.unsharedBlobs.size > 0;
+	}
+
+	/**
+	 * The number of blobs that this BlobManager has begun, but not finished, sharing.
+	 *
+	 * @remarks
+	 * Test support, and not change-notified. Consumers tracking outstanding work want
+	 * {@link BlobManager.hasOutstandingBlobWork}, which defines what is counted and is paired with the
+	 * `outstandingBlobWorkChanged` event. Tests need the count because the boolean cannot distinguish one
+	 * outstanding blob from several.
+	 */
+	public get unsharedBlobCount(): number {
+		return this.unsharedBlobs.size;
+	}
+
+	/**
+	 * Start counting the given blob as outstanding work, per the semantics on
+	 * {@link BlobManager.hasOutstandingBlobWork}. Idempotent, so it is safe for an already-counted blob
+	 * (e.g. one restored from pending state whose sharing then starts).
+	 */
+	private readonly startTrackingUnsharedBlob = (localId: string): void => {
+		const hadOutstandingWork = this.hasOutstandingBlobWork;
+		this.unsharedBlobs.add(localId);
+		if (!hadOutstandingWork && this.hasOutstandingBlobWork) {
+			this._events.emit("outstandingBlobWorkChanged");
+		}
+	};
+
+	/**
+	 * Stop counting the given blob as outstanding work. Idempotent, so it is safe to call from any path
+	 * that ends a sharing flow, and for a blob that was never counted (e.g. one shared by a remote client).
+	 */
+	private readonly stopTrackingUnsharedBlob = (localId: string): void => {
+		const hadOutstandingWork = this.hasOutstandingBlobWork;
+		this.unsharedBlobs.delete(localId);
+		if (hadOutstandingWork && !this.hasOutstandingBlobWork) {
+			this._events.emit("outstandingBlobWorkChanged");
+		}
+	};
+
+	/**
+	 * Discard the local record of a blob that is not going to become shared. These steps belong together:
+	 * a discarded blob has no flow left to complete it, so leaving it counted would hold the container
+	 * dirty forever. Safe for a blob that was never counted, since the tally update is idempotent.
+	 */
+	private readonly discardLocalBlob = (localId: string): void => {
+		this.localBlobCache.delete(localId);
+		this.pendingBlobsWithAttachedHandles.delete(localId);
+		this.stopTrackingUnsharedBlob(localId);
+	};
 
 	/**
 	 * Returns whether a blob with the given localId can be retrieved by the BlobManager via getBlob().
@@ -547,6 +665,12 @@ export class BlobManager {
 	/**
 	 * Upload and attach the localBlobCache entry for the given localId.
 	 *
+	 * Counts the blob as outstanding blob work for the duration of the flow (see
+	 * {@link BlobManager.hasOutstandingBlobWork}). Tracking starts once we commit to the flow, and stops
+	 * alongside the localBlobCache update that ends it - a terminal upload failure, an abort, or the blob
+	 * becoming fully shared (which processBlobAttachMessage handles). The blob is not fully durable after a
+	 * successful upload because the service does not retain it until the BlobAttach op is ack'd.
+	 *
 	 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
 	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
 	 * rejects if an error is encountered or the signal is aborted.
@@ -555,11 +679,18 @@ export class BlobManager {
 		localId: string,
 		signal?: AbortSignal,
 	): Promise<void> => {
-		if (signal?.aborted === true) {
-			this.localBlobCache.delete(localId);
-			this.pendingBlobsWithAttachedHandles.delete(localId);
-			throw createAbortError();
-		}
+		/**
+		 * Discards aborted blobs.
+		 * A helper lets TypeScript recheck the signal after callbacks.
+		 */
+		const throwIfAborted = (): void => {
+			if (signal?.aborted === true) {
+				this.discardLocalBlob(localId);
+				throw createAbortError();
+			}
+		};
+
+		throwIfAborted();
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
@@ -567,6 +698,13 @@ export class BlobManager {
 			0xc80 /* Expect uploadAndAttach to be called with either localOnly or uploaded state */,
 		);
 		const { blob } = localBlobRecordInitial;
+
+		// From here on this BlobManager is responsible for sharing the blob, so it counts as outstanding
+		// work. An upload aborted before this point returns above without ever counting.
+		this.startTrackingUnsharedBlob(localId);
+
+		// A dirty listener may abort synchronously before the upload's abort listener is registered.
+		throwIfAborted();
 
 		/**
 		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
@@ -599,8 +737,7 @@ export class BlobManager {
 				const onSignalAbort = (): void => {
 					removeListeners();
 					uploadHasBecomeIrrelevant = true;
-					this.localBlobCache.delete(localId);
-					this.pendingBlobsWithAttachedHandles.delete(localId);
+					this.discardLocalBlob(localId);
 					reject(createAbortError());
 				};
 				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
@@ -636,8 +773,7 @@ export class BlobManager {
 						if (!uploadHasBecomeIrrelevant) {
 							removeListeners();
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
-							this.localBlobCache.delete(localId);
-							this.pendingBlobsWithAttachedHandles.delete(localId);
+							this.discardLocalBlob(localId);
 							// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 							reject(error);
 						}
@@ -705,8 +841,7 @@ export class BlobManager {
 					};
 					const onSignalAbort = (): void => {
 						removeListeners();
-						this.localBlobCache.delete(localId);
-						this.pendingBlobsWithAttachedHandles.delete(localId);
+						this.discardLocalBlob(localId);
 						reject(createAbortError());
 					};
 					const removeListeners = (): void => {
@@ -788,6 +923,11 @@ export class BlobManager {
 		this.redirectTable.set(localId, storageId);
 		// set identity (id -> id) entry
 		this.redirectTable.set(storageId, storageId);
+		// Every success path passes through here, including blobs shared by a prior client. Ordering is
+		// load-bearing: after the redirectTable is populated, so a host reacting to the aggregate clearing
+		// can already resolve the blob via lookupTemporaryBlobStorageId(); before the processedBlobAttach
+		// emit, so a throwing listener cannot leave the blob counted forever.
+		this.stopTrackingUnsharedBlob(localId);
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 

@@ -12,6 +12,8 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
+export { computeSchemaHash, identifySchemaAlpha } from "./schemaHash.js";
+export { type SchemaIdentity, SchemaIdentityInternal } from "./schemaIdentity.js";
 export type {
 	CommitRevision,
 	ITree,
@@ -37,9 +39,20 @@ export type {
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export type {
+	TreeLocation,
+	TextLocationNode,
+	CapturedTreeLocation,
+	TreeGapCaptureOptions,
+	ResolvedTreeLocation,
+	TreeLocationResolution,
+	TreeLocationResolver,
+} from "./locations.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
@@ -48,12 +61,8 @@ export {
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export {
-	SchemaFactoryAlpha,
-	type SchemaStaticsAlpha,
-	type NodeProvider,
-} from "./schemaFactoryAlpha.js";
+export type { SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export type { SchemaStaticsAlpha, NodeProvider } from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,

@@ -16,16 +16,19 @@ debugAssert(() =>
 	),
 );
 
-// Checks that the prefix is removed in production builds when passed to a free function which uses the prefix in a predicate passed to debugAssert
+/**
+ * A free function which uses the given `prefix` in a debugAssert predicate
+ */
 function testConstantRouting(prefix: string): void {
 	debugAssert(() => prefixPredicate(prefix, () => "This should be removed in production 4"));
 }
-// Test calling from outside a class
+
+// Tests that the prefix argument is removed in production builds when `testConstantRouting` is called from outside a class
 testConstantRouting("This should be removed in production 5");
 
 class TestClass {
 	public testMethod(): void {
-		// Test calling from inside a class
+		// Tests that the prefix argument is removed in production builds when `testConstantRouting` is called from inside a class
 		testConstantRouting("This should be removed in production 6");
 	}
 }

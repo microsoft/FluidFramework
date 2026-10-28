@@ -16,7 +16,7 @@ import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecodi
 // eslint-disable-next-line import-x/no-internal-modules
 import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
 import type {
-	EncodedFieldBatchV1OrV2,
+	EncodedFieldBatchAnyVersion,
 	FieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/index.js";
@@ -53,7 +53,7 @@ describe("sharedTreeChangeCodec", () => {
 
 	// Dummy FieldBatchCodec codec which asserts when encoding or decoding.
 	const failFieldBatchCodec: FieldBatchCodec = {
-		encode: (): EncodedFieldBatchV1OrV2 => assert.fail(),
+		encode: (): EncodedFieldBatchAnyVersion => assert.fail(),
 		decode: (): FieldBatch => assert.fail(),
 		writeVersion: FieldBatchFormatVersion.v2,
 	};
@@ -111,13 +111,13 @@ describe("sharedTreeChangeCodec", () => {
 			encode: (
 				data: FieldBatch,
 				context: FieldBatchEncodingContext,
-			): EncodedFieldBatchV1OrV2 => {
+			): EncodedFieldBatchAnyVersion => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
 				return uncompressedEncodeV1(data);
 			},
 			decode: (
-				data: EncodedFieldBatchV1OrV2,
+				data: EncodedFieldBatchAnyVersion,
 				context: FieldBatchDecodingContext,
 			): FieldBatch => {
 				return decode(data, context.idDecodingContext, context.incrementalDecoder).map(
