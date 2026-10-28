@@ -1,6 +1,6 @@
 ---
 name: check-trust-policy
-description: Check whether an exact package version has trustworthy provenance and find an attested alternative. Use before adding, upgrading, or installing any npm package version that is not already in the project's lockfile (npm, Yarn, or pnpm), or when asked whether a package version is safe or to verify its provenance.
+description: Check whether an exact package version has trustworthy provenance and find an attested alternative. Use before adding, upgrading, or installing any npm package version that is not already in the project's lockfile (npm, Yarn, or pnpm), including through update commands or npx, npm exec, or dlx, or when asked whether a package version is safe or to verify its provenance.
 # Interim: this pre-approves every `node` command, not just the checker.
 # Copilot permission rules match only the program name for interpreters, and neither Copilot nor Agency expands the plugin root in skill frontmatter, so a rule scoped to this plugin's script is not currently possible.
 allowed-tools: Bash(node:*)
@@ -17,7 +17,14 @@ Do not invoke flub or install or build Fluid Framework build-tools.
 Run this check before installing any new package in a project, whether the project uses npm, Yarn, or pnpm.
 An install is new when the project's lockfile does not already contain the requested version of that package.
 This includes upgrading or downgrading a package that the lockfile already contains at a different version.
-It also includes adding a dependency (`npm install <name>`, `yarn add <name>`, `pnpm add <name>`) and running a package with `npx`, `yarn dlx`, or `pnpm dlx`.
+It covers these commands, including their aliases and abbreviations:
+
+- Adding a dependency: `npm install <name>`, `yarn add <name>`, `pnpm add <name>`.
+- Updating dependencies: `npm update`, `yarn up`, `yarn upgrade`, `yarn upgrade-interactive`, `pnpm update`.
+  Before running one, determine which versions it would change, and check each new version.
+- Running a package that is not installed: `npx`, `npm exec`, `yarn dlx`, `pnpm dlx`, `pnpx`.
+- Installing after editing a dependency version, override, or resolution in `package.json` or a pnpm catalog, with `npm install`, `yarn install`, or `pnpm install`.
+
 Check every new package version you plan to add or upgrade directly, at the exact version you intend to install.
 Do not install the package until the check has finished and you have reported the result to the user.
 
@@ -88,5 +95,17 @@ If the public npm package registry is also unreachable, report that a trust chec
 6. Report `auditIncomplete`, `searchTruncated`, and `errors`.
    A zero exit status in JSON mode does not establish acceptance.
    Do not describe any result as proving absence of malware or vulnerabilities.
-7. If the version is rejected or inconclusive, do not install it unless the user explicitly accepts the risk.
-   Do not download into the target project, install, or change dependency versions unless the user separately requests it.
+7. If the version is accepted, continue with the install or command that prompted the check, exactly as planned.
+8. If the version is rejected or inconclusive, do not install it unless the user explicitly accepts the risk.
+   Do not install a suggested alternative instead, or otherwise change dependency versions, unless the user separately requests it.
+
+## Autonomous sessions
+
+In an autonomous session (such as autopilot or noninteractive mode), the user may not be present to answer prompts.
+
+- Do not wait for policy selection or permission prompts; use the `cryptographic` policy unless the user supplied one, and state the policy used.
+- If the checker needs to be built, do not build it; stop the install and report the build commands from step 1.
+- If every checked version is accepted, report the results and continue with the install.
+- If any checked version is rejected or inconclusive, do not run the install or substitute an alternative.
+  Report the verdicts and any suggested alternatives, and leave the decision to the user.
+  Continue with parts of the task that do not depend on that install, if any.

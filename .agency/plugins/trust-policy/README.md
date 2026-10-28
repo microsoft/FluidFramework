@@ -22,6 +22,15 @@ The repository's `agency.toml` registers the plugin in the `trust-policy` profil
 The skill runs the compiled checker from `lib/`, so build the package once, as described in [Setup](#setup), before using the skill.
 If the checker is not built, the skill stops and gives the commands to run.
 
+### Autonomous sessions
+
+In autopilot or other noninteractive sessions, the skill does not wait for prompts.
+It uses the `cryptographic` policy unless one was supplied.
+If every checked version is accepted, the agent continues with the install as usual.
+If a version is rejected or inconclusive, the agent does not install it or substitute the suggested alternative; it reports the result and leaves the decision to the user.
+
+The skill is guidance, not enforcement: an agent applies it when it recognizes an upcoming install, and nothing intercepts package manager commands.
+
 ## Checker package
 
 ### Setup
