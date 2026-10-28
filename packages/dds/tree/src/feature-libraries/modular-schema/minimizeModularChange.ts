@@ -249,7 +249,6 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		rootInputId: ChangeAtomId,
 		count: number,
-		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
 		if (!this.isNodeIdInBuiltTree(fieldId.nodeId)) {
 			return { value: false, length: count };
@@ -260,12 +259,7 @@ class ModularChangeMinimizer {
 		countProcessed = isMoveOfBuiltRootEntry.length;
 
 		const isAttachOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
-
-		// XXX: This should now already be handled by the builtRootIds check.
-		const isMoveFromBuiltTree =
-			endpoint?.nodeId !== undefined && this.isNodeIdInBuiltTree(endpoint.nodeId);
-
-		const isAttachOfBuiltNode = isAttachOfBuiltRoot || isMoveFromBuiltTree;
+		const isAttachOfBuiltNode = isAttachOfBuiltRoot;
 		return { value: isAttachOfBuiltNode, length: countProcessed };
 	}
 
@@ -273,7 +267,6 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		rootInputId: ChangeAtomId,
 		count: number,
-		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
 		const isInDetachedTree = this.isFieldDetachedInOutput(fieldId);
 
@@ -282,7 +275,6 @@ class ModularChangeMinimizer {
 			fieldId,
 			rootInputId,
 			countProcessed,
-			endpoint,
 		);
 		countProcessed = shouldSquashAttachEntry.length;
 
@@ -304,12 +296,7 @@ class ModularChangeMinimizer {
 		}
 
 		if (endpoint !== undefined) {
-			const shouldDropAttachEntry = this.shouldDropAttach(
-				endpoint,
-				detachId,
-				countProcessed,
-				fieldId,
-			);
+			const shouldDropAttachEntry = this.shouldDropAttach(endpoint, detachId, countProcessed);
 			countProcessed = shouldDropAttachEntry.length;
 
 			if (!shouldDropAttachEntry.value) {
@@ -394,24 +381,12 @@ class ModularChangeMinimizer {
 		count: number,
 	): RangeQueryResult<FilterAttachResult> {
 		let countProcessed = count;
-		const moveEndpointEntry = getDetachFieldForAttach(
-			this.change.crossFieldKeys,
-			this.change.rootNodes,
-			id,
-			countProcessed,
-		);
-		countProcessed = moveEndpointEntry.length;
 
 		const inputIdEntry = firstDetachIdFromAttachId(this.change.rootNodes, id, countProcessed);
 		countProcessed = inputIdEntry.length;
 
 		const rootInputId = inputIdEntry.value;
-		const shouldSquashEntry = this.shouldSquashAttach(
-			fieldId,
-			rootInputId,
-			countProcessed,
-			moveEndpointEntry.value,
-		);
+		const shouldSquashEntry = this.shouldSquashAttach(fieldId, rootInputId, countProcessed);
 		countProcessed = shouldSquashEntry.length;
 
 		if (!shouldSquashEntry.value) {
@@ -480,18 +455,10 @@ class ModularChangeMinimizer {
 		countProcessed = attachEntry.length;
 
 		if (attachEntry.value !== undefined) {
-			const detachEntry = getFirstDetachField(
-				this.change.crossFieldKeys,
-				inputId,
-				countProcessed,
-			);
-			countProcessed = detachEntry.length;
-
 			const willDropAttachEntry = this.shouldDropAttach(
 				attachEntry.value,
 				inputId,
 				countProcessed,
-				detachEntry.value,
 			);
 			countProcessed = willDropAttachEntry.length;
 
@@ -549,25 +516,12 @@ class ModularChangeMinimizer {
 		count: number,
 	): RangeQueryResult<FilterAttachResult> {
 		let countProcessed = count;
-		const moveEndpointEntry = getDetachFieldForAttach(
-			this.change.crossFieldKeys,
-			this.change.rootNodes,
-			id,
-			countProcessed,
-		);
-
-		countProcessed = moveEndpointEntry.length;
 
 		const inputIdEntry = getOldRootIdFromNewRootId(this.change.rootNodes, id, countProcessed);
 		countProcessed = inputIdEntry.length;
 
 		const rootInputId = inputIdEntry.value ?? id;
-		const shouldDropEntry = this.shouldDropAttach(
-			fieldId,
-			rootInputId,
-			countProcessed,
-			moveEndpointEntry.value,
-		);
+		const shouldDropEntry = this.shouldDropAttach(fieldId, rootInputId, countProcessed);
 		countProcessed = shouldDropEntry.length;
 
 		if (shouldDropEntry.value) {
@@ -576,6 +530,15 @@ class ModularChangeMinimizer {
 				length: countProcessed,
 			};
 		}
+
+		const moveEndpointEntry = getDetachFieldForAttach(
+			this.change.crossFieldKeys,
+			this.change.rootNodes,
+			id,
+			countProcessed,
+		);
+
+		countProcessed = moveEndpointEntry.length;
 
 		if (moveEndpointEntry.value !== undefined) {
 			const willDropEndpointEntry = this.shouldDropDetach(

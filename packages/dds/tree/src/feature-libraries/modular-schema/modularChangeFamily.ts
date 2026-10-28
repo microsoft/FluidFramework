@@ -3776,7 +3776,6 @@ enum RenameCollisionPolicy {
 	OverwriteOld,
 }
 
-// XXX: Break this function into smaller pieces
 /**
  * Adds to a rename table, composing with renames which should be applied before or after the inserted rename.
  * @param table - The table to insert the rename into.

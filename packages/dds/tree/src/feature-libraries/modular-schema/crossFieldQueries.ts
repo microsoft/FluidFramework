@@ -122,9 +122,6 @@ export interface RebaseNodeManager {
 		count: number,
 	): RangeQueryResult<DetachedNodeEntry>;
 
-	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
-	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
-	// XXX: It's not clear if nodeChange should be rebased already, or should not be rebased, or if it doesn't matter.
 	/**
 	 * Must be called for each range of detaches in the base changeset.
 	 * If the length of the result is less than `count`, this must be called again for the remainder of the range.

@@ -127,10 +127,10 @@ export interface FieldChangeRebaser<TChangeset> {
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
-	// XXX: It's not clear whether `rebaseChild` must be called in all cases.
 	/**
 	 * Rebase `change` over `over`.
 	 * See `ChangeRebaser` for details.
+	 * `rebaseChild` must be called for each node in `over` which has nested changes.
 	 */
 	rebase(
 		change: TChangeset,
