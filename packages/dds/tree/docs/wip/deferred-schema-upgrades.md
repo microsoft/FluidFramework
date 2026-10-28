@@ -12,7 +12,7 @@ Recheck implementation-specific behavior against the source revision used for ea
 
 **Current direction: compare alternatives against the same behavioral requirements.**
 C2, a persistent internal view branch, is the implemented experiment under review, not a requirement for the next design.
-Options A, B, and C1 remain candidates.
+Options A, B, C1, and D remain candidates.
 No alternative implementation is selected by this documentation update.
 Plan for early delivery before the full schema/data rebase work is complete, using isolated temporary workarounds where required.
 Use one safe retry after rejection or synchronization rollback of the initial upgrade/edit attempt, then fail-stop if the retry fails.
@@ -33,6 +33,11 @@ Option C applies the local upgrade on an internal branch, then publishes its cha
 It can keep that branch afterward and synchronize subsequent edits with the base branch.
 Current branch APIs support local schema changes, but ordinary rebase does not preserve them across concurrent content changes.
 Ordinary merge preserves separate commits, which supports the ordered-publication option.
+
+Option D reuses the existing local branch maintained by `EditManager`, rather than adding another persistent authoring checkout.
+It proposes an explicit distinction between never-submitted schema preparation and submitted edits awaiting acknowledgement.
+Initial probes support the basic publication path but expose rebase, summary, reconnect, rollback, and shared-branch creation work.
+The [Option D discussion](#option-d-reuse-editmanagers-existing-local-branch) describes the proposed boundaries and feasibility gates.
 
 The team has confirmed that the scheduled work covers schema changes over data changes, data changes over schema changes, concurrent schema changes, and mixed schema/data changesets.
 As of 2026-10-26, the expected delivery is in a couple of months.
@@ -67,7 +72,8 @@ The agreed requirements are:
 1. Make deferred upgrades opt-in for now.
    Keep the current default behavior.
 2. Require an explicit upgrade call before a view that needs an upgrade becomes usable.
-   In deferred mode, this call applies the upgrade locally without sending an upgrade op or changing the shared branch.
+   In deferred mode, this call applies the upgrade locally without sending an upgrade op or changing the authoritative document state.
+   It may create an unpublished local schema commit; that commit must not enter sequenced history or document summaries.
 3. Publish the pending upgrade with the first application-originated local change that would otherwise be committed.
    Publish it even when that change is valid under the old document schema.
    Do not filter changes by their effect on document content.
@@ -110,7 +116,9 @@ The application remains responsible for deciding when a user can edit.
 | Term | Meaning in this proposal |
 | --- | --- |
 | Stored schema | The schema in a checkout's state. A private checkout can have schema changes that are not yet shared. |
-| Document schema | The schema on the shared branch, or its independent-tree equivalent. Pending private upgrades must not enter its summaries. |
+| Document schema | The authoritative schema for published document state, or its independent-tree equivalent. Pending private upgrades must not enter its summaries. It is not necessarily the schema of the optimistic local checkout. |
+| Sequenced trunk | The history confirmed by sequencing for a shared branch, maintained by `EditManager`. |
+| Existing local branch | The optimistic branch maintained by `EditManager` on which the normal checkout applies local edits. It is distinct from the trunk and from C2's additional private branch. |
 | View schema | The schema that defines the application's typed tree API. |
 | Upgrade target | The stored schema that an explicit upgrade would produce under the configured policy. |
 | Effective schema | A local schema used to interpret fields and prepare edits for this view. It is not itself a document change. |
@@ -220,6 +228,7 @@ The safety argument is that every document permitted by `S` is also permitted by
 The view can interpret the document through `U` without changing the document.
 The edit path must then install `U` before it applies content that depends on `U`.
 Option C installs `U` on a private checkout first, not on the shared branch.
+Option D proposes installing `U` on the existing optimistic local checkout while explicitly withholding publication and protecting authoritative summary state.
 Configuration alone must not grant access to a view that currently needs an upgrade.
 
 Check the target's view compatibility explicitly.
@@ -367,6 +376,7 @@ The required checks concern origin and lifecycle, not content effects:
 
 Options A and B use one live checkout and a local effective schema.
 Option C uses a separate private checkout with its own stored schema.
+Option D uses the existing local checkout and adds unpublished-state management to the local/trunk pipeline.
 All options must preserve the same public view behavior and meet the same internal recovery requirements.
 
 ### Separate document schema from view interpretation
@@ -375,7 +385,10 @@ For Options A and B, keep `checkout.storedSchema` as the authoritative document 
 Summaries, incoming change processing, and branch history must continue to use it.
 Do not temporarily replace it with `U` merely to permit reads.
 For Option C, the private checkout can legitimately store `U`.
-Only the shared checkout contributes the document schema to shared history and summaries.
+For Option C, only the base checkout contributes the document schema to shared history and summaries.
+For Option D, the existing local checkout would contain `U`, so summaries cannot blindly serialize that checkout's schema.
+Its implementation must preserve authoritative schema and summary state separately from unpublished preparation.
+The existing summary guard and local schema summarizer make simply withholding an op insufficient.
 
 Allow the hydrated FlexTree context to use an effective schema:
 
@@ -709,6 +722,7 @@ Planned schema-rebase support can reduce temporary costs, but it does not determ
 | B: effective schema with an internal transaction | Reuse schema editing and transaction composition. | Wrapper coverage, abort and notification semantics, data-only undo, and interaction with application transactions and post-processors. | Design proposal; existing transaction behavior is prior art, not a feature implementation. |
 | C1: temporary private checkout | Use a real local stored schema, then avoid persistent synchronization after handoff. | Safe transfer of node identity, subscriptions, forks, undo state, and unresolved publications. | Not implemented in the experiment. |
 | C2: persistent private checkout | Avoid a handoff and use normal schema-aware editors and chunk preparation. | Continuing synchronization, resource retention, outcome forwarding, and reconstruction under current rebase limits. | Implemented experiment under review; dated observations and measurements are in Section 9. |
+| D: existing EditManager local branch | Reuse the normal checkout, forest, and local/trunk synchronization without C2's extra persistent authoring layer. | Explicit unpublished/submitted state, safe rebase, authoritative summaries, resubmit and rollback boundaries, and shared-branch creation. | Source tracing and seven characterization probes; no complete implementation or comparative performance measurement. |
 
 Publication shape and checkout ownership are separate design choices.
 The C2 experiment uses ordered separate commits.
@@ -1066,12 +1080,139 @@ Validate the permanent costs with a focused prototype rather than judge the opti
 The decisive tests are live remote editing without node invalidation, ordered publication after an earlier upgrade call, data-only undo, reliable later editing, and safe retry or fatal failure for rejection cases.
 For C2, also test long-running bidirectional synchronization and history retention.
 
+### Option D: reuse EditManager's existing local branch
+
+#### Existing local/trunk split
+
+The normal [SharedTree checkout](../../src/shared-tree/sharedTree.ts) is already attached to the local branch returned by `SharedTreeCore`.
+[EditManager](../../src/shared-tree-core/editManager.ts) creates that branch from the sequenced trunk and rebases it when remote changes arrive.
+The local branch holds optimistic changes; it is not an application-created fork.
+On local acknowledgement, the sequencing path normally promotes the oldest local commit to the trunk without applying it to the checkout again.
+
+```text
+Normal SharedTree:
+    sequenced trunk -> existing local branch + application-facing checkout
+
+C2:
+    sequenced trunk -> existing local branch + base checkout -> additional view checkout
+
+Proposed D:
+    sequenced trunk -> existing local branch + application-facing checkout
+                      submitted edits and unpublished schema preparation tracked separately
+```
+
+Option D would retain the normal checkout and forest throughout deferral.
+It is not a proposal to remove the existing local branch, transaction branches, or application forks.
+It may still need retained history or scratch branches for safe recovery.
+Those are distinct from maintaining a second persistent application-facing forest.
+
+#### Proposed state and publication flow
+
+The inspected `EditManager` tracks local commits absent from the trunk but does not distinguish deliberately unpublished preparation from in-flight work.
+Meanwhile, [SharedTreeCore.registerSharedBranch](../../src/shared-tree-core/sharedTreeCore.ts) submits every local append.
+Option D must change this assumption across the pipeline, not merely suppress the schema message.
+
+Conceptually, the existing local history could contain:
+
+```text
+T = sequenced trunk head
+I = submitted edits awaiting acknowledgement
+S = never-submitted schema preparation
+D = newly committed application data
+
+Before the trigger: T -> I -> S
+After the trigger:  T -> I -> S -> D
+                             submit S, then D
+```
+
+This illustrates the ordinary case, not a new wire format or a complete state-machine specification.
+An application transaction continues to use its native transaction branch until it commits.
+
+The proposed flow is:
+
+1. An explicit deferred upgrade creates local schema preparation on the existing local branch.
+   The checkout uses that schema for reading, validation, and chunk preparation, without submitting it or treating it as sequenced.
+2. Preserve the distinction between earlier in-flight edits and later unpublished requests.
+   Coalesce compatible private requests without changing already-submitted ops.
+3. When an application-originated change commits, publish any required schema before its data through normal encoding and submission.
+   Preserve original data revisions and native data-only undo in the ordinary separate-commit path.
+4. Let normal local acknowledgement advance the trunk, but only for commits actually submitted.
+   Do not promote unpublished preparation when an earlier edit is acknowledged.
+5. Reconcile remote changes into the same local checkout.
+   Preserve pending intent until an actual received schema change ends deferral or the application cancels unused preparation.
+6. After deferral ends, use normal editing on that checkout.
+   Retain only state still needed by pending requests, in-flight publications, undo, or recovery.
+
+The common transaction, view-replacement, partial-outcome, and one-retry contracts still apply.
+In particular, closing a typed view does not authorize dropping submitted edits, and an earlier acknowledgement must not clear a later upgrade request.
+
+#### Responsibility boundaries
+
+`EditManager` is a useful integration point, but it should not become the owner of application schema policy or every runtime concern.
+Its history logic is generic over changesets.
+
+| Component | Proposed responsibility |
+| --- | --- |
+| View and schema layer | Explicit authorization, compatibility, staged policy, transaction scope, and application notifications. |
+| EditManager | Existing local/trunk history, distinction between unpublished and submitted commits, acknowledgement correlation, and automatic-rebase integration. |
+| SharedTreeCore and SharedTree kernel | Publication ordering, commit enrichment and validation, runtime submission, reconnect, and rollback. |
+| Checkout and summarizers | Consistent local schema/content, authoritative summary state, node lifetime, and repair-data retention. |
+
+Independent trees do not have an `EditManager`.
+Reuse schema-intent and transaction rules for them without creating a fictional acknowledgement lifecycle.
+The exact internal API between these owners remains to be designed.
+
+#### Required changes beyond a submission gate
+
+- **Remote rebase:** [SharedTreeChangeFamily.rebase](../../src/shared-tree/sharedTreeChangeFamily.ts) still drops schema/data combinations.
+  Withholding submission does not exempt a schema commit from that rule.
+  Intervene at the existing automatic-rebase boundary, retaining original work before it can be lost.
+  Schema-only preparation needs safe refresh; application work needs safe reconstruction or fail-stop.
+  Full schema/data rebase support should replace temporary transformations, not the permanent publication state.
+- **Enrichment and reconnect:** [BranchCommitEnricher](../../src/shared-tree-core/branchCommitEnricher.ts) prepares changes for submission, and [DefaultResubmitMachine](../../src/shared-tree-core/defaultResubmitMachine.ts) expects submitted entries for the local suffix it receives.
+  Do not pass never-submitted preparation into transport resubmission.
+  If rebase replaces a commit object, refresh its enrichment and validation context before first submission.
+- **Summaries and attach:** the history summarizer currently requires local head to equal trunk head.
+  The [schema summarizer](../../src/feature-libraries/schema-index/schemaSummarizer.ts) reads the same schema repository that the local checkout mutates.
+  Removing the history assertion alone would risk persisting a private upgrade.
+  A clean summarizer client is unaffected, but summary, export, and attach paths on the upgraded client need deliberate handling.
+  Assess a separate authoritative schema snapshot or an on-demand projection; do not assume either alone solves history, forest encoding, and repair-data consistency.
+- **Runtime rollback:** current rollback requires the rolled-back op to be the local head.
+  A later withheld schema can sit above it.
+  Remove cancelled application work without publishing or losing later private requests, and without treating cancellation as a recovery retry.
+- **Shared-branch creation:** local creation currently forks the existing local branch, while peers reconstruct from shared history.
+  Define how creation handles an unpublished schema ancestor so clients agree.
+  Do not silently inherit private preparation into a shared branch or flush it on unrelated internal activity.
+- **Recovery and lifetime:** native synchronization removes C2's extra forwarding layer, not the need for one safe retry, original-work retention, stable objects, undo mapping, and bounded resources.
+  Temporary rebase state must not retain unrelated history indefinitely.
+
+#### Expected tradeoffs and feasibility gates
+
+Option D could avoid C2's second persistent forest, view-to-base publication merge, extra base-to-view rebase, and much of the event and ownership forwarding caused by that additional layer.
+Like C2, it could use a real locally upgraded stored schema rather than a separate field-preparation schema path.
+These are architectural opportunities, not measured performance or code-size improvements.
+
+The cost moves into lower-level invariants shared by submission, sequencing, persistence, and recovery.
+The [initial probes](#option-d-feasibility-probes-2026-10-28) support the simple publication path but demonstrate that delaying submission alone is unsafe.
+A full implementation has not been established.
+
+Before selecting D, prototype these gates:
+
+1. **Remote data with withheld schema:** keep the view current and compatible without invalidating unaffected nodes or submitting the upgrade.
+2. **Earlier in-flight work with later private preparation:** preserve correct acknowledgement, reconnect, rollback, and one-retry accounting.
+3. **Summary and attach:** exclude private schema and content while preserving valid document state without a second persistent forest.
+
+Then extend the prototype to named-branch creation, view replacement, nested and asynchronous transactions, forks and replay, and the full common validation matrix.
+Compare retained resources and permanent synchronization costs with C2 on the same source baseline.
+Option D is a candidate for further investigation, not the selected replacement for C2.
+
 ### Approaches not recommended
 
-**Change the shared checkout's stored schema and delay only its op.**
-This makes document state, summaries, and change encoding disagree with replicated history.
-Do not use this approach.
-This is different from Option C, where the upgrade is a real change on a separate private branch.
+**Change the normal checkout's stored schema and delay only its op, without changing the surrounding invariants.**
+The existing pipeline does not support this distinction: rebase, summaries, resubmit, rollback, and shared-branch creation can mishandle the withheld schema.
+Option C isolates preparation on another checkout.
+Option D instead proposes explicit unpublished-state support across the existing local/trunk pipeline.
+Neither proposal makes a submission-only interception sufficient.
 
 **Call `upgradeSchema()` from `changed`, `beforeBatch`, or an insertion validator.**
 Event hooks are too late or prohibit edits.
@@ -1347,6 +1488,7 @@ Internal rollback and reapplication by a post-processor must not start another d
 2. **Define explicit local-upgrade and publication state.**
    Keep the public default unchanged.
    Prove read access for old documents, including live remote data edits.
+   For D, distinguish never-submitted preparation from submitted local commits; use its three feasibility gates before expanding the prototype.
 3. **Prototype the distinguishing mechanisms of the candidate.**
    Support a root edit, a new optional field, and insertion of a new node type with the optimized forest.
    Preserve references across commit and abort.
@@ -1371,6 +1513,7 @@ This is not a list of mandatory changes for Option C.
 Its permanent work should concentrate on private-checkout lifetime, synchronization or handoff, transaction integration, publication, and remaining recovery cases.
 Existing forest cloning and schema-bound chunk preparation already support a private upgraded checkout.
 The separate effective-schema preparation path is an Option A cost, not a permanent Option C requirement.
+Option D concentrates its distinct work on the existing local/trunk pipeline and authoritative summary state instead of adding another persistent checkout.
 
 | Area | Files |
 | --- | --- |
@@ -1381,6 +1524,8 @@ The separate effective-schema preparation path is an Option A cost, not a perman
 | Edit construction and transaction integration | [treeCheckout.ts](../../src/shared-tree/treeCheckout.ts), [sharedTreeEditBuilder.ts](../../src/shared-tree/sharedTreeEditBuilder.ts), [branch.ts](../../src/shared-tree-core/branch.ts), [transaction.ts](../../src/shared-tree-core/transaction.ts) |
 | Chunk preparation | [chunkTree.ts](../../src/feature-libraries/chunked-forest/chunkTree.ts), [mappedEditBuilder.ts](../../src/feature-libraries/default-schema/mappedEditBuilder.ts) |
 | Undo and any approved conflict changes | [treeCheckout.ts](../../src/shared-tree/treeCheckout.ts), [sharedTreeChangeFamily.ts](../../src/shared-tree/sharedTreeChangeFamily.ts) |
+| Option D local/trunk publication state | [editManager.ts](../../src/shared-tree-core/editManager.ts), [sharedTreeCore.ts](../../src/shared-tree-core/sharedTreeCore.ts), [sharedTree.ts](../../src/shared-tree/sharedTree.ts) |
+| Option D enrichment and persistence boundaries | [branchCommitEnricher.ts](../../src/shared-tree-core/branchCommitEnricher.ts), [defaultResubmitMachine.ts](../../src/shared-tree-core/defaultResubmitMachine.ts), [schemaSummarizer.ts](../../src/feature-libraries/schema-index/schemaSummarizer.ts) |
 
 Reuse existing helpers rather than create a second schema comparison or change-family implementation.
 Existing formats can encode both compound changes and ordered separate commits.
@@ -1442,7 +1587,7 @@ An internal pending flag alone does not prove that the correct ops were sent or 
 | --- | --- |
 | Default configuration | Existing compatibility and explicit-upgrade behavior is unchanged. |
 | Deferred open before an upgrade call | An upgrade-required view remains inaccessible. |
-| Explicit local upgrade, repeated reads, iteration, observation, export, and disposal | No new shared commit or submitted upgrade op; document schema unchanged. Option C may have a private schema commit. |
+| Explicit local upgrade, repeated reads, iteration, observation, export, and disposal | No submitted upgrade op or change to sequenced/document state. C and D may have unpublished local schema commits. |
 | Compatibility and schema queries after local upgrade | Match the local results of an immediate upgrade; no public pending-publication status. |
 | Publication of an already applied local upgrade | No compatibility transition or schema notification solely because publication occurred. |
 | Remote data edits during read-only use | View stays current; this client sends no automatic upgrade. |
@@ -1496,6 +1641,11 @@ An internal pending flag alone does not prove that the correct ops were sent or 
 | C2 initial publication followed by more edits | Preserve original revisions in normal publication; do not publish the same schema/edit history twice. |
 | C2 local acknowledgement, reconnect, and resubmit | Correct outcome forwarding and no feedback loop between view and base. |
 | C2 transactions, undo/redo, and application-created forks | Preserve transaction boundaries, metadata, history identity, and existing public behavior across synchronization. |
+| D existing-local-branch publication | Use the normal checkout; submit held schema before triggered data, preserving revisions, node identity, and data-only undo. |
+| D remote data with withheld schema | Preserve the local upgrade and live view instead of dropping preparation through ordinary schema rebase. |
+| D earlier in-flight edit followed by private schema | Acknowledgement and resubmit process submitted work only; rollback preserves later requests. |
+| D summary/attach with withheld schema | No private schema reaches persisted document state; do not simply bypass the existing summary guard. |
+| D named shared-branch creation | Local and remote clients agree on the branch's starting schema and history despite private preparation. |
 | Long sessions and disposal | Bound unnecessary history, listeners, and detached content on every owned checkout. Do not lose submitted work or dispose a borrowed base. |
 | Remote schema makes the document viewable before first edit | Deferral ends; the private upgrade is not published; subsequent edits use normal routing. |
 | Remote schema is viewable but not equivalent to `U`, including `canUpgrade: false` | Deferral still ends; target equality, equivalence, and upgrade permission are not exit requirements. |
@@ -1512,7 +1662,8 @@ An internal pending flag alone does not prove that the correct ops were sent or 
 | Older client receives the chosen publication shape | Applies ops consistently; its view can become incompatible as expected. |
 
 Inspect the actual submitted change, not only the final tree.
-For a single first edit without an outer transaction, require one tree commit containing the ordered schema/data changes.
+For a single first edit without an outer transaction, verify the chosen commit shape and schema-before-data ordering.
+Do not require one combined tree commit when the design uses ordered separate commits.
 A runtime may batch messages, so do not equate commit count with transport-envelope count.
 Before the first edit, also check the schema in a summary.
 Zero outgoing messages alone does not prove that the shared checkout stayed unchanged.
@@ -1624,11 +1775,36 @@ These figures describe that local experiment, not production latency, a required
 For meaningful comparison, rerun the same workload on the same source baseline and environment, and include recovery and long-session resource measurements.
 No test results from the C2 branch establish that this planning branch contains or validates the feature.
 
+### Option D feasibility probes, 2026-10-28
+
+Source tracing and seven temporary characterization tests used planning-branch commit `ab4f4ce2a68`.
+The tests rebuilt the current sources and used two clients with mock delivery.
+A test-only interception withheld schema calls at `SharedTreeKernel.submitCommit` and released them before the next data commit.
+It did not change `EditManager`, the rebaser, summarizers, or production submission rules.
+It was intentionally incomplete, not an Option D implementation.
+
+| Probe | Observed result |
+| --- | --- |
+| Existing local branch; first data publication | The upgrade stayed off the trunk with no op queued. Ordered schema/data publication preserved root and inserted-object identity and native data-only undo. |
+| Abort first data transaction after an earlier upgrade | No publication; the locally upgraded view remained usable and a later committed edit released schema then data. |
+| Remote data before publication | Ordinary rebase replaced the withheld schema change with an empty change and the view lost compatibility, although no schema op had been sent. |
+| Summary with withheld schema | History summarization asserted `0xc5e`. The schema summarizer, invoked separately, encoded the private upgraded schema. This was not a successfully generated whole-document summary. |
+| Earlier in-flight data followed by withheld schema, then reconnect over remote work | Resubmit enrichment asserted `0xc7a` because the local suffix included a revision with no submitted pending entry. |
+| Earlier queued data followed by withheld schema, then runtime cancellation | Rollback asserted `0xc6b` because the queued data was no longer the local head. |
+| Create a named shared branch while schema is withheld | The local branch inherited the private schema, while the peer reconstructed the branch without it; compatibility differed. |
+
+All seven tests passed as characterizations, including assertions of the expected failures.
+The first two support the basic feasibility of reusing the existing local branch.
+The other five identify integration work, not reasons to accept partial support.
+No live Fluid service, complete recovery implementation, summary solution, or performance improvement was validated.
+The temporary probes were removed and no production files changed.
+
 ## 10. Agreed decisions and remaining design work
 
 The initial 2026-10-26 decision was to implement C2 first.
 The 2026-10-27 investigation selected ordered separate commits for that experiment.
 On 2026-10-28, alternative solutions were reopened while C2 is reviewed.
+The same day's investigation added D: reuse `EditManager`'s existing local branch with explicit unpublished-state management.
 Neither a persistent checkout nor a combined commit is a fixed behavioral requirement.
 
 The shared contract remains:
