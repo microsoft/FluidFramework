@@ -162,7 +162,9 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
- * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions} and {@link SharedObjectKindAlpha} capabilities.
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions} and
+ * {@link @fluidframework/shared-object-base#SharedObjectKindAlpha} capabilities.
+ *
  * @param options - Configuration options for the SharedTree kind.
  * @returns A configured SharedTree kind with experimental capabilities.
  * @alpha
