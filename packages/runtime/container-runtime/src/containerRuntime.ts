@@ -843,7 +843,7 @@ export interface LoadContainerRuntimeParams {
 /**
  * Container runtime load parameters using the deprecated compatibility property.
  *
- * @deprecated 2.116.0. To be removed in 3.10.0. Use {@link LoadContainerRuntimeParams} with
+ * @deprecated 3.10.0. To be removed in a future release. Use {@link LoadContainerRuntimeParams} with
  * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  * @input
@@ -856,7 +856,7 @@ export type DeprecatedLoadContainerRuntimeParams = Omit<
 > & {
 	readonly oldestSupportedClient?: undefined;
 	/**
-	 * @deprecated 2.116.0. To be removed in 3.10.0.
+	 * @deprecated 3.10.0. To be removed in a future release.
 	 * Pass {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
