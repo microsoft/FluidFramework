@@ -49,6 +49,7 @@ import {
 	type VoidTransactionCallbackStatusBeta,
 	type TransactionVoidResult,
 	type TransactionValueResult,
+	type WithValue,
 	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
@@ -429,6 +430,14 @@ export class SchematizingSimpleTreeView<
 	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
 		? TransactionValueResult<TSuccessValue, TFailureValue>
 		: TransactionVoidResult;
+	public runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+	public runTransaction(
+		transaction: () => void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -457,6 +466,10 @@ export class SchematizingSimpleTreeView<
 			? TransactionValueResult<TSuccessValue, TFailureValue>
 			: TransactionVoidResult
 	>;
+	public runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>

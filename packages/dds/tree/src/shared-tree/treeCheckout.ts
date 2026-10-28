@@ -110,6 +110,7 @@ import {
 	type VoidTransactionCallbackStatusBeta,
 	type TransactionVoidResult,
 	type TransactionValueResult,
+	type WithValue,
 	type RunTransactionParamsAlpha,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
@@ -1351,6 +1352,14 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
 		? TransactionValueResult<TSuccessValue, TFailureValue>
 		: TransactionVoidResult;
+	public runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+	public runTransaction(
+		transaction: () => void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
@@ -1381,6 +1390,10 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			? TransactionValueResult<TSuccessValue, TFailureValue>
 			: TransactionVoidResult
 	>;
+	public runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
