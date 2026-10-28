@@ -1638,7 +1638,9 @@ describe("summary ownership routes", () => {
 			state: "active",
 		});
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(), { authorize });
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new Error("legacy summary ownership lookup must not run"));
 		const info = sandbox.spy(Lumberjack, "info");
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
@@ -1655,8 +1657,9 @@ describe("summary ownership routes", () => {
 			tenantId,
 			documentId,
 			operation: "read",
+			containerTypeHint: "ephemeral",
 		});
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.notCalled(readDocument);
 		sinon.assert.notCalled(storageNameRetrieverGet);
 		sinon.assert.calledOnce(getSummary);
 		const creationEvent = info
@@ -1668,6 +1671,47 @@ describe("summary ownership routes", () => {
 			);
 		assert.ok(creationEvent);
 		assert.match(creationEvent.args[0], /"Storage-Name":"authorized-storage"/);
+	});
+
+	it("preserves EC tombstone ordering without legacy ownership lookup", async () => {
+		const createTime = activeDocument.createTime;
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "delete",
+			source: "ec-lifecycle-redis",
+			lifecycleVersion: String(createTime),
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true), {
+			authorize,
+		});
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new Error("legacy summary ownership lookup must not run"));
+		const events: string[] = [];
+		sandbox.stub(cache, "markSummaryAccessDeleted").callsFake(async () => {
+			events.push("markDeleted");
+		});
+		sandbox.stub(RestGitService.prototype, "deleteSummary").callsFake(async () => {
+			events.push("deleteSummary");
+			return true;
+		});
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnceWithMatch(authorize, {
+			tenantId,
+			documentId,
+			operation: "delete",
+			containerTypeHint: "ephemeral",
+		});
+		assert.deepStrictEqual(events, ["markDeleted", "deleteSummary"]);
 	});
 
 	it("normalizes an Alfred storageName null before trusted fallback", async () => {
@@ -1990,20 +2034,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("forwards the customer access token on protected summary routes when enabled", async () => {
-		const authorize = sandbox
-			.stub()
-			.callsFake(async ({ operation }: { operation: "read" | "write" | "delete" }) => ({
-				tenantId,
-				documentId,
-				operation,
-				source: "dc-v2-metadata" as const,
-				storageAccountName: "authorized-storage",
-				physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				layoutVersion: "v2" as const,
-				lifecycleVersion: "generation-1",
-				state: "active" as const,
-			}));
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(true), { authorize });
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(true));
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
@@ -2044,11 +2075,6 @@ describe("summary ownership routes", () => {
 		assert.ok(readDocument.getCall(1).calledBefore(getSummary.getCall(1)));
 		assert.ok(readDocument.getCall(2).calledBefore(createSummary.getCall(0)));
 		assert.ok(readDocument.getCall(3).calledBefore(deleteSummary.getCall(0)));
-		sinon.assert.callCount(authorize, 4);
-		assert.ok(readDocument.getCall(0).calledBefore(authorize.getCall(0)));
-		assert.ok(readDocument.getCall(1).calledBefore(authorize.getCall(1)));
-		assert.ok(readDocument.getCall(2).calledBefore(authorize.getCall(2)));
-		assert.ok(readDocument.getCall(3).calledBefore(authorize.getCall(3)));
 	});
 
 	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {

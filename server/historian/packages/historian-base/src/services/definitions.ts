@@ -118,6 +118,10 @@ export interface ICreateGitServiceArgs {
 	 */
 	accessOperation?: DocumentAccessOperation;
 	/**
+	 * Selects the first safe ownership lookup for the authorizer without determining routing.
+	 */
+	containerTypeHint?: "ephemeral" | "durable";
+	/**
 	 * Candidate lifecycle or storage proof resolved earlier in the request. A configured
 	 * authorizer must validate and return it before Historian uses it.
 	 */

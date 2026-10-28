@@ -41,6 +41,7 @@ import type {
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	RestGitService,
+	IDocumentAccessProof,
 	IDocumentAccessAuthorizer,
 	ITrustedCreateContextResolver,
 	ITrustedCreateContext,
@@ -83,6 +84,27 @@ export function create(
 		config.get("alfredEnforcesServerGeneratedDocumentId") === true;
 	const accessStore =
 		ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache) ? cache : undefined;
+
+	function getEphemeralSummaryAccess(
+		proof: IDocumentAccessProof | undefined,
+	): ISummaryAccessContext | undefined {
+		if (proof?.source !== "ec-lifecycle-redis") {
+			return undefined;
+		}
+		const createTime = Number(proof.lifecycleVersion);
+		if (!Number.isSafeInteger(createTime) || createTime < 0) {
+			throw new NetworkError(500, "Document access authorizer returned an invalid EC proof.");
+		}
+		return {
+			tenantId: proof.tenantId,
+			documentId: proof.documentId,
+			isEphemeralContainer: true,
+			createTime,
+			storageName: undefined,
+			source: "localEphemeral",
+			accessProof: proof,
+		};
+	}
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -127,7 +149,28 @@ export function create(
 		routeType: utils.SummaryRouteType,
 		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<{ service: RestGitService; access: ISummaryAccessContext }> {
+	): Promise<{ service: RestGitService; access?: ISummaryAccessContext }> {
+		if (documentAccessAuthorizer !== undefined) {
+			const { service, accessProof } = await utils.createGitServiceWithAccess({
+				config,
+				tenantId,
+				authorization,
+				tenantService,
+				storageNameRetriever,
+				documentManager,
+				cache,
+				allowDisabledTenant,
+				ephemeralDocumentTTLSec,
+				simplifiedCustomDataRetriever,
+				postEphemeralContainerChecker,
+				query,
+				accessOperation:
+					operation === "get" ? "read" : operation === "post" ? "write" : "delete",
+				containerTypeHint: "ephemeral",
+				documentAccessAuthorizer,
+			});
+			return { service, access: getEphemeralSummaryAccess(accessProof) };
+		}
 		const access = await resolveSummaryAccess({
 			tenantId,
 			authorization,
@@ -155,7 +198,6 @@ export function create(
 			accessOperation:
 				operation === "get" ? "read" : operation === "post" ? "write" : "delete",
 			existingAccessProof: access.accessProof,
-			documentAccessAuthorizer,
 			summaryAccessContext: access,
 		});
 		return { service, access };
@@ -281,7 +323,7 @@ export function create(
 		// The Redis tombstone and GitRest deletion are not atomic. Marking access deleted first
 		// may briefly deny an existing summary if GitRest fails, but avoids leaving an active
 		// authorization record during or after deletion.
-		if (access.isEphemeralContainer && accessStore !== undefined) {
+		if (access?.isEphemeralContainer === true && accessStore !== undefined) {
 			try {
 				await accessStore.markSummaryAccessDeleted(
 					access.tenantId,

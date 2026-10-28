@@ -517,12 +517,23 @@ describe("summary ownership", function () {
 		);
 	});
 
-	it("fails authorization before tenant lookup or document storage access", async () => {
-		const denial = new NetworkError(404, "Document is deleted and cannot be accessed.");
+	it("authenticates before document authorization or storage access", async () => {
+		const authenticationFailure = new NetworkError(403, "Invalid token.");
 		const tenantService = new TestTenantService();
-		const getTenant = sandbox.spy(tenantService, "getTenant");
+		const getTenant = sandbox.stub(tenantService, "getTenant").rejects(authenticationFailure);
 		const documentManager = new TestDocumentManager();
 		const readStaticProperties = sandbox.spy(documentManager, "readStaticProperties");
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			storageAccountName: "document-storage",
+			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			layoutVersion: "v2",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		});
 
 		await assert.rejects(
 			createGitService({
@@ -536,13 +547,14 @@ describe("summary ownership", function () {
 				documentManager,
 				accessOperation: "read",
 				documentAccessAuthorizer: {
-					authorize: sandbox.stub().rejects(denial),
+					authorize,
 				},
 			}),
-			(error: unknown) => error === denial,
+			(error: unknown) => error === authenticationFailure,
 		);
 
-		sinon.assert.notCalled(getTenant);
+		sinon.assert.calledOnce(getTenant);
+		sinon.assert.notCalled(authorize);
 		sinon.assert.notCalled(readStaticProperties);
 	});
 
@@ -579,7 +591,7 @@ describe("summary ownership", function () {
 			/Document access authorizer returned an invalid proof/,
 		);
 
-		sinon.assert.notCalled(getTenant);
+		sinon.assert.calledOnce(getTenant);
 	});
 
 	for (const testCase of [
@@ -656,7 +668,7 @@ describe("summary ownership", function () {
 				/Document access authorizer returned an invalid proof/,
 			);
 
-			sinon.assert.notCalled(getTenant);
+			sinon.assert.calledOnce(getTenant);
 		});
 	}
 

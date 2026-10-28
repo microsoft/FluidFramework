@@ -38,6 +38,7 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
+	type IDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -502,7 +503,14 @@ export async function validateSummaryDocument({
 	return document;
 }
 
-export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+export interface ICreateGitServiceResult {
+	service: RestGitService;
+	accessProof?: IDocumentAccessProof;
+}
+
+export async function createGitServiceWithAccess(
+	createArgs: ICreateGitServiceArgs,
+): Promise<ICreateGitServiceResult> {
 	const {
 		config,
 		tenantId,
@@ -519,6 +527,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
 		accessOperation,
+		containerTypeHint: explicitContainerTypeHint,
 		existingAccessProof,
 		trustedCreateContext,
 		documentAccessAuthorizer,
@@ -529,6 +538,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
+	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 
 	if (documentAccessAuthorizer !== undefined && accessOperation === undefined) {
 		throw new NetworkError(
@@ -538,7 +548,8 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 	const isEphemeralHint = isEphemeralContainer ?? summaryAccessContext?.isEphemeralContainer;
 	const containerTypeHint =
-		isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable";
+		explicitContainerTypeHint ??
+		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
 	const accessProof =
 		accessOperation === undefined || documentAccessAuthorizer === undefined
 			? undefined
@@ -569,7 +580,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
 
-	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
@@ -621,19 +631,26 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 			(await storageNameRetriever?.get(tenantId, documentId)) ??
 			customData?.storageName;
 	}
-	return new RestGitService(
-		details.storage,
-		writeToExternalStorage,
-		tenantId,
-		documentId,
-		cache,
-		calculatedStorageName,
-		storageUrl,
-		postIsEphemeral,
-		maxCacheableSummarySize,
-		simplifiedCustomData,
+	return {
+		service: new RestGitService(
+			details.storage,
+			writeToExternalStorage,
+			tenantId,
+			documentId,
+			cache,
+			calculatedStorageName,
+			storageUrl,
+			postIsEphemeral,
+			maxCacheableSummarySize,
+			simplifiedCustomData,
+			accessProof,
+		),
 		accessProof,
-	);
+	};
+}
+
+export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+	return (await createGitServiceWithAccess(createArgs)).service;
 }
 
 /**
