@@ -5,7 +5,7 @@
 ---
 Remove deprecated TreeBranch and TreeBranchAlpha type aliases
 
-The deprecated `TreeBranch` and `TreeBranchAlpha` compatibility aliases have been removed. Use `UntypedTreeView` and `UntypedTreeViewAlpha` instead.
+The deprecated `TreeBranch` and `TreeBranchAlpha` compatibility aliases have been removed. Use [`UntypedTreeView`](https://fluidframework.com/docs/api/tree/untypedtreeview-interface) and [`UntypedTreeViewAlpha`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface) instead.
 
 ```typescript
 // Before
