@@ -161,7 +161,12 @@ export function mapTreeFromCursor(cursor: ITreeCursor): ExclusiveMapTree {
 	const fields: Map<FieldKey, ExclusiveMapTree[]> = new Map();
 	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
 		const field: ExclusiveMapTree[] = mapCursorField(cursor, mapTreeFromCursor);
-		fields.set(cursor.getFieldKey(), field);
+		// PERFORMANCE: .slice() removes spare backing-array capacity on V8
+		// This trades copy time and spare capacity for lower retained memory, especially for single-child fields.
+		// This tradeoff should be reconsidered with other forest performance optimizations, especially
+		// those that change the storage format of single-child fields and could make exact sizing less worthwhile.
+		// eslint-disable-next-line unicorn/prefer-spread -- see above
+		fields.set(cursor.getFieldKey(), field.slice());
 	}
 
 	const node: ExclusiveMapTree = {
