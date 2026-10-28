@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import {
+	takeAsync,
+	type AsyncGenerator,
+	type IRandom,
+} from "@fluid-private/stochastic-test-utils";
 import {
 	createDDSFuzzSuite,
+	type DDSFuzzClientFactory,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
-import type {
-	IChannel,
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import { ITree, type NodeBuilderData } from "../../../simple-tree/index.js";
@@ -47,22 +46,21 @@ export function createCompatFuzzSuite(
 	compatPackageStatics: TreePackageStatics,
 	compatVersion: MinimumVersionForCollab,
 ) {
+	const factories: readonly [IChannelFactory<ISharedTree>, TreePackageStatics][] = [
+		[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
+		[
+			makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
+			defaultTreePackageStatics,
+		],
+	];
 	const compatFuzzModel: DDSFuzzModel<
-		CompatTestTreeFactory,
+		IChannelFactory<ISharedTree>,
 		Operation,
-		DDSFuzzTestState<CompatTestTreeFactory>
+		DDSFuzzTestState<IChannelFactory<ISharedTree>, number>,
+		number
 	> = {
 		workloadName: "SharedTree Compat",
-		factory: new CompatTestTreeFactory(
-			[
-				[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
-				[
-					makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
-					defaultTreePackageStatics,
-				],
-			],
-			undefined,
-		),
+		factory: new CompatFuzzClientFactory(factories, undefined),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,
@@ -70,18 +68,7 @@ export function createCompatFuzzSuite(
 
 	createDDSFuzzSuite(compatFuzzModel, options);
 
-	createRevertFuzzTestSuites(
-		new CompatTestTreeFactory(
-			[
-				[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
-				[
-					makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
-					defaultTreePackageStatics,
-				],
-			],
-			populatedInitialState,
-		),
-	);
+	createRevertFuzzTestSuites(new CompatFuzzClientFactory(factories, populatedInitialState));
 }
 
 // AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
@@ -144,51 +131,42 @@ function makeFactorySupportingVersion(
 	return configuredSharedTree({ minVersionForCollab: version }).getFactory();
 }
 
-class CompatTestTreeFactory implements IChannelFactory<ISharedTree> {
-	private lastUsedIdx = -1;
-
-	public get type(): string {
-		return this.factories[0][0].type;
-	}
-	public get attributes(): IChannelAttributes {
-		return this.factories[0][0].attributes;
-	}
-
+export class CompatFuzzClientFactory
+	implements DDSFuzzClientFactory<IChannelFactory<ISharedTree>, number>
+{
 	public constructor(
 		private readonly factories: readonly [IChannelFactory<ISharedTree>, TreePackageStatics][],
 		private readonly initialState: NodeBuilderData<typeof FuzzNode> | undefined,
 	) {}
 
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree & IChannel> {
-		const [factory, statics] = this.getInnerFactory();
-		const tree = await factory.load(runtime, id, services, channelAttributes);
-		treeToPackageStatics.set(tree, statics);
-		return tree;
+	public generateClientConfiguration(random: IRandom): number {
+		return random.integer(0, this.factories.length - 1);
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree & IChannel {
-		const [factory, statics] = this.getInnerFactory();
-		const tree = factory.create(runtime, id);
-		treeToPackageStatics.set(tree, statics);
+	public getFactory(clientConfiguration: number): IChannelFactory<ISharedTree> {
+		const [factory, statics] = this.factories[clientConfiguration];
+		return {
+			type: factory.type,
+			attributes: factory.attributes,
+			load: async (runtime, id, services, channelAttributes) => {
+				const tree = await factory.load(runtime, id, services, channelAttributes);
+				treeToPackageStatics.set(tree, statics);
+				return tree;
+			},
+			create: (runtime, id) => {
+				const tree = factory.create(runtime, id);
+				treeToPackageStatics.set(tree, statics);
 
-		const view = tree.viewWith(
-			statics.newTreeViewConfiguration({
-				schema: createFuzzSchema([], statics.newSchemaFactory),
-			}),
-		);
-		(view as FuzzView).initialize(this.initialState);
-		view.dispose();
+				const view = tree.viewWith(
+					statics.newTreeViewConfiguration({
+						schema: createFuzzSchema([], statics.newSchemaFactory),
+					}),
+				);
+				(view as FuzzView).initialize(this.initialState);
+				view.dispose();
 
-		return tree;
-	}
-
-	private getInnerFactory(): [IChannelFactory<ISharedTree>, TreePackageStatics] {
-		this.lastUsedIdx = (this.lastUsedIdx + 1) % this.factories.length;
-		return this.factories[this.lastUsedIdx];
+				return tree;
+			},
+		};
 	}
 }

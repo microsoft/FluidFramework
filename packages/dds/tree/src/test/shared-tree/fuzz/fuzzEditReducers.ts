@@ -108,10 +108,13 @@ const syncFuzzReducer = combineReducers<
 		applyForkMergeOperation(state, operation);
 	},
 });
-export const fuzzReducer: Reducer<
-	Operation,
-	DDSFuzzTestState<IChannelFactory<ISharedTree>>
-> = (state, operation) => syncFuzzReducer(state, operation);
+
+export const fuzzReducer = (
+	state: DDSFuzzTestState<IChannelFactory<ISharedTree>>,
+	operation: Operation,
+): void => {
+	syncFuzzReducer(state, operation);
+};
 
 export function checkTreesAreSynchronized(
 	trees: readonly Client<IChannelFactory<ISharedTree>>[],

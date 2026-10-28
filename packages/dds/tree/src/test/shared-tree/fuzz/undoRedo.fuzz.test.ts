@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	type DDSFuzzClientFactory,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
@@ -70,8 +71,12 @@ const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 	schema: 1,
 };
 
-export function createRevertFuzzTestSuites(
-	treeFactory: IChannelFactory<ISharedTree> = SharedTreeTestFactory.build(
+type TreeFuzzFactory<TClientConfiguration> =
+	| IChannelFactory<ISharedTree>
+	| DDSFuzzClientFactory<IChannelFactory<ISharedTree>, TClientConfiguration>;
+
+export function createRevertFuzzTestSuites<TClientConfiguration = unknown>(
+	treeFactory: TreeFuzzFactory<TClientConfiguration> = SharedTreeTestFactory.build(
 		createOnCreate(populatedInitialState),
 	),
 ): void {
@@ -79,8 +84,8 @@ export function createRevertFuzzTestSuites(
 	fuzzTestRevertFirstToLast(treeFactory);
 }
 
-function fuzzTestRevertLastToFirst(
-	treeFactory: IChannelFactory<ISharedTree> = SharedTreeTestFactory.build(
+function fuzzTestRevertLastToFirst<TClientConfiguration>(
+	treeFactory: TreeFuzzFactory<TClientConfiguration> = SharedTreeTestFactory.build(
 		createOnCreate(populatedInitialState),
 	),
 ): void {
@@ -93,7 +98,8 @@ function fuzzTestRevertLastToFirst(
 		const model: DDSFuzzModel<
 			IChannelFactory<ISharedTree>,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeTestFactory, TClientConfiguration>,
+			TClientConfiguration
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
 			factory: treeFactory,
@@ -179,8 +185,8 @@ function fuzzTestRevertLastToFirst(
 	});
 }
 
-function fuzzTestRevertFirstToLast(
-	treeFactory: IChannelFactory<ISharedTree> = SharedTreeTestFactory.build(
+function fuzzTestRevertFirstToLast<TClientConfiguration>(
+	treeFactory: TreeFuzzFactory<TClientConfiguration> = SharedTreeTestFactory.build(
 		createOnCreate(populatedInitialState),
 	),
 ): void {
@@ -191,7 +197,8 @@ function fuzzTestRevertFirstToLast(
 		const model: DDSFuzzModel<
 			IChannelFactory<ISharedTree>,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeTestFactory, TClientConfiguration>,
+			TClientConfiguration
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
 			factory: treeFactory,
