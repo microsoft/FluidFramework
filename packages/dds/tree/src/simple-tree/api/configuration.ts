@@ -26,11 +26,8 @@ import {
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
-import {
-	toInitialSchema,
-	toUnhydratedSchema,
-	transformSimpleSchema,
-} from "../toStoredSchema.js";
+import { toInitialSchema, toUnhydratedSchema } from "../toStoredSchema.js";
+import { transformSimpleSchema } from "../schemaConversion.js";
 import { analyzeSchema, getRootSchemaDerivedData, type TreeSchema } from "../treeSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";

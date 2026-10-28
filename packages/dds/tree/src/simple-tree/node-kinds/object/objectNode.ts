@@ -72,7 +72,7 @@ import {
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
+import { convertFieldKind } from "../../schemaConversion.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,

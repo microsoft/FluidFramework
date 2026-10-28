@@ -49,16 +49,19 @@ import {
 	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
 import {
-	getStoredSchema,
-	hasStagedSchema,
 	toInitialSchema,
-	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
+
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/toStoredSchema.js";
+import {
+	getStoredSchema,
+	simpleStoredSchemaToStoredSchema,
 	transformSimpleNodeSchema,
 	filterAllowedTypes,
 	transformSimpleSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/toStoredSchema.js";
+} from "../../simple-tree/schemaConversion.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createTreeSchema, getRootSchemaDerivedData } from "../../simple-tree/treeSchema.js";
 import { brand } from "../../util/index.js";
@@ -794,11 +797,14 @@ describe("toStoredSchema", () => {
 	});
 
 	// Component staging propagation is tested directly in treeSchema.spec.ts.
-	describe("hasStagedSchema", () => {
+	describe("root staging", () => {
 		it("reports staging for an implicit root", () => {
-			const sf = new SchemaFactoryAlpha("stagingWrapper");
-			assert.equal(hasStagedSchema(sf.number), false);
-			assert.equal(hasStagedSchema(sf.stagedOptional(sf.number)), true);
+			const sf = new SchemaFactoryAlpha("rootStaging");
+			assert.equal(getRootSchemaDerivedData(sf.number).hasStagedSchema, false);
+			assert.equal(
+				getRootSchemaDerivedData(sf.stagedOptional(sf.number)).hasStagedSchema,
+				true,
+			);
 		});
 	});
 });

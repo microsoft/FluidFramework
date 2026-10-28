@@ -17,11 +17,15 @@ import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/inde
 // eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 import {
-	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
-	transformSimpleSchema,
+
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
+import {
+	simpleStoredSchemaToStoredSchema,
+	transformSimpleSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/schemaConversion.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import {
 	createTreeSchema,

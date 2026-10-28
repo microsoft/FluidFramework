@@ -8,44 +8,15 @@ import type { TreeStoredSchema } from "../core/index.js";
 import type { SchemaUpgrade } from "./core/index.js";
 import { StagedSchemaUpgradePolicy } from "./core/index.js";
 import type { ImplicitFieldSchema } from "./fieldSchema.js";
-import type {
+import {
+	getRootSchemaDerivedData,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	SimpleAllowedTypeAttributes,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	SimpleFieldSchema,
-} from "./simpleSchema.js";
-import { getRootSchemaDerivedData } from "./treeSchema.js";
-
-export {
-	convertField,
-	convertFieldKind,
-	filterAllowedTypes,
-	getStoredSchema,
-	simpleStoredSchemaToStoredSchema,
-	transformSimpleNodeSchema,
-	transformSimpleSchema,
-} from "./schemaConversion.js";
+	type RootSchemaDerivedData,
+} from "./treeSchema.js";
 
 // TODO: schemaConversion.ts, src/simple-tree/api/storedSchema.ts and src/simple-tree/core/toStored.ts should be refactored to group the logic more logically.
 // The content of src/simple-tree/api/storedSchema.ts should probably removed from the API surface, replaced by simple schema snapshotting APIs.
 // The simple-schema related logic from schemaConversion.ts and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
-
-/**
- * Reports whether a root field or any transitively reachable schema contains staging.
- * @remarks
- * Includes {@link SimpleAllowedTypeAttributes.isStaged | staged allowed types} and {@link SimpleFieldSchema.isStagedOptional | staged optional fields},
- * including those reachable only through other staged references.
- * A `false` result permits {@link toStoredSchema} to share stored schema across all {@link (StagedSchemaUpgradePolicy:interface)} instances.
- * A `true` result does not guarantee that different policies produce different stored schemas, since staging can be redundant.
- *
- * Resolves lazy schema references, so all referenced schemas must already be declared.
- * Does not initialize unhydrated contexts, whose construction itself depends on stored-schema generation.
- *
- * @throws Throws a `UsageError` if reachable node schemas have conflicting identifiers.
- */
-export function hasStagedSchema(root: ImplicitFieldSchema): boolean {
-	return getRootSchemaDerivedData(root).hasStagedSchema;
-}
 
 function isStagedSchemaUpgradePolicy(
 	stagedSchemaUpgrades: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
@@ -111,7 +82,7 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  *
  * @remarks
  * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
- * Roots without {@link hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
+ * Roots without {@link RootSchemaDerivedData.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
  * including {@link toUnhydratedSchema} for unhydrated contexts.
  * Different roots can share converted nodes; roots in the same policy-filtered component also share a node-definition map.
  * Root fields remain separate because their allowed types, kind, and metadata can differ.

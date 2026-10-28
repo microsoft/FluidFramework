@@ -335,11 +335,11 @@ export {
 } from "./prepareForInsertion.js";
 export {
 	toStoredSchema,
-	convertFieldKind,
 	toUpgradeSchema,
 	toInitialSchema,
 	toUnhydratedSchema,
 } from "./toStoredSchema.js";
+export { convertFieldKind } from "./schemaConversion.js";
 export {
 	numberSchema,
 	stringSchema,

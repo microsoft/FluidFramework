@@ -253,6 +253,10 @@ export class RootSchemaDerivedData {
 
 	/**
 	 * Whether staging on the root field or any reachable node prevents policy-independent root conversion.
+	 * @remarks
+	 * Includes staged allowed types and staged optional fields, including those reachable only through staged references.
+	 * A `false` result permits stored-schema sharing across all staged-upgrade policies.
+	 * A `true` result does not guarantee that different policies produce different stored schemas, since staging can be redundant.
 	 */
 	public get hasStagedSchema(): boolean {
 		return (this.#hasStagedSchema ??=
