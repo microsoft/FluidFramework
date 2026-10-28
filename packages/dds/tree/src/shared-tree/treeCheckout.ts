@@ -101,6 +101,7 @@ import {
 	type ReadSchema,
 	type TreeView,
 	type TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	type UnsafeUnknownSchema,
 	type ViewableTree,
 	type UntypedTreeView,
@@ -133,6 +134,7 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { DefaultTreeBranchHistory } from "./history.js";
+import { ViewBranch } from "./viewBranch.js";
 import type { DeferredSchemaForkRebaser } from "./deferredSchemaRebase.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
@@ -593,6 +595,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public schemaForkRebaser: DeferredSchemaForkRebaser | undefined;
 	/** The public branch represented by a persistent internal authoring checkout. */
 	public viewBase: TreeCheckout | undefined;
+	private viewBranch: ViewBranch | undefined;
 
 	/**
 	 * Root of the mutable label tree tracking transaction nesting.
@@ -1115,10 +1118,13 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
 			const revision =
-				event.type === "rebase"
+				event.type === "rebase" ||
+				(event.type === "append" && event.change.revision === undefined)
 					? this.#transaction.activeBranch.getHead().revision
 					: event.change.revision;
 
+			// A merge's composed change can be anonymous. Retain its repair data through
+			// the newest appended commit instead of leaving roots permanently untracked.
 			this.applyInternalChange(event.change.change, revision);
 		}
 		if (event.type === "rebase" && event.revisionReplacers !== undefined) {
@@ -1549,6 +1555,16 @@ export class TreeCheckout implements ITreeCheckout {
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
+		if (
+			this.viewBranch !== undefined ||
+			(this.isSharedBranch &&
+				config instanceof TreeViewConfigurationAlpha &&
+				config.schemaUpgradeMode === "deferred")
+		) {
+			this.checkNotDisposed();
+			this.viewBranch ??= new ViewBranch(this);
+			return this.viewBranch.viewWith(config);
+		}
 		return this.viewWithInternal(config);
 	}
 

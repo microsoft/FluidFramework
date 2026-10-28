@@ -269,4 +269,36 @@ describe("simple-tree configuration", () => {
 		const config = new TreeViewConfiguration({ schema: [] });
 		assert(config instanceof TreeViewConfigurationAlpha);
 	});
+
+	it("defaults to immediate upgrades and preserves deferred mode when copied", () => {
+		const immediate = new TreeViewConfigurationAlpha({ schema: schema.string });
+		const deferred = new TreeViewConfigurationAlpha({
+			schema: schema.string,
+			schemaUpgradeMode: "deferred",
+		});
+		assert.equal(immediate.schemaUpgradeMode, "immediate");
+		assert.equal(new TreeViewConfigurationAlpha(deferred).schemaUpgradeMode, "deferred");
+	});
+
+	it("rejects unknown schema-upgrade modes", () => {
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: schema.string,
+					// @ts-expect-error The alpha option accepts only documented modes.
+					schemaUpgradeMode: "automatic",
+				}),
+			/schemaUpgradeMode must be "immediate" or "deferred"/,
+		);
+	});
+
+	it("keeps the option on the alpha configuration surface", () => {
+		const deferred = new TreeViewConfigurationAlpha({
+			schema: schema.string,
+			schemaUpgradeMode: "deferred",
+		});
+		const publicConfig: TreeViewConfiguration<typeof schema.string> = deferred;
+		// @ts-expect-error The public configuration type does not expose the experimental option.
+		assert.equal(publicConfig.schemaUpgradeMode, "deferred");
+	});
 });

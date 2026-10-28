@@ -770,6 +770,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaUpgradeMode?: "immediate" | "deferred";
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
@@ -2240,6 +2241,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaUpgradeMode: "immediate" | "deferred";
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 

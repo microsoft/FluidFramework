@@ -725,6 +725,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * @remarks
 	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
 	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 * With {@link ITreeViewConfigurationAlpha.schemaUpgradeMode | deferred schema upgrades},
+	 * the upgrade is initially local; publication waits for a committed application change.
+	 * Reading the upgraded view does not publish the upgrade.
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.

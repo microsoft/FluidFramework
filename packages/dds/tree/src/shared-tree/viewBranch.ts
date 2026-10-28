@@ -21,6 +21,8 @@ import {
 	type ImplicitFieldSchema,
 	type TreeSchema,
 	type TreeViewConfiguration,
+	type ReadSchema,
+	type UnsafeUnknownSchema,
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 
@@ -323,8 +325,8 @@ export class ViewBranch {
 		];
 	}
 
-	public viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
 		if (this.disposed) {
 			throw new UsageError("Cannot create a view from a disposed view-branch controller.");
@@ -340,7 +342,9 @@ export class ViewBranch {
 		const view = this.checkout.viewWithInternal(
 			config,
 			false,
-			(schema) => this.upgradeLocally(schema, viewSchema, viewId),
+			viewSchema.schemaUpgradeMode === "deferred"
+				? (schema) => this.upgradeLocally(schema, viewSchema, viewId)
+				: undefined,
 			() => {
 				this.reconcileView = undefined;
 				this.releaseView?.();

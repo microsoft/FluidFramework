@@ -165,6 +165,32 @@ export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends ITreeViewConfiguration<TSchema> {
 	/**
+	 * Controls when an explicitly requested schema upgrade is published.
+	 * @remarks
+	 * In `"deferred"` mode, {@link TreeView.upgradeSchema} applies the upgrade locally and
+	 * enables compatible view access without sending a schema operation.
+	 * The next application-originated change that commits publishes the still-needed upgrade
+	 * before the data change. This includes constraint-only and net-zero changes.
+	 * Calls that produce no change and transactions containing only upgrade requests do not publish it.
+	 *
+	 * An aborted transaction rolls back upgrades requested inside that transaction, but retains
+	 * upgrades applied before it began. Initialization is not deferred.
+	 * Separate schema and data commits retain native data-only undo; explicit mixed schema/data
+	 * transactions keep their existing grouping and undo restrictions.
+	 *
+	 * A received schema change that makes the document viewable can cancel an unpublished upgrade.
+	 * If publication is rejected, the tree retries retained edits once when safe, without rerunning
+	 * application callbacks. Unsafe reconstruction or a rejected retry makes the tree unusable
+	 * and propagates an error rather than silently dropping edits.
+	 * Branch history exposes physical attempts and their actual revision IDs.
+	 *
+	 * Disposing a view cancels unused preparation, not application edits already submitted.
+	 * Application forks remain isolated until merged.
+	 * @defaultValue `"immediate"`
+	 */
+	readonly schemaUpgradeMode?: "immediate" | "deferred";
+
+	/**
 	 * Policy for generating stored schema from the view schema during staged schema upgrades.
 	 *
 	 * @remarks
@@ -287,8 +313,17 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaUpgradeMode}
+	 */
+	public readonly schemaUpgradeMode: "immediate" | "deferred";
+
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
+		this.schemaUpgradeMode = props.schemaUpgradeMode ?? "immediate";
+		if (this.schemaUpgradeMode !== "immediate" && this.schemaUpgradeMode !== "deferred") {
+			throw new UsageError('schemaUpgradeMode must be "immediate" or "deferred".');
+		}
 		const treeSchema = createTreeSchema(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;

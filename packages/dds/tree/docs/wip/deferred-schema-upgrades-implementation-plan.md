@@ -6,7 +6,8 @@ This plan implements the agreed [deferred schema upgrade design](./deferred-sche
 It follows **C2: a persistent internal view branch**.
 The source inspection for this plan used commit `24c481e3906` on 2026-10-26.
 The publication strategy was revised on 2026-10-27 after the ordered two-commit investigation.
-This document is a plan, not an implemented feature or a report of passing feature tests.
+The implementation progress section records completed milestones and their validation.
+The sequence below remains the development and removal plan; historical entries are not substitutes for current validation.
 
 Proceed with C2 first.
 Keep the application on one view checkout while a base checkout owns shared history and operation submission.
@@ -49,6 +50,70 @@ Use the [design's scenario matrix](./deferred-schema-upgrades.md#remote-upgrade-
 Do not weaken these requirements to simplify an intermediate implementation.
 
 ## Implementation progress
+
+### M8: alpha opt-in and final validation
+
+The alpha configuration now exposes `schemaUpgradeMode: "immediate" | "deferred"`, with `"immediate"` as the default.
+Configuration copies preserve it.
+Shared, named, and independent roots route deferred views through the persistent controller.
+Application forks remain private and use their existing merge boundary.
+Replacement views can select immediate mode without abandoning an earlier submitted publication.
+
+The public contract is documented in the configuration and upgrade APIs.
+The user approved the [changeset](../../../../../.changeset/deferred-tree-schema-upgrades.md).
+API reports were generated, not edited manually.
+Only the two expected alpha members were added to each of `@fluidframework/tree` and `fluid-framework`.
+No entrypoint regeneration was needed because no root exports changed.
+This is additive, non-legacy alpha API; it requires no API Council approval.
+No release-tag, export-reachability, or deprecation issues were found.
+Partner integration and hosted CI were not run.
+
+The API review used shared base `10a1b54f23b` against canonical upstream main, with the user's approval to continue despite divergence (114 upstream commits and 18 local commits at that point).
+No upstream merge, push, or PR creation was performed.
+
+Public-path tests cover explicit authorization, read-only access and export, data-only undo after recovery, view replacement, isolated forks, mode changes, independent trees, and sandbox Host/Guest synchronization.
+Ten deterministic seeds each run 40 multi-client insert/remove/move/abort operations after forced schema-publication recovery, checking convergence and root identity.
+
+#### Performance and retained-resource measurement
+
+A bounded diagnostic compared the public immediate and deferred modes on the same two-client mock runtime.
+Each of 20 measured samples followed two warm-up samples, with alternating mode order.
+The workload measured opening plus upgrade, the first edit plus delivery, and 100 insert/remove transactions with delivery.
+Two acknowledgement edits then advanced history trimming.
+There was no arbitrary performance pass/fail threshold.
+
+| Median time | Immediate | Deferred |
+| --- | ---: | ---: |
+| Opening and upgrade | 0.313 ms | 0.406 ms |
+| First publication and delivery | 0.711 ms | 1.027 ms |
+| Steady edit and delivery | 0.544 ms | 0.611 ms |
+
+These are local diagnostic measurements, not production latency guarantees.
+The persistent authoring branch has measurable overhead.
+Both modes retained two commits and zero removed roots after acknowledgement in every measured sample.
+Deferred opening sent no schema op; each complete workload sent exactly one schema op.
+
+The first measurement exposed a base-checkout leak: anonymous merge deltas left removed roots without a retention revision.
+The checkout now attributes that repair data conservatively to the newest appended commit.
+The permanent detached-content regression failed with 20 retained roots before the fix and passes with zero after it.
+Undo and retained-history regression suites passed after the fix.
+The temporary performance diagnostic was removed.
+
+#### Validation
+
+- Tree production and test ESM builds: passed.
+- Aggregator ESM build and both packages' `build:api-reports`: passed.
+- Tree alpha export and bundle release-tag checks, plus aggregator alpha export check: passed.
+- Biome and ESLint on all changed TypeScript files: passed.
+- `pnpm policy-check --path packages/dds/tree`: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^viewBranch|^deferred schema upgrade|^sharedTreeView|^SharedTree |^SchematizingSimpleTreeView|^DetachedFieldIndex|^Branches|^BranchCommitCounter|^EditManager|^TreeBranchHistoryImpl|^runtime schema upgrade API|^simple-tree configuration|^independentView|^Host and Guest correctness' --reporter dot`: 991 passed; 3 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^viewBranch|^deferred schema upgrade|^simple-tree configuration' --reporter dot`: 130 passed.
+- Retention, checkout, undo, and retained-history regression selection: 353 passed.
+- Sandbox Host/Guest correctness selection including the deferred-mode test: 127 passed.
+- Dependency-cruiser reported zero modules scanned; that result is not counted as validation.
+
+M0-M8 are implemented.
+M9 remains future work until full schema/data rebase support is available and passes the removal gates.
 
 ### M7b: private upgrade state and transaction scope
 

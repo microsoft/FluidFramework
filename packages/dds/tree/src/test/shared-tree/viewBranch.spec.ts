@@ -56,6 +56,12 @@ import {
 	SummarizeType,
 } from "../utils.js";
 
+function deferredConfig<T extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<T>,
+): TreeViewConfigurationAlpha<T> {
+	return new TreeViewConfigurationAlpha({ ...config, schemaUpgradeMode: "deferred" });
+}
+
 describe("viewBranch", () => {
 	describe("persistent synchronization", () => {
 		const sf = new SchemaFactoryBeta("viewBranchSynchronization");
@@ -265,7 +271,7 @@ describe("viewBranch", () => {
 			provider.synchronizeMessages();
 			const base = provider.trees[1].kernel.checkout;
 			const branch = new ViewBranch(base);
-			const view = branch.viewWith(after);
+			const view = branch.viewWith(deferredConfig(after));
 			return { provider, remote, base, branch, view };
 		}
 
@@ -290,6 +296,7 @@ describe("viewBranch", () => {
 				numberUpgrade,
 				booleanUpgrade,
 				fullConfig: new TreeViewConfigurationAlpha({
+					schemaUpgradeMode: "deferred",
 					schema,
 					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
 						numberUpgrade,
@@ -916,7 +923,7 @@ describe("viewBranch", () => {
 			original.initialize(["initial"]);
 			original.dispose();
 			const branch = new ViewBranch(base);
-			const view = branch.viewWith(configV2);
+			const view = branch.viewWith(deferredConfig(configV2));
 			const outcomes: CommitOutcome[] = [];
 			const off = view.events.on("changed", (metadata) => {
 				if (metadata.isLocal) {
@@ -1230,7 +1237,7 @@ describe("viewBranch", () => {
 			oldView.dispose();
 			const base = tree.kernel.checkout;
 			const branch = new ViewBranch(base);
-			const view = branch.viewWith(configV2);
+			const view = branch.viewWith(deferredConfig(configV2));
 			const outcomes: CommitOutcome[] = [];
 			const off = view.events.on("changed", (metadata) => {
 				if (metadata.isLocal) {
@@ -1274,7 +1281,7 @@ describe("viewBranch", () => {
 				"Disposing a named-branch view disposed its owned checkout.",
 			);
 			const branch = new ViewBranch(base);
-			const view = branch.viewWith(configV2);
+			const view = branch.viewWith(deferredConfig(configV2));
 			const outcomes: CommitOutcome[] = [];
 			const off = view.events.on("changed", (metadata) => {
 				if (metadata.isLocal) {
@@ -1317,7 +1324,7 @@ describe("viewBranch", () => {
 			assert(initial instanceof SchematizingSimpleTreeView);
 			const branch = new ViewBranch(initial.checkout);
 			initial.dispose();
-			const view = branch.viewWith(configV2);
+			const view = branch.viewWith(deferredConfig(configV2));
 			try {
 				view.upgradeSchema();
 				await provider.summarize();
@@ -1390,7 +1397,7 @@ describe("viewBranch", () => {
 		it("initializes an empty tree immediately and preserves the supplied root object", () => {
 			const provider = new TestTreeProviderLite(2);
 			const branch = new ViewBranch(provider.trees[1].kernel.checkout);
-			const view = branch.viewWith(configV2);
+			const view = branch.viewWith(deferredConfig(configV2));
 			try {
 				const root = new configV2.schema(["initial", 1]);
 				view.initialize(root);
@@ -1902,7 +1909,7 @@ describe("viewBranch", () => {
 				provider.synchronizeMessages();
 				provider.synchronizeMessages();
 				expectSchemaEqual(base.storedSchema, toUpgradeSchema(configV2.schema));
-				const reopened = branch.viewWith(configV2);
+				const reopened = branch.viewWith(deferredConfig(configV2));
 				assert.deepEqual([...reopened.root], ["remote", "initial", 1]);
 			} finally {
 				branch.dispose();
