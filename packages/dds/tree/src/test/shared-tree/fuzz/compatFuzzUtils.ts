@@ -40,7 +40,7 @@ import {
 	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { createRevertFirstToLastFuzzSuite } from "./undoRedo.fuzz.spec.js";
+import { createRevertFuzzTestSuites } from "./undoRedo.fuzz.test.js";
 
 export function createCompatFuzzSuite(
 	factoryForCompat: IChannelFactory<ITree>,
@@ -70,7 +70,7 @@ export function createCompatFuzzSuite(
 
 	createDDSFuzzSuite(compatFuzzModel, options);
 
-	createRevertFirstToLastFuzzSuite(
+	createRevertFuzzTestSuites(
 		new CompatTestTreeFactory(
 			[
 				[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
