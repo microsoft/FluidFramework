@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldKinds } from "../../feature-libraries/index.js";
 import {
@@ -13,7 +13,11 @@ import {
 	StagedSchemaUpgradePolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import {
+	normalizeFieldSchema,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 import {
@@ -37,7 +41,7 @@ import { testSchema } from "../testTrees.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
 
 // getTreeNodeSchemaInitializedData is also exercised through TreeNodeValid in treeNodeValid.spec.ts.
-// Stored-schema failure/reuse behavior is covered independently in toStoredSchema.spec.ts.
+// Stored-schema conversion and caching are covered independently in toStoredSchema.spec.ts.
 describe("createContext", () => {
 	describe("SchemaComponent", () => {
 		it("constructs contexts only on request and reuses successful results", () => {
@@ -62,68 +66,105 @@ describe("createContext", () => {
 			assert.strictEqual(SchemaComponent.fromSchema(root).context, context);
 			assert.equal(conversions, afterConstruction);
 		});
-		for (const target of [
-			"same root",
-			"another root",
-			"cached root",
-			"component getter",
-			"cached component getter",
-		] as const) {
-			it(`rejects reentrant context requests for the ${target} and allows retry`, () => {
+		for (const target of ["same root", "another root", "component getter"] as const) {
+			it(`rejects reentrant context initialization for the ${target}`, () => {
 				const [root, other] = createSchemaGraph([[], []]);
 				assert(root !== undefined && other !== undefined);
-				const directComponent = SchemaComponent.fromSchema(
-					target === "cached component getter" ? other : root,
-				);
-				if (target === "cached root" || target === "cached component getter") {
-					assert(SchemaComponent.fromSchema(other).context);
-				}
-				let reenter = true;
+				const directComponent = SchemaComponent.fromSchema(root);
 				const requestContext = () =>
-					target === "component getter" || target === "cached component getter"
+					target === "component getter"
 						? directComponent.context
 						: SchemaComponent.fromSchema(target === "same root" ? root : other).context;
 				Object.defineProperty(root, "persistedMetadata", {
 					get() {
-						if (reenter) {
-							requestContext();
-						}
+						requestContext();
 						return undefined;
 					},
 				});
-				for (let i = 0; i < 2; i++) {
-					assert.throws(
-						() => SchemaComponent.fromSchema(root).context,
-						validateAssertionError(/reentrant/),
-					);
-				}
-				reenter = false;
-				const context = SchemaComponent.fromSchema(root).context;
-				assert.strictEqual(SchemaComponent.fromSchema(root).context, context);
-				assert.notStrictEqual(SchemaComponent.fromSchema(other).context, context);
+				assert.throws(
+					() => directComponent.context,
+					validateUsageError(/Schema initialization must not be reentrant/),
+				);
 			});
 		}
-		for (const directContext of [false, true]) {
-			it(`rejects reentrant ${directContext ? "context access" : "component lookup"} during lazy schema evaluation and resets the guard`, () => {
+		for (const target of ["node", "configuration"] as const) {
+			for (const lookup of ["component", "root", "root field"] as const) {
+				it(`rejects ${target} initialization during lazy ${lookup} evaluation`, () => {
+					const sf = new SchemaFactoryAlpha("reentrantAnalysis");
+					class Other extends sf.object("Other", {}) {}
+					const resolveOther = () => {
+						if (target === "node") {
+							new Other({});
+						} else {
+							new TreeViewConfiguration({ schema: Other });
+						}
+						return Other;
+					};
+					class Root extends sf.objectRecursive("Root", {
+						child: sf.optionalRecursive([resolveOther]),
+					}) {}
+					assert.throws(
+						() =>
+							lookup === "component"
+								? SchemaComponent.fromSchema(Root)
+								: getRootSchemaDerivedData(
+										lookup === "root" ? Root : sf.optionalRecursive([resolveOther]),
+									),
+						validateUsageError(/Schema initialization must not be reentrant/),
+					);
+					class Independent extends sf.object("Independent", {}) {}
+					assert(new Independent({}) instanceof Independent);
+				});
+			}
+		}
+		for (const callback of ["lazy reference", "metadata getter"] as const) {
+			it(`allows cached schema and context access from a ${callback}`, () => {
 				const sf = new SchemaFactoryAlpha("reentrantAnalysis");
 				class Other extends sf.object("Other", {}) {}
-				const otherComponent = SchemaComponent.fromSchema(Other);
-				const requestContext = () =>
-					directContext ? otherComponent.context : SchemaComponent.fromSchema(Other).context;
+				new Other({});
+				const component = SchemaComponent.fromSchema(Other);
+				const data = getRootSchemaDerivedData(Other);
+				const context = component.context;
+				const unionRoot = [Other];
+				const unionData = getRootSchemaDerivedData(unionRoot);
+				const emptyRoot: [] = [];
+				const emptyData = getRootSchemaDerivedData(emptyRoot);
+				const emptyContext = emptyData.context;
+				let calls = 0;
+				const useCachedSchema = () => {
+					calls++;
+					assert.strictEqual(SchemaComponent.fromSchema(Other), component);
+					assert.strictEqual(getRootSchemaDerivedData(Other), data);
+					assert.strictEqual(getRootSchemaDerivedData(unionRoot), unionData);
+					assert.strictEqual(data.context, context);
+					assert.strictEqual(component.context, context);
+					assert.strictEqual(getRootSchemaDerivedData(emptyRoot).context, emptyContext);
+					assert.strictEqual(
+						toStoredSchema(Other, StagedSchemaUpgradePolicy.permissive).nodeSchema,
+						context.flexContext.schema.nodeSchema,
+					);
+					assert(new Other({}) instanceof Other);
+				};
 				class Root extends sf.objectRecursive("Root", {
 					child: sf.optionalRecursive([
 						() => {
-							requestContext();
+							if (callback === "lazy reference") {
+								useCachedSchema();
+							}
 							return Other;
 						},
 					]),
 				}) {}
-				assert.throws(
-					() => SchemaComponent.fromSchema(Root),
-					validateAssertionError(/reentrant/),
-				);
-				const context = SchemaComponent.fromSchema(Other).context;
-				assert.strictEqual(otherComponent.context, context);
+				if (callback === "metadata getter") {
+					Object.defineProperty(Root, "persistedMetadata", {
+						get() {
+							useCachedSchema();
+							return undefined;
+						},
+					});
+				}
+				assert.equal(SchemaComponent.fromSchema(Root).context.schema.size, 2);
+				assert.equal(calls, 1);
 			});
 		}
 		it("shares contexts and lookup data across recursive component members", () => {
@@ -207,66 +248,45 @@ describe("createContext", () => {
 				}
 			});
 		}
-		for (const target of [
-			"component lookup",
-			"root lookup",
-			"root context",
-			"cached root context",
-		] as const) {
-			it(`rejects reentrant ${target} during root-owned context construction and allows retry`, () => {
+		it("allows cached component lookup before its definitions are materialized during conversion", () => {
+			const [a, b] = createSchemaGraph([[], []]);
+			assert(a !== undefined && b !== undefined);
+			const data = getRootSchemaDerivedData([a, b]);
+			let lookups = 0;
+			Object.defineProperty(a, "persistedMetadata", {
+				get() {
+					const component = SchemaComponent.fromSchema(b);
+					assert(data.components.has(component));
+					assert.deepEqual([...component.definitions.values()], [b]);
+					lookups++;
+					return undefined;
+				},
+			});
+			assert.equal(data.context.schema.size, 2);
+			assert.equal(lookups, 1);
+		});
+		for (const target of ["root lookup", "root context"] as const) {
+			it(`rejects reentrant ${target} initialization during root-owned context construction`, () => {
 				const [a, b] = createSchemaGraph([[], []]);
 				assert(a !== undefined && b !== undefined);
 				const data = getRootSchemaDerivedData([a, b]);
 				const other = getRootSchemaDerivedData([]);
-				if (target === "cached root context") {
-					assert(other.context);
-				}
-				let reenter = true;
 				Object.defineProperty(a, "persistedMetadata", {
 					get() {
-						if (reenter) {
-							switch (target) {
-								case "component lookup": {
-									SchemaComponent.fromSchema(b);
-									break;
-								}
-								case "root lookup": {
-									getRootSchemaDerivedData([]);
-									break;
-								}
-								default: {
-									assert(other.context);
-								}
-							}
+						if (target === "root lookup") {
+							getRootSchemaDerivedData([]);
+						} else {
+							assert(other.context);
 						}
 						return undefined;
 					},
 				});
-				for (let i = 0; i < 2; i++) {
-					assert.throws(() => data.context, validateAssertionError(/reentrant/));
-				}
-				reenter = false;
-				const context = data.context;
-				assert.strictEqual(data.context, context);
-				assert.equal(context.schema.size, 2);
+				assert.throws(
+					() => data.context,
+					validateUsageError(/Schema initialization must not be reentrant/),
+				);
 			});
 		}
-		it("rejects reentrant root lookup during lazy schema evaluation and resets the guard", () => {
-			const sf = new SchemaFactoryAlpha("reentrantRootAnalysis");
-			class Node extends sf.objectRecursive("Node", {
-				child: sf.optionalRecursive([
-					() => {
-						getRootSchemaDerivedData([]);
-						return Node;
-					},
-				]),
-			}) {}
-			assert.throws(
-				() => getRootSchemaDerivedData([Node]),
-				validateAssertionError(/reentrant/),
-			);
-			assert.equal(getRootSchemaDerivedData([]).context.schema.size, 0);
-		});
 		it("lazily constructs contexts even after node initialization", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);
 			assert(a !== undefined && b !== undefined);
@@ -332,30 +352,16 @@ describe("createContext", () => {
 				}
 			});
 		}
-		it("does not publish partial permissive conversions or contexts after an error", () => {
+		it("propagates conversion errors during context construction", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);
 			assert(a !== undefined && b !== undefined);
 			getRootSchemaDerivedData(a);
-			let throwOnConversion = true;
 			Object.defineProperty(a, "persistedMetadata", {
 				get() {
-					if (throwOnConversion) {
-						throw new Error("conversion failure");
-					}
-					return undefined;
+					throw new Error("conversion failure");
 				},
 			});
-			for (let i = 0; i < 2; i++) {
-				assert.throws(() => SchemaComponent.fromSchema(a).context, /conversion failure/);
-				assert.throws(() => SchemaComponent.fromSchema(b).context, /conversion failure/);
-			}
-			throwOnConversion = false;
-			const context = SchemaComponent.fromSchema(a).context;
-			assert.equal(context.flexContext.schema.nodeSchema.size, 2);
-			assert.strictEqual(
-				SchemaComponent.fromSchema(b).context.flexContext.schema.nodeSchema,
-				context.flexContext.schema.nodeSchema,
-			);
+			assert.throws(() => SchemaComponent.fromSchema(a).context, /conversion failure/);
 		});
 		for (const initializeContextFirst of [false, true]) {
 			it(`works ${initializeContextFirst ? "after" : "before"} context initialization`, () => {

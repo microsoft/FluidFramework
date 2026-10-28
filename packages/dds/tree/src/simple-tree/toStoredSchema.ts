@@ -87,6 +87,8 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * Conversion reuses cached view-schema analysis and follows only references retained by the policy.
  * Different root identities have separate result caches, even when they share view-schema definitions.
  * Treat the returned schema as immutable.
+ * Callbacks may reuse completed cached schema data, but must not start nested derived-schema initialization or conversion.
+ * If schema evaluation or conversion throws, continued use of the affected schemas is unsupported.
  *
  * @privateRemarks
  * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
@@ -97,6 +99,7 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  *
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
+ * Throws a `UsageError` if a callback starts nested schema initialization.
  */
 export function toStoredSchema(
 	root: ImplicitFieldSchema,

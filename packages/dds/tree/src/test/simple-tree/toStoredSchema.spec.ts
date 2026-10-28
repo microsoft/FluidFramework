@@ -45,6 +45,7 @@ import {
 	isObjectNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	TreeViewConfigurationAlpha,
 	type ImplicitFieldSchema,
 	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
@@ -275,42 +276,70 @@ describe("toStoredSchema", () => {
 			assert.equal(empty.nodeSchema.size, 0);
 		});
 
-		it("does not cache failed conversions or invalidate successful results for other roots", () => {
+		it("propagates stored-schema conversion errors", () => {
 			const sf = new SchemaFactoryAlpha("policyFailure");
-			class Good extends sf.object("Good", { value: sf.stagedOptional(sf.number) }) {}
 			class A extends sf.objectRecursive("A", {
-				good: Good,
+				value: sf.stagedOptional(sf.number),
 				child: sf.optionalRecursive([() => B]),
 			}) {}
 			class B extends sf.objectRecursive("B", {
 				child: sf.optionalRecursive([() => A]),
 			}) {}
 			getRootSchemaDerivedData(A);
-			let shouldThrow = true;
 			Object.defineProperty(B, "persistedMetadata", {
 				get() {
-					if (shouldThrow) throw new Error("conversion failure");
-					return undefined;
+					throw new Error("conversion failure");
 				},
 			});
 			const policy = { ...StagedSchemaUpgradePolicy.restrictive };
-			const good = toStoredSchema(Good, policy);
-			for (const node of [A, B, A]) {
-				assert.throws(() => toStoredSchema(node, policy), /conversion failure/);
-				assert.strictEqual(toStoredSchema(Good, policy), good);
-			}
-			shouldThrow = false;
-			const a = toStoredSchema(A, policy);
-			const b = toStoredSchema(B, policy);
-			assert.deepEqual(a.nodeSchema, b.nodeSchema);
-			assert.deepEqual(
-				a.nodeSchema.get(brand(Good.identifier)),
-				good.nodeSchema.get(brand(Good.identifier)),
-			);
-			assert.deepEqual(a, reference(A, policy));
-			assert.strictEqual(toStoredSchema(A, policy), a);
-			assert.strictEqual(toStoredSchema(B, policy), b);
+			assert.throws(() => toStoredSchema(A, policy), /conversion failure/);
 		});
+
+		for (const staged of [false, true]) {
+			it(`rejects recursive standalone conversion from metadata (staged: ${staged})`, () => {
+				const sf = new SchemaFactoryAlpha("recursiveConversion");
+				class Node extends sf.object("Node", {
+					value: staged ? sf.stagedOptional(sf.number) : sf.optional(sf.number),
+				}) {}
+				const policy = StagedSchemaUpgradePolicy.restrictive;
+				Object.defineProperty(Node, "persistedMetadata", {
+					get() {
+						toStoredSchema(Node, policy);
+						return undefined;
+					},
+				});
+				assert.throws(
+					() => toStoredSchema(Node, policy),
+					validateUsageError(/Schema initialization must not be reentrant/),
+				);
+			});
+		}
+
+		for (const callback of ["includeStaged", "includeStagedOptional"] as const) {
+			it(`rejects node initialization from a ${callback} policy callback`, () => {
+				const sf = new SchemaFactoryAlpha("reentrantPolicy");
+				class Other extends sf.object("Other", {}) {}
+				class Node extends sf.object("Node", {
+					stagedType: sf.optional(sf.types([sf.staged(sf.number)])),
+					stagedField: sf.stagedOptional(sf.number),
+				}) {}
+				const policy: StagedSchemaUpgradePolicy = {
+					...StagedSchemaUpgradePolicy.permissive,
+					[callback]: () => {
+						new Other({});
+						return true;
+					},
+				};
+				assert.throws(
+					() =>
+						new TreeViewConfigurationAlpha({
+							schema: Node,
+							stagedUpgradePolicy: policy,
+						}),
+					validateUsageError(/Schema initialization must not be reentrant/),
+				);
+			});
+		}
 
 		for (const reverse of [false, true]) {
 			it(`keeps policy-specific topology separate when a staged edge splits a component (${reverse})`, () => {
@@ -350,21 +379,9 @@ describe("toStoredSchema", () => {
 				);
 			});
 		}
-		it("retries failed staging-free conversions and shares the result across policies", () => {
-			const sf = new SchemaFactoryAlpha("unstagedFailure");
+		it("shares staging-free conversions across policies without evaluating them", () => {
+			const sf = new SchemaFactoryAlpha("unstagedPolicies");
 			class Node extends sf.object("Node", {}) {}
-			let shouldThrow = true;
-			Object.defineProperty(Node, "persistedMetadata", {
-				get() {
-					if (shouldThrow) throw new Error("conversion failure");
-					return undefined;
-				},
-			});
-			assert.throws(
-				() => toStoredSchema(Node, StagedSchemaUpgradePolicy.restrictive),
-				/conversion failure/,
-			);
-			shouldThrow = false;
 			const unusedPolicy: StagedSchemaUpgradePolicy = {
 				includeStaged: () => assert.fail("Staging-free conversion must not evaluate policies"),
 				includeStagedOptional: () =>

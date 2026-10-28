@@ -124,21 +124,14 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 * Resolves lazy schema references and validates reachable identifiers without constructing a context.
 	 * Does not create root-derived data.
 	 * Use {@link getRootSchemaDerivedData} for field schemas.
+	 * Subject to the callback and failure constraints of {@link runSchemaInitialization}.
 	 * @throws A {@link UsageError} if distinct reachable schemas have the same identifier.
+	 * @throws A {@link UsageError} if a callback starts nested schema initialization.
 	 */
 	public static fromSchema(schema: TreeNodeSchema): SchemaComponent {
-		assert(
-			!isResolvingComponentData,
-			"Schema component resolution and context creation must not be reentrant",
-		);
-		isResolvingComponentData = true;
-		try {
-			const component = getOrCreateSchemaComponent(schema);
-			assert(component.definitions !== undefined, "Expected a validated schema component");
-			return component;
-		} finally {
-			isResolvingComponentData = false;
-		}
+		const component = getOrCreateSchemaComponent(schema);
+		assert(component.definitions !== undefined, "Expected a validated schema component");
+		return component;
 	}
 
 	/**
@@ -159,48 +152,58 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 * Default context shared by all roots referencing this component.
 	 * Root-field annotations are not part of an unhydrated node's context.
 	 * @remarks
-	 * Created on first access and cached only after construction succeeds.
+	 * Created on first access.
 	 * Reuses the permissive root conversion of one member, since every member reaches the same unfiltered nodes.
 	 * Does not allow unknown optional fields.
 	 */
 	public get context(): Context {
-		assert(
-			!isResolvingComponentData,
-			"Schema component resolution and context creation must not be reentrant",
-		);
 		if (this.#context !== undefined) {
 			return this.#context;
 		}
 		const member = this.members[0];
 		assert(member !== undefined, "A schema component must contain at least one node");
 		const data = getRootSchemaDerivedData(member);
-		isResolvingComponentData = true;
-		try {
-			return (this.#context = new Context(
-				new UnhydratedContext(
-					defaultSchemaPolicy,
-					data.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
-				),
-				data.definitions,
-			));
-		} finally {
-			isResolvingComponentData = false;
-		}
+		return (this.#context = new Context(
+			new UnhydratedContext(
+				defaultSchemaPolicy,
+				data.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+			),
+			data.definitions,
+		));
 	}
 }
 
 /**
- * Guards against synchronous reentry into schema lookup or default-context creation.
- * @remarks
- * Resolving schema references and converting stored schema can invoke user code, such as lazy references and metadata getters.
- * If that code requests data whose computation is still in progress, it can trigger recursive computation before a completed result is cached.
- *
- * This module-wide guard conservatively rejects nested component and root lookups and context requests,
- * including requests for unrelated components or already-cached contexts.
- * It does not guard ordinary recursive schema graphs, which are handled by the graph walker.
- * Guarded operations reset this flag in a `finally` block so failures do not block subsequent requests.
+ * Whether a derived-schema initialization or stored-schema conversion is in progress.
  */
-let isResolvingComponentData = false;
+let isInitializingSchema = false;
+
+/**
+ * Runs a derived-schema initialization or stored-schema conversion without allowing nested initialization.
+ * @remarks
+ * Lazy references, metadata getters, and upgrade policies can invoke user code before the result is cached.
+ * Such callbacks may reuse completed cached data, but must not start another initialization, even for unrelated schemas.
+ * Callers check for completed cached data before entering this helper.
+ * Internal graph traversal stays within this boundary; ordinary recursive schema references are supported.
+ *
+ * If initialization or conversion throws, continued use of the affected schemas is unsupported.
+ * Cache changes are not rolled back, and retry and fault isolation are not guaranteed.
+ * Resetting the guard avoids disabling all schema initialization after an exception; it does not restore failed schemas.
+ * @throws A {@link UsageError} if a callback starts nested schema initialization.
+ */
+function runSchemaInitialization<T>(initialize: () => T): T {
+	if (isInitializingSchema) {
+		throw new UsageError(
+			"Schema initialization must not be reentrant. Do not start another schema initialization from a lazy schema reference, metadata getter, or schema upgrade policy.",
+		);
+	}
+	isInitializingSchema = true;
+	try {
+		return initialize();
+	} finally {
+		isInitializingSchema = false;
+	}
+}
 
 /**
  * Data derived from an {@link ImplicitFieldSchema} root, obtained via {@link getRootSchemaDerivedData}.
@@ -279,13 +282,9 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	/**
 	 * Default context for this root's reachable nodes, independent of root-field annotations.
 	 * Single-component roots share the component's context even when the root field is staged.
-	 * Empty and multi-component roots create and cache their own contexts after construction succeeds.
+	 * Empty and multi-component roots create and cache their own contexts.
 	 */
 	public get context(): Context {
-		assert(
-			!isResolvingComponentData,
-			"Schema component resolution and context creation must not be reentrant",
-		);
 		const component = oneFromIterable(this.components);
 		if (component !== undefined) {
 			return component.context;
@@ -293,25 +292,21 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		if (this.#context !== undefined) {
 			return this.#context;
 		}
-		isResolvingComponentData = true;
-		try {
-			const definitions = this.definitions;
-			return (this.#context = new Context(
-				new UnhydratedContext(
-					defaultSchemaPolicy,
-					this.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
-				),
-				definitions,
-			));
-		} finally {
-			isResolvingComponentData = false;
-		}
+		const definitions = this.definitions;
+		return (this.#context = new Context(
+			new UnhydratedContext(
+				defaultSchemaPolicy,
+				this.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+			),
+			definitions,
+		));
 	}
 
 	/**
 	 * Converts and caches this root under the supplied policy, reusing its cached view schema.
 	 * Roots without staging use the permissive policy for all requests.
-	 * Failed conversions do not publish results.
+	 * Subject to the callback and failure constraints of {@link runSchemaInitialization}.
+	 * @throws A {@link UsageError} if a callback starts nested schema initialization.
 	 */
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		if (!this.hasStagedSchema) {
@@ -329,13 +324,15 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	 * Converts the cached view schema, following only references retained by the policy.
 	 */
 	private convertStoredSchema(policy: StagedSchemaUpgradePolicy): TreeStoredSchema {
-		return simpleStoredSchemaToStoredSchema(transformSimpleSchema(this.treeSchema, policy));
+		return runSchemaInitialization(() =>
+			simpleStoredSchemaToStoredSchema(transformSimpleSchema(this.treeSchema, policy)),
+		);
 	}
 }
 
 /**
  * Caches {@link RootSchemaDerivedData} records by requested root identity.
- * Retrieving root-derived data always validates reachable identifiers before returning.
+ * Root-derived data is cached after reachable identifiers have been validated.
  * Combining reachable components validates identifier uniqueness, even when those components are cached.
  * Root entries own complete stored-schema results; components own shared view-schema data.
  */
@@ -344,7 +341,6 @@ const rootSchemaDerivedDataCache = new WeakMap<ImplicitFieldSchema, RootSchemaDe
 /**
  * Completed node components, indexed by member identity without retaining requesting roots.
  * Analysis populates this cache without allocating root-derived data or validating reachable identifiers.
- * Completed components remain reusable after a requesting root fails analysis or validation.
  */
 const schemaComponentCache = new WeakMap<TreeNodeSchema, SchemaComponent>();
 
@@ -354,43 +350,36 @@ const schemaComponentCache = new WeakMap<TreeNodeSchema, SchemaComponent>();
  * Lazy schema references must be ready to evaluate, and schema definitions must remain unchanged after evaluation.
  * @returns Data derived from the schema, memoized by the original root identity.
  * @throws A {@link UsageError} if distinct reachable schemas have the same identifier.
+ * @throws A {@link UsageError} if a callback starts nested schema initialization.
  * @remarks
  * Graph and staging analysis are logically pure: they depend only on the supplied schema, not on cache state.
  * Evaluation of lazy schema references and internal cache population are implementation effects.
  * This function does not initialize contexts or perform configuration-specific validation; the latter remains the responsibility of {@link TreeViewConfiguration}.
  * Treat the returned graph as immutable; definitions may be shared across roots, and their iteration order is unspecified.
+ * Subject to the callback and failure constraints of {@link runSchemaInitialization}.
  */
 export function getRootSchemaDerivedData(
 	rootSchema: ImplicitFieldSchema,
 ): RootSchemaDerivedData {
-	assert(
-		!isResolvingComponentData,
-		"Schema component resolution and context creation must not be reentrant",
-	);
-	isResolvingComponentData = true;
-	try {
-		const data = getOrCreate(rootSchemaDerivedDataCache, rootSchema, () => {
-			const root = normalizeFieldSchema(rootSchema);
-			const components = new Set(
-				root.allowedTypesFull
-					.evaluate()
-					.types.map((type) => getOrCreateSchemaComponent(type.type)),
-			);
-			return new RootSchemaDerivedData(root, components);
+	return getOrCreate(rootSchemaDerivedDataCache, rootSchema, () => {
+		const { root, types } = runSchemaInitialization(() => {
+			const field = normalizeFieldSchema(rootSchema);
+			return { root: field, types: field.allowedTypesFull.evaluate().types };
 		});
-		// Component completion can precede root validation, including after a failed parent request.
-		assert(data.treeSchema !== undefined, "Expected a validated root graph");
-		return data;
-	} finally {
-		isResolvingComponentData = false;
-	}
+		const components = new Set(types.map((type) => getOrCreateSchemaComponent(type.type)));
+		// Root staging metadata can also invoke user code, independently of component discovery.
+		return runSchemaInitialization(() => {
+			const data = new RootSchemaDerivedData(root, components);
+			assert(data.treeSchema !== undefined, "Expected a validated root graph");
+			return data;
+		});
+	});
 }
 
 /**
  * Reports whether completed root-schema analysis is cached. For testing only.
  * @remarks
  * Does not discover schemas, validate identifiers, or materialize definitions.
- * A cached entry does not imply that root identifier validation has succeeded.
  */
 export function hasCachedRootSchemaDerivedDataForTesting(
 	schema: ImplicitFieldSchema,
@@ -414,47 +403,50 @@ export function hasCachedSchemaComponentForTesting(schema: TreeNodeSchema): bool
  * Publishes new components only after their dependencies are complete.
  * Does not create root-derived data, reachable definition maps, or contexts.
  * Configuration-specific validation and reachable identifier validation are separate operations.
+ * Guards discovery with {@link runSchemaInitialization}, after checking for an existing component.
+ * Cached components can be retrieved during initialization, even before their definitions have been materialized.
+ * @throws A {@link UsageError} if a callback starts nested component discovery.
  */
 function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 	const cached = schemaComponentCache.get(root);
 	if (cached !== undefined) {
 		return cached;
 	}
-	walkSchema([root], {
-		wasComponentVisited: (schema) => schemaComponentCache.has(schema),
-		stronglyConnectedComponent: (members) => {
-			const identities = new Set(members);
-			const dependencies = new Set<SchemaComponent>();
-			let hasStagedSchema = false;
-			for (const schema of members) {
-				for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-					for (const type of field.evaluate().types) {
-						if (type.metadata.stagedSchemaUpgrade !== undefined) {
-							hasStagedSchema = true;
+	return runSchemaInitialization(() => {
+		walkSchema([root], {
+			wasComponentVisited: (schema) => schemaComponentCache.has(schema),
+			stronglyConnectedComponent: (members) => {
+				const identities = new Set(members);
+				const dependencies = new Set<SchemaComponent>();
+				let hasStagedSchema = false;
+				for (const schema of members) {
+					for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
+						for (const type of field.evaluate().types) {
+							hasStagedSchema ||= type.metadata.stagedSchemaUpgrade !== undefined;
+							if (!identities.has(type.type)) {
+								dependencies.add(getCompletedComponent(type.type));
+							}
 						}
-						if (!identities.has(type.type)) {
-							dependencies.add(getCompletedComponent(type.type));
+					}
+					// Optional-field staging is not an allowed-type annotation.
+					const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
+					if (view.kind === NodeKind.Object) {
+						for (const field of view.fields.values()) {
+							hasStagedSchema ||= isStagedOptional(field);
 						}
 					}
 				}
-				// Optional-field staging is not an allowed-type annotation.
-				const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
-				if (view.kind === NodeKind.Object) {
-					for (const field of view.fields.values()) {
-						hasStagedSchema ||= isStagedOptional(field);
-					}
+				for (const dependency of dependencies) {
+					hasStagedSchema ||= dependency.hasStagedSchema;
 				}
-			}
-			for (const dependency of dependencies) {
-				hasStagedSchema ||= dependency.hasStagedSchema;
-			}
-			const component = new SchemaComponent(members, dependencies, hasStagedSchema);
-			for (const schema of members) {
-				schemaComponentCache.set(schema, component);
-			}
-		},
+				const component = new SchemaComponent(members, dependencies, hasStagedSchema);
+				for (const schema of members) {
+					schemaComponentCache.set(schema, component);
+				}
+			},
+		});
+		return getCompletedComponent(root);
 	});
-	return getCompletedComponent(root);
 }
 
 /**

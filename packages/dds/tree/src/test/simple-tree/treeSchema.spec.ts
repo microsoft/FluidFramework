@@ -204,9 +204,8 @@ describe("treeSchema", () => {
 			assert.deepEqual(rootComponent.dependencies, new Set([dependency]));
 			assert.equal(dependency.dependencies.size, 0);
 		});
-		it("publishes only completed dependencies when later discovery fails", () => {
+		it("propagates lazy schema evaluation errors", () => {
 			const sf = new SchemaFactoryAlpha("failure");
-			class Good extends sf.object("Good", {}) {}
 			class Bad extends sf.objectRecursive("Bad", {
 				child: sf.optionalRecursive([
 					() => {
@@ -214,51 +213,26 @@ describe("treeSchema", () => {
 					},
 				]),
 			}) {}
-			class Parent extends sf.object("Parent", { good: Good, bad: Bad }) {}
-			for (let i = 0; i < 2; i++) {
-				// Existing lazy evaluation is not retryable after a throwing initializer.
-				assert.throws(
-					() => getRootSchemaDerivedData(Parent),
-					i === 0 ? /lazy failure/ : TypeError,
-				);
-				assert.equal(hasCachedSchemaComponentForTesting(Parent), false);
-				assert.equal(hasCachedSchemaComponentForTesting(Bad), false);
-				assert.equal(hasCachedSchemaComponentForTesting(Good), true);
-			}
-			assert.equal(getRootSchemaDerivedData(Good).treeSchema.definitions.size, 1);
+			assert.throws(() => getRootSchemaDerivedData(Bad), /lazy failure/);
 		});
-		it("rechecks identifier conflicts when combining cached components", () => {
-			const sf = new SchemaFactoryAlpha("conflicts");
-			class A extends sf.object("Duplicate", {}) {}
-			class B extends sf.object("Duplicate", {}) {}
-			for (const node of [A, B]) {
-				getRootSchemaDerivedData(node);
-			}
-			class Parent extends sf.object("Parent", { a: A, b: B }) {}
-			assert.throws(
-				() => SchemaComponent.fromSchema(Parent),
-				validateUsageError(/Multiple schema encountered/),
-			);
-			assert.equal(hasCachedSchemaComponentForTesting(Parent), true);
-			assert.equal(hasCachedRootSchemaDerivedDataForTesting(Parent), false);
-			for (let i = 0; i < 2; i++) {
+		for (const lookup of ["component", "root", "union"] as const) {
+			it(`checks identifier conflicts when combining cached components for a ${lookup}`, () => {
+				const sf = new SchemaFactoryAlpha("conflicts");
+				class A extends sf.object("Duplicate", {}) {}
+				class B extends sf.object("Duplicate", {}) {}
+				for (const node of [A, B]) {
+					getRootSchemaDerivedData(node);
+				}
+				class Parent extends sf.object("Parent", { a: A, b: B }) {}
 				assert.throws(
-					() => getRootSchemaDerivedData(Parent),
+					() =>
+						lookup === "component"
+							? SchemaComponent.fromSchema(Parent)
+							: getRootSchemaDerivedData(lookup === "root" ? Parent : [A, B]),
 					validateUsageError(/Multiple schema encountered/),
 				);
-				assert.equal(hasCachedSchemaComponentForTesting(Parent), true);
-				assert.throws(
-					() => SchemaComponent.fromSchema(Parent),
-					validateUsageError(/Multiple schema encountered/),
-				);
-				assert.throws(
-					() => getRootSchemaDerivedData([A, B]),
-					validateUsageError(/Multiple schema encountered/),
-				);
-			}
-			assert.equal(getRootSchemaDerivedData(A).treeSchema.definitions.size, 1);
-			assert.equal(getRootSchemaDerivedData(B).treeSchema.definitions.size, 1);
-		});
+			});
+		}
 		it("does not bypass most-derived validation after analysis", () => {
 			const sf = new SchemaFactoryAlpha("mostDerived");
 			const Base = sf.object("Base", {});
