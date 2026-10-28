@@ -43,7 +43,7 @@ These shell functions are available in all terminal sessions. `dev` is the recom
 |---|---|---|
 | `dev` | `agency copilot --profile nori ... -- -i "/yolo auto"` | Copilot CLI configured for Fluid Framework feature work, testing, and debugging |
 | `copilot` | `agency copilot` | Copilot CLI without an FF-specific profile or default MCP servers |
-| `oce` | `agency copilot --profile ff-oce ... -- --agent ff-oce:ff-oce -i "/yolo auto"` | Copilot CLI configured for on-call engineer workflows |
+| `oce` | `agency copilot --profile ff-oce ... -- --model gpt-6.1-sol --agent ff-oce:ff-oce -i "/yolo auto"` | Copilot CLI configured for on-call engineer workflows |
 
 > [!NOTE]
 > A separately installed `claude` executable may also be available in the Codespace.

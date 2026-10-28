@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Config } from "@oclif/core";
@@ -186,6 +186,18 @@ describe("ai command", () => {
 		} finally {
 			await rm(tempDirectory, { recursive: true, force: true });
 		}
+	});
+
+	it("launches the OCE alias with the configured default model", async () => {
+		const aliasScriptPath = resolve(
+			process.cwd(),
+			"../../../scripts/codespace-setup/agent-aliases.sh",
+		);
+		const aliasScript = await readFile(aliasScriptPath, "utf8");
+
+		expect(aliasScript).to.include(
+			'agency copilot --profile ff-oce "$@" -- --model gpt-6.1-sol --agent ff-oce:ff-oce -i "/yolo auto"',
+		);
 	});
 
 	it("allows all supported aliases", () => {
