@@ -58,12 +58,15 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
 }
 
 /**
- * Shared derived data for a schema component.
- * Real components contain mutually reachable schemas; synthetic components contain no members and reference other components.
+ * Shared derived data for a {@link SchemaVisitor.stronglyConnectedComponent}).
+ *
+ * May also correspond to a synthetic component constructed for a root field, which contains no members and references other components.
  * @remarks
  * Does not certify identifier uniqueness or configuration-specific union validity.
  * Retains only members and outgoing dependencies, never parents or configurations.
  * Reachable definitions are materialized only for requested components, not eagerly for every descendant.
+ *
+ * Get using {@link fromSchema}.
  */
 export class SchemaComponent {
 	#definitions: TreeSchema["definitions"] | undefined;
@@ -210,7 +213,17 @@ export class SchemaComponent {
 	}
 }
 
-// Schema callbacks must not reenter component lookup or context creation.
+/**
+ * Guards against synchronous reentry into {@link SchemaComponent.fromSchema} or {@link SchemaComponent.context}.
+ * @remarks
+ * Resolving schema references and converting stored schema can invoke user code, such as lazy references and metadata getters.
+ * If that code requests data whose computation is still in progress, it can trigger recursive computation before a completed result is cached.
+ *
+ * This module-wide guard conservatively rejects all nested requests through these two APIs,
+ * including requests for unrelated components or already-cached contexts.
+ * It does not guard ordinary recursive schema graphs, which are handled by the graph walker.
+ * Both guarded operations reset this flag in a `finally` block so failures do not block subsequent requests.
+ */
 let isResolvingComponentData = false;
 
 /**
@@ -393,12 +406,15 @@ export function getRootSchemaDerivedData(
 }
 
 /**
- * Returns completed analysis without discovering schemas or validating a root.
+ * Reports whether completed root-schema analysis is cached. For testing only.
+ * @remarks
+ * Does not discover schemas, validate identifiers, or materialize definitions.
+ * A cached entry does not imply that root identifier validation has succeeded.
  */
-export function getCachedRootSchemaDerivedData(
+export function hasCachedRootSchemaDerivedDataForTesting(
 	schema: ImplicitFieldSchema,
-): RootSchemaDerivedData | undefined {
-	return rootSchemaDerivedDataCache.get(schema);
+): boolean {
+	return rootSchemaDerivedDataCache.has(schema);
 }
 
 /**

@@ -19,11 +19,12 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	analyzeSchema,
-	getCachedRootSchemaDerivedData,
+	hasCachedRootSchemaDerivedDataForTesting,
 	createTreeSchema,
 	getRootSchemaDerivedData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
+import { oneFromIterable } from "../../util/index.js";
 import { getStagedSchemaUpgrades, testSchema } from "../testTrees.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
 
@@ -38,8 +39,8 @@ describe("treeSchema", () => {
 			const second = createTreeSchema(a);
 			assert.notStrictEqual(first.definitions, second.definitions);
 			assert.deepEqual(new Set(first.definitions.values()), new Set([a, b]));
-			assert.equal(getCachedRootSchemaDerivedData(a)?.component, undefined);
-			assert.equal(getCachedRootSchemaDerivedData(b)?.component, undefined);
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(a), false);
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(b), false);
 		});
 	});
 	describe("analyzeSchema", () => {
@@ -102,11 +103,11 @@ describe("treeSchema", () => {
 			assert.strictEqual(getRootSchemaDerivedData(root).component, data.component);
 		});
 		it("lazily caches component definitions without materializing descendant maps", () => {
-			const [root, child] = createSchemaGraph([[1], []]);
-			assert(root !== undefined && child !== undefined);
-			analyzeSchema(root);
-			const component = getCachedRootSchemaDerivedData(root)?.component ?? assert.fail();
-			const dependency = getCachedRootSchemaDerivedData(child)?.component ?? assert.fail();
+			const [parent, root, child] = createSchemaGraph([[1], [2], []]);
+			assert(parent !== undefined && root !== undefined && child !== undefined);
+			const parentComponent = getRootSchemaDerivedData(parent).component;
+			const component = oneFromIterable(parentComponent.dependencies) ?? assert.fail();
+			const dependency = oneFromIterable(component.dependencies) ?? assert.fail();
 			const reads = new Map([
 				[component, 0],
 				[dependency, 0],
@@ -121,6 +122,9 @@ describe("treeSchema", () => {
 				});
 			}
 
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(root), true);
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(child), true);
+			assert.deepEqual([...reads.values()], [0, 0]);
 			const definitions = component.definitions;
 			assert.deepEqual([...reads.values()], [1, 1]);
 			assert.deepEqual(new Set(definitions.values()), new Set([root, child]));
@@ -138,8 +142,7 @@ describe("treeSchema", () => {
 				getRootSchemaDerivedData([a, b, parent][first] ?? assert.fail());
 				const aData = getRootSchemaDerivedData(a);
 				const bData = getRootSchemaDerivedData(b);
-				const aComponent = getCachedRootSchemaDerivedData(a)?.component ?? assert.fail();
-				assert.strictEqual(aComponent, getCachedRootSchemaDerivedData(b)?.component);
+				assert.strictEqual(aData.component, bData.component);
 				assert.strictEqual(aData.treeSchema.definitions, bData.treeSchema.definitions);
 				assert.notStrictEqual(aData.treeSchema.root, bData.treeSchema.root);
 				assert.deepEqual(
@@ -161,10 +164,11 @@ describe("treeSchema", () => {
 		it("deduplicates dependencies on different members of the same component", () => {
 			const [root, a, b] = createSchemaGraph([[1, 2, 1], [2], [1]]);
 			assert(root !== undefined && a !== undefined && b !== undefined);
-			getRootSchemaDerivedData(root);
-			const rootComponent = getCachedRootSchemaDerivedData(root)?.component ?? assert.fail();
-			const dependency = getCachedRootSchemaDerivedData(a)?.component ?? assert.fail();
-			assert.strictEqual(dependency, getCachedRootSchemaDerivedData(b)?.component);
+			const rootComponent = getRootSchemaDerivedData(root).component;
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(a), true);
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(b), true);
+			const dependency = getRootSchemaDerivedData(a).component;
+			assert.strictEqual(dependency, getRootSchemaDerivedData(b).component);
 			assert.deepEqual(rootComponent.members, [root]);
 			assert.deepEqual(new Set(dependency.members), new Set([a, b]));
 			assert.deepEqual(rootComponent.dependencies, new Set([dependency]));
@@ -187,9 +191,9 @@ describe("treeSchema", () => {
 					() => getRootSchemaDerivedData(Parent),
 					i === 0 ? /lazy failure/ : TypeError,
 				);
-				assert.equal(getCachedRootSchemaDerivedData(Parent)?.component, undefined);
-				assert.equal(getCachedRootSchemaDerivedData(Bad)?.component, undefined);
-				assert.notEqual(getCachedRootSchemaDerivedData(Good)?.component, undefined);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Parent), false);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Bad), false);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Good), true);
 			}
 			assert.equal(getRootSchemaDerivedData(Good).treeSchema.definitions.size, 1);
 		});
@@ -202,16 +206,13 @@ describe("treeSchema", () => {
 			}
 			class Parent extends sf.object("Parent", { a: A, b: B }) {}
 			analyzeSchema(Parent);
-			const component = getCachedRootSchemaDerivedData(Parent)?.component ?? assert.fail();
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(Parent), true);
 			for (let i = 0; i < 2; i++) {
-				assert.throws(
-					() => component.definitions,
-					validateUsageError(/Multiple schema encountered/),
-				);
 				assert.throws(
 					() => getRootSchemaDerivedData(Parent),
 					validateUsageError(/Multiple schema encountered/),
 				);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Parent), true);
 				assert.throws(
 					() => getRootSchemaDerivedData([A, B]),
 					validateUsageError(/Multiple schema encountered/),
@@ -243,10 +244,7 @@ describe("treeSchema", () => {
 				const data = getRootSchemaDerivedData(root);
 				assert.equal(data.treeSchema.definitions.size, depth);
 				assert.equal(data.hasStagedSchema, false);
-				assert.equal(
-					getCachedRootSchemaDerivedData(root)?.component?.members.length,
-					cycle ? depth : 1,
-				);
+				assert.equal(data.component.members.length, cycle ? depth : 1);
 			});
 		}
 		describe("staging reachability", () => {
@@ -281,32 +279,18 @@ describe("treeSchema", () => {
 							},
 						});
 
-						assert.equal(
-							getCachedRootSchemaDerivedData(B)?.component?.hasStagedSchema,
-							undefined,
-						);
-						assert.equal(
-							getCachedRootSchemaDerivedData(C)?.component?.hasStagedSchema,
-							undefined,
-						);
+						assert.equal(hasCachedRootSchemaDerivedDataForTesting(B), false);
+						assert.equal(hasCachedRootSchemaDerivedDataForTesting(C), false);
 						if (descendantFirst) {
 							assert.equal(getRootSchemaDerivedData(C).hasStagedSchema, staged);
 						}
 						assert.equal(getRootSchemaDerivedData(B).hasStagedSchema, staged);
-						assert.equal(
-							getCachedRootSchemaDerivedData(B)?.component?.hasStagedSchema,
-							staged,
-						);
-						assert.equal(
-							getCachedRootSchemaDerivedData(C)?.component?.hasStagedSchema,
-							staged,
-						);
+						assert.equal(hasCachedRootSchemaDerivedDataForTesting(C), true);
+						assert.equal(getRootSchemaDerivedData(B).component.hasStagedSchema, staged);
+						assert.equal(getRootSchemaDerivedData(C).component.hasStagedSchema, staged);
 						assert.equal(getRootSchemaDerivedData(C).hasStagedSchema, staged);
 						assert.equal(getRootSchemaDerivedData(A).hasStagedSchema, staged);
-						assert.equal(
-							getCachedRootSchemaDerivedData(A)?.component?.hasStagedSchema,
-							staged,
-						);
+						assert.equal(getRootSchemaDerivedData(A).component.hasStagedSchema, staged);
 						assert.equal(bReads, 1);
 						assert.equal(cReads, 1);
 					});
@@ -326,8 +310,10 @@ describe("treeSchema", () => {
 					// Both roots reach A's staged field; visiting the cycle must not cache an incomplete negative answer for B.
 					for (const root of reverse ? [B, A] : [A, B]) {
 						assert.equal(getRootSchemaDerivedData(root).hasStagedSchema, true);
-						assert.equal(getCachedRootSchemaDerivedData(A)?.component?.hasStagedSchema, true);
-						assert.equal(getCachedRootSchemaDerivedData(B)?.component?.hasStagedSchema, true);
+						assert.equal(hasCachedRootSchemaDerivedDataForTesting(A), true);
+						assert.equal(hasCachedRootSchemaDerivedDataForTesting(B), true);
+						assert.equal(getRootSchemaDerivedData(A).component.hasStagedSchema, true);
+						assert.equal(getRootSchemaDerivedData(B).component.hasStagedSchema, true);
 					}
 				});
 			}
@@ -348,12 +334,11 @@ describe("treeSchema", () => {
 
 				assert.equal(getRootSchemaDerivedData(Parent).hasStagedSchema, true);
 				for (const node of [Parent, A, B]) {
-					assert.equal(getCachedRootSchemaDerivedData(node)?.component?.hasStagedSchema, true);
+					assert.equal(hasCachedRootSchemaDerivedDataForTesting(node), true);
+					assert.equal(getRootSchemaDerivedData(node).component.hasStagedSchema, true);
 				}
-				assert.equal(
-					getCachedRootSchemaDerivedData(Unstaged)?.component?.hasStagedSchema,
-					false,
-				);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Unstaged), true);
+				assert.equal(getRootSchemaDerivedData(Unstaged).component.hasStagedSchema, false);
 				assert.equal(getRootSchemaDerivedData(Unstaged).hasStagedSchema, false);
 			});
 			it("attributes staged references to the parent, not the referenced class", () => {
@@ -364,8 +349,9 @@ describe("treeSchema", () => {
 				}) {}
 
 				assert.equal(getRootSchemaDerivedData(Parent).hasStagedSchema, true);
-				assert.equal(getCachedRootSchemaDerivedData(Parent)?.component?.hasStagedSchema, true);
-				assert.equal(getCachedRootSchemaDerivedData(Child)?.component?.hasStagedSchema, false);
+				assert.equal(getRootSchemaDerivedData(Parent).component.hasStagedSchema, true);
+				assert.equal(hasCachedRootSchemaDerivedDataForTesting(Child), true);
+				assert.equal(getRootSchemaDerivedData(Child).component.hasStagedSchema, false);
 				assert.equal(getRootSchemaDerivedData(Child).hasStagedSchema, false);
 			});
 			it("does not confuse root staging with staging in the referenced node", () => {
@@ -381,12 +367,19 @@ describe("treeSchema", () => {
 				it(testCase.name, () => {
 					const data = getRootSchemaDerivedData(testCase.schema);
 					assert.equal(data.hasStagedSchema, testCase.hasStagedSchema === true);
-					for (const node of data.treeSchema.definitions.values()) {
-						assert.equal(
-							getCachedRootSchemaDerivedData(node)?.component?.hasStagedSchema,
-							getStagedSchemaUpgrades(node).size > 0,
-							`Incorrect cached staging reachability for ${node.identifier}`,
-						);
+					const components = new Set([data.component]);
+					for (const component of components) {
+						for (const node of component.members) {
+							assert.equal(hasCachedRootSchemaDerivedDataForTesting(node), true);
+							assert.equal(
+								component.hasStagedSchema,
+								getStagedSchemaUpgrades(node).size > 0,
+								`Incorrect cached staging reachability for ${node.identifier}`,
+							);
+						}
+						for (const dependency of component.dependencies) {
+							components.add(dependency);
+						}
 					}
 				});
 			}
