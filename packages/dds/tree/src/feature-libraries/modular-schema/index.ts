@@ -94,5 +94,5 @@ export { minimizeModularChangeset } from "./minimizeModularChange.js";
 export { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 export {
 	isChangesetValid as isModularChangesetValid,
-	normalizeChangesetWithDummyChunks,
+	normalizeChangeset,
 } from "./modularChangeUtils.js";

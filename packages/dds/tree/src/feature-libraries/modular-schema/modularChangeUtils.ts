@@ -689,10 +689,11 @@ function makeDummyChunk(chunk: TreeChunk): TreeChunk {
  * @param dropRevertConstraint - Whether to drop revert constraints.
  * @returns The normalized modular changeset.
  */
-export function normalizeChangesetWithDummyChunks(
+export function normalizeChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	dropRevertConstraint: boolean,
+	chunkNormalizer: (chunk: TreeChunk) => TreeChunk,
 ): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
@@ -787,10 +788,10 @@ export function normalizeChangesetWithDummyChunks(
 	};
 	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
 	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(makeDummyChunk));
+		normal.builds = brand(change.builds.mapValues(chunkNormalizer));
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(makeDummyChunk));
+		normal.refreshers = brand(change.refreshers.mapValues(chunkNormalizer));
 	}
 
 	if (dropRevertConstraint) {
@@ -804,16 +805,19 @@ export function areEquivalent(
 	change2: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	ignoreRevertConstraint: boolean = true,
+	chunkNormalizer: (chunk: TreeChunk) => TreeChunk = makeDummyChunk,
 ): boolean {
-	const normalized1 = normalizeChangesetWithDummyChunks(
+	const normalized1 = normalizeChangeset(
 		change1,
 		fieldKinds,
 		ignoreRevertConstraint,
+		chunkNormalizer,
 	);
-	const normalized2 = normalizeChangesetWithDummyChunks(
+	const normalized2 = normalizeChangeset(
 		change2,
 		fieldKinds,
 		ignoreRevertConstraint,
+		chunkNormalizer,
 	);
 	const diff = merge(normalized1, normalized2, (item: object) =>
 		item instanceof BTree ? item.toArray() : item,

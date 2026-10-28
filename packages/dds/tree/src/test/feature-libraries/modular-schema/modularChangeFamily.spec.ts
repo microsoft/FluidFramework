@@ -54,6 +54,10 @@ import {
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -70,7 +74,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { normalizeChangesetWithDummyChunks } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
+import { normalizeChangeset } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import type {
 	NodeChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -1415,8 +1419,8 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangesetWithDummyChunks(change1, fieldKinds, true);
-			const normalized2 = normalizeChangesetWithDummyChunks(change2, fieldKinds, true);
+			const normalized1 = normalizeChangeset(change1, fieldKinds, true, deepCloneChunkedTree);
+			const normalized2 = normalizeChangeset(change2, fieldKinds, true, deepCloneChunkedTree);
 			assertEqual(normalized1, normalized2);
 		}
 
@@ -1551,6 +1555,16 @@ describe("ModularChangeFamily", () => {
 		assertEqual(changes, [expectedChange.change]);
 	});
 });
+
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
+	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
+	const cursor = cursorForJsonableTreeField(jsonable);
+	const clone = chunkFieldSingle(cursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
+	return clone;
+}
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
 	return family.changeRevision(
