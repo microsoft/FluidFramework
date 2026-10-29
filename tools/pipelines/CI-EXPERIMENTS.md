@@ -33,13 +33,22 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Candidate | Status | What must be established |
 | --- | --- | --- |
 | E6: lockfile-installed build tools | Preparing remote run | Versioning, bundle analysis, and coverage tooling work without source build/global linking |
-| Remove PR build-output archive | Consumer investigation complete; not changed yet | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
-| Remove PR release-package publishing | Investigating validation replacement | Eight public packages lack `attw --pack`; preserve an explicit packing check for them |
+| E7: remove PR build-output archive | Prepared locally | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
+| E7: remove PR release-package publishing | Prepared locally with parallel dry-run validation | Eight public packages lack `attw --pack`; check all public packages without producing release tarballs |
 | Split the serial Mocha/local-service job | Next timing experiment | Same suites and counts, lower critical path without excessive queue/setup overhead |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
 Non-PR tool-selection behavior is unchanged.
+
+E7 keeps archive production for non-PR real-service consumers (`test-real-service.yml` is triggered from main/release builds, not PRs).
+The PR bundle-size workflow consumes `bundleAnalyzerJson`, which is retained.
+The expensive release packing step is replaced by bounded parallel `pnpm pack --dry-run` validation for every public client package.
+Custom `pack:tests` scripts are still exercised, but their results go to the agent's temporary directory rather than published artifacts.
+No release tarballs, test-file artifacts, publish-order metadata, or shared build-output archive are produced on this PR path.
+Existing security-task configuration remains enabled; scans/SBOMs specific to the removed release tarballs are no longer produced on PRs.
+Main/release artifact generation and associated scanning are unchanged.
+This intentionally removes release-artifact production from PR validation, not the package-content checks.
 
 ## Method
 
@@ -84,6 +93,7 @@ This was not a cold-cache benchmark.
 | E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
 | Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
+| TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 
 ### Baseline observations
 
@@ -340,6 +350,21 @@ Any later relocation must name its replacement before removing the old invocatio
 | Source scans, binary scans, component governance | Existing pipeline templates | Do not disable |
 | Test result publication and service logs | Verification jobs | Preserve failure-path reporting |
 
+## Completed local TypeScript 7 experiment
+
+Installed TypeScript 7.0.2 only in the session's benchmark directory, leaving repository manifests and lockfiles unchanged.
+Compared fully checked SharedTree production ESM emits with TypeScript 6.0.3 and 7.0.2.
+Each run used a fresh output directory and `.tsbuildinfo`; compiler order alternated across three trials.
+TS6 wall times were 9.228, 9.480, and 9.017 seconds; TS7 times were 1.379, 1.406, and 1.374 seconds.
+The median improvement is approximately 6.7x for this local project, not for the whole CI pipeline.
+
+Both compilers passed and emitted 1,576 files.
+There were 263 source-map differences, 24 declaration differences, and four JavaScript differences.
+All four JavaScript differences were inspected: line wrapping and removal of redundant parentheses around an identifier.
+A strict token-equality check rejected that parentheses difference, so byte-for-byte or token-identical output is not claimed.
+Declaration samples changed inferred property/union ordering; full API-report compatibility has not been validated.
+This confirms substantial compiler potential, but not an integrated native build or test pass.
+
 ## Findings from completed experiments
 
 Independent verification removes the largest structural delay.
@@ -361,8 +386,9 @@ No security scans, existing suites, or required pipeline identities were intenti
    The npm registry reports TypeScript 7.0.2 as stable, and the [official native-port repository](https://github.com/microsoft/typescript-go) reports the port complete.
    This repository's `fluid-build` and `fluid-tsc` use the JavaScript compiler API (`parseCommandLine`, `createProgram`, `createIncrementalProgram`) and a virtual package-type override for CommonJS.
    The new native CLI does not supply that API.
-   A practical first experiment is an isolated native CLI benchmark on an ESM project while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
-   No TypeScript 7 compile or CI migration has been attempted yet.
+   The isolated CLI benchmark above succeeded.
+   The untested next step is a native compilation task integrated with the dependency graph, while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
+   Full workspace/native CI migration has not been attempted.
 
 ## Limitations
 

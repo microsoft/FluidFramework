@@ -396,20 +396,26 @@ extends:
                   workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   customCommand: 'run webpack'
 
-              - task: Bash@3
-                displayName: Archive Build Output Content
-                env:
-                  WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                inputs:
-                  targetType: filePath
-                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
+              - ${{ if not(parameters.independentTestBuilds) }}:
+                - task: Bash@3
+                  displayName: Archive Build Output Content
+                  env:
+                    WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  inputs:
+                    targetType: filePath
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
 
-              - task: CopyFiles@2
-                displayName: Copy build_output_archive to artifact staging directory
-                inputs:
-                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
-                  targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
+                - task: CopyFiles@2
+                  displayName: Copy build_output_archive to artifact staging directory
+                  inputs:
+                    sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
+                    targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
+
+              - ${{ if and(parameters.independentTestBuilds, not(parameters.taskPack)) }}:
+                - template: /tools/pipelines/templates/include-client-pack-validation.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -550,11 +556,12 @@ extends:
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
-                - output: pipelineArtifact
-                  displayName: Publish Artifact - build_output_archive
-                  targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
-                  artifactName: build_output_archive
-                  publishLocation: pipeline
+                - ${{ if not(parameters.independentTestBuilds) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - build_output_archive
+                    targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
+                    artifactName: build_output_archive
+                    publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
