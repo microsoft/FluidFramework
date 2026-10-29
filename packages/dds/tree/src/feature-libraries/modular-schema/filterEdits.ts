@@ -93,26 +93,23 @@ export function filterEdits(
 		let oldId = oldIdFirst;
 		let newId = newIdFirst;
 		while (remainingLength > 0) {
-			const filterResult = filterRename(oldId, newId, remainingLength);
+			let countProcessed = remainingLength;
+			const filterResult = filterRename(oldId, newId, countProcessed);
+			countProcessed = filterResult.length;
+
 			if (filterResult.value === EditFilterStatus.Preserve) {
 				const detachLocationEntry = change.rootNodes.detachLocations.getFirst(
 					oldId,
-					filterResult.length,
+					countProcessed,
 				);
 
-				assert(detachLocationEntry.length === filterResult.length, "XXX");
-				addNodeRename(
-					filteredRoots,
-					oldId,
-					newId,
-					filterResult.length,
-					detachLocationEntry.value,
-				);
+				countProcessed = detachLocationEntry.length;
+				addNodeRename(filteredRoots, oldId, newId, countProcessed, detachLocationEntry.value);
 			}
 
-			oldId = offsetChangeAtomId(oldId, filterResult.length);
-			newId = offsetChangeAtomId(newId, filterResult.length);
-			remainingLength -= filterResult.length;
+			oldId = offsetChangeAtomId(oldId, countProcessed);
+			newId = offsetChangeAtomId(newId, countProcessed);
+			remainingLength -= countProcessed;
 		}
 	}
 
