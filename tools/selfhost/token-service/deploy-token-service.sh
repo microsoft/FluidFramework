@@ -40,6 +40,8 @@ fail()   { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 [[ -f "$PARAMS_FILE" ]] || fail "parameters file not found: $PARAMS_FILE"
 command -v az >/dev/null || fail "az CLI not found."
 command -v jq >/dev/null || fail "jq not found."
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud
 
 # Every `az webapp auth ...` command in this script comes from the authV2 CLI extension, not from
 # the core CLI. When it is missing, az offers to install it -- and that prompt is written to
@@ -185,15 +187,15 @@ key_setting_name() {
 SCOPE_NAME="Fluid.Token.Issue"
 
 app_role_create_url() {
-  printf 'https://ms.portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/AppRoles/appId/%s/isMSAApp~/false' "$APP_ID"
+  printf '%s/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/AppRoles/appId/%s/isMSAApp~/false' "$AZURE_PORTAL_URL" "$APP_ID"
 }
 
 app_role_assign_url() {
   if [[ -n "${APP_SERVICE_PRINCIPAL_ID:-}" ]]; then
-    printf 'https://ms.portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Users/objectId/%s/appId/%s' \
-      "$APP_SERVICE_PRINCIPAL_ID" "$APP_ID"
+    printf '%s/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Users/objectId/%s/appId/%s' \
+      "$AZURE_PORTAL_URL" "$APP_SERVICE_PRINCIPAL_ID" "$APP_ID"
   else
-    printf 'https://ms.portal.azure.com/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview'
+    printf '%s/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview' "$AZURE_PORTAL_URL"
   fi
 }
 
@@ -237,7 +239,7 @@ site_write() {
 # token issuance is unaffected. Mirrors azure/deploy.sh.
 current_principal_object_id() {
   local token payload
-  token="$(az account get-access-token --resource https://management.azure.com --query accessToken -o tsv)"
+  token="$(az account get-access-token --query accessToken -o tsv)"
   payload="$(cut -d '.' -f2 <<<"$token" | tr '_-' '/+')"
   case $(( ${#payload} % 4 )) in
     2) payload+="==" ;;
@@ -255,7 +257,7 @@ ensure_role_assignment() {
   LAST_CREATED_ROLE_ID=""
   role_def_id="$(az role definition list --name "$role_name" --query '[0].name' -o tsv)"
   existing="$(az rest --method get \
-    --url "https://management.azure.com${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
+    --url "$AZURE_RESOURCE_MANAGER${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
     --query "value[?properties.principalId=='$principal_object_id' && contains(properties.roleDefinitionId, '$role_def_id') && properties.scope=='$scope'].id | [0]" -o tsv 2>/dev/null)"
   if [[ -n "$existing" ]]; then
     log "Role '$role_name' already granted at this scope"
@@ -285,7 +287,7 @@ cleanup_temporary_role_assignments() {
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
-      --url "https://management.azure.com${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
+      --url "$AZURE_RESOURCE_MANAGER${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
   done
 }
 
@@ -395,7 +397,7 @@ on the registration. Everything else here uses ARM, which this policy does not a
         fail "Microsoft Graph rejected the CLI's token under a conditional access policy. This is
 not a missing role. Re-authenticate for Graph, then re-run this script:
 
-  az login --tenant $ENTRA_TENANT_ID --scope https://graph.microsoft.com//.default
+  az login --tenant $ENTRA_TENANT_ID --scope $AZURE_MICROSOFT_GRAPH_RESOURCE/.default
 
 If your directory blocks app registration creation outright, ask an administrator to create one
 and set tokenService.appRegistrationName to its display name -- this script reuses an existing
@@ -419,7 +421,7 @@ display name -- this script reuses an existing registration by name."
     # what keeps it from clobbering oauth2PermissionScopes.
     log "Setting requestedAccessTokenVersion=2 on the new registration"
     az rest --method PATCH \
-      --uri "https://graph.microsoft.com/v1.0/applications(appId='$APP_ID')" \
+      --uri "$AZURE_MICROSOFT_GRAPH_RESOURCE/v1.0/applications(appId='$APP_ID')" \
       --headers "Content-Type=application/json" \
       --body '{"api":{"requestedAccessTokenVersion":2}}' >/dev/null \
       || fail "Could not set requestedAccessTokenVersion on $APP_ID. Set it to 2 in the portal
@@ -513,7 +515,7 @@ tokenIssuerVersion to '$detected', or change the registration's manifest to matc
     [[ "$kept" -gt 0 ]] && log "Preserving $kept existing scope(s) on this registration"
 
     az rest --method PATCH \
-      --url "https://graph.microsoft.com/v1.0/applications/$APP_OBJECT_ID" \
+      --url "$AZURE_MICROSOFT_GRAPH_RESOURCE/v1.0/applications/$APP_OBJECT_ID" \
       --headers "Content-Type=application/json" \
       --body "$(jq -n --argjson scopes "$merged_scopes" '{ api: { oauth2PermissionScopes: $scopes } }')"
   fi
@@ -537,7 +539,7 @@ tokenIssuerVersion to '$detected', or change the registration's manifest to matc
 
   log "Registering SPA redirect URIs: $(printf '%s' "$merged" | tr '\n' ' ')"
   az rest --method PATCH \
-    --url "https://graph.microsoft.com/v1.0/applications/$APP_OBJECT_ID" \
+    --url "$AZURE_MICROSOFT_GRAPH_RESOURCE/v1.0/applications/$APP_OBJECT_ID" \
     --headers "Content-Type=application/json" \
     --body "$(jq -n --arg uris "$merged" '{ spa: { redirectUris: ($uris | split("\n")) } }')"
 }
@@ -894,11 +896,8 @@ $FUNC_APP. This needs the authV2 az CLI extension: az extension add --name authV
   fi
 
   local issuer
-  if [[ "$TOKEN_ISSUER_VERSION" == "v1" ]]; then
-    issuer="https://sts.windows.net/$ENTRA_TENANT_ID/"
-  else
-    issuer="https://login.microsoftonline.com/$ENTRA_TENANT_ID/v2.0"
-  fi
+  issuer="$(azure_token_issuer "$ENTRA_TENANT_ID" "$TOKEN_ISSUER_VERSION")" \
+    || fail "Could not discover the Entra token issuer for the active Azure cloud."
 
   log "Binding the Function App to App Registration $APP_ID (expecting $TOKEN_ISSUER_VERSION tokens)"
   site_write "Binding the App Registration" az webapp auth microsoft update -g "$FUNC_RG" -n "$FUNC_APP" \
@@ -935,7 +934,7 @@ $FUNC_APP. This needs the authV2 az CLI extension: az extension add --name authV
     --require-https true
 
   local auth_url disabled
-  auth_url="https://management.azure.com/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-12-01"
+  auth_url="$AZURE_RESOURCE_MANAGER/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-12-01"
   disabled="$(az rest --method GET --url "$auth_url" 2>/dev/null | jq -c \
     --arg uri "$APP_ID_URI" --arg appid "$APP_ID" '
     .properties as $p
@@ -1170,7 +1169,7 @@ not enforcing. Do not use this deployment until 'az webapp auth show' reports en
   # enforcing -- asserting on that output would fail every deploy of a correctly secured app.
   local auth_json auth_required
   auth_json="$(az rest --method GET --uri \
-    "https://management.azure.com/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-01-01" \
+    "$AZURE_RESOURCE_MANAGER/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-01-01" \
     -o json 2>/dev/null || true)"
   auth_required="$(printf '%s' "$auth_json" \
     | jq -r '.properties.globalValidation.requireAuthentication // empty' 2>/dev/null || true)"
@@ -1181,7 +1180,7 @@ not enforcing. Do not use this deployment until 'az webapp auth show' reports en
     # Could not read it. The forged-principal probe below still covers the boundary end to end,
     # so this is reported rather than treated as a failure.
     log "WARNING: could not read authsettingsV2 to confirm Easy Auth is enforcing. Verify with:"
-    log "         az rest --method GET --uri \"https://management.azure.com/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-01-01\""
+    log "         az rest --method GET --uri \"$AZURE_RESOURCE_MANAGER/subscriptions/$SUB/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_APP/config/authsettingsV2?api-version=2023-01-01\""
   else
     fail "Easy Auth is not requiring authentication
 (globalValidation.requireAuthentication=$auth_required). Without it the platform forwards

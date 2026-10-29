@@ -33,6 +33,7 @@ FAILURES=0
 fail() { printf '  FAIL: %s\n' "$*" >&2; FAILURES=$((FAILURES + 1)); }
 ok()   { printf '  OK:   %s\n' "$*"; }
 note() { printf '  NOTE: %s\n' "$*"; }
+. "$SELFHOST_ROOT/azure/preflight-helpers.sh"
 
 REQUIRED_TOOLS=(az jq helm)
 missing=()
@@ -55,12 +56,18 @@ ensure_az_extension() {
     }
   fi
 }
-ensure_az_extension redisenterprise
-az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
-  echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
-  echo "  az extension update --name redisenterprise" >&2
-  exit 1
-}
+. "$SELFHOST_ROOT/azure/redis-helpers.sh"
+load_redis_config "$PARAMS_FILE" || exit 1
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud || exit 1
+if [[ "$REDIS_SERVICE" == managed ]]; then
+  ensure_az_extension redisenterprise
+  az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
+    echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
+    echo "  az extension update --name redisenterprise" >&2
+    exit 1
+  }
+fi
 export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 
 # ---------------------------------------------------------------------------
@@ -99,10 +106,6 @@ COSMOS="$(jqr '.cosmos.clusterName')"
 # `az cosmosdb create --locations isZoneRedundant=`'s expected "True"/"False" casing, not a
 # JSON boolean).
 COSMOS_ZONE_REDUNDANT="$(jqr '.cosmos.zoneRedundant')"; COSMOS_ZONE_REDUNDANT="${COSMOS_ZONE_REDUNDANT:-True}"
-REDIS="$(jqr '.redis.clusterName')"
-REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
-REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
-REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
 STORAGE="$(jqr '.storage.accountName')"
 EVENTHUBS_NAMESPACE="$(jqr '.kafka.eventHubs.namespaceName')"
 EVENTHUBS_SKU="$(jqr '.kafka.eventHubs.sku')"; EVENTHUBS_SKU="${EVENTHUBS_SKU:-Standard}"
@@ -110,7 +113,7 @@ EVENTHUBS_ZONE_REDUNDANT="$(jqr '.kafka.eventHubs.zoneRedundant')"; EVENTHUBS_ZO
 AFD="$(jqr '.frontDoor.profileName')"
 
 banner "Parameters file completeness"
-for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIGH_AVAILABILITY STORAGE AFD; do
+for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS STORAGE AFD; do
   if [[ -z "${!required}" ]]; then
     fail "'$required' is missing from $PARAMS_FILE"
   else
@@ -119,16 +122,6 @@ for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIG
 done
 if [[ -n "$BUILD_ACR" && "$BUILD_ACR" == "$DEPLOY_ACR" ]]; then
   fail "buildAcr.name and deployAcr.name must not be the same"
-fi
-legacy_redis_keys="$(jq -r '[((.redis // {}) | keys[]) | select(. == "vmSize" or . == "version" or . == "replicasPerMaster" or . == "zones")] | join(", ")' "$PARAMS_FILE")"
-if [[ -n "$legacy_redis_keys" ]]; then
-  fail "removed Azure Cache for Redis parameters are still present: redis.{$legacy_redis_keys}; replace the redis block from deploy.parameters.example.json"
-fi
-if [[ "$REDIS_SKU" != *_* ]]; then
-  fail "redis.sku '$REDIS_SKU' is not an Azure Managed Redis SKU (for example, Balanced_B5)"
-fi
-if [[ "$REDIS_HIGH_AVAILABILITY" != "Enabled" && "$REDIS_HIGH_AVAILABILITY" != "Disabled" ]]; then
-  fail "redis.highAvailability must be exactly 'Enabled' or 'Disabled' (got '${REDIS_HIGH_AVAILABILITY:-empty}')"
 fi
 if [[ $FAILURES -gt 0 ]]; then
   echo "Parameters file incomplete -- stopping (remaining checks need these values)." >&2
@@ -250,20 +243,25 @@ fi
 # Azure Managed Redis names are regionally scoped. There is no supported checkNameAvailability
 # request for Microsoft.Cache/redisEnterprise, so check existing resources in this subscription
 # and let the create operation remain authoritative across subscriptions.
-if az redisenterprise show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
-  ok "Azure Managed Redis '$REDIS' already exists in target RG $RG -- deploy.sh will verify and reuse it"
+if az "$REDIS_CLI" show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
+  ok "$REDIS_LABEL '$REDIS' already exists in target RG $RG -- deploy.sh will verify and reuse it"
 else
+  redis_resource_type=Microsoft.Cache/redisEnterprise
+  [[ "$REDIS_SERVICE" == cache ]] && redis_resource_type=Microsoft.Cache/Redis
   redis_loc_normalized="$(printf '%s' "$REDIS_LOC" | tr '[:upper:]' '[:lower:]' | tr -d ' ')"
-  redis_match="$(az resource list --resource-type Microsoft.Cache/redisEnterprise -o json | \
-    jq -r --arg name "$REDIS" --arg location "$redis_loc_normalized" \
-      '.[] | select(.name == $name and ((.location | ascii_downcase | gsub(" "; "")) == $location)) | .id' | head -1)"
+  redis_match="$(az resource list --resource-type "$redis_resource_type" -o json | \
+    jq -r --arg name "$REDIS" --arg location "$redis_loc_normalized" --arg service "$REDIS_SERVICE" \
+      '.[] | select(.name == $name and ($service == "cache" or ((.location | ascii_downcase | gsub(" "; "")) == $location))) | .id' | head -1)"
   if [[ -n "$redis_match" ]]; then
-    fail "Azure Managed Redis '$REDIS' already exists in $REDIS_LOC at $redis_match -- pick a different redis.clusterName or target that resource group"
+    fail "$REDIS_LABEL '$REDIS' already exists at $redis_match -- pick a different redis.clusterName or target that resource group"
   else
-    note "no Azure Managed Redis named '$REDIS' was found in $REDIS_LOC in this subscription; Azure will perform the authoritative availability check during create"
+    note "no $REDIS_LABEL named '$REDIS' was found in this subscription; Azure will perform the authoritative availability check during create"
   fi
   unset redis_loc_normalized redis_match
 fi
+
+banner "$REDIS_LABEL provider validation ($REDIS_LOC, $REDIS_SKU)"
+check_redis_capacity
 
 # ---------------------------------------------------------------------------
 # Storage account count quota -- Microsoft.Cache (Azure Managed Redis), Microsoft.DocumentDB (Cosmos DB),
@@ -301,61 +299,7 @@ banner "AKS node pool vCPU quota ($AKS_LOC, $AKS_NODE_VM_SIZE x $AKS_NODE_MIN_CO
 if az aks show -g "$RG" -n "$AKS" >/dev/null 2>&1; then
   ok "AKS cluster '$AKS' already exists in target RG $RG -- deploy.sh will reuse it (skipping quota check)"
 else
-  vm_family="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
-    --query "[?name=='$AKS_NODE_VM_SIZE'].family | [0]" -o tsv 2>/dev/null)"
-  vcpus_per_node="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" \
-    --query "[?name=='$AKS_NODE_VM_SIZE'].capabilities[] | [?name=='vCPUs'].value | [0]" -o tsv 2>/dev/null)"
-  if [[ -z "$vm_family" || -z "$vcpus_per_node" ]]; then
-    note "could not resolve VM size '$AKS_NODE_VM_SIZE' in $AKS_LOC -- verify it's a valid, available SKU there"
-  else
-    required_vcpus=$(( vcpus_per_node * (AKS_NODE_MIN_COUNT + 1) ))
-    read -r current_val limit_val <<<"$(az vm list-usage -l "$AKS_LOC" \
-      --query "[?name.value=='$vm_family'].[currentValue, limit]" -o tsv 2>/dev/null)"
-    if [[ -z "$limit_val" ]]; then
-      note "could not read quota for family '$vm_family' in $AKS_LOC"
-    else
-      available_vcpus=$(( limit_val - current_val ))
-      if [[ $available_vcpus -ge $required_vcpus ]]; then
-        ok "quota OK: $vm_family has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool)"
-      else
-        fail "quota SHORTFALL: $vm_family only has $available_vcpus/$limit_val vCPUs free in $AKS_LOC, need $required_vcpus vCPUs ($AKS_NODE_MIN_COUNT system nodes + 1 gitrestpool) -- request a quota increase or pick a smaller VM size/region"
-      fi
-    fi
-  fi
-
-  # Zones have NO runtime fallback in deploy.sh (unlike Redis/Cosmos/Storage below, which all
-  # catch a zone/SKU-related create failure and retry non-zonal) -- `az aks create --zones`
-  # fails outright, aborting the whole deploy.sh run under `set -euo pipefail`. Worth catching
-  # here in seconds rather than after everything up to phase1_aks has already run.
-  if [[ -z "$AKS_ZONES" ]]; then
-    note "aks.availabilityZones is empty -- deploy.sh will create a non-zonal system pool, skipping zone-support check"
-  else
-    # locationInfo[].zones alone is NOT enough -- it lists every zone the SKU can exist in
-    # ANYWHERE in the region, but a specific subscription can be excluded from a subset of
-    # those via `restrictions` (reasonCode NotAvailableForSubscription), which az aks create
-    # then rejects with (AvailabilityZoneNotSupported) at create time. Subtract those before
-    # comparing, or this check reports zones as available when AKS itself will reject them.
-    vm_zones="$(az vm list-skus --location "$AKS_LOC" --size "$AKS_NODE_VM_SIZE" -o json 2>/dev/null | \
-      jq -r --arg size "$AKS_NODE_VM_SIZE" '
-        .[] | select(.name == $size) |
-        (.locationInfo[0].zones // []) as $all |
-        ([.restrictions[]? | select(.type=="Zone") | .restrictionInfo.zones[]?]) as $restricted |
-        ($all - $restricted)[]
-      ' 2>/dev/null | tr '\n' ' ')"
-    if [[ -z "$vm_zones" ]]; then
-      note "'$AKS_NODE_VM_SIZE' in $AKS_LOC reports no zone support -- aks.availabilityZones ($AKS_ZONES) would fail at create time with no fallback; set it to an empty array or adjust region/VM size"
-    else
-      missing_zones=""
-      for z in $AKS_ZONES; do
-        grep -qw "$z" <<<"$vm_zones" || missing_zones="$missing_zones $z"
-      done
-      if [[ -n "$missing_zones" ]]; then
-        fail "'$AKS_NODE_VM_SIZE' in $AKS_LOC does not support zone(s):$missing_zones (only supports: $vm_zones) -- aks.availabilityZones would fail at create time with no fallback; adjust aks.availabilityZones or pick a different region/VM size"
-      else
-        ok "'$AKS_NODE_VM_SIZE' in $AKS_LOC supports all requested zones ($AKS_ZONES)"
-      fi
-    fi
-  fi
+  check_aks_capacity
 fi
 
 # ---------------------------------------------------------------------------
@@ -374,7 +318,7 @@ if az cosmosdb show -n "$COSMOS" -g "$RG" >/dev/null 2>&1; then
 else
   cosmos_sub_id="$(az account show --query id -o tsv)"
   cosmos_all_locs="$(az rest --method get \
-    --url "https://management.azure.com/subscriptions/$cosmos_sub_id/providers/Microsoft.DocumentDB/locations?api-version=2025-10-15" \
+    --url "$AZURE_RESOURCE_MANAGER/subscriptions/$cosmos_sub_id/providers/Microsoft.DocumentDB/locations?api-version=2025-10-15" \
     -o json 2>/dev/null)"
   if [[ -z "$cosmos_all_locs" ]] || ! jq -e '.value' >/dev/null 2>&1 <<<"$cosmos_all_locs"; then
     note "could not query Cosmos DB region availability for $RG_LOC (API call failed)"
@@ -421,7 +365,7 @@ else
   afd_quota_err="$PREFLIGHT_TEMP_DIR/afd-quota.err"
   afd_sub_id="$(az account show --query id -o tsv)"
   afd_resp="$(az rest --method post \
-    --url "https://management.azure.com/subscriptions/$afd_sub_id/providers/Microsoft.Cdn/checkResourceUsage?api-version=2026-04-01-preview" \
+    --url "$AZURE_RESOURCE_MANAGER/subscriptions/$afd_sub_id/providers/Microsoft.Cdn/checkResourceUsage?api-version=2026-04-01-preview" \
     2>"$afd_quota_err")"
   read -r afd_current afd_limit <<<"$(jq -r '.value[]? | select(.resourceType=="afdprofile") | "\(.currentValue) \(.limit)"' <<<"$afd_resp" 2>/dev/null)"
   if [[ -z "$afd_limit" ]]; then
@@ -451,6 +395,7 @@ else
   helm_template_err="$PREFLIGHT_TEMP_DIR/helm-template.err"
   sed -e "s|<ACR>|placeholderacr|g" -e "s|<IMAGE_TAG>|placeholder-tag|g" \
       -e "s|<REDIS_HOSTNAME>|placeholder.eastus.redis.azure.net|g" \
+      -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
       "$SELFHOST_ROOT/azure/routerlicious-values.yaml" > "$tmp_values"
   if helm template fluid "$CHART_DIR" -f "$tmp_values" >"$helm_template_out" 2>"$helm_template_err"; then
     ok "helm template rendered successfully ($(wc -l <"$helm_template_out" | tr -d ' ') lines of manifests)"

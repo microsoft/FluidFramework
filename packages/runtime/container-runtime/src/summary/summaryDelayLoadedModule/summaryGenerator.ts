@@ -211,8 +211,11 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
+					// Sequence gaps cannot recover missing logical op counts: grouped ops share sequence
+					// numbers. Only validate when the counts cover all ops since the acknowledged baseline.
+					!this.heuristicData.hasMissingOpData &&
 					summarizedDataStoreCount >
-					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
+						gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
 				) {
 					summaryLogger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",

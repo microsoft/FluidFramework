@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
+import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IContainerRuntimeBase,
@@ -463,7 +463,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -503,7 +503,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -543,7 +543,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =

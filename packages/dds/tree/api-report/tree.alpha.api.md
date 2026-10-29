@@ -170,10 +170,10 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSch
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfiguration<TSchema>): TreeViewConfigurationAlpha<TSchema>;
 
 // @alpha
-export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeArrayNode<TAllowedTypes>): TreeArrayNodeAlpha<TAllowedTypes>;
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes, TNode extends TreeArrayNode<TAllowedTypes> = TreeArrayNode<TAllowedTypes>>(node: TNode & TreeArrayNode<TAllowedTypes>): TNode extends TreeArrayNode<TAllowedTypes, infer TElement, infer TInsertable> ? TNode & Omit<TreeArrayNodeAlpha<TAllowedTypes, TElement, TInsertable>, keyof TreeArrayNode> : never;
 
 // @alpha
-export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeMapNode<TAllowedTypes>): TreeMapNodeAlpha<TAllowedTypes>;
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes, TNode extends TreeMapNode<TAllowedTypes> = TreeMapNode<TAllowedTypes>>(node: TNode & TreeMapNode<TAllowedTypes>): TNode extends TreeMapNode<TAllowedTypes> ? TNode & Omit<TreeMapNodeAlpha<TAllowedTypes, Exclude<ReturnType<TNode["get"]>, undefined>, Exclude<Parameters<TNode["set"]>[1], undefined>>, keyof TreeMapNode> : never;
 
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
@@ -276,7 +276,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -1201,6 +1201,27 @@ export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
+// @alpha
+export interface RebaseValidation {
+    readonly currentLevel: RebaseValidationLevel;
+    readonly Level: typeof RebaseValidationLevel;
+    readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
+    readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
+}
+
+// @alpha
+export const RebaseValidation: RebaseValidation;
+
+// @alpha
+export const RebaseValidationLevel: {
+    readonly None: 0;
+    readonly Cheap: 1;
+    readonly Strict: 2;
+};
+
+// @alpha
+export type RebaseValidationLevel = (typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
+
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {
 }
@@ -1578,7 +1599,7 @@ export interface SharedTreeFormatOptions {
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
-    readonly retainHistory?: boolean;
+    readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly validateCommitsOnFirstSubmission?: boolean;
     readonly validateRebasedCommitsBeforeResubmission?: boolean;
@@ -2013,6 +2034,7 @@ export interface TreeAlpha {
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
+    hasUnknownChildren(node: TreeNode): boolean;
     readonly identifier: TreeIdentifierUtils;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
         idCompressor?: IIdCompressor;
@@ -2083,12 +2105,6 @@ export interface TreeBeta {
 
 // @beta
 export const TreeBeta: TreeBeta;
-
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
-
-// @alpha @deprecated
-export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
@@ -2248,10 +2264,11 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 }
 
 // @alpha @sealed
-export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
+export interface TreeMapNodeAlpha<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes, out TNode = TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, in TInsertable = InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>> extends FluidReadonlyMap<string, TNode>, TreeNode, Pick<TreeMapNode<TAllowedTypes>, "delete"> {
     clear(): void;
-    getOrInsert(key: string, fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
-    getOrInsertComputed(key: string, callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
+    getOrInsert(key: string, fallbackValue: TInsertable): TNode;
+    getOrInsertComputed(key: string, callback: (key: string) => TInsertable): TNode;
+    set(key: string, value: TInsertable | undefined): void;
 }
 
 // @public @sealed
@@ -2439,6 +2456,9 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 
 // @beta @system
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
+
+// @alpha
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T>;
 
 // @alpha
 export const UnsafeUnknownSchema: unique symbol;

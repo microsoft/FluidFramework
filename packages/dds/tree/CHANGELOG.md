@@ -1,5 +1,117 @@
 # @fluidframework/tree
 
+## 3.7.0
+
+### Minor Changes
+
+- Configure how much SharedTree edit history to retain ([#28511](https://github.com/microsoft/FluidFramework/pull/28511)) [9c5a7ccd293](https://github.com/microsoft/FluidFramework/commit/9c5a7ccd293633c1359e3f572f85e0966aeed8ab)
+
+  The existing alpha SharedTree [`retainHistory`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface#retainhistory-propertysignature) option now accepts a number in addition to a boolean.
+  Pass a nonnegative safe integer to retain the newest specified number of available sequenced main-branch commits, `true` to retain all available history, or `false` or `0` to disable extra retention.
+
+  ```typescript
+  import { configuredSharedTree } from "fluid-framework/alpha";
+
+  const SharedTree = configuredSharedTree({ retainHistory: 20 });
+  ```
+
+  Collaboration and existing branches can require retaining more commits than the configured number.
+  After loading a summary, trimming waits for the collaboration boundary to be reported.
+  The count applies to sequenced commits, not file versions or snapshots.
+  The policy is local to each SharedTree instance and is not persisted or sent to other clients.
+  History that has already been removed cannot be recovered by increasing retention.
+
+  The existing boolean behavior is unchanged, and omitting `retainHistory` still defaults to `false`.
+
+- TreeArrayNodes correctly handle null elements during iteration and removal ([#28519](https://github.com/microsoft/FluidFramework/pull/28519)) [8defa178a08](https://github.com/microsoft/FluidFramework/commit/8defa178a083468b6160508f35fb67026329ec34)
+
+  Null elements in a [`TreeArrayNode`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface) are now handled correctly during iteration and by the alpha `splice` method.
+  Previously, encountering a `null` element during iteration or removing one with `splice` incorrectly threw an out-of-bounds error.
+
+- Adds debug-only checks to facilitate root cause analysis of SharedTree bugs ([#28435](https://github.com/microsoft/FluidFramework/pull/28435)) [2e08a3a09ad](https://github.com/microsoft/FluidFramework/commit/2e08a3a09adc8c4765656bb0bcad7ad305f53338)
+
+  This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
+  These checks can be used by application authors when faced with a SharedTree rebasing bug.
+  For example:
+
+  ```typescript
+  import { RebaseValidation } from "@fluidframework/tree/alpha";
+
+  it("repro SharedTree bug", () => {
+    // Reproduce the SharedTree bug under strict rebase validation level.
+    RebaseValidation.runWithLevel(RebaseValidation.Level.Strict, () => {
+      // Buggy scenario
+      // ...
+    });
+  });
+  ```
+
+  Running the test with strict validation is more likely to yield actionable feedback for SharedTree maintainers.
+
+  These checks are tree-shaken out of production builds, so they have no impact on shipped applications.
+
+  There are three levels of checking available:
+  - `RebaseValidation.Level.None`: No rebase validation is performed.
+  - `RebaseValidation.Level.Cheap`: A minimal amount of rebase validation is performed, with minimal performance overhead.
+  - `RebaseValidation.Level.Strict`: Extensive rebase validation is performed, with the highest performance overhead.
+
+  The level is set to `RebaseValidation.Level.Cheap` by default.
+  Debug builds may therefore experience asserts in scenarios where they did not before.
+  The level can be adjusted by calling `RebaseValidation.setLevel` or `RebaseValidation.runWithLevel`.
+
+- Slightly faster SharedTree initialization ([#28527](https://github.com/microsoft/FluidFramework/pull/28527)) [7402252137c](https://github.com/microsoft/FluidFramework/commit/7402252137c5f5177e127b44303e2a2b0bbcc5ae)
+
+  [`TreeView.initialize()`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#initialize-methodsignature) is now slightly faster for large schemas when debug-only checks are disabled or optimized out.
+  See [non-production conditional code](https://fluidframework.com/docs/api/core-utils/#nonproductionconditionalsincluded-function) for details on how bundlers remove these checks from production builds.
+
+  For a synthetic schema with **240 object types and 1,200 fields** (five fields per object type), plus an array root allowing all 240 types, warm initialization took about 7% less time in a local benchmark:
+
+  | Measurement               | Before  | After   |
+  | ------------------------- | ------- | ------- |
+  | `TreeView.initialize([])` | 5.21 ms | 4.83 ms |
+
+  The tree was initialized with an empty array: these numbers measure schema-related initialization work, not loading 240 objects.
+  Measurements used Node.js with debug-only checks disabled and exclude view creation.
+  Results depend on the schema and environment.
+
+- Reduce the bundle size of schema hashing ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  Schema hashing uses a browser-oriented SHA-256 implementation without Node.js Buffer compatibility dependencies.
+  This reduces browser bundle size when using [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+
+- Simplify the alpha schema identity API ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  The alpha `identifySchema` function is renamed to [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+  The alpha `computeSchemaHash` function is no longer exported.
+  To check a schema against an expected hash, pass a schema identity to the view configuration:
+
+  ```typescript
+  const config = new TreeViewConfigurationAlpha({
+    schema: MySchema,
+    schemaIdentity: identifySchemaAlpha({ expectedHash: savedHash }),
+  });
+  ```
+
+  If the expected hash does not match, the view construction error includes the actual hash.
+
+- Use stable definition ordering in schema exports ([#28544](https://github.com/microsoft/FluidFramework/pull/28544)) [30b0ce86b9c](https://github.com/microsoft/FluidFramework/commit/30b0ce86b9cdd8104b7affd25e46a86d8ec693ed)
+
+  SharedTree JSON Schema exports and schema compatibility snapshots now write node definitions in a stable identifier order, independent of definition map insertion order and locale.
+  Field and allowed-type ordering is unchanged.
+
+  Newly generated output may differ in definition ordering from older output.
+  Existing compatibility snapshots remain usable without regeneration, and ordering alone does not change schema compatibility results.
+  Schema hashes and persisted schema encoding are unchanged.
+
+- Unsafe array-to-tuple conversion is available for allowed schemas ([#28502](https://github.com/microsoft/FluidFramework/pull/28502)) [1b8870908cb](https://github.com/microsoft/FluidFramework/commit/1b8870908cb4d93d543f37f8a77f1e4ce492e539)
+
+  The alpha API `unsafeArrayToTuple` is now exported from `@fluidframework/tree/alpha` and `fluid-framework/alpha`.
+  It returns the original array with its type converted using [`UnionToTuple`](https://fluidframework.com/docs/api/fluid-framework/uniontotuple-typealias), allowing insertable content APIs to work when tuple type information has been lost.
+  Prefer preserving the tuple type with `as const` when possible.
+  The helper does not validate the array: if its element type includes a schema that is absent at runtime, TypeScript can accept content that fails at runtime.
+
+  See [Why is my insertable content getting typed as `never`?](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree#why-is-my-insertable-content-getting-typed-as-never) for examples and an explanation of the runtime risks.
+
 ## 3.6.0
 
 ### Minor Changes

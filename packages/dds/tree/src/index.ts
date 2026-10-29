@@ -26,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
@@ -248,8 +250,6 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type UntypedTreeView,
-	type TreeBranch,
-	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchEventsBeta,
@@ -384,7 +384,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, unsafeArrayToTuple } from "./util/index.js";
 
 import type * as InternalTypes from "./internalTypes.js";
 /**
