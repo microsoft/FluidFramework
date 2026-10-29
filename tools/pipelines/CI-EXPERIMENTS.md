@@ -47,8 +47,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
 | E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
 | E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | [430707](https://dev.azure.com/fluidframework/public/_build/results?buildId=430707) | Passed | Queue-to-finish 15m 30s; test compilation 117-125s |
-| E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | Pending | Pushed | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
-| E5: targeted test prerequisites | Pending | Pending | Preparing | Compile only packages with each suite's script and their build dependencies |
+| E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | [430731](https://dev.azure.com/fluidframework/public/_build/results?buildId=430731) | Passed, slower elapsed time | 22m 13s; roughly four-minute agent delays and slower tests |
+| E5: targeted test prerequisites | Implementation `c4bfc8a443f`; report update included in triggering commit | Pending | Ready to push | Compile only packages with each suite's script and their build dependencies |
 
 ### Baseline observations
 
@@ -192,6 +192,19 @@ Reuse the existing build task graph rather than maintaining a second list of val
 Non-pull-request builds keep their original commands and pool assignments.
 Do not roll this out if the new validation stage becomes a longer critical path.
 
+E4 passed in 1,333.2 seconds (22m 13s), worse than E3.
+Most jobs started 226-278 seconds after queueing, versus 25-51 seconds for comparable E3 jobs.
+Tinylicious service tests took 779.8 seconds versus 572.9 seconds, and Mocha took 478.6 versus 423.0 seconds.
+The artifact job itself shortened from 893.5 to 794.7 seconds (14m 54s to 13m 15s).
+The expanded policy job completed in 471.1 seconds (7m 51s), including the full `ci:build` graph, and was not the final job.
+Total timed agent jobs were 4,467.7 seconds.
+
+All checks passed, including companion policy run [430727](https://dev.azure.com/fluidframework/public/_build/results?buildId=430727).
+Tests reported 45,424 passed and 3,234 not executed, with no failures.
+Exact merge comparison from E3 to E4 (`49a219a8ab8ad733c61a9e697cfe6da18f1c5a6a` to `f71f58cd4385ec17115da4028f7aabf09c3b3e70`) shows additional upstream runtime/test changes, including compatibility-test utilities.
+Conclusion: validation relocation works and shortens the artifact job, but this run does not demonstrate an end-to-end benefit.
+Retain it provisionally for E5, then repeat before deciding whether its extra complexity is justified.
+
 ### E5: targeted test prerequisites
 
 Instead of compiling all 167 client workspace packages in every test job, select package roots by the script the unchanged test runner will execute.
@@ -253,7 +266,7 @@ Any later relocation must name its replacement before removing the old invocatio
 
 Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
 The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
-E4 is running; E5 is prepared.
+E4 passed but was slower in elapsed time; E5 is next.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
