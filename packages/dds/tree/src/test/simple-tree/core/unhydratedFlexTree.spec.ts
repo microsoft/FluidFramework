@@ -5,21 +5,30 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
 	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type Value,
 } from "../../../core/index.js";
 import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {
+	createUnhydratedFlexTreeNode,
+	UnhydratedContext,
 	UnhydratedFlexTreeNode,
+	UnhydratedMapNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { Context } from "../../../simple-tree/core/context.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
@@ -84,6 +93,46 @@ describe("unhydratedFlexTree", () => {
 
 	assert(map instanceof UnhydratedFlexTreeNode);
 	assert(arrayNode instanceof UnhydratedFlexTreeNode);
+
+	describe("leaf construction", () => {
+		class NoSchemaLookup extends Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+			public override get(_key: TreeNodeSchemaIdentifier): TreeNodeStoredSchema | undefined {
+				return assert.fail("Leaf construction must not look up its stored schema");
+			}
+		}
+
+		for (const [schema, value] of [
+			[schemaFactory.string, ""],
+			[schemaFactory.number, 0],
+			[schemaFactory.boolean, false],
+			[schemaFactory.null, null],
+			[schemaFactory.handle, new MockHandle("leaf")],
+		] as const) {
+			it(`skips schema lookup for ${schema.identifier}`, () => {
+				const original = getUnhydratedContext(schema);
+				const contextWithoutLookup = new Context(
+					new UnhydratedContext(original.flexContext.schemaPolicy, {
+						...original.flexContext.schema,
+						nodeSchema: new NoSchemaLookup(),
+					}),
+					original.schema,
+				);
+				const leaf = createUnhydratedFlexTreeNode(
+					{ type: brand(schema.identifier), value },
+					new Map(),
+					contextWithoutLookup,
+				);
+				assert(!(leaf instanceof UnhydratedMapNode));
+				assert.equal(leaf.value, value);
+			});
+		}
+	});
+
+	it("classifies non-leaf fields using their schema", () => {
+		assert(map instanceof UnhydratedMapNode);
+		assert(!(arrayNode instanceof UnhydratedMapNode));
+		assert(!(object instanceof UnhydratedMapNode));
+	});
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");

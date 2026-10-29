@@ -12,6 +12,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	EmptyKey,
 	type FieldAnchor,
+	CursorLocationType,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type TreeFieldStoredSchema,
@@ -27,6 +28,7 @@ import {
 	LazyValueField,
 	sequenceLengthCacheThreshold,
 	unboxedFlexNode,
+	unboxedFlexField,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
@@ -276,6 +278,46 @@ describe("LazyField", () => {
 		// Should not double free.
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
+	});
+
+	describe("unboxedFlexField", () => {
+		const sf = new SchemaFactory("unboxed-field");
+		for (const [name, value] of [
+			["empty", undefined],
+			["zero", 0],
+			["false", false],
+			["empty string", ""],
+			["null", null],
+		] as const) {
+			it(`preserves ${name} without allocating wrappers`, () => {
+				const { context, cursor } = readonlyTreeWithContent({
+					schema: sf.optional([sf.number, sf.boolean, sf.string, sf.null]),
+					initialTree: value,
+				});
+				const resources = context.withAnchors.size;
+				assert.equal(unboxedFlexField(context, cursor, rootFieldAnchor), value);
+				assert.equal(context.withAnchors.size, resources);
+				assert.equal(cursor.mode, CursorLocationType.Fields);
+				assert.equal(cursor.getFieldKey(), rootFieldKey);
+				cursor.free();
+				context[disposeSymbol]();
+			});
+		}
+
+		it("reuses non-leaf wrappers and restores the cursor", () => {
+			const { context, cursor } = readonlyTreeWithContent({
+				schema: JsonAsTree.JsonObject,
+				initialTree: { x: 1 },
+			});
+			const first = unboxedFlexField(context, cursor, rootFieldAnchor);
+			assert(first !== undefined);
+			assert(isFlexTreeNode(first));
+			assert.equal(unboxedFlexField(context, cursor, rootFieldAnchor), first);
+			assert.equal(cursor.mode, CursorLocationType.Fields);
+			assert.equal(cursor.getFieldKey(), rootFieldKey);
+			cursor.free();
+			context[disposeSymbol]();
+		});
 	});
 
 	describe("unboxedFlexNode", () => {

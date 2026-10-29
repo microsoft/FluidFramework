@@ -5,10 +5,20 @@
 
 import { strict as assert } from "node:assert";
 import { asAlpha } from "../../api.js";
+import type { FieldKey } from "../../core/index.js";
 import { Tree } from "../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isTreeNode } from "../../simple-tree/core/index.js";
-import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect unhydrated field storage.
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify field-level dependency tracking.
+import { withObservation } from "../../feature-libraries/flex-tree/observer.js";
+import {
+	SchemaFactory,
+	type NodeFromSchema,
+	isTreeNode,
+	getInnerNode,
+} from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
 
 import { describeHydration } from "./utils.js";
 
@@ -32,18 +42,85 @@ const initialTree = {
 describeHydration(
 	"MapNode",
 	(init) => {
+		it("does not retain empty dynamic fields", () => {
+			class Values extends schemaFactory.map("bounded-fields", schemaFactory.number) {}
+			const map = init(Values, {});
+			const inner = getInnerNode(map);
+			for (let i = 0; i < 128; i++) {
+				const key = `key-${i}`;
+				assert.equal(map.get(key), undefined);
+				assert.equal(inner.getBoxed(brand(key)).length, 0);
+				map.delete(key);
+				map.set(key, undefined);
+				map.set(key, i);
+				map.delete(key);
+				if (inner instanceof UnhydratedFlexTreeNode) {
+					assert.equal(inner.allFieldsLazy.size, 0);
+				}
+			}
+			assert.equal(map.size, 0);
+		});
+
+		it("preserves retained fields across eviction and replacement", () => {
+			class Values extends schemaFactory.map("retained-fields", schemaFactory.number) {}
+			const map = init(Values, {});
+			const inner = getInnerNode(map);
+			const key: FieldKey = brand("key");
+			const field = inner.getBoxed(key);
+			assert(field.is(FieldKinds.optional));
+			map.set(key, 1);
+			assert.equal(field.content, 1);
+			map.delete(key);
+			assert.equal(field.content, undefined);
+			const replacement = inner.getBoxed(key);
+			assert.notEqual(replacement, field);
+			map.set(key, 2);
+			assert.equal(field.content, 2);
+			assert.equal(replacement.boxedAt(0), field.boxedAt(0));
+			field.editor.set(undefined, false);
+			assert.equal(map.has(key), false);
+			map.set(key, 3);
+			assert.equal(field.content, 3);
+		});
+
+		it("updates dynamic field storage before notifying change listeners", () => {
+			class Values extends schemaFactory.map("field-notifications", schemaFactory.number) {}
+			const map = init(Values, {});
+			const inner = getInnerNode(map);
+			const key: FieldKey = brand("key");
+			const retained = inner.getBoxed(key);
+			assert(retained.is(FieldKinds.optional));
+			const observedValues: (number | undefined)[] = [];
+			const unsubscribe = Tree.on(map, "nodeChanged", () => {
+				const value = map.get(key);
+				assert.equal(retained.content, value);
+				assert.equal(inner.tryGetField(key)?.length ?? 0, value === undefined ? 0 : 1);
+				if (inner instanceof UnhydratedFlexTreeNode) {
+					assert.equal(inner.allFieldsLazy.size, value === undefined ? 0 : 1);
+				}
+				observedValues.push(value);
+			});
+			map.set(key, 1);
+			map.delete(key);
+			map.set(key, 2);
+			unsubscribe();
+			assert.deepEqual(observedValues, [1, undefined, 2]);
+		});
+
 		describe("forEach", () => {
 			it("non-leaf children", () => {
 				class Child extends schemaFactory.map("child", schemaFactory.number) {}
 				class Schema extends schemaFactory.map("x", Child) {}
 				const node = init(Schema, new Map([["a", new Map()]]));
 				const log: string[] = [];
-				for (const [key, child] of node) {
-					isTreeNode(child);
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing the map API.
+				node.forEach((child, key, map) => {
+					assert(isTreeNode(child));
 					assert.equal(child, node.get("a"));
 					assert(Tree.is(child, Child));
+					assert.equal(map, node);
 					log.push(key);
-				}
+				});
 				assert.deepEqual(log, ["a"]);
 			});
 
@@ -67,6 +144,45 @@ describeHydration(
 				node.forEach(callback, thisArg);
 				assert.deepEqual(log, ["b"]);
 			});
+		});
+
+		it("observes only the requested field during unboxed reads", () => {
+			class Values extends schemaFactory.map("observed-fields", [
+				schemaFactory.number,
+				schemaFactory.boolean,
+				schemaFactory.string,
+				schemaFactory.null,
+			]) {}
+			const map = init(Values, { zero: 0, false: false, empty: "", null: null });
+			const inner = getInnerNode(map);
+			const expected = [
+				["zero", 0],
+				["false", false],
+				["empty", ""],
+				["null", null],
+				["missing", undefined],
+			] as const;
+			const observedKeys: FieldKey[] = [];
+			withObservation(
+				{
+					observeNodeDeep: () => assert.fail("Unexpected deep observation"),
+					observeNodeFields: () => assert.fail("Unexpected fields observation"),
+					observeParentOf: () => assert.fail("Unexpected parent observation"),
+					observeNodeField: (node, key) => {
+						assert.equal(node, inner);
+						observedKeys.push(key);
+					},
+				},
+				() => {
+					for (const [key, value] of expected) {
+						assert.equal(map.get(key), value);
+					}
+				},
+			);
+			assert.deepEqual(
+				observedKeys,
+				expected.map(([key]) => key),
+			);
 		});
 
 		describe("prototype", () => {
@@ -337,6 +453,38 @@ describeHydration(
 		});
 	},
 	() => {
+		describe("unhydrated forEach callback mutations", () => {
+			class Values extends schemaFactory.map("forEach-mutations", schemaFactory.number) {}
+
+			it("skips deleted entries and visits entries added by a callback", () => {
+				const map = new Values({ a: 1, b: 2 });
+				const visited: [string, number][] = [];
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing mutation during forEach.
+				map.forEach((value, key) => {
+					visited.push([key, value]);
+					if (key === "a") {
+						map.delete("b");
+						map.set("c", 3);
+					}
+				});
+				assert.deepEqual(visited, [
+					["a", 1],
+					["c", 3],
+				]);
+			});
+
+			it("stops visiting entries after a callback clears the map", () => {
+				const map = new Values({ a: 1, b: 2 });
+				const visited: [string, number][] = [];
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing mutation during forEach.
+				map.forEach((value, key) => {
+					visited.push([key, value]);
+					asAlpha(map).clear();
+				});
+				assert.deepEqual(visited, [["a", 1]]);
+			});
+		});
+
 		it("explicit construction", () => {
 			class Schema extends schemaFactory.map("x", schemaFactory.number) {}
 			const data = [["x", 5]] as const;

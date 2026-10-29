@@ -10,15 +10,14 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import {
 	isTreeValue,
-	type FlexibleNodeContent,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
-	type OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
 import {
 	brand,
 	count,
 	isReadonlyArray,
+	mapIterable,
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
@@ -56,7 +55,7 @@ import {
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
@@ -322,28 +321,19 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getInnerNode(this);
 	}
 
-	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
-		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
-		return field.editor;
-	}
-
 	public delete(key: string): void {
-		const field = this.innerNode.getBoxed(brand(key));
-		this.editor(key).set(undefined, field.length === 0);
+		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
+		field.editor.set(undefined, field.length === 0);
 	}
 	public *entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = this.innerNode;
 		for (const key of node.keys()) {
-			yield [
-				key,
-				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
-			];
+			yield [key, getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
-		const field = node.getBoxed(brand(key));
-		return tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getTreeNodeForField(node, brand(key)) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -370,9 +360,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			innerSchema.mapFields,
 		);
 
-		const field = node.getBoxed(brand(key));
-
-		this.editor(key).set(mapTree, field.length === 0);
+		const field = node.getBoxed(brand(key)) as FlexTreeOptionalField;
+		field.editor.set(mapTree, field.length === 0);
 		return this;
 	}
 	public getOrInsert(
@@ -410,9 +399,12 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getInnerNode(this)) {
-			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
-			callbackFn.call(thisArg, node, field.key, this);
+		const node = getInnerNode(this);
+		// Preserve live unhydrated traversal without allocating hydrated field wrappers.
+		const keys = node.isHydrated() ? node.keys() : mapIterable(node.fields, ([key]) => key);
+		for (const key of keys) {
+			const value = getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>;
+			callbackFn.call(thisArg, value, key, this);
 		}
 	}
 	public clear(): void {

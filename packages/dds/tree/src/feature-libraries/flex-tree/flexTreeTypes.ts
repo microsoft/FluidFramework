@@ -170,8 +170,20 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
 	 * All fields implicitly exist, so `getBoxed` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content if allowed by the field kind.
 	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate a field in the empty case.
+	 * Repeated calls need not return the same wrapper, particularly for empty map and record fields.
+	 * Retained wrappers continue to refer to the same field after its contents change, subject to the owning node's lifetime.
 	 */
 	getBoxed(key: FieldKey): FlexTreeField;
+
+	/**
+	 * Gets the first child of a field, unboxing leaf nodes, without creating a field wrapper.
+	 * Returns undefined if the field is empty.
+	 * @param key - The field to read.
+	 * @remarks
+	 * Observes the field's contents, including when the field is empty.
+	 * Non-leaf children are returned as FlexTree nodes and may require creating a node wrapper.
+	 */
+	getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined;
 
 	/**
 	 * The field this tree is in, and the index within that field.

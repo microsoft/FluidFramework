@@ -6,14 +6,30 @@
 import {
 	type AnchorNode,
 	type DetachedField,
+	MapNodeStoredSchema,
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
 	type SchemaAndPolicy,
+	type TreeNodeStoredSchema,
 } from "../../core/index.js";
+import { FieldKinds } from "../default-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
 import { TreeStatus } from "./flexTreeTypes.js";
+
+/**
+ * Identifies optional map schemas, used by map and record nodes.
+ */
+export function isOptionalMapSchema(
+	schema: TreeNodeStoredSchema,
+): schema is MapNodeStoredSchema {
+	return (
+		schema instanceof MapNodeStoredSchema &&
+		schema.mapFields.kind === FieldKinds.optional.identifier
+	);
+}
+
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
  * @param detachedField - the detached field you want to check.
