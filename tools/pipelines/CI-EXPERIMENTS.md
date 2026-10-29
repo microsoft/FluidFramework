@@ -29,15 +29,32 @@ Sum agent-job durations separately from elapsed time.
 
 | Experiment | Source commit | Run | Status | Result |
 | --- | --- | --- | --- | --- |
-| Baseline: existing shared-build pipeline | `55e7036e05fa21e65b9c5dfa9f6c7440c43deb72` | [430658](https://dev.azure.com/fluidframework/public/_build/results?buildId=430658) | Running | Build job completed in 18m 17s; tests still running |
+| Baseline: existing shared-build pipeline | `55e7036e05fa21e65b9c5dfa9f6c7440c43deb72` | [430658](https://dev.azure.com/fluidframework/public/_build/results?buildId=430658) | Passed | Queue-to-finish 33m 28s |
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
-| E1: shallow, tag-free client checkout | Pending | Pending | Preparing | Preserve the shared-build architecture to isolate checkout effects |
+| E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | Pending | Pushed | Preserve the shared-build architecture to isolate checkout effects |
+| E2: independent verification builds | Pending | Pending | Preparing | Start verification immediately; preserve the comprehensive build job |
 
 ### Baseline observations
 
 The client pipeline is a single pipeline with policy, build, and verification stages.
 Verification waits for the entire build stage, including packaging, artifact processing, and security scans.
 The separate repository policy pipeline is not the critical path.
+Baseline test results: 48,660 total, 45,426 passed, 3,234 not executed, no failures, across 135 result runs.
+The baseline source merge commit was `09e38c8fd2850b513e8f3b9b92d9b95eacbc7a0f`.
+
+| Job | Duration |
+| --- | ---: |
+| Build | 18m 17s |
+| Client policy checks | 6m 29s |
+| Mocha plus local service | 12m 59s |
+| Tinylicious service | 13m 34s |
+| Playwright | 6m 04s |
+| AreTheTypesWrong | 4m 00s |
+| Tinylicious stress | 5m 23s |
+
+Verification starts about 19 minutes after queueing.
+Some verification jobs start nearly four minutes later than others, so agent availability must be included in the comparison.
+The Mocha test step takes 7m 02s, local service 2m 06s, and Tinylicious service 10m 19s.
 
 Selected build-job task durations:
 
@@ -71,6 +88,20 @@ Release checkout defaults remain unchanged.
 Version generation reads tags but only uses them for release collision detection and latest-release classification.
 The experiment is restricted to pull requests, which do not publish releases.
 Remote CI must still confirm that versioning, packaging, and checks succeed.
+
+### E2: independent verification
+
+Enable `independentTestBuilds` only for pull requests.
+Verification checks out the same `Build.SourceVersion` merge commit but no longer waits for the build stage or downloads its archive.
+Each verification job compiles through the existing `compile` task graph, with worker reuse.
+Playwright also builds browser bundles.
+Keep all original test commands and reporting.
+
+This first experiment deliberately compiles more than each individual suite needs.
+It isolates the stage dependency and artifact reuse decision before introducing targeted compilation.
+The original comprehensive build still validates lint, API reports, type tests, documentation, package generation, bundles, packaging, and scans.
+No validation is removed or moved to an optional check.
+Test builds use checked-in package versions rather than the build job's generated prerelease versions; packaging and version generation are still exercised in the original build.
 
 ## Validation ownership
 
@@ -109,6 +140,7 @@ Any later relocation must name its replacement before removing the old invocatio
 ## Limitations
 
 No measured improvement is claimed yet.
-The baseline is still running.
+The baseline passed; E1 has been pushed.
 Pipeline queue contention and caches can dominate small improvements.
-Public logs expose timings, but repository-level required-check configuration may require additional permissions to inspect.
+The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
+Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.

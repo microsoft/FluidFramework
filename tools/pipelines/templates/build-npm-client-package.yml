@@ -48,6 +48,10 @@ parameters:
 - name: coverageTests
   type: object
 
+- name: independentTestBuilds
+  type: boolean
+  default: false
+
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -597,8 +601,11 @@ extends:
       # Verification Stage
       - stage: verification
         displayName: Verification
-        dependsOn:
-          - build
+        ${{ if parameters.independentTestBuilds }}:
+          dependsOn: []
+        ${{ else }}:
+          dependsOn:
+            - build
         jobs:
           - job: Coverage_tests
             displayName: "Coverage tests"
@@ -616,7 +623,10 @@ extends:
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
               - name: COMMIT_SHA
-                value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                ${{ if parameters.independentTestBuilds }}:
+                  value: $(Build.SourceVersion)
+                ${{ else }}:
+                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
             steps:
               # Setup
@@ -662,15 +672,20 @@ extends:
                   # This shares the store with the client installs (above).
                   pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
 
-              - task: DownloadPipelineArtifact@2
-                inputs:
-                  artifact: build_output_archive
-                  targetPath: $(Build.StagingDirectory)
+              - ${{ if parameters.independentTestBuilds }}:
+                - template: /tools/pipelines/templates/include-client-test-build.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
+              - ${{ else }}:
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
 
-              - script: |
-                  echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                displayName: Extract Build Output Contents
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
@@ -795,7 +810,10 @@ extends:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: COMMIT_SHA
-                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                  ${{ if parameters.independentTestBuilds }}:
+                    value: $(Build.SourceVersion)
+                  ${{ else }}:
+                    value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -827,15 +845,21 @@ extends:
                     # cache key ensures a cache miss whenever the set of compat packages changes.
                     additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
 
-                - task: DownloadPipelineArtifact@2
-                  inputs:
-                    artifact: build_output_archive
-                    targetPath: $(Build.StagingDirectory)
+                - ${{ if parameters.independentTestBuilds }}:
+                  - template: /tools/pipelines/templates/include-client-test-build.yml@self
+                    parameters:
+                      buildDirectory: ${{ parameters.buildDirectory }}
+                      webpack: ${{ eq(test.jobName, 'PlaywrightTest') }}
+                - ${{ else }}:
+                  - task: DownloadPipelineArtifact@2
+                    inputs:
+                      artifact: build_output_archive
+                      targetPath: $(Build.StagingDirectory)
 
-                - script: |
-                    echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                  displayName: Extract Build Output Contents
+                  - script: |
+                      echo "Extracting build output archive contents..."
+                      tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                    displayName: Extract Build Output Contents
 
                 # Test
 

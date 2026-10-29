@@ -1,0 +1,32 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+- name: webpack
+  type: boolean
+  default: false
+
+steps:
+- task: Bash@3
+  displayName: Compile test prerequisites
+  env:
+    FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
+    BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      pnpm exec fluid-build --task compile --worker
+
+- ${{ if parameters.webpack }}:
+  - task: Bash@3
+    displayName: Build browser test bundles
+    inputs:
+      targetType: inline
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      script: |
+        set -eu -o pipefail
+        pnpm run webpack
