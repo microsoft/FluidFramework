@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import {
 	makeChangeAtomId,
 	offsetChangeAtomId,
@@ -82,53 +81,14 @@ export function filterEdits(
 		),
 	);
 
-	// XXX: Handle outputDetachLocations.
-	const filteredRoots = newRootTable();
-	for (const {
-		start: oldIdFirst,
-		value: newIdFirst,
-		length,
-	} of change.rootNodes.oldToNewId.entries()) {
-		let remainingLength = length;
-		let oldId = oldIdFirst;
-		let newId = newIdFirst;
-		while (remainingLength > 0) {
-			let countProcessed = remainingLength;
-			const filterResult = filterRename(oldId, newId, countProcessed);
-			countProcessed = filterResult.length;
-
-			if (filterResult.value === EditFilterStatus.Preserve) {
-				const detachLocationEntry = change.rootNodes.detachLocations.getFirst(
-					oldId,
-					countProcessed,
-				);
-
-				countProcessed = detachLocationEntry.length;
-				addNodeRename(filteredRoots, oldId, newId, countProcessed, detachLocationEntry.value);
-			}
-
-			oldId = offsetChangeAtomId(oldId, countProcessed);
-			newId = offsetChangeAtomId(newId, countProcessed);
-			remainingLength -= countProcessed;
-		}
-	}
-
-	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
-		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
-		setInChangeAtomIdMap(filteredRoots.nodeChanges, rootId, nodeId);
-
-		const detachLocation = change.rootNodes.detachLocations.getFirst(rootId, 1).value;
-		if (detachLocation !== undefined) {
-			filteredRoots.detachLocations.set(rootId, 1, detachLocation);
-		}
-	}
-
+	const filteredRoots = filterRoots(change, filterRename);
 	adjustmentPass?.(
 		filteredFieldChanges,
 		filteredRoots,
 		filteredNodeChanges,
 		change.nodeAliases,
 	);
+
 	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
 		makeChangesetInversions(
 			filteredFieldChanges,
@@ -176,4 +136,59 @@ function filterNodeEdits(
 		...change,
 		fieldChanges: filterFieldMapEdits(change.fieldChanges, nodeId, filterFieldEdits),
 	};
+}
+
+/**
+ * Returns a filtered version of the RootNodeTable for `change`.
+ * Note that output detach locations are currently always dropped during filtering.
+ */
+function filterRoots(
+	change: ModularChangeset,
+	filterRename: (
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<EditFilterStatus>,
+): RootNodeTable {
+	const filteredRoots = newRootTable();
+	for (const {
+		start: oldIdFirst,
+		value: newIdFirst,
+		length,
+	} of change.rootNodes.oldToNewId.entries()) {
+		let remainingLength = length;
+		let oldId = oldIdFirst;
+		let newId = newIdFirst;
+		while (remainingLength > 0) {
+			let countProcessed = remainingLength;
+			const filterResult = filterRename(oldId, newId, countProcessed);
+			countProcessed = filterResult.length;
+
+			if (filterResult.value === EditFilterStatus.Preserve) {
+				const detachLocationEntry = change.rootNodes.detachLocations.getFirst(
+					oldId,
+					countProcessed,
+				);
+
+				countProcessed = detachLocationEntry.length;
+				addNodeRename(filteredRoots, oldId, newId, countProcessed, detachLocationEntry.value);
+			}
+
+			oldId = offsetChangeAtomId(oldId, countProcessed);
+			newId = offsetChangeAtomId(newId, countProcessed);
+			remainingLength -= countProcessed;
+		}
+	}
+
+	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
+		setInChangeAtomIdMap(filteredRoots.nodeChanges, rootId, nodeId);
+
+		const detachLocation = change.rootNodes.detachLocations.getFirst(rootId, 1).value;
+		if (detachLocation !== undefined) {
+			filteredRoots.detachLocations.set(rootId, 1, detachLocation);
+		}
+	}
+
+	return filteredRoots;
 }
