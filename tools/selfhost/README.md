@@ -32,25 +32,47 @@ Work through these in order. Each folder has its own README with the detail.
 | 4 | **Verify it works** — two real Fluid clients collaborating end to end | [deploy-validate/](./deploy-validate/README.md) |
 | 5 | **Create your own tenants** — the deployment starts with one default tenant | [tenant-admin/](./tenant-admin/README.md) |
 | 6 | **Issue client tokens** — optional reference implementation, or bring your own | [token-service/](./token-service/README.md) |
+| 7 | **Migrate existing Azure Fluid Relay documents** — optional; inventories selected tenants, creates destination tenants, and copies reviewed documents | [copy-data/](./copy-data/README.md) |
 
-Steps 1–4 get you a running, verified deployment. Steps 5–6 are what you need before real users.
+Steps 1–4 get you a running, verified deployment.
+For new applications, continue with steps 5–6.
+For migration, step 7 creates missing destination tenants, so you do not need to create those same tenants manually in step 5.
+Configure a token backend before admitting real users.
 
-Once step 1 is done, `release/create-and-deploy-release.sh` runs steps 2 and 3 as a single command
-if you would rather not do them separately. It needs the `FLUID_DIR` environment variable set (see
-below) and a tag or a real commit SHA rather than a branch name — two ways to get one:
+### Recommended build and deployment command
+
+After step 1, use `release/create-and-deploy-release.sh` to complete steps 2 and 3 together.
+Run the following from `tools/selfhost`.
+Set `fluidRepoDir` in your parameters file to a **separate, clean Fluid Framework checkout outside this repository**.
+The scripts check out the release's pinned commit there; do not use a checkout with your own work.
+The combined command defaults `FLUID_DIR` to `fluidRepoDir`; an explicit `FLUID_DIR` overrides the build checkout.
+
+Select a reviewed tag or full commit SHA, not a branch name:
 
 - **Use an existing release tag** — search [the release list](https://github.com/microsoft/FluidFramework/releases?page=1)
   for one (for example, `server_v7.0.1`).
 - **Resolve a SHA from a branch** with `git rev-parse`, e.g. `git rev-parse origin/main`.
 
-Also sign in to the build registry first: this step pushes freshly built images, and an expired ACR
-login is a common cause of a failed push partway through the build.
+```bash
+./release/create-and-deploy-release.sh <tag-or-sha> <release-id>
+```
+
+For example, `<release-id>` can be `r0.1.0`; it names an immutable local bundle.
+The command checks your configuration before building, creates/reuses and logs into the build ACR, generates the bundle, and runs deployment with its own preflight checks.
+Deployment creates/reuses and logs into the deploy ACR.
+You do **not** need to log into registries that do not exist yet.
+You do not need to run preflight separately.
+
+If a complete bundle was generated but deployment failed, fix the configuration and reuse it without rebuilding:
 
 ```bash
-az acr login -n <buildAcr.name from your parameters file>
-FLUID_DIR=/path/to/your/FluidFramework/clone ACR_LOGIN_SERVER=<buildAcr.name>.azurecr.io \
-  ./release/create-and-deploy-release.sh <tag-or-sha> <release-id>
+./release/create-and-deploy-release.sh r0.1.0 --skip-build
 ```
+
+If generation itself failed, its temporary local artifacts are removed; retry the original command with the same release ID.
+Only use `--skip-preflight` deliberately after validating your configuration; it bypasses cloud checks, not local input validation.
+For advanced use of an existing build registry, set `ACR_LOGIN_SERVER` and authenticate to that registry yourself.
+See [registry authentication](./release/README.md#registry-authentication) for Docker Hub credentials, which are separate from ACR authentication.
 
 ## What each folder is
 
@@ -60,10 +82,10 @@ image digests, so the same bundle always deploys the same thing. `azure/deploy.s
 without one.
 
 Both this step and the deployment build from a local [FluidFramework](https://github.com/microsoft/FluidFramework)
-clone, which you provide. Use one clone for both, but note they reference it differently: the
-release scripts read the `FLUID_DIR` environment variable, while the deployment reads
-`fluidRepoDir` from the parameters file. Point both at the same directory, and use a clone you are
-happy to have checked out to an arbitrary commit.
+clone, which you provide.
+The combined command defaults its build checkout to `fluidRepoDir`; standalone release scripts require `FLUID_DIR` when building.
+The deployment reads `fluidRepoDir` from the parameters file.
+Point these at a separate clone that can be checked out to the pinned commit.
 
 **[azure/](./azure/README.md)** — The deployment itself. One JSON parameters file holds everything
 you customize; `deploy.sh` creates the resource group, network, registries, AKS cluster, Key Vault,
