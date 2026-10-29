@@ -32,6 +32,7 @@ import {
 	Multiplicity,
 	type FieldUpPath,
 	type RevisionInfo,
+	RebaseValidation,
 } from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
@@ -1443,6 +1444,36 @@ describe("ModularChangeFamily", () => {
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};
+		for (const version of family.codecs.getSupportedFormats()) {
+			describe(`revision metadata in version ${version}`, () => {
+				const jsonCodec = family.codecs.resolve(version);
+
+				it("preserves multiple revisions and rollback metadata without a context revision", () => {
+					const revisions: RevisionInfo[] = [
+						{ revision: tag1 },
+						{ revision: tag2, rollbackOf: tag1 },
+						{ revision: tag3 },
+					];
+					const change: ModularChangeset = { ...rootChange1a, revisions };
+					const untaggedContext: ChangeEncodingContext = { ...context, revision: undefined };
+					const encoded = jsonCodec.encode(change, untaggedContext);
+					const decoded = jsonCodec.decode(encoded, untaggedContext);
+					assert.deepEqual(decoded.revisions, revisions);
+					assertEquivalent(decoded, change);
+				});
+
+				it("encodes a revisionless changeset with cheap validation and decodes the context revision", () => {
+					RebaseValidation.runWithLevel(RebaseValidation.Level.Cheap, () => {
+						const change: ModularChangeset = { ...rootChange1a, revisions: undefined };
+						const encoded = jsonCodec.encode(change, context);
+						const decoded = jsonCodec.decode(encoded, context);
+						assert.deepEqual(decoded.revisions, [{ revision: tag1 }]);
+						assertEquivalent(decoded, { ...change, revisions: [{ revision: tag1 }] });
+					});
+				});
+			});
+		}
+
 		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV1,
