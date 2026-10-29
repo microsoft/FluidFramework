@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
+	unbrand,
 } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
@@ -104,21 +107,21 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 
 function doesVersionSupportCustomMetadata(version: EditManagerFormatVersion): boolean {
 	switch (version) {
-		case undefined:
-		case EditManagerFormatVersion.v1:
-		case EditManagerFormatVersion.v2:
-		case EditManagerFormatVersion.v3:
-		case EditManagerFormatVersion.v4:
-		case EditManagerFormatVersion.v6: {
+		case unbrand(EditManagerFormatVersion.v1):
+		case unbrand(EditManagerFormatVersion.v2):
+		case unbrand(EditManagerFormatVersion.v3):
+		case unbrand(EditManagerFormatVersion.v4):
+		case unbrand(EditManagerFormatVersion.v5):
+		case unbrand(EditManagerFormatVersion.v6): {
 			return false;
 		}
-		case EditManagerFormatVersion.v7:
-		case EditManagerFormatVersion.vSharedBranches:
-		case EditManagerFormatVersion.vDetachedRoots: {
+		case unbrand(EditManagerFormatVersion.v7):
+		case unbrand(EditManagerFormatVersion.vSharedBranches):
+		case unbrand(EditManagerFormatVersion.vDetachedRoots): {
 			return true;
 		}
 		default: {
-			throw new Error("XXX"); // unreachableCase(version);
+			unreachableCase(version);
 		}
 	}
 }

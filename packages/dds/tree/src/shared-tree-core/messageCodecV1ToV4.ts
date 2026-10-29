@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -16,6 +16,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	type Mutable,
+	unbrand,
 } from "../util/index.js";
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
@@ -115,21 +116,22 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 
 function doesVersionSupportCustomMetadata(version: MessageFormatVersion): boolean {
 	switch (version) {
-		case undefined:
-		case MessageFormatVersion.v1:
-		case MessageFormatVersion.v2:
-		case MessageFormatVersion.v3:
-		case MessageFormatVersion.v4:
-		case MessageFormatVersion.v6: {
+		case unbrand(MessageFormatVersion.undefined):
+		case unbrand(MessageFormatVersion.v1):
+		case unbrand(MessageFormatVersion.v2):
+		case unbrand(MessageFormatVersion.v3):
+		case unbrand(MessageFormatVersion.v4):
+		case unbrand(MessageFormatVersion.v5):
+		case unbrand(MessageFormatVersion.v6): {
 			return false;
 		}
-		case MessageFormatVersion.v7:
-		case MessageFormatVersion.vSharedBranches:
-		case MessageFormatVersion.vDetachedRoots: {
+		case unbrand(MessageFormatVersion.v7):
+		case unbrand(MessageFormatVersion.vSharedBranches):
+		case unbrand(MessageFormatVersion.vDetachedRoots): {
 			return true;
 		}
 		default: {
-			throw new Error("XXX"); // unreachableCase(version);
+			unreachableCase(version);
 		}
 	}
 }
