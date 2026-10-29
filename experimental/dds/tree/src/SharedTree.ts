@@ -111,7 +111,6 @@ import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.j
 
 /**
  * Creates an experimental tree through the factory registered with the data store runtime.
- * The returned interface lets application code use the tree without the implementation class.
  *
  * @param runtime - The data store runtime that owns the tree and has a `SharedTreeFactory` registered.
  * @param id - An optional ID for the tree. If omitted, the runtime generates an ID.

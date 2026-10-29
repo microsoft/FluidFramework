@@ -10,9 +10,9 @@ Existing `SharedTree` class exports, factory results, and helper signatures rema
 The interface retains the inherited handle type and exposes the existing connection state and lifecycle methods.
 
 ```typescript
-import { createSharedTree, type ISharedTree } from "@fluid-experimental/tree";
+import { createSharedTree } from "@fluid-experimental/tree";
 
-const tree: ISharedTree = createSharedTree(runtime);
+const tree = createSharedTree(runtime);
 ```
 
 This addition prepares consumers for the replacement of the implementation class.
