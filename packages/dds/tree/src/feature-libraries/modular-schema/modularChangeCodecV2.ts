@@ -28,11 +28,7 @@ import {
 } from "./modularChangeCodecV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
-import {
-	areEquivalent,
-	fieldKindsFromConfiguration,
-	isChangesetValid,
-} from "./modularChangeUtils.js";
+import { fieldKindsFromConfiguration, isChangesetValid } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -73,13 +69,6 @@ export function makeModularChangeCodecV2(
 				chunkCompressionStrategy,
 			) as EncodedModularChangesetV2;
 			encoded.noChangeConstraint = change.noChangeConstraint;
-			cheapRebaseValidation("V2 encode output", (): true | string => {
-				const decoded = modularChangeCodec.decode(encoded, context);
-				return (
-					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
-					"does not match decode output"
-				);
-			});
 			return encoded;
 		},
 
