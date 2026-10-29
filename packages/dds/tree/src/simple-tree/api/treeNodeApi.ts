@@ -8,14 +8,9 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	EmptyKey,
-	ObjectNodeStoredSchema,
-	rootFieldKey,
-	type DeltaMark,
-} from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { brand, extractFromOpaque } from "../../util/index.js";
+import { extractFromOpaque } from "../../util/index.js";
 import {
 	getKernel,
 	isTreeNode,
@@ -195,45 +190,27 @@ export const treeNodeApi: TreeNodeApi = {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
-						// Unknown optional fields have no property key, so they are left out of `changedProperties`.
-						const changedKnownFields = nodeSchema.allowUnknownOptionalFields
-							? [...changedFields].filter((field) =>
-									nodeSchema.storedKeyToPropertyKey.has(field),
-								)
-							: changedFields;
+						// Fields unknown to the view schema have no property key, so they are reported separately by stored key.
 						const changedProperties = new Set(
 							Array.from(
-								changedKnownFields,
+								[...changedFields].filter((field) =>
+									nodeSchema.storedKeyToPropertyKey.has(field),
+								),
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
 									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
-						// Stored keys map one-to-one to property keys, so equal sizes means no unknown fields changed.
-						if (changedProperties.size === changedFields.size) {
+						const changedUnknownProperties = new Set(
+							[...changedFields].filter(
+								(field) => !nodeSchema.storedKeyToPropertyKey.has(field),
+							),
+						);
+						if (changedUnknownProperties.size === 0) {
 							listener({ changedProperties });
 							return;
 						}
-
-						// The remaining fields are unknown optional fields, which are reported by stored key.
-						// Each must be an optional field in the stored schema: anything else should throw.
-						const storedSchema = kernel.context.flexContext.schema.nodeSchema.get(
-							brand(nodeSchema.identifier),
-						);
-						const changedUnknownFields = new Set(
-							Array.from(
-								[...changedFields].filter(
-									(field) => !nodeSchema.storedKeyToPropertyKey.has(field),
-								),
-								(field) =>
-									storedSchema instanceof ObjectNodeStoredSchema &&
-									storedSchema.objectNodeFields.get(field)?.kind ===
-										FieldKinds.optional.identifier
-										? field
-										: fail("Unknown field must be an optional field in the stored schema"),
-							),
-						);
-						listener({ changedProperties, changedUnknownFields });
+						listener({ changedProperties, changedUnknownProperties });
 					});
 				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {

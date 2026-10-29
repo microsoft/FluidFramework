@@ -69,6 +69,7 @@ import {
 	type TreeChangeEvents,
 	type TreeLeafValue,
 	type TreeNode,
+	type TreeView,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
 	type UnsafeUnknownSchema,
@@ -2212,11 +2213,30 @@ describe("treeNodeApi", () => {
 					{ known: factoryOld.optional(factoryOld.string) },
 					{ allowUnknownOptionalFields: true },
 				) {}
+
+				/**
+				 * Two clients sharing the same document, one with each schema.
+				 */
+				interface Clients {
+					/**
+					 * Provider for both clients. Call `synchronizeMessages` to deliver edits between them.
+					 */
+					readonly provider: TestTreeProviderLite;
+					/**
+					 * View of the client with the newer schema. Edits to `extra` are made through this view.
+					 */
+					readonly viewNew: TreeView<typeof PersonNew>;
+					/**
+					 * Data of each `nodeChanged` event on the root of the client with the older schema, in order.
+					 */
+					readonly events: readonly unknown[];
+				}
+
 				/**
 				 * Creates a client with the newer schema and a client with the older schema, sharing the same document.
 				 * Records the `nodeChanged` events on the older client's root.
 				 */
-				function setup() {
+				function setup(): Clients {
 					const provider = new TestTreeProviderLite(2);
 					const viewNew = provider.trees[0].viewWith(
 						new TreeViewConfiguration({ schema: PersonNew }),
@@ -2231,14 +2251,14 @@ describe("treeNodeApi", () => {
 					return { provider, viewNew, events };
 				}
 
-				it("nodeChanged reports only unknown optional fields by stored key", () => {
+				it("nodeChanged reports only unknown optional fields", () => {
 					const { provider, viewNew, events } = setup();
 
 					viewNew.root.extra = "x";
 					provider.synchronizeMessages();
 
 					assert.deepEqual(events, [
-						{ changedProperties: new Set(), changedUnknownFields: new Set(["extraKey"]) },
+						{ changedProperties: new Set(), changedUnknownProperties: new Set(["extraKey"]) },
 					]);
 				});
 
@@ -2254,7 +2274,7 @@ describe("treeNodeApi", () => {
 					assert.deepEqual(events, [
 						{
 							changedProperties: new Set(["known"]),
-							changedUnknownFields: new Set(["extraKey"]),
+							changedUnknownProperties: new Set(["extraKey"]),
 						},
 					]);
 				});

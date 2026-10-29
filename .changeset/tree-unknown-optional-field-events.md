@@ -10,13 +10,13 @@ This also affected `TreeAlpha.trackObservations`, `TreeAlpha.trackObservationsOn
 
 Now `nodeChanged` is emitted for these changes.
 Unknown optional fields have no property, so they are not included in `changedProperties`.
-Instead, the new `changedUnknownFields` property of the event data lists their stored keys.
+Instead, the new `changedUnknownProperties` property of the event data lists their stored keys.
 If only unknown optional fields changed, `changedProperties` is empty.
 
 ```typescript
-TreeBeta.on(node, "nodeChanged", ({ changedProperties, changedUnknownFields }) => {
+TreeBeta.on(node, "nodeChanged", ({ changedProperties, changedUnknownProperties }) => {
 	// changedProperties: property keys of known fields that changed.
-	// changedUnknownFields: stored keys of unknown optional fields that changed, or undefined if none changed.
+	// changedUnknownProperties: stored keys of unknown optional fields that changed, or undefined if none changed.
 });
 ```
 
