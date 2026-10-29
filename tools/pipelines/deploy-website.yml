@@ -218,11 +218,10 @@ stages:
           inputs:
             ArtifactType: M365
 
-        - task: AssetRetention@5
+        - task: AssetRetention@6
           displayName: Guardian Asset Retention
           condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
           inputs:
-            ArrowServiceConnection: 'ff-internal-arrow-sc'
             AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
             AssetNumber: '$(Build.BuildId)'
             IsShipped: false # based on value of arrow.releasedtoproduction variable
