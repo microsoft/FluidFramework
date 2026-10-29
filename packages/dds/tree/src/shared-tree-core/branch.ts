@@ -124,19 +124,6 @@ export interface BranchTrimmingEvents {
 }
 
 /**
- * Count bookkeeping for branches whose ancestry is trimmed together.
- * @remarks
- * Branches share a reference to the same trim state, allowing implicit updating to all of their commit counts without O(branch count) updates.
- */
-export interface BranchTrimState {
-	/**
-	 * The cumulative number of commits trimmed from the shared ancestry.
-	 * @remarks The owner must update this before emitting any notifications.
-	 */
-	readonly trimmedCommitCount: number;
-}
-
-/**
  * A branch of changes that can be applied to a SharedTree.
  * @remarks
  * A `SharedTreeBranch` tracks a linear history of commits terminating at a {@link SharedTreeBranch.getHead | head} commit,
@@ -162,11 +149,6 @@ export class SharedTreeBranch<
 	public readonly editor: TEditor;
 	private disposed = false;
 	/**
-	 * The cached commit count before subtracting {@link BranchTrimState.trimmedCommitCount}.
-	 * @remarks `undefined` until the count is first requested or inherited from a fork's parent.
-	 */
-	private logicalCommitCount?: number;
-	/**
 	 * The event source that notifies this branch when its ancestry is trimmed.
 	 * See {@link BranchTrimmingEvents} for details on trimming.
 	 * Set through {@link SharedTreeBranch.trimmer} and cleared when this branch is disposed.
@@ -178,14 +160,12 @@ export class SharedTreeBranch<
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
-	 * @param trimState - shared count of commits trimmed from this branch's ancestry.
 	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly trimState: BranchTrimState,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
@@ -220,19 +200,11 @@ export class SharedTreeBranch<
 
 	/**
 	 * Sets the head of this branch.
-	 * @param head - the new head.
-	 * @param commitCountDelta - the difference in commit count between the new and old heads.
 	 * @remarks This is a "manual override" of sorts, for when the branch needs to be set to a certain state without going through the usual flow of edits.
 	 * This might be necessary as a performance optimization, or to prevent parts of the system updating incorrectly (this method emits no change events!).
 	 */
-	public setHead(head: GraphCommit<TChange>, commitCountDelta: number): void {
+	public setHead(head: GraphCommit<TChange>): void {
 		this.assertNotDisposed();
-		if (head === this.head) {
-			return;
-		}
-		if (this.logicalCommitCount !== undefined) {
-			this.logicalCommitCount += commitCountDelta;
-		}
 		this.head = head;
 	}
 
@@ -268,7 +240,7 @@ export class SharedTreeBranch<
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(newHead, 1);
+		this.head = newHead;
 		this.#events.emit("afterChange", changeEvent);
 	}
 
@@ -291,24 +263,20 @@ export class SharedTreeBranch<
 	 * Gets the number of commits in this branch.
 	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
 	 * @remarks
-	 * The first call has linear complexity in the number of commits in the branch and subsequent calls are O(1)
-	 * Cannot be called after this branch is disposed.
+	 * This method has linear complexity in the number of commits in the branch.
+	 * See {@link BranchCommitCounter} for a cached version.
 	 */
 	public getCommitCount(): number {
-		this.assertNotDisposed();
-		const trimmedCommitCount = this.trimState.trimmedCommitCount;
-		if (this.logicalCommitCount === undefined) {
-			let count = -1; // Exclude the sentinel commit at the root.
-			for (
-				let commit: GraphCommit<TChange> | undefined = this.head;
-				commit !== undefined;
-				commit = commit.parent
-			) {
-				count++;
-			}
-			this.logicalCommitCount = count + trimmedCommitCount;
+		let count = 0;
+		for (
+			let commit: GraphCommit<TChange> | undefined = this.head;
+			commit !== undefined;
+			commit = commit.parent
+		) {
+			count++;
 		}
-		return this.logicalCommitCount - trimmedCommitCount;
+		// Exclude the sentinel commit that serves as the base to all branches.
+		return count - 1;
 	}
 
 	/**
@@ -323,15 +291,7 @@ export class SharedTreeBranch<
 		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
 	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(
-			commit,
-			this.changeFamily,
-			mintRevisionTag,
-			this.trimState,
-		);
-		if (commit === this.head) {
-			fork.logicalCommitCount = this.logicalCommitCount;
-		}
+		const fork = new SharedTreeBranch(commit, this.changeFamily, mintRevisionTag);
 		fork.trimmer = this.branchTrimmer;
 		this.#events.emit("fork", fork);
 		return fork;
@@ -374,7 +334,7 @@ export class SharedTreeBranch<
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(newSourceHead, newCommits.length - deletedSourceCommits.length);
+		this.head = newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
 	}
 
@@ -411,7 +371,7 @@ export class SharedTreeBranch<
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(commit, -removedCommits.length);
+		this.head = commit;
 		this.#events.emit("afterChange", changeEvent);
 	}
 
@@ -452,7 +412,7 @@ export class SharedTreeBranch<
 		);
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(rebaseResult.newSourceHead, sourceCommits.length);
+		this.head = rebaseResult.newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
 		return { sourceCommits };
 	}
@@ -482,11 +442,10 @@ export class SharedTreeBranch<
 	}
 
 	/**
-	 * Dispose this branch, preventing further mutations and commit count reads.
+	 * Dispose this branch, freezing its state.
 	 *
 	 * @remarks
 	 * Attempts to further mutate the branch will error.
-	 * Shared ancestry may still be trimmed after disposal.
 	 * Any transactions in progress will be aborted.
 	 * Calling dispose more than once has no effect.
 	 */

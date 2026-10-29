@@ -30,7 +30,6 @@ import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js"
 
 import {
 	SharedTreeBranch,
-	type BranchTrimState,
 	type BranchTrimmingEvents,
 	onForkTransitive,
 	type BranchId,
@@ -78,8 +77,7 @@ export class EditManager<
 	TChangeset,
 	TChangeProcessingContext = never,
 > {
-	private readonly trimmer = createEmitter<BranchTrimmingEvents>();
-	private readonly trimState = { trimmedCommitCount: 0 };
+	private readonly _events = createEmitter<BranchTrimmingEvents>();
 
 	private readonly sharedBranches = new Map<
 		BranchId,
@@ -162,10 +160,9 @@ export class EditManager<
 			this.trunkBase,
 			changeFamily,
 			mintRevisionTag,
-			this.trimState,
 			this.telemetryEventBatcher,
 		);
-		mainTrunk.trimmer = this.trimmer;
+		mainTrunk.trimmer = this._events;
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
 	}
@@ -464,9 +461,8 @@ export class EditManager<
 		delete newTrunkBase.parent;
 		newTrunkBase.wasTrimmed = true;
 		this.trunkBase = newTrunkBase;
-		this.trimState.trimmedCommitCount += trimmedRevisions.length;
 
-		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
+		this._events.emit("ancestryTrimmed", trimmedRevisions);
 	}
 
 	public isEmpty(): boolean {
@@ -523,15 +519,12 @@ export class EditManager<
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
-				const baseCommit =
-					trunkRevisionCache.get(branchData.base ?? rootRevision) ??
-					fail("Expected summary branch base to be in trunk cache");
 				const branch = this.createSharedBranch(
 					branchId,
 					branchData.name,
 					branchData.session,
 					mainBranch,
-					mainBranch.trunk.fork(baseCommit),
+					mainBranch.trunk.fork(),
 				);
 				branch.loadSummaryData(branchData, trunkRevisionCache);
 				this.addSharedBranch(branchId, branch);
@@ -668,8 +661,7 @@ export class EditManager<
 			minimumPossibleSequenceId,
 			this.changeFamily,
 			this.mintRevisionTag,
-			this.trimmer,
-			this.trimState,
+			this._events,
 			this.telemetryEventBatcher,
 		);
 
@@ -856,14 +848,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		private readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
-		private readonly trimState: BranchTrimState,
 		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
 	) {
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
-			trimState,
 			telemetryEventBatcher,
 		);
 		this.localBranch.trimmer = branchTrimmer;
@@ -936,7 +926,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
-			peerLocalBranch.setHead(this.trunk.getHead(), newCommits.length);
+			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, push the changes to the peer local branch and merge the branch into the trunk.
 			for (const newCommit of newCommits) {
@@ -981,13 +971,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			sessionId,
-			() =>
-				new SharedTreeBranch(
-					baseRevisionInTrunk,
-					this.changeFamily,
-					this.mintRevisionTag,
-					this.trimState,
-				),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 		return peerLocalBranch;
@@ -1132,7 +1116,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		graphCommit: GraphCommit<TChangeset>,
 		sessionId: SessionId,
 	): void {
-		this.trunk.setHead(graphCommit, 1);
+		this.trunk.setHead(graphCommit);
 		this.registerSequencedCommit(sequenceId, sessionId, graphCommit);
 	}
 
@@ -1272,12 +1256,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			(this.parentBranch === undefined) === (data.base === undefined),
 			0xc60 /* Expected branch base to match presence of parent branch */,
 		);
-		let trunkHead = this.trunk.getHead();
-		assert(
-			trunkHead.revision === (data.base ?? rootRevision) &&
-				this.localBranch.getHead() === trunkHead,
-			0xc61 /* Expected base revision to be in trunk cache */,
-		);
+		const parentTrunkBase =
+			trunkRevisionCache.get(data.base ?? rootRevision) ??
+			fail(0xc61 /* Expected base revision to be in trunk cache */);
+		let trunkHead = parentTrunkBase;
 		for (const c of data.trunk) {
 			const sequenceId: SequenceId =
 				c.indexInBatch === undefined
@@ -1297,9 +1279,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			trunkRevisionCache.set(c.revision, commit);
 			trunkHead = commit;
 		}
-		this.trunk.setHead(trunkHead, data.trunk.length);
+		this.trunk.setHead(trunkHead);
 
-		this.localBranch.setHead(this.trunk.getHead(), data.trunk.length);
+		this.localBranch.setHead(this.trunk.getHead());
 
 		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
@@ -1312,12 +1294,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			}
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(
-					branchHead,
-					this.changeFamily,
-					this.mintRevisionTag,
-					this.trimState,
-				),
+				new SharedTreeBranch(branchHead, this.changeFamily, this.mintRevisionTag),
 			);
 		}
 	}
