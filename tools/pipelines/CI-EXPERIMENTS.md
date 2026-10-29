@@ -26,6 +26,18 @@ Commit time is not a reliable push timestamp.
 For each agent job, include setup, post-job cache uploads, artifact scans, and reporting.
 Sum agent-job durations separately from elapsed time.
 
+For a run ID, the public data sources are:
+
+```text
+https://dev.azure.com/fluidframework/public/_apis/build/builds/{id}?api-version=7.1
+https://dev.azure.com/fluidframework/public/_apis/build/builds/{id}/timeline?api-version=7.1
+https://dev.azure.com/fluidframework/public/_apis/test/resultsummarybybuild?buildId={id}&api-version=7.1-preview.1
+```
+
+In the timeline, use `Job` records for agent-time totals and `Task` records for individual steps.
+Exclude agentless jobs without a start time; do not sum overlapping stages into elapsed time.
+Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
+
 ## Experiments
 
 | Experiment | Source commit | Run | Status | Result |
@@ -33,7 +45,8 @@ Sum agent-job durations separately from elapsed time.
 | Baseline: existing shared-build pipeline | `55e7036e05fa21e65b9c5dfa9f6c7440c43deb72` | [430658](https://dev.azure.com/fluidframework/public/_build/results?buildId=430658) | Passed | Queue-to-finish 33m 28s |
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
-| E2: independent verification builds | Implementation `2f9e0a1cac0`; report update included in triggering commit | Pending | Ready to push | Start verification immediately; preserve the comprehensive build job |
+| E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Running | Start verification immediately; preserve the comprehensive build job |
+| E3: emit-only TypeScript in test jobs | Pending | Pending | Preparing | Keep full type checking in the unchanged comprehensive build |
 
 ### Baseline observations
 
@@ -56,6 +69,7 @@ The baseline source merge commit was `09e38c8fd2850b513e8f3b9b92d9b95eacbc7a0f`.
 Verification starts about 19 minutes after queueing.
 Some verification jobs start nearly four minutes later than others, so agent availability must be included in the comparison.
 The Mocha test step takes 7m 02s, local service 2m 06s, and Tinylicious service 10m 19s.
+Total timed agent jobs: approximately 67m 44s, excluding the separate repository policy pipeline.
 
 Selected build-job task durations:
 
@@ -117,6 +131,28 @@ The original comprehensive build still validates lint, API reports, type tests, 
 No validation is removed or moved to an optional check.
 Test builds use checked-in package versions rather than the build job's generated prerelease versions; packaging and version generation are still exercised in the original build.
 
+### E3: emit-only TypeScript
+
+The client uses TypeScript 6.0.3, which supports `noCheck`.
+The shared `common/build/build-common/tsconfig.base.json` reaches 477 of 480 tracked client TypeScript configurations.
+The three remaining configurations retain normal checking.
+For this proof of concept, set `noCheck: true` in that base file only in each disposable independent-test checkout.
+Do not commit the changed base configuration or share those jobs' emitted files or `.tsbuildinfo` with the full validation build.
+The existing comprehensive build continues to type-check production code, test code, type tests, exports, and API reports normally.
+
+The initial local clean-emit comparison for SharedTree production code took 8.79 seconds with checks and 5.72 seconds without checks.
+This is a local microbenchmark, not a measured CI speedup.
+Both produced 1,576 output files.
+All JavaScript and source maps matched byte-for-byte; two declaration files differed only in inferred property ordering.
+Do not use emit-only declarations as the source for canonical API reports or release artifacts.
+Declaration inference still takes work under `noCheck`: compiler-reported emit time increased from 1.99 to 4.24 seconds even though check time fell from 5.32 to zero.
+
+The build-tool incremental option comparison does not include `noCheck`.
+Consequently, do not toggle modes within a shared build-output/cache directory and assume a subsequent checked build will revalidate.
+Separate fresh jobs are an important correctness boundary for this experiment.
+A local invalid-assignment sentinel produced no diagnostics with `noCheck`, and error TS2322 in a separate fully checked program.
+This confirms the compiler-mode behavior, not end-to-end remote validation coverage; the unchanged comprehensive CI build remains responsible for that coverage.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -150,11 +186,12 @@ Any later relocation must name its replacement before removing the old invocatio
 4. Investigate duplicate webpack work, cache upload tails, and package/archive processing if measurements justify it.
 5. Repeat the best configuration and baseline, recording cache hits and agent queueing.
 6. Exercise representative failing validation in an isolated experiment before claiming preservation has been demonstrated.
+7. Measure emit-only TypeScript in independent test jobs, with fully checked builds in the existing validation job.
 
 ## Limitations
 
 Checkout time improved; an end-to-end improvement has not yet been measured.
-The baseline passed; E1's relevant steps passed and E2 is next.
+The baseline passed; E1's relevant steps passed and E2 is running.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.

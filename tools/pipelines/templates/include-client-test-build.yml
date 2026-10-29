@@ -10,6 +10,27 @@ parameters:
 
 steps:
 - task: Bash@3
+  displayName: Use emit-only TypeScript in isolated test job
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      # Only this disposable test checkout is changed. The validation build keeps type checking.
+      node --input-type=module <<'JS'
+      import fs from "node:fs";
+      import ts from "typescript";
+      const file = "common/build/build-common/tsconfig.base.json";
+      const { config, error } = ts.readConfigFile(file, ts.sys.readFile);
+      if (error) {
+        throw new Error(ts.flattenDiagnosticMessageText(error.messageText, "\n"));
+      }
+      config.compilerOptions.noCheck = true;
+      fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n");
+      console.log(`Enabled noCheck in ${file}; TypeScript ${ts.version}`);
+      JS
+
+- task: Bash@3
   displayName: Compile test prerequisites
   env:
     FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
