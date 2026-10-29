@@ -192,9 +192,9 @@ Before recovery, confirm all eight deployments have zero replicas and their pods
 If cleanup reported a stop/wait failure, stop and wait for those pods manually before proceeding.
 Do not run deployments or autoscaler maintenance concurrently with this migration.
 To finish the cutover, run from tools/selfhost:
-  bash azure/deploy.sh --mode full "$RELEASE_ID" "$PARAMS_FILE"
+  bash azure/deploy.sh --mode full $(printf '%q' "$RELEASE_ID") $(printf '%q' "$PARAMS_FILE")
 To roll back, run from tools/selfhost:
-  bash azure/deploy.sh --mode full "$RELEASE_ID" "$REDIS_SOURCE_PARAMS"
+  bash azure/deploy.sh --mode full $(printf '%q' "$RELEASE_ID") $(printf '%q' "$REDIS_SOURCE_PARAMS")
 Full mode republishes the selected cache's key and endpoints; deploy-only does not repair keys.
 Do not delete either cache until application validation succeeds.
 EOF
