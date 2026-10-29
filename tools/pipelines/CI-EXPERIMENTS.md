@@ -17,7 +17,8 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 Use the Azure DevOps public build and timeline REST APIs to record queue/start/finish times, job times, and expensive tasks.
 Verify `triggerInfo.pr.sourceSha` and the merge commit recorded in `sourceVersion`.
 Use job logs to confirm the new checkout/build commands actually ran.
-Do not push another experiment while its predecessor is running: pull request updates automatically cancel older runs.
+Prefer to finish a run before pushing its successor: pull request updates automatically cancel older runs.
+For a step-level experiment, advancing after the relevant steps finish is acceptable, but record its end-to-end result as incomplete.
 Distinguish observations from hypotheses and avoid treating one noisy sample as a stable improvement.
 
 Primary metric: build queue time to final completion, plus the independently reported repository policy check.
@@ -31,8 +32,8 @@ Sum agent-job durations separately from elapsed time.
 | --- | --- | --- | --- | --- |
 | Baseline: existing shared-build pipeline | `55e7036e05fa21e65b9c5dfa9f6c7440c43deb72` | [430658](https://dev.azure.com/fluidframework/public/_build/results?buildId=430658) | Passed | Queue-to-finish 33m 28s |
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
-| E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | Pending | Pushed | Preserve the shared-build architecture to isolate checkout effects |
-| E2: independent verification builds | Pending | Pending | Preparing | Start verification immediately; preserve the comprehensive build job |
+| E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
+| E2: independent verification builds | Implementation `2f9e0a1cac0`; report update included in triggering commit | Pending | Ready to push | Start verification immediately; preserve the comprehensive build job |
 
 ### Baseline observations
 
@@ -89,6 +90,19 @@ Version generation reads tags but only uses them for release collision detection
 The experiment is restricted to pull requests, which do not publish releases.
 Remote CI must still confirm that versioning, packaging, and checks succeed.
 
+The E1 build passed in 16m 07s, compared with 18m 17s at baseline.
+Do not attribute the entire 130-second difference to checkout.
+The checkout itself improved by 26.4 seconds (73%).
+The main binary scan fell from 126.9 seconds to 21.0 seconds, and scan/cache post-processing also changed.
+`ci:build` was almost unchanged (347.9 versus 343.9 seconds), as was webpack (122.4 versus 122.9 seconds).
+The separate policy run [430677](https://dev.azure.com/fluidframework/public/_build/results?buildId=430677) passed in 4m 01s.
+
+Checkout logs confirm `git fetch --depth=1 --no-tags` on merge commit `295491da91d77e6069862e677bf0042134e57a13`.
+Observed verification checkouts were 9.5 seconds (AreTheTypesWrong), 11.9 seconds (Tinylicious), and 10.1 seconds (Playwright).
+On user direction, advance to E2 after these relevant steps finish rather than waiting for all tests.
+There is no complete E1 end-to-end measurement; the next push may cancel its remaining jobs.
+Conclusion: retain shallow, tag-free pull request checkout, but do not claim a measured end-to-end speedup from this run.
+
 ### E2: independent verification
 
 Enable `independentTestBuilds` only for pull requests.
@@ -139,8 +153,8 @@ Any later relocation must name its replacement before removing the old invocatio
 
 ## Limitations
 
-No measured improvement is claimed yet.
-The baseline passed; E1 has been pushed.
+Checkout time improved; an end-to-end improvement has not yet been measured.
+The baseline passed; E1's relevant steps passed and E2 is next.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
