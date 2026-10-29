@@ -8,8 +8,6 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ChangeAtomId } from "../../../core/index.js";
 import type {
 	CellMark,
-	Attach,
-	Detach,
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
@@ -29,20 +27,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 	const tag = idCompressor.generateCompressedId();
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
 	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
-	const attach: Populated<Attach> = {
-		type: "Attach",
-		id: brand(0),
-		revision: tag,
-		detachId: atomId,
-	};
-	const detach: Populated<Detach> = {
-		type: "Detach",
-		id: brand(0),
-		revision: tag,
-		cellRename: atomId,
-	};
 
-	// XXX: Why are the above not used?
 	const populatedMarks: PopulatedMark[] = [
 		{ count: 1, cellId: atomId, changes },
 		{ type: "Attach", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },

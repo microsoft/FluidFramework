@@ -125,7 +125,7 @@ const sharedTreeFamily = new SharedTreeChangeFamily(
 );
 
 describe("SharedTreeChangeFamily", () => {
-	// XXX: This test is composing a changeset with itself, which is not legal.
+	// TODO: This test composes two changesets with the same revision, which is not supported.
 	it.skip("composition composes runs of data changes", () => {
 		assert.deepEqual(
 			sharedTreeFamily.compose([

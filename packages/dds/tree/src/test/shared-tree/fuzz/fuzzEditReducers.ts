@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
+import { combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";

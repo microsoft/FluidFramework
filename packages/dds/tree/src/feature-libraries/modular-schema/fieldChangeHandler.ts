@@ -329,7 +329,6 @@ export interface FieldChangeEncodingContext {
 	// This should only be called during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 
-	// XXX: Update comment
 	/**
 	 * Returns the input context root ID from an output context root ID.
 	 * This is only needed for encoding to sequence field format v3 and older.
@@ -340,7 +339,6 @@ export interface FieldChangeEncodingContext {
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
-	// XXX: Update comment
 	/**
 	 * Returns the output context root ID from an input context root ID.
 	 * This is only needed for encoding to sequence field format v3 and older.
@@ -352,7 +350,8 @@ export interface FieldChangeEncodingContext {
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
 	/**
-	 * XXX: Comment
+	 * Returns the first ID this changeset renames `inputRootId` to, if any.
+	 * This may be an intermediate ID different from the final ID renames it to.
 	 */
 	getFirstRenameId(
 		inputRootId: ChangeAtomId,

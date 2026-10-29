@@ -25,7 +25,6 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
-import { ForestTypeExpensiveDebug } from "../../../shared-tree/index.js";
 import {
 	SharedTreeTestFactory,
 	toJsonableTree,
