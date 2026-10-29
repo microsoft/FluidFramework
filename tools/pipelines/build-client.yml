@@ -212,6 +212,7 @@ extends:
     taskLint: false # Linting is captured by `ci:build` via fluid-build
     ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
       independentTestBuilds: true
+      taskBuild: build:compile
     taskBuildDocs: true
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public

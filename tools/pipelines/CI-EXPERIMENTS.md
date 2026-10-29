@@ -46,7 +46,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
 | E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
-| E3: emit-only TypeScript in test jobs | Implementation `9f2d8f8a1e0`; report update included in triggering commit | Pending | Ready to push | Keep full type checking in the unchanged comprehensive build |
+| E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | Pending | Pushed | Keep full type checking in the unchanged comprehensive build |
+| E4: parallel full validation | Pending | Pending | Preparing | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
 
 ### Baseline observations
 
@@ -168,6 +169,19 @@ Separate fresh jobs are an important correctness boundary for this experiment.
 A local invalid-assignment sentinel produced no diagnostics with `noCheck`, and error TS2322 in a separate fully checked program.
 This confirms the compiler-mode behavior, not end-to-end remote validation coverage; the unchanged comprehensive CI build remains responsible for that coverage.
 
+### E4: parallel full validation
+
+The E2 build job still takes 16m 15s even when tests start independently.
+Move its complete `ci:build` invocation to the existing client policy stage, after `checks` and before the existing generated-file check.
+Use the same large agent pool as the original build rather than overloading the small policy pool.
+The artifact build uses `build:compile`, retaining full type checking for artifact emission, and keeps webpack, packing, documentation output, devtools, bundle analysis, and security scans.
+This intentionally retains some duplicate compilation and documentation work to preserve artifact and validation behavior.
+
+The policy stage becomes the comprehensive validation owner for lint, type tests, API reports, export/release-tag checks, documentation validation, readme/package-list generation, and all other dependencies of `ci:build`.
+Reuse the existing build task graph rather than maintaining a second list of validations.
+Non-pull-request builds keep their original commands and pool assignments.
+Do not roll this out if the new validation stage becomes a longer critical path.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -177,8 +191,8 @@ Any later relocation must name its replacement before removing the old invocatio
 | --- | --- | --- |
 | Repository policy, layers, repository formatting | Separate repository policy pipeline | Preserve |
 | Client checks, assert tags, package lists, dependency/version consistency | Client policy stage (`checks`) | Preserve |
-| Compilation, lint, type checks, exports, release tags, fences | Build (`ci:build`) | Preserve in a required job |
-| API reports and API Extractor documentation validation | Build (`ci:build`, `ci:build:docs`) | Preserve CI-mode checks and generated-file detection |
+| Compilation, lint, type checks, exports, release tags, fences | Build (`ci:build`) | E1-E3: unchanged; E4: complete `ci:build` in existing policy stage |
+| API reports and API Extractor documentation validation | Build (`ci:build`, `ci:build:docs`) | E4: CI-mode checks and generated-file detection in policy; documentation artifact generation also retained in build |
 | Type-test generation and compilation | Compilation dependencies | Preserve; generation cannot simply be removed from test compilation |
 | webpack, bundle analysis, devtools bundle | Build | Preserve |
 | Packing, manifests, readme generation, package metadata | Build | Preserve |

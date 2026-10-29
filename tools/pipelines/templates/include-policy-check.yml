@@ -16,6 +16,14 @@ parameters:
   type: string
   default: "pnpm install --workspace-root --frozen-lockfile"
 
+- name: pool
+  type: object
+  default: Small-eastus2
+
+- name: taskBuild
+  type: string
+  default: 'false'
+
 # A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
 # a pipeline stage separate from the build stage.
 - name: checks
@@ -28,7 +36,7 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: Small-eastus2
+  pool: ${{ parameters.pool }}
   jobs:
   - job:
     displayName: Run checks
@@ -62,6 +70,12 @@ stages:
             workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             customCommand: 'run ${{ check }}'
           condition: succeededOrFailed()
+
+      - template: /tools/pipelines/templates/include-build-lint.yml@self
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          taskBuild: ${{ parameters.taskBuild }}
+          taskLint: false
 
       - task: Bash@3
         displayName: Check for extraneous modified files

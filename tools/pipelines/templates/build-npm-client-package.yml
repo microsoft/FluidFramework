@@ -210,6 +210,9 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
+              ${{ if parameters.independentTestBuilds }}:
+                pool: ${{ parameters.poolBuild }}
+                taskBuild: ci:build
 
       # Build Stage
       - stage: build
