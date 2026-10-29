@@ -367,6 +367,115 @@ describe("ExtrinsicRangeTracker", () => {
 		});
 	});
 
+	it("restores range endpoints after a nested content transaction rolls back", () => {
+		const view = getView(new TreeViewConfiguration({ schema: Document }));
+		view.initialize(createDocument());
+		const tracker = createTracker(view.root);
+		tracker.setRangeBounds("range", { start: 1, end: 2 });
+		const range = tracker.getRange("range");
+		assert(range !== undefined);
+		const { start, end } = range;
+		tracker.transactOnContent((content) => {
+			const result = view.runTransaction(() => {
+				content.removeRange();
+				assert.deepEqual([start.index, end.index], [0, 0]);
+				return { rollback: true };
+			});
+			assert.equal(result.success, false);
+			assert.equal(content.fullString(), "ABC");
+			assert.deepEqual([start.index, end.index], [1, 2]);
+		});
+		assert.deepEqual(rangeBounds(tracker, "range"), { start: 1, end: 2 });
+		const stored = view.root.review.annotations.get("range");
+		assert(stored !== undefined);
+		assert.deepEqual([stored.start, stored.end], [1, 2]);
+		view.dispose();
+	});
+
+	for (const rollbackOuter of [false, true]) {
+		for (const rollbackInner of [false, true]) {
+			it(`tracks nested content transactions with outer rollback=${rollbackOuter} and inner rollback=${rollbackInner}`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: Document }));
+				view.initialize(createDocument());
+				const tracker = createTracker(view.root);
+				tracker.setRangeBounds("range", { start: 1, end: 2 });
+				const empty = tracker.trackNewRange("empty", { start: 2, end: 2 }, "empty");
+				const range = tracker.getRange("range");
+				assert(range !== undefined);
+				const { start, end } = range;
+				const expectedContent = rollbackOuter ? "PABC" : rollbackInner ? "QPABC" : "";
+				const expectedStart = rollbackOuter ? 2 : rollbackInner ? 3 : 0;
+				const expectedEnd = rollbackOuter ? 3 : rollbackInner ? 4 : 0;
+				tracker.transactOnContent((content) => {
+					content.insertAtStart("P");
+					view.runTransaction(() => {
+						content.insertAtStart("Q");
+						view.runTransaction(() => {
+							content.removeRange();
+							return { rollback: rollbackInner };
+						});
+						assert.equal(content.fullString(), rollbackInner ? "QPABC" : "");
+						assert.deepEqual([start.index, end.index], rollbackInner ? [3, 4] : [0, 0]);
+						return { rollback: rollbackOuter };
+					});
+					assert.equal(content.fullString(), expectedContent);
+					assert.deepEqual([start.index, end.index], [expectedStart, expectedEnd]);
+					assert.deepEqual([empty.start.index, empty.end.index], [expectedEnd, expectedEnd]);
+					content.insertAtStart("S");
+				});
+				assert.equal(view.root.body.fullString(), `S${expectedContent}`);
+				assert.deepEqual([start.index, end.index], [expectedStart + 1, expectedEnd + 1]);
+				assert.deepEqual(rangeBounds(tracker, "range"), {
+					start: expectedStart + 1,
+					end: expectedEnd + 1,
+				});
+				assert.deepEqual(rangeBounds(tracker, "empty"), {
+					start: expectedEnd + 1,
+					end: expectedEnd + 1,
+				});
+				// Transaction listeners must not outlive the content-editing scope.
+				view.runTransaction(() => {
+					view.root.title = "Discarded";
+					return { rollback: true };
+				});
+				view.runTransaction(() => {
+					view.root.title = "Committed";
+				});
+				tracker.transactOnContent((content) => content.removeAt(0));
+				assert.deepEqual([start.index, end.index], [expectedStart, expectedEnd]);
+				view.dispose();
+			});
+		}
+	}
+
+	it("restores snapshots for empty and data-only nested transactions", () => {
+		const view = getView(new TreeViewConfiguration({ schema: Document }));
+		view.initialize(createDocument());
+		const tracker = createTracker(view.root);
+		const range = tracker.getRange("range");
+		assert(range !== undefined);
+		tracker.transactOnContent((content) => {
+			content.insertAtStart("X");
+			view.runTransaction(() => ({ rollback: true }));
+			view.runTransaction(() => {
+				range.data = "Discarded";
+				return { rollback: true };
+			});
+			assert.equal(range.data, "existing");
+			assert.deepEqual(rangeBounds(tracker, "range"), { start: 2, end: 4 });
+			view.runTransaction(() => {
+				content.removeRange();
+				return { rollback: true };
+			});
+			assert.equal(content.fullString(), "XABC");
+			assert.deepEqual(rangeBounds(tracker, "range"), { start: 2, end: 4 });
+			content.insertAtEnd("Y");
+		});
+		assert.equal(view.root.body.fullString(), "XABCY");
+		assert.deepEqual(rangeBounds(tracker, "range"), { start: 2, end: 5 });
+		view.dispose();
+	});
+
 	it("reuses an existing tracker after its tree is hydrated", () => {
 		const document = createDocument();
 		const tracker = createTracker(document);

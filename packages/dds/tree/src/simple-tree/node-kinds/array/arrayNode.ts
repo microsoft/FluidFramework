@@ -1753,8 +1753,8 @@ export interface ArrayPlaceAnchor {
  * Removal collapses anchors inside the removed span, losing their original offsets.
  * Reinserting the removed content does not restore those offsets, even when a transaction rolls back.
  * For example, removing [0, 3) moves an anchor at index 1 to 0; rollback restores the content but moves the anchor to 3, not 1.
- * This also affects extrinsic ranges: a nested transaction that removes content and rolls back during a tracked edit
- * can cause the tracker to persist incorrect endpoints after the content has been restored.
+ * The extrinsic range tracker compensates for nested transaction rollback by restoring saved endpoints after the rollback.
+ * Standalone insertion anchors do not have that protection.
  *
  * TODO: Fix or improve the event ordering that causes the stale indices described above.
  * This may require better APIs for applications to control update ordering between dependent content.

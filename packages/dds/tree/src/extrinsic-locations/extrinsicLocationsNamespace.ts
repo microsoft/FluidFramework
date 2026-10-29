@@ -194,6 +194,8 @@ export namespace ExtrinsicLocations {
 		 * throws a {@link @fluidframework/telemetry-utils#UsageError}.
 		 * Perform those operations before or after this call, optionally within an enclosing transaction.
 		 * Calls on the same manager cannot be nested.
+		 * Nested {@link UntypedTreeViewAlpha.(runTransaction:2) | transactions} within the callback are supported.
+		 * If a nested transaction rolls back content edits, the range endpoints are restored before that transaction call returns.
 		 * For moves between managed arrays, nest the two managers' callbacks so both arrays
 		 * are edited only while their respective callbacks are active.
 		 * Ranges remain with their manager rather than following moved content.

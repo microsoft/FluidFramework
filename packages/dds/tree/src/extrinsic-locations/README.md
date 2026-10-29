@@ -75,6 +75,8 @@ The current MVP has the following requirements and limitations:
   Editing fields of object items or range data directly is allowed because it does not change array positions.
 - Content-editing callbacks must be synchronous, and editing scopes on the same array cannot be nested.
   Mutable content arrays obtained through a callback must not be used for editing outside that callback.
+  Nested `runTransaction` calls within a content-editing callback are supported.
+  If a nested transaction rolls back, the tracker restores its range endpoints before the transaction call returns.
 - Adding or removing ranges and explicitly changing their bounds during calls to [`transactOnContent`](./extrinsicLocationsNamespace.ts) or structural formatted-text editing methods throws a `UsageError`.
   This restriction applies to the collection whose content is being edited.
   Reading ranges and editing their data remain allowed.

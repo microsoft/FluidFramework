@@ -17,6 +17,8 @@ In this early `@alpha` version, concurrent changes anywhere in the document can 
 
 Use [`ExtrinsicLocations`](https://fluidframework.com/docs/api/tree/extrinsiclocations-namespace) to create an array schema with tracked ranges.
 Edit content through `transactOnContent` to maintain ranges across insertions, removals, and moves.
+You can use synchronous nested `runTransaction` calls inside its callback.
+If a nested transaction rolls back content edits, the range endpoints are restored before that transaction call returns.
 
 ```typescript
 import { ExtrinsicLocations, SchemaFactoryBeta } from "@fluidframework/tree/alpha";

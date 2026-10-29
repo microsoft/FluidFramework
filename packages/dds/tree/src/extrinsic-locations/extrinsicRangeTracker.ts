@@ -10,6 +10,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	createArrayInsertionAnchor,
+	getInnerNode,
 	type ArrayPlaceAnchor,
 	type TreeArrayNode,
 	type TreeNode,
@@ -107,6 +108,7 @@ export class ExtrinsicRangeTracker<
 	 * Adding or removing ranges and explicitly changing bounds are forbidden during the
 	 * {@link ExtrinsicLocations.ArrayMembers.transactOnContent | tracked content edit} and the subsequent range updates.
 	 * Editing scopes on this tracker cannot be nested.
+	 * Nested content transactions are supported: aborted transactions restore the endpoints from when they began.
 	 * Temporary anchors are disposed on every exit path.
 	 * Unhydrated edits cannot roll back, so their endpoints are written back even if the callback throws.
 	 * Errors on hydrated nodes have the same effect as errors in `runTransaction`.
@@ -124,10 +126,41 @@ export class ExtrinsicRangeTracker<
 			);
 			const anchors = new Map<TRange, ActiveRangeAnchors>();
 			this.#anchors = anchors;
+			const unregister: (() => void)[] = [];
 			let completed = false;
 			try {
 				for (const range of ranges.values()) {
 					this.#setAnchors(range, range.start, range.end);
+				}
+				const innerNode = getInnerNode(this.content);
+				if (innerNode.isHydrated()) {
+					const events = innerNode.context.checkout.transaction.events;
+					const snapshots: Map<TRange, StoredRangeEndpoints>[] = [];
+					unregister.push(
+						events.on("started", () => {
+							const snapshot = new Map<TRange, StoredRangeEndpoints>();
+							for (const [range, positions] of anchors) {
+								snapshot.set(range, {
+									start: positions.start.index,
+									end: positions.end.index,
+								});
+							}
+							snapshots.push(snapshot);
+						}),
+						events.on("committing", () => {
+							const snapshot = snapshots.pop();
+							assert(snapshot !== undefined, "A nested transaction must have a snapshot.");
+						}),
+						events.on("aborted", () => {
+							const snapshot = snapshots.pop();
+							assert(snapshot !== undefined, "A nested transaction must have a snapshot.");
+							// Inverse deltas cannot recover offsets lost when a removal collapses an anchor.
+							// Restore them only after the content has been restored by rollback.
+							for (const [range, { start, end }] of snapshot) {
+								this.#setAnchors(range, start, end);
+							}
+						}),
+					);
 				}
 				const result: unknown = edit(this.content);
 				if (isPromiseLike(result)) {
@@ -145,6 +178,9 @@ export class ExtrinsicRangeTracker<
 						}
 					}
 				} finally {
+					for (const off of unregister) {
+						off();
+					}
 					for (const positions of anchors.values()) {
 						positions.start.dispose();
 						positions.end.dispose();

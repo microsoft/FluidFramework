@@ -443,6 +443,39 @@ describe("ExtrinsicLocations", () => {
 		});
 	});
 
+	it("restores both managers after a nested transaction rolls back a move", () => {
+		class Root extends sf.object("RollbackMoveRoot", {
+			source: ArrayWithRanges,
+			destination: ArrayWithRanges,
+		}) {}
+		const view = getView(new TreeViewConfiguration({ schema: Root }));
+		view.initialize({
+			source: ArrayWithRanges.create([0, 1, 2]),
+			destination: ArrayWithRanges.create([3, 4]),
+		});
+		const { source, destination } = view.root;
+		source.ranges.trackNewRange("sourceRange", { start: 1, end: 3 }, "source");
+		destination.ranges.trackNewRange("destinationRange", { start: 0, end: 2 }, "destination");
+		source.transactOnContent((sourceContent) => {
+			destination.transactOnContent((destinationContent) => {
+				view.runTransaction(() => {
+					destinationContent.moveRangeToIndex(1, 1, 3, sourceContent);
+					assert.deepEqual(endpoints(source, "sourceRange"), [1, 1]);
+					assert.deepEqual(endpoints(destination, "destinationRange"), [0, 4]);
+					return { rollback: true };
+				});
+				assert.deepEqual(endpoints(source, "sourceRange"), [1, 3]);
+				assert.deepEqual(endpoints(destination, "destinationRange"), [0, 2]);
+			});
+			sourceContent.insertAtStart(9);
+		});
+		assert.deepEqual([...source.content], [9, 0, 1, 2]);
+		assert.deepEqual([...destination.content], [3, 4]);
+		assert.deepEqual(endpoints(source, "sourceRange"), [2, 4]);
+		assert.deepEqual(endpoints(destination, "destinationRange"), [0, 2]);
+		view.dispose();
+	});
+
 	it("keeps partial unhydrated edits consistent after a thrown callback and releases the scope", () => {
 		const array = ArrayWithRanges.create([0, 1, 2]);
 		array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
@@ -668,6 +701,28 @@ describe("ExtrinsicLocations", () => {
 				assert.deepEqual(rangeSnapshot(array), [["range", 3, 6, "range"]]);
 			});
 		}
+
+		it("replicates restored range endpoints after a nested content rollback", () => {
+			const { provider, view } = setup();
+			const array = view.root;
+			array.transactOnContent((content) => {
+				content.insertAtStart(9);
+				const result = view.runTransaction(() => {
+					content.removeRange();
+					assert.deepEqual(endpoints(array, "range"), [0, 0]);
+					return { rollback: true };
+				});
+				assert.equal(result.success, false);
+				assert.deepEqual(endpoints(array, "range"), [2, 5]);
+				content.insertAtStart(8);
+			});
+			provider.synchronizeMessages();
+			const other = provider.trees[1].viewWith(config);
+			for (const root of [array, other.root]) {
+				assert.deepEqual([...root.content], [8, 9, 0, 1, 2, 3, 4]);
+				assert.deepEqual(rangeSnapshot(root), [["range", 3, 6, "range"]]);
+			}
+		});
 
 		it("replicates sequential edits and their range updates", () => {
 			const { provider, view } = setup();
