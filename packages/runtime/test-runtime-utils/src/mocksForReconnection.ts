@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { serializeMockMessage } from "./mockMessage.js";
 import {
 	type IMockContainerRuntimeIdAllocationMessage,
 	IMockContainerRuntimeOptions,
@@ -185,7 +186,11 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		});
 		pendingMessages.forEach((op) => {
 			const ops = stashedOps.get(op.referenceSequenceNumber) ?? [];
-			ops.push(op.content);
+			// Stashed ops cross a serialization boundary; local metadata and live handles do not.
+			const stashed: { content: unknown } = JSON.parse(
+				serializeMockMessage({ content: op.content }),
+			);
+			ops.push(stashed.content);
 			stashedOps.set(op.referenceSequenceNumber, ops);
 		});
 

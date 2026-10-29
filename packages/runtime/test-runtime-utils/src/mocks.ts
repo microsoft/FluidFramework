@@ -78,6 +78,7 @@ import { v4 as uuid } from "uuid";
 import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
+import { serializeMockMessage } from "./mockMessage.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -621,7 +622,9 @@ export class MockContainerRuntimeFactory {
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>): void {
-		deepFreeze(msg);
+		// Encode before freezing so handles do not expose their live object graphs to the mock service.
+		const wireMessage = JSON.parse(serializeMockMessage(msg)) as ISequencedDocumentMessage;
+		deepFreeze(wireMessage);
 		if (
 			msg.clientId &&
 			msg.referenceSequenceNumber !== undefined &&
@@ -629,7 +632,7 @@ export class MockContainerRuntimeFactory {
 		) {
 			this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
 		}
-		this.messages.push(msg as ISequencedDocumentMessage);
+		this.messages.push(wireMessage);
 	}
 
 	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
