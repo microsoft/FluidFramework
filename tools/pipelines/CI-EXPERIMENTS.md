@@ -45,8 +45,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | Baseline: existing shared-build pipeline | `55e7036e05fa21e65b9c5dfa9f6c7440c43deb72` | [430658](https://dev.azure.com/fluidframework/public/_build/results?buildId=430658) | Passed | Queue-to-finish 33m 28s |
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
-| E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Running | Start verification immediately; preserve the comprehensive build job |
-| E3: emit-only TypeScript in test jobs | Pending | Pending | Preparing | Keep full type checking in the unchanged comprehensive build |
+| E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
+| E3: emit-only TypeScript in test jobs | Implementation `9f2d8f8a1e0`; report update included in triggering commit | Pending | Ready to push | Keep full type checking in the unchanged comprehensive build |
 
 ### Baseline observations
 
@@ -131,6 +131,21 @@ The original comprehensive build still validates lint, API reports, type tests, 
 No validation is removed or moved to an optional check.
 Test builds use checked-in package versions rather than the build job's generated prerelease versions; packaging and version generation are still exercised in the original build.
 
+E2 passed in 1,063.7 seconds, compared with 2,008.4 seconds at baseline: 15m 45s less elapsed time (47%).
+Timed agent jobs increased from 4,064.1 to 4,379.5 seconds, approximately 7.8% more agent time.
+This supports independent compilation as a latency optimization, not a compute saving.
+Independent compilation took 166-180 seconds per verification job.
+Mocha took 420.4 seconds versus 422.0 at baseline; the improvement comes primarily from overlapping work, not faster tests.
+The main build still took 16m 15s, so it is now close to the critical path.
+The separate policy run [430698](https://dev.azure.com/fluidframework/public/_build/results?buildId=430698) also passed.
+
+E2 reported 48,653 tests: 45,419 passed, 3,234 not executed, no failures.
+The seven-test difference is explained by upstream merge drift, not an omitted suite.
+Comparing exact merge commits `09e38c8fd2850b513e8f3b9b92d9b95eacbc7a0f` and `35fe7b1874e48ff700f3426fcca4803d7de7225d` shows replacement of SharedTree branch-history tests and addition of an ODSP summary-upload test.
+Published test logs show nine fewer SharedTree cases and two added ODSP cases (one per module format).
+Other suite summary counts match.
+The changing target branch and scan/cache differences mean this is a promising single-run observation, not a controlled statistical estimate.
+
 ### E3: emit-only TypeScript
 
 The client uses TypeScript 6.0.3, which supports `noCheck`.
@@ -190,8 +205,9 @@ Any later relocation must name its replacement before removing the old invocatio
 
 ## Limitations
 
-Checkout time improved; an end-to-end improvement has not yet been measured.
-The baseline passed; E1's relevant steps passed and E2 is running.
+Checkout time improved, and E2 completed approximately 47% faster than the original baseline in one observed run.
+The baseline and E2 passed; E1's full run was intentionally not measured.
+E3 is next.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
