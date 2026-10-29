@@ -72,6 +72,8 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
+		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
+		assert.equal(props.oldestSupportedClient, undefined);
 		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
 	});
 
@@ -126,6 +128,8 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
+		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
+		assert.equal(props.oldestSupportedClient, undefined);
 		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
 	});
 

@@ -56,7 +56,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
 // @beta @deprecated @legacy @input
 export type DeprecatedLoadContainerRuntimeParams = Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
-    readonly oldestSupportedClient?: undefined;
     readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 

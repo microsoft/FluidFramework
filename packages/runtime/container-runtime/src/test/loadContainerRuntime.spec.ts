@@ -8,7 +8,11 @@ import { strict as assert } from "node:assert";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 
-import { loadContainerRuntime, loadContainerRuntimeAlpha } from "../containerRuntime.js";
+import {
+	type DeprecatedLoadContainerRuntimeParams,
+	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
+} from "../containerRuntime.js";
 
 const commonParams = {
 	context: undefined as unknown as IContainerContext,
@@ -53,16 +57,20 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		const context = {
 			taggedLogger: { send: () => {} },
 		} as unknown as IContainerContext;
+		const params: DeprecatedLoadContainerRuntimeParams = {
+			...commonParams,
+			context,
+			// @ts-expect-error "1.2.3.4" is not a valid compatibility version shape.
+			minVersionForCollab: "1.2.3.4",
+		};
+
+		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
+		assert.equal(params.oldestSupportedClient, undefined);
 
 		// Reaching version validation proves the public exact-one guard accepted the deprecated
 		// property. The invalid version avoids requiring a complete container context in this test.
 		await assert.rejects(
-			loadContainerRuntime({
-				...commonParams,
-				context,
-				// @ts-expect-error "1.2.3.4" is not a valid compatibility version shape.
-				minVersionForCollab: "1.2.3.4",
-			}),
+			loadContainerRuntime(params),
 			/Invalid compatibility version: 1\.2\.3\.4/,
 		);
 	});

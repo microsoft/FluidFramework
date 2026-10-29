@@ -45,12 +45,16 @@ However, there are many other types of changes that could impact cross-client co
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
 `oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime.
-Callers must specify exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab`.
-If callers omit both properties, the runtime throws an error.
-Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on.
+The runtime uses this choice to select default configurations and prevent unsafe configurations, as the following sections explain.
+To preserve document access, customers must choose a version that all active deployments support.
 Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero.
-All active deployments that must collaborate must use Fluid Framework 2.0.0 or later.
-`oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+Therefore, deployments that must collaborate must use Fluid Framework 2.0.0 or later.
+
+Starting with Client 3.10, public runtime entry points require callers to make this choice explicitly.
+New callers use `oldestSupportedClient`.
+Existing beta callers can temporarily use `minVersionForCollab` through a deprecated migration type, but must still supply exactly one compatibility property.
+If callers supply neither property or both properties, the runtime throws a `UsageError` before it selects a configuration.
+Internal loaders retain their historical fallback so mixed-version test infrastructure can continue to operate.
 
 ### Default Configurations
 

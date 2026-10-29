@@ -87,13 +87,11 @@ export interface DataObjectTypes {
 
 // @beta @deprecated @legacy @input
 export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<BaseContainerRuntimeFactoryProps, "oldestSupportedClient" | "minVersionForCollab"> & {
-    readonly oldestSupportedClient?: undefined;
     readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 
 // @beta @deprecated @legacy @input
 export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<ContainerRuntimeFactoryWithDefaultDataStoreProps, "oldestSupportedClient" | "minVersionForCollab"> & {
-    readonly oldestSupportedClient?: undefined;
     readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 

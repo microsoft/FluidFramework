@@ -100,7 +100,6 @@ export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
 	BaseContainerRuntimeFactoryProps,
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
-	readonly oldestSupportedClient?: undefined;
 	/**
 	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *

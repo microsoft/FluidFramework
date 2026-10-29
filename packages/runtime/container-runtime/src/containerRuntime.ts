@@ -854,7 +854,6 @@ export type DeprecatedLoadContainerRuntimeParams = Omit<
 	LoadContainerRuntimeParams,
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
-	readonly oldestSupportedClient?: undefined;
 	/**
 	 * @deprecated 3.10.0. To be removed in a future release.
 	 * Pass {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
