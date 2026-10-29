@@ -1419,8 +1419,20 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(change1, fieldKinds, true, deepCloneChunkedTree);
-			const normalized2 = normalizeChangeset(change2, fieldKinds, true, deepCloneChunkedTree);
+			const normalized1 = normalizeChangeset(
+				change1,
+				fieldKinds,
+				true,
+				false,
+				deepCloneChunkedTree,
+			);
+			const normalized2 = normalizeChangeset(
+				change2,
+				fieldKinds,
+				true,
+				false,
+				deepCloneChunkedTree,
+			);
 			assertEqual(normalized1, normalized2);
 		}
 
