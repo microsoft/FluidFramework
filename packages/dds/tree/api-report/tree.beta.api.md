@@ -120,7 +120,10 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 }
 
 // @beta
-export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
+export function asBeta<TSchema extends ImplicitFieldSchema, TInput extends object = TreeView<TSchema>>(value: TInput & (TreeView<TSchema> | SchemaFactory<string | undefined, never>)): TInput extends {
+    readonly scope: infer TScope extends string | undefined;
+    object: (...args: infer TParameters) => unknown;
+} ? SchemaFactoryBeta<TScope, TParameters[0] & (number | string)> : TreeViewBeta<TSchema>;
 
 // @beta @sealed
 export type ChangeMetadataBeta = CommitMetadata & ({

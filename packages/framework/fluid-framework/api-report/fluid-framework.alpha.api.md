@@ -173,10 +173,18 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfi
 export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeArrayNode<TAllowedTypes>): TreeArrayNodeAlpha<TAllowedTypes>;
 
 // @alpha
+export function asAlpha<TScope extends string | undefined, TFactory extends SchemaFactory<string | undefined, never>>(factory: TFactory & {
+    readonly scope: TScope;
+}): SchemaFactoryAlpha<TScope, Parameters<TFactory["object"]>[0]>;
+
+// @alpha
 export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeMapNode<TAllowedTypes>): TreeMapNodeAlpha<TAllowedTypes>;
 
 // @beta
-export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
+export function asBeta<TSchema extends ImplicitFieldSchema, TInput extends object = TreeView<TSchema>>(value: TInput & (TreeView<TSchema> | SchemaFactory<string | undefined, never>)): TInput extends {
+    readonly scope: infer TScope extends string | undefined;
+    object: (...args: infer TParameters) => unknown;
+} ? SchemaFactoryBeta<TScope, TParameters[0] & (number | string)> : TreeViewBeta<TSchema>;
 
 // @public
 export enum AttachState {
