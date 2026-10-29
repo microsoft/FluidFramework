@@ -240,6 +240,9 @@ extends:
               - checkout: self
                 path: $(FluidFrameworkDirectory)
                 clean: true
+                ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  fetchDepth: 1
+                  fetchTags: false
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
@@ -620,12 +623,19 @@ extends:
               - checkout: self
                 path: $(FluidFrameworkDirectory)
                 clean: true
+                ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  fetchDepth: 1
+                  fetchTags: false
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
               - script: |
                   echo "commit: $(COMMIT_SHA)"
-                  git fetch origin $(COMMIT_SHA)
+                  if [ "$(Build.Reason)" = "PullRequest" ]; then
+                    git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
+                  else
+                    git fetch origin $(COMMIT_SHA)
+                  fi
                   git checkout $(COMMIT_SHA)
                 displayName: "Checkout build commit"
 
@@ -791,12 +801,19 @@ extends:
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
                   clean: true
+                  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                    fetchDepth: 1
+                    fetchTags: false
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
 
                 - script: |
                     echo "commit: $(COMMIT_SHA)"
-                    git fetch origin $(COMMIT_SHA)
+                    if [ "$(Build.Reason)" = "PullRequest" ]; then
+                      git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
+                    else
+                      git fetch origin $(COMMIT_SHA)
+                    fi
                     git checkout $(COMMIT_SHA)
                   displayName: "Checkout build commit"
 
