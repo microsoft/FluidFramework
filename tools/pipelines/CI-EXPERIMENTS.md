@@ -46,8 +46,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | Baseline: repository policy | Same | [430657](https://dev.azure.com/fluidframework/public/_build/results?buildId=430657) | Passed | Queue-to-finish 3m 38s |
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
 | E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
-| E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | Pending | Pushed | Keep full type checking in the unchanged comprehensive build |
-| E4: parallel full validation | Pending | Pending | Preparing | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
+| E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | [430707](https://dev.azure.com/fluidframework/public/_build/results?buildId=430707) | Passed | Queue-to-finish 15m 30s; test compilation 117-125s |
+| E4: parallel full validation | Implementation `6d55aa04340`; report update included in triggering commit | Pending | Ready to push | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
 
 ### Baseline observations
 
@@ -169,6 +169,15 @@ Separate fresh jobs are an important correctness boundary for this experiment.
 A local invalid-assignment sentinel produced no diagnostics with `noCheck`, and error TS2322 in a separate fully checked program.
 This confirms the compiler-mode behavior, not end-to-end remote validation coverage; the unchanged comprehensive CI build remains responsible for that coverage.
 
+E3 passed in 930.1 seconds (15m 30s), 2m 14s faster than E2 and 54% faster than the original baseline.
+The test totals exactly match E2: 45,419 passed, 3,234 not executed, no failures.
+Its merge commit was `49a219a8ab8ad733c61a9e697cfe6da18f1c5a6a`.
+The separate policy run [430706](https://dev.azure.com/fluidframework/public/_build/results?buildId=430706) passed.
+Independent compilation fell from 166-180 seconds to 117-125 seconds, approximately a 30% reduction.
+Total timed agent jobs fell to 3,950.3 seconds (65m 50s).
+The main build finished last, at 21:34:13 UTC; the last test job finished at 21:33:17 UTC.
+The main build also ran faster than E2 despite no intentional change to its work, so not all elapsed-time improvement is attributable to `noCheck`.
+
 ### E4: parallel full validation
 
 The E2 build job still takes 16m 15s even when tests start independently.
@@ -219,9 +228,9 @@ Any later relocation must name its replacement before removing the old invocatio
 
 ## Limitations
 
-Checkout time improved, and E2 completed approximately 47% faster than the original baseline in one observed run.
-The baseline and E2 passed; E1's full run was intentionally not measured.
-E3 is next.
+Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
+The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
+E4 is next.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
