@@ -37,8 +37,9 @@ import {
 	type ConciseTree,
 	type JsonCompatible,
 } from "@fluidframework/tree/beta";
-import * as Type from "typebox";
 import type { Static } from "typebox";
+// eslint-disable-next-line import-x/no-internal-modules -- Public entry point allowed by eslint-config-fluid 15.
+import * as Type from "typebox/type";
 
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";

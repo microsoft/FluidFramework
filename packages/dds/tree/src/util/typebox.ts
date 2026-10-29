@@ -3,9 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import type { TInterface, TObjectOptions, TProperties, TRecord, TSchema } from "typebox";
+import type { TObject, TObjectOptions, TProperties, TRecord, TSchema } from "typebox";
 import { Memory } from "typebox/system";
 import * as Type from "typebox/type";
+
+/**
+ * Merges property maps in assignment order, preserving the last schema and its modifiers for each key.
+ * Dynamically sized heritage lists cannot provide a precise property map.
+ */
+type MergedProperties<
+	Heritage extends readonly { readonly properties: TProperties }[],
+	Properties extends TProperties,
+> = Heritage extends readonly [
+	...infer Rest extends readonly { readonly properties: TProperties }[],
+	{ readonly properties: infer Last extends TProperties },
+]
+	? MergedProperties<Rest, Omit<Last, keyof Properties> & Properties>
+	: number extends Heritage["length"]
+		? TProperties
+		: Properties;
 
 /**
  * Creates an interface from object schemas without loading TypeBox's general type-instantiation engine.
@@ -30,11 +46,15 @@ export function typeboxInterface<
 	heritage: [...Heritage],
 	properties: Properties,
 	options: TObjectOptions = {},
-): TInterface<Heritage, Properties> {
+): TObject<MergedProperties<Heritage, Properties>> {
 	return Type.Object(
-		Object.assign({}, ...heritage.map((schema) => schema.properties), properties),
+		Object.assign(
+			{},
+			...heritage.map((schema) => schema.properties),
+			properties,
+		) as MergedProperties<Heritage, Properties>,
 		options,
-	) as unknown as TInterface<Heritage, Properties>;
+	);
 }
 
 /**

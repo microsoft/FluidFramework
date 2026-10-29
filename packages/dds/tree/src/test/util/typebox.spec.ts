@@ -220,6 +220,41 @@ describe("TypeBox builders", () => {
 		assert.equal(validator.check({ a: 1 }), false);
 	});
 
+	it("uses the last inherited property schema and then the explicit property schema", () => {
+		const inherited = Type.Object({
+			value: Type.Readonly(Type.String()),
+			other: Type.Boolean(),
+		});
+		const optional = Type.Object({ value: Type.Optional(Type.Number()) });
+		const inheritedOverride = typeboxInterface([inherited, optional], {});
+		const explicitOverride = typeboxInterface([inherited], optional.properties);
+		const requiredOverride = typeboxInterface([inherited, optional], {
+			value: Type.Boolean(),
+		});
+		type _InheritedOverride = requireTrue<
+			areSafelyAssignable<Static<typeof inheritedOverride>, { other: boolean; value?: number }>
+		>;
+		type _ExplicitOverride = requireTrue<
+			areSafelyAssignable<Static<typeof explicitOverride>, { other: boolean; value?: number }>
+		>;
+		type _RequiredOverride = requireTrue<
+			areSafelyAssignable<Static<typeof requiredOverride>, { other: boolean; value: boolean }>
+		>;
+
+		for (const schema of [inheritedOverride, explicitOverride]) {
+			assert.equal(schema.properties.value, optional.properties.value);
+			const validator = extractJsonValidator(FormatValidatorBasic).compile(schema);
+			assert.equal(validator.check({ other: true }), true);
+			assert.equal(validator.check({ other: true, value: 1 }), true);
+			assert.equal(validator.check({ other: true, value: "text" }), false);
+		}
+		const requiredValidator =
+			extractJsonValidator(FormatValidatorBasic).compile(requiredOverride);
+		assert.equal(requiredValidator.check({ other: true }), false);
+		assert.equal(requiredValidator.check({ other: true, value: true }), true);
+		assert.equal(requiredValidator.check({ other: true, value: 1 }), false);
+	});
+
 	it("preserves referenced record value types", () => {
 		const schema = Type.Cyclic(
 			{
