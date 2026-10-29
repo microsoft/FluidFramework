@@ -277,7 +277,7 @@ export namespace ExtrinsicLocations {
 	 *
 	 * A handle refers to a particular range, not to subsequent ranges created at the same key.
 	 * Reading an endpoint index or assigning data throws a {@link @fluidframework/telemetry-utils#UsageError} if that range is no longer tracked.
-	 * Undo that restores the same range makes the handle valid again.
+	 * An undo operation that restores the same range makes the handle valid again.
 	 * Each handle retains the same endpoint anchor objects as its bounds change.
 	 * Repeated lookups do not guarantee the same handle object.
 	 * @sealed
