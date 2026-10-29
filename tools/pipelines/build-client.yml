@@ -47,7 +47,7 @@ parameters:
     - "~"
     - " "
 - name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
+  displayName: Fluid build tools version (non-PR only; PRs use the lockfile)
   type: string
   default: repo
 
@@ -111,6 +111,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
@@ -177,6 +178,7 @@ pr:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry/*
@@ -197,7 +199,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
-    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
     # that need mitigation before coverage can be reenabled.
@@ -213,6 +216,7 @@ extends:
     ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
       independentTestBuilds: true
       taskBuild: build:compile
+      buildToolsVersionToInstall: installed
     taskBuildDocs: true
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public

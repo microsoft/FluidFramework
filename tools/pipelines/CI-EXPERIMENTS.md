@@ -6,7 +6,7 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Result:** the final configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
+**First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
 The best individual experimental run was E3 at 15m 30s; the final configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
 The deliberate type-check failure was rejected, removed, and followed by a successful clean run.
@@ -17,6 +17,29 @@ Also record agent time, queueing, and cache behavior: reducing a single step is 
 These are proof-of-concept changes, not a production rollout.
 Keep release behavior, validation, security scanning, and test coverage intact.
 Local CI readiness checks are skipped by request; remote CI is the experiment.
+
+## Retained changes with measured evidence
+
+| Change currently on this branch | Evidence | Qualification |
+| --- | --- | --- |
+| Shallow, tag-free PR checkout | E1 build checkout 36.2s to 9.8s | Direct step measurement; E1 full run was not completed |
+| Independent verification builds | E2 33m 28s to 17m 44s versus baseline | Largest structural improvement; extra compilation overlaps the artifact job |
+| Emit-only TypeScript in isolated test jobs | E3 test compilation 166-180s to 117-125s | Full checking remains elsewhere; negative probe proved enforcement |
+| Full validation in existing client policy stage | E4 shortened the artifact job; policy job passed and rejected the probe | Functionally confirmed; standalone elapsed-time improvement is not established |
+| Script-selected test prerequisites | E5 and repeat: service compilation about 53s, stress about 39s | All original test scripts retained; repeat test totals matched |
+
+## Active experiments
+
+| Candidate | Status | What must be established |
+| --- | --- | --- |
+| E6: lockfile-installed build tools | Preparing remote run | Versioning, bundle analysis, and coverage tooling work without source build/global linking |
+| Remove PR build-output archive | Consumer investigation complete; not changed yet | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
+| Remove PR release-package publishing | Investigating validation replacement | Eight public packages lack `attw --pack`; preserve an explicit packing check for them |
+| Split the serial Mocha/local-service job | Next timing experiment | Same suites and counts, lower critical path without excessive queue/setup overhead |
+
+The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
+E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
+Non-PR tool-selection behavior is unchanged.
 
 ## Method
 
@@ -48,7 +71,7 @@ The main-build pnpm cache logs confirm cache hits for the baseline and E2-E5/fin
 E2-E5 and the final repeat used the same main-build dependency cache key; the original baseline used a different key.
 This was not a cold-cache benchmark.
 
-## Experiments
+## Completed experiments
 
 | Experiment | Source commit | Run | Status | Result |
 | --- | --- | --- | --- | --- |
@@ -294,7 +317,8 @@ Most jobs started 253-266 seconds after queueing, making this run slower than E5
 
 The repeat supports the targeted-build improvements without relying on the fastest end-to-end sample.
 The remaining critical path is primarily the combined Mocha/local-service job and agent availability, not API validation.
-No more pipeline changes were made after this successful repeat; publishing the final report may trigger another unchanged-configuration run.
+This repeat completed the first phase.
+Follow-up requests for installed tools, artifact removal, and different test partitioning are tracked separately above.
 
 ## Validation ownership
 
@@ -316,25 +340,29 @@ Any later relocation must name its replacement before removing the old invocatio
 | Source scans, binary scans, component governance | Existing pipeline templates | Do not disable |
 | Test result publication and service logs | Verification jobs | Preserve failure-path reporting |
 
-## Productive changes and remaining ideas
+## Findings from completed experiments
 
 Independent verification removes the largest structural delay.
 Shallow checkout, emit-only test compilation, and script-based package selection all reduced their targeted steps.
 Validation relocation shortened the artifact job and passed its negative type-check test, but its standalone elapsed-time result was noisy.
 No security scans, existing suites, or required pipeline identities were intentionally removed.
 
+## Future ideas not yet evaluated
+
 1. Repeat baseline and candidate runs against the same target revision, with comparable agents and cache state.
    The target branch advanced during this session, and queueing varied substantially.
-2. Consider separating Mocha and local-service tests, which currently run serially in the coverage job.
-   Measure the additional agent setup/compilation cost and queue demand before adopting it.
-3. Consider removing the now-unused build-output archive on pull requests only.
-   First verify external consumers and security scanning coverage; retain release artifacts and scans.
-4. Investigate duplicate webpack work, packaging time, and cache upload tails.
+2. Investigate duplicate webpack work and cache upload tails.
    These can become the bottleneck after tests start independently.
-5. For production, replace the disposable shared-tsconfig edit with an explicit supported build-tool mode, including correct incremental-cache invalidation.
+3. For production, replace the disposable shared-tsconfig edit with an explicit supported build-tool mode, including correct incremental-cache invalidation.
    Preserve the strict separation between unchecked test outputs and checked validation/release outputs.
-6. Review version-sensitive runtime testing before rollout.
+4. Review version-sensitive runtime testing before rollout.
    Independent tests use source package versions, while packaging/version-generation validation still uses generated prerelease versions.
+5. TypeScript 7: assess a native-compiler integration rather than simply changing the catalog version.
+   The npm registry reports TypeScript 7.0.2 as stable, and the [official native-port repository](https://github.com/microsoft/typescript-go) reports the port complete.
+   This repository's `fluid-build` and `fluid-tsc` use the JavaScript compiler API (`parseCommandLine`, `createProgram`, `createIncrementalProgram`) and a virtual package-type override for CommonJS.
+   The new native CLI does not supply that API.
+   A practical first experiment is an isolated native CLI benchmark on an ESM project while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
+   No TypeScript 7 compile or CI migration has been attempted yet.
 
 ## Limitations
 
