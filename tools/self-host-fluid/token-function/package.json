@@ -1,0 +1,14 @@
+{
+	"name": "fluid-token-function",
+	"version": "1.0.0",
+	"description": "Token-minting Azure Function for the self-hosted Fluid stack. Signs HS256 JWTs with the customer-held tenant key (same claims shape as @fluidframework/azure-service-utils generateToken). Clients use AzureFunctionTokenProvider to fetch tokens; riddler validates them with the same shared key.",
+	"private": true,
+	"main": "src/functions/*.js",
+	"scripts": {
+		"start": "func start"
+	},
+	"dependencies": {
+		"@azure/functions": "^4.5.0",
+		"jsonwebtoken": "^9.0.2"
+	}
+}
