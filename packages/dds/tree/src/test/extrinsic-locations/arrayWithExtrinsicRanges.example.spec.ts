@@ -17,7 +17,11 @@ describe("ExtrinsicLocations example", () => {
 	it("keeps a review comment attached to a range of array content", () => {
 		const sf = new SchemaFactoryBeta("com.example.review");
 		class Comment extends sf.object("Comment", { message: sf.string }) {}
-		class Document extends ExtrinsicLocations.createArraySchema(sf, Comment, sf.string) {}
+		class Document extends ExtrinsicLocations.createArraySchema({
+			schemaFactory: sf,
+			rangeDataSchema: Comment,
+			contentSchema: sf.string,
+		}) {}
 
 		const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewWith(
 			new TreeViewConfiguration({ schema: Document }),
@@ -25,7 +29,7 @@ describe("ExtrinsicLocations example", () => {
 		view.initialize(Document.create(["Plan", "Build", "Ship"]));
 
 		const document = view.root;
-		const comment = document.ranges.trackNewRange(
+		const comment = document.ranges.trackRange(
 			"comment",
 			{ start: 1, end: 3 },
 			{ message: "Check these steps" },

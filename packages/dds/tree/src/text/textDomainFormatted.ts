@@ -202,12 +202,7 @@ export namespace FormattedText {
 
 	/**
 	 * Creates formatted text with application-defined data attached to tracked ranges.
-	 * @param inputSchemaFactory - Factory whose scope identifies this formatted text schema.
-	 * Use the same scope as {@link FormattedText.createSchema} when upgrading existing text.
-	 * @param formatSchema - Schema for each atom's formatting, unchanged when upgrading existing text.
-	 * @param extraAtoms - Additional atom schemas, unchanged when upgrading existing text.
-	 * @param defaultFormatInsertable - Formatting for text inserted without an explicit format.
-	 * @param rangeDataSchema - Schema for data associated with each range.
+	 * @param options - Factory, formatting, atom schemas, and range data schema for the text.
 	 * @returns A subclassable formatted text schema with range-reading and editing methods.
 	 * @remarks
 	 * This preserves the existing formatted text identifiers and adds optional range storage.
@@ -229,18 +224,42 @@ export namespace FormattedText {
 			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
 		>[],
 		const RangeDataSchema extends ImplicitAllowedTypes,
-	>(
-		inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
-		formatSchema: FormatSchema,
-		extraAtoms: ExtraAtomsSchema,
-		defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
-		rangeDataSchema: RangeDataSchema,
-	): FormattedTextSchemaWithRanges<
+	>(options: {
+		/**
+		 * Factory whose scope identifies this formatted text schema.
+		 * @remarks
+		 * Use the same scope as {@link FormattedText.createSchema} when upgrading existing text.
+		 */
+		readonly schemaFactory: SchemaFactoryBeta<TUserScope>;
+		/**
+		 * Schema for each atom's formatting, unchanged when upgrading existing text.
+		 */
+		readonly formatSchema: FormatSchema;
+		/**
+		 * Additional atom schemas, unchanged when upgrading existing text.
+		 */
+		readonly extraAtoms: ExtraAtomsSchema;
+		/**
+		 * Formatting for text inserted without an explicit format.
+		 */
+		readonly defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>;
+		/**
+		 * Schema for data associated with each range.
+		 */
+		readonly rangeDataSchema: RangeDataSchema;
+	}): FormattedTextSchemaWithRanges<
 		TUserScope,
 		FormatSchema,
 		ExtraAtomsSchema,
 		RangeDataSchema
 	> {
+		const {
+			schemaFactory: inputSchemaFactory,
+			formatSchema,
+			extraAtoms,
+			defaultFormatInsertable,
+			rangeDataSchema,
+		} = options;
 		return createSchemaInternal(
 			inputSchemaFactory,
 			formatSchema,

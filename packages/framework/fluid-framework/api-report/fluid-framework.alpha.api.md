@@ -497,14 +497,18 @@ export namespace ExtrinsicLocations {
     export interface ArrayStatics<TNode, TContentSchema extends ImplicitAllowedTypes> {
         create(content?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TContentSchema>>): TNode;
     }
-    export function createArraySchema<const TUserScope extends string, const TRangeDataSchema extends ImplicitAllowedTypes, const TContentSchema extends ImplicitAllowedTypes>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, rangeDataSchema: TRangeDataSchema, contentSchema: TContentSchema): ArraySchema<TUserScope, TRangeDataSchema, TContentSchema>;
+    export function createArraySchema<const TUserScope extends string, const TRangeDataSchema extends ImplicitAllowedTypes, const TContentSchema extends ImplicitAllowedTypes>(options: {
+        readonly schemaFactory: SchemaFactoryBeta<TUserScope>;
+        readonly rangeDataSchema: TRangeDataSchema;
+        readonly contentSchema: TContentSchema;
+    }): ArraySchema<TUserScope, TRangeDataSchema, TContentSchema>;
     // @sealed
     export interface RangeCollection<TData, TInsertableData = TData> {
         getRange(key: string): TrackedRange<TData, TInsertableData> | undefined;
         keys(): IterableIterator<string>;
         removeTrackedRange(key: string): void;
         setRangeBounds(key: string, bounds: RangeEndpoints): void;
-        trackNewRange(key: string, bounds: RangeEndpoints, data: TInsertableData): TrackedRange<TData, TInsertableData>;
+        trackRange(key: string, bounds: RangeEndpoints, data: TInsertableData): TrackedRange<TData, TInsertableData>;
     }
     // @sealed
     export interface RangeEndpoints {
@@ -784,7 +788,13 @@ export const ForestTypeReference: ForestType;
 // @alpha
 export namespace FormattedText {
     export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
-    export function createSchemaWithRanges<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], const RangeDataSchema extends ImplicitAllowedTypes>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>, rangeDataSchema: RangeDataSchema): FormattedTextSchemaWithRanges<TUserScope, FormatSchema, ExtraAtomsSchema, RangeDataSchema>;
+    export function createSchemaWithRanges<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], const RangeDataSchema extends ImplicitAllowedTypes>(options: {
+        readonly schemaFactory: SchemaFactoryBeta<TUserScope>;
+        readonly formatSchema: FormatSchema;
+        readonly extraAtoms: ExtraAtomsSchema;
+        readonly defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>;
+        readonly rangeDataSchema: RangeDataSchema;
+    }): FormattedTextSchemaWithRanges<TUserScope, FormatSchema, ExtraAtomsSchema, RangeDataSchema>;
     // @sealed
     export interface FormattedAtom<TFormat, TText> {
         readonly content: TText;

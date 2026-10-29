@@ -17,20 +17,20 @@ describe("FormattedText with ranges example", () => {
 		const sf = new SchemaFactoryBeta("com.example.annotatedText");
 		class Format extends sf.object("Format", { bold: sf.boolean }) {}
 		class Comment extends sf.object("Comment", { message: sf.string }) {}
-		class Text extends FormattedText.createSchemaWithRanges(
-			sf,
-			Format,
-			[],
-			{ bold: false },
-			Comment,
-		) {}
+		class Text extends FormattedText.createSchemaWithRanges({
+			schemaFactory: sf,
+			formatSchema: Format,
+			extraAtoms: [],
+			defaultFormatInsertable: { bold: false },
+			rangeDataSchema: Comment,
+		}) {}
 
 		const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewWith(
 			new TreeViewConfiguration({ schema: Text }),
 		);
 		view.initialize(Text.fromString("Hello world"));
 		const text = view.root;
-		const comment = text.ranges.trackNewRange(
+		const comment = text.ranges.trackRange(
 			"comment",
 			{ start: 6, end: 11 },
 			{ message: "Review this word" },

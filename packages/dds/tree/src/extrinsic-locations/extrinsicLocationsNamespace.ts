@@ -48,10 +48,7 @@ import { ExtrinsicRangeTracker } from "./extrinsicRangeTracker.js";
 export namespace ExtrinsicLocations {
 	/**
 	 * Creates a subclassable schema for an array with extrinsic ranges.
-	 * @param inputSchemaFactory - Factory whose scope distinguishes this schema from other parameterizations.
-	 * Keep the scope and parameter schemas stable when opening existing documents.
-	 * @param rangeDataSchema - Schema for the data associated with each range.
-	 * @param contentSchema - Schema for the items in the content array.
+	 * @param options - Factory and schemas for the content array and its range data.
 	 * @returns A schema with {@link ExtrinsicLocations.ArrayStatics} for construction and
 	 * {@link ExtrinsicLocations.ArrayMembers} for reading and editing.
 	 * @remarks
@@ -66,11 +63,23 @@ export namespace ExtrinsicLocations {
 		const TUserScope extends string,
 		const TRangeDataSchema extends ImplicitAllowedTypes,
 		const TContentSchema extends ImplicitAllowedTypes,
-	>(
-		inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
-		rangeDataSchema: TRangeDataSchema,
-		contentSchema: TContentSchema,
-	): ArraySchema<TUserScope, TRangeDataSchema, TContentSchema> {
+	>(options: {
+		/**
+		 * Factory whose scope distinguishes this schema from other parameterizations.
+		 * @remarks
+		 * Keep the scope and parameter schemas stable when opening existing documents.
+		 */
+		readonly schemaFactory: SchemaFactoryBeta<TUserScope>;
+		/**
+		 * Schema for the data associated with each range.
+		 */
+		readonly rangeDataSchema: TRangeDataSchema;
+		/**
+		 * Schema for the items in the content array.
+		 */
+		readonly contentSchema: TContentSchema;
+	}): ArraySchema<TUserScope, TRangeDataSchema, TContentSchema> {
+		const { schemaFactory: inputSchemaFactory, rangeDataSchema, contentSchema } = options;
 		const sf = createCustomizedFluidFrameworkScopedFactory(
 			inputSchemaFactory,
 			"extrinsicRanges",
@@ -219,7 +228,7 @@ export namespace ExtrinsicLocations {
 		 * @param content - Initial content. Defaults to an empty array.
 		 * @returns A new, unhydrated node of this schema.
 		 * @remarks
-		 * Use {@link ExtrinsicLocations.RangeCollection.trackNewRange} to add ranges after construction.
+		 * Use {@link ExtrinsicLocations.RangeCollection.trackRange} to add ranges after construction.
 		 */
 		create(
 			content?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TContentSchema>>,
@@ -348,7 +357,7 @@ export namespace ExtrinsicLocations {
 		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the key is already tracked or the endpoints are invalid.
 		 * Also throws during content-editing calls as described in {@link ExtrinsicLocations.RangeCollection}.
 		 */
-		trackNewRange(
+		trackRange(
 			key: string,
 			bounds: RangeEndpoints,
 			data: TInsertableData,

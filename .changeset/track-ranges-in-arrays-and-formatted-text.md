@@ -24,10 +24,14 @@ If a nested transaction rolls back content edits, the range endpoints are restor
 import { ExtrinsicLocations, SchemaFactoryBeta } from "@fluidframework/tree/alpha";
 
 const sf = new SchemaFactoryBeta("com.example.review");
-class Document extends ExtrinsicLocations.createArraySchema(sf, sf.string, sf.string) {}
+class Document extends ExtrinsicLocations.createArraySchema({
+	schemaFactory: sf,
+	rangeDataSchema: sf.string,
+	contentSchema: sf.string,
+}) {}
 
 const document = Document.create(["Plan", "Build", "Ship"]);
-const comment = document.ranges.trackNewRange(
+const comment = document.ranges.trackRange(
 	"comment",
 	{ start: 1, end: 3 },
 	"Check these steps",
@@ -39,7 +43,7 @@ document.content.slice(comment.start.index, comment.end.index); // ["Build", "Sh
 #### Formatted text
 
 Use [`FormattedText.createSchemaWithRanges`](https://fluidframework.com/docs/api/tree/formattedtext-namespace) for text whose existing editing methods maintain ranges automatically.
-It accepts the same arguments as `FormattedText.createSchema`, followed by a schema for range data.
+It accepts named options for the schema factory, formatting, additional atom schemas, default formatting, and range data schema.
 
 ```typescript
 import {
@@ -52,20 +56,20 @@ import {
 const sf = new SchemaFactoryBeta("com.example.annotatedText");
 class Format extends sf.object("Format", { bold: sf.boolean }) {}
 class Comment extends sf.object("Comment", { message: sf.string }) {}
-class Text extends FormattedText.createSchemaWithRanges(
-	sf,
-	Format,
-	[],
-	{ bold: false },
-	Comment,
-) {}
+class Text extends FormattedText.createSchemaWithRanges({
+	schemaFactory: sf,
+	formatSchema: Format,
+	extraAtoms: [],
+	defaultFormatInsertable: { bold: false },
+	rangeDataSchema: Comment,
+}) {}
 
 const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewWith(
 	new TreeViewConfiguration({ schema: Text }),
 );
 view.initialize(Text.fromString("Hello world"));
 const text = view.root;
-const comment = text.ranges.trackNewRange(
+const comment = text.ranges.trackRange(
 	"comment",
 	{ start: 6, end: 11 },
 	{ message: "Review this word" },

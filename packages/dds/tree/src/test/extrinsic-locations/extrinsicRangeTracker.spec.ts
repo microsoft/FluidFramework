@@ -107,7 +107,7 @@ describe("ExtrinsicRangeTracker", () => {
 		it("creates, repositions, and removes ranges between content editing scopes", () => {
 			const { document, tracker, range } = setup();
 			tracker.transactOnContent((content) => content.insertAtStart("X"));
-			const added = tracker.trackNewRange("added", { start: 0, end: 2 }, "added");
+			const added = tracker.trackRange("added", { start: 0, end: 2 }, "added");
 			assert.equal(added.data, "added");
 			tracker.setRangeBounds("range", { start: 2, end: 3 });
 			tracker.transactOnContent((content) => {
@@ -119,7 +119,7 @@ describe("ExtrinsicRangeTracker", () => {
 			assert.equal(tracker.getRange("added"), undefined);
 			assert.deepEqual([...document.review.annotations], [["range", range]]);
 			assert.deepEqual([range.start, range.end], [1, 2]);
-			const later = tracker.trackNewRange("later", { start: 0, end: 1 }, "after");
+			const later = tracker.trackRange("later", { start: 0, end: 1 }, "after");
 			tracker.setRangeBounds("later", { start: 1, end: 3 });
 			assert.deepEqual([later.start.index, later.end.index], [1, 3]);
 			tracker.removeTrackedRange("later");
@@ -141,7 +141,7 @@ describe("ExtrinsicRangeTracker", () => {
 			tracker.transactOnContent((content) => {
 				content.insertAtStart("X");
 				assert.throws(
-					() => tracker.trackNewRange("added", { start: 0, end: 2 }, "added"),
+					() => tracker.trackRange("added", { start: 0, end: 2 }, "added"),
 					validateUsageError(/while editing content/),
 				);
 				assert.throws(
@@ -159,7 +159,7 @@ describe("ExtrinsicRangeTracker", () => {
 			});
 			assert.deepEqual([range.start, range.end], [1, 3]);
 			assert.equal(range.data, "existing");
-			tracker.trackNewRange("added", { start: 0, end: 2 }, "added");
+			tracker.trackRange("added", { start: 0, end: 2 }, "added");
 			assert.equal(creations, 1);
 		});
 
@@ -184,13 +184,13 @@ describe("ExtrinsicRangeTracker", () => {
 				[0, Infinity],
 			]) {
 				assert.throws(
-					() => tracker.trackNewRange("invalid", { start, end }, "invalid"),
+					() => tracker.trackRange("invalid", { start, end }, "invalid"),
 					UsageError,
 				);
 				assert.throws(() => tracker.setRangeBounds("range", { start, end }), UsageError);
 			}
 			assert.throws(
-				() => tracker.trackNewRange("range", { start: 0, end: 1 }, "duplicate"),
+				() => tracker.trackRange("range", { start: 0, end: 1 }, "duplicate"),
 				validateUsageError(/already tracked/),
 			);
 			assert.equal(creations, 0);
@@ -297,7 +297,7 @@ describe("ExtrinsicRangeTracker", () => {
 				},
 				validateUsageError(/no longer tracked/),
 			);
-			const replacement = tracker.trackNewRange("range", { start: 0, end: 1 }, "replacement");
+			const replacement = tracker.trackRange("range", { start: 0, end: 1 }, "replacement");
 			assert.deepEqual([replacement.start.index, replacement.end.index], [0, 1]);
 			assert.throws(() => original.end.index, validateUsageError(/no longer tracked/));
 			assert.throws(
@@ -332,7 +332,7 @@ describe("ExtrinsicRangeTracker", () => {
 			const off = TreeBeta.on(range, "nodeChanged", () => {
 				observed.push(rangeBounds(tracker, "range"));
 				assert.throws(
-					() => tracker.trackNewRange("added", { start: 0, end: 1 }, "added"),
+					() => tracker.trackRange("added", { start: 0, end: 1 }, "added"),
 					validateUsageError(/while editing content/),
 				);
 				assert.throws(
@@ -399,7 +399,7 @@ describe("ExtrinsicRangeTracker", () => {
 				view.initialize(createDocument());
 				const tracker = createTracker(view.root);
 				tracker.setRangeBounds("range", { start: 1, end: 2 });
-				const empty = tracker.trackNewRange("empty", { start: 2, end: 2 }, "empty");
+				const empty = tracker.trackRange("empty", { start: 2, end: 2 }, "empty");
 				const range = tracker.getRange("range");
 				assert(range !== undefined);
 				const { start, end } = range;
@@ -479,7 +479,7 @@ describe("ExtrinsicRangeTracker", () => {
 	it("reuses an existing tracker after its tree is hydrated", () => {
 		const document = createDocument();
 		const tracker = createTracker(document);
-		const range = tracker.trackNewRange("added", { start: 0, end: 2 }, "added");
+		const range = tracker.trackRange("added", { start: 0, end: 2 }, "added");
 		tracker.transactOnContent((content) => content.insertAtStart("X"));
 		hydrateNode(document);
 		tracker.transactOnContent((content) => content.removeAt(0));
@@ -608,7 +608,7 @@ describe("ExtrinsicRangeTracker", () => {
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 		view.runTransaction(() => {
 			tracker.transactOnContent((content) => content.insertAtStart("X"));
-			tracker.trackNewRange("added", { start: 0, end: 2 }, "added");
+			tracker.trackRange("added", { start: 0, end: 2 }, "added");
 		});
 		const edited = JSON.stringify(view.root);
 		const undo = undoStack.pop();

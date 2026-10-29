@@ -265,9 +265,9 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * {@inheritDoc ExtrinsicLocations.RangeCollection.trackNewRange}
+	 * {@inheritDoc ExtrinsicLocations.RangeCollection.trackRange}
 	 */
-	public trackNewRange(
+	public trackRange(
 		key: string,
 		{ start, end }: ExtrinsicLocations.RangeEndpoints,
 		data: TRangeData,
@@ -276,7 +276,7 @@ export class ExtrinsicRangeTracker<
 		if (this.getRanges()?.has(key) === true) {
 			throw new UsageError("An extrinsic range is already tracked at this key.");
 		}
-		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.trackNewRange");
+		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.trackRange");
 		const range = this.createRange(start, end, data);
 		this.transactOnContent(() => {
 			this.#setAnchors(range, start, end);

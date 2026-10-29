@@ -29,11 +29,11 @@ import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { createTestUndoRedoStacks, getView, TestTreeProviderLite } from "../utils.js";
 
 const sf = new SchemaFactoryBeta("test.extrinsicRanges");
-class ArrayWithRanges extends ExtrinsicLocations.createArraySchema(
-	sf,
-	SchemaFactory.string,
-	SchemaFactory.number,
-) {}
+class ArrayWithRanges extends ExtrinsicLocations.createArraySchema({
+	schemaFactory: sf,
+	rangeDataSchema: SchemaFactory.string,
+	contentSchema: SchemaFactory.number,
+}) {}
 const config = new TreeViewConfiguration({
 	schema: ArrayWithRanges,
 	enableSchemaValidation: true,
@@ -82,7 +82,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("@Smoke maintains ranges through insertion and removal", () => {
 			const array = create();
-			const range = array.ranges.trackNewRange("range", { start: 1, end: 4 }, "comment");
+			const range = array.ranges.trackRange("range", { start: 1, end: 4 }, "comment");
 			array.transactOnContent((content) => content.insertAt(0, 10, 11));
 			assert.deepEqual([...array.content], [10, 11, 0, 1, 2, 3, 4]);
 			assert.deepEqual([...endpoints(array, "range"), range.data], [3, 6, "comment"]);
@@ -105,7 +105,7 @@ describe("ExtrinsicLocations", () => {
 		] as const) {
 			it(`inserts at ${index} with insertion-point endpoint semantics`, () => {
 				const array = create();
-				array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+				array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 				array.transactOnContent((content) => content.insertAt(index, 9));
 				assert.deepEqual(endpoints(array, "range"), expected);
 			});
@@ -123,7 +123,7 @@ describe("ExtrinsicLocations", () => {
 		] as const) {
 			it(`removes [${start}, ${end}) without deleting ranges`, () => {
 				const array = create();
-				const range = array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+				const range = array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 				array.transactOnContent((content) => content.removeRange(start, end));
 				assert.deepEqual(endpoints(array, "range"), expected);
 				assert.equal(array.ranges.getRange("range")?.data, range.data);
@@ -132,7 +132,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("supports empty content, empty ranges, and no-op edits", () => {
 			const array = create([]);
-			array.ranges.trackNewRange("range", { start: 0, end: 0 }, "empty");
+			array.ranges.trackRange("range", { start: 0, end: 0 }, "empty");
 			array.transactOnContent((content) => {
 				content.insertAt(0);
 				content.removeRange();
@@ -148,9 +148,9 @@ describe("ExtrinsicLocations", () => {
 
 		it("updates overlapping ranges independently", () => {
 			const array = create();
-			array.ranges.trackNewRange("outer", { start: 0, end: 5 }, "outer");
-			array.ranges.trackNewRange("inner", { start: 1, end: 3 }, "inner");
-			array.ranges.trackNewRange("empty", { start: 2, end: 2 }, "empty");
+			array.ranges.trackRange("outer", { start: 0, end: 5 }, "outer");
+			array.ranges.trackRange("inner", { start: 1, end: 3 }, "inner");
+			array.ranges.trackRange("empty", { start: 2, end: 2 }, "empty");
 			array.transactOnContent((content) => content.insertAt(2, TreeArrayNode.spread([8, 9])));
 			assert.deepEqual(
 				["outer", "inner", "empty"].map((key) => endpoints(array, key)),
@@ -173,8 +173,8 @@ describe("ExtrinsicLocations", () => {
 
 		it("sets and removes ranges by key", () => {
 			const array = create();
-			array.ranges.trackNewRange("first", { start: 1, end: 3 }, "same");
-			const second = array.ranges.trackNewRange("second", { start: 1, end: 3 }, "same");
+			array.ranges.trackRange("first", { start: 1, end: 3 }, "same");
+			const second = array.ranges.trackRange("second", { start: 1, end: 3 }, "same");
 			array.ranges.setRangeBounds("first", { start: 0, end: 5 });
 			assert.deepEqual(endpoints(array, "first"), [0, 5]);
 			assert.deepEqual(endpoints(array, "second"), [1, 3]);
@@ -200,7 +200,7 @@ describe("ExtrinsicLocations", () => {
 			const expected = new Map(
 				["review/42", "", "__proto__", "constructor"].map((key) => [
 					key,
-					array.ranges.trackNewRange(key, { start: 0, end: 1 }, key),
+					array.ranges.trackRange(key, { start: 0, end: 1 }, key),
 				]),
 			);
 			assert.equal(array.ranges, ranges);
@@ -219,15 +219,15 @@ describe("ExtrinsicLocations", () => {
 
 		it("rejects duplicate keys and supports reusing a removed key", () => {
 			const array = create();
-			const original = array.ranges.trackNewRange("review", { start: 1, end: 3 }, "original");
+			const original = array.ranges.trackRange("review", { start: 1, end: 3 }, "original");
 			const initial = JSON.stringify(array);
 			assert.throws(
-				() => array.ranges.trackNewRange("review", { start: 0, end: 1 }, "replacement"),
+				() => array.ranges.trackRange("review", { start: 0, end: 1 }, "replacement"),
 				validateUsageError(/already tracked/),
 			);
 			assert.equal(JSON.stringify(array), initial);
 			array.ranges.removeTrackedRange("review");
-			const replacement = array.ranges.trackNewRange(
+			const replacement = array.ranges.trackRange(
 				"review",
 				{ start: 0, end: 2 },
 				"replacement",
@@ -245,7 +245,7 @@ describe("ExtrinsicLocations", () => {
 		it("rejects keys not tracked by this manager", () => {
 			const array = create();
 			const other = create();
-			other.ranges.trackNewRange("other", { start: 0, end: 1 }, "other");
+			other.ranges.trackRange("other", { start: 0, end: 1 }, "other");
 			for (const key of ["other", "missing"]) {
 				assert.throws(
 					() => array.ranges.removeTrackedRange(key),
@@ -261,7 +261,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("rejects invalid endpoints before changing content or ranges", () => {
 			const array = create();
-			array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+			array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 			for (const [start, end] of [
 				[-1, 1],
 				[0, 6],
@@ -271,7 +271,7 @@ describe("ExtrinsicLocations", () => {
 				[0, Infinity],
 			]) {
 				assert.throws(
-					() => array.ranges.trackNewRange("invalid", { start, end }, "invalid"),
+					() => array.ranges.trackRange("invalid", { start, end }, "invalid"),
 					UsageError,
 				);
 				assert.throws(() => array.ranges.setRangeBounds("range", { start, end }), UsageError);
@@ -283,7 +283,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("delivers content events during the callback without buffering invalidation", () => {
 			const array = create();
-			array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+			array.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 			let events = 0;
 			let cached = [...array.content];
 			const off = TreeBeta.on(array.content, "nodeChanged", () => {
@@ -305,7 +305,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("returns live endpoints while copied endpoints remain snapshots", () => {
 			const array = create();
-			const range = array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+			const range = array.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 			const original = rangeBounds(array.ranges, "range");
 			array.transactOnContent((content) => {
 				assert.equal(content, array.content);
@@ -322,11 +322,11 @@ describe("ExtrinsicLocations", () => {
 
 		it("rejects range mutations during a callback while allowing reads and data edits", () => {
 			const array = create();
-			const range = array.ranges.trackNewRange("range", { start: 1, end: 4 }, "original");
+			const range = array.ranges.trackRange("range", { start: 1, end: 4 }, "original");
 			array.transactOnContent((content) => {
 				content.insertAtStart(9);
 				assert.throws(
-					() => array.ranges.trackNewRange("added", { start: 0, end: 2 }, "added"),
+					() => array.ranges.trackRange("added", { start: 0, end: 2 }, "added"),
 					validateUsageError(/while editing content/),
 				);
 				assert.throws(
@@ -345,14 +345,14 @@ describe("ExtrinsicLocations", () => {
 			});
 			assert.deepEqual(rangeSnapshot(array), [["range", 3, 6, "replacement"]]);
 			array.ranges.setRangeBounds("range", { start: 0, end: 2 });
-			array.ranges.trackNewRange("added", { start: 0, end: 1 }, "added");
+			array.ranges.trackRange("added", { start: 0, end: 1 }, "added");
 			array.ranges.removeTrackedRange("range");
 			assert.deepEqual(rangeSnapshot(array), [["added", 0, 1, "added"]]);
 		});
 
 		it("uses anchors for position reads during endpoint writeback", () => {
 			const array = create();
-			array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+			array.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 			const observed: [number, number][] = [];
 			const off = TreeBeta.on(array, "treeChanged", () => {
 				observed.push(endpoints(array, "range"));
@@ -366,7 +366,7 @@ describe("ExtrinsicLocations", () => {
 		for (const event of ["nodeChanged", "treeChanged"] as const) {
 			it(`resolves positions from ${event} callbacks registered inside the editing scope`, () => {
 				const array = create();
-				array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+				array.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 				const observed: [number, number][] = [];
 				array.transactOnContent((content) => {
 					const off = TreeBeta.on(content, event, () => {
@@ -385,7 +385,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("rejects same-manager nesting without ending the outer editing scope", () => {
 			const array = create();
-			array.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+			array.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 			array.transactOnContent((content) => {
 				assert.throws(
 					() => array.transactOnContent(() => {}),
@@ -400,7 +400,7 @@ describe("ExtrinsicLocations", () => {
 
 		it("tracks moves within the content array", () => {
 			const array = create();
-			array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+			array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 			array.transactOnContent((content) => {
 				content.moveToIndex(0, 4);
 				assert.deepEqual(endpoints(array, "range"), [2, 4]);
@@ -423,8 +423,8 @@ describe("ExtrinsicLocations", () => {
 			if (hydrated) {
 				hydrateNode(root);
 			}
-			root.source.ranges.trackNewRange("sourceRange", { start: 1, end: 3 }, "source");
-			root.destination.ranges.trackNewRange(
+			root.source.ranges.trackRange("sourceRange", { start: 1, end: 3 }, "source");
+			root.destination.ranges.trackRange(
 				"destinationRange",
 				{ start: 0, end: 2 },
 				"destination",
@@ -454,8 +454,8 @@ describe("ExtrinsicLocations", () => {
 			destination: ArrayWithRanges.create([3, 4]),
 		});
 		const { source, destination } = view.root;
-		source.ranges.trackNewRange("sourceRange", { start: 1, end: 3 }, "source");
-		destination.ranges.trackNewRange("destinationRange", { start: 0, end: 2 }, "destination");
+		source.ranges.trackRange("sourceRange", { start: 1, end: 3 }, "source");
+		destination.ranges.trackRange("destinationRange", { start: 0, end: 2 }, "destination");
 		source.transactOnContent((sourceContent) => {
 			destination.transactOnContent((destinationContent) => {
 				view.runTransaction(() => {
@@ -478,7 +478,7 @@ describe("ExtrinsicLocations", () => {
 
 	it("keeps partial unhydrated edits consistent after a thrown callback and releases the scope", () => {
 		const array = ArrayWithRanges.create([0, 1, 2]);
-		array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+		array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 		const error = new Error("callback failed");
 		assert.throws(
 			() =>
@@ -496,7 +496,7 @@ describe("ExtrinsicLocations", () => {
 
 	it("rejects promise-returning callbacks and releases the unhydrated editing scope", () => {
 		const array = ArrayWithRanges.create([0, 1, 2]);
-		array.ranges.trackNewRange("range", { start: 1, end: 3 }, "range");
+		array.ranges.trackRange("range", { start: 1, end: 3 }, "range");
 		assert.throws(
 			() =>
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Verifies rejection of asynchronous callbacks.
@@ -512,13 +512,13 @@ describe("ExtrinsicLocations", () => {
 	it("supports object content and range data without string-specific APIs", () => {
 		class Item extends sf.object("Item", { value: sf.number }) {}
 		class Comment extends sf.object("Comment", { message: sf.string }) {}
-		class Objects extends ExtrinsicLocations.createArraySchema(
-			new SchemaFactoryBeta("test.extrinsicRanges.objects"),
-			Comment,
-			[Item, SchemaFactory.null],
-		) {}
+		class Objects extends ExtrinsicLocations.createArraySchema({
+			schemaFactory: new SchemaFactoryBeta("test.extrinsicRanges.objects"),
+			rangeDataSchema: Comment,
+			contentSchema: [Item, SchemaFactory.null],
+		}) {}
 		const array = Objects.create([{ value: 1 }, null]);
-		const range = array.ranges.trackNewRange(
+		const range = array.ranges.trackRange(
 			"range",
 			{ start: 0, end: 2 },
 			{ message: "review" },
@@ -544,11 +544,11 @@ describe("ExtrinsicLocations", () => {
 		class Item extends sf.objectRecursive("RecursiveItem", {
 			children: sf.optionalRecursive([() => RecursiveArray]),
 		}) {}
-		class RecursiveArray extends ExtrinsicLocations.createArraySchema(
-			new SchemaFactoryBeta("test.extrinsicRanges.recursive"),
-			sf.null,
-			[Item],
-		) {}
+		class RecursiveArray extends ExtrinsicLocations.createArraySchema({
+			schemaFactory: new SchemaFactoryBeta("test.extrinsicRanges.recursive"),
+			rangeDataSchema: sf.null,
+			contentSchema: [Item],
+		}) {}
 		type _check = ValidateRecursiveSchema<typeof Item>;
 		const child = RecursiveArray.create();
 		child.transactOnContent((content) => content.insertAt(0, new Item({})));
@@ -557,11 +557,11 @@ describe("ExtrinsicLocations", () => {
 	});
 
 	it("keeps schema parameterizations distinct in the same document", () => {
-		const Other = ExtrinsicLocations.createArraySchema(
-			new SchemaFactoryBeta("test.extrinsicRanges.other"),
-			sf.null,
-			sf.string,
-		);
+		const Other = ExtrinsicLocations.createArraySchema({
+			schemaFactory: new SchemaFactoryBeta("test.extrinsicRanges.other"),
+			rangeDataSchema: sf.null,
+			contentSchema: sf.string,
+		});
 		class Root extends sf.object("Root", { numbers: ArrayWithRanges, strings: Other }) {}
 		const view = getView(new TreeViewConfiguration({ schema: Root }));
 		view.initialize({ numbers: ArrayWithRanges.create([1]), strings: Other.create(["a"]) });
@@ -574,6 +574,12 @@ describe("ExtrinsicLocations", () => {
 
 	it("erases constructors and unsafe mutation APIs while preserving inferred types", () => {
 		const check = (array: NodeFromSchema<typeof ArrayWithRanges>): void => {
+			// @ts-expect-error Schema factories require named options.
+			ExtrinsicLocations.createArraySchema(sf, sf.string, sf.number);
+			// @ts-expect-error Both content and range-data schemas are required.
+			ExtrinsicLocations.createArraySchema({ schemaFactory: sf, contentSchema: sf.number });
+			// @ts-expect-error The range creation method is named trackRange.
+			allowUnused(array.ranges.trackNewRange);
 			const members: ExtrinsicLocations.ArrayMembers<
 				typeof SchemaFactory.string,
 				typeof SchemaFactory.number
@@ -593,7 +599,7 @@ describe("ExtrinsicLocations", () => {
 			allowUnused(array.ranges.set);
 			// @ts-expect-error Range removal must go through the manager.
 			allowUnused(array.ranges.delete);
-			const range: ExtrinsicLocations.TrackedRange<string> = array.ranges.trackNewRange(
+			const range: ExtrinsicLocations.TrackedRange<string> = array.ranges.trackRange(
 				"range",
 				{ start: 0, end: 0 },
 				"range",
@@ -601,7 +607,7 @@ describe("ExtrinsicLocations", () => {
 			// @ts-expect-error Range operations use keys, not handles.
 			array.ranges.getRange(range);
 			// @ts-expect-error Keys must be strings.
-			array.ranges.trackNewRange(42, { start: 0, end: 0 }, "range");
+			array.ranges.trackRange(42, { start: 0, end: 0 }, "range");
 			// @ts-expect-error Endpoints must be changed through the manager.
 			range.start = 1;
 			array.transactOnContent((content) => {
@@ -618,7 +624,7 @@ describe("ExtrinsicLocations", () => {
 			// @ts-expect-error Forwarded array edits are not exposed.
 			allowUnused(array.insertAt);
 			// @ts-expect-error Range data types are preserved.
-			array.ranges.trackNewRange("new", { start: 0, end: 0 }, 123);
+			array.ranges.trackRange("new", { start: 0, end: 0 }, 123);
 		};
 		allowUnused(check);
 		const node = ArrayWithRanges.create();
@@ -643,12 +649,12 @@ describe("ExtrinsicLocations", () => {
 						content.insertAtStart(9);
 						content.removeRange(2, 4);
 					});
-					array.ranges.trackNewRange("new", { start: 0, end: 2 }, "new");
+					array.ranges.trackRange("new", { start: 0, end: 2 }, "new");
 					array.ranges.setRangeBounds("range", { start: 1, end: 3 });
 				});
 			},
 			add: (array: ArrayWithRanges): void => {
-				array.ranges.trackNewRange("new", { start: 0, end: 2 }, "new");
+				array.ranges.trackRange("new", { start: 0, end: 2 }, "new");
 			},
 			set: (array: ArrayWithRanges): void => {
 				array.ranges.setRangeBounds("range", { start: 0, end: 5 });
@@ -670,14 +676,14 @@ describe("ExtrinsicLocations", () => {
 			);
 			const view = asAlpha(provider.trees[0].viewWith(config));
 			view.initialize(ArrayWithRanges.create([0, 1, 2, 3, 4]));
-			view.root.ranges.trackNewRange("range", { start: 1, end: 4 }, "range");
+			view.root.ranges.trackRange("range", { start: 1, end: 4 }, "range");
 			provider.synchronizeMessages();
 			return { provider, view };
 		}
 
 		for (const [name, edit] of Object.entries({
 			add: (array: ArrayWithRanges): void => {
-				array.ranges.trackNewRange("added", { start: 0, end: 2 }, "added");
+				array.ranges.trackRange("added", { start: 0, end: 2 }, "added");
 			},
 			set: edits.set,
 			remove: edits.remove,
@@ -838,8 +844,8 @@ describe("ExtrinsicLocations", () => {
 			it(`rejects concurrent range creation atomically, same key: ${sameKey}`, () => {
 				const { provider, view } = setup();
 				const other = provider.trees[1].viewWith(config);
-				view.root.ranges.trackNewRange("review", { start: 1, end: 3 }, "first");
-				other.root.ranges.trackNewRange(
+				view.root.ranges.trackRange("review", { start: 1, end: 3 }, "first");
+				other.root.ranges.trackRange(
 					sameKey ? "review" : "other",
 					{ start: 0, end: 2 },
 					"second",
@@ -850,7 +856,7 @@ describe("ExtrinsicLocations", () => {
 					["review", 1, 3, "first"],
 				]);
 				assert.deepEqual(rangeSnapshot(other.root), rangeSnapshot(view.root));
-				other.root.ranges.trackNewRange("retry", { start: 0, end: 1 }, "after rejection");
+				other.root.ranges.trackRange("retry", { start: 0, end: 1 }, "after rejection");
 				provider.synchronizeMessages();
 				assert.deepEqual(rangeSnapshot(other.root), rangeSnapshot(view.root));
 			});
@@ -862,7 +868,7 @@ describe("ExtrinsicLocations", () => {
 			view.root.transactOnContent((content) => content.insertAt(0, 9));
 			const undo = undoStack.pop();
 			assert(undo !== undefined);
-			view.root.ranges.trackNewRange("new", { start: 0, end: 1 }, "new");
+			view.root.ranges.trackRange("new", { start: 0, end: 1 }, "new");
 			provider.synchronizeMessages();
 			undo.revert();
 			assert.deepEqual([...view.root.content], [9, 0, 1, 2, 3, 4]);

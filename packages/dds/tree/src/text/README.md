@@ -9,7 +9,7 @@ A collection of text related types, schema and utilities for working with text b
 ## Formatted text with tracked ranges
 
 Use `FormattedText.createSchemaWithRanges` from `@fluidframework/tree/alpha` to attach application-defined data to ranges of formatted text.
-It accepts the same arguments as `FormattedText.createSchema`, followed by the schema for range data.
+It accepts named options for the schema factory, formatting, additional atom schemas, default formatting, and range data schema.
 The existing text editing and formatting APIs remain available.
 
 ```typescript
@@ -23,20 +23,20 @@ import {
 const sf = new SchemaFactoryBeta("com.example.annotatedText");
 class Format extends sf.object("Format", { bold: sf.boolean }) {}
 class Comment extends sf.object("Comment", { message: sf.string }) {}
-class Text extends FormattedText.createSchemaWithRanges(
-	sf,
-	Format,
-	[],
-	{ bold: false },
-	Comment,
-) {}
+class Text extends FormattedText.createSchemaWithRanges({
+	schemaFactory: sf,
+	formatSchema: Format,
+	extraAtoms: [],
+	defaultFormatInsertable: { bold: false },
+	rangeDataSchema: Comment,
+}) {}
 
 const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewWith(
 	new TreeViewConfiguration({ schema: Text }),
 );
 view.initialize(Text.fromString("Hello world"));
 const text = view.root;
-const comment = text.ranges.trackNewRange(
+const comment = text.ranges.trackRange(
 	"comment",
 	{ start: 6, end: 11 },
 	{ message: "Review this word" },
