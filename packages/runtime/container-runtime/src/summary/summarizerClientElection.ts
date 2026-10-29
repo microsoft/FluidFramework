@@ -15,6 +15,7 @@ import type {
 	ITrackedClient,
 } from "./orderedClientElection.js";
 import { summarizerClientType } from "./summarizerTypes.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
@@ -59,6 +60,7 @@ export class SummarizerClientElection
 
 	constructor(
 		private readonly logger: TelemetryLoggerExt,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,

@@ -9,6 +9,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
@@ -131,6 +132,7 @@ export class SnapshotLegacy {
 		const chunk1 = this.getSeqLengthSegs(this.segments!, this.chunkSize);
 		let length: number = chunk1.chunkLengthChars;
 		let segments: number = chunk1.chunkSegmentCount;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(
 			SnapshotLegacy.header,

@@ -6,6 +6,7 @@
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -88,6 +89,7 @@ export const summarizeBlobManagerState = (
 ): ISummaryTreeWithStats => summarizeV1(redirectTable);
 
 const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
 	for (const storageId of storageIds) {

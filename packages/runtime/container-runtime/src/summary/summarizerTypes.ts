@@ -30,7 +30,9 @@ import type {
 
 import type { SummarizeReason } from "./summarizerUtils.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizeResults,
 } from "./summaryDelayLoadedModule/index.js";
 
@@ -141,6 +143,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 
 /**
  * Options affecting summarize behavior.
+ * @deprecated Direct summarizer control is deprecated and will become internal.
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * from `@fluidframework/container-loader/legacy`.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummarizeOptions {
@@ -177,6 +183,10 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 /**
+ * @deprecated Direct summarizer control is deprecated and will become internal.
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * from `@fluidframework/container-loader/legacy`.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -192,6 +202,9 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 
 /**
  * Options to use when enqueueing a summarize attempt.
+ * @deprecated Summarizer enqueue options expose implementation details and will become internal.
+ * There is no supported replacement for enqueueing summaries.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
@@ -212,6 +225,9 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
+ * @deprecated These summarizer implementation statistics will become internal.
+ * There is no supported replacement for these detailed statistics.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
@@ -243,6 +259,9 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 /**
  * Type for summarization failures that are retriable.
+ * @deprecated This summarizer implementation error type will become internal.
+ * There is no supported replacement for this implementation type.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IRetriableFailureError extends Error {
@@ -251,6 +270,9 @@ export interface IRetriableFailureError extends Error {
 
 /**
  * Base results for all submitSummary attempts.
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IBaseSummarizeResult {
@@ -268,6 +290,9 @@ export interface IBaseSummarizeResult {
 
 /**
  * Results of submitSummary after generating the summary tree.
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
@@ -288,6 +313,9 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 
 /**
  * Results of submitSummary after uploading the tree to storage.
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
@@ -304,6 +332,9 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 /**
  * Results of submitSummary after submitting the summarize op.
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
@@ -333,6 +364,9 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export type SubmitSummaryResult =
@@ -343,12 +377,18 @@ export type SubmitSummaryResult =
 
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
+ * @deprecated This summarizer implementation stage type will become internal.
+ * For application-requested summary results, use {@link @fluidframework/container-loader#LoadSummarizerSummaryResult}.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
  * The data in summarizer result when submit summary stage fails.
+ * @deprecated This detailed summarizer failure type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface SubmitSummaryFailureData {
@@ -356,6 +396,9 @@ export interface SubmitSummaryFailureData {
 }
 
 /**
+ * @deprecated This detailed summarizer result type will become internal.
+ * There is no supported replacement for these implementation-level results.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
@@ -371,6 +414,10 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  };
 
 /**
+ * @deprecated Direct summarizer control is deprecated and will become internal.
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * from `@fluidframework/container-loader/legacy`.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
@@ -400,6 +447,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	 * that resolve as the summarize attempt progresses. They will resolve with success
 	 * false if a failure is encountered.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 	/**
 	 * Enqueue an attempt to summarize after the specified sequence number.
@@ -413,6 +461,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	 * containing promises that resolve as the summarize attempt progresses. They will
 	 * resolve with success false if a failure is encountered.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
 }
 

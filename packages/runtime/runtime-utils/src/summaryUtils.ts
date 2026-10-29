@@ -185,6 +185,9 @@ export interface SummaryTreeBuilderParams {
 /**
  * A helper class for building summary trees.
  * @remarks Uses the builder pattern.
+ * @deprecated This summary-tree building utility exposes runtime implementation details and will become internal.
+ * There is no supported replacement for this implementation utility.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -290,6 +293,9 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @deprecated This legacy snapshot conversion utility exposes runtime implementation details and will become internal.
+ * There is no supported replacement for this implementation utility.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export function convertToSummaryTreeWithStats(
