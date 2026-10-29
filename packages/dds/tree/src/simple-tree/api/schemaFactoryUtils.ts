@@ -17,6 +17,8 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 
+import type { SchemaFactory } from "./schemaFactory.js";
+
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -83,7 +85,7 @@ export function scoped<
 	TScope extends string | undefined,
 	TName extends number | string,
 	Name extends TName | string,
->(factory: { readonly scope: TScope }, name: Name): ScopedSchemaName<TScope, Name> {
+>(factory: SchemaFactory<TScope, TName>, name: Name): ScopedSchemaName<TScope, Name> {
 	return (
 		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
 	) as ScopedSchemaName<TScope, Name>;

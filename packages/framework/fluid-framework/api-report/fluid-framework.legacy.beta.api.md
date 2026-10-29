@@ -120,10 +120,7 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 }
 
 // @beta
-export function asBeta<TSchema extends ImplicitFieldSchema, TInput extends object = TreeView<TSchema>>(value: TInput & (TreeView<TSchema> | SchemaFactory<string | undefined, never>)): TInput extends {
-    readonly scope: infer TScope extends string | undefined;
-    object: (...args: infer TParameters) => unknown;
-} ? SchemaFactoryBeta<TScope, TParameters[0] & (number | string)> : TreeViewBeta<TSchema>;
+export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
 // @public
 export enum AttachState {
@@ -1268,7 +1265,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 
-// @beta @input
+// @public @input
 export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly allowUnknownOptionalFields?: boolean;
 }
@@ -1410,8 +1407,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, System_Unsafe.TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>, {
         [Symbol.iterator](): Iterator<[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
     } | { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined>;
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     readonly scope: TScope;
 }
 

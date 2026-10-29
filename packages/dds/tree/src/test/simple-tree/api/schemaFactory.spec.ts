@@ -9,13 +9,15 @@ import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import { TreeStatus } from "../../../feature-libraries/index.js";
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	schemaFromValue,
+	type ObjectSchemaOptions,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactory.js";
+} from "../../../entrypoints/public.js";
+import { TreeStatus } from "../../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { schemaFromValue } from "../../../simple-tree/api/schemaFactory.js";
 import {
 	schemaStaticsStable,
 	type SchemaStatics,
@@ -53,6 +55,7 @@ import {
 	SchemaFactoryBeta,
 	allowUnused,
 	type InsertableTreeFieldFromImplicitField,
+	getSimpleSchema,
 } from "../../../simple-tree/index.js";
 import {
 	brand,
@@ -298,6 +301,34 @@ describe("schemaFactory", () => {
 	});
 
 	describe("object", () => {
+		describe("allowUnknownOptionalFields", () => {
+			const factories: readonly (new (scope: string) => SchemaFactory)[] = [
+				SchemaFactory,
+				SchemaFactoryBeta,
+				SchemaFactoryAlpha,
+			];
+			for (const Factory of factories) {
+				for (const allowUnknownOptionalFields of [undefined, false, true]) {
+					it(`${Factory.name} supports allowUnknownOptionalFields=${allowUnknownOptionalFields}`, () => {
+						const factory = new Factory("com.example");
+						const options: ObjectSchemaOptions | undefined =
+							allowUnknownOptionalFields === undefined
+								? undefined
+								: { allowUnknownOptionalFields };
+						class Item extends factory.object("Item", {}, options) {}
+
+						const schema = getSimpleSchema(Item).definitions.get(Item.identifier);
+						assert(schema !== undefined);
+						assert(schema.kind === NodeKind.Object);
+						assert.equal(
+							schema.allowUnknownOptionalFields,
+							allowUnknownOptionalFields ?? false,
+						);
+					});
+				}
+			}
+		});
+
 		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");
 			class Point extends schema.object("Point", {

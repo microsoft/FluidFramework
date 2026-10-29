@@ -205,9 +205,6 @@ export { SchemaFactory_base } from "./schemaStatics.js";
  *
  * @see {@link SchemaFactoryAlpha}
  * @see {@link SchemaFactoryBeta}
- * @see {@link (asAlpha:6)} to access alpha APIs on this factory
- * @see {@link asBeta} to access beta APIs on this factory
- *
  * @sealed @public
  */
 export class SchemaFactory<
@@ -264,10 +261,6 @@ export class SchemaFactory<
 		public readonly scope: TScope,
 	) {
 		super();
-		if (new.target === SchemaFactory || new.target === SchemaFactoryBeta) {
-			// All supported factory instances implement the alpha API so conversions can preserve identity.
-			return new SchemaFactoryAlpha<TScope, TName>(scope);
-		}
 	}
 
 	/**
@@ -275,30 +268,38 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+	 * @param options - Additional options for the schema.
 	 */
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
+		options?: ObjectSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
+			...options,
 		}) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
-			T
+			T,
+			never,
+			TCustomMetadata
 		>;
 	}
 
@@ -673,32 +674,41 @@ export class SchemaFactory<
 	 * Additionally `ImplicitlyConstructable` is disabled (forcing use of constructor) to avoid
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
+	 *
+	 * @param options - Additional options for the schema.
 	 */
 	public objectRecursive<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
+		options?: ObjectSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
 			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
 			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T
+			T,
+			never,
+			TCustomMetadata
 		>;
 	}
 
@@ -809,15 +819,8 @@ export class SchemaFactory<
 
 /**
  * {@link SchemaFactory} with additional beta APIs.
- *
- * @remarks
- * Use {@link asBeta} to access these APIs on an existing {@link SchemaFactory}.
- * Use {@link SchemaStaticsBeta.types} to normalize allowed types and preserve their annotations.
- *
- * @see {@link SchemaFactoryAlpha}
- * @see {@link (asAlpha:6)}
- *
  * @beta
+ * @privateRemarks
  */
 export class SchemaFactoryBeta<
 	out TScope extends string | undefined = string | undefined,
@@ -1188,14 +1191,7 @@ export class SchemaFactoryBeta<
 /**
  * {@link SchemaFactory} with additional alpha APIs.
  *
- * @remarks
- * Use {@link (asAlpha:6)} to access these APIs on an existing factory.
- *
- * @see {@link SchemaFactoryBeta}
- * @see {@link asBeta}
- *
  * @alpha
- *
  * @privateRemarks
  * When building schema, when `options` is not provided, `TCustomMetadata` is inferred as `unknown`.
  * If desired, this could be made to infer `undefined` instead by adding overloads for everything,
@@ -1469,11 +1465,9 @@ export class SchemaFactoryAlpha<
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return mapSchema(
-			scoped<TScope, TName, Name>(this, name),
+		return this.mapAlpha(
+			name,
 			allowedTypes as T & ImplicitAllowedTypes,
-			/* implicitlyConstructable */ false,
-			/* useMapPrototype */ false,
 			options,
 		) as unknown as MapNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
@@ -1531,12 +1525,10 @@ export class SchemaFactoryAlpha<
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return arraySchema(
-			scoped<TScope, TName, Name>(this, name),
+		return this.arrayAlpha(
+			name,
 			allowedTypes as T & ImplicitAllowedTypes,
-			false,
-			true,
-			options ?? {},
+			options,
 		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
 			T,

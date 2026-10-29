@@ -75,9 +75,6 @@ import type {
 /**
  * A map of string keys to tree objects.
  *
- * @see {@link TreeMapNodeAlpha} for additional alpha APIs
- * @see {@link (asAlpha:7)} to access alpha APIs on this node
- *
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
@@ -165,8 +162,6 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
  * This is the same as {@link TreeMapNode} except that it extends FluidReadonlyMap
  * instead of the built-in `ReadonlyMap`, insulating against breaking changes
  * in TypeScript's standard library iterator types.
- *
- * @see {@link (asAlpha:7)} to access these APIs on an existing {@link TreeMapNode}
  *
  * @sealed @alpha
  */

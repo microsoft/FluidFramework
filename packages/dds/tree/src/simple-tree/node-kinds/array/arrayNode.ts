@@ -97,9 +97,6 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @typeParam TNew - Use Default: Do not specify. Type of values to write into the array.
  * @typeParam TMoveFrom - Use Default: Do not specify. Type of node from which children can be moved into this array.
  *
- * @see {@link TreeArrayNodeAlpha} for additional alpha APIs
- * @see {@link (asAlpha:5)} to access alpha APIs on this node
- *
  * @sealed @public
  */
 export interface TreeArrayNode<
@@ -473,9 +470,6 @@ export interface TreeArrayNode<
 
 /**
  * {@link (TreeArrayNode:interface)} with additional alpha APIs.
- *
- * @see {@link (asAlpha:5)} to access these APIs on an existing {@link (TreeArrayNode:interface)}
- *
  * @alpha @sealed
  */
 export interface TreeArrayNodeAlpha<

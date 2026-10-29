@@ -30,14 +30,9 @@ import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
- *
- * @see {@link SchemaStaticsBeta} for additional beta APIs
- * @see {@link SchemaStaticsAlpha} for additional alpha APIs
- *
  * @privateRemarks
  * We have no way to make linkable members which exist both as statics and instance properties since API-Extractor does not support this.
  * As a workaround, we have this type as a third place which can be linked.
- *
  * @system @sealed @public
  */
 export interface SchemaStatics {

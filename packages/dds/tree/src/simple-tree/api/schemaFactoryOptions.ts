@@ -10,7 +10,7 @@ import type { NodeSchemaMetadata } from "../core/index.js";
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
  * @input
- * @beta
+ * @public
  */
 export interface ObjectSchemaOptions<TCustomMetadata = unknown>
 	extends NodeSchemaOptions<TCustomMetadata> {

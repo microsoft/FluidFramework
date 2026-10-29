@@ -23,11 +23,7 @@ import type {
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
- *
- * @see {@link SchemaStatics} for why this is useful
- * @see {@link SchemaStaticsAlpha} for additional alpha APIs
- * @see {@link asBeta} to access these APIs on an existing {@link SchemaFactory}
- *
+ * @see {@link SchemaStatics} for why this is useful.
  * @system @sealed @beta
  */
 export interface SchemaStaticsBeta {
