@@ -49,7 +49,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | [430707](https://dev.azure.com/fluidframework/public/_build/results?buildId=430707) | Passed | Queue-to-finish 15m 30s; test compilation 117-125s |
 | E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | [430731](https://dev.azure.com/fluidframework/public/_build/results?buildId=430731) | Passed, slower elapsed time | 22m 13s; roughly four-minute agent delays and slower tests |
 | E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
-| Type-check enforcement probe | Pending | Pending | Preparing | Deliberate semantic type error; must be rejected, then removed |
+| Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
+| Final configuration repeat | Probe-removal commit | Pending | Ready to push | Same pipeline configuration as E5, without the deliberate error |
 
 ### Baseline observations
 
@@ -226,7 +227,7 @@ These are roots, not total transitive build counts.
 Selection is based on scripts, not a hard-coded package list, so adding a package with the same test script includes it automatically.
 Missing or empty selections fail explicitly rather than passing without tests.
 The actual inline selection script was exercised locally with compiler invocations intercepted: all five selections matched these counts, Playwright requested both compile and webpack, and an unknown script failed.
-Remote CI still needs to demonstrate that task dependencies cover all runtime prerequisites.
+The successful remote run below demonstrates that the selected task dependencies cover the runtime prerequisites exercised by these suites.
 
 E5 passed in 1,040.4 seconds (17m 20s), including 120.3 seconds before the pipeline started.
 Timed agent jobs totaled 3,885.8 seconds (64m 46s).
@@ -254,6 +255,15 @@ The emit-only test builds are allowed to compile it, but cannot make the aggrega
 This is a deliberate negative test, not a performance sample.
 Remove the probe immediately after collecting evidence, then repeat the successful configuration.
 
+Run 430786 rejected the probe in the existing client policy job.
+Its `ci:build` log reported `src/index.ts:10:7 - error TS2322: Type 'string' is not assignable to type 'number'` at 22:26:40 and 22:26:50 UTC.
+The policy job completed with result `failed`.
+All five emit-only prerequisite steps succeeded, including the coverage job's 110.7-second compile.
+This demonstrates that unchecked test emission cannot bypass the separate checked validation job.
+The artifact job was still compiling when evidence was collected; no claim is made about its final result.
+The remaining run is not needed as a performance sample and may be auto-canceled by the restoring push.
+The source entrypoint has been restored byte-for-byte to the user's original dummy-change version.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -274,27 +284,32 @@ Any later relocation must name its replacement before removing the old invocatio
 | Source scans, binary scans, component governance | Existing pipeline templates | Do not disable |
 | Test result publication and service logs | Verification jobs | Preserve failure-path reporting |
 
-## Next experiments and open questions
+## Productive changes and remaining ideas
 
-1. Start verification without waiting for packaging and scans.
-   Keep the existing build job as the comprehensive validation/artifact owner, and build test prerequisites independently.
-   This first isolates the dependency barrier without simultaneously changing validation ownership.
-2. Measure targeted compilation against archive reuse.
-   Retain both CommonJS and ECMAScript module coverage where the test scripts require it.
-   Playwright and AreTheTypesWrong have different prerequisites from Mocha and service tests.
-3. If build validation remains the critical path, split validation into parallel jobs.
-   Prefer reusing existing task graphs over copying their dependency lists into pipeline YAML.
-4. Investigate duplicate webpack work, cache upload tails, and package/archive processing if measurements justify it.
-5. Repeat the best configuration and baseline, recording cache hits and agent queueing.
-6. Exercise representative failing validation in an isolated experiment before claiming preservation has been demonstrated.
-7. Measure emit-only TypeScript in independent test jobs, with fully checked builds in the existing validation job.
+Independent verification removes the largest structural delay.
+Shallow checkout, emit-only test compilation, and script-based package selection all reduced their targeted steps.
+Validation relocation shortened the artifact job and passed its negative type-check test, but its standalone elapsed-time result was noisy.
+No security scans, existing suites, or required pipeline identities were intentionally removed.
+
+1. Repeat baseline and candidate runs against the same target revision, with comparable agents and cache state.
+   The target branch advanced during this session, and queueing varied substantially.
+2. Consider separating Mocha and local-service tests, which currently run serially in the coverage job.
+   Measure the additional agent setup/compilation cost and queue demand before adopting it.
+3. Consider removing the now-unused build-output archive on pull requests only.
+   First verify external consumers and security scanning coverage; retain release artifacts and scans.
+4. Investigate duplicate webpack work, packaging time, and cache upload tails.
+   These can become the bottleneck after tests start independently.
+5. For production, replace the disposable shared-tsconfig edit with an explicit supported build-tool mode, including correct incremental-cache invalidation.
+   Preserve the strict separation between unchecked test outputs and checked validation/release outputs.
+6. Review version-sensitive runtime testing before rollout.
+   Independent tests use source package versions, while packaging/version-generation validation still uses generated prerelease versions.
 
 ## Limitations
 
 Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
 The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
 E4 and E5 passed; E5 reduced targeted build work.
-A deliberate type-check failure probe and final repeat remain.
+The deliberate type-check probe was rejected as intended; the clean final repeat remains.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
