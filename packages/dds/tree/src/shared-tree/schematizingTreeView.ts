@@ -55,7 +55,7 @@ import {
 	type FieldSchema,
 	tryDisposeTreeNode,
 	FieldSchemaAlpha,
-	TreeViewConfigurationAlpha,
+	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchHistory,
@@ -203,12 +203,9 @@ export class SchematizingSimpleTreeView<
 		}
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const stagedUpgradePolicy =
-			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
-		const configAlpha = new TreeViewConfigurationAlpha({
-			...config,
-			stagedUpgradePolicy,
-		});
+		// All TreeViewConfigurations are TreeViewConfigurationAlpha
+		const configAlpha = config as TreeViewConfigurationAlpha<ReadSchema<TRootSchema>>;
+
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 		const identity =
 			configAlpha.schemaIdentity === undefined
@@ -678,7 +675,7 @@ export class SchematizingSimpleTreeView<
 	public rewindTo(revision: string): void {
 		assert(
 			this.checkout instanceof TreeCheckout,
-			"Rewinding requires a checkout that supports branch replacement",
+			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
 		);
 		this.checkout.rewindTo(revision);
 	}

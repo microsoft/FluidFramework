@@ -196,6 +196,10 @@ export interface ITreeViewConfigurationAlpha<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
+ *
+ * @see {@link TreeViewConfigurationAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:4)} to access alpha APIs on this configuration
+ *
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -275,8 +279,9 @@ export class TreeViewConfiguration<
 
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
- * @remarks
- * See {@link (asAlpha:2)} for an API to downcast from {@link TreeViewConfiguration} to this type.
+ *
+ * @see {@link (asAlpha:4)} to access these APIs on an existing {@link TreeViewConfiguration}
+ *
  * @sealed @alpha
  */
 export class TreeViewConfigurationAlpha<

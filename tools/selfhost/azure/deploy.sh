@@ -58,18 +58,20 @@ SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat >&2 <<'EOF'
-Usage: azure/deploy.sh [--mode full|deploy-only] <release-id> [path/to/deploy.parameters.json]
+Usage: azure/deploy.sh [--mode full|deploy-only] [--skip-preflight] <release-id> [path/to/deploy.parameters.json]
 
   --mode full     new deployment: create Azure infrastructure and deploy the release (default)
                   aliases: --new, --full
   --mode deploy-only
                   deploy only the release bundle onto existing Azure/AKS infrastructure
+  --skip-preflight skip Azure preflight checks; local validation still runs
   -h, --help      show this help
 EOF
 }
 
 # Deployment mode
 MODE=full
+SKIP_PREFLIGHT=false
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -77,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     --mode=*)                     MODE="${1#*=}"; shift ;;
     --new|--full)                 MODE=full; shift ;;
     --deploy-only)                 MODE=deploy-only; shift ;;
+    --skip-preflight)              SKIP_PREFLIGHT=true; shift ;;
     -h|--help)                    usage; exit 0 ;;
     --)                           shift; while [[ $# -gt 0 ]]; do POSITIONAL+=("$1"); shift; done ;;
     -*)                           echo "ERROR: unknown option '$1'" >&2; usage; exit 1 ;;
@@ -317,8 +320,9 @@ export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 # chart/values rendering errors before any phase below creates, modifies,
 # or deletes anything. Aborts here on failure rather than partway through a real deploy.
 # ---------------------------------------------------------------------------
-banner "Running preflight checks (azure/preflight-check.sh)"
-if ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
+if [[ "$SKIP_PREFLIGHT" == true ]]; then
+  log "WARNING: --skip-preflight bypasses Azure capacity, zone, name, and Helm checks."
+elif ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
   echo "ERROR: preflight checks failed -- fix the issues above before deploying" >&2
   exit 1
 fi
@@ -861,6 +865,12 @@ create_private_endpoint() {
 # ===========================================================================
 phase1_images() {
   banner "Phase 1: Import release images"
+  local dockerhub_auth_args=() auth_args=()
+  if [[ -n "${DOCKERHUB_USERNAME:-}" || -n "${DOCKERHUB_TOKEN:-}" ]]; then
+    [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]] \
+      || fail "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN for authenticated Docker Hub imports."
+    dockerhub_auth_args=(--username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN")
+  fi
   az acr login -n "$ACR"
   local name repository digest src repo ref target_tag target_repo base without_tag
 
@@ -871,7 +881,13 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$repo:$IMAGE_TAG" >/dev/null 2>&1; then
       log "$repo:$IMAGE_TAG already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$repo:$IMAGE_TAG" --force
+      auth_args=()
+      case "$src" in
+        docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+          auth_args=(${dockerhub_auth_args[@]+"${dockerhub_auth_args[@]}"});;
+      esac
+      az acr import --name "$ACR" --source "$src" --image "$repo:$IMAGE_TAG" --force \
+        ${auth_args[@]+"${auth_args[@]}"}
     fi
   done < <(jq -r '.builtImages[]? | select(.status == "pinned") | [.name, .repository, .digest] | @tsv' "$IMAGES_FILE")
 
@@ -897,7 +913,13 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
       log "$target_repo@$digest already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
+      auth_args=()
+      case "$src" in
+        docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+          auth_args=(${dockerhub_auth_args[@]+"${dockerhub_auth_args[@]}"});;
+      esac
+      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force \
+        ${auth_args[@]+"${auth_args[@]}"}
     fi
   done < <(jq -r '.dependencyImages[]? | select(.status == "pinned") | [.name, (.tag // ""), .digest] | @tsv' "$IMAGES_FILE")
 

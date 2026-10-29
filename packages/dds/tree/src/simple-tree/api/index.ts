@@ -27,8 +27,6 @@ export type {
 	TreeViewAlpha,
 	TreeViewBeta,
 	UntypedTreeView,
-	TreeBranch,
-	TreeBranchAlpha,
 	UntypedTreeViewAlpha,
 	TreeBranchEvents,
 	TreeBranchEventsBeta,
@@ -51,6 +49,8 @@ export type {
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
@@ -59,12 +59,8 @@ export {
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export {
-	SchemaFactoryAlpha,
-	type SchemaStaticsAlpha,
-	type NodeProvider,
-} from "./schemaFactoryAlpha.js";
+export type { SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export type { SchemaStaticsAlpha, NodeProvider } from "./schemaFactoryAlpha.js";
 export {
 	type SchemaFactoryAlphaOptions,
 	composeSchemaFactoryAlphaOptions,

@@ -18,6 +18,7 @@ import {
 	TreeViewConfiguration,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
+	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
@@ -37,6 +38,10 @@ import type {
 } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
+
+// `TreeArrayNodeAlpha` should be assignable to `TreeArrayNode`.
+type _arrayAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeArrayNodeAlpha<TAllowedTypes>, TreeArrayNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -223,7 +228,7 @@ describe("ArrayNode", () => {
 				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
 				const list = init(schemaType, initial);
-				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				return asAlpha(list);
 			}
 
 			it("fails at runtime if attempting to set content via index assignment", () => {
