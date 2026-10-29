@@ -6,7 +6,7 @@
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils/internal';
+import { assert, compareArrays } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -108,18 +108,6 @@ import {
 	reservedIdCount,
 } from './persisted-types/index.js';
 import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
-
-/**
- * Creates an experimental tree through the factory registered with the data store runtime.
- *
- * @param runtime - The data store runtime that owns the tree and has a `SharedTreeFactory` registered.
- * @param id - An optional ID for the tree. If omitted, the runtime generates an ID.
- * @returns The new tree, initialized with the default root node.
- * @alpha
- */
-export function createSharedTree(runtime: IFluidDataStoreRuntime, id?: string): ISharedTree {
-	return SharedTree.create(runtime, id);
-}
 
 /**
  * The write format and associated options used to construct a `SharedTree`
@@ -230,14 +218,15 @@ export class SharedTreeFactory implements IChannelFactory {
 	private readonly args: SharedTreeArgs;
 
 	/**
-	 * Get a factory for SharedTree to register with the data store.
+	 * Creates a factory that selects the write format and options for a SharedTree.
+	 * If you omit these settings, the factory uses write format 0.1.1 and default options.
 	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/docs/Write-Format.md | the write format
 	 * documentation} for more information.
 	 * @param options - Configuration options for this tree
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	constructor(...args: SharedTreeArgs) {
-		this.args = args;
+	constructor(...args: SharedTreeArgs | []) {
+		this.args = args.length === 0 ? [WriteFormat.v0_1_1] : args;
 	}
 
 	public get type(): string {
@@ -303,7 +292,7 @@ export interface EditCommittedEventArguments {
 	/** Whether or not this is a local edit. */
 	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 }
 
 /**
@@ -316,7 +305,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** Whether or not this was a local edit. */
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
 	readonly logger: ITelemetryLoggerExt;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
@@ -357,6 +346,7 @@ export type EditApplicationOutcome =
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
+	(event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler);
 	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
 }
 
@@ -882,12 +872,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 		return { editLog, cachingLogViewer: logViewer };
 	}
 
-	public equals(sharedTree: SharedTree): boolean {
+	public equals(sharedTree: ISharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
 
-		return this.editLog.equals(sharedTree.editLog);
+		return compareArrays(this.edits.editIds, sharedTree.edits.editIds);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -1104,7 +1094,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements IShar
 	}
 
 	public mergeEditsFrom(
-		other: SharedTree,
+		other: ISharedTree,
 		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {

@@ -15,7 +15,7 @@ import {
 	CheckoutEvent,
 	EditStatus,
 	EditValidationResult,
-	SharedTree,
+	SharedTreeClass as SharedTree,
 	SharedTreeEvent,
 	Side,
 	StablePlace,
@@ -616,10 +616,10 @@ export function checkoutTests(
 		});
 
 		it('can dispose and remove listeners', async () => {
-			const { checkout } = await setUpTestCheckout();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
+			const { checkout, tree } = await setUpTestCheckout();
+			expect(tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
 			checkout.dispose();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
+			expect(tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 
 		additionalTests?.();

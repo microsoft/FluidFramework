@@ -29,7 +29,8 @@ import type {
  * A distributed tree with transactional edits, stable node identities, and revision history.
  *
  * @remarks
- * Use {@link createSharedTree} to create an instance through the factory registered with the data store runtime.
+ * Use the {@link (SharedTree:variable)} factory object to create an instance through the factory registered with the data store runtime.
+ * That factory determines the write format and options, while this interface describes the instance that your code uses.
  *
  * @sealed
  * @alpha
@@ -118,6 +119,15 @@ export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdCon
 	 * @returns Whether the trees have equal views and edit IDs.
 	 */
 	equals(sharedTree: ISharedTree): boolean;
+
+	/**
+	 * Emits an error event from a helper that operates on this tree.
+	 *
+	 * @param event - The error event name.
+	 * @param error - The error to report.
+	 * @returns Whether the event has a listener.
+	 */
+	emit(event: 'error', error: unknown): boolean;
 
 	/**
 	 * Gets the runtime that owns this tree.

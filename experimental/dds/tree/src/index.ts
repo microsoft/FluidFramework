@@ -130,14 +130,13 @@ export {
 	rangeFromStableRange,
 } from './TreeViewUtilities.js';
 export {
-	createSharedTree,
 	SharedTreeArgs,
 	SharedTreeOptions,
 	SharedTreeBaseOptions,
 	SharedTreeOptions_0_0_2,
 	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
-	SharedTree,
+	SharedTree as SharedTreeClass,
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
 	EditCommittedEventArguments,
@@ -146,6 +145,7 @@ export {
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
+export { SharedTree } from './SharedTreeKind.js';
 export { StringInterner } from './StringInterner.js';
 export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 

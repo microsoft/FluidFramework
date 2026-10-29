@@ -128,13 +128,22 @@ Note that this example isn't meant to be taken verbatim as valid code -- it chea
 
 ## Creating a SharedTree
 
-SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a Fluid runtime instance:
+`SharedTree` follows [Fluid distributed data structure conventions](https://fluidframework.com/docs/) by separating creation from the implementation class.
+Use its factory object to create a tree through the factory registered with the data store runtime:
 
 ```typescript
-import { createSharedTree } from "@fluid-experimental/tree";
+import { SharedTree } from "@fluid-experimental/tree";
 
-const tree = createSharedTree(runtime);
+const tree = SharedTree.create(runtime);
 ```
+
+The result is an `ISharedTree`, so you can pass it directly to a checkout or transaction.
+The registered factory determines the write format and options for that instance.
+For default settings, register the factory returned by `SharedTree.getFactory()`.
+If you need a specific write format and options, register `new SharedTreeFactory(writeFormat, options)` instead.
+
+If your code needs the implementation constructor, import `SharedTreeClass` instead of `SharedTree`.
+This class also retains the protected members that subclasses use.
 
 Upon creation, the tree will contain a single node: the [initialTree](./src/InitialTree.ts). All SharedTrees begin with this initial node as their root node, which cannot be deleted or moved. It provides an anchor for new nodes to be inserted underneath it.
 
