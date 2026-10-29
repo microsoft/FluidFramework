@@ -9,49 +9,78 @@ import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import type { IChannelServices, IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 
-import {
+import type {
 	createSharedTree,
 	EagerCheckout,
-	type EditCommittedEventArguments,
-	type ISharedTree,
+	EditCommittedEventArguments,
+	ISharedTree,
 	SharedTree,
 	Transaction,
 	WriteFormat,
 } from '../../index.js';
 
-declare function use<T>(value: T): void;
+type AssertAssignable<Expected, Actual extends Expected> = Actual;
+
+type Factory = ReturnType<typeof SharedTree.getFactory>;
+
+declare class CompatibleTree extends SharedTree {
+	public readonly handle: IFluidHandleInternal;
+}
 
 /**
- * Checks the additive interface and the existing class contracts.
+ * These tests check that ISharedTree exposes the expected members and that existing SharedTree APIs retain their types.
+ * Because the package tsconfig includes this file, TypeScript checks these requirements during compilation.
+ * Each property names one requirement and uses AssertAssignable to check it.
+ * For example, interfaceConnectionState checks that ISharedTree.connected remains assignable to boolean.
+ * If connected changes to string, that check fails because string does not satisfy the boolean constraint.
+ * These checks need no function calls, so they protect the types without a runtime test or a tree instance.
  */
-export async function checkSharedTreePreparation(
-	runtime: IFluidDataStoreRuntime,
-	services: IChannelServices,
-	committed: EditCommittedEventArguments
-): Promise<void> {
-	const tree = SharedTree.create(runtime);
-	use<ISharedTree>(tree);
-	const instance = createSharedTree(runtime);
-	use<ISharedTree>(instance);
-	use<ISharedTree>(createSharedTree(runtime, 'tree'));
-	use<boolean>(instance.connected);
-	use<void>(instance.initializeLocal());
-	use<Promise<void>>(instance.load(services));
+export interface SharedTreeCompatibilityChecks {
+	classImplementsInterface: AssertAssignable<ISharedTree, SharedTree>;
+	creationWithoutClass: AssertAssignable<
+		(runtime: IFluidDataStoreRuntime, id?: string) => ISharedTree,
+		typeof createSharedTree
+	>;
+	interfaceConnectionState: AssertAssignable<boolean, ISharedTree['connected']>;
+	interfaceLocalInitialization: AssertAssignable<() => void, ISharedTree['initializeLocal']>;
+	interfaceLoad: AssertAssignable<(services: IChannelServices) => Promise<void>, ISharedTree['load']>;
 	// EventEmitter utilities are outside the shared-object contract, which exposes event subscriptions only.
-	use<Record<Exclude<keyof SharedTree, keyof EventEmitter>, unknown>>(instance);
-	use<Pick<SharedTree, 'connected' | 'initializeLocal' | 'load'>>(instance);
-	use<IFluidHandle>(tree.handle);
-	use<SharedTree>(tree);
-	use<SharedTree>(committed.tree);
-	const factory = SharedTree.getFactory(WriteFormat.v0_1_1, undefined);
-	use<SharedTree>(factory.create(runtime, 'tree'));
-	use<SharedTree>(await factory.load(runtime, 'tree', services, factory.attributes));
-	use<SharedTree>(new EagerCheckout(tree).tree);
-	use<SharedTree>(new Transaction(tree).tree);
-	use<SharedTree>(new SharedTree(runtime, 'tree', WriteFormat.v0_1_1));
-
-	class CompatibleTree extends SharedTree {
-		public declare readonly handle: IFluidHandleInternal;
-	}
-	use<typeof SharedTree>(CompatibleTree);
+	interfaceCoversClassMembers: AssertAssignable<
+		Record<Exclude<keyof SharedTree, keyof EventEmitter>, unknown>,
+		ISharedTree
+	>;
+	interfacePreservesLifecycleSignatures: AssertAssignable<
+		Pick<SharedTree, 'connected' | 'initializeLocal' | 'load'>,
+		ISharedTree
+	>;
+	classHandleRemainsCompatible: AssertAssignable<IFluidHandle, SharedTree['handle']>;
+	staticCreationReturnsClass: AssertAssignable<
+		(runtime: IFluidDataStoreRuntime) => SharedTree,
+		typeof SharedTree.create
+	>;
+	committedEventRetainsClass: AssertAssignable<SharedTree, EditCommittedEventArguments['tree']>;
+	factoryCreationReturnsClass: AssertAssignable<
+		(runtime: IFluidDataStoreRuntime, id: string) => SharedTree,
+		Factory['create']
+	>;
+	factoryLoadReturnsClass: AssertAssignable<
+		(
+			runtime: IFluidDataStoreRuntime,
+			id: string,
+			services: IChannelServices,
+			attributes: Factory['attributes']
+		) => Promise<SharedTree>,
+		Factory['load']
+	>;
+	eagerCheckoutRetainsClass: AssertAssignable<SharedTree, EagerCheckout['tree']>;
+	transactionRetainsClass: AssertAssignable<SharedTree, Transaction['tree']>;
+	constructorReturnsClass: AssertAssignable<
+		new (
+			runtime: IFluidDataStoreRuntime,
+			id: string,
+			writeFormat: WriteFormat.v0_1_1
+		) => SharedTree,
+		typeof SharedTree
+	>;
+	subclassHandleRemainsCompatible: AssertAssignable<typeof SharedTree, typeof CompatibleTree>;
 }
