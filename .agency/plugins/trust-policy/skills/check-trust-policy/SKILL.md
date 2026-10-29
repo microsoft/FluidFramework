@@ -1,28 +1,25 @@
 ---
 name: check-trust-policy
 description: Check whether an exact package version has trustworthy provenance and find an attested alternative. Use before adding, upgrading, or installing any npm package version that is not already in the project's lockfile (npm, Yarn, or pnpm), including through update commands or npx, npm exec, or dlx, or when asked whether a package version is safe or to verify its provenance.
-# Interim: this pre-approves every `node` command, not just the checker.
-# Copilot permission rules match only the program name for interpreters, and neither Copilot nor Agency expands the plugin root in skill frontmatter, so a rule scoped to this plugin's script is not currently possible.
-allowed-tools: Bash(node:*)
 ---
 
 # Check package trust policy
 
 Use the standalone checker compiled into this plugin's `lib` directory.
 Resolve its absolute path from this skill's location: `../../lib/trust-policy.js`.
-Do not invoke flub or install or build Fluid Framework build-tools.
 
 ## When to run
 
 Run this check before installing any new package in a project, whether the project uses npm, Yarn, or pnpm.
 An install is new when the project's lockfile does not already contain the requested version of that package.
 This includes upgrading or downgrading a package that the lockfile already contains at a different version.
-It covers these commands, including their aliases and abbreviations:
+It covers any install, update, exec, or similar command in these package managers, including aliases and abbreviations.
+For example:
 
-- Adding a dependency: `npm install <name>`, `yarn add <name>`, `pnpm add <name>`.
-- Updating dependencies: `npm update`, `yarn up`, `yarn upgrade`, `yarn upgrade-interactive`, `pnpm update`.
-- Running a package that is not installed: `npx`, `npm exec`, `yarn dlx`, `pnpm dlx`, `pnpx`.
-- Installing after editing a dependency version, override, or resolution in `package.json` or a pnpm catalog, with `npm install`, `yarn install`, or `pnpm install`.
+- Install: `npm install <name>`, `pnpm add <name>`.
+- Update: `yarn up`, `pnpm update`.
+- Exec: `npx`, `pnpm dlx`.
+- Installing after editing a dependency version, override, or resolution in `package.json` or a pnpm catalog: `npm install`, `yarn install`.
 
 Check every package version the command would add to or change in the project, including new transitive dependencies, and every package the command would run.
 Get each exact version in one of only two ways:
@@ -112,10 +109,6 @@ If the public npm package registry is also unreachable, report that a trust chec
 
    Explain that this installs the plugin's own dependencies and compiler, not Fluid Framework build-tools, and does not touch the user's project.
    Ask the user to repeat the request once the build succeeds, and do not continue with the remaining steps.
-
-   > [!NOTE]
-   > Building from source is temporary.
-   > A future version of this skill will download a prebuilt checker package instead.
 
 2. Identify each exact `name@version` to check, using only the two sources in [When to run](#when-to-run).
    Do not replace an exact-version check with a tag or semver range.

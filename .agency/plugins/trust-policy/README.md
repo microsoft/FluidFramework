@@ -22,6 +22,13 @@ The repository's `agency.toml` registers the plugin in the `trust-policy` profil
 The skill runs the compiled checker from `lib/`, so build the package once, as described in [Setup](#setup), before using the skill.
 If the checker is not built, the skill stops and gives the commands to run.
 
+### Tool approval
+
+The skill does not pre-approve the `node` commands it runs, so the agent asks for approval to run the checker unless the user has already allowed it.
+A pre-approval cannot currently be limited to the checker.
+Copilot permission rules for interpreters match only the program name, so allowing the checker would allow every `node` command.
+Neither Copilot nor Agency expands the plugin's root directory in skill frontmatter, so a rule cannot name this plugin's script either.
+
 ### Version resolution
 
 When the command line does not name a single exact package version, the agent asks the package manager which versions it would install rather than guessing.
