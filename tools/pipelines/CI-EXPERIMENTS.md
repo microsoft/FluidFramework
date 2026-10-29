@@ -28,13 +28,12 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Full validation in existing client policy stage | E4 shortened the artifact job; policy job passed and rejected the probe | Functionally confirmed; standalone elapsed-time improvement is not established |
 | Script-selected test prerequisites | E5 and repeat: service compilation about 53s, stress about 39s | All original test scripts retained; repeat test totals matched |
 | Lockfile-installed build tools | E6 passed; tool setup 0.78-0.79s instead of roughly 21s source builds | Uses pinned `flub` 0.68.0; removes global linking and source-tool dependency |
+| No unused PR build/release archives | E7 build job 755.1s to 568.1s; replacement validation 24.3s | Non-PR artifacts preserved; PR artifact-specific scan scope reduced with the removed payloads |
 
 ## Active experiments
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E7: remove PR build-output archive | Pushed as `99dd98b1dc1` | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
-| E7: remove PR release-package publishing | Pushed with parallel dry-run validation | Eight non-private packages lack `attw --pack`; validate all non-private packages without producing release tarballs |
 | E8: split the serial Mocha/local-service job | Prepared locally | Same suites and counts, lower critical path without excessive queue/setup overhead |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
@@ -99,6 +98,7 @@ This was not a cold-cache benchmark.
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
 | Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
 | E6: lockfile-installed tools | `be1b1c90d8baf9bdedc877cfaeeecdc47c8185c9` | [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Passed | 18m 16s including 2m 27s initial queue; no repo-tool installation |
+| E7: validation-only PR packaging | `99dd98b1dc151530569354a22bbc7cfdad61cff0` | [430866](https://dev.azure.com/fluidframework/public/_build/results?buildId=430866) | Passed | Build job 9m 28s; total 17m 53s, still test-limited |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -347,6 +347,21 @@ Version generation, package version updates, bundle-analyzer aggregation, and th
 This confirms the old comment requiring a repo build for bundle aggregation was stale.
 The improvement is modest in elapsed time but removes a second dependency mechanism and improves reproducibility.
 
+### E7: remove unused PR artifacts
+
+Run 430866 passed in 1,072.6 seconds (17m 53s), with 45,438 passed and 3,235 not executed, exactly matching E6.
+The companion policy run [430862](https://dev.azure.com/fluidframework/public/_build/results?buildId=430862) passed.
+The main build shortened from 755.1 to 568.1 seconds: about 3m 07s less work.
+Parallel package dry-runs and custom test-archive validation completed in 24.3 seconds, replacing the 135-second release-packing step.
+The roughly 36-second shared-build archive and its staging/publication work are also gone.
+Elapsed pipeline improvement was only 24 seconds because verification, not the artifact job, determines completion.
+
+The published artifact list now contains only `devtools-extension-bundle_attempt-1`, `bundleAnalyzerJson`, and `_api-extractor-temp`.
+There is no `build_output_archive`, `pack`, or `test-files` artifact.
+Remaining inline/output binary checks, antimalware checks, and component-governance tasks succeeded.
+Some artifact-scoped tasks are skipped by the existing templates when their former payload is absent; security configuration was not explicitly disabled.
+This confirms the intended removal of PR release artifacts while retaining package validation and the remaining bundle/docs outputs.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -360,11 +375,11 @@ Any later relocation must name its replacement before removing the old invocatio
 | API reports and API Extractor documentation validation | Build (`ci:build`, `ci:build:docs`) | E4: CI-mode checks and generated-file detection in policy; documentation artifact generation also retained in build |
 | Type-test generation and compilation | Compilation dependencies | Preserve; generation cannot simply be removed from test compilation |
 | webpack, bundle analysis, devtools bundle | Build | Preserve |
-| Packing, manifests, readme generation, package metadata | Build | Preserve |
+| Packing, manifests, readme generation, package metadata | Build | E7: parallel package dry-runs and custom archive validation; PR publish artifacts/metadata omitted; non-PR production unchanged |
 | AreTheTypesWrong | Verification | Preserve |
 | Mocha and local-service tests | Coverage job (coverage instrumentation currently disabled upstream) | Preserve both suites |
 | Playwright, Tinylicious service, Tinylicious stress | Separate verification jobs | Preserve all three |
-| Source scans, binary scans, component governance | Existing pipeline templates | Do not disable |
+| Source scans, binary scans, component governance | Existing pipeline templates | Configuration retained; E7 omits removed PR artifact payloads and their artifact-specific processing |
 | Test result publication and service logs | Verification jobs | Preserve failure-path reporting |
 
 ## Completed local TypeScript 7 experiment
@@ -397,7 +412,8 @@ Mocha worker-mode adoption is deferred; E8 instead separates the existing serial
 Independent verification removes the largest structural delay.
 Shallow checkout, emit-only test compilation, and script-based package selection all reduced their targeted steps.
 Validation relocation shortened the artifact job and passed its negative type-check test, but its standalone elapsed-time result was noisy.
-No security scans, existing suites, or required pipeline identities were intentionally removed.
+Existing functional suites and pipeline identities are retained.
+Security configuration remains enabled, with E7's PR artifact-scope reduction documented separately.
 
 ## Future ideas not yet evaluated
 
