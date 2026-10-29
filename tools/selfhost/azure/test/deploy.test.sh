@@ -56,6 +56,19 @@ target_json() {
       tags:(if $cutover == "1" then {selfhostRedisMigrationCutover:"mock-release"} else {} end)}'
 }
 case "$*" in
+  "cloud show "*)
+    if [[ -n "${MOCK_CLOUD_JSON:-}" ]]; then printf '%s\n' "$MOCK_CLOUD_JSON"
+    else
+      echo '{"name":"AzureCloud","endpoints":{"resourceManager":"https://management.azure.com/","activeDirectory":"https://login.microsoftonline.com","portal":"https://portal.azure.com","microsoftGraphResourceId":"https://graph.microsoft.com/"},"suffixes":{"acrLoginServerEndpoint":".azurecr.io","keyvaultDns":".vault.azure.net"}}'
+    fi
+    exit 0 ;;
+  "network private-link-resource list "*|"rest --method get "*"/privateLinkResources?"*)
+    [[ "${MOCK_PRIVATE_LINK_EXIT:-0}" == 0 ]] || exit "$MOCK_PRIVATE_LINK_EXIT"
+    if [[ -n "${MOCK_PRIVATE_LINK_RESOURCES:-}" ]]; then printf '%s\n' "$MOCK_PRIVATE_LINK_RESOURCES"
+    else
+      echo '[{"groupId":"vault","requiredZoneNames":["privatelink.vaultcore.azure.net"]},{"groupId":"MongoDB","requiredZoneNames":["privatelink.mongo.cosmos.azure.com"]},{"groupId":"redisCache","requiredZoneNames":["privatelink.redis.cache.windows.net"]},{"properties":{"groupId":"redisEnterprise","requiredZoneNames":["privatelink.redis.azure.net"]}},{"groupId":"file","requiredZoneNames":["privatelink.file.core.windows.net"]},{"groupId":"namespace","requiredZoneNames":["privatelink.servicebus.windows.net"]}]'
+    fi
+    exit 0 ;;
   *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
     [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"acr repository show"*"example/service"*) exit 1 ;;
@@ -130,6 +143,7 @@ case "$*" in
   *"eventhubs namespace show"*"--query kafkaEnabled"*)        echo "true"; exit 0 ;;
   *"eventhubs namespace show"*"--query publicNetworkAccess"*) echo "Enabled"; exit 0 ;;
   *"eventhubs namespace show"*"--query id"*)                  echo "/subscriptions/s/resourceGroups/rg/providers/Microsoft.EventHub/namespaces/ns"; exit 0 ;;
+  *"eventhubs namespace show"*"--query serviceBusEndpoint"*) echo "${MOCK_SERVICEBUS_ENDPOINT-https://mock-eventhubs.servicebus.windows.net:443/}"; exit 0 ;;
   *"eventhubs namespace show"*)                               [ "${MOCK_NS_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"eventhubs eventhub show"*"--query partitionCount"*)       echo "32"; exit 0 ;;
   *"eventhubs eventhub show"*)                                exit 1 ;;
@@ -227,6 +241,7 @@ export PATH="$BIN:$PATH"
 REPO="$WORK/repo"; mkdir -p "$REPO/azure" "$REPO/release"
 cp "$AZURE_DIR"/*.yaml "$AZURE_DIR"/*.json "$AZURE_DIR"/*.sh "$REPO/azure/" 2>/dev/null || true
 cp "$AZURE_DIR/../release/lib.sh" "$REPO/release/lib.sh"
+cp "$AZURE_DIR/../azure-cloud.sh" "$REPO/azure-cloud.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$REPO/azure/preflight-check.sh"
 chmod +x "$REPO/azure/preflight-check.sh"
 
@@ -319,8 +334,6 @@ assert_eq "capacity parsed"       "${V_EVENTHUBS_CAPACITY:-}"        "1"
 assert_eq "partitionCount parsed" "${V_EVENTHUBS_PARTITIONS:-}"      "32"
 assert_eq "retentionHours parsed" "${V_EVENTHUBS_RETENTION_HOURS:-}" "72"
 assert_eq "zoneRedundant parsed"  "${V_EVENTHUBS_ZONE_REDUNDANT:-}"  "true"
-assert_eq "KAFKA_ENDPOINT is the TLS Kafka head on 9093" \
-  "${V_KAFKA_ENDPOINT:-}" "mock-eventhubs.servicebus.windows.net:9093"
 assert_eq "Azure Managed Redis defaults to Balanced_B5" "${V_REDIS_SKU:-}" "Balanced_B5"
 assert_eq "Azure Managed Redis high availability is parsed" "${V_REDIS_HIGH_AVAILABILITY:-}" "Enabled"
 assert_eq "Azure Managed Redis uses port 10000" "${V_REDIS_PORT:-}" "10000"
@@ -391,7 +404,7 @@ printf '%s' "$out" | grep -q "already exists, skipping create" \
 export MOCK_NS_EXISTS=0
 
 : > "$CALLS"; export MOCK_DNS_LINK_TO_VNET=1
-out="$(run_phase 'create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/new-storage file new-storage privatelink.file.core.windows.net')"; rc=$?
+out="$(run_phase 'create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/new-storage file new-storage')"; rc=$?
 assert_eq "renamed resource reuses the VNet's existing private DNS link" "$rc" "0"
 if grep -q "private-dns link vnet create" "$CALLS"; then
   no "existing VNet link is not recreated under the new resource name"
@@ -401,6 +414,86 @@ fi
 printf '%s' "$out" | grep -q "reusing it" \
   && ok "existing private DNS link reuse is reported" || no "existing private DNS link reuse is reported"
 export MOCK_DNS_LINK_TO_VNET=0
+
+for length in 61 62 63; do
+  cache_name="$(printf '%*s' "$length" '' | tr ' ' a)"
+  jq --arg name "$cache_name" '.redis = {useDeprecated:true,clusterName:$name}' "$PARAMS" > "$WORK/long-cache.json"
+  out="$(bash "$AZURE_DIR/validate-names.sh" "$WORK/long-cache.json" 2>&1)"; rc=$?
+  assert_eq "offline validation accepts a $length-character cache name" "$rc" "0"
+  : > "$CALLS"
+  out="$(run_phase "create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Cache/Redis/$cache_name redisCache $cache_name")"; rc=$?
+  assert_eq "$length-character cache name provisions its private endpoint" "$rc" "0"
+  expected="pe-${cache_name:0:61}"
+  assert_has "$length-character cache name uses a deterministic shortened name" "$CALLS" "private-endpoint create -g mock-rg -n $expected "
+  assert_has "shortened name is reused for wait and DNS mapping" "$CALLS" "--endpoint-name $expected "
+done
+cache_name="$(printf '%60s' '' | tr ' ' a)-bb"
+: > "$CALLS"
+out="$(run_phase "create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Cache/Redis/$cache_name redisCache $cache_name")"; rc=$?
+assert_eq "truncating at a hyphen still provisions a valid endpoint name" "$rc" "0"
+assert_has "truncated endpoint name cannot end in a hyphen" "$CALLS" "-n pe-${cache_name:0:60} "
+
+for resources in '[]' '{}' 'not-json' \
+  '[{"groupId":"redisCache","requiredZoneNames":[]}]' \
+  '[{"groupId":"redisCache","requiredZoneNames":["first.example","second.example"]}]'; do
+  : > "$CALLS"
+  out="$(MOCK_PRIVATE_LINK_RESOURCES="$resources" run_phase 'create_private_endpoint /cache redisCache test-cache')"; rc=$?
+  [[ "$rc" != 0 ]] && ok "invalid provider DNS metadata fails closed" || no "invalid provider DNS metadata fails closed" "$out"
+  if grep -q 'private-endpoint create\|private-dns zone create' "$CALLS"; then
+    no "invalid DNS metadata cannot create network resources"
+  else ok "invalid DNS metadata cannot create network resources"; fi
+done
+: > "$CALLS"
+out="$(MOCK_PRIVATE_LINK_EXIT=1 run_phase 'create_private_endpoint /cache redisCache test-cache')"; rc=$?
+[[ "$rc" != 0 ]] && ok "DNS metadata query failure stops provisioning" || no "DNS metadata query failure stops provisioning"
+
+group "3b. Sovereign-cloud private DNS, images, and CSI"
+for cloud in AzureUSGovernment AzureChinaCloud; do
+  if [[ "$cloud" == AzureUSGovernment ]]; then
+    arm=management.usgovcloudapi.net; authority=login.microsoftonline.us; portal=portal.azure.us
+    graph=graph.microsoft.us; acr=.azurecr.us; vault=vault.usgovcloudapi.net
+    vault_zone=privatelink.vaultcore.usgovcloudapi.net; cosmos_zone=privatelink.mongo.cosmos.azure.us
+    redis_zone=privatelink.redis.cache.usgovcloudapi.net
+    file_zone=privatelink.file.core.usgovcloudapi.net; eh_zone=privatelink.servicebus.usgovcloudapi.net
+    csi=AzureUSGovernmentCloud
+  else
+    arm=management.chinacloudapi.cn; authority=login.chinacloudapi.cn; portal=portal.azure.cn
+    graph=microsoftgraph.chinacloudapi.cn; acr=.azurecr.cn; vault=vault.azure.cn
+    vault_zone=privatelink.vaultcore.azure.cn; cosmos_zone=privatelink.mongo.cosmos.azure.cn
+    redis_zone=privatelink.redis.cache.chinacloudapi.cn
+    file_zone=privatelink.file.core.chinacloudapi.cn; eh_zone=privatelink.servicebus.chinacloudapi.cn
+    csi=AzureChinaCloud
+  fi
+  jq -n --arg name "$cloud" --arg arm "https://$arm/" --arg authority "https://$authority" \
+    --arg portal "https://$portal" --arg graph "https://$graph/" --arg acr "$acr" --arg vault ".$vault" \
+    '{name:$name,endpoints:{resourceManager:$arm,activeDirectory:$authority,portal:$portal,microsoftGraphResourceId:$graph},
+      suffixes:{acrLoginServerEndpoint:$acr,keyvaultDns:$vault}}' > "$WORK/$cloud.json"
+  resources="$(jq -nc --arg vault "$vault_zone" --arg cosmos "$cosmos_zone" --arg redis "$redis_zone" \
+    --arg file "$file_zone" --arg eh "$eh_zone" '[
+      {groupId:"vault",requiredZoneNames:[$vault]}, {groupId:"MongoDB",requiredZoneNames:[$cosmos]},
+      {groupId:"redisCache",requiredZoneNames:[$redis]}, {groupId:"file",requiredZoneNames:[$file]},
+      {groupId:"namespace",requiredZoneNames:[$eh]}]')"
+  : > "$CALLS"
+  out="$(MOCK_CLOUD_JSON="$(cat "$WORK/$cloud.json")" MOCK_PRIVATE_LINK_RESOURCES="$resources" run_phase '
+    for group in vault MongoDB redisCache file namespace; do
+      create_private_endpoint "/resources/$group" "$group" "sov-$group"
+    done')"; rc=$?
+  assert_eq "$cloud private endpoint provisioning succeeds" "$rc" "0"
+  for zone in "$vault_zone" "$cosmos_zone" "$redis_zone" "$file_zone" "$eh_zone"; do
+    assert_has "$cloud uses provider DNS zone $zone" "$CALLS" "--private-dns-zone $zone "
+  done
+  if grep -qE 'privatelink\..*(windows.net|azure.com|azure.net)' "$CALLS"; then
+    no "$cloud never creates a commercial-cloud DNS zone"
+  else ok "$cloud never creates a commercial-cloud DNS zone"; fi
+  out="$(MOCK_CLOUD_JSON="$(cat "$WORK/$cloud.json")" run_phase '
+    REDIS_HOSTNAME=mock-redis; WORKLOAD_IDENTITY_CLIENT_ID=mock-client; AZURE_TENANT_ID=mock-tenant
+    phase4_backends; phase4_secrets_infra
+    cat "$DEPLOY_DIR/backends.yaml" "$DEPLOY_DIR/secretproviderclass.yaml"
+  ')"; rc=$?
+  assert_eq "$cloud backend and CSI rendering succeeds" "$rc" "0"
+  assert_has "$cloud backend images use the active registry suffix" <(printf '%s' "$out") "image: mockacr$acr/gitrest:"
+  assert_has "$cloud CSI uses its cloud environment" <(printf '%s' "$out") "cloudName: $csi"
+done
 
 # ---------------------------------------------------------------------------
 group "4. Mock deploy: Azure Managed Redis"
@@ -684,6 +777,7 @@ group "6. Rendered manifests"
 # ---------------------------------------------------------------------------
 SPC="$WORK/spc.yaml"
 sed -e "s|<WORKLOAD_IDENTITY_CLIENT_ID>|cid|g" -e "s|<KV>|mock-kv|g" -e "s|<AZURE_TENANT_ID>|tid|g" \
+    -e "s|<AZURE_CLOUD_NAME>|AzurePublicCloud|g" \
     "$AZURE_DIR/secretproviderclass.yaml" > "$SPC"
 grep -q '<[A-Z_]*>' "$SPC" && no "SecretProviderClass fully substituted" || ok "SecretProviderClass fully substituted"
 absorb < <(python3 - "$SPC" <<'PY'
@@ -830,6 +924,24 @@ if PATH="$REALPATH" command -v helm >/dev/null 2>&1 && PATH="$REALPATH" command 
       done
     done
     cp "$AZURE_DIR/routerlicious-values.yaml" "$REL_DIR/deployment/azure/routerlicious-values.yaml"
+    for cloud in AzureUSGovernment AzureChinaCloud; do
+      if [[ "$cloud" == AzureUSGovernment ]]; then acr=.azurecr.us; eh_suffix=usgovcloudapi.net
+      else acr=.azurecr.cn; eh_suffix=chinacloudapi.cn; fi
+      endpoint="https://mock-eventhubs.servicebus.$eh_suffix:443/"
+      out="$(MOCK_CLOUD_JSON="$(cat "$WORK/$cloud.json")" MOCK_SERVICEBUS_ENDPOINT="$endpoint" run_phase \
+        'resolve_redis_hostname; phase5_helm; cat "$DEPLOY_DIR/routerlicious-values.yaml"' "$CACHE_PARAMS")"; rc=$?
+      assert_eq "$cloud Helm phase succeeds" "$rc" "0"
+      assert_has "$cloud Helm image uses the active registry suffix" <(printf '%s' "$out") "image: mockacr$acr/routerlicious:"
+      assert_has "$cloud Kafka uses the resource's actual endpoint" <(printf '%s' "$out") "url: mock-eventhubs.servicebus.$eh_suffix:9093"
+    done
+    for endpoint in "" "http://insecure.example/" "https://"; do
+      : > "$CALLS"
+      out="$(MOCK_SERVICEBUS_ENDPOINT="$endpoint" run_phase 'phase5_helm')"; rc=$?
+      [[ "$rc" != 0 ]] && ok "missing or invalid Event Hubs endpoints cannot deploy" || no "missing or invalid Event Hubs endpoints cannot deploy"
+      if grep -q 'helm install\|helm upgrade' "$CALLS"; then
+        no "invalid Event Hubs endpoint cannot reach Helm"
+      else ok "invalid Event Hubs endpoint cannot reach Helm"; fi
+    done
     if PATH="$REALPATH" helm template r "$CH" -f "$VALS" > "$WORK/render.yaml" 2>"$WORK/render.err"; then
       ok "helm template renders the patched chart"
       absorb < <(python3 - "$WORK/render.yaml" <<'PY'

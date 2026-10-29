@@ -170,7 +170,7 @@ ensure_role_assignment() {
   LAST_CREATED_ROLE_ID=""
   role_def_id="$(az role definition list --name "$role_name" --query '[0].name' -o tsv)"
   existing="$(az rest --method get \
-    --url "https://management.azure.com${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
+    --url "$AZURE_RESOURCE_MANAGER${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
     --query "value[?properties.principalId=='$principal_object_id' && contains(properties.roleDefinitionId, '$role_def_id') && properties.scope=='$scope'].id | [0]" -o tsv 2>/dev/null)"
   if [[ -n "$existing" ]]; then
     log "Role '$role_name' already granted to $principal_object_id at this scope, skipping"
@@ -199,7 +199,7 @@ cleanup_temporary_role_assignments() {
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
-      --url "https://management.azure.com${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
+      --url "$AZURE_RESOURCE_MANAGER${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
   done
 }
 
@@ -230,7 +230,7 @@ trap cleanup_deployment_state EXIT
 # Access policy as above, but ARM token issuance is unaffected.
 current_principal_object_id() {
   local token payload
-  token="$(az account get-access-token --resource https://management.azure.com --query accessToken -o tsv)"
+  token="$(az account get-access-token --query accessToken -o tsv)"
   payload="$(cut -d '.' -f2 <<<"$token" | tr '_-' '/+')"
   case $(( ${#payload} % 4 )) in
     2) payload+="==" ;;
@@ -314,6 +314,8 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   exit 1
 fi
 log "All required tools found: ${REQUIRED_TOOLS[*]}"
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud
 . "$SELFHOST_ROOT/azure/redis-helpers.sh"
 load_redis_config "$PARAMS_FILE"
 
@@ -371,7 +373,8 @@ elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
   FLUID_REPO_DIR="$HOME"
 fi
 ACR="$(jqr '.deployAcr.name')"
-BUSYBOX_IMAGE="$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST"
+ACR_LOGIN_SERVER="$ACR$AZURE_ACR_SUFFIX"
+BUSYBOX_IMAGE="$ACR_LOGIN_SERVER/busybox@$BUSYBOX_DIGEST"
 AKS="$(jqr '.aks.name')"
 AKS_LOC="$(jqr '.aks.location')"; AKS_LOC="${AKS_LOC:-$RG_LOC}"
 AKS_K8S_VERSION="$(jqr '.aks.kubernetesVersion')"; AKS_K8S_VERSION="${AKS_K8S_VERSION:-1.35}"
@@ -504,9 +507,6 @@ KAFKA_TUNING_ENV_JSON="$(jq -nc \
   '[{name:"kafka__lib__consumerGlobalAdditionalConfig",value:$consumer},
     {name:"kafka__lib__producerGlobalAdditionalConfig",value:$producer},
     {name:"kafka__lib__rdkafkaConsumeLoopTimeoutDelay",value:"0"}]')"
-# Broker endpoint handed to the chart as <KAFKA_ENDPOINT>. Event Hubs' Kafka head is always
-# port 9093 with TLS.
-KAFKA_ENDPOINT="${EVENTHUBS_NAMESPACE}.servicebus.windows.net:9093"
 AFD="$(jqr '.frontDoor.profileName')"
 # Azure's own default when left unset. 240 is the documented maximum for this setting.
 AFD_RESPONSE_TIMEOUT_SECONDS="$(jqr '.frontDoor.responseTimeoutSeconds')"; AFD_RESPONSE_TIMEOUT_SECONDS="${AFD_RESPONSE_TIMEOUT_SECONDS:-30}"
@@ -837,7 +837,7 @@ phase0_network_allow_frontdoor() {
 # Creates a Private Endpoint + Private DNS Zone (idempotent) for one PaaS resource into
 # pe-subnet, and links the zone to $VNET so AKS pods resolve the private IP instead of the
 # public one. $1=resource id, $2=group id (e.g. vault/MongoDB/redisCache/file/namespace),
-# $3=short name (used to build the PE/zone/link names), $4=private DNS zone name.
+# $3=short name (used to build the PE/zone/link names).
 #
 # NOTE: the private endpoint itself is created at $AKS_LOC, NOT $RG_LOC -- same reason as the
 # VNet region fix in phase0_network(): `az network private-endpoint create` requires the
@@ -845,9 +845,28 @@ phase0_network_allow_frontdoor() {
 # this wrong surfaces as a confusing "(InvalidResourceReference)"/"(NotFound) Resource ... not
 # found" error for the VNet itself rather than a clear region-mismatch message.
 create_private_endpoint() {
-  local resource_id="$1" group_id="$2" short_name="$3" zone_name="$4"
+  local resource_id="$1" group_id="$2" short_name="$3"
   local pe_name="pe-$short_name" zone_link_name="link-$short_name"
-  local vnet_id existing_zone_link endpoints endpoint pe_state
+  local vnet_id existing_zone_link endpoints endpoint pe_state resources zone_name
+  pe_name="${pe_name:0:64}"
+  pe_name="${pe_name%-}"
+
+  # The provider supplies the zone for this resource and cloud, including AMR versus Redis Enterprise.
+  if [[ "$group_id" == redisEnterprise ]]; then
+    resources="$(az rest --method get \
+      --url "$AZURE_RESOURCE_MANAGER$resource_id/privateLinkResources?api-version=2025-07-01" \
+      --query value -o json)" || return 1
+  else
+    resources="$(az network private-link-resource list --id "$resource_id" -o json)" || return 1
+  fi
+  zone_name="$(jq -er --arg group "$group_id" '
+    [.[] | (.properties // .) | select(.groupId == $group) | .requiredZoneNames[]] | unique |
+    if length == 1 and (.[0] | type == "string" and length > 0) then .[0]
+    else error("Expected one private DNS zone for the requested group") end
+  ' <<<"$resources")" || {
+    echo "ERROR: could not resolve private DNS for $resource_id ($group_id)." >&2
+    return 1
+  }
 
   endpoints="$(az network private-endpoint list -g "$RG" -o json)"
   endpoint="$(jq -c --arg name "$pe_name" '
@@ -1227,7 +1246,7 @@ phase8_keyvault() {
   if [[ "$(az keyvault show -g "$RG" -n "$KV" --query properties.publicNetworkAccess -o tsv)" != "Enabled" ]]; then
     az keyvault update -g "$RG" -n "$KV" --public-network-access Enabled
   fi
-  create_private_endpoint "$kv_id" vault "$KV" privatelink.vaultcore.azure.net
+  create_private_endpoint "$kv_id" vault "$KV"
 
   log "Phase 8 (Key Vault) VERIFY passed — workload identity has Key Vault Secrets User; CSI add-on identity (clientId=$CSI_IDENTITY_CLIENT_ID) is unused by design"
 }
@@ -1317,7 +1336,7 @@ phase8_cosmos() {
   if [[ "$(az cosmosdb show -n "$COSMOS" -g "$RG" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az cosmosdb update -n "$COSMOS" -g "$RG" --public-network-access Disabled
   fi
-  create_private_endpoint "$cosmos_id" MongoDB "$COSMOS" privatelink.mongo.cosmos.azure.com
+  create_private_endpoint "$cosmos_id" MongoDB "$COSMOS"
 
   if [[ "$(az cosmosdb show -n "$COSMOS" -g "$RG" --query capacityMode -o tsv)" == "Provisioned" ]]; then
     phase8_cosmos_throughput
@@ -1509,7 +1528,7 @@ provision_managed_redis() {
   [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)" == "$REDIS_HIGH_AVAILABILITY" \
       && "$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)" == "Disabled" ]] \
     || { echo "ERROR: Azure Managed Redis $REDIS does not have highAvailability=$REDIS_HIGH_AVAILABILITY with public access disabled" >&2; exit 1; }
-  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS" "$REDIS_DNS_ZONE"
+  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS"
   log "Phase 8 (Azure Managed Redis) VERIFY passed — highAvailability=$REDIS_HIGH_AVAILABILITY, access-key auth over TLS, public access disabled, and only the AKS VNet private endpoint can reach $REDIS"
 }
 
@@ -1542,7 +1561,7 @@ provision_redis_cache() {
   resolve_redis_hostname
   redis_id="$(jq -r '.id // empty' <<<"$cache")"
   [[ -n "$redis_id" ]] || { echo "ERROR: Azure Cache for Redis returned no resource ID." >&2; return 1; }
-  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS" "$REDIS_DNS_ZONE"
+  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS"
   log "Phase 8 (Azure Cache for Redis) VERIFY passed -- TLS 1.2, access keys, non-clustered, private endpoint only"
 }
 
@@ -1621,7 +1640,7 @@ phase8_storage() {
   if [[ "$(az storage account show -g "$RG" -n "$STORAGE" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az storage account update -g "$RG" -n "$STORAGE" --public-network-access Disabled
   fi
-  create_private_endpoint "$storage_id" file "$STORAGE" privatelink.file.core.windows.net
+  create_private_endpoint "$storage_id" file "$STORAGE"
   # The Azure File CSI driver's PROVISIONING path (dynamic PVC -> file share create/read via
   # ARM) runs under the AKS cluster's own control-plane identity, a DIFFERENT identity from the
   # kubelet identity granted above. AKS's auto-grant for this role only covers storage accounts
@@ -1705,7 +1724,7 @@ phase3_eventhubs() {
   if [[ "$(az eventhubs namespace show -g "$RG" -n "$EVENTHUBS_NAMESPACE" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az eventhubs namespace update -g "$RG" -n "$EVENTHUBS_NAMESPACE" --public-network-access Disabled >/dev/null
   fi
-  create_private_endpoint "$eh_id" namespace "$EVENTHUBS_NAMESPACE" privatelink.servicebus.windows.net
+  create_private_endpoint "$eh_id" namespace "$EVENTHUBS_NAMESPACE"
 
   for hub in rawdeltas deltas; do
     [[ "$(az eventhubs eventhub show -g "$RG" --namespace-name "$EVENTHUBS_NAMESPACE" -n "$hub" --query partitionCount -o tsv 2>/dev/null)" == "$EVENTHUBS_PARTITIONS" ]] \
@@ -1739,6 +1758,7 @@ EOF
 
   sed -e "s|<WORKLOAD_IDENTITY_CLIENT_ID>|$WORKLOAD_IDENTITY_CLIENT_ID|g" -e "s|<KV>|$KV|g" \
       -e "s|<AZURE_TENANT_ID>|$AZURE_TENANT_ID|g" \
+      -e "s|<AZURE_CLOUD_NAME>|$AZURE_CSI_CLOUD_NAME|g" \
       "$SELFHOST_ROOT/azure/secretproviderclass.yaml" > "$DEPLOY_DIR/secretproviderclass.yaml"
   grep -q '<[A-Z_]*>' "$DEPLOY_DIR/secretproviderclass.yaml" \
     && { echo "ERROR: unsubstituted placeholder left in the rendered SecretProviderClass:" >&2
@@ -1771,7 +1791,8 @@ resume_stopped_deployment() {
 
 phase4_backends() {
   banner "Phase 4: In-cluster backends"
-  sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
+  sed -e "s|<ACR>.azurecr.io|$ACR_LOGIN_SERVER|g" -e "s|<ACR>|$ACR|g" \
+      -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
       -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" -e "s|<GITREST_STORAGE_QUOTA>|$GITREST_STORAGE_QUOTA|g" \
       -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
       -e "s|__port, value: \"10000\"|__port, value: \"$REDIS_PORT\"|g" \
@@ -1792,6 +1813,16 @@ phase4_backends() {
 # ===========================================================================
 phase5_helm() {
   banner "Phase 5: Deploy Routerlicious (Helm)"
+  local servicebus_endpoint kafka_host
+  servicebus_endpoint="$(az eventhubs namespace show -g "$RG" -n "$EVENTHUBS_NAMESPACE" \
+    --query serviceBusEndpoint -o tsv)"
+  if ! kafka_host="$(jq -ner --arg endpoint "$servicebus_endpoint" '
+      $endpoint | capture("^https://(?<host>[A-Za-z0-9.-]+)(:[0-9]+)?/?$").host
+    ')"; then
+    echo "ERROR: Event Hubs namespace '$EVENTHUBS_NAMESPACE' returned an invalid service endpoint." >&2
+    return 1
+  fi
+  KAFKA_ENDPOINT="$kafka_host:9093"
   # ServiceAccount + SecretProviderClass are applied by phase4_secrets_infra (it runs before
   # phase4_backends, since gitrest/historian need both too) -- not rendered/applied here.
 
@@ -1955,7 +1986,7 @@ phase5_helm() {
     log "Patched fluid-configmap.yaml chart template with eventHubConnString"
   fi
 
-  sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
+  sed -e "s|<ACR>.azurecr.io|$ACR_LOGIN_SERVER|g" -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
       -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
       -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
       -e "s|^  port: 10000$|  port: $REDIS_PORT|g" \
@@ -2509,8 +2540,7 @@ elif [[ "$MODE" == "deploy-only" ]]; then
   #                               namespace, hubs and Key Vault secret already exist, and
   #                               re-running it would try to write to a Key Vault that
   #                               phase8_keyvault_lockdown has since closed to this workstation.
-  #                               KAFKA_ENDPOINT is derived from config at startup, so the chart
-  #                               still gets it without this phase.
+  #                               phase5_helm reads the namespace's Kafka endpoint directly.
   # publish_frontdoor_hostnames re-publishes the real Front Door hostnames into the chart's
   # discovery values without changing any Front Door configuration.
   initialize_deploy_only_mode

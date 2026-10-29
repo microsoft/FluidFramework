@@ -10,14 +10,12 @@ redis_service_metadata() {
       REDIS_CLI=redisenterprise
       REDIS_PORT=10000
       REDIS_PE_GROUP=redisEnterprise
-      REDIS_DNS_ZONE=privatelink.redis.azure.net
       ;;
     cache)
       REDIS_LABEL="Azure Cache for Redis"
       REDIS_CLI=redis
       REDIS_PORT=6380
       REDIS_PE_GROUP=redisCache
-      REDIS_DNS_ZONE=privatelink.redis.cache.windows.net
       ;;
     *)
       echo "ERROR: unsupported Redis service '$REDIS_SERVICE'." >&2

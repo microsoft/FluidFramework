@@ -109,7 +109,7 @@ check_redis_capacity() {
     return
   fi
   az rest --method post \
-      --url "https://management.azure.com/subscriptions/$SUB/resourceGroups/$RG/providers/Microsoft.Resources/deployments/selfhost-redis-preflight/validate?api-version=2025-04-01" \
+      --url "$AZURE_RESOURCE_MANAGER/subscriptions/$SUB/resourceGroups/$RG/providers/Microsoft.Resources/deployments/selfhost-redis-preflight/validate?api-version=2025-04-01" \
       --body "@$request" -o json >"$response" 2>"$errors" || validated=false
   if [[ "$validated" == true ]] && ! grep -q '[^[:space:]]' "$response"; then
     # HTTP 202 has no result body. Let the deployment CLI poll a validation to completion.

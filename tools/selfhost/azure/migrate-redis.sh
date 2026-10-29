@@ -19,7 +19,7 @@ fi
 
 validate_redis_migration_workloads() {
   local source_hostname="$1" deployments_file="$2"
-  jq -e --arg host "$source_hostname" --arg registry "$ACR.azurecr.io" \
+  jq -e --arg host "$source_hostname" --arg registry "$ACR_LOGIN_SERVER" \
     --slurpfile release "$IMAGES_FILE" '
     (.items | length) == 8 and
     all(.items[]; (.spec.selector.matchLabels | length) > 0) and

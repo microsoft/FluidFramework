@@ -58,6 +58,8 @@ ensure_az_extension() {
 }
 . "$SELFHOST_ROOT/azure/redis-helpers.sh"
 load_redis_config "$PARAMS_FILE" || exit 1
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud || exit 1
 if [[ "$REDIS_SERVICE" == managed ]]; then
   ensure_az_extension redisenterprise
   az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
@@ -316,7 +318,7 @@ if az cosmosdb show -n "$COSMOS" -g "$RG" >/dev/null 2>&1; then
 else
   cosmos_sub_id="$(az account show --query id -o tsv)"
   cosmos_all_locs="$(az rest --method get \
-    --url "https://management.azure.com/subscriptions/$cosmos_sub_id/providers/Microsoft.DocumentDB/locations?api-version=2025-10-15" \
+    --url "$AZURE_RESOURCE_MANAGER/subscriptions/$cosmos_sub_id/providers/Microsoft.DocumentDB/locations?api-version=2025-10-15" \
     -o json 2>/dev/null)"
   if [[ -z "$cosmos_all_locs" ]] || ! jq -e '.value' >/dev/null 2>&1 <<<"$cosmos_all_locs"; then
     note "could not query Cosmos DB region availability for $RG_LOC (API call failed)"
@@ -363,7 +365,7 @@ else
   afd_quota_err="$PREFLIGHT_TEMP_DIR/afd-quota.err"
   afd_sub_id="$(az account show --query id -o tsv)"
   afd_resp="$(az rest --method post \
-    --url "https://management.azure.com/subscriptions/$afd_sub_id/providers/Microsoft.Cdn/checkResourceUsage?api-version=2026-04-01-preview" \
+    --url "$AZURE_RESOURCE_MANAGER/subscriptions/$afd_sub_id/providers/Microsoft.Cdn/checkResourceUsage?api-version=2026-04-01-preview" \
     2>"$afd_quota_err")"
   read -r afd_current afd_limit <<<"$(jq -r '.value[]? | select(.resourceType=="afdprofile") | "\(.currentValue) \(.limit)"' <<<"$afd_resp" 2>/dev/null)"
   if [[ -z "$afd_limit" ]]; then

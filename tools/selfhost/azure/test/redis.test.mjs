@@ -32,7 +32,7 @@ set -euo pipefail
 load_redis_config "$2"
 write_redis_template "$3/template.json"
 cat "$3/template.json"
-printf '\\n%s\\n' "$REDIS_SERVICE/$REDIS_PORT/$REDIS_LOC/$REDIS_PE_GROUP/$REDIS_DNS_ZONE"
+printf '\\n%s\\n' "$REDIS_SERVICE/$REDIS_PORT/$REDIS_LOC/$REDIS_PE_GROUP"
 `,
 			"_",
 			azure,
@@ -48,7 +48,6 @@ test("omitting redis.useDeprecated preserves AMR defaults and requires explicit 
 	assert.equal(result.status, 0, result.stderr);
 	assert.match(result.stdout, /Balanced_B5/);
 	assert.match(result.stdout, /managed\/10000\/eastus2\/redisEnterprise/);
-	assert.match(result.stdout, /privatelink\.redis\.azure\.net/);
 	for (const highAvailability of [undefined, "", "enabled", true]) {
 		assert.notEqual(config(t, { highAvailability }).status, 0);
 	}
@@ -75,7 +74,6 @@ test("classic cache defaults to Premium P1 and does not require managed HA", (t)
 	assert.match(result.stdout, /"name": "Premium"/);
 	assert.match(result.stdout, /"capacity": 1/);
 	assert.match(result.stdout, /cache\/6380\/eastus2\/redisCache/);
-	assert.match(result.stdout, /privatelink\.redis\.cache\.windows\.net/);
 });
 
 test("all supported fallback capacities produce numeric template capacities", (t) => {

@@ -78,6 +78,7 @@ exit "$FAILURES"
 				REDIS_SKU: "Balanced_B5",
 				REDIS_HIGH_AVAILABILITY: "Enabled",
 				REDIS_CAPACITY: "1",
+				AZURE_RESOURCE_MANAGER: "https://management.azure.com",
 				RESPONSE: '{"properties":{}}',
 				ASYNC_RESPONSE: '{"properties":{}}',
 				...env,
@@ -206,6 +207,17 @@ test("Redis uses provider validation without creating or deploying resources", (
 	assert.match(result.stdout, /not a capacity reservation/);
 });
 
+test("Redis provider validation uses the active cloud's ARM endpoint", (t) => {
+	for (const endpoint of [
+		"https://management.usgovcloudapi.net",
+		"https://management.chinacloudapi.cn",
+	]) {
+		const result = run(t, "check_redis_capacity", { AZURE_RESOURCE_MANAGER: endpoint });
+		assert.equal(result.status, 0, result.stdout + result.stderr);
+		assert.ok(result.calls.includes(`--url ${endpoint}/subscriptions/`));
+		assert.doesNotMatch(result.calls, /management\.azure\.com/);
+	}
+});
 test("Redis surfaces provider errors and rejects success-shaped error responses", (t) => {
 	for (const env of [
 		{ REST_EXIT: "1" },
