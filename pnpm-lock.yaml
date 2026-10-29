@@ -1263,7 +1263,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       typebox:
-        specifier: ^1.4.2
+        specifier: ~1.4.2
         version: 1.4.2
     devDependencies:
       '@biomejs/biome':
@@ -8637,7 +8637,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typebox:
-        specifier: ^1.4.2
+        specifier: ~1.4.2
         version: 1.4.2
       uuid:
         specifier: ^11.1.1
