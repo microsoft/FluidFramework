@@ -103,11 +103,9 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	 *
 	 * Not present when the {@link NodeKind} does not support this feature (currently just array nodes).
 	 *
-	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
-	 *
-	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} have no property key,
-	 * so they are reported as a single `"unknown: one or more unknown optional fields changed"` entry.
-	 * This entry is not included in the type of the set.
+	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} are not included, since they have no property.
+	 * They are listed in {@link NodeChangedData.changedUnknownFields} instead.
+	 * The set is empty when only unknown optional fields changed, and is otherwise never empty.
 	 */
 	readonly changedProperties?: ReadonlySet<
 		// For Object nodes, strongly type with the property names from the schema:
@@ -115,6 +113,16 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 			? string & keyof TInfo
 			: string
 	>;
+
+	/**
+	 * When the changed node is an object node, this lists the stored keys of the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} which changed.
+	 * @remarks
+	 * Not present when no unknown optional fields changed.
+	 *
+	 * These are stored keys, not property keys.
+	 * Do not compare them with the keys in {@link NodeChangedData.changedProperties}: an unknown field's stored key can be the same string as the property key of a different, known field.
+	 */
+	readonly changedUnknownFields?: ReadonlySet<string>;
 
 	/**
 	 * When the changed node is an array node, the sequential operations describing what changed.
@@ -134,10 +142,10 @@ export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode>
 	extends NodeChangedData<TNode> {
 	/**
 	 * Lists all the properties which changed on the node.
-	 *
 	 * @remarks
-	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} are reported as a placeholder entry.
-	 * See {@link NodeChangedData.changedProperties} for details.
+	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} are not included, since they have no property.
+	 * They are listed in {@link NodeChangedData.changedUnknownFields} instead.
+	 * The set is empty when only unknown optional fields changed, and is otherwise never empty.
 	 */
 	readonly changedProperties: ReadonlySet<
 		TNode extends WithType<string, NodeKind.Object, infer TInfo>
@@ -196,7 +204,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
-	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} also count as changes.
+	 * This includes changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}, which are not properties of the node.
 	 *
 	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *

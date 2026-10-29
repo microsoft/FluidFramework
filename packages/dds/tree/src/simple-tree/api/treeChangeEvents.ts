@@ -35,7 +35,7 @@ export interface TreeChangeEvents {
 	 * This means that a handler for this event will be able to read the updated state of the tree.
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
-	 * Changes to {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} also count as changes.
+	 * This includes changes to unknown optional fields, which are not properties of the node.
 	 *
 	 * - Array nodes define a change as when an element is added, removed, moved, or replaced.
 	 *

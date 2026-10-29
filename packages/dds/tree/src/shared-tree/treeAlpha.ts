@@ -641,11 +641,9 @@ class NodeSubscription {
 				// TODO:Performance: Ideally this would use Set.prototype.isDisjointFrom when available.
 				for (const flexKey of this.keys) {
 					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
-					const key = keyMap === undefined ? flexKey : keyMap.get(flexKey);
+					const key = keyMap?.get(flexKey) ?? flexKey;
 
-					// An object field without a property key is an unknown optional field.
-					// `nodeChanged` does not say which unknown field changed, so invalidate on any change.
-					if (key === undefined || data.changedProperties.has(key)) {
+					if (data.changedProperties.has(key)) {
 						this.onInvalidation();
 						return;
 					}

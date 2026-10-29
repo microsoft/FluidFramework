@@ -6,8 +6,18 @@
 Fix nodeChanged events for changes to unknown optional fields
 
 When another client changed an [unknown optional field](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) of an object node, subscribing to `nodeChanged` on that node caused an error to be thrown when the change was applied.
-This also affected `TreeAlpha.trackObservations` and `TreeAlpha.trackObservationsOnce`, which subscribe to `nodeChanged` on observed nodes.
+This also affected `TreeAlpha.trackObservations`, `TreeAlpha.trackObservationsOnce`, and React components using observation tracking from `@fluidframework/react`, such as `useTreeObservations` and `withTreeObservations`.
 
 Now `nodeChanged` is emitted for these changes.
-Since unknown optional fields have no property key, `changedProperties` reports them as a single `"unknown: one or more unknown optional fields changed"` entry.
-`TreeAlpha.trackObservations` and `TreeAlpha.trackObservationsOnce` are invalidated when unknown optional fields change, if the tracked code observed them (for example, by calling `TreeAlpha.hasUnknownChildren`).
+Unknown optional fields have no property, so they are not included in `changedProperties`.
+Instead, the new `changedUnknownFields` property of the event data lists their stored keys.
+If only unknown optional fields changed, `changedProperties` is empty.
+
+```typescript
+TreeBeta.on(node, "nodeChanged", ({ changedProperties, changedUnknownFields }) => {
+	// changedProperties: property keys of known fields that changed.
+	// changedUnknownFields: stored keys of unknown optional fields that changed, or undefined if none changed.
+});
+```
+
+Observation tracking is invalidated when an unknown optional field changes if the tracked code observed it, for example by calling `TreeAlpha.hasUnknownChildren`.
