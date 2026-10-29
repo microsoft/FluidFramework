@@ -327,20 +327,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Called after summary has been uploaded to the server. Add the work-in-progress state to the pending summary
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
+	 * @param clientSequenceNumber - The client sequence number of the submitted summarize op, when available.
 	 */
-	public completeSummary(proposalHandle: string): void {
-		this.completeSummaryCore(proposalHandle, false /* parentSkipRecursion */);
+	public completeSummary(proposalHandle: string, clientSequenceNumber?: number): void {
+		this.completeSummaryCore(
+			proposalHandle,
+			false /* parentSkipRecursion */,
+			clientSequenceNumber,
+		);
 	}
 
 	/**
 	 * Recursive implementation for completeSummary, with additional internal-only parameters.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
-	 * @param parentPath - The path of the parent node which is used to build the path of this node.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
-	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
+	 * @param clientSequenceNumber - The client sequence number of the submitted summarize op, when available.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
+	protected completeSummaryCore(
+		proposalHandle: string,
+		parentSkipRecursion: boolean,
+		clientSequenceNumber?: number,
+	): void {
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
@@ -357,7 +365,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		for (const child of this.children.values()) {
-			child.completeSummaryCore(proposalHandle, this.wipSkipRecursion || parentSkipRecursion);
+			child.completeSummaryCore(
+				proposalHandle,
+				this.wipSkipRecursion || parentSkipRecursion,
+				clientSequenceNumber,
+			);
 		}
 		// Note that this overwrites existing pending summary with
 		// the same proposalHandle. If proposalHandle is something like
@@ -367,6 +379,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// newer one later which would have to overwrite the previous one.
 		this.pendingSummaries.set(proposalHandle, {
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
+			clientSequenceNumber,
 		});
 		this.clearSummary();
 	}
@@ -379,6 +392,70 @@ export class SummarizerNode implements IRootSummarizerNode {
 		for (const child of this.children.values()) {
 			child.clearSummary();
 		}
+	}
+
+	/**
+	 * Removes one pending proposal from this node and its children without changing work in progress.
+	 * @param proposalHandle - Handle of the proposal to remove.
+	 * @param referenceSequenceNumber - Reference sequence number of that proposal. A reused handle must not remove
+	 * another proposal.
+	 * @param clientSequenceNumber - Client sequence number of the submitted summarize op, when tracked.
+	 * @returns Whether this node had the proposal pending.
+	 */
+	public retireSummary(
+		proposalHandle: string,
+		referenceSequenceNumber: number,
+		clientSequenceNumber?: number,
+	): boolean {
+		this.validatePendingSummaryForRetirement(
+			proposalHandle,
+			referenceSequenceNumber,
+			clientSequenceNumber,
+		);
+		return this.removePendingSummary(proposalHandle);
+	}
+
+	private validatePendingSummaryForRetirement(
+		proposalHandle: string,
+		referenceSequenceNumber: number,
+		clientSequenceNumber?: number,
+	): void {
+		const pending = this.pendingSummaries.get(proposalHandle);
+		if (pending !== undefined && pending.referenceSequenceNumber !== referenceSequenceNumber) {
+			this.throwUnexpectedError({
+				eventName: "UnexpectedRetiredSummaryReferenceSequenceNumber",
+				proposalHandle,
+				referenceSequenceNumber,
+				pendingReferenceSequenceNumber: pending.referenceSequenceNumber,
+			});
+		}
+		if (
+			pending !== undefined &&
+			clientSequenceNumber !== undefined &&
+			pending.clientSequenceNumber !== clientSequenceNumber
+		) {
+			this.throwUnexpectedError({
+				eventName: "UnexpectedRetiredSummaryClientSequenceNumber",
+				proposalHandle,
+				clientSequenceNumber,
+				pendingClientSequenceNumber: pending.clientSequenceNumber,
+			});
+		}
+		for (const child of this.children.values()) {
+			child.validatePendingSummaryForRetirement(
+				proposalHandle,
+				referenceSequenceNumber,
+				clientSequenceNumber,
+			);
+		}
+	}
+
+	private removePendingSummary(proposalHandle: string): boolean {
+		const wasPending = this.pendingSummaries.delete(proposalHandle);
+		for (const child of this.children.values()) {
+			child.removePendingSummary(proposalHandle);
+		}
+		return wasPending;
 	}
 
 	/**
