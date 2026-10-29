@@ -35,8 +35,8 @@ class NumberMap extends sf.map("NumberMap", sf.number) {
 	}
 }
 
-describe("api", () => {
-	describeHydration("asAlpha collections", (init) => {
+describe("asAlpha", () => {
+	describeHydration("ArrayNode", (init) => {
 		it("preserves customized array types and types the alpha methods", () => {
 			const node = init(Numbers, [1]);
 			const alpha = asAlpha(node);
@@ -78,6 +78,49 @@ describe("api", () => {
 			assert.deepEqual([...node], [0, 3]);
 		});
 
+		it("preserves types for structurally named arrays", () => {
+			const array = asAlpha(init(sf.array(sf.number), [1]));
+			array.unshift(2);
+			const first = array.at(0);
+			type _first = requireTrue<areSafelyAssignable<typeof first, number | undefined>>;
+			assert.equal(first, 2);
+		});
+
+		it("distinguishes readable nodes from insertable object data", () => {
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			class Items extends sf.array("Items", Item) {}
+			const array = asAlpha(init(Items, []));
+
+			// Plain objects are valid inputs, but reads must return schema-based node instances.
+			array.unshift({ value: 1 });
+			const removed = array.pop();
+			type _removed = requireTrue<areSafelyAssignable<typeof removed, Item | undefined>>;
+			assert(removed instanceof Item);
+			assert.equal(removed.value, 1);
+
+			// Compile-only calls: an intersection must not hide an incorrectly typed alpha write method.
+			function _rejectInvalidContent(): void {
+				// @ts-expect-error The item's value must be numeric.
+				array.unshift({ value: "invalid" });
+			}
+		});
+
+		it("preserves recursive array read and insertion types", () => {
+			class RecursiveArray extends sf.arrayRecursive("RecursiveArray", [
+				sf.number,
+				() => RecursiveArray,
+			]) {}
+			const array = asAlpha(init(RecursiveArray, []));
+			array.unshift(1, new RecursiveArray([]));
+			const last = array.pop();
+			type _last = requireTrue<
+				areSafelyAssignable<typeof last, number | RecursiveArray | undefined>
+			>;
+			assert(last instanceof RecursiveArray);
+		});
+	});
+
+	describeHydration("MapNode", (init) => {
 		it("preserves customized map types and types the alpha methods", () => {
 			const node = init(NumberMap, { first: 1 });
 			const alpha = asAlpha(node);
@@ -113,14 +156,6 @@ describe("api", () => {
 			assert.equal(node.size, 0);
 		});
 
-		it("preserves types for structurally named arrays", () => {
-			const array = asAlpha(init(sf.array(sf.number), [1]));
-			array.unshift(2);
-			const first = array.at(0);
-			type _first = requireTrue<areSafelyAssignable<typeof first, number | undefined>>;
-			assert.equal(first, 2);
-		});
-
 		it("preserves types for structurally named maps", () => {
 			const map = asAlpha(init(sf.map(sf.number), { first: 1 }));
 			const entry = map.getOrInsert("second", 2);
@@ -130,30 +165,21 @@ describe("api", () => {
 
 		it("distinguishes readable nodes from insertable object data", () => {
 			class Item extends sf.object("Item", { value: sf.number }) {}
-			class Items extends sf.array("Items", Item) {}
 			class ItemMap extends sf.map("ItemMap", Item) {}
-			const array = asAlpha(init(Items, []));
 			const map = asAlpha(init(ItemMap, {}));
 
 			// Plain objects are valid inputs, but reads must return schema-based node instances.
-			array.unshift({ value: 1 });
-			const removed = array.pop();
 			const inserted = map.getOrInsert("first", { value: 2 });
 			const computed = map.getOrInsertComputed("second", () => ({ value: 3 }));
-			type _removed = requireTrue<areSafelyAssignable<typeof removed, Item | undefined>>;
 			type _inserted = requireTrue<areSafelyAssignable<typeof inserted, Item>>;
 			type _computed = requireTrue<areSafelyAssignable<typeof computed, Item>>;
-			assert(removed instanceof Item);
 			assert(inserted instanceof Item);
 			assert(computed instanceof Item);
-			assert.equal(removed.value, 1);
 			assert.equal(inserted.value, 2);
 			assert.equal(computed.value, 3);
 
 			// Compile-only calls: an intersection must not hide an incorrectly typed alpha write method.
 			function _rejectInvalidContent(): void {
-				// @ts-expect-error The item's value must be numeric.
-				array.unshift({ value: "invalid" });
 				// @ts-expect-error The item's value must be numeric.
 				map.getOrInsert("invalid", { value: "invalid" });
 				// @ts-expect-error A computed fallback must also match the schema.
@@ -163,25 +189,14 @@ describe("api", () => {
 			}
 		});
 
-		it("preserves recursive collection read and insertion types", () => {
-			class RecursiveArray extends sf.arrayRecursive("RecursiveArray", [
-				sf.number,
-				() => RecursiveArray,
-			]) {}
+		it("preserves recursive map read and insertion types", () => {
 			class RecursiveMap extends sf.mapRecursive("RecursiveMap", [
 				sf.number,
 				() => RecursiveMap,
 			]) {}
-			const array = asAlpha(init(RecursiveArray, []));
 			const map = asAlpha(init(RecursiveMap, {}));
-			array.unshift(1, new RecursiveArray([]));
-			const last = array.pop();
 			const entry = map.getOrInsert("first", new RecursiveMap({}));
-			type _last = requireTrue<
-				areSafelyAssignable<typeof last, number | RecursiveArray | undefined>
-			>;
 			type _entry = requireTrue<areSafelyAssignable<typeof entry, number | RecursiveMap>>;
-			assert(last instanceof RecursiveArray);
 			assert(entry instanceof RecursiveMap);
 		});
 
