@@ -6,6 +6,12 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
+**Result:** the final configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
+That is 43-48% less observed elapsed time, with substantial agent-queue variation.
+The best individual experimental run was E3 at 15m 30s; the final configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
+The deliberate type-check failure was rejected, removed, and followed by a successful clean run.
+Only pipeline files and this report remain changed relative to the user's original test commit.
+
 The goal is to reduce elapsed time from a push to completion of all required continuous integration (CI) checks.
 Also record agent time, queueing, and cache behavior: reducing a single step is not sufficient evidence of a faster pull request.
 These are proof-of-concept changes, not a production rollout.
@@ -25,6 +31,7 @@ Primary metric: build queue time to final completion, plus the independently rep
 Commit time is not a reliable push timestamp.
 For each agent job, include setup, post-job cache uploads, artifact scans, and reporting.
 Sum agent-job durations separately from elapsed time.
+These are raw agent-minutes, not normalized CPU time or billing cost: the validation stage moved from a small to a large pool.
 
 For a run ID, the public data sources are:
 
@@ -37,6 +44,9 @@ https://dev.azure.com/fluidframework/public/_apis/test/resultsummarybybuild?buil
 In the timeline, use `Job` records for agent-time totals and `Task` records for individual steps.
 Exclude agentless jobs without a start time; do not sum overlapping stages into elapsed time.
 Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
+The main-build pnpm cache logs confirm cache hits for the baseline and E2-E5/final repeat.
+E2-E5 and the final repeat used the same main-build dependency cache key; the original baseline used a different key.
+This was not a cold-cache benchmark.
 
 ## Experiments
 
@@ -50,7 +60,7 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | [430731](https://dev.azure.com/fluidframework/public/_build/results?buildId=430731) | Passed, slower elapsed time | 22m 13s; roughly four-minute agent delays and slower tests |
 | E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
-| Final configuration repeat | Probe-removal commit | Pending | Ready to push | Same pipeline configuration as E5, without the deliberate error |
+| Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
 
 ### Baseline observations
 
@@ -264,6 +274,28 @@ The artifact job was still compiling when evidence was collected; no claim is ma
 The remaining run is not needed as a performance sample and may be auto-canceled by the restoring push.
 The source entrypoint has been restored byte-for-byte to the user's original dummy-change version.
 
+### Final repeat
+
+The clean configuration passed in 1,149.1 seconds (19m 09s), with 45,432 passed tests and 3,235 not executed, exactly matching E5.
+The companion policy run [430799](https://dev.azure.com/fluidframework/public/_build/results?buildId=430799) passed.
+The merge commit was `71db44300a68a6964e7d5acf94b2b9dd4f7905c3`.
+Most jobs started 253-266 seconds after queueing, making this run slower than E5 despite comparable work durations.
+
+| Metric | Baseline | E5 | Final repeat |
+| --- | ---: | ---: | ---: |
+| Queue-to-finish | 33m 28s | 17m 20s | 19m 09s |
+| Artifact build job | 18m 17s | 13m 43s | 13m 01s |
+| Mocha plus local-service job | 12m 59s after build | 14m 36s independent | 14m 34s independent |
+| Tinylicious prerequisite compile | Archive reuse | 52.4s | 53.6s |
+| Stress prerequisite compile | Archive reuse | 38.1s | 39.4s |
+| AreTheTypesWrong prerequisite compile | Archive reuse | 79.0s | 76.1s |
+| Browser prerequisite compile plus webpack | Archive reuse | 163.6s | 165.4s |
+| Sum of timed agent jobs | 67m 44s | 64m 46s | 65m 28s |
+
+The repeat supports the targeted-build improvements without relying on the fastest end-to-end sample.
+The remaining critical path is primarily the combined Mocha/local-service job and agent availability, not API validation.
+No more pipeline changes were made after this successful repeat; publishing the final report may trigger another unchanged-configuration run.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -309,7 +341,10 @@ No security scans, existing suites, or required pipeline identities were intenti
 Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
 The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
 E4 and E5 passed; E5 reduced targeted build work.
-The deliberate type-check probe was rejected as intended; the clean final repeat remains.
+The deliberate type-check probe was rejected as intended, removed, and the clean final repeat passed.
 Pipeline queue contention and caches can dominate small improvements.
+There was one original baseline and two final-configuration samples, with a moving target branch; this is not a controlled statistical estimate.
+Release/non-pull-request pipelines were not executed as part of this experiment; their existing configuration is preserved by pull-request-only gating and parameter defaults.
+The tsconfig mutation is deliberately confined to disposable test jobs and remains proof-of-concept machinery, not a recommended public build interface.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
