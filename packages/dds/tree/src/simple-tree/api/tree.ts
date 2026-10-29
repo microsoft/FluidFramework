@@ -542,7 +542,6 @@ export interface TreeBranchHistory {
 	 * - A branch that contains commits not already on this branch is merged into this branch.
 	 * - The branch is rebased onto another branch that contains commits not already on this branch.
 	 * This number shrinks when past commits are trimmed from the history.
-	 * Reading this property after the branch is disposed throws an error.
 	 */
 	readonly length: number;
 

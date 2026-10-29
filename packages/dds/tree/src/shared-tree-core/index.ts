@@ -9,9 +9,10 @@ export {
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
 	type BranchId,
-	type BranchTrimState,
 	type BranchTrimmingEvents,
 } from "./branch.js";
+
+export { BranchCommitCounter } from "./branchCommitCounter.js";
 
 export {
 	type ChangeProcessor,
