@@ -12,6 +12,8 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
 	type IContainerContext,
 	type IContainerContextInternal,
 	type IBatchMessage,
@@ -5812,6 +5814,166 @@ describe("Runtime", () => {
 					false,
 					"Runtime should exit staging mode after discard",
 				);
+			});
+
+			describe("inbound processing", () => {
+				let deltaManager: IDeltaManagerFull;
+
+				beforeEach(() => {
+					const manager = containerRuntime.deltaManager;
+					assert(
+						isIDeltaManagerFull(manager),
+						"Expected access to the inbound and outbound queues",
+					);
+					deltaManager = manager;
+				});
+
+				it("pauses and resumes idempotently without exiting staging mode", async () => {
+					const controls = containerRuntime.enterStagingMode();
+					const { inbound, inboundSignal, outbound } = deltaManager;
+					const pause = sandbox.spy(inbound, "pause");
+					const resume = sandbox.spy(inbound, "resume");
+					assert.equal(
+						inbound.paused,
+						false,
+						"Entering staging mode should not pause inbound",
+					);
+
+					const paused = controls.pauseInbound();
+					assert.equal(inbound.paused, true, "Inbound should be paused immediately");
+					assert.strictEqual(controls.pauseInbound(), paused);
+					await paused;
+					assert.equal(pause.callCount, 1, "Repeated calls should acquire only one pause");
+					assert.equal(inboundSignal.paused, false, "Inbound signals should not be paused");
+					assert.equal(outbound.paused, false, "Outbound processing should not be paused");
+
+					controls.resumeInbound();
+					controls.resumeInbound();
+					assert.equal(inbound.paused, false, "Inbound should be resumed");
+					assert.equal(resume.callCount, 1, "Repeated resumes should release only one pause");
+					assert.equal(
+						containerRuntime.inStagingMode,
+						true,
+						"Staging mode should remain active",
+					);
+
+					await controls.pauseInbound();
+					controls.commitChanges();
+					assert.equal(inbound.paused, false, "A subsequent pause should also be released");
+					assert.equal(pause.callCount, 2);
+					assert.equal(resume.callCount, 2);
+				});
+
+				for (const exitMethod of ["commitChanges", "discardChanges"] as const) {
+					it(`${exitMethod} releases an outstanding pause before notifying exit listeners`, async () => {
+						const channelCollection = stubChannelCollection(containerRuntime);
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						const resume = sandbox.spy(inbound, "resume");
+						const paused = controls.pauseInbound();
+						submitDataStoreOp(
+							containerRuntime,
+							"1",
+							genTestDataStoreMessage("staged-op"),
+							"LOCAL_OP_METADATA",
+						);
+						const hasStagedChangesChanged = sandbox.spy((hasStagedChanges: boolean) => {
+							if (!hasStagedChanges) {
+								assert.equal(
+									inbound.paused,
+									false,
+									"Inbound should resume before the staged-change exit event",
+								);
+							}
+						});
+						containerRuntime.on("hasStagedChangesChanged", hasStagedChangesChanged);
+						channelCollection.notifyStagingMode.withArgs(false).callsFake(() => {
+							assert.equal(
+								inbound.paused,
+								false,
+								"Inbound should resume before data store exit notifications",
+							);
+						});
+						containerRuntime.on("stagingModeChanged", ({ inStagingMode }) => {
+							if (!inStagingMode) {
+								assert.equal(
+									inbound.paused,
+									false,
+									"Inbound should resume before the exit event",
+								);
+							}
+						});
+
+						controls[exitMethod]();
+						assert(hasStagedChangesChanged.calledOnceWithExactly(false));
+						await paused;
+						assert.equal(
+							inbound.paused,
+							false,
+							"Inbound should resume even before pause is awaited",
+						);
+						assert.equal(resume.callCount, 1);
+					});
+
+					for (const pauseThroughControls of [false, true]) {
+						it(`${exitMethod} preserves an external pause with staging pause ${pauseThroughControls}`, async () => {
+							const { inbound } = deltaManager;
+							await inbound.pause();
+							const controls = containerRuntime.enterStagingMode();
+							if (pauseThroughControls) {
+								await controls.pauseInbound();
+							}
+
+							controls[exitMethod]();
+							assert.equal(inbound.paused, true, "The external pause should remain active");
+							inbound.resume();
+							assert.equal(inbound.paused, false, "No staging pause should remain");
+						});
+					}
+
+					it(`${exitMethod} releases its pause when exiting throws`, async () => {
+						const channelCollection = stubChannelCollection(containerRuntime);
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						await controls.pauseInbound();
+						channelCollection.notifyStagingMode
+							.withArgs(false)
+							.throws(new Error("Failed to exit staging mode"));
+
+						assert.throws(() => controls[exitMethod](), /Failed to exit staging mode/);
+						assert.equal(
+							inbound.paused,
+							false,
+							"A failed exit should release the staging pause",
+						);
+					});
+				}
+
+				for (const reenterStaging of [false, true]) {
+					it(`rejects inactive pause controls with subsequent staging session ${reenterStaging}`, async () => {
+						const controls = containerRuntime.enterStagingMode();
+						controls.commitChanges();
+						const currentControls = reenterStaging
+							? containerRuntime.enterStagingMode()
+							: undefined;
+						await currentControls?.pauseInbound();
+
+						for (const method of ["pauseInbound", "resumeInbound"] as const) {
+							assert.throws(
+								() => controls[method](),
+								(error: Error & IErrorBase) =>
+									error.errorType === ContainerErrorTypes.usageError &&
+									error.message === "Not in staging mode",
+							);
+						}
+						assert.equal(
+							deltaManager.inbound.paused,
+							reenterStaging,
+							"Inactive controls should not change the current pause state",
+						);
+						currentControls?.discardChanges();
+					});
+				}
 			});
 
 			it("entering staging mode twice not allowed", () => {

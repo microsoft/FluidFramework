@@ -45,7 +45,10 @@ import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	toIDeltaManagerFull,
+} from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";
 
@@ -476,6 +479,40 @@ describe("Staging Mode", () => {
 			"Staging mode client should have received remote change",
 		);
 	});
+
+	for (const exitMethod of ["commitChanges", "discardChanges"] as const) {
+		it(`${exitMethod} resumes inbound operations paused through stage controls`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+			const controls = clients.original.dataObject.enterStagingMode();
+			await controls.pauseInbound();
+			clients.original.dataObject.makeEdit("staged");
+
+			const { inbound } = toIDeltaManagerFull(clients.original.container.deltaManager);
+			const inboundQueued = new Promise<void>((resolve) => {
+				inbound.once("push", () => resolve());
+			});
+			clients.loaded.dataObject.makeEdit("while-paused");
+			const remoteSequenceNumber = await waitForSave([clients.loaded]);
+			await inboundQueued;
+			assert.equal(
+				hasEdit(clients.original, "while-paused"),
+				false,
+				"Queued remote changes should not be processed while paused",
+			);
+
+			controls[exitMethod]();
+			const savedSequenceNumber = await waitForSave(clients);
+			await catchUp(clients, Math.max(remoteSequenceNumber, savedSequenceNumber));
+
+			assertConsistent(clients, "Clients should converge after staging mode exits");
+			assert.equal(
+				hasEdit(clients.original, "staged"),
+				exitMethod === "commitChanges",
+				"Staged changes should only be retained when committed",
+			);
+		});
+	}
 
 	it("commitChanges sends changes applied to other clients", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
