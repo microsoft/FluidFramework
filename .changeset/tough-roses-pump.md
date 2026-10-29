@@ -33,4 +33,3 @@ The loader API is not a replacement for building summary trees.
 This change preserves existing exports, signatures, and behavior.
 Internal implementations in the Fluid Framework repository can continue using these APIs.
 No internalization version or date is specified.
-See [AB#88250](https://dev.azure.com/fluidframework/internal/_workitems/edit/88250) for tracking.
