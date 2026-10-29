@@ -45,6 +45,10 @@ document.content.slice(comment.start.index, comment.end.index); // ["Build", "Sh
 Use [`FormattedText.createSchemaWithRanges`](https://fluidframework.com/docs/api/tree/formattedtext-namespace) for text whose existing editing methods maintain ranges automatically.
 It accepts named options for the schema factory, formatting, additional atom schemas, default formatting, and range data schema.
 
+Formatted text implementations now reserve the `ranges` property name, including schemas created with the existing `FormattedText.createSchema` Alpha API.
+If your subclass defines this property, rename it to avoid a collision with the implementation.
+Assignments to this property can now throw a `TypeError`, even though the existing factory's return type does not prevent the collision.
+
 ```typescript
 import {
 	FormattedText,
