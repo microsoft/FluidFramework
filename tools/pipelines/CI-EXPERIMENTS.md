@@ -27,14 +27,14 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Emit-only TypeScript in isolated test jobs | E3 test compilation 166-180s to 117-125s | Full checking remains elsewhere; negative probe proved enforcement |
 | Full validation in existing client policy stage | E4 shortened the artifact job; policy job passed and rejected the probe | Functionally confirmed; standalone elapsed-time improvement is not established |
 | Script-selected test prerequisites | E5 and repeat: service compilation about 53s, stress about 39s | All original test scripts retained; repeat test totals matched |
+| Lockfile-installed build tools | E6 passed; tool setup 0.78-0.79s instead of roughly 21s source builds | Uses pinned `flub` 0.68.0; removes global linking and source-tool dependency |
 
 ## Active experiments
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E6: lockfile-installed build tools | Running [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Versioning, bundle analysis, and coverage tooling work without source build/global linking |
-| E7: remove PR build-output archive | Prepared locally | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
-| E7: remove PR release-package publishing | Prepared locally with parallel dry-run validation | Eight public packages lack `attw --pack`; check all public packages without producing release tarballs |
+| E7: remove PR build-output archive | Pushed as `99dd98b1dc1` | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
+| E7: remove PR release-package publishing | Pushed with parallel dry-run validation | Eight non-private packages lack `attw --pack`; validate all non-private packages without producing release tarballs |
 | E8: split the serial Mocha/local-service job | Prepared locally | Same suites and counts, lower critical path without excessive queue/setup overhead |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
@@ -43,7 +43,7 @@ Non-PR tool-selection behavior is unchanged.
 
 E7 keeps archive production for non-PR real-service consumers (`test-real-service.yml` is triggered from main/release builds, not PRs).
 The PR bundle-size workflow consumes `bundleAnalyzerJson`, which is retained.
-The expensive release packing step is replaced by bounded parallel `pnpm pack --dry-run` validation for every public client package.
+The expensive release packing step is replaced by bounded parallel `pnpm pack --dry-run` validation for every non-private client package.
 Custom `pack:tests` scripts are still exercised, but their results go to the agent's temporary directory rather than published artifacts.
 No release tarballs, test-file artifacts, publish-order metadata, or shared build-output archive are produced on this PR path.
 Existing security-task configuration remains enabled; scans/SBOMs specific to the removed release tarballs are no longer produced on PRs.
@@ -98,6 +98,7 @@ This was not a cold-cache benchmark.
 | E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
 | Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
+| E6: lockfile-installed tools | `be1b1c90d8baf9bdedc877cfaeeecdc47c8185c9` | [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Passed | 18m 16s including 2m 27s initial queue; no repo-tool installation |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -335,6 +336,16 @@ The repeat supports the targeted-build improvements without relying on the faste
 The remaining critical path is primarily the combined Mocha/local-service job and agent availability, not API validation.
 This repeat completed the first phase.
 Follow-up requests for installed tools, artifact removal, and different test partitioning are tracked separately above.
+
+### E6: installed build tools
+
+Run 430848 passed in 1,096.3 seconds (18m 16s), with 45,438 passed tests and 3,235 not executed.
+Companion policy run [430844](https://dev.azure.com/fluidframework/public/_build/results?buildId=430844) passed.
+Both main-build and coverage-job logs identify `@fluid-tools/build-cli/0.68.0`, the workspace dependency.
+Their tool-selection steps took 0.78 and 0.79 seconds respectively, replacing source installation/build/linking steps of roughly 21 seconds.
+Version generation, package version updates, bundle-analyzer aggregation, and the complete validation/test flow succeeded.
+This confirms the old comment requiring a repo build for bundle aggregation was stale.
+The improvement is modest in elapsed time but removes a second dependency mechanism and improves reproducibility.
 
 ## Validation ownership
 
