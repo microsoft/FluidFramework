@@ -146,6 +146,10 @@ jobs:
           path: website/build
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
+      - name: Install linkcheck
+        run: |
+          bash ./infra/install-linkcheck.sh "$RUNNER_TEMP/fluid-linkcheck"
+          echo "$RUNNER_TEMP/fluid-linkcheck/linkcheck" >> "$GITHUB_PATH"
       - name: Check for broken links
         id: linkcheck
         continue-on-error: true

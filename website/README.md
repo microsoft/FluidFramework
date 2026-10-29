@@ -414,6 +414,23 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 <YoutubeVideo videoId="foo" className="my-styling" />
 ```
 
+## Link checker setup
+
+The link-checking scripts require [linkcheck 3.0.0](https://github.com/filiph/linkcheck/releases/tag/3.0.0) on your `PATH`.
+It is installed separately from the npm dependencies.
+On macOS or Linux, run these commands from `website`:
+
+```sh
+bash ./infra/install-linkcheck.sh "$HOME/.local/share/fluid-linkcheck"
+export PATH="$HOME/.local/share/fluid-linkcheck/linkcheck:$PATH"
+```
+
+The installer verifies the release archive's pinned SHA-256 checksum before extracting it with the system `tar`.
+Both CI pipelines use this installer.
+On Windows, download the `linkcheck-3.0.0-windows-x64.zip` release archive, verify its SHA-256 checksum is `c845e8167cbf41844ed0c0f8a21be06d798c36645e33ae0ec7ca2e8c8247e644`, and extract it.
+Add the extracted directory that contains `linkcheck.bat` to your `PATH`.
+See [Checking for Broken Links](../docs/content/Contributing/Working-with-the-Website/Checking-for-Broken-Links.md) for the checking commands.
+
 ## Scripts
 
 The following npm scripts are supported in this directory:

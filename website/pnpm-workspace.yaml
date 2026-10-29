@@ -13,7 +13,6 @@ allowBuilds:
   core-js: true
   core-js-pure: true
   keytar: true
-  linkcheck-bin: true
   unrs-resolver: true
 
 # Supply chain security settings - see /DEV.md for documentation

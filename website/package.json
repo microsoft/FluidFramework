@@ -99,7 +99,6 @@
 		"eslint-mdx": "^3.1.5",
 		"eslint-plugin-mdx": "^3.1.5",
 		"fs-extra": "^11.2.0",
-		"linkcheck-bin": "3.0.0-2",
 		"lunr": "^2.3.9",
 		"mdast-util-directive": "^3.1.0",
 		"pagefind": "1.5.2",
