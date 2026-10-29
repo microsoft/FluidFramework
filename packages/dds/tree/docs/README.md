@@ -4,6 +4,7 @@ SharedTree is a distributed data structure in the Fluid Framework. A description
 
 List of technical/design documents (to be organized into appropriate sections at a later time):
 
+-   [API Stability Audit](./api-stability-audit.md)
 -   [Cell Model of Collaborative Editing](./main/cell-model-of-collaborative-editing.md)
 -   [Data Model](./main/data-model.md)
 -   [Indexes and Branches](./main/indexes-and-branches.md)
