@@ -33,7 +33,6 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
-	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
 	getInnerNode,
 	type TreeNodeSchemaClass,
@@ -97,6 +96,9 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @typeParam T - Use Default: Do not specify. Type of values to read from the array.
  * @typeParam TNew - Use Default: Do not specify. Type of values to write into the array.
  * @typeParam TMoveFrom - Use Default: Do not specify. Type of node from which children can be moved into this array.
+ *
+ * @see {@link TreeArrayNodeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:5)} to access alpha APIs on this node
  *
  * @sealed @public
  */
@@ -471,6 +473,9 @@ export interface TreeArrayNode<
 
 /**
  * {@link (TreeArrayNode:interface)} with additional alpha APIs.
+ *
+ * @see {@link (asAlpha:5)} to access these APIs on an existing {@link (TreeArrayNode:interface)}
+ *
  * @alpha @sealed
  */
 export interface TreeArrayNodeAlpha<
@@ -851,13 +856,10 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
 /**
- * Attempts to coerce the given property key to an integer index property.
+ * Attempts to coerce the given property key to a canonical non-negative integer index.
  * @param key - The property key to coerce.
- * @param exclusiveMax - This restricts the range in which the resulting index is allowed to be.
- * The coerced index of `key` must be less than `exclusiveMax` or else this function will return `undefined`.
- * This is useful for reading an array within the bounds of its length, e.g. `asIndex(key, array.length)`.
  */
-export function asIndex(key: string | symbol, exclusiveMax: number): number | undefined {
+export function asIndex(key: string | symbol): number | undefined {
 	if (typeof key !== "string") {
 		return undefined;
 	}
@@ -877,7 +879,23 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 	}
 
 	// TODO: See 'matrix/range.ts' for fast integer coercing + range check.
-	return 0 <= asNumber && asNumber < exclusiveMax ? asNumber : undefined;
+	return 0 <= asNumber ? asNumber : undefined;
+}
+
+/**
+ * Returns the index represented by `key` if it is within the field's bounds.
+ * @param key - The property key to coerce.
+ * @param field - The field whose length bounds the index.
+ * @remarks
+ * Accepts the field rather than its length so the length is queried only when the key represents an index.
+ * Computing the length can be expensive for some field implementations.
+ */
+export function asIndexWithinBounds(
+	key: string | symbol,
+	field: Pick<readonly unknown[], "length">,
+): number | undefined {
+	const index = asIndex(key);
+	return index !== undefined && index < field.length ? index : undefined;
 }
 
 /**
@@ -900,7 +918,7 @@ function createArrayNodeProxy(
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
 			const field = getSequenceField(receiver);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 
 			if (maybeIndex === undefined) {
 				if (key === "length") {
@@ -933,10 +951,7 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const maybeContent = field.at(maybeIndex);
-			return maybeContent === undefined
-				? undefined
-				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
+			return getOrCreateNodeFromInnerUnboxedNode(field.atIndex(maybeIndex));
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -954,8 +969,8 @@ function createArrayNodeProxy(
 			}
 
 			// Array nodes treat all non-negative integer indexes as array access.
-			// Using Infinity here (rather than length) ensures that indexing past the end doesn't create additional session local properties.
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			// Do not check bounds: indexing past the end must not create additional session local properties.
+			const maybeIndex = asIndex(key);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
@@ -967,7 +982,7 @@ function createArrayNodeProxy(
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
 		},
 		ownKeys: (target) => {
@@ -989,13 +1004,13 @@ function createArrayNodeProxy(
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 			if (maybeIndex !== undefined) {
-				const val = field.at(maybeIndex);
+				const val = field.atIndex(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
+					value: getOrCreateNodeFromInnerUnboxedNode(val),
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
@@ -1013,7 +1028,7 @@ function createArrayNodeProxy(
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
 		defineProperty(target, key, attributes) {
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			const maybeIndex = asIndex(key);
 			if (maybeIndex !== undefined) {
 				throw new UsageError("Shadowing of array indices is not permitted.");
 			}
@@ -1119,13 +1134,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		index: number,
 	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
 		const field = getSequenceField(this);
-		const val = field.boxedAt(index);
+		const val = field.at(index);
 
 		if (val === undefined) {
 			return val;
 		}
 
-		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerUnboxedNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public findLast<S extends TreeNodeFromImplicitAllowedTypes<T>>(
 		predicate: (
@@ -1232,7 +1247,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		deleteCount?: number,
 		...items: Insertable<T>
 	): TreeNodeFromImplicitAllowedTypes<T>[] {
-		const length = this.length;
+		const field = getSequenceField(this);
+		const length = field.length;
 		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
 		const actualDeleteCount =
 			deleteCount === undefined
@@ -1241,12 +1257,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		validateIndexRange(
 			actualStart,
 			actualStart + actualDeleteCount,
-			getSequenceField(this),
+			field,
 			"TreeArrayNode.splice",
 		);
 		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
 		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
-			removed.push(this.at(index) ?? oob());
+			removed.push(
+				getOrCreateNodeFromInnerUnboxedNode(
+					field.atIndex(index),
+				) as TreeNodeFromImplicitAllowedTypes<T>,
+			);
 		}
 
 		const innerNode = getInnerNode(this);
@@ -1411,8 +1431,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
-		for (let i = 0; i < this.length; i++) {
-			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
+		for (let i = 0; ; i++) {
+			// Resolve the field again after each yield: an unhydrated array may have been hydrated.
+			const field = getSequenceField(this);
+			if (i >= field.length) {
+				return;
+			}
+			yield getOrCreateNodeFromInnerUnboxedNode(
+				field.atIndex(i),
+			) as TreeNodeFromImplicitAllowedTypes<T>;
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
@@ -1514,7 +1541,7 @@ export function arraySchema<
 					// Search prototype keys and check for positive integers. Throw if any are found.
 					// Shadowing of index properties on array nodes is not supported.
 					for (const key of Object.getOwnPropertyNames(prototype)) {
-						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						const maybeIndex = asIndex(key);
 						if (maybeIndex !== undefined) {
 							throw new UsageError(
 								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,

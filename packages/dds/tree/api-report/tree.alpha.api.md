@@ -276,7 +276,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -1544,7 +1544,7 @@ export interface SharedTreeFormatOptions {
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
-    readonly retainHistory?: boolean;
+    readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly validateCommitsOnFirstSubmission?: boolean;
     readonly validateRebasedCommitsBeforeResubmission?: boolean;
@@ -1979,6 +1979,7 @@ export interface TreeAlpha {
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
+    hasUnknownChildren(node: TreeNode): boolean;
     readonly identifier: TreeIdentifierUtils;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
         idCompressor?: IIdCompressor;
@@ -2049,12 +2050,6 @@ export interface TreeBeta {
 
 // @beta
 export const TreeBeta: TreeBeta;
-
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
-
-// @alpha @deprecated
-export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {

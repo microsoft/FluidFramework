@@ -16,6 +16,9 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 export TMPDIR="$WORK/tmp"
 mkdir -p "$TMPDIR"
+export DOCKER_CONFIG="$WORK/docker-config"
+mkdir -p "$DOCKER_CONFIG"
+unset DOCKERHUB_USERNAME DOCKERHUB_TOKEN
 
 PASS=0; FAIL=0; SKIP=0
 ok()    { printf '  \033[32mPASS\033[0m %s\n' "$1"; PASS=$((PASS+1)); }
@@ -43,6 +46,14 @@ echo "az $*" >> "$CALLS"
 case "$*" in
   *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
     [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
+  *"acr repository show"*"example/service"*) exit 1 ;;
+  "acr import "*)
+    jq -n --args '$ARGS.positional' -- "$@" > "$CALLS.import-args.json"
+    if [[ "${MOCK_IMPORT_FAILURE:-0}" = 1 ]]; then
+      echo "Mock registry rejected source credentials" >&2
+      exit 1
+    fi
+    exit 0 ;;
   *"acr repository show"*"routerlicious:mock-tag"*|*"acr repository show"*"historian:mock-tag"*|*"acr repository show"*"gitrest:mock-tag"*)
     exit 0 ;;
   *"acr show"*"--query provisioningState"*) echo "Succeeded"; exit 0 ;;
@@ -52,6 +63,7 @@ case "$*" in
   *"acr show"*"--query resourceGroup"*)
     [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && echo "mock-rg" && exit 0 || exit 1 ;;
   *"acr show"*"--query loginServer"*) echo "mockbuildacr.azurecr.io"; exit 0 ;;
+  *"acr show"*"--query id"*) echo "/subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.ContainerRegistry/registries/mockacr"; exit 0 ;;
   *"acr show"*) [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"extension show"*"redisenterprise"*)                                  exit 0 ;;
   *"redisenterprise create --help"*)
@@ -348,6 +360,109 @@ assert_has "dependency import checks the release-pinned digest" "$CALLS" \
   "busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 assert_has "missing pinned busybox digest is imported into the deploy ACR" "$CALLS" \
   "acr import --name mockacr --source docker.io/library/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+assert_eq "anonymous imports omit source authentication flags" \
+  "$(jq 'index("--username") == null and index("--password") == null' "$CALLS.import-args.json")" "true"
+
+: > "$CALLS"
+out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token run_phase 'phase1_images')"; rc=$?
+assert_eq "authenticated Docker Hub import exits 0" "$rc" "0"
+assert_has "authenticated import uses az acr import" "$CALLS" "acr import --name mockacr"
+assert_eq "source credentials are passed through Azure CLI flags" \
+  "$(jq -r '.[index("--username") + 1] + ":" + .[index("--password") + 1]' "$CALLS.import-args.json")" \
+  "test-user:test-only-token"
+assert_eq "authenticated import preserves the pinned digest" \
+  "$(jq -r '.[index("--source") + 1]' "$CALLS.import-args.json")" \
+  "docker.io/library/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+if [[ "$out" == *test-only-token* ]]; then
+  no "source token stays out of deployment output"
+else
+  ok "source token stays out of deployment output"
+fi
+
+if grep -q 'rest --method post\|acr show .*--query id' "$CALLS"; then
+  no "imports do not use a custom ARM request"
+else
+  ok "imports do not use a custom ARM request"
+fi
+assert_eq "Azure CLI handles completion without custom digest polling" \
+  "$(grep -c 'acr repository show.*busybox@sha256:' "$CALLS")" "1"
+assert_eq "authenticated image is imported exactly once" "$(grep -c '^az acr import ' "$CALLS")" "1"
+
+for missing in username token; do
+  : > "$CALLS"
+  if [[ "$missing" == username ]]; then
+    out="$(DOCKERHUB_USERNAME= DOCKERHUB_TOKEN=test-only-token run_phase 'phase1_images')"; rc=$?
+  else
+    out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN= run_phase 'phase1_images')"; rc=$?
+  fi
+  [[ "$rc" != 0 ]] && ok "missing Docker Hub $missing is rejected" || no "missing Docker Hub $missing is rejected"
+  assert_has "partial credentials explain which variables are needed" <(printf '%s' "$out") \
+    "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
+  if grep -q '^az acr ' "$CALLS"; then
+    no "partial credentials fail before registry login or import"
+  else
+    ok "partial credentials fail before registry login or import"
+  fi
+done
+
+printf '%s\n' '{"credsStore":"must-not-be-read","auths":{"https://index.docker.io/v1/":{"auth":"dXNlcjp0b2tlbg=="}}}' \
+  > "$DOCKER_CONFIG/config.json"
+: > "$CALLS"
+out="$(run_phase 'phase1_images')"; rc=$?
+assert_eq "saved Docker configuration is not needed for imports" "$rc" "0"
+assert_eq "saved Docker credentials are ignored without environment credentials" \
+  "$(jq 'index("--username") == null and index("--password") == null' "$CALLS.import-args.json")" "true"
+rm "$DOCKER_CONFIG/config.json"
+
+: > "$CALLS"
+out="$(MOCK_IMPORT_FAILURE=1 DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+  run_phase 'phase1_images')"; rc=$?
+[[ "$rc" != 0 ]] && ok "authenticated import failures stop deployment" \
+  || no "authenticated import failures stop deployment"
+assert_eq "rejected source credentials never silently retry anonymously" \
+  "$(grep -c '^az acr import ' "$CALLS")" "1"
+assert_has "rejected import used the environment credentials" "$CALLS" "--username test-user --password test-only-token"
+[[ "$out" == *"Mock registry rejected source credentials"* ]] \
+  && ok "authenticated import failure remains visible" \
+  || no "authenticated import failure remains visible"
+
+: > "$CALLS"
+out="$(DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN='test token * --flag' run_phase 'phase1_images')"; rc=$?
+assert_eq "source credentials with shell metacharacters import successfully" "$rc" "0"
+assert_eq "the source token remains one literal command argument" \
+  "$(jq -r '.[index("--password") + 1]' "$CALLS.import-args.json")" "test token * --flag"
+
+CUSTOM_IMAGES="$WORK/custom-import-images.json"
+for kind in built dependency; do
+  for registry in docker.io registry.hub.docker.com index.docker.io example.azurecr.io; do
+    jq --arg repository "$registry/example/service" --arg kind "$kind" '
+      if $kind == "built" then
+        .builtImages[0].repository = $repository |
+        .builtImages[0].digest = .dependencyImages[0].digest |
+        .dependencyImages = []
+      else .dependencyImages[0].name = $repository end
+    ' "$REL_DIR/images.json" > "$CUSTOM_IMAGES"
+    : > "$CALLS"
+    out="$(TEST_IMAGES_FILE="$CUSTOM_IMAGES" DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+      run_phase 'IMAGES_FILE="$TEST_IMAGES_FILE"; phase1_images')"; rc=$?
+    assert_eq "$kind image from $registry imports successfully" "$rc" "0"
+    if [[ "$registry" == example.azurecr.io ]]; then expected_auth=false; else expected_auth=true; fi
+    assert_eq "$kind image only receives Docker Hub credentials for Docker Hub sources" \
+      "$(jq 'index("--username") != null and index("--password") != null' "$CALLS.import-args.json")" "$expected_auth"
+    assert_has "$kind image preserves its source registry" "$CALLS" "--source $registry/example/service@sha256:"
+  done
+done
+
+jq '.dependencyImages = [
+  (.dependencyImages[0] | .name = "docker.io/example/service"),
+  (.dependencyImages[0] | .name = "example.azurecr.io/example/service")
+]' "$REL_DIR/images.json" > "$CUSTOM_IMAGES"
+: > "$CALLS"
+out="$(TEST_IMAGES_FILE="$CUSTOM_IMAGES" DOCKERHUB_USERNAME=test-user DOCKERHUB_TOKEN=test-only-token \
+  run_phase 'IMAGES_FILE="$TEST_IMAGES_FILE"; phase1_images')"; rc=$?
+assert_eq "mixed-registry dependencies import successfully" "$rc" "0"
+assert_eq "Docker Hub credentials are cleared before the next non-Hub import" \
+  "$(jq 'index("--username") == null and index("--password") == null' "$CALLS.import-args.json")" "true"
 
 : > "$CALLS"; export MOCK_BUSYBOX_DIGEST_EXISTS=1
 out="$(run_phase 'phase1_images')"; rc=$?
@@ -543,6 +658,7 @@ for name, good in [
   ("rendered kafka.lib.endpoint is the Event Hubs host", c['kafka']['lib']['endpoint'] == 'mock-eventhubs.servicebus.windows.net:9093'),
   ("rendered eventHubConnString is empty (env fills it)", c['kafka']['lib'].get('eventHubConnString') == ''),
   ("rendered numberOfPartitions is 32", c['kafka']['lib']['numberOfPartitions'] == 32),
+  ("rendered Alfred preserves requested document IDs", c['alfred']['enforceServerGeneratedDocumentId'] is False),
   ("ignoreCheckpointFlushException present", c['checkpoints']['ignoreCheckpointFlushException'] is True),
   ("no SharedAccessKey anywhere in the ConfigMap", 'SharedAccessKey' not in raw),
 ]:
