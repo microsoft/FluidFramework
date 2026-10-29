@@ -32,7 +32,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { makeField } from "./lazyField.js";
+import { getCachedField, makeField } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -141,12 +141,18 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return makeField(this.context, schema.kind, cursor);
+			return getCachedField(this, fieldKey) ?? makeField(this.context, schema.kind, cursor);
 		});
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
 		currentObserver?.observeNodeField(this, key);
+
+		this.ensureValidForAccess();
+		const cached = getCachedField(this, key);
+		if (cached !== undefined) {
+			return cached;
+		}
 
 		const fieldSchema = this.storedSchema.getFieldSchema(key);
 		return inCursorField(this.cursor, key, (cursor) => {
@@ -167,11 +173,21 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
 		currentObserver?.observeParentOf(this);
 
-		const cursor = this.cursor;
+		this.ensureValidForAccess();
 		const index = this.anchorNode.parentIndex;
-		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
+		const parent = this.anchorNode.parent?.slots.get(flexTreeSlot);
+		if (parent !== undefined) {
+			assert(parent.context === this.context, "Parent context must match child context");
+			assert(parent instanceof LazyTreeNode, "Expected a lazy parent node");
+			const cached = getCachedField(parent, key);
+			if (cached !== undefined) {
+				return { parent: cached, index };
+			}
+		}
 
+		const cursor = this.cursor;
+		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
 		let fieldSchema: FieldKindIdentifier;

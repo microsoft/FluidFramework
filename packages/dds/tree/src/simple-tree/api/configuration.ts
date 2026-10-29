@@ -34,6 +34,8 @@ import {
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
+import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+
 /**
  * Options when constructing a tree view.
  * @public
@@ -183,10 +185,21 @@ export interface ITreeViewConfigurationAlpha<
 	 * ```
 	 */
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+
+	/**
+	 * Provides hashing for schema telemetry and optional checks when constructing a view.
+	 * @remarks
+	 * Create with {@link identifySchemaAlpha}.
+	 */
+	readonly schemaIdentity?: SchemaIdentity;
 }
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
+ *
+ * @see {@link TreeViewConfigurationAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:4)} to access alpha APIs on this configuration
+ *
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -266,8 +279,9 @@ export class TreeViewConfiguration<
 
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
- * @remarks
- * See {@link (asAlpha:2)} for an API to downcast from {@link TreeViewConfiguration} to this type.
+ *
+ * @see {@link (asAlpha:4)} to access these APIs on an existing {@link TreeViewConfiguration}
+ *
  * @sealed @alpha
  */
 export class TreeViewConfigurationAlpha<
@@ -287,6 +301,15 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaIdentity}
+	 */
+	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
+
+	// TODO: Consider an async creator so identifySchemaAlpha can use native Web Crypto hashing APIs,
+	// saving approximately 2 KB of compressed bundle size.
+	// This is worth pursuing if there is another reason to make configuration creation async,
+	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
@@ -295,6 +318,9 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
+		if (props.schemaIdentity !== undefined) {
+			this.schemaIdentity = SchemaIdentityInternal.extract(props.schemaIdentity);
+		}
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy);

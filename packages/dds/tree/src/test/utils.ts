@@ -171,6 +171,7 @@ import {
 	type ITreeCheckout,
 	type SharedTreeContentSnapshot,
 	type TreeCheckout,
+	type CheckoutBase,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	createIndependentTreeViewAlpha,
@@ -1551,7 +1552,7 @@ export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdComp
  * Views the supplied checkout with the given schema.
  */
 export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
-	checkout: TreeCheckout,
+	checkout: CheckoutBase,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
 	return new SchematizingSimpleTreeView<TSchema>(
@@ -1646,6 +1647,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public get branchHistory(): TreeBranchHistory {
 		throw new Error("'history' property not implemented in MockTreeCheckout.");
+	}
+	public get locations(): never {
+		throw new Error("'locations' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

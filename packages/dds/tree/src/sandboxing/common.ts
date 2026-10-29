@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	fluidHandleSymbol,
-	type IFluidHandle,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	TelemetryDataTag,
@@ -214,16 +211,6 @@ const EscapedObject = Type.Object(
 );
 
 /**
- * Recognizes local {@link IFluidHandle} values by {@link fluidHandleSymbol}, without accepting cloneable legacy lookalikes.
- * Only trusted token restoration introduces handles into received data.
- */
-export function isLocalHandle(value: unknown): value is IFluidHandle {
-	// TODO: Remove isFluidHandle's legacy string-property fallback (including test-setup dependencies),
-	// then use it here. That fallback accepts ordinary data that can cross structured clone.
-	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
-}
-
-/**
  * Local placeholder that keeps an {@link ArrayBuffer} out of general schema validation.
  * @remarks
  * Created as a frozen null-prototype record by {@link createBufferPlaceholder}.
@@ -277,10 +264,10 @@ const RegisteredBufferPlaceholder = Type.Refine(
 );
 
 /**
- * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayloadVocabulary} validation.
+ * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
  */
 const LocalHandle = Type.Refine(Type.Unsafe<IFluidHandle>({ type: "object" }), (value) =>
-	isLocalHandle(value),
+	isFluidHandle(value),
 );
 /**
  * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.

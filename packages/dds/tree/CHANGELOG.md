@@ -1,5 +1,380 @@
 # @fluidframework/tree
 
+## 3.7.0
+
+### Minor Changes
+
+- Configure how much SharedTree edit history to retain ([#28511](https://github.com/microsoft/FluidFramework/pull/28511)) [9c5a7ccd293](https://github.com/microsoft/FluidFramework/commit/9c5a7ccd293633c1359e3f572f85e0966aeed8ab)
+
+  The existing alpha SharedTree [`retainHistory`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface#retainhistory-propertysignature) option now accepts a number in addition to a boolean.
+  Pass a nonnegative safe integer to retain the newest specified number of available sequenced main-branch commits, `true` to retain all available history, or `false` or `0` to disable extra retention.
+
+  ```typescript
+  import { configuredSharedTree } from "fluid-framework/alpha";
+
+  const SharedTree = configuredSharedTree({ retainHistory: 20 });
+  ```
+
+  Collaboration and existing branches can require retaining more commits than the configured number.
+  After loading a summary, trimming waits for the collaboration boundary to be reported.
+  The count applies to sequenced commits, not file versions or snapshots.
+  The policy is local to each SharedTree instance and is not persisted or sent to other clients.
+  History that has already been removed cannot be recovered by increasing retention.
+
+  The existing boolean behavior is unchanged, and omitting `retainHistory` still defaults to `false`.
+
+- TreeArrayNodes correctly handle null elements during iteration and removal ([#28519](https://github.com/microsoft/FluidFramework/pull/28519)) [8defa178a08](https://github.com/microsoft/FluidFramework/commit/8defa178a083468b6160508f35fb67026329ec34)
+
+  Null elements in a [`TreeArrayNode`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface) are now handled correctly during iteration and by the alpha `splice` method.
+  Previously, encountering a `null` element during iteration or removing one with `splice` incorrectly threw an out-of-bounds error.
+
+- Adds debug-only checks to facilitate root cause analysis of SharedTree bugs ([#28435](https://github.com/microsoft/FluidFramework/pull/28435)) [2e08a3a09ad](https://github.com/microsoft/FluidFramework/commit/2e08a3a09adc8c4765656bb0bcad7ad305f53338)
+
+  This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
+  These checks can be used by application authors when faced with a SharedTree rebasing bug.
+  For example:
+
+  ```typescript
+  import { RebaseValidation } from "@fluidframework/tree/alpha";
+
+  it("repro SharedTree bug", () => {
+    // Reproduce the SharedTree bug under strict rebase validation level.
+    RebaseValidation.runWithLevel(RebaseValidation.Level.Strict, () => {
+      // Buggy scenario
+      // ...
+    });
+  });
+  ```
+
+  Running the test with strict validation is more likely to yield actionable feedback for SharedTree maintainers.
+
+  These checks are tree-shaken out of production builds, so they have no impact on shipped applications.
+
+  There are three levels of checking available:
+  - `RebaseValidation.Level.None`: No rebase validation is performed.
+  - `RebaseValidation.Level.Cheap`: A minimal amount of rebase validation is performed, with minimal performance overhead.
+  - `RebaseValidation.Level.Strict`: Extensive rebase validation is performed, with the highest performance overhead.
+
+  The level is set to `RebaseValidation.Level.Cheap` by default.
+  Debug builds may therefore experience asserts in scenarios where they did not before.
+  The level can be adjusted by calling `RebaseValidation.setLevel` or `RebaseValidation.runWithLevel`.
+
+- Slightly faster SharedTree initialization ([#28527](https://github.com/microsoft/FluidFramework/pull/28527)) [7402252137c](https://github.com/microsoft/FluidFramework/commit/7402252137c5f5177e127b44303e2a2b0bbcc5ae)
+
+  [`TreeView.initialize()`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#initialize-methodsignature) is now slightly faster for large schemas when debug-only checks are disabled or optimized out.
+  See [non-production conditional code](https://fluidframework.com/docs/api/core-utils/#nonproductionconditionalsincluded-function) for details on how bundlers remove these checks from production builds.
+
+  For a synthetic schema with **240 object types and 1,200 fields** (five fields per object type), plus an array root allowing all 240 types, warm initialization took about 7% less time in a local benchmark:
+
+  | Measurement               | Before  | After   |
+  | ------------------------- | ------- | ------- |
+  | `TreeView.initialize([])` | 5.21 ms | 4.83 ms |
+
+  The tree was initialized with an empty array: these numbers measure schema-related initialization work, not loading 240 objects.
+  Measurements used Node.js with debug-only checks disabled and exclude view creation.
+  Results depend on the schema and environment.
+
+- Reduce the bundle size of schema hashing ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  Schema hashing uses a browser-oriented SHA-256 implementation without Node.js Buffer compatibility dependencies.
+  This reduces browser bundle size when using [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+
+- Simplify the alpha schema identity API ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  The alpha `identifySchema` function is renamed to [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+  The alpha `computeSchemaHash` function is no longer exported.
+  To check a schema against an expected hash, pass a schema identity to the view configuration:
+
+  ```typescript
+  const config = new TreeViewConfigurationAlpha({
+    schema: MySchema,
+    schemaIdentity: identifySchemaAlpha({ expectedHash: savedHash }),
+  });
+  ```
+
+  If the expected hash does not match, the view construction error includes the actual hash.
+
+- Use stable definition ordering in schema exports ([#28544](https://github.com/microsoft/FluidFramework/pull/28544)) [30b0ce86b9c](https://github.com/microsoft/FluidFramework/commit/30b0ce86b9cdd8104b7affd25e46a86d8ec693ed)
+
+  SharedTree JSON Schema exports and schema compatibility snapshots now write node definitions in a stable identifier order, independent of definition map insertion order and locale.
+  Field and allowed-type ordering is unchanged.
+
+  Newly generated output may differ in definition ordering from older output.
+  Existing compatibility snapshots remain usable without regeneration, and ordering alone does not change schema compatibility results.
+  Schema hashes and persisted schema encoding are unchanged.
+
+- Unsafe array-to-tuple conversion is available for allowed schemas ([#28502](https://github.com/microsoft/FluidFramework/pull/28502)) [1b8870908cb](https://github.com/microsoft/FluidFramework/commit/1b8870908cb4d93d543f37f8a77f1e4ce492e539)
+
+  The alpha API `unsafeArrayToTuple` is now exported from `@fluidframework/tree/alpha` and `fluid-framework/alpha`.
+  It returns the original array with its type converted using [`UnionToTuple`](https://fluidframework.com/docs/api/fluid-framework/uniontotuple-typealias), allowing insertable content APIs to work when tuple type information has been lost.
+  Prefer preserving the tuple type with `as const` when possible.
+  The helper does not validate the array: if its element type includes a schema that is absent at runtime, TypeScript can accept content that fails at runtime.
+
+  See [Why is my insertable content getting typed as `never`?](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree#why-is-my-insertable-content-getting-typed-as-never) for examples and an explanation of the runtime risks.
+
+## 3.6.0
+
+### Minor Changes
+
+- Plain and formatted text nodes support moving character ranges ([#28440](https://github.com/microsoft/FluidFramework/pull/28440)) [3eb861c0c18](https://github.com/microsoft/FluidFramework/commit/3eb861c0c1815e874f8ef00f6f0ee217515883d5)
+
+  The [PlainText.Members](https://fluidframework.com/docs/api/tree/plaintext-namespace/members-interface) API now exposes `moveRangeToIndex`, matching the existing [TreeArrayNode.moveRangeToIndex](https://fluidframework.com/docs/api/tree/treearraynode-interface#moverangetoindex-methodsignature) operation.
+  Both plain text and [formatted text](https://fluidframework.com/docs/api/tree/formattedtext-namespace/members-interface) nodes can now reorder ranges of text without removing and reinserting characters.
+
+  ```typescript
+  import { PlainText } from "@fluidframework/tree/alpha";
+
+  const text = PlainText.Tree.fromString("abcdef");
+  text.moveRangeToIndex(4, 0, 2);
+  console.log(text.fullString()); // "cdabef"
+  ```
+
+- Support record and map formatting in formatted text ranges ([#28458](https://github.com/microsoft/FluidFramework/pull/28458)) [6180bb2162d](https://github.com/microsoft/FluidFramework/commit/6180bb2162d68d88e7d4915a6b95139735f547ee)
+
+  `FormattedText.Members.formatRange` now supports record and map format nodes in addition to object format nodes.
+  Updates preserve entries not included in the update.
+  Set an entry to `undefined` to remove it.
+  Map formats accept either an object containing entries or a readonly map.
+  Node-valued properties and entries are cloned independently for each atom, including when copied from an existing hydrated format.
+  This also fixes copying hydrated node-valued properties in object formats.
+
+  ```typescript
+  text.formatRange(0, 5, { bold: true });
+  text.formatRange(0, 5, { bold: undefined });
+  // For map formats:
+  text.formatRange(0, 5, new Map([["bold", true]]));
+  ```
+
+- Revert to a commit directly from branch history ([#28399](https://github.com/microsoft/FluidFramework/pull/28399)) [14cfce7daed](https://github.com/microsoft/FluidFramework/commit/14cfce7daed3979b4345e283b3ac5f17da05f0e6)
+
+  Commit metadata now has a `revertTo()` method that reverts later changes on the branch from which the commit was obtained.
+  This supersedes the existing `revertTo()` API on the view (though that API remains available).
+
+  ```typescript
+  // Given some arbitrary commit in the history of a particular view...
+  const commit = view.branchHistory.getHead()?.getParent();
+  // ...check whether that commit can still be reverted, then revert if so
+  if (commit?.revertTo === undefined) {
+    throw new Error("Sorry, the requested revert can't be completed");
+  }
+  commit.revertTo();
+  ```
+
+  If the commit is no longer reachable on its original branch, the original branch has been replaced or disposed, or a later commit changes the schema, then the revert is not possible.
+  In any of these cases, the `revertTo()` method will be absent (`undefined`) from the commit metadata object.
+  The method is also unavailable while a transaction is in progress or during change events.
+  Read `revertTo` from the commit metadata before each call rather than retaining the function; each obtained function can be called only once.
+
+  Custom metadata supplied to transactions and reverts is read and serialized while edits to the target checkout are disallowed.
+  Getters and serialization hooks that attempt to edit that tree throw an error before the edit is applied.
+
+- Unhydrated array range moves preserve content when the destination overlaps the source ([#28441](https://github.com/microsoft/FluidFramework/pull/28441)) [5c61971ff70](https://github.com/microsoft/FluidFramework/commit/5c61971ff709120cfe11546ef94797760ff85393)
+
+  Calling [`TreeArrayNode.moveRangeToIndex`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface#moverangetoindex-methodsignature) with a destination gap inside the source range now leaves an [`Unhydrated`](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) array unchanged, matching the resulting array contents in the hydrated case.
+  Previously, these moves could reorder the array incorrectly and emit change deltas that did not match its content.
+
+  The destination gap is a position between items before the move, not an index in the resulting array.
+  For example, calling `array.moveRangeToIndex(1, 0, 2)` on an array containing `["a", "b", "c", "d", "e", "f"]` now leaves that array unchanged.
+  These overlapping moves do not emit change events on unhydrated arrays.
+  Hydrated arrays may still emit change events even though their content remains unchanged.
+
+- Add optional checksums to help catch unintended schema changes ([#28462](https://github.com/microsoft/FluidFramework/pull/28462)) [5c2ac041189](https://github.com/microsoft/FluidFramework/commit/5c2ac041189a0825272ba4311bdeb503cf12cbef)
+
+  SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
+
+  The checksum is a hash saved in application code to guard against unintended schema changes.
+  To enable this check, pass the saved hash as `expectedHash` to the separately imported [`identifySchema`](https://fluidframework.com/docs/api/tree#identifyschema-function) function and provide its result as the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property).
+  Calling `identifySchema()` without an expected hash enables schema hash telemetry without a construction check.
+
+  #### Configure the expected hash
+
+  To set the initial hash, use a non-empty placeholder and run a test that constructs the view.
+  Replace the placeholder with the computed hash from the error message.
+
+  ```typescript
+  import {
+    identifySchema,
+    SchemaFactoryAlpha,
+    StagedSchemaUpgradePolicy,
+    TreeViewConfigurationAlpha,
+  } from "fluid-framework/alpha";
+
+  const sf = new SchemaFactoryAlpha("com.example");
+  const stagedNumber = sf.staged(sf.number);
+  class Note extends sf.object("Note", {
+    text: sf.types([sf.string, stagedNumber]),
+  }) {}
+  const stagedUpgradePolicy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+    stagedNumber.metadata.stagedSchemaUpgrade!,
+  );
+
+  const expectedSchemaHash = "replace-with-computed-hash-from-error";
+
+  const config = new TreeViewConfigurationAlpha({
+    schema: Note,
+    stagedUpgradePolicy,
+    schemaIdentity: identifySchema({
+      // Optional.
+      expectedHash: expectedSchemaHash, // Optional: enables the hash check.
+    }),
+  });
+  // Throws if expectedHash does not match the current schema hash.
+  const view = tree.viewWith(config);
+  // initialize and upgradeSchema emit the target hash in Fluid Framework telemetry when schemaIdentity is provided.
+  view.initialize({ text: "Hello" });
+  ```
+
+  Keep the expected hash fixed until a schema change is intentional.
+  If a test reports a mismatch, review the schema change.
+  If the change is intentional, update the expected hash with the computed hash from the error message.
+
+- Resolve historical node selections and text positions for presence ([#28446](https://github.com/microsoft/FluidFramework/pull/28446)) [7d20e3b8239](https://github.com/microsoft/FluidFramework/commit/7d20e3b8239418c38eea10dd955ff23572c4f53f)
+
+  The new alpha `TreeViewAlpha.locations` API allows capturing a _location_ on one view and resolving it in another view (possibly one on a different client).
+  The resolved position accounts for intervening edits and moves.
+  The primary use case for this functionality is for presence scenarios.
+  Selections can target entire nodes (e.g. "whole paragraph," or "todo item") or a gap within a sequence of nodes (e.g. "text caret position").
+
+  The following pseudocode illustrates how an application may use this API.
+
+  ```typescript
+  // Use an attached main view with acknowledged edits and no open transaction.
+  const capture = view.locations.capture([
+    { kind: "node", node: selectedImage },
+    { kind: "sequence", node: characters, index: focusIndex },
+    { kind: "sequence", node: characters, index: anchorIndex },
+  ]);
+
+  // Send to another client, typically using the presence API.
+  publishSelection({ capture });
+
+  // On receipt, with the editor model synchronized to the local tree:
+  const results = view.locations.resolve(message.capture);
+  for (const entry of results) {
+    if (entry.status === "resolved") {
+      const location = entry.location;
+      if (location.kind === "node") {
+        highlightNode(location.node); // A local SimpleTree object.
+      } else {
+        showCaret(location.node, location.index); // Current array and gap.
+      }
+    }
+    // Otherwise, entry.status is "unavailable" and entry.reason explains why,
+    // or entry.status is "revision-unavailable".
+    // The receiving client may be behind the sender: retry after applying
+    // the inbound operations for that revision.
+    // If the revision has expired instead and been trimmed, wait for a fresh presence update.
+  }
+
+  // Single locations do not require arrays.
+  const caret = view.locations.captureGap(characters, focusIndex);
+  const caretResult = view.locations.resolve(caret);
+  const selectedNode = view.locations.captureNode(selectedImage);
+  ```
+
+  `capture` and `resolve` accept either one location or an array and return the corresponding single result or array.
+  The array overloads have identical per-location semantics and are more performant for many locations captured from the same revision.
+
+  Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
+  Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
+  nest them within other presence data).
+  For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/api/locations.ts).
+
+- Capture and resolve presence positions in plain and formatted text ([#28466](https://github.com/microsoft/FluidFramework/pull/28466)) [d603008a6c3](https://github.com/microsoft/FluidFramework/commit/d603008a6c37a1ac2d9a77c7c81469e64caaa429)
+
+  The alpha `TreeLocationResolver.captureGap` method and `kind: "sequence"` capture inputs now accept `PlainText.Tree` and schemas produced by `FormattedText.createSchema`, including subclasses, as well as array nodes.
+
+  ```typescript
+  const selection = view.locations.captureGap(view.root.text, 2, {
+    affinity: "after",
+  });
+  // selection can be resolved on another client, typically after being sent using presence APIs.
+  const result = otherView.locations.resolve(selection);
+  ```
+
+  Text-based gap locations treat the string as a sequence of characters and have semantics analogous to those documented for sequences.
+  Their resolved indices are character indices within the string (see the documentation on `PlainText.Members` for the distinction between character indices and UTF-16 code-unit indices).
+
+## 3.5.0
+
+### Minor Changes
+
+- Add a format validator for environments that disallow dynamic code generation ([#28430](https://github.com/microsoft/FluidFramework/pull/28430)) [e3c7f0105f](https://github.com/microsoft/FluidFramework/commit/e3c7f0105fc5b16e7edff852733f4b7aeee5a5f1)
+
+  The new alpha `FormatValidatorInterpreted` validates persisted SharedTree data using TypeBox's JSON schema interpreter.
+  Unlike `FormatValidatorBasic`, it does not generate JavaScript functions at runtime, so it works with Content Security Policies that omit `unsafe-eval`.
+  Interpreted validation is slower than compiled validation, so applications without this restriction should continue to use `FormatValidatorBasic`.
+  SharedTree sandbox protocol validation now uses the interpreted validator so it also works in these restricted environments.
+
+  ```typescript
+  import {
+    FormatValidatorInterpreted,
+    configuredSharedTreeAlpha,
+  } from "@fluidframework/tree/alpha";
+
+  const SharedTree = configuredSharedTreeAlpha({
+    jsonValidator: FormatValidatorInterpreted,
+  });
+  ```
+
+- Preserve tagged diagnostics when reporting sandbox session errors ([#28401](https://github.com/microsoft/FluidFramework/pull/28401)) [bcd245bd23](https://github.com/microsoft/FluidFramework/commit/bcd245bd234ed5b0549000f63cc8a2b5d142c70d)
+
+  Sandbox session errors retain their original cause and tagged telemetry properties.
+  Failure notifications include a validated classification code and separate protocol-only and sensitive diagnostic fields.
+  The Host tags protocol-only text received from the Guest as `SandboxGuestData`, and sensitive text as `UserData`.
+  Applications that use the Guest as a security boundary must treat this tag as untrusted, potentially sensitive data.
+  The Host does not send sensitive diagnostics to the Guest.
+  Unknown error messages are not included in the telemetry-safe session error message.
+  Blob-resolution errors are logged on the Host, while the Guest receives a fixed message that the service failed to resolve the handle.
+
+- SharedTree commit settlement events and no-change constraints are available in beta and legacy ([#28254](https://github.com/microsoft/FluidFramework/pull/28254)) [f557bb4670](https://github.com/microsoft/FluidFramework/commit/f557bb4670380db6a4bd47884403b8f3b4be6098)
+
+  You can now observe whether a local SharedTree commit is applied or dropped after the sequencing service orders it without using alpha APIs.
+  `CommitOutcome` and `LocalCommitEvents` are available from the `/beta` and `/legacy` entry points of `@fluidframework/tree` and `fluid-framework`.
+  The `changed` event is available on `TreeViewBeta` and `UntypedTreeView`, with `ChangeMetadataBeta` and `TreeBranchEventsBeta` describing its beta API.
+
+  ```typescript
+  import { asBeta, CommitOutcome } from "fluid-framework/beta";
+
+  // ...
+  const betaView = asBeta(view);
+  const unsubscribe = betaView.events.on("changed", (metadata) => {
+    if (metadata.isLocal) {
+      metadata.events.on("settled", (outcome) => {
+        if (outcome === CommitOutcome.FullyApplied) {
+          console.log("Changes saved.");
+        } else {
+          console.log("Changes rejected.");
+        }
+      });
+    }
+  });
+  ```
+
+  Register the `changed` listener before making the edit or running the transaction.
+  Do not edit the tree synchronously from a settlement callback; schedule any retry asynchronously.
+
+  You can also use `NoChangeConstraint` through the beta transaction APIs to require that the document has not changed before a transaction is applied.
+  `TransactionConstraintBeta` includes this constraint, which you can supply in `RunTransactionParamsBeta.preconditions`.
+  These APIs are available through both `/beta` and `/legacy`.
+
+  ```typescript
+  betaView.runTransaction(
+    () => {
+      // Make edits.
+    },
+    { preconditions: [{ type: "noChange" }] },
+  );
+  ```
+
+  You can separately constrain a later revert by returning `preconditionsOnRevert: [{ type: "noChange" }]` from the transaction callback.
+  This option is available on `TransactionCallbackStatusBeta` and requires that the document has not changed since the transaction before applying its revert.
+
+- Export stored content and schema from alpha viewable trees ([#28383](https://github.com/microsoft/FluidFramework/pull/28383)) [8150149578](https://github.com/microsoft/FluidFramework/commit/8150149578686358518caedf1c4019f78c55011d)
+
+  The new `ViewableTreeAlpha` interface provides `exportVerbose` and `exportSimpleSchema` methods.
+  Use `asAlpha(viewableTree)` to inspect stored tree content and schema without first creating a schematized view.
+
 ## 3.4.0
 
 ### Minor Changes

@@ -92,3 +92,7 @@ export type {
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 export { minimizeModularChangeset } from "./minimizeModularChange.js";
 export { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
+export {
+	isChangesetValid as isModularChangesetValid,
+	normalizeChangeset,
+} from "./modularChangeUtils.js";

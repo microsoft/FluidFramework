@@ -16,6 +16,7 @@ export {
 	compareFluidHandles,
 	encodeHandleForSerialization,
 	FluidHandleBase,
+	getDataStorePackagePath,
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,

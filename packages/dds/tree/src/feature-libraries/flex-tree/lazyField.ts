@@ -56,20 +56,38 @@ import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.j
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
- * Reuse fields.
- * Since field currently own cursors and register themselves for disposal when the node hit end of life,
- * not reusing them results in memory leaks every time the field is accessed.
- * Since the fields stay alive until the node is end of life reusing them this way is safe.
+ * Reuses field wrappers by parent node and field key.
+ * @remarks
+ * Each field under a node owns a cursor and is strongly referenced by its context's `withAnchors` set and its parent's `afterDestroy` listener.
+ * Preparing for an edit clears the cursor, but does not dispose the wrapper or release its parent anchor and listener.
+ * Without reuse, repeated boxing of the same field would accumulate wrappers, even across edits.
+ * This cache limits that accumulation to one wrapper per field key on each cached parent.
+ * Reuse is safe because these field wrappers remain alive until their parent is destroyed or their context is cleared.
  *
- * This ins't a perfect solution:
+ * This does not bound retention by the current document size for map nodes:
+ * public map `get`, `delete`, and `set` operations box fields even for missing keys.
+ * When an entry is removed, its field wrapper remains cached and registered with the context and parent.
+ * An empty map can therefore retain arbitrarily many wrappers for distinct keys accessed during its lifetime.
+ * In contrast, `has` uses `tryGetField`, which does not box missing fields.
+ * The outer WeakMap does not weaken references from the inner Map, context, or parent listener.
  *
- * - This can cause leaks, like map nodes will keep all accessed field objects around. Since other things cause this same leak already, its not too bad.
- * - This does not cache the root.
- * - Finding the parent anchor to do the caching on has significant cost.
+ * Fixing this retention requires avoiding unnecessary boxing and addressing field disposal, not just evicting cache entries:
+ * eviction alone leaves the context and listener references intact and permits duplicate wrappers on subsequent accesses.
+ * Fields are disposed when their parent is destroyed or their context is cleared, not when they become empty.
  *
- * Despite these limitations, this cache provides a large performance win in some common cases (over 10x), especially with how simple tree requests far more field objects than necessary currently.
+ * Fields without a parent node or a cached parent wrapper are not cached here.
+ * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
+ * Reuse also reduces repeated field-access costs by avoiding wrapper allocation, cursor creation, and listener registration.
  */
 const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
+
+/**
+ * Looks up a field without navigating a cursor.
+ * The caller must validate the owning node's lifetime before using the result.
+ */
+export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
+	return fieldCache.get(node)?.get(key);
+}
 
 export function makeField(
 	context: Context,
@@ -168,6 +186,14 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
+		this.ensureValidForAccess();
+		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+		const cached = parent?.slots.get(flexTreeSlot);
+		if (cached !== undefined) {
+			assert(cached.context === this.context, "Parent context must match field context");
+			return cached;
+		}
+
 		const cursor = this.cursor;
 		cursor.exitField();
 		const output = getOrCreateHydratedFlexTreeNode(this.context, cursor);
@@ -221,8 +247,14 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public getFieldPath(): NormalizedFieldUpPath {
-		return { parent: this.parent?.anchorNode, field: this.key };
+	public getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey } {
+		this.ensureValidForAccess();
+		const parent =
+			this.anchor.parent === undefined
+				? undefined
+				: (this.context.checkout.forest.anchors.locate(this.anchor.parent) ??
+					fail("Field parent anchor must exist"));
+		return { parent, field: this.key };
 	}
 
 	/**
@@ -230,15 +262,17 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		if (
-			!this.isFreed() &&
-			// Only allow editing if we are the root document field...
-			((this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
-				// ...or are under a node in the document
-				(this.parent !== undefined &&
-					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument))
-		) {
-			return this.getFieldPath();
+		if (!this.isFreed()) {
+			const path = this.getFieldPath();
+			if (
+				path.parent === undefined
+					? // Only allow editing if we are the root document field...
+						path.field === rootFieldKey
+					: // ...or are under a node in the document.
+						treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
+			) {
+				return path;
+			}
 		}
 
 		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
@@ -253,7 +287,85 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 }
 
+/**
+ * Minimum observed field length for activating a {@link LazySequence} length cache.
+ * @remarks
+ * Computing a field's length can require scanning its chunks.
+ * For small sequences, avoiding that work may not justify allocating cache state and an event subscription.
+ * The threshold limits those costs to larger sequences without adding storage to chunks.
+ * Once activated, caching continues until disposal, even if the sequence shrinks.
+ * This is a heuristic, not a change to the field's length semantics.
+ */
+export const sequenceLengthCacheThreshold = 128;
+
+/**
+ * State retained from activation of a {@link LazySequence} length cache until the field is disposed.
+ * @remarks
+ * Allocated only when the field reaches {@link sequenceLengthCacheThreshold}, to avoid cache and subscription overhead for small sequences.
+ * Invalidating the cached length does not remove the subscription.
+ */
+interface SequenceLengthCache {
+	/**
+	 * The cached field length, or `undefined` if invalidated by a change to the parent's direct children.
+	 * The next length read recomputes and stores the value.
+	 */
+	length: number | undefined;
+	/**
+	 * Unregisters the parent anchor's `childrenChanging` listener when the field is disposed.
+	 */
+	readonly unsubscribe: () => void;
+}
+
 export class LazySequence extends LazyField implements FlexTreeSequenceField {
+	/**
+	 * Length-cache state, or `undefined` if caching has not been activated.
+	 * @remarks
+	 * Each sequence has a property slot, but the cache entry and subscription are allocated only when
+	 * the field reaches {@link sequenceLengthCacheThreshold}, since caching short sequences may cost more than recomputing their lengths.
+	 * An own property avoids a WeakMap lookup on every length read without adding storage to chunks.
+	 * Activated entries and their subscriptions are retained until field disposal, even if the field shrinks.
+	 */
+	private lengthCache: SequenceLengthCache | undefined;
+
+	public override get length(): number {
+		const cached = this.lengthCache;
+		if (cached?.length !== undefined) {
+			return cached.length;
+		}
+
+		const length = super.length;
+		// Detached fields have no parent anchor, and their creation/destruction does not
+		// consistently emit childrenChanging. Leave these (including the root) uncached.
+		if (
+			cached === undefined &&
+			length >= sequenceLengthCacheThreshold &&
+			this.anchor.parent !== undefined
+		) {
+			const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+			assert(
+				parent !== undefined,
+				0xd7a /* A sequence field must have a live parent anchor */,
+			);
+			const entry: SequenceLengthCache = {
+				length,
+				unsubscribe: parent.events.on("childrenChanging", () => {
+					// Descendant edits may change chunk layout but cannot change this field's length.
+					entry.length = undefined;
+				}),
+			};
+			this.lengthCache = entry;
+		} else if (cached !== undefined) {
+			cached.length = length;
+		}
+		return length;
+	}
+
+	protected override forgetAnchor(): void {
+		this.lengthCache?.unsubscribe();
+		this.lengthCache = undefined;
+		super.forgetAnchor();
+	}
+
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 

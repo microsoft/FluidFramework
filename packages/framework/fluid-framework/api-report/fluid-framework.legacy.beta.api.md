@@ -167,6 +167,9 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
     [key: string]: ConciseTree<THandle>;
 };
 
+// @beta @legacy
+export function configuredSharedString(options: SharedStringOptions): ISharedObjectKind<ISharedString> & SharedObjectKind<ISharedString>;
+
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
@@ -1551,6 +1554,11 @@ export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<I
 // @beta @legacy
 export type SharedString = ISharedString;
 
+// @beta @legacy
+export interface SharedStringOptions {
+    readonly newMergeTreeSnapshotFormat?: boolean;
+}
+
 // @beta @legacy (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
@@ -1920,9 +1928,6 @@ export interface TreeBeta {
 
 // @beta
 export const TreeBeta: TreeBeta;
-
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
 
 // @beta @sealed
 export interface TreeBranchEventsBeta {

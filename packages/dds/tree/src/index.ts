@@ -26,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
@@ -248,13 +250,18 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type UntypedTreeView,
-	type TreeBranch,
-	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeLocation,
+	type TextLocationNode,
+	type CapturedTreeLocation,
+	type TreeGapCaptureOptions,
+	type ResolvedTreeLocation,
+	type TreeLocationResolution,
+	type TreeLocationResolver,
 	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
@@ -377,7 +384,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, unsafeArrayToTuple } from "./util/index.js";
 
 import type * as InternalTypes from "./internalTypes.js";
 /**
@@ -416,3 +423,7 @@ export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.j
 export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
+export {
+	identifySchemaAlpha,
+	type SchemaIdentity,
+} from "./simple-tree/index.js";

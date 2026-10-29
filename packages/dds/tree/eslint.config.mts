@@ -102,6 +102,33 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		files: ["src/**/*.ts"],
+		ignores: ["src/test/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+						// Noble exposes its public APIs through package subpaths.
+						"@noble/hashes/**",
+					],
+				},
+			],
+		},
+	},
+	{
 		files: ["src/test/**/*"],
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],

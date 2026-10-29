@@ -312,7 +312,6 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientCollection,
 	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
@@ -1587,6 +1586,10 @@ export class ContainerRuntime
 	 * that specifically care about operation acknowledgement do not depend on the host-facing aggregate.
 	 */
 	private lastOpDirty: boolean;
+	/**
+	 * Blob-aware dirty state requires separate loader-side op tracking to preserve reconnect ordering.
+	 */
+	private readonly blobWorkContributesToDirtyState: boolean;
 	private emitDirtyDocumentEvent = true;
 	/**
 	 * Tracks in-progress pending-op-state notifications.
@@ -2336,11 +2339,18 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
+		this.blobWorkContributesToDirtyState =
+			this.updatePendingOpState !== undefined &&
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBlobAwareDirtyState") !== true;
+
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
 		this.lastOpDirty = this.computeCurrentOpDirtyState();
 		this.updatePendingOpState?.(this.lastOpDirty);
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
+
+		// Restored blobs are counted before subscription; seed their dirty state above.
+		this.blobManager.events.on("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
@@ -2547,14 +2557,10 @@ export class ContainerRuntime
 				logger: this.baseLogger,
 				namespace: "OrderedClientElection",
 			});
-			const orderedClientCollection = new OrderedClientCollection(
+			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				this.innerDeltaManager,
 				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
 				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 				this.mc.config.getBoolean(
@@ -2636,6 +2642,7 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		this.blobManager.events.off("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -2643,6 +2650,8 @@ export class ContainerRuntime
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
+				opDirty: this.isOpDirty,
+				hasOutstandingBlobWork: this.blobManager.hasOutstandingBlobWork,
 				lastSequenceNumber: this.deltaManager.lastSequenceNumber,
 				attachState: this.attachState,
 			},
@@ -4202,8 +4211,7 @@ export class ContainerRuntime
 	private readonly signalAudience?: IAudience;
 
 	/**
-	 * Returns true of container is dirty, i.e. there are some pending local changes that
-	 * either were not sent out to delta stream or were not yet acknowledged.
+	 * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.isDirty}
 	 */
 	public get isDirty(): boolean {
 		// Rather than recomputing the dirty state in this moment,
@@ -4212,10 +4220,14 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
+	 * Returns true if the container is dirty: not attached, has pending user messages (ignoring
+	 * "non-dirtyable" ones), or has outstanding blob work.
 	 */
 	private computeCurrentDirtyState(): boolean {
-		return this.computeCurrentOpDirtyState();
+		return (
+			this.computeCurrentOpDirtyState() ||
+			(this.blobWorkContributesToDirtyState && this.blobManager.hasOutstandingBlobWork)
+		);
 	}
 
 	/**
@@ -4543,6 +4555,24 @@ export class ContainerRuntime
 		}
 
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.getDataStorePackagePath}
+	 */
+	public async getDataStorePackagePath(
+		nodePath: string,
+	): Promise<readonly string[] | undefined> {
+		// This lookup does not depend on GC; its node type taxonomy distinguishes data store paths from other paths.
+		switch (this.getNodeType(nodePath)) {
+			case GCNodeType.DataStore:
+			case GCNodeType.SubDataStore: {
+				return this.channelCollection.getDataStorePackagePath(nodePath);
+			}
+			default: {
+				return undefined;
+			}
+		}
 	}
 
 	/**
@@ -5145,9 +5175,15 @@ export class ContainerRuntime
 	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
 	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
 	 * frame publishes whatever state is current once nesting unwinds.
+	 *
+	 * Publication is suppressed after disposal and during op replay, which publishes its own net change.
 	 */
-	private publishDirtyState(): void {
-		if (this.pendingOpStateNotificationRunner.running) {
+	private readonly publishDirtyState = (): void => {
+		if (
+			this.disposed ||
+			!this.emitDirtyDocumentEvent ||
+			this.pendingOpStateNotificationRunner.running
+		) {
 			return;
 		}
 
@@ -5156,7 +5192,7 @@ export class ContainerRuntime
 			this.lastEmittedDirty = dirty;
 			this.emit(dirty ? "dirty" : "saved");
 		}
-	}
+	};
 
 	/**
 	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
