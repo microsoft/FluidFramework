@@ -38,4 +38,6 @@ export {
 	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	type DeprecatedBaseContainerRuntimeFactoryProps,
+	type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./container-runtime-factories/index.js";

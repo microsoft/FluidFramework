@@ -44,7 +44,13 @@ However, there are many other types of changes that could impact cross-client co
 
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero, so all active deployments that must collaborate need to be running Fluid Framework 2.0.0 or later. If the customer does not set `oldestSupportedClient`, Client 3.0 uses `"2.0.0"` and applies the same defaults and validation as an explicit `"2.0.0"`. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime.
+Callers must specify exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab`.
+If callers omit both properties, the runtime throws an error.
+Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on.
+Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero.
+All active deployments that must collaborate must use Fluid Framework 2.0.0 or later.
+`oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 
@@ -65,8 +71,6 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 	// ... other options
 };
 ```
-
-When the setting is omitted, Client 3.0 uses `"2.0.0"` before consulting this map. Omitted and explicit `"2.0.0"` settings therefore produce the same configuration.
 
 ### Unsafe Configuration Prevention
 
