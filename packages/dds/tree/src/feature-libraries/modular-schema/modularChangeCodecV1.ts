@@ -74,6 +74,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
+	areEquivalent,
 	fieldKindsFromConfiguration,
 	isChangesetValid,
 	nodeChangeFromId,
@@ -662,7 +663,7 @@ export function makeModularChangeCodecV1(
 			strictRebaseValidation("Malformed V1 encode input", () =>
 				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
 			);
-			return encodeChange(
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
@@ -670,6 +671,14 @@ export function makeModularChangeCodecV1(
 				fieldsCodec,
 				chunkCompressionStrategy,
 			);
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+			return encoded;
 		},
 		decode: (encodedChange, context) => {
 			const decoded = decodeChange(
