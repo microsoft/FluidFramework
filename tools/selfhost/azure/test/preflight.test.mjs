@@ -40,7 +40,7 @@ az() {
   case "$1 $2" in
     "vm list-skus") printf '%s' "$SKUS"; return "\${SKU_EXIT:-0}" ;;
     "vm list-usage") printf '%s' "\${USAGE:-0 64}"; return 0 ;;
-    "redisenterprise list") printf '%s' "\${CACHES:-[]}"; return "\${CACHES_EXIT:-0}" ;;
+    "redisenterprise list"|"redis list") printf '%s' "\${CACHES:-[]}"; return "\${CACHES_EXIT:-0}" ;;
     "group exists") printf '%s' "\${GROUP_EXISTS:-true}"; return "\${GROUP_EXIT:-0}" ;;
     "deployment group")
       printf '%s\\n' "$ASYNC_RESPONSE"
@@ -77,6 +77,7 @@ exit "$FAILURES"
 				REDIS_LOC: "eastus2",
 				REDIS_SKU: "Balanced_B5",
 				REDIS_HIGH_AVAILABILITY: "Enabled",
+				REDIS_CAPACITY: "1",
 				RESPONSE: '{"properties":{}}',
 				ASYNC_RESPONSE: '{"properties":{}}',
 				...env,
@@ -217,7 +218,35 @@ test("Redis surfaces provider errors and rejects success-shaped error responses"
 		const result = run(t, "check_redis_capacity", env);
 		assert.equal(result.status, 1, result.stdout + result.stderr);
 		assert.match(result.stdout, /Redis provider validation/);
+		assert.match(result.stdout, /redis\.location.*redis\.sku.*redis\.useDeprecated=true/);
 	}
+});
+
+test("Azure Cache fallback validates its own provider template without creating resources", (t) => {
+	const result = run(t, "check_redis_capacity", {
+		REDIS_SERVICE: "cache",
+		REDIS_SKU: "Premium",
+	});
+	assert.equal(result.status, 0, result.stdout + result.stderr);
+	assert.match(result.calls, /redis list /);
+	assert.doesNotMatch(result.calls, /redisenterprise|deployment group create/);
+	const resource = result.request().properties.template.resources[0];
+	assert.equal(resource.type, "Microsoft.Cache/Redis");
+	assert.deepEqual(resource.properties.sku, { name: "Premium", family: "P", capacity: 1 });
+	assert.equal(resource.properties.publicNetworkAccess, "Disabled");
+	assert.equal(resource.properties.enableNonSslPort, false);
+	assert.equal(resource.properties.minimumTlsVersion, "1.2");
+	assert.equal(resource.properties.redisConfiguration["maxmemory-policy"], "volatile-lru");
+});
+
+test("Azure Cache query errors are surfaced and never fall back to AMR", (t) => {
+	const result = run(t, "check_redis_capacity", {
+		REDIS_SERVICE: "cache",
+		REDIS_SKU: "Standard",
+		CACHES_EXIT: "1",
+	});
+	assert.equal(result.status, 1);
+	assert.doesNotMatch(result.calls, /rest|redisenterprise/);
 });
 
 test("Redis waits through the validation CLI when ARM accepts an asynchronous check", (t) => {

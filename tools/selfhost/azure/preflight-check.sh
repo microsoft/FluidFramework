@@ -56,12 +56,16 @@ ensure_az_extension() {
     }
   fi
 }
-ensure_az_extension redisenterprise
-az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
-  echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
-  echo "  az extension update --name redisenterprise" >&2
-  exit 1
-}
+. "$SELFHOST_ROOT/azure/redis-helpers.sh"
+load_redis_config "$PARAMS_FILE" || exit 1
+if [[ "$REDIS_SERVICE" == managed ]]; then
+  ensure_az_extension redisenterprise
+  az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
+    echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
+    echo "  az extension update --name redisenterprise" >&2
+    exit 1
+  }
+fi
 export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 
 # ---------------------------------------------------------------------------
@@ -100,10 +104,6 @@ COSMOS="$(jqr '.cosmos.clusterName')"
 # `az cosmosdb create --locations isZoneRedundant=`'s expected "True"/"False" casing, not a
 # JSON boolean).
 COSMOS_ZONE_REDUNDANT="$(jqr '.cosmos.zoneRedundant')"; COSMOS_ZONE_REDUNDANT="${COSMOS_ZONE_REDUNDANT:-True}"
-REDIS="$(jqr '.redis.clusterName')"
-REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
-REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
-REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
 STORAGE="$(jqr '.storage.accountName')"
 EVENTHUBS_NAMESPACE="$(jqr '.kafka.eventHubs.namespaceName')"
 EVENTHUBS_SKU="$(jqr '.kafka.eventHubs.sku')"; EVENTHUBS_SKU="${EVENTHUBS_SKU:-Standard}"
@@ -111,7 +111,7 @@ EVENTHUBS_ZONE_REDUNDANT="$(jqr '.kafka.eventHubs.zoneRedundant')"; EVENTHUBS_ZO
 AFD="$(jqr '.frontDoor.profileName')"
 
 banner "Parameters file completeness"
-for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIGH_AVAILABILITY STORAGE AFD; do
+for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS STORAGE AFD; do
   if [[ -z "${!required}" ]]; then
     fail "'$required' is missing from $PARAMS_FILE"
   else
@@ -120,16 +120,6 @@ for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIG
 done
 if [[ -n "$BUILD_ACR" && "$BUILD_ACR" == "$DEPLOY_ACR" ]]; then
   fail "buildAcr.name and deployAcr.name must not be the same"
-fi
-legacy_redis_keys="$(jq -r '[((.redis // {}) | keys[]) | select(. == "vmSize" or . == "version" or . == "replicasPerMaster" or . == "zones")] | join(", ")' "$PARAMS_FILE")"
-if [[ -n "$legacy_redis_keys" ]]; then
-  fail "removed Azure Cache for Redis parameters are still present: redis.{$legacy_redis_keys}; replace the redis block from deploy.parameters.example.json"
-fi
-if [[ "$REDIS_SKU" != *_* ]]; then
-  fail "redis.sku '$REDIS_SKU' is not an Azure Managed Redis SKU (for example, Balanced_B5)"
-fi
-if [[ "$REDIS_HIGH_AVAILABILITY" != "Enabled" && "$REDIS_HIGH_AVAILABILITY" != "Disabled" ]]; then
-  fail "redis.highAvailability must be exactly 'Enabled' or 'Disabled' (got '${REDIS_HIGH_AVAILABILITY:-empty}')"
 fi
 if [[ $FAILURES -gt 0 ]]; then
   echo "Parameters file incomplete -- stopping (remaining checks need these values)." >&2
@@ -251,22 +241,24 @@ fi
 # Azure Managed Redis names are regionally scoped. There is no supported checkNameAvailability
 # request for Microsoft.Cache/redisEnterprise, so check existing resources in this subscription
 # and let the create operation remain authoritative across subscriptions.
-if az redisenterprise show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
-  ok "Azure Managed Redis '$REDIS' already exists in target RG $RG -- deploy.sh will verify and reuse it"
+if az "$REDIS_CLI" show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
+  ok "$REDIS_LABEL '$REDIS' already exists in target RG $RG -- deploy.sh will verify and reuse it"
 else
+  redis_resource_type=Microsoft.Cache/redisEnterprise
+  [[ "$REDIS_SERVICE" == cache ]] && redis_resource_type=Microsoft.Cache/Redis
   redis_loc_normalized="$(printf '%s' "$REDIS_LOC" | tr '[:upper:]' '[:lower:]' | tr -d ' ')"
-  redis_match="$(az resource list --resource-type Microsoft.Cache/redisEnterprise -o json | \
-    jq -r --arg name "$REDIS" --arg location "$redis_loc_normalized" \
-      '.[] | select(.name == $name and ((.location | ascii_downcase | gsub(" "; "")) == $location)) | .id' | head -1)"
+  redis_match="$(az resource list --resource-type "$redis_resource_type" -o json | \
+    jq -r --arg name "$REDIS" --arg location "$redis_loc_normalized" --arg service "$REDIS_SERVICE" \
+      '.[] | select(.name == $name and ($service == "cache" or ((.location | ascii_downcase | gsub(" "; "")) == $location))) | .id' | head -1)"
   if [[ -n "$redis_match" ]]; then
-    fail "Azure Managed Redis '$REDIS' already exists in $REDIS_LOC at $redis_match -- pick a different redis.clusterName or target that resource group"
+    fail "$REDIS_LABEL '$REDIS' already exists at $redis_match -- pick a different redis.clusterName or target that resource group"
   else
-    note "no Azure Managed Redis named '$REDIS' was found in $REDIS_LOC in this subscription; Azure will perform the authoritative availability check during create"
+    note "no $REDIS_LABEL named '$REDIS' was found in this subscription; Azure will perform the authoritative availability check during create"
   fi
   unset redis_loc_normalized redis_match
 fi
 
-banner "Azure Managed Redis provider validation ($REDIS_LOC, $REDIS_SKU)"
+banner "$REDIS_LABEL provider validation ($REDIS_LOC, $REDIS_SKU)"
 check_redis_capacity
 
 # ---------------------------------------------------------------------------
@@ -401,6 +393,7 @@ else
   helm_template_err="$PREFLIGHT_TEMP_DIR/helm-template.err"
   sed -e "s|<ACR>|placeholderacr|g" -e "s|<IMAGE_TAG>|placeholder-tag|g" \
       -e "s|<REDIS_HOSTNAME>|placeholder.eastus.redis.azure.net|g" \
+      -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
       "$SELFHOST_ROOT/azure/routerlicious-values.yaml" > "$tmp_values"
   if helm template fluid "$CHART_DIR" -f "$tmp_values" >"$helm_template_out" 2>"$helm_template_err"; then
     ok "helm template rendered successfully ($(wc -l <"$helm_template_out" | tr -d ' ') lines of manifests)"
