@@ -4,7 +4,7 @@
  */
 
 import type { Static, TSchema } from "typebox";
-import { Check } from "typebox/value";
+import { Check } from "typebox/schema";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 
