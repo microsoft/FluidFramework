@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { type SpawnSyncReturns, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, type SpawnSyncReturns, spawnSync } from "node:child_process";
+import {
+	existsSync,
+	mkdtempSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,6 +54,44 @@ describe.skipIf(process.platform === "win32")("linkcheck installer", () => {
 			},
 		});
 	}
+
+	it("extracts and runs the checker, then cleans up temporary files", () => {
+		const fixture = join(directory, "fixture");
+		mkdirSync(join(fixture, "linkcheck"), { recursive: true });
+		writeFileSync(
+			join(fixture, "linkcheck", "linkcheck"),
+			'#!/bin/sh\nprintf "%s\\n" "$@" > "$0.args"\necho "fixture linkcheck"\n',
+			{ mode: 0o644 },
+		);
+		execFileSync("tar", [
+			"-czf",
+			join(directory, "fixture.tar.gz"),
+			"-C",
+			fixture,
+			"linkcheck",
+		]);
+		stub(
+			"curl",
+			`while [ "$#" -gt 0 ]; do
+	if [ "$1" = "--output" ]; then
+		cp "$(dirname "$0")/../fixture.tar.gz" "$2"
+		exit 0
+	fi
+	shift
+done
+exit 2`,
+		);
+		// The synthetic archive cannot match a release checksum; failure tests use real validation.
+		stub(process.platform === "darwin" ? "shasum" : "sha256sum", "cat > /dev/null");
+
+		const result = runInstaller();
+		expect(result.status, result.stderr).toBe(0);
+		expect(readFileSync(join(destination, "linkcheck", "linkcheck.args"), "utf8")).toBe(
+			"--version\n",
+		);
+		expect(result.stdout).toContain("fixture linkcheck");
+		expect(readdirSync(temporaryDirectory)).toEqual([]);
+	});
 
 	it("rejects a downloaded archive with the wrong checksum before extraction", () => {
 		stub(
