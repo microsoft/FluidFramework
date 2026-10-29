@@ -5,7 +5,7 @@
 ---
 Reduce repeated schema processing in SharedTree
 
-SharedTree reuses schema analysis and converted definitions across overlapping and recursive schemas, reducing repeated work during view configuration, context creation, index setup, and schema export.
+SharedTree reuses schema analysis and view-schema definitions across overlapping and recursive schemas, reducing repeated work during view configuration, context creation, index setup, and schema export.
 
 Schema definitions without reachable staged upgrades can also share conversions across upgrade policies.
 

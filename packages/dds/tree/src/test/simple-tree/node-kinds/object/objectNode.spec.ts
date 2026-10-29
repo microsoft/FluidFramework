@@ -19,7 +19,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../../../simple-tree/treeSchema.js";
+import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 import {
 	type FieldKind,
 	SchemaFactory,
@@ -909,7 +909,7 @@ describeHydration(
 
 			// Construct an A node from a flex node using the custom stored key.
 			const field = createField(
-				SchemaComponent.fromSchema(A).context.flexContext,
+				getUnhydratedContext(A).flexContext,
 				FieldKinds.optional.identifier,
 				brand("b"),
 				[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
@@ -917,7 +917,7 @@ describeHydration(
 			const flex = new UnhydratedFlexTreeNode(
 				{ type: brand(A.identifier) },
 				new Map([[brand("b"), field]]),
-				SchemaComponent.fromSchema(A).context,
+				getUnhydratedContext(A),
 			);
 
 			const fromFlex = createTreeNodeFromInner(flex);

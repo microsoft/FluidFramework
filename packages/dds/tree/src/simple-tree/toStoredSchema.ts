@@ -150,8 +150,30 @@ export function transformSimpleSchema(
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
-			for (const type of referencedTypes(transformed)) {
-				queue.push(type);
+			const kind = transformed.kind;
+			switch (kind) {
+				case NodeKind.Leaf: {
+					break;
+				}
+				case NodeKind.Array:
+				case NodeKind.Map:
+				case NodeKind.Record: {
+					for (const type of transformed.simpleAllowedTypes.keys()) {
+						queue.push(type);
+					}
+					break;
+				}
+				case NodeKind.Object: {
+					for (const fieldSchema of transformed.fields.values()) {
+						for (const type of fieldSchema.simpleAllowedTypes.keys()) {
+							queue.push(type);
+						}
+					}
+					break;
+				}
+				default: {
+					unreachableCase(kind);
+				}
 			}
 			return transformed;
 		});
@@ -169,34 +191,6 @@ export function transformSimpleSchema(
 		0xcaa /* Reachable schema missing from input TreeSchema */,
 	);
 	return { root, definitions };
-}
-
-/**
- * Enumerates direct child type identifiers from a simple node schema without traversing or filtering them.
- * Object fields are visited in map order and can yield the same identifier more than once.
- * Callers use transformed schema to enumerate only references retained by their policy.
- */
-export function* referencedTypes(schema: SimpleNodeSchema): IterableIterator<string> {
-	switch (schema.kind) {
-		case NodeKind.Leaf: {
-			break;
-		}
-		case NodeKind.Array:
-		case NodeKind.Map:
-		case NodeKind.Record: {
-			yield* schema.simpleAllowedTypes.keys();
-			break;
-		}
-		case NodeKind.Object: {
-			for (const field of schema.fields.values()) {
-				yield* field.simpleAllowedTypes.keys();
-			}
-			break;
-		}
-		default: {
-			unreachableCase(schema);
-		}
-	}
 }
 
 /**
@@ -306,7 +300,6 @@ export function transformSimpleNodeSchema(
  * @remarks
  * Performs a shallow transformation: child types remain identifiers and referenced node definitions are not converted.
  * Persisted metadata values are retained by reference; view-only metadata follows the selected transformation options.
- * Used by both whole-schema transformation and component-based stored conversion.
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema,
@@ -390,22 +383,7 @@ export function filterAllowedTypes(
 	return filtered;
 }
 
-/**
- * Copies a view field into stored form, applying the policy to allowed types and staged optionality.
- */
-export function filterFieldAllowedTypes(
-	f: SimpleFieldSchema<SchemaType.View>,
-	options: StagedSchemaUpgradePolicy,
-): SimpleFieldSchema<SchemaType.Stored>;
-/**
- * Copies and transforms a field's annotations and allowed types without traversing referenced schemas.
- * View-only data is retained or removed according to the transformation options.
- */
-export function filterFieldAllowedTypes(
-	f: SimpleFieldSchema,
-	options: SimpleSchemaTransformationOptions,
-): SimpleFieldSchema;
-export function filterFieldAllowedTypes(
+function filterFieldAllowedTypes(
 	f: SimpleFieldSchema,
 	options: SimpleSchemaTransformationOptions,
 ): SimpleFieldSchema {

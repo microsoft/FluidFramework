@@ -33,11 +33,9 @@ import {
 } from "../../simple-tree/core/treeNodeValid.js";
 import {
 	getTreeNodeSchemaInitializedData,
-
+	getUnhydratedContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../simple-tree/treeSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand, getOrCreate } from "../../util/index.js";
@@ -49,7 +47,7 @@ describe("TreeNodeValid", () => {
 			super(
 				{ type: brand(simpleSchema.identifier) },
 				new Map(),
-				SchemaComponent.fromSchema(simpleSchema).context,
+				getUnhydratedContext(simpleSchema),
 			);
 		}
 	}

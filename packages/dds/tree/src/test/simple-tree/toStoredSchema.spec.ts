@@ -871,16 +871,4 @@ describe("toStoredSchema", () => {
 			assert.deepEqual(stagedOptionalV1Permissive.encodeV1(), stagedOptionalV2.encodeV1());
 		});
 	});
-
-	// Component staging propagation is tested directly in treeSchema.spec.ts.
-	describe("root staging", () => {
-		it("reports staging for an implicit root", () => {
-			const sf = new SchemaFactoryAlpha("rootStaging");
-			assert.equal(getRootSchemaDerivedData(sf.number).hasStagedSchema, false);
-			assert.equal(
-				getRootSchemaDerivedData(sf.stagedOptional(sf.number)).hasStagedSchema,
-				true,
-			);
-		});
-	});
 });

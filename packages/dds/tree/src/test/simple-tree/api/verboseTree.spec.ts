@@ -18,7 +18,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	KeyEncodingOptions,
 	SchemaFactory,
@@ -73,7 +73,7 @@ describe("simple-tree verboseTree", () => {
 			const cursor = cursorForJsonableTreeNode({ type: brand("Test.T") });
 			const verbose = verboseFromCursor(
 				cursor,
-				SchemaComponent.fromSchema(TestObject).context,
+				getUnhydratedContext(TestObject),
 				encodeOptions,
 			);
 			assert.deepEqual(verbose, { type: "Test.T", fields: {} });
@@ -152,11 +152,7 @@ describe("simple-tree verboseTree", () => {
 					cursorName: "verboseTree",
 					cursorFactory: (data) => cursorFromVerbose(data, finalOptions),
 					dataFromCursor: (cursor) =>
-						verboseFromCursor(
-							cursor,
-							getRootSchemaDerivedData(RootSchema).context,
-							encodeOptions,
-						),
+						verboseFromCursor(cursor, getUnhydratedContext(RootSchema), encodeOptions),
 					testData: testTrees,
 					builders: {
 						withKeys: (keys) => {

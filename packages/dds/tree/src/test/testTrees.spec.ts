@@ -23,7 +23,7 @@ import {
 } from "./testTrees.js";
 import { compareSets } from "../util/index.js";
 
-describe("testTrees", () => {
+describe("test tree catalogs", () => {
 	for (const [collectionName, testCases] of Object.entries({
 		testSchema,
 		testSimpleTrees,
@@ -72,7 +72,7 @@ describe("testTrees", () => {
 
 	// Production analysis, conversion-cache, and context behavior over this catalog are covered in
 	// simple-tree/treeSchema.spec.ts, simple-tree/toStoredSchema.spec.ts, and simple-tree/createContext.spec.ts.
-	describe("staging in test schema", () => {
+	describe("getStagedSchemaUpgrades on test schema", () => {
 		for (const testCase of testSchema) {
 			it(testCase.name, () => {
 				// Reference conversions must bypass policy-key normalization and the stored-schema cache.

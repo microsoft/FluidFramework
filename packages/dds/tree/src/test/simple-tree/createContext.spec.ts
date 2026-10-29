@@ -14,6 +14,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
+	getUnhydratedContext,
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -39,6 +40,28 @@ import { createSchemaGraph } from "./schemaTestUtils.js";
 // getTreeNodeSchemaInitializedData is also exercised through TreeNodeValid in treeNodeValid.spec.ts.
 // Stored-schema conversion and caching are covered independently in toStoredSchema.spec.ts.
 describe("createContext", () => {
+	describe("getUnhydratedContext", () => {
+		it("supports leaf schemas and implicit and explicit field roots", () => {
+			const sf = new SchemaFactoryAlpha("contextAdapter");
+			class A extends sf.object("A", {}) {}
+			class B extends sf.object("B", {}) {}
+			assert.strictEqual(
+				getUnhydratedContext(sf.number),
+				SchemaComponent.fromSchema(sf.number).context,
+			);
+			for (const root of [
+				A,
+				[],
+				[A, B],
+				sf.optional(A),
+				sf.types([sf.staged(A), B]),
+			] as const) {
+				const context = getUnhydratedContext(root);
+				assert.strictEqual(getUnhydratedContext(root), context);
+				assert.strictEqual(getRootSchemaDerivedData(root).context, context);
+			}
+		});
+	});
 	describe("SchemaComponent", () => {
 		it("constructs contexts only on request and reuses successful results", () => {
 			const [root] = createSchemaGraph([[]]);
@@ -134,6 +157,8 @@ describe("createContext", () => {
 					assert.strictEqual(getRootSchemaDerivedData(unionRoot), unionData);
 					assert.strictEqual(data.context, context);
 					assert.strictEqual(component.context, context);
+					assert.strictEqual(getUnhydratedContext(Other), context);
+					assert.strictEqual(getUnhydratedContext(unionRoot), context);
 					assert.strictEqual(getRootSchemaDerivedData(emptyRoot).context, emptyContext);
 					assert.strictEqual(
 						toStoredSchema(Other, StagedSchemaUpgradePolicy.permissive).nodeSchema,

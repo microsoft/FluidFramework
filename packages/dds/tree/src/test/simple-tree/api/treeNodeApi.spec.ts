@@ -50,7 +50,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	type ArrayNodeDeltaOp,
 	type ArrayNodeTreeChangedDeltaOp,
@@ -4155,13 +4157,10 @@ describe("treeNodeApi", () => {
 				// Similar pattern to what TreeBeta.clone uses.
 
 				// Context that doesn't know about the unknown field's type
-				const dummyContextLimited = SchemaComponent.fromSchema(PointUnknown).context;
+				const dummyContextLimited = getUnhydratedContext(PointUnknown);
 
 				// Context that does know about the unknown field's type
-				const dummyContextFull = getRootSchemaDerivedData([
-					PointUnknown,
-					SchemaFactory.number,
-				]).context;
+				const dummyContextFull = getUnhydratedContext([PointUnknown, SchemaFactory.number]);
 
 				// Use limited context for view part and full context for flex-tree parts, so that unknown optional fields are unknown in the view schema, but allowed in the flex tree.
 				const flexContext = new UnhydratedContext(

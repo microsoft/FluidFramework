@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getRootSchemaDerivedData, SchemaComponent } from "../../../simple-tree/treeSchema.js";
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	numberSchema,
 	SchemaFactoryAlpha,
@@ -40,7 +40,7 @@ const schemaFactory = new SchemaFactoryAlpha("Test");
 describe("simple-tree customTree", () => {
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const context = getRootSchemaDerivedData(JsonAsTree.Tree).context;
+			const context = getUnhydratedContext(JsonAsTree.Tree);
 			const leaf_options = { keys: KeyEncodingOptions.allStoredKeys };
 			assert.equal(
 				customFromCursor(
@@ -81,9 +81,8 @@ describe("simple-tree customTree", () => {
 				{ allowUnknownOptionalFields: true },
 			) {}
 
-			const contextA = SchemaComponent.fromSchema(A).context;
-			const contextUnknownOptionalFieldA =
-				SchemaComponent.fromSchema(UnknownOptionalFieldA).context;
+			const contextA = getUnhydratedContext(A);
+			const contextUnknownOptionalFieldA = getUnhydratedContext(UnknownOptionalFieldA);
 			const contentCursor = fieldCursorFromInsertable(A, { a: 1, b: 2 });
 			contentCursor.enterNode(0);
 

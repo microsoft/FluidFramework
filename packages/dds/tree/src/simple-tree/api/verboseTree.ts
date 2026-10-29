@@ -26,7 +26,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
-import { getRootSchemaDerivedData } from "../treeSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
@@ -124,7 +124,7 @@ export function applySchemaToParserOptions(
 		...options,
 	};
 
-	const context = getRootSchemaDerivedData(schema).context;
+	const context = getUnhydratedContext(schema);
 
 	return {
 		keyConverter:

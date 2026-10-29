@@ -27,7 +27,7 @@ import {
 	UnhydratedFlexTreeNode,
 	createField,
 } from "../core/index.js";
-import { getRootSchemaDerivedData } from "../treeSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { unknownTypeError } from "./customTree.js";
@@ -44,7 +44,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	destinationSchema: TreeFieldStoredSchema,
 	contextForNewNodes?: Context,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const context = contextForNewNodes ?? getRootSchemaDerivedData(schema).context;
+	const context = contextForNewNodes ?? getUnhydratedContext(schema);
 	assert(context.flexContext.isHydrated() === false, 0xbfe /* Expected unhydrated context */);
 	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
 

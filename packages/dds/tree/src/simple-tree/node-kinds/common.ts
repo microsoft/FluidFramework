@@ -14,7 +14,7 @@ import {
 	normalizeAllowedTypes,
 	type FlexContent,
 } from "../core/index.js";
-import { SchemaComponent } from "../treeSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 import {
 	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
@@ -35,7 +35,7 @@ export function recordLikeDataToFlexContent(
 	schema: MapNodeSchema | RecordNodeSchema,
 ): FlexContent {
 	const allowedChildTypes = normalizeAllowedTypes(schema.info);
-	const context = SchemaComponent.fromSchema(schema).context.flexContext;
+	const context = getUnhydratedContext(schema).flexContext;
 
 	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
 	for (const item of fieldsIterator) {

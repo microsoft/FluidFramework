@@ -56,7 +56,6 @@ function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 	return { view, parent: view.root };
 }
 
-// Unit tests for simple-tree/api/simpleTreeIndex.ts; retained at this legacy test path.
 describe("simple tree indexes", () => {
 	it("reuses cached definitions without rediscovering schema", () => {
 		const sf = new SchemaFactory("indexLookupReuse");

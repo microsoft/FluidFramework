@@ -23,7 +23,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaComponent } from "../../simple-tree/treeSchema.js";
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -1597,7 +1597,7 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 								value: "x",
 							},
 							new Map(),
-							SchemaComponent.fromSchema(SchemaFactory.string).context,
+							getUnhydratedContext(SchemaFactory.string),
 						),
 					]),
 				}),
@@ -1621,7 +1621,7 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 								value: context === "UseGlobalContext" ? "global" : "contextual",
 							},
 							new Map(),
-							SchemaComponent.fromSchema(SchemaFactory.string).context,
+							getUnhydratedContext(SchemaFactory.string),
 						),
 					]),
 				}),

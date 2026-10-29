@@ -45,7 +45,6 @@ function createView(child?: IndexableChild) {
 	return { view, parent: view.root };
 }
 
-// Unit tests for simple-tree/api/identifierIndex.ts; retained at this legacy test path.
 describe("identifier indexes", () => {
 	function init(child: IndexableChild) {
 		const { view, parent } = createView(child);
