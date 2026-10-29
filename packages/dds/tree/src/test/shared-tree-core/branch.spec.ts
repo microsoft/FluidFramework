@@ -67,8 +67,6 @@ describe("Branches", () => {
 		change(parent);
 		// Ensure that the child has not changed
 		assert.equal(child.getHead(), childHead);
-		assert.equal(parent.getCommitCount(), 2);
-		assert.equal(child.getCommitCount(), 0);
 	});
 
 	it("that create forks are isolated from their child's changes", () => {
@@ -81,8 +79,6 @@ describe("Branches", () => {
 		change(child);
 		// Ensure that the parent has not changed
 		assert.equal(parent.getHead(), parentHead);
-		assert.equal(parent.getCommitCount(), 0);
-		assert.equal(child.getCommitCount(), 2);
 	});
 
 	it("rebase changes from a child onto a parent", () => {
@@ -322,7 +318,6 @@ describe("Branches", () => {
 		assertHistory(branch, tag1, tag2);
 		branch.removeAfter(originalHead);
 		assert.equal(branch.getHead(), originalHead);
-		assertHistory(branch);
 	});
 
 	it("emit correct change events after a remove", () => {
@@ -392,9 +387,7 @@ describe("Branches", () => {
 				revision: nullRevisionTag,
 				customMetadata: undefined,
 			};
-			const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag, {
-				trimmedCommitCount: 0,
-			});
+			const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 			branch.trimmer = trimmer;
 			const received: RevisionTag[][] = [];
 			branch.events.on("ancestryTrimmed", (revs) => received.push(revs));
@@ -477,11 +470,7 @@ describe("Branches", () => {
 			customMetadata: undefined,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag, {
-			trimmedCommitCount: 0,
-		});
-		// Initialize the cached count so history checks exercise incremental updates.
-		assertHistory(branch);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
 		branch.events.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
@@ -516,7 +505,6 @@ describe("Branches", () => {
 			(c) => c.revision === nullRevisionTag,
 		);
 		assert.equal(ancestor?.revision, nullRevisionTag);
-		assert.equal(branch.getCommitCount(), tags.length);
 
 		assert.deepEqual(
 			commits.map((c) => c.revision),

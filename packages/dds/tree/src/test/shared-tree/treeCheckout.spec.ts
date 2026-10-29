@@ -2938,7 +2938,7 @@ describe("sharedTreeView", () => {
 			fork.root.insertAtEnd({ id: "A" });
 
 			// This hides the commit that inserted "A".
-			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead(), -1);
+			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead());
 
 			fork.root.removeAt(0);
 
