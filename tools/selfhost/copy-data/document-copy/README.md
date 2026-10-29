@@ -8,6 +8,10 @@ If the service returns a different document ID, copying fails explicitly and cre
 
 If the self-hosted document already exists, the copy is skipped and recorded as a
 warning instead of attempting to create it.
+The existing document is not modified, verified, or repaired.
+If you intend to replace it, first review and back up any destination data you need to keep.
+Then manually delete the destination document and rerun the copy using a reviewed inventory containing only that document, without `--failed-only`.
+For unresolved earlier create attempts, follow the [manual-review guidance](../README.md#retry-failed-documents) before attempting another copy.
 
 ## Prerequisites
 

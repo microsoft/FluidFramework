@@ -679,7 +679,7 @@ export async function copyInventory(
 				} else {
 					recordWarning(results, id, documentId, result);
 					status = "unverified-existing";
-					log(`Skipped ${id}/${documentId}: destination data was NOT verified or repaired.`);
+					log(`Skipped ${id}/${documentId}: ${result.message}`);
 				}
 				results.history[id] ??= {};
 				results.history[id][documentId] ??= [];
@@ -745,7 +745,8 @@ export async function copyInventory(
 								}
 								result = {
 									result: "warning",
-									message: "Destination already exists; its data was NOT verified or repaired",
+									message:
+										"Destination already exists and was not modified. Its data was NOT verified or repaired. If you intend to replace it, first review and back up any needed destination data, then manually delete the destination document and rerun the copy for that document using a reviewed inventory without --failed-only.",
 								};
 							} catch (error) {
 								failure = error;
