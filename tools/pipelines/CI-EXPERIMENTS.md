@@ -48,7 +48,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
 | E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | [430707](https://dev.azure.com/fluidframework/public/_build/results?buildId=430707) | Passed | Queue-to-finish 15m 30s; test compilation 117-125s |
 | E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | [430731](https://dev.azure.com/fluidframework/public/_build/results?buildId=430731) | Passed, slower elapsed time | 22m 13s; roughly four-minute agent delays and slower tests |
-| E5: targeted test prerequisites | Implementation `c4bfc8a443f`; report update included in triggering commit | Pending | Ready to push | Compile only packages with each suite's script and their build dependencies |
+| E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
+| Type-check enforcement probe | Pending | Pending | Preparing | Deliberate semantic type error; must be rejected, then removed |
 
 ### Baseline observations
 
@@ -227,6 +228,32 @@ Missing or empty selections fail explicitly rather than passing without tests.
 The actual inline selection script was exercised locally with compiler invocations intercepted: all five selections matched these counts, Playwright requested both compile and webpack, and an unknown script failed.
 Remote CI still needs to demonstrate that task dependencies cover all runtime prerequisites.
 
+E5 passed in 1,040.4 seconds (17m 20s), including 120.3 seconds before the pipeline started.
+Timed agent jobs totaled 3,885.8 seconds (64m 46s).
+The main build took 823.1 seconds and the final coverage job took 876.5 seconds.
+The companion policy run [430762](https://dev.azure.com/fluidframework/public/_build/results?buildId=430762) passed.
+Tests reported 45,432 passed, 3,235 not executed, no failures, on merge commit `16a70c549503626fc484c1d782998b57541dfccf`.
+The original test scripts are unchanged; test counts continue to vary as the target branch advances.
+
+| Prerequisite step | E4 seconds | E5 seconds |
+| --- | ---: | ---: |
+| Mocha plus local service | 127.8 | 113.4 |
+| Tinylicious service | 133.6 | 52.4 |
+| Tinylicious stress | 137.2 | 38.1 |
+| AreTheTypesWrong | 125.6 | 79.0 |
+| Playwright compile plus webpack | 236.6 | 163.6 |
+
+Targeting is productive, especially for service and stress jobs, and all runtime prerequisites resolved successfully.
+The helper still uses the normal `compile` dependency graph, rather than a manually maintained subset of compiler commands.
+
+### Remote type-check enforcement probe
+
+Temporarily add an unexported `number` variable initialized with a string in SharedTree's source entrypoint.
+The expected outcome is TS2322 in the fully checked policy/build jobs.
+The emit-only test builds are allowed to compile it, but cannot make the aggregate pipeline green.
+This is a deliberate negative test, not a performance sample.
+Remove the probe immediately after collecting evidence, then repeat the successful configuration.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -266,7 +293,8 @@ Any later relocation must name its replacement before removing the old invocatio
 
 Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
 The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
-E4 passed but was slower in elapsed time; E5 is next.
+E4 and E5 passed; E5 reduced targeted build work.
+A deliberate type-check failure probe and final repeat remain.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.

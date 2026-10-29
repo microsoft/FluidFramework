@@ -6,6 +6,10 @@
 // For the time being, if exports are changed, additional files under entrypoints need updated.
 // Run `pnpm generate:entrypoint-sources` to update them.
 
+// Deliberate CI validation probe; remove after the checked build rejects it.
+const ciTypeCheckSentinel: number = "ci-typecheck-sentinel";
+void ciTypeCheckSentinel;
+
 export {
 	ValueSchema,
 	type Revertible,
