@@ -679,6 +679,7 @@ extends:
                 - template: /tools/pipelines/templates/include-client-test-build.yml@self
                   parameters:
                     buildDirectory: ${{ parameters.buildDirectory }}
+                    testTasks: ${{ parameters.coverageTests }}
               - ${{ else }}:
                 - task: DownloadPipelineArtifact@2
                   inputs:
@@ -852,6 +853,8 @@ extends:
                   - template: /tools/pipelines/templates/include-client-test-build.yml@self
                     parameters:
                       buildDirectory: ${{ parameters.buildDirectory }}
+                      testTasks:
+                      - ${{ test }}
                       webpack: ${{ eq(test.jobName, 'PlaywrightTest') }}
                 - ${{ else }}:
                   - task: DownloadPipelineArtifact@2

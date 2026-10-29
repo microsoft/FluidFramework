@@ -4,6 +4,8 @@
 parameters:
 - name: buildDirectory
   type: string
+- name: testTasks
+  type: object
 - name: webpack
   type: boolean
   default: false
@@ -35,19 +37,35 @@ steps:
   env:
     FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
     BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+    TEST_TASKS: ${{ convertToJson(parameters.testTasks) }}
+    BUILD_WEBPACK: ${{ parameters.webpack }}
   inputs:
     targetType: inline
     workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
     script: |
       set -eu -o pipefail
-      pnpm exec fluid-build --task compile --worker
-
-- ${{ if parameters.webpack }}:
-  - task: Bash@3
-    displayName: Build browser test bundles
-    inputs:
-      targetType: inline
-      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      script: |
-        set -eu -o pipefail
-        pnpm run webpack
+      node --input-type=module <<'JS'
+      import { execFileSync } from "node:child_process";
+      import fs from "node:fs";
+      import path from "node:path";
+      const tests = JSON.parse(process.env.TEST_TASKS);
+      const workspace = JSON.parse(execFileSync("pnpm", ["list", "-r", "--depth", "-1", "--json"], { encoding: "utf8" }));
+      const packages = workspace.filter((p) => p.path !== process.cwd()).map((p) => ({
+        ...p,
+        scripts: JSON.parse(fs.readFileSync(path.join(p.path, "package.json"), "utf8")).scripts ?? {},
+      }));
+      const selected = new Set();
+      for (const test of tests) {
+        const matches = packages.filter((p) => Object.hasOwn(p.scripts, test.buildScript));
+        if (matches.length === 0) {
+          throw new Error(`No workspace packages provide ${test.buildScript} for ${test.name}`);
+        }
+        for (const p of matches) selected.add(p.path);
+      }
+      if (selected.size === 0) throw new Error("No test packages selected");
+      console.log("Building test packages and their task dependencies:", [...selected]);
+      const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? ["compile", "webpack"] : ["compile"];
+      for (const task of tasks) {
+        execFileSync("pnpm", ["exec", "fluid-build", "--task", task, "--worker", ...selected], { stdio: "inherit" });
+      }
+      JS

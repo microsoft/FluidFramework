@@ -47,7 +47,8 @@ Test totals come from `aggregatedResultsAnalysis`, not log-line counts.
 | E1: shallow, tag-free client checkout | `1eda934faa6816c00eee73cd7eb2295ec2f1eac3` | [430678](https://dev.azure.com/fluidframework/public/_build/results?buildId=430678) | Relevant steps passed; full run incomplete | Build checkout 36.2s to 9.8s; observed test checkouts 9.5-11.9s |
 | E2: independent verification builds | `fe357b0da754b16c296cdcd6032efe3a47943998` | [430699](https://dev.azure.com/fluidframework/public/_build/results?buildId=430699) | Passed | Queue-to-finish 17m 44s, versus baseline 33m 28s |
 | E3: emit-only TypeScript in test jobs | `957e5d8f8b8097242adb0d132a9d743f39639308` | [430707](https://dev.azure.com/fluidframework/public/_build/results?buildId=430707) | Passed | Queue-to-finish 15m 30s; test compilation 117-125s |
-| E4: parallel full validation | Implementation `6d55aa04340`; report update included in triggering commit | Pending | Ready to push | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
+| E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | Pending | Pushed | Move `ci:build` to the existing client policy stage; artifact build uses checked `compile` |
+| E5: targeted test prerequisites | Pending | Pending | Preparing | Compile only packages with each suite's script and their build dependencies |
 
 ### Baseline observations
 
@@ -191,6 +192,28 @@ Reuse the existing build task graph rather than maintaining a second list of val
 Non-pull-request builds keep their original commands and pool assignments.
 Do not roll this out if the new validation stage becomes a longer critical path.
 
+### E5: targeted test prerequisites
+
+Instead of compiling all 167 client workspace packages in every test job, select package roots by the script the unchanged test runner will execute.
+Ask pnpm for the workspace package list, read each manifest, then pass the matching directories to the existing `compile` task graph.
+Fluid build still builds their task dependencies.
+Keep both module formats wherever the package's existing `compile` task requires them.
+For Playwright, also limit webpack to the same selected package roots.
+
+| Job | Selected package roots |
+| --- | ---: |
+| Mocha plus local service | 89 |
+| Playwright | 34 |
+| Tinylicious service | 5 |
+| Tinylicious stress | 1 |
+| AreTheTypesWrong | 99 |
+
+These are roots, not total transitive build counts.
+Selection is based on scripts, not a hard-coded package list, so adding a package with the same test script includes it automatically.
+Missing or empty selections fail explicitly rather than passing without tests.
+The actual inline selection script was exercised locally with compiler invocations intercepted: all five selections matched these counts, Playwright requested both compile and webpack, and an unknown script failed.
+Remote CI still needs to demonstrate that task dependencies cover all runtime prerequisites.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -230,7 +253,7 @@ Any later relocation must name its replacement before removing the old invocatio
 
 Checkout time improved; E2 completed approximately 47% faster and E3 approximately 54% faster than the original baseline.
 The baseline, E2, and E3 passed; E1's full run was intentionally not measured.
-E4 is next.
+E4 is running; E5 is prepared.
 Pipeline queue contention and caches can dominate small improvements.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
