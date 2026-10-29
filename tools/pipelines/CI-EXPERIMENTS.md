@@ -32,10 +32,10 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E6: lockfile-installed build tools | Preparing remote run | Versioning, bundle analysis, and coverage tooling work without source build/global linking |
+| E6: lockfile-installed build tools | Running [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Versioning, bundle analysis, and coverage tooling work without source build/global linking |
 | E7: remove PR build-output archive | Prepared locally | Retain main/release downstream artifacts; confirm remaining PR outputs and scans |
 | E7: remove PR release-package publishing | Prepared locally with parallel dry-run validation | Eight public packages lack `attw --pack`; check all public packages without producing release tarballs |
-| Split the serial Mocha/local-service job | Next timing experiment | Same suites and counts, lower critical path without excessive queue/setup overhead |
+| E8: split the serial Mocha/local-service job | Prepared locally | Same suites and counts, lower critical path without excessive queue/setup overhead |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -49,6 +49,11 @@ No release tarballs, test-file artifacts, publish-order metadata, or shared buil
 Existing security-task configuration remains enabled; scans/SBOMs specific to the removed release tarballs are no longer produced on PRs.
 Main/release artifact generation and associated scanning are unchanged.
 This intentionally removes release-artifact production from PR validation, not the package-content checks.
+
+E8 moves `ci:test:realsvc:local` into its own PR verification job, using the existing targeted-build and result-publication machinery.
+The coverage job retains the unchanged `ci:test:mocha` command.
+Non-PR coverage/test layout is unchanged.
+This tests the simpler partition change before introducing package/file shards and additional runner modes.
 
 ## Method
 
@@ -94,6 +99,7 @@ This was not a cold-cache benchmark.
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
 | Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
+| Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
 ### Baseline observations
 
@@ -365,6 +371,16 @@ A strict token-equality check rejected that parentheses difference, so byte-for-
 Declaration samples changed inferred property/union ordering; full API-report compatibility has not been validated.
 This confirms substantial compiler potential, but not an integrated native build or test pass.
 
+## Completed local test-runner experiment
+
+Per-package logs from run 430803 show merge-tree occupying 463.8 seconds of the 465-second Mocha step.
+SharedTree took 182.8 seconds; the local-service suite then added another 133.8 seconds serially.
+An isolated merge-tree run with `mocha --parallel --jobs 4` and JSON reporting completed all 1,570 cases in 184.1 seconds: 1,568 passed, two pending.
+However, the process exited with status 13 despite reporting zero test failures.
+The captured text log was empty; the exact shutdown cause has not been established.
+Do not treat this as a passing optimization or suppress its exit code.
+Mocha worker-mode adoption is deferred; E8 instead separates the existing serial suites into independent CI jobs without changing runner behavior.
+
 ## Findings from completed experiments
 
 Independent verification removes the largest structural delay.
@@ -389,6 +405,9 @@ No security scans, existing suites, or required pipeline identities were intenti
    The isolated CLI benchmark above succeeded.
    The untested next step is a native compilation task integrated with the dependency graph, while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
    Full workspace/native CI migration has not been attempted.
+6. Investigate merge-tree file-level sharding or the worker-mode shutdown failure.
+   The measured slow files include `client.replay.spec.js`, `client.obliterateFarm.spec.js`, and `client.conflictFarm.spec.js`.
+   Any partition must cover the original file/test set exactly, preserve reporting and failure semantics, and justify the extra agent demand.
 
 ## Limitations
 
