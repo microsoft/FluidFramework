@@ -609,6 +609,10 @@ export interface IFluidParentContext
 	 * @remarks
 	 * Both names remain available for consumers from different package versions.
 	 * New consumers use {@link IFluidParentContext.oldestSupportedClient}.
+	 *
+	 * @deprecated 3.10.0. Will be removed in a future release.
+	 * Use {@link IFluidParentContext.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

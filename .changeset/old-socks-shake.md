@@ -10,6 +10,9 @@ Runtime and data store contexts now expose the required `oldestSupportedClient` 
 Consumers can use `context.oldestSupportedClient` directly instead of `context.minVersionForCollab`.
 The runtime retains its internal fallback for older contexts that expose only `minVersionForCollab`, so mixed-version packages remain supported.
 
+`IFluidParentContext.minVersionForCollab` is deprecated in 3.10.0 and will be removed in a future release.
+Use `IFluidParentContext.oldestSupportedClient` instead.
+
 ```typescript
 const oldestSupportedClient = context.oldestSupportedClient;
 ```
