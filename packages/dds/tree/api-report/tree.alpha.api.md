@@ -276,7 +276,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKind<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
