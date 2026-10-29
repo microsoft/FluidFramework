@@ -590,6 +590,16 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * To keep these documents compatible with the specified client version, distributed data structures can use this value to select feature flags and formats.
+	 * As a result, an older version can limit available features and write formats.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for details about this compatibility setting.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	/**
 	 * Oldest Fluid Framework client version that must be able to process documents written by the
 	 * runtime.
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
@@ -597,8 +607,12 @@ export interface IFluidParentContext
 	 * for more details.
 	 *
 	 * @remarks
-	 * The property name is retained while the cross-layer dual-property migration in
-	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
+	 * Both names remain available for consumers from different package versions.
+	 * New consumers use {@link IFluidParentContext.oldestSupportedClient}.
+	 *
+	 * @deprecated 3.10.0. Will be removed in a future release.
+	 * Use {@link IFluidParentContext.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

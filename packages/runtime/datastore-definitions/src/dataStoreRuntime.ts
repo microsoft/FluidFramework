@@ -235,4 +235,15 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
 	readonly minVersionForCollab?: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * This setting has the same compatibility effects as
+	 * {@link @fluidframework/runtime-definitions#IFluidParentContext.oldestSupportedClient}.
+	 * Older runtimes can expose it only as {@link IFluidDataStoreRuntimeInternalConfig.minVersionForCollab}.
+	 * If `oldestSupportedClient` is absent, use that property to preserve compatibility with those runtimes.
+	 */
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }

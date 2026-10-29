@@ -80,6 +80,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     // (undocumented)

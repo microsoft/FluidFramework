@@ -240,7 +240,9 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 		);
 
 		if (this.roots.isShared()) {
-			this.roots = this.roots.clone();
+			const oldRoots = this.roots;
+			this.roots = oldRoots.clone();
+			oldRoots.referenceRemoved();
 		}
 
 		// The `CombinableVisitor` which can apply deltas to this forest.

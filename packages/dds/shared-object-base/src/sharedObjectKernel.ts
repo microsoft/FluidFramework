@@ -29,6 +29,7 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
@@ -114,6 +115,7 @@ export interface SharedKernel {
 class SharedObjectFromKernel<
 	TOut extends object,
 	TEvent extends ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 > extends SharedObject<TEvent> {
 	/**
 	 * Lazy init here so kernel can be constructed in loadCore when loading from existing data.
@@ -139,9 +141,9 @@ class SharedObjectFromKernel<
 		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
 		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
 		// would emit an error.
-		const minVersionForCollab: OldestSupportedClientVersion | undefined = (
-			runtime as IFluidDataStoreRuntimeInternalConfig
-		).minVersionForCollab;
+		const minVersionForCollab: OldestSupportedClientVersion | undefined =
+			(runtime as IFluidDataStoreRuntimeInternalConfig).oldestSupportedClient ??
+			(runtime as IFluidDataStoreRuntimeInternalConfig).minVersionForCollab;
 
 		assert(minVersionForCollab !== undefined, 0xcee /* minVersionForCollab must be defined */);
 
@@ -156,6 +158,7 @@ class SharedObjectFromKernel<
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
+			oldestSupportedClient: minVersionForCollab,
 		};
 	}
 
@@ -313,6 +316,17 @@ export interface KernelArgs {
 	 * for more details.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents with operations from this SharedObject implementation.
+	 *
+	 * @remarks
+	 * To keep these documents compatible with the specified client version, the implementation uses this value to select feature flags and formats.
+	 * As a result, an older version can limit available features and write formats.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for details about this compatibility setting.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 }
 
 /**
