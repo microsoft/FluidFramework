@@ -6,8 +6,6 @@
 import * as Type from "typebox/type";
 import type { Static } from "typebox";
 
-import { typeboxOptional } from "../util/index.js";
-
 const indexSchema = Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER });
 
 const revisionSchema = Type.Object({
@@ -19,7 +17,7 @@ const nodeReferenceSchema = Type.Object({
 	version: Type.Number(),
 	revision: revisionSchema,
 	path: Type.Array(Type.Tuple([Type.String(), indexSchema]), { minItems: 1 }),
-	length: typeboxOptional(indexSchema),
+	length: Type.Optional(indexSchema),
 });
 
 /**
@@ -37,7 +35,7 @@ export const capturedTreeLocationSchema = Type.Union([
 		node: nodeReferenceSchema,
 		index: indexSchema,
 		affinity: Type.Union([Type.Literal("before"), Type.Literal("after")]),
-		movePolicy: typeboxOptional(Type.Unknown()),
+		movePolicy: Type.Optional(Type.Unknown()),
 	}),
 ]);
 

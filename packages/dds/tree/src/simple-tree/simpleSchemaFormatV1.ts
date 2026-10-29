@@ -14,7 +14,7 @@
 import * as Type from "typebox/type";
 import type { TObjectOptions, Static } from "typebox";
 
-import { stringKeyRecord, typeboxOptional } from "../util/index.js";
+import { stringKeyRecord } from "../util/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
@@ -31,7 +31,7 @@ export const SimpleSchemaFormatVersion = {
  */
 export const SimpleAllowedTypeAttributesFormat = Type.Object(
 	{
-		isStaged: typeboxOptional(Type.Boolean()),
+		isStaged: Type.Optional(Type.Boolean()),
 	},
 	noAdditionalProps,
 );
@@ -140,7 +140,7 @@ export const SimpleObjectNodeSchemaFormat = Type.Object(
 	{
 		kind: Type.Integer(),
 		fields: SimpleObjectFieldSchemasFormat,
-		allowUnknownOptionalFields: typeboxOptional(Type.Boolean()),
+		allowUnknownOptionalFields: Type.Optional(Type.Boolean()),
 	},
 	noAdditionalProps,
 );
@@ -152,11 +152,11 @@ export type SimpleObjectNodeSchemaFormat = Static<typeof SimpleObjectNodeSchemaF
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export const SimpleNodeSchemaUnionFormat = Type.Object({
-	array: typeboxOptional(SimpleArrayNodeSchemaFormat),
-	map: typeboxOptional(SimpleMapNodeSchemaFormat),
-	record: typeboxOptional(SimpleRecordNodeSchemaFormat),
-	leaf: typeboxOptional(SimpleLeafNodeSchemaFormat),
-	object: typeboxOptional(SimpleObjectNodeSchemaFormat),
+	array: Type.Optional(SimpleArrayNodeSchemaFormat),
+	map: Type.Optional(SimpleMapNodeSchemaFormat),
+	record: Type.Optional(SimpleRecordNodeSchemaFormat),
+	leaf: Type.Optional(SimpleLeafNodeSchemaFormat),
+	object: Type.Optional(SimpleObjectNodeSchemaFormat),
 });
 export type SimpleNodeSchemaUnionFormat = Static<typeof SimpleNodeSchemaUnionFormat>;
 

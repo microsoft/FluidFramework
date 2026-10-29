@@ -32,7 +32,7 @@ import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
 } from "../../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase, typeboxOptional } from "../../../../util/index.js";
+import { brand, ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);
@@ -40,8 +40,8 @@ const StringShape = Type.String();
 
 const EncodedChunkShape = Type.Object(
 	{
-		a: typeboxOptional(Constant),
-		b: typeboxOptional(StringShape),
+		a: Type.Optional(Constant),
+		b: Type.Optional(StringShape),
 	},
 	unionOptions,
 );

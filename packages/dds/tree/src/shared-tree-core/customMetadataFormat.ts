@@ -10,7 +10,6 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	stringKeyRecord,
-	typeboxOptional,
 } from "../util/index.js";
 
 /**
@@ -25,13 +24,13 @@ export const EncodedCustomMetadataTree = Type.Cyclic(
 		EncodedCustomMetadataTree: Type.Object(
 			{
 				/** The metadata supplied by the transaction represented by this entry. */
-				m: typeboxOptional(
+				m: Type.Optional(
 					Type.Unsafe<JsonCompatibleReadOnlyObject>(
 						stringKeyRecord(JsonCompatibleReadOnlySchema),
 					),
 				),
 				/** The metadata trees of transactions nested within the transaction represented by this entry. */
-				c: typeboxOptional(Type.Array(Type.Ref("EncodedCustomMetadataTree"))),
+				c: Type.Optional(Type.Array(Type.Ref("EncodedCustomMetadataTree"))),
 			},
 			{ additionalProperties: false },
 		),

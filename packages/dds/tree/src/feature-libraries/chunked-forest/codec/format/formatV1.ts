@@ -7,7 +7,6 @@ import * as Type from "typebox/type";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
-import { typeboxOptional } from "../../../../util/index.js";
 
 import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 
@@ -111,19 +110,19 @@ export const EncodedNodeShape = Type.Object(
 		/**
 		 * If not provided, inlined in data.
 		 */
-		type: typeboxOptional(IdentifierOrIndex),
-		value: typeboxOptional(EncodedValueShape),
+		type: Type.Optional(IdentifierOrIndex),
+		value: Type.Optional(EncodedValueShape),
 		/**
 		 * Fields with fixed (per key) shapes.
 		 * They are encoded in the order they are specified here.
 		 * To ensure the order is preserved, this is an array instead of an object with keys.
 		 */
-		fields: typeboxOptional(Type.Array(EncodedFieldShape)),
+		fields: Type.Optional(Type.Array(EncodedFieldShape)),
 		/**
 		 * If undefined, no data. Otherwise, nested array of `[key, ...data]*`
 		 * Covers any fields beyond those in `fields`.
 		 */
-		extraFields: typeboxOptional(ShapeIndex),
+		extraFields: Type.Optional(ShapeIndex),
 	},
 	{ additionalProperties: false },
 );
@@ -137,19 +136,19 @@ export const shapesV1 = {
 	/**
 	 * {@link EncodedNestedArrayShape} union member.
 	 */
-	a: typeboxOptional(EncodedNestedArrayShape),
+	a: Type.Optional(EncodedNestedArrayShape),
 	/**
 	 * {@link EncodedInlineArrayShape} union member.
 	 */
-	b: typeboxOptional(EncodedInlineArrayShape),
+	b: Type.Optional(EncodedInlineArrayShape),
 	/**
 	 * {@link EncodedNodeShape} union member.
 	 */
-	c: typeboxOptional(EncodedNodeShape),
+	c: Type.Optional(EncodedNodeShape),
 	/**
 	 * {@link EncodedAnyShape} union member.
 	 */
-	d: typeboxOptional(EncodedAnyShape),
+	d: Type.Optional(EncodedAnyShape),
 } as const;
 
 /**
@@ -169,6 +168,6 @@ export const shapesV1 = {
  */
 export type EncodedChunkShapeV1 = Static<typeof EncodedChunkShapeV1>;
 export const EncodedChunkShapeV1 = Type.Object(
-	{ ...shapesV1, e: typeboxOptional(Type.Never()) },
+	{ ...shapesV1, e: Type.Optional(Type.Never()) },
 	unionOptions,
 );

@@ -93,7 +93,7 @@ const config: Linter.Config[] = [
 				{
 					// The import policy above reserves `Type` for the TypeBox runtime namespace.
 					selector:
-						'CallExpression[callee.object.name="Type"][callee.property.name=/^(Interface|Optional|Readonly|Record)$/]',
+						'CallExpression[callee.object.name="Type"][callee.property.name=/^(Interface|Record)$/]',
 					message:
 						"Use the specialized helpers in `src/util/typebox.ts`; these general TypeBox builders load the type-instantiation engine.",
 				},

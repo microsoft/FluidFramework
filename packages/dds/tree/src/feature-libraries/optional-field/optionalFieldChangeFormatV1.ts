@@ -6,7 +6,6 @@
 import * as Type from "typebox/type";
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
-import { typeboxOptional } from "../../util/index.js";
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
@@ -25,14 +24,14 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object(
 		{
 			// Subtrees being created. They start as detached.
-			b: typeboxOptional(Type.Array(EncodedBuild)),
+			b: Type.Optional(Type.Array(EncodedBuild)),
 			// Subtrees being moved.
 			m: EncodedMoves,
 			// Nested changes
 			c: EncodedChildChanges(tNodeChange),
 			// Reserved ID for detaching the subtree from the field if it were to be populated.
 			// Only specified when the field is empty.
-			d: typeboxOptional(EncodedRegisterId),
+			d: Type.Optional(EncodedRegisterId),
 		},
 		noAdditionalProps,
 	);
@@ -45,7 +44,7 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 	// Changes to the children of the node that is in the specified register in the input context of this change.
-	typeboxOptional(Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange])));
+	Type.Optional(Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange])));
 
 // A list of triplets (source, destination, isNodeTargeting) each representing a move of a node
 // from its current source register to a new destination register.
@@ -53,8 +52,8 @@ const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 // Otherwise the intention is to move whatever node happens to be in the source register.
 // These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
 // As such, changesets should not contain duplicated src or dst entries.
-const EncodedMoves = typeboxOptional(
+const EncodedMoves = Type.Optional(
 	Type.Array(
-		Type.Tuple([EncodedRegisterId, EncodedRegisterId, typeboxOptional(Type.Boolean())]),
+		Type.Tuple([EncodedRegisterId, EncodedRegisterId, Type.Optional(Type.Boolean())]),
 	),
 );

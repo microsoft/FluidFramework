@@ -1,4 +1,57 @@
-# TypeBox 1.3.34 migration: performance and packaging findings
+# TypeBox migration: performance and packaging findings
+
+## TypeBox 1.4.2 follow-up
+
+The branch now uses **TypeBox 1.4.2**.
+The [1.4.0 release notes](https://github.com/sinclairzx81/typebox/blob/main/changelog/1.4.0.md) describe the move to shared subschemas and recursive freezing.
+The sections below this follow-up retain the historical 1.3.34 investigation; they are not claims about the current dependency.
+
+| Finding | Verified in 1.4.2 | Fluid action |
+| --- | --- | --- |
+| Modifier deep copies | `Type.Optional` and `Type.Readonly` share nested schemas and preserve metadata without mutating their inputs | Removed the local modifier implementations and switched callers to the public APIs |
+| Unstable generated names | Repeated `Build(...).Evaluate().Code()` output is identical; `Build` now resets the unique-name allocator | Added regression tests for stable code and independent refinement bindings |
+| Incomplete immutable mode | `immutableTypes` recursively freezes property maps, required-key arrays, tuples, and nested schemas | Extended the builder tests to cover nested containers and mutation rejection |
+| Interface/record builder bundle overhead | Using both public builders still adds about 9.6 KB gzipped to the measured SharedTree export bundle | Retained `typeboxInterface` and `stringKeyRecord`, including their lint restrictions |
+| Repeated validator compilation | Deterministic output reduces compilation cost but does not cache validators by schema identity | Retained the `WeakMap` compilation cache |
+| Integer constraints | `Type.Integer` remains the direct expression of the required integer semantics | Retained integer schemas rather than returning to `multipleOf: 1` |
+
+The existing modifier tests now exercise the public APIs.
+They cover schema identity, property descriptors, refinements, frozen inputs, repeated and composed modifiers, static types, and both `immutableTypes` and `enumerableKind` settings.
+No TypeBox dependency patch is applied.
+Tree and the CLI example compile with the upgrade.
+The targeted builder, validator, codec, sandbox, and persisted-snapshot suites passed 6,038 tests, with 125 pending tests; the CLI example's schema-compatibility test also passed.
+No persisted snapshots were regenerated.
+
+### Local measurements
+
+Measurements used Node.js 22.22.3 on October 29, 2026.
+The runtime probe used the sequence-field V3 changeset schema, a string node-change schema, and 100 insertion marks.
+Times are median microseconds per operation across seven batches after 1,000 warmups: 10,000 operations per batch, or 500 for compilation.
+These small local probes are not application-wide performance guarantees.
+
+| Operation | 1.3.34 with local modifiers | 1.4.2 with public modifiers |
+| --- | ---: | ---: |
+| Construct a sequence-change schema | 8.50 | 6.89 |
+| Compile the same sequence schema without Fluid's cache | 890 | 416 |
+| Compile through Fluid's warm schema-identity cache | 0.034 | 0.024 |
+| Validate 100 insertion marks | 15.74 | 15.69 |
+
+The compiler-name fix does not make the cache redundant.
+It also does not remove the fixed-key validation overhead observed in this probe.
+
+Production Webpack 5.109.0 browser bundles exported `SharedTree` from the compiled package, with caching and source maps disabled, serial Terser minification, no extracted license files, and gzip level 9.
+Each bundle was executed and checked for the `SharedTree.getFactory` export.
+The public-builder variant replaced only the remaining interface/record helper module for measurement; it was not adopted in Fluid.
+
+| Bundle | Minified bytes | Gzip bytes |
+| --- | ---: | ---: |
+| 1.3.34, all local helpers | 454,736 | 123,811 |
+| 1.4.2, public modifiers and retained interface/record helpers | 453,446 | 123,403 |
+| 1.4.2, all public builders | 489,095 | 133,003 |
+
+Thus the upgrade and modifier removal reduce this bundle by 408 gzip bytes, while removing the remaining helpers would add 9,600.
+These measurements use newer Fluid sources than the historical bundle tables below and should not be compared to those tables as an isolated TypeBox change.
+They cover the default export bundle, not a fresh consumer installation or a rerun of the historical validation-enabled bundle matrix.
 
 ## Summary for TypeBox maintainers
 

@@ -14,13 +14,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import {
-	type Brand,
-	brandedIntegerType,
-	strictEnum,
-	type Values,
-	typeboxOptional,
-} from "../util/index.js";
+import { type Brand, brandedIntegerType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
@@ -71,7 +65,7 @@ const Commit = <ChangeSchema extends TSchema>(
 		? Type.Object(
 				{
 					...commitProperties(tChange),
-					customMetadata: typeboxOptional(EncodedCustomMetadataTree),
+					customMetadata: Type.Optional(EncodedCustomMetadataTree),
 				},
 				noAdditionalProps,
 			)
@@ -82,7 +76,7 @@ const SeqNumber = brandedIntegerType<SeqNumber>();
 
 const sequenceIdProperties = {
 	sequenceNumber: SeqNumber,
-	indexInBatch: typeboxOptional(Type.Integer({ minimum: 0 })),
+	indexInBatch: Type.Optional(Type.Integer({ minimum: 0 })),
 };
 const SequenceId = Type.Object(sequenceIdProperties);
 
@@ -105,7 +99,7 @@ export const SequencedCommit = <ChangeSchema extends TSchema>(
 				{
 					...commitProperties(tChange),
 					...sequenceIdProperties,
-					customMetadata: typeboxOptional(EncodedCustomMetadataTree),
+					customMetadata: Type.Optional(EncodedCustomMetadataTree),
 				},
 				noAdditionalProps,
 			)
@@ -158,11 +152,11 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
 ) =>
 	Type.Object(
 		{
-			id: typeboxOptional(Type.Number()),
-			name: typeboxOptional(Type.String()),
-			session: typeboxOptional(SessionIdSchema),
-			author: typeboxOptional(Type.String()),
-			base: typeboxOptional(RevisionTagSchema),
+			id: Type.Optional(Type.Number()),
+			name: Type.Optional(Type.String()),
+			session: Type.Optional(SessionIdSchema),
+			author: Type.Optional(Type.String()),
+			base: Type.Optional(RevisionTagSchema),
 			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
 			peers: Type.Array(
 				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),

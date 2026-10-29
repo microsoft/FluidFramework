@@ -11,8 +11,6 @@ import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 	brandedIntegerType,
-	typeboxOptional,
-	typeboxReadonly,
 } from "../../util/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
@@ -65,8 +63,8 @@ type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
 	{
-		fieldChanges: typeboxOptional(EncodedFieldChangeMap),
-		nodeExistsConstraint: typeboxOptional(EncodedNodeExistsConstraint),
+		fieldChanges: Type.Optional(EncodedFieldChangeMap),
+		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,
 );
@@ -78,8 +76,8 @@ export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
 export const EncodedRevisionInfo = Type.Object(
 	{
-		revision: typeboxReadonly(RevisionTagSchema),
-		rollbackOf: typeboxReadonly(typeboxOptional(RevisionTagSchema)),
+		revision: Type.Readonly(RevisionTagSchema),
+		rollbackOf: Type.Readonly(Type.Optional(RevisionTagSchema)),
 	},
 	noAdditionalProps,
 );
@@ -126,17 +124,17 @@ export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
 export const EncodedModularChangesetV1 = Type.Object(
 	{
-		maxId: typeboxOptional(ChangesetLocalIdSchema),
+		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
-		revisions: typeboxReadonly(typeboxOptional(Type.Array(EncodedRevisionInfo))),
+		revisions: Type.Readonly(Type.Optional(Type.Array(EncodedRevisionInfo))),
 		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
-		builds: typeboxOptional(EncodedBuilds),
-		refreshers: typeboxOptional(EncodedBuilds),
+		builds: Type.Optional(EncodedBuilds),
+		refreshers: Type.Optional(EncodedBuilds),
 		/**
 		 * The number of constraints within this changeset that are violated.
 		 */
-		violations: typeboxOptional(Type.Integer({ minimum: 0 })),
+		violations: Type.Optional(Type.Integer({ minimum: 0 })),
 	},
 	noAdditionalProps,
 );

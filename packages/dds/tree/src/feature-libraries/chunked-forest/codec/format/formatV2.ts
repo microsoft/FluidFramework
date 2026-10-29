@@ -7,7 +7,6 @@ import * as Type from "typebox/type";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
-import { typeboxOptional } from "../../../../util/index.js";
 
 import { shapesV1 } from "./formatV1.js";
 
@@ -25,7 +24,7 @@ export const EncodedIncrementalChunkShape = Type.Literal(0);
  */
 export const shapesV2 = {
 	...shapesV1,
-	e: typeboxOptional(EncodedIncrementalChunkShape),
+	e: Type.Optional(EncodedIncrementalChunkShape),
 } as const;
 
 /**
@@ -38,6 +37,6 @@ export const shapesV2 = {
  */
 export type EncodedChunkShapeV2 = Static<typeof EncodedChunkShapeV2>;
 export const EncodedChunkShapeV2 = Type.Object(
-	{ ...shapesV2, f: typeboxOptional(Type.Never()) },
+	{ ...shapesV2, f: Type.Optional(Type.Never()) },
 	unionOptions,
 );

@@ -6,12 +6,7 @@
 import * as Type from "typebox/type";
 import type { Static, TSchema } from "typebox";
 
-import {
-	stringKeyRecord,
-	typeboxInterface,
-	typeboxOptional,
-	typeboxReadonly,
-} from "../../util/index.js";
+import { stringKeyRecord, typeboxInterface } from "../../util/index.js";
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
 /**
@@ -64,8 +59,8 @@ const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
 
 type EncodedNodeData = Static<typeof EncodedNodeData>;
 const EncodedNodeData = Type.Object({
-	value: typeboxOptional(Type.Any()),
-	type: typeboxReadonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
+	value: Type.Optional(Type.Any()),
+	type: Type.Readonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
 });
 
 /**
@@ -78,8 +73,8 @@ interface EncodedGenericFieldsNode<TChild> {
 }
 const EncodedGenericFieldsNode = <Schema extends TSchema>(tChild: Schema) =>
 	Type.Object({
-		fields: typeboxOptional(EncodedFieldMapObject(tChild)),
-		globalFields: typeboxOptional(EncodedFieldMapObject(tChild)),
+		fields: Type.Optional(EncodedFieldMapObject(tChild)),
+		globalFields: Type.Optional(EncodedFieldMapObject(tChild)),
 	});
 
 /**

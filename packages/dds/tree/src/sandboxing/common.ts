@@ -23,8 +23,6 @@ import {
 	brandedIntegerType,
 	type JsonCompatibleReadOnly,
 	stringKeyRecord,
-	typeboxOptional,
-	typeboxReadonly,
 } from "../util/index.js";
 
 /**
@@ -180,9 +178,9 @@ export const serializedHandleType = "__sandbox_handle__";
  */
 const SerializedHandle = Type.Object(
 	{
-		type: typeboxReadonly(Type.Literal(serializedHandleType)),
+		type: Type.Readonly(Type.Literal(serializedHandleType)),
 		/** Index of the referenced handle in the owning Host session. */
-		token: typeboxReadonly(HandleToken),
+		token: Type.Readonly(HandleToken),
 	},
 	{ additionalProperties: false },
 );
@@ -451,24 +449,24 @@ export type HostInitializationMessage = Static<typeof HostInitializationMessage>
 const HostInitializationMessage = Type.Object(
 	{
 		/** Identifies the commit represented by the snapshot. */
-		baseRevision: typeboxReadonly(SessionRevisionTag),
+		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by replaying `commits`. */
-		mainRevision: typeboxReadonly(SessionRevisionTag),
+		mainRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies a finalized-history boundary in the reconstructed Host branch, which may precede the newest finalized commit. */
-		trunkRevision: typeboxReadonly(SessionRevisionTag),
+		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The compressed tree at `baseRevision`. */
-		tree: typeboxReadonly(SerializedTreePayload),
+		tree: Type.Readonly(SerializedTreePayload),
 		/** The persisted schema at `baseRevision`. */
-		schema: typeboxReadonly(SerializedTreePayload),
+		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
-		commits: typeboxReadonly(SerializedTreeCommits),
+		commits: Type.Readonly(SerializedTreeCommits),
 		/**
 		 * Wire string for a {@link @fluidframework/id-compressor/internal#SerializedIdCompressorWithOngoingSession}.
 		 * @remarks
 		 * Envelope validation checks only the string shape. Guest deserialization validates
 		 * the compressor format and confirms it is a child ID space shard.
 		 */
-		idCompressor: typeboxReadonly(Type.String()),
+		idCompressor: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
 );
@@ -482,17 +480,17 @@ export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
 const HostUpdateMessage = Type.Object(
 	{
 		/** Identifies this update and the acknowledgment that completes it. */
-		updateId: typeboxReadonly(HostUpdateId),
+		updateId: Type.Readonly(HostUpdateId),
 		/** Identifies the retained commit after which `commits` replaces the Guest's Host branch. */
-		baseRevision: typeboxReadonly(SessionRevisionTag),
+		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by applying `commits`. */
-		mainRevision: typeboxReadonly(SessionRevisionTag),
+		mainRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies a finalized-history boundary in the resulting Host branch, which may precede the newest finalized commit. */
-		trunkRevision: typeboxReadonly(SessionRevisionTag),
+		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
-		commits: typeboxReadonly(SerializedTreeCommits),
+		commits: Type.Readonly(SerializedTreeCommits),
 		/** Parent ID space shard token needed before the Guest decodes commits or revisions. */
-		parentIdSpaceShardSyncToken: typeboxReadonly(ParentIdSpaceShardSyncToken),
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
 	},
 	{ additionalProperties: false },
 );
@@ -507,11 +505,11 @@ export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
 const HostIdRangeMessage = Type.Object(
 	{
 		/** Sequence number for ranges sent to this Guest. */
-		rangeId: typeboxReadonly(HostIdRangeId),
+		rangeId: Type.Readonly(HostIdRangeId),
 		/** Synchronizes the Guest's child ID space shard before it finalizes the range. */
-		parentIdSpaceShardSyncToken: typeboxReadonly(ParentIdSpaceShardSyncToken),
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
 		/** The finalized range to apply before dependent Host updates. */
-		range: typeboxReadonly(FinalizedIdRange),
+		range: Type.Readonly(FinalizedIdRange),
 	},
 	{ additionalProperties: false },
 );
@@ -523,7 +521,7 @@ export type HostUpdateAckMessage = Static<typeof HostUpdateAckMessage>;
 const HostUpdateAckMessage = Type.Object(
 	{
 		/** Identifies the applied Host update. */
-		updateId: typeboxReadonly(HostUpdateId),
+		updateId: Type.Readonly(HostUpdateId),
 	},
 	{ additionalProperties: false },
 );
@@ -535,15 +533,15 @@ export type GuestChangeMessage = Static<typeof GuestChangeMessage>;
 const GuestChangeMessage = Type.Object(
 	{
 		/** Identifies this change and the acknowledgment that completes it. */
-		changeId: typeboxReadonly(GuestChangeId),
+		changeId: Type.Readonly(GuestChangeId),
 		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
-		mainRevision: typeboxReadonly(SessionRevisionTag),
+		mainRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host finalized-history boundary that the Guest had acknowledged. */
-		trunkRevision: typeboxReadonly(SessionRevisionTag),
+		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
-		change: typeboxReadonly(SerializedTreePayload),
+		change: Type.Readonly(SerializedTreePayload),
 		/** Child ID space shard progress needed by the Host before it can decode the change. */
-		idSpaceShardToken: typeboxReadonly(GuestIdSpaceShardToken),
+		idSpaceShardToken: Type.Readonly(GuestIdSpaceShardToken),
 	},
 	{ additionalProperties: false },
 );
@@ -555,7 +553,7 @@ export type GuestChangeAckMessage = Static<typeof GuestChangeAckMessage>;
 const GuestChangeAckMessage = Type.Object(
 	{
 		/** Identifies the applied Guest change. */
-		changeId: typeboxReadonly(GuestChangeId),
+		changeId: Type.Readonly(GuestChangeId),
 	},
 	{ additionalProperties: false },
 );
@@ -573,14 +571,14 @@ const SessionFailureMessage = Type.Object(
 		 * Protocol-only diagnostics. An uncompromised sender must not put schema or sensitive data here.
 		 * The Host treats this as `SandboxGuestData`, regardless of the reported code.
 		 */
-		protocolMessage: typeboxOptional(Type.String()),
+		protocolMessage: Type.Optional(Type.String()),
 		/**
 		 * Potentially sensitive diagnostics.
 		 * May contain document content that the Guest is authorized to access, but must not contain
 		 * credentials or other sensitive Host data outside that authorization.
 		 * Receivers must tag this as `UserData`.
 		 */
-		sensitiveMessage: typeboxOptional(Type.String()),
+		sensitiveMessage: Type.Optional(Type.String()),
 	},
 	{ additionalProperties: false },
 );
@@ -594,9 +592,9 @@ export type BlobRequestMessage = Static<typeof BlobRequestMessage>;
 const BlobRequestMessage = Type.Object(
 	{
 		/** Identifies this pending resolution, independently of the handle token. */
-		requestId: typeboxReadonly(BlobRequestId),
+		requestId: Type.Readonly(BlobRequestId),
 		/** Identifies the handle to resolve in the Host's session-local table. */
-		token: typeboxReadonly(HandleToken),
+		token: Type.Readonly(HandleToken),
 	},
 	{ additionalProperties: false },
 );
@@ -608,9 +606,9 @@ const BlobRequestMessage = Type.Object(
 const BlobSuccessMessage = Type.Object(
 	{
 		/** Matches the outstanding Guest request. */
-		requestId: typeboxReadonly(BlobRequestId),
+		requestId: Type.Readonly(BlobRequestId),
 		/** Unwrapped by the Guest only after the response passes validation. */
-		blob: typeboxReadonly(RegisteredBufferPlaceholder),
+		blob: Type.Readonly(RegisteredBufferPlaceholder),
 	},
 	{ additionalProperties: false },
 );
@@ -620,9 +618,9 @@ const BlobSuccessMessage = Type.Object(
 const BlobErrorMessage = Type.Object(
 	{
 		/** Matches the outstanding Guest request. */
-		requestId: typeboxReadonly(BlobRequestId),
+		requestId: Type.Readonly(BlobRequestId),
 		/** Error message used to reject the Guest proxy's cached resolution promise. */
-		error: typeboxReadonly(Type.String()),
+		error: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
 );
@@ -637,22 +635,22 @@ export type HostToGuestMessage = Static<typeof hostToGuestMessageSchema>;
 const hostToGuestMessageSchema = Type.Object(
 	{
 		/** Initializes the Guest with a {@link HostInitializationMessage}. */
-		hostInitialization: typeboxOptional(HostInitializationMessage),
+		hostInitialization: Type.Optional(HostInitializationMessage),
 		/** Updates the Guest's copy of the Host branch with a {@link HostUpdateMessage}. */
-		hostUpdate: typeboxOptional(HostUpdateMessage),
+		hostUpdate: Type.Optional(HostUpdateMessage),
 		/** Sends the Guest a finalized ID range in a {@link HostIdRangeMessage}. */
-		hostIdRange: typeboxOptional(HostIdRangeMessage),
+		hostIdRange: Type.Optional(HostIdRangeMessage),
 		/** Acknowledges a {@link GuestChangeMessage} with a {@link GuestChangeAckMessage}. */
-		guestChangeAck: typeboxOptional(GuestChangeAckMessage),
+		guestChangeAck: Type.Optional(GuestChangeAckMessage),
 		/** Returns the resolved buffer for a {@link BlobRequestMessage}. */
-		blobResponse: typeboxOptional(BlobSuccessMessage),
+		blobResponse: Type.Optional(BlobSuccessMessage),
 		/** Reports that the Host could not resolve a {@link BlobRequestMessage}. */
-		blobResponseError: typeboxOptional(BlobErrorMessage),
+		blobResponseError: Type.Optional(BlobErrorMessage),
 		/**
 		 * Reports a terminal Host failure to the Guest.
 		 * The Guest stops the session without sending another failure notification.
 		 */
-		sessionFailure: typeboxOptional(SessionFailureMessage),
+		sessionFailure: Type.Optional(SessionFailureMessage),
 	},
 	unionOptions,
 );
@@ -664,16 +662,16 @@ export type GuestToHostMessage = Static<typeof guestToHostMessageSchema>;
 const guestToHostMessageSchema = Type.Object(
 	{
 		/** Acknowledges a {@link HostUpdateMessage} with a {@link HostUpdateAckMessage}. */
-		hostUpdateAck: typeboxOptional(HostUpdateAckMessage),
+		hostUpdateAck: Type.Optional(HostUpdateAckMessage),
 		/** Sends a Guest-authored change in a {@link GuestChangeMessage}. */
-		guestChange: typeboxOptional(GuestChangeMessage),
+		guestChange: Type.Optional(GuestChangeMessage),
 		/** Requests that the Host resolve an authorized blob with a {@link BlobRequestMessage}. */
-		blobRequest: typeboxOptional(BlobRequestMessage),
+		blobRequest: Type.Optional(BlobRequestMessage),
 		/**
 		 * Reports a terminal Guest failure to the Host.
 		 * The Host stops the session without sending another failure notification.
 		 */
-		sessionFailure: typeboxOptional(SessionFailureMessage),
+		sessionFailure: Type.Optional(SessionFailureMessage),
 	},
 	unionOptions,
 );

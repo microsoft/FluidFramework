@@ -33,7 +33,6 @@ import {
 	encodeCustomMetadataTree,
 } from "../shared-tree-core/index.js";
 import type { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
-import { typeboxOptional } from "../util/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -63,7 +62,7 @@ function createSerializedChangeSchema<TChangeSchema extends TSchema>(
 			/** Identifies the ID-compressor session required to decode the change. */
 			originatorId: SessionIdSchema,
 			/** Application-defined metadata attached to the commit. */
-			customMetadata: typeboxOptional(
+			customMetadata: Type.Optional(
 				Type.Unsafe<EncodedCustomMetadataTreeType>(EncodedCustomMetadataTree),
 			),
 		},

@@ -6,7 +6,7 @@
 import * as Type from "typebox/type";
 import type { TObjectOptions, Static } from "typebox";
 
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+import { typeboxInterface } from "../../util/index.js";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 
@@ -26,7 +26,7 @@ export const EncodedModularChangesetV2 = typeboxInterface(
 		Type.Object(
 			{
 				/** Global no change constraint that gets violated whenever the changeset is rebased */
-				noChangeConstraint: typeboxOptional(EncodedNoChangeConstraint),
+				noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 			},
 			noAdditionalProps,
 		),

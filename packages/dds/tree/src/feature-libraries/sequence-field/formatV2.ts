@@ -8,7 +8,7 @@ import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+import { typeboxInterface } from "../../util/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
@@ -23,7 +23,7 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 export const CellId = EncodedChangeAtomId;
 
-const HasRevisionTag = Type.Object({ revision: typeboxOptional(RevisionTagSchema) });
+const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
 const Insert = typeboxInterface([HasMoveId, HasRevisionTag], {}, noAdditionalProps);
 
@@ -31,7 +31,7 @@ const HasMoveFields = typeboxInterface(
 	[
 		HasMoveId,
 		HasRevisionTag,
-		Type.Object({ finalEndpoint: typeboxOptional(EncodedChangeAtomId) }),
+		Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
 	],
 	{},
 );
@@ -39,7 +39,7 @@ const HasMoveFields = typeboxInterface(
 const MoveIn = typeboxInterface([HasMoveFields], {}, noAdditionalProps);
 
 const DetachFields = Type.Object({
-	idOverride: typeboxOptional(CellId),
+	idOverride: Type.Optional(CellId),
 });
 
 const Remove = typeboxInterface(
@@ -58,16 +58,16 @@ const MoveOut = typeboxInterface([HasMoveFields, DetachFields], {}, noAdditional
 
 const Attach = Type.Object(
 	{
-		insert: typeboxOptional(Insert),
-		moveIn: typeboxOptional(MoveIn),
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
 	},
 	unionOptions,
 );
 
 const Detach = Type.Object(
 	{
-		remove: typeboxOptional(Remove),
-		moveOut: typeboxOptional(MoveOut),
+		remove: Type.Optional(Remove),
+		moveOut: Type.Optional(MoveOut),
 	},
 	unionOptions,
 );
@@ -80,11 +80,11 @@ const AttachAndDetach = Type.Object({
 export const MarkEffect = Type.Object(
 	{
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
-		insert: typeboxOptional(Insert),
-		moveIn: typeboxOptional(MoveIn),
-		remove: typeboxOptional(Remove),
-		moveOut: typeboxOptional(MoveOut),
-		attachAndDetach: typeboxOptional(AttachAndDetach),
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
+		remove: Type.Optional(Remove),
+		moveOut: Type.Optional(MoveOut),
+		attachAndDetach: Type.Optional(AttachAndDetach),
 	},
 	unionOptions,
 );
@@ -98,9 +98,9 @@ export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 	Type.Object(
 		{
 			// If undefined, indicates a Noop mark.
-			effect: typeboxOptional(tMark),
-			cellId: typeboxOptional(CellId),
-			changes: typeboxOptional(tNodeChange),
+			effect: Type.Optional(tMark),
+			cellId: Type.Optional(CellId),
+			changes: Type.Optional(tNodeChange),
 			count: CellCount,
 		},
 		noAdditionalProps,

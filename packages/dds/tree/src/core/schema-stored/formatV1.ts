@@ -12,7 +12,6 @@ import {
 	brandedStringType,
 	stringKeyRecord,
 	typeboxInterface,
-	typeboxOptional,
 } from "../../util/index.js";
 
 /**
@@ -88,15 +87,15 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		/**
 		 * Object node union member.
 		 */
-		object: typeboxOptional(stringKeyRecord(FieldSchemaFormat)),
+		object: Type.Optional(stringKeyRecord(FieldSchemaFormat)),
 		/**
 		 * Map node union member.
 		 */
-		map: typeboxOptional(FieldSchemaFormat),
+		map: Type.Optional(FieldSchemaFormat),
 		/**
 		 * Leaf node union member.
 		 */
-		leaf: typeboxOptional(Type.Enum(PersistedValueSchema)),
+		leaf: Type.Optional(Type.Enum(PersistedValueSchema)),
 	},
 	unionOptions,
 );

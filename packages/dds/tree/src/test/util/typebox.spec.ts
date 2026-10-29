@@ -15,16 +15,14 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	stringKeyRecord,
 	typeboxInterface,
-	typeboxOptional,
-	typeboxReadonly,
 	type areSafelyAssignable,
 	type requireTrue,
 } from "../../util/index.js";
 
-describe("TypeBox helpers", () => {
+describe("TypeBox builders", () => {
 	for (const [name, modifier, key] of [
-		["optional", typeboxOptional, "~optional"],
-		["readonly", typeboxReadonly, "~readonly"],
+		["optional", Type.Optional, "~optional"],
+		["readonly", Type.Readonly, "~readonly"],
 	] as const) {
 		describe(name, () => {
 			it("copies only the outer schema and preserves its metadata", () => {
@@ -58,6 +56,21 @@ describe("TypeBox helpers", () => {
 				assert.equal(validator.check({ field: { value: 1 } }), false);
 			});
 
+			it("accepts frozen schemas without changing the input", () => {
+				const schema = Object.freeze(
+					Type.Object({ value: Type.String() }, { description: "original" }),
+				);
+				const modified = modifier(schema);
+
+				assert.equal(modified.properties, schema.properties);
+				assert.equal(
+					Object.getOwnPropertyDescriptor(modified, "description")?.value,
+					"original",
+				);
+				assert.equal(Object.hasOwn(schema, key), false);
+				assert.equal(Object.hasOwn(modified, key), true);
+			});
+
 			for (const immutableTypes of [false, true]) {
 				for (const enumerableKind of [false, true]) {
 					it(`respects immutableTypes=${immutableTypes}, enumerableKind=${enumerableKind}`, () => {
@@ -71,6 +84,9 @@ describe("TypeBox helpers", () => {
 							assert.equal(modified.properties, schema.properties);
 							assert.equal(Object.isFrozen(modified), immutableTypes);
 							assert.equal(Object.isFrozen(repeated), immutableTypes);
+							assert.equal(Object.isFrozen(modified.properties), immutableTypes);
+							assert.equal(Object.isFrozen(modified.properties.value), immutableTypes);
+							assert.equal(Object.isFrozen(modified.required), immutableTypes);
 							assert.equal(Object.hasOwn(schema, key), false);
 							assert.deepEqual(Object.getOwnPropertyDescriptor(modified, key), {
 								value: true,
@@ -88,10 +104,39 @@ describe("TypeBox helpers", () => {
 		});
 	}
 
+	it("freezes nested schema containers in immutable mode", () => {
+		const settings = { ...Settings.Get() };
+		try {
+			Settings.Set({ immutableTypes: true });
+			const schema = Type.Object({
+				nested: Type.Optional(Type.Array(Type.Tuple([Type.String(), Type.Number()]))),
+			});
+			const array = schema.properties.nested;
+			const tuple = array.items;
+			for (const container of [
+				schema,
+				schema.properties,
+				array,
+				tuple,
+				tuple.items,
+				...tuple.items,
+			]) {
+				assert.equal(Object.isFrozen(container), true);
+			}
+			assert.throws(
+				() => Object.assign(schema.properties, { extra: Type.String() }),
+				TypeError,
+			);
+			assert.throws(() => tuple.items.push(Type.String()), TypeError);
+		} finally {
+			Settings.Set(settings);
+		}
+	});
+
 	it("composes optional and readonly modifiers in either order", () => {
 		const field = Type.Object({ value: Type.String() });
-		const optionalReadonly = typeboxOptional(typeboxReadonly(field));
-		const readonlyOptional = typeboxReadonly(typeboxOptional(field));
+		const optionalReadonly = Type.Optional(Type.Readonly(field));
+		const readonlyOptional = Type.Readonly(Type.Optional(field));
 		const schema = Type.Object({ field: optionalReadonly });
 		type _Modifiers = requireTrue<
 			areSafelyAssignable<Static<typeof schema>, { readonly field?: { value: string } }>
@@ -112,8 +157,8 @@ describe("TypeBox helpers", () => {
 
 	it("creates optional and readonly properties", () => {
 		const schema = Type.Object({
-			optional: typeboxOptional(Type.String()),
-			readonly: typeboxReadonly(Type.Boolean()),
+			optional: Type.Optional(Type.String()),
+			readonly: Type.Readonly(Type.Boolean()),
 		});
 
 		assert.deepEqual(JSON.parse(JSON.stringify(schema)), {
@@ -139,7 +184,7 @@ describe("TypeBox helpers", () => {
 			[
 				Type.Object({
 					inherited: Type.Number(),
-					optional: typeboxOptional(Type.String()),
+					optional: Type.Optional(Type.String()),
 				}),
 			],
 			{ own: Type.Boolean() },

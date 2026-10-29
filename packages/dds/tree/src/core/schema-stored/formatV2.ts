@@ -12,7 +12,6 @@ import {
 	JsonCompatibleReadOnlySchema,
 	stringKeyRecord,
 	typeboxInterface,
-	typeboxOptional,
 } from "../../util/index.js";
 
 import {
@@ -22,7 +21,7 @@ import {
 } from "./formatV1.js";
 
 export type PersistedMetadataFormat = Static<typeof PersistedMetadataFormat>;
-export const PersistedMetadataFormat = typeboxOptional(
+export const PersistedMetadataFormat = Type.Optional(
 	Type.Unsafe<JsonCompatibleReadOnlyObject>(stringKeyRecord(JsonCompatibleReadOnlySchema)),
 );
 
@@ -51,15 +50,15 @@ export const TreeNodeSchemaUnionFormat = Type.Object(
 		/**
 		 * Object node union member.
 		 */
-		object: typeboxOptional(stringKeyRecord(FieldSchemaFormat)),
+		object: Type.Optional(stringKeyRecord(FieldSchemaFormat)),
 		/**
 		 * Map node union member.
 		 */
-		map: typeboxOptional(FieldSchemaFormat),
+		map: Type.Optional(FieldSchemaFormat),
 		/**
 		 * Leaf node union member.
 		 */
-		leaf: typeboxOptional(Type.Enum(PersistedValueSchema)),
+		leaf: Type.Optional(Type.Enum(PersistedValueSchema)),
 	},
 	unionOptions,
 );

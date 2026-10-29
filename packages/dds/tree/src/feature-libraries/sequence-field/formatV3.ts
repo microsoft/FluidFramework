@@ -7,7 +7,7 @@ import * as Type from "typebox/type";
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+import { typeboxInterface } from "../../util/index.js";
 
 import {
 	CellId,
@@ -26,7 +26,7 @@ const Rename = Type.Object(
 );
 
 const MarkEffect = typeboxInterface(
-	[MarkEffectV2, Type.Object({ rename: typeboxOptional(Rename) })],
+	[MarkEffectV2, Type.Object({ rename: Type.Optional(Rename) })],
 	{},
 	unionOptions,
 );

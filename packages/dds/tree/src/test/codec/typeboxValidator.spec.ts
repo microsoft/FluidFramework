@@ -7,12 +7,41 @@ import { strict as assert } from "node:assert";
 import { mock } from "node:test";
 
 import * as Type from "typebox/type";
-import { BuildResult } from "typebox/schema";
+import { Build, BuildResult } from "typebox/schema";
 
 import { extractJsonValidator } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
-describe("TypeBox validator compilation cache", () => {
+describe("TypeBox validator compilation", () => {
+	it("generates stable code across repeated compilations", () => {
+		const schema = Type.Object(
+			{
+				items: Type.Array(Type.Object({ value: Type.Optional(Type.String()) })),
+			},
+			{ additionalProperties: false },
+		);
+		const first = Build(schema).Evaluate();
+		Build(Type.Tuple([Type.Number(), Type.Boolean()])).Evaluate();
+		const second = Build(schema).Evaluate();
+
+		assert.equal(first.Code(), second.Code());
+		for (const compiled of [first, second]) {
+			assert.equal(compiled.Check({ items: [{}, { value: "text" }] }), true);
+			assert.equal(compiled.Check({ items: [{ value: 1 }] }), false);
+			assert.equal(compiled.Check({ items: [], extra: true }), false);
+		}
+	});
+
+	it("keeps refinement bindings independent across compilations", () => {
+		const positive = Build(Type.Refine(Type.Number(), (value) => value > 0)).Evaluate();
+		const negative = Build(Type.Refine(Type.Number(), (value) => value < 0)).Evaluate();
+
+		assert.equal(positive.Check(1), true);
+		assert.equal(positive.Check(-1), false);
+		assert.equal(negative.Check(-1), true);
+		assert.equal(negative.Check(1), false);
+	});
+
 	it("compiles a shared schema once and preserves validation", () => {
 		const compile = mock.method(BuildResult.prototype, "Evaluate");
 		try {
