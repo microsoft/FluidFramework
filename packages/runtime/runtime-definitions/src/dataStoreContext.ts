@@ -597,11 +597,8 @@ export interface IFluidParentContext
 	 * As a result, an older version can limit available features and write formats.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
 	 * for details about this compatibility setting.
-	 *
-	 * Older contexts can expose this setting only as {@link IFluidParentContext.minVersionForCollab}.
-	 * If `oldestSupportedClient` is absent, use that property to preserve compatibility with those contexts.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedClientVersion;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	/**
 	 * Oldest Fluid Framework client version that must be able to process documents written by the
 	 * runtime.
@@ -611,7 +608,7 @@ export interface IFluidParentContext
 	 *
 	 * @remarks
 	 * Both names remain available for consumers from different package versions.
-	 * New consumers use {@link IFluidParentContext.oldestSupportedClient} when it is present.
+	 * New consumers use {@link IFluidParentContext.oldestSupportedClient}.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

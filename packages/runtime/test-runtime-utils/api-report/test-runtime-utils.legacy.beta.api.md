@@ -349,7 +349,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
-    oldestSupportedClient?: OldestSupportedClientVersion;
+    oldestSupportedClient: OldestSupportedClientVersion;
     // (undocumented)
     on(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)

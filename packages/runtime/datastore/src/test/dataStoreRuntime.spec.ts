@@ -625,6 +625,7 @@ describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 	): FluidDataStoreRuntime_ForTesting {
 		const context = new MockFluidDataStoreContext(id);
 		context.minVersionForCollab = minVersionForCollab;
+		context.oldestSupportedClient = minVersionForCollab;
 		return new FluidDataStoreRuntime(
 			context,
 			{} as unknown as ISharedObjectRegistry,
@@ -645,6 +646,17 @@ describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 		const runtime = new FluidDataStoreRuntime(context, new Map(), false, async (rt) => rt);
 		assert.strictEqual(runtime.oldestSupportedClient, "2.20.0");
 		assert.strictEqual(runtime.minVersionForCollab, "2.20.0");
+	});
+
+	it("uses the default oldestSupportedClient from the context", () => {
+		const context: IFluidDataStoreContext = new MockFluidDataStoreContext(
+			"defaultOldestSupportedClient",
+		);
+		const oldestSupportedClient: OldestSupportedClientVersion = context.oldestSupportedClient;
+		const runtime = new FluidDataStoreRuntime(context, new Map(), false, async (rt) => rt);
+		assert.strictEqual(oldestSupportedClient, context.minVersionForCollab);
+		assert.strictEqual(runtime.oldestSupportedClient, oldestSupportedClient);
+		assert.strictEqual(runtime.minVersionForCollab, oldestSupportedClient);
 	});
 
 	it("prefers oldestSupportedClient when both properties are present", () => {

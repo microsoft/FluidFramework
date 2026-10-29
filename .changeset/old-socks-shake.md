@@ -6,10 +6,13 @@
 ---
 Add oldestSupportedClient across runtime layers
 
-Runtime and data store contexts now expose `oldestSupportedClient` beside `minVersionForCollab`.
-The runtime uses `oldestSupportedClient` when both properties are present.
-Older contexts that expose only `minVersionForCollab` remain supported.
+Runtime and data store contexts now expose the required `oldestSupportedClient` property beside `minVersionForCollab`.
+Consumers can use `context.oldestSupportedClient` directly instead of `context.minVersionForCollab`.
+The runtime retains its internal fallback for older contexts that expose only `minVersionForCollab`, so mixed-version packages remain supported.
 
-Use `context.oldestSupportedClient ?? context.minVersionForCollab` during the migration.
+```typescript
+const oldestSupportedClient = context.oldestSupportedClient;
+```
+
 The on-disk schema and telemetry property names do not change.
 See [the migration issue](https://github.com/microsoft/FluidFramework/issues/27851) for more details.
