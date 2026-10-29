@@ -144,6 +144,12 @@ export namespace ExtrinsicLocations {
 	 * Reading and editing APIs for an array with extrinsic ranges.
 	 * @remarks
 	 * Edit content synchronously with {@link ExtrinsicLocations.ArrayMembers.transactOnContent}.
+	 * The {@link ExtrinsicLocations.ArrayMembers.content | content} property exposes a read-only array type;
+	 * mutable access is provided only to the editing callback.
+	 * This is a type-level restriction, not a runtime barrier.
+	 * Bypassing it through a type assertion, another view schema, or an import can change the content without updating the stored range endpoints.
+	 * Those endpoints can then refer to the wrong items or fall outside the array.
+	 *
 	 * Content items and range data that are object nodes can still be edited directly.
 	 * Such edits do not change array positions.
 	 * @sealed
@@ -155,6 +161,9 @@ export namespace ExtrinsicLocations {
 	> {
 		/**
 		 * Live, read-only view of the content array.
+		 * @remarks
+		 * Use {@link ExtrinsicLocations.ArrayMembers.transactOnContent} to insert, remove, or move items.
+		 * The read-only type does not prevent edits to fields of object items.
 		 */
 		readonly content: ReadonlyArrayNode<
 			[TContentSchema] extends [ImplicitAllowedTypes]
@@ -268,18 +277,21 @@ export namespace ExtrinsicLocations {
 	 * Endpoints follow insertion-point semantics: insertion at an endpoint moves it after the inserted content.
 	 * Insertion at the start is excluded, insertion at the end is included, and empty ranges stay empty.
 	 * Removal collapses endpoints inside the removed span to the start of that span.
+	 *
 	 * Ranges remain with their collection rather than following moved content.
+	 * Moves adjust endpoints as a removal followed by an insertion; they do not preserve the association with the moved items.
+	 * For example, moving annotated items to another managed array does not transfer their ranges to that array.
+	 * The ranges remain in the source collection, where their endpoints adjust to the removal and can collapse to an empty range.
 	 *
 	 * Each endpoint anchor's `index` returns its current position, including during a content editing scope.
 	 * A known array-anchor event-ordering limitation can cause listeners registered before the scope to read stale positions.
-	 * Reads after a content edit returns within the scope are current.
+	 * After an individual synchronous content-editing call returns, endpoint reads are current, even if the enclosing editing callback is still running.
 	 * Copy the endpoint indexes to retain a snapshot.
 	 *
 	 * A handle refers to a particular range, not to subsequent ranges created at the same key.
 	 * Reading an endpoint index or assigning data throws a {@link @fluidframework/telemetry-utils#UsageError} if that range is no longer tracked.
 	 * An undo operation that restores the same range makes the handle valid again.
 	 * Each handle retains the same endpoint anchor objects as its bounds change.
-	 * Repeated lookups do not guarantee the same handle object.
 	 * @sealed
 	 * @alpha
 	 */
@@ -344,6 +356,8 @@ export namespace ExtrinsicLocations {
 		 * Looks up a tracked range without creating stored state.
 		 * @param key - Range key to look up.
 		 * @returns A live handle, or `undefined` if the key is not tracked.
+		 * @remarks
+		 * Repeated calls for the same range do not guarantee the same handle object.
 		 */
 		getRange(key: string): TrackedRange<TData, TInsertableData> | undefined;
 

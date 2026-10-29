@@ -68,7 +68,8 @@ export function runRangeTransaction<T>(node: TreeNode, edit: () => T): T {
  * Their enclosing schema and the range nodes' additional fields are chosen by the caller.
  *
  * Structural content edits must use {@link ExtrinsicRangeTracker.transactOnContent}.
- * Content events are not buffered.
+ * Content change listeners run synchronously during individual edits.
+ * Their notifications are not delayed until the editing callback finishes or the stored endpoints are updated.
  * Position reads use temporary insertion anchors until the callback and endpoint writeback finish.
  * The array-anchor event-ordering limitation also applies to these reads.
  *
@@ -85,8 +86,10 @@ export class ExtrinsicRangeTracker<
 	/**
 	 * Creates a tracker over existing content and a string-keyed map of extrinsic ranges.
 	 * @param content - Array whose insertion points the ranges refer to.
-	 * @param getRanges - Reads the current optional range storage without creating it.
-	 * @param ensureRanges - Gets or initializes storage inside a guarded transaction.
+	 * @param getRanges - Reads the current optional range storage without creating it, so reading ranges does not edit the tree.
+	 * @param ensureRanges - Returns existing range storage or creates it when an edit first needs it.
+	 * On hydrated nodes, the tracker calls this inside a guarded transaction so storage creation and the edit are atomic.
+	 * Formatted text uses this to initialize optional storage lazily; arrays already have storage and return it unchanged.
 	 * @param createRange - Creates an unhydrated range node containing the supplied endpoints and application data.
 	 */
 	public constructor(

@@ -48,6 +48,17 @@ See [Planned work](#planned-work) for implementation progress and future design 
 For arrays, see the API documentation in [extrinsicLocationsNamespace.ts](./extrinsicLocationsNamespace.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
 For formatted text, see the [text documentation](../text/README.md).
 
+### Why range support uses separate schema factories
+
+Persisted ranges need storage for their endpoints and application-defined data.
+`ExtrinsicLocations.createArraySchema` creates an object schema that contains both a content array and a range collection.
+It does not add fields to an existing array node.
+
+For formatted text, `FormattedText.createSchemaWithRanges` adds optional range storage to the existing text schema.
+Using a separate factory makes this schema change opt-in and leaves `FormattedText.createSchema` unchanged.
+Existing documents require an explicit [schema upgrade](../text/README.md#upgrade-existing-formatted-text), after which views using the old schema are incompatible.
+This also lets applications choose whether to adopt the current alpha implementation and its limitations.
+
 ## Current MVP limitations
 
 The current MVP has the following requirements and limitations:
@@ -58,7 +69,10 @@ The current MVP has the following requirements and limitations:
   Undo and redo can also be rejected after intervening changes.
   Range data edits use ordinary tree editing semantics and do not add these constraints.
 - All writers must use the provided content and range editing APIs to keep range endpoints correct.
-  Other view schemas, import operations, or agents can bypass these APIs and leave stale endpoints.
+  The array API exposes a read-only content type and provides mutable access only inside `transactOnContent`.
+  This type-level restriction does not prevent other view schemas, import operations, type assertions, or agents from bypassing the editing APIs.
+  Such edits can leave stale endpoints that refer to the wrong content or fall outside the array.
+  Editing fields of object items or range data directly is allowed because it does not change array positions.
 - Content-editing callbacks must be synchronous, and editing scopes on the same array cannot be nested.
   Mutable content arrays obtained through a callback must not be used for editing outside that callback.
 - Adding or removing ranges and explicitly changing their bounds during calls to [`transactOnContent`](./extrinsicLocationsNamespace.ts) or structural formatted-text editing methods throws a `UsageError`.
@@ -88,27 +102,44 @@ Assigning `ExtrinsicLocations.TrackedRange.data` replaces its data without chang
 
 ## Planned work
 
-Phase 1 status and remaining work (remaining Phase 1 work can proceed in parallel):
+The following tracks separate work on the constrained MVP from work on future index fields and bulk editing.
+They describe design directions, not commitments or a fixed implementation order.
+
+### MVP and constraint-based improvements
 
 1. **Implemented:** An extrinsic range MVP using `NoChangeConstraint` to maintain its data invariants.
-It stores numeric endpoints and uses temporary array insertion anchors, which process sequence deltas, to update at the after editing the array.
-2. Schema versioning to allow for schema changes which change the field kind without strict field kind ordering rules to prevent cycles.
-3. Add Experimental (alpha) field kind: index. Support edits like "if larger than A, add B" (where A is adjusted when rebasing over other edits).
-4. Ensure stabilization and rollout of new field kinds is practical and robust (good errors, no asserts etc.)
-5. Generalize staged field kind changes (required to option is supported, add required vs identifier. One direction will depend on 2).
-6. Implement shallow "NoChangeConstraint" (also desired for tables)
-7. "Drill down" aka "Batch" editing: way to apply same edit to all nodes at a path which can include wildcards and/or ranges. Also consider table and range formatting use-cases in design.
-8. Work through the merge edge cases of the planned final design (see below), including undo/redo, moves, and cases where range ends can get swapped.
-The MVP has tests for its current constrained behavior; those do not validate the future design.
-9. **Partially implemented:** Range-enabled formatted text supports an explicit schema upgrade from existing text, with lazy range storage and no rewrite of existing content.
+It stores numeric endpoints and uses temporary array insertion anchors, which process sequence deltas, to update the endpoints after editing the array.
+It does not introduce a field kind.
+2. Implement a shallow `NoChangeConstraint` to reduce conflicts in the constrained approach.
+This is also useful for tables and should work across field kinds; it is not required for the proposed index field kind itself.
+3. **Partially implemented:** Range-enabled formatted text supports an explicit schema upgrade from existing text, with lazy range storage and no rewrite of existing content.
 Production rollout and stabilization remain future work.
 See the [upgrade documentation](../text/README.md#upgrade-existing-formatted-text).
-10. Design anchors for presence (Not really part of this work, but has some overlap).
-11. Ensure we have ways to hide fields from AI, not just expose methods to protected invariants.
-12. Write command pattern demo with showing how to have telemetry for failure, and how one could implement retry.
+4. Ensure we have ways to hide fields from AI, not just expose methods to protect invariants.
+5. Write a command-pattern demo showing how to record rejected edits in telemetry and implement retries.
+Range-maintenance constraints can reject an enclosing application transaction, not just the text or range edit.
+The demo would explain this consequence and how applications can respond; it is supporting guidance, not a prerequisite for the range implementation.
 
-Later:
-These can overlap with phase one, but have some minimal dependency on parts of it and each-other.
+### Index-field and bulk-editing work
+
+1. Schema versioning to allow schema changes that change the field kind without strict field kind ordering rules to prevent cycles.
+2. Add an experimental (alpha) index field kind.
+An insertion-oriented example is "if larger than A, add B", where A is adjusted when rebasing over other edits.
+This example is not a complete edit model: overlapping removals can also require adjusting B, and moves and removals need more detailed operations and rebase rules.
+3. Ensure stabilization and rollout of new field kinds is practical and robust, with useful errors rather than assertions.
+4. Generalize staged field kind changes (required to optional is supported; add required versus identifier).
+One direction will depend on the schema-versioning work above.
+5. "Drill down", also called "batch" editing: apply the same edit to all nodes at a path that can include wildcards or ranges.
+Also consider table and range-formatting use cases in the design.
+6. Work through the merge edge cases of the proposed design (see below), including undo/redo, moves, and cases where range ends can get swapped.
+The MVP has tests for its current constrained behavior; those do not validate the future design.
+
+Related work: design anchors for presence.
+This is not part of extrinsic range support, but some requirements overlap.
+
+### Later work
+
+These ideas can overlap with the tracks above, but depend on the relevant infrastructure and, in some cases, each other.
 
 1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app). Should support multiple children: make things like a range kind with 2 children (start and end) easier we end up having to do that. Using this to add range start and range end, or fields with other kinds of anchoring are also options.
 2. Improve MVP concurrency 1: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
@@ -134,12 +165,19 @@ The relationship to anchors and presence remains a design question.
 ### Designs:
 
 Index field kind (accepted design direction; not implemented by this MVP):
-- Reuse code from sequence field kind (identical changeset logic, including rebase and ops)
+- Reuse sequence-field logic for index adjustment and rebasing where the behavior must match.
+Sharing that logic would help keep the two implementations consistent; it does not mean the MVP introduces a new field kind.
 - Child is just a number representing an index
 
 Can we do better anchoring for better semantics? Does this require knowing both start and end, and maybe extra config inside the field, not just a single number?
 
 ### Bulk editing:
+
+Bulk editing is a general capability, not a feature specific to extrinsic ranges.
+It is relevant here because a content edit must update all affected ranges, including ranges added concurrently.
+Without an operation that applies to the whole collection, the constrained approach must reject conflicting edits to keep endpoints correct.
+Bulk operations could also avoid encoding a separate endpoint edit for every affected range when inserting a character.
+These are motivations for future work, not capabilities of the current MVP.
 
 How does this work in our setup? Allow all nodes (or maybe fields) in changesets to be roots for structural bulk edits?
 Do we need to make it more limited, like can only do edits which don't change the tree shape (Like replace leaf nodes)?
