@@ -88,6 +88,8 @@ export {
 	SchemaFactory,
 	scoped,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
+	composeSchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryAlphaOptions,

@@ -4,43 +4,45 @@
 "__section": feature
 ---
 
-Set object schema defaults once for each factory
+Add object options to alpha and beta schema factories so defaults can be set once
 
-[SchemaFactoryAlpha][] now accepts an options object with the scope and default callbacks.
-Use `objectOptionDefaults` to set defaults instead of repeating the options on each call.
-The callback applies to [objectAlpha][], [objectRecursive][], and [objectRecursiveAlpha][].
-It does not change [object][].
+[SchemaFactoryBeta](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class) and [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class) now accept an options object with the scope and a default callback.
+Use [objectOptionDefaults](https://fluidframework.com/docs/api/fluid-framework/schemafactorybetaoptions-interface#objectoptiondefaults-propertysignature) to set defaults instead of repeating the options on each call.
+For beta factories, the callback applies to [object](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#object-method) and [objectRecursive](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#objectrecursive-method).
+For alpha factories, it also applies to [objectAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectalpha-method) and [objectRecursiveAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectrecursivealpha-method).
+It does not change [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) instances.
 
 ```typescript
-import { SchemaFactoryAlpha } from "fluid-framework/alpha";
+import { SchemaFactoryBeta } from "fluid-framework/beta";
 
-const sf = new SchemaFactoryAlpha({
+const sf = new SchemaFactoryBeta({
     scope: "com.example",
     objectOptionDefaults: (_name, _fields, options) => ({
-        allowUnknownOptionalFields: true,
+        allowUnknownOptionalFields: false,
         ...options,
     }),
 });
 
-class Foo extends sf.objectAlpha("Foo", { x: sf.number }) {}
-class Bar extends sf.objectAlpha("Bar", { y: sf.string }) {}
+class Foo extends sf.object("Foo", { x: sf.number }) {}
+class Bar extends sf.object("Bar", { y: sf.string }) {}
 
 // Override the default for one schema.
-class Strict extends sf.objectAlpha("Strict", {}, { allowUnknownOptionalFields: false }) {}
+class Permissive extends sf.object("Permissive", {}, { allowUnknownOptionalFields: true }) {}
 ```
 
-[settings][] provides the factory's options without its scope.
-[withOptionsAlpha][] creates a factory with the same scope and new settings.
-It does not change the original factory.
-[scopedFactoryAlpha][] creates a child factory that also uses the parent's settings.
-Use [composeSchemaFactoryAlphaOptions][] to apply two callbacks in order.
-The second callback receives the options returned by the first callback.
+New utilities support composing and extending factory settings without losing existing defaults:
+
+- [settings](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#settings-property) provides the factory's options without its scope.
+- [withOptions](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#withoptions-method) creates a factory with the same scope and replacement settings without changing the original factory.
+- [scopedFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#scopedfactory-method) creates a child factory that also uses the parent's settings.
+- [composeSchemaFactoryBetaOptions](https://fluidframework.com/docs/api/fluid-framework/composeschemafactorybetaoptions-function) applies two callbacks in order.
+  The second callback receives the options returned by the first callback.
 
 ```typescript
-import { composeSchemaFactoryAlphaOptions } from "fluid-framework/alpha";
+import { composeSchemaFactoryBetaOptions } from "fluid-framework/beta";
 
-const extended = sf.withOptionsAlpha(
-    composeSchemaFactoryAlphaOptions(sf.settings, {
+const extended = sf.withOptions(
+    composeSchemaFactoryBetaOptions(sf.settings, {
         objectOptionDefaults: (_name, _fields, options) => ({
             metadata: { description: "auto-generated" },
             ...options,
@@ -49,12 +51,4 @@ const extended = sf.withOptionsAlpha(
 );
 ```
 
-[SchemaFactoryAlpha]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class
-[objectAlpha]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectalpha-methodsignature
-[objectRecursive]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectrecursive-methodsignature
-[objectRecursiveAlpha]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectrecursivealpha-methodsignature
-[object]: https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-methodsignature
-[settings]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#settings-property
-[withOptionsAlpha]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#withoptionsalpha-methodsignature
-[scopedFactoryAlpha]: https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#scopedfactoryalpha-methodsignature
-[composeSchemaFactoryAlphaOptions]: https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryalphaoptions-function
+For alpha-only options, use [SchemaFactoryAlphaOptions](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalphaoptions-interface), [withOptionsAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#withoptionsalpha-method), [scopedFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#scopedfactoryalpha-method), and [composeSchemaFactoryAlphaOptions](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryalphaoptions-function).

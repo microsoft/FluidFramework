@@ -52,7 +52,9 @@ import {
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
 	allowUnused,
+	getSimpleSchema,
 	type InsertableTreeFieldFromImplicitField,
+	type ObjectSchemaOptions,
 } from "../../../simple-tree/index.js";
 import {
 	brand,
@@ -1447,6 +1449,155 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
+	describe("SchemaFactoryBeta constructor settings", () => {
+		function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
+			const simple = getSimpleSchema(schema).definitions.get(schema.identifier);
+			assert(simple?.kind === NodeKind.Object);
+			return simple.allowUnknownOptionalFields;
+		}
+
+		it("keeps the scope separate and preserves its inferred type", () => {
+			const sf = new SchemaFactoryBeta({ scope: "test" });
+			assert.equal(sf.scope, "test");
+			assert.equal("scope" in sf.settings, false);
+			assert.equal(sf.settings.objectOptionDefaults, undefined);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), false);
+			assert.equal(
+				allowsUnknownOptionalFields(new SchemaFactoryBeta("test").object("Default", {})),
+				false,
+			);
+			type _check = requireTrue<areSafelyAssignable<typeof sf.scope, "test">>;
+		});
+
+		it("applies defaults once to object and recursive object schemas", () => {
+			const calls: (number | string)[] = [];
+			const sf = new SchemaFactoryBeta({
+				scope: "test",
+				objectOptionDefaults: (name, _fields, options) => {
+					calls.push(name);
+					return { allowUnknownOptionalFields: true, ...options };
+				},
+			});
+			assert.equal(allowsUnknownOptionalFields(sf.object("Object", {})), true);
+			assert.equal(allowsUnknownOptionalFields(sf.objectRecursive("Recursive", {})), true);
+			assert.deepEqual(calls, ["Object", "Recursive"]);
+			assert.equal(
+				allowsUnknownOptionalFields(new SchemaFactory("test").object("Stable", {})),
+				false,
+			);
+		});
+
+		it("lets per-call options override defaults and preserves custom metadata typing", () => {
+			const sf = new SchemaFactoryBeta({
+				scope: "test",
+				objectOptionDefaults: (_name, _fields, options) => ({
+					allowUnknownOptionalFields: true,
+					...options,
+				}),
+			});
+			const Schema = sf.object(
+				"Override",
+				{},
+				{
+					allowUnknownOptionalFields: false,
+					metadata: { custom: { count: 42 } },
+				},
+			);
+			assert.equal(allowsUnknownOptionalFields(Schema), false);
+			assert.equal(Schema.metadata.custom?.count, 42);
+			type _check = requireTrue<
+				areSafelyAssignable<typeof Schema.metadata.custom, { count: 42 } | undefined>
+			>;
+		});
+
+		it("passes the original arguments and keeps options when the callback returns undefined", () => {
+			const fields = { x: SchemaFactoryBeta.number };
+			const options: ObjectSchemaOptions = { allowUnknownOptionalFields: true };
+			const sf = new SchemaFactoryBeta<"test", number>({
+				scope: "test",
+				objectOptionDefaults: (name, actualFields, actualOptions) => {
+					assert.equal(name, 42);
+					assert.equal(actualFields, fields);
+					assert.equal(actualOptions, options);
+					return undefined;
+				},
+			});
+			const Schema = sf.object(42, fields, options);
+			assert.equal(Schema.identifier, "test.42");
+			assert.equal(allowsUnknownOptionalFields(Schema), true);
+		});
+
+		it("inherits settings in child scopes and replaces them without changing the original", () => {
+			const sf = new SchemaFactoryBeta({
+				scope: "test",
+				objectOptionDefaults: () => ({ allowUnknownOptionalFields: true }),
+			});
+			const child = sf.scopedFactory("child");
+			const replaced = sf.withOptions({});
+			assert.equal(child.scope, "test.child");
+			assert.equal(child.scopedFactory("nested").scope, "test.child.nested");
+			assert.equal(allowsUnknownOptionalFields(child.object("Child", {})), true);
+			assert.equal(replaced.scope, sf.scope);
+			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), false);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Original", {})), true);
+			type _check = requireTrue<areSafelyAssignable<typeof child.scope, "test.child">>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof replaced.scope, "test">>;
+		});
+
+		it("preserves undefined scopes and numeric name constraints when replacing settings", () => {
+			const sf = new SchemaFactoryBeta<undefined, number>({
+				scope: undefined,
+				objectOptionDefaults: () => ({ allowUnknownOptionalFields: true }),
+			});
+			const replaced = sf.withOptions(sf.settings);
+			assert.equal(replaced.scope, undefined);
+			assert.equal(replaced.object(42, {}).identifier, "42");
+			assert.equal(sf.scopedFactory(1).scope, "1");
+			assert.equal(allowsUnknownOptionalFields(replaced.object(43, {})), true);
+			type _check = requireTrue<areSafelyAssignable<typeof replaced.scope, undefined>>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof replaced, SchemaFactoryBeta<undefined, number>>
+			>;
+		});
+
+		it("preserves callbacks defined on a prototype", () => {
+			class Options {
+				public readonly scope = "test";
+
+				public objectOptionDefaults(): { allowUnknownOptionalFields: boolean } {
+					return { allowUnknownOptionalFields: true };
+				}
+			}
+			const options = new Options();
+			const sf = new SchemaFactoryBeta(options);
+			const replaced = new SchemaFactoryBeta("test").withOptions(options);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Direct", {})), true);
+			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), true);
+			assert.equal(
+				allowsUnknownOptionalFields(sf.scopedFactory("child").object("Child", {})),
+				true,
+			);
+		});
+
+		it("propagates callback errors", () => {
+			const error = new Error("Default options failed");
+			const sf = new SchemaFactoryBeta({
+				scope: "test",
+				objectOptionDefaults: () => {
+					throw error;
+				},
+			});
+			assert.throws(
+				() => sf.object("Object", {}),
+				(actual) => actual === error,
+			);
+			assert.throws(
+				() => sf.objectRecursive("Recursive", {}),
+				(actual) => actual === error,
+			);
+		});
+	});
+
 	describe("SchemaFactoryAlpha constructor settings", () => {
 		it("keeps the scope separate from the settings", () => {
 			const sf = new SchemaFactoryAlpha({ scope: "test" });
@@ -1557,13 +1708,17 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("applies defaults to recursive methods but not the inherited object method", () => {
+		it("applies defaults once to recursive methods and the inherited beta object method", () => {
 			let calls = 0;
 			const sf = new SchemaFactoryAlpha({
 				scope: "test",
 				objectOptionDefaults: (_name, _fields, options) => {
 					calls++;
-					return { allowUnknownOptionalFields: true, ...options };
+					return {
+						allowUnknownOptionalFields: true,
+						metadata: { description: "factory default" },
+						...options,
+					};
 				},
 			});
 			assert.equal(sf.objectRecursive("Recursive", {}).allowUnknownOptionalFields, true);
@@ -1571,8 +1726,8 @@ describe("schemaFactory", () => {
 				sf.objectRecursiveAlpha("RecursiveAlpha", {}).allowUnknownOptionalFields,
 				true,
 			);
-			sf.object("Stable", {});
-			assert.equal(calls, 2);
+			assert.equal(sf.object("Beta", {}).metadata.description, "factory default");
+			assert.equal(calls, 3);
 		});
 
 		it("propagates callback errors", () => {

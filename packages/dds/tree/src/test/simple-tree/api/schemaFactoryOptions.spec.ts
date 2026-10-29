@@ -7,115 +7,171 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	composeSchemaFactoryAlphaOptions,
-	type SchemaFactoryAlphaOptions,
+	composeSchemaFactoryBetaOptions,
+	getSimpleSchema,
+	NodeKind,
+	type SchemaFactoryBetaOptions,
+	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 
+function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
+	const simple = getSimpleSchema(schema).definitions.get(schema.identifier);
+	assert(simple?.kind === NodeKind.Object);
+	return simple.allowUnknownOptionalFields;
+}
+
 describe("schemaFactoryOptions", () => {
-	describe("composeSchemaFactoryAlphaOptions", () => {
-		it("chains callbacks: both effects are applied", () => {
-			const base: SchemaFactoryAlphaOptions = {
-				objectOptionDefaults: (_name, _fields, options) => ({
-					allowUnknownOptionalFields: true,
-					...options,
-				}),
-			};
-			const override: SchemaFactoryAlphaOptions = {
-				objectOptionDefaults: (_name, _fields, options) => ({
-					metadata: { description: "from override" },
-					...options,
-				}),
-			};
-			const composed = composeSchemaFactoryAlphaOptions(base, override);
-			const sf = new SchemaFactoryAlpha({ scope: "test", ...composed });
-
-			const Schema = sf.objectAlpha("Foo", { x: sf.number });
-			assert.equal(Schema.allowUnknownOptionalFields, true, "base effect preserved");
-			assert.equal(Schema.metadata.description, "from override", "override effect applied");
-		});
-
-		it("override wins on conflicts", () => {
-			const base: SchemaFactoryAlphaOptions = {
-				objectOptionDefaults: (_name, _fields, options) => ({
-					allowUnknownOptionalFields: true,
-					...options,
-				}),
-			};
-			const override: SchemaFactoryAlphaOptions = {
-				objectOptionDefaults: (_name, _fields, options) => ({
-					...options,
-					allowUnknownOptionalFields: false,
-				}),
-			};
-			const composed = composeSchemaFactoryAlphaOptions(base, override);
-			const sf = new SchemaFactoryAlpha({ scope: "test", ...composed });
-
-			const Schema = sf.objectAlpha("Foo", { x: sf.number });
-			assert.equal(Schema.allowUnknownOptionalFields, false, "override wins");
-		});
-
-		it("has no callback when neither input has one", () => {
-			const composed = composeSchemaFactoryAlphaOptions({}, {});
-			assert.equal(composed.objectOptionDefaults, undefined);
-		});
-
-		for (const position of ["base", "override"] as const) {
-			it(`supports only a ${position} callback`, () => {
-				const options: SchemaFactoryAlphaOptions = {
-					objectOptionDefaults: (_name, _fields, perCallOptions) => ({
+	for (const [Factory, compose] of [
+		[SchemaFactoryBeta, composeSchemaFactoryBetaOptions],
+		[SchemaFactoryAlpha, composeSchemaFactoryAlphaOptions],
+	] as const) {
+		describe(compose.name, () => {
+			it("chains callbacks: both effects are applied", () => {
+				const base: SchemaFactoryBetaOptions = {
+					objectOptionDefaults: (_name, _fields, options) => ({
 						allowUnknownOptionalFields: true,
-						...perCallOptions,
+						...options,
 					}),
 				};
-				const composed =
-					position === "base"
-						? composeSchemaFactoryAlphaOptions(options, {})
-						: composeSchemaFactoryAlphaOptions({}, options);
-				const sf = new SchemaFactoryAlpha({ ...composed, scope: "test" });
-				assert.equal(sf.objectAlpha("Foo", {}).allowUnknownOptionalFields, true);
+				const override: SchemaFactoryBetaOptions = {
+					objectOptionDefaults: (_name, _fields, options) => ({
+						metadata: { description: "from override" },
+						...options,
+					}),
+				};
+				const composed = compose(base, override);
+				const sf = new Factory({ scope: "test", ...composed });
+
+				const Schema = sf.object("Foo", { x: sf.number });
+				assert.equal(allowsUnknownOptionalFields(Schema), true, "base effect preserved");
+				assert.equal(Schema.metadata.description, "from override", "override effect applied");
 			});
-		}
 
-		it("preserves the input options when callbacks return undefined", () => {
-			const calls: string[] = [];
-			const perCallOptions = { allowUnknownOptionalFields: true };
-			const fields = { x: SchemaFactoryAlpha.number };
-			const composed = composeSchemaFactoryAlphaOptions(
-				{
-					objectOptionDefaults: (name, actualFields, options) => {
-						calls.push("base");
-						assert.equal(name, 42);
-						assert.equal(actualFields, fields);
-						assert.equal(options, perCallOptions);
-						return undefined;
-					},
-				},
-				{
-					objectOptionDefaults: (name, actualFields, options) => {
-						calls.push("override");
-						assert.equal(name, 42);
-						assert.equal(actualFields, fields);
-						assert.equal(options, perCallOptions);
-						return undefined;
-					},
-				},
-			);
-			const sf = new SchemaFactoryAlpha<"test", number>({ ...composed, scope: "test" });
-			const Schema = sf.objectAlpha(42, fields, perCallOptions);
-			assert.equal(Schema.identifier, "test.42");
-			assert.equal(Schema.allowUnknownOptionalFields, true);
-			assert.deepEqual(calls, ["base", "override"]);
-		});
+			it("override wins on conflicts", () => {
+				const base: SchemaFactoryBetaOptions = {
+					objectOptionDefaults: (_name, _fields, options) => ({
+						allowUnknownOptionalFields: true,
+						...options,
+					}),
+				};
+				const override: SchemaFactoryBetaOptions = {
+					objectOptionDefaults: (_name, _fields, options) => ({
+						...options,
+						allowUnknownOptionalFields: false,
+					}),
+				};
+				const composed = compose(base, override);
+				const sf = new Factory({ scope: "test", ...composed });
 
-		it("keeps the base result when the override returns undefined", () => {
-			const composed = composeSchemaFactoryAlphaOptions(
-				{
-					objectOptionDefaults: () => ({ allowUnknownOptionalFields: true }),
-				},
-				{ objectOptionDefaults: () => undefined },
-			);
-			const sf = new SchemaFactoryAlpha({ ...composed, scope: "test" });
-			assert.equal(sf.objectAlpha("Foo", {}).allowUnknownOptionalFields, true);
+				const Schema = sf.object("Foo", { x: sf.number });
+				assert.equal(allowsUnknownOptionalFields(Schema), false, "override wins");
+			});
+
+			it("has no callback when neither input has one", () => {
+				const composed = compose({}, {});
+				assert.equal(composed.objectOptionDefaults, undefined);
+			});
+
+			for (const position of ["base", "override"] as const) {
+				it(`supports only a ${position} callback`, () => {
+					const options: SchemaFactoryBetaOptions = {
+						objectOptionDefaults: (_name, _fields, perCallOptions) => ({
+							allowUnknownOptionalFields: true,
+							...perCallOptions,
+						}),
+					};
+					const composed = position === "base" ? compose(options, {}) : compose({}, options);
+					const sf = new Factory({ ...composed, scope: "test" });
+					assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+				});
+			}
+
+			it("preserves the input options when callbacks return undefined", () => {
+				const calls: string[] = [];
+				const perCallOptions = { allowUnknownOptionalFields: true };
+				const fields = { x: Factory.number };
+				const composed = compose(
+					{
+						objectOptionDefaults: (name, actualFields, options) => {
+							calls.push("base");
+							assert.equal(name, 42);
+							assert.equal(actualFields, fields);
+							assert.equal(options, perCallOptions);
+							return undefined;
+						},
+					},
+					{
+						objectOptionDefaults: (name, actualFields, options) => {
+							calls.push("override");
+							assert.equal(name, 42);
+							assert.equal(actualFields, fields);
+							assert.equal(options, perCallOptions);
+							return undefined;
+						},
+					},
+				);
+				const sf = new Factory<"test", number>({ ...composed, scope: "test" });
+				const Schema = sf.object(42, fields, perCallOptions);
+				assert.equal(Schema.identifier, "test.42");
+				assert.equal(allowsUnknownOptionalFields(Schema), true);
+				assert.deepEqual(calls, ["base", "override"]);
+			});
+
+			it("keeps the base result when the override returns undefined", () => {
+				const composed = compose(
+					{
+						objectOptionDefaults: () => ({ allowUnknownOptionalFields: true }),
+					},
+					{ objectOptionDefaults: () => undefined },
+				);
+				const sf = new Factory({ ...composed, scope: "test" });
+				assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+			});
+
+			for (const position of ["base", "override"] as const) {
+				it(`propagates errors from the ${position} callback`, () => {
+					const error = new Error(position);
+					const options: SchemaFactoryBetaOptions = {
+						objectOptionDefaults: () => {
+							throw error;
+						},
+					};
+					const composed = position === "base" ? compose(options, {}) : compose({}, options);
+					assert.throws(
+						() => composed.objectOptionDefaults?.("Object", {}, undefined),
+						(actual) => actual === error,
+					);
+				});
+			}
 		});
+	}
+
+	it("preserves alpha-only options through the shared composition implementation", () => {
+		const composed = composeSchemaFactoryAlphaOptions(
+			{
+				objectOptionDefaults: (_name, _fields, options) => ({
+					persistedMetadata: { base: true },
+					...options,
+				}),
+			},
+			{
+				objectOptionDefaults: (_name, _fields, options) => ({
+					...options,
+					persistedMetadata: { ...options?.persistedMetadata, override: true },
+				}),
+			},
+		);
+		const sf = new SchemaFactoryAlpha({ scope: "test", ...composed });
+		const Schema = sf.objectAlpha(
+			"Alpha",
+			{},
+			{
+				metadata: { custom: { count: 42 } },
+			},
+		);
+		assert.deepEqual(Schema.persistedMetadata, { base: true, override: true });
+		assert.equal(Schema.metadata.custom?.count, 42);
 	});
 });
