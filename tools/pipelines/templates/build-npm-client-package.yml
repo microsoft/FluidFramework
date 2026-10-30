@@ -52,10 +52,6 @@ parameters:
   type: boolean
   default: false
 
-- name: testNodeVersion
-  type: string
-  default: '22.22.2'
-
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -665,8 +661,6 @@ extends:
                 displayName: "Checkout build commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
-                parameters:
-                  version: ${{ parameters.testNodeVersion }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
@@ -859,8 +853,6 @@ extends:
                   displayName: "Checkout build commit"
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
-                  parameters:
-                    version: ${{ parameters.testNodeVersion }}
 
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:

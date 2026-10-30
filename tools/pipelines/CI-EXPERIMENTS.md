@@ -6,14 +6,15 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Current selected implementation:** TypeScript 6 workers with the lean runtime graph and development-only example bundles.
+**Current selected implementation:** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
 Its latest run passed in **16m 40s**, including **3m 36s** of initial queueing, versus the original **33m 28s** baseline.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
-An isolated Node 26.13.0 benchmark passed; a PR-test-only CI trial is next.
+Node 26.13.0 passed isolated benchmarks but is not retained: the locked `opossum@8.5.0` dependency rejects it during CI installation.
+The final changes restore the configuration exercised by run 430969, minus the unused native adapter; subsequent confirmation runs do not change the selected implementation.
 
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
-The best individual experimental run was E3 at 15m 30s; the final configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
+The best individual experimental run was E3 at 15m 30s; the first-phase configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
 The deliberate type-check failure was rejected, removed, and followed by a successful clean run.
 Only pipeline files and this report remain changed relative to the user's original test commit.
 
@@ -38,12 +39,11 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | No type-only generation in runtime jobs | Combined retry logs show zero `typetests` commands in all six test jobs, versus 58 in checked policy validation | Declaration entrypoints retained for Mocha import tests and ATTW |
 | Development validation for private examples | Combined retry: main webpack 120.3s to 33.5s, browser prerequisites 171.2s to 58.6s | Production size producer unchanged; reduced production-only coverage for private examples |
 
-## Active experiments
+## Experiment status
 
-| Candidate | Status | What must be established |
-| --- | --- | --- |
-| E13: Node 26.13.0 PR test jobs | Preparing after successful local benchmarks | Keep policy/artifact and non-PR jobs on Node 22; verify the complete PR test suite on Node 26 |
-| Node 26 parallel-Mocha probe | Local run in progress | Check whether the earlier worker-mode exit 13 is resolved before reconsidering parallel runner mode |
+The experiments below are concluded.
+Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
+Further ideas that have not been implemented are listed separately at the end.
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -142,7 +142,7 @@ This was not a cold-cache benchmark.
 | E4: parallel full validation | `ea8bd9e75fee46c13231845db0bc744a31730f7d` | [430731](https://dev.azure.com/fluidframework/public/_build/results?buildId=430731) | Passed, slower elapsed time | 22m 13s; roughly four-minute agent delays and slower tests |
 | E5: targeted test prerequisites | `38918a5574a902cabfc3adc29ecfdfeae3cb2ad3` | [430766](https://dev.azure.com/fluidframework/public/_build/results?buildId=430766) | Passed | 17m 20s including two-minute initial queue; substantially smaller targeted builds |
 | Type-check enforcement probe | `9b80e124e3bd6c0fbff43529ce226fc979254c46` | [430786](https://dev.azure.com/fluidframework/public/_build/results?buildId=430786) | Expected rejection observed | Policy `ci:build` failed with TS2322; emit-only compilation succeeded |
-| Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
+| First-phase configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
 | E6: lockfile-installed tools | `be1b1c90d8baf9bdedc877cfaeeecdc47c8185c9` | [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Passed | 18m 16s including 2m 27s initial queue; no repo-tool installation |
 | E7: validation-only PR packaging | `99dd98b1dc151530569354a22bbc7cfdad61cff0` | [430866](https://dev.azure.com/fluidframework/public/_build/results?buildId=430866) | Passed | Build job 9m 28s; total 17m 53s, still test-limited |
 | E8: independent local-service job | `a5d0f9e18b8c11276079d52e06ed39abfe09ff00` | [430896](https://dev.azure.com/fluidframework/public/_build/results?buildId=430896) | Passed | 16m 35s including 3m 17s initial queue; all suite counts unchanged |
@@ -151,6 +151,8 @@ This was not a cold-cache benchmark.
 | Native retry plus E11 development bundles | `4b3f2a5d4195ccea4721a2ef1ca95cb1d195adfd` | [430954](https://dev.azure.com/fluidframework/public/_build/results?buildId=430954) | Passed | 16m 35s; native adapter works with legacy exception; webpack 33.5s |
 | E12: TypeScript 6 worker comparison | `4d89e87ff040fb33193235c323539967a53f90aa` | [430969](https://dev.azure.com/fluidframework/public/_build/results?buildId=430969) | Passed; selected | 16m 40s; prerequisite builds as fast or faster than the partial native adapter |
 | Node 26 local serial benchmarks | No repository runtime/dependency changes | Local only | Passed | Compilation about 11% faster, merge-tree 7.5% faster, identical emitted files/test counts |
+| Node 26 parallel-Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | 1,568 passes/two pending in 168.2s, but newer Node did not fix worker shutdown |
+| E13: Node 26 PR test jobs | `3eff90cec5069d9990c71115b07bcba9c30e5797` | [430990](https://dev.azure.com/fluidframework/public/_build/results?buildId=430990) | Blocked before tests; reverted | Frozen install rejects `opossum@8.5.0` on Node 26 |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -366,7 +368,7 @@ The artifact job was still compiling when evidence was collected; no claim is ma
 The remaining run is not needed as a performance sample and may be auto-canceled by the restoring push.
 The source entrypoint has been restored byte-for-byte to the user's original dummy-change version.
 
-### Final repeat
+### First-phase repeat
 
 The clean configuration passed in 1,149.1 seconds (19m 09s), with 45,432 passed tests and 3,235 not executed, exactly matching E5.
 The companion policy run [430799](https://dev.azure.com/fluidframework/public/_build/results?buildId=430799) passed.
@@ -501,10 +503,21 @@ Both merge-tree runs exited zero with 1,568 passes and two skipped cases.
 Checked and unchecked compiler output comparisons found zero differing emitted files between Node versions.
 The merge-tree result is one local sample per runtime, not a CI performance guarantee.
 The existing local test report was preserved, and the default local Node was not changed.
+The four-worker JSON-reporter probe was also repeated on Node 26.
+It reported all 1,568 tests passing and two pending in 168.2 seconds, but still exited 13 with an empty text log.
+The newer runtime does not resolve that worker-mode failure, so parallel Mocha remains excluded from the selected configuration.
 
 E13 selects 26.13.0 only for PR verification jobs; policy, artifact builds, and non-PR jobs keep 22.22.2.
 Dependencies are installed after selecting the runtime in each fresh job.
 Before production rollout, decide how to preserve minimum-supported-Node runtime coverage: non-PR jobs still use Node 22, but the PR unit suites in this trial use Node 26.
+
+The CI trial failed during dependency installation, before any Node 26 test result could be collected.
+pnpm reported `ERR_PNPM_UNSUPPORTED_ENGINE` for `opossum@8.5.0`, whose declared range is `^24 || ^22 || ^21 || ^20 || ^18 || ^16`.
+The failure persisted across the existing automatic retries.
+This is a declared-support/installability blocker, not proof that the locally tested code fails at runtime on Node 26.
+Do not disable engine checks or silently alter dependency metadata to force adoption.
+Node 22.22.2 is restored for all jobs; no dependency versions were changed.
+Node selection itself also took 38-43 seconds in the observed Node 26 jobs, so startup overhead must be included in any future CI comparison.
 
 ## Validation ownership
 
@@ -582,6 +595,11 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
 7. Add a supported disposable-CI mode to `fluid-build` if E9 shows useful potential.
    Such a mode could avoid cache read/write bookkeeping while retaining graph deduplication and necessary dependency/config analysis.
    A blanket forced rebuild in each successive artifact-job invocation would lose useful within-job reuse and is not proposed.
+8. Revisit newer Node after resolving dependency support ranges, or benchmark a supported Node 24 version.
+   Node 24 satisfies the observed `opossum` range, but it was not among the `n ls` versions in the inspected image and has not been benchmarked here.
+   Preserve minimum-supported-runtime coverage when deciding on a production test matrix.
+9. Measure whether the Node-selection step can avoid copying an already-active matching runtime.
+   Instrument the initial version first; no such change was made in this experiment.
 
 ## Limitations
 
@@ -593,5 +611,7 @@ Pipeline queue contention and caches can dominate small improvements.
 There was one original baseline and two final-configuration samples, with a moving target branch; this is not a controlled statistical estimate.
 Release/non-pull-request pipelines were not executed as part of this experiment; their existing configuration is preserved by pull-request-only gating and parameter defaults.
 The tsconfig mutation is deliberately confined to disposable test jobs and remains proof-of-concept machinery, not a recommended public build interface.
+Newer Node and the partial native TypeScript adapter are not enabled in the selected configuration.
+No engine-policy overrides or dependency upgrades were used to make the unsuccessful trials appear green.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.

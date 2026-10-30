@@ -222,7 +222,6 @@ extends:
       taskBuild: build:compile
       buildToolsVersionToInstall: installed
       taskPack: false
-      testNodeVersion: '26.13.0'
     taskBuildDocs: true
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
