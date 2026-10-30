@@ -6,10 +6,11 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing configuration:** serial E2E/query-path control [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) passed 45,649 tests with 3,235 skipped and no failures in **12m 23s**.
-All nine timed jobs finished below nine minutes; the longest job was Tinylicious service at **7m 39s**.
-This is the first passing sample meeting the per-job target, not proof that most future runs will meet it.
-The next experiment retries two-worker E2E execution after fixing unnecessary fake-clock installation in skipped service suites.
+**Latest passing run:** guarded two-worker retry [431159](https://dev.azure.com/fluidframework/public/_build/results?buildId=431159) passed in **11m 57s**, with all nine timed jobs below nine minutes (longest: artifact build, **7m 53s**).
+The serial query-path control [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) also passed with all nine jobs below the target, in **12m 23s** overall.
+Every suite's textual pass/skip totals matched between these two runs.
+Azure's retry aggregate misclassified 28 inherited skips as passes due to a parallel JUnit serialization issue; a targeted reporter correction is now being verified rather than claiming extra executed tests.
+The query optimization is independently validated; parallel E2E reliability still needs repeated confirmation.
 The previous ESM-only build run [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) passed in **13m 14s**.
 The preceding cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed the same test totals in **11m 13s**, versus the original **33m 28s** baseline.
 Eight of nine timed jobs were below nine minutes in both runs; Tinylicious service remains above target at **10m 20s** in the latest run.
@@ -179,6 +180,20 @@ It retained all 5,977 discovered case names (4,050 passed, 1,927 pending), and r
 The two affected local-driver files still passed 41 cases with one pending.
 This validates the guard's intended behavior locally; the particular remote timer's history remains unproven.
 The next remote retry enables the same two-worker configuration with these guards, leaving the query optimization unchanged.
+
+Run 431159 then passed, with all nine timed jobs below nine minutes.
+The Tinylicious test step fell from the serial control's 314.0 seconds to 264.9 seconds (15.6%); its full job took 440.6 seconds.
+No timer assertion, hook failure, or automatic retry was reported.
+The companion policy run [431155](https://dev.azure.com/fluidframework/public/_build/results?buildId=431155) passed.
+This supports the early-skip correction but does not prove that every possible asynchronous leak is resolved.
+
+The Azure aggregate reported 45,677 passed and 3,207 skipped, while all package/task text summaries matched the serial control exactly.
+Inspection found Mocha's parallel serializer preserves `state: "pending"` but serializes `isPending()` from the test's own `pending` flag, losing inherited pending state for nested suites.
+The built-in xUnit reporter uses that deserialized method, producing a self-closing testcase without `<skipped/>` even though the summary says it was skipped.
+A small fixture reproduced this mismatch with a nested suite skipped by its ancestor's hook.
+The Fluid xUnit wrapper now recognizes final pending state while preserving the original method as a fallback.
+The regression checks that inherited skips stay skipped and real passes remain passes; existing failure/report naming tests also pass.
+The next confirmation includes this reporting fix and one extra reporter regression test, with no change to the runtime suite selection.
 
 The serial query-patch control 431144 passed all 45,649 tests, with 3,235 skipped, in 743.4 seconds.
 Its Tinylicious test step took 314.0 seconds and the full job 458.5 seconds, compared with E20's 468.0 and 619.9 seconds.
@@ -448,7 +463,8 @@ This was not a cold-cache benchmark.
 | E20: ESM-only service prerequisites | `90673c161fc5c48cbeb2f051986f6a34124acd38` | [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) | Passed | 13m 14s, unchanged suite totals; zero CJS commands in service/stress builds |
 | E21: profiled query-path and end-to-end concurrency candidates | `2e8a2594dfeb0dc833c0fe8d9c142314c8a4aa59` | [431129](https://dev.azure.com/fluidframework/public/_build/results?buildId=431129) | Failed | Legacy timer assertion in SharedDirectory setup; all other jobs passed |
 | E21 serial control | `123a85096486a3ced7844a7e749ba5650d340fde` | [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) | Passed | 12m 23s; all nine jobs below nine minutes; unchanged test totals |
-| E22: parallel retry with early service-driver skips | Implementation `f403b0debf0` plus retry flag/report | Pending | Local full suite passed; remote pending | Skip local-only suites before replacing process timers; preserve all cases and assertions |
+| E22: parallel retry with early service-driver skips | `3bd61b252c75990d802db5bd4912acfc654ad3ba` | [431159](https://dev.azure.com/fluidframework/public/_build/results?buildId=431159) | Passed; reporting discrepancy diagnosed | 11m 57s; all nine jobs under nine minutes; Tinylicious test step 264.9s |
+| E22 reporting correction/repeat | Pending | Pending | Local reporter regression passed; remote pending | Preserve nested-suite skipped status in parallel JUnit output |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
