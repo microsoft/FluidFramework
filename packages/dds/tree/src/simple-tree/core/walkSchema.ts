@@ -43,7 +43,7 @@ export function walkAllowedTypes(
  * @remarks
  * Walks without a component callback allocate no component state.
  *
- * An {@link IncrementalSchemaVisitor} can omit component visits already completed by the caller.
+ * An {@link IncrementalSchemaVisitor} skips subgraphs whose component visits were already completed by the caller.
  * Ordinary {@link SchemaVisitor}s report every visited component when requested, independently of caller-owned results.
  * The walker retains no internal state between calls. Failed walks discard all per-walk component analysis state;
  * results from successfully completed component callbacks remain the caller's responsibility.
@@ -56,7 +56,7 @@ export function walkAllowedTypes(
  * Standard Tarjan traversal uses the presence of a discovery index to detect previously discovered nodes.
  * Here, `visited` tracks discovery separately from `analysis.states`, which contains only nodes participating in this walk's component analysis.
  * Walks without component callbacks still need cycle detection but allocate no Tarjan state.
- * Incremental walks may also traverse previously completed components to report field callbacks without analyzing those components again.
+ * Incremental walks do not evaluate fields inside previously completed components.
  *
  * The `pending` stack replaces recursive depth-first-search calls.
  * The separate `analysis.stack` is Tarjan's stack of discovered nodes not yet assigned to an identified strongly connected component.
@@ -75,8 +75,10 @@ export function walkSchema(
 	const { wasComponentVisited, allowedTypeFilter } = visitor;
 	assert(
 		wasComponentVisited === undefined ||
-			(visitor.stronglyConnectedComponent !== undefined && visitor.node === undefined),
-		"Incremental component visits require a component callback without node callbacks",
+			(visitor.stronglyConnectedComponent !== undefined &&
+				visitor.node === undefined &&
+				visitor.allowedTypes === undefined),
+		"Incremental component visits require a component callback without node or allowed-type callbacks",
 	);
 	/**
 	 * Zero-based ordinal assigned when a node is first analyzed.
@@ -121,7 +123,7 @@ export function walkSchema(
 		 */
 		readonly references: Iterator<TreeNodeSchema>;
 		/**
-		 * Absent for ordinary walks without component callbacks and for previously visited components.
+		 * Absent for ordinary walks without component callbacks.
 		 */
 		readonly nodeState: TarjanNodeState | undefined;
 	}
@@ -153,16 +155,14 @@ export function walkSchema(
 					stack: new Array<TarjanNodeState>(),
 				};
 	const pending: Frame[] = [];
-	const pruneVisitedComponents =
-		wasComponentVisited !== undefined && visitor.allowedTypes === undefined;
 	const referenceVisitor: Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter"> =
-		pruneVisitedComponents
-			? {
+		wasComponentVisited === undefined
+			? visitor
+			: {
 					allowedTypeFilter: (type) =>
 						(allowedTypeFilter === undefined || allowedTypeFilter(type)) &&
 						!wasComponentVisited(type.type),
-				}
-			: visitor;
+				};
 
 	/**
 	 * Evaluates fields in declaration order without initializing contexts.
@@ -178,26 +178,20 @@ export function walkSchema(
 	}
 
 	/**
-	 * Starts an unvisited node unless its previous component visit permits pruning.
-	 * When field callbacks require traversal, most-derived validation precedes querying previous component visits.
+	 * Starts an unvisited node unless its component and dependencies were already completed.
 	 */
 	function discover(schema: TreeNodeSchema): void {
 		if (visited.has(schema)) {
 			return;
 		}
 		visited.add(schema);
-		// Previously visited components need no new Tarjan node state, but field callbacks still require traversal.
-		if (pruneVisitedComponents && wasComponentVisited(schema)) {
+		if (wasComponentVisited?.(schema) === true) {
 			return;
 		}
 		// Reject conflicting subclasses of a factory-generated base, including conflicts with constructed nodes.
 		markSchemaMostDerived(schema, false);
 		let nodeState: TarjanNodeState | undefined;
-		// Without field callbacks, the cutoff above already established that this node is new.
-		if (
-			analysis !== undefined &&
-			(pruneVisitedComponents || !(wasComponentVisited?.(schema) ?? false))
-		) {
+		if (analysis !== undefined) {
 			nodeState = {
 				schema,
 				index: analysis.states.size,
@@ -345,18 +339,18 @@ export interface SchemaVisitor {
 /**
  * A visitor for incrementally visiting components of a schema graph with {@link walkSchema}.
  * @remarks
- * Reuses {@link SchemaVisitor}'s component, allowed-type, and filtering callbacks.
+ * Reuses {@link SchemaVisitor}'s component and filtering callbacks.
  * Unlike an ordinary visitor, it reports only components not covered by {@link IncrementalSchemaVisitor.wasComponentVisited}.
  * Outgoing dependency components have either completed their callback in this walk or are covered by that predicate.
  *
- * Use this when component callbacks produce reusable caller-owned results, while allowed-type callbacks perform
- * checks required on every pass, such as configuration-specific validation.
+ * Use this when component callbacks produce reusable caller-owned results.
+ * Checks required on every pass, such as configuration-specific validation, need a separate ordinary walk.
  * No cache is maintained by the walker, and retaining cached results is not required by this interface.
- * Node callbacks are excluded: this mode omits previously completed component visits.
+ * Node and allowed-type callbacks are excluded: this mode skips previously completed subgraphs.
  * Neither the callbacks nor the predicate may initialize node contexts during schema discovery.
  */
 export interface IncrementalSchemaVisitor
-	extends Pick<SchemaVisitor, "allowedTypes" | "allowedTypeFilter">,
+	extends Pick<SchemaVisitor, "allowedTypeFilter">,
 		Required<Pick<SchemaVisitor, "stronglyConnectedComponent">> {
 	/**
 	 * Returns whether the caller has successfully completed a {@link SchemaVisitor.stronglyConnectedComponent}
@@ -374,13 +368,17 @@ export interface IncrementalSchemaVisitor
 	 * Dependencies excluded by the filter do not need completed visits.
 	 * The predicate may be called multiple times for a schema; it must not depend on call count or cause traversal side effects.
 	 *
-	 * Returning `true` suppresses component callbacks for that completed subgraph.
-	 * Without an {@link SchemaVisitor.allowedTypes} callback, traversal stops at that schema.
-	 * With that callback, the walker still traverses its fields and dependencies in ordinary visitor order.
+	 * Returning `true` stops traversal at that schema.
+	 * Its fields and dependencies are not traversed, and no component callbacks are reported for that subgraph.
 	 */
 	wasComponentVisited: (schema: TreeNodeSchema) => boolean;
 	/**
 	 * Incremental component visits do not support node callbacks.
 	 */
 	node?: never;
+	/**
+	 * Incremental component visits do not support allowed-type callbacks.
+	 * Use an ordinary walk to inspect every field.
+	 */
+	allowedTypes?: never;
 }

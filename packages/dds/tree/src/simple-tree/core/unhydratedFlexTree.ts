@@ -12,6 +12,7 @@ import {
 	type AnchorEvents,
 	dummyRoot,
 	EmptyKey,
+	storedEmptyFieldSchema,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
 	type FieldKey,
@@ -57,6 +58,8 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+import type { SchemaComponent } from "../treeSchema.js";
 
 import type { Context } from "./context.js";
 import type { TreeNode } from "./treeNode.js";
@@ -152,7 +155,7 @@ export class UnhydratedFlexTreeNode
 		 * The {@link Context} for this node.
 		 * @remarks
 		 * Provides access to all schemas reachable from this node.
-		 * See {@link getUnhydratedContext}.
+		 * See {@link SchemaComponent.context}.
 		 */
 		public readonly simpleContext: Context,
 	) {
@@ -378,13 +381,21 @@ export class UnhydratedFlexTreeNode
  * @remarks An editor is required to edit the FlexTree.
  */
 export class UnhydratedContext implements FlexTreeContext {
+	public readonly schema: TreeStoredSchema;
+
 	/**
-	 * @param flexSchema - Schema to use when working with the tree.
+	 * @param nodeSchema - Node definitions to use when working with the tree.
+	 * Unhydrated nodes have no document root, so the context uses a forbidden root field.
 	 */
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
-		public readonly schema: TreeStoredSchema,
-	) {}
+		nodeSchema: TreeStoredSchema["nodeSchema"],
+	) {
+		this.schema = {
+			nodeSchema,
+			rootFieldSchema: storedEmptyFieldSchema,
+		};
+	}
 
 	public isDisposed(): boolean {
 		return false;

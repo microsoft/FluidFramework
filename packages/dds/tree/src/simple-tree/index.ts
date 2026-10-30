@@ -331,13 +331,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export {
-	toStoredSchema,
-	convertFieldKind,
-	toUpgradeSchema,
-	toInitialSchema,
-	toUnhydratedSchema,
-} from "./toStoredSchema.js";
+export { toUnhydratedSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -347,4 +341,12 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
-export { type TreeSchema, createTreeSchema } from "./treeSchema.js";
+export {
+	type TreeSchema,
+	type TransitiveSchemaInfo,
+	createTreeSchema,
+	SchemaComponent,
+	toStoredSchema,
+	toUpgradeSchema,
+	toInitialSchema,
+} from "./treeSchema.js";

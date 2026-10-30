@@ -54,7 +54,6 @@ import {
 	prepareForInsertionContextless,
 	type FieldSchema,
 	tryDisposeTreeNode,
-	FieldSchemaAlpha,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -501,18 +500,9 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
-			assert(
-				this.rootFieldSchema instanceof FieldSchemaAlpha,
-				0xbfa /* all field schema should be FieldSchemaAlpha */,
-			);
 			slots.set(
 				SimpleContextSlot,
-				new HydratedContext(
-					this.flexTreeContext,
-					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.allowedTypesFull.evaluate(),
-					),
-				),
+				new HydratedContext(this.flexTreeContext, this.viewSchema.definitions),
 			);
 
 			// Trigger "rootChanged" events if the root changes in the future.

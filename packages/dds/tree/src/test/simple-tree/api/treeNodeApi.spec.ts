@@ -51,6 +51,8 @@ import {
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	type ArrayNodeDeltaOp,
 	type ArrayNodeTreeChangedDeltaOp,
@@ -3440,6 +3442,43 @@ describe("treeNodeApi", () => {
 			innerPoints: schema.array(TestPoint),
 		}) {}
 
+		for (const hydrated of [false, true]) {
+			it(`clones ${hydrated ? "hydrated" : "unhydrated"} nodes without requesting a default context`, () => {
+				class CloneSchema extends schema.object("CloneWithoutDefaultContext", {
+					value: schema.number,
+				}) {}
+				let original: CloneSchema;
+				if (hydrated) {
+					const view = getView(new TreeViewConfiguration({ schema: CloneSchema }));
+					view.initialize({ value: 1 });
+					original = view.root;
+				} else {
+					original = new CloneSchema({ value: 1 });
+				}
+				const component = SchemaComponent.fromSchema(CloneSchema);
+				Object.defineProperty(component, "context", {
+					configurable: true,
+					get() {
+						assert.fail("Cloning must not request the component's default context");
+					},
+				});
+				try {
+					const cloned = TreeBeta.clone<typeof CloneSchema>(original);
+					assert.deepEqual(cloned, original);
+					assert.notStrictEqual(cloned, original);
+					const inner = getInnerNode(cloned);
+					assert(inner instanceof UnhydratedFlexTreeNode);
+					assert.strictEqual(inner.simpleContext.schema, component.definitions);
+					assert.strictEqual(
+						inner.context.schema.nodeSchema,
+						getInnerNode(original).context.schema.nodeSchema,
+					);
+				} finally {
+					Reflect.deleteProperty(component, "context");
+				}
+			});
+		}
+
 		it("clones unhydrated nodes", () => {
 			const topLeft = new TestPoint({ x: 1, y: 1 });
 			const bottomRight = new TestPoint({ x: 10, y: 10 });
@@ -4126,7 +4165,7 @@ describe("treeNodeApi", () => {
 				// Use limited context for view part and full context for flex-tree parts, so that unknown optional fields are unknown in the view schema, but allowed in the flex tree.
 				const flexContext = new UnhydratedContext(
 					defaultSchemaPolicy,
-					dummyContextFull.flexContext.schema,
+					dummyContextFull.flexContext.schema.nodeSchema,
 				);
 				const context: Context = new Context(flexContext, dummyContextLimited.schema);
 
