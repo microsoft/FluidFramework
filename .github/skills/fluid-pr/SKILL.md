@@ -1,6 +1,7 @@
 ---
 name: fluid-pr
 description: Use when creating a pull request in the Fluid Framework repo. Composes a PR title and body following Fluid Framework conventions, proposes them to the user, then pushes the branch and creates the PR on GitHub. Triggers on "create a PR", "make a PR", "open a PR", "submit a PR", or "push and create a PR".
+license: MIT
 ---
 
 <required>

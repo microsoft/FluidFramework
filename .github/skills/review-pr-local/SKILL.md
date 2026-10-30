@@ -1,12 +1,22 @@
 ---
 name: review-pr-local
 description: The authority on pulling a pull request — Azure DevOps or GitHub — into an isolated local worktree so a human can review it in their editor, and on posting human-controlled review comments back to the PR (ADO via the ado PR-thread MCP tools or the Azure DevOps REST API, GitHub via the gh CLI). Auto-detects the platform and all identifiers from the PR URL; not tied to any specific repository. The AI assists an interactive human review and only ever posts comments the human explicitly requests. If you find yourself checking out a PR branch over the user's own working tree, or posting AI-authored review prose the human did not ask for, invoke this skill instead.
+license: MIT
 argument-hint: "[PR-url]"
 ---
 
 # Review a PR Locally (ADO + GitHub)
 
 Check out a pull request into an **isolated git worktree** — never disturbing the user's current checkout — surface its changes in the editor, run an interactive review where the human drives, and post only the comments the human asks for. All identifiers are derived from the PR URL, so the skill works against any ADO or GitHub repository.
+
+## Tool and workspace boundaries
+
+- Use Copilot's file-reading and search tools for inspection.
+- Restrict shell commands to `git`, `az`, and `gh`, plus the minimum JSON serialization and targeted temporary-file cleanup required by the documented ADO REST fallback.
+- Use `ask_user` whenever the workflow requires information or approval from the human.
+- Do not edit source files in either the user's checkout or the review worktree.
+- Do not commit, push, merge, approve, or otherwise change the reviewed branch.
+- Post a review comment only when the human explicitly requests that specific comment, following the approval rules below.
 
 ## Review Philosophy — high-signal, human-owned
 

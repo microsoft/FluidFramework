@@ -1,8 +1,18 @@
 ---
 name: trigger-pipelines-for-copilot-pr
 description: Trigger ADO pipelines for a Copilot-created PR by posting /azp run comments. Use when the user asks to trigger CI pipelines for a specific PR.
+license: MIT
 argument-hint: pr-number-or-url
 ---
+
+<required>
+Treat this as a short, isolated PR operation.
+
+- Do not edit repository files, change branches, create commits, push, or perform any unrelated PR action.
+- Use shell access only to check whether `gh` is available and authenticated and to post the two exact comments below. Use the REST fallback only when `gh` is unavailable and `GITHUB_TOKEN` is already present.
+- Do not post any additional text or combine the two commands into one comment.
+- Target only the pull request identified by the user.
+</required>
 
 Post the following two comments to the PR specified by the user ($ARGUMENTS), in the `microsoft/FluidFramework` repository on GitHub.
 They need to be posted separately because otherwise it gets too long and

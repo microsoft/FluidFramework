@@ -1,6 +1,7 @@
 ---
 name: api-changes
 description: Use when customer-facing API changes were made — i.e., API report .md files differ from the branch's resolved comparison base. Guides through release tag assignment, API Council review requirements, breaking change classification, deprecation process, and changeset guidance. Triggered automatically by ci-readiness-check when api-report diffs are detected.
+license: MIT
 ---
 
 <required>

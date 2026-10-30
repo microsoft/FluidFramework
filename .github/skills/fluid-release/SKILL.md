@@ -1,6 +1,7 @@
 ---
 name: fluid-release
 description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. In autonomous mode, auto-detects state from the repo, attempts to execute, and falls back to a GitHub issue on failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
+license: MIT
 ---
 
 # Fluid Framework Client Release

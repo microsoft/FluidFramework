@@ -1,6 +1,7 @@
 ---
 name: ci-readiness-check
 description: Use when the user explicitly asks for a CI check or to push their branch — e.g. "ci readiness", "check ci", "pre-push check", "ready for CI", "ci check", "ready to push", "push my changes", "push the branch", "let's push". Catches common CI failures before pushing — formatting, stale API reports, missing changesets, policy violations.
+license: MIT
 ---
 
 <required>

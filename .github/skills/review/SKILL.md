@@ -1,6 +1,7 @@
 ---
 name: review
 description: "Review changes relative to a prior state, such as a diff, pull request, branch, commit, or working-tree changes. Use for change-focused code review and regression analysis. Do not use to assess an existing file, API, design, implementation, or other artifact without a comparison; if the request is ambiguous, ask whether the user wants a change review and what prior state to compare against."
+license: MIT
 argument-hint: "[branch-name]"
 ---
 ```text
