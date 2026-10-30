@@ -12,6 +12,13 @@ import type {
 import type { Query } from "express-serve-static-core";
 import type * as nconf from "nconf";
 
+import type {
+	DocumentAccessOperation,
+	IDocumentAccessAuthorizer,
+	IDocumentAccessProof,
+	ITrustedCreateContext,
+} from "./documentAccess";
+
 /**
  * Interface for a git object cache
  */
@@ -45,6 +52,12 @@ export interface ISummaryAccessContext {
 	createTime: number;
 	storageName?: string;
 	source: "localEphemeral" | "alfred";
+	/**
+	 * Candidate proof produced by the ephemeral lifecycle fast path. A configured document
+	 * authorizer must validate and return it before Historian uses it for routing or cache
+	 * isolation. It is ignored when document authorization is disabled.
+	 */
+	accessProof?: IDocumentAccessProof;
 }
 
 export class MalformedEphemeralSummaryAccessRecordError extends Error {}
@@ -99,6 +112,22 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 	query?: Query;
+	/**
+	 * Required when documentAccessAuthorizer is configured. It remains optional so callers that do
+	 * not enable document authorization retain the existing createGitService contract.
+	 */
+	accessOperation?: DocumentAccessOperation;
+	/**
+	 * Selects the first safe ownership lookup for the authorizer without determining routing.
+	 */
+	containerTypeHint?: "ephemeral" | "durable";
+	/**
+	 * Candidate lifecycle or storage proof resolved earlier in the request. A configured
+	 * authorizer must validate and return it before Historian uses it.
+	 */
+	existingAccessProof?: IDocumentAccessProof;
+	trustedCreateContext?: ITrustedCreateContext;
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer;
 	summaryAccessContext?: ISummaryAccessContext;
 }
 

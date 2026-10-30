@@ -38,6 +38,7 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
+	type IDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -502,7 +503,14 @@ export async function validateSummaryDocument({
 	return document;
 }
 
-export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+export interface ICreateGitServiceResult {
+	service: RestGitService;
+	accessProof?: IDocumentAccessProof;
+}
+
+export async function createGitServiceWithAccess(
+	createArgs: ICreateGitServiceArgs,
+): Promise<ICreateGitServiceResult> {
 	const {
 		config,
 		tenantId,
@@ -518,16 +526,72 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		accessOperation,
+		containerTypeHint: explicitContainerTypeHint,
+		existingAccessProof,
+		trustedCreateContext,
+		documentAccessAuthorizer,
 		summaryAccessContext,
 	} = createArgs;
-	const documentId =
-		summaryAccessContext?.documentId ?? getTokenDocumentId(tenantId, authorization);
+	const tokenDocumentId = getTokenDocumentId(tenantId, authorization);
 	const token = parseToken(tenantId, authorization);
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
-
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
+
+	if (documentAccessAuthorizer !== undefined && accessOperation === undefined) {
+		throw new NetworkError(
+			500,
+			"Document access operation is required when an authorizer is configured.",
+		);
+	}
+	const isEphemeralHint = isEphemeralContainer ?? summaryAccessContext?.isEphemeralContainer;
+	const containerTypeHint =
+		explicitContainerTypeHint ??
+		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
+	const accessProof =
+		accessOperation === undefined || documentAccessAuthorizer === undefined
+			? undefined
+			: await documentAccessAuthorizer.authorize({
+					tenantId,
+					documentId: tokenDocumentId,
+					operation: accessOperation,
+					containerTypeHint,
+					trustedCreateContext,
+					existingProof: existingAccessProof,
+			  });
+	if (
+		documentAccessAuthorizer !== undefined &&
+		(accessProof === undefined ||
+			accessProof.tenantId !== tenantId ||
+			accessProof.documentId !== tokenDocumentId ||
+			accessProof.operation !== accessOperation ||
+			accessProof.lifecycleVersion.length === 0 ||
+			accessProof.state !== (accessOperation === "create" ? "pending" : "active") ||
+			(accessProof.containerType !== "ephemeral" &&
+				accessProof.containerType !== "durable") ||
+			(accessProof.containerType === "ephemeral" &&
+				(!Number.isSafeInteger(accessProof.ephemeralCreateTime) ||
+					accessProof.ephemeralCreateTime < 0)) ||
+			(accessProof.source === "ec-lifecycle-redis" &&
+				accessProof.containerType !== "ephemeral") ||
+			((accessProof.source === "dc-v1-metadata" || accessProof.source === "dc-v2-metadata") &&
+				accessProof.containerType !== "durable") ||
+			(trustedCreateContext !== undefined &&
+				(accessProof.lifecycleVersion !== trustedCreateContext.lifecycleVersion ||
+					accessProof.containerType !== trustedCreateContext.containerType ||
+					accessProof.ephemeralCreateTime !==
+						trustedCreateContext.ephemeralCreateTime)) ||
+			(accessProof.physicalContainerName === undefined) !==
+				(accessProof.layoutVersion === undefined) ||
+			(accessProof.physicalContainerName !== undefined &&
+				accessProof.storageAccountName === undefined))
+	) {
+		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
+	}
+	const documentId = accessProof?.documentId ?? tokenDocumentId;
+
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
@@ -537,23 +601,25 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
 	const isEphemeral =
-		summaryAccessContext?.isEphemeralContainer ??
-		(ignoreEphemeralFlag
-			? false
-			: await checkAndCacheIsEphemeral({
-					documentId,
-					tenantId,
-					documentManager,
-					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-					isEphemeralContainerOverride: isEphemeralContainer,
-					cache,
-			  }));
+		accessProof !== undefined
+			? accessProof.containerType === "ephemeral"
+			: summaryAccessContext?.isEphemeralContainer ??
+			  (ignoreEphemeralFlag
+					? false
+					: await checkAndCacheIsEphemeral({
+							documentId,
+							tenantId,
+							documentManager,
+							ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+							isEphemeralContainerOverride: isEphemeralContainer,
+							cache,
+					  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
 	let postIsEphemeral: boolean = isEphemeral;
-	if (postEphemeralContainerChecker !== undefined) {
+	if (accessProof === undefined && postEphemeralContainerChecker !== undefined) {
 		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
 			tenantId,
 			documentId,
@@ -563,7 +629,11 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 
 	let calculatedStorageName: string | undefined;
-	if (initialUpload && storageName) {
+	if (accessProof?.storageAccountName !== undefined) {
+		calculatedStorageName = accessProof.storageAccountName;
+	} else if (accessProof?.containerType === "ephemeral") {
+		calculatedStorageName = undefined;
+	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
 	} else if (summaryAccessContext?.isEphemeralContainer === true) {
 		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
@@ -576,18 +646,26 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 			(await storageNameRetriever?.get(tenantId, documentId)) ??
 			customData?.storageName;
 	}
-	return new RestGitService(
-		details.storage,
-		writeToExternalStorage,
-		tenantId,
-		documentId,
-		cache,
-		calculatedStorageName,
-		storageUrl,
-		postIsEphemeral,
-		maxCacheableSummarySize,
-		simplifiedCustomData,
-	);
+	return {
+		service: new RestGitService(
+			details.storage,
+			writeToExternalStorage,
+			tenantId,
+			documentId,
+			cache,
+			calculatedStorageName,
+			storageUrl,
+			postIsEphemeral,
+			maxCacheableSummarySize,
+			simplifiedCustomData,
+			accessProof,
+		),
+		accessProof,
+	};
+}
+
+export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+	return (await createGitServiceWithAccess(createArgs)).service;
 }
 
 /**

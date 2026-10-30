@@ -39,6 +39,8 @@ import type {
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
 } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
@@ -57,6 +59,8 @@ export function create(
 	readinessCheck?: IReadinessCheck,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -138,6 +142,8 @@ export function create(
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		documentAccessAuthorizer,
+		trustedCreateContextResolver,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
