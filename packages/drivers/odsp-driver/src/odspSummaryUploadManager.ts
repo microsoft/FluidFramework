@@ -34,6 +34,8 @@ import type {
 import type { EpochTracker } from "./epochTracker.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
+import type { OdspOperation } from "./odspOperation.js";
+import { withOdspOperation } from "./requestControl.js";
 
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
@@ -57,6 +59,7 @@ export class OdspSummaryUploadManager {
 	public async writeSummaryTree(
 		tree: ISummaryTree,
 		context: ISummaryContext,
+		operation?: OdspOperation,
 	): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
@@ -75,6 +78,7 @@ export class OdspSummaryUploadManager {
 			context.ackHandle,
 			context.referenceSequenceNumber,
 			tree,
+			operation,
 		);
 		const id = result ? result.id : undefined;
 		if (!result || !id) {
@@ -88,6 +92,7 @@ export class OdspSummaryUploadManager {
 		parentHandle: string | undefined,
 		referenceSequenceNumber: number,
 		tree: ISummaryTree,
+		operation?: OdspOperation,
 	): Promise<IWriteSummaryResponse> {
 		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
 		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
@@ -126,7 +131,7 @@ export class OdspSummaryUploadManager {
 			const postBody = JSON.stringify(snapshot);
 
 			return PerformanceEvent.timedExecAsync(
-				this.mc.logger,
+				operation?.logger ?? this.mc.logger,
 				{
 					eventName: "uploadSummary",
 					attempt: options.refresh ? 2 : 1,
@@ -140,11 +145,14 @@ export class OdspSummaryUploadManager {
 				async (event) => {
 					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
 						url,
-						{
-							body: postBody,
-							headers,
-							method: "POST",
-						},
+						withOdspOperation(
+							{
+								body: postBody,
+								headers,
+								method: "POST",
+							},
+							operation,
+						),
 						"uploadSummary",
 					);
 					event.end({ ...response.propsToLog });

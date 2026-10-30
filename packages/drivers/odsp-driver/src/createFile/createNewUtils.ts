@@ -39,6 +39,8 @@ import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";
 import { runWithRetry } from "./../retryUtils.js";
+import { OdspOperation } from "../odspOperation.js";
+import { withOdspOperation } from "../requestControl.js";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -217,6 +219,7 @@ export async function createNewFluidContainerCore<T>(args: {
 	fetchType: FetchType;
 	validateResponseCallback?: (content: T) => void;
 	additionalHeaders?: { [key: string]: string };
+	operation?: OdspOperation;
 }): Promise<T> {
 	const {
 		containerSnapshot,
@@ -228,7 +231,14 @@ export async function createNewFluidContainerCore<T>(args: {
 		fetchType,
 		validateResponseCallback,
 		additionalHeaders = {},
+		operation,
 	} = args;
+	if (operation === undefined) {
+		return new OdspOperation(logger, epochTracker, telemetryName, initialUrl).run(
+			async (context) =>
+				createNewFluidContainerCore({ ...args, logger: context.logger, operation: context }),
+		);
+	}
 	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
 	return getWithRetryForTokenRefresh(async (options) => {
@@ -298,16 +308,21 @@ export async function createNewFluidContainerCore<T>(args: {
 					async () =>
 						epochTracker.fetchAndParseAsJSON<T>(
 							url,
-							{
-								body: postBody,
-								headers,
-								method,
-							},
+							withOdspOperation(
+								{
+									body: postBody,
+									headers,
+									method,
+								},
+								operation,
+							),
 							fetchType,
 							addInBody,
 						),
 					telemetryName,
 					logger,
+					undefined,
+					operation,
 				);
 
 				validateResponseCallback?.(fetchResponse.content);

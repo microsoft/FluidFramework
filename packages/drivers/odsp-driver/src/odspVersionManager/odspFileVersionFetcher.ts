@@ -29,6 +29,8 @@ import { getApiRoot } from "../odspUrlHelper.js";
 import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion as driverVersion } from "../packageVersion.js";
 import { mergeRequestHeaders } from "../requestHeaders.js";
+import { OdspOperation } from "../odspOperation.js";
+import { withOdspOperation } from "../requestControl.js";
 
 /**
  * A single ODSP file version, as listed by the file's version history.
@@ -109,7 +111,7 @@ export function createOdspFileVersionFetcher(
 	const { urlParts, getAuthHeader, epochTracker, logger, requestHeaders } = props;
 	const { siteUrl, driveId, itemId } = urlParts;
 
-	const listFileVersions = async (): Promise<OdspFileVersionRef[]> =>
+	const listFileVersions = async (operation: OdspOperation): Promise<OdspFileVersionRef[]> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			const method = "GET";
 			const versions: OdspFileVersionRef[] = [];
@@ -126,7 +128,7 @@ export function createOdspFileVersionFetcher(
 				const headers = getHeadersWithAuth(token);
 				const response = await epochTracker.fetchAndParseAsJSON<{
 					value?: IDriveItemVersion[];
-				}>(url, { method, headers }, "versions");
+				}>(url, withOdspOperation({ method, headers }, operation), "versions");
 				const page = response.content as IDriveItemVersionsPage;
 				// The API returns versions newest-first.
 				for (const version of page.value ?? []) {
@@ -140,7 +142,10 @@ export function createOdspFileVersionFetcher(
 			return versions;
 		});
 
-	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
+	const resolveSequenceNumber = async (
+		versionId: string,
+		operation: OdspOperation,
+	): Promise<number> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			// The sequence number lives in the version snapshot's `.protocol/attributes` blob, so fetch the
 			// version-scoped snapshot with `blobs=2` to inline it. No op stream needed.
@@ -156,7 +161,11 @@ export function createOdspFileVersionFetcher(
 			// The snapshot comes back as JSON or "ms-fluid" (ODSP's compact binary form). Accept both and
 			// pin the binary version (as the driver's snapshot fetch does) so the parser can read it.
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
+			const response = await epochTracker.fetch(
+				url,
+				withOdspOperation({ method, headers }, operation),
+				"treesLatest",
+			);
 			const contentType = response.headers.get("content-type") ?? "";
 			let sequenceNumber: number | undefined;
 			if (contentType.includes("application/json")) {
@@ -203,7 +212,11 @@ export function createOdspFileVersionFetcher(
 	// document's epoch, but the shared EpochTracker pins to the first epoch it sees and throws on the
 	// second (divergent) read - so it could never yield two epochs to compare. `fetchArray` also lets
 	// the body (JSON or ms-fluid binary) be consumed and discarded; only the header is needed.
-	const readEpoch = async (url: string, scenarioName: string): Promise<string | undefined> =>
+	const readEpoch = async (
+		url: string,
+		scenarioName: string,
+		operation: OdspOperation,
+	): Promise<string | undefined> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			const method = "GET";
 			const token = await getAuthHeader(
@@ -211,28 +224,61 @@ export function createOdspFileVersionFetcher(
 				scenarioName,
 			);
 			const headers = getHeadersWithAuth(token);
-			const response = await fetchArray(url, {
-				method,
-				headers: mergeRequestHeaders(requestHeaders, headers),
-			});
+			const response = await operation.request(async () =>
+				fetchArray(url, {
+					method,
+					headers: mergeRequestHeaders(requestHeaders, headers),
+				}),
+			);
 			return response.headers.get("x-fluid-epoch") ?? undefined;
 		});
 
-	const getLiveDocumentEpoch = async (): Promise<string | undefined> =>
+	const getLiveDocumentEpoch = async (operation: OdspOperation): Promise<string | undefined> =>
 		// The (unversioned) live snapshot endpoint is a current-file read, so its epoch is the live
 		// document's epoch. `blobs=0` keeps the response to the tree metadata.
-		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch");
+		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch", operation);
 
-	const getRecoverableVersionEpoch = async (versionId: string): Promise<string | undefined> =>
+	const getRecoverableVersionEpoch = async (
+		versionId: string,
+		operation: OdspOperation,
+	): Promise<string | undefined> =>
 		readEpoch(
 			`${itemRoot}/versions/${encodeURIComponent(versionId)}/opStream/snapshots/trees/latest?blobs=0`,
 			"FileVersionEpoch",
+			operation,
 		);
 
 	return {
-		listFileVersions,
-		resolveSequenceNumber,
-		getLiveDocumentEpoch,
-		getRecoverableVersionEpoch,
+		listFileVersions: async () => {
+			const operation = new OdspOperation(logger, epochTracker, "listFileVersions", itemRoot);
+			return operation.run(listFileVersions);
+		},
+		resolveSequenceNumber: async (versionId) => {
+			const operation = new OdspOperation(
+				logger,
+				epochTracker,
+				"resolveSequenceNumber",
+				`${itemRoot}/${versionId}`,
+			);
+			return operation.run(async () => resolveSequenceNumber(versionId, operation));
+		},
+		getLiveDocumentEpoch: async () => {
+			const operation = new OdspOperation(
+				logger,
+				epochTracker,
+				"getLiveDocumentEpoch",
+				itemRoot,
+			);
+			return operation.run(getLiveDocumentEpoch);
+		},
+		getRecoverableVersionEpoch: async (versionId) => {
+			const operation = new OdspOperation(
+				logger,
+				epochTracker,
+				"getRecoverableVersionEpoch",
+				`${itemRoot}/${versionId}`,
+			);
+			return operation.run(async () => getRecoverableVersionEpoch(versionId, operation));
+		},
 	};
 }

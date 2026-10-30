@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	ICacheEntry,
@@ -12,6 +13,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	LocationRedirectionError,
+	getRetryDelayFromError,
 	maximumCacheDurationMs,
 	NonRetryableError,
 	RateLimiter,
@@ -31,7 +33,6 @@ import {
 	extractTelemetryLoggerExt,
 	isFluidError,
 	loggerToMonitoringContext,
-	normalizeError,
 	toITelemetryLoggerExt,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -52,6 +53,8 @@ import {
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { copyRequestHeaders, mergeRequestHeaders } from "./requestHeaders.js";
+import { OdspOperation } from "./odspOperation.js";
+import { getOdspOperation, getRequestControl, withOdspOperation } from "./requestControl.js";
 
 /**
  * @legacy
@@ -299,13 +302,51 @@ export class EpochTracker implements IPersistedFileCache {
 		addInBody: boolean = false,
 		fetchReason?: string,
 	): Promise<IOdspResponse<T>> {
+		const operation = getOdspOperation(fetchOptions);
+		if (operation === undefined) {
+			return new OdspOperation(this.loggerInternal, this, fetchType, url)
+				.run(async (context) =>
+					this.fetchCore(
+						url,
+						withOdspOperation(fetchOptions, context),
+						fetcher,
+						fetchType,
+						addInBody,
+						fetchReason,
+					),
+				)
+				.finally(() => withOdspOperation(fetchOptions, undefined));
+		}
 		const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
 		// Add epoch in fetch request.
 		this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
 		fetchOptions.headers = mergeRequestHeaders(this.requestHeaders, fetchOptions.headers);
 		let epochFromResponse: string | undefined;
+		let attemptProperties: ITelemetryBaseProperties | undefined;
 		return this.rateLimiter
-			.schedule(async () => fetcher(url, fetchOptions))
+			.schedule(async () => {
+				const control = getRequestControl(fetchOptions);
+				await control?.beforeRequest();
+				const attempt = operation.startRequest(
+					clientCorrelationId,
+					this.rateLimiter.waitQueueLength,
+				);
+				attemptProperties = attempt.properties;
+				try {
+					const response = await fetcher(url, fetchOptions);
+					Object.assign(response.propsToLog, attempt.properties);
+					attempt.end(undefined, response.propsToLog);
+					return response;
+				} catch (error) {
+					const normalized = operation.annotateError(error, {
+						...attempt.properties,
+						serverRetryAfterMs: getRetryDelayFromError(error),
+					});
+					attempt.end(normalized);
+					control?.onError(normalized);
+					throw normalized;
+				}
+			})
 			.then((response) => {
 				epochFromResponse = response.headers.get("x-fluid-epoch");
 				this.validateEpochFromResponse(epochFromResponse, fetchType);
@@ -350,8 +391,9 @@ export class EpochTracker implements IPersistedFileCache {
 				throw error;
 			})
 			.catch((error) => {
-				const fluidError = normalizeError(error, {
-					props: { XRequestStatsHeader: clientCorrelationId },
+				const fluidError = operation.annotateError(error, {
+					...attemptProperties,
+					XRequestStatsHeader: clientCorrelationId,
 				});
 				throw fluidError;
 			});

@@ -17,13 +17,24 @@ import { v4 as uuid } from "uuid";
 
 import type { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
+import type { OdspOperation } from "./odspOperation.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import type { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
+import {
+	withOdspOperation,
+	withRequestControl,
+	type RequestControl,
+} from "./requestControl.js";
 
 interface IJoinSessionBody {
 	requestSocketToken?: boolean;
 	displayName?: string;
+}
+
+interface JoinSessionRequestControl extends RequestControl {
+	readonly signal: AbortSignal;
+	readonly operation?: OdspOperation;
 }
 
 /**
@@ -42,6 +53,7 @@ interface IJoinSessionBody {
  * @param displayName - display name used to identify client joining a session.
  * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
  * If not specified client display name is extracted from the access token that is used to join session.
+ * @param requestControl - Document-scoped throttle coordination and disposal signal.
  */
 export const fetchJoinSession = mockify(
 	async (
@@ -56,6 +68,7 @@ export const fetchJoinSession = mockify(
 		disableJoinSessionRefresh: boolean | undefined,
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
+		requestControl?: JoinSessionRequestControl,
 	): Promise<ISocketStorageDiscovery> => {
 		const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
 		const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
@@ -113,12 +126,20 @@ export const fetchJoinSession = mockify(
 					async () =>
 						epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
 							url,
-							{ method, headers, body: postBody },
+							withOdspOperation(
+								withRequestControl(
+									{ method, headers, body: postBody, signal: requestControl?.signal },
+									requestControl,
+								),
+								requestControl?.operation,
+							),
 							"joinSession",
 							true,
 						),
 					"joinSession",
 					logger,
+					undefined,
+					requestControl?.operation,
 				);
 
 				const socketUrl = response.content.deltaStreamSocketUrl;
