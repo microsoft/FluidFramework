@@ -76,6 +76,9 @@ minimumReleaseAgeExclude:
   # Temporary exceptions go here as needed.
 
 overrides:
+  # CI experiment: retain engine checks while enabling Node 26 for local-service dependencies.
+  "@fluidframework/server-lambdas@7.0.1>opossum": 10.0.0
+
   # concurrently and jsonpath pin vulnerable versions (CVE-2026-13311 and CVE-2026-27601).
   concurrently@10.0.3>shell-quote: ^1.11.0
   jsonpath@1.2.1>underscore: ^1.13.8
@@ -281,6 +284,10 @@ packages:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+  # Serialize same-object writes in Tinylicious's Git dependency; see scripts/test-tinylicious-storage.cjs.
+  isomorphic-git@1.27.2: patches/isomorphic-git@1.27.2.patch
+  # Avoid splitting query paths for every scanned document in the test service.
+  tinylicious@7.0.1: patches/tinylicious@7.0.1.patch
 
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't

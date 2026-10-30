@@ -264,20 +264,17 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 	this.timeout(testTimeoutOverrideMs);
 
 	let clock: SinonFakeTimers;
-	before(() => {
+	before(function () {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		// Service timestamps do not follow the fake clock. Skip before changing process timers.
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
 		clock = useFakeTimers({ shouldAdvanceTime: true });
 	});
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		/**
-		 * Note that these tests use fake timers and will fail when run with real services. The reason is because GC uses
-		 * op timestamps to keep track of how much time has passed. With real services, the op timestamps are real and
-		 * they will not move with the fake timers.
-		 */
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
 	});
 
 	afterEach(() => {
@@ -286,7 +283,7 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 	});
 
 	after(() => {
-		clock.restore();
+		clock?.restore();
 	});
 
 	describe("Using swept data stores not allowed", () => {

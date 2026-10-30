@@ -47,7 +47,7 @@ parameters:
     - "~"
     - " "
 - name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
+  displayName: Fluid build tools version (non-PR only; PRs use the lockfile)
   type: string
   default: repo
 
@@ -107,9 +107,14 @@ trigger:
     - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-test-task.yml
+    - tools/pipelines/templates/include-client-test-build.yml
+    - tools/pipelines/templates/include-client-pack-validation.yml
+    - tools/pipelines/templates/include-development-validation-bundles.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
@@ -171,10 +176,15 @@ pr:
     - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-test-task.yml
+    - tools/pipelines/templates/include-client-test-build.yml
+    - tools/pipelines/templates/include-client-pack-validation.yml
+    - tools/pipelines/templates/include-development-validation-bundles.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry/*
@@ -195,7 +205,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
-    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
     # that need mitigation before coverage can be reenabled.
@@ -208,6 +219,13 @@ extends:
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
+    ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+      independentTestBuilds: true
+      taskBuild: build:compile
+      buildToolsVersionToInstall: installed
+      taskPack: false
+      testNodeVersion: '26.13.0'
+      buildNodeVersion: '26.13.0'
     taskBuildDocs: true
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
@@ -218,12 +236,15 @@ extends:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
-    - { name: "ci:test:playwright", jobName: "PlaywrightTest" }
-    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
-    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
-    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
+    - { name: "ci:test:playwright", jobName: "PlaywrightTest", buildScript: "test:playwright" }
+    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest", buildScript: "test:realsvc:tinylicious:report", compileTask: "compile:esm" }
+    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest", buildScript: "test:stress:tinylicious:report", compileTask: "compile:esm" }
+    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong", buildScript: "check:are-the-types-wrong", requiresTypeEntrypoints: true }
+    - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+      - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest", buildScript: "test:realsvc:local:report", compileTask: "compile:esm" }
     coverageTests:
-    - { name: "ci:test:mocha", jobName: "MochaTest" }
-    - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
+    - { name: "ci:test:mocha", jobName: "MochaTest", buildScript: "test:mocha", requiresTypeEntrypoints: true }
+    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest", buildScript: "test:realsvc:local:report" }
     checks:
     - checks

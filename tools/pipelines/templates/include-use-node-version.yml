@@ -9,6 +9,10 @@ parameters:
   type: string
   default: '22.22.2'
 
+- name: useCachedRuntime
+  type: boolean
+  default: false
+
 steps:
 - task: Bash@3
   displayName: Set node version
@@ -20,13 +24,30 @@ steps:
 
       # Output installed node versions
       n ls
-      # Use the specified node version
-      sudo n ${{ parameters.version }}
+      echo "Initial node: $(node --version) at $(command -v node)"
+      if [[ "${{ parameters.useCachedRuntime }}" == [Tt][Rr][Uu][Ee] ]]; then
+        # Keep npm's writable global installation prefix when using an immutable cached runtime.
+        npm_prefix="$(npm prefix --global)"
+        node_path="$(n which ${{ parameters.version }})"
+        if [ ! -x "$node_path" ]; then
+          echo "##vso[task.logissue type=error]Cached Node executable is missing: $node_path"
+          exit 1
+        fi
+        node_directory="$(dirname "$node_path")"
+        export NPM_CONFIG_PREFIX="$npm_prefix"
+        export PATH="$node_directory:$npm_prefix/bin:$PATH"
+        echo "##vso[task.setvariable variable=NPM_CONFIG_PREFIX]$npm_prefix"
+        echo "##vso[task.prependpath]$npm_prefix/bin"
+        echo "##vso[task.prependpath]$node_directory"
+        echo "Selected cached runtime at $node_path without copying"
+      else
+        sudo n ${{ parameters.version }}
+      fi
       # Output the node version
       version=$(node --version)
-      if [ $version != v${{ parameters.version }} ];
+      if [ "$version" != "v${{ parameters.version }}" ];
       then
-        echo "Could not configure the required node version ${configuredVersion}";
+        echo "##vso[task.logissue type=error]Could not configure Node ${{ parameters.version }}; got $version";
         exit 1;
       else
         echo "Using node ${version}"

@@ -14,10 +14,10 @@ parameters:
 - name: buildDirectory
   type: string
 
-# The version of the build tools to install, or "repo" to install the one from the repository.
+# The version to install, "repo" to build from source, or "installed" to use the workspace dependency.
 # If "repo" is selected, this includes a global install of whatever version of pnpm build-tools uses,
 # which can overwrite an already installed version (like the one used by the package/release-group being built).
-# If anything except "repo" is selected, this results in a lock-less install, which could pull in untested
+# Selecting a version results in a lock-less install, which could pull in untested
 # and un-audited versions of the many dependencies of build-tools.
 - name: buildToolsVersionToInstall
   type: string
@@ -33,6 +33,21 @@ parameters:
   default: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
+  - ${{ if eq(parameters.buildToolsVersionToInstall, 'installed') }}:
+    - task: Bash@3
+      displayName: Use lockfile-installed Fluid Build Tools
+      inputs:
+        targetType: inline
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          if [ ! -x node_modules/.bin/flub ]; then
+            echo "##vso[task.logissue type=error]Workspace flub is missing; install workspace dependencies first"
+            exit 1
+          fi
+          echo "##vso[task.prependpath]$(pwd)/node_modules/.bin"
+          pnpm exec flub --version
+
   # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
   # with the next group of steps.
   - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -60,7 +75,7 @@ steps:
 
   # These steps install a version of build-tools from the npm registry. As noted above, these steps are mutually exclusive
   # with the previous group of steps.
-  - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
+  - ${{ if and(ne(parameters.buildToolsVersionToInstall, 'repo'), ne(parameters.buildToolsVersionToInstall, 'installed')) }}:
     - task: Bash@3
       name: InstallBuildTools
       displayName: Install Fluid Build Tools (from npm)

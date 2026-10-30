@@ -1,0 +1,109 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+- name: testTasks
+  type: object
+- name: webpack
+  type: boolean
+  default: false
+
+steps:
+- template: /tools/pipelines/templates/include-development-validation-bundles.yml@self
+
+- task: Bash@3
+  displayName: Configure emit-only runtime test build
+  env:
+    TEST_TASKS: ${{ convertToJson(parameters.testTasks) }}
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      # Only this disposable test checkout is changed. The validation build keeps type checking.
+      node --input-type=module <<'JS'
+      import fs from "node:fs";
+      import ts from "typescript";
+      const file = "common/build/build-common/tsconfig.base.json";
+      const { config, error } = ts.readConfigFile(file, ts.sys.readFile);
+      if (error) {
+        throw new Error(ts.flattenDiagnosticMessageText(error.messageText, "\n"));
+      }
+      config.compilerOptions.noCheck = true;
+      fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n");
+      console.log(`Enabled noCheck in ${file}; TypeScript ${ts.version}`);
+      fs.appendFileSync("fluidBuild.config.cjs",
+        '\nmodule.exports.tasks["typetests:gen"] = { dependsOn: [], script: false };\n');
+      console.log("Disabled type-only test generation in this runtime-test job; policy validation retains it");
+      const needsTypeEntrypoints = JSON.parse(process.env.TEST_TASKS).some((task) => {
+        // Azure object parameters can serialize boolean members as strings.
+        const value = task.requiresTypeEntrypoints ?? false;
+        const normalized = String(value).toLowerCase();
+        if (normalized !== "true" && normalized !== "false") {
+          throw new Error(`Invalid requiresTypeEntrypoints for ${task.name}: ${value}`);
+        }
+        console.log(`Type entrypoints for ${task.name}: ${normalized} (${typeof value})`);
+        return normalized === "true";
+      });
+      if (!needsTypeEntrypoints) {
+        fs.appendFileSync("fluidBuild.config.cjs", [
+          'module.exports.tasks["build:entrypoints:esm"] = { dependsOn: ["build:esm"], script: false };',
+          'module.exports.tasks["build:entrypoints:cjs"] = { dependsOn: ["build:cjs"], script: false };',
+          "",
+        ].join("\n"));
+        console.log("Disabled declaration entrypoint generation for this runtime-only job");
+      } else {
+        console.log("Retained declaration entrypoints for import/package type validation");
+      }
+      JS
+
+- task: Bash@3
+  displayName: Compile test prerequisites
+  env:
+    FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
+    BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+    TEST_TASKS: ${{ convertToJson(parameters.testTasks) }}
+    BUILD_WEBPACK: ${{ parameters.webpack }}
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      node --input-type=module <<'JS'
+      import { execFileSync } from "node:child_process";
+      import fs from "node:fs";
+      import path from "node:path";
+      const tests = JSON.parse(process.env.TEST_TASKS);
+      const workspace = JSON.parse(execFileSync("pnpm", ["list", "-r", "--depth", "-1", "--json"], { encoding: "utf8" }));
+      const packages = workspace.filter((p) => p.path !== process.cwd()).map((p) => ({
+        ...p,
+        scripts: JSON.parse(fs.readFileSync(path.join(p.path, "package.json"), "utf8")).scripts ?? {},
+      }));
+      const selected = new Set();
+      for (const test of tests) {
+        const matches = packages.filter((p) => Object.hasOwn(p.scripts, test.buildScript));
+        if (matches.length === 0) {
+          throw new Error(`No workspace packages provide ${test.buildScript} for ${test.name}`);
+        }
+        for (const p of matches) selected.add(p.path);
+      }
+      if (selected.size === 0) throw new Error("No test packages selected");
+      console.log("Building test packages and their task dependencies:", [...selected]);
+      const requestedCompileTasks = tests.map((test) => {
+        const task = test.compileTask ?? "compile";
+        if (task !== "compile" && task !== "compile:esm") {
+          throw new Error(`Unsupported compile task for ${test.name}: ${task}`);
+        }
+        return task;
+      });
+      const compileTask = requestedCompileTasks.includes("compile") ? "compile" : "compile:esm";
+      console.log(`Compile target: ${compileTask}`);
+      const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? [compileTask, "webpack"] : [compileTask];
+      execFileSync("pnpm", [
+        "exec", "fluid-build", "--force", "--dep", "--worker",
+        ...tasks.flatMap((task) => ["--task", task]),
+        ...selected,
+      ], { stdio: "inherit" });
+      JS

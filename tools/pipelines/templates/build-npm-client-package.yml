@@ -48,6 +48,18 @@ parameters:
 - name: coverageTests
   type: object
 
+- name: independentTestBuilds
+  type: boolean
+  default: false
+
+- name: testNodeVersion
+  type: string
+  default: '22.22.2'
+
+- name: buildNodeVersion
+  type: string
+  default: '22.22.2'
+
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -206,6 +218,11 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
+              nodeVersion: ${{ parameters.buildNodeVersion }}
+              useCachedRuntime: ${{ parameters.independentTestBuilds }}
+              ${{ if parameters.independentTestBuilds }}:
+                pool: ${{ parameters.poolBuild }}
+                taskBuild: ci:build
 
       # Build Stage
       - stage: build
@@ -240,6 +257,9 @@ extends:
               - checkout: self
                 path: $(FluidFrameworkDirectory)
                 clean: true
+                ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  fetchDepth: 1
+                  fetchTags: false
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
@@ -341,6 +361,9 @@ extends:
                     fi
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                parameters:
+                  version: ${{ parameters.buildNodeVersion }}
+                  useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
@@ -371,6 +394,9 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
+              - ${{ if parameters.independentTestBuilds }}:
+                - template: /tools/pipelines/templates/include-development-validation-bundles.yml@self
+
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
                 parameters:
@@ -386,20 +412,26 @@ extends:
                   workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   customCommand: 'run webpack'
 
-              - task: Bash@3
-                displayName: Archive Build Output Content
-                env:
-                  WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                inputs:
-                  targetType: filePath
-                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
+              - ${{ if not(parameters.independentTestBuilds) }}:
+                - task: Bash@3
+                  displayName: Archive Build Output Content
+                  env:
+                    WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  inputs:
+                    targetType: filePath
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
 
-              - task: CopyFiles@2
-                displayName: Copy build_output_archive to artifact staging directory
-                inputs:
-                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
-                  targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
+                - task: CopyFiles@2
+                  displayName: Copy build_output_archive to artifact staging directory
+                  inputs:
+                    sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
+                    targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
+
+              - ${{ if and(parameters.independentTestBuilds, not(parameters.taskPack)) }}:
+                - template: /tools/pipelines/templates/include-client-pack-validation.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -424,9 +456,7 @@ extends:
 
               # Bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                  # Bash@3 (not Npm@1) so `flub` resolves via PATH to the globally-linked
-                  # workspace build; `npm run` would shadow it with the catalog-pinned
-                  # flub, which currently lacks the bundleAnalyzerJson aggregation.
+                  # Use the build tools selected during version setup.
                   - task: Bash@3
                     displayName: 'Calculate bundle sizes'
                     inputs:
@@ -542,11 +572,12 @@ extends:
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
-                - output: pipelineArtifact
-                  displayName: Publish Artifact - build_output_archive
-                  targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
-                  artifactName: build_output_archive
-                  publishLocation: pipeline
+                - ${{ if not(parameters.independentTestBuilds) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - build_output_archive
+                    targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
+                    artifactName: build_output_archive
+                    publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
@@ -594,8 +625,11 @@ extends:
       # Verification Stage
       - stage: verification
         displayName: Verification
-        dependsOn:
-          - build
+        ${{ if parameters.independentTestBuilds }}:
+          dependsOn: []
+        ${{ else }}:
+          dependsOn:
+            - build
         jobs:
           - job: Coverage_tests
             displayName: "Coverage tests"
@@ -613,23 +647,35 @@ extends:
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
               - name: COMMIT_SHA
-                value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                ${{ if parameters.independentTestBuilds }}:
+                  value: $(Build.SourceVersion)
+                ${{ else }}:
+                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
             steps:
               # Setup
               - checkout: self
                 path: $(FluidFrameworkDirectory)
                 clean: true
+                ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  fetchDepth: 1
+                  fetchTags: false
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
               - script: |
                   echo "commit: $(COMMIT_SHA)"
-                  git fetch origin $(COMMIT_SHA)
+                  if [ "$(Build.Reason)" = "PullRequest" ]; then
+                    git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
+                  else
+                    git fetch origin $(COMMIT_SHA)
+                  fi
                   git checkout $(COMMIT_SHA)
                 displayName: "Checkout build commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                parameters:
+                  useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
@@ -637,14 +683,19 @@ extends:
                   # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                   # whenever legacy package versions are added or removed. Including it in the pnpm store
                   # cache key ensures a cache miss whenever the set of compat packages changes.
-                  # Currently repo build-tools also installs sharing the store - ideally that is removed by #73628 and the `| ...` can be removed.
-                  additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | ${{ parameters.buildDirectory }}/build-tools/pnpm-lock.yaml'
+                  ${{ if parameters.independentTestBuilds }}:
+                    additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
+                  ${{ else }}:
+                    additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | ${{ parameters.buildDirectory }}/build-tools/pnpm-lock.yaml'
 
               # We need it in order to run flub where the code coverage comparison logic calls for it
               - template: /tools/pipelines/templates/include-install-build-tools.yml@self
                 parameters:
                   buildDirectory: ${{ parameters.buildDirectory }}
-                  buildToolsVersionToInstall: repo
+                  ${{ if parameters.independentTestBuilds }}:
+                    buildToolsVersionToInstall: installed
+                  ${{ else }}:
+                    buildToolsVersionToInstall: repo
                   # Note that skipping pnpm install means client pnpm version must suffice for build-tools.
                   # Ideally, #73628 removes this whole template use making it a non-issue. For now, second
                   # pnpm install is skipped to preserve the client version for any remaining steps.
@@ -652,15 +703,21 @@ extends:
                   # This shares the store with the client installs (above).
                   pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
 
-              - task: DownloadPipelineArtifact@2
-                inputs:
-                  artifact: build_output_archive
-                  targetPath: $(Build.StagingDirectory)
+              - ${{ if parameters.independentTestBuilds }}:
+                - template: /tools/pipelines/templates/include-client-test-build.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
+                    testTasks: ${{ parameters.coverageTests }}
+              - ${{ else }}:
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
 
-              - script: |
-                  echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                displayName: Extract Build Output Contents
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
@@ -785,22 +842,35 @@ extends:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: COMMIT_SHA
-                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                  ${{ if parameters.independentTestBuilds }}:
+                    value: $(Build.SourceVersion)
+                  ${{ else }}:
+                    value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
                   clean: true
+                  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                    fetchDepth: 1
+                    fetchTags: false
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
 
                 - script: |
                     echo "commit: $(COMMIT_SHA)"
-                    git fetch origin $(COMMIT_SHA)
+                    if [ "$(Build.Reason)" = "PullRequest" ]; then
+                      git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
+                    else
+                      git fetch origin $(COMMIT_SHA)
+                    fi
                     git checkout $(COMMIT_SHA)
                   displayName: "Checkout build commit"
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                  parameters:
+                    version: ${{ coalesce(test.nodeVersion, parameters.testNodeVersion) }}
+                    useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:
@@ -810,17 +880,35 @@ extends:
                     # cache key ensures a cache miss whenever the set of compat packages changes.
                     additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
 
-                - task: DownloadPipelineArtifact@2
-                  inputs:
-                    artifact: build_output_archive
-                    targetPath: $(Build.StagingDirectory)
+                - ${{ if parameters.independentTestBuilds }}:
+                  - template: /tools/pipelines/templates/include-client-test-build.yml@self
+                    parameters:
+                      buildDirectory: ${{ parameters.buildDirectory }}
+                      testTasks:
+                      - ${{ test }}
+                      webpack: ${{ eq(test.jobName, 'PlaywrightTest') }}
+                - ${{ else }}:
+                  - task: DownloadPipelineArtifact@2
+                    inputs:
+                      artifact: build_output_archive
+                      targetPath: $(Build.StagingDirectory)
 
-                - script: |
-                    echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                  displayName: Extract Build Output Contents
+                  - script: |
+                      echo "Extracting build output archive contents..."
+                      tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                    displayName: Extract Build Output Contents
 
                 # Test
+
+                - ${{ if and(parameters.independentTestBuilds, contains(test.name, 'tinylicious')) }}:
+                  - task: Bash@3
+                    displayName: Verify concurrent Tinylicious Git storage
+                    inputs:
+                      targetType: inline
+                      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                      script: |
+                        set -eu -o pipefail
+                        node --test scripts/test-tinylicious-storage.cjs
 
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
