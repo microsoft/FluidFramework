@@ -6,12 +6,13 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing control:** run [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) completed in **16m 36s**, with eight of nine timed jobs under nine minutes.
-It passed 45,649 tests with 3,235 skipped and no failures, using Node 22 for Mocha/Tinylicious and Node 26 for other client build/verification jobs.
+**Latest fully passing configuration:** patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) passed 45,649 tests with 3,235 skipped and no failures.
+It took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
+The preceding Node 22 Tinylicious control [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) took **16m 36s**, with eight of nine timed jobs under nine minutes.
 The earlier mixed-runtime run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) passed in **14m 43s**, versus the original **33m 28s** baseline, but its unpatched Node 26 Tinylicious configuration was not reliably green.
 Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
-After reproducing the Tinylicious storage failure, a scoped dependency patch now passes the local regression on both runtimes.
-The next trial returns Tinylicious-backed jobs to Node 26 with that patch; the matrix below describes this candidate, not an already-green result.
+After reproducing the Tinylicious storage failure, the scoped dependency patch passed both local regression and real service CI on Node 26.
+The next trial changes runtime selection to avoid global copies; it does not change the runtime versions in the matrix.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -20,7 +21,7 @@ The current branch therefore intentionally uses the following mixed runtime conf
 | Job | Current Node.js version | Reason |
 | --- | --- | --- |
 | Mocha unit suite (`Coverage tests`), including merge-tree | 22.22.2 | Restored after Node 26 failures involving recursive `fs.rmdirSync` and browser-storage assumptions |
-| Tinylicious service and stress verification | 26.13.0, patched dependency trial | Same-object write serialization fixes the local reproducer; real service confirmation remains pending |
+| Tinylicious service and stress verification | 26.13.0 with patched Git dependency | E18 service suites and storage regression gates passed; patch remains limited to same-process concurrency |
 | Local-service verification | 26.13.0 | Passed; this does not use Tinylicious's filesystem Git storage path |
 | Playwright and AreTheTypesWrong verification | 26.13.0 | Passed in the mixed-runtime confirmation 431044 |
 | Client policy/type/API validation and artifact build | 26.13.0 | E16 both jobs passed: 6m 51s and 6m 44s; unchanged by the storage patch |
@@ -65,6 +66,7 @@ Pool owners should inspect queue/assignment/agent-start events to distinguish th
 | 431044 | Policy/build started at 21/33s; Mocha at 228s; service jobs around 258-273s |
 | 431054 | First jobs started at 22-25s; the last verification jobs started at 454-460s |
 | 431064 | First client jobs started at 74-86s; final jobs at 455s |
+| 431074 | Initial jobs started at 19-74s; artifact/Tinylicious/local/stress jobs started at 482-486s |
 
 These are start offsets, not pure agent-queue durations.
 For example, the critical Tinylicious job in green run 431064 started 267s after queueing and then ran for 714s.
@@ -76,7 +78,7 @@ Do not sum all parallel jobs' waiting times to estimate end-to-end savings.
 
 Node 26.13.0 is already preinstalled in the inspected CI image: `n ls` lists it alongside 22.22.2.
 The current `sudo n <version>` step copies a cached distribution into the active global installation; it is not downloading Node on every job.
-Measured selection steps range from about 10-14s to 38-83s, for both runtime versions.
+Measured selection steps range from about 10-14s to 38-92s, for both runtime versions.
 Simply adding Node 26 to the cache again will not remove that copy.
 
 E19 selects `n which <version>` by prepending its bin directory to the job PATH instead of calling `sudo n`.
@@ -120,13 +122,14 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 | Development validation for private examples | Combined retry: main webpack 120.3s to 33.5s, browser prerequisites 171.2s to 58.6s | Production size producer unchanged; reduced production-only coverage for private examples |
 | Correct parallel merge-tree selection and lower-allocation diagnostics | E15 Mocha step passed in 187.4s versus E12's 448.5s | All original merge-tree cases preserved; aggregate E15 failed in the separate Tinylicious job |
 | Node 26 client policy/artifact execution | E16 checked compilation 207.2s to 173.6s; policy `ci:build` 339.7s to 290.6s | Both jobs passed; Tinylicious runtime compatibility is a separate issue |
+| Same-process Git storage patch for Tinylicious | E18 passed; service test step 394.3s versus 551.4s in the Node 22 control | Patch plus Node 26 is a combined change; cross-process/crash-safe publication is not addressed |
 
 ## Experiment status
 
-The Node 26 client policy/artifact jobs passed; the Tinylicious dependency-patch confirmation is active.
-E19's cached-runtime selection is prepared separately so it does not change the in-flight E18 measurement.
+The patched Node 26 configuration passed E18.
+E19's cached-runtime selection is next, using the same dependency and runtime versions.
 
-### Active E18: fix same-process Git-object publication races
+### E18: fix same-process Git-object publication races
 
 A plain upgrade is not an established solution: the latest tested isomorphic-git 1.44.8 still failed 17 of 2,000 concurrent operations.
 Patch the already-locked isomorphic-git 1.27.2 using pnpm's existing `patchedDependencies` mechanism instead of changing unrelated dependency versions.
@@ -148,6 +151,14 @@ The corresponding bundler module receives the same source change; importing that
 The client workspace patch does not change the separately locked server release group or publish a repaired Tinylicious release.
 For long-term rollout, upstream the fix or adopt an upstream atomic-publication solution, update the server dependency and its regression coverage, then retire this client-side patch.
 No upstream issue, pull request, or package publication has been performed automatically.
+
+Remote run 431074 passed all service/stress tests and both storage regression cases in each Tinylicious job.
+The companion policy run [431070](https://dev.azure.com/fluidframework/public/_build/results?buildId=431070) passed.
+Suite totals matched the control: 45,649 passed, 3,235 skipped.
+Tinylicious's test step dropped from 551.4 to 394.3 seconds (28.5%), but its full job still took 691.3 seconds due to setup overhead, including 91 seconds copying Node.
+The artifact job took 587.3 seconds with a similar 91.6-second Node selection.
+The four late jobs started 482-486 seconds after queueing, making queue-to-finish 1,212.3 seconds despite successful faster test execution.
+This run demonstrates compatibility of the patched path; repeated runs are still needed to characterize reliability and scheduling variability.
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
 
@@ -286,8 +297,8 @@ This was not a cold-cache benchmark.
 | E15 unchanged repeat | `4f8679fa6a5f902cab8c1e5e438ddc035beb5bce` | [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) | Passed | 14m 43s; Mocha 194.7s; all mixed-runtime jobs green |
 | E16: Node 26 client policy/artifact builds | `0a4f0518e7a1d3c8558390425b7927b2392ac3a3` | [431054](https://dev.azure.com/fluidframework/public/_build/results?buildId=431054) | Both targeted jobs passed; Tinylicious failed again | Policy 6m 51s, artifact 6m 44s; same summary-upload HTTP 400 |
 | E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
-| E18: patched Git storage on Node 26 | Implementation `0a0a896b14c`; report update included in triggering commit | Pending | Local regression/stress passed; ready to push | Same-object writes serialized; errors preserved |
-| E19: cached runtime selection | Pending | Pending | Prepared locally | Avoid global Node copying in PR jobs; preserve npm prefix and validate exact runtime |
+| E18: patched Git storage on Node 26 | `73860819672a2b8464e1bee2782c8c811f852d9d` | [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) | Passed | 20m 12s with eight-minute job-start delays; Tinylicious test step 394.3s |
+| E19: cached runtime selection | Implementation `5fba6328c88`; report update included in triggering commit | Pending | Ready to push | Avoid global Node copying in PR jobs; preserve npm prefix and validate exact runtime |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -722,7 +733,7 @@ Policy/type validation, artifact build, browser tests, local-service tests, stre
 Companion repository policy run [431029](https://dev.azure.com/fluidframework/public/_build/results?buildId=431029) passed.
 
 The separate Node 26 Tinylicious job failed one summary-upload setup with `R11s fetch error: {}` after reporting 4,048 passed and 1,928 pending cases in its end-to-end package.
-The cause is unresolved: it has not been classified as transient, opossum-related, Node-related, or a code regression.
+At this stage the cause was unresolved; later E16/E18 investigation reproduced and patched a matching Git-object publication failure.
 No end-to-end green timing is claimed for E15.
 A report-only push repeats the unchanged implementation to collect another result without skipping or weakening this check.
 
@@ -835,7 +846,7 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
 10. Migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
     This remains separate from the active policy/artifact runtime trial.
 11. Investigate atomic Git-object writes/reads in Tinylicious's storage implementation before moving its service jobs back to Node 26.
-    E18's same-process serialization patch is being tested; cross-process/crash-safe publication remains future work.
+    E18's same-process serialization patch passed local and remote tests; cross-process/crash-safe publication remains future work.
     Preserve the concurrent-tree reproducer as regression coverage for an upstream fix.
     Upgrading to isomorphic-git 1.44.8 alone did not eliminate the reproduced failure.
 
@@ -852,7 +863,8 @@ The tsconfig mutation is deliberately confined to disposable test jobs and remai
 The partial native TypeScript adapter is not enabled.
 E14's dependency installation succeeded, but its Node 26 unit suite failed.
 The mixed-runtime configuration retaining Mocha on Node 22 passed in 431044.
-The subsequent Node 26 policy/artifact jobs passed remotely, but Tinylicious's Node-sensitive storage failure prevents treating the all-Node-26 service configuration as reliable.
+The Node 26 policy/artifact jobs and patched Tinylicious service jobs passed remotely.
+The unpatched storage failure remains documented; the patch's same-process scope and the small number of full confirmation runs limit reliability claims.
 No engine-policy bypass is used, and earlier unsuccessful trials remain recorded as failures.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
