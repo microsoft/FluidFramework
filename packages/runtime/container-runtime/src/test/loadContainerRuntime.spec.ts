@@ -9,9 +9,9 @@ import type { IContainerContext } from "@fluidframework/container-definitions/in
 import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type DeprecatedLoadContainerRuntimeParams,
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
+	type LoadContainerRuntimeParams,
 } from "../containerRuntime.js";
 
 const commonParams = {
@@ -24,7 +24,6 @@ const commonParams = {
 describe("loadContainerRuntime compatibility parameter", () => {
 	it("rejects a missing compatibility parameter at runtime", async () => {
 		await assert.rejects(
-			// @ts-expect-error A compatibility property is required.
 			loadContainerRuntime(commonParams),
 			/Specify exactly one of oldestSupportedClient or minVersionForCollab/,
 		);
@@ -32,7 +31,6 @@ describe("loadContainerRuntime compatibility parameter", () => {
 
 	it("rejects both compatibility parameters at runtime", async () => {
 		await assert.rejects(
-			// @ts-expect-error Exactly one compatibility property may be supplied.
 			loadContainerRuntime({
 				...commonParams,
 				oldestSupportedClient: defaultTestOldestSupportedClient,
@@ -44,36 +42,41 @@ describe("loadContainerRuntime compatibility parameter", () => {
 
 	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
 		it(`rejects null for ${property} at runtime`, async () => {
+			const params: LoadContainerRuntimeParams = { ...commonParams };
+			// @ts-expect-error A compatibility version must not be null.
+			// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+			params[property] = null;
 			await assert.rejects(
-				// @ts-expect-error A compatibility version must not be null.
-				// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
-				loadContainerRuntime({ ...commonParams, [property]: null }),
+				loadContainerRuntime(params),
 				/Compatibility version must not be null/,
 			);
 		});
-	}
 
-	it("accepts the deprecated compatibility parameter at the public boundary", async () => {
-		const context = {
-			taggedLogger: { send: () => {} },
-		} as unknown as IContainerContext;
-		const params: DeprecatedLoadContainerRuntimeParams = {
-			...commonParams,
-			context,
+		it(`preserves extensible load parameters with ${property}`, async () => {
+			interface ExtendedParams extends LoadContainerRuntimeParams {
+				readonly customProperty: boolean;
+			}
+			const context = {
+				taggedLogger: { send: () => {} },
+			} as unknown as IContainerContext;
+			const params: ExtendedParams = {
+				...commonParams,
+				context,
+				[property]: defaultTestOldestSupportedClient,
+				customProperty: true,
+			};
+
+			// Version validation follows the public compatibility check.
+			// An invalid version avoids the need for a complete container context.
 			// @ts-expect-error "1.2.3.4" is not a valid compatibility version shape.
-			minVersionForCollab: "1.2.3.4",
-		};
+			params[property] = "1.2.3.4";
 
-		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
-		assert.equal(params.oldestSupportedClient, undefined);
-
-		// Reaching version validation proves the public exact-one guard accepted the deprecated
-		// property. The invalid version avoids requiring a complete container context in this test.
-		await assert.rejects(
-			loadContainerRuntime(params),
-			/Invalid compatibility version: 1\.2\.3\.4/,
-		);
-	});
+			await assert.rejects(
+				loadContainerRuntime(params),
+				/Invalid compatibility version: 1\.2\.3\.4/,
+			);
+		});
+	}
 
 	it("requires the canonical compatibility parameter at runtime for alpha", async () => {
 		await assert.rejects(

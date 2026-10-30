@@ -13,8 +13,6 @@ import {
 	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	type DeprecatedBaseContainerRuntimeFactoryProps,
-	type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "../container-runtime-factories/index.js";
 
 const commonProps = {
@@ -32,61 +30,58 @@ const defaultFactory: IFluidDataStoreFactory = {
 };
 
 const createBaseContainerRuntimeFactory = (
-	props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
+	props: BaseContainerRuntimeFactoryProps,
 ): BaseContainerRuntimeFactory => new BaseContainerRuntimeFactory(props);
 
 const createContainerRuntimeFactoryWithDefaultDataStore = (
-	props:
-		| ContainerRuntimeFactoryWithDefaultDataStoreProps
-		| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+	props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore(props);
 
 describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
 		it(`rejects null for ${property}`, () => {
+			const props: BaseContainerRuntimeFactoryProps = { ...commonProps };
+			// @ts-expect-error A compatibility version must not be null.
+			// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+			props[property] = null;
 			assert.throws(() => {
-				// @ts-expect-error A compatibility version must not be null.
-				// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
-				new BaseContainerRuntimeFactory({ ...commonProps, [property]: null });
+				new BaseContainerRuntimeFactory(props);
 			}, /Compatibility version must not be null/);
+		});
+
+		it(`preserves extensible construction properties with ${property}`, () => {
+			interface ExtendedProps extends BaseContainerRuntimeFactoryProps {
+				readonly customProperty: boolean;
+			}
+			const props: ExtendedProps = {
+				...commonProps,
+				[property]: defaultTestOldestSupportedClient,
+				customProperty: true,
+			};
+
+			assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
 		});
 	}
 
-	it("keeps the canonical construction properties extendable", () => {
-		interface ExtendedProps extends BaseContainerRuntimeFactoryProps {
-			readonly customProperty: boolean;
-		}
-		const props: ExtendedProps = {
+	it("accepts an explicitly undefined canonical property with the deprecated property", () => {
+		const props: BaseContainerRuntimeFactoryProps = {
 			...commonProps,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			customProperty: true,
-		};
-
-		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
-	});
-
-	it("preserves the deprecated construction overload", () => {
-		const props: DeprecatedBaseContainerRuntimeFactoryProps = {
-			...commonProps,
+			oldestSupportedClient: undefined,
 			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
-		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
-		assert.equal(props.oldestSupportedClient, undefined);
 		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
 	});
 
 	it("rejects a missing compatibility parameter", () => {
 		assert.throws(() => {
-			// @ts-expect-error A compatibility property is required.
 			new BaseContainerRuntimeFactory(commonProps);
 		}, /Specify exactly one/);
 	});
 
 	it("rejects both compatibility parameters", () => {
 		assert.throws(() => {
-			// @ts-expect-error Exactly one compatibility property may be supplied.
 			new BaseContainerRuntimeFactory({
 				...commonProps,
 				oldestSupportedClient: defaultTestOldestSupportedClient,
@@ -99,43 +94,46 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", () => {
 	for (const property of ["oldestSupportedClient", "minVersionForCollab"] as const) {
 		it(`rejects null for ${property}`, () => {
+			const props: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
+				...commonProps,
+				defaultFactory,
+			};
+			// @ts-expect-error A compatibility version must not be null.
+			// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
+			props[property] = null;
 			assert.throws(() => {
-				// @ts-expect-error A compatibility version must not be null.
-				new ContainerRuntimeFactoryWithDefaultDataStore({
-					...commonProps,
-					defaultFactory,
-					// eslint-disable-next-line unicorn/no-null -- Test invalid JavaScript input.
-					[property]: null,
-				});
+				new ContainerRuntimeFactoryWithDefaultDataStore(props);
 			}, /Compatibility version must not be null/);
+		});
+
+		it(`preserves extensible construction properties with ${property}`, () => {
+			interface ExtendedProps extends ContainerRuntimeFactoryWithDefaultDataStoreProps {
+				readonly customProperty: boolean;
+			}
+			const props: ExtendedProps = {
+				...commonProps,
+				defaultFactory,
+				[property]: defaultTestOldestSupportedClient,
+				customProperty: true,
+			};
+
+			assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
 		});
 	}
 
-	it("preserves the canonical construction overload", () => {
+	it("accepts an explicitly undefined canonical property with the deprecated property", () => {
 		const props: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,
 			defaultFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-		};
-
-		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
-	});
-
-	it("preserves the deprecated construction overload", () => {
-		const props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = {
-			...commonProps,
-			defaultFactory,
+			oldestSupportedClient: undefined,
 			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
-		// @ts-expect-error The deprecated type does not include oldestSupportedClient.
-		assert.equal(props.oldestSupportedClient, undefined);
 		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
 	});
 
 	it("rejects a missing compatibility parameter", () => {
 		assert.throws(() => {
-			// @ts-expect-error A compatibility property is required.
 			new ContainerRuntimeFactoryWithDefaultDataStore({
 				...commonProps,
 				defaultFactory,
@@ -145,7 +143,6 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 
 	it("rejects both compatibility parameters", () => {
 		assert.throws(() => {
-			// @ts-expect-error Exactly one compatibility property may be supplied.
 			new ContainerRuntimeFactoryWithDefaultDataStore({
 				...commonProps,
 				defaultFactory,

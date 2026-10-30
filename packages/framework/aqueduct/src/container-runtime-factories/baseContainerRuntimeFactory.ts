@@ -36,6 +36,9 @@ import {
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ * @remarks
+ * Both compatibility properties remain optional in this interface for source compatibility.
+ * The constructor requires exactly one supported compatibility version at runtime.
  * @input
  * @legacy
  * @beta
@@ -73,42 +76,18 @@ export interface BaseContainerRuntimeFactoryProps {
 	 *
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
 	 */
-	oldestSupportedClient: OldestSupportedClientVersion;
+	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
 
 	/**
-	 * This property must not be provided. Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
+	 * Deprecated name for {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient}.
+	 * Supply exactly one compatibility property when you create a factory.
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0.
 	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
-	minVersionForCollab?: undefined;
+	minVersionForCollab?: OldestSupportedClientVersion | undefined;
 }
-
-/**
- * {@link BaseContainerRuntimeFactory} construction properties using the deprecated compatibility
- * property.
- *
- * @deprecated 3.10.0. To be removed in a future release. Use {@link BaseContainerRuntimeFactoryProps}
- * with {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
- * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
- * @input
- * @legacy
- * @beta
- */
-export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
-	BaseContainerRuntimeFactoryProps,
-	"oldestSupportedClient" | "minVersionForCollab"
-> & {
-	/**
-	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
-	 *
-	 * @deprecated 3.10.0. To be removed in a future release.
-	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-	 */
-	readonly minVersionForCollab: OldestSupportedClientVersion;
-};
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
@@ -134,22 +113,7 @@ export class BaseContainerRuntimeFactory
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	private readonly oldestSupportedClient: OldestSupportedClientVersion;
 
-	public constructor(props: BaseContainerRuntimeFactoryProps);
-	/**
-	 * @deprecated 3.10.0. To be removed in a future release.
-	 * Pass {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-	 */
-	public constructor(props: DeprecatedBaseContainerRuntimeFactoryProps);
-	/**
-	 * Creates a factory when the compatibility property is selected dynamically.
-	 */
-	public constructor(
-		props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
-	);
-	public constructor(
-		props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
-	) {
+	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
 
 		this.registryEntries = props.registryEntries;

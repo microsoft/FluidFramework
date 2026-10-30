@@ -54,11 +54,6 @@ export interface ContainerRuntimeOptions {
 // @beta @legacy (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
-// @beta @deprecated @legacy @input
-export type DeprecatedLoadContainerRuntimeParams = Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
-    readonly minVersionForCollab: OldestSupportedClientVersion;
-};
-
 // @beta @legacy (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
@@ -353,14 +348,11 @@ export interface IVersionMarkResolver {
 // @beta @legacy
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
-// @beta @legacy
-export function loadContainerRuntime(params: DeprecatedLoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
-
-// @beta @legacy
-export function loadContainerRuntime(params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
-
 // @alpha @legacy
-export function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+export function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams & {
+    oldestSupportedClient: OldestSupportedClientVersion;
+    minVersionForCollab?: undefined;
+}): Promise<{
     runtime: IContainerRuntime & IRuntime;
 }>;
 
@@ -370,8 +362,8 @@ export interface LoadContainerRuntimeParams {
     context: IContainerContext;
     existing: boolean;
     // @deprecated
-    minVersionForCollab?: undefined;
-    oldestSupportedClient: OldestSupportedClientVersion;
+    minVersionForCollab?: OldestSupportedClientVersion;
+    oldestSupportedClient?: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated

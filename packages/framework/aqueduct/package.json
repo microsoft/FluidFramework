@@ -141,12 +141,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Interface_BaseContainerRuntimeFactoryProps": {
-				"forwardCompat": false
-			},
-			"Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {
-				"forwardCompat": false
-			},
 			"Interface_IDataObjectProps": {
 				"forwardCompat": false
 			}

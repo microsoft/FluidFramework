@@ -52,7 +52,9 @@ Therefore, deployments that must collaborate must use Fluid Framework 2.0.0 or l
 
 Starting with Client 3.10, public runtime entry points require callers to make this choice explicitly.
 New callers use `oldestSupportedClient`.
-Existing beta callers can temporarily use `minVersionForCollab` through a deprecated migration type, but must still supply exactly one compatibility property.
+Existing beta callers can continue to use `minVersionForCollab` on the same parameter interfaces.
+Both properties remain optional in TypeScript to preserve existing declarations and interface extensions.
+The runtime enforces the requirement for exactly one compatibility property.
 If callers supply neither property or both properties, the runtime throws a `UsageError` before it selects a configuration.
 Internal loaders retain their historical fallback so mixed-version test infrastructure can continue to operate.
 

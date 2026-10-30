@@ -85,8 +85,8 @@ Starting with Client 3.10, applications must make this compatibility choice expl
 Use `oldestSupportedClient` to select the oldest client version that must retain document access.
 This explicit choice prevents a default value from changing the compatibility requirements without the application's knowledge.
 
-During migration, existing beta callers can use `minVersionForCollab` instead, through the corresponding deprecated parameter type.
-This path still requires exactly one compatibility property.
+During migration, existing beta callers can continue to use `minVersionForCollab` on the same parameter interfaces.
+Both properties remain optional in TypeScript to preserve existing declarations, but the runtime requires exactly one compatibility property.
 If callers supply neither property or both properties, runtime instantiation fails with a `UsageError`.
 Version validation also rejects unsupported values.
 For these errors, see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor).
@@ -161,8 +161,9 @@ const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
 
 You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `oldestSupportedClient` value. If there is a mismatch (e.g., enabling a feature introduced in 2.40.0 with `oldestSupportedClient: "2.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-The required `oldestSupportedClient` property makes this configuration explicit on `LoadContainerRuntimeParams`.
-If an existing beta caller still uses `minVersionForCollab`, use `DeprecatedLoadContainerRuntimeParams` until you can migrate it.
+The beta loader requires an explicit compatibility choice at runtime.
+`LoadContainerRuntimeParams` keeps both properties optional so existing declarations and interface extensions remain compatible.
+If an existing beta caller still uses `minVersionForCollab`, it can keep that property on the same interface until migration.
 Do not supply both properties.
 The runtime rejects an ambiguous compatibility choice, just as it rejects an omitted choice.
 
