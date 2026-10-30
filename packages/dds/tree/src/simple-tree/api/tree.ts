@@ -51,7 +51,6 @@ import type {
 	TransactionCallbackStatusBeta,
 	TransactionVoidResult,
 	TransactionValueResult,
-	VoidTransactionCallbackStatusAlpha,
 	VoidTransactionCallbackStatusBeta,
 	WithValue,
 } from "./transactionTypes.js";
@@ -639,47 +638,109 @@ export interface UntypedTreeViewAlpha
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.
 	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
+	 * @param params - Optional parameters for the transaction.
+	 * @returns The transaction status and the value returned by the callback.
+	 * @typeParam TSuccessValue - The value type returned when the transaction succeeds.
+	 * @typeParam TFailureValue - The value type returned when the transaction is rolled back. Defaults to `TSuccessValue`.
 	 * @remarks
 	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
 	 */
-	runTransaction<TSuccessValue, TFailureValue>(
+	runTransaction<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionValueResult<TSuccessValue, TFailureValue>;
 
 	/**
-	 * An overload of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 * {@inheritDoc UntypedTreeView.(runTransaction:3)}
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
 	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
 	 */
+	runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
+		params?: RunTransactionParamsAlpha,
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
+
+	/**
+	 * {@inheritDoc TreeContextBeta.(runTransaction:1)}
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
+	 */
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+
+	/**
+	 * Runs a transaction without requiring the callback to return a value or transaction status.
+	 * @param transaction - The callback to run during the transaction.
+	 * @param params - Optional parameters for the transaction.
+	 * @returns The transaction status.
+	 * @privateRemarks
+	 * Keep this last: TypeScript permits value-returning callbacks where `() => void` is expected,
+	 * so placing this before the value-aware overloads would hide their inferred result values.
+	 */
 	runTransaction(
-		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		transaction: () => void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionVoidResult;
 
 	/**
 	 * An asynchronous version of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction}.
+	 * @param transaction - The asynchronous callback to run during the transaction.
+	 * @param params - Optional parameters for the transaction.
+	 * @returns A promise for the transaction status and the value returned by the callback.
+	 * @typeParam TSuccessValue - The value type returned when the transaction succeeds.
+	 * @typeParam TFailureValue - The value type returned when the transaction is rolled back. Defaults to `TSuccessValue`.
 	 * @remarks See {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync} for additional information about asynchronous transactions.
 	 */
-
-	runTransactionAsync<TSuccessValue, TFailureValue>(
+	runTransactionAsync<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 
 	/**
-	 * An overload of {@link UntypedTreeViewAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 * {@inheritDoc UntypedTreeView.(runTransactionAsync:3)}
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
 	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
-	runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+	runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionVoidResult>;
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
+	>;
+
+	/**
+	 * {@inheritDoc TreeContextBeta.(runTransactionAsync:1)}
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
+	 */
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
 
 	/**
 	 * Apply a serialized change to this branch.

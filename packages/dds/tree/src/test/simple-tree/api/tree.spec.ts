@@ -10,9 +10,10 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha, asBeta } from "../../../api.js";
 import type { Revertible } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { Tree, TreeCheckout } from "../../../shared-tree/index.js";
+import { Tree, TreeAlpha, TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
@@ -30,12 +31,24 @@ import {
 	type TreeView,
 	type TreeViewAlpha,
 	type TreeViewBeta,
+	type TreeContextAlpha,
+	type TreeContextBeta,
+	type UntypedTreeView,
+	type UntypedTreeViewAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusBeta,
+	type WithValue,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
+	areSafelyAssignable,
 	requireAssignableTo,
+	requireTrue,
 } from "../../../util/index.js";
 import { expectSchemaEqual, getView, StringArray, TestTreeProviderLite } from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
@@ -61,9 +74,344 @@ const factory = SharedTree.getFactory();
 		TreeViewAlpha<ImplicitFieldSchema>,
 		TreeViewBeta<ImplicitFieldSchema>
 	>;
+
+	// UntypedTreeViewAlpha should be assignable to UntypedTreeView
+	type _checkAlphaUntypedViewAssignableToBeta = requireAssignableTo<
+		UntypedTreeViewAlpha,
+		UntypedTreeView
+	>;
+
+	// TreeContextAlpha should be assignable to TreeContextBeta
+	type _checkAlphaContextAssignableToBeta = requireAssignableTo<
+		TreeContextAlpha,
+		TreeContextBeta
+	>;
 }
 
 describe("simple-tree tree", () => {
+	describe("alpha transaction overloads", () => {
+		// Whole-interface assignability does not guarantee that every explicit-generic call remains valid.
+		// These tests exercise call sites as well as checking inferred types and runtime results.
+		it("preserves single-value calls on views and after context narrowing", async () => {
+			const view = getView(new TreeViewConfiguration({ schema: NodeList }));
+			view.initialize([]);
+			// These are different static views of the same object, not separate trees.
+			const beta = asBeta(view);
+			const alpha = asAlpha(beta);
+			const untyped: UntypedTreeViewAlpha = alpha;
+			const context = TreeAlpha.context(view.root);
+			// Restoring beta-compatible call shapes must not restrict callers to beta transaction options.
+			const options = { customMetadata: { test: "transaction overloads" } };
+
+			const beforeNarrowing = context.runTransaction<number>(() => ({ value: 42 }), options);
+			const asyncBeforeNarrowing = await context.runTransactionAsync<number>(
+				async () => ({ value: 42 }),
+				options,
+			);
+			// Narrowing used to hide the context's single-type-argument overload.
+			assert(context.isView());
+
+			// Keep the explicit <number>: inference alone would not catch the original missing call shape.
+			// Await each asynchronous transaction separately because transactions on this view cannot overlap.
+			const results = [
+				beforeNarrowing,
+				asyncBeforeNarrowing,
+				beta.runTransaction<number>(() => ({ value: 42 })),
+				await beta.runTransactionAsync<number>(async () => ({ value: 42 })),
+				alpha.runTransaction<number>(() => ({ value: 42 }), options),
+				await alpha.runTransactionAsync<number>(async () => ({ value: 42 }), options),
+				untyped.runTransaction<number>(() => ({ value: 42 }), options),
+				await untyped.runTransactionAsync<number>(async () => ({ value: 42 }), options),
+				context.runTransaction<number>(() => ({ value: 42 }), options),
+				await context.runTransactionAsync<number>(async () => ({ value: 42 }), options),
+				// Check concrete implementation signatures too, rather than only the public interfaces.
+				view.runTransaction<number>(() => ({ value: 42 }), options),
+				await view.runTransactionAsync<number>(async () => ({ value: 42 }), options),
+				view.checkout.runTransaction<number>(() => ({ value: 42 }), options),
+				await view.checkout.runTransactionAsync<number>(async () => ({ value: 42 }), options),
+			];
+			type _check = requireTrue<
+				areSafelyAssignable<typeof results, TransactionValueResult<number, number>[]>
+			>;
+			assert.deepEqual(
+				results,
+				results.map(() => ({ success: true, value: 42 })),
+			);
+			view.dispose();
+		});
+
+		it("accepts synchronous callbacks with incidental return values", () => {
+			const view = getView(new TreeViewConfiguration({ schema: NodeList }));
+			view.initialize([]);
+			const beta = asBeta(view);
+			const alpha = asAlpha(beta);
+			const untyped: UntypedTreeViewAlpha = alpha;
+			const context = TreeAlpha.context(view.root);
+			const options = { customMetadata: { test: "incidental return values" } };
+			const appended: string[] = [];
+			const callback = (): number => {
+				view.root.insertAtEnd("item");
+				// Native push returns a number; callers need not wrap it in a value-less callback.
+				return appended.push("item");
+			};
+
+			const beforeNarrowing = context.runTransaction(callback, options);
+			assert(context.isView());
+			const results = [
+				beforeNarrowing,
+				beta.runTransaction(callback),
+				alpha.runTransaction(callback, options),
+				untyped.runTransaction(callback, options),
+				context.runTransaction(callback, options),
+				view.runTransaction(callback, options),
+				view.checkout.runTransaction(callback, options),
+			];
+			type _check = requireTrue<areSafelyAssignable<typeof results, TransactionVoidResult[]>>;
+			assert.deepEqual(
+				results,
+				results.map(() => ({ success: true })),
+			);
+			assert.equal(appended.length, results.length);
+			assert.deepEqual([...view.root], appended);
+
+			// The return-discarding rule for () => void does not apply inside Promise<void>.
+			async function _rejectAsyncIncidentalReturn(): Promise<void> {
+				// @ts-expect-error Beta does not accept a Promise<number> callback.
+				await beta.runTransactionAsync(async () => appended.push("item"));
+				// @ts-expect-error Alpha must not expand the asynchronous contract.
+				await alpha.runTransactionAsync(async () => appended.push("item"));
+			}
+			view.dispose();
+		});
+
+		for (const rollback of [false, true]) {
+			it(`accepts value callbacks with unknown rollback types (rollback: ${rollback})`, async () => {
+				const view = getView(new TreeViewConfiguration({ schema: NodeList }));
+				view.initialize([]);
+				const beta = asBeta(view);
+				const alpha = asAlpha(beta);
+				const untyped: UntypedTreeViewAlpha = alpha;
+				const context = TreeAlpha.context(view.root);
+				const options = { customMetadata: { test: "WithValue compatibility" } };
+				// Structural typing permits additional properties on WithValue.
+				// Keep rollback typed as unknown so the alpha status overload cannot accept this callback.
+				const callback = (): WithValue<number> & { rollback: unknown } => {
+					view.root.insertAtEnd("item");
+					return { value: 42, rollback };
+				};
+				const asyncCallback = async (): Promise<WithValue<number> & { rollback: unknown }> =>
+					callback();
+				const beforeNarrowing = context.runTransaction<number>(callback, options);
+				const asyncBeforeNarrowing = await context.runTransactionAsync<number>(
+					asyncCallback,
+					options,
+				);
+				assert(context.isView());
+				// Explicit <number> selects the value-type convention, not the callback-return-type convention.
+				const results = [
+					beforeNarrowing,
+					asyncBeforeNarrowing,
+					beta.runTransaction<number>(callback),
+					await beta.runTransactionAsync<number>(asyncCallback),
+					alpha.runTransaction<number>(callback, options),
+					await alpha.runTransactionAsync<number>(asyncCallback, options),
+					untyped.runTransaction<number>(callback, options),
+					await untyped.runTransactionAsync<number>(asyncCallback, options),
+					context.runTransaction<number>(callback, options),
+					await context.runTransactionAsync<number>(asyncCallback, options),
+					view.runTransaction<number>(callback, options),
+					await view.runTransactionAsync<number>(asyncCallback, options),
+					view.checkout.runTransaction<number>(callback, options),
+					await view.checkout.runTransactionAsync<number>(asyncCallback, options),
+				];
+				type _check = requireTrue<
+					areSafelyAssignable<typeof results, TransactionValueResult<number, number>[]>
+				>;
+				assert.deepEqual(
+					results,
+					results.map(() => ({ success: !rollback, value: 42 })),
+				);
+				assert.deepEqual([...view.root], rollback ? [] : results.map(() => "item"));
+				view.dispose();
+			});
+		}
+
+		it("preserves generic callback forwarding and beta result types", async () => {
+			const view: TreeViewAlpha<typeof NodeList> = getView(
+				new TreeViewConfiguration({ schema: NodeList }),
+			);
+			view.initialize([]);
+			const beta: UntypedTreeView = view;
+
+			// TOut describes the entire callback result, not just its value.
+			// Keeping it unresolved inside these helpers checks generic forwarding, not only concrete calls.
+			// Each helper invokes the callback twice on the same view, so the cases below make no edits.
+			function forward<
+				TOut extends
+					| TransactionCallbackStatusBeta<unknown, unknown>
+					| VoidTransactionCallbackStatusBeta
+					| void,
+			>(callback: () => TOut) {
+				const expected = beta.runTransaction<TOut>(callback);
+				const actual = view.runTransaction<TOut>(callback, { customMetadata: {} });
+				// Equal runtime results cannot detect type widening or narrowing; check both directions.
+				type _check = requireAssignableTo<typeof actual, typeof expected>;
+				type _checkReverse = requireAssignableTo<typeof expected, typeof actual>;
+				assert.deepEqual(actual, expected);
+				return actual;
+			}
+
+			async function forwardAsync<
+				TOut extends
+					| TransactionCallbackStatusBeta<unknown, unknown>
+					| VoidTransactionCallbackStatusBeta
+					| void,
+			>(callback: () => Promise<TOut>) {
+				const expected = await beta.runTransactionAsync<TOut>(callback);
+				const actual = await view.runTransactionAsync<TOut>(callback, {
+					customMetadata: {},
+				});
+				// The awaited conditional result must retain the same generic relationship as the sync API.
+				type _check = requireAssignableTo<typeof actual, typeof expected>;
+				type _checkReverse = requireAssignableTo<typeof expected, typeof actual>;
+				assert.deepEqual(actual, expected);
+				return actual;
+			}
+
+			assert.deepEqual(
+				forward(() => ({ value: 42 })),
+				{ success: true, value: 42 },
+			);
+			assert.deepEqual(await forwardAsync(async () => ({ value: 42 })), {
+				success: true,
+				value: 42,
+			});
+			assert.deepEqual(
+				forward<TransactionCallbackStatusBeta<number, string>>(() => ({
+					rollback: true,
+					value: "cancelled",
+				})),
+				{ success: false, value: "cancelled" },
+			);
+			assert.deepEqual(
+				await forwardAsync<TransactionCallbackStatusBeta<number, string>>(async () => ({
+					rollback: true,
+					value: "cancelled",
+				})),
+				{ success: false, value: "cancelled" },
+			);
+			assert.deepEqual(
+				forward(() => {}),
+				{ success: true },
+			);
+			assert.deepEqual(await forwardAsync(async () => {}), { success: true });
+			assert.deepEqual(
+				forward<VoidTransactionCallbackStatusBeta>(() => ({ rollback: true })),
+				{ success: false },
+			);
+			assert.deepEqual(
+				await forwardAsync<VoidTransactionCallbackStatusBeta>(async () => ({
+					rollback: true,
+				})),
+				{ success: false },
+			);
+			view.dispose();
+		});
+
+		it("preserves existing alpha inference, explicit success/failure types, and rollback", async () => {
+			const view: TreeViewAlpha<typeof NodeList> = getView(
+				new TreeViewConfiguration({ schema: NodeList }),
+			);
+			view.initialize([]);
+			// Declare different success and failure types even though this invocation always rolls back.
+			// Inserting content makes the runtime assertion verify rollback, not merely the returned status.
+			const callback = (): TransactionCallbackStatusAlpha<number, string> => {
+				view.root.insertAtEnd("rolled back");
+				return { rollback: true, value: "cancelled" };
+			};
+			const results = [
+				view.runTransaction(callback),
+				view.runTransaction<number, string>(callback),
+				await view.runTransactionAsync(async () => callback()),
+				await view.runTransactionAsync<number, string>(async () => callback()),
+			];
+			type _check = requireTrue<
+				areSafelyAssignable<typeof results, TransactionValueResult<number, string>[]>
+			>;
+			assert.deepEqual(
+				results,
+				results.map(() => ({ success: false, value: "cancelled" })),
+			);
+			assert.deepEqual([...view.root], []);
+
+			// A value-only callback should still infer number for both outcomes, without explicit type arguments.
+			const inferred = view.runTransaction(() => ({ value: 42 }));
+			const inferredAsync = await view.runTransactionAsync(async () => ({ value: 42 }));
+			type _checkInferred = requireTrue<
+				areSafelyAssignable<typeof inferred, TransactionValueResult<number, number>>
+			>;
+			type _checkInferredAsync = requireTrue<
+				areSafelyAssignable<typeof inferredAsync, typeof inferred>
+			>;
+			assert.deepEqual(inferred, { success: true, value: 42 });
+			assert.deepEqual(inferredAsync, inferred);
+
+			// Value-less callbacks still produce valueless result types.
+			const voidResults = [
+				view.runTransaction(() => {}),
+				view.runTransaction(() => ({ rollback: true })),
+				await view.runTransactionAsync(async () => {}),
+				await view.runTransactionAsync(async () => ({ rollback: true })),
+			];
+			type _checkVoid = requireTrue<
+				areSafelyAssignable<typeof voidResults, TransactionVoidResult[]>
+			>;
+			assert.deepEqual(voidResults, [
+				{ success: true },
+				{ success: false },
+				{ success: true },
+				{ success: false },
+			]);
+			view.dispose();
+		});
+
+		it("derives value-bearing results from explicit callback-return types", async () => {
+			const view: TreeViewAlpha<typeof NodeList> = getView(
+				new TreeViewConfiguration({ schema: NodeList }),
+			);
+			view.initialize([]);
+
+			// Explicitly select the callback-return-type overload. Structurally equivalent alpha and beta
+			// callback aliases can affect overload inference, which is not what this test needs to exercise.
+			async function run(callback: () => TransactionCallbackStatusBeta<number, string>) {
+				const result =
+					view.runTransaction<TransactionCallbackStatusBeta<number, string>>(callback);
+				const asyncResult = await view.runTransactionAsync<
+					TransactionCallbackStatusBeta<number, string>
+				>(async () => callback());
+				// The fallback conditional distributes over the callback union. With these callback types,
+				// each arm infers its value type for both outcomes, yielding a union of two result types.
+				// The former void overload hid the returned value instead.
+				type _check = requireTrue<
+					areSafelyAssignable<
+						typeof result,
+						TransactionValueResult<number, number> | TransactionValueResult<string, string>
+					>
+				>;
+				type _checkAsync = requireTrue<areSafelyAssignable<typeof asyncResult, typeof result>>;
+				assert.deepEqual(asyncResult, result);
+				return result;
+			}
+
+			assert.deepEqual(await run(() => ({ value: 42 })), { success: true, value: 42 });
+			assert.deepEqual(await run(() => ({ rollback: true, value: "cancelled" })), {
+				success: false,
+				value: "cancelled",
+			});
+			view.dispose();
+		});
+	});
+
 	it("ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.required(NodeList) });
 		const view = getView(config);

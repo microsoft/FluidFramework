@@ -106,8 +106,11 @@ import {
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
+	type VoidTransactionCallbackStatusBeta,
 	type TransactionVoidResult,
 	type TransactionValueResult,
+	type WithValue,
 	type RunTransactionParamsAlpha,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
@@ -1335,12 +1338,27 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return false;
 	}
 
-	public runTransaction<TSuccessValue, TFailureValue>(
+	public runTransaction<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionValueResult<TSuccessValue, TFailureValue>;
+	public runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
+		params?: RunTransactionParamsAlpha,
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
+	public runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		transaction: () => void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionVoidResult;
 	@breakingMethod
@@ -1356,14 +1374,27 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
-	public runTransactionAsync<TSuccessValue, TFailureValue>(
+	public runTransactionAsync<TSuccessValue, TFailureValue = TSuccessValue>(
 		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
-	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+	public runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionVoidResult>;
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
+	>;
+	public runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
