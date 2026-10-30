@@ -25,7 +25,7 @@ FLAGS
   --launchFile=<value>      Write the launch command to this file instead of executing it. Used by shell wrappers to run
                             the alias as a separate process.
   --model=<value>           The AI model to use for the launcher assistant. Defaults to the model specified in
-                            launcher-prompt.md frontmatter, or the Copilot default model.
+                            launcher-prompt.md frontmatter, or GPT-6 Luna.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -41,7 +41,7 @@ EXAMPLES
 
   Use a specific model for the launcher assistant.
 
-    $ flub ai --model <model-id>
+    $ flub ai --model gpt-6-luna
 ```
 
 _See code: [src/commands/ai.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/ai.ts)_

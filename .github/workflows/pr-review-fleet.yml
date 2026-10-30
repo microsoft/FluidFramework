@@ -249,6 +249,7 @@ jobs:
       - name: Run reviewer
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_MODEL: gpt-6.1-sol
           PROMPT_FILE: ${{ steps.prompt.outputs.prompt_file }}
         timeout-minutes: 15
         run: |
