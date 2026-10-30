@@ -439,6 +439,7 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly changedUnknownProperties?: ReadonlySet<string>;
     readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
