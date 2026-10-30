@@ -6,9 +6,9 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing configuration:** run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) completed in **14m 43s**, versus the original **33m 28s** baseline (56% less observed elapsed time).
-It passed 45,649 tests with 3,235 skipped and no failures.
-It used Node 22 for Mocha/policy/artifact jobs and Node 26 for other verification jobs, with TypeScript 6 workers, lean runtime builds, development-only example bundles, and corrected parallel merge-tree tests.
+**Latest fully passing control:** run [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) completed in **16m 36s**, with eight of nine timed jobs under nine minutes.
+It passed 45,649 tests with 3,235 skipped and no failures, using Node 22 for Mocha/Tinylicious and Node 26 for other client build/verification jobs.
+The earlier mixed-runtime run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) passed in **14m 43s**, versus the original **33m 28s** baseline, but its unpatched Node 26 Tinylicious configuration was not reliably green.
 Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
 After reproducing the Tinylicious storage failure, a scoped dependency patch now passes the local regression on both runtimes.
 The next trial returns Tinylicious-backed jobs to Node 26 with that patch; the matrix below describes this candidate, not an already-green result.
@@ -230,8 +230,8 @@ This was not a cold-cache benchmark.
 | E15: spec-only parallel merge-tree plus lower-allocation diagnostics | `6d1de054676de5ec446b80a42a49c1fe5135c472` | [431033](https://dev.azure.com/fluidframework/public/_build/results?buildId=431033) | Mocha passed; separate Tinylicious step failed | Full Mocha step 187.4s; summary-upload setup network error prevents an overall green result |
 | E15 unchanged repeat | `4f8679fa6a5f902cab8c1e5e438ddc035beb5bce` | [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) | Passed | 14m 43s; Mocha 194.7s; all mixed-runtime jobs green |
 | E16: Node 26 client policy/artifact builds | `0a4f0518e7a1d3c8558390425b7927b2392ac3a3` | [431054](https://dev.azure.com/fluidframework/public/_build/results?buildId=431054) | Both targeted jobs passed; Tinylicious failed again | Policy 6m 51s, artifact 6m 44s; same summary-upload HTTP 400 |
-| E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Running | Retain Node 26 for other compatible jobs |
-| E18: patched Git storage on Node 26 | Pending | Pending | Local regression/stress passed; remote pending | Same-object writes serialized; errors preserved |
+| E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
+| E18: patched Git storage on Node 26 | Implementation `0a0a896b14c`; report update included in triggering commit | Pending | Local regression/stress passed; ready to push | Same-object writes serialized; errors preserved |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -718,6 +718,11 @@ The latest upstream library still failed this workload, so a blanket library upg
 No server implementation, error handling, or library version was patched to hide the failure.
 Tinylicious service/stress jobs explicitly select Node 22; Node 26 remains enabled for policy, artifact, browser, local-service, and package-type jobs.
 The authorized opossum 10 override remains in place and has passed installation and functional circuit-breaker checks.
+
+The Node 22 Tinylicious control (431064) then passed all 45,649 tests, with 3,235 skipped.
+Its policy, artifact, and Mocha jobs took 389.5, 449.5, and 460.9 seconds respectively.
+Tinylicious service took 714.2 seconds, including a 551.4-second test step, and was the only timed job above nine minutes.
+That gives a passing reliability/performance baseline for the patched Node 26 attempt.
 
 ### Why merge-tree is slow
 
