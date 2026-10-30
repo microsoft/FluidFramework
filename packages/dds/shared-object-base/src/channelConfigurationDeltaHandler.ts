@@ -14,6 +14,7 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 import {
 	ChannelConfigurationController,
 	type ChannelConfiguration,
+	type ChannelConfigurationDefinition,
 } from "./channelConfiguration.js";
 import {
 	hasChannelConfigurationMarker,
@@ -22,6 +23,11 @@ import {
 } from "./channelConfigurationFormat.js";
 import type { SharedObjectTransport } from "./sharedObject.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
+import type {
+	SharedKernelConfiguration,
+	SharedKernelConfigurationFactory,
+	SharedKernelConfigurationFactoryArgs,
+} from "./sharedObjectKernel.js";
 
 /**
  * State available before services are connected, without exposing the runtime or subclass hooks.
@@ -32,6 +38,55 @@ export interface ChannelConfigurationHost {
 	isDisposed(): boolean;
 	isReadOnly(): boolean;
 	onDispose(listener: () => void): void;
+}
+
+/**
+ * Creates injected persisted-configuration support for a kernel-backed shared object.
+ * @internal
+ */
+export function makeSharedKernelConfiguration<TConfig extends ChannelConfiguration>(
+	definition: ChannelConfigurationDefinition<TConfig>,
+	initialConfiguration?: TConfig,
+): SharedKernelConfigurationFactory<TConfig> {
+	return {
+		channelConfigurationProtocolVersion: 1,
+		create: (args) => makeConfiguredKernelSupport(definition, initialConfiguration, args),
+	};
+}
+
+function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
+	definition: ChannelConfigurationDefinition<TConfig>,
+	initialConfiguration: TConfig | undefined,
+	args: SharedKernelConfigurationFactoryArgs,
+): SharedKernelConfiguration<TConfig> {
+	const initialization: SharedObjectConfigurationOptions<TConfig>["initialization"] =
+		args.initializationKind === "load"
+			? { kind: "load" }
+			: initialConfiguration === undefined
+				? { kind: "create" }
+				: { kind: "create", initialConfiguration };
+	const handler = new ChannelConfigurationDeltaHandler(
+		{ definition, initialization },
+		args.ordinary,
+		args.transport,
+		{
+			attributes: args.attributes,
+			logger: args.logger,
+			isDisposed: args.isDisposed,
+			isReadOnly: args.isReadOnly,
+			onDispose: args.onDispose,
+		},
+	);
+	handler.beginInitialization(args.initializationKind);
+	return {
+		configuration: handler.controller,
+		deltaHandler: handler,
+		attributes: handler.attributes,
+		submitOrdinaryMessage: (content, metadata) =>
+			handler.submitOrdinaryMessage(content, metadata),
+		completeInitialization: () => handler.completeInitialization(),
+		close: (error) => handler.close(error),
+	};
 }
 
 /**

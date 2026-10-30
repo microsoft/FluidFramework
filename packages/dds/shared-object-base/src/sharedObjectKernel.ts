@@ -29,11 +29,8 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 
 import type {
 	ChannelConfiguration,
-	ChannelConfigurationDefinition,
 	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
-import { ChannelConfigurationDeltaHandler } from "./channelConfigurationDeltaHandler.js";
-import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
@@ -42,9 +39,8 @@ import {
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
-	type SharedObjectMessageRouting,
+	type SharedObjectTransport,
 } from "./sharedObject.js";
-import type { SharedObjectConfigurationInitialization } from "./sharedObjectConfiguration.js";
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
@@ -117,34 +113,41 @@ export interface SharedKernel {
  */
 export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 
-function installOrdinaryKernelMessageRouting(
-	messageRouting: SharedObjectMessageRouting,
-): void {
-	const { ordinary } = messageRouting;
-	const deltaHandler: Required<IDeltaHandler> = {
-		setConnectionState: (connected: boolean): void => {
-			ordinary.setConnectionState(connected);
-		},
-		processMessages: (messages: IRuntimeMessageCollection): void => {
-			for (const message of messages.messagesContent) {
-				verifyOrdinaryChannelMessage(message.contents);
-			}
-			ordinary.processMessages(messages);
-		},
-		applyStashedOp: (content: unknown): void => {
-			verifyOrdinaryChannelMessage(content);
-			ordinary.applyStashedOp(content);
-		},
-		reSubmit: (content: unknown, metadata: unknown, squash: boolean): void => {
-			verifyOrdinaryChannelMessage(content);
-			ordinary.reSubmit(content, metadata, squash);
-		},
-		rollback: (content: unknown, metadata: unknown): void => {
-			verifyOrdinaryChannelMessage(content);
-			ordinary.rollback(content, metadata);
-		},
-	};
-	messageRouting.install(deltaHandler);
+/**
+ * Inputs available when constructing optional persisted-configuration support for a kernel.
+ * @internal
+ */
+export interface SharedKernelConfigurationFactoryArgs {
+	readonly initializationKind: "create" | "load";
+	readonly attributes: IChannelAttributes;
+	readonly ordinary: Required<IDeltaHandler>;
+	readonly transport: SharedObjectTransport;
+	readonly logger: TelemetryLoggerExt;
+	readonly isDisposed: () => boolean;
+	readonly isReadOnly: () => boolean;
+	readonly onDispose: (listener: () => void) => void;
+}
+
+/**
+ * Per-instance persisted-configuration support installed before a kernel is constructed.
+ * @internal
+ */
+export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration> {
+	readonly configuration: ChannelConfigurationFacet<TConfig>;
+	readonly deltaHandler: Required<IDeltaHandler>;
+	readonly attributes: IChannelAttributes;
+	submitOrdinaryMessage(content: unknown, metadata: unknown): void;
+	completeInitialization(): void;
+	close(error: unknown): void;
+}
+
+/**
+ * Creates persisted-configuration support for each kernel-backed shared object.
+ * @internal
+ */
+export interface SharedKernelConfigurationFactory<TConfig extends ChannelConfiguration> {
+	readonly channelConfigurationProtocolVersion: 1;
+	create(args: SharedKernelConfigurationFactoryArgs): SharedKernelConfiguration<TConfig>;
 }
 
 /**
@@ -174,7 +177,7 @@ class SharedObjectFromKernel<
 	#lazyData: FactoryOut<TOut> | undefined = undefined;
 
 	readonly #kernelArgs: KernelArgs<TConfig>;
-	readonly #configurationHandler: ChannelConfigurationDeltaHandler<TConfig> | undefined;
+	readonly #configuration: SharedKernelConfiguration<TConfig> | undefined;
 
 	public constructor(
 		id: string,
@@ -182,31 +185,41 @@ class SharedObjectFromKernel<
 		attributes: IChannelAttributes,
 		public readonly factory: SharedKernelFactory<TOut, TConfig>,
 		telemetryContextPrefix: string,
-		initialization: SharedObjectConfigurationInitialization<TConfig>,
+		initializationKind: "create" | "load",
+		configurationFactory: SharedKernelConfigurationFactory<TConfig> | undefined,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		const definition = factory.configurationDefinition;
-		const hasConfiguration =
-			initialization.kind === "load"
-				? "configuration" in attributes
-				: initialization.initialConfiguration !== undefined;
 		assert(
-			!hasConfiguration || definition !== undefined,
+			!("configuration" in attributes) ||
+				configurationFactory?.channelConfigurationProtocolVersion === 1,
 			"Factory does not support channel configuration",
 		);
-		const messageRouting = getSharedObjectMessageRouting(this);
-		if (definition === undefined) {
-			this.#configurationHandler = undefined;
-			installOrdinaryKernelMessageRouting(messageRouting);
+		if (configurationFactory === undefined) {
+			this.#configuration = undefined;
 		} else {
-			this.#configurationHandler = this.#installConfigurationHandler(
-				definition,
-				initialization,
-				messageRouting,
+			const messageRouting = getSharedObjectMessageRouting(this);
+			const configuration = configurationFactory.create({
+				initializationKind,
+				attributes,
+				ordinary: messageRouting.ordinary,
+				transport: messageRouting.transport,
+				logger: extractTelemetryLoggerExt(this.logger),
+				isDisposed: () => runtime.disposed,
+				isReadOnly: () => runtime.isReadOnly(),
+				onDispose: (listener) => runtime.once("dispose", listener),
+			});
+			messageRouting.install(configuration.deltaHandler, (error) =>
+				configuration.close(error),
 			);
+			Object.defineProperty(this, "attributes", {
+				value: configuration.attributes,
+			});
+			Object.defineProperty(this, "channelConfigurationProtocolVersion", {
+				value: configurationFactory.channelConfigurationProtocolVersion,
+			});
+			this.#configuration = configuration;
 		}
-		const configuration = this.#configurationHandler?.controller;
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
@@ -230,48 +243,21 @@ class SharedObjectFromKernel<
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
-			...(configuration === undefined ? {} : { configuration }),
+			...(this.#configuration === undefined
+				? {}
+				: { configuration: this.#configuration.configuration }),
 			oldestSupportedClient: minVersionForCollab,
 		};
-	}
-
-	#installConfigurationHandler(
-		definition: ChannelConfigurationDefinition<TConfig>,
-		initialization: SharedObjectConfigurationInitialization<TConfig>,
-		messageRouting: SharedObjectMessageRouting,
-	): ChannelConfigurationDeltaHandler<TConfig> {
-		const handler = new ChannelConfigurationDeltaHandler(
-			{ definition, initialization },
-			messageRouting.ordinary,
-			messageRouting.transport,
-			{
-				attributes: this.attributes,
-				logger: extractTelemetryLoggerExt(this.logger),
-				isDisposed: () => this.runtime.disposed,
-				isReadOnly: () => this.runtime.isReadOnly(),
-				onDispose: (listener) => this.runtime.once("dispose", listener),
-			},
-		);
-		handler.beginInitialization(initialization.kind);
-		messageRouting.install(handler, (error) => handler.close(error));
-		Object.defineProperty(this, "attributes", {
-			value: handler.attributes,
-		});
-		Object.defineProperty(this, "channelConfigurationProtocolVersion", {
-			value: 1,
-		});
-		return handler;
 	}
 
 	protected override submitLocalMessage(
 		content: unknown,
 		localOpMetadata: unknown = undefined,
 	): void {
-		if (this.#configurationHandler === undefined) {
-			verifyOrdinaryChannelMessage(content);
+		if (this.#configuration === undefined) {
 			super.submitLocalMessage(content, localOpMetadata);
 		} else {
-			this.#configurationHandler.submitOrdinaryMessage(content, localOpMetadata);
+			this.#configuration.submitOrdinaryMessage(content, localOpMetadata);
 		}
 	}
 
@@ -291,7 +277,7 @@ class SharedObjectFromKernel<
 
 	protected override initializeLocalCore(): void {
 		this.#initializeData(this.factory.create(this.#kernelArgs));
-		this.#configurationHandler?.completeInitialization();
+		this.#configuration?.completeInitialization();
 	}
 
 	#initializeData(data: FactoryOut<TOut>): void {
@@ -311,7 +297,7 @@ class SharedObjectFromKernel<
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
 		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
-		this.#configurationHandler?.completeInitialization();
+		this.#configuration?.completeInitialization();
 	}
 
 	protected override onDisconnect(): void {
@@ -378,14 +364,6 @@ export interface SharedKernelFactory<
 	T extends object,
 	TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
-	/**
-	 * Defines the configuration values this factory can read and validate.
-	 * Unmarked instances receive its default configuration without changing their summary format.
-	 * Their first accepted configuration change starts persisting configuration.
-	 * Omit this definition for DDSes that do not support configuration.
-	 */
-	readonly configurationDefinition?: ChannelConfigurationDefinition<TConfig>;
-
 	create(args: KernelArgs<TConfig>): FactoryOut<T>;
 
 	/**
@@ -400,10 +378,11 @@ export interface SharedKernelFactory<
  */
 export interface KernelArgs<TConfig extends ChannelConfiguration = ChannelConfiguration> {
 	/**
-	 * Per-instance configuration, available before the kernel is constructed or loaded.
+	 * Per-instance configuration, available before the kernel is constructed or loaded when
+	 * persisted-configuration support is injected.
 	 * Read its current snapshot to initialize configuration-dependent state, then subscribe to changes.
 	 * Unmarked instances use the factory's default configuration at revision zero.
-	 * Undefined only when the factory does not define configuration.
+	 * Undefined when configuration support is not injected.
 	 */
 	readonly configuration?: ChannelConfigurationFacet<TConfig>;
 	/**
@@ -558,12 +537,10 @@ export interface SharedObjectOptions<
 	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>, TConfig>;
 
 	/**
-	 * Enables persisted configuration on new instances and supplies their initial values.
-	 * Omit this option to use the factory's defaults without persisting configuration until its
-	 * first accepted change. Loading uses persisted attributes or those defaults, never this option.
-	 * Values must remain unchanged after they are supplied; factory attributes remain unchanged.
+	 * Optional persisted-configuration support installed before the kernel is created or loaded.
+	 * Omit this option for a kernel that does not participate in the configuration protocol.
 	 */
-	readonly initialConfiguration?: TConfig;
+	readonly configuration?: SharedKernelConfigurationFactory<TConfig>;
 
 	/**
 	 * {@inheritDoc SharedObject.telemetryContextPrefix}
@@ -583,7 +560,7 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 ) {
 	class ChannelFactory implements IChannelFactory<T> {
 		public get channelConfigurationProtocolVersion(): 1 | undefined {
-			return options.factory.configurationDefinition === undefined ? undefined : 1;
+			return options.configuration?.channelConfigurationProtocolVersion;
 		}
 
 		/**
@@ -616,7 +593,8 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				attributes,
 				options.factory,
 				options.telemetryContextPrefix,
-				{ kind: "load" },
+				"load",
+				options.configuration,
 			);
 			await shared.load(services);
 			return shared as unknown as T & IChannel;
@@ -629,9 +607,8 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				ChannelFactory.Attributes,
 				options.factory,
 				options.telemetryContextPrefix,
-				options.initialConfiguration === undefined
-					? { kind: "create" }
-					: { kind: "create", initialConfiguration: options.initialConfiguration },
+				"create",
+				options.configuration,
 			);
 
 			shared.initializeLocal();

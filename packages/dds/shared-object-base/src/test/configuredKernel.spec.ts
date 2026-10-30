@@ -41,6 +41,7 @@ import type {
 	ChannelConfigurationFacet,
 	ChannelConfigurationChange,
 } from "../channelConfiguration.js";
+import { makeSharedKernelConfiguration } from "../channelConfigurationDeltaHandler.js";
 import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
 import type { ISharedObjectKind, SharedObjectKindAlpha } from "../sharedObject.js";
 import {
@@ -74,7 +75,7 @@ interface View {
 
 function makeKind(
 	initialConfiguration?: Config,
-	support: boolean = true,
+	injectConfiguration: boolean = true,
 	type: string = "configured-test",
 	options: {
 		processMessages?: () => void;
@@ -122,13 +123,17 @@ function makeKind(
 		attributes: { type, snapshotFormatVersion: "1" },
 		telemetryContextPrefix: "configured-test",
 		factory: {
-			...(support
-				? { configurationDefinition: options.configurationDefinition ?? definition }
-				: {}),
 			create,
 			loadCore: async (args) => create(args),
 		},
-		...(initialConfiguration === undefined ? {} : { initialConfiguration }),
+		...(injectConfiguration
+			? {
+					configuration: makeSharedKernelConfiguration(
+						options.configurationDefinition ?? definition,
+						initialConfiguration,
+					),
+				}
+			: {}),
 	});
 }
 
@@ -904,7 +909,7 @@ describe("configured kernel composition", () => {
 		await assert.rejects(config.requestChange({}), /disposed/);
 	});
 
-	it("keeps DDSes without a configuration definition on ordinary dispatch", async () => {
+	it("keeps DDSes without injected configuration support on ordinary dispatch", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
 		const factory = makeKind(undefined, false).getFactory();
 		const shared = factory.create(runtime, "unconfigured");
@@ -948,21 +953,24 @@ describe("configured kernel composition", () => {
 		assert.deepEqual(submitted, []);
 	});
 
-	for (const lazy of [false, true]) {
-		it(`rejects activation for a nonparticipating DDS during ${lazy ? "lazy replay" : "live processing"}`, async () => {
-			const test = datastoreHarness(makeKind(undefined, false).getFactory());
-			if (lazy) {
-				test.process(barrier(0, true));
-				await assert.rejects(test.runtime.getChannel("dds"), DataProcessingError);
-			} else {
-				await test.runtime.getChannel("dds");
-				assert.equal(test.shared.config, undefined);
-				test.process("ordinary");
-				assert.throws(() => test.process(barrier(0, true)), DataProcessingError);
-			}
-			test.runtime.dispose();
-		});
-	}
+	it("preserves marker-shaped payloads for a nonparticipating DDS", () => {
+		const { runtime, services, delta, submitted } = harness();
+		const shared = makeKind(undefined, false).getFactory().create(runtime, "ordinary");
+		shared.connect(services);
+		const contents = { isChannelConfigurationOp: true, applicationValue: "ordinary" };
+		shared.edit(contents);
+		assert.deepEqual(submitted, [{ contents, metadata: undefined }]);
+		delta.processMessages(collection([contents], true));
+		assert.deepEqual(shared.observed.at(-1), [
+			"operation",
+			contents,
+			undefined,
+			undefined,
+			true,
+		]);
+		assert.equal(shared.config, undefined);
+		assert(!supportsChannelConfiguration(shared));
+	});
 
 	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		it(`rejects DDS submissions using the reserved marker (${attachState})`, () => {

@@ -61,13 +61,13 @@ state, CAS decisions, and configuration-request completion tracking.
 A configuration-specific message layer, `ChannelConfigurationDeltaHandler`,
 composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
 It owns configuration routing, initialization, attribute persistence, and disposal.
-`SharedObjectFromKernel` constructs this layer when its kernel factory supplies a configuration definition.
+`SharedObjectFromKernel` receives this layer through an optional configuration factory.
 Kernel implementations receive the typed facet in `KernelArgs` before the kernel factory constructs or loads the kernel.
 The generic `SharedObject` inheritance path does not construct configuration support.
 
 The integration is intentionally limited to the kernel-based path instead of adding configuration registration to the broad `SharedObject` inheritance path.
 `SharedObjectCore` provides only a package-internal, protocol-neutral routing seam.
-The seam lets `SharedObjectFromKernel` compose configuration with the existing lifecycle without adding a protected or public API for external subclasses.
+The seam lets the injected configuration factory compose with the existing lifecycle without adding a protected or public API for external subclasses.
 
 The DDS owns the meaning and validation of its configuration, how it reacts to an accepted change,
 and how it processes ordinary ops, including optimistic local state and acknowledgements. It does
@@ -91,10 +91,20 @@ Production DDS adoption and enforcement of mixed-version compatibility are also 
 
 ### Kernel-based DDSes
 
-A participating `SharedKernelFactory` supplies a `configurationDefinition`.
-`SharedObjectFromKernel` constructs the controller and message layer before it calls `factory.create` or `factory.loadCore`.
+A participating `SharedObjectOptions` supplies a configuration factory created with `makeSharedKernelConfiguration`.
+`SharedObjectFromKernel` invokes the injected factory before it calls `factory.create` or `factory.loadCore`.
 The resulting `KernelArgs.configuration` facet is readable during kernel construction.
 Requests cannot change configuration until local initialization or loading completes.
+
+`makeSharedKernelConfiguration` receives the definition and optional creation values and closes over them.
+The per-instance configuration factory receives lifecycle arguments from `SharedObjectFromKernel`:
+
+```typescript
+const kind = makeSharedObjectKind({
+    // ...
+    configuration: makeSharedKernelConfiguration(definition, initialConfiguration),
+});
+```
 
 The factory reads the initial snapshot and registers change handling through the facet:
 
@@ -110,9 +120,9 @@ function create(args: KernelArgs<MyConfiguration>): FactoryOut<MyView> {
 }
 ```
 
-`SharedObjectOptions.initialConfiguration` applies only when the factory creates a new channel.
+The second `makeSharedKernelConfiguration` argument applies only when the factory creates a new channel.
 Load reads the instance's channel attributes, never the factory's creation settings.
-The wrapper declares `channelConfigurationProtocolVersion: 1` when the factory supports configuration,
+The injected factory declares `channelConfigurationProtocolVersion: 1`,
 even before configuration is persisted.
 The datastore continues to write per-instance configuration through channel attributes.
 
@@ -120,7 +130,7 @@ The datastore continues to write per-instance configuration through channel attr
 
 Add an optional `configuration` member to the serialized attributes blob.
 For a supporting DDS, absence means the stable default configuration at revision zero, without persistent configuration.
-For a DDS without a configuration definition, absence keeps its existing protocol and no configuration facet is supplied.
+A kernel without an injected configuration factory keeps its existing protocol and receives no configuration facet.
 
 ```json
 {
@@ -163,7 +173,7 @@ patch merging, `and`, `or`, or client-local defaults are applied on load.
 The protocol trusts this internal contract instead of copying, freezing, or recursively inspecting values.
 Serialization uses the normal op and summary paths; failures retain their diagnostic stacks.
 The definition's default configuration applies only when persisted configuration is absent.
-Explicit `initialConfiguration` values apply only to creation, never to loaded state.
+Explicit creation values apply only to creation, never to loaded state.
 Message-size limits belong to the normal runtime submission path, not the configuration protocol.
 DDS authors should keep configuration small; the protocol does not impose a separate size limit,
 truncate values, or fall back to defaults.
@@ -208,7 +218,7 @@ instance's attributes.
 The wrapper copies attributes for configuration-capable instances, before they can add the configuration getter.
 This shallow copy keeps the per-instance getter off the shared factory attributes.
 The getter is added at configured creation, configured load, or the first accepted replacement.
-DDSes without a configuration definition keep the existing attributes behavior.
+DDSes without injected configuration support keep the existing attributes behavior.
 
 ## Wire protocol and processing
 
@@ -227,12 +237,12 @@ export interface ChannelConfigurationMessageV1 {
 }
 ```
 
-The factory's configuration definition selects configuration-capable dispatch, including for unmarked instances.
+The injected configuration factory selects configuration-capable dispatch, including for unmarked instances.
 This dispatch uses the presence of an own top-level `isChannelConfigurationOp` property to classify a message as a configuration op.
 Any value reserves that property; the configuration parser requires its value to be `true`.
 Nested application data can use the same name.
 The first accepted configuration op adds the attributes marker before notifying the DDS.
-Without a configuration definition, the shared ordinary-op guard rejects the reserved top-level property instead of passing it to an unsupported DDS.
+Without injected configuration support, the kernel retains its existing ordinary dispatch and does not reserve this property.
 
 For every incoming logical message on a configured channel, in order:
 
@@ -347,10 +357,10 @@ export interface ChannelConfigurationFacet<
 }
 ```
 
-`SharedKernelFactory<T, TConfig>.configurationDefinition` declares reader support.
-`SharedObjectOptions<T, TConfig>.initialConfiguration` separately opts new instances in.
-`KernelArgs<TConfig>.configuration` contains the facet whenever the factory defines configuration.
-It is undefined only for DDSes that do not support configuration.
+`makeSharedKernelConfiguration` receives the reader definition and optional creation values.
+`SharedObjectOptions<T, TConfig>.configuration` injects that support into `SharedObjectFromKernel`.
+`KernelArgs<TConfig>.configuration` contains the facet when support is injected.
+It is undefined for uninjected kernels.
 Unmarked instances start with `defaultConfiguration` at revision zero.
 The wrapper creates the facet before calling `factory.create` or `factory.loadCore`.
 The kernel can read it during construction and register a listener before loading its state.
@@ -503,10 +513,9 @@ CAS remains entirely in the shared configuration mechanism.
 It exposes that endpoint and the lower-level transport through a package-internal routing accessor.
 The accessor is not part of the protected or public `SharedObjectCore` API.
 
-`SharedObjectFromKernel` installs an ordinary-message routing guard before initialization or service connection.
-For a factory without a configuration definition,
-this layer validates the reserved configuration marker and forwards ordinary traffic unchanged.
-For a supporting factory, it composes the ordinary endpoint with `ChannelConfigurationDeltaHandler`.
+`SharedObjectFromKernel` installs optional configuration routing before initialization or service connection.
+With no injected configuration factory, it retains the original ordinary message path and does not reserve configuration messages.
+When configuration support is injected, it composes the ordinary endpoint with `ChannelConfigurationDeltaHandler`.
 The runtime connects to the configuration layer,
 which routes control ops to the controller and ordinary collections to the original endpoint.
 It splits ordinary runs around control ops, preserving the original envelope, message metadata, and synchronous ordering.
@@ -514,10 +523,11 @@ Kernel hooks remain downstream of ordinary handle decoding and DDS events.
 The layer routes configuration requests during resubmission, stashed-op restoration, and rollback,
 but delegates ordinary payloads to the stable DDS endpoint.
 `submitLocalMessage` remains the ordinary submission entry point.
-Kernel-based channels guard ordinary submission, receive, stash, resubmit, and rollback
+Configuration-aware kernel-based channels guard ordinary submission, receive, stash, resubmit, and rollback
 against an own top-level `isChannelConfigurationOp` property.
 They throw `DataProcessingError` for any value of this reserved property,
-including when their factory does not support configuration, to prevent future collisions.
+preventing ordinary DDS traffic from colliding with configuration messages.
+Uninjected kernels treat this property as ordinary application data.
 Direct `SharedObject` subclasses are outside this integration and retain their existing ordinary dispatch behavior.
 The guard does not inspect nested application data or impose a DDS payload schema.
 This reserved-key policy is part of kernel-based persisted configuration, not generic `SharedObject` dispatch.
@@ -566,12 +576,12 @@ Existing DDS event-listener error handling is unchanged.
 
 ## Creation, attachment, load, and summaries
 
-At creation the wrapper uses `SharedObjectOptions.initialConfiguration`, when provided.
+At creation the injected configuration factory uses the initial values supplied to `makeSharedKernelConfiguration`, when provided.
 Otherwise, a supporting factory uses its stable `defaultConfiguration`.
 Explicit initial values activate persistence immediately, even when they equal the defaults.
 The DDS author owns rollout policy; choosing explicit activation can sacrifice compatibility with older clients.
 Loading uses persisted configuration when present and the same stable defaults when absent.
-It never uses `initialConfiguration` to replace loaded state.
+It never uses creation values to replace loaded state.
 Reading defaults does not add an attributes marker; the first accepted replacement adds it, including a replacement with identical values.
 Once present, the marker remains even when all settings return to defaults.
 
@@ -677,7 +687,7 @@ cancels an op that might already have reached the service.
 
 This change does not ensure that all clients write channel attributes correctly.
 An older summarizer can omit persisted configuration.
-On a subsequent load, a supporting DDS then uses `definition.defaultConfiguration` at revision zero and remains unmarked, even if its creation-time `initialConfiguration` was different.
+On a subsequent load, a supporting DDS then uses `definition.defaultConfiguration` at revision zero and remains unmarked, even if its creation values were different.
 Missing configuration is not rejected, automatically migrated, or reconstructed from creation settings.
 Until mixed-version safeguards are added, persisted configuration must not be enabled when an older summarizer can write the channel.
 
@@ -704,15 +714,15 @@ instances, not evidence that every configuration value is supported.
 `supportsChannelConfiguration`, exported from `datastore/internal`, checks the marker on a channel or factory.
 The runtime does not require a factory marker before `factory.load`.
 It requires a returned configured instance to declare support before connecting/replaying it.
-`SharedObjectFromKernel` installs the controller and declares that support together.
+The injected configuration factory installs the controller and declares that support together.
 These checks apply only in runtimes that contain the reader safeguards, and a channel can be loaded lazily.
 They do not establish peer readiness or provide an automatic saturation gate before configuration-op submission.
 
 Supporting factories expose stable defaults on unmarked instances without changing their summaries.
 The first accepted configuration replacement activates persistence.
 With this shared infrastructure,
-a kernel-based channel without a configuration definition rejects a configuration op
-instead of passing it to its kernel.
+a kernel-based channel participates in configuration dispatch only when support is injected.
+An uninjected kernel retains ordinary dispatch for the same payload.
 Lazy replay must apply activation before exposing or summarizing the channel.
 A changed channel cannot reuse a summary handle that omits activation.
 
@@ -729,7 +739,7 @@ DDS-specific invalidation events and telemetry are outside this design.
 | Area | Current implementation |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state and wire-format types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Package-internal SharedObject routing seam; optional configuration composition in `SharedObjectFromKernel`; kernel facet; per-instance configuration attributes; kernel configuration-op dispatch and reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
+| `shared-object-base` | Package-internal SharedObject routing seam; optional injected configuration composition in `SharedObjectFromKernel`; kernel facet; per-instance configuration attributes; configuration-op dispatch and reserved-key guards for participating kernels; configuration-request completion tracking; normal DDS attachment state. |
 | Existing datastore/runtime paths | Retain instance-attribute persistence, lazy replay ordering, ordinary stashed-op handling, pending accounting, and summary invalidation; no compatibility gates are added. |
 | Test kernels | Exercise configured and unconfigured kernel factories, stable defaults, creation values, loaded state, synchronous change callbacks, and ordinary lifecycle behavior. |
 
@@ -764,13 +774,13 @@ The key scenarios are:
 | Staging rollback and disposal | Configuration requests receive explicit cancellation/error outcomes; ordinary DDS squash/rollback remains functional without crossing configuration-op boundaries. |
 | Future expected revision, malformed configuration op, unsupported winning config | Predictable failure before dependent state is processed. |
 | Ordinary primitive, array, and object payloads | Preserve the existing payload shapes; ordinary validation remains the DDS's responsibility. |
-| Reserved own top-level property | Any value identifies a configuration candidate only on configured dispatch; parsing requires `true`. Kernel-based ordinary submission, receive, stash, resubmit, and rollback reject the property with `DataProcessingError`, including for an unconfigured kernel factory. Direct `SharedObject` subclasses retain ordinary dispatch. |
+| Reserved own top-level property | Any value identifies a configuration candidate only on injected configuration dispatch; parsing requires `true`. Participating kernel submission, receive, stash, resubmit, and rollback reject the property with `DataProcessingError`. Uninjected kernels and direct `SharedObject` subclasses retain ordinary dispatch. |
 | Nested application property with the reserved name | Remains ordinary application data; no configuration dispatch or shared rejection. |
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Unsupported persisted configuration | Controller validation fails for malformed state, unknown protocol versions, or locally unsupported values before DDS state is read. |
-| Optional DDS participation | DDSes without a definition continue ordinary operation and reject configuration ops. Supporting DDSes use defaults before activation. |
+| Optional DDS participation | Uninjected DDSes retain ordinary dispatch. Supporting DDSes use defaults before activation. |
 | Existing unmarked channel | Stable defaults at revision zero; no summary marker until the first accepted replacement. Normal stable summaries remain readable. |
-| Creation settings versus loaded state | `initialConfiguration` applies only at creation. Load uses persisted values when present and definition defaults when absent. |
+| Creation settings versus loaded state | Explicit creation values apply only at creation. Load uses persisted values when present and definition defaults when absent. |
 | Configuration omitted by an older summarizer | Subsequent load uses definition defaults at revision zero, unmarked, even if creation settings differed. No rejection or automatic migration is added. |
 | Per-instance attributes | Configuration changes update the actual instance's attributes without changing factory attributes or other instances. Supporting unmarked instances do not acquire a marker merely by loading or summarizing. |
 
