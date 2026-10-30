@@ -3,6 +3,13 @@
 This project welcomes contributions and suggestions. Detailed instructions for working in the repo
 can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
+Dependency changes from external contributors are welcome, but will require some additional steps.
+The repository is configured to use a public Azure Artifacts feed as its registry (see .npmrc / pnpm-workspace files).
+External contributors do not have permissions to cause that feed to save new packages from upstream npmjs.
+At development time, such contributors can modify the npmrc and pnpm-workspace files to reference registry.npmjs.org (or some other feed of their choice).
+A Fluid Framework maintainer will then need to update lock files at PR time after confirming the dependency updates are reasonable.
+See [Dependency setup and changes](./docs/content/Contributing/Dependencies.md) for the contribution and authentication steps.
+
 Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to,
 and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 

@@ -57,6 +57,3 @@ CLAUDE.local.md
 
 # Output from benchmarks
 **/benchmark*Output.json
-
-# npm configuration: Currently only used by CI to redirect to an alternative registry.
-.npmrc

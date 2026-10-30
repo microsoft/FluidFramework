@@ -158,8 +158,8 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 | `minimumReleaseAge` | 0 | See "Why `minimumReleaseAge` 0" |
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
-| `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
-| `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
+| `trustPolicy` | off | The publicPackages mirror does not preserve the metadata required for no-downgrade checks |
+| `trustPolicyExclude` | [] | Retained exclusions for when trust metadata is available again (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
 ### Why `minimumReleaseAge` 0
@@ -172,11 +172,12 @@ Unfortunately, artifact feeds do not preserve package publish time when ingestin
 Rather, they record when the package was first added to the downstream artifact feed.
 Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
 
-This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
-
 #### Updating dependencies while respecting minimum release age
 
-Contributors should use `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` when updating dependencies to mimic the repository policy for consuming packages from npmjs registry.
+Use `pnpm install-no-frozen` in the root or ESLint configuration workspace when updating dependencies.
+The script checks pnpm's effective registry and sets a minimum release age of 10080 minutes (7 days) for `registry.npmjs.org`, or 0 for `publicPackages`, which applies its own package-age protections.
+It respects environment configuration and forwarded `--registry` arguments.
+For other registries, it leaves the configured minimum release age unchanged.
 
 ### Why `resolutionMode: highest` instead of `time-based`
 
