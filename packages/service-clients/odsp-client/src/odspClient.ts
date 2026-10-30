@@ -230,11 +230,11 @@ export class OdspClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollaboration: OldestSupportedClientVersion,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			minVersionForCollaboration,
+			oldestSupportedClient,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
