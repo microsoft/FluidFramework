@@ -53,6 +53,8 @@ import {
 	SchemaFactoryBeta,
 	allowUnused,
 	type InsertableTreeFieldFromImplicitField,
+	getSimpleSchema,
+	type SimpleObjectNodeSchema,
 } from "../../../simple-tree/index.js";
 import {
 	brand,
@@ -1393,6 +1395,19 @@ describe("schemaFactory", () => {
 		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
 			factory.scopedFactory("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		const ScopedObject = scopedFactory.object("Object", {});
+		assert.equal(
+			getSimpleSchema(ScopedObject).definitions.get(ScopedObject.identifier)?.kind,
+			NodeKind.Object,
+		);
+		assert.equal(
+			(
+				getSimpleSchema(ScopedObject).definitions.get(
+					ScopedObject.identifier,
+				) as SimpleObjectNodeSchema
+			).allowUnknownOptionalFields,
+			true,
+		);
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
 		>;
@@ -1423,6 +1438,15 @@ describe("schemaFactory", () => {
 		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
 			factory.scopedFactoryAlpha("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		const ScopedObject = scopedFactory.objectAlpha("Object", {});
+		assert.equal(
+			(
+				getSimpleSchema(ScopedObject).definitions.get(
+					ScopedObject.identifier,
+				) as SimpleObjectNodeSchema
+			).allowUnknownOptionalFields,
+			true,
+		);
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
 		>;
