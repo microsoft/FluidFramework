@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { defaultRuntimeOptionsForMinVersion } from "../compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForOldestSupportedClient } from "../compatibilityConfiguration.js";
 
-describe("defaultRuntimeOptionsForMinVersion", () => {
+describe("defaultRuntimeOptionsForOldestSupportedClient", () => {
 	it("enables the supported configuration at the compatibility floor", () => {
-		assert.deepEqual(defaultRuntimeOptionsForMinVersion("2.0.0"), {
+		assert.deepEqual(defaultRuntimeOptionsForOldestSupportedClient("2.0.0"), {
 			enableRuntimeIdCompressor: "on",
 		});
 	});

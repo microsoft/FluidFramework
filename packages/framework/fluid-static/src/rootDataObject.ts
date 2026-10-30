@@ -31,7 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForOldestSupportedClient } from "./compatibilityConfiguration.js";
 import type {
 	ContainerSchema,
 	IRootDataObject,
@@ -266,7 +266,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...defaultRuntimeOptionsForMinVersion(config.oldestSupportedClient),
+				...defaultRuntimeOptionsForOldestSupportedClient(config.oldestSupportedClient),
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
