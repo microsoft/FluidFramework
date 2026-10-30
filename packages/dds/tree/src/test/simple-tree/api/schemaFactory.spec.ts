@@ -1471,6 +1471,35 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
+	it("defaults allowUnknownOptionalFields when explicitly undefined", () => {
+		const betaFactory = new SchemaFactoryBeta("test.beta");
+		const BetaObject = betaFactory.object(
+			"Object",
+			{},
+			{
+				allowUnknownOptionalFields: undefined,
+			},
+		);
+		assert.equal(
+			(
+				getSimpleSchema(BetaObject).definitions.get(
+					BetaObject.identifier,
+				) as SimpleObjectNodeSchema
+			).allowUnknownOptionalFields,
+			true,
+		);
+
+		const alphaFactory = new SchemaFactoryAlpha("test.alpha");
+		const AlphaObject = alphaFactory.objectAlpha(
+			"Object",
+			{},
+			{
+				allowUnknownOptionalFields: undefined,
+			},
+		);
+		assert.equal(AlphaObject.allowUnknownOptionalFields, true);
+	});
+
 	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 

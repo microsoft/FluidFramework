@@ -889,6 +889,9 @@ export class SchemaFactoryBeta<
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
 			...options,
+			allowUnknownOptionalFields:
+				options?.allowUnknownOptionalFields ??
+				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 		}) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
@@ -1203,6 +1206,9 @@ export class SchemaFactoryAlpha<
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
 			...options,
+			allowUnknownOptionalFields:
+				options?.allowUnknownOptionalFields ??
+				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 		});
 	}
 

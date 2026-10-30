@@ -9,18 +9,6 @@
 		}
 	},
 	"definitions": {
-		"com.fluidframework.leaf.boolean": {
-			"leaf": {
-				"kind": 3,
-				"leafKind": 2
-			}
-		},
-		"com.fluidframework.leaf.number": {
-			"leaf": {
-				"kind": 3,
-				"leafKind": 0
-			}
-		},
 		"com.fluidframework.leaf.string": {
 			"leaf": {
 				"kind": 3,
@@ -44,60 +32,59 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
-			"array": {
-				"kind": 1,
-				"simpleAllowedTypes": {
-					"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
-						"isStaged": false
-					}
-				}
+		"test.FormattedTextTest.lineTag.h1": {
+			"object": {
+				"kind": 2,
+				"fields": {},
+				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
+		"test.FormattedTextTest.lineTag.h2": {
+			"object": {
+				"kind": 2,
+				"fields": {},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
+			}
+		},
+		"test.FormattedTextTest.StringLineAtom": {
 			"object": {
 				"kind": 2,
 				"fields": {
-					"content": {
+					"tag": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted.StringTextAtom": {
+							"test.FormattedTextTest.lineTag.h1": {
 								"isStaged": false
 							},
-							"test.FormattedTextTest.StringLineAtom": {
+							"test.FormattedTextTest.lineTag.h2": {
 								"isStaged": false
 							}
 						},
-						"storedKey": ""
+						"storedKey": "tag"
 					},
-					"format": {
+					"indent": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"test.FormattedTextTest.CharacterFormat": {
+							"com.fluidframework.leaf.number": {
 								"isStaged": false
 							}
 						},
-						"storedKey": "format"
+						"storedKey": "indent"
 					}
 				},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
-			"object": {
-				"kind": 2,
-				"fields": {
-					"content": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
-								"isStaged": false
-							}
-						},
-						"storedKey": ""
-					}
-				},
-				"allowUnknownOptionalFields": false
+		"com.fluidframework.leaf.boolean": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 2
 			}
 		},
 		"test.FormattedTextTest.CharacterFormat": {
@@ -132,49 +119,62 @@
 						"storedKey": "font"
 					}
 				},
-				"allowUnknownOptionalFields": true
-			}
-		},
-		"test.FormattedTextTest.StringLineAtom": {
-			"object": {
-				"kind": 2,
-				"fields": {
-					"tag": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"test.FormattedTextTest.lineTag.h1": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.h2": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "tag"
-					},
-					"indent": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.leaf.number": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "indent"
-					}
-				},
-				"allowUnknownOptionalFields": true
-			}
-		},
-		"test.FormattedTextTest.lineTag.h1": {
-			"object": {
-				"kind": 2,
-				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"test.FormattedTextTest.lineTag.h2": {
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
 			"object": {
 				"kind": 2,
-				"fields": {},
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted.StringTextAtom": {
+								"isStaged": false
+							},
+							"test.FormattedTextTest.StringLineAtom": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					},
+					"format": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"test.FormattedTextTest.CharacterFormat": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "format"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					}
+				},
 				"allowUnknownOptionalFields": false
 			}
 		}

@@ -9,36 +9,6 @@
 		}
 	},
 	"definitions": {
-		"basic.Atom": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": true
-			}
-		},
-		"basic.Format": {
-			"object": {
-				"kind": 2,
-				"fields": {
-					"bold": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.leaf.boolean": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "bold"
-					}
-				},
-				"allowUnknownOptionalFields": true
-			}
-		},
-		"com.fluidframework.leaf.boolean": {
-			"leaf": {
-				"kind": 3,
-				"leafKind": 2
-			}
-		},
 		"com.fluidframework.leaf.string": {
 			"leaf": {
 				"kind": 3,
@@ -62,14 +32,34 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<basic>.StringArray": {
-			"array": {
-				"kind": 1,
-				"simpleAllowedTypes": {
-					"com.fluidframework.text.formatted<basic>.StringAtom": {
-						"isStaged": false
+		"basic.Atom": {
+			"object": {
+				"kind": 2,
+				"fields": {},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.leaf.boolean": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 2
+			}
+		},
+		"basic.Format": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"bold": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.boolean": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "bold"
 					}
-				}
+				},
+				"allowUnknownOptionalFields": false
 			}
 		},
 		"com.fluidframework.text.formatted<basic>.StringAtom": {
@@ -99,6 +89,16 @@
 					}
 				},
 				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.text.formatted<basic>.StringArray": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.text.formatted<basic>.StringAtom": {
+						"isStaged": false
+					}
+				}
 			}
 		},
 		"com.fluidframework.text.formatted<basic>.Text": {
