@@ -35,8 +35,8 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E10: corrected declaration guard plus native CLI adapter | Pushed as `4ef16eadd6d` | Normalize Azure boolean metadata, retain TypeScript 6 APIs/CJS support, use native CLI, and preserve cache isolation |
-| E11: development-mode example validation | Prepared; selection checks passed | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
+| E10 retry: native adapter with legacy declaration exception | Preparing | Keep `property-properties` on TS6 after native TS2883; do not weaken declaration validation |
+| E11: development-mode example validation | Prepared; included in the next retry | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -77,6 +77,7 @@ It uses atomic replacement, not writes through symlinks/hard links into the comp
 TypeScript 6's JavaScript API remains available to `fluid-build`, `fluid-tsc`, ts-morph, API Extractor, and loaders.
 Direct compiler aliases used by import-compatibility tests still resolve to their original compiler packages.
 `fluid-tsc` CommonJS builds remain TypeScript 6; this is a partial native adapter, not a full toolchain upgrade.
+The retry also explicitly retains TypeScript 6 for `@fluid-experimental/property-properties`, whose JavaScript declaration emit fails under TypeScript 7.
 JavaScript worker execution is disabled so plain `tsc` tasks actually invoke the native CLI.
 No checked validation or artifact job is changed.
 
@@ -139,6 +140,7 @@ This was not a cold-cache benchmark.
 | E7: validation-only PR packaging | `99dd98b1dc151530569354a22bbc7cfdad61cff0` | [430866](https://dev.azure.com/fluidframework/public/_build/results?buildId=430866) | Passed | Build job 9m 28s; total 17m 53s, still test-limited |
 | E8: independent local-service job | `a5d0f9e18b8c11276079d52e06ed39abfe09ff00` | [430896](https://dev.azure.com/fluidframework/public/_build/results?buildId=430896) | Passed | 16m 35s including 3m 17s initial queue; all suite counts unchanged |
 | E9: lean runtime task graph | `a0671df680eb5c7550b55c18a455b9d68db7a61c` | [430921](https://dev.azure.com/fluidframework/public/_build/results?buildId=430921) | Failed; not promoted | Strict boolean guard failed to preserve declaration generation in ATTW/Mocha |
+| E10: native CLI adapter | `4ef16eadd6dcde2bd81ce12c7d36c79de0b39bae` | [430936](https://dev.azure.com/fluidframework/public/_build/results?buildId=430936) | Failed; retry prepared | TS2883 while emitting legacy JavaScript declarations in `property-properties` |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -420,6 +422,15 @@ The strict `=== true` check did not tolerate Azure's string-valued boolean metad
 The correction accepts boolean or case-insensitive string `true`/`false`, rejects other values, and logs the received type.
 Do not count the shorter E9 compilation times as a validated optimization: required declaration work was missing.
 The next native-adapter run includes this correction; it is not a controlled native-only comparison with E9.
+
+### E10: native declaration incompatibility
+
+The native adapter installed and executed successfully, and several targeted prerequisite builds completed.
+The Mocha prerequisite build failed in `@fluid-experimental/property-properties` with TS2883: the inferred `PropertyFactory` type could not name an `EventEmitter` reference portably.
+This is native JavaScript declaration-emission incompatibility, not a missing runtime dependency or a reason to ignore compiler errors.
+The retry explicitly leaves that package's original TypeScript 6 bin intact and verifies its version.
+It does not change library source, add unsafe type casts, or disable the checked validation job.
+The pending development-bundle experiment is included in that retry, so its results will describe a combined configuration rather than a native-only comparison.
 
 ## Validation ownership
 

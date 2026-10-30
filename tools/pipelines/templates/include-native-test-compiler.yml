@@ -50,6 +50,14 @@ steps:
       let replaced = 0;
       for (const pkg of packages) {
         const bin = path.join(pkg.path, "node_modules/.bin/tsc");
+        if (pkg.name === "@fluid-experimental/property-properties") {
+          const version = execFileSync(bin, ["--version"], { encoding: "utf8" }).trim();
+          if (!version.startsWith("Version 6.")) {
+            throw new Error(`Expected the legacy declaration compiler for ${pkg.name}, got ${version}`);
+          }
+          console.log(`Retaining ${version} for ${pkg.name}: native JS declaration emit fails with TS2883`);
+          continue;
+        }
         if (!fs.existsSync(bin)) continue;
         const directory = fs.realpathSync(path.dirname(bin));
         if (!directory.startsWith(root + path.sep)) {
