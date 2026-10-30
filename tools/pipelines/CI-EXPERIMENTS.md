@@ -35,8 +35,7 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E9: lean fresh runtime-test builds | Pushed as `a0671df680e` | Skip type-only generation, unnecessary declaration entrypoints, and up-to-date checks; preserve checked validation |
-| E10: native CLI adapter in test jobs | Prepared; local adapter checks passed | Keep TypeScript 6 APIs/CJS support, use native TypeScript 7 for `tsc` commands, disable JS workers, and preserve cache isolation |
+| E10: corrected declaration guard plus native CLI adapter | Prepared; local adapter checks passed | Normalize Azure boolean metadata, retain TypeScript 6 APIs/CJS support, use native CLI, and preserve cache isolation |
 | E11: development-mode example validation | Preparing | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
@@ -136,6 +135,7 @@ This was not a cold-cache benchmark.
 | E6: lockfile-installed tools | `be1b1c90d8baf9bdedc877cfaeeecdc47c8185c9` | [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Passed | 18m 16s including 2m 27s initial queue; no repo-tool installation |
 | E7: validation-only PR packaging | `99dd98b1dc151530569354a22bbc7cfdad61cff0` | [430866](https://dev.azure.com/fluidframework/public/_build/results?buildId=430866) | Passed | Build job 9m 28s; total 17m 53s, still test-limited |
 | E8: independent local-service job | `a5d0f9e18b8c11276079d52e06ed39abfe09ff00` | [430896](https://dev.azure.com/fluidframework/public/_build/results?buildId=430896) | Passed | 16m 35s including 3m 17s initial queue; all suite counts unchanged |
+| E9: lean runtime task graph | `a0671df680eb5c7550b55c18a455b9d68db7a61c` | [430921](https://dev.azure.com/fluidframework/public/_build/results?buildId=430921) | Failed; not promoted | Strict boolean guard failed to preserve declaration generation in ATTW/Mocha |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -408,6 +408,15 @@ The Mocha job shortened from 823.3 to 726.1 seconds; its unchanged test command 
 Local-service tests took 130.7 seconds in a separate 302.8-second job, including a 43.7-second targeted build.
 The main build was 534.9 seconds and no longer controls completion.
 Mocha and Tinylicious service tests are now the long jobs; the extra local-service agent did not become the critical path in this run.
+
+### E9: declaration guard failure
+
+The generation/forced-build changes compiled, but AreTheTypesWrong reported conditional-export fallback errors across packages.
+Setup logs show that declaration entrypoint generation was incorrectly disabled in the ATTW and Mocha jobs, despite their preservation metadata.
+The strict `=== true` check did not tolerate Azure's string-valued boolean metadata.
+The correction accepts boolean or case-insensitive string `true`/`false`, rejects other values, and logs the received type.
+Do not count the shorter E9 compilation times as a validated optimization: required declaration work was missing.
+The next native-adapter run includes this correction; it is not a controlled native-only comparison with E9.
 
 ## Validation ownership
 

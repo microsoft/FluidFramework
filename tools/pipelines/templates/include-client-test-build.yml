@@ -35,7 +35,16 @@ steps:
       fs.appendFileSync("fluidBuild.config.cjs",
         '\nmodule.exports.tasks["typetests:gen"] = { dependsOn: [], script: false };\n');
       console.log("Disabled type-only test generation in this runtime-test job; policy validation retains it");
-      const needsTypeEntrypoints = JSON.parse(process.env.TEST_TASKS).some((task) => task.requiresTypeEntrypoints === true);
+      const needsTypeEntrypoints = JSON.parse(process.env.TEST_TASKS).some((task) => {
+        // Azure object parameters can serialize boolean members as strings.
+        const value = task.requiresTypeEntrypoints ?? false;
+        const normalized = String(value).toLowerCase();
+        if (normalized !== "true" && normalized !== "false") {
+          throw new Error(`Invalid requiresTypeEntrypoints for ${task.name}: ${value}`);
+        }
+        console.log(`Type entrypoints for ${task.name}: ${normalized} (${typeof value})`);
+        return normalized === "true";
+      });
       if (!needsTypeEntrypoints) {
         fs.appendFileSync("fluidBuild.config.cjs", [
           'module.exports.tasks["build:entrypoints:esm"] = { dependsOn: ["build:esm"], script: false };',
