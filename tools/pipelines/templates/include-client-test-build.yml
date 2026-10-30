@@ -48,6 +48,8 @@ steps:
       }
       JS
 
+- template: /tools/pipelines/templates/include-native-test-compiler.yml@self
+
 - task: Bash@3
   displayName: Compile test prerequisites
   env:
@@ -82,7 +84,7 @@ steps:
       console.log("Building test packages and their task dependencies:", [...selected]);
       const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? ["compile", "webpack"] : ["compile"];
       execFileSync("pnpm", [
-        "exec", "fluid-build", "--force", "--dep", "--worker",
+        "exec", "fluid-build", "--force", "--dep",
         ...tasks.flatMap((task) => ["--task", task]),
         ...selected,
       ], { stdio: "inherit" });

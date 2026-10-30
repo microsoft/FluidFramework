@@ -35,8 +35,9 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E9: lean fresh runtime-test builds | Preparing | Skip type-only generation, unnecessary declaration entrypoints, and up-to-date checks; preserve checked validation |
-| E10: native CLI adapter in test jobs | Investigating | Keep TypeScript 6 APIs/CJS support, use native TypeScript 7 for `tsc` commands, disable JS workers, and preserve cache isolation |
+| E9: lean fresh runtime-test builds | Pushed as `a0671df680e` | Skip type-only generation, unnecessary declaration entrypoints, and up-to-date checks; preserve checked validation |
+| E10: native CLI adapter in test jobs | Prepared; local adapter checks passed | Keep TypeScript 6 APIs/CJS support, use native TypeScript 7 for `tsc` commands, disable JS workers, and preserve cache isolation |
+| E11: development-mode example validation | Preparing | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -71,6 +72,23 @@ Compile and browser webpack tasks are requested together so the graph runs each 
 The existing JavaScript worker mode is retained for this first measurement.
 The flag does not disable task-graph construction, config parsing, TypeScript build-info emission, or done-file generation.
 Whether bypassing checks helps remains an experiment: checks can also avoid duplicate work within an otherwise fresh build.
+
+E10 installs pinned TypeScript 7.0.2 in the agent temporary directory and replaces only each workspace's local `.bin/tsc` entry.
+It uses atomic replacement, not writes through symlinks/hard links into the compiler package or pnpm store.
+TypeScript 6's JavaScript API remains available to `fluid-build`, `fluid-tsc`, ts-morph, API Extractor, and loaders.
+Direct compiler aliases used by import-compatibility tests still resolve to their original compiler packages.
+`fluid-tsc` CommonJS builds remain TypeScript 6; this is a partial native adapter, not a full toolchain upgrade.
+JavaScript worker execution is disabled so plain `tsc` tasks actually invoke the native CLI.
+No checked validation or artifact job is changed.
+
+A local fixture started with a bin hard-linked to an original compiler wrapper.
+After running the actual setup script, the local bin reported TypeScript 7.0.2, the original hard-linked file was unchanged, and the direct compatibility CLI still reported 6.0.3.
+This validates the adapter's filesystem/API isolation, not the complete native runtime build.
+
+E11's bundle-size producer is `@fluid-example/bundle-size-tests`: its ordinary `webpack` command also produces the analysis data, and `webpack:profile` delegates to it.
+It must remain production-mode.
+Other private examples expose `webpack:dev` scripts; switching their validation bundling retains resolution/loader checks but no longer tests production-only optimization behavior.
+The devtools extension's existing configuration is already development-mode and is not changed.
 
 ## Method
 

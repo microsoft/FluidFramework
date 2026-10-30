@@ -109,6 +109,7 @@ trigger:
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-client-test-build.yml
     - tools/pipelines/templates/include-client-pack-validation.yml
+    - tools/pipelines/templates/include-native-test-compiler.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -176,6 +177,7 @@ pr:
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-client-test-build.yml
     - tools/pipelines/templates/include-client-pack-validation.yml
+    - tools/pipelines/templates/include-native-test-compiler.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
