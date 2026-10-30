@@ -18,12 +18,11 @@ import {
 	type ChunkedCursor,
 	type TreeChunk,
 	cursorChunk,
-	cursorLeafSequence,
-	tryGetLeafSequence,
-	type LeafSequence,
+	cursorStringSequence,
+	tryGetStringSequence,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase } from "../../util/index.js";
+import { ReferenceCountedBase, type StringSequence } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
 /**
@@ -96,8 +95,10 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
  * like UniformChunk, should be supported by delegating to their cursor implementations.
  */
 export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor {
-	public get [cursorLeafSequence](): LeafSequence | undefined {
-		return this.nestedCursor === undefined ? undefined : tryGetLeafSequence(this.nestedCursor);
+	public get [cursorStringSequence](): StringSequence | undefined {
+		return this.nestedCursor === undefined
+			? undefined
+			: tryGetStringSequence(this.nestedCursor);
 	}
 
 	/**

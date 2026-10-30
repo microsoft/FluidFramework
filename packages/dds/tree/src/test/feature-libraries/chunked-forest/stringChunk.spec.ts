@@ -12,10 +12,9 @@ import {
 } from "../../../core/index.js";
 import {
 	combineChunks,
-	cursorForLeafSequence,
+	cursorForStringSequence,
 	cursorForMapTreeField,
 	jsonableTreeFromFieldCursor,
-	StringLeafSequence,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
@@ -45,8 +44,7 @@ const compressor = { policy, idCompressor: undefined };
 describe("StringChunk", () => {
 	it("adopts primitive string storage without copying complete pieces", () => {
 		const storage = StringSequence.fromString("a".repeat(stringBufferSize + 10));
-		const sequence = new StringLeafSequence(type, storage);
-		const cursor = cursorForLeafSequence(sequence);
+		const cursor = cursorForStringSequence(type, storage);
 		const chunks = chunkField(cursor, compressor);
 		assert.equal(chunks.length, storage.pieces.length);
 		for (const [index, chunk] of chunks.entries()) {
@@ -58,8 +56,7 @@ describe("StringChunk", () => {
 	});
 
 	it("adopts a partial primitive sequence and preserves cursor positioning", () => {
-		const sequence = new StringLeafSequence(type, StringSequence.fromString("a\u{1F600}bc"));
-		const cursor = cursorForLeafSequence(sequence);
+		const cursor = cursorForStringSequence(type, StringSequence.fromString("a\u{1F600}bc"));
 		cursor.enterNode(1);
 		const chunks = chunkRange(cursor, compressor, 2, true);
 		assert.equal(chunks.length, 1);

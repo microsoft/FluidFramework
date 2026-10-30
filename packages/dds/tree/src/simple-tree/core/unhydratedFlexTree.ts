@@ -11,7 +11,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type AnchorEvents,
 	dummyRoot,
-	type LeafSequence,
 	EmptyKey,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
@@ -57,9 +56,16 @@ import {
 	currentObserver,
 	withObservation,
 	type MinimalMapTreeNodeView,
-	LeafSequenceCursor,
+	StringSequenceCursor,
+	type CursorWithNode,
 } from "../../feature-libraries/index.js";
-import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
+import {
+	brand,
+	filterIterable,
+	getOrCreate,
+	mapIterable,
+	type StringSequence,
+} from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";
 
 import type { Context } from "./context.js";
@@ -426,77 +432,76 @@ const unparentedLocation: LocationInField = {
 export class UnhydratedFlexTreeField
 	implements FlexTreeField, MapTreeFieldViewGeneric<UnhydratedFlexTreeNode>
 {
-	private leaves: LeafSequence | undefined;
+	private strings:
+		| { readonly type: TreeNodeSchemaIdentifier; sequence: StringSequence }
+		| undefined;
 
-	/** Packed leaves have no defaults, public node objects, or child subtrees to hydrate. */
-	public get leafSequence(): LeafSequence | undefined {
-		return this.leaves;
+	/** Packed strings have no defaults, public node objects, or child subtrees to hydrate. */
+	public get stringSequence(): StringSequence | undefined {
+		return this.strings?.sequence;
 	}
 
 	public get uniformLeaf(): MinimalMapTreeNodeView | undefined {
-		return this.leaves === undefined
+		return this.strings === undefined
 			? undefined
 			: {
-					type: this.leaves.type,
-					value: this.leaves.representativeValue,
+					type: this.strings.type,
+					value: "",
 					fields: new Map(),
 				};
 	}
 
-	/** Initializes an empty, private primitive sequence before its public root is returned. */
-	public initializeLeafSequence(sequence: LeafSequence): void {
+	/** Initializes an empty, private string sequence before its public root is returned. */
+	public initializeStringSequence(
+		type: TreeNodeSchemaIdentifier,
+		sequence: StringSequence,
+	): void {
 		assert(
 			this.schema === FieldKinds.sequence.identifier && this.length === 0,
 			"Packed initialization requires an empty sequence",
 		);
-		this.leaves = sequence;
+		this.strings = { type, sequence };
 	}
 
-	/** Returns false when insertion requires the ordinary child-node representation. */
-	public tryInsertLeaves(index: number, content: LeafSequence): boolean {
-		const leaves = this.leaves;
-		if (leaves === undefined) {
-			return false;
-		}
-		const combined = leaves
+	/* eslint-disable unicorn/prefer-spread -- These edits use StringSequence.concat, not Array.concat. */
+	public insertStrings(index: number, content: StringSequence): void {
+		const strings = this.strings ?? fail("Expected packed strings");
+		const sequence = strings.sequence;
+		strings.sequence = sequence
 			.slice(0, index)
-			.tryConcat(content)
-			?.tryConcat(leaves.slice(index, leaves.length));
-		if (combined === undefined) {
-			return false;
-		}
-		this.leaves = combined;
+			.concat(content)
+			.concat(sequence.slice(index, sequence.length));
 		const marks: DeltaMark[] = index === 0 ? [] : [{ count: index }];
 		marks.push({ count: content.length, attach: syntheticDetachedNodeId });
 		this.parent?.emitChangedEvent(this.key, marks);
-		return true;
 	}
 
-	public removeLeaves(index: number, count: number): void {
-		const leaves = this.leaves ?? fail("Expected primitive sequence");
-		this.leaves =
-			leaves.slice(0, index).tryConcat(leaves.slice(index + count, leaves.length)) ??
-			fail("Slices of the same sequence must be combinable");
+	public removeStrings(index: number, count: number): void {
+		const strings = this.strings ?? fail("Expected packed strings");
+		const sequence = strings.sequence;
+		strings.sequence = sequence
+			.slice(0, index)
+			.concat(sequence.slice(index + count, sequence.length));
 		const marks: DeltaMark[] = index === 0 ? [] : [{ count: index }];
 		marks.push({ count, detach: syntheticDetachedNodeId });
 		this.parent?.emitChangedEvent(this.key, marks);
 	}
 
-	protected moveLeaves(index: number, count: number, destination: number): void {
-		const leaves = this.leaves ?? fail("Expected primitive sequence");
-		const moved = leaves.slice(index, index + count);
-		const rest =
-			leaves.slice(0, index).tryConcat(leaves.slice(index + count, leaves.length)) ??
-			fail("Slices of the same sequence must be combinable");
+	protected moveStrings(index: number, count: number, destination: number): void {
+		const strings = this.strings ?? fail("Expected packed strings");
+		const sequence = strings.sequence;
+		const moved = sequence.slice(index, index + count);
+		const rest = sequence
+			.slice(0, index)
+			.concat(sequence.slice(index + count, sequence.length));
 		const gap = destination > index ? destination - count : destination;
-		this.leaves =
-			rest.slice(0, gap).tryConcat(moved)?.tryConcat(rest.slice(gap, rest.length)) ??
-			fail("Slices of the same sequence must be combinable");
+		strings.sequence = rest.slice(0, gap).concat(moved).concat(rest.slice(gap, rest.length));
 		this.parent?.emitChangedEvent(
 			this.key,
 			buildUnhydratedMoveMarks(index, count, destination),
 		);
 	}
+	/* eslint-enable unicorn/prefer-spread */
 
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
@@ -524,12 +529,24 @@ export class UnhydratedFlexTreeField
 		}
 	}
 
+	/**
+	 * Provides a packed-string cursor without materializing children.
+	 * Returns undefined for the ordinary child-node representation.
+	 */
+	public tryGetCursor(): CursorWithNode<UnhydratedFlexTreeNode> | undefined {
+		return this.strings === undefined
+			? undefined
+			: new StringSequenceCursor(
+					this.strings.type,
+					this.strings.sequence,
+					(index) => this.children[index] ?? oob(),
+				);
+	}
+
 	public borrowCursor(): ITreeCursorSynchronous {
-		if (this.leaves !== undefined) {
-			return new LeafSequenceCursor(this.leaves, (index) => this.children[index] ?? oob());
-		}
-		return cursorForMapTreeField<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(
-			this.children,
+		return (
+			this.tryGetCursor() ??
+			cursorForMapTreeField<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(this.children)
 		);
 	}
 
@@ -559,7 +576,7 @@ export class UnhydratedFlexTreeField
 	}
 
 	public get children(): UnhydratedFlexTreeNode[] {
-		if (this.leaves !== undefined) {
+		if (this.strings !== undefined) {
 			const parent = this.parent ?? fail("Packed fields require a parent");
 			const children: UnhydratedFlexTreeNode[] = [];
 			const cursor = this.borrowCursor();
@@ -575,7 +592,7 @@ export class UnhydratedFlexTreeField
 				}
 			});
 			this.lazyChildren = children;
-			this.leaves = undefined;
+			this.strings = undefined;
 		}
 		const provider = this.getPendingDefault();
 		if (provider) {
@@ -586,7 +603,7 @@ export class UnhydratedFlexTreeField
 	}
 
 	public get length(): number {
-		return this.leaves?.length ?? this.children.length;
+		return this.strings?.sequence.length ?? this.children.length;
 	}
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
@@ -644,8 +661,8 @@ export class UnhydratedFlexTreeField
 
 	/** Unboxes leaf nodes to their values */
 	protected unboxed(index: number): TreeValue | UnhydratedFlexTreeNode {
-		if (this.leaves !== undefined) {
-			return this.leaves.at(index);
+		if (this.strings !== undefined) {
+			return this.strings.sequence.at(index);
 		}
 		const child = this.children[index] ?? oob();
 		const value = child.value;
@@ -756,8 +773,8 @@ export class UnhydratedSequenceField
 				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
 					return;
 				}
-				if (this.leafSequence !== undefined) {
-					this.moveLeaves(sourceIndex, count, destIndex);
+				if (this.stringSequence !== undefined) {
+					this.moveStrings(sourceIndex, count, destIndex);
 					return;
 				}
 				// Within-field move: do both operations in a single edit to emit only one event
@@ -800,16 +817,16 @@ export class UnhydratedSequenceField
 	}
 
 	public valuesFrom(index: number): IterableIterator<FlexTreeUnknownUnboxed> | undefined {
-		return this.leafSequence === undefined ? undefined : this.iterateLeafValues(index);
+		return this.stringSequence === undefined ? undefined : this.iterateStringValues(index);
 	}
 
-	private *iterateLeafValues(index: number): IterableIterator<FlexTreeUnknownUnboxed> {
-		let sequence = this.leafSequence;
+	private *iterateStringValues(index: number): IterableIterator<FlexTreeUnknownUnboxed> {
+		let sequence = this.stringSequence;
 		let values = sequence?.values(index);
 		for (let i = index; i < this.length; i++) {
 			// Unhydrated edits and explicit materialization can replace storage between yields.
-			if (sequence !== this.leafSequence) {
-				sequence = this.leafSequence;
+			if (sequence !== this.stringSequence) {
+				sequence = this.stringSequence;
 				values = sequence?.values(i);
 			}
 			if (values === undefined) {

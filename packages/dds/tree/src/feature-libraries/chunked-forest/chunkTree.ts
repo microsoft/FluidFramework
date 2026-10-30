@@ -23,7 +23,7 @@ import {
 	ValueSchema,
 	type TreeChunk,
 	tryGetChunk,
-	tryGetLeafSequence,
+	tryGetStringSequence,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
@@ -40,7 +40,6 @@ import { BasicChunk } from "./basicChunk.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { StringChunk, stringBufferSize } from "./stringChunk.js";
-import { StringLeafSequence } from "../stringLeafSequence.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
 export interface Disposable {
@@ -562,13 +561,13 @@ function tryChunkStringRange(
 		count = Math.min(remaining, source.topLevelLength - offset);
 		output.push(source.slice(offset, offset + count));
 	} else {
-		const sequence = tryGetLeafSequence(cursor);
-		if (!(sequence instanceof StringLeafSequence)) {
+		const sequence = tryGetStringSequence(cursor);
+		if (sequence === undefined) {
 			return 0;
 		}
 		count = Math.min(remaining, sequence.length - offset);
-		for (const piece of sequence.storage.slice(offset, offset + count).pieces) {
-			output.push(new StringChunk(sequence.type, piece));
+		for (const piece of sequence.slice(offset, offset + count).pieces) {
+			output.push(new StringChunk(cursor.type, piece));
 		}
 	}
 	cursor.seekNodes(count - (skipLastNavigation && count === remaining ? 1 : 0));
@@ -622,10 +621,10 @@ export function chunkRange(
 				chunkCompressor.policy.stringChunks === true &&
 				((source instanceof BasicChunk &&
 					source.fields.size === 0 &&
-					isCharacter(cursor.value)) ||
+					isPackableTextAtomContent(cursor.value)) ||
 					(source instanceof UniformChunk &&
 						source.shape.treeShape.fields.size === 0 &&
-						isCharacter(cursor.value)))
+						isPackableTextAtomContent(cursor.value)))
 			) &&
 			!(chunkCompressor.policy.stringChunks !== true && source instanceof StringChunk)
 		) {
@@ -666,13 +665,13 @@ export function chunkRange(
 				chunkCompressor.policy.stringChunks === true &&
 				shape instanceof TreeShape &&
 				shape.fields.size === 0 &&
-				isCharacter(cursor.value)
+				isPackableTextAtomContent(cursor.value)
 			) {
 				const characters: string[] = [];
 				let units = 0;
 				while (remaining > 0 && cursor.type === type) {
 					const value = cursor.value;
-					if (!isCharacter(value) || units + value.length > stringBufferSize) {
+					if (!isPackableTextAtomContent(value) || units + value.length > stringBufferSize) {
 						break;
 					}
 					// Keep separately stored surrogate halves distinct.
@@ -874,7 +873,12 @@ export function coalesceUniformChunks(
 	}
 }
 
-function isCharacter(value: Value): value is string {
+/**
+ * Tests whether a primitive value can be stored as one packed text atom.
+ * The string must produce exactly one element under JavaScript string iteration, including a lone surrogate.
+ * Empty and longer strings remain valid leaf values but use the ordinary chunk representation.
+ */
+function isPackableTextAtomContent(value: Value): value is string {
 	return (
 		typeof value === "string" &&
 		(value.length === 1 || (value.length === 2 && (value.codePointAt(0) ?? 0) > 0xffff))

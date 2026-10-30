@@ -7,18 +7,17 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	cursorChunk,
-	cursorLeafSequence,
+	cursorStringSequence,
 	dummyRoot,
 	type ChunkedCursor,
 	type FieldKey,
 	type FieldUpPath,
-	type LeafSequence,
 	type PathRootPrefix,
 	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
-	type TreeValue,
 	type UpPath,
 } from "../core/index.js";
+import type { StringSequence } from "../util/index.js";
 import type { MinimalMapTreeNodeView } from "./mapTreeCursor.js";
 import {
 	type CursorWithNode,
@@ -28,9 +27,9 @@ import {
 } from "./treeCursorUtils.js";
 
 /**
- * A field cursor over immutable primitive leaves, materializing node objects only on request.
+ * A field cursor over string storage, materializing node objects only on request.
  */
-export class LeafSequenceCursor<TNode>
+export class StringSequenceCursor<TNode>
 	extends SynchronousCursor
 	implements CursorWithNode<TNode>, ChunkedCursor
 {
@@ -38,18 +37,26 @@ export class LeafSequenceCursor<TNode>
 	private index = 0;
 	private field: FieldKey = dummyRoot;
 	private inEmptyField = false;
-	private iterator: Iterator<TreeValue> | undefined;
-	private current: TreeValue | undefined;
+	private iterator: Iterator<string> | undefined;
+	private current: string | undefined;
 
+	/**
+	 * @param nodeType - Schema identifier shared by all string leaves.
+	 * @param sequence - Immutable storage read by the cursor.
+	 * @param nodeAt - Supplies the corresponding node object only when getNode is called.
+	 * @param chunk - Optional chunk covering the same sequence.
+	 * The caller must retain its owning reference while using this cursor.
+	 */
 	public constructor(
-		private readonly sequence: LeafSequence,
+		private readonly nodeType: TreeNodeSchemaIdentifier,
+		private readonly sequence: StringSequence,
 		private readonly nodeAt: (index: number) => TNode,
 		private readonly chunk?: TreeChunk,
 	) {
 		super();
 	}
 
-	public get [cursorLeafSequence](): LeafSequence | undefined {
+	public get [cursorStringSequence](): StringSequence | undefined {
 		return this.inEmptyField ? undefined : this.sequence;
 	}
 
@@ -61,8 +68,13 @@ export class LeafSequenceCursor<TNode>
 		return !this.inEmptyField;
 	}
 
-	public fork(): LeafSequenceCursor<TNode> {
-		const fork = new LeafSequenceCursor(this.sequence, this.nodeAt, this.chunk);
+	public fork(): StringSequenceCursor<TNode> {
+		const fork = new StringSequenceCursor(
+			this.nodeType,
+			this.sequence,
+			this.nodeAt,
+			this.chunk,
+		);
 		if (this.mode === CursorLocationType.Nodes || this.inEmptyField) {
 			fork.enterNode(this.index);
 			if (this.inEmptyField) {
@@ -91,14 +103,12 @@ export class LeafSequenceCursor<TNode>
 
 	public get type(): TreeNodeSchemaIdentifier {
 		this.assertNode();
-		return this.sequence.type;
+		return this.nodeType;
 	}
 
-	public get value(): TreeValue {
+	public get value(): string {
 		this.assertNode();
-		if (this.current === undefined) {
-			this.current = this.sequence.at(this.index);
-		}
+		this.current ??= this.sequence.at(this.index);
 		return this.current;
 	}
 
@@ -209,23 +219,25 @@ export class LeafSequenceCursor<TNode>
 	}
 
 	private advance(): void {
-		assert(this.iterator !== undefined, "Expected leaf iterator");
+		assert(this.iterator !== undefined, "Expected string iterator");
 		const next = this.iterator.next();
-		assert(next.done !== true, "Leaf iterator must match the sequence length");
+		assert(next.done !== true, "String iterator must match the sequence length");
 		this.current = next.value;
 	}
 }
 
 /**
- * Creates a primitive field cursor without allocating per-leaf nodes.
+ * Creates a string field cursor without allocating per-atom nodes.
  */
-export function cursorForLeafSequence(
-	sequence: LeafSequence,
+export function cursorForStringSequence(
+	type: TreeNodeSchemaIdentifier,
+	sequence: StringSequence,
 	chunk?: TreeChunk,
-): LeafSequenceCursor<MinimalMapTreeNodeView> {
-	return new LeafSequenceCursor(
+): StringSequenceCursor<MinimalMapTreeNodeView> {
+	return new StringSequenceCursor(
+		type,
 		sequence,
-		(index) => ({ type: sequence.type, value: sequence.at(index), fields: new Map() }),
+		(index) => ({ type, value: sequence.at(index), fields: new Map() }),
 		chunk,
 	);
 }

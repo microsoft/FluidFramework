@@ -9,19 +9,17 @@ import {
 	dummyRoot,
 	type FieldKey,
 	type JsonableTree,
-	type LeafSequence,
 	type TreeNodeSchemaIdentifier,
-	type TreeValue,
-	tryGetLeafSequence,
+	tryGetStringSequence,
 } from "../../core/index.js";
 import {
-	cursorForLeafSequence,
+	cursorForStringSequence,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	jsonableTreeFromCursor,
 	type MinimalMapTreeNodeView,
 	type MapTreeFieldViewGeneric,
-	StringLeafSequence,
+	StringSequenceCursor,
 } from "../../feature-libraries/index.js";
 import { brand, StringSequence } from "../../util/index.js";
 import { testSpecializedFieldCursor } from "../cursorTestSuite.js";
@@ -30,36 +28,25 @@ const type: TreeNodeSchemaIdentifier = brand("leaf-sequence-string");
 const objectType: TreeNodeSchemaIdentifier = brand("leaf-sequence-object");
 const first: FieldKey = brand("first");
 const second: FieldKey = brand("second");
-const makeSequence = (text: string): StringLeafSequence =>
-	new StringLeafSequence(type, StringSequence.fromString(text));
 
-function repeatedLeaves(value: TreeValue, length: number): LeafSequence {
-	return {
-		type,
-		representativeValue: value,
-		length,
-		at: (index) => {
-			assert(index >= 0 && index < length);
-			return value;
-		},
-		*values(start) {
-			for (let index = start; index < length; index++) {
-				yield value;
-			}
-		},
-		slice: (start, end) => repeatedLeaves(value, end - start),
-		tryConcat: (other) =>
-			other.type === type && other.representativeValue === value
-				? repeatedLeaves(value, length + other.length)
-				: undefined,
-	};
-}
-
-describe("primitive leaf sequence cursors", () => {
+describe("string sequence cursors", () => {
 	for (const value of [0, false, null]) {
-		it(`traverses non-string primitive storage (${String(value)})`, () => {
-			const sequence = repeatedLeaves(value, 3);
-			const cursor = cursorForLeafSequence(sequence);
+		it(`delegates fields containing non-string values (${String(value)})`, () => {
+			const nodes = Array.from({ length: 3 }, () => ({ type, value, fields: new Map() }));
+			const cursor = cursorForMapTreeNode<MinimalMapTreeNodeView>({
+				type: objectType,
+				fields: new Map([
+					[
+						first,
+						{
+							length: nodes.length,
+							tryGetCursor: () => cursorForMapTreeField(nodes),
+							[Symbol.iterator]: () => nodes[Symbol.iterator](),
+						},
+					],
+				]),
+			});
+			cursor.enterField(first);
 			assert(cursor.firstNode());
 			assert.equal(cursor.value, value);
 			assert.equal(cursor.fork().value, value);
@@ -75,21 +62,21 @@ describe("primitive leaf sequence cursors", () => {
 	}
 
 	testSpecializedFieldCursor({
-		cursorName: "primitive sequence",
+		cursorName: "string sequence",
 		builders: {},
-		cursorFactory: cursorForLeafSequence,
+		cursorFactory: (sequence: StringSequence) => cursorForStringSequence(type, sequence),
 		testData: ["", "abc", "a\u{1F600}b", "\uD800x\uDC00"].map((text) => ({
 			name: JSON.stringify(text),
-			dataFactory: () => makeSequence(text),
+			dataFactory: () => StringSequence.fromString(text),
 			reference: [...text].map((value) => ({ type, value })),
 			path: { parent: undefined, field: dummyRoot },
 		})),
 	});
 
-	const leaves = makeSequence("a\u{1F600}b");
+	const leaves = StringSequence.fromString("a\u{1F600}b");
 	const field = {
 		length: leaves.length,
-		leafSequence: leaves,
+		tryGetCursor: () => cursorForStringSequence(type, leaves),
 		*[Symbol.iterator](): IterableIterator<MinimalMapTreeNodeView> {
 			for (const value of leaves.values(0)) {
 				yield { type, value, fields: new Map() };
@@ -120,12 +107,12 @@ describe("primitive leaf sequence cursors", () => {
 		},
 	};
 	testSpecializedFieldCursor({
-		cursorName: "delegated primitive fields",
+		cursorName: "delegated string fields",
 		builders: {},
 		cursorFactory: cursorForMapTreeField,
 		testData: [
 			{
-				name: "mixed nested and primitive fields",
+				name: "mixed nested and string fields",
 				dataFactory: () => [root],
 				reference: [reference],
 				path: { parent: undefined, field: dummyRoot },
@@ -141,8 +128,12 @@ describe("primitive leaf sequence cursors", () => {
 					first,
 					{
 						...field,
+						tryGetCursor: () =>
+							new StringSequenceCursor(type, leaves, () => {
+								throw new Error("String traversal must not materialize node objects");
+							}),
 						[Symbol.iterator](): Iterator<MinimalMapTreeNodeView> {
-							throw new Error("Primitive traversal must not enumerate node objects");
+							throw new Error("String traversal must not enumerate node objects");
 						},
 					},
 				],
@@ -160,7 +151,7 @@ describe("primitive leaf sequence cursors", () => {
 		assert.equal(cursor.getFieldKey(), first);
 		const fieldFork = cursor.fork();
 		cursor.enterNode(1);
-		assert.equal(tryGetLeafSequence(cursor), leaves);
+		assert.equal(tryGetStringSequence(cursor), leaves);
 		const nodeFork = cursor.fork();
 		const nodePath = nodeFork.getPath();
 		cursor.enterField(second);

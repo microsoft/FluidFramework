@@ -5,8 +5,7 @@
 
 import type { ChunkedCursor, TreeChunk, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import { ReferenceCountedBase, StringPiece, StringSequence } from "../../util/index.js";
-import { cursorForLeafSequence } from "../leafSequenceCursor.js";
-import { StringLeafSequence } from "../stringLeafSequence.js";
+import { cursorForStringSequence } from "../stringSequenceCursor.js";
 
 export { stringBufferSize } from "../../util/index.js";
 
@@ -14,14 +13,14 @@ export { stringBufferSize } from "../../util/index.js";
  * A forest chunk adapting shared string storage to primitive tree leaves.
  */
 export class StringChunk extends ReferenceCountedBase implements TreeChunk {
-	private readonly sequence: StringLeafSequence;
+	private readonly sequence: StringSequence;
 
 	public constructor(
 		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly piece: StringPiece,
 	) {
 		super();
-		this.sequence = new StringLeafSequence(type, new StringSequence([piece]));
+		this.sequence = new StringSequence([piece]);
 	}
 
 	public static fromString(type: TreeNodeSchemaIdentifier, text: string): StringChunk[] {
@@ -51,7 +50,7 @@ export class StringChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public cursor(): ChunkedCursor {
-		return cursorForLeafSequence(this.sequence, this);
+		return cursorForStringSequence(this.type, this.sequence, this);
 	}
 
 	protected onUnreferenced(): void {}

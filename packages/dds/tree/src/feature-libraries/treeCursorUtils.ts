@@ -11,10 +11,9 @@ import {
 	CursorMarker,
 	cursorChunk,
 	type TreeChunk,
-	cursorLeafSequence,
+	cursorStringSequence,
 	tryGetChunk,
-	tryGetLeafSequence,
-	type LeafSequence,
+	tryGetStringSequence,
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
@@ -26,6 +25,7 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
+import type { StringSequence } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
@@ -141,8 +141,10 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		return this.nestedCursor === undefined ? undefined : tryGetChunk(this.nestedCursor);
 	}
 
-	public get [cursorLeafSequence](): LeafSequence | undefined {
-		return this.nestedCursor === undefined ? undefined : tryGetLeafSequence(this.nestedCursor);
+	public get [cursorStringSequence](): StringSequence | undefined {
+		return this.nestedCursor === undefined
+			? undefined
+			: tryGetStringSequence(this.nestedCursor);
 	}
 
 	public override readonly [CursorMarker] = true;

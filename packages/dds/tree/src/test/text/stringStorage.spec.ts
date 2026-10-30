@@ -35,7 +35,7 @@ import {
 	TreeViewConfiguration,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
-import { StringLeafSequence, withObservation } from "../../feature-libraries/index.js";
+import { withObservation } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -163,7 +163,7 @@ describe("PlainText string storage prototype", () => {
 		const array = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
 		assert(array instanceof UnhydratedFlexTreeNode);
 		const field = array.getBoxed(EmptyKey);
-		const sequence = field.leafSequence;
+		const sequence = field.stringSequence;
 		assert(sequence !== undefined);
 		sequence.at = () => {
 			throw new Error("Sequential traversal must not perform indexed lookup");
@@ -174,7 +174,7 @@ describe("PlainText string storage prototype", () => {
 			count++;
 		}
 		assert.equal(count, 30_000);
-		assert.equal(field.leafSequence, sequence);
+		assert.equal(field.stringSequence, sequence);
 	});
 
 	for (const [name, forest] of [
@@ -240,7 +240,7 @@ describe("PlainText string storage prototype", () => {
 		assert.deepEqual(events, []);
 		const array = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
 		assert(array instanceof UnhydratedFlexTreeNode);
-		assert(array.getBoxed(EmptyKey).leafSequence !== undefined);
+		assert(array.getBoxed(EmptyKey).stringSequence !== undefined);
 	});
 
 	it("keeps fromString packed through unhydrated reads, edits, and hydration", () => {
@@ -252,8 +252,8 @@ describe("PlainText string storage prototype", () => {
 		assert(array instanceof UnhydratedFlexTreeNode);
 		const field = array.getBoxed(EmptyKey);
 		const arrayObject = array.treeNode;
-		assert(field.leafSequence instanceof StringLeafSequence);
-		assert(field.leafSequence.storage.pieces.length < 10);
+		assert(field.stringSequence !== undefined);
+		assert(field.stringSequence.pieces.length < 10);
 		const anchor = text.createInsertionAnchor(7);
 		const events: unknown[] = [];
 		text.onCharactersChanged((ops) => events.push(ops));
@@ -267,7 +267,10 @@ describe("PlainText string storage prototype", () => {
 			node.removeRange(100, 150);
 		}
 		assert.deepEqual(text.charactersCopy(), reference.charactersCopy());
-		assert(field.leafSequence !== undefined, "Unhydrated operations expanded character nodes");
+		assert(
+			field.stringSequence !== undefined,
+			"Unhydrated operations expanded character nodes",
+		);
 		assert.equal(anchor.index, 9);
 		assert.equal(events.length, 4);
 		const view = createIndependentTreeAlpha({ forest: ForestTypeStringPrototype }).viewWith(
@@ -277,7 +280,7 @@ describe("PlainText string storage prototype", () => {
 		assert.equal(view.root, text);
 		assert(arrayObject !== undefined);
 		assert.equal(getInnerNode(arrayObject).isHydrated(), true);
-		assert(field.leafSequence !== undefined, "Hydration expanded character nodes");
+		assert(field.stringSequence !== undefined, "Hydration expanded character nodes");
 		assert.equal(
 			pieces(view.root).reduce((n, chunk) => n + chunk.topLevelLength, 0),
 			text.characterCount(),

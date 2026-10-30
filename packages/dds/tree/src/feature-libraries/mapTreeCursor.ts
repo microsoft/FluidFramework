@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	type LeafSequence,
 	type DetachedField,
 	type ExclusiveMapTree,
 	type FieldKey,
@@ -29,7 +28,6 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
-import { LeafSequenceCursor } from "./leafSequenceCursor.js";
 
 /**
  * A generic variant of {@link MapTree} that can be used to strongly type trees implementing a MapTree-like API.
@@ -64,9 +62,10 @@ export interface MinimalFieldMap<TField> {
  */
 export interface MapTreeFieldViewGeneric<TNode> {
 	/**
-	 * Optional immutable primitive storage with no child identities or defaults.
+	 * Optional field cursor that avoids enumerating node objects.
+	 * Returns undefined when the ordinary node representation should be used.
 	 */
-	readonly leafSequence?: LeafSequence;
+	tryGetCursor?(): CursorWithNode<TNode> | undefined;
 	/**
 	 * A representative leaf for a homogeneous field.
 	 * When supplied, all children must be valid leaves with this type and value schema.
@@ -146,15 +145,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 }
 
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
-	getFieldCursor: (node, key) => {
-		const sequence = node.fields.get(key)?.leafSequence;
-		return sequence === undefined
-			? undefined
-			: new LeafSequenceCursor(
-					sequence,
-					(index) => adapter.getFieldFromNode(node, key)[index] ?? oob(),
-				);
-	},
+	getFieldCursor: (node, key) => node.fields.get(key)?.tryGetCursor?.(),
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),
