@@ -661,8 +661,8 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
 	});
 
-	describe("unknownOptionalFieldSchemas", () => {
-		const factoryNew = new SchemaFactoryAlpha("unknownOptionalFieldSchemas");
+	describe("unknownFieldSchemas", () => {
+		const factoryNew = new SchemaFactoryAlpha("unknownFieldSchemas");
 		class ChildNew extends factoryNew.object("Child", { x: factoryNew.number }) {}
 		class ExtraNew extends factoryNew.object("Extra", { y: factoryNew.number }) {}
 		class ParentNew extends factoryNew.object("Parent", {
@@ -673,7 +673,7 @@ describe("SchematizingSimpleTreeView", () => {
 			unknownTypeNode: factoryNew.optional(ExtraNew),
 		}) {}
 
-		const factoryOld = new SchemaFactoryAlpha("unknownOptionalFieldSchemas");
+		const factoryOld = new SchemaFactoryAlpha("unknownFieldSchemas");
 		class ChildOld extends factoryOld.object("Child", { x: factoryOld.number }) {}
 		class ParentOld extends factoryOld.object(
 			"Parent",
@@ -721,17 +721,17 @@ describe("SchematizingSimpleTreeView", () => {
 			for (const testCase of testDocuments) {
 				const view = testDocumentIndependentView(testCase);
 				assert.equal(
-					(view.unknownOptionalFieldSchemas?.size ?? 0) > 0,
+					(view.unknownFieldSchemas?.size ?? 0) > 0,
 					testCase.hasUnknownOptionalFieldSchema === true,
 					testCase.name,
 				);
 			}
 		});
 
-		it("includes the unknown optional fields of each object schema, keyed by stored key", () => {
+		it("includes the unknown fields of each object schema, keyed by stored key", () => {
 			// `unknownTypeNode` is included even though it has no content.
 			assert.deepEqual(
-				viewWithUnknownOptionalFields().unknownOptionalFieldSchemas,
+				viewWithUnknownOptionalFields().unknownFieldSchemas,
 				new Map([
 					[
 						ParentOld,
@@ -739,7 +739,7 @@ describe("SchematizingSimpleTreeView", () => {
 							["known", optionalField("known", "com.fluidframework.leaf.string")],
 							[
 								"unknownTypeNode",
-								optionalField("unknownTypeNode", "unknownOptionalFieldSchemas.Extra"),
+								optionalField("unknownTypeNode", "unknownFieldSchemas.Extra"),
 							],
 						]),
 					],
@@ -751,12 +751,12 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = viewWithUnknownOptionalFields();
 			assert(isTreeNode(view.root));
 			const context = TreeAlpha.context(view.root);
-			assert.deepEqual([...(context.unknownOptionalFieldSchemas?.keys() ?? [])], [ParentOld]);
+			assert.deepEqual([...(context.unknownFieldSchemas?.keys() ?? [])], [ParentOld]);
 		});
 
 		it("is undefined for unhydrated nodes", () => {
 			const node = new ParentOld({ child: new ChildOld({ x: 1 }) });
-			assert.equal(TreeAlpha.context(node).unknownOptionalFieldSchemas, undefined);
+			assert.equal(TreeAlpha.context(node).unknownFieldSchemas, undefined);
 		});
 
 		it("updates when another client adds an optional field", () => {
@@ -764,10 +764,10 @@ describe("SchematizingSimpleTreeView", () => {
 			const viewOld = provider.trees[0].viewWith(configOld);
 			viewOld.initialize(new ParentOld({ child: new ChildOld({ x: 1 }) }));
 			provider.synchronizeMessages();
-			const before = asAlpha(viewOld).unknownOptionalFieldSchemas;
+			const before = asAlpha(viewOld).unknownFieldSchemas;
 			assert.deepEqual(before, new Map());
 			// The value is reused until the stored schema changes.
-			assert.equal(asAlpha(viewOld).unknownOptionalFieldSchemas, before);
+			assert.equal(asAlpha(viewOld).unknownFieldSchemas, before);
 
 			const viewNew = provider.trees[1].viewWith(configNew);
 			assert.equal(viewNew.compatibility.canUpgrade, true);
@@ -775,7 +775,7 @@ describe("SchematizingSimpleTreeView", () => {
 			provider.synchronizeMessages();
 
 			assert.equal(viewOld.compatibility.canView, true);
-			const after = asAlpha(viewOld).unknownOptionalFieldSchemas;
+			const after = asAlpha(viewOld).unknownFieldSchemas;
 			assert.notEqual(after, before);
 			assert.deepEqual(
 				[...(after?.get(ParentOld)?.keys() ?? [])],

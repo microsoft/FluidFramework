@@ -2733,7 +2733,7 @@ export interface TreeContextAlpha extends TreeContextBeta {
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
     // (undocumented)
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
-    readonly unknownOptionalFieldSchemas: ReadonlyMap<TreeNodeSchema, ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>> | undefined;
+    readonly unknownFieldSchemas: ReadonlyMap<TreeNodeSchema, ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>> | undefined;
 }
 
 // @beta @sealed

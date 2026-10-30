@@ -1334,10 +1334,8 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return false;
 	}
 
-	/**
-	 * This is always `undefined`, because a checkout has no view schema.
-	 */
-	public get unknownOptionalFieldSchemas(): undefined {
+	public get unknownFieldSchemas(): undefined {
+		// A checkout has no view schema.
 		return undefined;
 	}
 

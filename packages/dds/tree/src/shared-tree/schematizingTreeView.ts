@@ -97,15 +97,15 @@ import { exportSimpleSchema } from "./sharedTree.js";
 import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Gets the {@link TreeContextAlpha.unknownOptionalFieldSchemas | unknown optional field schemas} of `viewSchema` in `storedSchema`.
- * @returns A map from each object node schema in `viewSchema` that has unknown optional fields
+ * Gets the {@link TreeContextAlpha.unknownFieldSchemas | unknown field schemas} of `viewSchema` in `storedSchema`.
+ * @returns A map from each object node schema in `viewSchema` that has unknown fields
  * to the stored schema of those fields, keyed by stored key.
- * Object node schemas without unknown optional fields are omitted.
+ * Object node schemas without unknown fields are omitted.
  */
-function getUnknownOptionalFieldSchemas(
+function getUnknownFieldSchemas(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
-): TreeContextAlpha["unknownOptionalFieldSchemas"] {
+): TreeContextAlpha["unknownFieldSchemas"] {
 	const result = new Map<
 		TreeNodeSchema,
 		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
@@ -189,14 +189,12 @@ export class SchematizingSimpleTreeView<
 	 */
 	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	/**
-	 * Cached {@link SchematizingSimpleTreeView.unknownOptionalFieldSchemas}.
+	 * Cached {@link SchematizingSimpleTreeView.unknownFieldSchemas}.
 	 * @remarks
 	 * Computed lazily on first access.
 	 * Reset to `undefined` when the stored schema changes or the view is disposed, so the next access recomputes it.
 	 */
-	private currentUnknownOptionalFieldSchemas:
-		| TreeContextAlpha["unknownOptionalFieldSchemas"]
-		| undefined;
+	private currentUnknownFieldSchemas: TreeContextAlpha["unknownFieldSchemas"] | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -551,7 +549,7 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		this.currentUnknownOptionalFieldSchemas = undefined;
+		this.currentUnknownFieldSchemas = undefined;
 		const compatibility = this.computeCompatibility();
 		this.currentCompatibility = compatibility;
 
@@ -672,13 +670,13 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get unknownOptionalFieldSchemas(): TreeContextAlpha["unknownOptionalFieldSchemas"] {
+	public get unknownFieldSchemas(): TreeContextAlpha["unknownFieldSchemas"] {
 		this.ensureUndisposed();
-		this.currentUnknownOptionalFieldSchemas ??= getUnknownOptionalFieldSchemas(
+		this.currentUnknownFieldSchemas ??= getUnknownFieldSchemas(
 			this.viewSchema,
 			this.checkout.storedSchema,
 		);
-		return this.currentUnknownOptionalFieldSchemas;
+		return this.currentUnknownFieldSchemas;
 	}
 
 	public get compatibility(): SchemaCompatibilityStatusBeta {
@@ -698,7 +696,7 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
-		this.currentUnknownOptionalFieldSchemas = undefined;
+		this.currentUnknownFieldSchemas = undefined;
 		this.onDispose?.();
 		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
 			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed

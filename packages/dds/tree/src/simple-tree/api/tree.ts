@@ -456,10 +456,11 @@ export interface TreeContextAlpha extends TreeContextBeta {
 	isBranch(): this is UntypedTreeViewAlpha;
 
 	/**
-	 * The {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} of each object node schema in the view schema of this context.
+	 * The schema of the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown fields} of each object node schema in the view schema of this context.
 	 *
 	 * @remarks
-	 * Maps each object node schema in the view schema that has unknown optional fields to the schema of those fields, keyed by {@link SimpleObjectFieldSchema.storedKey | stored key}.
+	 * Each key is an object node schema in the view schema that has unknown fields.
+	 * Each value maps the {@link SimpleObjectFieldSchema.storedKey | stored key} of each of those fields to its schema.
 	 *
 	 * This is `undefined` if this context has no view schema, for example the context of an {@link Unhydrated | unhydrated} node.
 	 *
@@ -470,7 +471,7 @@ export interface TreeContextAlpha extends TreeContextBeta {
 	 *
 	 * To read the content of these fields, use {@link (TreeAlpha:interface).(exportVerbose:1)} with {@link KeyEncodingOptions.allStoredKeys}.
 	 */
-	readonly unknownOptionalFieldSchemas:
+	readonly unknownFieldSchemas:
 		| ReadonlyMap<
 				TreeNodeSchema,
 				ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
