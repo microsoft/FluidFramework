@@ -91,7 +91,16 @@ steps:
       }
       if (selected.size === 0) throw new Error("No test packages selected");
       console.log("Building test packages and their task dependencies:", [...selected]);
-      const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? ["compile", "webpack"] : ["compile"];
+      const requestedCompileTasks = tests.map((test) => {
+        const task = test.compileTask ?? "compile";
+        if (task !== "compile" && task !== "compile:esm") {
+          throw new Error(`Unsupported compile task for ${test.name}: ${task}`);
+        }
+        return task;
+      });
+      const compileTask = requestedCompileTasks.includes("compile") ? "compile" : "compile:esm";
+      console.log(`Compile target: ${compileTask}`);
+      const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? [compileTask, "webpack"] : [compileTask];
       execFileSync("pnpm", [
         "exec", "fluid-build", "--force", "--dep", "--worker",
         ...tasks.flatMap((task) => ["--task", task]),

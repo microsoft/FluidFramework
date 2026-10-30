@@ -127,7 +127,30 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 ## Experiment status
 
 The patched Node 26 configuration passed E18.
-E19's cached-runtime selection is next, using the same dependency and runtime versions.
+E19's cached-runtime selection is running, using the same dependency and runtime versions.
+E20's ESM-only service prerequisites are prepared separately so they do not change the in-flight E19 comparison.
+
+### Prepared E20: ESM-only service and stress prerequisites
+
+The Tinylicious prerequisite log from run 431074 contains 109 `fluid-tsc commonjs` commands, although those service scripts execute ESM tests.
+The five service packages select `lib/test` directly or inherit the ESM default from the shared Mocha configuration.
+The stress package explicitly selects `lib/test`; local-service tests use the same end-to-end ESM configuration.
+The `azure-local-service` wrapper is checked-in JavaScript and starts the installed Tinylicious dependency, not a workspace-generated CommonJS build.
+
+Use the existing `compile:esm` task for local-service, Tinylicious-service, and Tinylicious-stress jobs.
+It preserves ESM package/test compilation, required copies, and dependency traversal.
+Do not globally disable CommonJS tasks: a necessary dependency may still request one through its existing task graph.
+Installed third-party/CommonJS dependencies and compatibility packages remain unchanged.
+
+Mocha keeps full `compile` because some package scripts execute CJS suites and import-format compatibility tests.
+AreTheTypesWrong keeps full compilation for package/type validation.
+Browser jobs are not changed in this trial; further narrowing would require a separate prerequisite audit.
+Policy and artifact validation remain full builds, including CommonJS buildability checks.
+Non-PR test setup continues to use its original artifact path.
+
+Local checks exercised the actual selection logic for all job types, mixed groups, and invalid targets.
+Missing metadata defaults to full compilation, mixed groups retain full compilation, and unknown targets fail explicitly.
+Fresh remote CI must still confirm that no runtime prerequisite was omitted, that suite counts match, and that CommonJS compiler commands disappear or are limited to genuinely required transitive tasks.
 
 ### E18: fix same-process Git-object publication races
 
@@ -299,6 +322,7 @@ This was not a cold-cache benchmark.
 | E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
 | E18: patched Git storage on Node 26 | `73860819672a2b8464e1bee2782c8c811f852d9d` | [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) | Passed | 20m 12s with eight-minute job-start delays; Tinylicious test step 394.3s |
 | E19: cached runtime selection | Implementation `5fba6328c88`; report update included in triggering commit | Pending | Ready to push | Avoid global Node copying in PR jobs; preserve npm prefix and validate exact runtime |
+| E20: ESM-only service prerequisites | Pending | Pending | Prepared locally | Existing `compile:esm` task for service/stress jobs; full compile remains for Mocha/type validation |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -682,7 +706,7 @@ Any later relocation must name its replacement before removing the old invocatio
 | webpack, bundle analysis, devtools bundle | Build | Preserve |
 | Packing, manifests, readme generation, package metadata | Build | E7: parallel package dry-runs and custom archive validation; PR publish artifacts/metadata omitted; non-PR production unchanged |
 | AreTheTypesWrong | Verification | Preserve |
-| Mocha and local-service tests | Coverage job (coverage instrumentation currently disabled upstream) | Preserve both suites |
+| Mocha and local-service tests | Coverage job (coverage instrumentation currently disabled upstream) | Preserve both suites; E8 splits local service; E20 changes only that job's build target |
 | Playwright, Tinylicious service, Tinylicious stress | Separate verification jobs | Preserve all three |
 | Source scans, binary scans, component governance | Existing pipeline templates | Configuration retained; E7 omits removed PR artifact payloads and their artifact-specific processing |
 | Test result publication and service logs | Verification jobs | Preserve failure-path reporting |
