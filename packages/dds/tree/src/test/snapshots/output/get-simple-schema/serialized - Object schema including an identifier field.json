@@ -29,7 +29,7 @@
             "storedKey": "id"
           }
         },
-        "allowUnknownOptionalFields": false
+        "allowUnknownOptionalFields": true
       }
     }
   }
