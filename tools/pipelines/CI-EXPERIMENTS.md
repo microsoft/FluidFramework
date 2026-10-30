@@ -6,14 +6,15 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing configuration:** cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed 45,649 tests with 3,235 skipped and no failures in **11m 13s**, versus the original **33m 28s** baseline.
-Eight of nine timed jobs were below nine minutes; Tinylicious service remained above target at **10m 27s**.
+**Latest fully passing configuration:** ESM-only service build run [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) passed 45,649 tests with 3,235 skipped and no failures in **13m 14s**.
+The preceding cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed the same test totals in **11m 13s**, versus the original **33m 28s** baseline.
+Eight of nine timed jobs were below nine minutes in both runs; Tinylicious service remains above target at **10m 20s** in the latest run.
 The preceding patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
 The preceding Node 22 Tinylicious control [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) took **16m 36s**, with eight of nine timed jobs under nine minutes.
 The earlier mixed-runtime run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) passed in **14m 43s**, versus the original **33m 28s** baseline, but its unpatched Node 26 Tinylicious configuration was not reliably green.
 Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
 After reproducing the Tinylicious storage failure, the scoped dependency patch passed both local regression and real service CI on Node 26.
-Cached-runtime selection is now verified; the next trial requests ESM-only prerequisites for runtime service/stress jobs without changing the runtimes.
+Cached-runtime selection and ESM-only prerequisites for runtime service/stress jobs are now verified without changing the runtime matrix.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -129,13 +130,14 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 | Node 26 client policy/artifact execution | E16 checked compilation 207.2s to 173.6s; policy `ci:build` 339.7s to 290.6s | Both jobs passed; Tinylicious runtime compatibility is a separate issue |
 | Same-process Git storage patch for Tinylicious | E18 passed; service test step 394.3s versus 551.4s in the Node 22 control | Patch plus Node 26 is a combined change; cross-process/crash-safe publication is not addressed |
 | Job-scoped cached runtime selection | E19 passed; no-copy selection 3.8-24.1s versus prior 91s copy outliers | Preserves npm prefix; overall run also benefited from shorter queue delays |
+| ESM-only service/stress prerequisites | E20 passed with zero CommonJS compiler commands and identical suite totals | Removes unnecessary work; observed prerequisite-step savings only 1-3s |
 
 ## Experiment status
 
-The patched Node 26 configuration and cached-runtime selection passed.
-E20's ESM-only service prerequisites are next; E19 provides the comparison baseline.
+The patched Node 26 configuration, cached-runtime selection, and ESM-only service prerequisites passed.
+The nine-minute target is not fully met: Tinylicious service is the remaining long job, and queue/start variability still affects end-to-end time.
 
-### Prepared E20: ESM-only service and stress prerequisites
+### E20: ESM-only service and stress prerequisites
 
 The Tinylicious prerequisite log from run 431074 contains 109 `fluid-tsc commonjs` commands, although those service scripts execute ESM tests.
 The five service packages select `lib/test` directly or inherit the ESM default from the shared Mocha configuration.
@@ -155,7 +157,19 @@ Non-PR test setup continues to use its original artifact path.
 
 Local checks exercised the actual selection logic for all job types, mixed groups, and invalid targets.
 Missing metadata defaults to full compilation, mixed groups retain full compilation, and unknown targets fail explicitly.
-Fresh remote CI must still confirm that no runtime prerequisite was omitted, that suite counts match, and that CommonJS compiler commands disappear or are limited to genuinely required transitive tasks.
+Fresh run 431099 confirmed that no runtime prerequisite was missing.
+The Tinylicious service, local-service, and stress build logs explicitly selected `compile:esm` and each contained zero `fluid-tsc commonjs` commands.
+The full pipeline and companion policy run [431095](https://dev.azure.com/fluidframework/public/_build/results?buildId=431095) passed, with exactly the same 45,649 passed and 3,235 skipped tests as E19.
+
+| Prerequisite step | E19 full compile | E20 ESM compile |
+| --- | ---: | ---: |
+| Tinylicious service | 32.3s | 29.3s |
+| Local service | 31.3s | 30.0s |
+| Stress | 30.5s | 27.2s |
+
+Retain the smaller task graph, but do not claim a large elapsed-time win: the removed CommonJS work was mostly outside the critical path on these agents.
+Queue-to-finish increased from 672.9 to 793.5 seconds despite the smaller builds, demonstrating the importance of scheduling/run variability.
+The Tinylicious service job still took 619.9 seconds, with a 468-second test step, and was the only timed job above nine minutes.
 
 ### E18: fix same-process Git-object publication races
 
@@ -327,7 +341,7 @@ This was not a cold-cache benchmark.
 | E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
 | E18: patched Git storage on Node 26 | `73860819672a2b8464e1bee2782c8c811f852d9d` | [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) | Passed | 20m 12s with eight-minute job-start delays; Tinylicious test step 394.3s |
 | E19: cached runtime selection | `e9812338463fc4f86b7087557e0c3992d7b707bf` | [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) | Passed | 11m 13s; eight of nine jobs under nine minutes; no-copy selection verified |
-| E20: ESM-only service prerequisites | Implementation `89ffcdbadaf`; report update included in triggering commit | Pending | Ready to push | Existing `compile:esm` task for service/stress jobs; full compile remains for Mocha/type validation |
+| E20: ESM-only service prerequisites | `90673c161fc5c48cbeb2f051986f6a34124acd38` | [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) | Passed | 13m 14s, unchanged suite totals; zero CJS commands in service/stress builds |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
