@@ -229,7 +229,7 @@ describe("schematizeTree", () => {
 			): this is TreeViewAlpha<TSchema> {
 				return false;
 			},
-			get unknownOptionalFields(): never {
+			get unknownOptionalFieldSchemas(): never {
 				throw new Error("Function not implemented.");
 			},
 			revertTo(): void {

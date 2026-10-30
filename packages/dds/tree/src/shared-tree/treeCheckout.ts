@@ -1335,10 +1335,10 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	}
 
 	/**
-	 * This is always empty, because a checkout has no view schema.
+	 * This is always `undefined`, because a checkout has no view schema.
 	 */
-	public get unknownOptionalFields(): UntypedTreeViewAlpha["unknownOptionalFields"] {
-		return new Map();
+	public get unknownOptionalFieldSchemas(): undefined {
+		return undefined;
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
