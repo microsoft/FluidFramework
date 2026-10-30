@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
+import { typeboxInterface } from "../../util/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 const CellCount = Type.Integer({ minimum: 1 });
 
@@ -24,21 +25,24 @@ export const CellId = EncodedChangeAtomId;
 
 const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
+const Insert = typeboxInterface([HasMoveId, HasRevisionTag], {}, noAdditionalProps);
 
-const HasMoveFields = Type.Composite([
-	HasMoveId,
-	HasRevisionTag,
-	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
-]);
+const HasMoveFields = typeboxInterface(
+	[
+		HasMoveId,
+		HasRevisionTag,
+		Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+	],
+	{},
+);
 
-const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
+const MoveIn = typeboxInterface([HasMoveFields], {}, noAdditionalProps);
 
 const DetachFields = Type.Object({
 	idOverride: Type.Optional(CellId),
 });
 
-const Remove = Type.Composite(
+const Remove = typeboxInterface(
 	[
 		Type.Object({
 			id: ChangesetLocalIdSchema,
@@ -46,10 +50,11 @@ const Remove = Type.Composite(
 		HasRevisionTag,
 		DetachFields,
 	],
+	{},
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
+const MoveOut = typeboxInterface([HasMoveFields, DetachFields], {}, noAdditionalProps);
 
 const Attach = Type.Object(
 	{

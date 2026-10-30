@@ -132,10 +132,10 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/type-factory": "workspace:~",
 		"@noble/hashes": "^2.4.0",
-		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"semver-ts": "^1.0.3",
 		"tslib": "^2.8.1",
+		"typebox": "~1.4.2",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {

@@ -33,4 +33,42 @@ describe("custom Fluid rules", function () {
 		const violations = result.messages.filter((message) => message.ruleId === ruleId);
 		assert.strictEqual(violations.length, 3);
 	});
+
+	it("enforces tree-shakeable TypeBox imports", async function () {
+		const eslint = createESLintForConfig(recommended);
+		const fixture = path.join(
+			__dirname,
+			"..",
+			"rules",
+			"test",
+			"test-cases",
+			"no-hyphen-after-jsdoc-tag",
+			"test.ts",
+		);
+		const [result] = await eslint.lintText(
+			[
+				'import Type from "typebox";',
+				'import { Type as TypeBox } from "typebox";',
+				'import * as TypeNamespace from "typebox";',
+				'import * as TypeSubpathNamespace from "typebox/type";',
+				'import { Object as TypeObjectFromRoot } from "typebox";',
+				'import { Object as TypeObject } from "typebox/type";',
+				'import type { Static } from "typebox";',
+				'import type { TSchema } from "typebox/type";',
+				"void Type;",
+				"void TypeBox;",
+				"void TypeNamespace;",
+				"void TypeSubpathNamespace;",
+				"void TypeObjectFromRoot;",
+				"void TypeObject;",
+			].join("\n"),
+			{ filePath: fixture },
+		);
+		assert.ok(result !== undefined, "Expected a lint result");
+
+		const violations = result.messages.filter(
+			(message) => message.ruleId === "no-restricted-syntax",
+		);
+		assert.strictEqual(violations.length, 6);
+	});
 });

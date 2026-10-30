@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 const indexSchema = Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER });
 

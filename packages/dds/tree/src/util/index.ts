@@ -24,6 +24,7 @@ export {
 	unbrand,
 } from "./brand.js";
 export { brandedIntegerType, brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { stringKeyRecord, typeboxInterface } from "./typebox.js";
 export {
 	brandOpaque,
 	extractFromOpaque,

@@ -12,10 +12,8 @@ import {
 	TelemetryDataTag,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
-// eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
-import { TypeSystem } from "@sinclair/typebox/system";
+import type { Static } from "typebox";
+import * as Type from "typebox/type";
 
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
@@ -253,49 +251,68 @@ export function getTransportBuffer(value: object): ArrayBuffer | undefined {
 /**
  * Recognizes {@link BufferPlaceholder} identities registered in {@link transportBuffers}, rejecting shape lookalikes and raw buffers.
  */
-const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
-	"Sandbox.RegisteredBufferPlaceholder",
-	(_schema, value) =>
-		typeof value === "object" && value !== null && transportBuffers.has(value),
-)();
-
-/**
- * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
- */
-const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
-	isFluidHandle(value),
-)();
-/**
- * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
- * {@link TreePayloadVocabulary} separately validates property values.
- */
-const NullPrototypeRecord = TypeSystem.Type<Record<string, unknown>>(
-	"Sandbox.NullPrototypeRecord",
-	(_schema, value) => {
-		if (typeof value !== "object" || value === null) {
-			return false;
-		}
-		const prototype: unknown = Object.getPrototypeOf(value);
-		return prototype === null && !transportBuffers.has(value);
-	},
-)();
-
-/**
- * The value vocabulary of decoded tree payloads, not their codec-specific structure.
- * {@link LocalHandle} must precede {@link NullPrototypeRecord} so validation treats handles as opaque leaves.
- */
-const TreePayloadVocabulary = Type.Recursive((Self) =>
-	Type.Union([
-		LocalHandle,
-		Type.Null(),
-		Type.Undefined(),
-		Type.Boolean(),
-		Type.Number(),
-		Type.String(),
-		Type.Array(Self),
-		Type.Intersect([NullPrototypeRecord, Type.Record(Type.String(), Self)]),
-	]),
+const RegisteredBufferPlaceholder = Type.Refine(
+	Type.Unsafe<BufferPlaceholder>({ type: "object" }),
+	(value) => typeof value === "object" && value !== null && transportBuffers.has(value),
 );
+
+/**
+ * Checks if `value` is a valid leaf value in a tree, including primitive types and Fluid handles.
+ */
+function isValidTreeLeafValue(
+	value: unknown,
+	// eslint-disable-next-line @rushstack/no-new-null -- null already allowed as tree leaf value.
+): value is string | number | boolean | null | IFluidHandle {
+	if (value === null || typeof value === "boolean" || typeof value === "string") {
+		return true;
+	}
+	if (typeof value === "number") {
+		return Number.isFinite(value) && !Object.is(value, -0);
+	}
+	if (typeof value !== "object") {
+		return false;
+	}
+	return isFluidHandle(value);
+}
+
+/**
+ * Checks normalized, codec-encoded sandbox payloads before codec-specific decoding.
+ * @remarks
+ * Covers compressed tree snapshots, persisted schemas, and serialized commits and changes.
+ * Values are still tree-codec encoded, but transport tokens have been restored to opaque handles
+ * (or local handles have been preserved during outgoing normalization).
+ * Transport normalization has already rejected cycles and accessors outside handles.
+ * Records must have null prototypes; registered buffer placeholders are not allowed.
+ */
+function isSandboxCodecPayloadValue(value: unknown): boolean {
+	if (isValidTreeLeafValue(value)) {
+		return true;
+	}
+	if (typeof value !== "object") {
+		return false;
+	}
+	if (Array.isArray(value)) {
+		return value.every(isSandboxCodecPayloadValue);
+	}
+	return (
+		Object.getPrototypeOf(value) === null &&
+		!transportBuffers.has(value) &&
+		// Existing codecs emit undefined-valued optional properties, which JSON omits.
+		// TODO: Consider rejecting these once codecs consistently omit absent properties.
+		Object.values(value).every(
+			(property) => property === undefined || isSandboxCodecPayloadValue(property),
+		)
+	);
+}
+
+/**
+ * The value vocabulary of normalized, codec-encoded sandbox payloads, not their codec-specific structure.
+ * See {@link isSandboxCodecPayloadValue} for the supported values and normalization preconditions.
+ * A refinement explicitly short-circuits on handles: TypeBox's interpreted unions and intersections
+ * evaluate every branch and can otherwise traverse handle internals.
+ * This predicate does not generate code and remains compatible with restrictive Content Security Policies.
+ */
+const SandboxCodecPayload = Type.Refine(Type.Unknown(), isSandboxCodecPayloadValue);
 // TODO: Verify that existing tree codecs reject restored handles in structural-record positions,
 // including record-node data, without traversing handle internals or invoking getters.
 
@@ -316,7 +333,7 @@ const validator = extractJsonValidator(sandboxFormatValidator);
 const handleTokenValidator = validator.compile(HandleToken);
 const serializedHandleValidator = validator.compile(SerializedHandle);
 const escapedObjectValidator = validator.compile(EscapedObject);
-const treePayloadVocabularyValidator = validator.compile(TreePayloadVocabulary);
+const sandboxCodecPayloadValidator = validator.compile(SandboxCodecPayload);
 
 /**
  * Checks {@link EscapedObject} structure after the transport has copied and restricted its value types.
@@ -326,10 +343,11 @@ export function isEscapedObject(value: unknown): value is Static<typeof EscapedO
 }
 
 /**
- * Checks the {@link TreePayloadVocabulary} value vocabulary before existing tree codecs inspect the payload.
+ * Checks the {@link SandboxCodecPayload} value vocabulary before existing tree codecs decode the payload.
+ * Requires transport-normalized input as described by {@link isSandboxCodecPayloadValue}.
  */
 export function validateTreePayloadVocabulary(value: unknown): void {
-	if (!treePayloadVocabularyValidator.check(value)) {
+	if (!sandboxCodecPayloadValidator.check(value)) {
 		throw new SandboxProtocolError("Invalid sandbox tree payload.");
 	}
 }
@@ -346,12 +364,12 @@ const SessionRevisionTag = Type.Unsafe<RevisionTag>(
 	Type.Union([Type.Literal("root"), Type.Integer()]),
 );
 
-/** A serialized SharedTree payload validated against the sandbox transport vocabulary. */
-const SerializedTreePayload = Type.Unsafe<JsonCompatibleReadOnly>(TreePayloadVocabulary);
+/** A codec-encoded SharedTree payload validated against the sandbox codec-payload vocabulary. */
+const SerializedTreePayload = Type.Unsafe<JsonCompatibleReadOnly>(SandboxCodecPayload);
 
 /** Serialized SharedTree commits in application order. */
 const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
-	Type.Array(TreePayloadVocabulary),
+	Type.Array(SandboxCodecPayload),
 );
 
 /**
@@ -361,10 +379,10 @@ const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
  * This check does not show that the ID space shard belongs to this Host session.
  * The Host checks that separately before it uses the token.
  */
-const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
-	"Sandbox.IdSpaceShardSessionId",
-	(_schema, value) => typeof value === "string" && isStableId(value),
-)();
+const IdSpaceShardSessionId = Type.Refine(
+	Type.Unsafe<SessionId>({ type: "string" }),
+	(value) => typeof value === "string" && isStableId(value),
+);
 
 /**
  * Validates the ID space shard token that the Guest sends with each change.

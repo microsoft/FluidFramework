@@ -10,7 +10,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import * as Type from "@sinclair/typebox";
+import * as Type from "typebox/type";
 
 import {
 	extractJsonValidator,
