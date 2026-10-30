@@ -30,6 +30,7 @@ import type {
 } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -38,7 +39,11 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleObjectFieldSchema,
+	SimpleTreeSchema,
+} from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
@@ -454,6 +459,29 @@ export interface TreeContextAlpha extends TreeContextBeta {
 	 * @deprecated Use {@link TreeContextAlpha.isView | isView()} instead.
 	 */
 	isBranch(): this is UntypedTreeViewAlpha;
+
+	/**
+	 * The schema of the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown fields} of each object node schema in the view schema of this context.
+	 *
+	 * @remarks
+	 * Each key is an object node schema in the view schema that has unknown fields.
+	 * Each value maps the {@link SimpleObjectFieldSchema.storedKey | stored key} of each of those fields to its schema.
+	 *
+	 * This is `undefined` if this context has no view schema, for example the context of an {@link Unhydrated | unhydrated} node.
+	 *
+	 * The value can change when the stored schema changes, for example when another client upgrades the schema.
+	 * To be notified of these changes, listen to {@link TreeViewEvents.schemaChanged} on the {@link TreeViewAlpha | view}, then read this property again.
+	 * Reading this property is not tracked by {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce},
+	 * so a stored schema change does not invalidate their results.
+	 *
+	 * To read the content of these fields, use {@link (TreeAlpha:interface).(exportVerbose:1)} with {@link KeyEncodingOptions.allStoredKeys}.
+	 */
+	readonly unknownFieldSchemas:
+		| ReadonlyMap<
+				TreeNodeSchema,
+				ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+		  >
+		| undefined;
 }
 
 /**

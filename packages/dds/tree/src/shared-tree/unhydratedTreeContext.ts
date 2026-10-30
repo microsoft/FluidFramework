@@ -32,6 +32,13 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 		return false;
 	}
 
+	public get unknownFieldSchemas(): undefined {
+		// Unhydrated nodes have no view schema.
+		// Clones (see `cloneTree`) keep the source's stored schema in their flex context,
+		// so this could return the real value if unhydrated nodes got their own context.
+		return undefined;
+	}
+
 	public runTransaction<TValue>(
 		t: () => WithValue<TValue>,
 		params?: RunTransactionParamsAlpha,

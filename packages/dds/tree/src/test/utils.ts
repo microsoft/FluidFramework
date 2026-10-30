@@ -1633,6 +1633,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
 		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
 	}
+	public get unknownFieldSchemas(): never {
+		throw new Error("Property 'unknownFieldSchemas' not implemented in MockTreeCheckout.");
+	}
 	public runTransaction(): never {
 		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");
 	}
