@@ -1556,6 +1556,44 @@ describe("ModularChangeFamily", () => {
 			const updated = family.changeRevision(Change.empty(), replacer);
 			assert.equal(updated.maxId, 7);
 		});
+
+		for (const component of ["builds", "refreshers", "destroys"] as const) {
+			it(`accounts for the full relocated range in ${component}`, () => {
+				const replacer = new DefaultRevisionReplacer(tag3, new Set([tag1, tag2, tag4]));
+				// Model an earlier component reserving IDs 0-2 in the replacement revision.
+				replacer.getUpdatedAtomId({ revision: tag1, localId: brand(0) }, 3);
+				const chunk = chunkFromJsonTrees([1, 2, 3]);
+				const input: Mutable<ModularChangeset> = {
+					...Change.empty(),
+					maxId: brand(2),
+				};
+				if (component === "destroys") {
+					input.destroys = newChangeAtomIdBTree([[[tag2, brand(0)], 3]]);
+				} else {
+					input[component] = newChangeAtomIdBTree([[[tag2, brand(0)], chunk]]);
+				}
+				// This synthetic input isolates the detached-content table. Editor-generated
+				// changes normally reference the range elsewhere, which can mask a missing count here.
+				deepFreeze(input);
+				const updated = family.changeRevision(input, replacer);
+
+				assert.equal(updated.maxId, 5);
+				assert.equal(
+					updated[component]?.get([tag3, brand(3)]),
+					component === "destroys" ? 3 : chunk,
+				);
+				assert.equal(
+					replacer.getUpdatedAtomId({ revision: tag2, localId: brand(2) }).localId,
+					5,
+				);
+				// A later colliding range must start after all three relocated IDs, not just the first.
+				assert.equal(
+					replacer.getUpdatedAtomId({ revision: tag4, localId: brand(0) }).localId,
+					6,
+				);
+				assert.equal(input.maxId, 2);
+			});
+		}
 	});
 
 	it("build child change", () => {

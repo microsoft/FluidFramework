@@ -1344,12 +1344,16 @@ export class ModularChangeFamily
 		);
 
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
-		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
-			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
+		const updatedNodes = replaceIdMapRevisions(
+			change.nodeChanges,
+			replacer,
+			() => 1,
+			(nodeChangeset) => this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
 		);
 		const updatedNodeToParent = replaceIdMapRevisions(
 			change.nodeToParent,
 			replacer,
+			() => 1,
 			(fieldId) =>
 				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), replacer),
 		);
@@ -1370,15 +1374,23 @@ export class ModularChangeFamily
 		};
 
 		if (change.builds !== undefined) {
-			updated.builds = replaceIdMapRevisions(change.builds, replacer);
+			updated.builds = replaceIdMapRevisions(
+				change.builds,
+				replacer,
+				(chunk) => chunk.topLevelLength,
+			);
 		}
 
 		if (change.destroys !== undefined) {
-			updated.destroys = replaceIdMapRevisions(change.destroys, replacer);
+			updated.destroys = replaceIdMapRevisions(change.destroys, replacer, (count) => count);
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, replacer);
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				replacer,
+				(chunk) => chunk.topLevelLength,
+			);
 		}
 
 		// Read the bound after all replacements, including ranges and detached content.
@@ -1529,14 +1541,22 @@ function replaceCrossFieldKeyTableRevisions(
 	return updated;
 }
 
+/**
+ * Replaces each map key's revision and reserves the full ID range represented by its value.
+ * @param map - Entries keyed by the first ID of each range.
+ * @param replacer - Tracks replacement IDs across the changeset.
+ * @param getCount - Number of consecutive IDs represented by an entry. Use 1 for single-ID entries.
+ * @param valueMapper - Updates references within each value, if needed.
+ */
 function replaceIdMapRevisions<T>(
 	map: ChangeAtomIdBTree<T>,
 	replacer: RevisionReplacer,
+	getCount: (value: T) => number,
 	valueMapper: (value: T) => T = (value) => value,
 ): ChangeAtomIdBTree<T> {
 	const updated = newChangeAtomIdBTree<T>();
 	for (const [[revision, localId], value] of map.entries()) {
-		const newAtom = replacer.getUpdatedAtomId({ revision, localId });
+		const newAtom = replacer.getUpdatedAtomId({ revision, localId }, getCount(value));
 		updated.set([newAtom.revision, newAtom.localId], valueMapper(value));
 	}
 
