@@ -282,16 +282,6 @@ stages:
             # Building the website with 3x versions currently eats up a lot of memory, so we need to increase the max heap size for Node.js.
             NODE_OPTIONS: --max-old-space-size=6144
 
-        - task: Bash@3
-          displayName: Install linkcheck
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/website
-            script: |
-              set -euo pipefail
-              bash ./infra/install-linkcheck.sh "$(Agent.TempDirectory)/fluid-linkcheck"
-              echo "##vso[task.prependpath]$(Agent.TempDirectory)/fluid-linkcheck/linkcheck"
-
         - task: Npm@1
           displayName: Validate links
           inputs:
