@@ -381,6 +381,9 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
+              - ${{ if parameters.independentTestBuilds }}:
+                - template: /tools/pipelines/templates/include-development-validation-bundles.yml@self
+
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
                 parameters:

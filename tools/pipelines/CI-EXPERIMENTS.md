@@ -35,8 +35,8 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E10: corrected declaration guard plus native CLI adapter | Prepared; local adapter checks passed | Normalize Azure boolean metadata, retain TypeScript 6 APIs/CJS support, use native CLI, and preserve cache isolation |
-| E11: development-mode example validation | Preparing | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
+| E10: corrected declaration guard plus native CLI adapter | Pushed as `4ef16eadd6d` | Normalize Azure boolean metadata, retain TypeScript 6 APIs/CJS support, use native CLI, and preserve cache isolation |
+| E11: development-mode example validation | Prepared; selection checks passed | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -88,6 +88,9 @@ E11's bundle-size producer is `@fluid-example/bundle-size-tests`: its ordinary `
 It must remain production-mode.
 Other private examples expose `webpack:dev` scripts; switching their validation bundling retains resolution/loader checks but no longer tests production-only optimization behavior.
 The devtools extension's existing configuration is already development-mode and is not changed.
+The setup selects 40 private examples with the exact production/development webpack script pair and no `webpack:profile` script.
+A read-only execution of the actual selection logic confirmed that the bundle-size producer and devtools extension are excluded.
+Only the disposable PR build/test checkouts are changed; non-PR bundling and the policy validation checkout remain unchanged.
 
 ## Method
 

@@ -11,6 +11,8 @@ parameters:
   default: false
 
 steps:
+- template: /tools/pipelines/templates/include-development-validation-bundles.yml@self
+
 - task: Bash@3
   displayName: Configure emit-only runtime test build
   env:
