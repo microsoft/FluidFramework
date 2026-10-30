@@ -6,13 +6,14 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing configuration:** patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) passed 45,649 tests with 3,235 skipped and no failures.
-It took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
+**Latest fully passing configuration:** cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed 45,649 tests with 3,235 skipped and no failures in **11m 13s**, versus the original **33m 28s** baseline.
+Eight of nine timed jobs were below nine minutes; Tinylicious service remained above target at **10m 27s**.
+The preceding patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
 The preceding Node 22 Tinylicious control [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) took **16m 36s**, with eight of nine timed jobs under nine minutes.
 The earlier mixed-runtime run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) passed in **14m 43s**, versus the original **33m 28s** baseline, but its unpatched Node 26 Tinylicious configuration was not reliably green.
 Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
 After reproducing the Tinylicious storage failure, the scoped dependency patch passed both local regression and real service CI on Node 26.
-The next trial changes runtime selection to avoid global copies; it does not change the runtime versions in the matrix.
+Cached-runtime selection is now verified; the next trial requests ESM-only prerequisites for runtime service/stress jobs without changing the runtimes.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -67,6 +68,7 @@ Pool owners should inspect queue/assignment/agent-start events to distinguish th
 | 431054 | First jobs started at 22-25s; the last verification jobs started at 454-460s |
 | 431064 | First client jobs started at 74-86s; final jobs at 455s |
 | 431074 | Initial jobs started at 19-74s; artifact/Tinylicious/local/stress jobs started at 482-486s |
+| 431084 | Initial jobs started at 23-35s; Mocha/build at 113-120s; final jobs at 260-268s |
 
 These are start offsets, not pure agent-queue durations.
 For example, the critical Tinylicious job in green run 431064 started 267s after queueing and then ran for 714s.
@@ -74,7 +76,7 @@ Starting it promptly could materially reduce the 996-second total without changi
 The previous all-green run 431044 took 883s despite its longest individual job being 659s; start/finish overhead therefore still matters after jobs meet their own execution budgets.
 Do not sum all parallel jobs' waiting times to estimate end-to-end savings.
 
-### Branch-side change being tested: cached runtime selection
+### Verified branch-side change: cached runtime selection
 
 Node 26.13.0 is already preinstalled in the inspected CI image: `n ls` lists it alongside 22.22.2.
 The current `sudo n <version>` step copies a cached distribution into the active global installation; it is not downloading Node on every job.
@@ -86,7 +88,10 @@ It verifies the exact version, fails explicitly if the cached executable is unav
 The selection is job-scoped, not a machine-wide runtime replacement.
 It is gated to these independent PR client jobs; other pipelines and non-PR jobs retain the original behavior by default.
 Local fixture checks passed for actual Node 26 execution, global-prefix preservation, boolean serialization, and missing-runtime failure.
-Remote image permissions, task PATH propagation, and install behavior still require verification.
+Run 431084 verified image permissions, task PATH propagation, and package installation.
+Logs explicitly show selection of `/usr/local/n/versions/node/<version>/bin/node` without copying, and both Node 22 and 26 jobs passed.
+Selection steps still varied from 3.8 to 24.1 seconds, so avoiding copies does not eliminate slow process startup/shared-image I/O.
+That is materially below the preceding 91-second copy steps, but improved job scheduling also contributed to the faster total.
 
 ### Recommendations for image and pool owners (not yet implemented)
 
@@ -123,12 +128,12 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 | Correct parallel merge-tree selection and lower-allocation diagnostics | E15 Mocha step passed in 187.4s versus E12's 448.5s | All original merge-tree cases preserved; aggregate E15 failed in the separate Tinylicious job |
 | Node 26 client policy/artifact execution | E16 checked compilation 207.2s to 173.6s; policy `ci:build` 339.7s to 290.6s | Both jobs passed; Tinylicious runtime compatibility is a separate issue |
 | Same-process Git storage patch for Tinylicious | E18 passed; service test step 394.3s versus 551.4s in the Node 22 control | Patch plus Node 26 is a combined change; cross-process/crash-safe publication is not addressed |
+| Job-scoped cached runtime selection | E19 passed; no-copy selection 3.8-24.1s versus prior 91s copy outliers | Preserves npm prefix; overall run also benefited from shorter queue delays |
 
 ## Experiment status
 
-The patched Node 26 configuration passed E18.
-E19's cached-runtime selection is running, using the same dependency and runtime versions.
-E20's ESM-only service prerequisites are prepared separately so they do not change the in-flight E19 comparison.
+The patched Node 26 configuration and cached-runtime selection passed.
+E20's ESM-only service prerequisites are next; E19 provides the comparison baseline.
 
 ### Prepared E20: ESM-only service and stress prerequisites
 
@@ -321,8 +326,8 @@ This was not a cold-cache benchmark.
 | E16: Node 26 client policy/artifact builds | `0a4f0518e7a1d3c8558390425b7927b2392ac3a3` | [431054](https://dev.azure.com/fluidframework/public/_build/results?buildId=431054) | Both targeted jobs passed; Tinylicious failed again | Policy 6m 51s, artifact 6m 44s; same summary-upload HTTP 400 |
 | E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
 | E18: patched Git storage on Node 26 | `73860819672a2b8464e1bee2782c8c811f852d9d` | [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) | Passed | 20m 12s with eight-minute job-start delays; Tinylicious test step 394.3s |
-| E19: cached runtime selection | Implementation `5fba6328c88`; report update included in triggering commit | Pending | Ready to push | Avoid global Node copying in PR jobs; preserve npm prefix and validate exact runtime |
-| E20: ESM-only service prerequisites | Pending | Pending | Prepared locally | Existing `compile:esm` task for service/stress jobs; full compile remains for Mocha/type validation |
+| E19: cached runtime selection | `e9812338463fc4f86b7087557e0c3992d7b707bf` | [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) | Passed | 11m 13s; eight of nine jobs under nine minutes; no-copy selection verified |
+| E20: ESM-only service prerequisites | Implementation `89ffcdbadaf`; report update included in triggering commit | Pending | Ready to push | Existing `compile:esm` task for service/stress jobs; full compile remains for Mocha/type validation |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
