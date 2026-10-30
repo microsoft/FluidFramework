@@ -4,6 +4,7 @@
  */
 
 export {
+	adjustIndexForArraySplice,
 	collectContiguousRanges,
 	type IndexRange,
 	replaceArrayRange,

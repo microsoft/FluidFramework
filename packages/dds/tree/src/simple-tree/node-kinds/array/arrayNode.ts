@@ -1837,40 +1837,40 @@ export function createArrayInsertionAnchor(
 }
 
 /**
- * Compute the new index of an {@link ArrayPlaceAnchor} after applying a shallow array delta.
+ * Adjusts an insertion-point index across a shallow array delta.
  * @remarks
- * The marks cover the array's sequence field in order. `readPosition` walks the pre-edit array as the marks are
- * consumed while `index` stays fixed at the anchor's pre-edit location; comparing the two (both in pre-edit
- * coordinates) shifts `newIndex` to keep the anchor in the same gap between children as content is inserted or
- * removed around it. Each mark is a removal (`detach`), an insertion (`attach`), or a retain (neither); a mark may
- * carry both `detach` and `attach`, which is handled as a removal followed by an insertion. The per-mark behavior is
- * commented inline below.
+ * This is lossy: if a removal includes the index, a future undo of that removal may not restore the original index.
+ * This does not follow moves.
+ * This makes the subjective policy choice that index should end up after inserts at its location
+ * (as is commonly desired for insertion points).
  */
-function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): number {
-	let readPosition = 0;
+export function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): number {
+	// If we were editing the array as we consume marks:
+	// `position` is the location in the array where we are applying edits.
+	// `newIndex` is the updated version of `index` in the array.
+	let position = 0;
 	let newIndex = index;
 	for (const mark of marks) {
-		// A removal consumes pre-edit content: if it lies entirely before the anchor it pulls the anchor left,
-		// and if it contains the anchor's position the anchor collapses to the start of the removed span.
+		if (position > newIndex) {
+			// Edits after the index have no impact on it, so we can stop processing further marks.
+			break;
+		}
+
 		if (mark.detach !== undefined) {
-			const removeEnd = readPosition + mark.count;
-			if (removeEnd <= index) {
-				newIndex -= mark.count;
-			} else if (readPosition < index) {
-				newIndex -= index - readPosition;
+			// A removal consumes pre-edit content: if it lies entirely before the index it pulls the index left,
+			// and if it contains the index's position the index collapses to the start of the removed span.
+			if (newIndex < position + mark.count) {
+				return position;
 			}
-			readPosition += mark.count;
+			newIndex -= mark.count;
 		}
 		if (mark.attach !== undefined) {
-			// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor leaves the
-			// anchor after the new content (insertion-point behavior). Inserted content is new, so it does not
-			// advance the pre-edit read position.
-			if (readPosition <= index) {
-				newIndex += mark.count;
-			}
+			// Content inserted at or before the index pushes it right(insertion-point behavior).
+			newIndex += mark.count;
+			position += mark.count;
 		} else if (mark.detach === undefined) {
 			// Retain: existing content that was neither inserted nor removed.
-			readPosition += mark.count;
+			position += mark.count;
 		}
 	}
 	return newIndex;

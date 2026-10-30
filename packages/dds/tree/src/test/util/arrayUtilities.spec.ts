@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	adjustIndexForArraySplice,
 	collectContiguousRanges,
 	replaceArrayRange,
 	validateIndex,
@@ -22,6 +23,26 @@ import {
 } from "../../util/arrayUtilities.js";
 
 describe("arrayUtilities unit tests", () => {
+	it("adjustIndexForArraySplice", () => {
+		for (const [index, start, removedCount, insertedCount, expected] of [
+			[1, 2, 0, 3, 1],
+			[2, 2, 0, 3, 5],
+			[4, 2, 0, 3, 7],
+			[1, 2, 3, 0, 1],
+			[2, 2, 3, 0, 2],
+			[3, 2, 3, 0, 2],
+			[5, 2, 3, 0, 2],
+			[6, 2, 3, 0, 3],
+			[3, 2, 3, 4, 6],
+			[0, 0, 0, 0, 0],
+		]) {
+			assert.equal(
+				adjustIndexForArraySplice(index, start, removedCount, insertedCount),
+				expected,
+			);
+		}
+	});
+
 	it("validateSafeInteger", () => {
 		assert.doesNotThrow(() => validateSafeInteger(0, "test"));
 		assert.doesNotThrow(() => validateSafeInteger(-0, "test"));
