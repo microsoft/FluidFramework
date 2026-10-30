@@ -35,6 +35,7 @@ catalogs:
       version: 10.1.8
 
 overrides:
+  '@fluidframework/server-lambdas@7.0.1>opossum': 10.0.0
   concurrently@10.0.3>shell-quote: ^1.11.0
   jsonpath@1.2.1>underscore: ^1.13.8
   '@babel/core@>=7 <8': ^7.29.6
@@ -23898,9 +23899,9 @@ packages:
     resolution: {integrity: sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==}
     hasBin: true
 
-  opossum@8.5.0:
-    resolution: {integrity: sha512-LZNvs+p9/ZbG4oN6unnjh4hTxkB0dyHKI2p7azVt8w+//GKDpfHss6WR7KebbpzGEssYwtSd8Mvwxqcmxg10NA==}
-    engines: {node: ^24 || ^22 || ^21 || ^20 || ^18 || ^16}
+  opossum@10.0.0:
+    resolution: {integrity: sha512-sghtqL8Usj+et06Zui0nyn0R6FFsl7cyuoU+d7MctYU0nbS7Htzjleh+tWohFqk1Rp1srrFwbFa8Vxd0O64w6A==}
+    engines: {node: ^26 || ^24 || ^22}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -29876,7 +29877,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.18.1
       nconf: 0.12.1
-      opossum: 8.5.0
+      opossum: 10.0.0
       semver: 7.8.5
       serialize-error: 8.1.0
       sha.js: 2.4.12
@@ -29905,7 +29906,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.18.1
       nconf: 0.12.1
-      opossum: 8.5.0
+      opossum: 10.0.0
       semver: 7.8.5
       serialize-error: 8.1.0
       sha.js: 2.4.12
@@ -29934,7 +29935,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.18.1
       nconf: 0.12.1
-      opossum: 8.5.0
+      opossum: 10.0.0
       semver: 7.8.5
       serialize-error: 8.1.0
       sha.js: 2.4.12
@@ -38515,7 +38516,7 @@ snapshots:
 
   opener@1.5.2: {}
 
-  opossum@8.5.0: {}
+  opossum@10.0.0: {}
 
   optionator@0.9.4:
     dependencies:

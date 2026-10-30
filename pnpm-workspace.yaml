@@ -76,6 +76,9 @@ minimumReleaseAgeExclude:
   # Temporary exceptions go here as needed.
 
 overrides:
+  # CI experiment: retain engine checks while enabling Node 26 for local-service dependencies.
+  "@fluidframework/server-lambdas@7.0.1>opossum": 10.0.0
+
   # concurrently and jsonpath pin vulnerable versions (CVE-2026-13311 and CVE-2026-27601).
   concurrently@10.0.3>shell-quote: ^1.11.0
   jsonpath@1.2.1>underscore: ^1.13.8

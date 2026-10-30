@@ -6,17 +6,18 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Current selected implementation:** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
+**Last validated implementation:** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
 Its latest run passed in **16m 40s**, including **3m 36s** of initial queueing, versus the original **33m 28s** baseline.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
-Node 26.13.0 passed isolated benchmarks but is not retained: the locked `opossum@8.5.0` dependency rejects it during CI installation.
-The final changes restore the configuration exercised by run 430969, minus the unused native adapter; subsequent confirmation runs do not change the selected implementation.
+Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
+At the user's request, E14 retries PR verification on Node 26 with a scoped override to opossum 10.0.0, which declares Node 26 support.
+Policy, artifact, and non-PR jobs remain on Node 22.
 
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
 The best individual experimental run was E3 at 15m 30s; the first-phase configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
 The deliberate type-check failure was rejected, removed, and followed by a successful clean run.
-Only pipeline files and this report remain changed relative to the user's original test commit.
+The experimental branch changes pipeline files, this report, and now the client workspace override/lockfile; the user's dummy source change is preserved.
 
 The goal is to reduce elapsed time from a push to completion of all required continuous integration (CI) checks.
 Also record agent time, queueing, and cache behavior: reducing a single step is not sufficient evidence of a faster pull request.
@@ -41,9 +42,27 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 ## Experiment status
 
-The experiments below are concluded.
+E1-E13 are concluded; E14 is active.
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
+
+### Active E14: supported opossum upgrade for Node 26
+
+Pin `@fluidframework/server-lambdas@7.0.1>opossum` to `10.0.0` in the client workspace overrides and regenerate the lockfile with pnpm.
+This changes only the three existing server-lambdas lockfile snapshots and the opossum package record; the server release group's separate manifests/lockfile are untouched.
+The override applies to client workspace installations on both Node 22 and 26, not just the PR test jobs.
+It raises this transitive dependency's declared minimum to Node 22, matching the client workspace's existing minimum.
+
+The [upstream changelog](https://github.com/nodeshift/opossum/blob/main/CHANGELOG.md) identifies removal of older Node support as the breaking changes in v9/v10.
+The upstream v8.5.0-to-v10.0.0 comparison contains no changes under `lib/`.
+Version 10 explicitly supports `^26 || ^24 || ^22`.
+No engine checks or package metadata are overridden; this uses an actual supported upstream release.
+
+Local `pnpm install --frozen-lockfile` completed successfully under Node 26.13.0, including the compatibility-workspace postinstall.
+Actual server-lambdas dependency resolution selects opossum 10.0.0.
+Circuit-breaker success, rejection, open-state, and fallback checks passed on local Node 22.22.3 and 26.13.0.
+Remote CI still needs to validate the full service/test graph and end-to-end timing.
+This is a user-authorized follow-up to the original install blocker, not evidence that the earlier Node 26 run passed.
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -516,7 +535,8 @@ pnpm reported `ERR_PNPM_UNSUPPORTED_ENGINE` for `opossum@8.5.0`, whose declared 
 The failure persisted across the existing automatic retries.
 This is a declared-support/installability blocker, not proof that the locally tested code fails at runtime on Node 26.
 Do not disable engine checks or silently alter dependency metadata to force adoption.
-Node 22.22.2 is restored for all jobs; no dependency versions were changed.
+After E13, Node 22.22.2 was restored for all jobs without dependency changes.
+The later user-authorized E14 upgrade is tracked separately above.
 Node selection itself also took 38-43 seconds in the observed Node 26 jobs, so startup overhead must be included in any future CI comparison.
 
 ## Validation ownership
@@ -611,7 +631,8 @@ Pipeline queue contention and caches can dominate small improvements.
 There was one original baseline and two final-configuration samples, with a moving target branch; this is not a controlled statistical estimate.
 Release/non-pull-request pipelines were not executed as part of this experiment; their existing configuration is preserved by pull-request-only gating and parameter defaults.
 The tsconfig mutation is deliberately confined to disposable test jobs and remains proof-of-concept machinery, not a recommended public build interface.
-Newer Node and the partial native TypeScript adapter are not enabled in the selected configuration.
-No engine-policy overrides or dependency upgrades were used to make the unsuccessful trials appear green.
+The partial native TypeScript adapter is not enabled.
+Node 26 is being retried with the explicitly documented E14 dependency upgrade; its remote result is pending.
+No engine-policy bypass is used, and earlier unsuccessful trials remain recorded as failures.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
