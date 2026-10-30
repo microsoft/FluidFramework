@@ -219,6 +219,7 @@ extends:
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
               nodeVersion: ${{ parameters.buildNodeVersion }}
+              useCachedRuntime: ${{ parameters.independentTestBuilds }}
               ${{ if parameters.independentTestBuilds }}:
                 pool: ${{ parameters.poolBuild }}
                 taskBuild: ci:build
@@ -362,6 +363,7 @@ extends:
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
                 parameters:
                   version: ${{ parameters.buildNodeVersion }}
+                  useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
@@ -672,6 +674,8 @@ extends:
                 displayName: "Checkout build commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                parameters:
+                  useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
@@ -866,6 +870,7 @@ extends:
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
                   parameters:
                     version: ${{ coalesce(test.nodeVersion, parameters.testNodeVersion) }}
+                    useCachedRuntime: ${{ parameters.independentTestBuilds }}
 
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:

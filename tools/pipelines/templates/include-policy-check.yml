@@ -28,6 +28,10 @@ parameters:
   type: string
   default: '22.22.2'
 
+- name: useCachedRuntime
+  type: boolean
+  default: false
+
 # A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
 # a pipeline stage separate from the build stage.
 - name: checks
@@ -52,6 +56,7 @@ stages:
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
       parameters:
         version: ${{ parameters.nodeVersion }}
+        useCachedRuntime: ${{ parameters.useCachedRuntime }}
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:

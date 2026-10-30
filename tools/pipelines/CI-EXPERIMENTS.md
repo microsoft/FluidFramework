@@ -50,6 +50,60 @@ Do not meet the budget by dropping validation or hiding intermittent failures.
 Run 431044 had seven of nine timed agent jobs under nine minutes; artifact build and Tinylicious were above it.
 One successful run does not establish a reliable percentile.
 
+## Job-start delays and CI image recommendations
+
+Job start latency is now a substantial part of queue-to-green time.
+Do not conflate it with checkout or compiler time: a job without an agent has not reached those steps.
+The optimized policy, build, and verification stages have no dependencies on each other, so their staggered starts are no longer explained by the old shared-build barrier.
+The public timeline does not identify whether each delay is pool exhaustion, an organization parallel-job limit, VM provisioning, agent registration, or template/service prechecks.
+Pool owners should inspect queue/assignment/agent-start events to distinguish these causes before buying capacity or changing images.
+
+| Run | Observed job-start behavior after pipeline queue time |
+| --- | --- |
+| 430707 | Main client jobs started within 25-51s |
+| 430803 | Main client jobs started around 253-266s |
+| 431044 | Policy/build started at 21/33s; Mocha at 228s; service jobs around 258-273s |
+| 431054 | First jobs started at 22-25s; the last verification jobs started at 454-460s |
+| 431064 | First client jobs started at 74-86s; final jobs at 455s |
+
+These are start offsets, not pure agent-queue durations.
+For example, the critical Tinylicious job in green run 431064 started 267s after queueing and then ran for 714s.
+Starting it promptly could materially reduce the 996-second total without changing its test code.
+The previous all-green run 431044 took 883s despite its longest individual job being 659s; start/finish overhead therefore still matters after jobs meet their own execution budgets.
+Do not sum all parallel jobs' waiting times to estimate end-to-end savings.
+
+### Branch-side change being tested: cached runtime selection
+
+Node 26.13.0 is already preinstalled in the inspected CI image: `n ls` lists it alongside 22.22.2.
+The current `sudo n <version>` step copies a cached distribution into the active global installation; it is not downloading Node on every job.
+Measured selection steps range from about 10-14s to 38-83s, for both runtime versions.
+Simply adding Node 26 to the cache again will not remove that copy.
+
+E19 selects `n which <version>` by prepending its bin directory to the job PATH instead of calling `sudo n`.
+It verifies the exact version, fails explicitly if the cached executable is unavailable, and preserves npm's previous writable global prefix for the existing pinned pnpm installation.
+The selection is job-scoped, not a machine-wide runtime replacement.
+It is gated to these independent PR client jobs; other pipelines and non-PR jobs retain the original behavior by default.
+Local fixture checks passed for actual Node 26 execution, global-prefix preservation, boolean serialization, and missing-runtime failure.
+Remote image permissions, task PATH propagation, and install behavior still require verification.
+
+### Recommendations for image and pool owners (not yet implemented)
+
+| Recommendation | Why it may help | Required checks / owner action |
+| --- | --- | --- |
+| Keep enough warm agents for a PR's initial burst | The current client graph can request eight large agents at once, plus separate policy/source-analysis capacity | Check pool maximum and warm/standby settings, scale-out delay, and organization/project parallel-job limits; size for concurrent PRs, not just one |
+| Compare queued, assigned, and agent-ready timestamps | Four-to-eight-minute waves may come from cold provisioning or capacity limits rather than image setup | Export scheduling telemetry; correlate with other workloads using the pool and VM startup/registration |
+| Provide immutable, side-by-side Node 22.22.2 and 26.13.0 paths | Avoid repeated global copies and let mixed-runtime jobs select a version cheaply | Ensure paths are readable/executable for the agent, document them, and preserve a separate writable npm/pnpm installation location |
+| Pre-cache the exact repository-pinned pnpm version | Avoid repeated global installs if installation time is significant | Gate reuse on exact version equality; retain normal installation for changed pins and preserve registry/auth configuration |
+| Preinstall matching Playwright browser binaries and OS libraries | May avoid browser download/system-package work inside browser-test steps | Match the lockfile's Playwright/browser revisions, expose a shared read-only browser cache, and validate both package variants; savings have not been isolated here |
+| Measure pnpm cache restore/save against a seeded immutable store | Restore/pack/upload can cost more than a small incremental install | Compare bytes, hit type, and restore/save durations; never reuse writable `node_modules` across jobs or bypass frozen-lockfile/integrity checks |
+| Examine slow initialization, network-isolation, and governance tails | Individual injected/setup tasks have varied considerably between runs | Work with the pipeline-template/security owners; optimize provisioning or caching, not removal of required checks |
+| Favor cancellation/coalescing of obsolete PR work | Superseded jobs consume capacity needed by current revisions | Existing PR auto-cancel was observed; check whether cancellation promptly releases agents and whether expensive post-job work delays reuse |
+
+These are recommendations, not changes to external pool/image settings.
+More agents and larger standby pools cost money; compare queue-time reduction against sustained utilization and expected PR concurrency.
+If capacity cannot be increased, consider prioritizing long jobs or combining short verification work, but measure the tradeoff against larger individual job times and the nine-minute target.
+The two-dimensional goal remains: reliable jobs below nine minutes on most runs, and little avoidable delay before those jobs start.
+
 ## Retained changes with measured evidence
 
 | Change currently on this branch | Evidence | Qualification |
@@ -70,6 +124,7 @@ One successful run does not establish a reliable percentile.
 ## Experiment status
 
 The Node 26 client policy/artifact jobs passed; the Tinylicious dependency-patch confirmation is active.
+E19's cached-runtime selection is prepared separately so it does not change the in-flight E18 measurement.
 
 ### Active E18: fix same-process Git-object publication races
 
@@ -232,6 +287,7 @@ This was not a cold-cache benchmark.
 | E16: Node 26 client policy/artifact builds | `0a4f0518e7a1d3c8558390425b7927b2392ac3a3` | [431054](https://dev.azure.com/fluidframework/public/_build/results?buildId=431054) | Both targeted jobs passed; Tinylicious failed again | Policy 6m 51s, artifact 6m 44s; same summary-upload HTTP 400 |
 | E17: Tinylicious Node 22 control | `57ebbb69f0c783a45e0671075816aa8be30ebf05` | [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) | Passed | 16m 36s; eight of nine timed jobs under nine minutes; Tinylicious 11m 54s |
 | E18: patched Git storage on Node 26 | Implementation `0a0a896b14c`; report update included in triggering commit | Pending | Local regression/stress passed; ready to push | Same-object writes serialized; errors preserved |
+| E19: cached runtime selection | Pending | Pending | Prepared locally | Avoid global Node copying in PR jobs; preserve npm prefix and validate exact runtime |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
