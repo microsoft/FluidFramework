@@ -40,7 +40,6 @@ import { v4 as uuid } from "uuid";
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
 import { JoinSessionCache } from "./joinSessionCache.js";
-import { checkJoinSessionDisposed, waitForJoinSession } from "./joinSessionRequest.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
@@ -67,7 +66,6 @@ export class OdspDelayLoadedDeltaStream {
 
 	private firstConnectionAttempt = true;
 	private hasAttemptedJoinSession = false;
-	private readonly joinSessionAbortController = new AbortController();
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
 	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
@@ -417,8 +415,6 @@ export class OdspDelayLoadedDeltaStream {
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
-		const signal = this.joinSessionAbortController.signal;
-		checkJoinSessionDisposed(signal);
 		let caller: string;
 		if (isRefreshingJoinSession) {
 			caller = "periodicRefresh";
@@ -449,7 +445,7 @@ export class OdspDelayLoadedDeltaStream {
 				displayName,
 			);
 			// Emit event only in case it is fetched from the network.
-			if (!signal.aborted && joinSessionResponse.sensitivityLabelsInfo !== undefined) {
+			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
 				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
 			}
 			return {
@@ -471,7 +467,7 @@ export class OdspDelayLoadedDeltaStream {
 							caller,
 						})
 					: sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-			const _response = await waitForJoinSession(promise, signal);
+			const _response = await promise;
 			// Responses without a refresh duration use the legacy one-hour lifetime.
 			_response.joinSessionResponse.refreshSessionDurationSeconds ??= 3600;
 			return {
@@ -483,13 +479,11 @@ export class OdspDelayLoadedDeltaStream {
 			};
 		};
 		let response = await getResponseAndRefreshAfterDeltaMs();
-		checkJoinSessionDisposed(signal);
 		// This means that the cached entry has expired(This should not be possible if the response is fetched
 		// from the network call). In this case we remove the cached entry and fetch the new response.
 		if (response.refreshAfterDeltaMs <= 0) {
 			this.cache.sessionJoinCache.remove(this.joinSessionKey);
 			response = await getResponseAndRefreshAfterDeltaMs();
-			checkJoinSessionDisposed(signal);
 		}
 		if (!disableJoinSessionRefresh) {
 			const props = {
@@ -595,7 +589,6 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	public dispose(): void {
-		this.joinSessionAbortController.abort();
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
 		delete this.currentConnection;

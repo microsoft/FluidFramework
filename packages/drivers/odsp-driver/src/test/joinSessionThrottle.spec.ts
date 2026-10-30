@@ -158,99 +158,29 @@ describe("join-session throttle coordination", () => {
 		assert.equal(fetchStub.callCount, 3);
 	});
 
-	it("cancels a disposed wait without cancelling another service's wait", async () => {
-		const first = createStream();
-		const second = createStream();
-		await assert.rejects(join(first));
-		const cancelled = assert.rejects(join(first), /disposed/i);
-		const surviving = join(second);
-		await clock.tickAsync(1000);
-		first.dispose();
-		await cancelled;
-		assert.equal(fetchStub.callCount, 1);
-		await clock.tickAsync(119000);
-		await surviving;
-		assert.equal(fetchStub.callCount, 2);
-	});
-
-	it("never starts a join-session request after disposal", async () => {
+	it("keeps a pending join waiting for shared work after disposal", async () => {
 		const stream = createStream();
-		stream.dispose();
-		await assert.rejects(join(stream), /disposed/i);
-		assert.equal(fetchStub.callCount, 0);
-	});
-
-	for (const phase of ["token fetch", "HTTP response"] as const) {
-		it(`keeps a shared join alive when its initiating service is disposed during ${phase}`, async () => {
-			const token = new Deferred<string>();
-			const pendingResponse = new Deferred<Response>();
-			fetchStub
-				.onFirstCall()
-				.returns(
-					phase === "HTTP response" ? pendingResponse.promise : Promise.resolve(success()),
-				);
-			const first = createStream(resolvedUrl, cache, async () =>
-				phase === "token fetch" ? token.promise : "test-token",
-			);
-			let cancelledPromptly = false;
-			const cancelled = assert.rejects(join(first), /disposed/i).then(() => {
-				cancelledPromptly = true;
-			});
-			const surviving = join(createStream()).then(
-				() => true,
-				() => false,
-			);
-			await clock.tickAsync(0);
-			first.dispose();
-			await clock.tickAsync(0);
-			const cancelledBeforeCompletion = cancelledPromptly;
-			token.resolve("test-token");
-			pendingResponse.resolve(success());
-			await clock.tickAsync(0);
-			await cancelled;
-			assert.equal(await surviving, true, "another live caller still receives the response");
-			assert.equal(cancelledBeforeCompletion, true, "disposal does not wait for shared work");
-			assert.equal(fetchStub.callCount, 1);
-		});
-	}
-
-	it("allows shared work to finish after all callers dispose while the token is pending", async () => {
-		fetchStub.onFirstCall().resolves(success());
-		const token = new Deferred<string>();
-		const first = createStream(resolvedUrl, cache, async () => token.promise);
-		const second = createStream();
-		const cancelled = [
-			assert.rejects(join(first), /disposed/i),
-			assert.rejects(join(second), /disposed/i),
-		];
-		await clock.tickAsync(0);
-		first.dispose();
-		second.dispose();
-		token.resolve("test-token");
-		await clock.tickAsync(0);
-		await Promise.all(cancelled);
-		await clock.tickAsync(0);
-		assert.equal(fetchStub.callCount, 1);
-	});
-
-	it("allows a replacement caller to reuse work after the initiating caller disposes", async () => {
-		fetchStub.onFirstCall().resolves(success());
-		const token = new Deferred<string>();
-		const first = createStream(resolvedUrl, cache, async () => token.promise);
-		const cancelled = assert.rejects(join(first), /disposed/i);
-		await clock.tickAsync(0);
-		first.dispose();
-		await clock.tickAsync(0);
-		const replacement = join(createStream()).then(
-			() => true,
-			() => false,
+		await assert.rejects(join(stream));
+		let settled = false;
+		const next = join(stream).then(
+			() => {
+				settled = true;
+				return true;
+			},
+			() => {
+				settled = true;
+				return false;
+			},
 		);
 		await clock.tickAsync(0);
-		token.resolve("test-token");
+		stream.dispose();
 		await clock.tickAsync(0);
-		await cancelled;
-		assert.equal(fetchStub.callCount, 1, "the replacement shares the existing request");
-		assert.equal(await replacement, true);
+		assert.equal(settled, false, "disposal does not settle the pending join");
+		await clock.tickAsync(119999);
+		assert.equal(fetchStub.callCount, 1);
+		await clock.tickAsync(1);
+		assert.equal(await next, true, "the join still receives the shared result");
+		assert.equal(fetchStub.callCount, 2);
 	});
 
 	it("does not schedule an unusable Retry-After deadline", async () => {
