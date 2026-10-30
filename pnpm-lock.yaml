@@ -108,6 +108,7 @@ pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
   isomorphic-git@1.27.2: 58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12
+  tinylicious@7.0.1: e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd
 
 importers:
 
@@ -193,7 +194,7 @@ importers:
     dependencies:
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.3.7)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.3.7)(supports-color@10.2.2)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -385,7 +386,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -482,7 +483,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -582,7 +583,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -676,7 +677,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -830,7 +831,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -918,7 +919,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1018,7 +1019,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1145,7 +1146,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1233,7 +1234,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1397,7 +1398,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1838,7 +1839,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -1953,7 +1954,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -2317,7 +2318,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
@@ -3341,7 +3342,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
@@ -3743,7 +3744,7 @@ importers:
         version: 3.4.2(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -3861,7 +3862,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -3997,7 +3998,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -4879,7 +4880,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5000,7 +5001,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5133,7 +5134,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5242,7 +5243,7 @@ importers:
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5339,7 +5340,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5448,7 +5449,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -5542,7 +5543,7 @@ importers:
         version: 6.1.3
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
@@ -10281,7 +10282,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(supports-color@10.2.2)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -12925,7 +12926,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2)
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -13292,7 +13293,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(supports-color@10.2.2)
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
@@ -14279,7 +14280,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(supports-color@10.2.2)
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -14479,7 +14480,7 @@ importers:
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(supports-color@10.2.2)
+        version: 7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(supports-color@10.2.2)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -40544,7 +40545,7 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
 
-  tinylicious@7.0.1(debug@4.3.7)(supports-color@10.2.2):
+  tinylicious@7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 7.0.1
@@ -40585,7 +40586,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  tinylicious@7.0.1(debug@4.4.3)(supports-color@10.2.2):
+  tinylicious@7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 7.0.1
@@ -40626,7 +40627,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  tinylicious@7.0.1(supports-color@10.2.2):
+  tinylicious@7.0.1(patch_hash=e3c741cc528326ecf04fc1c1a1aaeb6309f62633a491bb8881b2415d3205c9dd)(supports-color@10.2.2):
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 7.0.1

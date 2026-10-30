@@ -16,6 +16,41 @@ const requireTests = createRequire(
 );
 const requireTinylicious = createRequire(requireTests.resolve("tinylicious"));
 
+test("Tinylicious query paths preserve nested filtering, sorting, and updates", async () => {
+	const { Collection } = requireTinylicious("./services/inMemorycollection");
+	const collection = new Collection();
+	await collection.insertMany(
+		[
+			{ _id: "one", tenantId: "a", operation: { sequenceNumber: 1 } },
+			{ _id: "two", tenantId: "a", operation: { sequenceNumber: 2 } },
+			{ _id: "three", tenantId: "b", operation: { sequenceNumber: 3 } },
+			{ _id: "four", tenantId: "a", operation: { sequenceNumber: 4 } },
+		],
+		true,
+	);
+	const query = { tenantId: "a", "operation.sequenceNumber": { $gt: 1, $lt: 5 } };
+	const descending = { "operation.sequenceNumber": -1 };
+	assert.deepEqual(
+		(await collection.find(query, descending)).map((row) => row._id),
+		["four", "two"],
+	);
+	assert.equal((await collection.findOne({ "operation.sequenceNumber": 2 }))._id, "two");
+	await collection.update({ _id: "two" }, { operation: { sequenceNumber: 5 } });
+	assert.deepEqual(
+		(await collection.find(query, descending)).map((row) => row._id),
+		["four"],
+	);
+	assert.deepEqual(
+		(await collection.find({}, { "operation.sequenceNumber": 1 })).map((row) => row._id),
+		["one", "three", "four", "two"],
+	);
+	await collection.deleteMany({ tenantId: "a" });
+	assert.deepEqual(
+		(await collection.findAll()).map((row) => row._id),
+		["three"],
+	);
+});
+
 test("Tinylicious waits for a concurrent loose-object write before reading it", {
 	timeout: 10000,
 }, async () => {

@@ -60,6 +60,9 @@ Do not conflate it with checkout or compiler time: a job without an agent has no
 The optimized policy, build, and verification stages have no dependencies on each other, so their staggered starts are no longer explained by the old shared-build barrier.
 The public timeline does not identify whether each delay is pool exhaustion, an organization parallel-job limit, VM provisioning, agent registration, or template/service prechecks.
 Pool owners should inspect queue/assignment/agent-start events to distinguish these causes before buying capacity or changing images.
+This experiment PR includes shared-template changes and was observed triggering build-tools, common-package, and server pipelines in addition to client CI.
+For example, the check rollup for report commit `d6769415261` included those pipelines and eventually passed all reported checks.
+That extra validation load may contribute to pool contention; these queue observations are not a clean estimate of a normal PR changing only client source after the pipeline work is merged.
 
 | Run | Observed job-start behavior after pipeline queue time |
 | --- | --- |
@@ -136,6 +139,62 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 
 The patched Node 26 configuration, cached-runtime selection, and ESM-only service prerequisites passed.
 The nine-minute target is not fully met: Tinylicious service is the remaining long job, and queue/start variability still affects end-to-end time.
+
+### Active E21: profile the remaining test-service bottleneck
+
+The latest green service log shows the end-to-end package occupying 467 seconds; the other four service packages took roughly 5-35 seconds each.
+Within that package, SharedDirectory occupied about 82 seconds, SharedMap 47 seconds, and attach-lifecycle tests 43 seconds.
+No single ordinary test body explains the total; repeated setup and many compatibility cases matter.
+
+Profiled the two dominant directory/map files on Node 26 with separate V8 profiles for the test client and Tinylicious.
+The service listened only on loopback, used a new session-owned storage directory for every run, and was stopped after each bounded run.
+The local subset contains 851 cases; it is not a full-suite CI timing sample.
+Initial stale local build artifacts were rebuilt before collecting successful profiles.
+
+| Measurement | Observation |
+| --- | --- |
+| Baseline test-phase time | 76.077s initially; 75.878s in a warmed repeat |
+| Sum of test-body durations | 13.828s in the initial run |
+| `createContainers` before-each hooks | 52.916s across 836 invocations, about 70% of the initial test phase |
+| Whole-process client/server profile | Both showed substantial idle/I/O time; startup/module loading is included and must not be confused with test-body CPU |
+| Server path-lookup hotspot | In-memory collection lookup repeatedly split dotted query keys for every scanned row; warmed control spent about 5.99s of self samples there |
+
+Two candidates were evaluated rather than assuming they would help:
+
+1. Loading the two secondary clients concurrently preserved all 851 cases, but test-phase time changed from 76.077s to 76.944s and setup-hook time increased slightly.
+   The apparently better process wall time came from a warm startup, not faster tests.
+   This candidate was reverted and is not on the branch.
+2. Precomputing query/sort key paths once per query preserved the installed collection's matching semantics.
+   The prototype took 72.302s and the actual installed package patch took 71.793s, versus the 75.878s warmed control.
+   Path-lookup self samples fell from about 5.99s to 0.53s.
+   This is a modest roughly 5% local subset improvement, not yet a measured full-CI gain.
+
+The query optimization is carried as an exact-version `tinylicious@7.0.1` dependency patch, separate from the Git-object race fix.
+It does not add indexes, cache values/results, alter range semantics, or change the separately released server source package.
+Regression coverage checks nested filtering, positive range bounds, sorting, updates, and deletion on both Node 22 and 26.
+The local selected-suite test names exactly match before/after the patch.
+
+A two-file, two-worker trial with that patch passed the same 851 cases in 66.30s process wall time, compared with 80.17s for the warmed unmodified serial control.
+The custom profiling reporter initially assumed serial hook identities and failed in parallel mode; this was an instrumentation failure, not a product test failure.
+The corrected profiler reports per-hook timings only for serial runs and leaves parallel assertion/failure reporting intact.
+An initial full-suite profile also added `--unhandled-rejections=strict` manually and produced 11 negative-test/timer failures.
+Inspecting the actual Mocha launcher showed that its explicit `node-option` list replaces the generic Node-flag list; CI's real child flags are conditions, exposed GC, and the 8GB heap limit, without that manually added flag.
+The profile was corrected to match those existing CI flags; no production test flag or failure check was removed.
+The failed mismatched-flag run is not used as evidence for or against the parallel configuration.
+The full end-to-end spec set then passed through the opt-in two-worker configuration in 300.06s process wall time.
+It reported 4,050 passed, 1,927 pending, and zero failures.
+After normalizing the runtime `[t9s]` title prefix, every one of the 5,977 discovered case names matched the original serial inventory; none were omitted.
+Those are local results with a profiling reporter, not a measured CI speedup or a claim that runtime skip decisions exactly match a different CI revision.
+Only PR Tinylicious end-to-end execution opts in; the driver is explicitly propagated to workers, and actual performance-measurement mode stays serial.
+No fuzz count, compatibility selection, test case, assertion, or timeout is intentionally reduced.
+Fresh CI with the normal reporter must still pass before treating parallel end-to-end execution as a retained improvement.
+Serial dry-run discovery found 5,977 cases across 131 files, all ending in `.spec.js`; the compiled/source spec-file sets also matched exactly.
+The exact-name comparison above confirms that the narrower file pattern did not omit discovered cases.
+
+The full parallel server profile had only about 11% idle samples, versus substantial idle time in the serial subset.
+After the query-path fix, in-memory collection scans and checkpoint writes became prominent remaining costs.
+This argues against simply increasing worker count further: the single service process is approaching a CPU bottleneck.
+A properly maintained collection index, cheaper checkpoint bookkeeping, or isolated service shards may offer larger future gains, but require correctness/durability review rather than silently dropping work.
 
 ### E20: ESM-only service and stress prerequisites
 
@@ -342,6 +401,7 @@ This was not a cold-cache benchmark.
 | E18: patched Git storage on Node 26 | `73860819672a2b8464e1bee2782c8c811f852d9d` | [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) | Passed | 20m 12s with eight-minute job-start delays; Tinylicious test step 394.3s |
 | E19: cached runtime selection | `e9812338463fc4f86b7087557e0c3992d7b707bf` | [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) | Passed | 11m 13s; eight of nine jobs under nine minutes; no-copy selection verified |
 | E20: ESM-only service prerequisites | `90673c161fc5c48cbeb2f051986f6a34124acd38` | [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) | Passed | 13m 14s, unchanged suite totals; zero CJS commands in service/stress builds |
+| E21: profiled query-path and end-to-end concurrency candidates | Pending | Local full-suite passed; remote pending | Ready to push | Setup dominates; full two-worker run covers all 5,977 cases in 300.06s |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 

@@ -8,6 +8,17 @@ import { getFluidTestMochaConfigWithCompat } from "@fluid-private/test-version-u
 const packageDir = import.meta.dirname;
 const config = getFluidTestMochaConfigWithCompat(packageDir);
 
+if (process.env.FLUID_E2E_PARALLEL === "1" && process.env.FLUID_TEST_PERF_MODE === undefined) {
+	if (process.env.fluid__test__driver === undefined) {
+		throw new Error(
+			"Parallel end-to-end tests require fluid__test__driver for worker processes",
+		);
+	}
+	config.spec = process.env.MOCHA_SPEC ?? "lib/test/**/*.spec.js";
+	config.parallel = true;
+	config.jobs = 2;
+}
+
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves.
 // AB#7856
 config.exit = true;
