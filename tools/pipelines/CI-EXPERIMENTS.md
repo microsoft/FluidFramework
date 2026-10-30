@@ -6,6 +6,11 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
+**Current selected implementation:** TypeScript 6 workers with the lean runtime graph and development-only example bundles.
+Its latest run passed in **16m 40s**, including **3m 36s** of initial queueing, versus the original **33m 28s** baseline.
+The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
+An isolated Node 26.13.0 benchmark passed; a PR-test-only CI trial is next.
+
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
 The best individual experimental run was E3 at 15m 30s; the final configuration was retained because its targeted task timings are reproducibly lower and validation ownership is explicit.
@@ -37,7 +42,8 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E12: TypeScript 6 worker comparison | Preparing | Keep the same lean graph and development bundles; remove native setup and restore JS workers to assess adapter value |
+| E13: Node 26.13.0 PR test jobs | Preparing after successful local benchmarks | Keep policy/artifact and non-PR jobs on Node 22; verify the complete PR test suite on Node 26 |
+| Node 26 parallel-Mocha probe | Local run in progress | Check whether the earlier worker-mode exit 13 is resolved before reconsidering parallel runner mode |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -143,6 +149,8 @@ This was not a cold-cache benchmark.
 | E9: lean runtime task graph | `a0671df680eb5c7550b55c18a455b9d68db7a61c` | [430921](https://dev.azure.com/fluidframework/public/_build/results?buildId=430921) | Failed; not promoted | Strict boolean guard failed to preserve declaration generation in ATTW/Mocha |
 | E10: native CLI adapter | `4ef16eadd6dcde2bd81ce12c7d36c79de0b39bae` | [430936](https://dev.azure.com/fluidframework/public/_build/results?buildId=430936) | Failed; retry prepared | TS2883 while emitting legacy JavaScript declarations in `property-properties` |
 | Native retry plus E11 development bundles | `4b3f2a5d4195ccea4721a2ef1ca95cb1d195adfd` | [430954](https://dev.azure.com/fluidframework/public/_build/results?buildId=430954) | Passed | 16m 35s; native adapter works with legacy exception; webpack 33.5s |
+| E12: TypeScript 6 worker comparison | `4d89e87ff040fb33193235c323539967a53f90aa` | [430969](https://dev.azure.com/fluidframework/public/_build/results?buildId=430969) | Passed; selected | 16m 40s; prerequisite builds as fast or faster than the partial native adapter |
+| Node 26 local serial benchmarks | No repository runtime/dependency changes | Local only | Passed | Compilation about 11% faster, merge-tree 7.5% faster, identical emitted files/test counts |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -451,6 +459,52 @@ Production analyzer artifacts remained present alongside docs and devtools outpu
 
 E12 retains all lean-graph/development changes but restores TypeScript 6 workers and removes the native setup invocation.
 This comparison will determine whether the extra adapter complexity earns a place in the final configuration.
+
+### E12: select TypeScript 6 workers
+
+Run 430969 passed in 1,000.5 seconds (16m 40s), including 215.9 seconds before pipeline start.
+It reported 45,648 passed tests and 3,235 not executed.
+The 201 additional tests relative to the native run are explained by upstream SharedTree changes: exact merge comparison shows the extrinsic-range feature and tests were added between the runs.
+Mocha log summaries show 197 additional regular Tree cases and four additional production-mode cases.
+
+| Prerequisite build | Partial native adapter | TypeScript 6 workers |
+| --- | ---: | ---: |
+| Mocha | 116.5s | 110.7s |
+| AreTheTypesWrong | 78.5s | 68.2s |
+| Tinylicious service | 38.9s | 35.1s |
+| Local service | 35.0s | 34.6s |
+| Stress | 31.9s | 32.0s |
+| Browser compile/bundles | 58.6s | 58.6s |
+
+Keep the simpler TypeScript 6 worker path and remove the unused adapter.
+The native proof of concept remains reproducible from its experiment commits, but is not a confirmed improvement in this pipeline.
+Its local compiler speedup did not translate into a demonstrated CI gain when CJS compilation, JavaScript APIs, process startup, and other build tasks remained in the old toolchain.
+This is not evidence that a properly integrated native build cannot help; it is evidence against retaining this particular adapter without a benefit.
+
+### Node runtime benchmark setup
+
+Run 430969 lists Node 26.13.0 alongside the current 22.22.2 in its agent image.
+Both exact versions were downloaded from nodejs.org into session-only storage and verified against the published SHA-256 sums.
+The global/default local Node installation is unchanged.
+The benchmark alternates compiler order over three fresh checked and unchecked emits, then runs the unchanged serial merge-tree suite on each runtime.
+No CI runtime change is made before correctness and timing are assessed.
+
+The local serial benchmark passed on both versions.
+
+| Workload | Node 22.22.2 | Node 26.13.0 | Observation |
+| --- | ---: | ---: | --- |
+| Checked Tree emit, median of three fresh runs | 8.836s | 7.851s | 11.1% faster |
+| Emit-only Tree build, median of three fresh runs | 5.671s | 5.033s | 11.3% faster |
+| Serial merge-tree suite, one run per version | 462.3s | 427.6s | 7.5% faster |
+
+Both merge-tree runs exited zero with 1,568 passes and two skipped cases.
+Checked and unchecked compiler output comparisons found zero differing emitted files between Node versions.
+The merge-tree result is one local sample per runtime, not a CI performance guarantee.
+The existing local test report was preserved, and the default local Node was not changed.
+
+E13 selects 26.13.0 only for PR verification jobs; policy, artifact builds, and non-PR jobs keep 22.22.2.
+Dependencies are installed after selecting the runtime in each fresh job.
+Before production rollout, decide how to preserve minimum-supported-Node runtime coverage: non-PR jobs still use Node 22, but the PR unit suites in this trial use Node 26.
 
 ## Validation ownership
 
