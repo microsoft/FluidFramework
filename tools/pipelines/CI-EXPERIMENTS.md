@@ -6,7 +6,11 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest fully passing configuration:** ESM-only service build run [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) passed 45,649 tests with 3,235 skipped and no failures in **13m 14s**.
+**Latest fully passing configuration:** serial E2E/query-path control [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) passed 45,649 tests with 3,235 skipped and no failures in **12m 23s**.
+All nine timed jobs finished below nine minutes; the longest job was Tinylicious service at **7m 39s**.
+This is the first passing sample meeting the per-job target, not proof that most future runs will meet it.
+The next experiment retries two-worker E2E execution after fixing unnecessary fake-clock installation in skipped service suites.
+The previous ESM-only build run [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) passed in **13m 14s**.
 The preceding cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed the same test totals in **11m 13s**, versus the original **33m 28s** baseline.
 Eight of nine timed jobs were below nine minutes in both runs; Tinylicious service remains above target at **10m 20s** in the latest run.
 The preceding patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
@@ -149,8 +153,8 @@ This is not the earlier Git-object write error, and is not classified as ordinar
 The same timer signature appeared during local parallel investigation, although the exact case differed.
 All other jobs passed, and all timed jobs were below nine minutes; the failed run is not accepted as a successful performance result.
 
-The next control restores serial end-to-end execution while retaining the query-path patch.
-The opt-in local parallel configuration remains available for diagnosis, but CI no longer enables it.
+The control restored serial end-to-end execution while retaining the query-path patch.
+CI disabled the parallel opt-in during that control; the E22 retry below reenables it with the early-skip correction.
 Investigate timer ownership, worker reuse, and asynchronous cleanup before considering it reliable.
 No tests, assertions, or timeout checks are removed.
 
@@ -170,7 +174,17 @@ It does not suppress timer assertions, clear arbitrary outstanding timers, or en
 A diagnostic that rejects replacement of native `setTimeout` failed against the original Container suite, then passed after the early skip.
 The corrected Tinylicious selection still reported one passing and 31 pending Container cases, and all ten GC sweep cases pending.
 On the intended local driver, the two affected files passed 41 cases with one pending.
-Full parallel repetition with timer tracing and the fake-clock guard remains in progress; remote validation is still required.
+Full parallel repetition with timer lifecycle tracing and the fake-clock guard passed in 309.13 seconds.
+It retained all 5,977 discovered case names (4,050 passed, 1,927 pending), and recorded no invalid timer handler.
+The two affected local-driver files still passed 41 cases with one pending.
+This validates the guard's intended behavior locally; the particular remote timer's history remains unproven.
+The next remote retry enables the same two-worker configuration with these guards, leaving the query optimization unchanged.
+
+The serial query-patch control 431144 passed all 45,649 tests, with 3,235 skipped, in 743.4 seconds.
+Its Tinylicious test step took 314.0 seconds and the full job 458.5 seconds, compared with E20's 468.0 and 619.9 seconds.
+All nine timed jobs were below nine minutes, with no suite removed.
+This supports retaining the query-path optimization independently of whether parallel workers prove reliable.
+Scheduling and test-runtime variability still affect the comparison, so the exact speedup is not treated as a stable estimate.
 
 The latest green service log shows the end-to-end package occupying 467 seconds; the other four service packages took roughly 5-35 seconds each.
 Within that package, SharedDirectory occupied about 82 seconds, SharedMap 47 seconds, and attach-lifecycle tests 43 seconds.
@@ -215,7 +229,7 @@ The full end-to-end spec set then passed through the opt-in two-worker configura
 It reported 4,050 passed, 1,927 pending, and zero failures.
 After normalizing the runtime `[t9s]` title prefix, every one of the 5,977 discovered case names matched the original serial inventory; none were omitted.
 Those are local results with a profiling reporter, not a measured CI speedup or a claim that runtime skip decisions exactly match a different CI revision.
-The initial PR Tinylicious end-to-end candidate opted in; its flag is disabled again for the serial control after the remote failure.
+The initial PR Tinylicious end-to-end candidate opted in; its flag was disabled for the serial control after the remote failure and is enabled again only for the guarded E22 retry.
 The local diagnostic opt-in still propagates the driver explicitly and keeps actual performance-measurement mode serial.
 No fuzz count, compatibility selection, test case, assertion, or timeout is intentionally reduced.
 Fresh CI with the normal reporter must still pass before treating parallel end-to-end execution as a retained improvement.
@@ -433,7 +447,8 @@ This was not a cold-cache benchmark.
 | E19: cached runtime selection | `e9812338463fc4f86b7087557e0c3992d7b707bf` | [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) | Passed | 11m 13s; eight of nine jobs under nine minutes; no-copy selection verified |
 | E20: ESM-only service prerequisites | `90673c161fc5c48cbeb2f051986f6a34124acd38` | [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) | Passed | 13m 14s, unchanged suite totals; zero CJS commands in service/stress builds |
 | E21: profiled query-path and end-to-end concurrency candidates | `2e8a2594dfeb0dc833c0fe8d9c142314c8a4aa59` | [431129](https://dev.azure.com/fluidframework/public/_build/results?buildId=431129) | Failed | Legacy timer assertion in SharedDirectory setup; all other jobs passed |
-| E21 serial control | `123a85096486a3ced7844a7e749ba5650d340fde` | Pending | Running | Retain query-path patch; disable E2E parallelism without changing suite selection |
+| E21 serial control | `123a85096486a3ced7844a7e749ba5650d340fde` | [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) | Passed | 12m 23s; all nine jobs below nine minutes; unchanged test totals |
+| E22: parallel retry with early service-driver skips | Implementation `f403b0debf0` plus retry flag/report | Pending | Local full suite passed; remote pending | Skip local-only suites before replacing process timers; preserve all cases and assertions |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
