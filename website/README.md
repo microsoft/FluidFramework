@@ -419,12 +419,16 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 The link-checking scripts use [Linkinator](https://github.com/JustinBeckwith/linkinator), which is installed with the website's npm dependencies.
 No separate binary installation or `PATH` setup is required.
 The configuration in `linkinator.config.json` checks local pages, CSS references, and fragment identifiers.
-External URLs are excluded, as in the previous link-checking command.
-The existing exclusions for Docusaurus stylesheets and Pagefind assets are retained.
 The checker limits concurrency and retries transient request failures up to two times.
 A pnpm patch makes unexpected crawler task failures, including interrupted response bodies, fail the check instead of reporting success.
 Interrupted body reads fail immediately rather than retrying a partially processed page.
 See [Checking for Broken Links](../docs/content/Contributing/Working-with-the-Website/Checking-for-Broken-Links.md) for the checking commands.
+
+The `skip` patterns in [linkinator.config.json](./linkinator.config.json), in order, exclude:
+
+1. URLs outside `http://127.0.0.1:3000`. This preserves the previous command's internal-only scope; external link checking was not enabled.
+2. Generated Docusaurus stylesheet bundles at `/assets/css/styles.<hash>.css`. This preserves the previous checker's stylesheet exclusion; references in other stylesheets and inline styles are still checked.
+3. Generated Pagefind assets under `/pagefind/`. Key search bundle files are verified separately by the `Verify Pagefind search bundle` step in the [deployment pipeline](../tools/pipelines/deploy-website.yml).
 
 ## Scripts
 
