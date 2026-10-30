@@ -865,7 +865,7 @@ extends:
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
                   parameters:
-                    version: ${{ parameters.testNodeVersion }}
+                    version: ${{ coalesce(test.nodeVersion, parameters.testNodeVersion) }}
 
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:

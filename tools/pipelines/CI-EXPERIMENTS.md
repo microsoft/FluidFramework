@@ -9,7 +9,8 @@ Started on 2026-10-29.
 **Latest fully passing configuration:** run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) completed in **14m 43s**, versus the original **33m 28s** baseline (56% less observed elapsed time).
 It passed 45,649 tests with 3,235 skipped and no failures.
 It used Node 22 for Mocha/policy/artifact jobs and Node 26 for other verification jobs, with TypeScript 6 workers, lean runtime builds, development-only example bundles, and corrected parallel merge-tree tests.
-The next experiment moves only client policy and artifact builds to Node 26; the matrix below distinguishes that trial from the last green configuration.
+Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
+Tinylicious-backed jobs are now returning to Node 22 after reproducing a Node 26 storage failure; the matrix below describes the current configuration.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -18,14 +19,15 @@ The current branch therefore intentionally uses the following mixed runtime conf
 | Job | Current Node.js version | Reason |
 | --- | --- | --- |
 | Mocha unit suite (`Coverage tests`), including merge-tree | 22.22.2 | Restored after Node 26 failures involving recursive `fs.rmdirSync` and browser-storage assumptions |
-| Local-service, Tinylicious service, and stress verification | 26.13.0 | All passed in the unchanged repeat 431044 with the supported opossum override |
+| Tinylicious service and stress verification | 22.22.2 | Node 26 exposed a reproducible concurrent git-object write/read failure; do not rely on intermittent green runs |
+| Local-service verification | 26.13.0 | Passed; this does not use Tinylicious's filesystem Git storage path |
 | Playwright and AreTheTypesWrong verification | 26.13.0 | Passed in the mixed-runtime confirmation 431044 |
-| Client policy/type/API validation and artifact build | 26.13.0, new trial | Last green run used 22.22.2; Node 26 compatibility/performance for these jobs is not yet demonstrated |
+| Client policy/type/API validation and artifact build | 26.13.0 | E16 both jobs passed: 6m 51s and 6m 44s; full-run confirmation with Tinylicious on Node 22 remains pending |
 | Separate repository policy pipeline and all non-PR jobs | 22.22.2 | Outside the newer-runtime trial |
 
 The measured 7.5% merge-tree and approximately 11% compilation improvements are local workload results, not demonstrated end-to-end CI savings.
 The Mocha job still does not receive those potential Node 26 gains because it remains on Node 22.
-The policy/artifact trial tests the compilation opportunity separately, without migrating the incompatible unit tests.
+The policy/artifact trial demonstrated faster checked compilation without migrating the incompatible unit tests.
 
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
@@ -62,10 +64,11 @@ One successful run does not establish a reliable percentile.
 | No type-only generation in runtime jobs | Combined retry logs show zero `typetests` commands in all six test jobs, versus 58 in checked policy validation | Declaration entrypoints retained for Mocha import tests and ATTW |
 | Development validation for private examples | Combined retry: main webpack 120.3s to 33.5s, browser prerequisites 171.2s to 58.6s | Production size producer unchanged; reduced production-only coverage for private examples |
 | Correct parallel merge-tree selection and lower-allocation diagnostics | E15 Mocha step passed in 187.4s versus E12's 448.5s | All original merge-tree cases preserved; aggregate E15 failed in the separate Tinylicious job |
+| Node 26 client policy/artifact execution | E16 checked compilation 207.2s to 173.6s; policy `ci:build` 339.7s to 290.6s | Both jobs passed; Tinylicious runtime compatibility is a separate issue |
 
 ## Experiment status
 
-The mixed-runtime repeat is green; the Node 26 client policy/artifact experiment is active.
+The Node 26 client policy/artifact jobs passed; the reliable-runtime confirmation with Tinylicious restored to Node 22 is active.
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
 
@@ -202,7 +205,7 @@ This was not a cold-cache benchmark.
 | E14: Node 26 with supported opossum | `bc34fb6ba8522cfb1fedfdaae9780c17cca86ff7` | [431023](https://dev.azure.com/fluidframework/public/_build/results?buildId=431023) | Installation fixed; unit suite failed | 12 Node-compatibility failures unrelated to opossum; keep full Mocha job on Node 22 |
 | E15: spec-only parallel merge-tree plus lower-allocation diagnostics | `6d1de054676de5ec446b80a42a49c1fe5135c472` | [431033](https://dev.azure.com/fluidframework/public/_build/results?buildId=431033) | Mocha passed; separate Tinylicious step failed | Full Mocha step 187.4s; summary-upload setup network error prevents an overall green result |
 | E15 unchanged repeat | `4f8679fa6a5f902cab8c1e5e438ddc035beb5bce` | [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) | Passed | 14m 43s; Mocha 194.7s; all mixed-runtime jobs green |
-| E16: Node 26 client policy/artifact builds | Pending | Pending | Preparing | Keep Mocha/non-PR on Node 22; test faster compilation without altering validation |
+| E16: Node 26 client policy/artifact builds | `0a4f0518e7a1d3c8558390425b7927b2392ac3a3` | [431054](https://dev.azure.com/fluidframework/public/_build/results?buildId=431054) | Both targeted jobs passed; Tinylicious failed again | Policy 6m 51s, artifact 6m 44s; same summary-upload HTTP 400 |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -664,6 +667,32 @@ Its checked compile itself stayed near 207 seconds.
 Tinylicious's test step was 420 seconds; setup/compilation/reporting brought its total just over the target.
 These distinguish work that could benefit from faster execution from variable agent/template overhead.
 
+### E16: checked builds on Node 26, and the Tinylicious storage blocker
+
+The client policy and artifact jobs passed on Node 26.13.0 in 411.2 and 404.3 seconds respectively, both below nine minutes.
+Policy `ci:build` shortened from 339.7 to 290.6 seconds (14.5%); checked artifact compilation from 207.2 to 173.6 seconds (16.2%).
+The main webpack step shortened from 33.4 to 27.7 seconds.
+Mocha stayed on Node 22 and again passed in 186.8 seconds.
+These are actual CI step measurements, unlike the earlier isolated Node microbenchmarks.
+Whole-run success is not claimed: Tinylicious again failed the same summary-upload setup.
+
+The uploaded Tinylicious server log contains HTTP 400 responses with `{}` bodies for concurrent `POST /repos/tinylicious/git/trees` requests.
+The route calls `isomorphic-git.writeTree` followed by `readTree`; its error handler serializes rejected errors to HTTP 400, losing non-enumerable Error details.
+A local reproduction using the installed `isomorphic-git@1.27.2` and Node's real filesystem ran 20 fresh repositories with 100 concurrent identical tree-write/read operations each:
+
+| Runtime/library | Failed operations / 2,000 | Error |
+| --- | ---: | --- |
+| Node 22.22.3, isomorphic-git 1.27.2 | 0 | None |
+| Node 26.13.0, isomorphic-git 1.27.2 | 208 | `Cannot create property 'caller' on string 'buffer error'` |
+| Node 26.13.0, isomorphic-git 1.44.8 (isolated trial) | 17 | `DecompressionError: Invalid compressed buffer: buffer error` |
+
+This identifies a reproducible Node-sensitive concurrent Git-storage failure consistent with the server symptom; it is not proof of the precise exception in the remote request, whose error handler discarded the details.
+The installed implementation checks whether an object exists and then writes it, without atomic publication protecting concurrent readers/writers.
+The latest upstream library still failed this workload, so a blanket library upgrade is not an established fix.
+No server implementation, error handling, or library version was patched to hide the failure.
+Tinylicious service/stress jobs explicitly select Node 22; Node 26 remains enabled for policy, artifact, browser, local-service, and package-type jobs.
+The authorized opossum 10 override remains in place and has passed installation and functional circuit-breaker checks.
+
 ### Why merge-tree is slow
 
 The existing suite repeatedly simulates and compares multiple collaborating clients over large operation matrices.
@@ -718,6 +747,9 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
    Instrument the initial version first; no such change was made in this experiment.
 10. Migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
     This remains separate from the active policy/artifact runtime trial.
+11. Investigate atomic Git-object writes/reads in Tinylicious's storage implementation before moving its service jobs back to Node 26.
+    Preserve the local concurrent-tree reproducer as regression coverage for any proposed upstream fix.
+    Upgrading to isomorphic-git 1.44.8 alone did not eliminate the reproduced failure.
 
 ## Limitations
 
@@ -732,7 +764,7 @@ The tsconfig mutation is deliberately confined to disposable test jobs and remai
 The partial native TypeScript adapter is not enabled.
 E14's dependency installation succeeded, but its Node 26 unit suite failed.
 The mixed-runtime configuration retaining Mocha on Node 22 passed in 431044.
-The subsequent Node 26 policy/artifact trial has not yet been validated remotely.
+The subsequent Node 26 policy/artifact jobs passed remotely, but Tinylicious's Node-sensitive storage failure prevents treating the all-Node-26 service configuration as reliable.
 No engine-policy bypass is used, and earlier unsuccessful trials remain recorded as failures.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.

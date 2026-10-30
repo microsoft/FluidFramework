@@ -237,8 +237,8 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - { name: "ci:test:playwright", jobName: "PlaywrightTest", buildScript: "test:playwright" }
-    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest", buildScript: "test:realsvc:tinylicious:report" }
-    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest", buildScript: "test:stress:tinylicious:report" }
+    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest", buildScript: "test:realsvc:tinylicious:report", nodeVersion: "22.22.2" }
+    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest", buildScript: "test:stress:tinylicious:report", nodeVersion: "22.22.2" }
     - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong", buildScript: "check:are-the-types-wrong", requiresTypeEntrypoints: true }
     - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
       - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest", buildScript: "test:realsvc:local:report" }
