@@ -7,7 +7,7 @@
 // @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
-// @alpha @legacy
+// @beta @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
@@ -47,7 +47,7 @@ export interface IBaseProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICaptureFullContainerStateProps {
     readonly blobCaptureMode?: "inline" | "reference" | undefined;
     readonly documentServiceFactory: IDocumentServiceFactory;
