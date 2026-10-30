@@ -565,6 +565,136 @@ describe("custom commit metadata", () => {
 				validateUsageError(/must be a JSON object/),
 			);
 		});
+
+		describe("rejects invalid metadata recoverably", () => {
+			function cyclicMetadata(): JsonCompatibleReadOnlyObject {
+				const cyclic: Record<string, unknown> = {};
+				cyclic.self = cyclic;
+				return cyclic as JsonCompatibleReadOnlyObject;
+			}
+
+			it("from runTransaction, without running the transaction or leaking its label", () => {
+				const view = createView();
+				const labels: unknown[][] = [];
+				view.events.on("changed", (metadata) => {
+					if (metadata.isLocal) {
+						labels.push([...metadata.labels]);
+					}
+				});
+				let ran = false;
+
+				assert.throws(
+					() =>
+						view.runTransaction(
+							() => {
+								ran = true;
+							},
+							{ label: "rejected", customMetadata: cyclicMetadata() },
+						),
+					validateUsageError(/must be JSON-serializable/),
+				);
+				assert.equal(ran, false);
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("a");
+					},
+					{ label: "accepted", customMetadata: { tag: "accepted" } },
+				);
+				assert.deepEqual([...view.root], ["a"]);
+				assert.deepEqual(labels, [["accepted"]]);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "accepted" });
+			});
+
+			it("from runTransactionAsync", async () => {
+				const view = createView();
+				let ran = false;
+
+				await assert.rejects(
+					view.runTransactionAsync(
+						async () => {
+							ran = true;
+						},
+						{ customMetadata: cyclicMetadata() },
+					),
+					validateUsageError(/must be JSON-serializable/),
+				);
+				assert.equal(ran, false);
+
+				await view.runTransactionAsync(
+					async () => {
+						view.root.insertAtEnd("a");
+					},
+					{ customMetadata: { tag: "accepted" } },
+				);
+				assert.deepEqual([...view.root], ["a"]);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "accepted" });
+			});
+
+			it("from a nested transaction, allowing the enclosing transaction to continue", () => {
+				const view = createView();
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("outer");
+						assert.throws(
+							() =>
+								view.runTransaction(
+									() => {
+										view.root.insertAtEnd("inner");
+									},
+									{ customMetadata: cyclicMetadata() },
+								),
+							validateUsageError(/must be JSON-serializable/),
+						);
+						view.root.insertAtEnd("after");
+					},
+					{ customMetadata: { tag: "outer" } },
+				);
+
+				assert.deepEqual([...view.root], ["outer", "after"]);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "outer" });
+			});
+
+			it("from revertTo", () => {
+				const view = createView();
+				const commit = view.branchHistory.getHead();
+				assert(commit !== undefined);
+				view.root.insertAtEnd("a");
+
+				assert.throws(
+					() =>
+						view.revertTo(commit.revision, {
+							customMetadata: [] as unknown as JsonCompatibleReadOnlyObject,
+						}),
+					validateUsageError(/must be a JSON object/),
+				);
+				assert.deepEqual([...view.root], ["a"]);
+
+				view.revertTo(commit.revision, { customMetadata: { tag: "the-revert" } });
+				assert.deepEqual([...view.root], []);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
+			});
+
+			it("while a transaction that throws still breaks the view", () => {
+				const view = createView();
+
+				assert.throws(
+					() =>
+						view.runTransaction(
+							() => {
+								throw new Error("transaction failed");
+							},
+							{ customMetadata: { tag: "valid" } },
+						),
+					/transaction failed/,
+				);
+				assert.throws(
+					() => view.runTransaction(() => {}),
+					validateUsageError(/invalid state/),
+				);
+			});
+		});
 	});
 
 	describe("Reverts", () => {

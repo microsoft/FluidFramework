@@ -420,6 +420,8 @@ export class SchematizingSimpleTreeView<
 		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionVoidResult;
+	// Not breaking: the checkout breaks on genuine failures, but rejects invalid metadata recoverably.
+	@throwIfBroken
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -439,6 +441,8 @@ export class SchematizingSimpleTreeView<
 		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionVoidResult>;
+	// See runTransaction.
+	@throwIfBroken
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -680,6 +684,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rewindTo(revision);
 	}
 
+	// Like the checkout's revertTo, invalid arguments (including metadata) are rejected recoverably.
+	@throwIfBroken
 	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
 		this.checkout.revertTo(revision, options);
 	}

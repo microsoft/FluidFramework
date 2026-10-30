@@ -1343,7 +1343,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionVoidResult;
-	@breakingMethod
+	@throwIfBroken
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -1351,7 +1351,22 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			| void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
-		this.mountTransaction(params, false);
+		// Validated before entering the breaking scope (and before any state is mutated),
+		// so that invalid metadata is a recoverable usage error.
+		const customMetadata = this.snapshotCustomMetadata(params);
+		return this.runTransactionWithMetadata(transaction, params, customMetadata);
+	}
+
+	@breakingMethod
+	private runTransactionWithMetadata<TSuccessValue, TFailureValue>(
+		transaction: () =>
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
+			| void,
+		params: RunTransactionParamsAlpha | undefined,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
+		this.mountTransaction(params, false, customMetadata);
 		const transactionCallbackStatus = transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
@@ -1364,7 +1379,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionVoidResult>;
-	@breakingMethod
+	@throwIfBroken
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
@@ -1373,7 +1388,22 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		>,
 		params: RunTransactionParamsAlpha | undefined,
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
-		this.mountTransaction(params, true);
+		// See runTransaction. A throw here rejects the returned promise without breaking the checkout.
+		const customMetadata = this.snapshotCustomMetadata(params);
+		return this.runTransactionAsyncWithMetadata(transaction, params, customMetadata);
+	}
+
+	@breakingMethod
+	private async runTransactionAsyncWithMetadata<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
+			| void
+		>,
+		params: RunTransactionParamsAlpha | undefined,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
+		this.mountTransaction(params, true, customMetadata);
 		const transactionCallbackStatus = await transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
@@ -1381,6 +1411,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	private mountTransaction(
 		params: RunTransactionParamsAlpha | undefined,
 		isAsync: boolean,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
 	): void {
 		this.checkNotDisposed();
 		// Starting a transaction is an edit, so it is forbidden from within a change-event
@@ -1400,9 +1431,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.pushLabelFrame(params?.label);
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
-			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
-			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
-			customMetadata: this.snapshotCustomMetadata(params),
+			customMetadata,
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
