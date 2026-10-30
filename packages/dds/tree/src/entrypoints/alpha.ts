@@ -198,6 +198,7 @@ export {
 	ErasedNode, 
 	ErasedSchema, 
 	ErasedSchemaSubclassable, 
+	ExtrinsicLocations, 
 	FactoryContent, 
 	FactoryContentObject, 
 	FieldHasDefaultAlpha, 
