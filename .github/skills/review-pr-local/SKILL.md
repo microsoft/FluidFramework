@@ -1,7 +1,6 @@
 ---
 name: review-pr-local
 description: The authority on pulling a pull request — Azure DevOps or GitHub — into an isolated local worktree so a human can review it in their editor, and on posting human-controlled review comments back to the PR (ADO via the ado PR-thread MCP tools or the Azure DevOps REST API, GitHub via the gh CLI). Auto-detects the platform and all identifiers from the PR URL; not tied to any specific repository. The AI assists an interactive human review and only ever posts comments the human explicitly requests. If you find yourself checking out a PR branch over the user's own working tree, or posting AI-authored review prose the human did not ask for, invoke this skill instead.
-allowed-tools: Bash(git:*), Bash(az:*), Bash(gh:*), Read, Grep, Glob, AskUserQuestion
 argument-hint: "[PR-url]"
 ---
 
@@ -30,7 +29,7 @@ Detect the platform and extract every identifier from the URL — nothing is har
 | Azure DevOps | `https://<org>.visualstudio.com/<project>/_git/<repo>/pullrequest/<id>` or `https://dev.azure.com/<org>/<project>/_git/<repo>/pullrequest/<id>` | org, project, repo, id |
 | GitHub | `https://github.com/<owner>/<repo>/pull/<number>` | owner, repo, number |
 
-If given a bare number instead of a URL, use `AskUserQuestion` to get the full URL (or the platform + identifiers).
+If given a bare number instead of a URL, use `ask_user` to get the full URL (or the platform + identifiers).
 
 ## Step 2 — Prerequisites (self-contained)
 

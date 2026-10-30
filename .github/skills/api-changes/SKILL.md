@@ -4,14 +4,14 @@ description: Use when customer-facing API changes were made — i.e., API report
 ---
 
 <required>
-Before doing any work, create one task/todo item per applicable step using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot). Mark each task in_progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
+Before doing any work, create one task/todo item per applicable step using the available Copilot task-management tooling. Mark each task in progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
 </required>
 
 # API Changes Review
 
 ## Step 1: Identify what changed
 
-Read `.claude/skills/comparison-base/SKILL.md` and execute it with `HEAD` as `$REVIEW_REF`. This is required; use the target and comparison commit it resolves.
+Read `.github/skills/comparison-base/SKILL.md` and execute it with `HEAD` as `$REVIEW_REF`. This is required; use the target and comparison commit it resolves.
 
 Compare the selected base with the working tree, not just `HEAD`, because this skill is often called immediately after API reports have been regenerated and those edits may be uncommitted:
 

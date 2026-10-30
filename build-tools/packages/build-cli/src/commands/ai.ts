@@ -15,7 +15,6 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "claude-haiku-4.5";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
 export async function readAssetFile(
@@ -55,7 +54,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		},
 		{
 			description: "Use a specific model for the launcher assistant.",
-			command: "<%= config.bin %> <%= command.id %> --model claude-sonnet-4.5",
+			command: "<%= config.bin %> <%= command.id %> --model <model-id>",
 		},
 	];
 
@@ -86,7 +85,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
-				"Defaults to the model specified in launcher-prompt.md frontmatter.",
+				"Defaults to the model specified in launcher-prompt.md frontmatter, or the Copilot default model.",
 		}),
 		...BaseCommand.flags,
 	};
@@ -105,9 +104,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		]);
 		this.verbose(`Alias file: ${aliasFile.path}`);
 
-		const model = flags.model ?? promptFile.model ?? FALLBACK_MODEL;
+		const model = flags.model ?? promptFile.model;
 		this.verbose(
-			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
+			model === undefined
+				? "Model: Copilot default"
+				: `Model: ${model} (source: ${flags.model ? "flag" : "frontmatter"})`,
 		);
 
 		const allowedAliasSet = new Set<string>(SUPPORTED_ALIASES);
@@ -138,7 +139,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		let proposal: AliasProposal | undefined;
 		try {
 			proposal = await runAiSession({
-				model,
+				...(model !== undefined ? { model } : {}),
 				prompt,
 				githubToken,
 				ui: {

@@ -237,7 +237,7 @@ If any step in autonomous mode fails (permission errors, command failures, git p
 1. **What was completed** — PRs created, branches pushed, commands run successfully
 2. **What failed** — the specific error and which step it occurred at
 3. **What remains** — the exact commands for remaining steps, ready to copy-paste
-4. **How to finish** — remind the human to use the fluid-release skill in interactive mode (`claude "do the release"`)
+4. **How to finish** — remind the human to invoke the `fluid-release` skill in an interactive GitHub Copilot session
 
 Use the title format `Release <VERSION>: <brief description of failure>` and label it with `release-blocking`.
 

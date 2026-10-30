@@ -8,14 +8,14 @@ description: Use when the user explicitly asks for a CI check or to push their b
 
 There are exactly two narrow exceptions where you MAY skip the Step 1 mode-choice question. Both must be applied conservatively; if you are not certain an exception applies, you MUST ask.
 
-1. **No-op since the last check in this conversation.** The most recent CI readiness check in the *current* conversation already ran, and every change since then is obviously/provably outside the scope of any check the skill performs. Examples that qualify: edits only to comments; edits only to files outside any workspace package (e.g. files under `.claude/`, repo-root `README.md` / `CHANGELOG.md`, top-level docs not in a `docs/*` package). **Watch out:** `docs/api/` and similar are themselves workspace packages — markdown inside a workspace package does NOT automatically qualify. If you cannot quickly verify the changed files are outside every workspace package, ask.
+1. **No-op since the last check in this conversation.** The most recent CI readiness check in the *current* conversation already ran, and every change since then is obviously/provably outside the scope of any check the skill performs. Examples that qualify: edits only to comments; edits only to repository agent configuration under `.github/skills/`; edits only to repo-root `README.md` / `CHANGELOG.md`; or edits only to top-level docs not in a `docs/*` package. **Watch out:** `docs/api/` and similar are themselves workspace packages — markdown inside a workspace package does NOT automatically qualify. If you cannot quickly verify the changed files are outside every workspace package, ask.
 2. **Explicit standing instruction.** The user has explicitly told you — in this conversation or in a saved memory entry — to auto-skip the CI readiness check without asking. Inferred preference, prior approvals of past runs, or general "be less interruptive" guidance does NOT qualify.
 
 If either exception applies, treat it as equivalent to the user picking **Skip** in Step 1: do NOT ask the mode-choice question, do NOT create CI-readiness tasks/todos, and do NOT run the CI script or any other build/test/API-report steps. Stop the skill after reporting the skip.
 
 When you apply an exception, you MUST explicitly report — every single time, with no abbreviation across repeated runs — that (a) you skipped asking the mode-choice question, (b) the CI readiness check itself was skipped, and (c) which exception applied. Silent skipping is forbidden.
 
-When neither exception applies, ask the user and wait for their response. Immediately after they respond, create one task/todo item per applicable step using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot) — before doing any other work. Mark each task in_progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
+When neither exception applies, ask the user and wait for their response. Immediately after they respond, create one task/todo item per applicable step using the available Copilot task-management tooling — before doing any other work. Mark each task in progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
 
 Tasks to create by mode:
 
@@ -46,7 +46,7 @@ Wait for the user's response. If they say skip (or anything clearly negative), s
 Run the bundled script from the repository root:
 
 ```bash
-bash .claude/skills/ci-readiness-check/ci-readiness-check.sh [base-branch]
+bash .github/skills/ci-readiness-check/ci-readiness-check.sh [base-branch]
 ```
 
 The base branch defaults to `main`. Pass a different branch if needed (e.g., `next`).
@@ -101,7 +101,7 @@ Running `build:api-reports` when nothing changed can introduce spurious diffs �
 
 # Step 6: API reports and cross-package cascade (Build and Test only)
 
-If `@fluidframework/tree` is among the changed packages and its API surface likely changed, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before proceeding with 6a.
+If `@fluidframework/tree` is among the changed packages and its API surface likely changed, read `.github/skills/ci-readiness-check/tree-api-checks.md` before proceeding with 6a.
 
 ## 6a. Regenerate API reports
 

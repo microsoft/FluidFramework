@@ -1,7 +1,3 @@
----
-model: claude-haiku-4.5
----
-
 <!--
 Compatibility copy for published flub versions that still search .devcontainer/ai-agent/.
 Keep this synchronized with ../launcher-prompt.md until the legacy lookup can be removed.
