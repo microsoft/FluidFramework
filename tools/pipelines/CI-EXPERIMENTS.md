@@ -29,12 +29,14 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Script-selected test prerequisites | E5 and repeat: service compilation about 53s, stress about 39s | All original test scripts retained; repeat test totals matched |
 | Lockfile-installed build tools | E6 passed; tool setup 0.78-0.79s instead of roughly 21s source builds | Uses pinned `flub` 0.68.0; removes global linking and source-tool dependency |
 | No unused PR build/release archives | E7 build job 755.1s to 568.1s; replacement validation 24.3s | Non-PR artifacts preserved; PR artifact-specific scan scope reduced with the removed payloads |
+| Separate PR local-service test job | E8 passed with identical test totals; Mocha job 823.3s to 726.1s | One extra agent job; local-service work now overlaps Mocha |
 
 ## Active experiments
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E8: split the serial Mocha/local-service job | Prepared locally | Same suites and counts, lower critical path without excessive queue/setup overhead |
+| E9: lean fresh runtime-test builds | Preparing | Skip type-only generation, unnecessary declaration entrypoints, and up-to-date checks; preserve checked validation |
+| E10: native CLI adapter in test jobs | Investigating | Keep TypeScript 6 APIs/CJS support, use native TypeScript 7 for `tsc` commands, disable JS workers, and preserve cache isolation |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -53,6 +55,22 @@ E8 moves `ci:test:realsvc:local` into its own PR verification job, using the exi
 The coverage job retains the unchanged `ci:test:mocha` command.
 Non-PR coverage/test layout is unchanged.
 This tests the simpler partition change before introducing package/file shards and additional runner modes.
+
+E9 applies only to disposable independent-test builds, not the multi-step artifact/validation jobs.
+It replaces the runtime job's global `typetests:gen` task with an empty non-script task.
+Those generated tests contain only types and are already checked in; regenerating them in an unchecked runtime build adds no validation.
+The separate policy job retains the original generation and full type checking.
+This corrects the earlier conservative assumption that generation had to remain in the runtime task graph.
+`flub generate entrypoints` emits declaration files, not JavaScript.
+E9 disables its standard ESM/CJS generation tasks for pure runtime jobs while keeping the underlying JavaScript compile dependencies.
+Mocha retains them because `@fluid-example/import-testing` executes compiler-based compatibility tests.
+AreTheTypesWrong retains them because it validates package type entrypoints.
+These exceptions are explicit `requiresTypeEntrypoints` metadata; the full policy and artifact builds are unchanged.
+`fluid-build --force --dep` bypasses both initial and pre-execution up-to-date checks for selected packages and dependencies.
+Compile and browser webpack tasks are requested together so the graph runs each shared task once.
+The existing JavaScript worker mode is retained for this first measurement.
+The flag does not disable task-graph construction, config parsing, TypeScript build-info emission, or done-file generation.
+Whether bypassing checks helps remains an experiment: checks can also avoid duplicate work within an otherwise fresh build.
 
 ## Method
 
@@ -99,6 +117,7 @@ This was not a cold-cache benchmark.
 | Final configuration repeat | `b7b436cff14b6b515c8e4890fe93f22f425ec805` | [430803](https://dev.azure.com/fluidframework/public/_build/results?buildId=430803) | Passed | 19m 09s; same test totals and similar targeted build timings as E5 |
 | E6: lockfile-installed tools | `be1b1c90d8baf9bdedc877cfaeeecdc47c8185c9` | [430848](https://dev.azure.com/fluidframework/public/_build/results?buildId=430848) | Passed | 18m 16s including 2m 27s initial queue; no repo-tool installation |
 | E7: validation-only PR packaging | `99dd98b1dc151530569354a22bbc7cfdad61cff0` | [430866](https://dev.azure.com/fluidframework/public/_build/results?buildId=430866) | Passed | Build job 9m 28s; total 17m 53s, still test-limited |
+| E8: independent local-service job | `a5d0f9e18b8c11276079d52e06ed39abfe09ff00` | [430896](https://dev.azure.com/fluidframework/public/_build/results?buildId=430896) | Passed | 16m 35s including 3m 17s initial queue; all suite counts unchanged |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -362,6 +381,16 @@ Remaining inline/output binary checks, antimalware checks, and component-governa
 Some artifact-scoped tasks are skipped by the existing templates when their former payload is absent; security configuration was not explicitly disabled.
 This confirms the intended removal of PR release artifacts while retaining package validation and the remaining bundle/docs outputs.
 
+### E8: separate local-service verification
+
+Run 430896 passed in 994.6 seconds (16m 35s), including 196.8 seconds before pipeline start.
+The companion policy run [430892](https://dev.azure.com/fluidframework/public/_build/results?buildId=430892) passed.
+All 45,438 passed tests and 3,235 not-executed tests match E7 exactly.
+The Mocha job shortened from 823.3 to 726.1 seconds; its unchanged test command took 438.8 seconds.
+Local-service tests took 130.7 seconds in a separate 302.8-second job, including a 43.7-second targeted build.
+The main build was 534.9 seconds and no longer controls completion.
+Mocha and Tinylicious service tests are now the long jobs; the extra local-service agent did not become the critical path in this run.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -373,7 +402,7 @@ Any later relocation must name its replacement before removing the old invocatio
 | Client checks, assert tags, package lists, dependency/version consistency | Client policy stage (`checks`) | Preserve |
 | Compilation, lint, type checks, exports, release tags, fences | Build (`ci:build`) | E1-E3: unchanged; E4: complete `ci:build` in existing policy stage |
 | API reports and API Extractor documentation validation | Build (`ci:build`, `ci:build:docs`) | E4: CI-mode checks and generated-file detection in policy; documentation artifact generation also retained in build |
-| Type-test generation and compilation | Compilation dependencies | Preserve; generation cannot simply be removed from test compilation |
+| Type-test generation and compilation | Compilation dependencies | Checked policy validation retains generation and type checking; E9 removes generation from unchecked runtime-test builds |
 | webpack, bundle analysis, devtools bundle | Build | Preserve |
 | Packing, manifests, readme generation, package metadata | Build | E7: parallel package dry-runs and custom archive validation; PR publish artifacts/metadata omitted; non-PR production unchanged |
 | AreTheTypesWrong | Verification | Preserve |
@@ -435,6 +464,9 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
 6. Investigate merge-tree file-level sharding or the worker-mode shutdown failure.
    The measured slow files include `client.replay.spec.js`, `client.obliterateFarm.spec.js`, and `client.conflictFarm.spec.js`.
    Any partition must cover the original file/test set exactly, preserve reporting and failure semantics, and justify the extra agent demand.
+7. Add a supported disposable-CI mode to `fluid-build` if E9 shows useful potential.
+   Such a mode could avoid cache read/write bookkeeping while retaining graph deduplication and necessary dependency/config analysis.
+   A blanket forced rebuild in each successive artifact-job invocation would lose useful within-job reuse and is not proposed.
 
 ## Limitations
 

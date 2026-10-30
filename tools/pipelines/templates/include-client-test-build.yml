@@ -12,7 +12,9 @@ parameters:
 
 steps:
 - task: Bash@3
-  displayName: Use emit-only TypeScript in isolated test job
+  displayName: Configure emit-only runtime test build
+  env:
+    TEST_TASKS: ${{ convertToJson(parameters.testTasks) }}
   inputs:
     targetType: inline
     workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
@@ -30,6 +32,20 @@ steps:
       config.compilerOptions.noCheck = true;
       fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n");
       console.log(`Enabled noCheck in ${file}; TypeScript ${ts.version}`);
+      fs.appendFileSync("fluidBuild.config.cjs",
+        '\nmodule.exports.tasks["typetests:gen"] = { dependsOn: [], script: false };\n');
+      console.log("Disabled type-only test generation in this runtime-test job; policy validation retains it");
+      const needsTypeEntrypoints = JSON.parse(process.env.TEST_TASKS).some((task) => task.requiresTypeEntrypoints === true);
+      if (!needsTypeEntrypoints) {
+        fs.appendFileSync("fluidBuild.config.cjs", [
+          'module.exports.tasks["build:entrypoints:esm"] = { dependsOn: ["build:esm"], script: false };',
+          'module.exports.tasks["build:entrypoints:cjs"] = { dependsOn: ["build:cjs"], script: false };',
+          "",
+        ].join("\n"));
+        console.log("Disabled declaration entrypoint generation for this runtime-only job");
+      } else {
+        console.log("Retained declaration entrypoints for import/package type validation");
+      }
       JS
 
 - task: Bash@3
@@ -65,7 +81,9 @@ steps:
       if (selected.size === 0) throw new Error("No test packages selected");
       console.log("Building test packages and their task dependencies:", [...selected]);
       const tasks = process.env.BUILD_WEBPACK.toLowerCase() === "true" ? ["compile", "webpack"] : ["compile"];
-      for (const task of tasks) {
-        execFileSync("pnpm", ["exec", "fluid-build", "--task", task, "--worker", ...selected], { stdio: "inherit" });
-      }
+      execFileSync("pnpm", [
+        "exec", "fluid-build", "--force", "--dep", "--worker",
+        ...tasks.flatMap((task) => ["--task", task]),
+        ...selected,
+      ], { stdio: "inherit" });
       JS

@@ -233,11 +233,11 @@ extends:
     - { name: "ci:test:playwright", jobName: "PlaywrightTest", buildScript: "test:playwright" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest", buildScript: "test:realsvc:tinylicious:report" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest", buildScript: "test:stress:tinylicious:report" }
-    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong", buildScript: "check:are-the-types-wrong" }
+    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong", buildScript: "check:are-the-types-wrong", requiresTypeEntrypoints: true }
     - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
       - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest", buildScript: "test:realsvc:local:report" }
     coverageTests:
-    - { name: "ci:test:mocha", jobName: "MochaTest", buildScript: "test:mocha" }
+    - { name: "ci:test:mocha", jobName: "MochaTest", buildScript: "test:mocha", requiresTypeEntrypoints: true }
     - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
       - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest", buildScript: "test:realsvc:local:report" }
     checks:
