@@ -22,9 +22,12 @@ For application-requested summaries, use the loader API:
 import { loadSummarizerContainerAndMakeSummary } from "@fluidframework/container-loader/legacy";
 ```
 
-The loader API reports summary submission and broadcast results.
-It does not provide equivalent enqueueing, collection watching, detailed stage promises, or acknowledgement results.
-Its success result does not guarantee that the summary has been acknowledged, and its returned handle is not guaranteed to be an acknowledged snapshot version.
+The loader API manages loading and disposing the summarizer container and requests an on-demand summary without requiring the application to manage summarizer implementation details.
+A successful result confirms that the summary was generated, uploaded, submitted, and its proposal broadcast was observed.
+Enqueueing, collection watching, and detailed stage promises are implementation-level controls that are intentionally not exposed by this API.
+
+The API currently completes without waiting for service acknowledgement.
+Applications that need to load the newly generated summary by an acknowledged snapshot version cannot obtain that guarantee from this result; the returned handle identifies the proposed summary.
 
 `SummaryTreeBuilder` and `convertToSummaryTreeWithStats` from `@fluidframework/runtime-utils` are also deprecated as implementation utilities intended to become internal.
 There is no supported replacement for these tree-building and conversion utilities.
