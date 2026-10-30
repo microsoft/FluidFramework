@@ -52,7 +52,6 @@ import {
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { copyRequestHeaders, mergeRequestHeaders } from "./requestHeaders.js";
-import { getRequestControl } from "./requestControl.js";
 
 /**
  * @legacy
@@ -306,16 +305,7 @@ export class EpochTracker implements IPersistedFileCache {
 		fetchOptions.headers = mergeRequestHeaders(this.requestHeaders, fetchOptions.headers);
 		let epochFromResponse: string | undefined;
 		return this.rateLimiter
-			.schedule(async () => {
-				const control = getRequestControl(fetchOptions);
-				await control?.beforeRequest();
-				try {
-					return await fetcher(url, fetchOptions);
-				} catch (error) {
-					control?.onError(error);
-					throw error;
-				}
-			})
+			.schedule(async () => fetcher(url, fetchOptions))
 			.then((response) => {
 				epochFromResponse = response.headers.get("x-fluid-epoch");
 				this.validateEpochFromResponse(epochFromResponse, fetchType);

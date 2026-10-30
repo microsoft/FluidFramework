@@ -39,7 +39,8 @@ import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
-import { checkJoinSessionDisposed, getJoinSessionThrottle } from "./joinSessionThrottle.js";
+import { JoinSessionCache } from "./joinSessionCache.js";
+import { checkJoinSessionDisposed, waitForJoinSession } from "./joinSessionRequest.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
@@ -418,22 +419,15 @@ export class OdspDelayLoadedDeltaStream {
 	): Promise<ISocketStorageDiscovery> {
 		const signal = this.joinSessionAbortController.signal;
 		checkJoinSessionDisposed(signal);
-		const throttle = getJoinSessionThrottle(this.cache);
-		const throttleKey = JSON.stringify([
-			new URL(this.odspResolvedUrl.siteUrl).origin,
-			this.joinSessionKey,
-		]);
-		const caller = isRefreshingJoinSession
-			? "periodicRefresh"
-			: options.refresh
-				? requestSocketToken
-					? "socketTokenRefresh"
-					: "storageTokenRefresh"
-				: this.hasAttemptedJoinSession
-					? "reconnect"
-					: "initialConnect";
+		let caller: string;
+		if (isRefreshingJoinSession) {
+			caller = "periodicRefresh";
+		} else if (options.refresh) {
+			caller = requestSocketToken ? "socketTokenRefresh" : "storageTokenRefresh";
+		} else {
+			caller = this.hasAttemptedJoinSession ? "reconnect" : "initialConnect";
+		}
 		this.hasAttemptedJoinSession = true;
-		await throttle.wait(throttleKey, signal, this.mc.logger, caller);
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
@@ -453,16 +447,9 @@ export class OdspDelayLoadedDeltaStream {
 				disableJoinSessionRefresh,
 				isRefreshingJoinSession,
 				displayName,
-				{
-					signal,
-					beforeRequest: async () =>
-						throttle.wait(throttleKey, signal, this.mc.logger, caller),
-					onError: (error) => throttle.record(throttleKey, error, this.mc.logger),
-				},
 			);
-			checkJoinSessionDisposed(signal);
 			// Emit event only in case it is fetched from the network.
-			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
+			if (!signal.aborted && joinSessionResponse.sensitivityLabelsInfo !== undefined) {
 				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
 			}
 			return {
@@ -476,14 +463,17 @@ export class OdspDelayLoadedDeltaStream {
 			entryTime: number;
 			joinSessionResponse: ISocketStorageDiscovery;
 		}> => {
-			const _response = await this.cache.sessionJoinCache.addOrGet(
-				this.joinSessionKey,
-				executeFetch,
-			);
-			// If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
-			// cache entry to be treated as expired after 1 hour.
-			_response.joinSessionResponse.refreshSessionDurationSeconds =
-				_response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
+			const sessionJoinCache = this.cache.sessionJoinCache;
+			const promise =
+				sessionJoinCache instanceof JoinSessionCache
+					? sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch, {
+							logger: this.mc.logger,
+							caller,
+						})
+					: sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+			const _response = await waitForJoinSession(promise, signal);
+			// Responses without a refresh duration use the legacy one-hour lifetime.
+			_response.joinSessionResponse.refreshSessionDurationSeconds ??= 3600;
 			return {
 				..._response,
 				refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(

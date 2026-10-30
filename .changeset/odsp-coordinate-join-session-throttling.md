@@ -2,8 +2,11 @@
 "@fluidframework/odsp-driver": minor
 "__section": fix
 ---
-Honor server throttle delays across join-session callers
+Preserve server throttle delays across failed join-session attempts
 
-Join-session requests for the same document and client cache honor the longest active Retry-After deadline, including after an earlier request fails.
-Reconnects and session refreshes share this gate without blocking unrelated documents or independently scoped clients.
-Disposing a document service cancels its throttle waits.
+Reconnects and session refreshes retain the server's Retry-After deadline after a join-session request fails.
+New requests share a promise that waits for the deadline before fetching, without delaying unrelated documents or independently scoped client caches.
+The exported promise-cache API remains unchanged.
+Disposing a document service stops that caller's wait without cancelling shared work.
+
+This change does not prevent a request that already passed its throttle check from starting if an overlapping, invalidated request subsequently establishes a new deadline.

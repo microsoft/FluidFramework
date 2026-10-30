@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { Deferred, PromiseCache } from "@fluidframework/core-utils/internal";
+import type {
+	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	createChildMonitoringContext,
@@ -16,8 +19,11 @@ import { restore, stub, useFakeTimers, type SinonFakeTimers, type SinonStub } fr
 
 import { createOdspUrl } from "../createOdspUrl.js";
 import { createOdspCacheAndTracker } from "../epochTracker.js";
-import { getJoinSessionThrottle } from "../joinSessionThrottle.js";
-import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
+import {
+	type INonPersistentCache,
+	LocalPersistentCache,
+	NonPersistentCache,
+} from "../odspCache.js";
 import { OdspDelayLoadedDeltaStream } from "../odspDelayLoadedDeltaStream.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getJoinSessionCacheKey } from "../odspUtils.js";
@@ -37,7 +43,11 @@ describe("join-session throttle coordination", () => {
 		refreshSessionDurationSeconds: 3600,
 	};
 
-	function createStream(url = resolvedUrl, sharedCache = cache): OdspDelayLoadedDeltaStream {
+	function createStream(
+		url = resolvedUrl,
+		sharedCache: INonPersistentCache = cache,
+		getAuthHeader?: InstrumentedStorageTokenFetcher,
+	): OdspDelayLoadedDeltaStream {
 		const mc = createChildMonitoringContext({ logger: new MockLogger().toTelemetryLogger() });
 		const { cache: odspCache, epochTracker } = createOdspCacheAndTracker(
 			new LocalPersistentCache(),
@@ -45,7 +55,7 @@ describe("join-session throttle coordination", () => {
 			{ docId: url.hashedDocumentId, resolvedUrl: url },
 			mc.logger,
 		);
-		const stream = new OdspDelayLoadedDeltaStream(
+		const args: ConstructorParameters<typeof OdspDelayLoadedDeltaStream> = [
 			url,
 			{},
 			async () => "Bearer test",
@@ -56,7 +66,11 @@ describe("join-session throttle coordination", () => {
 			epochTracker,
 			() => {},
 			() => {},
-		);
+		];
+		if (getAuthHeader !== undefined) {
+			args[2] = getAuthHeader;
+		}
+		const stream = new OdspDelayLoadedDeltaStream(...args);
 		streams.push(stream);
 		return stream;
 	}
@@ -65,9 +79,10 @@ describe("join-session throttle coordination", () => {
 		stream: OdspDelayLoadedDeltaStream,
 		refresh = false,
 		socketToken = false,
+		periodicRefresh = false,
 	): Promise<unknown> {
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		return stream["joinSessionCore"](socketToken, { refresh }, refresh, undefined);
+		return stream["joinSessionCore"](socketToken, { refresh }, periodicRefresh, undefined);
 	}
 
 	function throttle(seconds: number): Response {
@@ -107,15 +122,15 @@ describe("join-session throttle coordination", () => {
 		clock.restore();
 	});
 
-	for (const [name, refresh, socketToken] of [
-		["reconnect", false, false],
-		["periodic refresh", true, false],
-		["socket-token refresh", true, true],
+	for (const [name, refresh, socketToken, periodicRefresh] of [
+		["reconnect", false, false, false],
+		["periodic refresh", false, false, true],
+		["socket-token refresh", true, true, false],
 	] as const) {
 		it(`retains Retry-After after rejection for ${name}`, async () => {
 			const stream = createStream();
 			await assert.rejects(join(stream), { errorType: "throttlingError" });
-			const next = join(stream, refresh, socketToken);
+			const next = join(stream, refresh, socketToken, periodicRefresh);
 			await clock.tickAsync(119999);
 			assert.equal(fetchStub.callCount, 1, "no request before the server deadline");
 			await clock.tickAsync(1);
@@ -165,6 +180,142 @@ describe("join-session throttle coordination", () => {
 		assert.equal(fetchStub.callCount, 0);
 	});
 
+	for (const phase of ["token fetch", "HTTP response"] as const) {
+		it(`keeps a shared join alive when its initiating service is disposed during ${phase}`, async () => {
+			const token = new Deferred<string>();
+			const pendingResponse = new Deferred<Response>();
+			fetchStub
+				.onFirstCall()
+				.returns(
+					phase === "HTTP response" ? pendingResponse.promise : Promise.resolve(success()),
+				);
+			const first = createStream(resolvedUrl, cache, async () =>
+				phase === "token fetch" ? token.promise : "test-token",
+			);
+			let cancelledPromptly = false;
+			const cancelled = assert.rejects(join(first), /disposed/i).then(() => {
+				cancelledPromptly = true;
+			});
+			const surviving = join(createStream()).then(
+				() => true,
+				() => false,
+			);
+			await clock.tickAsync(0);
+			first.dispose();
+			await clock.tickAsync(0);
+			const cancelledBeforeCompletion = cancelledPromptly;
+			token.resolve("test-token");
+			pendingResponse.resolve(success());
+			await clock.tickAsync(0);
+			await cancelled;
+			assert.equal(await surviving, true, "another live caller still receives the response");
+			assert.equal(cancelledBeforeCompletion, true, "disposal does not wait for shared work");
+			assert.equal(fetchStub.callCount, 1);
+		});
+	}
+
+	it("allows shared work to finish after all callers dispose while the token is pending", async () => {
+		fetchStub.onFirstCall().resolves(success());
+		const token = new Deferred<string>();
+		const first = createStream(resolvedUrl, cache, async () => token.promise);
+		const second = createStream();
+		const cancelled = [
+			assert.rejects(join(first), /disposed/i),
+			assert.rejects(join(second), /disposed/i),
+		];
+		await clock.tickAsync(0);
+		first.dispose();
+		second.dispose();
+		token.resolve("test-token");
+		await clock.tickAsync(0);
+		await Promise.all(cancelled);
+		await clock.tickAsync(0);
+		assert.equal(fetchStub.callCount, 1);
+	});
+
+	it("allows a replacement caller to reuse work after the initiating caller disposes", async () => {
+		fetchStub.onFirstCall().resolves(success());
+		const token = new Deferred<string>();
+		const first = createStream(resolvedUrl, cache, async () => token.promise);
+		const cancelled = assert.rejects(join(first), /disposed/i);
+		await clock.tickAsync(0);
+		first.dispose();
+		await clock.tickAsync(0);
+		const replacement = join(createStream()).then(
+			() => true,
+			() => false,
+		);
+		await clock.tickAsync(0);
+		token.resolve("test-token");
+		await clock.tickAsync(0);
+		await cancelled;
+		assert.equal(fetchStub.callCount, 1, "the replacement shares the existing request");
+		assert.equal(await replacement, true);
+	});
+
+	it("does not schedule an unusable Retry-After deadline", async () => {
+		clock.setSystemTime(1000);
+		const logger = new MockLogger();
+		const error = createOdspNetworkError("throttle", 429, Number.MAX_SAFE_INTEGER / 1000);
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet(
+				"document",
+				async () => {
+					throw error;
+				},
+				{ logger: logger.toTelemetryLogger(), caller: "initialConnect" },
+			),
+			(actual: unknown) => actual === error,
+		);
+		assert.equal(clock.countTimers(), 0);
+		assert.ok(
+			logger.events.some(
+				(event) => event.eventName === "JoinSessionThrottleInvalidRetryAfter",
+			),
+		);
+		await cache.sessionJoinCache.addOrGet("document", async () => ({
+			entryTime: Date.now(),
+			joinSessionResponse: response,
+		}));
+	});
+
+	it("rounds fractional milliseconds up without shortening Retry-After", async () => {
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, 0.0015);
+			}),
+		);
+		let fetched = false;
+		const waiting = cache.sessionJoinCache.addOrGet("document", async () => {
+			fetched = true;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		});
+		await clock.tickAsync(1);
+		assert.equal(fetched, false);
+		await clock.tickAsync(1);
+		await waiting;
+		assert.equal(clock.countTimers(), 0);
+	});
+
+	it("waits through long deadlines without overflowing setTimeout", async () => {
+		const maximumTimerDelayMs = 2 ** 31 - 1;
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, (maximumTimerDelayMs + 1000) / 1000);
+			}),
+		);
+		let completed = false;
+		const waiting = cache.sessionJoinCache.addOrGet("document", async () => {
+			completed = true;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		});
+		await clock.tickAsync(maximumTimerDelayMs);
+		assert.equal(completed, false);
+		await clock.tickAsync(1000);
+		await waiting;
+		assert.equal(clock.countTimers(), 0);
+	});
+
 	it("keeps the maximum deadline when overlapping requests fail out of order", async () => {
 		const firstResponse = new Deferred<Response>();
 		fetchStub.onFirstCall().returns(firstResponse.promise);
@@ -207,54 +358,185 @@ describe("join-session throttle coordination", () => {
 		assert.equal(fetchStub.callCount, 2);
 	});
 
-	it("rechecks the deadline after leaving the HTTP concurrency queue", async () => {
-		fetchStub.onFirstCall().callsFake(async () => success());
-		const stream = createStream();
-		const release = new Deferred<void>();
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		const limiter = stream["epochTracker"].rateLimiter;
-		const occupied = Array.from({ length: 24 }, async () =>
-			limiter.schedule(async () => release.promise),
+	it("stores the delayed promise immediately and does not use deadline cleanup timers", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet(key, async () => {
+				throw createOdspNetworkError("throttle", 429, 120);
+			}),
 		);
-		const next = join(stream);
-		await clock.tickAsync(0);
-		assert.equal(limiter.waitQueueLength, 1);
-		const key = JSON.stringify([
-			new URL(resolvedUrl.siteUrl).origin,
-			getJoinSessionCacheKey(resolvedUrl),
-		]);
-		getJoinSessionThrottle(cache).record(
-			key,
-			createOdspNetworkError("throttle", 429, 120),
-			new MockLogger().toTelemetryLogger(),
-		);
-		release.resolve();
+		assert.equal(cache.sessionJoinCache.get(key), undefined);
+		assert.equal(cache.sessionJoinCache.has(key), false);
+		assert.equal(clock.countTimers(), 0, "a deadline alone does not need a timer");
+		let requests = 0;
+		const execute = async (): Promise<{
+			entryTime: number;
+			joinSessionResponse: typeof response;
+		}> => {
+			requests++;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		};
+		const first = cache.sessionJoinCache.addOrGet(key, execute);
+		const cached = cache.sessionJoinCache.get(key);
+		assert.notEqual(cached, undefined, "get sees the promise before waiting begins");
+		assert.equal(cache.sessionJoinCache.has(key), true);
+		const second = cache.sessionJoinCache.addOrGet(key, execute);
+		assert.equal(cache.sessionJoinCache.get(key), cached);
 		await clock.tickAsync(119999);
-		assert.equal(fetchStub.callCount, 0);
+		assert.equal(requests, 0);
+		assert.equal(clock.countTimers(), 1, "coalesced callers share one waiting timer");
 		await clock.tickAsync(1);
-		await Promise.all([...occupied, next]);
-		assert.equal(fetchStub.callCount, 1);
+		await Promise.all([first, second]);
+		assert.equal(requests, 1);
+		assert.equal(clock.countTimers(), 0);
 	});
 
-	it("extends an already waiting caller and expires all throttle timers", async () => {
+	it("rechecks an extended deadline when the shared waiting timer wakes", async () => {
+		const pending = new Deferred<Response>();
+		fetchStub.onFirstCall().returns(pending.promise);
+		const older = assert.rejects(join(createStream()));
+		await clock.tickAsync(0);
+		cache.sessionJoinCache.remove(getJoinSessionCacheKey(resolvedUrl));
+		fetchStub.onSecondCall().resolves(throttle(120));
 		const stream = createStream();
 		await assert.rejects(join(stream));
 		const next = join(stream);
 		await clock.tickAsync(60000);
-		const key = JSON.stringify([
-			new URL(resolvedUrl.siteUrl).origin,
-			getJoinSessionCacheKey(resolvedUrl),
-		]);
-		getJoinSessionThrottle(cache).record(
-			key,
-			createOdspNetworkError("throttle", 429, 120),
-			new MockLogger().toTelemetryLogger(),
-		);
+		pending.resolve(throttle(120));
+		await older;
+		await clock.tickAsync(119999);
+		assert.equal(fetchStub.callCount, 2);
+		await clock.tickAsync(1);
+		await next;
+		assert.equal(fetchStub.callCount, 3);
+		stream.dispose();
+		assert.equal(clock.countTimers(), 0);
+	});
+
+	it("keeps the deadline when the promise is explicitly invalidated", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		await assert.rejects(join(createStream()));
+		assert.equal(cache.sessionJoinCache.remove(key), false);
+		const next = join(createStream());
 		await clock.tickAsync(119999);
 		assert.equal(fetchStub.callCount, 1);
 		await clock.tickAsync(1);
 		await next;
-		stream.dispose();
+		assert.equal(fetchStub.callCount, 2);
+	});
+
+	it("does not let an older failed request evict a replacement promise", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		const older = new Deferred<{
+			entryTime: number;
+			joinSessionResponse: typeof response;
+		}>();
+		const failed = assert.rejects(
+			cache.sessionJoinCache.addOrGet(key, async () => older.promise),
+		);
+		cache.sessionJoinCache.remove(key);
+		const replacement = cache.sessionJoinCache.addOrGet(key, async () => ({
+			entryTime: Date.now(),
+			joinSessionResponse: response,
+		}));
+		const cached = cache.sessionJoinCache.get(key);
+		older.reject(new Error("older failure"));
+		await failed;
+		await replacement;
+		assert.equal(cache.sessionJoinCache.get(key), cached);
+	});
+
+	it("keeps inherited synchronous insertion and value methods on the same cache state", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		const cachedResponse = { entryTime: Date.now(), joinSessionResponse: response };
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet(key, async () => {
+				throw createOdspNetworkError("throttle", 429, 120);
+			}),
+		);
+		let requests = 0;
+		assert.equal(
+			cache.sessionJoinCache.add(key, async () => {
+				requests++;
+				return cachedResponse;
+			}),
+			true,
+		);
+		assert.equal(cache.sessionJoinCache.addValue(key, cachedResponse), false);
+		const waiting = cache.sessionJoinCache.addValueOrGet(key, cachedResponse);
+		await clock.tickAsync(119999);
+		assert.equal(requests, 0);
+		await clock.tickAsync(1);
+		assert.equal(await waiting, cachedResponse);
+		assert.equal(requests, 1);
+		assert.equal(cache.sessionJoinCache.remove(key), true);
+		assert.equal(cache.sessionJoinCache.get(key), undefined);
+		assert.equal(cache.sessionJoinCache.addValue(key, cachedResponse), true);
+		assert.equal(await cache.sessionJoinCache.get(key), cachedResponse);
+	});
+
+	it("installs the promise before invoking a reentrant fetch callback", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		let calls = 0;
+		const result = { entryTime: Date.now(), joinSessionResponse: response };
+		let second: ReturnType<typeof cache.sessionJoinCache.addOrGet> | undefined;
+		const first = cache.sessionJoinCache.addOrGet(key, async () => {
+			calls++;
+			second = cache.sessionJoinCache.addOrGet(key, async () => {
+				calls++;
+				return result;
+			});
+			assert.notEqual(cache.sessionJoinCache.get(key), undefined);
+			return result;
+		});
+		assert.equal(await first, result);
+		assert.equal(await second, result);
+		assert.equal(calls, 1);
+	});
+
+	it("accepts an existing plain PromiseCache supplied through the exported interface", async () => {
+		fetchStub.onFirstCall().resolves(success());
+		const legacyCache: INonPersistentCache = {
+			...cache,
+			sessionJoinCache: new PromiseCache(),
+		};
+		await Promise.all([
+			join(createStream(resolvedUrl, legacyCache)),
+			join(createStream(resolvedUrl, legacyCache)),
+		]);
+		assert.equal(fetchStub.callCount, 1);
+	});
+
+	for (const seconds of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+		it(`does not delay a subsequent request for an unusable Retry-After of ${seconds}`, async () => {
+			const error = createOdspNetworkError("throttle", 429, seconds);
+			await assert.rejects(
+				cache.sessionJoinCache.addOrGet("document", async () => {
+					throw error;
+				}),
+				(actual: unknown) => actual === error,
+			);
+			const next = await cache.sessionJoinCache.addOrGet("document", async () => ({
+				entryTime: Date.now(),
+				joinSessionResponse: response,
+			}));
+			assert.equal(next.joinSessionResponse, response);
+			assert.equal(clock.countTimers(), 0);
+		});
+	}
+
+	it("uses an expired deadline without requiring a cleanup timer to run", async () => {
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, 120);
+			}),
+		);
+		clock.setSystemTime(120000);
+		const next = await cache.sessionJoinCache.addOrGet("document", async () => ({
+			entryTime: Date.now(),
+			joinSessionResponse: response,
+		}));
+		assert.equal(next.joinSessionResponse, response);
 		assert.equal(clock.countTimers(), 0);
 	});
 });
