@@ -38,6 +38,19 @@ Read the **@fluidframework/register-collection** API documentation at <https://f
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Creation and instance types
+
+Use `ConsensusRegisterCollection.create(runtime)` to create a collection. Use `ConsensusRegisterCollection.getFactory()` to register its factory. For instance annotations, the `ConsensusRegisterCollection` type is an alias for `IConsensusRegisterCollection`.
+
+```typescript
+import {
+	ConsensusRegisterCollection,
+	type IConsensusRegisterCollection,
+} from "@fluidframework/register-collection/legacy";
+
+const registers: IConsensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+```
+
 ### Detecting concurrency in Fluid
 
 In distributed systems literature, detecting concurrency requires some form of logical/physical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.

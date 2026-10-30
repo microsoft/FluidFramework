@@ -142,7 +142,15 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ConsensusRegisterCollectionClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusRegisterCollectionClass": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
