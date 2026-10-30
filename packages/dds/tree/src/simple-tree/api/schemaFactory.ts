@@ -205,6 +205,7 @@ export { SchemaFactory_base } from "./schemaStatics.js";
  *
  * @see {@link SchemaFactoryAlpha}
  * @see {@link SchemaFactoryBeta}
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/ | Schema Patterns} for schema boundaries, package exports, and configurable models.
  * @sealed @public
  */
 export class SchemaFactory<

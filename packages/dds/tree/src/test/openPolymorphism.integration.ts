@@ -37,6 +37,8 @@ import { Component } from "../componentApi.js";
  * the source code can be structured in an open polymorphism style which at runtime evaluate into closed polymorphism by having each implementation register itself into a central {@link AllowedTypes}.
  * There are a few ways to do this, some of which are demonstrated below.
  * Of particular note is the {@link Component} design pattern, which leverages utilities in the {@link Component} namespace.
+ * Start with components.integration.ts for a focused, executable walkthrough of the recommended composition pattern.
+ * This file retains alternative approaches and additional edge-case coverage.
  */
 
 /**

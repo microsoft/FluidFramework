@@ -11,6 +11,8 @@ As your application (or library) grows and evolves, you may need to modify the s
 SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) in ways that allow an app to load or upgrade documents created or edited by earlier versions of the app (see [understanding compatibility](./index.mdx#understanding-compatibility)).
 To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink>.
 
+If your schemas come from reusable packages, see [Schema Libraries and Versioning](./schema-libraries.mdx) for the distinction between library releases, persisted schemas, and application rollout policy.
+
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
 :::
