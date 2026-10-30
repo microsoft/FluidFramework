@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { asAlpha } from "../../api.js";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
@@ -26,6 +27,7 @@ import { ForestTypeStringPrototype } from "../../shared-tree/forestTypeStringPro
 import {
 	createIndependentTreeAlpha,
 	ForestTypeReference,
+	ForestTypeOptimized,
 	TreeAlpha,
 } from "../../shared-tree/index.js";
 import {
@@ -33,6 +35,7 @@ import {
 	TreeViewConfiguration,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
+import { StringLeafSequence, withObservation } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -76,6 +79,131 @@ function pieces(root: PlainText.Tree): StringChunk[] {
 }
 
 describe("PlainText string storage prototype", () => {
+	it("initializes a deep non-text tree without primitive storage", () => {
+		const sf = new SchemaFactory("string-storage-numeric-chain");
+		class NumericNode extends sf.objectRecursive("NumericNode", {
+			value: sf.number,
+			next: sf.optionalRecursive([() => NumericNode]),
+		}) {}
+		let root: NumericNode | undefined;
+		for (let index = 0; index < 800; index++) {
+			root = new NumericNode({ value: index, next: root });
+		}
+		assert(root !== undefined);
+		const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+			new TreeViewConfiguration({ schema: NumericNode }),
+		);
+		view.initialize(root);
+		assert.equal(view.root, root);
+		view.dispose();
+	});
+
+	it("records field observations during packed iteration", () => {
+		const text = PlainText.Tree.fromString("abc");
+		const array = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
+		assert(array instanceof UnhydratedFlexTreeNode);
+		let observed = false;
+		withObservation(
+			{
+				observeNodeDeep: () => {},
+				observeNodeFields: () => {},
+				observeParentOf: () => {},
+				observeNodeField: (node, key) => {
+					if (node === array && key === EmptyKey) {
+						observed = true;
+					}
+				},
+			},
+			() => assert.deepEqual([...text.characters()], ["a", "b", "c"]),
+		);
+		assert(observed);
+	});
+
+	it("iterates packed leaves sequentially without indexed lookup or materialization", () => {
+		const text = PlainText.Tree.fromString("ab\u{1F600}".repeat(10_000));
+		const array = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
+		assert(array instanceof UnhydratedFlexTreeNode);
+		const field = array.getBoxed(EmptyKey);
+		const sequence = field.leafSequence;
+		assert(sequence !== undefined);
+		sequence.at = () => {
+			throw new Error("Sequential traversal must not perform indexed lookup");
+		};
+		let count = 0;
+		for (const character of text.characters()) {
+			assert.equal(character, ["a", "b", "\u{1F600}"][count % 3]);
+			count++;
+		}
+		assert.equal(count, 30_000);
+		assert.equal(field.leafSequence, sequence);
+	});
+
+	for (const [name, forest] of [
+		["reference", ForestTypeReference],
+		["optimized", ForestTypeOptimized],
+		["prototype", ForestTypeStringPrototype],
+	] as const) {
+		it(`continues packed iteration across hydration (${name})`, () => {
+			const text = PlainText.Tree.fromString("a\u{1F600}bc");
+			const iterator = text.characters()[Symbol.iterator]();
+			assert.equal(iterator.next().value, "a");
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: PlainText.Tree }),
+			);
+			view.initialize(text);
+			assert.equal(iterator.next().value, "\u{1F600}");
+			assert.equal(iterator.next().value, "b");
+			assert.equal(iterator.next().value, "c");
+			assert.equal(iterator.next().done, true);
+			view.dispose();
+		});
+	}
+
+	it("preserves live unhydrated iteration across edits and materialization", () => {
+		const text = PlainText.Tree.fromString("abcd");
+		const reference = plainTextFromString("abcd", false);
+		const actual = text.characters()[Symbol.iterator]();
+		const expected = reference.characters()[Symbol.iterator]();
+		assert.deepEqual(actual.next(), expected.next());
+		for (const node of [text, reference]) {
+			node.insertAt(1, "\uD800");
+			node.insertAt(2, "\uDC00");
+		}
+		assert.deepEqual(actual.next(), expected.next());
+		const field = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
+		assert(field instanceof UnhydratedFlexTreeNode);
+		assert.equal(field.getBoxed(EmptyKey).children.length, 6);
+		for (let i = 0; i < 6; i++) {
+			assert.deepEqual(actual.next(), expected.next());
+		}
+	});
+
+	it("retains mutation detection after a packed iterator is hydrated", () => {
+		const text = PlainText.Tree.fromString("abc");
+		const iterator = text.characters()[Symbol.iterator]();
+		iterator.next();
+		const view = createIndependentTreeAlpha({ forest: ForestTypeStringPrototype }).viewWith(
+			new TreeViewConfiguration({ schema: PlainText.Tree }),
+		);
+		view.initialize(text);
+		iterator.next();
+		text.insertAt(0, "x");
+		assert.throws(() => iterator.next(), /Concurrent editing and iteration/);
+		view.dispose();
+	});
+
+	it("preserves overlapping unhydrated moves as no-ops without expanding leaves", () => {
+		const text = PlainText.Tree.fromString("a\u{1F600}bcde");
+		const events: unknown[] = [];
+		text.onCharactersChanged((ops) => events.push(ops));
+		text.moveRangeToIndex(3, 1, 5);
+		assert.equal(text.fullString(), "a\u{1F600}bcde");
+		assert.deepEqual(events, []);
+		const array = getInnerNode(text).getBoxed(EmptyKey).boxedAt(0);
+		assert(array instanceof UnhydratedFlexTreeNode);
+		assert(array.getBoxed(EmptyKey).leafSequence !== undefined);
+	});
+
 	it("keeps fromString packed through unhydrated reads, edits, and hydration", () => {
 		const text = PlainText.Tree.fromString("ab\u{1F600}".repeat(4000));
 		const reference = plainTextFromString("ab\u{1F600}".repeat(4000), false);
@@ -85,8 +213,8 @@ describe("PlainText string storage prototype", () => {
 		assert(array instanceof UnhydratedFlexTreeNode);
 		const field = array.getBoxed(EmptyKey);
 		const arrayObject = array.treeNode;
-		assert(field.stringChunks !== undefined);
-		assert(field.stringChunks.length < 10);
+		assert(field.leafSequence instanceof StringLeafSequence);
+		assert(field.leafSequence.storage.pieces.length < 10);
 		const anchor = text.createInsertionAnchor(7);
 		const events: unknown[] = [];
 		text.onCharactersChanged((ops) => events.push(ops));
@@ -100,7 +228,7 @@ describe("PlainText string storage prototype", () => {
 			node.removeRange(100, 150);
 		}
 		assert.deepEqual(text.charactersCopy(), reference.charactersCopy());
-		assert(field.stringChunks !== undefined, "Unhydrated operations expanded character nodes");
+		assert(field.leafSequence !== undefined, "Unhydrated operations expanded character nodes");
 		assert.equal(anchor.index, 9);
 		assert.equal(events.length, 4);
 		const view = createIndependentTreeAlpha({ forest: ForestTypeStringPrototype }).viewWith(
@@ -110,7 +238,7 @@ describe("PlainText string storage prototype", () => {
 		assert.equal(view.root, text);
 		assert(arrayObject !== undefined);
 		assert.equal(getInnerNode(arrayObject).isHydrated(), true);
-		assert(field.stringChunks !== undefined, "Hydration expanded character nodes");
+		assert(field.leafSequence !== undefined, "Hydration expanded character nodes");
 		assert.equal(
 			pieces(view.root).reduce((n, chunk) => n + chunk.topLevelLength, 0),
 			text.characterCount(),
@@ -366,18 +494,14 @@ describe("PlainText string storage prototype", () => {
 	it("matches the reference forest across deterministic mixed edits", () => {
 		const view = createView();
 		const reference = createView(ForestTypeReference);
-		let state = 42;
-		const random = (max: number): number => {
-			state = (state * 1664525 + 1013904223) % 0x1_00_00_00_00;
-			return state % max;
-		};
+		const random = makeRandom(42);
 		for (let i = 0; i < 300; i++) {
 			const length = view.root.characterCount();
-			const start = random(length + 1);
-			const end = start + random(length - start + 1);
-			const destination = random(length + 1);
-			const operation = random(3);
-			const text = ["a", "\u{1F600}", "\uD800", "\uDC00", "xyz"][random(5)] ?? "";
+			const start = random.integer(0, length);
+			const end = random.integer(start, length);
+			const destination = random.integer(0, length);
+			const operation = random.integer(0, 2);
+			const text = random.pick(["a", "\u{1F600}", "\uD800", "\uDC00", "xyz"]);
 			for (const root of [view.root, reference.root]) {
 				if (operation === 0) {
 					root.insertAt(start, text);

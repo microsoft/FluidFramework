@@ -20,7 +20,12 @@ const view = createIndependentTreeAlpha({ forest: ForestTypeStringPrototype }).v
 view.initialize(PlainText.Tree.fromString(text));
 ```
 
-The forest represents eligible single-code-point string leaves as pieces of immutable buffers.
+The storage model in `src/util/stringStorage.ts` represents string atoms as pieces of immutable buffers.
+It has no tree, schema, cursor, or forest dependencies.
+`StringPiece` holds an immutable range; `StringSequence` holds an immutable list of pieces.
+The unhydrated field and forest use separate adapters over this shared storage.
+`LeafSequence` describes primitive leaves without child identities or defaults.
+`StringChunk` adapts string pieces to the chunked forest.
 Each buffer contains at most 4096 UTF-16 code units.
 Pieces share buffers when split, and contiguous pieces from the same buffer coalesce without copying.
 Small pieces from different buffers can coalesce up to 256 code units.
@@ -29,13 +34,18 @@ Separate surrogate-half leaves stay separate, even when adjacent.
 Other leaf values use the existing representation.
 The opt-in policy can also pack eligible string-leaf sequences outside PlainText, but does not optimize formatted-text construction or formatting.
 
-`PlainText.insertAt` bypasses per-character MapTree preparation on this forest.
+`PlainText.insertAt` supplies a primitive field cursor instead of preparing a MapTree for each character.
+The destination forest chooses its representation; only the prototype forest adopts string pieces.
 `fullString` reads piece spans; `charactersCopy` still allocates its requested character array.
 `PlainText.Tree.fromString` now creates a packed unhydrated sequence.
 Its ordinary text reads, inserts, deletes, and within-text moves retain pieces.
+Unhydrated `characters()` advances a sequential iterator instead of searching for each character from the first piece.
+It observes edits between yields and switches to the hydrated field if hydration occurs.
 Initialization on the prototype forest preserves those pieces instead of expanding character nodes.
 The public text and array objects, event listeners, and insertion anchors survive hydration.
 Generic internal APIs that explicitly request unhydrated child nodes can still materialize them.
+MapTree cursors delegate primitive field traversal without materializing those nodes.
+This avoids whole-node chunk snapshots and ancestor snapshot invalidation during hydration.
 Unhydrated packing does not require selecting a forest in advance; insertion into the reference or ordinary optimized forest remains supported.
 The field still uses a flat chunk array, so lookup and splicing remain linear in the number of pieces.
 Delta builds still allocate per-root cursors and detached entries: this experiment does not eliminate all per-character transient work.
@@ -45,7 +55,7 @@ Run these commands from the repository root after installing dependencies:
 
 ```powershell
 pnpm exec fluid-build packages\dds\tree --task build:test:esm
-pnpm --dir packages\dds\tree exec mocha --grep 'StringChunk|PlainText string storage|textDomain' --reporter dot
+pnpm --dir packages\dds\tree exec mocha --grep 'forest-independent string storage|primitive leaf sequence cursors|StringChunk|PlainText string storage|textDomain' --reporter dot
 $env:FLUID_TEST_PERF_MODE = '1'
 pnpm --dir packages\dds\tree exec mocha --grep 'PlainText string storage benchmark' --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js
 Remove-Item Env:\FLUID_TEST_PERF_MODE

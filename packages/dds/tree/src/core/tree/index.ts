@@ -123,6 +123,7 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 } from "./chunk.js";
+export { type LeafSequence, cursorLeafSequence, tryGetLeafSequence } from "./leafSequence.js";
 
 export {
 	DetachedFieldIndex,

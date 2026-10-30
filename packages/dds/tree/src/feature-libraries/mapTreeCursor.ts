@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	cursorChunk,
-	type TreeChunk,
+	type LeafSequence,
 	type DetachedField,
 	type ExclusiveMapTree,
 	type FieldKey,
@@ -30,6 +29,7 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
+import { LeafSequenceCursor } from "./leafSequenceCursor.js";
 
 /**
  * A generic variant of {@link MapTree} that can be used to strongly type trees implementing a MapTree-like API.
@@ -38,8 +38,6 @@ import {
  * @see {@link MinimalMapTreeNodeView} for a minimal configuration of this interface.
  */
 export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
-	/** Optional borrowed snapshot containing exactly this node and its descendants. */
-	readonly [cursorChunk]?: TreeChunk;
 	/**
 	 * The non-empty fields on this node.
 	 * @remarks
@@ -65,6 +63,10 @@ export interface MinimalFieldMap<TField> {
  * Subset of array, so can be implemented by `TNode[]`.
  */
 export interface MapTreeFieldViewGeneric<TNode> {
+	/**
+	 * Optional immutable primitive storage with no child identities or defaults.
+	 */
+	readonly leafSequence?: LeafSequence;
 	/**
 	 * A representative leaf for a homogeneous field.
 	 * When supplied, all children must be valid leaves with this type and value schema.
@@ -144,7 +146,15 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 }
 
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
-	chunk: (node) => node[cursorChunk],
+	getFieldCursor: (node, key) => {
+		const sequence = node.fields.get(key)?.leafSequence;
+		return sequence === undefined
+			? undefined
+			: new LeafSequenceCursor(
+					sequence,
+					(index) => adapter.getFieldFromNode(node, key)[index] ?? oob(),
+				);
+	},
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),

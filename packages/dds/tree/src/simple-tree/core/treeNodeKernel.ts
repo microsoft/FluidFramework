@@ -187,7 +187,6 @@ export class TreeNodeKernel {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
-		this.getInnerNodeIfUnhydrated()?.invalidateChunk();
 		this.#hydrationState = this.createHydratedState(inner);
 
 		// Lazily migrate existing event listeners to the anchor node.

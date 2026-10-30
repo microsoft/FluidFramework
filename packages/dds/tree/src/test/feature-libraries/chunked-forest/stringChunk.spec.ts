@@ -12,8 +12,10 @@ import {
 } from "../../../core/index.js";
 import {
 	combineChunks,
+	cursorForLeafSequence,
 	cursorForMapTreeField,
 	jsonableTreeFromFieldCursor,
+	StringLeafSequence,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
@@ -33,7 +35,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 import { stringSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, StringSequence } from "../../../util/index.js";
 import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 
 const type: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
@@ -41,6 +43,53 @@ const policy = makePolicy({ stringChunks: true });
 const compressor = { policy, idCompressor: undefined };
 
 describe("StringChunk", () => {
+	it("adopts primitive string storage without copying complete pieces", () => {
+		const storage = StringSequence.fromString("a".repeat(stringBufferSize + 10));
+		const sequence = new StringLeafSequence(type, storage);
+		const cursor = cursorForLeafSequence(sequence);
+		const chunks = chunkField(cursor, compressor);
+		assert.equal(chunks.length, storage.pieces.length);
+		for (const [index, chunk] of chunks.entries()) {
+			assert(chunk instanceof StringChunk);
+			assert.equal(chunk.piece, storage.pieces[index]);
+			chunk.referenceRemoved();
+		}
+		assert.equal(storage.length, stringBufferSize + 10);
+	});
+
+	it("adopts a partial primitive sequence and preserves cursor positioning", () => {
+		const sequence = new StringLeafSequence(type, StringSequence.fromString("a\u{1F600}bc"));
+		const cursor = cursorForLeafSequence(sequence);
+		cursor.enterNode(1);
+		const chunks = chunkRange(cursor, compressor, 2, true);
+		assert.equal(chunks.length, 1);
+		assert(chunks[0] instanceof StringChunk);
+		assert.equal(chunks[0].text, "\u{1F600}b");
+		assert.equal(cursor.value, "b");
+		chunks[0].referenceRemoved();
+	});
+
+	it("reuses complete chunks and owns a reference to each output", () => {
+		const original = StringChunk.fromString(type, "abc")[0];
+		const tail = StringChunk.fromString(type, "def")[0];
+		assert(original !== undefined && tail !== undefined);
+		const input = combineChunks([original, tail]);
+		const cursor = input.cursor();
+		cursor.enterNode(0);
+		const output = chunkRange(cursor, compressor, 6, true);
+		assert.equal(output.length, 2);
+		assert.equal(output[0], original);
+		assert.equal(output[1], tail);
+		assert(original.isShared());
+		for (const chunk of output) {
+			chunk.referenceRemoved();
+		}
+		assert(!original.isShared());
+		input.referenceRemoved();
+		assert(original.isUnreferenced());
+		assert(tail.isUnreferenced());
+	});
+
 	it("preserves empty and multi-character leaves on the generic path", () => {
 		const values = ["a", "", "bc", "\u{1F600}", "\uD800", "\uDC00"];
 		const cursor = cursorForMapTreeField(

@@ -200,7 +200,6 @@ interface RelativeNodePath {
  * {@link RelativeNodePath}s for every {@link TreeNode} in the content tree inserted as an atomic operation.
  */
 interface LocatedNodesBatch {
-	readonly source: UnhydratedFlexTreeNode;
 	/**
 	 * UpPath shared by all {@link RelativeNodePath}s in this batch corresponding to the root of the inserted content.
 	 */
@@ -233,7 +232,6 @@ export function prepareContentForHydration(
 	const batches: LocatedNodesBatch[] = [];
 	for (const item of content) {
 		const batch: LocatedNodesBatch = {
-			source: item,
 			rootPath: {
 				parent: undefined,
 				parentField: placeholderKey,
@@ -281,7 +279,7 @@ function walkMapTree(
 
 		for (const [key, field] of node.allFieldsLazy) {
 			field.fillPendingDefaults(context);
-			if (field.stringChunks !== undefined) {
+			if (field.leafSequence !== undefined) {
 				continue;
 			}
 			for (const [i, child] of field.children.entries()) {
@@ -378,6 +376,5 @@ function hydrator(
 			getKernel(node).hydrate(flexNode);
 			forest.anchors.forget(anchor);
 		}
-		batch.source.invalidateChunk();
 	};
 }

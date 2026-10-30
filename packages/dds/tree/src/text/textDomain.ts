@@ -16,17 +16,13 @@ import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 import {
 	EmptyKey,
 	mapCursorField,
-	tryGetChunk,
+	tryGetLeafSequence,
 	type ITreeCursorSynchronous,
 } from "../core/index.js";
-import { combineChunks, indexForAt } from "../feature-libraries/index.js";
+import { cursorForLeafSequence, StringLeafSequence } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { LazySequence } from "../feature-libraries/flex-tree/lazyField.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ChunkedForest } from "../feature-libraries/chunked-forest/chunkedForest.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { StringChunk } from "../feature-libraries/chunked-forest/stringChunk.js";
-import { brand, validateIndex, validateIndexRange } from "../util/index.js";
+import { brand, StringSequence, validateIndex, validateIndexRange } from "../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../simple-tree/core/unhydratedFlexTree.js";
 import {
@@ -253,7 +249,14 @@ export function plainTextFromString(value: string, packed: boolean): TextNode {
 		const node = new TextNode({ content: [] });
 		const inner = getInnerNode(node.content);
 		assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
-		inner.getBoxed(EmptyKey).initializeStrings(brand(SchemaFactory.string.identifier), value);
+		inner
+			.getBoxed(EmptyKey)
+			.initializeLeafSequence(
+				new StringLeafSequence(
+					brand(SchemaFactory.string.identifier),
+					StringSequence.fromString(value),
+				),
+			);
 		return node;
 	} else {
 		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
@@ -278,51 +281,32 @@ export function charactersFromString(value: string): Iterable<string> {
 }
 
 class StringArray extends sf.array("StringArray", SchemaFactory.string) {
-	public override at(index: number): string | undefined {
-		const inner = getInnerNode(this);
-		if (inner instanceof UnhydratedFlexTreeNode) {
-			const field = inner.getBoxed(EmptyKey);
-			if (field.stringChunks !== undefined) {
-				const i = indexForAt(index, field.length);
-				if (i === undefined) {
-					return undefined;
-				}
-				const cursor = field.borrowCursor();
-				cursor.enterNode(i);
-				return cursor.value as string;
-			}
-		}
-		return super.at(index);
-	}
-
 	public tryInsertString(index: number, text: string): boolean {
 		const inner = getInnerNode(this);
 		if (!inner.isHydrated()) {
 			assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
 			const unhydratedField = inner.getBoxed(EmptyKey);
-			if (unhydratedField.stringChunks !== undefined) {
+			if (unhydratedField.leafSequence !== undefined) {
 				validateIndex(index, unhydratedField, "TreeArrayNode.insertAt", true);
-				unhydratedField.insertStrings(index, text);
-				return true;
+				return unhydratedField.tryInsertLeaves(
+					index,
+					new StringLeafSequence(
+						brand(SchemaFactory.string.identifier),
+						StringSequence.fromString(text),
+					),
+				);
 			}
-			return false;
-		}
-		const forest = inner.context.checkout.forest;
-		if (!(forest instanceof ChunkedForest) || forest.chunker.stringChunks !== true) {
 			return false;
 		}
 		const field = inner.getBoxed(EmptyKey);
 		assert(field instanceof LazySequence, "Expected hydrated string sequence");
 		validateIndex(index, field, "TreeArrayNode.insertAt", true);
 		// This built-in schema accepts only strings, with no defaults or wrapper identities to hydrate.
-		const content = combineChunks(
-			StringChunk.fromString(brand(SchemaFactory.string.identifier), text),
+		const content = new StringLeafSequence(
+			brand(SchemaFactory.string.identifier),
+			StringSequence.fromString(text),
 		);
-		try {
-			field.insertCursor(index, content.cursor());
-		} finally {
-			content.referenceRemoved();
-		}
+		field.insertCursor(index, cursorForLeafSequence(content));
 		return true;
 	}
 
@@ -331,12 +315,12 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 		if (!inner.isHydrated()) {
 			assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
 			const field = inner.getBoxed(EmptyKey);
-			if (field.stringChunks !== undefined) {
+			if (field.leafSequence !== undefined) {
 				const removeStart = start ?? 0;
 				validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
 				const removeEnd = Math.min(field.length, end ?? field.length);
 				validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
-				field.removeStrings(removeStart, removeEnd - removeStart);
+				field.removeLeaves(removeStart, removeEnd - removeStart);
 				return;
 			}
 		}
@@ -362,10 +346,10 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 			const spans: string[] = [];
 			let hasNode = cursor.firstNode();
 			while (hasNode) {
-				const chunk = tryGetChunk(cursor);
-				if (chunk instanceof StringChunk) {
-					spans.push(chunk.text);
-					hasNode = cursor.seekNodes(chunk.topLevelLength);
+				const sequence = tryGetLeafSequence(cursor);
+				if (sequence instanceof StringLeafSequence) {
+					spans.push(sequence.storage.text);
+					hasNode = cursor.seekNodes(sequence.length);
 				} else {
 					spans.push(cursor.value as string);
 					hasNode = cursor.nextNode();

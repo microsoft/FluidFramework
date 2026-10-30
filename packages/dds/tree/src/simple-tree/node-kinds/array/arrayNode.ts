@@ -10,7 +10,12 @@ import type {
 import { Lazy, oob, fail, assert, clamp } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, ObjectNodeStoredSchema, type DeltaMark } from "../../../core/index.js";
+import {
+	EmptyKey,
+	ObjectNodeStoredSchema,
+	type DeltaMark,
+	type TreeValue,
+} from "../../../core/index.js";
 import type {
 	FlexibleFieldContent,
 	FlexTreeNode,
@@ -1431,14 +1436,22 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
+		let previousField: FlexTreeSequenceField | undefined;
+		let values: IterableIterator<FlexTreeNode | TreeValue> | undefined;
 		for (let i = 0; ; i++) {
 			// Resolve the field again after each yield: an unhydrated array may have been hydrated.
 			const field = getSequenceField(this);
 			if (i >= field.length) {
 				return;
 			}
+			if (field !== previousField) {
+				previousField = field;
+				values = field.valuesFrom?.(i);
+			}
+			const next = values?.next();
+			assert(next?.done !== true, "Field iterator must match its length");
 			yield getOrCreateNodeFromInnerUnboxedNode(
-				field.atIndex(i),
+				next === undefined ? field.atIndex(i) : next.value,
 			) as TreeNodeFromImplicitAllowedTypes<T>;
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);

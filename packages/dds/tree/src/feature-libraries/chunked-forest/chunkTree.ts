@@ -23,6 +23,7 @@ import {
 	ValueSchema,
 	type TreeChunk,
 	tryGetChunk,
+	tryGetLeafSequence,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
@@ -38,7 +39,8 @@ import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
-import { StringChunk, StringTreeChunk, stringBufferSize } from "./stringChunk.js";
+import { StringChunk, stringBufferSize } from "./stringChunk.js";
+import { StringLeafSequence } from "../stringLeafSequence.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
 export interface Disposable {
@@ -541,6 +543,39 @@ function newBasicChunkTree(
 }
 
 /**
+ * Adopts shared string storage and returns the number of consumed nodes, or zero to use normal chunking.
+ * Keep this work outside chunkRange's frame, which is retained during recursive subtree chunking.
+ */
+function tryChunkStringRange(
+	cursor: ITreeCursorSynchronous,
+	source: TreeChunk | undefined,
+	remaining: number,
+	skipLastNavigation: boolean,
+	output: TreeChunk[],
+): number {
+	const offset = cursor.fieldIndex - cursor.chunkStart;
+	let count: number;
+	if (source instanceof StringChunk) {
+		if (offset === 0 && remaining >= source.topLevelLength) {
+			return 0;
+		}
+		count = Math.min(remaining, source.topLevelLength - offset);
+		output.push(source.slice(offset, offset + count));
+	} else {
+		const sequence = tryGetLeafSequence(cursor);
+		if (!(sequence instanceof StringLeafSequence)) {
+			return 0;
+		}
+		count = Math.min(remaining, sequence.length - offset);
+		for (const piece of sequence.storage.slice(offset, offset + count).pieces) {
+			output.push(new StringChunk(sequence.type, piece));
+		}
+	}
+	cursor.seekNodes(count - (skipLastNavigation && count === remaining ? 1 : 0));
+	return count;
+}
+
+/**
  * Chunk a portion of a field.
  *
  * @param cursor - cursor at the starting node in the field.
@@ -567,12 +602,12 @@ export function chunkRange(
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
 		const source = tryGetChunk(cursor);
-		if (source instanceof StringChunk && chunkCompressor.policy.stringChunks === true) {
-			const offset = cursor.fieldIndex - cursor.chunkStart;
-			const count = Math.min(remaining, source.topLevelLength - offset);
-			output.push(source.slice(offset, offset + count));
-			remaining -= count;
-			cursor.seekNodes(count - (skipLastNavigation && remaining === 0 ? 1 : 0));
+		const stringCount =
+			chunkCompressor.policy.stringChunks === true
+				? tryChunkStringRange(cursor, source, remaining, skipLastNavigation, output)
+				: 0;
+		if (stringCount > 0) {
+			remaining -= stringCount;
 			continue;
 		}
 		const start = cursor.chunkStart;
@@ -585,15 +620,12 @@ export function chunkRange(
 			start === cursor.fieldIndex &&
 			!(
 				chunkCompressor.policy.stringChunks === true &&
-				((source instanceof BasicChunk && !(source instanceof StringTreeChunk)) ||
+				(source instanceof BasicChunk ||
 					(source instanceof UniformChunk &&
 						source.shape.treeShape.fields.size === 0 &&
 						isCharacter(cursor.value)))
 			) &&
-			!(
-				chunkCompressor.policy.stringChunks !== true &&
-				(source instanceof StringChunk || source instanceof StringTreeChunk)
-			)
+			!(chunkCompressor.policy.stringChunks !== true && source instanceof StringChunk)
 		) {
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
