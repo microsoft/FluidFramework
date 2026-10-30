@@ -30,13 +30,14 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Lockfile-installed build tools | E6 passed; tool setup 0.78-0.79s instead of roughly 21s source builds | Uses pinned `flub` 0.68.0; removes global linking and source-tool dependency |
 | No unused PR build/release archives | E7 build job 755.1s to 568.1s; replacement validation 24.3s | Non-PR artifacts preserved; PR artifact-specific scan scope reduced with the removed payloads |
 | Separate PR local-service test job | E8 passed with identical test totals; Mocha job 823.3s to 726.1s | One extra agent job; local-service work now overlaps Mocha |
+| No type-only generation in runtime jobs | Combined retry logs show zero `typetests` commands in all six test jobs, versus 58 in checked policy validation | Declaration entrypoints retained for Mocha import tests and ATTW |
+| Development validation for private examples | Combined retry: main webpack 120.3s to 33.5s, browser prerequisites 171.2s to 58.6s | Production size producer unchanged; reduced production-only coverage for private examples |
 
 ## Active experiments
 
 | Candidate | Status | What must be established |
 | --- | --- | --- |
-| E10 retry: native adapter with legacy declaration exception | Preparing | Keep `property-properties` on TS6 after native TS2883; do not weaken declaration validation |
-| E11: development-mode example validation | Prepared; included in the next retry | Use existing development scripts only for private non-profiled examples; retain production size bundles and published artifact behavior |
+| E12: TypeScript 6 worker comparison | Preparing | Keep the same lean graph and development bundles; remove native setup and restore JS workers to assess adapter value |
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
 E6 uses that lockfile dependency explicitly through the workspace bin path rather than relying on a global installation.
@@ -141,6 +142,7 @@ This was not a cold-cache benchmark.
 | E8: independent local-service job | `a5d0f9e18b8c11276079d52e06ed39abfe09ff00` | [430896](https://dev.azure.com/fluidframework/public/_build/results?buildId=430896) | Passed | 16m 35s including 3m 17s initial queue; all suite counts unchanged |
 | E9: lean runtime task graph | `a0671df680eb5c7550b55c18a455b9d68db7a61c` | [430921](https://dev.azure.com/fluidframework/public/_build/results?buildId=430921) | Failed; not promoted | Strict boolean guard failed to preserve declaration generation in ATTW/Mocha |
 | E10: native CLI adapter | `4ef16eadd6dcde2bd81ce12c7d36c79de0b39bae` | [430936](https://dev.azure.com/fluidframework/public/_build/results?buildId=430936) | Failed; retry prepared | TS2883 while emitting legacy JavaScript declarations in `property-properties` |
+| Native retry plus E11 development bundles | `4b3f2a5d4195ccea4721a2ef1ca95cb1d195adfd` | [430954](https://dev.azure.com/fluidframework/public/_build/results?buildId=430954) | Passed | 16m 35s; native adapter works with legacy exception; webpack 33.5s |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -432,6 +434,24 @@ The retry explicitly leaves that package's original TypeScript 6 bin intact and 
 It does not change library source, add unsafe type casts, or disable the checked validation job.
 The pending development-bundle experiment is included in that retry, so its results will describe a combined configuration rather than a native-only comparison.
 
+### Successful native/development retry
+
+Run 430954 passed in 995.0 seconds (16m 35s), with 45,447 passed tests and 3,235 not executed.
+The companion policy run [430950](https://dev.azure.com/fluidframework/public/_build/results?buildId=430950) passed.
+The original validation build remained fully checked.
+Its log contains 58 type-test generation commands and 134 declaration-entrypoint commands.
+All six independent test-build logs contain zero type-test generation commands.
+Pure runtime jobs contain zero declaration-entrypoint commands; Mocha and ATTW retain 120 and 132 respectively.
+
+The native CLI adapter is therefore viable without changes to `fluid-build`, provided TypeScript 6 APIs/CJS support and the explicit legacy declaration exception remain.
+However, native performance is not established in isolation.
+The Mocha prerequisite build took 116.5 seconds, compared with 111.4 seconds in E8; its test command also ran longer (571.8 versus 438.8 seconds).
+The large bundling improvement is clearer: the main webpack step fell from 120.3 to 33.5 seconds and browser prerequisites from 171.2 to 58.6 seconds.
+Production analyzer artifacts remained present alongside docs and devtools output.
+
+E12 retains all lean-graph/development changes but restores TypeScript 6 workers and removes the native setup invocation.
+This comparison will determine whether the extra adapter complexity earns a place in the final configuration.
+
 ## Validation ownership
 
 Initially retain all existing checks.
@@ -501,7 +521,7 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
    The new native CLI does not supply that API.
    The isolated CLI benchmark above succeeded.
    The untested next step is a native compilation task integrated with the dependency graph, while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
-   Full workspace/native CI migration has not been attempted.
+   The partial CLI adapter passed CI, but a full native toolchain including CJS/API consumers has not been attempted.
 6. Investigate merge-tree file-level sharding or the worker-mode shutdown failure.
    The measured slow files include `client.replay.spec.js`, `client.obliterateFarm.spec.js`, and `client.conflictFarm.spec.js`.
    Any partition must cover the original file/test set exactly, preserve reporting and failure semantics, and justify the extra agent demand.
