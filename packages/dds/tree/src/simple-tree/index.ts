@@ -240,6 +240,7 @@ export {
 	type ErasedSchema,
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
+	type MaskedProperties,
 	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	type SnapshotSchemaCompatibilityOptions,

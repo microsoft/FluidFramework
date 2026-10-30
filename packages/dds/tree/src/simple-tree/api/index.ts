@@ -69,6 +69,7 @@ export type {
 	ErasedSchema,
 	ErasedNode,
 	ErasedSchemaSubclassable,
+	MaskedProperties,
 } from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
