@@ -6,20 +6,15 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Latest passing run:** guarded two-worker retry [431159](https://dev.azure.com/fluidframework/public/_build/results?buildId=431159) passed in **11m 57s**, with all nine timed jobs below nine minutes (longest: artifact build, **7m 53s**).
-The serial query-path control [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) also passed with all nine jobs below the target, in **12m 23s** overall.
-Every suite's textual pass/skip totals matched between these two runs.
-Azure's retry aggregate misclassified 28 inherited skips as passes due to a parallel JUnit serialization issue; a targeted reporter correction is now being verified rather than claiming extra executed tests.
-The query optimization is independently validated; parallel E2E reliability still needs repeated confirmation.
-The previous ESM-only build run [431099](https://dev.azure.com/fluidframework/public/_build/results?buildId=431099) passed in **13m 14s**.
-The preceding cached-runtime run [431084](https://dev.azure.com/fluidframework/public/_build/results?buildId=431084) passed the same test totals in **11m 13s**, versus the original **33m 28s** baseline.
-Eight of nine timed jobs were below nine minutes in both runs; Tinylicious service remains above target at **10m 20s** in the latest run.
-The preceding patched Node 26 run [431074](https://dev.azure.com/fluidframework/public/_build/results?buildId=431074) took **20m 12s** because critical jobs started about eight minutes after queueing and then spent 91 seconds selecting Node.
-The preceding Node 22 Tinylicious control [431064](https://dev.azure.com/fluidframework/public/_build/results?buildId=431064) took **16m 36s**, with eight of nine timed jobs under nine minutes.
-The earlier mixed-runtime run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) passed in **14m 43s**, versus the original **33m 28s** baseline, but its unpatched Node 26 Tinylicious configuration was not reliably green.
-Node 26 client policy and artifact jobs subsequently passed in E16 with faster compilation.
-After reproducing the Tinylicious storage failure, the scoped dependency patch passed both local regression and real service CI on Node 26.
-Cached-runtime selection and ESM-only prerequisites for runtime service/stress jobs are now verified without changing the runtime matrix.
+**Latest confirmation:** [431174](https://dev.azure.com/fluidframework/public/_build/results?buildId=431174) passed in **12m 31s**, with **all nine timed jobs below nine minutes** and corrected Azure totals of **45,649 passed / 3,235 skipped / zero failures**.
+The preceding guarded parallel run [431159](https://dev.azure.com/fluidframework/public/_build/results?buildId=431159) passed in **11m 57s**, also with all nine jobs below the target.
+The serial query-path control [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) met the same per-job target in **12m 23s** overall.
+These observations support the goal, but two guarded parallel runs do not establish a long-term reliability percentile.
+Compared with the original **33m 28s** baseline, the final two runs used approximately **63-64% less end-to-end time**; target-branch drift, cache state, and queue variability prevent treating that as a controlled statistical estimate.
+
+The final configuration retains the measured checkout, independent-build, lean task-graph, cached-runtime, targeted ESM, development-bundle, Node 26, and test-service optimizations described below.
+The Git-storage patch, early fake-clock skips, and parallel JUnit skip correction all passed their focused regressions and remote CI.
+No failed trial is counted as a speedup and no tests or error checks were disabled to obtain a green result.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -55,8 +50,22 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 Aim for every job to finish within nine minutes on most runs, including setup, dependency installation, compilation, tests, reporting, and post-job work.
 Track agent waiting separately and continue reporting total queue-to-green time.
 Do not meet the budget by dropping validation or hiding intermittent failures.
-Run 431044 had seven of nine timed agent jobs under nine minutes; artifact build and Tinylicious were above it.
-One successful run does not establish a reliable percentile.
+The final serial control and both guarded parallel runs met this target for all nine timed jobs.
+Job start delays remain material: in run 431174, policy/build jobs started about 4m 20s after queueing.
+
+| Job in final confirmation 431174 | Duration |
+| --- | ---: |
+| Client policy/type/API validation | 7m 52s |
+| Artifact build | 7m 20s |
+| Mocha unit suite | 8m 47s |
+| Tinylicious service | 7m 18s |
+| Playwright | 5m 44s |
+| Local service | 4m 53s |
+| AreTheTypesWrong | 3m 46s |
+| Stress | 3m 47s |
+| Source analysis | 53s |
+
+The Mocha job's 64-second cache restore and 43-second post-job scan-cache handling leave limited headroom, so image/cache recommendations still matter.
 
 ## Job-start delays and CI image recommendations
 
@@ -139,13 +148,16 @@ The two-dimensional goal remains: reliable jobs below nine minutes on most runs,
 | Same-process Git storage patch for Tinylicious | E18 passed; service test step 394.3s versus 551.4s in the Node 22 control | Patch plus Node 26 is a combined change; cross-process/crash-safe publication is not addressed |
 | Job-scoped cached runtime selection | E19 passed; no-copy selection 3.8-24.1s versus prior 91s copy outliers | Preserves npm prefix; overall run also benefited from shorter queue delays |
 | ESM-only service/stress prerequisites | E20 passed with zero CommonJS compiler commands and identical suite totals | Removes unnecessary work; observed prerequisite-step savings only 1-3s |
+| Query-path precomputation and guarded two-worker E2E execution | Serial control and two guarded parallel runs passed; final Tinylicious test step 288.0s | Avoids global fake-clock changes in skipped local-only suites; exact compatibility selection retained |
+| Accurate parallel JUnit inherited skips | Reporter fixture reproduces the issue; final Azure totals return to 45,649 passed / 3,235 skipped | Corrects reporting only; does not execute or unskip additional product tests |
 
 ## Experiment status
 
-The patched Node 26 configuration, cached-runtime selection, and ESM-only service prerequisites passed.
-The nine-minute target is not fully met: Tinylicious service is the remaining long job, and queue/start variability still affects end-to-end time.
+The experimental sequence is complete for this proof of concept.
+The final serial control and guarded parallel confirmations met the nine-minute execution budget for all nine jobs.
+Scheduling delays, broader reliability sampling, and production rollout work remain; they are not claimed solved by the observed runs.
 
-### Active E21: profile the remaining test-service bottleneck
+### E21/E22: profile and validate the remaining test-service bottleneck
 
 Remote run [431129](https://dev.azure.com/fluidframework/public/_build/results?buildId=431129) failed in the Tinylicious end-to-end job.
 It reported an uncaught legacy `@fluidframework/core-utils@2.0.9` timer assertion `0x764` ("Running timer missing handler") during SharedDirectory setup, followed by a missing-snapshot assertion and duplicate hook completion.
@@ -156,7 +168,7 @@ All other jobs passed, and all timed jobs were below nine minutes; the failed ru
 
 The control restored serial end-to-end execution while retaining the query-path patch.
 CI disabled the parallel opt-in during that control; the E22 retry below reenables it with the early-skip correction.
-Investigate timer ownership, worker reuse, and asynchronous cleanup before considering it reliable.
+The investigation and guarded retry outcomes are recorded below rather than treating the initial failure as a transient service error.
 No tests, assertions, or timeout checks are removed.
 
 #### Recovery investigation: process-wide fake timers in skipped suites
@@ -193,7 +205,13 @@ The built-in xUnit reporter uses that deserialized method, producing a self-clos
 A small fixture reproduced this mismatch with a nested suite skipped by its ancestor's hook.
 The Fluid xUnit wrapper now recognizes final pending state while preserving the original method as a fallback.
 The regression checks that inherited skips stay skipped and real passes remain passes; existing failure/report naming tests also pass.
-The next confirmation includes this reporting fix and one extra reporter regression test, with no change to the runtime suite selection.
+Confirmation run 431174 included the reporting fix and passed in 750.8 seconds (12m 31s).
+The reporter's new nested-skip regression executed in CI; the reporter suite reported 12 passing cases.
+Azure reported 45,649 passed and 3,235 skipped, correcting the earlier misleading aggregate.
+The Tinylicious test step took 288.0 seconds and its full job 438.4 seconds.
+All nine timed jobs were below nine minutes and no prior job attempts were present.
+The companion policy run [431170](https://dev.azure.com/fluidframework/public/_build/results?buildId=431170) passed.
+This second green guarded run supports retention, while broader production sampling remains necessary.
 
 The serial query-patch control 431144 passed all 45,649 tests, with 3,235 skipped, in 743.4 seconds.
 Its Tinylicious test step took 314.0 seconds and the full job 458.5 seconds, compared with E20's 468.0 and 619.9 seconds.
@@ -464,7 +482,7 @@ This was not a cold-cache benchmark.
 | E21: profiled query-path and end-to-end concurrency candidates | `2e8a2594dfeb0dc833c0fe8d9c142314c8a4aa59` | [431129](https://dev.azure.com/fluidframework/public/_build/results?buildId=431129) | Failed | Legacy timer assertion in SharedDirectory setup; all other jobs passed |
 | E21 serial control | `123a85096486a3ced7844a7e749ba5650d340fde` | [431144](https://dev.azure.com/fluidframework/public/_build/results?buildId=431144) | Passed | 12m 23s; all nine jobs below nine minutes; unchanged test totals |
 | E22: parallel retry with early service-driver skips | `3bd61b252c75990d802db5bd4912acfc654ad3ba` | [431159](https://dev.azure.com/fluidframework/public/_build/results?buildId=431159) | Passed; reporting discrepancy diagnosed | 11m 57s; all nine jobs under nine minutes; Tinylicious test step 264.9s |
-| E22 reporting correction/repeat | Pending | Pending | Local reporter regression passed; remote pending | Preserve nested-suite skipped status in parallel JUnit output |
+| E22 reporting correction/repeat | `ba2385f911c601b2e4d21b0cc701779b1f2e2c27` | [431174](https://dev.azure.com/fluidframework/public/_build/results?buildId=431174) | Passed | 12m 31s; all nine jobs under nine minutes; corrected 45,649 passed / 3,235 skipped |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -1004,11 +1022,10 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
 7. Add a supported disposable-CI mode to `fluid-build` if E9 shows useful potential.
    Such a mode could avoid cache read/write bookkeeping while retaining graph deduplication and necessary dependency/config analysis.
    A blanket forced rebuild in each successive artifact-job invocation would lose useful within-job reuse and is not proposed.
-8. Revisit newer Node after resolving dependency support ranges, or benchmark a supported Node 24 version.
-   Node 24 satisfies the observed `opossum` range, but it was not among the `n ls` versions in the inspected image and has not been benchmarked here.
-   Preserve minimum-supported-runtime coverage when deciding on a production test matrix.
-9. Measure whether the Node-selection step can avoid copying an already-active matching runtime.
-   Instrument the initial version first; no such change was made in this experiment.
+8. Broaden supported-runtime coverage before production rollout; Node 24 has not been benchmarked here.
+   The Node 26 install blocker was resolved with the supported opossum upgrade, but full unit-suite compatibility still needs work.
+9. Investigate remaining variability in process startup, cache restore, and post-job scan-cache handling.
+   Cached PATH selection already removes Node copying; its remaining overhead and broader image/pool recommendations are recorded above.
 10. Migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
     This remains separate from the active policy/artifact runtime trial.
 11. Investigate atomic Git-object writes/reads in Tinylicious's storage implementation before moving its service jobs back to Node 26.
