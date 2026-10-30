@@ -43,6 +43,10 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 		private readonly obsoleteRevisions: Set<RevisionTag | undefined>,
 	) {}
 
+	public getMaxId(): ChangesetLocalId {
+		return this.maxSeen;
+	}
+
 	public isObsolete(revision: RevisionTag | undefined): boolean {
 		return this.obsoleteRevisions.has(revision);
 	}
