@@ -13,7 +13,10 @@ import {
 import type { ICreateGitServiceArgs, ISummaryAccessContext } from "../services/definitions";
 import { TestDocumentManager, TestTenantService } from "./utils";
 
-type ActiveDocumentAccessProof = Extract<IDocumentAccessProof, { state: "active" }>;
+type ActiveDocumentAccessProof = Extract<
+	IDocumentAccessProof,
+	{ state: "active"; containerType: "durable" }
+>;
 
 function createProof(
 	overrides: Partial<ActiveDocumentAccessProof> = {},
@@ -23,6 +26,7 @@ function createProof(
 		documentId: "document",
 		operation: "read",
 		source: "dc-v2-metadata",
+		containerType: "durable",
 		storageAccountName: "storage",
 		physicalContainerName: "pd2-document",
 		layoutVersion: "v2",
@@ -40,6 +44,7 @@ describe("document access contract", () => {
 			documentId: "document",
 			operation: "create",
 			source: "trusted-create",
+			containerType: "durable",
 			lifecycleVersion: "generation-1",
 			state: "active",
 		};
@@ -49,6 +54,7 @@ describe("document access contract", () => {
 			documentId: "document",
 			operation: "read",
 			source: "dc-v2-metadata",
+			containerType: "durable",
 			physicalContainerName: "pd2-document",
 			lifecycleVersion: "generation-1",
 			state: "active",
@@ -117,6 +123,7 @@ describe("document access contract", () => {
 				documentId: "document",
 				operation: "create",
 				source: "trusted-create",
+				containerType: "durable",
 				lifecycleVersion: "generation-1",
 				state: "pending",
 			} satisfies IDocumentAccessProof,

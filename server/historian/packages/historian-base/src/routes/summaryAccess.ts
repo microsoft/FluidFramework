@@ -48,6 +48,8 @@ function createEphemeralAccessProof(context: ISummaryAccessContext): IDocumentAc
 		documentId: context.documentId,
 		operation: "read",
 		source: "ec-lifecycle-redis",
+		containerType: "ephemeral",
+		ephemeralCreateTime: context.createTime,
 		lifecycleVersion: String(context.createTime),
 		state: "active",
 	};

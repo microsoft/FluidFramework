@@ -1631,6 +1631,7 @@ describe("summary ownership routes", () => {
 			documentId,
 			operation: "read",
 			source: "dc-v2-metadata",
+			containerType: "durable",
 			storageAccountName: "authorized-storage",
 			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			layoutVersion: "v2",
@@ -1680,7 +1681,9 @@ describe("summary ownership routes", () => {
 			documentId,
 			operation: "delete",
 			source: "ec-lifecycle-redis",
-			lifecycleVersion: String(createTime),
+			containerType: "ephemeral",
+			ephemeralCreateTime: createTime,
+			lifecycleVersion: "generation-1",
 			state: "active",
 		});
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true), {
@@ -1712,6 +1715,39 @@ describe("summary ownership routes", () => {
 			containerTypeHint: "ephemeral",
 		});
 		assert.deepStrictEqual(events, ["markDeleted", "deleteSummary"]);
+	});
+
+	it("skips durable storage lookup for an authorized ephemeral summary", async () => {
+		const createTime = activeDocument.createTime;
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: createTime,
+			lifecycleVersion: String(createTime),
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true), {
+			authorize,
+		});
+		storageNameRetrieverGet.rejects(
+			new Error("durable storage lookup must not run for an ephemeral proof"),
+		);
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
 	});
 
 	it("normalizes an Alfred storageName null before trusted fallback", async () => {
@@ -1987,6 +2023,8 @@ describe("summary ownership routes", () => {
 		const trustedCreateContext = {
 			tenantId,
 			documentId,
+			containerType: "ephemeral" as const,
+			ephemeralCreateTime: activeDocument.createTime,
 			lifecycleVersion: "generation-1",
 			expiresAtMs: Date.now() + 60_000,
 		};
@@ -1996,6 +2034,8 @@ describe("summary ownership routes", () => {
 			documentId,
 			operation: "create",
 			source: "trusted-create",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
 			lifecycleVersion: "generation-1",
 			state: "pending",
 		});

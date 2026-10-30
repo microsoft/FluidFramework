@@ -439,6 +439,8 @@ describe("summary ownership", function () {
 			documentId,
 			operation: "read",
 			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
 			lifecycleVersion: "generation-1",
 			state: "active",
 		};
@@ -470,6 +472,51 @@ describe("summary ownership", function () {
 		});
 	});
 
+	it("uses the authorized durable container type instead of legacy ephemeral signals", async () => {
+		const postEphemeralContainerCheck = sandbox.stub().resolves(true);
+		const info = sandbox.spy(Lumberjack, "info");
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: false,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			isEphemeralContainer: true,
+			postEphemeralContainerChecker: { postEphemeralContainerCheck },
+			accessOperation: "read",
+			documentAccessAuthorizer: {
+				authorize: sandbox.stub().resolves({
+					tenantId,
+					documentId,
+					operation: "read",
+					source: "dc-v2-metadata",
+					containerType: "durable",
+					storageAccountName: "document-storage",
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					layoutVersion: "v2",
+					lifecycleVersion: "generation-1",
+					state: "active",
+				}),
+			},
+		});
+
+		sinon.assert.notCalled(postEphemeralContainerCheck);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Is-Ephemeral-Container":false/);
+	});
+
 	it("keeps legacy summary cache identity when no authorizer is configured", async () => {
 		const summary = {
 			id: "summary-1",
@@ -483,6 +530,8 @@ describe("summary ownership", function () {
 			documentId,
 			operation: "read",
 			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
 			lifecycleVersion: "generation-1",
 			state: "active",
 		};
@@ -627,6 +676,19 @@ describe("summary ownership", function () {
 			},
 		},
 		{
+			name: "missing authoritative container type",
+			accessOperation: "read" as const,
+			trustedCreateContext: undefined,
+			proof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "alfred-fallback",
+				lifecycleVersion: "generation-1",
+				state: "active",
+			},
+		},
+		{
 			name: "mismatched initial-create generation",
 			accessOperation: "create" as const,
 			trustedCreateContext: {
@@ -703,6 +765,7 @@ describe("summary ownership", function () {
 					documentId,
 					operation: "create",
 					source: "trusted-create",
+					containerType: "durable",
 					storageAccountName: "authorized-storage",
 					physicalContainerName:
 						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

@@ -102,6 +102,8 @@ describe("summary access resolver", () => {
 				documentId,
 				operation: "read",
 				source: "ec-lifecycle-redis",
+				containerType: "ephemeral",
+				ephemeralCreateTime: activeDocument.createTime,
 				lifecycleVersion: String(activeDocument.createTime),
 				state: "active",
 			},
@@ -162,6 +164,8 @@ describe("summary access resolver", () => {
 			documentId,
 			operation: "read",
 			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
 			lifecycleVersion: String(activeDocument.createTime),
 			state: "active",
 		});

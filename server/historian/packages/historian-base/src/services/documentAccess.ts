@@ -33,6 +33,20 @@ type IDocumentStorageRouting =
 			layoutVersion: "v1" | "v2";
 	  };
 
+type IDocumentContainerType =
+	| {
+			/**
+			 * Ephemeral containers use their authoritative creation time for lifecycle expiry
+			 * and deletion tombstones.
+			 */
+			containerType: "ephemeral";
+			ephemeralCreateTime: number;
+	  }
+	| {
+			containerType: "durable";
+			ephemeralCreateTime?: undefined;
+	  };
+
 interface ITrustedCreateContextBase {
 	tenantId: string;
 	documentId: string;
@@ -48,7 +62,9 @@ interface ITrustedCreateContextBase {
  *
  * When a physical container is specified, its storage account and layout must also be present.
  */
-export type ITrustedCreateContext = ITrustedCreateContextBase & IDocumentStorageRouting;
+export type ITrustedCreateContext = ITrustedCreateContextBase &
+	IDocumentStorageRouting &
+	IDocumentContainerType;
 
 interface IDocumentAccessProofBase {
 	tenantId: string;
@@ -86,13 +102,16 @@ type IDocumentAccessState =
  * Request-scoped authorization proof returned by an {@link IDocumentAccessAuthorizer}.
  *
  * The tenant, document, operation, lifecycle generation, and state must match the request.
+ * The container type is authoritative for backend selection. Ephemeral proofs carry their
+ * creation time separately from the opaque lifecycle generation.
  * Physical container routing is atomic: when a physical container is present, the storage
  * account and layout are required with it. A storage account without a physical container is
  * allowed for legacy storage selection.
  */
 export type IDocumentAccessProof = IDocumentAccessProofBase &
 	IDocumentAccessState &
-	IDocumentStorageRouting;
+	IDocumentStorageRouting &
+	IDocumentContainerType;
 
 export interface IAuthorizeDocumentAccessInput {
 	tenantId: string;

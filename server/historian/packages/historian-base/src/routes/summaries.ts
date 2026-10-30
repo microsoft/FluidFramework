@@ -88,18 +88,14 @@ export function create(
 	function getEphemeralSummaryAccess(
 		proof: IDocumentAccessProof | undefined,
 	): ISummaryAccessContext | undefined {
-		if (proof?.source !== "ec-lifecycle-redis") {
+		if (proof?.containerType !== "ephemeral") {
 			return undefined;
-		}
-		const createTime = Number(proof.lifecycleVersion);
-		if (!Number.isSafeInteger(createTime) || createTime < 0) {
-			throw new NetworkError(500, "Document access authorizer returned an invalid EC proof.");
 		}
 		return {
 			tenantId: proof.tenantId,
 			documentId: proof.documentId,
 			isEphemeralContainer: true,
-			createTime,
+			createTime: proof.ephemeralCreateTime,
 			storageName: undefined,
 			source: "localEphemeral",
 			accessProof: proof,

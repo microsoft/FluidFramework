@@ -45,6 +45,7 @@ function createProof(operation: DocumentAccessOperation): IDocumentAccessProof {
 			documentId,
 			operation,
 			source: "trusted-create",
+			containerType: "durable",
 			lifecycleVersion: "generation-1",
 			state: "pending",
 		};
@@ -54,6 +55,7 @@ function createProof(operation: DocumentAccessOperation): IDocumentAccessProof {
 		documentId,
 		operation,
 		source: "alfred-fallback",
+		containerType: "durable",
 		lifecycleVersion: "generation-1",
 		state: "active",
 	};

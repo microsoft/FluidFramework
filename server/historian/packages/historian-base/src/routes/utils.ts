@@ -569,8 +569,20 @@ export async function createGitServiceWithAccess(
 			accessProof.operation !== accessOperation ||
 			accessProof.lifecycleVersion.length === 0 ||
 			accessProof.state !== (accessOperation === "create" ? "pending" : "active") ||
+			(accessProof.containerType !== "ephemeral" &&
+				accessProof.containerType !== "durable") ||
+			(accessProof.containerType === "ephemeral" &&
+				(!Number.isSafeInteger(accessProof.ephemeralCreateTime) ||
+					accessProof.ephemeralCreateTime < 0)) ||
+			(accessProof.source === "ec-lifecycle-redis" &&
+				accessProof.containerType !== "ephemeral") ||
+			((accessProof.source === "dc-v1-metadata" || accessProof.source === "dc-v2-metadata") &&
+				accessProof.containerType !== "durable") ||
 			(trustedCreateContext !== undefined &&
-				accessProof.lifecycleVersion !== trustedCreateContext.lifecycleVersion) ||
+				(accessProof.lifecycleVersion !== trustedCreateContext.lifecycleVersion ||
+					accessProof.containerType !== trustedCreateContext.containerType ||
+					accessProof.ephemeralCreateTime !==
+						trustedCreateContext.ephemeralCreateTime)) ||
 			(accessProof.physicalContainerName === undefined) !==
 				(accessProof.layoutVersion === undefined) ||
 			(accessProof.physicalContainerName !== undefined &&
@@ -589,24 +601,25 @@ export async function createGitServiceWithAccess(
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
 	const isEphemeral =
-		summaryAccessContext?.isEphemeralContainer ??
-		(accessProof?.source === "ec-lifecycle-redis" ? true : undefined) ??
-		(ignoreEphemeralFlag
-			? false
-			: await checkAndCacheIsEphemeral({
-					documentId,
-					tenantId,
-					documentManager,
-					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-					isEphemeralContainerOverride: isEphemeralContainer,
-					cache,
-			  }));
+		accessProof !== undefined
+			? accessProof.containerType === "ephemeral"
+			: summaryAccessContext?.isEphemeralContainer ??
+			  (ignoreEphemeralFlag
+					? false
+					: await checkAndCacheIsEphemeral({
+							documentId,
+							tenantId,
+							documentManager,
+							ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+							isEphemeralContainerOverride: isEphemeralContainer,
+							cache,
+					  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
 	let postIsEphemeral: boolean = isEphemeral;
-	if (postEphemeralContainerChecker !== undefined) {
+	if (accessProof === undefined && postEphemeralContainerChecker !== undefined) {
 		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
 			tenantId,
 			documentId,
@@ -618,6 +631,8 @@ export async function createGitServiceWithAccess(
 	let calculatedStorageName: string | undefined;
 	if (accessProof?.storageAccountName !== undefined) {
 		calculatedStorageName = accessProof.storageAccountName;
+	} else if (accessProof?.containerType === "ephemeral") {
+		calculatedStorageName = undefined;
 	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
 	} else if (summaryAccessContext?.isEphemeralContainer === true) {
