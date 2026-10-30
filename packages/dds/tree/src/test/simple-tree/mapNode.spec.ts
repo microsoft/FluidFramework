@@ -8,9 +8,20 @@ import { asAlpha } from "../../api.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
-import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	type ImplicitAllowedTypes,
+	type NodeFromSchema,
+	type TreeMapNode,
+	type TreeMapNodeAlpha,
+} from "../../simple-tree/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 
 import { describeHydration } from "./utils.js";
+
+// `TreeMapNodeAlpha` should be assignable to `TreeMapNode`.
+type _mapAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeMapNodeAlpha<TAllowedTypes>, TreeMapNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("Test");
 

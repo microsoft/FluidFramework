@@ -91,9 +91,9 @@ overrides:
   # ip-address CVE-2026-69192 (Address4 decodes leading-zero octets as decimal while
   # resolvers decode them as octal, allowing SSRF/trust-boundary bypass). Fixed in 10.3.1.
   ip-address@>=9 <10: ^10.3.1
-  # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
+  # js-yaml: fix CVE-2026-59869 and GHSA-5p4m-2wfm-xmqj (merge-key and ordered-map CPU DoS).
   # Exact pins ensure vulnerable transitive versions are not selected.
-  js-yaml@>=3 <4: 3.15.0
+  js-yaml@>=3 <4: 3.15.2
   js-yaml@>=4 <5: 4.3.2
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
@@ -223,8 +223,8 @@ overrides:
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
 
-  # Resolve a known security vulnerability.
-  simple-git: ^3.36.0
+  # Resolve simple-git and argv-parser vulnerabilities (CVE-2026-102828 and CVE-2026-102829).
+  simple-git: ^4.0.2
 
   # codemirror and marked overrides are because simplemde uses * versions, and the fully up-to-date
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.

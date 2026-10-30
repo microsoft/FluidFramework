@@ -5,20 +5,20 @@
 
 "use strict";
 
-const AZURE_PORTAL = "https://ms.portal.azure.com";
 const CREATE_ROLE_INSTRUCTIONS_URL =
 	"https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps#app-roles-ui";
 const ASSIGN_ROLE_INSTRUCTIONS_URL =
 	"https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal";
 
 function roleUrls(appId, servicePrincipalObjectId) {
+	const portal = process.env.AZURE_PORTAL_URL ?? "https://ms.portal.azure.com";
 	const createRole = appId
-		? `${AZURE_PORTAL}/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/AppRoles/appId/${encodeURIComponent(appId)}/isMSAApp~/false`
-		: `${AZURE_PORTAL}/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade`;
+		? `${portal}/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/AppRoles/appId/${encodeURIComponent(appId)}/isMSAApp~/false`
+		: `${portal}/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade`;
 	const assignRole =
 		appId && servicePrincipalObjectId
-			? `${AZURE_PORTAL}/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Users/objectId/${encodeURIComponent(servicePrincipalObjectId)}/appId/${encodeURIComponent(appId)}`
-			: `${AZURE_PORTAL}/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview`;
+			? `${portal}/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Users/objectId/${encodeURIComponent(servicePrincipalObjectId)}/appId/${encodeURIComponent(appId)}`
+			: `${portal}/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/~/AppAppsPreview`;
 	return { createRole, assignRole };
 }
 

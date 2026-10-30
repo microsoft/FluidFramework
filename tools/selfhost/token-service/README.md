@@ -73,6 +73,10 @@ a token is correctly signed; it does not know who was entitled to ask for one.
   [Using an existing App Registration](#using-an-existing-app-registration) if you cannot create
   one.
 
+Use `tokenIssuerVersion: "v2"` for a new registration.
+For an existing v1 registration, set it to `"v1"` or leave it empty to allow Graph-based detection when your directory permits it.
+Do not change `authorizationPolicy` solely to select the token issuer version.
+
 ### If Microsoft Graph is blocked (AADSTS530084)
 
 Some directories enforce a conditional access **token protection** policy that the Azure CLI

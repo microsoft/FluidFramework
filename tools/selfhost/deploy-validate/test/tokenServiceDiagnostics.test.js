@@ -87,3 +87,24 @@ test("network and discovery failures give generic setup guidance", () => {
 	assert.match(output, /Function App and App Registration exist/);
 	assert.match(output, /Original error: fetch failed/);
 });
+
+test("role guidance links use the portal supplied by the active Azure cloud", (t) => {
+	const original = process.env.AZURE_PORTAL_URL;
+	t.after(() => {
+		if (original === undefined) delete process.env.AZURE_PORTAL_URL;
+		else process.env.AZURE_PORTAL_URL = original;
+	});
+	for (const portal of ["https://portal.azure.us", "https://portal.azure.cn"]) {
+		process.env.AZURE_PORTAL_URL = portal;
+		const output = formatTokenServicePreflightError(
+			new TokenServiceError("denied", {
+				status: 403,
+				serviceMessage: "Account has not been granted access to this tenant.",
+			}),
+			context,
+		);
+		assert.ok(output.includes(`${portal}/#view/Microsoft_AAD_RegisteredApps/`));
+		assert.ok(output.includes(`${portal}/#view/Microsoft_AAD_IAM/`));
+		assert.doesNotMatch(output, /portal\.azure\.com/);
+	}
+});

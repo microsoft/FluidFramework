@@ -15,7 +15,7 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "gpt-6-luna";
+export const FALLBACK_MODEL = "gpt-6-luna";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
 export async function readAssetFile(

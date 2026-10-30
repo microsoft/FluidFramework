@@ -147,7 +147,14 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IProvideTestFluidObject": {
+				"forwardCompat": false
+			},
+			"Interface_ITestFluidObject": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

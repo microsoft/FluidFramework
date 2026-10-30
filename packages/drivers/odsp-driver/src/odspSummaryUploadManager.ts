@@ -137,7 +137,7 @@ export class OdspSummaryUploadManager {
 					referenceSequenceNumber,
 					type: snapshot.type,
 				},
-				async () => {
+				async (event) => {
 					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
 						url,
 						{
@@ -147,6 +147,7 @@ export class OdspSummaryUploadManager {
 						},
 						"uploadSummary",
 					);
+					event.end({ ...response.propsToLog });
 					return response.content;
 				},
 			);
