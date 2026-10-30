@@ -9,6 +9,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandle,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
@@ -80,6 +81,7 @@ export function createSingleBlobSummary(
 	key: string,
 	content: string | Uint8Array,
 ): ISummaryTreeWithStats {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	const builder = new SummaryTreeBuilder();
 	builder.addBlob(key, content);
 	return builder.getSummaryTree();

@@ -23,22 +23,28 @@ import {
 import { opSize } from "../../opProperties.js";
 import type {
 	IConnectableRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IRetriableFailureError,
 	ISummaryConfiguration,
 } from "../summarizerTypes.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryCollection } from "../summaryCollection.js";
 
 import type { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 /**
@@ -88,7 +94,9 @@ export const createSummarizingWarning = (
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public get ISummarizer(): this {
 		return this;
 	}
@@ -115,6 +123,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		private readonly internalsProvider: ISummarizerInternalsProvider,
 		handleContext: IFluidHandleContext,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
 			runtime: IConnectableRuntime,
@@ -387,6 +396,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
 			if (this._disposed || this.runningSummarizer?.disposed === true) {
@@ -433,10 +443,12 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 							runCoordinator.stop(stopReason);
 							this.close();
 						})
+						// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 						.catch((error: IRetriableFailureError) => {
 							builder.fail("Failed to start summarizer", error);
 						});
 				})
+				// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 				.catch((error: IRetriableFailureError) => {
 					builder.fail("Failed to create cancellation token", error);
 				});
@@ -447,6 +459,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (
 			this._disposed ||

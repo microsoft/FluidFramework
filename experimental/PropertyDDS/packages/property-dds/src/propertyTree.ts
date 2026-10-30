@@ -35,6 +35,7 @@ import {
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 // eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -582,6 +583,7 @@ export class SharedPropertyTree extends SharedObject {
 			numChunks: 0,
 		};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		if (!this.useMH) {
 			// If the MH is not used, we have to include the tip view, the remote changes and the received

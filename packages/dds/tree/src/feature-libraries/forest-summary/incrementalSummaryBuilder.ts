@@ -9,6 +9,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -116,6 +117,7 @@ interface TrackedSummaryProperties {
 	 * The parent summary builder to use to build the incremental summary tree.
 	 * When a chunk is being summarized, it will add its summary to this builder against its reference ID.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	parentSummaryBuilder: SummaryTreeBuilder;
 	/**
 	 * Serializes content (including {@link (IFluidHandle:interface)}s) for adding to a summary blob.
@@ -339,6 +341,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		fullTree: boolean;
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
 		stringify: SummaryElementStringifier;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): ForestIncrementalSummaryBehavior {
 		assert(
@@ -458,6 +461,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				// parent's summary tree under its reference ID.
 				// Before encoding the chunk, set the parent summary builder to this chunk's summary builder so that
 				// any incremental chunks in the subtree of this chunk will use that as their parent summary builder.
+				// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 				const chunkSummaryBuilder = new SummaryTreeBuilder();
 				trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
 				chunkSummaryBuilder.addBlob(
@@ -512,6 +516,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
 		forestSummaryRootContent: string;
 		forestSummaryRootContentKey: string;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const {

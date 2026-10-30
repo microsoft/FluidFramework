@@ -27,25 +27,33 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IRetriableFailureError,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizeOptions,
 	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
 	ISummaryCancellationToken,
 	ISummaryConfiguration,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
 import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IAckedSummary,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IClientSummaryWatcher,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryCollection,
 } from "../summaryCollection.js";
 
@@ -53,6 +61,7 @@ import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summa
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import { SummaryGenerator } from "./summaryGenerator.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
@@ -70,13 +79,16 @@ export class RunningSummarizer
 {
 	public static async start(
 		logger: ITelemetryBaseLogger,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summaryCollection: SummaryCollection,
 
 		cancellationToken: ISummaryCancellationToken,
@@ -146,6 +158,7 @@ export class RunningSummarizer
 		| {
 				reason: SummarizeReason;
 				afterSequenceNumber: number;
+				// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 				summarizeOptions: ISummarizeOptions;
 				readonly resultsBuilder: SummarizeResultBuilder;
 		  }
@@ -168,15 +181,18 @@ export class RunningSummarizer
 
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		) => Promise<SubmitSummaryResult>,
 		private readonly refreshLatestSummaryAckCallback: (
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly summaryCollection: SummaryCollection,
 
 		private readonly cancellationToken: ISummaryCancellationToken,
@@ -282,6 +298,7 @@ export class RunningSummarizer
 		this.setupEventListeners();
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
 		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
@@ -602,9 +619,11 @@ export class RunningSummarizer
 	 */
 	private trySummarizeOnce(
 		summarizeProps: ISummarizeTelemetryProperties,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		options: ISummarizeOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
 		isLastSummary = false,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): ISummarizeResults {
 		this.lockedSummaryAction(
 			() => {
@@ -714,7 +733,9 @@ export class RunningSummarizer
 	 */
 	private async trySummarizeWithRetries(
 		reason: SummarizeReason,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summarizeOptions: ISummarizeOptions = {},
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
 		const attemptSummarize = (
@@ -722,8 +743,10 @@ export class RunningSummarizer
 			finalAttempt: boolean,
 		): {
 			summarizeProps: ISummarizeTelemetryProperties;
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			summarizeResult: ISummarizeResults;
 		} => {
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const attemptSummarizeOptions: ISummarizeOptions = {
 				fullTree: summarizeOptions.fullTree ?? false,
 			};
@@ -763,7 +786,9 @@ export class RunningSummarizer
 		let retryAfterSeconds: number | undefined;
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		let results: ISummarizeResults | undefined;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		let error: IRetriableFailureError | undefined;
 		let failureMessage: string | undefined;
 		do {
@@ -892,7 +917,9 @@ export class RunningSummarizer
 	private async summarizeOnDemandWithRetries(
 		reason: SummarizeReason,
 		resultsBuilder: SummarizeResultBuilder,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summarizeOptions: ISummarizeOptions = {},
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<ISummarizeResults> {
 		const results = await this.trySummarizeWithRetries(reason, summarizeOptions);
 		if (results === undefined) {
@@ -915,8 +942,10 @@ export class RunningSummarizer
 	 *{@inheritdoc (ISummarizer:interface).summarizeOnDemand}
 	 */
 	public summarizeOnDemand(
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		options: IOnDemandSummarizeOptions,
 		resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): ISummarizeResults {
 		if (this.stopping) {
 			resultsBuilder.fail(
@@ -938,6 +967,7 @@ export class RunningSummarizer
 				`onDemand;${reason}`,
 				resultsBuilder,
 				summarizeOptions,
+				// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			).catch((error: IRetriableFailureError) => {
 				resultsBuilder.fail("summarize failed", error);
 			});
@@ -954,6 +984,7 @@ export class RunningSummarizer
 	/**
 	 *{@inheritdoc (ISummarizer:interface).enqueueSummarize}
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;
 		let overridden = false;
