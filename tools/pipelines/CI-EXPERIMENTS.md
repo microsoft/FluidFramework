@@ -6,12 +6,24 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Last validated implementation:** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
+**Last fully passing reference configuration (E12):** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
 Its latest run passed in **16m 40s**, including **3m 36s** of initial queueing, versus the original **33m 28s** baseline.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
-At the user's request, E14 retries PR verification on Node 26 with a scoped override to opossum 10.0.0, which declares Node 26 support.
-Policy, artifact, and non-PR jobs remain on Node 22.
+The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
+The current branch therefore intentionally uses the following mixed runtime configuration:
+
+| Job | Current Node.js version | Reason |
+| --- | --- | --- |
+| Mocha unit suite (`Coverage tests`), including merge-tree | 22.22.2 | Restored after Node 26 failures involving recursive `fs.rmdirSync` and browser-storage assumptions |
+| Local-service, Tinylicious service, and stress verification | 26.13.0 | Continue the newer-runtime experiment with the supported opossum override |
+| Playwright and AreTheTypesWrong verification | 26.13.0 | These jobs passed in E14; mixed-configuration confirmation is in progress |
+| Client policy/type/API validation and artifact build | 22.22.2 | Not yet tested on Node 26; deliberately unchanged, not known to be incompatible |
+| Separate repository policy pipeline and all non-PR jobs | 22.22.2 | Outside the newer-runtime trial |
+
+The measured 7.5% merge-tree and approximately 11% compilation improvements are local workload results, not demonstrated end-to-end CI savings.
+In particular, the current Mocha and main build jobs do not receive those potential Node 26 gains because they still run on Node 22.
+Trying the policy/artifact build jobs on Node 26 is a separate, untested opportunity; it does not require migrating the incompatible unit tests first.
 
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
@@ -39,6 +51,7 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 | Separate PR local-service test job | E8 passed with identical test totals; Mocha job 823.3s to 726.1s | One extra agent job; local-service work now overlaps Mocha |
 | No type-only generation in runtime jobs | Combined retry logs show zero `typetests` commands in all six test jobs, versus 58 in checked policy validation | Declaration entrypoints retained for Mocha import tests and ATTW |
 | Development validation for private examples | Combined retry: main webpack 120.3s to 33.5s, browser prerequisites 171.2s to 58.6s | Production size producer unchanged; reduced production-only coverage for private examples |
+| Correct parallel merge-tree selection and lower-allocation diagnostics | E15 Mocha step passed in 187.4s versus E12's 448.5s | All original merge-tree cases preserved; aggregate E15 failed in the separate Tinylicious job |
 
 ## Experiment status
 
@@ -46,7 +59,7 @@ E1-E14 have recorded outcomes; the merge-tree optimization and mixed-runtime con
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
 
-### Active E14: supported opossum upgrade for Node 26
+### E14 outcome and current mixed-runtime confirmation
 
 Pin `@fluidframework/server-lambdas@7.0.1>opossum` to `10.0.0` in the client workspace overrides and regenerate the lockfile with pnpm.
 This changes only the three existing server-lambdas lockfile snapshots and the opossum package record; the server release group's separate manifests/lockfile are untouched.
@@ -177,7 +190,7 @@ This was not a cold-cache benchmark.
 | Node 26 parallel-Mocha probe | No repository changes | Local only | Initially rejected: process exited 13 | 1,568 passes/two pending in 168.2s; later traced to 13 helper files triggering fail-zero |
 | E13: Node 26 PR test jobs | `3eff90cec5069d9990c71115b07bcba9c30e5797` | [430990](https://dev.azure.com/fluidframework/public/_build/results?buildId=430990) | Blocked before tests; reverted | Frozen install rejects `opossum@8.5.0` on Node 26 |
 | E14: Node 26 with supported opossum | `bc34fb6ba8522cfb1fedfdaae9780c17cca86ff7` | [431023](https://dev.azure.com/fluidframework/public/_build/results?buildId=431023) | Installation fixed; unit suite failed | 12 Node-compatibility failures unrelated to opossum; keep full Mocha job on Node 22 |
-| E15: spec-only parallel merge-tree plus lower-allocation diagnostics | Pending | Local validation complete; remote pending | 1,569 passes/two skipped in 152.0s; all 1,570 original cases retained plus one regression |
+| E15: spec-only parallel merge-tree plus lower-allocation diagnostics | `6d1de054676de5ec446b80a42a49c1fe5135c472` | [431033](https://dev.azure.com/fluidframework/public/_build/results?buildId=431033) | Mocha passed; separate Tinylicious step failed | Full Mocha step 187.4s; summary-upload setup network error prevents an overall green result |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -533,9 +546,9 @@ It reported all 1,568 tests passing and two pending in 168.2 seconds, but still 
 The newer runtime did not change this result.
 Later investigation below identified test-file selection, not Node shutdown, as the cause.
 
-E13 selects 26.13.0 only for PR verification jobs; policy, artifact builds, and non-PR jobs keep 22.22.2.
-Dependencies are installed after selecting the runtime in each fresh job.
-Before production rollout, decide how to preserve minimum-supported-Node runtime coverage: non-PR jobs still use Node 22, but the PR unit suites in this trial use Node 26.
+E13 originally selected 26.13.0 for all PR verification jobs, while policy, artifact builds, and non-PR jobs kept 22.22.2.
+Dependencies were installed after selecting the runtime in each fresh job.
+This describes the historical E13/E14 trial, not the current configuration: the full Mocha unit suite was subsequently restored to Node 22 as shown in the matrix above.
 
 The CI trial failed during dependency installation, before any Node 26 test result could be collected.
 pnpm reported `ERR_PNPM_UNSUPPORTED_ENGINE` for `opossum@8.5.0`, whose declared range is `^24 || ^22 || ^21 || ^20 || ^18 || ^16`.
@@ -604,6 +617,18 @@ This is approximately 67% less local elapsed time than the earlier 462.3-second 
 The PR-only opt-in is `FLUID_MERGE_TREE_PARALLEL=1`; serial/non-PR and benchmark invocations retain their defaults.
 Remote CI will measure contention with the other packages running concurrently.
 
+Run 431033 confirmed the improvement in CI with the real reporter and concurrent workspace tests.
+The full Mocha step passed in 187.4 seconds, versus 448.5 seconds in E12 (58% less elapsed time).
+The merge-tree output reported 1,569 passes and two pending cases, including the diagnostic regression.
+The complete Mocha job took 430.2 seconds including setup, compilation, and result publication.
+Policy/type validation, artifact build, browser tests, local-service tests, stress tests, and AreTheTypesWrong also passed.
+Companion repository policy run [431029](https://dev.azure.com/fluidframework/public/_build/results?buildId=431029) passed.
+
+The separate Node 26 Tinylicious job failed one summary-upload setup with `R11s fetch error: {}` after reporting 4,048 passed and 1,928 pending cases in its end-to-end package.
+The cause is unresolved: it has not been classified as transient, opossum-related, Node-related, or a code regression.
+No end-to-end green timing is claimed for E15.
+A report-only push repeats the unchanged implementation to collect another result without skipping or weakening this check.
+
 ### Why merge-tree is slow
 
 The existing suite repeatedly simulates and compares multiple collaborating clients over large operation matrices.
@@ -656,6 +681,10 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
    Preserve minimum-supported-runtime coverage when deciding on a production test matrix.
 9. Measure whether the Node-selection step can avoid copying an already-active matching runtime.
    Instrument the initial version first; no such change was made in this experiment.
+10. Try Node 26 independently in the client policy/type-validation and artifact-build jobs.
+    Neither job has been tested on Node 26 in this experiment.
+    The local compilation gains motivate this trial, but are not evidence of its compatibility or CI speedup.
+    Separately migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
 
 ## Limitations
 
@@ -668,7 +697,8 @@ There was one original baseline and two final-configuration samples, with a movi
 Release/non-pull-request pipelines were not executed as part of this experiment; their existing configuration is preserved by pull-request-only gating and parameter defaults.
 The tsconfig mutation is deliberately confined to disposable test jobs and remains proof-of-concept machinery, not a recommended public build interface.
 The partial native TypeScript adapter is not enabled.
-Node 26 is being retried with the explicitly documented E14 dependency upgrade; its remote result is pending.
+E14's dependency installation succeeded, but its Node 26 unit suite failed.
+The current mixed-runtime configuration retains the supported opossum upgrade and keeps Mocha on Node 22; its remote confirmation is pending.
 No engine-policy bypass is used, and earlier unsuccessful trials remain recorded as failures.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
