@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
+import type {
+	JsonCompatibleReadOnlyObject,
+	RestrictiveStringRecord,
+} from "../../util/index.js";
 import type { NodeSchemaMetadata } from "../core/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
@@ -119,4 +123,204 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryBeta} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryBeta}.
+ * You can create these options and read them from {@link SchemaFactoryBeta.settings}.
+ *
+ * Use {@link composeSchemaFactoryBetaOptions} to combine two sets of options.
+ *
+ * @beta
+ */
+export interface SchemaFactoryBetaOptions {
+	/**
+	 * Sets options for each schema created with {@link SchemaFactoryBeta.object}.
+	 *
+	 * @param name - The schema name within the factory's scope.
+	 * @param fields - The schemas for the object's fields.
+	 * @param options - The options passed to the schema creation method, if any.
+	 *
+	 * @typeParam TCustomMetadata - The type of custom metadata in the schema options.
+	 *
+	 * @returns The options to use, or `undefined` to keep the per-call options unchanged.
+	 *
+	 * @remarks
+	 * This also applies to {@link SchemaFactoryBeta.objectRecursive}.
+	 * It does not change {@link SchemaFactory} instances.
+	 *
+	 * The callback can choose options based on the schema's name, fields, and per-call options.
+	 * It controls how factory defaults and per-call options are combined.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for object schemas.
+	 * Spread the per-call options after the defaults to let callers override them.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta({
+	 *     scope: "com.example",
+	 *     objectOptions: (_name, _fields, options) => ({
+	 *         allowUnknownOptionalFields: true,
+	 *         ...options,
+	 *     }),
+	 * });
+	 * ```
+	 */
+	readonly objectOptions?: <TCustomMetadata = unknown>(
+		name: number | string,
+		fields: RestrictiveStringRecord<ImplicitFieldSchema>,
+		options: ObjectSchemaOptions<TCustomMetadata> | undefined,
+	) => ObjectSchemaOptions<TCustomMetadata> | undefined;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryAlpha} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryAlpha}.
+ * You can create these options and read them from {@link SchemaFactoryAlpha.settings}.
+ *
+ * Use {@link composeSchemaFactoryAlphaOptions} to combine two sets of options.
+ *
+ * @alpha
+ */
+export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
+	/**
+	 * Sets options for each schema created with {@link SchemaFactoryAlpha.objectAlpha}.
+	 *
+	 * @param name - The schema name within the factory's scope.
+	 * @param fields - The schemas for the object's fields.
+	 * @param options - The options passed to the schema creation method, if any.
+	 *
+	 * @typeParam TCustomMetadata - The type of custom metadata in the schema options.
+	 *
+	 * @returns The options to use, or `undefined` to keep the per-call options unchanged.
+	 *
+	 * @remarks
+	 * This also applies to the inherited {@link SchemaFactoryBeta.object} method,
+	 * {@link SchemaFactoryAlpha.objectRecursive}, and
+	 * {@link SchemaFactoryAlpha.objectRecursiveAlpha}.
+	 * It does not change {@link SchemaFactory} instances.
+	 *
+	 * The callback can choose options based on the schema's name, fields, and per-call options.
+	 * It controls how factory defaults and per-call options are combined.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for all object schemas created with these methods.
+	 * Spread the per-call options after the defaults to let callers override them.
+	 *
+	 * Use {@link composeSchemaFactoryAlphaOptions} to extend an existing factory's settings.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryAlpha({
+	 *     scope: "com.example",
+	 *     objectOptions: (_name, _fields, options) => ({
+	 *         allowUnknownOptionalFields: true,
+	 *         ...options,
+	 *     }),
+	 * });
+	 * ```
+	 */
+	readonly objectOptions?: <TCustomMetadata = unknown>(
+		name: number | string,
+		fields: RestrictiveStringRecord<ImplicitFieldSchema>,
+		options: ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined,
+	) => ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined;
+}
+
+/**
+ * Combines two sets of {@link SchemaFactoryAlphaOptions} by chaining their callbacks.
+ *
+ * @param base - The options whose callback runs first.
+ * @param override - The options whose callback runs second.
+ *
+ * @returns Options that apply the base callback, then the override callback.
+ *
+ * @remarks
+ * The base {@link SchemaFactoryAlphaOptions.objectOptions} callback runs first.
+ * Its result is passed as the options argument to the override callback.
+ * If either callback returns `undefined`, the options passed to that callback are kept.
+ *
+ * Spreading the options objects would replace the base callback.
+ * This helper keeps both callbacks.
+ *
+ * Use this with {@link SchemaFactoryAlpha.(createDerivedFactory:1)} to extend a factory's defaults.
+ *
+ * @example
+ * ```typescript
+ * const extended = sf.createDerivedFactory(
+ *     composeSchemaFactoryAlphaOptions(sf.settings, {
+ *         objectOptions: (_name, _fields, options) => ({
+ *             allowUnknownOptionalFields: true,
+ *             ...options,
+ *         }),
+ *     }),
+ * );
+ * ```
+ *
+ * @alpha
+ */
+export function composeSchemaFactoryAlphaOptions(
+	base: SchemaFactoryAlphaOptions,
+	override: SchemaFactoryAlphaOptions,
+): SchemaFactoryAlphaOptions {
+	return composeSchemaFactoryBetaOptions(base, override);
+}
+
+/**
+ * Combines two sets of {@link SchemaFactoryBetaOptions} by chaining their callbacks.
+ *
+ * @param base - The options whose callback runs first.
+ * @param override - The options whose callback runs second.
+ *
+ * @returns Options that apply the base callback, then the override callback.
+ *
+ * @remarks
+ * The base {@link SchemaFactoryBetaOptions.objectOptions} callback runs first.
+ * Its result is passed as the options argument to the override callback.
+ * If either callback returns `undefined`, the options passed to that callback are kept.
+ *
+ * Spreading the options objects would replace the base callback.
+ * This helper keeps both callbacks.
+ *
+ * Use this with {@link SchemaFactoryBeta.(createDerivedFactory:1)} to extend a factory's defaults.
+ *
+ * @example
+ * ```typescript
+ * const extended = sf.createDerivedFactory(
+ *     composeSchemaFactoryBetaOptions(sf.settings, {
+ *         objectOptions: (_name, _fields, options) => ({
+ *             allowUnknownOptionalFields: true,
+ *             ...options,
+ *         }),
+ *     }),
+ * );
+ * ```
+ *
+ * @beta
+ */
+export function composeSchemaFactoryBetaOptions(
+	base: SchemaFactoryBetaOptions,
+	override: SchemaFactoryBetaOptions,
+): SchemaFactoryBetaOptions {
+	return {
+		objectOptions:
+			base.objectOptions === undefined && override.objectOptions === undefined
+				? undefined
+				: <TCustomMetadata = unknown>(
+						name: number | string,
+						fields: RestrictiveStringRecord<ImplicitFieldSchema>,
+						options: ObjectSchemaOptions<TCustomMetadata> | undefined,
+					): ObjectSchemaOptions<TCustomMetadata> | undefined => {
+						const afterBase = base.objectOptions?.(name, fields, options) ?? options;
+						return override.objectOptions?.(name, fields, afterBase) ?? afterBase;
+					},
+	};
 }

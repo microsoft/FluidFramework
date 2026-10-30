@@ -22,12 +22,11 @@ import {
 	type ISerializedElection,
 	type ISummarizer,
 	type ISummaryCollectionOpEvents,
+	SummarizerClientElection,
 	SummaryManager,
 	summarizerClientType,
 } from "../../summary/index.js";
 
-// Replace with the production export when PR #28518 removes the legacy construction adapter.
-import { SummarizerClientElection } from "./legacySummarizerClientElection.js";
 import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Summarizer Client Election", () => {
@@ -377,8 +376,7 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("electedSummarizerChanged event", () => {
-		// Enable when PR #28518 adds consolidated transition telemetry.
-		it.skip("Should log identity transitions including parent-only handoff, but not ignored joins or resets", () => {
+		it("Should log identity transitions including parent-only handoff, but not ignored joins or resets", () => {
 			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],
@@ -584,8 +582,7 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
-		// Enable when PR #28518 preserves progress through parent-only handoff.
-		it.skip("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
+		it("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
 			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],

@@ -141,7 +141,11 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockFluidDataStoreContext": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

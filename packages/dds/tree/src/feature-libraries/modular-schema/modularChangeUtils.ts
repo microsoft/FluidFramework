@@ -693,6 +693,7 @@ export function normalizeChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	dropRevertConstraint: boolean,
+	dropRevisionInfo: boolean,
 	chunkNormalizer: (chunk: TreeChunk) => TreeChunk,
 ): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
@@ -797,6 +798,9 @@ export function normalizeChangeset(
 	if (dropRevertConstraint) {
 		delete normal.noChangeConstraintOnRevert;
 	}
+	if (dropRevisionInfo) {
+		delete normal.revisions;
+	}
 	return makeModularChangeset(normal);
 }
 
@@ -805,18 +809,21 @@ export function areEquivalent(
 	change2: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	ignoreRevertConstraint: boolean = true,
+	ignoreRevisionInfo: boolean = true,
 	chunkNormalizer: (chunk: TreeChunk) => TreeChunk = makeDummyChunk,
 ): boolean {
 	const normalized1 = normalizeChangeset(
 		change1,
 		fieldKinds,
 		ignoreRevertConstraint,
+		ignoreRevisionInfo,
 		chunkNormalizer,
 	);
 	const normalized2 = normalizeChangeset(
 		change2,
 		fieldKinds,
 		ignoreRevertConstraint,
+		ignoreRevisionInfo,
 		chunkNormalizer,
 	);
 	const diff = merge(normalized1, normalized2, (item: object) =>

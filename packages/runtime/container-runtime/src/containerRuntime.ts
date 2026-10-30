@@ -319,7 +319,6 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
@@ -1017,9 +1016,7 @@ export class ContainerRuntime
 				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
 			);
 		}
-		// Internally this value is still threaded through as `minVersionForCollab`. Renaming the
-		// Runtime/DataStore/DDS propagation path crosses API layers and requires a staged migration
-		// where both names coexist for old and new consumers. See #27851.
+		// Both internal names remain available while older Runtime, DataStore, and DDS packages migrate.
 		const minVersionForCollab =
 			oldestSupportedClientParam ??
 			deprecatedMinVersionForCollab ??
@@ -1380,6 +1377,10 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, unknown>;
 
 	private readonly _getClientId: () => string | undefined;
+	public get oldestSupportedClient(): OldestSupportedClientVersion {
+		return this.minVersionForCollab;
+	}
+
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -2561,28 +2562,14 @@ export class ContainerRuntime
 			!onRequestMode &&
 			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
 		) {
-			// Only create a SummaryManager and SummarizerClientElection
-			// if summaries are enabled and we are not the summarizer client.
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
+			// Interactive clients coordinate automatic summarizer creation.
+			this.summarizerClientElection = new SummarizerClientElection(
+				this.baseLogger,
 				this.innerDeltaManager,
 				this._quorum,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
 				summaryCollection,
-				orderedClientElectionForSummarizer,
 				maxOpsSinceLastSummary,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 			);
 
 			const defaultAction = (): void => {

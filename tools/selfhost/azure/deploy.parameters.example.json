@@ -50,7 +50,9 @@
 		}
 	},
 
+	"_redisComment": "useDeprecated is a boolean, default false (Azure Managed Redis). For capacity/region fallback use useDeprecated=true, sku=Premium (capacity 1-5) or Standard (capacity 0-6), and capacity=1. highAvailability is managed-only. Azure Cache for Redis creation eligibility varies by tenant/cloud and the service retires September 30, 2028; see azure/README.md.",
 	"redis": {
+		"useDeprecated": false,
 		"clusterName": "my-fluid-redis",
 		"location": "",
 		"sku": "Balanced_B5",

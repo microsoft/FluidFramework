@@ -333,7 +333,16 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
+							summarizeType === SummarizeType.disabled
+								? { state: "disabled" }
+								: summarizeType === SummarizeType.onDemand
+									? {
+											state: "disableHeuristics",
+											initialSummarizerDelayMs: 0,
+											maxAckWaitTime: 20000,
+											maxOpsSinceLastSummary: 7000,
+										}
+									: undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},

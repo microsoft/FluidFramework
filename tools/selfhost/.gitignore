@@ -2,6 +2,7 @@
 .env
 *.local
 azure/deploy.parameters.json
+azure/deploy.parameters.amr.json
 azure/deploy.parameters.[0-9]*.json
 azure/end-to-end-tests/end-to-end-tests.parameters.json
 deploy-validate/.deployment-config.json

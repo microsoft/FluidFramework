@@ -520,7 +520,8 @@ export interface ISummarizeHeuristicData {
 	totalOpsSize: number;
 
 	/**
-	 * Wether or not this instance contains adjusted metrics due to missing op data
+	 * Whether operation counts are unreliable for the current summary baseline.
+	 * Cleared when this client's summary attempt is acknowledged and its counts are retired.
 	 */
 	hasMissingOpData: boolean;
 

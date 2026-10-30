@@ -190,15 +190,27 @@ export const treeNodeApi: TreeNodeApi = {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						// Fields unknown to the view schema have no property key, so they are reported separately by stored key.
 						const changedProperties = new Set(
 							Array.from(
-								changedFields,
+								[...changedFields].filter((field) =>
+									nodeSchema.storedKeyToPropertyKey.has(field),
+								),
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
 									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
-						listener({ changedProperties });
+						const changedUnknownProperties = new Set(
+							[...changedFields].filter(
+								(field) => !nodeSchema.storedKeyToPropertyKey.has(field),
+							),
+						);
+						if (changedUnknownProperties.size === 0) {
+							listener({ changedProperties });
+							return;
+						}
+						listener({ changedProperties, changedUnknownProperties });
 					});
 				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
