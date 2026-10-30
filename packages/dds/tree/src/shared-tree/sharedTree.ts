@@ -43,6 +43,7 @@ import {
 	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
+	schemaDataIsEmpty,
 } from "../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
@@ -108,10 +109,27 @@ import {
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+
+/**
+ * Flush policy to defer attached local schema upgrades until the first subsequent data change.
+ *
+ * @remarks
+ * Data includes constraints and changes with no net content effect; we do not profile deltas here.
+ * Schema-only initialization must still publish immediately. Other schema-only commits wait for first data change.
+ * Empty changes keep the normal commit path; an empty transaction creates no commit to classify.
+ */
+function bufferCommitsUntilDataChange(change: SharedTreeChange): boolean {
+	return (
+		change.changes.length === 0 ||
+		change.changes.some(
+			(part) => part.type === "data" || schemaDataIsEmpty(part.innerChange.schema.old),
+		)
+	);
+}
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -301,18 +319,23 @@ export class SharedTreeKernel
 			},
 		);
 		super(
-			breaker,
-			sharedObject,
-			serializer,
-			submitLocalMessage,
-			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
-			changeFamily,
-			options,
-			changeFormatVersionForEditManager,
-			changeFormatVersionForMessage,
-			idCompressor,
-			schema,
-			defaultSchemaPolicy,
+			/* breaker: */ breaker,
+			/* sharedObject: */ sharedObject,
+			/* serializer: */ serializer,
+			/* submitLocalMessage: */ submitLocalMessage,
+			/* summarizables: */ [schemaSummarizer, forestSummarizer, removedRootsSummarizer],
+			/* changeFamily: */ changeFamily,
+			/* coreOptions: */ options,
+			/* changeFormatVersionForEditManager: */ changeFormatVersionForEditManager,
+			/* changeFormatVersionForMessage: */ changeFormatVersionForMessage,
+			/* idCompressor: */ idCompressor,
+			/* schema: */ schema,
+			/* schemaPolicy: */ defaultSchemaPolicy,
+			/* enrichmentConfig: */ undefined,
+			/* getEditor: */ undefined,
+			/* bufferCommitsUntil: */ options.bufferSchemaUpgrades
+				? bufferCommitsUntilDataChange
+				: undefined,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
@@ -329,6 +352,19 @@ export class SharedTreeKernel
 
 		this.registerSharedBranchForEditing("main", this.checkout);
 		this.registerCheckout("main", this.checkout);
+		if (options.bufferSchemaUpgrades) {
+			// Incremental schema summaries use the sequence number recorded when the schema changes locally.
+			// A buffered upgrade can record the same sequence number as an older summary,
+			// even though that summary does not contain the upgrade.
+			this.checkout.mainBranch.events.on("commitSequenced", (commit) => {
+				if (hasSchemaChange(commit.change)) {
+					// Sequencing need not reapply the schema or emit another schema-change event.
+					// Clear the reuse marker so later summaries encode the current schema instead
+					// of referencing the old blob. This does not apply schema or flush any commits.
+					schemaSummarizer.invalidate();
+				}
+			});
+		}
 
 		this.view = {
 			contentSnapshot: () => this.contentSnapshot(),
@@ -453,6 +489,33 @@ export class SharedTreeKernel
 		super.applyStashedOp(...args);
 	}
 
+	/**
+	 * Defers the submission callback until the branch's checkout has applied the commit without unexpected errors.
+	 *
+	 * @remarks
+	 * {@link TreeCheckout.onCommitValid} calls the callback immediately for an already-validated commit.
+	 * Otherwise, it registers the callback on that commit object until local application succeeds.
+	 * If application fails, the callback is not called and the checkout remains in an error state.
+	 *
+	 * The checkout validates appended commits after applying the append to its state.
+	 * It also validates an outer transaction's squash commit after the transaction completes.
+	 * Thus, validating the last commit of an append covers the local application of the whole append.
+	 */
+	protected override validateLocalCommit(
+		branchId: BranchId,
+		commit: GraphCommit<SharedTreeChange>,
+		onValid: () => void,
+	): void {
+		// A data trigger must apply successfully before it releases an earlier buffered
+		// schema. Waiting here also covers the squash of an application transaction.
+		const checkout = this.getCheckout(branchId);
+		assert(
+			checkout.transaction.size === 0,
+			"Cannot submit a commit while a transaction is in progress.",
+		);
+		checkout.onCommitValid(commit, onValid);
+	}
+
 	protected override submitCommit(
 		branchId: BranchId,
 		commit: GraphCommit<SharedTreeChange>,
@@ -464,16 +527,9 @@ export class SharedTreeKernel
 			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
-		if (isResubmit) {
-			return super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
-		}
-
-		// Refrain from submitting new commits until they are validated by the checkout.
-		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
-		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
-		checkout.onCommitValid(commit, () =>
-			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
-		);
+		// First publication has passed validateLocalCommit; transport resubmission uses
+		// the runtime's previously submitted entry rather than creating a new buffered edit.
+		super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
 	}
 
 	public onDisconnect(): void {}
@@ -702,7 +758,19 @@ export interface SharedTreeOptions
 
 export interface SharedTreeOptionsInternal
 	extends SharedTreeOptions,
-		Partial<SharedTreeCoreOptionsInternal> {}
+		Partial<SharedTreeCoreOptionsInternal> {
+	/**
+	 * Enables the internal buffer-only schema-upgrade experiment.
+	 * @remarks
+	 * On attached trees, schema-only upgrades stay local until an application change commits.
+	 * Initialization flushes immediately, including schema-only initialization.
+	 * Detached commits are sequenced locally after validation, without sending ops.
+	 * Attach summaries include these commits; buffering starts when the tree itself attaches.
+	 * Does not provide schema rebase workarounds or recovery. Buffered history currently
+	 * prevents summarization and shared-branch creation; this is not a public feature option.
+	 */
+	readonly bufferSchemaUpgrades?: boolean;
+}
 
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -837,6 +905,7 @@ export function buildConfiguredForest(
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+	bufferSchemaUpgrades: false,
 	jsonValidator: FormatValidatorNoOp,
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,

@@ -1206,6 +1206,175 @@ Then extend the prototype to named-branch creation, view replacement, nested and
 Compare retained resources and permanent synchronization costs with C2 on the same source baseline.
 Option D is a candidate for further investigation, not the selected replacement for C2.
 
+### Simplified buffer-only prototype
+
+The 2026-10-29 exploration deliberately excludes schema-rebase workarounds and automatic retry.
+It tests a smaller boundary: `SharedTreeCore` owns a generic local-commit submission buffer, and `SharedTree` supplies a `bufferCommitsUntil` policy based on change content.
+This is not a complete implementation of the shared feature contract.
+Full schema/data rebase support remains a prerequisite for reliable concurrent schema upgrades.
+
+The buffer records never-submitted commit revisions, not encoded messages or an extra authoring branch.
+An application commit that satisfies `bufferCommitsUntil` releases the queued prefix through that commit, preserving order and revisions.
+A later schema-only suffix remains buffered.
+Before first submission, resolve queued revisions against the current local history and enrich those current changes.
+Do not resubmit a stale original changeset after ordinary rebase has replaced it.
+Evaluate the trigger when application history is appended, not while processing remote rebase or transport resubmission.
+
+On an attached tree, the `SharedTree` policy holds schema-only upgrades and flushes for application data, including constraint-only and net-zero changes.
+Initialization retains its immediate behavior.
+Detached commits bypass the policy and are sequenced locally after validation, without sending ops.
+They become part of the initial state in the attach summary.
+The default core policy flushes every commit, preserving existing callers.
+Keep this experiment behind an internal option rather than expose an incomplete public schema-upgrade contract.
+
+Buffering does not make a commit accepted.
+Local changes and transaction rollback remain managed by the existing checkout and `EditManager`.
+Reconnect replays submitted commits only; buffered revisions have no runtime pending entry.
+Remote changes use the existing rebaser without removing and reapplying schema.
+The current rebaser may therefore drop a buffered upgrade and disable its view.
+Tests must record that limitation rather than suppress it, rebuild the schema, or retry application callbacks.
+
+This stage must not flush merely to satisfy a read, summary, attach, or shared-branch creation request.
+A client with buffered local changes cannot currently produce an authoritative summary without additional state separation.
+Keep that boundary explicit rather than serialize its private schema or weaken the existing summary invariant.
+Similarly, runtime rollback of a submitted commit below an unrelated buffered suffix and shared-branch creation from unpublished history need explicit safeguards if the ordinary pipeline cannot handle them.
+Document unsupported boundaries rather than adding schema-specific projection under another name.
+
+Prototype gates are trigger classification, validation-before-flush, ordering and revision preservation, ordinary rebase integration, reconnect filtering, cancellation, and explicit persistence boundaries.
+Documentation and tests must distinguish passing buffer behavior from the still-incomplete deferred-schema feature.
+
+#### Buffer-only implementation
+
+The prototype on `tree/defer-schema-upgrade-op-clean` starts from `1793718feb6`.
+Enable it through the internal `SharedTreeOptionsInternal.bufferSchemaUpgrades` factory option.
+The default is false; no public configuration member, entrypoint, changeset, or API report is added.
+
+[SharedTree](../../src/shared-tree/sharedTree.ts) supplies `bufferCommitsUntilDataChange` to the core.
+It recognizes data and schema-only initialization without teaching the core about either change type.
+[SharedTreeCore](../../src/shared-tree-core/sharedTreeCore.ts) owns one [CommitSubmissionBuffer](../../src/shared-tree-core/commitSubmissionBuffer.ts) per local shared branch when a policy is provided.
+The buffer stores revision IDs and a ready-prefix length.
+It resolves that prefix against `EditManager`'s current local history before enrichment and first submission.
+It does not store encoded messages or original changesets that could become stale through rebase.
+
+Submission waits for checkout validation of the triggering append.
+For a merged sequence `schema -> data -> later schema` on an attached tree, only the prefix through data flushes.
+The later schema remains private.
+Queued commits retain their revisions, metadata, and application transaction boundaries.
+If submission throws after one member has reached the runtime, the existing broken-state path propagates the failure; the prototype does not retry or promise atomic acceptance.
+
+The core checks the tree's attachment state each time local history is appended.
+While the tree is detached, every commit bypasses the policy, but still waits for validation.
+The existing detached submission path sequences these commits locally and sends no ops.
+A new tree in an attached container is also exempt until the tree itself attaches.
+After attachment, new commits use the configured policy.
+Attachment and summary generation do not flush the queue.
+
+The ordinary `EditManager`, checkout, forest, and schema rebaser are unchanged.
+There is no additional live checkout, schema remove/reapply projection, or identity-remapping adapter.
+The current schema rebaser can drop the buffered upgrade and invalidate the view.
+The buffer does not undo that result or flush merely because the rebased change is empty.
+A later application trigger submits the current rebased changes, including empty ones, rather than resurrecting the original upgrade.
+
+Reconnect re-enriches only submitted revisions, excluding the never-submitted suffix.
+Stashed operations are different from newly authored changes: they already crossed the submission boundary.
+Their replay bypasses `bufferCommitsUntil`, even if buffering was enabled by an application update since they were submitted.
+An integration test initially failed because a schema-only pending op was buffered again on reload; the replay distinction fixes that failure.
+
+Incremental summaries after publication also need an explicit schema-cache invalidation.
+The original local schema event can precede the last summary even though publication occurs afterward.
+The prototype reuses the small schema-summarizer invalidation hook from Option D and invokes it on schema sequencing.
+This is cache bookkeeping, not schema reconstruction or a new summarization projection.
+
+The 2026-10-30 investigation confirmed that standard summarizer loading does not create a typed SharedTree view or request a local schema upgrade.
+An interactive client's buffered upgrade therefore does not prevent a separate, normally initialized summarizer from generating summaries.
+This is not a prohibition on custom application code: custom initialization can still create and upgrade a view on the summarizer client.
+The policy's caller must ensure that a summarizing instance has no buffered local commits.
+The prototype enforces this library-internal requirement with an assertion, not a user-input error.
+Direct summaries and attach-summary generation on an instance with a nonempty buffer violate the same requirement; neither operation implicitly flushes the buffer.
+Completed detached commits do not wait for a later edit, so detached serialization and attachment include the upgraded schema without violating this requirement.
+
+#### Demonstrated behavior and deliberate limits
+
+The [queue tests](../../src/test/shared-tree-core/commitSubmissionBuffer.spec.ts) and [SharedTree integration tests](../../src/test/shared-tree/schemaUpgradeBuffer.spec.ts) cover:
+
+- Ordered first publication, original revisions, stable node identity, and native data-only undo without concurrency.
+- Default immediate mode and immediate initialization, including initialization without content.
+- Detached upgrades and transactions without ops, attach-summary round trips, and validation before local sequencing.
+- Detached container serialization and attachment, policy activation after attachment, and new trees in attached containers.
+- Empty and upgrade-only transactions, abort before publication, and constraint-only or net-zero application triggers.
+- Validation before flushing, a trailing untriggered schema in merged history, and partial submission failure.
+- Current schema-rebase failure behavior without reconstruction, plus equivalent remote-schema arrival.
+- Desired remote-rebase behavior in a separate acceptance group, with unsupported cases skipped as described below.
+- Reconnect and runtime pending-state restoration, including an application update that changes the flush policy.
+- Native data-before-schema rollback of a queued publication.
+- Safe rejection of summaries with buffered commits, shared-branch creation from buffered history, and rollback beneath a buffered suffix.
+- Correct incremental schema-summary output once publication has completed.
+
+These tests do not establish the complete deferred-upgrade feature:
+
+- No automatic retry, schema-rebase workaround, or restoration of an upgrade removed by native runtime rollback is implemented.
+- An attached client with buffered revisions cannot summarize without further authoritative-state separation.
+  It must not flush merely to satisfy that operation.
+- Creating a shared branch from buffered local history is refused before creating the branch.
+- Runtime rollback beneath a later buffered suffix is refused before changing local history.
+  Reconciliation of that suffix is outside this stage.
+- Closing a typed view does not erase its buffered local history; there is no per-view cancellation manager.
+- No performance, full compatibility matrix, or production-readiness claim is made.
+
+The explicit refusals preserve state rather than conceal these missing capabilities.
+They remain prototype limitations, not proposed restrictions for the final feature.
+Required schema/data rebase support and the earlier agreed recovery contract remain separate follow-up work.
+
+#### Remote-rebase acceptance tests
+
+The `remote rebase acceptance` group in [schemaUpgradeBuffer.spec.ts](../../src/test/shared-tree/schemaUpgradeBuffer.spec.ts) specifies the desired behavior when remote changes arrive before the local upgrade is submitted.
+Its remote peer submits schema changes immediately, so schema-only reception is tested without requiring a remote data trigger.
+Its local peer buffers upgrades and records its own sequenced schema changes.
+This lets the tests detect publication caused by remote processing, duplicate schema publication, and attempts to overwrite a newer schema.
+
+All nine cases were run enabled on 2026-10-30 before adding skips: two passed and seven failed.
+Only the failing cases use `it.skip`, with TODO comments that identify the missing behavior.
+
+| Incoming change | Acceptance criteria | Result with the current prototype |
+| --- | --- | --- |
+| Data insertion, removal, or transactional replacement | Preserve the local schema, readable view, and root reference without submitting ops. The next local edit publishes the retained upgrade and converges with the peer. | Three skipped cases: the local upgrade is dropped and the view becomes incompatible. |
+| Identical schema, with or without later remote data | Preserve node references and use the received schema. An aborted transaction and later committed edits must not restore or publish the redundant local upgrade. | Two skipped cases: the view remains readable, but its root object is replaced. |
+| Compatible but insufficient schema | Retain the remaining local expansion through both the remote upgrade and a later remote data edit. The next local edit publishes an upgrade from the received schema to the local target. | One skipped case: the local target is dropped and the view becomes incompatible. |
+| Compatible covering schema with an unknown optional field | Use ordinary compatibility even when `isEquivalent` and `canUpgrade` are false. Preserve the root reference and unknown remote content without publishing the narrower local schema. | One skipped case: compatibility is correct, but the root object is replaced. |
+| Incompatible schema expansion, with or without later remote data | Notify the application that the view is incompatible. Preserve the received schema and content, send no local upgrade, and allow a replacement view to edit without publishing the old view's narrower schema. | Two active, passing cases. |
+
+The skipped tests also contain assertions after the first failing condition.
+Those later assertions are acceptance criteria, not behavior established by the enabled run.
+The node-reference failures require view-lifetime support as well as correct schema rebasing.
+The active tests that characterize dropped upgrades and reconnect-induced incompatibility must be updated when the corresponding acceptance cases are enabled.
+
+To rerun the unsupported cases, temporarily change the four `it.skip` registrations in this group to `it`, then run:
+
+```sh
+pnpm --dir packages/dds/tree run test:mocha:esm --grep '^Schema upgrade submission buffer remote rebase acceptance' --reporter spec
+```
+
+The enabled run reported **2 passing, 7 failing**, at the conditions listed above.
+No schema-rebase implementation or recovery workaround was added with these tests.
+
+After restoring the seven skips, the following focused regression commands each passed with **60 passing, 7 pending**:
+
+```sh
+pnpm --dir packages/dds/tree run test:mocha:esm --grep '^(SharedTreeCore|Schema upgrade submission buffer|CommitSubmissionBuffer)' --reporter dot
+pnpm --dir packages/dds/tree run test:mocha:prod --grep '^(SharedTreeCore|Schema upgrade submission buffer|CommitSubmissionBuffer)' --reporter dot
+```
+
+Production and test ESM builds, Biome, ESLint, and whitespace checks also passed.
+
+#### Earlier buffer-only validation
+
+These broader results predate the remote-rebase acceptance group:
+
+- Production and test ESM builds: passed.
+- Biome and ESLint on all six changed TypeScript files: passed.
+- `pnpm --dir packages/dds/tree run test:mocha:esm --grep '^CommitSubmissionBuffer|^Schema upgrade submission buffer|^sharedTreeView|^SharedTree |^SharedTreeCore|^SchematizingSimpleTreeView|^EditManager|^DefaultResubmitMachine|^BranchCommitEnricher|^Host and Guest correctness|^schemaSummarizer' --reporter dot`: 833 passed; 3 existing tests pending.
+- `pnpm --dir packages/dds/tree run test:mocha:prod --grep '^CommitSubmissionBuffer|^Schema upgrade submission buffer|^SchematizingSimpleTreeView' --reporter dot`: 88 passed.
+
 ### Approaches not recommended
 
 **Change the normal checkout's stored schema and delay only its op, without changing the surrounding invariants.**

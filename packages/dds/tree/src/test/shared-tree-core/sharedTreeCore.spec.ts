@@ -82,6 +82,23 @@ import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
+	it("ignores the buffering policy for detached commits", () => {
+		// This fixture uses a detached channel and no SharedTree schema policy.
+		// The generic core must handle detached commits on its own.
+		const tree = createTree({
+			indexes: [],
+			bufferCommitsUntil: () => {
+				// This policy would hold every commit if its result controlled submission.
+				return false;
+			},
+		});
+		changeTree(tree);
+		// Detached submission sequences the commit locally, so no later edit is
+		// needed to clear the queue or make the tree safe to summarize.
+		assert.equal(tree.getLocalBranch().getHead(), tree.getTrunkHead());
+		assert.doesNotThrow(() => tree.summarizeCore(mockSerializer));
+	});
+
 	it("summarizes without indexes", async () => {
 		const tree = createTree({ indexes: [] });
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
