@@ -1,7 +1,9 @@
 `flub typetests`
 ================
 
-Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+Updates configuration for type tests in package.json files and pnpm catalogs. If the previous version changes after running preparation, then install dependencies before building.
+
+    In pnpm workspaces, baseline versions are stored in the named "typeTest-previous" catalog by default. Use --no-catalog to write inline npm aliases instead.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during configuration. This is useful when resetting the type tests to a clean state, such as after a release.
 
@@ -11,11 +13,11 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ## `flub typetests`
 
-Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+Updates configuration for type tests in package.json files and pnpm catalogs. If the previous version changes after running preparation, then install dependencies before building.
 
 ```
 USAGE
-  $ flub typetests [-v | --quiet] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
+  $ flub typetests [-v | --quiet] [--catalog] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
     [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
@@ -46,6 +48,9 @@ FLAGS
   -r, --remove
       Remove the test "-previous" version dependency. This is also done implicitly (without this flag) if type tests are
       disabled.
+
+  --[no-]catalog
+      Store previous-version dependencies in the typeTest-previous pnpm catalog. Non-pnpm packages use inline npm aliases.
 
   --concurrency=<value>
       [default: 25] The number of tasks to execute concurrently.
@@ -92,8 +97,11 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Updates configuration for type tests in package.json files. If the previous version changes after running preparation,
-  then npm install must be run before building.
+  Updates configuration for type tests in package.json files and pnpm catalogs. If the previous version changes after
+  running preparation, then install dependencies before building.
+
+  In pnpm workspaces, baseline versions are stored in the named "typeTest-previous" catalog by default. Use --no-catalog
+  to write inline npm aliases instead.
 
   Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during
   configuration. This is useful when resetting the type tests to a clean state, such as after a release.
