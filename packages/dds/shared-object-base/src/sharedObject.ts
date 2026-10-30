@@ -79,19 +79,7 @@ interface ProcessTelemetryProperties {
  * @remarks
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
  * Even more such behaviors are implemented in the {@link SharedObject} class.
- * @deprecated This class will become internal in release 3.20.0.
- * Use existing distributed data structures instead of custom subclasses.
- * Use {@link ISharedObject} for types that do not expose implementation details.
- * See {@link https://github.com/microsoft/FluidFramework/issues/26284} for details.
- * @privateRemarks
- * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
- * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
- * or if the intention is that no other implementations should exist and creating some might break things.
- * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
- *
- * TODO:
- * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObjectCore<
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -729,16 +717,7 @@ export abstract class SharedObjectCore<
  * Helper for implementing {@link ISharedObject} with simplified, synchronous summarization and garbage collection.
  * @remarks
  * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
- * @deprecated This class will become internal in release 3.20.0.
- * Use existing distributed data structures instead of custom subclasses.
- * Use {@link ISharedObject} for types that do not expose implementation details.
- * See {@link https://github.com/microsoft/FluidFramework/issues/26284} for details.
- * @privateRemarks
- * TODO:
- * This class is badly named.
- * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
- * and this class should be renamed to something like "SharedObjectSynchronous".
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,

@@ -134,6 +134,17 @@ SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/do
 const tree = SharedTree.create(runtime);
 ```
 
+The package exports `SharedTree` as a creation value and a type alias for `ISharedTree`. Direct construction and inheritance from `SharedTree` are no longer supported. Use `SharedTree.create(runtime)` or `SharedTree.getFactory()` instead of the implementation constructor. The factory overloads retain their write-format options.
+
+```typescript
+import { SharedTree, WriteFormat, type ISharedTree } from "@fluid-experimental/tree";
+
+const tree: ISharedTree = SharedTree.create(runtime);
+const factory = SharedTree.getFactory(WriteFormat.v0_1_1, undefined);
+```
+
+The interface retains typed handles, edits, ID conversions, events, and revision history through `logViewer`. Both `getRevisionViewInMemory` and deprecated `getRevisionViewInSession` remain available. `EagerCheckout`, `Transaction`, and undo handlers accept the interface. This API change does not convert persisted data to modern `@fluidframework/tree`.
+
 Upon creation, the tree will contain a single node: the [initialTree](./src/InitialTree.ts). All SharedTrees begin with this initial node as their root node, which cannot be deleted or moved. It provides an anchor for new nodes to be inserted underneath it.
 
 ## Reading
