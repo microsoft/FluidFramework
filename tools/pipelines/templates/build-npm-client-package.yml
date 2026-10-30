@@ -56,6 +56,10 @@ parameters:
   type: string
   default: '22.22.2'
 
+- name: buildNodeVersion
+  type: string
+  default: '22.22.2'
+
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -214,6 +218,7 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
+              nodeVersion: ${{ parameters.buildNodeVersion }}
               ${{ if parameters.independentTestBuilds }}:
                 pool: ${{ parameters.poolBuild }}
                 taskBuild: ci:build
@@ -355,6 +360,8 @@ extends:
                     fi
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                parameters:
+                  version: ${{ parameters.buildNodeVersion }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:

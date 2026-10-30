@@ -24,6 +24,10 @@ parameters:
   type: string
   default: 'false'
 
+- name: nodeVersion
+  type: string
+  default: '22.22.2'
+
 # A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
 # a pipeline stage separate from the build stage.
 - name: checks
@@ -46,6 +50,8 @@ stages:
       fetchDepth: 1
       fetchTags: false
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
+      parameters:
+        version: ${{ parameters.nodeVersion }}
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:

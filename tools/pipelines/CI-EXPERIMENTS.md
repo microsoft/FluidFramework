@@ -6,8 +6,10 @@ Experiment branch: `CraigMacomber/FluidFramework:fastCI2`.
 Test pull request: [microsoft/FluidFramework#28593](https://github.com/microsoft/FluidFramework/pull/28593).
 Started on 2026-10-29.
 
-**Last fully passing reference configuration (E12):** Node 22.22.2 and TypeScript 6 workers with the lean runtime graph and development-only example bundles.
-Its latest run passed in **16m 40s**, including **3m 36s** of initial queueing, versus the original **33m 28s** baseline.
+**Latest fully passing configuration:** run [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) completed in **14m 43s**, versus the original **33m 28s** baseline (56% less observed elapsed time).
+It passed 45,649 tests with 3,235 skipped and no failures.
+It used Node 22 for Mocha/policy/artifact jobs and Node 26 for other verification jobs, with TypeScript 6 workers, lean runtime builds, development-only example bundles, and corrected parallel merge-tree tests.
+The next experiment moves only client policy and artifact builds to Node 26; the matrix below distinguishes that trial from the last green configuration.
 The partial TypeScript 7 adapter was demonstrated but is not retained: the worker comparison did not justify its extra compatibility machinery.
 Node 26.13.0 passed isolated benchmarks but the first CI attempt was blocked by `opossum@8.5.0`.
 The scoped opossum 10.0.0 override fixed installation, but E14 then exposed 12 Node 26 unit-test incompatibilities.
@@ -16,14 +18,14 @@ The current branch therefore intentionally uses the following mixed runtime conf
 | Job | Current Node.js version | Reason |
 | --- | --- | --- |
 | Mocha unit suite (`Coverage tests`), including merge-tree | 22.22.2 | Restored after Node 26 failures involving recursive `fs.rmdirSync` and browser-storage assumptions |
-| Local-service, Tinylicious service, and stress verification | 26.13.0 | Continue the newer-runtime experiment with the supported opossum override |
-| Playwright and AreTheTypesWrong verification | 26.13.0 | These jobs passed in E14; mixed-configuration confirmation is in progress |
-| Client policy/type/API validation and artifact build | 22.22.2 | Not yet tested on Node 26; deliberately unchanged, not known to be incompatible |
+| Local-service, Tinylicious service, and stress verification | 26.13.0 | All passed in the unchanged repeat 431044 with the supported opossum override |
+| Playwright and AreTheTypesWrong verification | 26.13.0 | Passed in the mixed-runtime confirmation 431044 |
+| Client policy/type/API validation and artifact build | 26.13.0, new trial | Last green run used 22.22.2; Node 26 compatibility/performance for these jobs is not yet demonstrated |
 | Separate repository policy pipeline and all non-PR jobs | 22.22.2 | Outside the newer-runtime trial |
 
 The measured 7.5% merge-tree and approximately 11% compilation improvements are local workload results, not demonstrated end-to-end CI savings.
-In particular, the current Mocha and main build jobs do not receive those potential Node 26 gains because they still run on Node 22.
-Trying the policy/artifact build jobs on Node 26 is a separate, untested opportunity; it does not require migrating the incompatible unit tests first.
+The Mocha job still does not receive those potential Node 26 gains because it remains on Node 22.
+The policy/artifact trial tests the compilation opportunity separately, without migrating the incompatible unit tests.
 
 **First-phase result:** the configuration passed twice, in **17m 20s** and **19m 09s**, compared with the original **33m 28s** baseline.
 That is 43-48% less observed elapsed time, with substantial agent-queue variation.
@@ -36,6 +38,14 @@ Also record agent time, queueing, and cache behavior: reducing a single step is 
 These are proof-of-concept changes, not a production rollout.
 Keep release behavior, validation, security scanning, and test coverage intact.
 Local CI readiness checks are skipped by request; remote CI is the experiment.
+
+### Current performance target
+
+Aim for every job to finish within nine minutes on most runs, including setup, dependency installation, compilation, tests, reporting, and post-job work.
+Track agent waiting separately and continue reporting total queue-to-green time.
+Do not meet the budget by dropping validation or hiding intermittent failures.
+Run 431044 had seven of nine timed agent jobs under nine minutes; artifact build and Tinylicious were above it.
+One successful run does not establish a reliable percentile.
 
 ## Retained changes with measured evidence
 
@@ -55,7 +65,7 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 ## Experiment status
 
-E1-E14 have recorded outcomes; the merge-tree optimization and mixed-runtime confirmation are active.
+The mixed-runtime repeat is green; the Node 26 client policy/artifact experiment is active.
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
 
@@ -78,7 +88,7 @@ Run 431023 passed dependency installation, confirming the override removes the e
 It subsequently found 12 unit-test failures on Node 26: obsolete recursive `fs.rmdirSync` calls in fluid-runner tests and browser-storage assumptions in example/devtools tests.
 These are not opossum installation or circuit-breaker failures.
 Rather than broaden this experiment into unrelated test migrations, keep the full Mocha unit-suite job on Node 22.
-The other verification jobs continue the Node 26 experiment; passing runs are still required before calling the mixed-runtime configuration validated.
+The other verification jobs retained Node 26, and the complete mixed-runtime configuration subsequently passed in run 431044.
 This is a user-authorized follow-up to the original install blocker, not evidence that the earlier Node 26 run passed.
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
@@ -191,6 +201,8 @@ This was not a cold-cache benchmark.
 | E13: Node 26 PR test jobs | `3eff90cec5069d9990c71115b07bcba9c30e5797` | [430990](https://dev.azure.com/fluidframework/public/_build/results?buildId=430990) | Blocked before tests; reverted | Frozen install rejects `opossum@8.5.0` on Node 26 |
 | E14: Node 26 with supported opossum | `bc34fb6ba8522cfb1fedfdaae9780c17cca86ff7` | [431023](https://dev.azure.com/fluidframework/public/_build/results?buildId=431023) | Installation fixed; unit suite failed | 12 Node-compatibility failures unrelated to opossum; keep full Mocha job on Node 22 |
 | E15: spec-only parallel merge-tree plus lower-allocation diagnostics | `6d1de054676de5ec446b80a42a49c1fe5135c472` | [431033](https://dev.azure.com/fluidframework/public/_build/results?buildId=431033) | Mocha passed; separate Tinylicious step failed | Full Mocha step 187.4s; summary-upload setup network error prevents an overall green result |
+| E15 unchanged repeat | `4f8679fa6a5f902cab8c1e5e438ddc035beb5bce` | [431044](https://dev.azure.com/fluidframework/public/_build/results?buildId=431044) | Passed | 14m 43s; Mocha 194.7s; all mixed-runtime jobs green |
+| E16: Node 26 client policy/artifact builds | Pending | Pending | Preparing | Keep Mocha/non-PR on Node 22; test faster compilation without altering validation |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -629,6 +641,29 @@ The cause is unresolved: it has not been classified as transient, opossum-relate
 No end-to-end green timing is claimed for E15.
 A report-only push repeats the unchanged implementation to collect another result without skipping or weakening this check.
 
+The unchanged repeat 431044 passed with 45,649 passed tests and 3,235 skipped.
+Companion policy run [431040](https://dev.azure.com/fluidframework/public/_build/results?buildId=431040) passed.
+The Tinylicious error did not reproduce; its cause remains unresolved, rather than declared fixed.
+The monitor itself encountered an Azure API HTTP 503; querying the completed run confirmed CI success.
+The monitoring helper now retries selected transient HTTP errors with bounded backoff.
+
+| Timed job in 431044 | Duration | Under nine minutes? |
+| --- | ---: | --- |
+| Client policy/type validation | 7m 30s | Yes |
+| Source analysis | 45s | Yes |
+| Artifact build | 10m 59s | No |
+| Mocha | 7m 27s | Yes |
+| Tinylicious service | 9m 36s | No |
+| Playwright | 5m 24s | Yes |
+| Local service | 4m 55s | Yes |
+| AreTheTypesWrong | 3m 50s | Yes |
+| Stress | 3m 17s | Yes |
+
+The artifact job included an 80-second Node-selection step and 76-second component-governance step, well above many previous runs.
+Its checked compile itself stayed near 207 seconds.
+Tinylicious's test step was 420 seconds; setup/compilation/reporting brought its total just over the target.
+These distinguish work that could benefit from faster execution from variable agent/template overhead.
+
 ### Why merge-tree is slow
 
 The existing suite repeatedly simulates and compares multiple collaborating clients over large operation matrices.
@@ -681,10 +716,8 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
    Preserve minimum-supported-runtime coverage when deciding on a production test matrix.
 9. Measure whether the Node-selection step can avoid copying an already-active matching runtime.
    Instrument the initial version first; no such change was made in this experiment.
-10. Try Node 26 independently in the client policy/type-validation and artifact-build jobs.
-    Neither job has been tested on Node 26 in this experiment.
-    The local compilation gains motivate this trial, but are not evidence of its compatibility or CI speedup.
-    Separately migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
+10. Migrate the unit tests' removed filesystem API usage and browser-storage assumptions before moving the full Mocha job back to Node 26.
+    This remains separate from the active policy/artifact runtime trial.
 
 ## Limitations
 
@@ -698,7 +731,8 @@ Release/non-pull-request pipelines were not executed as part of this experiment;
 The tsconfig mutation is deliberately confined to disposable test jobs and remains proof-of-concept machinery, not a recommended public build interface.
 The partial native TypeScript adapter is not enabled.
 E14's dependency installation succeeded, but its Node 26 unit suite failed.
-The current mixed-runtime configuration retains the supported opossum upgrade and keeps Mocha on Node 22; its remote confirmation is pending.
+The mixed-runtime configuration retaining Mocha on Node 22 passed in 431044.
+The subsequent Node 26 policy/artifact trial has not yet been validated remotely.
 No engine-policy bypass is used, and earlier unsuccessful trials remain recorded as failures.
 The branch-protection API returned HTTP 403, so exact repository-level required-check configuration could not be inspected.
 Keep the existing pipeline and job check identities rather than relying on a new pipeline becoming required.
