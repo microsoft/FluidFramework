@@ -13,7 +13,8 @@ import { toForestType } from "./forestType.js";
 
 /**
  * Opt-in string-piece storage experiment. Not a supported package export.
- * Eligible string leaves use pieces; other content uses the optimized forest's existing chunks.
+ * Directly encountered eligible string leaves use pieces; existing containers are reused.
+ * Repacking nested text decoded from older formats is outside this prototype.
  */
 export const ForestTypeStringPrototype = toForestType(
 	(breaker, schema, idCompressor, shouldEncodeIncrementally) =>

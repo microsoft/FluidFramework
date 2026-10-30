@@ -614,13 +614,15 @@ export function chunkRange(
 		let reusedChunk = false;
 		// symbol based fast path to check for chunk:
 		// return existing chunk with a increased ref count if possible.
-		// The string prototype visits decoded basic subtrees and string-leaf uniform chunks
-		// so loaded and remote content can acquire the same representation as local inserts.
+		// Convert directly encountered string leaves, but retain reuse of container chunks.
+		// Repacking nested content decoded from older formats is outside this prototype.
 		if (
 			start === cursor.fieldIndex &&
 			!(
 				chunkCompressor.policy.stringChunks === true &&
-				(source instanceof BasicChunk ||
+				((source instanceof BasicChunk &&
+					source.fields.size === 0 &&
+					isCharacter(cursor.value)) ||
 					(source instanceof UniformChunk &&
 						source.shape.treeShape.fields.size === 0 &&
 						isCharacter(cursor.value)))

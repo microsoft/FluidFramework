@@ -33,6 +33,15 @@ Sparse checkpoints every 64 code points support random cursor access; sequential
 Separate surrogate-half leaves stay separate, even when adjacent.
 Other leaf values use the existing representation.
 The opt-in policy can also pack eligible string-leaf sequences outside PlainText, but does not optimize formatted-text construction or formatting.
+The chunker converts directly encountered character leaves and reuses existing container chunks.
+It does not scan those containers to find more text.
+This preserves chunk reuse for numeric maps and other existing subtrees.
+
+Automatic repacking of nested text decoded from older formats is outside this prototype.
+Old-format summaries and remote inserts of non-empty text subtrees remain supported, but their text can stay unpacked.
+Direct remote character inserts can still be packed when their leaves reach the chunker.
+The persisted-format follow-up must verify that its decoder produces packed text for remote inserts and summaries.
+Avoiding a decoded node allocation for each character belongs in that batch or run decoder, not in repeated container conversion.
 
 `PlainText.insertAt` supplies a primitive field cursor instead of preparing a MapTree for each character.
 The destination forest chooses its representation; only the prototype forest adopts string pieces.

@@ -79,6 +79,45 @@ function pieces(root: PlainText.Tree): StringChunk[] {
 }
 
 describe("PlainText string storage prototype", () => {
+	for (const [name, forest] of [
+		["optimized", ForestTypeOptimized],
+		["prototype", ForestTypeStringPrototype],
+	] as const) {
+		it(`reuses an existing numeric map without traversing its fields (${name})`, () => {
+			const sf = new SchemaFactory(`string-storage-numeric-map-${name}`);
+			class Numbers extends sf.map("Numbers", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Numbers }),
+			);
+			view.initialize(
+				new Numbers(
+					Object.fromEntries(
+						Array.from({ length: 10_000 }, (_, index) => [`key-${index}`, index] as const),
+					),
+				),
+			);
+			const inner = getInnerNode(view.root);
+			assert(inner.isHydrated());
+			assert(inner.context.checkout.forest instanceof ChunkedForest);
+			const source = tryGetChunk(inner.borrowCursor());
+			assert(source instanceof BasicChunk);
+			const cursor = source.cursor();
+			cursor.firstField = () => {
+				throw new Error("Reusing an existing map must not traverse its fields");
+			};
+			const chunks = inner.context.checkout.forest.chunkField(cursor);
+			try {
+				assert.equal(chunks.length, 1);
+				assert.equal(chunks[0], source);
+			} finally {
+				for (const chunk of chunks) {
+					chunk.referenceRemoved();
+				}
+				view.dispose();
+			}
+		});
+	}
+
 	it("initializes a deep non-text tree without primitive storage", () => {
 		const sf = new SchemaFactory("string-storage-numeric-chain");
 		class NumericNode extends sf.objectRecursive("NumericNode", {
@@ -309,7 +348,7 @@ describe("PlainText string storage prototype", () => {
 		view.dispose();
 	});
 
-	it("loads an ordinary optimized-forest summary into packed storage", async () => {
+	it("loads and edits an ordinary optimized-forest summary without requiring packed storage", async () => {
 		const provider = new TestTreeProviderLite(1);
 		const source = provider.trees[0];
 		assert(source !== undefined);
@@ -333,12 +372,11 @@ describe("PlainText string storage prototype", () => {
 		);
 		const loadedView = loaded.viewWith(config);
 		assert.deepEqual(loadedView.root.charactersCopy(), view.root.charactersCopy());
-		assert.equal(
-			pieces(loadedView.root).reduce((n, chunk) => n + chunk.topLevelLength, 0),
-			600,
-		);
+		const expected = view.root.charactersCopy();
+		expected.splice(123, 0, ..."edit");
 		loadedView.root.insertAt(123, "edit");
 		assert.equal(loadedView.root.characterCount(), 604);
+		assert.deepEqual(loadedView.root.charactersCopy(), expected);
 		loadedView.dispose();
 		view.dispose();
 	});
@@ -398,6 +436,27 @@ describe("PlainText string storage prototype", () => {
 		provider.synchronizeMessages();
 		assert.deepEqual(first.root.charactersCopy(), second.root.charactersCopy());
 		assert(pieces(second.root).length < 30);
+		first.dispose();
+		second.dispose();
+	});
+
+	it("preserves remote non-empty text subtrees without requiring packed storage", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({ forest: ForestTypeStringPrototype }).getFactory(),
+		);
+		const config = new TreeViewConfiguration({ schema: PlainText.Tree });
+		const first = provider.trees[0]?.viewWith(config);
+		const second = provider.trees[1]?.viewWith(config);
+		assert(first !== undefined && second !== undefined);
+		first.initialize(PlainText.Tree.fromString("ab\u{1F600}".repeat(200)));
+		provider.synchronizeMessages();
+		assert.deepEqual(second.root.charactersCopy(), first.root.charactersCopy());
+		second.root.insertAt(10, "X");
+		first.root.removeRange(20, 25);
+		provider.synchronizeMessages();
+		assert.equal(second.root.characterCount(), 596);
+		assert.deepEqual(second.root.charactersCopy(), first.root.charactersCopy());
 		first.dispose();
 		second.dispose();
 	});
