@@ -1188,6 +1188,77 @@ describe("ArrayNode", () => {
 					assert.deepEqual([...array], []);
 				});
 
+				for (const initial of [[], [1, 2, 3]]) {
+					for (const sourceKind of ["implicit", "explicit", "cross-array"] as const) {
+						it(`empty range moves preserve anchors and emit no events (${sourceKind}, length ${initial.length})`, () => {
+							const schema = schemaFactory.object("EmptyMoves", {
+								source: schemaFactory.array(schemaFactory.number),
+								destination: schemaFactory.array(schemaFactory.number),
+							});
+							const root = init(schema, { source: initial, destination: initial });
+							const events: string[] = [];
+							for (const node of [root, root.source, root.destination]) {
+								for (const event of ["nodeChanged", "treeChanged"] as const) {
+									TreeBeta.on(node, event, () => events.push(event));
+								}
+							}
+							const anchors = [root.source, root.destination].map((array) =>
+								Array.from({ length: array.length + 1 }, (_, index) =>
+									createArrayInsertionAnchor(array, index),
+								),
+							);
+
+							for (let sourceIndex = 0; sourceIndex <= initial.length; sourceIndex++) {
+								for (
+									let destinationGap = 0;
+									destinationGap <= initial.length;
+									destinationGap++
+								) {
+									if (sourceKind === "implicit") {
+										root.source.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex);
+									} else {
+										const destination =
+											sourceKind === "explicit" ? root.source : root.destination;
+										destination.moveRangeToIndex(
+											destinationGap,
+											sourceIndex,
+											sourceIndex,
+											root.source,
+										);
+									}
+								}
+							}
+
+							assert.deepEqual(events, []);
+							assert.deepEqual([...root.source], initial);
+							assert.deepEqual([...root.destination], initial);
+							for (const arrayAnchors of anchors) {
+								for (const [index, anchor] of arrayAnchors.entries()) {
+									assert.equal(anchor.index, index);
+									anchor.dispose();
+								}
+							}
+						});
+					}
+				}
+
+				it("validates indices for empty range moves", () => {
+					const array = init(schemaType, [1, 2, 3]);
+					for (const [sourceIndex, destinationGap, error] of [
+						[4, 1, /out of bounds/],
+						[-1, 1, /Expected non-negative index/],
+						[1.5, 1, /Expected a safe integer/],
+						[1, 4, /out of bounds/],
+						[1, -1, /Expected non-negative index/],
+						[1, 1.5, /Expected a safe integer/],
+					] as const) {
+						assert.throws(
+							() => array.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex),
+							validateUsageError(error),
+						);
+					}
+				});
+
 				it("invalid content type", () => {
 					const schema = schemaFactory.object("parent", {
 						array1: schemaFactory.array([schemaFactory.number, schemaFactory.string]),
@@ -1234,6 +1305,30 @@ describe("ArrayNode", () => {
 					);
 				});
 			});
+		});
+	}
+
+	for (const count of [0, 1]) {
+		it(`range moves still reject incompatible contexts (${count} items)`, () => {
+			const unhydrated = new CustomizableNumberArray([1]);
+			const hydrated = hydrate(CustomizableNumberArray, [1]);
+			const otherView = hydrate(CustomizableNumberArray, [1]);
+			assert.throws(
+				() => hydrated.moveRangeToIndex(0, 0, count, unhydrated),
+				validateUsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				),
+			);
+			assert.throws(
+				() => unhydrated.moveRangeToIndex(0, 0, count, hydrated),
+				validateUsageError(
+					"Cannot move elements from a hydrated array to an unhydrated array.",
+				),
+			);
+			assert.throws(
+				() => hydrated.moveRangeToIndex(0, 0, count, otherView),
+				validateUsageError("Cannot move elements between two different TreeViews."),
+			);
 		});
 	}
 
@@ -1654,6 +1749,35 @@ describe("ArrayNode", () => {
 					validateUsageError(/non-negative/),
 				);
 			});
+		});
+
+		describeHydration("range move insertion anchors", (init) => {
+			for (const [destinationGap, expectedContent, expectedIndexes] of [
+				[0, [1, 2, 0, 3, 4], [2, 3, 3, 3, 4, 5]],
+				[1, [0, 1, 2, 3, 4], [0, 3, 3, 3, 4, 5]],
+				[2, [0, 1, 2, 3, 4], [0, 1, 3, 3, 4, 5]],
+				[3, [0, 1, 2, 3, 4], [0, 1, 1, 3, 4, 5]],
+				[4, [0, 3, 1, 2, 4], [0, 1, 1, 1, 4, 5]],
+				[5, [0, 3, 4, 1, 2], [0, 1, 1, 1, 2, 5]],
+			] as const) {
+				it(`tracks every gap when moving [1, 3) to gap ${destinationGap}`, () => {
+					const array = init(CustomizableNumberArray, [0, 1, 2, 3, 4]);
+					const anchors = Array.from({ length: array.length + 1 }, (_, index) =>
+						createArrayInsertionAnchor(array, index),
+					);
+
+					array.moveRangeToIndex(destinationGap, 1, 3);
+
+					assert.deepEqual([...array], expectedContent);
+					assert.deepEqual(
+						anchors.map((anchor) => anchor.index),
+						expectedIndexes,
+					);
+					for (const anchor of anchors) {
+						anchor.dispose();
+					}
+				});
+			}
 		});
 
 		// Multiple edits being processed at once can complicate anchor handling.

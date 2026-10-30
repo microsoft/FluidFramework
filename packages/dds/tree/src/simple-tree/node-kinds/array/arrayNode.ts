@@ -1374,18 +1374,29 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			}
 		}
 
-		const movedCount = sourceEnd - sourceStart;
-		if (destinationField.context.isHydrated()) {
-			if (!sourceField.context.isHydrated()) {
-				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
-				);
-			}
-			if (sourceField.context !== destinationField.context) {
-				throw new UsageError("Cannot move elements between two different TreeViews.");
-			}
+		const destinationContext = destinationField.context;
+		const sourceContext = sourceField.context;
+		if (sourceContext.isHydrated() !== destinationContext.isHydrated()) {
+			throw new UsageError(
+				destinationContext.isHydrated()
+					? "Cannot move elements from an unhydrated array to a hydrated array."
+					: "Cannot move elements from a hydrated array to an unhydrated array.",
+			);
+		}
+		if (destinationContext.isHydrated() && sourceContext !== destinationContext) {
+			throw new UsageError("Cannot move elements between two different TreeViews.");
+		}
 
-			destinationField.context.checkout.editor.move(
+		const movedCount = sourceEnd - sourceStart;
+		if (movedCount === 0) {
+			// The merge semantics allow no-oping empty moves,
+			// and doing so helps align hydrated and unhydrated move behaviors
+			// as they would differ in how they handle empty moves otherwise.
+			return;
+		}
+
+		if (destinationContext.isHydrated()) {
+			destinationContext.checkout.editor.move(
 				sourceField.getFieldPath(),
 				sourceStart,
 				movedCount,
@@ -1393,18 +1404,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				destinationGap,
 			);
 		} else {
-			if (!(sourceField instanceof UnhydratedSequenceField)) {
-				throw new UsageError(
-					"Cannot move elements from a hydrated array to an unhydrated array.",
-				);
-			}
-
-			if (sourceField.context.isHydrated()) {
-				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
-				);
-			}
-
+			assert(
+				sourceField instanceof UnhydratedSequenceField,
+				"Expected an unhydrated source field after validating move contexts",
+			);
 			assert(
 				destinationField instanceof UnhydratedSequenceField,
 				0xcd5 /* destinationField should be unhydrated since we're in the else branch of isHydrated() check */,

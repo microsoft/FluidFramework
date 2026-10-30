@@ -272,9 +272,9 @@ describe("array node delta in nodeChanged", () => {
 	});
 
 	// Overlapping range moves must preserve content in both hydrated and unhydrated implementations.
-	// Any emitted delta must replay to that same content, even though notification counts can differ.
+	// Each move emits a delta that must replay to that same content.
 	// Check both event APIs: correct final content alone does not prove that subscribers can replay it.
-	describeHydration("overlapping range moves", (init, hydrated) => {
+	describeHydration("overlapping range moves", (init) => {
 		for (const event of ["nodeChanged", "treeChanged"] as const) {
 			it(`preserves content and ${event} deltas when the destination is inside the range`, () => {
 				const initialState = [0, 1, 2, 3, 4, 5];
@@ -331,12 +331,7 @@ describe("array node delta in nodeChanged", () => {
 							);
 							myArray.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
 							assert.deepEqual([...myArray], initialState);
-							// Hydrated no-op moves can emit remove/insert ops with no net content change.
-							// Require correct replay above, not an empty delta or matching event counts.
-							// The unhydrated shortcut should avoid emitting events entirely.
-							if (!hydrated) {
-								assert.equal(eventCount, 0);
-							}
+							assert.equal(eventCount, 1);
 						}
 					}
 				}

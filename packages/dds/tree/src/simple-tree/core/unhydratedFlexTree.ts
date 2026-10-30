@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -67,7 +67,7 @@ interface UnhydratedTreeSequenceFieldEditBuilder
 	 * Moves elements from a source position to a destination position.
 	 * Can move within the same field or from another unhydrated sequence field.
 	 * @param sourceIndex - The index of the first element to move.
-	 * @param count - The number of elements to move.
+	 * @param count - The number of elements to move. Must be a positive integer.
 	 * @param destIndex - The index at which to insert the moved elements.
 	 * @param source - The source field to move from (defaults to this field for within-field moves).
 	 */
@@ -652,13 +652,16 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
-				// A destination gap inside the moved range leaves the sequence unchanged.
-				if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
-					return;
-				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
+					if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+						// The destination gap is inside the moved range.
+						// This leaves the content unchanged, so we return early.
+						// We still need the enclosing edit call to emit a change event with delta marks
+						// matching hydrated editing behavior.
+						return;
+					}
 					const removed = mapTrees.splice(sourceIndex, count);
 					// Adjust destination index if it comes after the source
 					const adjustedDest = destIndex > sourceIndex ? destIndex - count : destIndex;
@@ -705,32 +708,57 @@ export class UnhydratedSequenceField
  * Builds {@link DeltaMark}s describing a within-field move for use in
  * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
  *
+ * @param sourceIndex - The index of the first element to move in the pre-edit sequence.
+ * @param count - The number of consecutive elements to move. Must be a positive integer.
+ * @param destIndex - The destination gap in the pre-edit sequence, without adjustment for removal.
+ * @returns Synthetic notification marks.
+ * These marks use placeholder detached-node IDs and are not suitable for applying the move to a forest.
  * @remarks
- * The destination gap must not be strictly inside the moved range.
+ * The caller must provide nonnegative integer indices with the source range and destination gap
+ * within the sequence bounds. The array API filters out empty moves before calling this helper.
  *
- * Forward move (`sourceIndex < destIndex`):
- * `[retain(src), detach(n), retain(mid), attach(n)]`
- *
- * Backward move (`destIndex < sourceIndex`):
- * `[retain(dst), attach(n), retain(mid), detach(n)]`
- *
- * A no-op move (`sourceIndex === destIndex`) returns an empty array; the event
- * should not fire in that case, but the empty marks are harmless if it does.
+ * Content-preserving moves can still change insertion anchors.
  */
-function buildUnhydratedMoveMarks(
+export function buildUnhydratedMoveMarks(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
 ): readonly DeltaMark[] {
+	debugAssert(
+		() => (Number.isInteger(count) && count > 0) || "Expected a positive integer move count",
+	);
 	const marks: DeltaMark[] = [];
-	if (sourceIndex < destIndex) {
-		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+
+	const leadingRetain = Math.min(sourceIndex, destIndex);
+	if (leadingRetain > 0) {
+		marks.push({ count: leadingRetain });
+	}
+
+	if (destIndex > sourceIndex && destIndex < sourceIndex + count) {
+		// Destination is strictly inside the source range.
+		// This is a no-op as far as content changes go, but still needs to emit marks which match the hydrated event behavior.
+
+		// The prefix is the part of the source range before the destination gap; the suffix is the part after it.
+		// Detach the prefix, attach the whole range, then detach the suffix.
+		// With real detached-node IDs, the suffix's ID would keep the prefix's major and increase its minor by prefixLength.
+		const prefixLength = destIndex - sourceIndex;
+		marks.push({ count: prefixLength, detach: syntheticDetachedNodeId });
+		// Attach the whole range at the destination gap.
+		marks.push({ count, attach: syntheticDetachedNodeId });
+		marks.push({
+			count: count - prefixLength,
+			detach: syntheticDetachedNodeId,
+		});
+	} else if (sourceIndex < destIndex) {
+		// Forward move, including to the source range's ending gap: detach before attaching.
+		// Retain only the elements between the source range's end and the destination.
 		marks.push({ count, detach: syntheticDetachedNodeId });
 		const between = destIndex - sourceIndex - count;
 		if (between > 0) marks.push({ count: between });
 		marks.push({ count, attach: syntheticDetachedNodeId });
-	} else if (destIndex < sourceIndex) {
-		if (destIndex > 0) marks.push({ count: destIndex });
+	} else {
+		// Backward move, including to the source range's starting gap: attach before detaching.
+		// This order matters for insertion anchors even when the destination equals the source.
 		marks.push({ count, attach: syntheticDetachedNodeId });
 		const between = sourceIndex - destIndex;
 		if (between > 0) marks.push({ count: between });

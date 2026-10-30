@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
+	type DeltaMark,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
@@ -16,6 +20,7 @@ import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/ind
 // eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {
+	buildUnhydratedMoveMarks,
 	UnhydratedFlexTreeNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -25,6 +30,133 @@ import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { expectEqualCursors } from "../../utils.js";
+
+describe("buildUnhydratedMoveMarks", () => {
+	const id = { minor: 0 };
+	const cases: readonly [
+		name: string,
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		expected: readonly DeltaMark[],
+	][] = [
+		[
+			"backward move to zero",
+			3,
+			2,
+			0,
+			[{ count: 2, attach: id }, { count: 3 }, { count: 2, detach: id }],
+		],
+		[
+			"backward move with a leading retain",
+			4,
+			2,
+			1,
+			[{ count: 1 }, { count: 2, attach: id }, { count: 3 }, { count: 2, detach: id }],
+		],
+		[
+			"forward move from zero",
+			0,
+			2,
+			5,
+			[{ count: 2, detach: id }, { count: 3 }, { count: 2, attach: id }],
+		],
+		[
+			"forward move with a leading retain",
+			1,
+			2,
+			5,
+			[{ count: 1 }, { count: 2, detach: id }, { count: 2 }, { count: 2, attach: id }],
+		],
+		[
+			"move to the starting gap at zero",
+			0,
+			2,
+			0,
+			[
+				{ count: 2, attach: id },
+				{ count: 2, detach: id },
+			],
+		],
+		[
+			"move to the starting gap with a leading retain",
+			1,
+			2,
+			1,
+			[{ count: 1 }, { count: 2, attach: id }, { count: 2, detach: id }],
+		],
+		[
+			"move from zero to the ending gap",
+			0,
+			2,
+			2,
+			[
+				{ count: 2, detach: id },
+				{ count: 2, attach: id },
+			],
+		],
+		[
+			"move to the ending gap with a leading retain",
+			1,
+			2,
+			3,
+			[{ count: 1 }, { count: 2, detach: id }, { count: 2, attach: id }],
+		],
+		[
+			"interior move from zero",
+			0,
+			2,
+			1,
+			[
+				{ count: 1, detach: id },
+				{ count: 2, attach: id },
+				{ count: 1, detach: id },
+			],
+		],
+		[
+			"interior move with a shorter prefix",
+			1,
+			3,
+			2,
+			[
+				{ count: 1 },
+				{ count: 1, detach: id },
+				{ count: 3, attach: id },
+				{ count: 2, detach: id },
+			],
+		],
+		[
+			"interior move with a shorter suffix",
+			1,
+			3,
+			3,
+			[
+				{ count: 1 },
+				{ count: 2, detach: id },
+				{ count: 3, attach: id },
+				{ count: 1, detach: id },
+			],
+		],
+	];
+
+	for (const [name, sourceIndex, count, destIndex, expected] of cases) {
+		it(name, () => {
+			assert.deepEqual(buildUnhydratedMoveMarks(sourceIndex, count, destIndex), expected);
+		});
+	}
+
+	for (const count of [0, -1, 0.5]) {
+		it(`rejects a count of ${count}`, function () {
+			if (!nonProductionConditionalsIncluded()) {
+				this.skip();
+			}
+			assert.throws(
+				() => buildUnhydratedMoveMarks(1, count, 0),
+				validateAssertionError("Debug assert failed: Expected a positive integer move count"),
+			);
+		});
+	}
+});
 
 describe("unhydratedFlexTree", () => {
 	// #region The schema used in this test suite
