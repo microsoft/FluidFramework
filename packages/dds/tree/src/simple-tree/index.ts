@@ -93,6 +93,7 @@ export {
 	type SchemaStaticsAlpha,
 	type NodeProvider,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,

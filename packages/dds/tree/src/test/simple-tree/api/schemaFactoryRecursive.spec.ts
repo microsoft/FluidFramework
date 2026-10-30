@@ -12,6 +12,8 @@ import {
 	validateTypeError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import type { ObjectSchemaOptionsBeta } from "../../../entrypoints/beta.js";
 import {
 	SchemaFactory,
 	type ObjectSchemaOptions,
@@ -555,16 +557,13 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("Node schema metadata - beta", () => {
 			const factory = new SchemaFactoryBeta("");
-			class Foo extends factory.objectRecursive(
-				"Foo",
-				{ bar: [() => Foo] },
-				{
-					metadata: {
-						description: "A recursive object called Foo",
-						custom: { baz: true },
-					},
+			const options: ObjectSchemaOptionsBeta<{ baz: true }> = {
+				metadata: {
+					description: "A recursive object called Foo",
+					custom: { baz: true },
 				},
-			) {}
+			};
+			class Foo extends factory.objectRecursive("Foo", { bar: [() => Foo] }, options) {}
 
 			const custom = Foo.metadata.custom;
 

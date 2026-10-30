@@ -127,6 +127,7 @@ export {
 	NodeChangedDataDelta, 
 	NodeChangedDataProperties, 
 	NodeChangedDataTreeDelta, 
+	ObjectSchemaOptionsBeta,
 	PopUnion, 
 	RecordNodeInsertableData, 
 	RunTransactionParamsBeta, 

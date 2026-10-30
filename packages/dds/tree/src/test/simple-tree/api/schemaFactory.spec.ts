@@ -9,6 +9,8 @@ import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { ObjectSchemaOptionsBeta } from "../../../entrypoints/beta.js";
 import {
 	SchemaFactory,
 	type ObjectSchemaOptions,
@@ -457,12 +459,9 @@ describe("schemaFactory", () => {
 					baz: true,
 				},
 			} as const;
+			const options = { metadata: fooMetadata } satisfies ObjectSchemaOptionsBeta;
 
-			class Foo extends factory.object(
-				"Foo",
-				{ bar: factory.number },
-				{ metadata: fooMetadata },
-			) {}
+			class Foo extends factory.object("Foo", { bar: factory.number }, options) {}
 
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;

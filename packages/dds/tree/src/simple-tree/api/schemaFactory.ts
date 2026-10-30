@@ -65,6 +65,7 @@ import {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptionsAlpha,
 } from "./schemaFactoryOptions.js";
 import { scoped, structuralName, type ScopedSchemaName } from "./schemaFactoryUtils.js";
@@ -84,6 +85,7 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptionsAlpha,
 } from "./schemaFactoryOptions.js";
 export {
@@ -273,20 +275,17 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptions,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T,
-		never,
-		TCustomMetadata
+		T
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
@@ -297,9 +296,7 @@ export class SchemaFactory<
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
-			T,
-			never,
-			TCustomMetadata
+			T
 		>;
 	}
 
@@ -680,20 +677,17 @@ export class SchemaFactory<
 	public objectRecursive<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
-		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptions,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T,
-		never,
-		TCustomMetadata
+		T
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
@@ -706,9 +700,7 @@ export class SchemaFactory<
 			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
 			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T,
-			never,
-			TCustomMetadata
+			T
 		>;
 	}
 
@@ -892,7 +884,7 @@ export class SchemaFactoryBeta<
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptionsBeta<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -925,7 +917,7 @@ export class SchemaFactoryBeta<
 	>(
 		name: Name,
 		t: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptionsBeta<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
