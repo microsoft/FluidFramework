@@ -415,6 +415,7 @@ export class OdspDelayLoadedDeltaStream {
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
+		// Classify the caller for throttle-wait telemetry; this does not select retry behavior.
 		let caller: string;
 		if (isRefreshingJoinSession) {
 			caller = "periodicRefresh";
@@ -460,6 +461,7 @@ export class OdspDelayLoadedDeltaStream {
 			joinSessionResponse: ISocketStorageDiscovery;
 		}> => {
 			const sessionJoinCache = this.cache.sessionJoinCache;
+			// The legacy-beta cache interface also permits a consumer-supplied PromiseCache.
 			const promise =
 				sessionJoinCache instanceof JoinSessionCache
 					? sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch, {

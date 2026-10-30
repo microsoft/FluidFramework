@@ -24,6 +24,10 @@ interface JoinInfo {
 	 * Expiration is checked on access, not maintained by cleanup timers.
 	 */
 	throttleDeadline?: number;
+	/**
+	 * Links throttle and wait telemetry for one active window without logging the document key.
+	 * It does not participate in request coordination.
+	 */
 	throttleGateId?: string;
 }
 
@@ -40,6 +44,9 @@ const maximumTimerDelayMs = 2 ** 31 - 1;
  * The PromiseCache methods preserve the exported cache contract.
  */
 export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
+	/**
+	 * Authoritative entries used instead of the superclass's private promise map.
+	 */
 	private readonly joinInfo = new Map<string, JoinInfo>();
 
 	public override has(key: string): boolean {
@@ -56,14 +63,14 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 	 */
 	public override remove(key: string): boolean {
 		const info = this.getInfo(key);
-		const hadPromise = info?.promise !== undefined;
-		if (info !== undefined) {
-			delete info.promise;
-			if (info.throttleDeadline === undefined) {
-				this.joinInfo.delete(key);
-			}
+		if (info?.promise === undefined) {
+			return false;
 		}
-		return hadPromise;
+		delete info.promise;
+		if (info.throttleDeadline === undefined) {
+			this.joinInfo.delete(key);
+		}
+		return true;
 	}
 
 	/**
@@ -84,31 +91,36 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		}
 
 		// Defer the callback so even reentrant callers find the installed promise.
-		const promise = Promise.resolve().then(async () => {
-			await this.waitForThrottle(key, telemetry);
-			return asyncFn();
-		});
+		const promise = Promise.resolve()
+			.then(async () => {
+				await this.waitForThrottle(key, telemetry);
+				return asyncFn();
+			})
+			.catch((error: unknown) => {
+				this.recordThrottle(key, error, telemetry);
+				// A removed request must not evict work installed by a later caller.
+				if (this.getInfo(key)?.promise === promise) {
+					this.remove(key);
+				}
+				throw error;
+			});
 		info.promise = promise;
 		this.joinInfo.set(key, info);
-		promise.catch((error: unknown) => {
-			this.recordThrottle(key, error, telemetry);
-			// A removed request must not evict work installed by a later caller.
-			if (this.getInfo(key)?.promise === promise) {
-				this.remove(key);
-			}
-		});
 		return promise;
 	}
 
 	private getInfo(key: string): JoinInfo | undefined {
 		const info = this.joinInfo.get(key);
-		if (info?.throttleDeadline !== undefined && info.throttleDeadline <= Date.now()) {
+		if (info === undefined) {
+			return undefined;
+		}
+		if (info.throttleDeadline !== undefined && info.throttleDeadline <= Date.now()) {
 			delete info.throttleDeadline;
 			delete info.throttleGateId;
-			if (info.promise === undefined) {
-				this.joinInfo.delete(key);
-				return undefined;
-			}
+		}
+		if (info.promise === undefined && info.throttleDeadline === undefined) {
+			this.joinInfo.delete(key);
+			return undefined;
 		}
 		return info;
 	}
@@ -168,6 +180,9 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		while (info?.throttleDeadline !== undefined) {
 			const start = Date.now();
 			const scheduledDelayMs = Math.min(info.throttleDeadline - start, maximumTimerDelayMs);
+			if (scheduledDelayMs <= 0) {
+				return;
+			}
 			const props = {
 				throttleGateId: info.throttleGateId,
 				throttleScope: "clientDocument",
