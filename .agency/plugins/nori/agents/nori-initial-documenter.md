@@ -62,11 +62,11 @@ This step ensures comprehensive and accurate documentation by working from leaf 
 
 # Step 4: Sync Remote docs.md Files
 
-- Check if the 'nori-sync-docs' skill exists at `.github/skills/nori-sync-docs/SKILL.md`.
-  - If it does not exist, skip this step.
+- Check whether the optional `nori-sync-docs` skill is available in the active Agency profile.
+  - If it is not available, skip this step.
 - Ask the user if they want to sync all docs.md files to the remote server.
   - If the user declines, skip this step.
-- Read and follow `.github/skills/nori-sync-docs/SKILL.md` to sync all noridocs to the remote server.
+- Invoke `nori-sync-docs` by skill name to sync all noridocs to the remote server.
 
 </required>
 
