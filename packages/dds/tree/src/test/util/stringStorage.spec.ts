@@ -6,6 +6,7 @@
 /* eslint-disable unicorn/prefer-spread -- These tests exercise StringSequence.concat, not Array.concat. */
 
 import { strict as assert } from "node:assert";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	StringPiece,
 	StringSequence,
@@ -76,15 +77,11 @@ describe("forest-independent string storage", () => {
 	it("matches ordinary arrays through deterministic immutable edits", () => {
 		let sequence = StringSequence.fromString("abc\u{1F600}".repeat(1000));
 		let atoms = [...sequence.values(0)];
-		let randomState = 42;
-		const random = (max: number): number => {
-			randomState = (randomState * 1664525 + 1013904223) % 0x1_00_00_00_00;
-			return randomState % max;
-		};
+		const random = makeRandom(42);
 		for (let step = 0; step < 100; step++) {
-			const start = random(atoms.length + 1);
-			const end = start + random(atoms.length - start + 1);
-			const text = ["x", "\u{1F600}", "\uD800", "\uDC00", ""][random(5)] ?? "";
+			const start = random.integer(0, atoms.length);
+			const end = random.integer(start, atoms.length);
+			const text = random.pick(["x", "\u{1F600}", "\uD800", "\uDC00", ""]);
 			const old = sequence;
 			const oldAtoms = atoms;
 			sequence = sequence
