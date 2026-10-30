@@ -45,6 +45,13 @@ export {
 	withMemoizedTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
+export type {
+	FC,
+	MemoExoticComponent,
+	PropsAreEqual,
+	ReactElement,
+	ReactNode,
+} from "./reactTypes.js";
 export {
 	syncTextToTree,
 	PlainTextMainView,
