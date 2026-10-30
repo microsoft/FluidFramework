@@ -895,6 +895,16 @@ extends:
 
                 # Test
 
+                - ${{ if and(parameters.independentTestBuilds, contains(test.name, 'tinylicious')) }}:
+                  - task: Bash@3
+                    displayName: Verify concurrent Tinylicious Git storage
+                    inputs:
+                      targetType: inline
+                      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                      script: |
+                        set -eu -o pipefail
+                        node --test scripts/test-tinylicious-storage.cjs
+
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |

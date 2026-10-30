@@ -1,0 +1,50 @@
+diff --git a/index.cjs b/index.cjs
+index c87a47fb87344adddb6d15cce5ba5aaa66bdf224..9ff11c27ffb1da9f72713607d5c18167a55564df 100644
+--- a/index.cjs
++++ b/index.cjs
+@@ -4944,6 +4944,8 @@ class GitIgnoreManager {
+   }
+ }
+ 
++const looseObjectWriteLock = new AsyncLock({ maxPending: Infinity });
++
+ async function writeObjectLoose({ fs, gitdir, object, format, oid }) {
+   if (format !== 'deflated') {
+     throw new InternalError(
+@@ -4955,7 +4957,10 @@ async function writeObjectLoose({ fs, gitdir, object, format, oid }) {
+   // Don't overwrite existing git objects - this helps avoid EPERM errors.
+   // Although I don't know how we'd fix corrupted objects then. Perhaps delete them
+   // on read?
+-  if (!(await fs.exists(filepath))) await fs.write(filepath, object);
++  // An existing object may still be an incomplete write from another caller.
++  await looseObjectWriteLock.acquire(filepath, async () => {
++    if (!(await fs.exists(filepath))) await fs.write(filepath, object);
++  });
+ }
+ 
+ /* eslint-env node, browser */
+diff --git a/index.js b/index.js
+index 4d8f9c89d7ef4cd0efc1028495fd5fbaa6ebba83..9c722930adc68a874312350849759f2574f1541f 100644
+--- a/index.js
++++ b/index.js
+@@ -4938,6 +4938,8 @@ class GitIgnoreManager {
+   }
+ }
+ 
++const looseObjectWriteLock = new AsyncLock({ maxPending: Infinity });
++
+ async function writeObjectLoose({ fs, gitdir, object, format, oid }) {
+   if (format !== 'deflated') {
+     throw new InternalError(
+@@ -4949,7 +4951,10 @@ async function writeObjectLoose({ fs, gitdir, object, format, oid }) {
+   // Don't overwrite existing git objects - this helps avoid EPERM errors.
+   // Although I don't know how we'd fix corrupted objects then. Perhaps delete them
+   // on read?
+-  if (!(await fs.exists(filepath))) await fs.write(filepath, object);
++  // An existing object may still be an incomplete write from another caller.
++  await looseObjectWriteLock.acquire(filepath, async () => {
++    if (!(await fs.exists(filepath))) await fs.write(filepath, object);
++  });
+ }
+ 
+ /* eslint-env node, browser */

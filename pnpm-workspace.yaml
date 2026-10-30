@@ -284,6 +284,8 @@ packages:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+  # Serialize same-object writes in Tinylicious's Git dependency; see scripts/test-tinylicious-storage.cjs.
+  isomorphic-git@1.27.2: patches/isomorphic-git@1.27.2.patch
 
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't

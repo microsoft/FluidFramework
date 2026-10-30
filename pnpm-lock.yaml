@@ -107,6 +107,7 @@ pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
+  isomorphic-git@1.27.2: 58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12
 
 importers:
 
@@ -36398,7 +36399,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  isomorphic-git@1.27.2:
+  isomorphic-git@1.27.2(patch_hash=58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12):
     dependencies:
       async-lock: 1.4.1
       clean-git-ref: 2.0.1
@@ -40567,7 +40568,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.27.2(patch_hash=58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12)
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
@@ -40608,7 +40609,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.27.2(patch_hash=58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12)
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
@@ -40649,7 +40650,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.27.2(patch_hash=58326ef678033b7c21215c6facd03515c08abf928db5cbe250b3d33b79810e12)
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
