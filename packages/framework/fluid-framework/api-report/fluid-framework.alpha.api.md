@@ -443,7 +443,7 @@ export type ErasedNode<TExtra, Identifier extends string> = TExtra & TreeNode & 
 export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<NodeType extends WithType<infer Identifier> ? Identifier : string, NodeKind, NodeType, never, false>;
 
 // @alpha
-export type ErasedSchemaSubclassable<TExtra, Identifier extends string> = TreeNodeSchemaClass<Identifier, NodeKind, ErasedNode<TExtra, Identifier>, never, false>;
+export type ErasedSchemaSubclassable<TExtra, Identifier extends string, TReserved = unknown> = TreeNodeSchemaClass<Identifier, NodeKind, ErasedNode<TExtra & TReserved, Identifier>, never, false>;
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
@@ -455,7 +455,7 @@ export abstract class ErasedType<out Name = unknown> {
 export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchema<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchema<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
 
 // @alpha
-export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchemaClass<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchemaClass<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
+export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = unknown, TReserved = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchemaClass<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchemaClass<T["identifier"], NodeKind, TNode & TReserved & TreeNode & WithType<T["identifier"]>, never, false>;
 
 // @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
@@ -1504,6 +1504,11 @@ export type MapNodeSchema = MapNodeCustomizableSchema | MapNodePojoEmulationSche
 // @alpha (undocumented)
 export const MapNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is MapNodeSchema;
+};
+
+// @alpha
+export type MaskedProperties<TKeys extends PropertyKey> = {
+    readonly [TKey in TKeys]?: unknown;
 };
 
 // @public
