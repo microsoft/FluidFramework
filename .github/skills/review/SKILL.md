@@ -1,6 +1,7 @@
 ---
 name: review
 description: "Review changes relative to a prior state, such as a diff, pull request, branch, commit, or working-tree changes. Use for change-focused code review and regression analysis. Do not use to assess an existing file, API, design, implementation, or other artifact without a comparison; if the request is ambiguous, ask whether the user wants a change review and what prior state to compare against."
+license: MIT
 argument-hint: "[branch-name]"
 ---
 ```text
@@ -48,7 +49,7 @@ Before doing anything, ask the user:
 Wait for the user's response. If they say skip, stop here.
 
 <required>
-Immediately after the user picks a mode, create one task per applicable step using TaskCreate — before doing any other work. Mark each task in_progress when you start it and completed when you finish.
+Immediately after the user picks a mode, create one task per applicable step using the available Copilot task-management tooling — before doing any other work. Mark each task in progress when you start it and completed when you finish.
 
 Tasks to create by mode:
 
@@ -59,7 +60,7 @@ Tasks to create by mode:
 
 ## Step 2: Resolve Base & Gather Changes
 
-Read `.claude/skills/comparison-base/SKILL.md` and execute it before gathering changes. This is required; do not duplicate or approximate its target-selection logic in this skill. Use `HEAD` as `$REVIEW_REF` for the current branch, or pass the named review branch as its input. Retain all resolver outputs for the report and subsequent commands.
+Read `.github/skills/comparison-base/SKILL.md` and execute it before gathering changes. This is required; do not duplicate or approximate its target-selection logic in this skill. Use `HEAD` as `$REVIEW_REF` for the current branch, or pass the named review branch as its input. Retain all resolver outputs for the report and subsequent commands.
 
 Choose the diff endpoint once and use it for the entire review:
 
@@ -103,7 +104,7 @@ For local untracked files, read their full workspace contents and present them a
 
 ### Standard mode: selective full-file reads
 
-After reading diffs, identify files where fuller context is needed — typically where the change touches a function that references shared state, calls other functions in the same file, or has fragmented hunks. Read those files in one batch using the Read tool.
+After reading diffs, identify files where fuller context is needed — typically where the change touches a function that references shared state, calls other functions in the same file, or has fragmented hunks. Read those files in one batch using Copilot's file-reading tools.
 
 ### Deep mode: full-file reads for all changed files
 
@@ -226,7 +227,7 @@ The API Analyst receives the contents of `api-conventions.md` (in this skill's d
 
 Read `api-conventions.md`:
 ```bash
-cat .claude/skills/review/api-conventions.md
+cat .github/skills/review/api-conventions.md
 ```
 
 #### The Inspector (orchestrator)
@@ -237,7 +238,7 @@ While sub-agents run, perform the Architecture, Tests, Performance, and Security
 
 ### Spawning Sub-agents
 
-Spawn all sub-agents in a single parallel batch using the Agent tool.
+Spawn all sub-agents in a single parallel batch using Copilot's task delegation tool.
 
 Each sub-agent prompt includes — literally pasted into the prompt text:
 
@@ -274,9 +275,9 @@ Deduplicate on file:line, sort by severity. Drop "looks correct" findings.
 
 Output routing:
 - 5 or fewer findings: Print the full report to the terminal.
-- More than 5 findings: Write the full report to `/tmp/review-report.md` and print a summary to the terminal: verdict line, finding counts by area, and the file path.
+- More than 5 findings: Write the full report to `review-report.md` in the system temporary directory and print a summary to the terminal: verdict line, finding counts by area, and the file path.
 
-Always print: `Review report written to /tmp/review-report.md` when writing to file.
+Always print the resolved report path when writing the report to a file.
 
 If zero findings remain after the evidence gate, use the exact summary line:
 `0 CRITICAL, 0 HIGH, 0 MEDIUM — No high-confidence issues found in the current diff.`
@@ -338,6 +339,6 @@ What next?
 
 - Empty diff: Report "No changes to review" and stop.
 - >10,000 lines changed: Ask user to narrow scope.
-- Comparison-base resolution issue: Follow the edge-case handling in `.claude/skills/comparison-base/SKILL.md`.
+- Comparison-base resolution issue: Follow the edge-case handling in `.github/skills/comparison-base/SKILL.md`.
 - No executable code after exclusions: Skip Breaker. API Analyst reduced pass. Inspector only.
 - Sub-agent timeout: Note "Review incomplete" for that area.

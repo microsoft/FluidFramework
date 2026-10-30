@@ -86,7 +86,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
-				"Defaults to the model specified in launcher-prompt.md frontmatter.",
+				"Defaults to the model specified in launcher-prompt.md frontmatter, or GPT-6 Luna.",
 		}),
 		...BaseCommand.flags,
 	};

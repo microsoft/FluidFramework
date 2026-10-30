@@ -25,7 +25,7 @@ FLAGS
   --launchFile=<value>      Write the launch command to this file instead of executing it. Used by shell wrappers to run
                             the alias as a separate process.
   --model=<value>           The AI model to use for the launcher assistant. Defaults to the model specified in
-                            launcher-prompt.md frontmatter.
+                            launcher-prompt.md frontmatter, or GPT-6 Luna.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

@@ -1,6 +1,7 @@
 ---
 name: fluid-pr-guide
 description: Use when composing, writing, drafting, or reviewing a PR title, PR description, or PR body in Fluid Framework — provides title style, body template, and section guidance.
+license: MIT
 ---
 
 Use **Option A** for build-tools PRs because this group [generates changelogs from commits](../../../build-tools/README.md#documenting-build-tools-changes).

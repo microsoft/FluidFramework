@@ -6,6 +6,7 @@ description: >
   ask "why did this pipeline fail", "summarize the test failures", "is this test flaky or a
   real bug", "compare these runs", or wants bugs filed for genuine failures. Covers the Real
   Service End to End Tests pipeline as the worked example but applies to any FF test pipeline.
+license: MIT
 ---
 
 # Pipeline Test Triage

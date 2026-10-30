@@ -1,18 +1,19 @@
 ---
 name: fluid-pr
 description: Use when creating a pull request in the Fluid Framework repo. Composes a PR title and body following Fluid Framework conventions, proposes them to the user, then pushes the branch and creates the PR on GitHub. Triggers on "create a PR", "make a PR", "open a PR", "submit a PR", or "push and create a PR".
+license: MIT
 ---
 
 <required>
-*CRITICAL* Do NOT run `gh pr create` until the user has explicitly confirmed via AskUserQuestion in step 5. Do not skip ahead.
+*CRITICAL* Do NOT run `gh pr create` until the user has explicitly confirmed via the `ask_user` tool in step 5. Do not skip ahead.
 
-*CRITICAL* Add the following steps to your task/todo list using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot):
+*CRITICAL* Add the following steps to your task/todo list using the available Copilot task-management tooling:
 
 1. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
 2. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead. Pipeline changes on branches prefixed with `test/` are an exception.
 3. **Load the `fluid-pr-guide` skill NOW** (via the Skill tool) before composing anything. It contains the title conventions, body template, and section guidance you need. Do NOT skip this step or rely on memory.
 4. Using the loaded `fluid-pr-guide`, compose the PR title and body following its conventions and template.
-5. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
+5. Print the proposed title and body as text, then immediately use the `ask_user` tool to let the user choose what to do next. Use these exact options:
    - "Create PR" — Push the branch and open the pull request
    - "Create draft PR" — Push the branch and open a draft pull request
    - "Edit" — Revise the title or body before creating
@@ -30,7 +31,7 @@ git remote get-url origin
 
 If the URL contains `microsoft/FluidFramework`, **stop** unless the branch is prefixed with `test/` and the conversation context or changed files indicate that the change needs Azure Pipelines testing. A user request for a "test branch" in that context is sufficient intent to use the exception. Otherwise, tell the user they should push to their fork instead and do not proceed.
 
-Once the checks in steps 1–2 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 5. This is the only point where the `fluid-pr` flow asks the user a question.
+Once the checks in steps 1–2 pass silently, compose the title and body, print them as text, then use the `ask_user` tool with the four options as described in step 5. This is the only point where the `fluid-pr` flow asks the user a question.
 
 ```bash
 # Push branch (first time)
