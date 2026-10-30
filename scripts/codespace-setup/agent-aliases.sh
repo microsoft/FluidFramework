@@ -35,7 +35,7 @@ copilot() {
 
 oce() {
 	_ensure_agency || return 1
-	agency copilot --profile ff-oce "$@" -- --model gpt-6.1-sol --agent ff-oce:ff-oce -i "/yolo auto"
+	agency copilot --profile ff-oce "$@" -- --agent ff-oce:ff-oce -i "/yolo auto"
 }
 
 start() {

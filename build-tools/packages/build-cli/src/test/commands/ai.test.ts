@@ -14,6 +14,7 @@ import { describe, it } from "mocha";
 import AiCommand, {
 	assertSafeAliasSelection,
 	buildLauncherPrompt,
+	FALLBACK_MODEL,
 	normalizePromptAnswer,
 	readAssetFile,
 	SUPPORTED_ALIASES,
@@ -188,16 +189,15 @@ describe("ai command", () => {
 		}
 	});
 
-	it("launches the OCE alias with the configured default model", async () => {
-		const aliasScriptPath = resolve(
-			process.cwd(),
-			"../../../scripts/codespace-setup/agent-aliases.sh",
-		);
-		const aliasScript = await readFile(aliasScriptPath, "utf8");
-
-		expect(aliasScript).to.include(
-			'agency copilot --profile ff-oce "$@" -- --model gpt-6.1-sol --agent ff-oce:ff-oce -i "/yolo auto"',
-		);
+	it("keeps launcher prompt models aligned with the fallback model", async () => {
+		const repositoryRoot = resolve(process.cwd(), "../../..");
+		for (const relativePath of [
+			".devcontainer/launcher-prompt.md",
+			".devcontainer/ai-agent/launcher-prompt.md",
+		]) {
+			const prompt = await readFile(resolve(repositoryRoot, relativePath), "utf8");
+			expect(prompt).to.match(new RegExp(`^model: ${FALLBACK_MODEL}$`, "mu"));
+		}
 	});
 
 	it("allows all supported aliases", () => {
