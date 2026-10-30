@@ -12,7 +12,7 @@ import {
 	type IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/legacy";
 
-// @ts-expect-error The implementation class is not a supported export.
+// @ts-expect-error Do not expose the implementation class to consumers. Use the interface and creation APIs instead.
 export type { ConsensusRegisterCollectionClass } from "@fluidframework/register-collection/legacy";
 
 declare function use(value: unknown): void;

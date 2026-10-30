@@ -42,8 +42,6 @@ Read the **@fluidframework/register-collection** API documentation at <https://f
 
 Use `ConsensusRegisterCollection.create(runtime)` to create a collection. Use `ConsensusRegisterCollection.getFactory()` to register its factory. For instance annotations, the `ConsensusRegisterCollection` type is an alias for `IConsensusRegisterCollection`.
 
-The package no longer exports `ConsensusRegisterCollectionClass`, so direct construction and inheritance from the implementation class are no longer supported. The existing collection deprecation still applies.
-
 ```typescript
 import {
 	ConsensusRegisterCollection,
