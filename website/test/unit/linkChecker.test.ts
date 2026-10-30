@@ -31,15 +31,30 @@ describe("link checker", () => {
 	let requests: string[];
 	let broken: "page" | "fragment" | "css" | undefined;
 	let transientFailures: number;
+	let interruptedPath: string | undefined;
 
 	beforeEach(async () => {
 		directory = mkdtempSync(join(tmpdir(), "link-checker-test-"));
 		requests = [];
 		broken = undefined;
 		transientFailures = 0;
+		interruptedPath = undefined;
 		server = createServer((request, response) => {
 			const path = request.url ?? "/";
 			requests.push(path);
+			if (path === interruptedPath) {
+				response.writeHead(200, {
+					"Content-Type": path.endsWith(".css") ? "text/css" : "text/html",
+					"Content-Length": "10000",
+				});
+				response.write(
+					path.endsWith(".css")
+						? "body { background: url('/missing.png'); }"
+						: '<a href="/missing">Missing</a>',
+				);
+				setTimeout(() => response.destroy(), 25);
+				return;
+			}
 			if (path === "/target" && transientFailures > 0) {
 				transientFailures--;
 				response.writeHead(503);
@@ -147,6 +162,17 @@ describe("link checker", () => {
 			expect(result.output).toContain(
 				kind === "page" ? "/missing" : kind === "fragment" ? "#missing" : "/missing.png",
 			);
+		},
+	);
+
+	it.each(["/nested", "/theme.css"])(
+		"fails instead of reporting success when the body of %s is interrupted",
+		async (path) => {
+			interruptedPath = path;
+			const result = await check();
+			expect(result.code, result.output).toBe(1);
+			expect(result.output).not.toContain("Successfully scanned");
+			expect(requests).toContain(path);
 		},
 	);
 

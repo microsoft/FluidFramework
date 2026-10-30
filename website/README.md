@@ -422,6 +422,8 @@ The configuration in `linkinator.config.json` checks local pages, CSS references
 External URLs are excluded, as in the previous link-checking command.
 The existing exclusions for Docusaurus stylesheets and Pagefind assets are retained.
 The checker limits concurrency and retries transient request failures up to two times.
+A pnpm patch makes unexpected crawler task failures, including interrupted response bodies, fail the check instead of reporting success.
+Interrupted body reads fail immediately rather than retrying a partially processed page.
 See [Checking for Broken Links](../docs/content/Contributing/Working-with-the-Website/Checking-for-Broken-Links.md) for the checking commands.
 
 ## Scripts

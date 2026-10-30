@@ -49,6 +49,9 @@ overrides:
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
 
+patchedDependencies:
+  linkinator@8.1.0: b477488bb8e60c57452b683f16e4962396ee47b432daf0884f33c6512ca6b154
+
 importers:
 
   .:
@@ -166,7 +169,7 @@ importers:
         version: 11.3.2
       linkinator:
         specifier: 8.1.0
-        version: 8.1.0
+        version: 8.1.0(patch_hash=b477488bb8e60c57452b683f16e4962396ee47b432daf0884f33c6512ca6b154)
       lunr:
         specifier: ^2.3.9
         version: 2.3.9
@@ -16122,7 +16125,7 @@ snapshots:
 
   lines-and-columns@2.0.4: {}
 
-  linkinator@8.1.0:
+  linkinator@8.1.0(patch_hash=b477488bb8e60c57452b683f16e4962396ee47b432daf0884f33c6512ca6b154):
     dependencies:
       chalk: 6.0.0
       escape-html: 1.0.3

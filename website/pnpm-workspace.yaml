@@ -152,3 +152,7 @@ overrides:
   # vulnerability.
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
+
+patchedDependencies:
+  # Fail closed when crawler tasks reject, including interrupted response body reads.
+  linkinator@8.1.0: patches/linkinator@8.1.0.patch

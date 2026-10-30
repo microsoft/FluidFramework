@@ -1,0 +1,58 @@
+diff --git a/build/src/queue.d.ts b/build/src/queue.d.ts
+index 7a096d9e0f4a15cc5992b6fb878c58034294c378..caf32bec3284cb63eadbd2f159aec2653d154cdf 100644
+--- a/build/src/queue.d.ts
++++ b/build/src/queue.d.ts
+@@ -8,6 +8,7 @@ export type QueueItemOptions = {
+ export type AsyncFunction = () => Promise<void>;
+ export declare class Queue extends EventEmitter {
+     private readonly q;
++    private readonly errors;
+     private activeFunctions;
+     private readonly concurrency;
+     private wakeup;
+diff --git a/build/src/queue.js b/build/src/queue.js
+index e893e198a4185b520f239b33e15a610cbeec0880..81e62ca433cb8973bb9f8479d6036a2fcb8d7ce7 100644
+--- a/build/src/queue.js
++++ b/build/src/queue.js
+@@ -1,6 +1,7 @@
+ import { EventEmitter } from 'node:events';
+ export class Queue extends EventEmitter {
+     q = [];
++    errors = [];
+     activeFunctions = 0;
+     concurrency;
+     wakeup;
+@@ -23,14 +24,14 @@ export class Queue extends EventEmitter {
+         this.scheduleWakeup();
+     }
+     async onIdle() {
+-        if (this.activeFunctions === 0 && this.q.length === 0) {
+-            return;
+-        }
+-        return new Promise((resolve) => {
+-            this.once('done', () => {
+-                resolve();
++        if (this.activeFunctions !== 0 || this.q.length !== 0) {
++            await new Promise((resolve) => {
++                this.once('done', resolve);
+             });
+-        });
++        }
++        if (this.errors.length !== 0) {
++            throw this.errors[0];
++        }
+     }
+     /** Remove retry delays so an aborted run can drain queued work promptly. */
+     runPendingNow() {
+@@ -67,9 +68,8 @@ export class Queue extends EventEmitter {
+                 this.activeFunctions++;
+                 item
+                     .fn()
+-                    .catch(() => {
+-                    // Errors are handled within crawl() and stored in results.
+-                    // Silently catch here to prevent unhandled promise rejections.
++                    .catch((error) => {
++                    this.errors.push(error);
+                 })
+                     .finally(() => {
+                     this.activeFunctions--;
