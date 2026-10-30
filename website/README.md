@@ -414,6 +414,22 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 <YoutubeVideo videoId="foo" className="my-styling" />
 ```
 
+## Link checker setup
+
+The link-checking scripts use [Linkinator](https://github.com/JustinBeckwith/linkinator), which is installed with the website's npm dependencies.
+No separate binary installation or `PATH` setup is required.
+The configuration in `linkinator.config.json` checks local pages, CSS references, and fragment identifiers.
+The checker limits concurrency and retries transient request failures up to two times.
+A pnpm patch makes unexpected crawler task failures, including interrupted response bodies, fail the check instead of reporting success.
+Interrupted body reads fail immediately rather than retrying a partially processed page.
+See [Checking for Broken Links](../docs/content/Contributing/Working-with-the-Website/Checking-for-Broken-Links.md) for the checking commands.
+
+The `skip` patterns in [linkinator.config.json](./linkinator.config.json), in order, exclude:
+
+1. URLs outside `http://127.0.0.1:3000`. This preserves the previous command's internal-only scope; external link checking was not enabled.
+2. Generated Docusaurus stylesheet bundles at `/assets/css/styles.<hash>.css`. This preserves the previous checker's stylesheet exclusion; references in other stylesheets and inline styles are still checked.
+3. Generated Pagefind assets under `/pagefind/`. Key search bundle files are verified separately by the `Verify Pagefind search bundle` step in the [deployment pipeline](../tools/pipelines/deploy-website.yml).
+
 ## Scripts
 
 The following npm scripts are supported in this directory:
@@ -473,7 +489,7 @@ The following npm scripts are supported in this directory:
 | `build:search` | `pagefind --site build` | |
 | `build:site` | `npm run build:generate-content && npm run build:docusaurus && npm run build:search` | Build the site, including API documentation. |
 | `build:test` | `tsc --project test/tsconfig.json --pretty --noEmit` | TSC build of the test code as a sanity check. |
-| `check-links` | `linkcheck http://127.0.0.1:3000 --skip-file skipped-urls.txt` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
+| `check-links` | `linkinator http://127.0.0.1:3000 --config linkinator.config.json --retry-errors-count 2 --retry-errors-jitter 0` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
 | `ci:check-links` | `start-server-and-test "npm run serve -- --host 127.0.0.1 --no-open" http://127.0.0.1:3000 check-links` | `check-links` variant for CI. Serves the site before running checks. |
 | `clean` | `concurrently "npm:clean:*"` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | `node ./infra/clean-api-documentation.mjs` | Clean up generate API documentation content. |
