@@ -15,6 +15,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	generateErrorWithStack,
+	LoggingError,
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -25,6 +26,78 @@ interface IResponseException extends Error {
 	code: number;
 	stack?: string;
 	underlyingResponseHeaders?: Record<string, unknown>;
+}
+
+/**
+ * Internal metadata preserved on errors that roundtrip through an {@link @fluidframework/core-interfaces#IResponse}.
+ * @internal
+ */
+export interface IResponseExceptionMetadata {
+	code: number;
+	underlyingResponseHeaders?: Record<string, unknown>;
+}
+
+interface IResponseWithOriginalError extends IResponse {
+	originalError?: unknown;
+}
+
+/**
+ * Symbol used to store internal response exception metadata on an Error object.
+ * @internal
+ */
+export const responseExceptionMetadataSym = Symbol("responseExceptionMetadata");
+
+/**
+ * Error shape carrying internal response exception metadata via a symbol-indexed property.
+ * @internal
+ */
+export type IErrorWithResponseExceptionMetadata = Error & {
+	[responseExceptionMetadataSym]: IResponseExceptionMetadata;
+};
+
+function mergeResponseExceptionMetadata<T extends Error>(
+	error: T,
+	response: IResponse,
+): T & IResponseException {
+	const responseExceptionMetadata: IResponseExceptionMetadata = {
+		code: response.status,
+		underlyingResponseHeaders: response.headers,
+	};
+
+	// This type accounts for the properties defined below
+	const mergedErrorWithMetadata = error as T &
+		IErrorWithResponseExceptionMetadata &
+		IResponseException;
+
+	// Attach the metadata to the error object itself
+	Object.defineProperty(mergedErrorWithMetadata, responseExceptionMetadataSym, {
+		value: responseExceptionMetadata,
+		writable: true,
+		configurable: true,
+	});
+	// Add getters for the IResponseException properties that pull from the metadata, for back-compat
+	Object.defineProperties(mergedErrorWithMetadata, {
+		errorFromRequestFluidObject: {
+			get() {
+				return true;
+			},
+			configurable: true,
+		},
+		code: {
+			get() {
+				return mergedErrorWithMetadata[responseExceptionMetadataSym].code;
+			},
+			configurable: true,
+		},
+		underlyingResponseHeaders: {
+			get() {
+				return mergedErrorWithMetadata[responseExceptionMetadataSym].underlyingResponseHeaders;
+			},
+			configurable: true,
+		},
+	} satisfies Partial<Record<keyof IResponseException, unknown>>);
+
+	return mergedErrorWithMetadata;
 }
 
 /**
@@ -68,10 +141,11 @@ export function exceptionToResponse(error: unknown): IResponse {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
+		originalError: LoggingError.typeCheck(error) ? error : undefined,
 		get stack() {
 			return errWithStack.stack;
 		},
-	};
+	} satisfies IResponseWithOriginalError as IResponse;
 }
 
 /**
@@ -82,21 +156,23 @@ export function exceptionToResponse(error: unknown): IResponse {
  * @internal
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
+	const originalError = (response as IResponseWithOriginalError).originalError;
+	if (LoggingError.typeCheck(originalError)) {
+		return mergeResponseExceptionMetadata(originalError, response);
+	}
+
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
 	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = "stack" in response ? response : generateErrorWithStack();
-	const responseErr: Error & IResponseException = {
-		errorFromRequestFluidObject: true,
-		message,
-		name: "Error",
-		code: response.status,
-		get stack() {
+	const responseErr = mergeResponseExceptionMetadata(new Error(message), response);
+	Object.defineProperty(responseErr, "stack", {
+		get() {
 			return errWithStack.stack;
 		},
-		underlyingResponseHeaders: response.headers,
-	};
+		configurable: true,
+	});
 
 	return responseErr;
 }
