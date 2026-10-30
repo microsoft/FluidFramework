@@ -30,13 +30,13 @@ describe("schemaFactoryOptions", () => {
 		describe(compose.name, () => {
 			it("chains callbacks: both effects are applied", () => {
 				const base: SchemaFactoryBetaOptions = {
-					objectOptionDefaults: (_name, _fields, options) => ({
+					objectOptions: (_name, _fields, options) => ({
 						allowUnknownOptionalFields: true,
 						...options,
 					}),
 				};
 				const override: SchemaFactoryBetaOptions = {
-					objectOptionDefaults: (_name, _fields, options) => ({
+					objectOptions: (_name, _fields, options) => ({
 						metadata: { description: "from override" },
 						...options,
 					}),
@@ -51,13 +51,13 @@ describe("schemaFactoryOptions", () => {
 
 			it("override wins on conflicts", () => {
 				const base: SchemaFactoryBetaOptions = {
-					objectOptionDefaults: (_name, _fields, options) => ({
+					objectOptions: (_name, _fields, options) => ({
 						allowUnknownOptionalFields: true,
 						...options,
 					}),
 				};
 				const override: SchemaFactoryBetaOptions = {
-					objectOptionDefaults: (_name, _fields, options) => ({
+					objectOptions: (_name, _fields, options) => ({
 						...options,
 						allowUnknownOptionalFields: false,
 					}),
@@ -71,13 +71,13 @@ describe("schemaFactoryOptions", () => {
 
 			it("has no callback when neither input has one", () => {
 				const composed = compose({}, {});
-				assert.equal(composed.objectOptionDefaults, undefined);
+				assert.equal(composed.objectOptions, undefined);
 			});
 
 			for (const position of ["base", "override"] as const) {
 				it(`supports only a ${position} callback`, () => {
 					const options: SchemaFactoryBetaOptions = {
-						objectOptionDefaults: (_name, _fields, perCallOptions) => ({
+						objectOptions: (_name, _fields, perCallOptions) => ({
 							allowUnknownOptionalFields: true,
 							...perCallOptions,
 						}),
@@ -94,7 +94,7 @@ describe("schemaFactoryOptions", () => {
 				const fields = { x: Factory.number };
 				const composed = compose(
 					{
-						objectOptionDefaults: (name, actualFields, options) => {
+						objectOptions: (name, actualFields, options) => {
 							calls.push("base");
 							assert.equal(name, 42);
 							assert.equal(actualFields, fields);
@@ -103,7 +103,7 @@ describe("schemaFactoryOptions", () => {
 						},
 					},
 					{
-						objectOptionDefaults: (name, actualFields, options) => {
+						objectOptions: (name, actualFields, options) => {
 							calls.push("override");
 							assert.equal(name, 42);
 							assert.equal(actualFields, fields);
@@ -122,9 +122,9 @@ describe("schemaFactoryOptions", () => {
 			it("keeps the base result when the override returns undefined", () => {
 				const composed = compose(
 					{
-						objectOptionDefaults: () => ({ allowUnknownOptionalFields: true }),
+						objectOptions: () => ({ allowUnknownOptionalFields: true }),
 					},
-					{ objectOptionDefaults: () => undefined },
+					{ objectOptions: () => undefined },
 				);
 				const sf = new Factory({ ...composed, scope: "test" });
 				assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
@@ -134,13 +134,13 @@ describe("schemaFactoryOptions", () => {
 				it(`propagates errors from the ${position} callback`, () => {
 					const error = new Error(position);
 					const options: SchemaFactoryBetaOptions = {
-						objectOptionDefaults: () => {
+						objectOptions: () => {
 							throw error;
 						},
 					};
 					const composed = position === "base" ? compose(options, {}) : compose({}, options);
 					assert.throws(
-						() => composed.objectOptionDefaults?.("Object", {}, undefined),
+						() => composed.objectOptions?.("Object", {}, undefined),
 						(actual) => actual === error,
 					);
 				});
@@ -151,13 +151,13 @@ describe("schemaFactoryOptions", () => {
 	it("preserves alpha-only options through the shared composition implementation", () => {
 		const composed = composeSchemaFactoryAlphaOptions(
 			{
-				objectOptionDefaults: (_name, _fields, options) => ({
+				objectOptions: (_name, _fields, options) => ({
 					persistedMetadata: { base: true },
 					...options,
 				}),
 			},
 			{
-				objectOptionDefaults: (_name, _fields, options) => ({
+				objectOptions: (_name, _fields, options) => ({
 					...options,
 					persistedMetadata: { ...options?.persistedMetadata, override: true },
 				}),

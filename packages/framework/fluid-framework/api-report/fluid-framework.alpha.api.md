@@ -1986,6 +1986,8 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     }));
     arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaAlpha<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
+    createDerivedFactory(settings?: SchemaFactoryAlphaOptions): SchemaFactoryAlpha<TScope, TName>;
+    createDerivedFactory<const T extends TName, TNameInner extends number | string = string>(settings: SchemaFactoryAlphaOptions | undefined, name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchemaAlpha<FieldKind.Identifier, StringSchema, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     static readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
     readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
@@ -2022,12 +2024,11 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly withDefaultRecursive: <Kind extends FieldKind, Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, TCustomMetadata = unknown>(fieldSchema: System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata>, defaultValue: Unenforced<NodeProvider<System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<System_Unsafe.FieldSchemaUnsafe<Kind, Types>>>>) => FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;
-    withOptionsAlpha(settings: SchemaFactoryAlphaOptions): SchemaFactoryAlpha<TScope, TName>;
 }
 
 // @alpha
 export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
-    readonly objectOptionDefaults?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined) => ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined;
+    readonly objectOptions?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined) => ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined;
 }
 
 // @beta
@@ -2035,8 +2036,9 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     constructor(scopeOrOptions: TScope | (SchemaFactoryBetaOptions & {
         readonly scope: TScope;
     }));
+    createDerivedFactory(settings?: SchemaFactoryBetaOptions): SchemaFactoryBeta<TScope, TName>;
+    createDerivedFactory<const T extends TName, TNameInner extends number | string = string>(settings: SchemaFactoryBetaOptions | undefined, name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
-    // (undocumented)
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     record<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
@@ -2051,12 +2053,11 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
     static typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
-    withOptions(settings: SchemaFactoryBetaOptions): SchemaFactoryBeta<TScope, TName>;
 }
 
 // @beta
 export interface SchemaFactoryBetaOptions {
-    readonly objectOptionDefaults?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions<TCustomMetadata> | undefined) => ObjectSchemaOptions<TCustomMetadata> | undefined;
+    readonly objectOptions?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions<TCustomMetadata> | undefined) => ObjectSchemaOptions<TCustomMetadata> | undefined;
 }
 
 // @public @system
