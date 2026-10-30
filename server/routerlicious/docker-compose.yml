@@ -123,13 +123,6 @@ services:
     volumes:
       - git:/home/node/documents
     restart: always
-  git:
-    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${GITSSH_IMAGE_TAG:-latest}
-    ports:
-      - "3022:22"
-    volumes:
-      - git:/home/git
-    restart: always
   zookeeper:
     image: wurstmeister/zookeeper:latest
     ports:

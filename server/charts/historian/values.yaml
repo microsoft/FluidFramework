@@ -100,10 +100,6 @@ gitrest:
       - redis2.pass
       - redisForThrottling.pass
 
-gitssh:
-  name: gitssh
-  image: fluidcr.azurecr.io/build/fluidframework/routerlicious/gitssh:latest
-
 lumberjack:
   options:
     enableGlobalTelemetryContext: true
