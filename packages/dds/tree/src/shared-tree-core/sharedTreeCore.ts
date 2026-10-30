@@ -50,6 +50,7 @@ import {
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
+import { CommitSubmissionBuffer } from "./commitSubmissionBuffer.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
@@ -70,6 +71,7 @@ import {
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
+import { allowUnused } from "../simple-tree/index.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -143,6 +145,38 @@ export class SharedTreeCore<
 
 	private readonly enrichers: Map<BranchId, EnricherState<TChange>> = new Map();
 
+	/**
+	 * Maps each branch that uses a flush policy to its queue of local commits not yet submitted to the runtime.
+	 *
+	 * @remarks
+	 * The queue holds these commits until the policy permits submission and validation completes.
+	 * Detached commits and stashed-op replay bypass the policy, but still wait for validation.
+	 * This state is separate from the runtime's pending operations, which have already been submitted.
+	 * The distinction prevents reconnect processing from resubmitting commits that are still private.
+	 */
+	private readonly submissionBuffers = new Map<BranchId, CommitSubmissionBuffer<TChange>>();
+
+	/**
+	 * Contains the IDs of branches whose submission queues are currently being flushed.
+	 *
+	 * @remarks
+	 * A detached tree can acknowledge a commit synchronously during submission.
+	 * Callbacks can therefore run before the flush finishes.
+	 * This set prevents those callbacks from starting another flush of the same queue.
+	 */
+	private readonly flushingBranches = new Set<BranchId>();
+
+	/**
+	 * True while restoring an operation from the runtime's saved pending state.
+	 *
+	 * @remarks
+	 * That operation was submitted before the state was saved; it is not a new application edit.
+	 * Local commits created during restoration must therefore bypass the current flush policy.
+	 * Otherwise, a previously submitted commit could remain buffered until another application edit.
+	 * This flag also prevents a second restoration from starting before the first one finishes.
+	 */
+	private applyingStashedCommit = false;
+
 	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
@@ -155,7 +189,8 @@ export class SharedTreeCore<
 	 * @param editManager - The edit manager
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
 	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
+	 * Without a flush policy, committed edits submit immediately.
+	 * A flush policy delays submission only; it does not delay local application or alter rebase.
 	 */
 	public constructor(
 		public readonly breaker: Breakable,
@@ -172,6 +207,32 @@ export class SharedTreeCore<
 		schemaPolicy: SchemaPolicy,
 		enrichmentConfig?: EnrichmentConfig<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
+		/**
+		 * Optional policy that enables buffering of attached local commits until a change permits submission.
+		 *
+		 * @remarks
+		 * The core calls this function for each newly appended local change while the tree is attached,
+		 * except when restoring an already-submitted operation from runtime pending state.
+		 * Return `true` to submit that commit and all earlier buffered commits on the same branch, in order.
+		 * Return `false` to keep that commit buffered until a later change returns `true`.
+		 * Submission still waits for local commit validation.
+		 *
+		 * If omitted, commits are submitted as soon as they pass validation.
+		 * Buffering delays submission only. It does not delay local application or change rebase behavior.
+		 * Submission does not mean that a commit has been accepted by the sequencing service.
+		 *
+		 * Detached commits bypass this policy and are sequenced locally after validation, without sending ops.
+		 * They become part of the initial state in the attach summary.
+		 * Attachment is checked for each append, at the tree level rather than the container level.
+		 * A new tree in an attached container also bypasses the policy until the tree itself attaches.
+		 *
+		 * Summarization, including attach-summary generation, cannot run on this instance while commits are buffered.
+		 * The caller must ensure that clients which generate summaries do not create buffered local changes.
+		 * Standard summarizer clients load DDS state without creating application tree views or requesting local upgrades.
+		 * Custom initialization must preserve this behavior.
+		 * Summarization does not flush the buffer; violating this requirement triggers an assertion.
+		 */
+		private readonly bufferCommitsUntil?: (change: TChange) => boolean,
 	) {
 		super(
 			summarizablesTreeKey,
@@ -261,6 +322,12 @@ export class SharedTreeCore<
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 		builder: SummaryTreeBuilder;
 	}): void {
+		// Summary generation must exclude local commits that have never been submitted.
+		// The policy owner is responsible for keeping this buffer empty on summarizer clients.
+		assert(
+			!this.hasBufferedCommits(),
+			"Cannot summarize while local commits are buffered for submission.",
+		);
 		const { stringify, fullTree, telemetryContext, incrementalSummaryContext, builder } =
 			props;
 		const summarizableBuilder = new SummaryTreeBuilder();
@@ -342,8 +409,26 @@ export class SharedTreeCore<
 
 	private registerSharedBranch(branchId: BranchId): void {
 		const branch = this.editManager.getLocalBranch(branchId);
+		const buffer =
+			this.bufferCommitsUntil === undefined
+				? undefined
+				: new CommitSubmissionBuffer(this.bufferCommitsUntil);
+		if (buffer !== undefined) {
+			this.submissionBuffers.set(branchId, buffer);
+		}
 		branch.events.on("beforeChange", (change) => {
 			if (change.type === "append") {
+				if (buffer !== undefined) {
+					// Queue logical revisions, not encoded messages or stale enrichment.
+					// Detached commits send no ops. Sequence them locally after validation so
+					// serialization and attachment include their state without a summary-time flush.
+					buffer.enqueue(
+						/* commits: */ change.newCommits,
+						/* bypassBuffer: */ this.detachedRevision !== undefined ||
+							this.applyingStashedCommit,
+					);
+					return;
+				}
 				if (this.detachedRevision === undefined) {
 					// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
 					this.getCommitEnricher(branchId).prepareChanges(
@@ -353,10 +438,115 @@ export class SharedTreeCore<
 				}
 
 				for (const commit of change.newCommits) {
-					this.submitCommit(branchId, commit, this.schemaAndPolicy, false);
+					this.validateLocalCommit(branchId, commit, () =>
+						this.submitCommit(branchId, commit, this.schemaAndPolicy, false),
+					);
 				}
 			}
 		});
+		if (buffer !== undefined) {
+			branch.events.on("afterChange", (change) => {
+				if (change.type === "append") {
+					const last = change.newCommits.at(-1);
+					assert(last !== undefined, "An append must contain a commit.");
+					// The graph now contains the appended revisions, but the checkout may not
+					// have applied them yet. Wait for validation of the whole append before flush.
+					this.validateLocalCommit(branchId, last, () =>
+						this.flushBufferedCommits(branchId, buffer),
+					);
+				} else if (change.type === "remove") {
+					for (const commit of change.removedCommits) buffer.remove(commit.revision);
+				}
+				// Rebase does not call bufferCommitsUntil. Ready commits are resolved again when flushed.
+			});
+		}
+	}
+
+	/**
+	 * Runs the provided `onValid` callback once the specified local commit has passed the validation required before submission.
+	 *
+	 * @remarks
+	 * This is a callback hook, not a validation result or a promise.
+	 * Returning from this method does not mean that validation has completed or that the callback has run.
+	 * The default implementation performs no validation and calls `onValid` synchronously.
+	 *
+	 * Successful validation concerns local submission only.
+	 * It does not mean that the service has sequenced the commit or that it will survive later rebasing.
+	 *
+	 * @param branchId - The branch that owns the appended commit.
+	 * @param commit - The commit to validate, or the last commit of an append on the buffered path.
+	 * @param onValid - The continuation to run after successful validation.
+	 * It can run synchronously before this method returns, or later when validation completes.
+	 */
+	protected validateLocalCommit(
+		branchId: BranchId,
+		commit: GraphCommit<TChange>,
+		onValid: () => void,
+	): void {
+		// Our TSConfig settings require unused variables to be `_`-prefixed.
+		// But since this implementation is the base implementation that defines the signature used by subclasses,
+		// it is preferable to avoid such prefixes.
+		// Trick the compiler into thinking we're using them so we don't need to prefix them.
+		allowUnused(branchId);
+		allowUnused(commit);
+
+		onValid();
+	}
+
+	/**
+	 * Submits the ready prefix of a branch's buffer in local commit order.
+	 *
+	 * @remarks
+	 * The caller must wait for local commit validation before calling this method.
+	 * This method does not evaluate the buffering policy or release later commits that are still held.
+	 *
+	 * Buffered revisions are resolved against current local history so submission uses any rebased changes.
+	 * Attached commits are enriched before submission to the runtime.
+	 * Detached commits are sequenced locally without sending ops.
+	 *
+	 * A recursive call for the same branch does nothing.
+	 * This prevents duplicate submission when synchronous callbacks run during a flush.
+	 * If submission fails, the error propagates to the existing broken-state handler.
+	 *
+	 * @param branchId - The branch whose ready commits will be submitted.
+	 * @param buffer - The submission buffer for that branch.
+	 * Commits after its ready prefix remain buffered.
+	 */
+	private flushBufferedCommits(
+		branchId: BranchId,
+		buffer: CommitSubmissionBuffer<TChange>,
+	): void {
+		if (this.flushingBranches.has(branchId)) {
+			return;
+		}
+		const ready = buffer.getReadyCommits(this.editManager.getLocalCommits(branchId));
+		if (ready.length === 0) {
+			return;
+		}
+		this.flushingBranches.add(branchId);
+		try {
+			if (this.detachedRevision === undefined) {
+				this.getCommitEnricher(branchId).prepareChanges(
+					ready,
+					this.coreOptions.validateCommitsOnFirstSubmission ?? false,
+				);
+			}
+			for (const commit of ready) {
+				// The buffer is not the runtime pending queue. Once handed off, resubmission
+				// belongs to the runtime even if acknowledgement occurs synchronously.
+				buffer.remove(commit.revision);
+				// Submission can fail after an earlier member reached the runtime. Let the
+				// existing broken-state boundary propagate the failure; do not restore a queue
+				// that might replay already-submitted members or imply all-or-nothing acceptance.
+				this.submitCommit(branchId, commit, this.schemaAndPolicy, false);
+			}
+		} finally {
+			this.flushingBranches.delete(branchId);
+		}
+	}
+
+	private hasBufferedCommits(): boolean {
+		return [...this.submissionBuffers.values()].some((buffer) => buffer.hasPending);
 	}
 
 	private async loadSummarizable(
@@ -541,6 +731,7 @@ export class SharedTreeCore<
 
 		// Update the resubmit machine for each commit applied.
 		for (const commit of commits) {
+			this.submissionBuffers.get(branchId)?.remove(commit.revision);
 			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(commit.revision, isLocal);
 		}
 	}
@@ -561,6 +752,9 @@ export class SharedTreeCore<
 			.map((id) => this.idCompressor.decompress(id));
 	}
 	public createSharedBranch(branchName?: string): string {
+		if (this.hasBufferedCommits()) {
+			throw new UsageError("Cannot create a shared branch from buffered local history.");
+		}
 		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
 			throw new UsageError(
 				`Branch name is too long: ${branchName.length} > maxBranchNameLength`,
@@ -614,7 +808,12 @@ export class SharedTreeCore<
 					const localCommits = this.editManager.getLocalCommits(branchId);
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
-					return localCommits.slice(revisionIndex);
+					// Never-submitted changes have no runtime pending entry. Re-enrich only
+					// the submitted prefix, without flushing any later private preparation.
+					const buffer = this.submissionBuffers.get(branchId);
+					return localCommits
+						.slice(revisionIndex)
+						.filter((commit) => buffer?.has(commit.revision) !== true);
 				};
 
 				assert(
@@ -654,6 +853,16 @@ export class SharedTreeCore<
 				} = message;
 				const branch = this.editManager.getLocalBranch(branchId);
 				const head = branch.getHead();
+				if (
+					head.revision !== revision &&
+					this.submissionBuffers.get(branchId)?.hasPending === true
+				) {
+					// Removing a submitted ancestor under an unpublished suffix requires
+					// reconciliation, not a queue flush. Keep the unsupported boundary explicit.
+					throw new UsageError(
+						"Cannot roll back a submitted commit beneath buffered local changes.",
+					);
+				}
 				assert(head.revision === revision, 0xc6b /* Can only rollback latest commit */);
 				const newHead = head.parent ?? fail(0xc6c /* must have parent */);
 				branch.removeAfter(newHead);
@@ -662,6 +871,7 @@ export class SharedTreeCore<
 			}
 			case "branch": {
 				this.editManager.removeBranch(message.branchId);
+				this.submissionBuffers.delete(message.branchId);
 				break;
 			}
 			default: {
@@ -671,6 +881,18 @@ export class SharedTreeCore<
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
+		// Stashed operations have already been submitted. Recreate their normal pending
+		// state even if the current application policy would hold a newly authored change.
+		assert(!this.applyingStashedCommit, "Applying stashed operations must not be reentrant.");
+		this.applyingStashedCommit = true;
+		try {
+			this.applySubmittedStashedOp(content);
+		} finally {
+			this.applyingStashedCommit = false;
+		}
+	}
+
+	private applySubmittedStashedOp(content: JsonCompatibleReadOnly): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const message = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,

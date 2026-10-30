@@ -91,6 +91,14 @@ export class SchemaSummarizer
 		});
 	}
 
+	/**
+	 * Prevents reuse of a schema blob from before a delayed local upgrade was sequenced.
+	 * @remarks The local schema-change event can precede publication, so its sequence alone is insufficient.
+	 */
+	public invalidate(): void {
+		this.schemaIndexLastChangedSeq = undefined;
+	}
+
 	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
