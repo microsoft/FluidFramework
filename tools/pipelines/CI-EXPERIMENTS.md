@@ -142,6 +142,18 @@ The nine-minute target is not fully met: Tinylicious service is the remaining lo
 
 ### Active E21: profile the remaining test-service bottleneck
 
+Remote run [431129](https://dev.azure.com/fluidframework/public/_build/results?buildId=431129) failed in the Tinylicious end-to-end job.
+It reported an uncaught legacy `@fluidframework/core-utils@2.0.9` timer assertion `0x764` ("Running timer missing handler") during SharedDirectory setup, followed by a missing-snapshot assertion and duplicate hook completion.
+The run had no retried attempts.
+This is not the earlier Git-object write error, and is not classified as ordinary service flakiness.
+The same timer signature appeared during local parallel investigation, although the exact case differed.
+All other jobs passed, and all timed jobs were below nine minutes; the failed run is not accepted as a successful performance result.
+
+The next control restores serial end-to-end execution while retaining the query-path patch.
+The opt-in local parallel configuration remains available for diagnosis, but CI no longer enables it.
+Investigate timer ownership, worker reuse, and asynchronous cleanup before considering it reliable.
+No tests, assertions, or timeout checks are removed.
+
 The latest green service log shows the end-to-end package occupying 467 seconds; the other four service packages took roughly 5-35 seconds each.
 Within that package, SharedDirectory occupied about 82 seconds, SharedMap 47 seconds, and attach-lifecycle tests 43 seconds.
 No single ordinary test body explains the total; repeated setup and many compatibility cases matter.
