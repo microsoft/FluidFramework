@@ -44,7 +44,19 @@ However, there are many other types of changes that could impact cross-client co
 
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero, so all active deployments that must collaborate need to be running Fluid Framework 2.0.0 or later. If the customer does not set `oldestSupportedClient`, Client 3.0 uses `"2.0.0"` and applies the same defaults and validation as an explicit `"2.0.0"`. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime.
+The runtime uses this choice to select default configurations and prevent unsafe configurations, as the following sections explain.
+To preserve document access, customers must choose a version that all active deployments support.
+Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero.
+Therefore, deployments that must collaborate must use Fluid Framework 2.0.0 or later.
+
+Starting with Client 3.10, public runtime entry points require callers to make this choice explicitly.
+New callers use `oldestSupportedClient`.
+Existing beta callers can continue to use `minVersionForCollab` on the same parameter interfaces.
+Both properties remain optional in TypeScript to preserve existing declarations and interface extensions.
+The runtime enforces the requirement for exactly one compatibility property.
+If callers supply neither property or both properties, the runtime throws a `UsageError` before it selects a configuration.
+Internal loaders retain their historical fallback so mixed-version test infrastructure can continue to operate.
 
 ### Default Configurations
 
@@ -65,8 +77,6 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 	// ... other options
 };
 ```
-
-When the setting is omitted, Client 3.0 uses `"2.0.0"` before consulting this map. Omitted and explicit `"2.0.0"` settings therefore produce the same configuration.
 
 ### Unsafe Configuration Prevention
 

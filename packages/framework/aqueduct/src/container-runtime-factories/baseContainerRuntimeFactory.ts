@@ -11,10 +11,10 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	validateExplicitOldestSupportedClient,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
@@ -36,6 +36,9 @@ import {
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ * @remarks
+ * Both compatibility properties remain optional in this interface for source compatibility.
+ * The constructor requires exactly one supported compatibility version at runtime.
  * @input
  * @legacy
  * @beta
@@ -76,16 +79,11 @@ export interface BaseContainerRuntimeFactoryProps {
 	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
 
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * Deprecated name for {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient}.
+	 * Supply exactly one compatibility property when you create a factory.
 	 *
-	 * @remarks
-	 * See {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} for compatibility implications.
-	 *
-	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
-	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-	 * {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
+	 * @deprecated 2.116.0. To be removed in 3.10.0.
+	 * Use {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	minVersionForCollab?: OldestSupportedClientVersion | undefined;
@@ -113,7 +111,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import-x/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	private readonly oldestSupportedClient: OldestSupportedClientVersion | undefined;
+	private readonly oldestSupportedClient: OldestSupportedClientVersion;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -124,17 +122,7 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
-		const deprecatedMinVersionForCollab = props.minVersionForCollab;
-		if (
-			props.oldestSupportedClient !== undefined &&
-			deprecatedMinVersionForCollab !== undefined
-		) {
-			throw new UsageError(
-				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
-			);
-		}
-		this.oldestSupportedClient = props.oldestSupportedClient ?? deprecatedMinVersionForCollab;
+		this.oldestSupportedClient = validateExplicitOldestSupportedClient(props);
 	}
 
 	/**

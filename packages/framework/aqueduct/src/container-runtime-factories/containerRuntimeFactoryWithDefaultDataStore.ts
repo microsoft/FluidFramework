@@ -29,6 +29,8 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ * @remarks
+ * The constructor requires exactly one compatibility property at runtime, as described by {@link BaseContainerRuntimeFactoryProps}.
  * @legacy
  * @beta
  */
