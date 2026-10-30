@@ -9,6 +9,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	CursorLocationType,
 	CursorMarker,
+	cursorChunk,
+	type TreeChunk,
+	cursorStringSequence,
+	tryGetChunk,
+	tryGetStringSequence,
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
@@ -20,6 +25,7 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
+import type { StringSequence } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
@@ -82,6 +88,10 @@ export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "leng
  */
 export interface CursorAdapter<TNode> {
 	/**
+	 * Optional field cursor that avoids materializing the field's node objects.
+	 */
+	getFieldCursor?(node: TNode, key: FieldKey): CursorWithNode<TNode> | undefined;
+	/**
 	 * @returns the value of the given node.
 	 */
 	value(node: TNode): Value;
@@ -127,6 +137,16 @@ export abstract class SynchronousCursor {
  * 2. Support for cursors which are field cursors at the root.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
+	public get [cursorChunk](): TreeChunk | undefined {
+		return this.nestedCursor === undefined ? undefined : tryGetChunk(this.nestedCursor);
+	}
+
+	public get [cursorStringSequence](): StringSequence | undefined {
+		return this.nestedCursor === undefined
+			? undefined
+			: tryGetStringSequence(this.nestedCursor);
+	}
+
 	public override readonly [CursorMarker] = true;
 	/**
 	 * Might start at special root where fields are detached sequences.
@@ -146,12 +166,17 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		private readonly indexStack: number[],
 		private siblings: SiblingsOrKey<TNode>,
 		private index: number,
+		private nestedCursor?: CursorWithNode<TNode>,
+		private nestedDepth = 0,
 	) {
 		super();
 	}
 
 	public getFieldKey(): FieldKey {
 		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		if (this.nestedCursor !== undefined && this.nestedDepth > 0) {
+			return this.nestedCursor.getFieldKey();
+		}
 		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as readonly FieldKey[])[this.index]!;
@@ -181,11 +206,19 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public getFieldLength(): number {
 		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.getFieldLength();
+		}
 		return this.getField().length;
 	}
 
 	public enterNode(index: number): void {
 		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		if (this.nestedCursor !== undefined) {
+			this.nestedCursor.enterNode(index);
+			this.nestedDepth++;
+			return;
+		}
 		const siblings = this.getField();
 		if (!(index in siblings)) {
 			throw new UsageError(
@@ -200,18 +233,45 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
 		assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.getPath(this.nestedPrefix(prefix));
+		}
 		return this.getOffsetPath(0, prefix);
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
+		if (this.nestedCursor !== undefined && this.nestedDepth > 0) {
+			return this.nestedCursor.getFieldPath(this.nestedPrefix(prefix));
+		}
+		return this.outerFieldPath(prefix);
+	}
+
+	private outerFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+		const key = (this.siblings as readonly FieldKey[])[this.index] ?? oob();
 		return {
-			field:
-				this.indexStack.length === 1
-					? (prefix?.rootFieldOverride ?? this.getFieldKey())
-					: this.getFieldKey(),
+			field: this.indexStack.length === 1 ? (prefix?.rootFieldOverride ?? key) : key,
 			parent: this.getOffsetPath(1, prefix),
 		};
+	}
+
+	private nestedPrefix(prefix?: PathRootPrefix): PathRootPrefix {
+		const field = this.outerFieldPath(prefix);
+		return {
+			parent: field.parent,
+			rootFieldOverride: field.field,
+			indexOffset: this.indexStack.length === 1 ? prefix?.indexOffset : undefined,
+		};
+	}
+
+	private delegateField(): void {
+		const parent = this.getStackedNode(this.indexStack.length - 1);
+		this.nestedCursor = this.adapter.getFieldCursor?.(parent, this.getFieldKey());
+		this.nestedDepth = 0;
+		assert(
+			this.nestedCursor === undefined || this.nestedCursor.mode === CursorLocationType.Fields,
+			"A delegated cursor must start at its root field",
+		);
 	}
 
 	private getOffsetPath(
@@ -268,11 +328,18 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 			[...this.indexStack],
 			this.siblings,
 			this.index,
+			this.nestedCursor?.fork(),
+			this.nestedDepth,
 		);
 	}
 
 	public enterField(key: FieldKey): void {
 		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
+		if (this.nestedCursor !== undefined) {
+			this.nestedCursor.enterField(key);
+			this.nestedDepth++;
+			return;
+		}
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
 
@@ -283,25 +350,45 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		// at the cost of an allocation here.
 		this.index = 0;
 		this.siblings = [key];
+		this.delegateField();
 	}
 
 	public get mode(): CursorLocationType {
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.mode;
+		}
 		return this.siblingStack.length % 2 === 0
 			? CursorLocationType.Nodes
 			: CursorLocationType.Fields;
 	}
 
 	public nextField(): boolean {
+		if (this.nestedCursor !== undefined && this.nestedDepth > 0) {
+			const found = this.nestedCursor.nextField();
+			if (!found) {
+				this.nestedDepth--;
+			}
+			return found;
+		}
+		this.nestedCursor = undefined;
 		this.index += 1;
 		if (this.index === (this.siblings as []).length) {
 			this.exitField();
 			return false;
 		}
+		this.delegateField();
 		return true;
 	}
 
 	public firstField(): boolean {
 		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
+		if (this.nestedCursor !== undefined) {
+			const found = this.nestedCursor.firstField();
+			if (found) {
+				this.nestedDepth++;
+			}
+			return found;
+		}
 		const fields = this.adapter.keysFromNode(this.getNode());
 		if (fields.length === 0) {
 			return false;
@@ -311,6 +398,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		this.indexStack.push(this.index);
 		this.index = 0;
 		this.siblings = fields;
+		this.delegateField();
 		return true;
 	}
 
@@ -318,6 +406,13 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(
 			() => this.mode === CursorLocationType.Nodes || "can only seekNodes when in Nodes",
 		);
+		if (this.nestedCursor !== undefined) {
+			const found = this.nestedCursor.seekNodes(offset);
+			if (!found) {
+				this.nestedDepth--;
+			}
+			return found;
+		}
 		this.index += offset;
 		if (this.index in this.siblings) {
 			return true;
@@ -330,6 +425,13 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(
 			() => this.mode === CursorLocationType.Fields || "firstNode only allowed in fields mode",
 		);
+		if (this.nestedCursor !== undefined) {
+			const found = this.nestedCursor.firstNode();
+			if (found) {
+				this.nestedDepth++;
+			}
+			return found;
+		}
 		const nodes = this.getField();
 		if (nodes.length === 0) {
 			return false;
@@ -345,6 +447,13 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(
 			() => this.mode === CursorLocationType.Nodes || "can only nextNode when in Nodes",
 		);
+		if (this.nestedCursor !== undefined) {
+			const found = this.nestedCursor.nextNode();
+			if (!found) {
+				this.nestedDepth--;
+			}
+			return found;
+		}
 		this.index++;
 		if (this.index < (this.siblings as []).length) {
 			return true;
@@ -359,6 +468,12 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 				this.mode === CursorLocationType.Fields ||
 				"can only navigate up from field when in field",
 		);
+		if (this.nestedCursor !== undefined && this.nestedDepth > 0) {
+			this.nestedCursor.exitField();
+			this.nestedDepth--;
+			return;
+		}
+		this.nestedCursor = undefined;
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xac3 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xac4 /* Unexpected indexStack.length */);
@@ -370,6 +485,11 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 				this.mode === CursorLocationType.Nodes ||
 				"can only navigate up from node when in node",
 		);
+		if (this.nestedCursor !== undefined) {
+			this.nestedCursor.exitNode();
+			this.nestedDepth--;
+			return;
+		}
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xac5 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xac6 /* Unexpected indexStack.length */);
@@ -379,6 +499,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(
 			() => this.mode === CursorLocationType.Nodes || "can only get node when in node",
 		);
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.getNode();
+		}
 		// Can not use `?? oob()` since null and undefined are valid values.
 		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -399,6 +522,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	 * The value of the current node
 	 */
 	public get value(): Value {
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.value;
+		}
 		return this.adapter.value(this.getNode());
 	}
 
@@ -406,6 +532,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	 * The type of the current node
 	 */
 	public get type(): TreeType {
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.type;
+		}
 		return this.adapter.type(this.getNode());
 	}
 
@@ -413,14 +542,19 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		debugAssert(
 			() => this.mode === CursorLocationType.Nodes || "can only node's index when in node",
 		);
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor.fieldIndex;
+		}
 		return this.index;
 	}
 
 	public get chunkStart(): number {
-		return this.fieldIndex;
+		return this.nestedCursor?.chunkStart ?? this.fieldIndex;
 	}
 
-	public readonly chunkLength = 1;
+	public get chunkLength(): number {
+		return this.nestedCursor?.chunkLength ?? 1;
+	}
 }
 
 /**

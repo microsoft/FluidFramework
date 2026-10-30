@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
@@ -13,7 +13,18 @@ import {
 } from "@fluidframework/type-factory/alpha";
 import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	EmptyKey,
+	mapCursorField,
+	tryGetStringSequence,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
+import { cursorForStringSequence } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { LazySequence } from "../feature-libraries/flex-tree/lazyField.js";
+import { brand, StringSequence, validateIndex, validateIndexRange } from "../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../simple-tree/core/unhydratedFlexTree.js";
 import {
 	createArrayInsertionAnchor,
 	eraseSchemaDetails,
@@ -157,6 +168,9 @@ class TextNode
 	}
 
 	public insertAt(index: number, additionalCharacters: string): void {
+		if (this.content.tryInsertString(index, additionalCharacters)) {
+			return;
+		}
 		this.content.insertAt(
 			index,
 			TreeArrayNode.spread(charactersFromString(additionalCharacters)),
@@ -225,6 +239,24 @@ class TextNode
 	}
 
 	public static fromString(value: string): TextNode {
+		return plainTextFromString(value, true);
+	}
+}
+
+/** Internal factory switch for benchmarking packed construction against the original path. */
+export function plainTextFromString(value: string, packed: boolean): TextNode {
+	if (packed) {
+		const node = new TextNode({ content: [] });
+		const inner = getInnerNode(node.content);
+		assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
+		inner
+			.getBoxed(EmptyKey)
+			.initializeStringSequence(
+				brand(SchemaFactory.string.identifier),
+				StringSequence.fromString(value),
+			);
+		return node;
+	} else {
 		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
 		// Thus the array construction here is necessary to avoid a runtime error.
@@ -247,6 +279,49 @@ export function charactersFromString(value: string): Iterable<string> {
 }
 
 class StringArray extends sf.array("StringArray", SchemaFactory.string) {
+	public tryInsertString(index: number, text: string): boolean {
+		const inner = getInnerNode(this);
+		if (!inner.isHydrated()) {
+			assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
+			const unhydratedField = inner.getBoxed(EmptyKey);
+			if (unhydratedField.stringSequence !== undefined) {
+				validateIndex(index, unhydratedField, "TreeArrayNode.insertAt", true);
+				unhydratedField.insertStrings(index, StringSequence.fromString(text));
+				return true;
+			}
+			return false;
+		}
+		const field = inner.getBoxed(EmptyKey);
+		assert(field instanceof LazySequence, "Expected hydrated string sequence");
+		validateIndex(index, field, "TreeArrayNode.insertAt", true);
+		// This built-in schema accepts only strings, with no defaults or wrapper identities to hydrate.
+		field.insertCursor(
+			index,
+			cursorForStringSequence(
+				brand(SchemaFactory.string.identifier),
+				StringSequence.fromString(text),
+			),
+		);
+		return true;
+	}
+
+	public override removeRange(start?: number, end?: number): void {
+		const inner = getInnerNode(this);
+		if (!inner.isHydrated()) {
+			assert(inner instanceof UnhydratedFlexTreeNode, "Expected unhydrated string array");
+			const field = inner.getBoxed(EmptyKey);
+			if (field.stringSequence !== undefined) {
+				const removeStart = start ?? 0;
+				validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
+				const removeEnd = Math.min(field.length, end ?? field.length);
+				validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
+				field.removeStrings(removeStart, removeEnd - removeStart);
+				return;
+			}
+		}
+		super.removeRange(start, end);
+	}
+
 	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
 		const cursor = getInnerNode(this).borrowCursor();
 		cursor.enterField(EmptyKey);
@@ -262,7 +337,21 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 	}
 
 	public fullString(): string {
-		return this.charactersCopy().join("");
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const spans: string[] = [];
+			let hasNode = cursor.firstNode();
+			while (hasNode) {
+				const sequence = tryGetStringSequence(cursor);
+				if (sequence === undefined) {
+					spans.push(cursor.value as string);
+					hasNode = cursor.nextNode();
+				} else {
+					spans.push(sequence.text);
+					hasNode = cursor.seekNodes(sequence.length);
+				}
+			}
+			return spans.join("");
+		});
 	}
 }
 

@@ -366,6 +366,11 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		super.forgetAnchor();
 	}
 
+	/** Inserts already validated content without creating MapTrees or public node wrappers. */
+	public insertCursor(index: number, content: ITreeCursorSynchronous): void {
+		this.sequenceEditor().insert(index, content);
+	}
+
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 

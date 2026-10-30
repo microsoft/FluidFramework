@@ -115,6 +115,7 @@ export {
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
+export { StringPiece, StringSequence, stringBufferSize } from "./stringStorage.js";
 
 export type {
 	_RecursiveTrick,
