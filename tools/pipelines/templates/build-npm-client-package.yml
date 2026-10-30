@@ -665,8 +665,6 @@ extends:
                 displayName: "Checkout build commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
-                parameters:
-                  version: ${{ parameters.testNodeVersion }}
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:

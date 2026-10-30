@@ -45,6 +45,8 @@ steps:
         npm run ${{ parameters.taskTestStep }}
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
+      ${{ if and(eq(variables['Build.Reason'], 'PullRequest'), eq(parameters.taskTestStep, 'ci:test:mocha')) }}:
+        FLUID_MERGE_TREE_PARALLEL: "1"
       # Tests can use this environment variable to behave differently when running from a test branch
       ${{ if contains(parameters.taskTestStep, 'tinylicious') }}:
         # Disable colorization for tinylicious logs (not useful when printing to a file)

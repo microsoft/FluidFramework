@@ -42,7 +42,7 @@ Local CI readiness checks are skipped by request; remote CI is the experiment.
 
 ## Experiment status
 
-E1-E13 are concluded; E14 is active.
+E1-E14 have recorded outcomes; the merge-tree optimization and mixed-runtime confirmation are active.
 Selected changes with evidence are listed above; unsuccessful or non-beneficial trials remain in the history, not in the selected runtime/compiler configuration.
 Further ideas that have not been implemented are listed separately at the end.
 
@@ -61,7 +61,11 @@ No engine checks or package metadata are overridden; this uses an actual support
 Local `pnpm install --frozen-lockfile` completed successfully under Node 26.13.0, including the compatibility-workspace postinstall.
 Actual server-lambdas dependency resolution selects opossum 10.0.0.
 Circuit-breaker success, rejection, open-state, and fallback checks passed on local Node 22.22.3 and 26.13.0.
-Remote CI still needs to validate the full service/test graph and end-to-end timing.
+Run 431023 passed dependency installation, confirming the override removes the engine blocker.
+It subsequently found 12 unit-test failures on Node 26: obsolete recursive `fs.rmdirSync` calls in fluid-runner tests and browser-storage assumptions in example/devtools tests.
+These are not opossum installation or circuit-breaker failures.
+Rather than broaden this experiment into unrelated test migrations, keep the full Mocha unit-suite job on Node 22.
+The other verification jobs continue the Node 26 experiment; passing runs are still required before calling the mixed-runtime configuration validated.
 This is a user-authorized follow-up to the original install blocker, not evidence that the earlier Node 26 run passed.
 
 The installed `@fluid-tools/build-cli` is 0.68.0 and already aggregates `bundleAnalyzerJson`; the pipeline comment claiming otherwise was stale.
@@ -170,8 +174,10 @@ This was not a cold-cache benchmark.
 | Native retry plus E11 development bundles | `4b3f2a5d4195ccea4721a2ef1ca95cb1d195adfd` | [430954](https://dev.azure.com/fluidframework/public/_build/results?buildId=430954) | Passed | 16m 35s; native adapter works with legacy exception; webpack 33.5s |
 | E12: TypeScript 6 worker comparison | `4d89e87ff040fb33193235c323539967a53f90aa` | [430969](https://dev.azure.com/fluidframework/public/_build/results?buildId=430969) | Passed; selected | 16m 40s; prerequisite builds as fast or faster than the partial native adapter |
 | Node 26 local serial benchmarks | No repository runtime/dependency changes | Local only | Passed | Compilation about 11% faster, merge-tree 7.5% faster, identical emitted files/test counts |
-| Node 26 parallel-Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | 1,568 passes/two pending in 168.2s, but newer Node did not fix worker shutdown |
+| Node 26 parallel-Mocha probe | No repository changes | Local only | Initially rejected: process exited 13 | 1,568 passes/two pending in 168.2s; later traced to 13 helper files triggering fail-zero |
 | E13: Node 26 PR test jobs | `3eff90cec5069d9990c71115b07bcba9c30e5797` | [430990](https://dev.azure.com/fluidframework/public/_build/results?buildId=430990) | Blocked before tests; reverted | Frozen install rejects `opossum@8.5.0` on Node 26 |
+| E14: Node 26 with supported opossum | `bc34fb6ba8522cfb1fedfdaae9780c17cca86ff7` | [431023](https://dev.azure.com/fluidframework/public/_build/results?buildId=431023) | Installation fixed; unit suite failed | 12 Node-compatibility failures unrelated to opossum; keep full Mocha job on Node 22 |
+| E15: spec-only parallel merge-tree plus lower-allocation diagnostics | Pending | Local validation complete; remote pending | 1,569 passes/two skipped in 152.0s; all 1,570 original cases retained plus one regression |
 | TypeScript 7 local microbenchmark | No repository dependency changes | Local only | Both compilers passed | Three checked ESM emits: TS6 median 9.228s, TS7 median 1.379s |
 | Merge-tree four-worker Mocha probe | No repository changes | Local only | Not adopted: process exited 13 | JSON reported 1,568 passes, two pending, no assertion failures, in 184.1s |
 
@@ -524,7 +530,8 @@ The merge-tree result is one local sample per runtime, not a CI performance guar
 The existing local test report was preserved, and the default local Node was not changed.
 The four-worker JSON-reporter probe was also repeated on Node 26.
 It reported all 1,568 tests passing and two pending in 168.2 seconds, but still exited 13 with an empty text log.
-The newer runtime does not resolve that worker-mode failure, so parallel Mocha remains excluded from the selected configuration.
+The newer runtime did not change this result.
+Later investigation below identified test-file selection, not Node shutdown, as the cause.
 
 E13 selects 26.13.0 only for PR verification jobs; policy, artifact builds, and non-PR jobs keep 22.22.2.
 Dependencies are installed after selecting the runtime in each fresh job.
@@ -580,9 +587,37 @@ Per-package logs from run 430803 show merge-tree occupying 463.8 seconds of the 
 SharedTree took 182.8 seconds; the local-service suite then added another 133.8 seconds serially.
 An isolated merge-tree run with `mocha --parallel --jobs 4` and JSON reporting completed all 1,570 cases in 184.1 seconds: 1,568 passed, two pending.
 However, the process exited with status 13 despite reporting zero test failures.
-The captured text log was empty; the exact shutdown cause has not been established.
-Do not treat this as a passing optimization or suppress its exit code.
-Mocha worker-mode adoption is deferred; E8 instead separates the existing serial suites into independent CI jobs without changing runner behavior.
+At the time, the empty text log left the cause unresolved; the run was correctly not treated as passing.
+Subsequent debug tracing established that this was not a shutdown failure.
+Mocha's parallel runner counted one `fail-zero` failure for each of 13 helper/type-only modules selected by the recursive `lib/test` default.
+They emit no test-failure event, so the JSON reporter shows zero assertion failures while Mocha returns a failure count of 13.
+All worker processes terminated normally.
+
+The opt-in correction selects `lib/test/**/*.spec.js` before enabling four-worker mode.
+It preserves the existing reporter, root hooks, all real tests, and `fail-zero`.
+An explicitly selected helper-only file still exits 1, and an intentionally failing test still reports the assertion and exits 1.
+The default serial configuration and explicit `MOCHA_SPEC` selections remain available.
+The corrected four-worker run with the normal CI reporter completed all 1,568 original passes and two pending cases with exit zero.
+With the lower-allocation diagnostic queue described below, the full run completed in 151.952 seconds: 1,569 passes and two skipped cases, including one new diagnostic regression test.
+Comparing every reported full test name against the original run found no missing cases and exactly that one added regression case.
+This is approximately 67% less local elapsed time than the earlier 462.3-second serial baseline, without shrinking operation matrices.
+The PR-only opt-in is `FLUID_MERGE_TREE_PARALLEL=1`; serial/non-PR and benchmark invocations retain their defaults.
+Remote CI will measure contention with the other packages running concurrently.
+
+### Why merge-tree is slow
+
+The existing suite repeatedly simulates and compares multiple collaborating clients over large operation matrices.
+The earlier four-worker profile attributed approximately 155s of test-body time to replay, 120s to the obliterate farm, and 93s to the conflict farm.
+Those are concurrent-run durations, not additive serial estimates.
+A CPU profile of one expensive replay case found approximately 35% of samples in garbage collection and substantial time building diagnostic strings in `TestClientLogger.getSegString` and `addNewLogLine`.
+Every operation records client-state snapshots, including breadth-first traversals that allocate a linked-list node per tree node.
+That diagnostic work runs even for successful tests; it is not evidence that production merge-tree operations alone account for the suite duration.
+Replace the linked list with an array queue, preserving breadth-first order and complete diagnostic history.
+An 18-state comparison across tree splits, pending insertions, removals, annotations, and obliteration produced byte-identical current-state/history strings.
+A committed regression case checks multi-level traversal order and pending-edit markers.
+Three alternating runs of the expensive replay case measured median wall times of 11.568 seconds for the original linked queue and 8.804 seconds for the final array queue (24% less).
+This microbenchmark isolates diagnostic rendering, while the full parallel run measures the combined runtime improvement.
+No production merge-tree algorithm, fuzz seed/count, replay corpus, assertion, or logger history was removed.
 
 ## Findings from completed experiments
 
@@ -609,9 +644,10 @@ Security configuration remains enabled, with E7's PR artifact-scope reduction do
    The isolated CLI benchmark above succeeded.
    The untested next step is a native compilation task integrated with the dependency graph, while retaining TypeScript 6 for API Extractor, ESLint, and existing build-tool APIs.
    The partial CLI adapter passed CI, but a full native toolchain including CJS/API consumers has not been attempted.
-6. Investigate merge-tree file-level sharding or the worker-mode shutdown failure.
+6. Further balance merge-tree work after the spec-only parallel-runner experiment.
    The measured slow files include `client.replay.spec.js`, `client.obliterateFarm.spec.js`, and `client.conflictFarm.spec.js`.
-   Any partition must cover the original file/test set exactly, preserve reporting and failure semantics, and justify the extra agent demand.
+   Any partition must cover the original test set exactly, preserve reporting and failure semantics, and justify the extra agent demand.
+   The original exit-13 cause is now known; it was helper-file selection with per-file `fail-zero`, not a Node shutdown bug.
 7. Add a supported disposable-CI mode to `fluid-build` if E9 shows useful potential.
    Such a mode could avoid cache read/write bookkeeping while retaining graph deduplication and necessary dependency/config analysis.
    A blanket forced rebuild in each successive artifact-job invocation would lose useful within-job reuse and is not proposed.

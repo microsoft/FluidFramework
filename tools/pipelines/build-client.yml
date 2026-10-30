@@ -107,6 +107,7 @@ trigger:
     - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-test-task.yml
     - tools/pipelines/templates/include-client-test-build.yml
     - tools/pipelines/templates/include-client-pack-validation.yml
     - tools/pipelines/templates/include-development-validation-bundles.yml
@@ -175,6 +176,7 @@ pr:
     - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-test-task.yml
     - tools/pipelines/templates/include-client-test-build.yml
     - tools/pipelines/templates/include-client-pack-validation.yml
     - tools/pipelines/templates/include-development-validation-bundles.yml
