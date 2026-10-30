@@ -1310,7 +1310,7 @@ describe("TreeLocationResolver", () => {
 		]);
 	});
 
-	it("reports normal view incompatibility instead of rejecting historical schema changes", () => {
+	it("resolves locations when historical schema adds an unknown optional field", () => {
 		const { provider, views } = setup();
 		const batch = captureGaps(views[0], [1]);
 		const receiver = views[1].locations;
@@ -1326,8 +1326,10 @@ describe("TreeLocationResolver", () => {
 		);
 		view.upgradeSchema();
 		provider.synchronizeMessages();
-		assert.equal(views[1].compatibility.canView, false);
-		assert.throws(() => receiver.resolve(batch), /view schema is incompatible/);
+		assert.equal(views[1].compatibility.canView, true);
+		assert.deepEqual(resolved(receiver.resolve(batch)), [
+			{ kind: "sequence", node: views[1].root.left, index: 1, affinity: "after" },
+		]);
 	});
 
 	it("rejects retained resolver references after view disposal", () => {

@@ -536,7 +536,7 @@ describe("checkSchemaCompatibility", () => {
 
 				// Note: the decision to not allow is policy. See
 				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
-				it("stored schema has additional optional fields which view schema did not allow", () => {
+				it("stored schema has additional optional fields which view schema allows", () => {
 					class Point2D extends factory.objectAlpha("Point", {
 						x: factory.number,
 						y: factory.number,
@@ -546,7 +546,14 @@ describe("checkSchemaCompatibility", () => {
 						y: factory.number,
 						z: factory.optional(factory.number),
 					}) {}
-					expectCompatibility({ view: Point2D, stored: toUpgradeSchema(Point3D) }, expected);
+					expectCompatibility(
+						{ view: Point2D, stored: toUpgradeSchema(Point3D) },
+						{
+							canView: true,
+							canUpgrade: false,
+							isEquivalent: false,
+						},
+					);
 				});
 
 				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema

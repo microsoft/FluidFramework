@@ -27,6 +27,7 @@ import {
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
@@ -87,7 +88,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("parse and snapshot can roundtrip schema", () => {
-		const factory = new SchemaFactory("test");
+		const factory = new SchemaFactoryAlpha("test");
 		const Schema = factory.optional(factory.string, {});
 
 		const view = new TreeViewConfiguration({ schema: Schema });
@@ -132,14 +133,18 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
-		const factory = new SchemaFactory("test");
+		const factory = new SchemaFactoryAlpha("test");
 
 		// The past view schema, for the purposes of illustration. This wouldn't normally appear as a concrete schema in the test
 		// checking compatibility, but rather would be loaded from a snapshot.
-		class Point2D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-		}) {}
+		class Point2D extends factory.objectAlpha(
+			"Point",
+			{
+				x: factory.number,
+				y: factory.number,
+			},
+			{ allowUnknownOptionalFields: false },
+		) {}
 
 		// This is the same as Point3D, except missing `z`.
 		let oldViewSchema: TreeViewConfiguration = new TreeViewConfiguration({ schema: Point2D });
@@ -172,9 +177,8 @@ describe("snapshotCompatibilityChecker", () => {
 		// Test what the old version of the application would do with a tree using the new schema:
 		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
 
-		// If the old schema set allowUnknownOptionalFields, this would be true, but since it did not,
-		// we assert that there is forwards compatibility break:
-		// this means these two versions of the application cannot collaborate on content using these schema.
+		// Point2D explicitly disallows unknown optional fields, so content created with the current
+		// schema cannot be viewed by the old schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
 	}
 
@@ -186,18 +190,17 @@ describe("snapshotCompatibilityChecker", () => {
 		checkCompatibilityDetectsUpgradeableSchemas(true);
 	});
 
-	it("checkCompatibility: allowUnknownOptionalFields", () => {
+	it("checkCompatibility: disallow unknown optional fields", () => {
 		const factory = new SchemaFactoryBeta("test");
 
-		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
-		// even though it does not know about the optional field `z`.
+		// Point2D explicitly opts out of unknown optional fields, so it cannot read Point3D trees.
 		class Point2D extends factory.object(
 			"Point",
 			{
 				x: factory.number,
 				y: factory.number,
 			},
-			{ allowUnknownOptionalFields: true },
+			{ allowUnknownOptionalFields: false },
 		) {}
 		class Point3D extends factory.object("Point", {
 			x: factory.number,
@@ -219,8 +222,8 @@ describe("snapshotCompatibilityChecker", () => {
 		// Test what the old version of the application would do with a tree using the new schema:
 		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
 
-		// Content created with the current schema can be viewed by the old schema due to allowUnknownOptionalFields
-		assert.equal(forwardsCompatibilityStatus.canView, true);
+		// Content created with the current schema cannot be viewed by the old schema due to its explicit opt-out.
+		assert.equal(forwardsCompatibilityStatus.canView, false);
 	});
 
 	it("checkCompatibility: staged schema", () => {
@@ -286,12 +289,16 @@ describe("snapshotCompatibilityChecker", () => {
 		it("write current view schema snapshot", () => {
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
 
-			const factory = new SchemaFactory("test");
+			const factory = new SchemaFactoryBeta("test");
 
-			class Point2D extends factory.object("Point", {
-				x: factory.number,
-				y: factory.number,
-			}) {}
+			class Point2D extends factory.object(
+				"Point",
+				{
+					x: factory.number,
+					y: factory.number,
+				},
+				{ allowUnknownOptionalFields: false },
+			) {}
 
 			class Point3D extends factory.object("Point", {
 				x: factory.number,
@@ -380,10 +387,14 @@ Snapshots exist for versions: [
 
 			// For this scenario the application will evolve through three versions of a Point schema across 3 versions of the app.
 
-			class Point1 extends factory.object("Point", {
-				x: factory.number,
-				y: factory.number,
-			}) {}
+			class Point1 extends factory.object(
+				"Point",
+				{
+					x: factory.number,
+					y: factory.number,
+				},
+				{ allowUnknownOptionalFields: false },
+			) {}
 
 			class Point2 extends factory.object(
 				"Point",
@@ -702,10 +713,14 @@ Snapshots exist for versions: [
 				return Number.parseFloat(a) - Number.parseFloat(b);
 			};
 
-			class Point1 extends factory.object("Point", {
-				x: factory.number,
-				y: factory.number,
-			}) {}
+			class Point1 extends factory.object(
+				"Point",
+				{
+					x: factory.number,
+					y: factory.number,
+				},
+				{ allowUnknownOptionalFields: false },
+			) {}
 
 			class Point2 extends factory.object(
 				"Point",
@@ -1146,7 +1161,7 @@ Snapshots exist for versions: [
 			);
 			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-			assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
 		}
 

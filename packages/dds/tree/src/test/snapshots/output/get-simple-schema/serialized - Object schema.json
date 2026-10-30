@@ -44,7 +44,7 @@
             "storedKey": "bar"
           }
         },
-        "allowUnknownOptionalFields": false
+        "allowUnknownOptionalFields": true
       }
     }
   }
