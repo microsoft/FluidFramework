@@ -257,7 +257,12 @@ export function chunkField(
 	debugAssert(
 		() => started === (length !== 0) || "only 0 length fields should not have nodes",
 	);
-	return chunkRange(cursor, policy, length, false);
+	// PERFORMANCE: .slice() removes spare backing-array capacity on V8
+	// This trades copy time and spare capacity for lower retained memory, especially for single-child fields.
+	// This tradeoff should be reconsidered with other forest performance optimizations, especially
+	// those that change the storage format of single-child fields and could make exact sizing less worthwhile.
+	// eslint-disable-next-line unicorn/prefer-spread -- see above
+	return chunkRange(cursor, policy, length, false).slice();
 }
 
 /**
