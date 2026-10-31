@@ -9,6 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadSummarizerContainerAndMakeSummary,
+	loadSummarizerContainerAndMakeAcknowledgedSummary,
 	type ILoadSummarizerContainerProps,
 	type LoadSummarizerSummaryResult,
 } from "@fluidframework/container-loader/internal";
@@ -114,6 +115,32 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 			false,
 			"fullTree flag should be false in Summarize_generate telemetry when config is not enabled",
 		);
+	});
+
+	it("loads the acknowledged version and reads summarized content", async () => {
+		const container = await provider.makeTestContainer(testContainerConfig);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		dataObject.root.set("acknowledged-content", "included in snapshot");
+		await provider.ensureSynchronized(container);
+		const props = await buildLoadPropsForExistingContainer(container, testContainerConfig);
+		const editsSequenceNumber = container.deltaManager.lastSequenceNumber;
+		const { version, referenceSequenceNumber } =
+			await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		assert(
+			referenceSequenceNumber >= editsSequenceNumber,
+			"summary must include the synchronized edits",
+		);
+		const loaded = await provider.loadTestContainer(testContainerConfig, {
+			[LoaderHeader.version]: version,
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.loadMode]: { opsBeforeReturn: "cached", deltaConnection: "none" },
+		});
+		try {
+			const entry = (await loaded.getEntryPoint()) as ITestFluidObject;
+			assert.equal(entry.root.get("acknowledged-content"), "included in snapshot");
+		} finally {
+			loaded.dispose();
+		}
 	});
 
 	it("summarizes successfully with fullTree gate on", async function () {

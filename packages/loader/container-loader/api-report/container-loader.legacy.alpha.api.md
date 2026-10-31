@@ -4,6 +4,12 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
 // @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
@@ -216,6 +222,9 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 
 // @alpha @legacy
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
+
+// @beta @legacy
+export function loadSummarizerContainerAndMakeAcknowledgedSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;

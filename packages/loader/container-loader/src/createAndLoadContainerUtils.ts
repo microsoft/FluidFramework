@@ -62,6 +62,7 @@ import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import type {
+	AcknowledgedSummary,
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
@@ -75,6 +76,9 @@ import {
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
 	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
+	readonly receivedSummaryAckOrNack: Promise<
+		SummarizeOnDemandResults["receivedSummaryAckOrNack"]
+	>;
 }
 
 interface OnDemandSummarizeOptions {
@@ -765,6 +769,11 @@ async function waitForCatchUp(
 /**
  * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
  *
+ * @remarks
+ * By default, success requires submission and broadcast, without an additional acknowledgement wait.
+ * To obtain an acknowledged snapshot version, use {@link loadSummarizerContainerAndMakeAcknowledgedSummary}.
+ * The proposal's `summaryInfo.handle` need not equal the acknowledged snapshot version.
+ *
  * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
  * @returns A result indicating success with summary details, or failure with an error for host-side handling.
  * @legacy @beta
@@ -784,6 +793,118 @@ export async function loadSummarizerContainerAndMakeSummary(
 		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
 	}
 	return result;
+}
+
+/**
+ * Loads a summarizer container, creates a summary, waits for service acknowledgement, and disposes the container.
+ *
+ * @remarks
+ * The runtime's acknowledgement timeout and retries apply. An attempt fails if the container disconnects,
+ * closes, or is disposed. The loader retries a failed attempt once with a new container,
+ * including when snapshot refresh disposes the first summarizer during catch-up.
+ * Both returned values identify the same successful attempt.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns The acknowledged snapshot version and the reference sequence number of its summary proposal.
+ * @throws If summarization fails after retries or times out.
+ * @legacy @beta
+ */
+export async function loadSummarizerContainerAndMakeAcknowledgedSummary(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	try {
+		return await loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
+	} catch {
+		// Reload once to recover from snapshot-refresh disposal during catch-up.
+		return loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
+	}
+}
+
+async function loadSummarizerAndSummarizeOnce(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
+	const subMc = mixinMonitoringContext(
+		mixinDebugLogger("fluid:telemetry", logger, {
+			all: { loaderId: uuid(), loaderVersion: pkgVersion },
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
+	const mc = createChildMonitoringContext({
+		logger: subMc.logger,
+		namespace: "SummarizerOnDemand",
+	});
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "SummarizerOnDemandAcknowledgedSummary" },
+		async () => {
+			const container = await loadExistingContainer({
+				...loadSummarizerContainerProps,
+				request: {
+					...originalRequest,
+					headers: {
+						...originalRequest.headers,
+						[LoaderHeader.cache]: false,
+						[LoaderHeader.clientDetails]: {
+							capabilities: { interactive: false },
+							type: "summarizer",
+						},
+						[DriverHeader.summarizingClient]: true,
+						[LoaderHeader.reconnect]: false,
+					},
+				},
+			});
+			const failureMonitor = createContainerFailureMonitor(container);
+			return Promise.race([
+				summarizeAndWaitForAcknowledgement(
+					container,
+					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true,
+				),
+				failureMonitor.failure,
+			]).finally(() => {
+				failureMonitor.dispose();
+				container.dispose();
+			});
+		},
+		{ start: true, end: true, cancel: "generic" },
+	);
+}
+
+async function summarizeAndWaitForAcknowledgement(
+	container: IContainer,
+	fullTree: boolean,
+): Promise<AcknowledgedSummary> {
+	const entryPoint = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+	// The failure race may have disposed the container while entry-point resolution was pending.
+	if (container.closed) {
+		throw new GenericError("Container terminated before summary generation");
+	}
+	const summarizer = entryPoint?.ISummarizer;
+	if (summarizer === undefined) {
+		throw new GenericError("Summarizer entry point not available");
+	}
+	const results = summarizer.summarizeOnDemand({
+		reason: "summaryOnRequest",
+		retryOnFailure: true,
+		fullTree,
+	});
+	const submitted = await results.summarySubmitted;
+	if (!submitted.success) {
+		throw normalizeError(submitted.error);
+	}
+	const broadcast = await results.summaryOpBroadcasted;
+	if (!broadcast.success) {
+		throw normalizeError(broadcast.error);
+	}
+	const acknowledgement = await results.receivedSummaryAckOrNack;
+	if (!acknowledgement.success) {
+		throw normalizeError(acknowledgement.error);
+	}
+	return {
+		version: acknowledgement.data.summaryAckOp.contents.handle,
+		referenceSequenceNumber: broadcast.data.summarizeOp.referenceSequenceNumber,
+	};
 }
 
 async function loadSummarizerContainerAndMakeSummaryInternal(
@@ -908,4 +1029,42 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 		},
 		{ start: true, end: true, cancel: "generic" },
 	);
+}
+
+/**
+ * Monitors container termination, rejecting on failure until disposed.
+ */
+function createContainerFailureMonitor(container: IContainer): {
+	readonly failure: Promise<never>;
+	dispose(): void;
+} {
+	let onTermination: (error?: unknown) => void;
+	let settled = false;
+	const failure = new Promise<never>((_resolve, reject) => {
+		onTermination = (error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			reject(
+				error === undefined
+					? new GenericError("Container terminated while monitoring for failure")
+					: normalizeError(error),
+			);
+		};
+		container.on("closed", onTermination);
+		container.on("disposed", onTermination);
+		container.on("disconnected", onTermination);
+		if (container.closed || container.disposed === true) {
+			onTermination();
+		}
+	});
+	return {
+		failure,
+		dispose: () => {
+			container.off("closed", onTermination);
+			container.off("disposed", onTermination);
+			container.off("disconnected", onTermination);
+		},
+	};
 }
