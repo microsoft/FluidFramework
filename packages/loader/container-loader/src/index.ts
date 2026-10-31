@@ -13,6 +13,7 @@ export {
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
+	loadSummarizerContainerAndMakeAcknowledgedSummary,
 	type ICaptureFullContainerStateProps,
 	type IContainerDriverServices,
 	type IContainerHostProps,
@@ -25,6 +26,7 @@ export {
 	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
 export type {
+	AcknowledgedSummary,
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummaryStage,

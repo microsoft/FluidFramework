@@ -4,6 +4,12 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -184,6 +190,9 @@ export class Loader implements IHostLoader {
 
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
+
+// @beta @legacy
+export function loadSummarizerContainerAndMakeAcknowledgedSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;

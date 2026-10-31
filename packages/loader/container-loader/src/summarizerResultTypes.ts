@@ -92,7 +92,8 @@ export interface OnDemandSummaryResults {
 		 */
 		readonly stage?: SummaryStage;
 		/**
-		 * Handle of the complete summary.
+		 * Handle from the broadcast summary proposal. This does not guarantee service
+		 * acknowledgement and may differ from the acknowledged snapshot version.
 		 */
 		readonly handle?: string;
 	};
@@ -101,6 +102,24 @@ export interface OnDemandSummaryResults {
 	 * True if summarize op broadcast was observed.
 	 */
 	readonly summaryOpBroadcasted: boolean;
+}
+
+/**
+ * An acknowledged summary that can be loaded as a snapshot.
+ * @sealed
+ * @legacy @beta
+ */
+export interface AcknowledgedSummary {
+	/**
+	 * Snapshot version from the service ACK, suitable for
+	 * {@link @fluidframework/container-definitions#LoaderHeader.version}.
+	 */
+	readonly version: string;
+	/**
+	 * Reference sequence number of the acknowledged summary's proposal.
+	 * Identifies the document state captured by the summary.
+	 */
+	readonly referenceSequenceNumber: number;
 }
 
 /**

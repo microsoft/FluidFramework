@@ -8,6 +8,7 @@
   - [Importing from this package](#importing-from-this-package)
   - [API Documentation](#api-documentation)
   - [Fluid Loader](#fluid-loader)
+  - [Creating and loading an acknowledged summary](#creating-and-loading-an-acknowledged-summary)
   - [Expectations from host implementers](#expectations-from-host-implementers)
   - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
   - [Container Lifetime](#container-lifetime)
@@ -85,6 +86,46 @@ Storage includes snapshots as well as the live and persisted operation stream.
 
 The consensus system allows clients within the collaboration window to agree on container's properties. One
 example of this is the npm package that should be loaded to process operations applied to the container.
+
+## Creating and loading an acknowledged summary
+
+`loadSummarizerContainerAndMakeSummary` loads a summarizer container, requests a summary, and disposes the container after the attempt.
+By default, success requires summary submission and broadcast; the loader does not add an acknowledgement wait.
+The runtime can wait longer as part of its existing retry behavior.
+`summaryResults.summaryInfo.handle` is the handle from the broadcast proposal, which does not guarantee acknowledgement and can differ from the snapshot version in the service ACK.
+
+To migrate code that uses direct summarizer APIs to generate a summary and then load its acknowledged version, use `loadSummarizerContainerAndMakeAcknowledgedSummary`:
+
+```typescript
+import { LoaderHeader } from "@fluidframework/container-definitions/legacy";
+import {
+	loadExistingContainer,
+	loadSummarizerContainerAndMakeAcknowledgedSummary,
+} from "@fluidframework/container-loader/legacy";
+
+// props supplies codeLoader, urlResolver, documentServiceFactory, and request.
+const { version, referenceSequenceNumber } =
+	await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+const container = await loadExistingContainer({
+	...props,
+	request: {
+		...props.request,
+		headers: { ...props.request.headers, [LoaderHeader.version]: version },
+	},
+});
+// Use container, then dispose it when finished.
+```
+
+The new function returns `{ version, referenceSequenceNumber }` after service acknowledgement and rejects on error.
+`version` comes from `summaryAckOp.contents.handle`, suitable for `LoaderHeader.version` on drivers that support loading snapshot versions.
+`referenceSequenceNumber` comes from the matching summary proposal and identifies the document state captured by the summary.
+The summarizer container stays alive until acknowledgement.
+A NACK, runtime timeout, disconnection, closure, or disposal causes the attempt to fail.
+The runtime's existing ACK timeout and summary-stage retries apply.
+The loader imposes no additional timeout beyond the runtime's existing summary timeouts.
+The loader retries a failed attempt once with a new container, including when snapshot refresh disposes the first summarizer during catch-up.
+Both returned values describe the successful attempt.
+The existing `loadSummarizerContainerAndMakeSummary` retains its result shape and completion semantics.
 
 ## Expectations from host implementers
 
