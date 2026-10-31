@@ -60,6 +60,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 	/**
 	 * Invalidates a promise without discarding an active server deadline.
 	 * Outstanding work can still settle for its existing callers.
+	 * Expired throttle-only entries are removed even when there is no promise.
+	 * @returns Whether a promise was removed.
 	 */
 	public override remove(key: string): boolean {
 		const info = this.getInfo(key);
@@ -109,6 +111,9 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		return promise;
 	}
 
+	/**
+	 * Clears expired throttle metadata and prunes entries with no promise or active deadline.
+	 */
 	private getInfo(key: string): JoinInfo | undefined {
 		const info = this.joinInfo.get(key);
 		if (info === undefined) {
@@ -181,6 +186,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 			const start = Date.now();
 			const scheduledDelayMs = Math.min(info.throttleDeadline - start, maximumTimerDelayMs);
 			if (scheduledDelayMs <= 0) {
+				// Prune metadata if the deadline expired between clock reads.
+				this.getInfo(key);
 				return;
 			}
 			const props = {

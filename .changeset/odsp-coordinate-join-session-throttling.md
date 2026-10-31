@@ -4,8 +4,9 @@
 ---
 Preserve server throttle delays across failed join-session attempts
 
-Reconnects and session refreshes retain the server's Retry-After deadline after a join-session request fails.
+With the driver's built-in non-persistent cache, reconnects and session refreshes retain the server's Retry-After deadline after a join-session request fails.
 New requests share a promise that waits for the deadline before fetching, without delaying unrelated documents or independently scoped client caches.
 The exported promise-cache API remains unchanged.
+Consumer-supplied plain `PromiseCache` instances retain their previous behavior without Retry-After coordination.
 
 This change does not prevent a request that already passed its throttle check from starting if an overlapping, invalidated request subsequently establishes a new deadline.

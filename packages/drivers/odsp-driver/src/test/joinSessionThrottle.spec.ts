@@ -303,6 +303,8 @@ describe("join-session throttle coordination", () => {
 
 	it("stores the delayed promise immediately and does not use deadline cleanup timers", async () => {
 		const key = getJoinSessionCacheKey(resolvedUrl);
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const entries = cache.sessionJoinCache["joinInfo"];
 		await assert.rejects(
 			cache.sessionJoinCache.addOrGet(key, async () => {
 				throw createOdspNetworkError("throttle", 429, 120);
@@ -331,6 +333,26 @@ describe("join-session throttle coordination", () => {
 		await clock.tickAsync(1);
 		await Promise.all([first, second]);
 		assert.equal(requests, 1);
+		assert.equal(clock.countTimers(), 0);
+		assert.equal(entries.get(key)?.throttleDeadline, undefined);
+		assert.equal(entries.get(key)?.throttleGateId, undefined);
+		assert.equal(entries.get(key)?.promise, cached, "waiting preserves the shared promise");
+	});
+
+	it("prunes an expired throttle-only entry when remove returns false", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const entries = cache.sessionJoinCache["joinInfo"];
+		await assert.rejects(join(createStream()));
+		assert.equal(cache.sessionJoinCache.remove(key), false);
+		assert.equal(entries.has(key), true, "an active deadline survives without a promise");
+		clock.setSystemTime(120000);
+		assert.equal(cache.sessionJoinCache.remove(key), false);
+		assert.equal(
+			entries.has(key),
+			false,
+			"expired entries are removed even without a promise",
+		);
 		assert.equal(clock.countTimers(), 0);
 	});
 
@@ -398,6 +420,8 @@ describe("join-session throttle coordination", () => {
 
 	it("does not schedule a timer when the deadline passes before the wait is scheduled", async () => {
 		const logger = new MockLogger();
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const entries = cache.sessionJoinCache["joinInfo"];
 		// Each read advances the wall clock, as elapsed execution time would.
 		let elapsedMs = 0;
 		stub(Date, "now").callsFake(() => clock.now + elapsedMs++);
@@ -421,6 +445,13 @@ describe("join-session throttle coordination", () => {
 			await clock.tickAsync(20);
 			await next;
 			assert.ok(requestedAt !== undefined && requestedAt > earliestDeadline);
+			assert.equal(
+				entries.get(key)?.throttleDeadline,
+				undefined,
+				"the wait clears its deadline",
+			);
+			assert.equal(entries.get(key)?.throttleGateId, undefined, "the wait clears its gate ID");
+			assert.notEqual(entries.get(key)?.promise, undefined, "the result remains cached");
 		}
 		const scheduled = logger.events
 			.filter((event) => event.eventName.endsWith("JoinSessionThrottleWait"))
