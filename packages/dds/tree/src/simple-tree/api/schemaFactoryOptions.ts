@@ -14,10 +14,9 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
  * @input
- * @beta
+ * @public
  */
-export interface ObjectSchemaOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+export interface ObjectSchemaOptions {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -68,22 +67,33 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown>
 }
 
 /**
+ * Options when declaring an {@link SchemaFactoryBeta.object|object node}'s schema, including custom metadata.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the node schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @input
+ * @beta
+ */
+export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown>
+	extends ObjectSchemaOptions,
+		NodeSchemaOptions<TCustomMetadata> {}
+
+/**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
  *
  * @input
  * @alpha
  */
 export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
-	extends ObjectSchemaOptions<TCustomMetadata>,
+	extends ObjectSchemaOptionsBeta<TCustomMetadata>,
 		NodeSchemaOptionsAlpha<TCustomMetadata> {}
 
 /**
  * Default options for Object node schema creation.
  * @remarks Omits parameters that are not relevant for common use cases.
  */
-export const defaultSchemaFactoryObjectOptions: Required<
-	Pick<ObjectSchemaOptions, "allowUnknownOptionalFields">
-> = {
+export const defaultSchemaFactoryObjectOptions: Required<ObjectSchemaOptions> = {
 	allowUnknownOptionalFields: false,
 };
 
@@ -174,8 +184,8 @@ export interface SchemaFactoryBetaOptions {
 	readonly objectOptions?: <TCustomMetadata = unknown>(
 		name: number | string,
 		fields: RestrictiveStringRecord<ImplicitFieldSchema>,
-		options: ObjectSchemaOptions<TCustomMetadata> | undefined,
-	) => ObjectSchemaOptions<TCustomMetadata> | undefined;
+		options: ObjectSchemaOptionsBeta<TCustomMetadata> | undefined,
+	) => ObjectSchemaOptionsBeta<TCustomMetadata> | undefined;
 }
 
 /**
@@ -317,8 +327,8 @@ export function composeSchemaFactoryBetaOptions(
 				: <TCustomMetadata = unknown>(
 						name: number | string,
 						fields: RestrictiveStringRecord<ImplicitFieldSchema>,
-						options: ObjectSchemaOptions<TCustomMetadata> | undefined,
-					): ObjectSchemaOptions<TCustomMetadata> | undefined => {
+						options: ObjectSchemaOptionsBeta<TCustomMetadata> | undefined,
+					): ObjectSchemaOptionsBeta<TCustomMetadata> | undefined => {
 						const afterBase = base.objectOptions?.(name, fields, options) ?? options;
 						return override.objectOptions?.(name, fields, afterBase) ?? afterBase;
 					},

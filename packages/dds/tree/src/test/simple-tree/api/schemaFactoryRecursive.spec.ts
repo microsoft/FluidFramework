@@ -12,6 +12,13 @@ import {
 	validateTypeError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import type { ObjectSchemaOptionsBeta } from "../../../entrypoints/beta.js";
+import {
+	SchemaFactory,
+	type ObjectSchemaOptions,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../entrypoints/public.js";
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
@@ -28,7 +35,6 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeView,
-	SchemaFactory,
 	type InternalTreeNode,
 	type FlexListToUnion,
 	type ApplyKindInput,
@@ -40,6 +46,8 @@ import {
 	type ImplicitAllowedTypes,
 	type AllowedTypes,
 	SchemaFactoryBeta,
+	getSimpleSchema,
+	NodeKind,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
@@ -113,6 +121,38 @@ describe("SchemaFactory Recursive methods", () => {
 	});
 
 	describe("objectRecursive", () => {
+		describe("allowUnknownOptionalFields", () => {
+			const factories: readonly (new (scope: string) => SchemaFactory)[] = [
+				SchemaFactory,
+				SchemaFactoryBeta,
+				SchemaFactoryAlpha,
+			];
+			for (const Factory of factories) {
+				for (const allowUnknownOptionalFields of [undefined, false, true]) {
+					it(`${Factory.name} supports allowUnknownOptionalFields=${allowUnknownOptionalFields}`, () => {
+						const factory = new Factory("com.example");
+						const options: ObjectSchemaOptions | undefined =
+							allowUnknownOptionalFields === undefined
+								? undefined
+								: { allowUnknownOptionalFields };
+						class Item extends factory.objectRecursive(
+							"Item",
+							{ child: factory.optionalRecursive([() => Item]) },
+							options,
+						) {}
+
+						const schema = getSimpleSchema(Item).definitions.get(Item.identifier);
+						assert(schema !== undefined);
+						assert(schema.kind === NodeKind.Object);
+						assert.equal(
+							schema.allowUnknownOptionalFields,
+							allowUnknownOptionalFields ?? false,
+						);
+					});
+				}
+			}
+		});
+
 		it("End-to-end with recursive object", () => {
 			const schema = new SchemaFactory("com.example");
 
@@ -517,16 +557,13 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("Node schema metadata - beta", () => {
 			const factory = new SchemaFactoryBeta("");
-			class Foo extends factory.objectRecursive(
-				"Foo",
-				{ bar: [() => Foo] },
-				{
-					metadata: {
-						description: "A recursive object called Foo",
-						custom: { baz: true },
-					},
+			const options: ObjectSchemaOptionsBeta<{ baz: true }> = {
+				metadata: {
+					description: "A recursive object called Foo",
+					custom: { baz: true },
 				},
-			) {}
+			};
+			class Foo extends factory.objectRecursive("Foo", { bar: [() => Foo] }, options) {}
 
 			const custom = Foo.metadata.custom;
 

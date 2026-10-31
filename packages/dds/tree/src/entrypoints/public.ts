@@ -42,6 +42,7 @@ export {
 	NodeSchemaOptions, 
 	NumberKeys, 
 	ObjectFromSchemaRecord, 
+	ObjectSchemaOptions,
 	ReadonlyArrayNode, 
 	RestrictiveReadonlyRecord, 
 	RestrictiveStringRecord, 

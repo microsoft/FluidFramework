@@ -65,6 +65,7 @@ import {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptionsAlpha,
 	type SchemaFactoryAlphaOptions,
 	type SchemaFactoryBetaOptions,
@@ -86,6 +87,7 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptionsAlpha,
 } from "./schemaFactoryOptions.js";
 export {
@@ -270,6 +272,7 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+	 * @param options - Additional options for the schema.
 	 */
 	public object<
 		const Name extends TName,
@@ -277,6 +280,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		fields: T,
+		options?: ObjectSchemaOptions,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -287,6 +291,7 @@ export class SchemaFactory<
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
+			...options,
 		}) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
@@ -668,6 +673,8 @@ export class SchemaFactory<
 	 * Additionally `ImplicitlyConstructable` is disabled (forcing use of constructor) to avoid
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
+	 *
+	 * @param options - Additional options for the schema.
 	 */
 	public objectRecursive<
 		const Name extends TName,
@@ -675,6 +682,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		t: T,
+		options?: ObjectSchemaOptions,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -687,6 +695,7 @@ export class SchemaFactory<
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
@@ -967,7 +976,7 @@ export class SchemaFactoryBeta<
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptionsBeta<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -1012,7 +1021,7 @@ export class SchemaFactoryBeta<
 	>(
 		name: Name,
 		t: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: ObjectSchemaOptionsBeta<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,

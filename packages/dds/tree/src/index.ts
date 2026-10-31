@@ -93,6 +93,7 @@ export {
 	type SchemaFactoryAlphaOptions,
 	composeSchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
