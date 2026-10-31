@@ -40,6 +40,23 @@ interface JoinSessionTelemetry {
 const maximumTimerDelayMs = 2 ** 31 - 1;
 
 /**
+ * Clears expired throttle metadata and removes entries with no promise or active deadline.
+ */
+export function pruneJoinSessionCache(entries: Map<string, JoinInfo>, key: string): void {
+	const info = entries.get(key);
+	if (info === undefined) {
+		return;
+	}
+	if (info.throttleDeadline !== undefined && info.throttleDeadline <= Date.now()) {
+		delete info.throttleDeadline;
+		delete info.throttleGateId;
+	}
+	if (info.promise === undefined && info.throttleDeadline === undefined) {
+		entries.delete(key);
+	}
+}
+
+/**
  * Owns shared join-session promises and server deadlines in one entry per document.
  * The PromiseCache methods preserve the exported cache contract.
  */
@@ -54,7 +71,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 	}
 
 	public override get(key: string): Promise<JoinSessionResult> | undefined {
-		return this.getInfo(key)?.promise;
+		pruneJoinSessionCache(this.joinInfo, key);
+		return this.joinInfo.get(key)?.promise;
 	}
 
 	/**
@@ -64,15 +82,14 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 	 * @returns Whether a promise was removed.
 	 */
 	public override remove(key: string): boolean {
-		const info = this.getInfo(key);
-		if (info?.promise === undefined) {
+		const info = this.joinInfo.get(key);
+		if (info === undefined) {
 			return false;
 		}
+		const hadPromise = info.promise !== undefined;
 		delete info.promise;
-		if (info.throttleDeadline === undefined) {
-			this.joinInfo.delete(key);
-		}
-		return true;
+		pruneJoinSessionCache(this.joinInfo, key);
+		return hadPromise;
 	}
 
 	/**
@@ -87,7 +104,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		asyncFn: () => Promise<JoinSessionResult>,
 		telemetry?: JoinSessionTelemetry,
 	): Promise<JoinSessionResult> {
-		const info = this.getInfo(key) ?? {};
+		pruneJoinSessionCache(this.joinInfo, key);
+		const info = this.joinInfo.get(key) ?? {};
 		if (info.promise !== undefined) {
 			return info.promise;
 		}
@@ -101,7 +119,7 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 			.catch((error: unknown) => {
 				this.recordThrottle(key, error, telemetry);
 				// A removed request must not evict work installed by a later caller.
-				if (this.getInfo(key)?.promise === promise) {
+				if (this.joinInfo.get(key)?.promise === promise) {
 					this.remove(key);
 				}
 				throw error;
@@ -109,25 +127,6 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		info.promise = promise;
 		this.joinInfo.set(key, info);
 		return promise;
-	}
-
-	/**
-	 * Clears expired throttle metadata and prunes entries with no promise or active deadline.
-	 */
-	private getInfo(key: string): JoinInfo | undefined {
-		const info = this.joinInfo.get(key);
-		if (info === undefined) {
-			return undefined;
-		}
-		if (info.throttleDeadline !== undefined && info.throttleDeadline <= Date.now()) {
-			delete info.throttleDeadline;
-			delete info.throttleGateId;
-		}
-		if (info.promise === undefined && info.throttleDeadline === undefined) {
-			this.joinInfo.delete(key);
-			return undefined;
-		}
-		return info;
 	}
 
 	private recordThrottle(
@@ -158,7 +157,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 			);
 			return;
 		}
-		const info = this.getInfo(key) ?? {};
+		pruneJoinSessionCache(this.joinInfo, key);
+		const info = this.joinInfo.get(key) ?? {};
 		if (info.throttleDeadline !== undefined && info.throttleDeadline >= deadline) {
 			return;
 		}
@@ -181,13 +181,14 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		key: string,
 		telemetry: JoinSessionTelemetry | undefined,
 	): Promise<void> {
-		let info = this.getInfo(key);
+		pruneJoinSessionCache(this.joinInfo, key);
+		let info = this.joinInfo.get(key);
 		while (info?.throttleDeadline !== undefined) {
 			const start = Date.now();
 			const scheduledDelayMs = Math.min(info.throttleDeadline - start, maximumTimerDelayMs);
 			if (scheduledDelayMs <= 0) {
 				// Prune metadata if the deadline expired between clock reads.
-				this.getInfo(key);
+				pruneJoinSessionCache(this.joinInfo, key);
 				return;
 			}
 			const props = {
@@ -204,7 +205,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 				...props,
 				observedDelayMs: Date.now() - start,
 			});
-			info = this.getInfo(key);
+			pruneJoinSessionCache(this.joinInfo, key);
+			info = this.joinInfo.get(key);
 		}
 	}
 }
