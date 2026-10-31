@@ -156,7 +156,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
 
 				assert(compareFluidHandles(acquiredValue, handle));
-				const dataStore = (await handle.get()) as ConsensusQueueClass<unknown>;
+				const dataStore = (await handle.get()) as IConsensusOrderedCollection<unknown>;
 				assert(compareFluidHandles(dataStore.handle, testCollection.handle));
 
 				assert.strictEqual(await removeItem(), undefined);

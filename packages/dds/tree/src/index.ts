@@ -86,8 +86,12 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
+	composeSchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
+	composeSchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
@@ -251,8 +255,6 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type UntypedTreeView,
-	type TreeBranch,
-	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchEventsBeta,
@@ -420,6 +422,7 @@ export {
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { ExtrinsicLocations } from "./extrinsic-locations/index.js";
 export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";

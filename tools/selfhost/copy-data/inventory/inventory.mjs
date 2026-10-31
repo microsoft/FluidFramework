@@ -7,6 +7,8 @@ import { execFile } from "node:child_process";
 import { writeFile, chmod, mkdir } from "node:fs/promises";
 import { promisify } from "node:util";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { ConfigurationError } from "../configuration/configuration.mjs";
 import { safeErrorMessage } from "../configuration/errors.mjs";
 import { redact } from "../configuration/redaction.mjs";
 
@@ -71,11 +73,12 @@ function resourceGroupOf(resource) {
 	);
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
 	const options = {
 		resourceGroup: undefined,
 		subscription: undefined,
 		tenantId: undefined,
+		tenantIds: undefined,
 		output: DEFAULT_OUTPUT,
 	};
 
@@ -83,7 +86,8 @@ function parseArgs(argv) {
 		const arg = argv[i];
 		const next = () => {
 			const value = argv[++i];
-			if (value === undefined) throw new Error(`Missing value for ${arg}`);
+			if (value === undefined || value.startsWith("-"))
+				throw new ConfigurationError([`Missing value for ${arg}`]);
 			return value;
 		};
 		switch (arg) {
@@ -97,6 +101,26 @@ function parseArgs(argv) {
 			case "--tenant-id":
 				options.tenantId = next();
 				break;
+			case "--tenant-ids": {
+				const value = next();
+				let ids;
+				try {
+					ids = JSON.parse(value);
+				} catch {
+					throw new ConfigurationError(["--tenant-ids requires a JSON array of tenant IDs"]);
+				}
+				if (
+					!Array.isArray(ids) ||
+					ids.length === 0 ||
+					ids.some((id) => typeof id !== "string" || id.trim() === "")
+				) {
+					throw new ConfigurationError([
+						"--tenant-ids requires a non-empty JSON array of non-empty strings",
+					]);
+				}
+				options.tenantIds = [...new Set(ids.map((id) => id.trim().toLowerCase()))];
+				break;
+			}
 			case "--output":
 			case "-o":
 				options.output = next();
@@ -106,9 +130,11 @@ function parseArgs(argv) {
 				options.help = true;
 				break;
 			default:
-				throw new Error(`Unknown argument: ${arg}`);
+				throw new ConfigurationError([`Unknown argument: ${arg}`]);
 		}
 	}
+	if (options.tenantId !== undefined && options.tenantIds !== undefined)
+		throw new ConfigurationError(["Use either --tenant-id or --tenant-ids, not both"]);
 	return options;
 }
 
@@ -125,6 +151,7 @@ Options:
   -g, --resource-group <rg>    Limit to one resource group (default: whole subscription)
       --subscription <id>      Subscription to query (default: az CLI active subscription)
       --tenant-id <id>         Limit to one Fluid tenant (frsTenantId).
+      --tenant-ids '<json>'    Limit to a JSON array, e.g. '["tenant-a","tenant-b"]'.
   -o, --output <file>          Output path (default: ${DEFAULT_OUTPUT})
   -h, --help                   Show this message
 
@@ -140,8 +167,8 @@ function scopeArgs(options) {
 }
 
 /** Confirm the CLI is installed and signed in. */
-async function resolveAccount(options) {
-	const account = await az(["account", "show", ...scopeArgs(options)]);
+async function resolveAccount(options, runAz) {
+	const account = await runAz(["account", "show", ...scopeArgs(options)]);
 	if (!account) throw new Error("az account show returned no account. Run `az login`.");
 	return {
 		subscriptionId: account.id,
@@ -150,17 +177,17 @@ async function resolveAccount(options) {
 }
 
 /** List Fluid Relay servers, optionally scoped to a single resource group. */
-async function listServers(options) {
+async function listServers(options, runAz) {
 	const args = ["fluid-relay", "server", "list", ...scopeArgs(options)];
 	if (options.resourceGroup) args.push("--resource-group", options.resourceGroup);
-	const servers = await az(args);
+	const servers = await runAz(args);
 	return Array.isArray(servers) ? servers : [];
 }
 
 /** List the documents (ARM containers) belonging to a single server. */
-async function listDocuments(server, options) {
+async function listDocuments(server, options, runAz) {
 	const resourceGroup = resourceGroupOf(server);
-	const containers = await az([
+	const containers = await runAz([
 		"fluid-relay",
 		"container",
 		"list",
@@ -194,17 +221,17 @@ function describeDocument(container, server) {
 	};
 }
 
-async function main() {
-	const options = parseArgs(process.argv.slice(2));
+export async function main(argv = process.argv.slice(2), runAz = az) {
+	const options = parseArgs(argv);
 	if (options.help) {
 		usage();
 		return 0;
 	}
 
-	const account = await resolveAccount(options);
+	const account = await resolveAccount(options, runAz);
 	log(`Subscription: ${account.subscriptionName} (${account.subscriptionId})`);
 
-	const serverResources = await listServers(options);
+	const serverResources = await listServers(options, runAz);
 	if (serverResources.length === 0) {
 		const scope = options.resourceGroup
 			? `resource group '${options.resourceGroup}'`
@@ -214,11 +241,15 @@ async function main() {
 		log(`Found ${serverResources.length} Fluid Relay server(s).`);
 	}
 	if (options.tenantId) log(`Filtering to Fluid tenant: ${options.tenantId}`);
+	if (options.tenantIds) log(`Filtering to Fluid tenants: ${options.tenantIds.join(", ")}`);
+	const tenantFilter = new Set(
+		options.tenantIds ?? (options.tenantId ? [options.tenantId] : []),
+	);
+	const foundTenants = new Set();
 
 	// Collect each Fluid Relay server's document IDs under its tenant.
 	const tenantDocuments = new Map();
 	const errors = [];
-	let total = 0;
 
 	for (const serverResource of serverResources) {
 		const server = describeServer(serverResource);
@@ -226,23 +257,24 @@ async function main() {
 		// Skip a non-matching server before listing its containers. Only safe when
 		// the server reports a tenant; if it doesn't, filter per document,
 		// since the tenant may only be visible on the containers.
-		if (options.tenantId && server.frsTenantId && server.frsTenantId !== options.tenantId) {
+		if (tenantFilter.size > 0 && server.frsTenantId && !tenantFilter.has(server.frsTenantId)) {
 			continue;
 		}
+		if (server.frsTenantId) foundTenants.add(server.frsTenantId);
 
 		try {
-			const containers = await listDocuments(serverResource, options);
+			const containers = await listDocuments(serverResource, options, runAz);
 			let matched = 0;
 			for (const container of containers) {
 				const { tenantId, documentId } = describeDocument(container, serverResource);
-				if (options.tenantId && tenantId !== options.tenantId) {
+				if (tenantFilter.size > 0 && !tenantFilter.has(tenantId)) {
 					continue;
 				}
+				foundTenants.add(tenantId);
 				if (!tenantDocuments.has(tenantId)) tenantDocuments.set(tenantId, new Set());
 				tenantDocuments.get(tenantId).add(documentId);
 				matched++;
 			}
-			total += matched;
 			log(`  ${server.name}: ${matched} document(s)`);
 		} catch (err) {
 			const codes = err instanceof AzError ? err.codes : {};
@@ -259,6 +291,12 @@ async function main() {
 		}
 	}
 
+	const missingTenants = [...tenantFilter].filter((id) => !foundTenants.has(id));
+	if (missingTenants.length > 0)
+		throw new ConfigurationError([
+			`Requested tenant(s) not found in the selected scope: ${missingTenants.join(", ")}. Existing inventory was not overwritten.`,
+		]);
+
 	const tenants = {};
 	for (const [tenantId, documentIds] of tenantDocuments) {
 		const documents = [...documentIds].sort();
@@ -268,6 +306,10 @@ async function main() {
 			documents,
 		};
 	}
+	const total = Object.values(tenants).reduce(
+		(count, tenant) => count + tenant.documentCount,
+		0,
+	);
 
 	const inventory = {
 		generatedAt: new Date().toISOString(),
@@ -275,6 +317,7 @@ async function main() {
 		// Present only when filtered, so a consumer can tell a scoped inventory
 		// from a complete one.
 		...(options.tenantId ? { tenantFilter: options.tenantId } : {}),
+		...(options.tenantIds ? { tenantFilters: options.tenantIds } : {}),
 		tenants,
 		errors,
 	};
@@ -297,10 +340,11 @@ async function main() {
 	return 0;
 }
 
-main().then(
-	(code) => process.exit(code),
-	(err) => {
-		console.error(`\nError: ${redact(safeErrorMessage(err))}`);
-		process.exit(1);
-	},
-);
+if (process.argv[1] === fileURLToPath(import.meta.url))
+	main().then(
+		(code) => process.exit(code),
+		(err) => {
+			console.error(`\nError: ${redact(safeErrorMessage(err))}`);
+			process.exit(1);
+		},
+	);
