@@ -75,6 +75,45 @@ interface ProcessTelemetryProperties {
 }
 
 /**
+ * Message transport exposed to internal SharedObject subclasses that compose an optional protocol.
+ * @internal
+ */
+export interface SharedObjectTransport {
+	isAttached(): boolean;
+	verifyNotClosed(): void;
+	prepareMessage(content: unknown): unknown;
+	submitMessage(content: unknown, metadata: unknown): void;
+}
+
+/**
+ * Package-internal access to the message-routing state of a SharedObject.
+ * @internal
+ */
+export interface SharedObjectMessageRouting {
+	readonly ordinary: Required<IDeltaHandler>;
+	readonly transport: SharedObjectTransport;
+	install(deltaHandler: Required<IDeltaHandler>, close?: (error: unknown) => void): void;
+}
+
+let accessSharedObjectMessageRouting:
+	| ((sharedObject: SharedObjectCore) => SharedObjectMessageRouting)
+	| undefined;
+
+/**
+ * Gets package-internal message-routing access for a SharedObject.
+ * @internal
+ */
+export function getSharedObjectMessageRouting(
+	sharedObject: SharedObjectCore,
+): SharedObjectMessageRouting {
+	assert(
+		accessSharedObjectMessageRouting !== undefined,
+		"SharedObject message routing access has not been initialized",
+	);
+	return accessSharedObjectMessageRouting(sharedObject);
+}
+
+/**
  * Base class from which all {@link ISharedObject|shared objects} derive.
  * @remarks
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
@@ -99,6 +138,26 @@ export abstract class SharedObjectCore<
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
+	static {
+		accessSharedObjectMessageRouting = (sharedObject) => ({
+			ordinary: sharedObject.#deltaHandler,
+			transport: {
+				isAttached: () => sharedObject.isAttached(),
+				verifyNotClosed: () => sharedObject.verifyNotClosed(),
+				prepareMessage: (content) => sharedObject.#prepareMessage(content),
+				submitMessage: (content, metadata) => sharedObject.#submitMessage(content, metadata),
+			},
+			install: (deltaHandler, close) => {
+				assert(
+					sharedObject.services === undefined,
+					"Message routing must be installed before connecting",
+				);
+				sharedObject.#deltaHandler = deltaHandler;
+				sharedObject.#messageRoutingClose = close;
+			},
+		});
+	}
+
 	public get IFluidLoadable(): this {
 		return this;
 	}
@@ -139,6 +198,7 @@ export abstract class SharedObjectCore<
 	 * Tracks error that closed this object.
 	 */
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+	#messageRoutingClose: ((error: unknown) => void) | undefined;
 
 	/**
 	 * Gets the connection state
@@ -250,6 +310,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
+			this.#messageRoutingClose?.(error);
 		}
 	}
 
@@ -528,7 +589,7 @@ export abstract class SharedObjectCore<
 		});
 	}
 
-	readonly #deltaHandler: IDeltaHandler = {
+	#deltaHandler: Required<IDeltaHandler> = {
 		processMessages: (messagesCollection: IRuntimeMessageCollection) => {
 			this.processMessages(messagesCollection);
 		},
