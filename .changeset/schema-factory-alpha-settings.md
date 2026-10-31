@@ -3,53 +3,53 @@
 "fluid-framework": minor
 "__section": feature
 ---
-Add object options to alpha and beta schema factories so defaults can be set once
+Configure public schema factories with reusable object defaults
 
-[SchemaFactoryBeta](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class) and [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class) now accept an options object with the scope and a default callback.
-Use [objectOptions](https://fluidframework.com/docs/api/fluid-framework/schemafactorybetaoptions-interface#objectoptions-propertysignature) to set defaults instead of repeating the options on each call.
-For beta factories, the callback applies to [object](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#object-method) and [objectRecursive](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#objectrecursive-method).
-For alpha factories, it also applies to [objectAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectalpha-method) and [objectRecursiveAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#objectrecursivealpha-method).
-It does not change [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) instances.
+[`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) now accepts an options object with the scope and an [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) callback through the public API.
+The callback provides reusable defaults for [`object`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-method) and [`objectRecursive`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method), including the public `allowUnknownOptionalFields` option.
+Options passed directly to an object schema remain available to the callback, so applications can choose whether per-schema options or factory defaults take precedence.
 
 ```typescript
-import { SchemaFactoryBeta } from "fluid-framework/beta";
+import { SchemaFactory } from "fluid-framework";
 
-const sf = new SchemaFactoryBeta({
-    scope: "com.example",
-    objectOptions: (_name, _fields, options) => ({
-        allowUnknownOptionalFields: false,
-        ...options,
-    }),
+const sf = new SchemaFactory({
+	scope: "com.example",
+	objectOptions: (_name, _fields, options) => ({
+		allowUnknownOptionalFields: true,
+		...options,
+	}),
 });
 
-class Foo extends sf.object("Foo", { x: sf.number }) {}
-class Bar extends sf.object("Bar", { y: sf.string }) {}
+class Person extends sf.object("Person", { name: sf.string }) {}
 
 // Override the default for one schema.
-class Permissive extends sf.object("Permissive", {}, { allowUnknownOptionalFields: true }) {}
+class StrictPerson extends sf.object(
+	"StrictPerson",
+	{ name: sf.string },
+	{ allowUnknownOptionalFields: false },
+) {}
 ```
 
 New utilities support composing and extending factory settings without losing existing defaults:
 
-- [settings](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#settings-property) provides the factory's options without its scope.
-- [createDerivedFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#createderivedfactory-method) creates a factory with replacement settings and an optional child scope without changing the original factory.
-  It preserves alpha APIs when called on an alpha factory.
-- [scopedFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class#scopedfactory-method) creates a child factory that also uses the parent's settings.
-- [composeSchemaFactoryBetaOptions](https://fluidframework.com/docs/api/fluid-framework/composeschemafactorybetaoptions-function) applies two callbacks in order.
+- [`settings`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#settings-property) provides the factory's options without its scope.
+- [`createDerivedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#createderivedfactory-method) creates a factory with replacement settings and an optional child scope without changing the original factory.
+- [`scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#scopedfactory-method) creates a child factory that also uses the parent's settings.
+- [`composeSchemaFactoryOptions`](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryoptions-function) applies two callbacks in order.
   The second callback receives the options returned by the first callback.
 
 ```typescript
-import { composeSchemaFactoryBetaOptions } from "fluid-framework/beta";
+import { composeSchemaFactoryOptions } from "fluid-framework";
 
 const extended = sf.createDerivedFactory(
-    composeSchemaFactoryBetaOptions(sf.settings, {
-        objectOptions: (_name, _fields, options) => ({
-            metadata: { description: "auto-generated" },
-            ...options,
-        }),
-    }),
-    "extended",
+	composeSchemaFactoryOptions(sf.settings, {
+		objectOptions: (_name, _fields, options) => ({
+			...options,
+			allowUnknownOptionalFields: false,
+		}),
+	}),
+	"strict",
 );
 ```
-
-For alpha-only options, use [SchemaFactoryAlphaOptions](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalphaoptions-interface), [createDerivedFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#createderivedfactory-method), [scopedFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#scopedfactoryalpha-method), and [composeSchemaFactoryAlphaOptions](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryalphaoptions-function).
+The beta and alpha schema factories retain their corresponding tier-specific settings and composition APIs.
+The beta and alpha schema factories retain their corresponding tier-specific settings and composition APIs.

@@ -6,13 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import {
+	SchemaFactory,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	composeSchemaFactoryAlphaOptions,
 	composeSchemaFactoryBetaOptions,
+	composeSchemaFactoryOptions,
 	getSimpleSchema,
 	NodeKind,
 	type SchemaFactoryBetaOptions,
+	type SchemaFactoryOptions,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 
@@ -23,6 +26,113 @@ function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
 }
 
 describe("schemaFactoryOptions", () => {
+	describe(composeSchemaFactoryOptions.name, () => {
+		it("chains callbacks in order", () => {
+			const calls: string[] = [];
+			const composed = composeSchemaFactoryOptions(
+				{
+					objectOptions: (_name, _fields, options) => {
+						calls.push("base");
+						return { allowUnknownOptionalFields: true, ...options };
+					},
+				},
+				{
+					objectOptions: (_name, _fields, options) => {
+						calls.push("override");
+						return { ...options, allowUnknownOptionalFields: false };
+					},
+				},
+			);
+			const sf = new SchemaFactory({ scope: "test", ...composed });
+
+			assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), false);
+			assert.deepEqual(calls, ["base", "override"]);
+		});
+
+		it("has no callback when neither input has one", () => {
+			const composed = composeSchemaFactoryOptions({}, {});
+			assert.equal(composed.objectOptions, undefined);
+		});
+
+		for (const position of ["base", "override"] as const) {
+			it(`supports only a ${position} callback`, () => {
+				const options: SchemaFactoryOptions = {
+					objectOptions: (_name, _fields, perCallOptions) => ({
+						allowUnknownOptionalFields: true,
+						...perCallOptions,
+					}),
+				};
+				const composed =
+					position === "base"
+						? composeSchemaFactoryOptions(options, {})
+						: composeSchemaFactoryOptions({}, options);
+				const sf = new SchemaFactory({ ...composed, scope: "test" });
+				assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+			});
+		}
+
+		it("preserves the input options when callbacks return undefined", () => {
+			const calls: string[] = [];
+			const perCallOptions = { allowUnknownOptionalFields: true };
+			const fields = { x: SchemaFactory.number };
+			const composed = composeSchemaFactoryOptions(
+				{
+					objectOptions: (name, actualFields, options) => {
+						calls.push("base");
+						assert.equal(name, 42);
+						assert.equal(actualFields, fields);
+						assert.equal(options, perCallOptions);
+						return undefined;
+					},
+				},
+				{
+					objectOptions: (name, actualFields, options) => {
+						calls.push("override");
+						assert.equal(name, 42);
+						assert.equal(actualFields, fields);
+						assert.equal(options, perCallOptions);
+						return undefined;
+					},
+				},
+			);
+			const sf = new SchemaFactory<"test", number>({ ...composed, scope: "test" });
+			const Schema = sf.object(42, fields, perCallOptions);
+			assert.equal(Schema.identifier, "test.42");
+			assert.equal(allowsUnknownOptionalFields(Schema), true);
+			assert.deepEqual(calls, ["base", "override"]);
+		});
+
+		it("keeps the base result when the override returns undefined", () => {
+			const composed = composeSchemaFactoryOptions(
+				{
+					objectOptions: () => ({ allowUnknownOptionalFields: true }),
+				},
+				{ objectOptions: () => undefined },
+			);
+			const sf = new SchemaFactory({ ...composed, scope: "test" });
+			assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+		});
+
+		for (const position of ["base", "override"] as const) {
+			it(`propagates errors from the ${position} callback`, () => {
+				const error = new Error(position);
+				const options: SchemaFactoryOptions = {
+					objectOptions: () => {
+						throw error;
+					},
+				};
+				const composed =
+					position === "base"
+						? composeSchemaFactoryOptions(options, {})
+						: composeSchemaFactoryOptions({}, options);
+				assert.throws(
+					() => composed.objectOptions?.("Object", {}, undefined),
+					(actual) => actual === error,
+				);
+			});
+		}
+	});
+
 	for (const [Factory, compose] of [
 		[SchemaFactoryBeta, composeSchemaFactoryBetaOptions],
 		[SchemaFactoryAlpha, composeSchemaFactoryAlphaOptions],
