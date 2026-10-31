@@ -95,7 +95,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @remarks
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
  * Numeric enums values have the value implicitly converted into a string.
- * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryBeta.scopedFactory}) to avoid the enum members colliding with other schemas.
+ * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryBeta.(createDerivedFactory:2)}) to avoid the enum members colliding with other schemas.
  * @example
  * ```typescript
  * const schemaFactory = new SchemaFactory("com.myApp");

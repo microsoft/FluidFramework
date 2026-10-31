@@ -61,7 +61,10 @@ describe("schemaCreationUtilities", () => {
 		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
 		// Therefore we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings
 		// which is what this test does.
-		const Mode = enumFromStrings(schema.scopedFactory("Mode"), ["Fun", "Cool"]);
+		const Mode = enumFromStrings(schema.createDerivedFactory(undefined, "Mode"), [
+			"Fun",
+			"Cool",
+		]);
 		const currentViewSchema = new TreeViewConfiguration({ schema: Mode.schema });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "enumFromStrings-example");
 	});
@@ -74,7 +77,7 @@ describe("schemaCreationUtilities", () => {
 			a = "A",
 			b = "B",
 		}
-		const ModeNodes = adaptEnum(schema.scopedFactory("Mode"), Mode);
+		const ModeNodes = adaptEnum(schema.createDerivedFactory(undefined, "Mode"), Mode);
 		const currentViewSchema = new TreeViewConfiguration({ schema: ModeNodes.schema });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "adaptEnum-example");
 	});
@@ -124,7 +127,11 @@ describe("schemaCreationUtilities", () => {
 	it("enumFromStrings - construction tests", () => {
 		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 
-		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
+		const ModeNodes = enumFromStrings(schemaFactory.createDerivedFactory(undefined, "Mode"), [
+			"A",
+			"B",
+			"C",
+		]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
@@ -165,7 +172,7 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 		}
 		// Define the schema for each member of the enum using a nested scope to group them together.
-		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.createDerivedFactory(undefined, "Mode"), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		// An example schema which has an enum as a child.
@@ -193,7 +200,7 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 			c = 6.3,
 		}
-		const f = schemaFactory.scopedFactory("Mode");
+		const f = schemaFactory.createDerivedFactory(undefined, "Mode");
 
 		type Scope = typeof f extends SchemaFactoryBeta<infer S> ? S : never;
 		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
@@ -247,7 +254,7 @@ describe("schemaCreationUtilities", () => {
 		enum Mode {
 			a,
 		}
-		const f = schemaFactory.scopedFactory("Mode");
+		const f = schemaFactory.createDerivedFactory(undefined, "Mode");
 
 		type Scope = typeof f extends SchemaFactoryBeta<infer S> ? S : never;
 		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
@@ -272,7 +279,7 @@ describe("schemaCreationUtilities", () => {
 			c = "C",
 		}
 		// Uses a nested schema factory, as recommended by adaptEnum's docs to ensure that pattern works.
-		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.createDerivedFactory(undefined, "Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);

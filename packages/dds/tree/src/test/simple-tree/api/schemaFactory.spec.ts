@@ -1417,36 +1417,6 @@ describe("schemaFactory", () => {
 		>;
 	});
 
-	it("scopedFactory", () => {
-		const factory = new SchemaFactoryBeta("test.blah");
-
-		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
-			factory.scopedFactory("scoped");
-		assert.equal(scopedFactory.scope, "test.blah.scoped");
-		type _check = requireTrue<
-			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
-		>;
-
-		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
-
-		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
-			return f.scope;
-		}
-
-		const inferred = inferScope(scopedFactory);
-		// TODO: AB#43345
-		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
-		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
-
-		function inferScope2<TScope extends string>(
-			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
-		) {
-			return f.scope;
-		}
-		const inferred2 = inferScope2(scopedFactory);
-		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
-	});
-
 	it("scopedFactoryAlpha", () => {
 		const factory = new SchemaFactoryAlpha("test.blah");
 
@@ -1477,13 +1447,163 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
-	describe("SchemaFactoryBeta constructor settings", () => {
-		function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
-			const simple = getSimpleSchema(schema).definitions.get(schema.identifier);
-			assert(simple?.kind === NodeKind.Object);
-			return simple.allowUnknownOptionalFields;
-		}
+	function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
+		const simple = getSimpleSchema(schema).definitions.get(schema.identifier);
+		assert(simple?.kind === NodeKind.Object);
+		return simple.allowUnknownOptionalFields;
+	}
 
+	describe("SchemaFactory constructor settings", () => {
+		it("keeps the scope separate and preserves its inferred type", () => {
+			const sf = new SchemaFactory({ scope: "test" });
+			assert.equal(sf.scope, "test");
+			assert.equal("scope" in sf.settings, false);
+			assert.equal(sf.settings.objectOptions, undefined);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), false);
+			assert.equal(
+				allowsUnknownOptionalFields(new SchemaFactory("test").object("Default", {})),
+				false,
+			);
+			type _check = requireTrue<areSafelyAssignable<typeof sf.scope, "test">>;
+		});
+
+		it("applies defaults to object and recursive object schemas", () => {
+			const calls: (number | string)[] = [];
+			const sf = new SchemaFactory({
+				scope: "test",
+				objectOptions: (name, _fields, options) => {
+					calls.push(name);
+					return { allowUnknownOptionalFields: true, ...options };
+				},
+			});
+			assert.equal(allowsUnknownOptionalFields(sf.object("Object", {})), true);
+			assert.equal(allowsUnknownOptionalFields(sf.objectRecursive("Recursive", {})), true);
+			assert.deepEqual(calls, ["Object", "Recursive"]);
+		});
+
+		it("lets per-call options override defaults", () => {
+			const sf = new SchemaFactory({
+				scope: "test",
+				objectOptions: (_name, _fields, options) => ({
+					allowUnknownOptionalFields: true,
+					...options,
+				}),
+			});
+			assert.equal(
+				allowsUnknownOptionalFields(
+					sf.object("Override", {}, { allowUnknownOptionalFields: false }),
+				),
+				false,
+			);
+			assert.equal(
+				allowsUnknownOptionalFields(
+					new SchemaFactory("test").object("Direct", {}, { allowUnknownOptionalFields: true }),
+				),
+				true,
+			);
+		});
+
+		it("inherits settings in child scopes and replaces them without changing the original", () => {
+			const sf = new SchemaFactory({
+				scope: "test",
+				objectOptions: () => ({ allowUnknownOptionalFields: true }),
+			});
+			const child = sf.createDerivedFactory(undefined, "child");
+			const replaced = sf.createDerivedFactory({});
+			assert.equal(child.scope, "test.child");
+			assert.equal(child.createDerivedFactory(undefined, "nested").scope, "test.child.nested");
+			assert.equal(allowsUnknownOptionalFields(child.object("Child", {})), true);
+			assert.equal(replaced.scope, sf.scope);
+			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), false);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Original", {})), true);
+			type _check = requireTrue<areSafelyAssignable<typeof child.scope, "test.child">>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof replaced.scope, "test">>;
+		});
+
+		it("shares structural schemas with same-scope derived factories", () => {
+			const factories: SchemaFactory<"test">[] = [
+				new SchemaFactory("test"),
+				new SchemaFactoryBeta("test"),
+				new SchemaFactoryAlpha("test"),
+			];
+			for (const sf of factories) {
+				const derived = sf.createDerivedFactory({});
+				const array = sf.array(sf.number);
+				const map = sf.map(sf.number);
+				assert.equal(derived.array(derived.number), array);
+				assert.equal(derived.map(derived.number), map);
+
+				const Root = sf.object("Root", {
+					arrayFromOriginal: array,
+					arrayFromDerived: derived.array(derived.number),
+					mapFromOriginal: map,
+					mapFromDerived: derived.map(derived.number),
+				});
+				assert.doesNotThrow(() => new TreeViewConfiguration({ schema: Root }));
+			}
+		});
+
+		it("preserves undefined scopes and numeric name constraints", () => {
+			const sf = new SchemaFactory<undefined, number>({
+				scope: undefined,
+				objectOptions: () => ({ allowUnknownOptionalFields: true }),
+			});
+			const replaced = sf.createDerivedFactory(sf.settings);
+			const child = sf.createDerivedFactory<0, number>(undefined, 0);
+			assert.equal(replaced.scope, undefined);
+			assert.equal(replaced.object(42, {}).identifier, "42");
+			assert.equal(child.scope, "0");
+			assert.equal(child.object(1, {}).identifier, "0.1");
+			assert.equal(allowsUnknownOptionalFields(replaced.object(43, {})), true);
+			type _check = requireTrue<
+				areSafelyAssignable<typeof replaced, SchemaFactory<undefined, number>>
+			>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof child, SchemaFactory<"0", number>>
+			>;
+		});
+
+		it("preserves callbacks defined on a prototype", () => {
+			class Options {
+				public readonly scope = "test";
+
+				public objectOptions(): { allowUnknownOptionalFields: boolean } {
+					return { allowUnknownOptionalFields: true };
+				}
+			}
+			const options = new Options();
+			const sf = new SchemaFactory(options);
+			const replaced = new SchemaFactory("test").createDerivedFactory(options);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Direct", {})), true);
+			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), true);
+			assert.equal(
+				allowsUnknownOptionalFields(
+					sf.createDerivedFactory(undefined, "child").object("Child", {}),
+				),
+				true,
+			);
+		});
+
+		it("propagates callback errors", () => {
+			const error = new Error("Default options failed");
+			const sf = new SchemaFactory({
+				scope: "test",
+				objectOptions: () => {
+					throw error;
+				},
+			});
+			assert.throws(
+				() => sf.object("Object", {}),
+				(actual) => actual === error,
+			);
+			assert.throws(
+				() => sf.objectRecursive("Recursive", {}),
+				(actual) => actual === error,
+			);
+		});
+	});
+
+	describe("SchemaFactoryBeta constructor settings", () => {
 		it("keeps the scope separate and preserves its inferred type", () => {
 			const sf = new SchemaFactoryBeta({ scope: "test" });
 			assert.equal(sf.scope, "test");
@@ -1560,10 +1680,10 @@ describe("schemaFactory", () => {
 				scope: "test",
 				objectOptions: () => ({ allowUnknownOptionalFields: true }),
 			});
-			const child = sf.scopedFactory("child");
+			const child = sf.createDerivedFactory(undefined, "child");
 			const replaced = sf.createDerivedFactory({});
 			assert.equal(child.scope, "test.child");
-			assert.equal(child.scopedFactory("nested").scope, "test.child.nested");
+			assert.equal(child.createDerivedFactory(undefined, "nested").scope, "test.child.nested");
 			assert.equal(allowsUnknownOptionalFields(child.object("Child", {})), true);
 			assert.equal(replaced.scope, sf.scope);
 			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), false);
@@ -1580,7 +1700,7 @@ describe("schemaFactory", () => {
 			const replaced = sf.createDerivedFactory(sf.settings);
 			assert.equal(replaced.scope, undefined);
 			assert.equal(replaced.object(42, {}).identifier, "42");
-			assert.equal(sf.scopedFactory(1).scope, "1");
+			assert.equal(sf.createDerivedFactory(undefined, 1).scope, "1");
 			assert.equal(allowsUnknownOptionalFields(replaced.object(43, {})), true);
 			type _check = requireTrue<areSafelyAssignable<typeof replaced.scope, undefined>>;
 			type _check2 = requireTrue<
@@ -1646,7 +1766,9 @@ describe("schemaFactory", () => {
 			assert.equal(allowsUnknownOptionalFields(sf.object("Direct", {})), true);
 			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), true);
 			assert.equal(
-				allowsUnknownOptionalFields(sf.scopedFactory("child").object("Child", {})),
+				allowsUnknownOptionalFields(
+					sf.createDerivedFactory(undefined, "child").object("Child", {}),
+				),
 				true,
 			);
 		});
@@ -1881,7 +2003,7 @@ describe("schemaFactory", () => {
 			const beta: SchemaFactoryBeta<"test"> = original;
 			const derived = beta.createDerivedFactory();
 			const child = beta.createDerivedFactory(undefined, "child");
-			const scoped = beta.scopedFactory("scoped");
+			const scoped = beta.createDerivedFactory(undefined, "scoped");
 			for (const factory of [derived, child, scoped]) {
 				assert(factory instanceof SchemaFactoryAlpha);
 				assert.deepEqual(factory.objectAlpha("Derived", {}).persistedMetadata, {
