@@ -34,7 +34,6 @@ New utilities support composing and extending factory settings without losing ex
 
 - [`settings`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#settings-property) provides the factory's options without its scope.
 - [`createDerivedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#createderivedfactory-method) creates a factory with replacement settings and an optional child scope without changing the original factory.
-- [`scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#scopedfactory-method) creates a child factory that also uses the parent's settings.
 - [`composeSchemaFactoryOptions`](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryoptions-function) applies two callbacks in order.
   The second callback receives the options returned by the first callback.
 

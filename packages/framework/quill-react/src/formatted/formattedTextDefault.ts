@@ -65,7 +65,7 @@ export namespace FormattedTextDefault {
 	 * Tag with which a line in text can be formatted from HTML.
 	 * @internal
 	 */
-	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
+	export const LineTag = enumFromStrings(sf.createDerivedFactory(undefined, "lineTag"), [
 		"h1",
 		"h2",
 		"h3",

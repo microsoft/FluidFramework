@@ -100,6 +100,21 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
+const structuralTypesByFactory = new WeakMap<object, Map<string, TreeNodeSchema>>();
+
+function getStructuralTypes(factory: object): Map<string, TreeNodeSchema> {
+	let structuralTypes = structuralTypesByFactory.get(factory);
+	if (structuralTypes === undefined) {
+		structuralTypes = new Map();
+		structuralTypesByFactory.set(factory, structuralTypes);
+	}
+	return structuralTypes;
+}
+
+function shareStructuralTypes(source: object, target: object): void {
+	structuralTypesByFactory.set(target, getStructuralTypes(source));
+}
+
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -224,10 +239,12 @@ export class SchemaFactory<
 	 * Such usage should probably return a distinct type or error but currently does not.
 	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.
 	 */
-	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
+	private get structuralTypes(): Map<string, TreeNodeSchema> {
+		return getStructuralTypes(this);
+	}
 
 	/**
-	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this factory.
 	 */
 	public readonly scope: TScope;
 
@@ -249,7 +266,7 @@ export class SchemaFactory<
 	 * There are no restrictions on mixing schemas from different schema factories.
 	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 *
-	 * The scope is a prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+	 * The scope is a prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this factory.
 	 * Generally each independently developed library
 	 * (possibly a package, but could also be part of a package or multiple packages developed together)
 	 * should get its own unique scope.
@@ -292,27 +309,6 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Creates a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} that combines this factory's scope and the provided name.
-	 *
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 *
-	 * @returns A factory with the child scope and this factory's settings.
-	 *
-	 * @remarks
-	 * The main use case is creating a collection of related schemas, such as with a function that creates multiple schemas.
-	 * A child scope helps ensure that the related schemas do not collide with other schemas in the parent scope.
-	 *
-	 * The returned factory inherits this factory's {@link SchemaFactory.settings}.
-	 */
-	public scopedFactory<const T extends TName>(
-		name: T,
-	): SchemaFactory<ScopedSchemaName<TScope, T>> {
-		return this.createDerivedFactory(undefined, name);
-	}
-
-	/**
 	 * Creates a factory with the same scope and optional replacement settings.
 	 *
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
@@ -351,10 +347,14 @@ export class SchemaFactory<
 		settings: SchemaFactoryOptions = this.settings,
 		name?: TName,
 	): SchemaFactory<string | undefined, number | string> {
-		return new SchemaFactory({
+		const derived = new SchemaFactory({
 			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
 			objectOptions: settings.objectOptions,
 		});
+		if (name === undefined) {
+			shareStructuralTypes(this, derived);
+		}
+		return derived;
 	}
 
 	/**
@@ -981,32 +981,6 @@ export class SchemaFactoryBeta<
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
 	/**
-	 * Creates a {@link SchemaFactoryBeta} with a {@link SchemaFactory.scope|scope} which is a
-	 * combination of this factory's scope and the provided name.
-	 *
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A factory with the child scope and this factory's settings.
-	 *
-	 * @remarks
-	 * The main use-case for this is when creating a collection of related schemas (for example
-	 * using a function that creates multiple schemas).
-	 * Creating such related schema using a sub-scope helps ensure they won't collide with other
-	 * schema in the parent scope.
-	 *
-	 * The returned factory inherits this factory's {@link SchemaFactoryBeta.settings}.
-	 */
-	public override scopedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
-		return this.createDerivedFactory<T, TNameInner>(undefined, name);
-	}
-
-	/**
 	 * Creates a factory with the same scope and optional replacement settings.
 	 *
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
@@ -1049,10 +1023,14 @@ export class SchemaFactoryBeta<
 		settings: SchemaFactoryBetaOptions = this.settings,
 		name?: TName,
 	): SchemaFactoryBeta<string | undefined, number | string> {
-		return new SchemaFactoryBeta({
+		const derived = new SchemaFactoryBeta({
 			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
 			objectOptions: settings.objectOptions,
 		});
+		if (name === undefined) {
+			shareStructuralTypes(this, derived);
+		}
+		return derived;
 	}
 
 	/**
@@ -1918,9 +1896,13 @@ export class SchemaFactoryAlpha<
 		settings: SchemaFactoryAlphaOptions = this.settings,
 		name?: TName,
 	): SchemaFactoryAlpha<string | undefined, number | string> {
-		return new SchemaFactoryAlpha({
+		const derived = new SchemaFactoryAlpha({
 			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
 			objectOptions: settings.objectOptions,
 		});
+		if (name === undefined) {
+			shareStructuralTypes(this, derived);
+		}
+		return derived;
 	}
 }
