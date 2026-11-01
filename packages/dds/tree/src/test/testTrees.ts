@@ -412,7 +412,7 @@ class NestedMultiStage extends factory.object("NestedMultiStage", {
 	),
 }) {}
 
-const textFactory = factory.createDerivedFactory(undefined, "text");
+const textFactory = factory.scopedFactory("text");
 
 class TextFormat extends textFactory.object("TextFormat", {
 	bold: SchemaFactoryAlpha.boolean,

@@ -100,21 +100,6 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
-const structuralTypesByFactory = new WeakMap<object, Map<string, TreeNodeSchema>>();
-
-function getStructuralTypes(factory: object): Map<string, TreeNodeSchema> {
-	let structuralTypes = structuralTypesByFactory.get(factory);
-	if (structuralTypes === undefined) {
-		structuralTypes = new Map();
-		structuralTypesByFactory.set(factory, structuralTypes);
-	}
-	return structuralTypes;
-}
-
-function shareStructuralTypes(source: object, target: object): void {
-	structuralTypesByFactory.set(target, getStructuralTypes(source));
-}
-
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -239,9 +224,7 @@ export class SchemaFactory<
 	 * Such usage should probably return a distinct type or error but currently does not.
 	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.
 	 */
-	private get structuralTypes(): Map<string, TreeNodeSchema> {
-		return getStructuralTypes(this);
-	}
+	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
 	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this factory.
@@ -253,7 +236,7 @@ export class SchemaFactory<
 	 *
 	 * @remarks
 	 * Use {@link composeSchemaFactoryOptions} with
-	 * {@link SchemaFactory.(createDerivedFactory:1)} to extend these options.
+	 * {@link SchemaFactory.scopedFactory} to extend these options.
 	 */
 	public readonly settings: SchemaFactoryOptions;
 
@@ -309,52 +292,27 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Creates a factory with the same scope and optional replacement settings.
+	 * Creates a factory with a child scope and optional replacement settings.
 	 *
+	 * @param name - The name to append to this factory's scope.
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
 	 *
-	 * @returns A new factory with the same scope.
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new factory with the child scope and the provided or inherited settings.
 	 *
 	 * @remarks
 	 * This does not change the original factory.
 	 * Use {@link composeSchemaFactoryOptions} with this factory's
 	 * {@link SchemaFactory.settings} to extend the existing settings.
 	 */
-	public createDerivedFactory(settings?: SchemaFactoryOptions): SchemaFactory<TScope, TName>;
-
-	/**
-	 * Creates a factory with a child scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A new factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 */
-	public createDerivedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(
-		settings: SchemaFactoryOptions | undefined,
+	public scopedFactory<const T extends TName>(
 		name: T,
-	): SchemaFactory<ScopedSchemaName<TScope, T>, TNameInner>;
-	public createDerivedFactory(
 		settings: SchemaFactoryOptions = this.settings,
-		name?: TName,
-	): SchemaFactory<string | undefined, number | string> {
-		const derived = new SchemaFactory({
-			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
+	): SchemaFactory<ScopedSchemaName<TScope, T>> {
+		return new SchemaFactory({
+			scope: scoped<TScope, TName, T>(this, name),
 			objectOptions: settings.objectOptions,
 		});
-		if (name === undefined) {
-			shareStructuralTypes(this, derived);
-		}
-		return derived;
 	}
 
 	/**
@@ -921,7 +879,7 @@ export class SchemaFactoryBeta<
 	 *
 	 * @remarks
 	 * Use {@link composeSchemaFactoryBetaOptions} with
-	 * {@link SchemaFactoryBeta.(createDerivedFactory:1)} to extend these options.
+	 * {@link SchemaFactoryBeta.scopedFactory} to extend these options.
 	 */
 	public override readonly settings: SchemaFactoryBetaOptions;
 
@@ -981,11 +939,13 @@ export class SchemaFactoryBeta<
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
 	/**
-	 * Creates a factory with the same scope and optional replacement settings.
+	 * Creates a factory with a child scope and optional replacement settings.
 	 *
+	 * @param name - The name to append to this factory's scope.
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
 	 *
-	 * @returns A new factory with the same scope.
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new factory with the child scope and the provided or inherited settings.
 	 *
 	 * @remarks
 	 * This does not change the original factory.
@@ -993,44 +953,14 @@ export class SchemaFactoryBeta<
 	 * Use {@link composeSchemaFactoryBetaOptions} with this factory's
 	 * {@link SchemaFactoryBeta.settings} to extend the existing settings.
 	 */
-	public override createDerivedFactory(
-		settings?: SchemaFactoryBetaOptions,
-	): SchemaFactoryBeta<TScope, TName>;
-
-	/**
-	 * Creates a factory with a child scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A new factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * The returned factory preserves the alpha or beta APIs of this factory.
-	 */
-	public override createDerivedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(
-		settings: SchemaFactoryBetaOptions | undefined,
+	public override scopedFactory<const T extends TName>(
 		name: T,
-	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
-	public override createDerivedFactory(
 		settings: SchemaFactoryBetaOptions = this.settings,
-		name?: TName,
-	): SchemaFactoryBeta<string | undefined, number | string> {
-		const derived = new SchemaFactoryBeta({
-			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
+	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
+		return new SchemaFactoryBeta({
+			scope: scoped<TScope, TName, T>(this, name),
 			objectOptions: settings.objectOptions,
 		});
-		if (name === undefined) {
-			shareStructuralTypes(this, derived);
-		}
-		return derived;
 	}
 
 	/**
@@ -1377,7 +1307,7 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @remarks
 	 * Use {@link composeSchemaFactoryAlphaOptions} with
-	 * {@link SchemaFactoryAlpha.(createDerivedFactory:1)} to extend these options.
+	 * {@link SchemaFactoryAlpha.scopedFactory} to extend these options.
 	 */
 	public override readonly settings: SchemaFactoryAlphaOptions;
 
@@ -1823,32 +1753,13 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Creates a {@link SchemaFactoryAlpha} in a child scope.
+	 * Creates an alpha factory with a child scope and optional replacement settings.
 	 *
 	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A factory with the child scope and this factory's settings.
-	 *
-	 * @remarks
-	 * A child scope keeps related schemas separate from schemas in the parent scope.
-	 * The returned factory inherits this factory's {@link SchemaFactoryAlpha.settings}.
-	 */
-	public scopedFactoryAlpha<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
-		return this.createDerivedFactory<T, TNameInner>(undefined, name);
-	}
-
-	/**
-	 * Creates an alpha factory with the same scope and optional replacement settings.
-	 *
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
 	 *
-	 * @returns A new alpha factory with the same scope.
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new alpha factory with the child scope and the provided or inherited settings.
 	 *
 	 * @remarks
 	 * This does not change the original factory.
@@ -1857,7 +1768,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @example
 	 * ```typescript
-	 * const extended = sf.createDerivedFactory(
+	 * const extended = sf.scopedFactory(
+	 *     "extended",
 	 *     composeSchemaFactoryAlphaOptions(sf.settings, {
 	 *         objectOptions: (_name, _fields, options) => ({
 	 *             allowUnknownOptionalFields: true,
@@ -1867,42 +1779,13 @@ export class SchemaFactoryAlpha<
 	 * );
 	 * ```
 	 */
-	public override createDerivedFactory(
-		settings?: SchemaFactoryAlphaOptions,
-	): SchemaFactoryAlpha<TScope, TName>;
-
-	/**
-	 * Creates an alpha factory with a child scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A new alpha factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 */
-	public override createDerivedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(
-		settings: SchemaFactoryAlphaOptions | undefined,
+	public override scopedFactory<const T extends TName>(
 		name: T,
-	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
-	public override createDerivedFactory(
 		settings: SchemaFactoryAlphaOptions = this.settings,
-		name?: TName,
-	): SchemaFactoryAlpha<string | undefined, number | string> {
-		const derived = new SchemaFactoryAlpha({
-			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
+	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
+		return new SchemaFactoryAlpha({
+			scope: scoped<TScope, TName, T>(this, name),
 			objectOptions: settings.objectOptions,
 		});
-		if (name === undefined) {
-			shareStructuralTypes(this, derived);
-		}
-		return derived;
 	}
 }

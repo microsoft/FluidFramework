@@ -308,11 +308,12 @@ export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
  * Spreading the options objects would replace the base callback.
  * This helper keeps both callbacks.
  *
- * Use this with {@link SchemaFactory.(createDerivedFactory:1)} to extend a factory's defaults.
+ * Use this with {@link SchemaFactory.scopedFactory} to extend a factory's defaults.
  *
  * @example
  * ```typescript
- * const extended = sf.createDerivedFactory(
+ * const extended = sf.scopedFactory(
+ *     "extended",
  *     composeSchemaFactoryOptions(sf.settings, {
  *         objectOptions: (_name, _fields, options) => ({
  *             allowUnknownOptionalFields: true,
@@ -359,11 +360,12 @@ export function composeSchemaFactoryOptions(
  * Spreading the options objects would replace the base callback.
  * This helper keeps both callbacks.
  *
- * Use this with {@link SchemaFactoryAlpha.(createDerivedFactory:1)} to extend a factory's defaults.
+ * Use this with {@link SchemaFactoryAlpha.scopedFactory} to extend a factory's defaults.
  *
  * @example
  * ```typescript
- * const extended = sf.createDerivedFactory(
+ * const extended = sf.scopedFactory(
+ *     "extended",
  *     composeSchemaFactoryAlphaOptions(sf.settings, {
  *         objectOptions: (_name, _fields, options) => ({
  *             allowUnknownOptionalFields: true,
@@ -398,11 +400,12 @@ export function composeSchemaFactoryAlphaOptions(
  * Spreading the options objects would replace the base callback.
  * This helper keeps both callbacks.
  *
- * Use this with {@link SchemaFactoryBeta.(createDerivedFactory:1)} to extend a factory's defaults.
+ * Use this with {@link SchemaFactoryBeta.scopedFactory} to extend a factory's defaults.
  *
  * @example
  * ```typescript
- * const extended = sf.createDerivedFactory(
+ * const extended = sf.scopedFactory(
+ *     "extended",
  *     composeSchemaFactoryBetaOptions(sf.settings, {
  *         objectOptions: (_name, _fields, options) => ({
  *             allowUnknownOptionalFields: true,

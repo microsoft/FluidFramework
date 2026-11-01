@@ -33,21 +33,21 @@ class StrictPerson extends sf.object(
 New utilities support composing and extending factory settings without losing existing defaults:
 
 - [`settings`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#settings-property) provides the factory's options without its scope.
-- [`createDerivedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#createderivedfactory-method) creates a factory with replacement settings and an optional child scope without changing the original factory.
+- [`scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#scopedfactory-method) creates a child factory with inherited or replacement settings without changing the original factory.
 - [`composeSchemaFactoryOptions`](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryoptions-function) applies two callbacks in order.
   The second callback receives the options returned by the first callback.
 
 ```typescript
 import { composeSchemaFactoryOptions } from "fluid-framework";
 
-const extended = sf.createDerivedFactory(
+const extended = sf.scopedFactory(
+	"strict",
 	composeSchemaFactoryOptions(sf.settings, {
 		objectOptions: (_name, _fields, options) => ({
 			...options,
 			allowUnknownOptionalFields: false,
 		}),
 	}),
-	"strict",
 );
 ```
 The beta and alpha schema factories retain their corresponding tier-specific settings and composition APIs.

@@ -27,10 +27,7 @@ export namespace FormattedTextTest {
 	/**
 	 * Tag with which a line in text can be formatted.
 	 */
-	export const LineTag = enumFromStrings(sf.createDerivedFactory(undefined, "lineTag"), [
-		"h1",
-		"h2",
-	]);
+	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), ["h1", "h2"]);
 
 	/**
 	 * Newline atom which carries formatting for the line it ends.
