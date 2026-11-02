@@ -290,14 +290,13 @@ export class SchemaFactory<
 	 *
 	 * @param name - The name to append to this factory's scope.
 	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
+	 * New settings can be combined with {@link SchemaFactory.settings} to create derived settings.
 	 *
 	 * @typeParam T - The name appended to this factory's scope.
 	 * @returns A new factory with the child scope and the provided or inherited settings.
 	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * Spread this factory's {@link SchemaFactory.settings} and its `objectOptions`
-	 * to create replacement settings.
+	 * @remarks This does not change the original factory.
+	 *
 	 */
 	public scopedFactory<const T extends TName>(
 		name: T,
@@ -869,10 +868,6 @@ export class SchemaFactoryBeta<
 > extends SchemaFactory<TScope, TName> {
 	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
-	 *
-	 * @remarks
-	 * Spread these options and their `objectOptions` to create replacement settings for
-	 * {@link SchemaFactoryBeta.scopedFactory}.
 	 */
 	public override readonly settings: SchemaFactoryBetaOptions;
 
@@ -1284,10 +1279,6 @@ export class SchemaFactoryAlpha<
 > extends SchemaFactoryBeta<TScope, TName> {
 	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
-	 *
-	 * @remarks
-	 * Spread these options and their `objectOptions` to create replacement settings for
-	 * {@link SchemaFactoryAlpha.scopedFactory}.
 	 */
 	public override readonly settings: SchemaFactoryAlphaOptions;
 
