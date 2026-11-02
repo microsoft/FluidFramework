@@ -841,7 +841,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
-// @public
+// @public @input
 export interface SchemaFactoryOptions {
     readonly objectOptions?: ObjectSchemaOptions;
 }

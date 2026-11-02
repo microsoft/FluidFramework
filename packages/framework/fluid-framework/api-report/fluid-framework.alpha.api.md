@@ -2081,7 +2081,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     }>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
     readonly objectOptions?: ObjectSchemaOptionsAlpha<never>;
 }
@@ -2108,12 +2108,12 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
-// @beta
+// @beta @input
 export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
     readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
 }
 
-// @public
+// @public @input
 export interface SchemaFactoryOptions {
     readonly objectOptions?: ObjectSchemaOptions;
 }
