@@ -855,6 +855,8 @@ Snapshots exist for versions: [
 					"point-schema-2.0.0-snapshot.json",
 				],
 			);
+			assert.equal(snapshots.get("point-schema-1.0.0-snapshot.json")?.endsWith("\n"), true);
+			assert.equal(snapshots.get("point-schema-2.0.0-snapshot.json")?.endsWith("\n"), true);
 		});
 
 		it("rejects invalid characters in custom snapshot file name format", () => {
