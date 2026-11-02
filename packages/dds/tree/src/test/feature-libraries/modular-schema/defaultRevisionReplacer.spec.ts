@@ -28,7 +28,7 @@ describe("DefaultRevisionReplacer", () => {
 			assert.equal(replacer.getMaxId(), -1);
 		});
 
-		it("includes the end of a replaced range and does not decrease on reuse", () => {
+		it("includes the end of a replaced range and does not change on reuse", () => {
 			const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
 			const id = makeChangeAtomId(localId1, obsoleteRev1);
 			replacer.getUpdatedAtomId(id, 3);
