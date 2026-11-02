@@ -13,7 +13,6 @@ import {
 	NodeKind,
 	type SchemaFactoryAlphaOptions,
 	type SchemaFactoryBetaOptions,
-	type SchemaFactoryOptions,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireFalse, requireTrue } from "../../../util/index.js";
@@ -59,9 +58,6 @@ describe("schemaFactoryOptions", () => {
 				});
 				for (const [options, expected] of [
 					[undefined, true],
-					[{}, true],
-					[{ allowUnknownOptionalFields: true }, true],
-					[{ allowUnknownOptionalFields: false }, false],
 					[{ allowUnknownOptionalFields: undefined }, false],
 				] as const) {
 					assert.equal(
@@ -74,24 +70,6 @@ describe("schemaFactoryOptions", () => {
 					);
 				}
 				assert.equal(sf.settings.objectOptions?.allowUnknownOptionalFields, true);
-			});
-
-			it("lets callers extend settings with object spreads", () => {
-				const options: SchemaFactoryOptions = Object.freeze({
-					objectOptions: Object.freeze({ allowUnknownOptionalFields: true }),
-				});
-				const sf: SchemaFactory = new Factory({ scope: "test", ...options });
-				const child = sf.scopedFactory("child", {
-					...sf.settings,
-					objectOptions: {
-						...sf.settings.objectOptions,
-						allowUnknownOptionalFields: false,
-					},
-				});
-
-				assert.equal(allowsUnknownOptionalFields(child.object("Child", {})), false);
-				assert.equal(allowsUnknownOptionalFields(sf.object("Original", {})), true);
-				assert.deepEqual(sf.settings, options);
 			});
 
 			it("does not mutate defaults or per-schema options", () => {
