@@ -32,9 +32,6 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @public
-export function composeSchemaFactoryOptions(base: SchemaFactoryOptions, override: SchemaFactoryOptions): SchemaFactoryOptions;
-
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -329,9 +326,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
-// @public
+// @public @input
 export interface SchemaFactoryOptions {
-    readonly objectOptions?: (name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions | undefined) => ObjectSchemaOptions | undefined;
+    readonly objectOptions?: ObjectSchemaOptions;
 }
 
 // @public @system

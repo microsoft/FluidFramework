@@ -270,15 +270,6 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
-// @alpha
-export function composeSchemaFactoryAlphaOptions(base: SchemaFactoryAlphaOptions, override: SchemaFactoryAlphaOptions): SchemaFactoryAlphaOptions;
-
-// @beta
-export function composeSchemaFactoryBetaOptions(base: SchemaFactoryBetaOptions, override: SchemaFactoryBetaOptions): SchemaFactoryBetaOptions;
-
-// @public
-export function composeSchemaFactoryOptions(base: SchemaFactoryOptions, override: SchemaFactoryOptions): SchemaFactoryOptions;
-
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -1528,9 +1519,9 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     }>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
-    readonly objectOptions?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined) => ObjectSchemaOptionsAlpha<TCustomMetadata> | undefined;
+    readonly objectOptions?: ObjectSchemaOptionsAlpha<never>;
 }
 
 // @beta
@@ -1555,14 +1546,14 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
-// @beta
+// @beta @input
 export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
-    readonly objectOptions?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsBeta<TCustomMetadata> | undefined) => ObjectSchemaOptionsBeta<TCustomMetadata> | undefined;
+    readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
 }
 
-// @public
+// @public @input
 export interface SchemaFactoryOptions {
-    readonly objectOptions?: (name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions | undefined) => ObjectSchemaOptions | undefined;
+    readonly objectOptions?: ObjectSchemaOptions;
 }
 
 // @public @system

@@ -40,9 +40,6 @@ export interface CommitMetadata {
 }
 
 // @public
-export function composeSchemaFactoryOptions(base: SchemaFactoryOptions, override: SchemaFactoryOptions): SchemaFactoryOptions;
-
-// @public
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -808,9 +805,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
-// @public
+// @public @input
 export interface SchemaFactoryOptions {
-    readonly objectOptions?: (name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions | undefined) => ObjectSchemaOptions | undefined;
+    readonly objectOptions?: ObjectSchemaOptions;
 }
 
 // @public @system
