@@ -4,7 +4,7 @@
 ---
 On-demand summaries can return an acknowledged snapshot version
 
-The new `loadSummarizerContainerAndMakeAcknowledgedSummary` function creates a summary and waits for service acknowledgement.
+`loadSummarizerContainerAndMakeAcknowledgedSummary` creates a summary and waits for service acknowledgement.
 It returns an `AcknowledgedSummary` with required `version` and `referenceSequenceNumber` fields, and rejects on error.
 Use `version` with `LoaderHeader.version` to load the acknowledged snapshot.
 The reference sequence number comes from the matching summary proposal and identifies the document state captured by the summary.
@@ -29,11 +29,13 @@ const container = await loadExistingContainer({
 // Use container, then dispose it when finished.
 ```
 
-The new function rejects if summarization cannot recover from NACK, timeout, or premature container termination.
+`loadSummarizerContainerAndMakeAcknowledgedSummary` rejects if summarization cannot recover from NACK, timeout, or premature container termination.
 The runtime handles summary-stage retries.
-The loader retries a failed attempt once with a new container, including when snapshot refresh disposes the first summarizer during catch-up.
+The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+A fresh load can succeed if a transient condition has resolved, but recovery is not guaranteed.
 Both returned values identify the successful attempt.
 The summarizer container is disposed before the promise settles.
 
-The existing `loadSummarizerContainerAndMakeSummary` retains its result shape and completion semantics.
-Its `summaryResults.summaryInfo.handle` remains the broadcast proposal handle, which can differ from the acknowledged snapshot version.
+`loadSummarizerContainerAndMakeSummary` returns `summaryResults.summaryInfo.handle`, which identifies the broadcast summary proposal.
+It is not guaranteed to identify an acknowledged snapshot that can be loaded with `LoaderHeader.version`.
+Use the `version` returned by `loadSummarizerContainerAndMakeAcknowledgedSummary` when an acknowledged snapshot version is required.

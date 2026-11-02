@@ -770,9 +770,10 @@ async function waitForCatchUp(
  * Loads a summarizer container, creates a summary, waits for service acknowledgement, and disposes the container.
  *
  * @remarks
- * The runtime's acknowledgement timeout and retries apply. An attempt fails if the container disconnects,
- * closes, or is disposed. The loader retries a failed attempt once with a new container,
- * including when snapshot refresh disposes the first summarizer during catch-up.
+ * The runtime handles summary retries and times out if the service ACK does not arrive.
+ * An attempt fails if the container disconnects, closes, or is disposed.
+ * The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+ * This gives transient conditions another opportunity to resolve; it does not guarantee recovery.
  * Both returned values identify the same successful attempt.
  *
  * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
@@ -786,7 +787,10 @@ export async function loadSummarizerContainerAndMakeAcknowledgedSummary(
 	try {
 		return await loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
 	} catch {
-		// Reload once to recover from snapshot-refresh disposal during catch-up.
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure, including
+		// load failures and errors marked non-retryable, following the approach in PR #25977.
+		// https://github.com/microsoft/FluidFramework/pull/25977
 		return loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
 	}
 }
@@ -882,9 +886,12 @@ async function summarizeAndWaitForAcknowledgement(
  * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
  *
  * @remarks
- * By default, success requires submission and broadcast, without an additional acknowledgement wait.
+ * Success requires submission and broadcast. The loader does not explicitly wait for the service ACK,
+ * although the runtime may wait for it as part of its retry behavior.
  * To obtain an acknowledged snapshot version, use {@link loadSummarizerContainerAndMakeAcknowledgedSummary}.
- * The proposal's `summaryInfo.handle` need not equal the acknowledged snapshot version.
+ * The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
+ * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
+ * {@link @fluidframework/container-definitions#LoaderHeader.version}.
  *
  * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
  * @returns A result indicating success with summary details, or failure with an error for host-side handling.
@@ -897,11 +904,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 		loadSummarizerContainerProps,
 	);
 	if (!result.success) {
-		/**
-		 * We retry once as there is potential for a race condition when loading a snapshot.
-		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
-		 * will be closed so it can load from the new snapshot.
-		 */
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure result,
+		// including errors marked non-retryable.
+		// https://github.com/microsoft/FluidFramework/pull/25977
 		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
 	}
 	return result;
@@ -1049,7 +1055,7 @@ function createContainerFailureMonitor(container: IContainer): {
 			settled = true;
 			reject(
 				error === undefined
-					? new GenericError("Container terminated while monitoring for failure")
+					? new GenericError("Container terminated without error")
 					: normalizeError(error),
 			);
 		};
