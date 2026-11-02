@@ -16,6 +16,14 @@ export type {
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	ICreateGitServiceArgs,
+	ActivateSummaryAccessResult,
+	IEphemeralSummaryAccessRecord,
+	IEphemeralSummaryAccessStore,
+	ISummaryAccessContext,
+} from "./definitions";
+export {
+	isEphemeralSummaryAccessStore,
+	MalformedEphemeralSummaryAccessRecordError,
 } from "./definitions";
 export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";

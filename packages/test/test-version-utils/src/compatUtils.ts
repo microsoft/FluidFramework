@@ -187,7 +187,8 @@ export async function getVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			containerOptions?.minVersionForCollab ??
+			containerOptions?.oldestSupportedClient ??
+				containerOptions?.minVersionForCollab ??
 				getMinVersionForCollab(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,
@@ -312,7 +313,8 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			containerOptions?.minVersionForCollab ??
+			containerOptions?.oldestSupportedClient ??
+				containerOptions?.minVersionForCollab ??
 				getMinVersionForCollab(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,
@@ -334,7 +336,8 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			containerOptions?.minVersionForCollab ??
+			containerOptions?.oldestSupportedClient ??
+				containerOptions?.minVersionForCollab ??
 				getMinVersionForCollab(
 					apis.containerRuntime.version,
 					apis.containerRuntimeForLoading.version,

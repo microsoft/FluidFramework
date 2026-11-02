@@ -149,9 +149,6 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		this.continuityID = this.getOrCreateContinuityID();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
-	 */
 	public send(event: ITelemetryBaseEvent, _logLevel?: LogLevel): void {
 		const optIn = isTelemetryOptInEnabled();
 

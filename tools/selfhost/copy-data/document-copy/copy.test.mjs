@@ -41,7 +41,7 @@ test("copies the latest Azure Fluid Relay summary through the self-host document
 					{ id: "values", content: "[]", encoding: "utf-8" },
 				],
 			});
-		return jsonResponse({ id: "self-host-document" }, 201);
+		return jsonResponse({ id: "azure-fluid-relay-document" }, 201);
 	};
 
 	const result = await copyDocument({
@@ -55,7 +55,7 @@ test("copies the latest Azure Fluid Relay summary through the self-host document
 		fetchImplementation,
 	});
 
-	assert.deepEqual(result, { result: "success", documentId: "self-host-document" });
+	assert.deepEqual(result, { result: "success", documentId: "azure-fluid-relay-document" });
 	assert.equal(
 		requests[1].url,
 		"https://azure-fluid-relay-historian.example/repos/azure-fluid-relay/git/refs/heads%2Fazure-fluid-relay-document",

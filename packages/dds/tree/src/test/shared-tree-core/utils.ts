@@ -314,6 +314,7 @@ export class TestSharedTreeCore extends SharedObject {
 		this.transaction = new SquashingTransactionStack(
 			this.getLocalBranch(),
 			this.kernel.mintRevisionTag,
+			undefined,
 		);
 	}
 

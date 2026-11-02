@@ -259,9 +259,6 @@ export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
-	 */
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
@@ -270,9 +267,6 @@ export class FluidDataStoreRuntime
 
 	public readonly policies: IFluidDataStorePolicies;
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
-	 */
 	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
@@ -385,13 +379,14 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
-	 *
-	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
-	 * and we keep this property as private, but consumers may optimistically cast
-	 * to the internal interface to access this property.
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.minVersionForCollab}
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient?: OldestSupportedClientVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -565,19 +560,15 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+		this.oldestSupportedClient =
+			this.dataStoreContext.oldestSupportedClient ?? this.dataStoreContext.minVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
-	 */
 	public get inStagingMode(): boolean {
 		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
-	 */
 	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}

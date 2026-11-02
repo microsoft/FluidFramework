@@ -127,6 +127,7 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
+	username?: string,
 ): Promise<
 	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
 > {
@@ -136,6 +137,7 @@ export async function createTestDriver(
 			directory: "stress",
 			options: options[(runId ?? seed) % options.length],
 			odspEndpointName: endpointName,
+			username,
 			// Use a memory-only token manager to avoid cross-process file lock contention
 			// when many stress test workers run simultaneously.
 			tokenManager: new OdspTokenManager(),
@@ -153,7 +155,6 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
-	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
 
 /**

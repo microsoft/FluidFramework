@@ -32,6 +32,8 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v2: 2,
 	/**
 	 * Experimental codec with optimizations for text.
+	 * @remarks
+	 * Adds {@link EncodedSpecializedNodeShape} to the shapes of v2.
 	 */
 	vTextExperimental: "text",
 });
@@ -42,9 +44,34 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
  * @remarks
  * This helper should be used for comparison since experimental versions
  * can be a string.
+ *
+ * Formats in this encoding family are additive: each later format, including experimental ones,
+ * keeps every shape of the formats before it.
+ * Listing only the formats that predate {@link EncodedIncrementalChunkShape} is enough,
+ * and new formats do not need to be added here.
  */
 export function supportsIncrementalEncoding(version: FieldBatchFormatVersion): boolean {
 	if (version === FieldBatchFormatVersion.v1) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Whether the given format version supports the {@link EncodedSpecializedNodeShape} (`f`) shape.
+ *
+ * @remarks
+ * This helper should be used for comparison since experimental versions
+ * can be a string.
+ *
+ * Formats in this encoding family are additive: each later format, including experimental ones,
+ * keeps every shape of the formats before it.
+ * Listing only the formats that predate {@link EncodedSpecializedNodeShape} is enough,
+ * and new formats do not need to be added here.
+ */
+export function supportsSpecializedNodeShapes(version: FieldBatchFormatVersion): boolean {
+	if (version === FieldBatchFormatVersion.v1 || version === FieldBatchFormatVersion.v2) {
 		return false;
 	}
 
@@ -85,12 +112,18 @@ export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
 );
 
 /**
- * Encoded {@link FieldBatch}, which might use V2 features, but might also have been from a V1 encoder.
+ * Encoded {@link FieldBatch} in any supported {@link FieldBatchFormatVersion}.
  * @remarks
- * Type wise, equivalent to V2, as that is a superset of V1.
- * Used instead of just V2 for clarity.
+ * Currently we use the same code-paths to decode all supported versions. To accomplish
+ * that, they accept this type. When adding a new format, if continuing this pattern,
+ * add the batch type to this union. If the format diverges sufficiently that this approach
+ * no longer makes sense, rename this type accordingly, and set up new code paths for
+ * handling the new format.
  */
-export type EncodedFieldBatchV1OrV2 = EncodedFieldBatchV1 | EncodedFieldBatchV2;
+export type EncodedFieldBatchAnyVersion =
+	| EncodedFieldBatchV1
+	| EncodedFieldBatchV2
+	| EncodedFieldBatchVTextExperimental;
 
 /**
  * Encoded data, compatible with both V1 and V2 formats.

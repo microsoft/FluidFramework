@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces";
+import {
+	assert,
+	compareArrays,
+	debugAssert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -14,6 +21,11 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
+import type { ExtrinsicLocations } from "../extrinsic-locations/index.js";
+import {
+	ExtrinsicRangeTracker,
+	// eslint-disable-next-line import-x/no-internal-modules -- Shared implementation details, intentionally not package exported.
+} from "../extrinsic-locations/extrinsicRangeTracker.js";
 import { TreeAlpha, Tree as TreeStatic, TreeBeta } from "../shared-tree/index.js";
 import {
 	createArrayInsertionAnchor,
@@ -24,7 +36,10 @@ import {
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetails,
 	isObjectNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
 	eraseSchemaDetailsSubclassable,
+	NodeKind,
 } from "../simple-tree/index.js";
 import type {
 	ArrayPlaceAnchor,
@@ -36,7 +51,6 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTreeFieldFromImplicitField,
-	NodeKind,
 	TreeNode,
 	ScopedSchemaName,
 	ErasedSchemaSubclassable,
@@ -45,6 +59,7 @@ import type {
 } from "../simple-tree/index.js";
 import {
 	brand,
+	getOrCreate,
 	mapIterable,
 	oneFromIterable,
 	validateIndex,
@@ -57,6 +72,7 @@ import {
 	processCharactersChangedDelta,
 	type PlainText,
 } from "./textDomain.js";
+import { textLocationArray } from "./textLocationAdapter.js";
 
 /**
  * Sets up scope for formatted text schema built-in types.
@@ -82,20 +98,24 @@ const formatKey: FieldKey = brand("format");
  * This is outside the namespace so it can be exported for testing, but not package exported.
  */
 export class StringTextAtomNode
-	extends sfStatic.object("StringTextAtom", {
-		/**
-		 * The underlying text content of this atom.
-		 * @remarks
-		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
-		 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
-		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
-		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
-		 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
-		 * @privateRemarks
-		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
-		 */
-		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
-	})
+	extends sfStatic.object(
+		"StringTextAtom",
+		{
+			/**
+			 * The underlying text content of this atom.
+			 * @remarks
+			 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
+			 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
+			 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
+			 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
+			 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+			 * @privateRemarks
+			 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
+			 */
+			content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements FormattedText.TextAtom
 {
 	public static fromCharacter(value: string): StringTextAtomNode {
@@ -121,14 +141,27 @@ export class StringTextAtomNode
  * This is generic over formatting an embedded object/atom types.
  *
  * @privateRemarks
- * See {@link FormattedTextDefault} for an example parameterization.
+ * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization.
  *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
- * - Sort out API around overwriting subsets of formatting information.
  * @alpha
  */
 export namespace FormattedText {
+	/**
+	 * A subset of formatting properties or map entries to update with {@link FormattedText.Members.formatRange}.
+	 * @remarks
+	 * Map formats accept a readonly map or an object whose properties specify entries.
+	 * An `undefined` value removes a map or record entry, or clears an optional object field.
+	 * @alpha
+	 */
+	export type FormatUpdate<TFormat> =
+		TFormat extends FluidReadonlyMap<string, infer TValue>
+			?
+					| FluidReadonlyMap<string, TValue | undefined>
+					| Readonly<Record<string, TValue | undefined>>
+			: Partial<TFormat>;
+
 	/**
 	 * Creates a schema for a formatted text node, parameterized by the formatting and the embedded object (atom) types.
 	 *
@@ -137,7 +170,7 @@ export namespace FormattedText {
 	 * This scope is used to distinguish different usages of `createSchema` from each-other, and must be kept the same between versions for nodes to remain compatible.
 	 * It must be different to distinguish different formatted text schema within the same document.
 	 * @param formatSchema - Schema describing the formatting associated with each atom of text.
-	 * Use an {@link NodeKind.Object|Object node} to support {@link FormattedText.Members.formatRange}.
+	 * Use an object, record, or map node to support {@link FormattedText.Members.formatRange}.
 	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedText.(StringTextAtom:variable)}.
 	 * Use this to embed richer content (for example line breaks or inline objects) alongside plain characters.
 	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
@@ -145,7 +178,7 @@ export namespace FormattedText {
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
 	 *
 	 * @privateRemarks
-	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
+	 * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization of this factory.
 	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
@@ -161,12 +194,119 @@ export namespace FormattedText {
 		extraAtoms: ExtraAtomsSchema,
 		defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
 	): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema> {
+		return createSchemaInternal(
+			inputSchemaFactory,
+			formatSchema,
+			extraAtoms,
+			defaultFormatInsertable,
+			SchemaFactory.null,
+			false,
+		);
+	}
+
+	/**
+	 * Creates formatted text with application-defined data attached to tracked ranges.
+	 * @param options - Factory, formatting, atom schemas, and range data schema for the text.
+	 * @returns A subclassable formatted text schema with range-reading and editing methods.
+	 * @remarks
+	 * This preserves the existing formatted text identifiers and adds optional range storage.
+	 * Upgrade the document schema with `upgradeSchema()` before editing existing text with this schema.
+	 * Range storage is initialized lazily during a guarded edit, not when reading ranges.
+	 * Older writers that do not maintain ranges must not continue editing after the upgrade.
+	 *
+	 * Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
+	 * Structural text edits, range creation/removal, and bound changes use document-wide `noChange` constraints, including on revert.
+	 * Range data edits use ordinary tree editing semantics without adding these constraints.
+	 * Concurrent changes can reject the entire edit.
+	 * Range positions use the same atom indexes as the text editing methods.
+	 * @alpha
+	 */
+	export function createSchemaWithRanges<
+		const TUserScope extends string,
+		const FormatSchema extends ImplicitAllowedTypes,
+		const ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+		const RangeDataSchema extends ImplicitAllowedTypes,
+	>(options: {
+		/**
+		 * Factory whose scope identifies this formatted text schema.
+		 * @remarks
+		 * Use the same scope as {@link FormattedText.createSchema} when upgrading existing text.
+		 */
+		readonly schemaFactory: SchemaFactoryBeta<TUserScope>;
+		/**
+		 * Schema for each atom's formatting, unchanged when upgrading existing text.
+		 */
+		readonly formatSchema: FormatSchema;
+		/**
+		 * Additional atom schemas, unchanged when upgrading existing text.
+		 */
+		readonly extraAtoms: ExtraAtomsSchema;
+		/**
+		 * Formatting for text inserted without an explicit format.
+		 */
+		readonly defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>;
+		/**
+		 * Schema for data associated with each range.
+		 */
+		readonly rangeDataSchema: RangeDataSchema;
+	}): FormattedTextSchemaWithRanges<
+		TUserScope,
+		FormatSchema,
+		ExtraAtomsSchema,
+		RangeDataSchema
+	> {
+		const {
+			schemaFactory: inputSchemaFactory,
+			formatSchema,
+			extraAtoms,
+			defaultFormatInsertable,
+			rangeDataSchema,
+		} = options;
+		return createSchemaInternal(
+			inputSchemaFactory,
+			formatSchema,
+			extraAtoms,
+			defaultFormatInsertable,
+			rangeDataSchema,
+			true,
+		);
+	}
+
+	/**
+	 * Builds both schema variants, linking range storage only when requested.
+	 */
+	function createSchemaInternal<
+		const TUserScope extends string,
+		const FormatSchema extends ImplicitAllowedTypes,
+		const ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+		const RangeDataSchema extends ImplicitAllowedTypes,
+	>(
+		inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+		formatSchema: FormatSchema,
+		extraAtoms: ExtraAtomsSchema,
+		defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
+		rangeDataSchema: RangeDataSchema,
+		includeRanges: boolean,
+	): FormattedTextSchemaWithRanges<
+		TUserScope,
+		FormatSchema,
+		ExtraAtomsSchema,
+		RangeDataSchema
+	> {
 		const atoms = [StringTextAtom, ...extraAtoms] as const;
 		/**
 		 * The type of a text atom node, which goes in a StringAtom.
 		 */
 		type TextAtomNode = TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>;
-
+		type Tracker = ExtrinsicRangeTracker<
+			StringArray,
+			ExtrinsicRange,
+			InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+		>;
 		const sf = createFormattedScopedFactory(inputSchemaFactory);
 
 		const defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
@@ -196,11 +336,78 @@ export namespace FormattedText {
 		}
 
 		class TextNode
-			extends sf.object("Text", {
-				content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-			})
-			implements Members<FormatSchema, ExtraAtomsSchema>
+			extends sf.object(
+				"Text",
+				{
+					content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+					...(includeRanges
+						? { rangeStorage: SchemaFactory.optional([() => Ranges], { key: "ranges" }) }
+						: {}),
+				},
+				{ allowUnknownOptionalFields: false },
+			)
+			implements MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>
 		{
+			#rangeTracker: Tracker | undefined;
+
+			#getRanges(): Ranges | undefined {
+				const ranges = this.rangeStorage;
+				if (ranges === undefined) {
+					return undefined;
+				}
+				assert(
+					TreeStatic.is(ranges, Ranges),
+					"Range storage must use the expected map schema.",
+				);
+				return ranges;
+			}
+
+			#getRangeTracker(): Tracker {
+				assert(includeRanges, "Range methods require a range-enabled schema.");
+				return (this.#rangeTracker ??= new ExtrinsicRangeTracker<
+					StringArray,
+					ExtrinsicRange,
+					InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+				>(
+					this.content,
+					() => this.#getRanges(),
+					() => {
+						let ranges = this.#getRanges();
+						if (ranges === undefined) {
+							ranges = new Ranges({});
+							this.rangeStorage = ranges;
+						}
+						return ranges;
+					},
+					(start, end, data) => new ExtrinsicRange({ start, end, data }),
+				));
+			}
+
+			#editContent(edit: (content: StringArray) => void): void {
+				if (includeRanges) {
+					this.#getRangeTracker().transactOnContent(edit);
+				} else {
+					edit(this.content);
+				}
+			}
+
+			public get ranges(): ExtrinsicLocations.RangeCollection<
+				TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
+				InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+			> {
+				return this.#getRangeTracker();
+			}
+
+			/**
+			 * Exposes the current array-node representation of this text.
+			 * @remarks
+			 * Depending on this accessor also depends on text being represented by an array node.
+			 * Future text optimizations may change that representation, so such dependencies should generally be avoided.
+			 */
+			public get [textLocationArray](): TreeArrayNode {
+				return this.content;
+			}
+
 			public insertAt(
 				index: number,
 				additionalCharacters:
@@ -208,19 +415,51 @@ export namespace FormattedText {
 					| Iterable<TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>,
 				format?: InsertableTreeFieldFromImplicitField<FormatSchema>,
 			): void {
+				if (includeRanges) {
+					validateIndex(index, this.content, "FormattedText.insertAt", true);
+				}
 				const newAtoms: Iterable<TextAtomNode> =
 					typeof additionalCharacters === "string"
 						? stringTextAtomsFromString(additionalCharacters)
 						: additionalCharacters;
 				const formatNode = getFormatNode(format);
-				this.content.insertAt(
-					index,
-					TreeArrayNode.spread(stringAtomsFromTextAtoms(newAtoms, formatNode)),
+				this.#editContent((content) =>
+					content.insertAt(
+						index,
+						TreeArrayNode.spread(stringAtomsFromTextAtoms(newAtoms, formatNode)),
+					),
 				);
 			}
 
 			public removeRange(index: number | undefined, end: number | undefined): void {
-				this.content.removeRange(index, end);
+				if (includeRanges) {
+					validateIndexRange(
+						index ?? 0,
+						Math.min(end ?? this.content.length, this.content.length),
+						this.content,
+						"FormattedText.removeRange",
+					);
+				}
+				this.#editContent((content) => content.removeRange(index, end));
+			}
+
+			public moveRangeToIndex(
+				destinationGap: number,
+				sourceStart: number,
+				sourceEnd: number,
+			): void {
+				if (includeRanges) {
+					validateIndex(destinationGap, this.content, "FormattedText.moveRangeToIndex", true);
+					validateIndexRange(
+						sourceStart,
+						sourceEnd,
+						this.content,
+						"FormattedText.moveRangeToIndex",
+					);
+				}
+				this.#editContent((content) =>
+					content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd),
+				);
 			}
 
 			public characters(): Iterable<string> {
@@ -286,54 +525,115 @@ export namespace FormattedText {
 				index: number,
 				additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
 			): void {
-				this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
+				if (includeRanges) {
+					validateIndex(index, this.content, "FormattedText.insertWithFormattingAt", true);
+				}
+				this.#editContent((content) =>
+					content.insertAt(index, TreeArrayNode.spread(additionalCharacters)),
+				);
 			}
 
 			public formatRange(
 				start: number | undefined,
 				end: number | undefined,
-				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+				format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 			): void {
-				const fieldFormatsRaw = Object.entries(format) as [
-					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-					unknown,
-				][];
-				const fieldFormats = fieldFormatsRaw.map(([key, value]) => {
-					// Object.entries should only return string keyed enumerable own properties.
-					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-					assert(
-						typeof key === "string",
-						0xcc8 /* Object.entries returned a non-string key. */,
+				if (TreeStatic.is(format, SchemaFactory.leaves)) {
+					throw new UsageError(
+						"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
 					);
-					return [key, value] as const;
-				});
-				this.#editRange(start, end, "FormattedText.formatRange", (atom) => {
-					const formatNode: TreeNode | TreeValue = atom.format;
-					const atomFormatSchema = TreeStatic.schema(formatNode);
-					if (!isObjectNodeSchema(atomFormatSchema)) {
-						throw new UsageError(
-							"formatRange currently only supports object nodes for the format.",
-						);
-					}
-					for (const [key, value] of fieldFormats) {
-						const field = atomFormatSchema.fields.get(key);
-						if (field === undefined) {
-							throw new UsageError(`Unknown format key: ${key}`);
+				}
+
+				const fieldFormats: readonly (readonly [string, TreeNode | TreeValue | undefined])[] =
+					typeof format === "object" &&
+					format !== null &&
+					"get" in format &&
+					typeof format.get === "function" &&
+					Symbol.iterator in format
+						? [...(format as Iterable<readonly [string, TreeNode | TreeValue | undefined]>)]
+						: (Object.entries(format) as [string, TreeNode | TreeValue | undefined][]);
+
+				type Operation = (formatNode: TreeNode) => void;
+				const perSchemaOperation = new Map<TreeNodeSchema, Operation>();
+				// Since this runs once per schema (instead of once per character),
+				// perform schema-specific checks here where possible.
+				const buildOperation = (atomFormatSchema: TreeNodeSchema): Operation => {
+					switch (atomFormatSchema.kind) {
+						case NodeKind.Leaf:
+						case NodeKind.Array: {
+							throw new UsageError(
+								`formatRange encountered an existing \`${NodeKind[atomFormatSchema.kind]}\` format node: these are not supported. Consider using \`reformat\` instead.`,
+							);
+						}
+						case NodeKind.Record: {
+							assert(
+								isRecordNodeSchema(atomFormatSchema),
+								0xd72 /* Expected a record schema. */,
+							);
+							return (formatNode: TreeNode) => {
+								assert(
+									TreeStatic.is(formatNode, atomFormatSchema),
+									0xd73 /* Expected a record node. */,
+								);
+								for (const [key, value] of fieldFormats) {
+									formatNode[key] = TreeBeta.clone(value);
+								}
+							};
+						}
+						case NodeKind.Map: {
+							assert(isMapNodeSchema(atomFormatSchema), 0xd74 /* Expected a map schema. */);
+							return (formatNode: TreeNode) => {
+								assert(
+									TreeStatic.is(formatNode, atomFormatSchema),
+									0xd75 /* Expected a map node. */,
+								);
+								for (const [key, value] of fieldFormats) {
+									// The setter validates the cloned value against this map's entry schema.
+									formatNode.set(key, TreeBeta.clone(value) as never);
+								}
+							};
+						}
+						case NodeKind.Object: {
+							// Narrow the typing to allow easy access to object specific APIs.
+							assert(
+								isObjectNodeSchema(atomFormatSchema),
+								0xd76 /* Expected an object schema. */,
+							);
+							// Check keys explicitly: unknown properties may not invoke a tree field setter.
+							for (const [key] of fieldFormats) {
+								if (!atomFormatSchema.fields.has(key)) {
+									throw new UsageError(`Unknown format key: ${key}`);
+								}
+							}
+
+							// Return the per character operation that will be applied to each with this schema.
+							return (formatNode: TreeNode) => {
+								for (const [key, value] of fieldFormats) {
+									// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+									// `undefined` passes through cloning; the field setter checks whether the schema allows it.
+									const clonedValue = TreeBeta.clone(value);
+									(formatNode as unknown as Record<string, TreeNode | TreeValue | undefined>)[
+										key
+									] = clonedValue;
+								}
+							};
 						}
 
-						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-						// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
-						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
-							| TreeNode
-							| TreeValue;
-
-						(
-							formatNode as unknown as Record<
-								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-								TreeNode | TreeValue
-							>
-						)[key] = clonedValue;
+						default: {
+							unreachableCase(atomFormatSchema.kind);
+						}
 					}
+				};
+
+				// Apply the per-schema operation to each atom in the range.
+				// In the future we may want to implement a more efficient way to express and encode at least the common case of edits like this,
+				// like a lower level range editing API which we can use for more efficient batch updates when the schema allows it.
+				this.#editRange(start, end, "FormattedText.formatRange", (atom) => {
+					const formatNode = atom.format;
+					const atomFormatSchema = TreeStatic.schema(formatNode);
+					const operation = getOrCreate(perSchemaOperation, atomFormatSchema, buildOperation);
+					// buildOperation rejects leaf schema, so this cast is safe.
+					operation(formatNode as TreeNode);
 				});
 			}
 
@@ -598,15 +898,26 @@ export namespace FormattedText {
 		 * A unit of the text, with formatting.
 		 */
 		class StringAtom
-			extends sf.object("StringAtom", {
-				content: SchemaFactory.required(atoms, { key: EmptyKey }),
-				format: SchemaFactory.required(formatSchema),
-			})
+			extends sf.object(
+				"StringAtom",
+				{
+					content: SchemaFactory.required(atoms, { key: EmptyKey }),
+					format: SchemaFactory.required(formatSchema),
+				},
+				{ allowUnknownOptionalFields: false },
+			)
 			implements
 				FormattedAtom<
 					TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 					TreeNodeFromImplicitAllowedTypes<typeof atoms>
 				> {}
+
+		class ExtrinsicRange extends sf.object("ExtrinsicRange", {
+			data: SchemaFactory.required(rangeDataSchema),
+			start: SchemaFactory.number,
+			end: SchemaFactory.number,
+		}) {}
+		class Ranges extends sf.map("ExtrinsicRanges", [() => ExtrinsicRange]) {}
 
 		/**
 		 * Schema for a text node.
@@ -621,11 +932,11 @@ export namespace FormattedText {
 		 * TODO: there is at least one collision prone member to worry about here: `content`.
 		 */
 		const Tree = eraseSchemaDetailsSubclassable<
-			Members<FormatSchema, ExtraAtomsSchema>,
+			MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>,
 			Statics<Tree, FormatSchema>
 		>()(TextNode);
 		type Tree = ErasedNode<
-			Members<FormatSchema, ExtraAtomsSchema>,
+			MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
 		>;
 
@@ -726,6 +1037,37 @@ export namespace FormattedText {
 	}
 
 	/**
+	 * Formatted text with separately stored ranges and application-defined range data.
+	 * @remarks
+	 * Range endpoints follow the insertion-point semantics of {@link ExtrinsicLocations.RangeCollection}.
+	 * Ranges remain with this text rather than following moved content.
+	 * Content events are not buffered, and reentrant structural edits on this text are not supported.
+	 * Structural editing methods track content edits and update ranges automatically, as described in {@link ExtrinsicLocations.ArrayMembers.transactOnContent}.
+	 * Adding or removing ranges in this text's collection or explicitly changing their bounds during these calls
+	 * throws a {@link @fluidframework/telemetry-utils#UsageError}.
+	 * Reading ranges and editing their data remain allowed.
+	 * Position reads from change-event listeners are subject to the known array-anchor event-ordering limitation.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface MembersWithRanges<
+		FormatSchema extends ImplicitAllowedTypes,
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+		RangeDataSchema extends ImplicitAllowedTypes,
+	> extends Members<FormatSchema, ExtraAtomsSchema> {
+		/**
+		 * Live collection for reading and editing extrinsic ranges.
+		 * Reading this property does not initialize stored range data.
+		 */
+		readonly ranges: ExtrinsicLocations.RangeCollection<
+			TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
+			InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+		>;
+	}
+
+	/**
 	 * Interface for a text node.
 	 * @remarks
 	 * The string is broken up into substrings which are referred to as 'characters'.
@@ -812,9 +1154,11 @@ export namespace FormattedText {
 		 * @param format - The formatting to apply to the specified range.
 		 * For each atom, every property of `format` will be cloned and assigned to the atom's format's corresponding subtree, overwriting any existing values for those properties.
 		 * All enumerable own properties of `format` will be applied, including those with `undefined` values.
+		 * For map formats, `format` can also be a readonly map, in which case its entries are applied instead.
+		 * Setting a map or record entry to `undefined` removes it.
 		 * @remarks
 		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
-		 * This edits existing formatting subtrees on each atom, and only works when those atoms are object nodes.
+		 * This edits existing formatting subtrees on each atom, and only works when those formats are object, record, or map nodes.
 		 *
 		 * This is typically used to set some formatting property, like `bold` on a range of text without impacting other formatting properties.
 		 * @privateRemarks
@@ -827,7 +1171,7 @@ export namespace FormattedText {
 		formatRange(
 			startIndex: number | undefined,
 			endIndex: number | undefined,
-			format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+			format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 		): void;
 
 		/**
@@ -940,6 +1284,29 @@ export namespace FormattedText {
 	> &
 		ErasedSchemaSubclassable<
 			Members<FormatSchema, ExtraAtomsSchema>,
+			FormattedTextSchemaIdentifier<TUserScope>
+		>;
+
+	/**
+	 * A formatted text schema with extrinsic range support.
+	 * @alpha
+	 */
+	export type FormattedTextSchemaWithRanges<
+		TUserScope extends string,
+		FormatSchema extends ImplicitAllowedTypes,
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+		RangeDataSchema extends ImplicitAllowedTypes,
+	> = Statics<
+		ErasedNode<
+			MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>,
+			FormattedTextSchemaIdentifier<TUserScope>
+		>,
+		FormatSchema
+	> &
+		ErasedSchemaSubclassable<
+			MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
 		>;
 }

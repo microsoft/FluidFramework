@@ -61,6 +61,9 @@ peerDependencyRules:
   ignoreMissing:
     - '@types/node'
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
@@ -71,17 +74,17 @@ overrides:
   # Resolve a known security vulnerability.
   ws@>=8 <9: ^8.21.0
 
-  # Resolve a known security vulnerability.
-  fast-uri: ^4.1.2
+  # fast-uri CVE-2026-75899 (SSRF via repeated hostname decoding). Fixed in 4.1.3.
+  fast-uri: ^4.1.3
 
   diff@>=8 <9: ^8.0.3
-  js-yaml@<4: 3.15.0
+  js-yaml@<4: 3.15.2
   js-yaml@>=4: 4.3.2
   jws: ^3.2.3
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'
   qs: ^6.15.2
-  simple-git: ^3.36.0
+  simple-git: ^4.0.2
   sharp: ^0.33.2
   tar: ^7.5.11
   minimatch@>=3 <4: ^3.1.5

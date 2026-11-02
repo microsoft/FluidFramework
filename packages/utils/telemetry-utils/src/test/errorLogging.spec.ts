@@ -137,11 +137,13 @@ describe("Error Logging", () => {
 		});
 	});
 	describe("TaggedTelemetryData", () => {
-		it("Ensure backwards compatibility", () => {
-			// The values of the enum should never change (even if the keys are renamed)
-			assert(TelemetryDataTag.CodeArtifact === ("CodeArtifact" as TelemetryDataTag));
-			assert(TelemetryDataTag.SchemaArtifact === ("SchemaArtifact" as TelemetryDataTag));
-			assert(TelemetryDataTag.UserData === ("UserData" as TelemetryDataTag));
+		// The values of the enum should never change (even if the keys are renamed).
+		it("Ensure enum values are maintained", () => {
+			assert.deepEqual(
+				new Set(Object.values(TelemetryDataTag)),
+				// When new tags are added, this set should be extended. It should never have entries removed.
+				new Set(["CodeArtifact", "SchemaArtifact", "UserData", "SandboxGuestData"]),
+			);
 		});
 	});
 	describe("isTaggedTelemetryPropertyValue", () => {

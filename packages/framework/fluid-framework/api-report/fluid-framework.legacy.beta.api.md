@@ -129,6 +129,14 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @beta @sealed
+export type ChangeMetadataBeta = CommitMetadata & ({
+    readonly isLocal: true;
+    readonly events: Listenable<LocalCommitEvents>;
+} | {
+    readonly isLocal: false;
+});
+
 // @beta @input
 export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -148,9 +156,22 @@ export interface CommitMetadata {
 }
 
 // @beta
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
+}
+
+// @beta
+export function composeSchemaFactoryBetaOptions(base: SchemaFactoryBetaOptions, override: SchemaFactoryBetaOptions): SchemaFactoryBetaOptions;
+
+// @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
 };
+
+// @beta @legacy
+export function configuredSharedString(options: SharedStringOptions): ISharedObjectKind<ISharedString> & SharedObjectKind<ISharedString>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -1143,6 +1164,11 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+// @beta @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
+}
+
 // @public
 export const LogLevel: LogLevelConst;
 
@@ -1171,12 +1197,19 @@ export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
 
+// @beta
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
+
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly changedUnknownProperties?: ReadonlySet<string>;
     readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
@@ -1236,9 +1269,13 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 
-// @beta @input
-export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
+// @public @input
+export interface ObjectSchemaOptions {
     readonly allowUnknownOptionalFields?: boolean;
+}
+
+// @beta @input
+export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown> extends ObjectSchemaOptions, NodeSchemaOptions<TCustomMetadata> {
 }
 
 // @public
@@ -1314,6 +1351,7 @@ export interface RunTransaction {
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+    readonly preconditions?: readonly TransactionConstraintBeta[];
 }
 
 // @public @sealed
@@ -1377,8 +1415,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, System_Unsafe.TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>, {
         [Symbol.iterator](): Iterator<[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
     } | { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined>;
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     readonly scope: TScope;
 }
 
@@ -1387,13 +1425,18 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
-    // (undocumented)
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
+    constructor(scopeOrOptions: TScope | (SchemaFactoryBetaOptions & {
+        readonly scope: TScope;
+    }));
+    createDerivedFactory(settings?: SchemaFactoryBetaOptions): SchemaFactoryBeta<TScope, TName>;
+    createDerivedFactory<const T extends TName, TNameInner extends number | string = string>(settings: SchemaFactoryBetaOptions | undefined, name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsBeta<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptionsBeta<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     record<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
     recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+    readonly settings: SchemaFactoryBetaOptions;
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     static stagedRecursive: <const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
@@ -1402,6 +1445,11 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
     static typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
+}
+
+// @beta
+export interface SchemaFactoryBetaOptions {
+    readonly objectOptions?: <TCustomMetadata = unknown>(name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptionsBeta<TCustomMetadata> | undefined) => ObjectSchemaOptionsBeta<TCustomMetadata> | undefined;
 }
 
 // @public @system
@@ -1523,6 +1571,11 @@ export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<I
 
 // @beta @legacy
 export type SharedString = ISharedString;
+
+// @beta @legacy
+export interface SharedStringOptions {
+    readonly newMergeTreeSnapshotFormat?: boolean;
+}
 
 // @beta @legacy (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
@@ -1653,8 +1706,11 @@ export namespace System_Unsafe {
     export type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
     // @sealed @system
     export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
+        // (undocumented)
         readonly allowedTypes: Types;
+        // (undocumented)
         readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+        // (undocumented)
         readonly kind: Kind;
     }
     // @system
@@ -1807,14 +1863,19 @@ export interface Tagged<V, T extends string = string> {
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @beta @input
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
     readonly rollback: true;
-});
+})) & {
+    readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @beta @sealed
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
 
 // @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
@@ -1886,8 +1947,10 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
+// @beta @sealed
+export interface TreeBranchEventsBeta {
+    changed(data: ChangeMetadataBeta): void;
+}
 
 // @public @sealed
 export interface TreeChangeEvents {
@@ -2039,7 +2102,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    // (undocumented)
     readonly compatibility: SchemaCompatibilityStatusBeta;
+    readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -2094,6 +2159,7 @@ export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union
 // @beta @sealed
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEventsBeta>;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;

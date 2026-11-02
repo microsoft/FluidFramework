@@ -145,6 +145,33 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 }
 
 /**
+ * Utility function to add extra context to {@link debugAssert | debug assertion} messages.
+ * @param prefixString - The prefix to add to the debug assertion message. Prepended to the failure description with an additional `": "` delimiter.
+ * @param predicateOutput - The output of the predicate function: either `true` or an object describing the failure.
+ * @returns `true` when `predicateOutput` is `true`; otherwise, the failure description with the added prefix.
+ * @example
+ * ```ts
+ * function computeBaz(foo: Thing, bar: Thing) {
+ *     debugAssert(() => prefixPredicate("Malformed foo in computeBaz", validateThing(foo)));
+ *     debugAssert(() => prefixPredicate("Malformed bar in computeBaz", validateThing(bar)));
+ *     // ...
+ * }
+ * ```
+ * @internal
+ */
+export function prefixPredicate(
+	prefixString: string,
+	predicateOutput: true | { toString(): string },
+): true | string {
+	const result = predicateOutput;
+	if (result === true) {
+		return true;
+	}
+	const innerMessage = result.toString();
+	return `${prefixString}: ${innerMessage}`;
+}
+
+/**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
  *
  * Enabled when {@link nonProductionConditionalsIncluded} is true.
@@ -163,6 +190,8 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
  *
  * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|skip non-production code}
  * can use the same approaches to disable these asserts to reduce performance overhead.
+ *
+ * See {@link prefixPredicate} for a helper for adding extra context to debug assertion messages.
  *
  * @privateRemarks
  * This design was chosen to accomplish two main goals:
@@ -242,7 +271,7 @@ export function nonProductionConditionalsIncluded(): boolean {
 }
 
 /**
- * Overrides the behavior code which optimizes out non-production conditional code like {@link debugAssert} and {@link nonProductionConditionalsIncluded}.
+ * Overrides the behavior code which optimizes out non-production conditional code like {@link debugAssert}, {@link skipInProduction}, and {@link nonProductionConditionalsIncluded}.
  *
  * Can be called multiple times. Will emulate production builds if called with `true` more times than `false`.
  * Emulation of production builds is disabled when enabled and disabled counts match (including at 0, by default).
@@ -283,9 +312,17 @@ export function emulateProductionBuild(enable = true): void {
 let emulateProductionBuildCount = 0;
 
 /**
- * {@link skipInProductionInner}, except can be disabled by {@link emulateProductionBuild}.
+ * Runs `conditional` only in debug/development (non optimized/minified) builds, but optimizes it out of production builds.
+ *
+ * @param conditional - This function will only be run in some configurations so it should be pure (at least in production scenarios).
+ * It can be used to interact with debug only functionality that is also removed in production builds, or to do validation/testing/debugging that can be assumed to be side effect-free in production where it might be removed.
+ * @remarks
+ * Great care must be taken when using this to ensure that bugs are not introduced which only occur when `conditional` is not run.
+ * One way to do this is to provide an alternative way to disable the effects of `conditional` in development builds so both configurations can be tested.
+ * See {@link emulateProductionBuild} for a way to emulate production build behavior in development.
+ * @internal
  */
-function skipInProduction(conditional: () => void): void {
+export function skipInProduction(conditional: () => void): void {
 	skipInProductionInner(() => {
 		if (emulateProductionBuildCount === 0) conditional();
 	});
@@ -295,7 +332,7 @@ function skipInProduction(conditional: () => void): void {
  * Run `conditional` only in debug/development (non optimized/minified) builds, but optimize it out of production builds.
  *
  * @param conditional - This function will only be run in some configurations so it should be pure (at least in production scenarios).
- * It can be used to interact with debug only functionality that is also removed in production builds, or to do validation/testing/debugging that can be assumed to be sideeffect free in production where it might be removed.
+ * It can be used to interact with debug only functionality that is also removed in production builds, or to do validation/testing/debugging that can be assumed to be side effect-free in production where it might be removed.
  * @remarks
  * Great care must be taken when using this to ensure that bugs are not introduced which only occur when `conditional` is not run.
  * One way to do this is to provide an alternative way to disable the effects of `conditional` in development builds so both configurations can be tested:

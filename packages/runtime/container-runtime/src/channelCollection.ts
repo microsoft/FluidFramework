@@ -150,6 +150,7 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
@@ -265,6 +266,7 @@ export function formParentContext<
 			return context.setChannelDirty(address);
 		},
 		minVersionForCollab: context.minVersionForCollab,
+		oldestSupportedClient: context.oldestSupportedClient,
 		getExtension: context.getExtension.bind(context),
 	};
 }
@@ -1585,7 +1587,7 @@ export class ChannelCollection
 	}
 
 	/**
-	 * Called by GC to retrieve the package path of a data store node with the given path.
+	 * Returns the package path of the data store containing the given node without loading the data store.
 	 */
 	public async getDataStorePackagePath(
 		nodePath: string,

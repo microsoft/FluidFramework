@@ -1,5 +1,22 @@
 # @fluidframework/devtools-core
 
+## 3.7.0
+
+### Minor Changes
+
+- Devtools ignores messages from other windows ([#28503](https://github.com/microsoft/FluidFramework/pull/28503)) [e4a2759eb7a](https://github.com/microsoft/FluidFramework/commit/e4a2759eb7a93a78fbfc6f445379581b0ae9ae3e)
+
+  Devtools now accepts window messages only from the application's own window.
+  This prevents other windows from directly issuing devtools commands through window messaging.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

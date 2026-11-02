@@ -69,7 +69,7 @@ export interface RevertOptionsAlpha {
 }
 
 /**
- * Options for {@link UntypedTreeViewAlpha.revertTo}.
+ * Options for {@link TreeBranchCommitMetadata.revertTo}.
  *
  * @sealed @alpha
  */
@@ -89,13 +89,7 @@ export interface RevertToOptionsAlpha {
  * @sealed @alpha
  */
 export interface RevertibleAlpha extends Revertible {
-	/**
-	 * {@inheritDoc Revertible.(revert:1)}
-	 */
 	revert(): void;
-	/**
-	 * {@inheritDoc Revertible.(revert:2)}
-	 */
 	revert(dispose: boolean): void;
 	/**
 	 * Reverts the associated change according to the given options.

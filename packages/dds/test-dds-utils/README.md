@@ -55,6 +55,53 @@ See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
 The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)
 including the reconnect flow.
 
+### Per-client configuration
+
+Set `DDSFuzzModel.factory` to a `DDSFuzzClientFactory` provider to construct clients with different DDS options or package versions.
+You define the configuration values and supply a callback that resolves each value to an `IChannelFactory`.
+The factories must expose a common channel API that your model can use.
+
+Use `generateClientConfiguration(random, client)` to select a configuration with seeded randomness.
+The client context includes `clientId` and `isSummarizer`, so you can give the summarizer a specific configuration.
+Use `getFactory(clientConfiguration)` to resolve the recorded value without making new random choices.
+Configuration values use the same Fluid serialization as other fuzz operations, including support for `IFluidHandle` values.
+Use the same serializable shapes as operation data; a configuration provider must return a value other than `undefined`.
+Do not mutate configurations after they are generated.
+
+For example, a model with an existing workload can select between two compatible factories:
+
+```typescript
+type ClientConfiguration = { version: "current" | "previous" };
+type Factory = typeof currentFactory | typeof previousFactory;
+type State = DDSFuzzTestState<Factory, ClientConfiguration>;
+
+const model: DDSFuzzModel<Factory, Operation, State> = {
+	...existingModel,
+	factory: {
+		generateClientConfiguration: (random, { isSummarizer }) => ({
+			version: isSummarizer ? "current" : random.pick(["current", "previous"]),
+		}),
+		getFactory: ({ version }) =>
+			version === "current" ? currentFactory : previousFactory,
+	},
+};
+```
+
+Your resolver can also construct a factory from options stored in the configuration.
+The provider is the model's factory; no separate default factory is needed.
+For a single configuration, continue to pass an `IChannelFactory` directly as `model.factory`.
+Use `isChannelFactory(model.factory)` to narrow the factory type when integrating a model with code that requires a direct `IChannelFactory`.
+
+The harness records the initial clients in an `initialize` operation.
+It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.
+Each created client exposes its configuration as `client.clientConfiguration`, including in `clientCreate` listeners.
+The `testStart` event occurs once, after the starting clients are created and before the workload generator is created.
+This lifecycle is the same for both factory forms and for replay.
+Rehydration and stash restoration retain the original client's configuration, even if the client gets a new name.
+
+If you pass an `IChannelFactory` directly, the harness omits details about configuration for each client in its operations.
+The same configuration mechanism is available in `SquashFuzzModel`.
+
 ### Future Improvements
 
 The generic aspects of this model could be improved to fuzz test correctness a few other general concerns DDS authors have:

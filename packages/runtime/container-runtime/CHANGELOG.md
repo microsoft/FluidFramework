@@ -1,5 +1,47 @@
 # @fluidframework/container-runtime
 
+## 3.7.0
+
+### Minor Changes
+
+- Container dirty state now accounts for outstanding attachment blob work ([#28459](https://github.com/microsoft/FluidFramework/pull/28459)) [b94b1f3ff60](https://github.com/microsoft/FluidFramework/commit/b94b1f3ff6015742da98385a88870926ff498663)
+
+  [`IContainer.isDirty`](https://fluidframework.com/docs/api/container-definitions/icontainer-interface#isdirty-propertysignature) and [`IFluidContainer.isDirty`](https://fluidframework.com/docs/api/fluid-static/ifluidcontainer-interface#isdirty-propertysignature) now include outstanding attachment blob work, not just operations.
+  Previously, `saved` could fire during a blob upload, allowing hosts to dispose the container and lose the attachment.
+  Do not dispose a container while `isDirty` is `true`.
+
+  Blob work ends when sharing succeeds, fails, or is cancelled.
+  The `saved` event means no local work remains outstanding, not that every blob was shared successfully.
+  Failed or cancelled handles may remain unusable; observe the handle's `payloadShared` and `payloadShareFailed` events for individual outcomes.
+
+  ```ts
+  container.on("saved", () => container.dispose());
+  ```
+
+  Helpers waiting for `saved` now also wait for blob sharing to end.
+  A stalled upload can keep them waiting indefinitely.
+
+  Blob coverage requires `@fluidframework/container-loader` from this release or later.
+  Older loaders retain operation-only tracking; service clients such as `@fluidframework/azure-client` include a matching loader.
+  Setting the runtime configuration flag `Fluid.ContainerRuntime.DisableBlobAwareDirtyState` to `true` restores operation-only dirty tracking.
+  With either fallback, `saved` can fire while blob work remains outstanding.
+
+## 3.6.0
+
+### Minor Changes
+
+- Keep unresolved version marks pending when history is inconclusive ([#28448](https://github.com/microsoft/FluidFramework/pull/28448)) [2e167d8c734](https://github.com/microsoft/FluidFramework/commit/2e167d8c734c76a57eed0135a390d11e1b55ff69)
+
+  Version marks are no longer permanently classified as unresolvable when a historical operation read is empty or starts
+  after the mark's sequence-number lower bound.
+  Neither result proves that the specific batch sequenced in the unavailable range.
+  The runtime keeps the mark pending so a disconnected or resubmitted batch can still sequence and resolve later.
+  Hosts own retry suppression and expiration policy for long-lived pending marks.
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

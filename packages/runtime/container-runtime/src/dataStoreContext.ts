@@ -357,6 +357,11 @@ export abstract class FluidDataStoreContext
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient: OldestSupportedClientVersion;
+
 	private baseSnapshotSequenceNumber: number | undefined;
 
 	/**
@@ -466,7 +471,9 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
-		this.minVersionForCollab = props.parentContext.minVersionForCollab;
+		this.oldestSupportedClient =
+			props.parentContext.oldestSupportedClient ?? props.parentContext.minVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -1366,16 +1373,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(): ISummaryTreeWithStats {
 		throw new Error("Cannot attach remote store");
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
@@ -1449,9 +1450,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		}
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
@@ -1479,9 +1477,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return attachSummary;
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
 			this.channel !== undefined,

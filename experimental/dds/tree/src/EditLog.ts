@@ -341,9 +341,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return Array.from(this._editEvictionHandlers);
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.length}
-	 */
 	public get length(): number {
 		return this.numberOfSequencedEdits + this.numberOfLocalEdits;
 	}
@@ -362,9 +359,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return this.localEdits.length;
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.editIds}
-	 */
 	public get editIds(): EditId[] {
 		return this.sequencedEdits.map(({ id }) => id).concat(this.localEdits.map(({ id }) => id));
 	}
@@ -384,9 +378,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return revision <= this.sequencedEdits.length;
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.tryGetIndexOfId}
-	 */
 	public tryGetIndexOfId(editId: EditId): number | undefined {
 		const orderedEdit = this.allEditIds.get(editId);
 		if (orderedEdit === undefined) {
@@ -413,16 +404,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return this.allEditIds.get(editId) ?? fail('All edits should exist in this map');
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.getIndexOfId}
-	 */
 	public getIndexOfId(editId: EditId): number {
 		return this.tryGetIndexOfId(editId) ?? fail('edit not found');
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.getIdAtIndex}
-	 */
 	public getIdAtIndex(index: number): EditId {
 		if (this._earliestAvailableEditIndex + this.numberOfSequencedEdits <= index) {
 			return this.localEdits[index - this.numberOfSequencedEdits].id;
@@ -431,9 +416,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return this.sequencedEdits[index - this._earliestAvailableEditIndex].id;
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.tryGetEditAtIndex}
-	 */
 	public tryGetEditAtIndex(index: number): Edit<TChange> | undefined {
 		if (this._earliestAvailableEditIndex + this.numberOfSequencedEdits <= index) {
 			return this.localEdits[index - this.numberOfSequencedEdits];
@@ -442,9 +424,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		return this.sequencedEdits[index - this._earliestAvailableEditIndex];
 	}
 
-	/**
-	 * {@inheritDoc OrderedEditSet.tryGetEditFromId}
-	 */
 	public tryGetEditFromId(editId: EditId): Edit<TChange> | undefined {
 		const index = this.tryGetIndexOfId(editId);
 		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;

@@ -67,7 +67,7 @@ export interface MessageLoggingOptions {
 }
 
 /**
- * Utility function for handling incoming events.
+ * Utility function for handling incoming events from the same window.
  *
  * @param event - The window event containing the message to handle.
  * @param handlers - List of handlers for particular event types.
@@ -83,6 +83,12 @@ export function handleIncomingWindowMessage(
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	if (event.source !== globalThis.window) {
+		// Accept only messages posted by this window.
+		// See https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns
+		return;
+	}
+
 	// TODO: remove loggingOptions once things settle.
 	return handleIncomingMessage(event.data, handlers, loggingOptions);
 }

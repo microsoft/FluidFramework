@@ -8,3 +8,4 @@ export {
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,
 } from "./quillFormattedView.js";
+export { FormattedTextDefault } from "./formattedTextDefault.js";

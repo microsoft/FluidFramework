@@ -1920,24 +1920,15 @@ describe("Directory", () => {
 				this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
-			 */
 			public get sharedObject(): SharedDirectory {
 				// Return the remote SharedDirectory because we want to verify its summary data.
 				return this.directory2;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
-			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
-			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const subMapId1 = `subMap-${++this.subMapCount}`;
 				const subMap1 = createLocalMap(subMapId1);
@@ -1954,9 +1945,6 @@ describe("Directory", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
-			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
 				const fooDirectory = this.directory1.getSubDirectory("foo");
@@ -1976,9 +1964,6 @@ describe("Directory", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
-			 */
 			public async addNestedHandles(): Promise<void> {
 				const fooDirectory =
 					this.directory1.getSubDirectory("foo") ?? this.directory1.createSubDirectory("foo");

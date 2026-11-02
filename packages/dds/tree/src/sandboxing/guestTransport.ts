@@ -6,14 +6,12 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestId,
-	type BlobRequestMessage,
-	type BlobResponseMessage,
+	type GuestToHostMessage,
 	type HandleToken,
 	normalizeProtocolError,
 	SandboxProtocolError,
@@ -48,23 +46,50 @@ class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 }
 
 /**
- * Restores {@link GuestHandle} proxies and resolves blobs independently of tree synchronization.
- * Caches one proxy per {@link HandleToken} and permits sending only proxies created by this codec.
- * {@link GuestTransportCodec.dispose} rejects pending requests and clears the session's proxy tables.
+ * Manages Guest-side handle proxies and blob requests for one sandbox transport session.
  */
 export class GuestTransportCodec extends TransportCodec {
-	private readonly sessionId = uuid();
+	/**
+	 * Guest handles indexed by their transport tokens.
+	 */
 	private readonly handles = new Map<HandleToken, GuestHandle>();
+
+	/**
+	 * Transport tokens indexed by their Guest handles.
+	 */
 	private readonly tokens = new Map<IFluidHandle, HandleToken>();
+
+	/**
+	 * Blob requests awaiting responses from the Host.
+	 */
 	private readonly pending = new Map<
 		BlobRequestId,
 		{ resolve: (value: ArrayBuffer) => void; reject: (error: Error) => void }
 	>();
+
+	/**
+	 * Identifier to assign to the next blob request.
+	 */
 	private nextRequestId = 0;
+
+	/**
+	 * Whether this transport session has ended.
+	 */
 	private disposed = false;
 
-	public constructor(private readonly send: (message: BlobRequestMessage) => void) {
+	/**
+	 * Sends protocol messages to the Host.
+	 */
+	private readonly send: (message: GuestToHostMessage) => void;
+
+	/**
+	 * Creates a codec for a Guest transport session.
+	 *
+	 * @param send - Sends a protocol message to the Host.
+	 */
+	public constructor(send: (message: GuestToHostMessage) => void) {
 		super();
+		this.send = send;
 	}
 
 	protected encodeHandle(handle: IFluidHandle): HandleToken {
@@ -81,15 +106,19 @@ export class GuestTransportCodec extends TransportCodec {
 		}
 		let handle = this.handles.get(token);
 		if (handle === undefined) {
-			handle = new GuestHandle(`/sandbox/${this.sessionId}/${token}`, async () =>
-				this.requestBlob(token),
-			);
+			handle = new GuestHandle(`/sandbox/${token}`, async () => this.requestBlob(token));
 			this.handles.set(token, handle);
 			this.tokens.set(handle, token);
 		}
 		return handle;
 	}
 
+	/**
+	 * Requests the blob represented by a transport token.
+	 *
+	 * @param token - The token that identifies the blob.
+	 * @returns The blob data returned by the Host.
+	 */
 	private async requestBlob(token: HandleToken): Promise<ArrayBuffer> {
 		if (this.disposed) {
 			throw new UsageError("The Guest handle session is disposed.");
@@ -103,7 +132,7 @@ export class GuestTransportCodec extends TransportCodec {
 		return new Promise<ArrayBuffer>((resolve, reject) => {
 			this.pending.set(requestId, { resolve, reject });
 			try {
-				this.send({ type: "blobRequest", requestId, token });
+				this.send({ blobRequest: { requestId, token } });
 			} catch (error) {
 				this.pending.delete(requestId);
 				reject(normalizeProtocolError(error));
@@ -111,19 +140,51 @@ export class GuestTransportCodec extends TransportCodec {
 		});
 	}
 
-	public receiveBlobResponse(message: BlobResponseMessage): void {
-		const pending = this.pending.get(message.requestId);
+	/**
+	 * Completes a pending blob request with its response data.
+	 *
+	 * @param requestId - The identifier of the pending blob request.
+	 * @param blob - The blob data returned by the Host.
+	 * @throws A {@link SandboxProtocolError} if `requestId` does not identify a pending request.
+	 */
+	public receiveBlobResponse(requestId: BlobRequestId, blob: ArrayBuffer): void {
+		this.takePendingBlobRequest(requestId).resolve(blob);
+	}
+
+	/**
+	 * Rejects a pending blob request with an error from the Host.
+	 *
+	 * @param requestId - The identifier of the pending blob request.
+	 * @param error - The error message returned by the Host.
+	 * @throws A {@link SandboxProtocolError} if `requestId` does not identify a pending request.
+	 */
+	public receiveBlobResponseError(requestId: BlobRequestId, error: string): void {
+		this.takePendingBlobRequest(requestId).reject(new Error(error));
+	}
+
+	/**
+	 * Removes and returns a pending blob request.
+	 *
+	 * @param requestId - The identifier of the pending request.
+	 * @returns The callbacks for completing the request.
+	 */
+	private takePendingBlobRequest(requestId: BlobRequestId): {
+		resolve: (value: ArrayBuffer) => void;
+		reject: (error: Error) => void;
+	} {
+		const pending = this.pending.get(requestId);
 		if (pending === undefined) {
 			throw new SandboxProtocolError("Unexpected sandbox blob response.");
 		}
-		this.pending.delete(message.requestId);
-		if ("error" in message) {
-			pending.reject(new Error(message.error));
-		} else {
-			pending.resolve(message.blob);
-		}
+		this.pending.delete(requestId);
+		return pending;
 	}
 
+	/**
+	 * Ends the transport session and rejects all pending blob requests.
+	 *
+	 * @param error - The error used to reject pending requests.
+	 */
 	public dispose(error: Error = new Error("The Guest handle session is disposed.")): void {
 		this.disposed = true;
 		for (const pending of this.pending.values()) {

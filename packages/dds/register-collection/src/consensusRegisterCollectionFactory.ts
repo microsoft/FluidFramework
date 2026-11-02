@@ -42,9 +42,6 @@ export class ConsensusRegisterCollectionFactory
 		return ConsensusRegisterCollectionFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
