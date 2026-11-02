@@ -38,6 +38,21 @@ Read the **@fluidframework/shared-object-base** API documentation at <https://fl
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Implementation base classes
+
+`SharedObject` and `SharedObjectCore` are internal implementation base classes.
+These classes are not part of the supported APIs at the root or `/legacy` entry points.
+External subclassing of these classes is no longer supported.
+The `/internal` entry point remains available for DDS implementations in this repository.
+It is not a supported migration path for applications.
+
+Use `ISharedObject` from `@fluidframework/shared-object-base/legacy` when you need the shared object contract.
+Use the interface and creation API of the specific DDS when possible.
+There is no supported replacement base class for custom DDS subclasses.
+Custom DDS implementations must implement the channel contracts without these base classes or remain on an earlier release.
+
+See [issue #26691](https://github.com/microsoft/FluidFramework/issues/26691) for the related API changes.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

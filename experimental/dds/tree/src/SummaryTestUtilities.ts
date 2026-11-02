@@ -5,9 +5,9 @@
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
 
-import type { EditLog } from './EditLog.js';
-import type { SharedTree } from './SharedTree.js';
-import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types/index.js';
+import type { ISharedTree } from './ISharedTree.js';
+import { getSharedTreeInternals } from './SharedTreeInternals.js';
+import type { EditChunkContents, FluidEditHandle } from './persisted-types/index.js';
 
 /**
  * Format used for exporting an uploaded edit chunk and its associated handle path. Primarily used for testing SharedTree summaries.
@@ -29,9 +29,9 @@ interface UploadedEditChunkContents {
  * The contents will not be decoded from the format used in the blob.
  * @deprecated Edit virtualization is no longer supported. Do not use this.
  */
-export async function getUploadedEditChunkContents(sharedTree: SharedTree): Promise<UploadedEditChunkContents[]> {
+export async function getUploadedEditChunkContents(sharedTree: ISharedTree): Promise<UploadedEditChunkContents[]> {
 	const editChunks: UploadedEditChunkContents[] = [];
-	const { editChunks: editsOrHandles } = (sharedTree.edits as unknown as EditLog<ChangeInternal>).getEditLogSummary();
+	const { editChunks: editsOrHandles } = getSharedTreeInternals(sharedTree).getEditLogSummary();
 	for (const { chunk } of editsOrHandles) {
 		if (!Array.isArray(chunk)) {
 			const handle = chunk as FluidEditHandle;
@@ -52,6 +52,6 @@ export async function getUploadedEditChunkContents(sharedTree: SharedTree): Prom
  * @deprecated Edit virtualization is no longer supported. Do not use this.
  * @internal
  */
-export async function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string> {
+export async function getSerializedUploadedEditChunkContents(sharedTree: ISharedTree): Promise<string> {
 	return JSON.stringify(await getUploadedEditChunkContents(sharedTree));
 }
