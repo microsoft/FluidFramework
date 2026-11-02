@@ -35,6 +35,14 @@ export interface CommitStagedChangesOptionsInternal {
  */
 export interface StageControlsInternal extends StageControls {
 	/**
+	 * Same as {@link StageControls.pauseInbound}, but always defined.
+	 */
+	readonly pauseInbound: () => Promise<void>;
+	/**
+	 * Same as {@link StageControls.resumeInbound}, but always defined.
+	 */
+	readonly resumeInbound: () => void;
+	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
 	 * made by this container will additionally flow freely to the ordering service.

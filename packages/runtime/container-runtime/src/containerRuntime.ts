@@ -4084,7 +4084,7 @@ export class ContainerRuntime
 		};
 
 		const stageControls: StageControlsInternal = {
-			pauseInbound: () => {
+			pauseInbound: async () => {
 				verifyStageControls();
 				inboundPause ??= this._deltaManager.inbound.pause();
 				return inboundPause;

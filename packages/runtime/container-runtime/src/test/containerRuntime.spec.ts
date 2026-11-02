@@ -5818,6 +5818,9 @@ describe("Runtime", () => {
 
 			describe("inbound processing", () => {
 				let deltaManager: IDeltaManagerFull;
+				const isInactiveControlsError = (error: Error & IErrorBase): boolean =>
+					error.errorType === ContainerErrorTypes.usageError &&
+					error.message === "Not in staging mode";
 
 				beforeEach(() => {
 					const manager = containerRuntime.deltaManager;
@@ -5841,8 +5844,7 @@ describe("Runtime", () => {
 
 					const paused = controls.pauseInbound();
 					assert.equal(inbound.paused, true, "Inbound should be paused immediately");
-					assert.strictEqual(controls.pauseInbound(), paused);
-					await paused;
+					await Promise.all([paused, controls.pauseInbound()]);
 					assert.equal(pause.callCount, 1, "Repeated calls should acquire only one pause");
 					assert.equal(inboundSignal.paused, false, "Inbound signals should not be paused");
 					assert.equal(outbound.paused, false, "Outbound processing should not be paused");
@@ -5947,6 +5949,24 @@ describe("Runtime", () => {
 							"A failed exit should release the staging pause",
 						);
 					});
+
+					it(`${exitMethod} releases its pause when the final flush throws`, async () => {
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						await controls.pauseInbound();
+						// Stub only after entering, since entering staging mode also flushes the Outbox.
+						const { outbox } = containerRuntime as unknown as {
+							outbox: { flush: () => void };
+						};
+						sandbox.stub(outbox, "flush").throws(new Error("Failed to flush"));
+
+						assert.throws(() => controls[exitMethod](), /Failed to flush/);
+						assert.equal(
+							inbound.paused,
+							false,
+							"A failed final flush should release the staging pause",
+						);
+					});
 				}
 
 				for (const reenterStaging of [false, true]) {
@@ -5958,14 +5978,8 @@ describe("Runtime", () => {
 							: undefined;
 						await currentControls?.pauseInbound();
 
-						for (const method of ["pauseInbound", "resumeInbound"] as const) {
-							assert.throws(
-								() => controls[method](),
-								(error: Error & IErrorBase) =>
-									error.errorType === ContainerErrorTypes.usageError &&
-									error.message === "Not in staging mode",
-							);
-						}
+						await assert.rejects(controls.pauseInbound(), isInactiveControlsError);
+						assert.throws(() => controls.resumeInbound(), isInactiveControlsError);
 						assert.equal(
 							deltaManager.inbound.paused,
 							reenterStaging,

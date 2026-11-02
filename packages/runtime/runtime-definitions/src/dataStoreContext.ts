@@ -227,10 +227,22 @@ export interface StageControls {
 	 * Operations continue to be received and queued, and inbound signals are not paused.
 	 * Call {@link StageControls.resumeInbound} to release this pause without exiting staging mode.
 	 *
+	 * While paused, this client's reference sequence number does not advance,
+	 * which holds back the minimum sequence number for all clients.
+	 * Keep pauses short.
+	 *
+	 * If the container reconnects while paused, it might not finish connecting until inbound processing resumes,
+	 * because connecting can require processing inbound operations, such as the container's own join operation.
+	 * Do not wait for the container to connect before resuming inbound processing or exiting staging mode.
+	 *
+	 * This is `undefined` if the container runtime does not support pausing inbound operations,
+	 * for example because it is an older version.
+	 * It is defined exactly when {@link StageControls.resumeInbound} is defined.
+	 *
 	 * @returns A promise that resolves when any ongoing inbound operation processing has stopped.
-	 * @throws A `UsageError` if these controls are no longer for the active staging session.
+	 * The promise rejects with a `UsageError` if these controls are no longer for the active staging session.
 	 */
-	readonly pauseInbound: () => Promise<void>;
+	readonly pauseInbound?: () => Promise<void>;
 	/**
 	 * Releases the inbound processing pause acquired through {@link StageControls.pauseInbound}
 	 * without exiting staging mode.
@@ -239,9 +251,13 @@ export interface StageControls {
 	 * Has no effect if these controls have not paused inbound processing or have already resumed it.
 	 * Pauses acquired by other code are not affected.
 	 *
+	 * This is `undefined` if the container runtime does not support pausing inbound operations,
+	 * for example because it is an older version.
+	 * It is defined exactly when {@link StageControls.pauseInbound} is defined.
+	 *
 	 * @throws A `UsageError` if these controls are no longer for the active staging session.
 	 */
-	readonly resumeInbound: () => void;
+	readonly resumeInbound?: () => void;
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes

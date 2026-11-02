@@ -447,8 +447,8 @@ export type ResolveResult = {
 export interface StageControls {
     readonly commitChanges: () => void;
     readonly discardChanges: () => void;
-    readonly pauseInbound: () => Promise<void>;
-    readonly resumeInbound: () => void;
+    readonly pauseInbound?: () => Promise<void>;
+    readonly resumeInbound?: () => void;
 }
 
 // @beta @legacy
