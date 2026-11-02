@@ -128,6 +128,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		const connections: OdspDocumentDeltaConnection[] = [];
 
 		async function createConnection(): Promise<OdspDocumentDeltaConnection> {
+			setConnectResponse();
 			const connection = await mockSocket(socket as unknown as Socket, async () =>
 				OdspDocumentDeltaConnection.create(
 					tenantId,
@@ -181,8 +182,9 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			}
 		}
 
-		beforeEach(() => {
-			socket = new ClientSocketMock({
+		function setConnectResponse(): void {
+			assert(socket !== undefined);
+			socket.setMockSocketConnectResponseForReuse({
 				connect_document: {
 					eventToEmit: "connect_document_success",
 					connectMessage: {
@@ -210,6 +212,10 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					},
 				},
 			});
+		}
+
+		beforeEach(() => {
+			socket = new ClientSocketMock();
 		});
 
 		afterEach(() => {
@@ -297,33 +303,53 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			assert.deepEqual(await promise, response);
 		});
 
-		it("rejects only the disposed connection's flush on a shared socket", async () => {
-			const connection = await createConnection();
-			const sibling = await createConnection();
-			assert(socket !== undefined);
-			const first = startFlush(connection);
-			const second = startFlush(sibling);
-			const rejected = assert.rejects(first.promise);
-			let siblingSettled = false;
-			const siblingResult = second.promise.finally(() => {
-				siblingSettled = true;
+		for (const disconnect of ["dispose", "server-client"] as const) {
+			it(`rejects only the targeted connection's flush on shared-socket ${disconnect}`, async () => {
+				const connection = await createConnection();
+				const sibling = await createConnection();
+				assert(socket !== undefined);
+				assert.notEqual(connection.clientId, sibling.clientId);
+				let disconnectReason: IAnyDriverError | undefined;
+				connection.on("disconnect", (reason: IAnyDriverError) => {
+					disconnectReason = reason;
+				});
+				const first = startFlush(connection);
+				const firstResult = Promise.allSettled([first.promise]);
+				const second = startFlush(sibling);
+				let siblingSettled = false;
+				const siblingResult = Promise.allSettled([second.promise]).then((result) => {
+					siblingSettled = true;
+					return result;
+				});
+				if (disconnect === "dispose") {
+					connection.dispose();
+				} else {
+					socket.sendServerDisconnectEvent(
+						{ message: "Server disconnect", code: 400 },
+						connection.clientId,
+					);
+				}
+				connection.dispose();
+				socket.emit("flush_ops_response", {
+					nonce: first.nonce,
+					code: 200,
+					lastPersistedSequenceNumber: 456,
+				});
+				assert(disconnectReason !== undefined);
+				assert.deepEqual(await promptly(firstResult), [
+					{ status: "rejected", reason: disconnectReason },
+				]);
+				assert(socket.connected, "disconnecting one client should preserve the shared socket");
+				assert(!sibling.disposed);
+				assert(!siblingSettled, "a stale response should not settle the sibling's flush");
+				assert.equal(socket.listenerCount("flush_ops_response"), 1);
+				const response = { nonce: second.nonce, code: 200, lastPersistedSequenceNumber: 123 };
+				socket.emit("flush_ops_response", response);
+				assert.deepEqual(await promptly(siblingResult), [
+					{ status: "fulfilled", value: response },
+				]);
 			});
-			connection.dispose();
-			connection.dispose();
-			socket.emit("flush_ops_response", {
-				nonce: first.nonce,
-				code: 200,
-				lastPersistedSequenceNumber: 456,
-			});
-			await promptly(rejected);
-			assert(socket.connected, "disposing one connection should preserve the shared socket");
-			assert(!sibling.disposed);
-			assert(!siblingSettled, "a stale response should not settle the sibling's flush");
-			assert.equal(socket.listenerCount("flush_ops_response"), 1);
-			const response = { nonce: second.nonce, code: 200, lastPersistedSequenceNumber: 123 };
-			socket.emit("flush_ops_response", response);
-			assert.deepEqual(await promptly(siblingResult), response);
-		});
+		}
 	});
 
 	it("Connect document success on connection", async () => {
