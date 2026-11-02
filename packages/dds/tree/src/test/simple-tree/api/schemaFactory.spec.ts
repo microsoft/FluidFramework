@@ -313,10 +313,8 @@ describe("schemaFactory", () => {
 				for (const allowUnknownOptionalFields of [undefined, false, true]) {
 					it(`${Factory.name} supports allowUnknownOptionalFields=${allowUnknownOptionalFields}`, () => {
 						const factory = new Factory("com.example");
-						const options: ObjectSchemaOptions | undefined =
-							allowUnknownOptionalFields === undefined
-								? { allowUnknownOptionalFields: undefined }
-								: { allowUnknownOptionalFields };
+						const options: ObjectSchemaOptions =
+							allowUnknownOptionalFields === undefined ? {} : { allowUnknownOptionalFields };
 						class Item extends factory.object("Item", {}, options) {}
 
 						const schema = getSimpleSchema(Item).definitions.get(Item.identifier);
