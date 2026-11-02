@@ -95,7 +95,7 @@ export interface OnDemandSummaryResults {
 		 * Identifies the broadcast summary proposal.
 		 * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
 		 * {@link @fluidframework/container-definitions#LoaderHeader.version}.
-		 * Use the `version` returned by {@link loadSummarizerContainerAndMakeAcknowledgedSummary}
+		 * Use the `version` returned by {@link loadAndSummarize}
 		 * when an acknowledged snapshot version is required.
 		 */
 		readonly handle?: string;

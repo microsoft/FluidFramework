@@ -781,21 +781,21 @@ async function waitForCatchUp(
  * @throws If summarization fails after retries or times out.
  * @legacy @beta
  */
-export async function loadSummarizerContainerAndMakeAcknowledgedSummary(
+export async function loadAndSummarize(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
 ): Promise<AcknowledgedSummary> {
 	try {
-		return await loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
+		return await loadAndSummarizeOnce(loadSummarizerContainerProps);
 	} catch {
 		// During catch-up, the runtime may discover a newer summary and dispose the container.
 		// A second load may pick up the newer snapshot. Retry once on any failure, including
 		// load failures and errors marked non-retryable, following the approach in PR #25977.
 		// https://github.com/microsoft/FluidFramework/pull/25977
-		return loadSummarizerAndSummarizeOnce(loadSummarizerContainerProps);
+		return loadAndSummarizeOnce(loadSummarizerContainerProps);
 	}
 }
 
-async function loadSummarizerAndSummarizeOnce(
+async function loadAndSummarizeOnce(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
 ): Promise<AcknowledgedSummary> {
 	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
@@ -888,7 +888,7 @@ async function summarizeAndWaitForAcknowledgement(
  * @remarks
  * Success requires submission and broadcast. The loader does not explicitly wait for the service ACK,
  * although the runtime may wait for it as part of its retry behavior.
- * To obtain an acknowledged snapshot version, use {@link loadSummarizerContainerAndMakeAcknowledgedSummary}.
+ * To obtain an acknowledged snapshot version, use {@link loadAndSummarize}.
  * The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
  * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
  * {@link @fluidframework/container-definitions#LoaderHeader.version}.

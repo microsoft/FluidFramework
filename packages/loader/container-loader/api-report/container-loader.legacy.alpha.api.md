@@ -196,6 +196,9 @@ export interface IScribeProtocolState {
 }
 
 // @beta @legacy
+export function loadAndSummarize(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
+
+// @beta @legacy
 export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
 
 // @beta @legacy
@@ -222,9 +225,6 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 
 // @alpha @legacy
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
-
-// @beta @legacy
-export function loadSummarizerContainerAndMakeAcknowledgedSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;

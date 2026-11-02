@@ -94,20 +94,20 @@ Success requires summary submission and broadcast.
 The loader does not explicitly wait for the service ACK, although the runtime may wait for it as part of its retry behavior.
 The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
 It is not guaranteed to identify an acknowledged snapshot that can be loaded with `LoaderHeader.version`.
-Use the `version` returned by `loadSummarizerContainerAndMakeAcknowledgedSummary` when an acknowledged snapshot version is required.
+Use the `version` returned by `loadAndSummarize` when an acknowledged snapshot version is required.
 
-To migrate code that uses direct summarizer APIs to generate a summary and then load its acknowledged version, use `loadSummarizerContainerAndMakeAcknowledgedSummary`:
+To migrate code that uses direct summarizer APIs to generate a summary and then load its acknowledged version, use `loadAndSummarize`:
 
 ```typescript
 import { LoaderHeader } from "@fluidframework/container-definitions/legacy";
 import {
 	loadExistingContainer,
-	loadSummarizerContainerAndMakeAcknowledgedSummary,
+	loadAndSummarize,
 } from "@fluidframework/container-loader/legacy";
 
 // props supplies codeLoader, urlResolver, documentServiceFactory, and request.
 const { version, referenceSequenceNumber } =
-	await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+	await loadAndSummarize(props);
 const container = await loadExistingContainer({
 	...props,
 	request: {
@@ -118,7 +118,7 @@ const container = await loadExistingContainer({
 // Use container, then dispose it when finished.
 ```
 
-`loadSummarizerContainerAndMakeAcknowledgedSummary` returns `{ version, referenceSequenceNumber }` after service acknowledgement and rejects on error.
+`loadAndSummarize` returns `{ version, referenceSequenceNumber }` after service acknowledgement and rejects on error.
 `version` comes from `summaryAckOp.contents.handle`, suitable for `LoaderHeader.version` on drivers that support loading snapshot versions.
 `referenceSequenceNumber` comes from the matching summary proposal and identifies the document state captured by the summary.
 The summarizer container stays alive until acknowledgement.

@@ -21,7 +21,7 @@ import { createSandbox, type SinonSpy } from "sinon";
 
 import {
 	loadSummarizerContainerAndMakeSummary,
-	loadSummarizerContainerAndMakeAcknowledgedSummary,
+	loadAndSummarize,
 	type ILoadSummarizerContainerProps,
 } from "../createAndLoadContainerUtils.js";
 import { Loader } from "../loader.js";
@@ -121,7 +121,7 @@ describe("On-demand summary acknowledgement", () => {
 		const current = attempt(acknowledgement.promise);
 		sandbox.stub(Loader.prototype, "resolve").resolves(current.container);
 		let completed = false;
-		const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const pending = loadAndSummarize(props);
 		const completion = pending.then(() => {
 			completed = true;
 		});
@@ -158,7 +158,7 @@ describe("On-demand summary acknowledgement", () => {
 			for (const [index, current] of attempts.entries()) {
 				resolve.onCall(index).resolves(current.container);
 			}
-			const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+			const pending = loadAndSummarize(props);
 			const rejected = assert.rejects(pending, (caught: unknown) => {
 				assert(caught instanceof Error);
 				if (failure === "NACK" || failure === "runtime timeout") {
@@ -189,7 +189,7 @@ describe("On-demand summary acknowledgement", () => {
 		const resolve = sandbox.stub(Loader.prototype, "resolve");
 		resolve.onFirstCall().resolves(first.container);
 		resolve.onSecondCall().resolves(second.container);
-		const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const pending = loadAndSummarize(props);
 		await first.started.promise;
 		first.events.emit("disposed");
 		const result = await pending;
@@ -208,7 +208,7 @@ describe("On-demand summary acknowledgement", () => {
 		resolve.onFirstCall().resolves(first.container);
 		resolve.onSecondCall().resolves(second.container);
 
-		const result = await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const result = await loadAndSummarize(props);
 
 		assert.deepEqual(result, { version: "second-version", referenceSequenceNumber: 20 });
 		assert.equal(resolve.callCount, 2);
@@ -236,7 +236,7 @@ describe("On-demand summary acknowledgement", () => {
 		const resolve = sandbox.stub(Loader.prototype, "resolve");
 		resolve.onFirstCall().resolves(first.container);
 		resolve.onSecondCall().resolves(second.container);
-		const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const pending = loadAndSummarize(props);
 		await entryPointRequested.promise;
 		sandbox.stub(first.container, "closed").value(true);
 		sandbox.stub(first.container, "disposed").value(true);
@@ -278,10 +278,7 @@ describe("On-demand summary acknowledgement", () => {
 			for (const [index, current] of attempts.entries()) {
 				resolve.onCall(index).resolves(current.container);
 			}
-			await assert.rejects(
-				loadSummarizerContainerAndMakeAcknowledgedSummary(props),
-				(error: unknown) => error === errors[1],
-			);
+			await assert.rejects(loadAndSummarize(props), (error: unknown) => error === errors[1]);
 			assert.equal(resolve.callCount, 2);
 			for (const current of attempts) {
 				assert.equal(current.dispose.callCount, 1);
@@ -302,7 +299,7 @@ describe("On-demand summary acknowledgement", () => {
 		const resolve = sandbox.stub(Loader.prototype, "resolve");
 		resolve.onFirstCall().resolves(first.container);
 		resolve.onSecondCall().resolves(second.container);
-		const result = await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const result = await loadAndSummarize(props);
 		assert.deepEqual(result, { version: "second-version", referenceSequenceNumber: 20 });
 		assert.equal(resolve.callCount, 2);
 		assert.equal(first.dispose.callCount, 1);
@@ -321,7 +318,7 @@ describe("On-demand summary acknowledgement", () => {
 				const resolve = sandbox.stub(Loader.prototype, "resolve");
 				resolve.onFirstCall().resolves(first.container);
 				resolve.onSecondCall().resolves(second.container);
-				const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+				const pending = loadAndSummarize(props);
 				const outcome = assert.rejects(pending, (caught: unknown) => {
 					assert.equal(caught, error);
 					return true;

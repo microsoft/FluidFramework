@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadSummarizerContainerAndMakeSummary,
-	loadSummarizerContainerAndMakeAcknowledgedSummary,
+	loadAndSummarize,
 	type ILoadSummarizerContainerProps,
 	type LoadSummarizerSummaryResult,
 } from "@fluidframework/container-loader/internal";
@@ -124,8 +124,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		await provider.ensureSynchronized(container);
 		const props = await buildLoadPropsForExistingContainer(container, testContainerConfig);
 		const editsSequenceNumber = container.deltaManager.lastSequenceNumber;
-		const { version, referenceSequenceNumber } =
-			await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		const { version, referenceSequenceNumber } = await loadAndSummarize(props);
 		assert(
 			referenceSequenceNumber >= editsSequenceNumber,
 			"summary must include the synchronized edits",

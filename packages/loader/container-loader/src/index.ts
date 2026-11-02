@@ -13,7 +13,7 @@ export {
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
-	loadSummarizerContainerAndMakeAcknowledgedSummary,
+	loadAndSummarize,
 	type ICaptureFullContainerStateProps,
 	type IContainerDriverServices,
 	type IContainerHostProps,
