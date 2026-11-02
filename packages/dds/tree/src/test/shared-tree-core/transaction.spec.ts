@@ -64,6 +64,43 @@ describe("TransactionStacks", () => {
 		assert.equal(aborting, true);
 	});
 
+	it("emit an event after abort callbacks complete, including for nested transactions", () => {
+		const calls: string[] = [];
+		const transaction = new TransactionStack(() => ({
+			onPop: (result) => {
+				assert.equal(result, TransactionResult.Abort);
+				calls.push(`rollback ${transaction.size}`);
+			},
+		}));
+		transaction.events.on("aborting", () => {
+			calls.push(`aborting ${transaction.size}`);
+		});
+		transaction.events.on("aborted", () => {
+			calls.push(`aborted ${transaction.size}`);
+		});
+		transaction.start();
+		transaction.start();
+		transaction.abort();
+		transaction.abort();
+		assert.deepEqual(calls, [
+			"aborting 2",
+			"rollback 1",
+			"aborted 1",
+			"aborting 1",
+			"rollback 0",
+			"aborted 0",
+		]);
+	});
+
+	it("does not emit aborted when committing a transaction", () => {
+		const transaction = new TransactionStack();
+		transaction.events.on("aborted", () =>
+			assert.fail("Committed transaction must not abort"),
+		);
+		transaction.start();
+		transaction.commit();
+	});
+
 	it("emit an event just before committing a transaction", () => {
 		const transaction = new TransactionStack();
 		let committing = false;

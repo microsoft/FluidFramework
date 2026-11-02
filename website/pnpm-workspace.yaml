@@ -130,7 +130,7 @@ overrides:
   # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
   qs: ^6.15.2
   # simple-git: overridden to resolve a known security vulnerability.
-  simple-git: ^3.36.0
+  simple-git: ^4.0.2
   # validator: overridden to ^13.15.0 to resolve a known vulnerability in older
   # versions (transitive via swagger-tools).
   validator: ^13.15.0

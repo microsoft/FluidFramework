@@ -112,14 +112,14 @@ overrides:
   oclif>@aws-sdk/client-s3: "-"
 
   # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
-  js-yaml@<4: 3.15.0
+  js-yaml@<4: 3.15.2
   js-yaml@>=4: 4.3.2
 
   # Resolve known vulnerabilities in older versions.
   qs: ^6.15.2
 
   # Resolve a known security vulnerability.
-  simple-git: ^3.36.0
+  simple-git: ^4.0.2
 
   # sharp <0.32.6 has a vulnerability flagged by Component Governance (GHSA-54xq-cgqr-rpm3),
   # pulled in transitively via jssm-viz-cli.

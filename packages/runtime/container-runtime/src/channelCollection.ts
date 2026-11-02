@@ -150,6 +150,7 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
@@ -265,6 +266,7 @@ export function formParentContext<
 			return context.setChannelDirty(address);
 		},
 		minVersionForCollab: context.minVersionForCollab,
+		oldestSupportedClient: context.oldestSupportedClient,
 		getExtension: context.getExtension.bind(context),
 	};
 }

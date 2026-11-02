@@ -106,7 +106,7 @@
 		"playwright": "^1.59.1",
 		"prop-types": "^15.8.1",
 		"rimraf": "^6.1.3",
-		"simple-git": "^3.36.0",
+		"simple-git": "^4.0.2",
 		"sinon": "^18.0.1",
 		"typescript": "catalog:TypeScript"
 	},
