@@ -2,7 +2,8 @@
 
 ## Status and goal
 
-This document proposes an implementation plan, not an implemented feature.
+This document records the implementation plan and incremental progress checkpoints.
+The full plan is not yet implemented.
 Create a separate exhaustive test suite that uses production code to author changes and maintain tree state.
 This is additive work: leave all existing axiom suites, generators, adapters, shared harness implementations, test registrations, skips, and execution settings untouched.
 Do not replace, migrate, refactor, or remove existing tests, even where the new suite overlaps their coverage.
@@ -342,7 +343,46 @@ This checkpoint does not yet implement the SharedTree axiom adapter, exhaustive 
 The current candidate callbacks are a small capture-layer interface, not the planned serializable operation vocabulary.
 Pause for review before adding those layers.
 
-### Remaining implementation steps
+### Progress checkpoint: history generation and SharedTree axioms
+
+The second milestone adds five separate files without changing existing tests or shared helpers:
+
+- [historyGeneration.ts](../../src/test/shared-tree/axiomatic/historyGeneration.ts) enumerates exact-length committed histories while retaining ancestor checkouts only during descendant exploration.
+   Retained histories contain descriptions and complete tagged changes, not live checkouts.
+- [multiFieldFixture.ts](../../src/test/shared-tree/axiomatic/multiFieldFixture.ts) supplies a fixed-schema fixture with two sequence fields, one optional field, and one required field.
+   Its serializable vocabulary includes moves in both directions, sequence insertion/removal, optional set/clear, and required replacement.
+   Candidate availability follows the current forest, with sequence destinations bounded to two nodes.
+- [historyGeneration.spec.ts](../../src/test/shared-tree/axiomatic/historyGeneration.spec.ts) checks explicit operation outcomes, deterministic enumeration, retained-change replay, and disposal on completion, cancellation, and failure.
+- [sharedTreeAxioms.ts](../../src/test/shared-tree/axiomatic/sharedTreeAxioms.ts) binds algebraic calls to the production SharedTree family and supplies envelope-aware structural comparisons, data-effect emptiness assertions, and whole-change replay checks.
+- [sharedTreeAxioms.spec.ts](../../src/test/shared-tree/axiomatic/sharedTreeAxioms.spec.ts) independently registers the bounded laws and adapter contract tests.
+   Coverage includes empty identities, rollback cancellation, sequential-versus-composed replay, composition associativity, rebase over composition, and focused schema-envelope behavior.
+
+The fixture produces 7 one-edit histories, 41 two-edit histories, and 235 three-edit histories.
+The rebase matrix contains 287 combinations per forest implementation.
+Depth-two enumeration creates and disposes 48 exploration forks; early-exit tests verify descendant-first cleanup.
+The generated changes use the editor's default rebase version 1.
+
+Validation on 2026-11-02: the tree test build, formatting, and lint checks pass.
+The focused suite, including the first milestone, reports **75 passing and 2 failing tests**, in approximately two seconds.
+Both failures are the same structural rebase discrepancy, once for each forest implementation.
+The checkpoint is therefore blocked, not complete or ready for CI.
+
+The failing case starts with `left = [A]` and `right = [B]`:
+
+1. The local edit removes `A` from `left`.
+2. The concurrent history moves `B` from `right` to the end of `left`, then moves `A` from `left` to `right`.
+3. Rebasing the local edit over those changes separately produces a detach in `right`.
+4. Rebasing it over their composition produces the same detach followed by an additional empty-cell mark referring to the first move's revision.
+
+A diagnostic run of all 287 reference-forest combinations found exactly one structural mismatch and no visible-content or stored-schema replay mismatches between the two rebased paths.
+Matching replay does not establish equivalent future rebase behavior or detached-content identity.
+The structural assertion remains enabled and unchanged; no operation was filtered out and no test was skipped.
+Further investigation must establish whether the difference requires a production fix or a justified comparison normalization before this checkpoint can pass.
+Pause for review before changing production behavior or comparison semantics.
+
+Undo/redo ownership, nested editable nodes, moves between different parents, additional laws, alternate rebase versions, and stress budgets remain future work.
+
+### Implementation steps and remaining extensions
 
 1. **Establish a baseline and coverage inventory.**
    Record the existing enabled axioms, operation families, version combinations, runtime, and known failures.
