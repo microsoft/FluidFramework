@@ -94,7 +94,6 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 						apply: (child) => child.editor.move(leftField, 0, 1, rightField, 1),
 					},
 				])) {
-					assert(change !== undefined);
 					const head = checkout.mainBranch.getHead();
 					assert.equal(head.parent, base);
 					assert.equal(change.change, head.change);
@@ -125,7 +124,6 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 						},
 					})),
 				)) {
-					assert(change !== undefined);
 					revisions.add(change.revision);
 					assert.notEqual(checkout, parent);
 					expectJsonTree(parent, initialContent);
@@ -133,20 +131,45 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				assert.equal(revisions.size, 2);
 			});
 
-			it("distinguishes no submission from an explicit empty clear", () => {
-				for (const { description, change, checkout } of generateSharedTreeChanges(parent, [
+			it("rejects no submission and disposes the fork without changing the parent", () => {
+				const base = parent.mainBranch.getHead();
+				let disposed = false;
+				const changes = generateSharedTreeChanges(parent, [
 					{
 						description: "zero-count move",
-						apply: (child) => child.editor.move(leftField, 0, 0, rightField, 0),
+						apply: (child) => {
+							child.events.on("dispose", () => {
+								disposed = true;
+							});
+							child.editor.move(leftField, 0, 0, rightField, 0);
+						},
 					},
+				]);
+				assert.throws(() => changes.next(), /Operation must submit a commit/);
+				assert(disposed);
+				assert.equal(parent.mainBranch.getHead(), base);
+				expectJsonTree(parent, initialContent);
+			});
+
+			it("accepts an explicit empty clear as a committed change", () => {
+				const base = parent.mainBranch.getHead();
+				let count = 0;
+				for (const { change, checkout } of generateSharedTreeChanges(parent, [
 					{
 						description: "empty clear",
 						apply: (child) => child.editor.optionalField(optionalField).set(undefined, true),
 					},
 				])) {
-					assert.equal(change === undefined, description === "zero-count move");
+					count++;
+					const head = checkout.mainBranch.getHead();
+					assert.equal(head.parent, base);
+					assert.equal(change.change, head.change);
+					assert.equal(change.revision, head.revision);
 					expectJsonTree(checkout, initialContent);
 				}
+				assert.equal(count, 1);
+				assert.equal(parent.mainBranch.getHead(), base);
+				expectJsonTree(parent, initialContent);
 			});
 
 			it("captures a multi-call transaction as one commit", () => {
@@ -161,7 +184,6 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 						},
 					},
 				])) {
-					assert(change !== undefined);
 					assert.equal(checkout.mainBranch.getHead().parent, parent.mainBranch.getHead());
 					assert.equal(change.change.changes.length, 1);
 					const inner = change.change.changes[0];
@@ -174,7 +196,10 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 			it("disposes exploration forks on early termination", () => {
 				let disposed = false;
 				for (const { checkout } of generateSharedTreeChanges(parent, [
-					{ description: "no edit", apply: () => {} },
+					{
+						description: "empty clear",
+						apply: (child) => child.editor.optionalField(optionalField).set(undefined, true),
+					},
 				])) {
 					checkout.events.on("dispose", () => {
 						disposed = true;

@@ -32,7 +32,7 @@ export type SharedTreeHistory = readonly NamedSharedTreeChange[];
  * @param operations - Candidates derived from the current checkout and zero-based depth.
  * @param length - A nonnegative integer. Zero yields one empty history.
  * @remarks
- * Candidates that submit no commit are skipped, including their descendants.
+ * Candidates must submit exactly one commit; invalid candidates fail enumeration.
  * Each descendant is explored before advancing the owning change iterator, so its ancestor forks remain alive.
  * Completion, failure, and iterator closure release all exploration forks.
  * Captured changes are borrowed data; do not mutate them or release their chunk references.
@@ -59,12 +59,10 @@ export function* generateSharedTreeHistories(
 			state,
 			operations(state, history.length),
 		)) {
-			if (candidate.change !== undefined) {
-				yield* visit(candidate.checkout, [
-					...history,
-					{ description: candidate.description, change: candidate.change },
-				]);
-			}
+			yield* visit(candidate.checkout, [
+				...history,
+				{ description: candidate.description, change: candidate.change },
+			]);
 		}
 	}
 

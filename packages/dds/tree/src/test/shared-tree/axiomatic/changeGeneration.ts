@@ -14,7 +14,7 @@ import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.
 export interface SharedTreeTestOperation {
 	readonly description: string;
 	/**
-	 * Submit at most one commit, using a transaction if multiple editor calls are needed.
+	 * Submit exactly one commit, using a transaction if multiple editor calls are needed.
 	 * Do not dispose the checkout or retain resources beyond the operation's exploration scope.
 	 */
 	readonly apply: (checkout: TreeCheckout) => void;
@@ -27,10 +27,9 @@ export interface GeneratedSharedTreeChange {
 	readonly description: string;
 	readonly checkout: TreeCheckout;
 	/**
-	 * The complete committed change, or undefined if the operation submitted no commit.
-	 * Unchanged visible content does not imply the absence of a commit.
+	 * The complete committed change, even if it leaves visible content unchanged.
 	 */
-	readonly change: TaggedChange<SharedTreeChange> | undefined;
+	readonly change: TaggedChange<SharedTreeChange>;
 }
 
 /**
@@ -52,14 +51,12 @@ export function* generateSharedTreeChanges(
 			operation.apply(checkout);
 			assert.equal(checkout.transaction.size, 0, "Operation left a transaction open");
 			const after = checkout.mainBranch.getHead();
-			assert(
-				after === before || after.parent === before,
-				"Operation must submit at most one commit",
-			);
+			assert(after !== before, "Operation must submit a commit");
+			assert(after.parent === before, "Operation must submit at most one commit");
 			yield {
 				description: operation.description,
 				checkout,
-				change: after === before ? undefined : tagChange(after.change, after.revision),
+				change: tagChange(after.change, after.revision),
 			};
 		} finally {
 			try {

@@ -118,7 +118,6 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				)) {
 					const { operation, expected } = initialCases[index++];
 					assert.equal(candidate.description, JSON.stringify(operation));
-					assert(candidate.change !== undefined);
 					expectJsonTree(candidate.checkout, expected);
 				}
 				assert.equal(index, 7);
@@ -242,13 +241,12 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				}
 			});
 
-			it("skips no-submission candidates but retains committed empty clears", () => {
+			it("retains committed empty clears", () => {
 				const depths: number[] = [];
 				const events: string[] = [];
 				const source = observeForks((_state, depth) => {
 					depths.push(depth);
 					return [
-						{ description: "no submission", apply: () => {} },
 						{
 							description: "empty clear",
 							apply: (child) => applyMultiFieldOperation(child, { type: "clearOptional" }),
@@ -261,25 +259,26 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					histories.map((history) => history.map((entry) => entry.description)),
 					[["empty clear", "empty clear"]],
 				);
-				assert.equal(events.filter((event) => event.startsWith("create")).length, 4);
-				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 4);
+				assert.equal(events.filter((event) => event.startsWith("create")).length, 2);
+				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 2);
 				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
-			it("yields no histories when every candidate submits nothing", () => {
+			it("rejects no-submission candidates without exploring later siblings", () => {
 				const depths: number[] = [];
-				const histories = [
-					...generateSharedTreeHistories(
-						parent,
-						(_state, depth) => {
-							depths.push(depth);
-							return [{ description: "no submission", apply: () => {} }];
-						},
-						2,
-					),
-				];
-				assert.deepEqual(histories, []);
+				const events: string[] = [];
+				const source = observeForks((_state, depth) => {
+					depths.push(depth);
+					return [
+						{ description: "no submission", apply: () => {} },
+						{ description: "later sibling", apply: () => assert.fail("Must not continue") },
+					];
+				}, events);
+				const histories = generateSharedTreeHistories(parent, source, 2);
+				assert.throws(() => histories.next(), /Operation must submit a commit/);
 				assert.deepEqual(depths, [0]);
+				assert.deepEqual(events, ["create 0", "dispose 0"]);
+				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
 			for (const length of [-1, 0.5, 1.5, Number.NaN, Infinity, -Infinity]) {
@@ -301,6 +300,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 			for (const failure of [
 				"apply",
 				"enumeration",
+				"no submission",
 				"open transaction",
 				"multiple commits",
 			] as const) {
@@ -314,6 +314,9 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 						yield {
 							description: `clear at ${depth}`,
 							apply: (child: TreeCheckout) => {
+								if (depth === 1 && failure === "no submission") {
+									return;
+								}
 								if (depth === 1 && (failure === "apply" || failure === "open transaction")) {
 									child.transaction.start();
 								}
@@ -339,7 +342,9 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 									error.message,
 									failure === "open transaction"
 										? /Operation left a transaction open/
-										: /Operation must submit at most one commit/,
+										: failure === "no submission"
+											? /Operation must submit a commit/
+											: /Operation must submit at most one commit/,
 								);
 							}
 							return true;

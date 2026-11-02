@@ -102,7 +102,8 @@ Use a checkout transaction when an intention requires multiple editor calls, and
 Assert the commit shape and count instead of accidentally capturing only the last edit.
 Handle operations that produce no commit explicitly, and distinguish them from explicit no-op changes that do produce a commit.
 Require no open transaction at capture boundaries.
-If the head object is unchanged, classify the operation as producing no commit; otherwise require `after.parent === before`.
+If the head object is unchanged, fail the operation; otherwise require `after.parent === before`.
+Every candidate must submit exactly one commit, so captured changes never use `undefined` to represent no submission.
 For generated edits used in rollback axioms, also check that each data entry's modular revision metadata contains exactly one revision.
 This remains a precondition of rollback inversion delegated by `SharedTreeChangeFamily`, not a reason to run inversion directly on modular changes.
 Transactions reuse one revision for their steps, whereas manually composing independently authored edits does not establish this invariant.
@@ -398,6 +399,15 @@ This replacement creates new descendant identities; it is not an in-place update
 After conversion, the build, formatting, and lint checks pass, and history counts remain 7, 41, and 235.
 The focused suite still reports 75 passing tests and the same two enabled structural-rebase failures on the remove/move/move case.
 No production code or pre-existing shared harness was changed.
+
+### Capture contract revision: require a commit
+
+Candidate callbacks must now submit exactly one commit.
+`GeneratedSharedTreeChange.change` is non-optional, and history generation no longer skips candidates that submit nothing.
+Such candidates fail enumeration, with cleanup of their own fork and any active ancestor forks.
+Explicit empty clears remain valid because they submit a commit even when visible content is unchanged.
+The affected capture and history suites pass all 66 tests across both forest implementations; build, formatting, and lint checks also pass.
+The unrelated structural-rebase failures recorded above are outside this contract change.
 
 ### Implementation steps and remaining extensions
 
