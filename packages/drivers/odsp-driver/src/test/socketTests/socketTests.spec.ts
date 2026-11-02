@@ -15,7 +15,7 @@ import {
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
-import { spy, stub } from "sinon";
+import { type SinonStub, spy, stub } from "sinon";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -25,6 +25,7 @@ import type { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
 import { OdspDocumentServiceFactory } from "../../odspDocumentServiceFactory.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
+import { pkgVersion } from "../../packageVersion.js";
 import { SocketIOClientStatic } from "../../socketModule.js";
 
 import { ClientSocketMock } from "./socketMock.js";
@@ -42,6 +43,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	};
 	const webSocketUrl = "https://webSocketUrl";
 	let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
+	let mockLogger: MockLogger;
 	const socketReferenceKeyPrefix = "prefix";
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
@@ -62,7 +64,8 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	});
 
 	beforeEach(async () => {
-		logger = new MockLogger().toTelemetryLogger();
+		mockLogger = new MockLogger();
+		logger = mockLogger.toTelemetryLogger();
 		documentId = uuid();
 		tenantId = uuid();
 		// use null logger here as we expect errors
@@ -126,6 +129,34 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 	describe("flush settlement", () => {
 		const connections: OdspDocumentDeltaConnection[] = [];
+		let now: number;
+		let performanceStub: SinonStub;
+
+		function flushEvents(
+			eventName: "FlushCancelledOnDisconnect" | "FlushResult",
+		): MockLogger["events"] {
+			return mockLogger.events.filter(
+				(event) => event.eventName === `DeltaConnection:${eventName}`,
+			);
+		}
+
+		function checkCancellation(reason: IAnyDriverError, duration: number): void {
+			const events = flushEvents("FlushCancelledOnDisconnect");
+			assert.equal(events.length, 1, "only the pending disconnected flush should be reported");
+			assert.equal(events[0].category, "generic");
+			assert.equal(events[0].duration, duration);
+			assert.equal(events[0].driverVersion, pkgVersion);
+			assert.equal(events[0].errorType, reason.errorType);
+			assert.equal(events[0].canRetry, reason.canRetry);
+		}
+
+		function checkResult(duration: number, code = 200): void {
+			const events = flushEvents("FlushResult");
+			assert.equal(events.length, 1, "only the matching response should be reported");
+			assert.equal(events[0].duration, duration);
+			assert.equal(events[0].driverVersion, pkgVersion);
+			assert.equal(events[0].code, code);
+		}
 
 		async function createConnection(): Promise<OdspDocumentDeltaConnection> {
 			setConnectResponse();
@@ -216,15 +247,21 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 		beforeEach(() => {
 			socket = new ClientSocketMock();
+			now = 0;
+			performanceStub = stub(globalThis.performance, "now").callsFake(() => now);
 		});
 
 		afterEach(() => {
-			for (const connection of connections.splice(0)) {
-				connection.dispose();
+			try {
+				for (const connection of connections.splice(0)) {
+					connection.dispose();
+				}
+				socket?.sendServerDisconnectEvent({ message: "Test cleanup", code: 400 });
+				assert(socket !== undefined);
+				checkListenerCount(socket);
+			} finally {
+				performanceStub.restore();
 			}
-			socket?.sendServerDisconnectEvent({ message: "Test cleanup", code: 400 });
-			assert(socket !== undefined);
-			checkListenerCount(socket);
 		});
 
 		for (const disconnect of [
@@ -246,6 +283,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					promise,
 					(error: unknown) => error === disconnectReason,
 				);
+				now = 25;
 				switch (disconnect) {
 					case "dispose": {
 						connection.dispose(new Error("Disposed during flush"));
@@ -287,6 +325,8 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					code: 200,
 					lastPersistedSequenceNumber: 123,
 				});
+				checkCancellation(disconnectReason, 25);
+				assert.equal(flushEvents("FlushResult").length, 0);
 			});
 		}
 
@@ -295,13 +335,67 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			assert(socket !== undefined);
 			const { promise, nonce } = startFlush(connection);
 			const response = { nonce, code: 200, lastPersistedSequenceNumber: 123 };
+			now = 40;
 			socket.emit("flush_ops_response", response);
 			assert.deepEqual(await promptly(promise), response);
 			connection.dispose();
 			connection.dispose();
 			socket.emit("flush_ops_response", { ...response, lastPersistedSequenceNumber: 456 });
 			assert.deepEqual(await promise, response);
+			checkResult(40);
+			assert.equal(flushEvents("FlushCancelledOnDisconnect").length, 0);
 		});
+
+		it("does not report cancellation without a pending flush", async () => {
+			const connection = await createConnection();
+			connection.dispose();
+			connection.dispose();
+			assert.equal(flushEvents("FlushCancelledOnDisconnect").length, 0);
+			assert.equal(flushEvents("FlushResult").length, 0);
+		});
+
+		for (const completion of ["disconnect", 200, 204, 409, 429, 500] as const) {
+			it(`uses the replacement flush timestamp on ${completion}`, async () => {
+				const connection = await createConnection();
+				assert(socket !== undefined);
+				const first = startFlush(connection);
+				const replaced = assert.rejects(first.promise);
+				now = 100;
+				const second = startFlush(connection);
+				const outcome = Promise.allSettled([second.promise]);
+				await promptly(replaced);
+				assert.equal(flushEvents("FlushCancelledOnDisconnect").length, 0);
+				now = 110;
+				socket.emit("flush_ops_response", {
+					nonce: first.nonce,
+					code: 200,
+					lastPersistedSequenceNumber: 456,
+				});
+				assert.equal(flushEvents("FlushResult").length, 0);
+				now = 125;
+				if (completion === "disconnect") {
+					let disconnectReason: IAnyDriverError | undefined;
+					connection.on("disconnect", (reason: IAnyDriverError) => {
+						disconnectReason = reason;
+					});
+					connection.dispose();
+					assert(disconnectReason !== undefined);
+					assert.deepEqual(await promptly(outcome), [
+						{ status: "rejected", reason: disconnectReason },
+					]);
+					checkCancellation(disconnectReason, 25);
+				} else {
+					const response = { nonce: second.nonce, code: completion };
+					socket.emit("flush_ops_response", response);
+					assert.deepEqual(await promptly(outcome), [
+						{ status: "fulfilled", value: response },
+					]);
+					checkResult(25, completion);
+					connection.dispose();
+					assert.equal(flushEvents("FlushCancelledOnDisconnect").length, 0);
+				}
+			});
+		}
 
 		for (const disconnect of ["dispose", "server-client"] as const) {
 			it(`rejects only the targeted connection's flush on shared-socket ${disconnect}`, async () => {
@@ -315,12 +409,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				});
 				const first = startFlush(connection);
 				const firstResult = Promise.allSettled([first.promise]);
+				now = 10;
 				const second = startFlush(sibling);
 				let siblingSettled = false;
 				const siblingResult = Promise.allSettled([second.promise]).then((result) => {
 					siblingSettled = true;
 					return result;
 				});
+				now = 25;
 				if (disconnect === "dispose") {
 					connection.dispose();
 				} else {
@@ -344,11 +440,17 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				assert(!sibling.disposed);
 				assert(!siblingSettled, "a stale response should not settle the sibling's flush");
 				assert.equal(socket.listenerCount("flush_ops_response"), 1);
+				checkCancellation(disconnectReason, 25);
+				assert.equal(flushEvents("FlushResult").length, 0);
 				const response = { nonce: second.nonce, code: 200, lastPersistedSequenceNumber: 123 };
+				now = 40;
 				socket.emit("flush_ops_response", response);
 				assert.deepEqual(await promptly(siblingResult), [
 					{ status: "fulfilled", value: response },
 				]);
+				sibling.dispose();
+				checkCancellation(disconnectReason, 25);
+				checkResult(30);
 			});
 		}
 	});
