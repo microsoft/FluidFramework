@@ -22,7 +22,6 @@ import { generateSharedTreeHistories } from "./historyGeneration.js";
 import {
 	applyMultiFieldOperation,
 	createMultiFieldFixture,
-	multiFieldContent,
 	multiFieldOperationDescriptors,
 	multiFieldOperations,
 	type MultiFieldOperationDescriptor,
@@ -56,31 +55,27 @@ const initialCases: {
 }[] = [
 	{
 		operation: { type: "move", source: "left" },
-		expected: multiFieldContent([], ["B", "A"]),
+		expected: [{ left: [], right: ["B", "A"] }],
 	},
 	{
 		operation: { type: "move", source: "right" },
-		expected: multiFieldContent(["A", "B"], []),
+		expected: [{ left: ["A", "B"], right: [] }],
 	},
 	{
 		operation: { type: "insert", value: "N0" },
-		expected: multiFieldContent(["A", "N0"], ["B"]),
+		expected: [{ left: ["A", "N0"], right: ["B"] }],
 	},
 	{
 		operation: { type: "remove" },
-		expected: multiFieldContent([], ["B"]),
+		expected: [{ left: [], right: ["B"] }],
 	},
 	{
 		operation: { type: "setOptional", value: "N0" },
-		expected: multiFieldContent(["A"], ["B"], "N0"),
+		expected: [{ left: ["A"], right: ["B"], optional: "N0" }],
 	},
 	{
 		operation: { type: "clearOptional" },
-		expected: multiFieldContent(["A"], ["B"]),
-	},
-	{
-		operation: { type: "setRequired", value: "N0" },
-		expected: multiFieldContent(["A"], ["B"], undefined, "N0"),
+		expected: [{ left: ["A"], right: ["B"] }],
 	},
 ];
 
@@ -100,7 +95,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 
 			it("initializes the fixture without setup commits", () => {
 				assert.equal(parent.mainBranch.getHead().parent, undefined);
-				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 			});
 
 			it("uses a deterministic, serializable vocabulary with explicit outcomes", () => {
@@ -120,8 +115,8 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					assert.equal(candidate.description, JSON.stringify(operation));
 					expectJsonTree(candidate.checkout, expected);
 				}
-				assert.equal(index, 7);
-				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+				assert.equal(index, 6);
+				expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 			});
 
 			it("yields one empty history at zero depth without requesting candidates", () => {
@@ -138,8 +133,8 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 			});
 
 			for (const [length, count] of [
-				[1, 7],
-				[2, 41],
+				[1, 6],
+				[2, 28],
 			] as const) {
 				it(`enumerates ${count} deterministic histories of length ${length}`, () => {
 					const base = parent.mainBranch.getHead();
@@ -162,7 +157,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 						}
 					}
 					assert.equal(parent.mainBranch.getHead(), base);
-					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 				});
 			}
 
@@ -173,8 +168,8 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 						histories.filter((history) => history[0].description === JSON.stringify(operation))
 							.length,
 				);
-				// The four sequence edits each leave five candidates; the three scalar edits leave seven.
-				assert.deepEqual(counts, [5, 5, 5, 5, 7, 7, 7]);
+				// The four sequence edits each leave four candidates; the two optional edits leave six.
+				assert.deepEqual(counts, [4, 4, 4, 4, 6, 6]);
 				const remove = JSON.stringify({ type: "remove" });
 				assert(
 					!histories.some((history) => history.every((entry) => entry.description === remove)),
@@ -188,12 +183,12 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				);
 			});
 
-			it("disposes all 48 exploration forks on completion", () => {
+			it("disposes all 34 exploration forks on completion", () => {
 				const events: string[] = [];
 				const source = observeForks(multiFieldOperations, events);
-				assert.equal([...generateSharedTreeHistories(parent, source, 2)].length, 41);
-				assert.equal(events.filter((event) => event.startsWith("create")).length, 48);
-				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 48);
+				assert.equal([...generateSharedTreeHistories(parent, source, 2)].length, 28);
+				assert.equal(events.filter((event) => event.startsWith("create")).length, 34);
+				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 34);
 			});
 
 			it("disposes nested forks in descendant-first order on early exit", () => {
@@ -205,14 +200,13 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					break;
 				}
 				assert.deepEqual(events, ["create 0", "create 1", "dispose 1", "dispose 0"]);
-				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 			});
 
 			it("retains replayable complete changes, not live checkouts", () => {
 				const steps: MultiFieldOperationDescriptor[] = [
 					{ type: "insert", value: "N0" },
 					{ type: "setOptional", value: "N1" },
-					{ type: "setRequired", value: "N2" },
 					{ type: "move", source: "left" },
 					{ type: "clearOptional" },
 				];
@@ -235,7 +229,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					for (const { change } of histories[0]) {
 						replay.mainBranch.apply(change, CommitKind.Default, undefined);
 					}
-					expectJsonTree(replay, multiFieldContent(["N0"], ["B", "A"], undefined, "N2"));
+					expectJsonTree(replay, [{ left: ["N0"], right: ["B", "A"] }]);
 				} finally {
 					replay.dispose();
 				}
@@ -261,7 +255,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				);
 				assert.equal(events.filter((event) => event.startsWith("create")).length, 2);
 				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 2);
-				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 			});
 
 			it("rejects no-submission candidates without exploring later siblings", () => {
@@ -278,7 +272,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				assert.throws(() => histories.next(), /Operation must submit a commit/);
 				assert.deepEqual(depths, [0]);
 				assert.deepEqual(events, ["create 0", "dispose 0"]);
-				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 			});
 
 			for (const length of [-1, 0.5, 1.5, Number.NaN, Infinity, -Infinity]) {
@@ -357,7 +351,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 							: ["create 0", "create 1", "dispose 1", "dispose 0"],
 					);
 					assert.equal(parent.transaction.size, 0);
-					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 				});
 			}
 		});

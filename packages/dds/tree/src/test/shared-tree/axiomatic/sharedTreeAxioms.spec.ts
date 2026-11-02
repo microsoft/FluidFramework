@@ -29,11 +29,7 @@ import {
 } from "../../utils.js";
 
 import { generateSharedTreeHistories, type SharedTreeHistory } from "./historyGeneration.js";
-import {
-	createMultiFieldFixture,
-	multiFieldContent,
-	multiFieldOperations,
-} from "./multiFieldFixture.js";
+import { createMultiFieldFixture, multiFieldOperations } from "./multiFieldFixture.js";
 import {
 	SharedTreeAxiomAdapter,
 	assertSharedTreeChangeHasNoEffects,
@@ -82,13 +78,13 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 			});
 			afterEach(() => {
 				try {
-					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, [{ left: ["A"], right: ["B"] }]);
 				} finally {
 					parent.dispose();
 				}
 			});
 
-			it("composition and rebase identities for all seven initial operations", () => {
+			it("composition and rebase identities for all six initial operations", () => {
 				let count = 0;
 				for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 1)) {
 					withTrace([history], () => {
@@ -107,7 +103,7 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 					});
 					count++;
 				}
-				assert.equal(count, 7);
+				assert.equal(count, 6);
 			});
 
 			it("composes each operation with its rollback to a change with no effects", () => {
@@ -124,7 +120,7 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 				}
 			});
 
-			it("composition matches sequential replay for all 41 two-edit histories", () => {
+			it("composition matches sequential replay for all 28 two-edit histories", () => {
 				let count = 0;
 				for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 2)) {
 					withTrace([history], () => {
@@ -138,10 +134,10 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 					});
 					count++;
 				}
-				assert.equal(count, 41);
+				assert.equal(count, 28);
 			});
 
-			it("composition is associative for all 235 three-edit histories", () => {
+			it("composition is associative for all 132 three-edit histories", () => {
 				let count = 0;
 				for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 3)) {
 					withTrace([history], () => {
@@ -153,10 +149,10 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 					});
 					count++;
 				}
-				assert.equal(count, 235);
+				assert.equal(count, 132);
 			});
 
-			it("rebases seven concurrent operations over all 41 two-edit histories", () => {
+			it("rebases six concurrent operations over all 28 two-edit histories", () => {
 				const locals = [...generateSharedTreeHistories(parent, multiFieldOperations, 1)];
 				const bases = [...generateSharedTreeHistories(parent, multiFieldOperations, 2)];
 				let count = 0;
@@ -179,7 +175,7 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 						count++;
 					}
 				}
-				assert.equal(count, 287);
+				assert.equal(count, 168);
 			});
 		});
 	}

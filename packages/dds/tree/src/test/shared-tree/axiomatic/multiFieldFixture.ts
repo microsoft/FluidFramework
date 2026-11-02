@@ -9,7 +9,7 @@ import { EmptyKey, rootFieldKey, type NormalizedFieldUpPath } from "../../../cor
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import type { ForestType, TreeCheckout } from "../../../shared-tree/index.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
-import { brand, type JsonCompatible } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	checkoutWithContent,
@@ -24,34 +24,14 @@ type SequenceField = "left" | "right";
 type FixtureField = SequenceField | "optional";
 
 /**
- * Build JSON content for the fixture's two arrays and scalar properties.
- */
-export function multiFieldContent(
-	left: string[],
-	right: string[],
-	optional?: string,
-	required: string = "required",
-): JsonCompatible[] {
-	return [
-		{
-			left,
-			right,
-			...(optional === undefined ? {} : { optional }),
-			required,
-		},
-	];
-}
-
-/**
- * Create a required JSON object root containing two arrays and scalar properties.
- * JSON object properties are optional; required-field edits replace the root.
+ * Create a JSON object root containing two arrays and an initially absent optional property.
  * The caller owns the checkout.
  */
 export function createMultiFieldFixture(forestType: ForestType): TreeCheckout {
 	return checkoutWithContent(
 		{
 			schema: toInitialSchema(JsonAsTree.JsonObject),
-			initialTree: fieldJsonCursor(multiFieldContent(["A"], ["B"])),
+			initialTree: fieldJsonCursor([{ left: ["A"], right: ["B"] }]),
 		},
 		{ forestType, idCompressor: testIdCompressor },
 	);
@@ -88,16 +68,15 @@ function readFields(checkout: TreeCheckout): {
 	left: string[];
 	right: string[];
 	optional: string | undefined;
-	required: string;
 } {
 	const roots = jsonTreeFromCheckout(checkout);
 	assert.equal(roots.length, 1);
 	const root = roots[0];
 	assert(typeof root === "object" && root !== null && !Array.isArray(root));
 	for (const key of Object.keys(root)) {
-		assert(["left", "right", "optional", "required"].includes(key));
+		assert(["left", "right", "optional"].includes(key));
 	}
-	const { left, right, optional, required } = root;
+	const { left, right, optional } = root;
 	assert(
 		Array.isArray(left) && left.every((value): value is string => typeof value === "string"),
 	);
@@ -105,8 +84,7 @@ function readFields(checkout: TreeCheckout): {
 		Array.isArray(right) && right.every((value): value is string => typeof value === "string"),
 	);
 	assert(optional === undefined || typeof optional === "string");
-	assert(typeof required === "string");
-	return { left, right, optional, required };
+	return { left, right, optional };
 }
 
 /**
@@ -115,7 +93,7 @@ function readFields(checkout: TreeCheckout): {
  */
 export type MultiFieldOperationDescriptor =
 	| { readonly type: "move"; readonly source: SequenceField }
-	| { readonly type: "insert" | "setOptional" | "setRequired"; readonly value: string }
+	| { readonly type: "insert" | "setOptional"; readonly value: string }
 	| { readonly type: "remove" | "clearOptional" };
 
 /**
@@ -142,7 +120,6 @@ export function* multiFieldOperationDescriptors(
 	}
 	yield { type: "setOptional", value };
 	yield { type: "clearOptional" };
-	yield { type: "setRequired", value };
 }
 
 /**
@@ -178,14 +155,8 @@ export function applyMultiFieldOperation(
 			return;
 		}
 		case "insert":
-		case "setOptional":
-		case "setRequired": {
-			// Replace the required root while preserving the visible values of the other properties.
-			const content =
-				operation.type === "setRequired"
-					? multiFieldContent(fields.left, fields.right, fields.optional, operation.value)
-					: [operation.value];
-			const chunk = chunkFromJsonTrees(content);
+		case "setOptional": {
+			const chunk = chunkFromJsonTrees([operation.value]);
 			try {
 				switch (operation.type) {
 					case "insert": {
@@ -197,10 +168,6 @@ export function applyMultiFieldOperation(
 						checkout.editor
 							.optionalField(field("optional"))
 							.set(chunk, fields.optional === undefined);
-						break;
-					}
-					case "setRequired": {
-						checkout.editor.valueField({ parent: undefined, field: rootFieldKey }).set(chunk);
 						break;
 					}
 					default: {

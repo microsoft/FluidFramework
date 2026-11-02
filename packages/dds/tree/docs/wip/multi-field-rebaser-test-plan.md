@@ -4,6 +4,7 @@
 
 This document records the implementation plan and incremental progress checkpoints.
 The full plan is not yet implemented.
+The current implementation excludes required-field operations at the user's request; earlier required-field proposals and checkpoints below are historical.
 Create a separate exhaustive test suite that uses production code to author changes and maintain tree state.
 This is additive work: leave all existing axiom suites, generators, adapters, shared harness implementations, test registrations, skips, and execution settings untouched.
 Do not replace, migrate, refactor, or remove existing tests, even where the new suite overlaps their coverage.
@@ -408,6 +409,18 @@ Such candidates fail enumeration, with cleanup of their own fork and any active 
 Explicit empty clears remain valid because they submit a commit even when visible content is unchanged.
 The affected capture and history suites pass all 66 tests across both forest implementations; build, formatting, and lint checks also pass.
 The unrelated structural-rebase failures recorded above are outside this contract change.
+
+### Fixture simplification: inline data and no required-field operations
+
+The fixture and its tests now declare JSON data inline instead of calling a content-construction helper.
+The `required` property and required-root replacement operation have been removed.
+The six initial candidates cover moves in both directions, insertion, removal, optional set, and optional clear.
+There are 28 two-edit histories, 132 three-edit histories, and 168 concurrent-edit/base-history combinations per forest.
+Depth-two exploration creates and disposes 34 forks.
+
+Build, formatting, and lint checks pass.
+The affected history and axiom suites report 57 passing tests and the same two structural-rebase failures on the remove/move/move case.
+Those failures remain enabled and are unrelated to the removed required-field coverage.
 
 ### Implementation steps and remaining extensions
 
