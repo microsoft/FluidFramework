@@ -536,7 +536,7 @@ describe("checkSchemaCompatibility", () => {
 
 				// Note: the decision to not allow is policy. See
 				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
-				it("stored schema has additional optional fields which view schema allows", () => {
+				it("the stored schema has additional optional fields, which the view schema allows", () => {
 					class Point2D extends factory.objectAlpha("Point", {
 						x: factory.number,
 						y: factory.number,
