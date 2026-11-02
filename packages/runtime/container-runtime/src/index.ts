@@ -22,6 +22,11 @@ export {
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
+	IApplicationSummaryProjection,
+	IApplicationSummaryProjectionContext,
+	IApplicationSummaryProjectionResult,
+} from "./summary/index.js";
+export type {
 	ContainerRuntimeAliasMessage,
 	ContainerRuntimeDataStoreOpMessage,
 	OutboundContainerRuntimeAttachMessage,
