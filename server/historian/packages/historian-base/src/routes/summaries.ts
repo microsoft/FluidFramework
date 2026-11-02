@@ -47,7 +47,7 @@ import type {
 	ITrustedCreateContext,
 } from "../services";
 import { isEphemeralSummaryAccessStore } from "../services";
-import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
+import { parseToken, Constants } from "../utils";
 
 import { resolveSummaryAccess } from "./summaryAccess";
 import * as utils from "./utils";
@@ -230,7 +230,15 @@ export function create(
 	): Promise<IWriteSummaryResponse> {
 		let service: RestGitService;
 		if (initial === true) {
-			const documentId = getDocumentIdFromRequest(tenantId, authorization);
+			const { accessToken, documentId } = utils.getTokenDocumentIdentity(
+				tenantId,
+				authorization,
+			);
+			const authenticatedTenantDetails = await tenantService.getTenant(
+				tenantId,
+				accessToken,
+				false,
+			);
 			let trustedCreateContext: ITrustedCreateContext | undefined;
 			if (documentAccessAuthorizer === undefined) {
 				Lumberjack.info("HistorianInitialSummaryUploadExemption", {
@@ -277,6 +285,7 @@ export function create(
 				tenantId,
 				authorization,
 				tenantService,
+				authenticatedTenantDetails,
 				storageNameRetriever,
 				documentManager,
 				cache,

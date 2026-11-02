@@ -294,10 +294,6 @@ export function getTokenDocumentIdentity(
 	return { accessToken, documentId };
 }
 
-function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
-	return getTokenDocumentIdentity(tenantId, authorization).documentId;
-}
-
 export function logOwnershipOutcome(
 	tenantId: string,
 	documentId: string,
@@ -516,6 +512,7 @@ export async function createGitServiceWithAccess(
 		tenantId,
 		authorization,
 		tenantService,
+		authenticatedTenantDetails,
 		storageNameRetriever,
 		documentManager,
 		cache,
@@ -533,12 +530,13 @@ export async function createGitServiceWithAccess(
 		documentAccessAuthorizer,
 		summaryAccessContext,
 	} = createArgs;
-	const tokenDocumentId = getTokenDocumentId(tenantId, authorization);
-	const token = parseToken(tenantId, authorization);
-	if (!token) {
-		throw new NetworkError(403, "Authorization token is missing.");
-	}
-	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
+	const { accessToken, documentId: tokenDocumentId } = getTokenDocumentIdentity(
+		tenantId,
+		authorization,
+	);
+	const details =
+		authenticatedTenantDetails ??
+		(await tenantService.getTenant(tenantId, accessToken, allowDisabledTenant ?? false));
 
 	if (documentAccessAuthorizer !== undefined && accessOperation === undefined) {
 		throw new NetworkError(

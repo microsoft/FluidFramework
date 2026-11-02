@@ -101,6 +101,11 @@ export interface ICreateGitServiceArgs {
 	tenantId: string;
 	authorization: string | undefined;
 	tenantService: ITenantService;
+	/**
+	 * Tenant details already returned by tenantService for this request's authorization token.
+	 * This is used only when a caller must perform authenticated work before creating the service.
+	 */
+	authenticatedTenantDetails?: ITenantConfig;
 	storageNameRetriever?: IStorageNameRetriever;
 	documentManager: IDocumentManager;
 	cache?: ICache;

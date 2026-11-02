@@ -1954,6 +1954,35 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(createSummary);
 	});
 
+	it("authenticates before resolving a trusted initial creation context", async () => {
+		const authenticationFailure = new NetworkError(403, "Invalid token.");
+		sandbox.stub(defaultTenantService, "getTenant").rejects(authenticationFailure);
+		const resolve = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			containerType: "durable",
+			lifecycleVersion: "generation-1",
+			expiresAtMs: Date.now() + 60_000,
+		});
+		const authorize = sandbox.stub();
+		superTest = createSummaryOwnershipSuperTest(
+			createTestProvider(true),
+			{ authorize },
+			{ resolve },
+		);
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.set("Fluid-Create-Context", "opaque-create-token")
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(403);
+
+		sinon.assert.notCalled(resolve);
+		sinon.assert.notCalled(authorize);
+	});
+
 	for (const testCase of [
 		{
 			name: "invalid",
@@ -2020,6 +2049,7 @@ describe("summary ownership routes", () => {
 	}
 
 	it("resolves and authorizes the trusted initial creation context", async () => {
+		const getTenant = sandbox.spy(defaultTenantService, "getTenant");
 		const trustedCreateContext = {
 			tenantId,
 			documentId,
@@ -2057,6 +2087,8 @@ describe("summary ownership routes", () => {
 			.send({ type: "container", trees: [], blobs: [] })
 			.expect(201);
 
+		sinon.assert.calledOnce(getTenant);
+		sinon.assert.callOrder(getTenant, resolve, authorize);
 		sinon.assert.calledOnceWithExactly(resolve, {
 			tenantId,
 			documentId,

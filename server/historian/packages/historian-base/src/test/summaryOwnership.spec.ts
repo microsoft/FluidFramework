@@ -694,6 +694,7 @@ describe("summary ownership", function () {
 			trustedCreateContext: {
 				tenantId,
 				documentId,
+				containerType: "durable" as const,
 				lifecycleVersion: "generation-1",
 				expiresAtMs: Date.now() + 60_000,
 			},
@@ -702,6 +703,7 @@ describe("summary ownership", function () {
 				documentId,
 				operation: "create",
 				source: "trusted-create",
+				containerType: "durable" as const,
 				lifecycleVersion: "generation-2",
 				state: "pending",
 			},
