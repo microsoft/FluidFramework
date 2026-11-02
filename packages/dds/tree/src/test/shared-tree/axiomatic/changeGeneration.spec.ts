@@ -27,17 +27,6 @@ import { checkoutWithContent, chunkFromJsonTrees, expectJsonTree } from "../../u
 
 import { generateSharedTreeChanges } from "./changeGeneration.js";
 
-function content(left: string[], right: string[], optional?: string): JsonCompatible[] {
-	return [
-		{
-			left,
-			right,
-			required: "required",
-			...(optional === undefined ? {} : { optional }),
-		},
-	];
-}
-
 function field(key: string): NormalizedFieldUpPath {
 	const root = {
 		parent: undefined,
@@ -61,7 +50,7 @@ function field(key: string): NormalizedFieldUpPath {
 const leftField = field("left");
 const rightField = field("right");
 const optionalField = field("optional");
-const initialContent = content(["A"], ["B"]);
+const initialContent: JsonCompatible[] = [{ left: ["A"], right: ["B"] }];
 const schema = toInitialSchema(JsonAsTree.JsonObject);
 
 describe("SharedTree axiom infrastructure: change generation", () => {
@@ -101,7 +90,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					assert.equal(typeof change.revision, "number");
 					assert.equal(change.change.changes.length, 1);
 					assert.equal(change.change.changes[0].type, "data");
-					expectJsonTree(checkout, content([], ["B", "A"]));
+					expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
 					expectJsonTree(parent, initialContent);
 				}
 				assert.equal(parent.mainBranch.getHead(), base);
@@ -189,7 +178,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					const inner = change.change.changes[0];
 					assert(inner.type === "data");
 					assert.deepEqual(inner.innerChange.revisions, [{ revision: change.revision }]);
-					expectJsonTree(checkout, content([], ["B", "A"]));
+					expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
 				}
 			});
 
@@ -264,7 +253,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				const replay = parent.fork();
 				try {
 					replay.mainBranch.apply(captured, CommitKind.Default, undefined);
-					expectJsonTree(replay, content(["A", "X"], ["B"]));
+					expectJsonTree(replay, [{ left: ["A", "X"], right: ["B"] }]);
 				} finally {
 					replay.dispose();
 				}
