@@ -4,18 +4,20 @@
  */
 
 /*
- * Store text without a separate stored string or object for each character.
- * Pieces refer to ranges in immutable string buffers.
- * To represent an edit, reuse those buffers and build a new list of pieces.
- * Existing pieces and sequences do not change.
+ * This module provides a representation for efficiently storing and manipulating strings consistent
+ * with the semantics exposed by SharedTree's text domains.
+ * This module has no tree, schema, cursor, or forest dependencies, though it can be used as a building block for text storage in such structures.
  *
- * This module has no tree, schema, cursor, or forest dependencies.
- * Different tree representations can share its storage without sharing their editing policies.
+ * Details on the representation:
+ * - StringBuffer stores the actual text and sparse code-point offsets for efficient conversion from atom indices to UTF-16 offsets in the underlying string.
+ * - StringPiece refers to a range in an immutable StringBuffer.
+ * - StringSequence represents a sequence of StringPiece instances, allowing efficient concatenation and slicing without necessarily copying the underlying text.
  *
- * Indexes count logical atoms, not UTF-16 code units or grapheme clusters.
- * Each code point in an input string becomes one atom.
- * A lone surrogate is also one atom.
- * Joining sequences preserves these boundaries: separately supplied surrogate halves remain two atoms.
+ * Details on "consistency with SharedTree's text domains" in terms of atom indexing:
+ * - Indexes count logical atoms, not UTF-16 code units or grapheme clusters.
+ * - Each code point in an input string becomes one atom.
+ * - A lone surrogate is also one atom.
+ * - Joining sequences preserves these boundaries: separately supplied surrogate halves remain two atoms, even if they become adjacent in a sequence of text.
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
@@ -31,8 +33,18 @@ const coalesceSize = 256;
 
 /** Immutable text and sparse code-point offsets shared by pieces. */
 class StringBuffer {
+	/**
+	 * The length of this buffer in logical code-point atoms.
+	 *
+	 * This differs from `text.length`, which counts UTF-16 code units.
+	 */
 	public readonly length: number;
-	private readonly checkpoints: readonly number[] | undefined;
+	/**
+	 * #checkpoints[i] stores the UTF-16 offset of the i-th checkpoint, which is at index `i * checkpointStride`
+	 *
+	 * If `text` happens to have exactly one atom per code unit, checkpoints are not needed and this field is undefined.
+	 */
+	readonly #checkpoints: readonly number[] | undefined;
 
 	public constructor(public readonly text: string) {
 		const checkpoints: number[] = [];
@@ -44,7 +56,7 @@ class StringBuffer {
 			offset += characterWidth(text, offset);
 		}
 		this.length = count;
-		this.checkpoints = count === text.length ? undefined : checkpoints;
+		this.#checkpoints = count === text.length ? undefined : checkpoints;
 	}
 
 	/**
@@ -54,11 +66,11 @@ class StringBuffer {
 	 */
 	public offset(index: number): number {
 		assert(index >= 0 && index <= this.length, "Character offset out of bounds");
-		if (this.checkpoints === undefined || index === this.length) {
+		if (this.#checkpoints === undefined || index === this.length) {
 			return index === this.length ? this.text.length : index;
 		}
 		const checkpoint = Math.floor(index / checkpointStride);
-		let offset = this.checkpoints[checkpoint] ?? oob();
+		let offset = this.#checkpoints[checkpoint] ?? oob();
 		for (let i = checkpoint * checkpointStride; i < index; i++) {
 			offset += characterWidth(this.text, offset);
 		}
@@ -78,14 +90,20 @@ function characterWidth(text: string, offset: number): number {
  * All indexes and lengths on this class count atoms unless stated otherwise.
  */
 export class StringPiece {
+	readonly #buffer: StringBuffer;
+	readonly #start: number;
+
 	private constructor(
-		private readonly buffer: StringBuffer,
-		private readonly start: number,
+		buffer: StringBuffer,
+		start: number,
 		/**
 		 * The number of atoms in this piece.
 		 */
 		public readonly length: number,
-	) {}
+	) {
+		this.#buffer = buffer;
+		this.#start = start;
+	}
 
 	/**
 	 * Splits an input string into pieces with buffers bounded by {@link stringBufferSize}.
@@ -109,9 +127,9 @@ export class StringPiece {
 	}
 
 	public get text(): string {
-		return this.buffer.text.slice(
-			this.buffer.offset(this.start),
-			this.buffer.offset(this.start + this.length),
+		return this.#buffer.text.slice(
+			this.#buffer.offset(this.#start),
+			this.#buffer.offset(this.#start + this.length),
 		);
 	}
 
@@ -122,8 +140,8 @@ export class StringPiece {
 	 */
 	public at(index: number): string {
 		assert(Number.isInteger(index) && index >= 0 && index < this.length, "Invalid atom index");
-		const offset = this.buffer.offset(this.start + index);
-		return this.buffer.text.slice(offset, offset + characterWidth(this.buffer.text, offset));
+		const offset = this.#buffer.offset(this.#start + index);
+		return this.#buffer.text.slice(offset, offset + characterWidth(this.#buffer.text, offset));
 	}
 
 	/**
@@ -137,10 +155,10 @@ export class StringPiece {
 			Number.isInteger(start) && start >= 0 && start <= this.length,
 			"Invalid atom index",
 		);
-		let offset = this.buffer.offset(this.start + start);
+		let offset = this.#buffer.offset(this.#start + start);
 		for (let index = start; index < this.length; index++) {
-			const end = offset + characterWidth(this.buffer.text, offset);
-			yield this.buffer.text.slice(offset, end);
+			const end = offset + characterWidth(this.#buffer.text, offset);
+			yield this.#buffer.text.slice(offset, end);
 			offset = end;
 		}
 	}
@@ -164,7 +182,7 @@ export class StringPiece {
 		);
 		return start === 0 && end === this.length
 			? this
-			: new StringPiece(this.buffer, this.start + start, end - start);
+			: new StringPiece(this.#buffer, this.#start + start, end - start);
 	}
 
 	/**
@@ -177,13 +195,13 @@ export class StringPiece {
 	 * The join is rejected if it would combine two separate surrogate-half atoms into one atom.
 	 */
 	public tryAppend(other: StringPiece): StringPiece | undefined {
-		if (this.buffer === other.buffer && this.start + this.length === other.start) {
-			return new StringPiece(this.buffer, this.start, this.length + other.length);
+		if (this.#buffer === other.#buffer && this.#start + this.length === other.#start) {
+			return new StringPiece(this.#buffer, this.#start, this.length + other.length);
 		}
 		const leftLength =
-			this.buffer.offset(this.start + this.length) - this.buffer.offset(this.start);
+			this.#buffer.offset(this.#start + this.length) - this.#buffer.offset(this.#start);
 		const rightLength =
-			other.buffer.offset(other.start + other.length) - other.buffer.offset(other.start);
+			other.#buffer.offset(other.#start + other.length) - other.#buffer.offset(other.#start);
 		if (leftLength + rightLength > coalesceSize) {
 			return undefined;
 		}
