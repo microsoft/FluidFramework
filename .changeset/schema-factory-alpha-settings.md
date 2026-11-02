@@ -5,19 +5,18 @@
 ---
 Configure public schema factories with reusable object defaults
 
-[`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) now accepts an options object with the scope and an [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) callback through the public API.
-The callback provides reusable defaults for [`object`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-method) and [`objectRecursive`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method), including the public `allowUnknownOptionalFields` option.
-Options passed directly to an object schema remain available to the callback, so applications can choose whether per-schema options or factory defaults take precedence.
+[`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) now accepts an options object with the scope and an [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) property bag through the public API.
+The property bag provides reusable defaults for [`object`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-method) and [`objectRecursive`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method), including the public `allowUnknownOptionalFields` option.
+Options passed directly to an object schema override factory defaults through a shallow merge.
 
 ```typescript
 import { SchemaFactory } from "fluid-framework";
 
 const sf = new SchemaFactory({
 	scope: "com.example",
-	objectOptions: (_name, _fields, options) => ({
+	objectOptions: {
 		allowUnknownOptionalFields: true,
-		...options,
-	}),
+	},
 });
 
 class Person extends sf.object("Person", { name: sf.string }) {}
@@ -30,25 +29,19 @@ class StrictPerson extends sf.object(
 ) {}
 ```
 
-New utilities support composing and extending factory settings without losing existing defaults:
+You can read and extend factory settings without changing the original factory:
 
 - [`settings`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#settings-property) provides the factory's options without its scope.
 - [`scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#scopedfactory-method) creates a child factory with inherited or replacement settings without changing the original factory.
-- [`composeSchemaFactoryOptions`](https://fluidframework.com/docs/api/fluid-framework/composeschemafactoryoptions-function) applies two callbacks in order.
-  The second callback receives the options returned by the first callback.
 
 ```typescript
-import { composeSchemaFactoryOptions } from "fluid-framework";
-
-const extended = sf.scopedFactory(
-	"strict",
-	composeSchemaFactoryOptions(sf.settings, {
-		objectOptions: (_name, _fields, options) => ({
-			...options,
-			allowUnknownOptionalFields: false,
-		}),
-	}),
-);
+const extended = sf.scopedFactory("strict", {
+	...sf.settings,
+	objectOptions: {
+		...sf.settings.objectOptions,
+		allowUnknownOptionalFields: false,
+	},
+});
 ```
-The beta and alpha schema factories retain their corresponding tier-specific settings and composition APIs.
-The beta and alpha schema factories retain their corresponding tier-specific settings and composition APIs.
+
+The beta and alpha schema factories support their corresponding tier-specific options.

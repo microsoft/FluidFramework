@@ -83,7 +83,6 @@ export {
 	ValidateRecursiveSchemaTemplate, 
 	ViewableTree, 
 	WithType, 
-	composeSchemaFactoryOptions, 
 	rollback, 
 	typeSchemaSymbol,
 	// #endregion
@@ -171,7 +170,6 @@ export {
 	WithValue, 
 	adaptEnum, 
 	asBeta, 
-	composeSchemaFactoryBetaOptions, 
 	configuredSharedTreeBeta, 
 	createIdentifierIndex, 
 	createIndependentTreeBeta, 
@@ -337,7 +335,6 @@ export {
 	cloneWithReplacements, 
 	codePointCount, 
 	comparePersistedSchema, 
-	composeSchemaFactoryAlphaOptions, 
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 

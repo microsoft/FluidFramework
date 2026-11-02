@@ -9,15 +9,14 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
-	composeSchemaFactoryAlphaOptions,
-	composeSchemaFactoryBetaOptions,
-	composeSchemaFactoryOptions,
 	getSimpleSchema,
 	NodeKind,
+	type SchemaFactoryAlphaOptions,
 	type SchemaFactoryBetaOptions,
 	type SchemaFactoryOptions,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
+import type { areSafelyAssignable, requireFalse, requireTrue } from "../../../util/index.js";
 
 function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
 	const simple = getSimpleSchema(schema).definitions.get(schema.identifier);
@@ -26,262 +25,138 @@ function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
 }
 
 describe("schemaFactoryOptions", () => {
-	describe(composeSchemaFactoryOptions.name, () => {
-		it("chains callbacks in order", () => {
-			const calls: string[] = [];
-			const composed = composeSchemaFactoryOptions(
-				{
-					objectOptions: (_name, _fields, options) => {
-						calls.push("base");
-						return { allowUnknownOptionalFields: true, ...options };
-					},
-				},
-				{
-					objectOptions: (_name, _fields, options) => {
-						calls.push("override");
-						return { ...options, allowUnknownOptionalFields: false };
-					},
-				},
-			);
-			const sf = new SchemaFactory({ scope: "test", ...composed });
-
-			assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), false);
-			assert.deepEqual(calls, ["base", "override"]);
-		});
-
-		it("has no callback when neither input has one", () => {
-			const composed = composeSchemaFactoryOptions({}, {});
-			assert.equal(composed.objectOptions, undefined);
-		});
-
-		for (const position of ["base", "override"] as const) {
-			it(`supports only a ${position} callback`, () => {
-				const options: SchemaFactoryOptions = {
-					objectOptions: (_name, _fields, perCallOptions) => ({
-						allowUnknownOptionalFields: true,
-						...perCallOptions,
-					}),
-				};
-				const composed =
-					position === "base"
-						? composeSchemaFactoryOptions(options, {})
-						: composeSchemaFactoryOptions({}, options);
-				const sf = new SchemaFactory({ ...composed, scope: "test" });
-				assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
-			});
-		}
-
-		it("preserves the input options when callbacks return undefined", () => {
-			const calls: string[] = [];
-			const perCallOptions = { allowUnknownOptionalFields: true };
-			const fields = { x: SchemaFactory.number };
-			const composed = composeSchemaFactoryOptions(
-				{
-					objectOptions: (name, actualFields, options) => {
-						calls.push("base");
-						assert.equal(name, 42);
-						assert.equal(actualFields, fields);
-						assert.equal(options, perCallOptions);
-						return undefined;
-					},
-				},
-				{
-					objectOptions: (name, actualFields, options) => {
-						calls.push("override");
-						assert.equal(name, 42);
-						assert.equal(actualFields, fields);
-						assert.equal(options, perCallOptions);
-						return undefined;
-					},
-				},
-			);
-			const sf = new SchemaFactory<"test", number>({ ...composed, scope: "test" });
-			const Schema = sf.object(42, fields, perCallOptions);
-			assert.equal(Schema.identifier, "test.42");
-			assert.equal(allowsUnknownOptionalFields(Schema), true);
-			assert.deepEqual(calls, ["base", "override"]);
-		});
-
-		it("keeps the base result when the override returns undefined", () => {
-			const composed = composeSchemaFactoryOptions(
-				{
-					objectOptions: () => ({ allowUnknownOptionalFields: true }),
-				},
-				{ objectOptions: () => undefined },
-			);
-			const sf = new SchemaFactory({ ...composed, scope: "test" });
-			assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
-		});
-
-		for (const position of ["base", "override"] as const) {
-			it(`propagates errors from the ${position} callback`, () => {
-				const error = new Error(position);
-				const options: SchemaFactoryOptions = {
-					objectOptions: () => {
-						throw error;
-					},
-				};
-				const composed =
-					position === "base"
-						? composeSchemaFactoryOptions(options, {})
-						: composeSchemaFactoryOptions({}, options);
-				assert.throws(
-					() => composed.objectOptions?.("Object", {}, undefined),
-					(actual) => actual === error,
-				);
-			});
-		}
-	});
-
-	for (const [Factory, compose] of [
-		[SchemaFactoryBeta, composeSchemaFactoryBetaOptions],
-		[SchemaFactoryAlpha, composeSchemaFactoryAlphaOptions],
-	] as const) {
-		describe(compose.name, () => {
-			it("chains callbacks: both effects are applied", () => {
-				const base: SchemaFactoryBetaOptions = {
-					objectOptions: (_name, _fields, options) => ({
-						allowUnknownOptionalFields: true,
-						...options,
-					}),
-				};
-				const override: SchemaFactoryBetaOptions = {
-					objectOptions: (_name, _fields, options) => ({
-						metadata: { description: "from override" },
-						...options,
-					}),
-				};
-				const composed = compose(base, override);
-				const sf = new Factory({ scope: "test", ...composed });
-
-				const Schema = sf.object("Foo", { x: sf.number });
-				assert.equal(allowsUnknownOptionalFields(Schema), true, "base effect preserved");
-				assert.equal(Schema.metadata.description, "from override", "override effect applied");
-			});
-
-			it("override wins on conflicts", () => {
-				const base: SchemaFactoryBetaOptions = {
-					objectOptions: (_name, _fields, options) => ({
-						allowUnknownOptionalFields: true,
-						...options,
-					}),
-				};
-				const override: SchemaFactoryBetaOptions = {
-					objectOptions: (_name, _fields, options) => ({
-						...options,
+	for (const Factory of [SchemaFactory, SchemaFactoryBeta, SchemaFactoryAlpha]) {
+		describe(Factory.name, () => {
+			it("lets callers extend settings with object spreads", () => {
+				const options: SchemaFactoryOptions = Object.freeze({
+					objectOptions: Object.freeze({ allowUnknownOptionalFields: true }),
+				});
+				const sf: SchemaFactory = new Factory({ scope: "test", ...options });
+				const child = sf.scopedFactory("child", {
+					...sf.settings,
+					objectOptions: {
+						...sf.settings.objectOptions,
 						allowUnknownOptionalFields: false,
-					}),
-				};
-				const composed = compose(base, override);
-				const sf = new Factory({ scope: "test", ...composed });
-
-				const Schema = sf.object("Foo", { x: sf.number });
-				assert.equal(allowsUnknownOptionalFields(Schema), false, "override wins");
-			});
-
-			it("has no callback when neither input has one", () => {
-				const composed = compose({}, {});
-				assert.equal(composed.objectOptions, undefined);
-			});
-
-			for (const position of ["base", "override"] as const) {
-				it(`supports only a ${position} callback`, () => {
-					const options: SchemaFactoryBetaOptions = {
-						objectOptions: (_name, _fields, perCallOptions) => ({
-							allowUnknownOptionalFields: true,
-							...perCallOptions,
-						}),
-					};
-					const composed = position === "base" ? compose(options, {}) : compose({}, options);
-					const sf = new Factory({ ...composed, scope: "test" });
-					assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+					},
 				});
-			}
 
-			it("preserves the input options when callbacks return undefined", () => {
-				const calls: string[] = [];
-				const perCallOptions = { allowUnknownOptionalFields: true };
-				const fields = { x: Factory.number };
-				const composed = compose(
-					{
-						objectOptions: (name, actualFields, options) => {
-							calls.push("base");
-							assert.equal(name, 42);
-							assert.equal(actualFields, fields);
-							assert.equal(options, perCallOptions);
-							return undefined;
-						},
-					},
-					{
-						objectOptions: (name, actualFields, options) => {
-							calls.push("override");
-							assert.equal(name, 42);
-							assert.equal(actualFields, fields);
-							assert.equal(options, perCallOptions);
-							return undefined;
-						},
-					},
-				);
-				const sf = new Factory<"test", number>({ ...composed, scope: "test" });
-				const Schema = sf.object(42, fields, perCallOptions);
-				assert.equal(Schema.identifier, "test.42");
-				assert.equal(allowsUnknownOptionalFields(Schema), true);
-				assert.deepEqual(calls, ["base", "override"]);
+				assert.equal(allowsUnknownOptionalFields(child.object("Child", {})), false);
+				assert.equal(allowsUnknownOptionalFields(sf.object("Original", {})), true);
+				assert.deepEqual(sf.settings, options);
 			});
 
-			it("keeps the base result when the override returns undefined", () => {
-				const composed = compose(
-					{
-						objectOptions: () => ({ allowUnknownOptionalFields: true }),
-					},
-					{ objectOptions: () => undefined },
+			it("does not mutate defaults or per-schema options", () => {
+				const defaults = Object.freeze({ allowUnknownOptionalFields: true });
+				const perSchema = Object.freeze({ allowUnknownOptionalFields: false });
+				const sf: SchemaFactory = new Factory({ scope: "test", objectOptions: defaults });
+				assert.equal(allowsUnknownOptionalFields(sf.object("Override", {}, perSchema)), false);
+				assert.equal(
+					allowsUnknownOptionalFields(sf.objectRecursive("RecursiveOverride", {}, perSchema)),
+					false,
 				);
-				const sf = new Factory({ ...composed, scope: "test" });
-				assert.equal(allowsUnknownOptionalFields(sf.object("Foo", {})), true);
+				assert.deepEqual(defaults, { allowUnknownOptionalFields: true });
+				assert.deepEqual(perSchema, { allowUnknownOptionalFields: false });
 			});
 
-			for (const position of ["base", "override"] as const) {
-				it(`propagates errors from the ${position} callback`, () => {
-					const error = new Error(position);
-					const options: SchemaFactoryBetaOptions = {
-						objectOptions: () => {
-							throw error;
-						},
-					};
-					const composed = position === "base" ? compose(options, {}) : compose({}, options);
-					assert.throws(
-						() => composed.objectOptions?.("Object", {}, undefined),
-						(actual) => actual === error,
-					);
+			it("uses factory defaults when the per-schema options bag is empty", () => {
+				const sf: SchemaFactory = new Factory({
+					scope: "test",
+					objectOptions: { allowUnknownOptionalFields: true },
 				});
-			}
+				assert.equal(allowsUnknownOptionalFields(sf.object("Object", {}, {})), true);
+				assert.equal(
+					allowsUnknownOptionalFields(sf.objectRecursive("Recursive", {}, {})),
+					true,
+				);
+			});
 		});
 	}
 
-	it("preserves alpha-only options through the shared composition implementation", () => {
-		const composed = composeSchemaFactoryAlphaOptions(
-			{
-				objectOptions: (_name, _fields, options) => ({
-					persistedMetadata: { base: true },
-					...options,
-				}),
+	for (const Factory of [SchemaFactoryBeta, SchemaFactoryAlpha]) {
+		describe(`${Factory.name} metadata defaults`, () => {
+			it("preserves defaults when callers extend a child factory's options", () => {
+				const sf = new Factory({
+					scope: "test",
+					objectOptions: {
+						allowUnknownOptionalFields: true,
+						metadata: { description: "factory default" },
+					},
+				});
+				const child = sf.scopedFactory("child", {
+					...sf.settings,
+					objectOptions: {
+						...sf.settings.objectOptions,
+						allowUnknownOptionalFields: false,
+					},
+				});
+				const Schema = child.object("Child", {});
+				assert.equal(allowsUnknownOptionalFields(Schema), false);
+				assert.equal(Schema.metadata.description, "factory default");
+			});
+
+			it("replaces metadata without changing per-schema custom metadata typing", () => {
+				const sf = new Factory({
+					scope: "test",
+					objectOptions: {
+						allowUnknownOptionalFields: true,
+						metadata: { description: "factory default" },
+					},
+				});
+				const Schema = sf.object("Object", {}, { metadata: { custom: { count: 42 } } });
+				assert.equal(allowsUnknownOptionalFields(Schema), true);
+				assert.equal(Schema.metadata.description, undefined);
+				assert.equal(Schema.metadata.custom?.count, 42);
+				type _check = requireTrue<
+					areSafelyAssignable<typeof Schema.metadata.custom, { count: 42 } | undefined>
+				>;
+			});
+		});
+	}
+
+	it("shallowly replaces alpha persisted metadata while preserving other defaults", () => {
+		const sf = new SchemaFactoryAlpha({
+			scope: "test",
+			objectOptions: {
+				allowUnknownOptionalFields: true,
+				metadata: { description: "factory default" },
+				persistedMetadata: { original: true },
 			},
-			{
-				objectOptions: (_name, _fields, options) => ({
-					...options,
-					persistedMetadata: { ...options?.persistedMetadata, override: true },
-				}),
-			},
-		);
-		const sf = new SchemaFactoryAlpha({ scope: "test", ...composed });
-		const Schema = sf.objectAlpha(
-			"Alpha",
-			{},
-			{
-				metadata: { custom: { count: 42 } },
-			},
-		);
-		assert.deepEqual(Schema.persistedMetadata, { base: true, override: true });
-		assert.equal(Schema.metadata.custom?.count, 42);
+		});
+		const options = { persistedMetadata: { override: true } };
+		for (const Schema of [
+			sf.objectAlpha("Alpha", {}, options),
+			sf.objectRecursive("Recursive", {}, options),
+			sf.objectRecursiveAlpha("RecursiveAlpha", {}, options),
+		]) {
+			assert.equal(Schema.allowUnknownOptionalFields, true);
+			assert.equal(Schema.metadata.description, "factory default");
+			assert.deepEqual(Schema.persistedMetadata, { override: true });
+		}
+		assert.deepEqual(sf.settings.objectOptions?.persistedMetadata, { original: true });
+	});
+
+	it("keeps factory options readonly and excludes per-schema custom metadata", () => {
+		interface CustomMetadataDefaults {
+			objectOptions: { metadata: { custom: { count: number } } };
+		}
+		type _beta = requireFalse<
+			areSafelyAssignable<CustomMetadataDefaults, SchemaFactoryBetaOptions>
+		>;
+		type _alpha = requireFalse<
+			areSafelyAssignable<CustomMetadataDefaults, SchemaFactoryAlphaOptions>
+		>;
+		const sf = new SchemaFactoryBeta({
+			scope: "test",
+			objectOptions: { allowUnknownOptionalFields: true },
+		});
+		// eslint-disable-next-line no-constant-condition -- Type-check readonly settings without mutating them.
+		if (false) {
+			// @ts-expect-error Factory settings are readonly.
+			sf.settings.objectOptions = {};
+			if (sf.settings.objectOptions !== undefined) {
+				// @ts-expect-error Object defaults are readonly.
+				sf.settings.objectOptions.allowUnknownOptionalFields = false;
+			}
+		}
 	});
 });

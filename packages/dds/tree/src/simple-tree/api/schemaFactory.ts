@@ -100,18 +100,6 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
-/**
- * Gets the object-options callback with its receiver bound to the source options.
- *
- * @param options - The options that contain the callback.
- * @returns The bound callback, or `undefined` if the options do not specify one.
- */
-function bindObjectOptions<TOptions extends SchemaFactoryOptions>(
-	options: TOptions,
-): TOptions["objectOptions"] {
-	return options.objectOptions?.bind(options);
-}
-
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -245,10 +233,6 @@ export class SchemaFactory<
 
 	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
-	 *
-	 * @remarks
-	 * Use {@link composeSchemaFactoryOptions} with
-	 * {@link SchemaFactory.scopedFactory} to extend these options.
 	 */
 	public readonly settings: SchemaFactoryOptions;
 
@@ -299,7 +283,7 @@ export class SchemaFactory<
 		this.scope = typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions;
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: bindObjectOptions(scopeOrOptions) }
+				? { objectOptions: scopeOrOptions.objectOptions }
 				: {};
 	}
 
@@ -314,8 +298,8 @@ export class SchemaFactory<
 	 *
 	 * @remarks
 	 * This does not change the original factory.
-	 * Use {@link composeSchemaFactoryOptions} with this factory's
-	 * {@link SchemaFactory.settings} to extend the existing settings.
+	 * Spread this factory's {@link SchemaFactory.settings} and its `objectOptions`
+	 * to create replacement settings.
 	 */
 	public scopedFactory<const T extends TName>(
 		name: T,
@@ -323,7 +307,7 @@ export class SchemaFactory<
 	): SchemaFactory<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactory({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: bindObjectOptions(settings),
+			objectOptions: settings.objectOptions,
 		});
 	}
 
@@ -332,8 +316,8 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
-	 * @param options - The per-call options passed to {@link SchemaFactoryOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * {@link SchemaFactoryOptions.objectOptions} can provide factory-wide defaults.
@@ -353,10 +337,10 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		const resolvedOptions = this.settings.objectOptions?.(name, fields, options) ?? options;
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...resolvedOptions,
+			...this.settings.objectOptions,
+			...options,
 		}) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
@@ -739,8 +723,8 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 *
-	 * @param options - The per-call options passed to {@link SchemaFactoryOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 */
 	public objectRecursive<
 		const Name extends TName,
@@ -890,8 +874,8 @@ export class SchemaFactoryBeta<
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
 	 *
 	 * @remarks
-	 * Use {@link composeSchemaFactoryBetaOptions} with
-	 * {@link SchemaFactoryBeta.scopedFactory} to extend these options.
+	 * Spread these options and their `objectOptions` to create replacement settings for
+	 * {@link SchemaFactoryBeta.scopedFactory}.
 	 */
 	public override readonly settings: SchemaFactoryBetaOptions;
 
@@ -906,7 +890,7 @@ export class SchemaFactoryBeta<
 		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: bindObjectOptions(scopeOrOptions) }
+				? { objectOptions: scopeOrOptions.objectOptions }
 				: {};
 	}
 
@@ -959,7 +943,7 @@ export class SchemaFactoryBeta<
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryBeta({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: bindObjectOptions(settings),
+			objectOptions: settings.objectOptions,
 		});
 	}
 
@@ -968,8 +952,8 @@ export class SchemaFactoryBeta<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param fields - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryBetaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryBetaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * {@link SchemaFactoryBetaOptions.objectOptions} can provide factory-wide defaults.
@@ -992,10 +976,10 @@ export class SchemaFactoryBeta<
 		never,
 		TCustomMetadata
 	> {
-		const resolvedOptions = this.settings.objectOptions?.(name, fields, options) ?? options;
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...resolvedOptions,
+			...this.settings.objectOptions,
+			...options,
 		}) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
@@ -1013,8 +997,8 @@ export class SchemaFactoryBeta<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryBetaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryBetaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * See {@link SchemaFactory.objectRecursive} for recursive-schema requirements.
@@ -1306,8 +1290,8 @@ export class SchemaFactoryAlpha<
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
 	 *
 	 * @remarks
-	 * Use {@link composeSchemaFactoryAlphaOptions} with
-	 * {@link SchemaFactoryAlpha.scopedFactory} to extend these options.
+	 * Spread these options and their `objectOptions` to create replacement settings for
+	 * {@link SchemaFactoryAlpha.scopedFactory}.
 	 */
 	public override readonly settings: SchemaFactoryAlphaOptions;
 
@@ -1322,7 +1306,7 @@ export class SchemaFactoryAlpha<
 		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: bindObjectOptions(scopeOrOptions) }
+				? { objectOptions: scopeOrOptions.objectOptions }
 				: {};
 	}
 
@@ -1331,8 +1315,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param fields - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * {@link SchemaFactoryAlphaOptions.objectOptions} can provide factory-wide defaults.
@@ -1346,10 +1330,10 @@ export class SchemaFactoryAlpha<
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		const resolvedOptions = this.settings.objectOptions?.(name, fields, options) ?? options;
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...resolvedOptions,
+			...this.settings.objectOptions,
+			...options,
 		});
 	}
 
@@ -1358,8 +1342,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * See {@link SchemaFactory.objectRecursive} for recursive-schema requirements.
@@ -1423,8 +1407,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * Use this instead of {@link SchemaFactory.objectRecursive} when fields use {@link SchemaStaticsAlpha.withDefaultRecursive}.
@@ -1761,7 +1745,7 @@ export class SchemaFactoryAlpha<
 	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryAlpha({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: bindObjectOptions(settings),
+			objectOptions: settings.objectOptions,
 		});
 	}
 }

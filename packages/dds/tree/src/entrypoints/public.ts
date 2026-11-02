@@ -83,7 +83,6 @@ export {
 	ValidateRecursiveSchemaTemplate, 
 	ViewableTree, 
 	WithType, 
-	composeSchemaFactoryOptions, 
 	rollback, 
 	typeSchemaSymbol
 	// #endregion
