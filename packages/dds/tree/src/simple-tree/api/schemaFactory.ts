@@ -100,6 +100,12 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
+/**
+ * Gets the object-options callback with its receiver bound to the source options.
+ *
+ * @param options - The options that contain the callback.
+ * @returns The bound callback, or `undefined` if the options do not specify one.
+ */
 function bindObjectOptions<TOptions extends SchemaFactoryOptions>(
 	options: TOptions,
 ): TOptions["objectOptions"] {
@@ -945,19 +951,7 @@ export class SchemaFactoryBeta<
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
 	/**
-	 * Creates a factory with a child scope and optional replacement settings.
-	 *
-	 * @param name - The name to append to this factory's scope.
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @returns A new factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * The returned factory preserves the alpha or beta APIs of this factory.
-	 * Use {@link composeSchemaFactoryBetaOptions} with this factory's
-	 * {@link SchemaFactoryBeta.settings} to extend the existing settings.
+	 * {@inheritDoc SchemaFactory.scopedFactory}
 	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
@@ -1759,31 +1753,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Creates an alpha factory with a child scope and optional replacement settings.
-	 *
-	 * @param name - The name to append to this factory's scope.
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @returns A new alpha factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * Use {@link composeSchemaFactoryAlphaOptions} with this factory's
-	 * {@link SchemaFactoryAlpha.settings} to extend the existing settings.
-	 *
-	 * @example
-	 * ```typescript
-	 * const extended = sf.scopedFactory(
-	 *     "extended",
-	 *     composeSchemaFactoryAlphaOptions(sf.settings, {
-	 *         objectOptions: (_name, _fields, options) => ({
-	 *             allowUnknownOptionalFields: true,
-	 *             ...options,
-	 *         }),
-	 *     }),
-	 * );
-	 * ```
+	 * {@inheritDoc SchemaFactory.scopedFactory}
 	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
