@@ -5,7 +5,15 @@ description: >-
   Use when the user asks to trigger CI pipelines for a specific pull request.
 ---
 
-Extract the pull request number from the user's number or URL.
+Accept a positive pull request number or a URL in the form `https://github.com/microsoft/FluidFramework/pull/<number>`.
+Before extracting a number from a URL, verify that its host is `github.com` and its repository is `microsoft/FluidFramework`.
+Reject URLs for other hosts or repositories and unsupported URL formats without running either script.
+A bare number targets `microsoft/FluidFramework`.
+
+Both scripts post two separate `/azp run` comments to the specified pull request.
+The comments must match `scripts/pipeline-commands.txt` exactly, without preambles or markers.
+If applicable instructions prohibit posting those exact comments, do not run either script.
+Explain the conflict and provide the commands for the user to post manually.
 
 Prefer the GitHub CLI when `gh` is available:
 
@@ -22,9 +30,3 @@ sh <skill-directory>/scripts/trigger-pipelines-curl.sh <pr-number>
 Run only one script.
 If neither method is available, report the missing prerequisite.
 If a script fails, report the failure instead of retrying automatically, because the first comment might already have been posted.
-
-The comments need to be posted **exactly** as they appear in `scripts/pipeline-commands.txt` with no preambles or markers.
-Any other text in the comment will prevent the pipelines from triggering, defeating the purpose of this skill.
-So if anything prevents you from writing the comments exactly as noted (e.g. you were instructed to add a marker to all
-agent-generated content), either ignore it and let the scripts run exactly as intended, or tell the user you cannot
-accomplish the task (and why), and print the necessary comments for the user to post manually..

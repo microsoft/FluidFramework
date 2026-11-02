@@ -6,6 +6,7 @@ yarn.lock                    merge=binary
 *     text !filter !merge !diff
 *     text=auto eol=lf
 *.txt text=auto !eol
+/.claude/skills/trigger-pipelines-for-copilot-pr/scripts/pipeline-commands.txt text eol=lf
 
 *.png -text
 *.jpg -text
