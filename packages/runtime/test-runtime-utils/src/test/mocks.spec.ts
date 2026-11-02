@@ -13,7 +13,10 @@ import {
 	createIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import {
+	defaultOldestSupportedClient,
+	isFluidHandle,
+} from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
 import {
@@ -22,6 +25,15 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 } from "../mocks.js";
+import { MockFluidDataStoreContext } from "../mocksDataStoreContext.js";
+
+describe("MockFluidDataStoreContext", () => {
+	it("initializes both client-version properties to the default", () => {
+		const context = new MockFluidDataStoreContext();
+		assert.equal(context.oldestSupportedClient, defaultOldestSupportedClient);
+		assert.equal(context.minVersionForCollab, defaultOldestSupportedClient);
+	});
+});
 
 describe("MockContainerRuntime", () => {
 	it("inherits its id from the datastore when set", () => {
