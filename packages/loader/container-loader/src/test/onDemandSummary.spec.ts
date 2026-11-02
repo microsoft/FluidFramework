@@ -198,6 +198,79 @@ describe("On-demand summary acknowledgement", () => {
 		assert.equal(second.dispose.callCount, 1);
 	});
 
+	it("does not start an abandoned summary when its entry point resolves after retry", async () => {
+		const first = attempt(new Deferred<Ack>().promise, "first-proposal", 10);
+		const second = attempt(Promise.resolve(ack("second-version")), "second-proposal", 20);
+		const entryPoint = await first.container.getEntryPoint();
+		const entryPointRequested = new Deferred<void>();
+		const deferredEntryPoint = new Deferred<typeof entryPoint>();
+		const summarize = sandbox.spy(
+			(entryPoint as { ISummarizer: { summarizeOnDemand(): unknown } }).ISummarizer,
+			"summarizeOnDemand",
+		);
+		sandbox.stub(first.container, "getEntryPoint").callsFake(async () => {
+			entryPointRequested.resolve();
+			return deferredEntryPoint.promise;
+		});
+		const resolve = sandbox.stub(Loader.prototype, "resolve");
+		resolve.onFirstCall().resolves(first.container);
+		resolve.onSecondCall().resolves(second.container);
+		const pending = loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+		await entryPointRequested.promise;
+		sandbox.stub(first.container, "closed").value(true);
+		sandbox.stub(first.container, "disposed").value(true);
+		first.events.emit("disposed");
+		const result = await pending;
+		deferredEntryPoint.resolve(entryPoint);
+		// Flush the abandoned continuation after the public operation has already succeeded.
+		await sandbox.useFakeTimers().tickAsync(0);
+		assert.equal(summarize.callCount, 0);
+		assert.deepEqual(result, { version: "second-version", referenceSequenceNumber: 20 });
+		assert.equal(resolve.callCount, 2);
+		assert.equal(first.dispose.callCount, 1);
+		assert.equal(second.dispose.callCount, 1);
+	});
+
+	for (const stage of ["submission", "broadcast"] as const) {
+		it(`rejects and retries on ${stage} failure without waiting for later stages`, async () => {
+			const errors = [new GenericError("first failure"), new GenericError("second failure")];
+			const attempts = errors.map((error) => {
+				const current = attempt();
+				const never = new Promise<never>(() => {});
+				sandbox.stub(current.container, "getEntryPoint").resolves({
+					ISummarizer: {
+						summarizeOnDemand: () => ({
+							summarySubmitted: Promise.resolve(
+								stage === "submission"
+									? { success: false, error }
+									: { success: true, data: { stage: "submit" } },
+							),
+							summaryOpBroadcasted:
+								stage === "submission" ? never : Promise.resolve({ success: false, error }),
+							receivedSummaryAckOrNack: never,
+						}),
+					},
+				});
+				return current;
+			});
+			const resolve = sandbox.stub(Loader.prototype, "resolve");
+			for (const [index, current] of attempts.entries()) {
+				resolve.onCall(index).resolves(current.container);
+			}
+			await assert.rejects(
+				loadSummarizerContainerAndMakeAcknowledgedSummary(props),
+				(error: unknown) => error === errors[1],
+			);
+			assert.equal(resolve.callCount, 2);
+			for (const current of attempts) {
+				assert.equal(current.dispose.callCount, 1);
+				assert.equal(current.events.listenerCount("closed"), 0);
+				assert.equal(current.events.listenerCount("disposed"), 0);
+				assert.equal(current.events.listenerCount("disconnected"), 0);
+			}
+		});
+	}
+
 	it("returns the successful retry's version after a NACK", async () => {
 		const first = attempt(
 			Promise.resolve({ success: false, error: new GenericError("NACK") }),
