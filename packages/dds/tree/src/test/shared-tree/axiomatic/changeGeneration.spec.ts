@@ -7,95 +7,62 @@ import { strict as assert } from "node:assert";
 
 import {
 	CommitKind,
-	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	ValueSchema,
+	EmptyKey,
 	rootFieldKey,
-	type FieldKey,
-	type JsonableTree,
 	type NormalizedFieldUpPath,
 	type RevisionTag,
 	type TaggedChange,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
 } from "../../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type SharedTreeChange,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
-import { stringSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { checkoutWithContent, chunkFromJsonableTrees, validateTree } from "../../utils.js";
+import { toInitialSchema } from "../../../simple-tree/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
+import { checkoutWithContent, chunkFromJsonTrees, expectJsonTree } from "../../utils.js";
 
 import { generateSharedTreeChanges } from "./changeGeneration.js";
 
-const rootType = brand<TreeNodeSchemaIdentifier>("axiomatic.root");
-const leafType = brand<TreeNodeSchemaIdentifier>(stringSchema.identifier);
-
-function leaf(value: string): JsonableTree {
-	return { type: leafType, value };
-}
-
-function content(left: string[], right: string[], optional?: string): JsonableTree[] {
+function content(left: string[], right: string[], optional?: string): JsonCompatible[] {
 	return [
 		{
-			type: rootType,
-			fields: {
-				...(left.length === 0 ? {} : { left: left.map(leaf) }),
-				...(right.length === 0 ? {} : { right: right.map(leaf) }),
-				required: [leaf("required")],
-				...(optional === undefined ? {} : { optional: [leaf(optional)] }),
-			},
+			left,
+			right,
+			required: "required",
+			...(optional === undefined ? {} : { optional }),
 		},
 	];
 }
 
 function field(key: string): NormalizedFieldUpPath {
-	return {
-		parent: {
-			parent: undefined,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-			detachedNodeId: undefined,
-		},
-		field: brand(key),
+	const root = {
+		parent: undefined,
+		parentField: rootFieldKey,
+		parentIndex: 0,
+		detachedNodeId: undefined,
 	};
+	return key === "left" || key === "right"
+		? {
+				parent: {
+					parent: root,
+					parentField: brand(key),
+					parentIndex: 0,
+					detachedNodeId: undefined,
+				},
+				field: EmptyKey,
+			}
+		: { parent: root, field: brand(key) };
 }
 
 const leftField = field("left");
 const rightField = field("right");
 const optionalField = field("optional");
 const initialContent = content(["A"], ["B"]);
-const leafField = (kind: TreeFieldStoredSchema["kind"]): TreeFieldStoredSchema => ({
-	kind,
-	types: new Set([leafType]),
-	persistedMetadata: undefined,
-});
-const schema = {
-	rootFieldSchema: {
-		kind: FieldKinds.required.identifier,
-		types: new Set([rootType]),
-		persistedMetadata: undefined,
-	},
-	nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-		[
-			rootType,
-			new ObjectNodeStoredSchema(
-				new Map<FieldKey, TreeFieldStoredSchema>([
-					[brand("left"), leafField(FieldKinds.sequence.identifier)],
-					[brand("right"), leafField(FieldKinds.sequence.identifier)],
-					[brand("optional"), leafField(FieldKinds.optional.identifier)],
-					[brand("required"), leafField(FieldKinds.required.identifier)],
-				]),
-			),
-		],
-		[leafType, new LeafNodeStoredSchema(ValueSchema.String)],
-	]),
-};
+const schema = toInitialSchema(JsonAsTree.JsonObject);
 
 describe("SharedTree axiom infrastructure: change generation", () => {
 	for (const [name, forestType] of [
@@ -106,7 +73,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 			let parent: TreeCheckout;
 			beforeEach(() => {
 				parent = checkoutWithContent(
-					{ schema, initialTree: cursorForJsonableTreeField(initialContent) },
+					{ schema, initialTree: fieldJsonCursor(initialContent) },
 					{ forestType },
 				);
 			});
@@ -116,7 +83,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 
 			it("initializes without authoring setup commits", () => {
 				assert.equal(parent.mainBranch.getHead().parent, undefined);
-				validateTree(parent, initialContent);
+				expectJsonTree(parent, initialContent);
 			});
 
 			it("captures an atomic cross-field move without unwrapping its change", () => {
@@ -135,8 +102,8 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					assert.equal(typeof change.revision, "number");
 					assert.equal(change.change.changes.length, 1);
 					assert.equal(change.change.changes[0].type, "data");
-					validateTree(checkout, content([], ["B", "A"]));
-					validateTree(parent, initialContent);
+					expectJsonTree(checkout, content([], ["B", "A"]));
+					expectJsonTree(parent, initialContent);
 				}
 				assert.equal(parent.mainBranch.getHead(), base);
 			});
@@ -148,8 +115,8 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					["X", "Y"].map((value) => ({
 						description: value,
 						apply: (child: TreeCheckout) => {
-							validateTree(child, initialContent);
-							const chunk = chunkFromJsonableTrees([leaf(value)]);
+							expectJsonTree(child, initialContent);
+							const chunk = chunkFromJsonTrees([value]);
 							try {
 								child.editor.optionalField(optionalField).set(chunk, true);
 							} finally {
@@ -161,7 +128,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					assert(change !== undefined);
 					revisions.add(change.revision);
 					assert.notEqual(checkout, parent);
-					validateTree(parent, initialContent);
+					expectJsonTree(parent, initialContent);
 				}
 				assert.equal(revisions.size, 2);
 			});
@@ -178,7 +145,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					},
 				])) {
 					assert.equal(change === undefined, description === "zero-count move");
-					validateTree(checkout, initialContent);
+					expectJsonTree(checkout, initialContent);
 				}
 			});
 
@@ -200,7 +167,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					const inner = change.change.changes[0];
 					assert(inner.type === "data");
 					assert.deepEqual(inner.innerChange.revisions, [{ revision: change.revision }]);
-					validateTree(checkout, content([], ["B", "A"]));
+					expectJsonTree(checkout, content([], ["B", "A"]));
 				}
 			});
 
@@ -247,7 +214,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					}[failure];
 					assert.throws(() => changes.next(), message);
 					assert(disposed);
-					validateTree(parent, initialContent);
+					expectJsonTree(parent, initialContent);
 				});
 			}
 
@@ -257,7 +224,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					{
 						description: "insert X",
 						apply: (child) => {
-							const chunk = chunkFromJsonableTrees([leaf("X")]);
+							const chunk = chunkFromJsonTrees(["X"]);
 							try {
 								child.editor.sequenceField(leftField).insert(1, chunk);
 							} finally {
@@ -272,7 +239,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				const replay = parent.fork();
 				try {
 					replay.mainBranch.apply(captured, CommitKind.Default, undefined);
-					validateTree(replay, content(["A", "X"], ["B"]));
+					expectJsonTree(replay, content(["A", "X"], ["B"]));
 				} finally {
 					replay.dispose();
 				}

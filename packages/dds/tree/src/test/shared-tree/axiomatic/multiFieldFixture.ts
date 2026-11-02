@@ -5,104 +5,60 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	ValueSchema,
-	rootFieldKey,
-	type FieldKey,
-	type JsonableTree,
-	type NormalizedFieldUpPath,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-} from "../../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../../feature-libraries/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedFieldUpPath } from "../../../core/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import type { ForestType, TreeCheckout } from "../../../shared-tree/index.js";
-import { stringSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { toInitialSchema } from "../../../simple-tree/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import {
 	checkoutWithContent,
-	chunkFromJsonableTrees,
+	chunkFromJsonTrees,
 	testIdCompressor,
-	toJsonableTree,
+	jsonTreeFromCheckout,
 } from "../../utils.js";
 
 import type { SharedTreeTestOperation } from "./changeGeneration.js";
 
-const rootType = brand<TreeNodeSchemaIdentifier>("axiomatic.multiField.root");
-const leafType = brand<TreeNodeSchemaIdentifier>(stringSchema.identifier);
-
 type SequenceField = "left" | "right";
-type FixtureField = SequenceField | "optional" | "required";
-
-function leaf(value: string): JsonableTree {
-	return { type: leafType, value };
-}
+type FixtureField = SequenceField | "optional";
 
 /**
- * Build explicit expected content for the fixed four-field fixture.
+ * Build JSON content for the fixture's two arrays and scalar properties.
  */
 export function multiFieldContent(
 	left: string[],
 	right: string[],
 	optional?: string,
 	required: string = "required",
-): JsonableTree[] {
+): JsonCompatible[] {
 	return [
 		{
-			type: rootType,
-			fields: {
-				...(left.length === 0 ? {} : { left: left.map(leaf) }),
-				...(right.length === 0 ? {} : { right: right.map(leaf) }),
-				...(optional === undefined ? {} : { optional: [leaf(optional)] }),
-				required: [leaf(required)],
-			},
+			left,
+			right,
+			...(optional === undefined ? {} : { optional }),
+			required,
 		},
 	];
 }
 
-const leafField = (kind: TreeFieldStoredSchema["kind"]): TreeFieldStoredSchema => ({
-	kind,
-	types: new Set([leafType]),
-	persistedMetadata: undefined,
-});
-
-const schema = {
-	rootFieldSchema: {
-		kind: FieldKinds.required.identifier,
-		types: new Set([rootType]),
-		persistedMetadata: undefined,
-	},
-	nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-		[
-			rootType,
-			new ObjectNodeStoredSchema(
-				new Map<FieldKey, TreeFieldStoredSchema>([
-					[brand("left"), leafField(FieldKinds.sequence.identifier)],
-					[brand("right"), leafField(FieldKinds.sequence.identifier)],
-					[brand("optional"), leafField(FieldKinds.optional.identifier)],
-					[brand("required"), leafField(FieldKinds.required.identifier)],
-				]),
-			),
-		],
-		[leafType, new LeafNodeStoredSchema(ValueSchema.String)],
-	]),
-};
-
 /**
- * Create a checkout with direct sequence fields, an empty optional field, and a required string.
+ * Create a required JSON object root containing two arrays and scalar properties.
+ * JSON object properties are optional; required-field edits replace the root.
  * The caller owns the checkout.
  */
 export function createMultiFieldFixture(forestType: ForestType): TreeCheckout {
 	return checkoutWithContent(
-		{ schema, initialTree: cursorForJsonableTreeField(multiFieldContent(["A"], ["B"])) },
+		{
+			schema: toInitialSchema(JsonAsTree.JsonObject),
+			initialTree: fieldJsonCursor(multiFieldContent(["A"], ["B"])),
+		},
 		{ forestType, idCompressor: testIdCompressor },
 	);
 }
 
 function field(key: FixtureField): NormalizedFieldUpPath {
-	return {
+	const property: NormalizedFieldUpPath = {
 		parent: {
 			parent: undefined,
 			parentField: rootFieldKey,
@@ -111,36 +67,46 @@ function field(key: FixtureField): NormalizedFieldUpPath {
 		},
 		field: brand(key),
 	};
+	return key === "optional"
+		? property
+		: {
+				parent: {
+					parent: property.parent,
+					parentField: property.field,
+					parentIndex: 0,
+					detachedNodeId: undefined,
+				},
+				field: EmptyKey,
+			};
 }
 
 /**
  * Read attached content without retaining a cursor across an edit.
  * This reader is specific to the fixture, not an arbitrary-schema generator.
  */
-function readFields(checkout: TreeCheckout): Record<FixtureField, readonly JsonableTree[]> {
-	const roots = toJsonableTree(checkout);
+function readFields(checkout: TreeCheckout): {
+	left: string[];
+	right: string[];
+	optional: string | undefined;
+	required: string;
+} {
+	const roots = jsonTreeFromCheckout(checkout);
 	assert.equal(roots.length, 1);
 	const root = roots[0];
-	assert.equal(root.type, rootType);
-	const fields = {
-		left: root.fields?.left ?? [],
-		right: root.fields?.right ?? [],
-		optional: root.fields?.optional ?? [],
-		required: root.fields?.required ?? [],
-	};
-	for (const key of Object.keys(root.fields ?? {})) {
+	assert(typeof root === "object" && root !== null && !Array.isArray(root));
+	for (const key of Object.keys(root)) {
 		assert(["left", "right", "optional", "required"].includes(key));
 	}
-	assert(fields.optional.length <= 1);
-	assert.equal(fields.required.length, 1);
-	for (const nodes of Object.values(fields)) {
-		for (const node of nodes) {
-			assert.equal(node.type, leafType);
-			assert.equal(typeof node.value, "string");
-			assert.equal(Object.keys(node.fields ?? {}).length, 0);
-		}
-	}
-	return fields;
+	const { left, right, optional, required } = root;
+	assert(
+		Array.isArray(left) && left.every((value): value is string => typeof value === "string"),
+	);
+	assert(
+		Array.isArray(right) && right.every((value): value is string => typeof value === "string"),
+	);
+	assert(optional === undefined || typeof optional === "string");
+	assert(typeof required === "string");
+	return { left, right, optional, required };
 }
 
 /**
@@ -208,13 +174,18 @@ export function applyMultiFieldOperation(
 		case "clearOptional": {
 			checkout.editor
 				.optionalField(field("optional"))
-				.set(undefined, fields.optional.length === 0);
+				.set(undefined, fields.optional === undefined);
 			return;
 		}
 		case "insert":
 		case "setOptional":
 		case "setRequired": {
-			const chunk = chunkFromJsonableTrees([leaf(operation.value)]);
+			// Replace the required root while preserving the visible values of the other properties.
+			const content =
+				operation.type === "setRequired"
+					? multiFieldContent(fields.left, fields.right, fields.optional, operation.value)
+					: [operation.value];
+			const chunk = chunkFromJsonTrees(content);
 			try {
 				switch (operation.type) {
 					case "insert": {
@@ -225,11 +196,11 @@ export function applyMultiFieldOperation(
 					case "setOptional": {
 						checkout.editor
 							.optionalField(field("optional"))
-							.set(chunk, fields.optional.length === 0);
+							.set(chunk, fields.optional === undefined);
 						break;
 					}
 					case "setRequired": {
-						checkout.editor.valueField(field("required")).set(chunk);
+						checkout.editor.valueField({ parent: undefined, field: rootFieldKey }).set(chunk);
 						break;
 					}
 					default: {

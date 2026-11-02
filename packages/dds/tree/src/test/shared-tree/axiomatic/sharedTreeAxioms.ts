@@ -26,7 +26,7 @@ import {
 	assertModularChangesetsEqual,
 	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the modular changeset assertion helper.
 } from "../../feature-libraries/modular-schema/modularChangesetUtil.js";
-import { defaultRevisionMetadataFromChanges, toJsonableTree } from "../../utils.js";
+import { defaultRevisionMetadataFromChanges, jsonTreeFromCheckout } from "../../utils.js";
 
 /**
  * Bind algebraic operations to the unwrapped production SharedTree family.
@@ -180,7 +180,7 @@ export function assertSharedTreeReplayEqual(
 					);
 				}
 			}
-			assert.deepEqual(toJsonableTree(left), toJsonableTree(right));
+			assert.deepEqual(jsonTreeFromCheckout(left), jsonTreeFromCheckout(right));
 			assert.deepEqual(left.storedSchema.rootFieldSchema, right.storedSchema.rootFieldSchema);
 			assert.deepEqual(left.storedSchema.nodeSchema, right.storedSchema.nodeSchema);
 		} finally {

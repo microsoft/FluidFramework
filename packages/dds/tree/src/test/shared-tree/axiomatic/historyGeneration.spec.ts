@@ -5,13 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { CommitKind, type JsonableTree } from "../../../core/index.js";
+import { CommitKind } from "../../../core/index.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
-import { validateTree } from "../../utils.js";
+import type { JsonCompatible } from "../../../util/index.js";
+import { expectJsonTree } from "../../utils.js";
 
 import {
 	generateSharedTreeChanges,
@@ -51,7 +52,7 @@ function observeForks(source: OperationSource, events: string[]): OperationSourc
 
 const initialCases: {
 	operation: MultiFieldOperationDescriptor;
-	expected: JsonableTree[];
+	expected: JsonCompatible[];
 }[] = [
 	{
 		operation: { type: "move", source: "left" },
@@ -99,7 +100,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 
 			it("initializes the fixture without setup commits", () => {
 				assert.equal(parent.mainBranch.getHead().parent, undefined);
-				validateTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
 			it("uses a deterministic, serializable vocabulary with explicit outcomes", () => {
@@ -118,10 +119,10 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					const { operation, expected } = initialCases[index++];
 					assert.equal(candidate.description, JSON.stringify(operation));
 					assert(candidate.change !== undefined);
-					validateTree(candidate.checkout, expected);
+					expectJsonTree(candidate.checkout, expected);
 				}
 				assert.equal(index, 7);
-				validateTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
 			it("yields one empty history at zero depth without requesting candidates", () => {
@@ -162,7 +163,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 						}
 					}
 					assert.equal(parent.mainBranch.getHead(), base);
-					validateTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 				});
 			}
 
@@ -205,7 +206,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					break;
 				}
 				assert.deepEqual(events, ["create 0", "create 1", "dispose 1", "dispose 0"]);
-				validateTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
 			it("retains replayable complete changes, not live checkouts", () => {
@@ -235,7 +236,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 					for (const { change } of histories[0]) {
 						replay.mainBranch.apply(change, CommitKind.Default, undefined);
 					}
-					validateTree(replay, multiFieldContent(["N0"], ["B", "A"], undefined, "N2"));
+					expectJsonTree(replay, multiFieldContent(["N0"], ["B", "A"], undefined, "N2"));
 				} finally {
 					replay.dispose();
 				}
@@ -262,7 +263,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 				);
 				assert.equal(events.filter((event) => event.startsWith("create")).length, 4);
 				assert.equal(events.filter((event) => event.startsWith("dispose")).length, 4);
-				validateTree(parent, multiFieldContent(["A"], ["B"]));
+				expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 			});
 
 			it("yields no histories when every candidate submits nothing", () => {
@@ -351,7 +352,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 							: ["create 0", "create 1", "dispose 1", "dispose 0"],
 					);
 					assert.equal(parent.transaction.size, 0);
-					validateTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 				});
 			}
 		});

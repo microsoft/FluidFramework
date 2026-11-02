@@ -22,10 +22,10 @@ import {
 import { ajvValidator } from "../../codec/index.js";
 import {
 	defaultRevisionMetadataFromChanges,
+	expectJsonTree,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateTree,
 } from "../../utils.js";
 
 import { generateSharedTreeHistories, type SharedTreeHistory } from "./historyGeneration.js";
@@ -82,7 +82,7 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 			});
 			afterEach(() => {
 				try {
-					validateTree(parent, multiFieldContent(["A"], ["B"]));
+					expectJsonTree(parent, multiFieldContent(["A"], ["B"]));
 				} finally {
 					parent.dispose();
 				}

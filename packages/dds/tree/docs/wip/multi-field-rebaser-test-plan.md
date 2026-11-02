@@ -382,6 +382,23 @@ Pause for review before changing production behavior or comparison semantics.
 
 Undo/redo ownership, nested editable nodes, moves between different parents, additional laws, alternate rebase versions, and stress budgets remain future work.
 
+### Fixture revision: JSON helpers and built-in schema
+
+At the user's request, the implemented fixtures now use `JsonCompatible[]`, `fieldJsonCursor`, and `chunkFromJsonTrees` instead of `JsonableTree` and custom stored-schema declarations.
+Both fixtures use `toInitialSchema(JsonAsTree.JsonObject)`.
+Assertions and replay comparisons use `expectJsonTree` and `jsonTreeFromCheckout`.
+
+This supersedes the direct-sequence-field layout described above.
+The `left` and `right` properties each contain a JSON array node; sequence edits target its `EmptyKey` field.
+Cross-field moves therefore span two array parents.
+JSON object properties are optional, including the property named `required`.
+To retain actual required-field coverage without a custom schema, the `setRequired` operation replaces the required root object, copying the other visible property values and updating that scalar label.
+This replacement creates new descendant identities; it is not an in-place update of a required scalar property.
+
+After conversion, the build, formatting, and lint checks pass, and history counts remain 7, 41, and 235.
+The focused suite still reports 75 passing tests and the same two enabled structural-rebase failures on the remove/move/move case.
+No production code or pre-existing shared harness was changed.
+
 ### Implementation steps and remaining extensions
 
 1. **Establish a baseline and coverage inventory.**
