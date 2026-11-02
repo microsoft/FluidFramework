@@ -17,4 +17,3 @@ export {
 	dataStoreCompatDetailsForRuntime,
 	runtimeSupportRequirementsForDataStore,
 } from "./dataStoreLayerCompatState.js";
-export { supportsChannelConfiguration } from "./channelConfiguration.js";

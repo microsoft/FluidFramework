@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ReadonlyJsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	JsonDeserialized,
+	JsonSerializable,
+	ReadonlyJsonTypeWith,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { IChannelAttributes } from "./storage.js";
 
@@ -20,7 +24,7 @@ export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<
  * @internal
  */
 export interface ChannelConfigurationSnapshotV1<
-	TConfig extends ChannelConfiguration = ChannelConfiguration,
+	TConfig extends object = ChannelConfiguration,
 > {
 	/**
 	 * Version of this configuration snapshot format.
@@ -37,45 +41,36 @@ export interface ChannelConfigurationSnapshotV1<
 	 * Because these values are persistent, the DDS author is responsible for maintaining
 	 * compatibility with values written by supported older versions.
 	 */
-	readonly values: TConfig;
+	readonly values: JsonSerializable<TConfig> & JsonDeserialized<TConfig>;
 }
 
 /**
  * Attributes for an instance using the configuration protocol.
  *
  * The DDS owns the configuration values.
- * They are stored with the channel attributes so the runtime can verify protocol support and
- * make the values available to the channel factory before constructing the channel or processing
- * buffered operations.
+ * They are stored with the channel attributes so the runtime can validate the generic persisted
+ * format and make the values available to the channel factory before constructing the channel
+ * or processing buffered operations.
+ *
+ * @remarks
+ * The runtime validates the generic persisted format before loading the channel, but it does not
+ * verify that the loaded channel preserves the configuration.
+ * The DDS author must validate, respect, and preserve the configuration.
+ * For compatibility reasons, channels generally avoid writing an explicit configuration until
+ * after the first configuration change has been requested.
+ *
+ * A configuration-backed feature that changes persisted data must follow the cross-client
+ * compatibility staging process in `CrossClientCompatibilityDevGuide.md`.
+ * In particular, the adopting feature must be controlled by a container runtime option represented
+ * in the document schema, configured in both compatibility maps, and covered by `FullCompat` tests.
+ * The runtime option may be enabled only when `oldestSupportedClient` permits the version that reads
+ * and preserves the configuration; raising that floor without document-schema enforcement is not
+ * sufficient.
+ *
+ * Enabling the feature before saturation can allow an older summarizer to discard configuration
+ * that it does not understand.
  * @internal
  */
 export interface ConfiguredChannelAttributes extends IChannelAttributes {
 	readonly configuration: ChannelConfigurationSnapshotV1;
-}
-
-/**
- * Declares configuration protocol support for a channel or its factory.
- *
- * This does not mean the channel's attributes will necessarily contain a configuration.
- * Just that if the attributes already contain a configuration, the channel will respect and preserve it.
- * For compatibility reasons (see remarks), channels generally avoid writing an explicit configuration
- * until after the first configuration change has been requested.
- *
- * @remarks Channels that use configuration should implement this interface to declare their support.
- * This is used as a safety guard to avoid compatibility issues between code support for configuration
- * and presence of configuration in the attributes blob.
- *
- * e.g. shortly after a channel opts into using configuration, a new version of the code writes a document
- * containing configured attributes. If an older version (code-wise) of that channel is allowed to load the
- * document and is elected summarizer, it would drop the configuration changes made by the new version.
- *
- * Document load paths have consistency checks using this interface to prevent such incompatible scenarios
- * (by failing fast on the old client when it attempts to load the document produced by the new code).
- *
- * Since the safeguards cause immediate failure, general practices around saturating support for configured DDSes
- * before using that configuration capability must be followed for application ecosystems that care.
- * @internal
- */
-export interface ChannelConfigurationSupport {
-	readonly channelConfigurationProtocolVersion?: 1;
 }

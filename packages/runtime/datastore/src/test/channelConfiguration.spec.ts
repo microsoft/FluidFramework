@@ -8,37 +8,29 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	ContainerErrorTypes,
-} from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type {
-	ChannelConfigurationSupport,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	CreateChildSummarizerNodeFn,
-	IRuntimeMessageCollection,
-	ISummarizerNodeWithGC,
-} from "@fluidframework/runtime-definitions/internal";
-import { createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockFluidDataStoreContext,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+	createMockLoggerExt,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
+import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	type ChannelServiceEndpoints,
 } from "../channelContext.js";
-import { hasChannelConfiguration } from "../channelConfiguration.js";
-import { supportsChannelConfiguration } from "../index.js";
-import { RehydratedLocalChannelContext } from "../localChannelContext.js";
-import { RemoteChannelContext } from "../remoteChannelContext.js";
+import {
+	isChannelConfigurationSnapshotV1,
+	isConfiguredChannelAttributes,
+} from "../channelConfiguration.js";
 
 describe("Channel configuration compatibility", () => {
 	const attributes = { type: "configured", snapshotFormatVersion: "1" };
@@ -47,28 +39,11 @@ describe("Channel configuration compatibility", () => {
 		attachState: AttachState.Attached,
 	} as unknown as IFluidDataStoreRuntime;
 
-	function channel(): IChannel & ChannelConfigurationSupport {
+	function channel(): IChannel {
 		return {
 			attributes: { ...attributes, configuration: snapshot },
-			channelConfigurationProtocolVersion: 1,
-		} as unknown as IChannel & ChannelConfigurationSupport;
+		} as unknown as IChannel;
 	}
-
-	it("identifies reader support independently of persisted configuration", () => {
-		const configured = channel();
-		assert.equal(supportsChannelConfiguration(configured), true);
-		assert.equal(
-			supportsChannelConfiguration({ ...configured, attributes }),
-			true,
-			"Reader support must not depend on per-instance activation",
-		);
-		assert.equal(
-			supportsChannelConfiguration({ attributes: configured.attributes } as IChannel),
-			false,
-		);
-		const unsupported = { ...configured, channelConfigurationProtocolVersion: 2 };
-		assert.equal(supportsChannelConfiguration(unsupported), false);
-	});
 
 	it("loads legacy instances unchanged without requiring configuration support", async () => {
 		const legacy = { attributes } as IChannel;
@@ -97,7 +72,6 @@ describe("Channel configuration compatibility", () => {
 	it("uses factory attributes unchanged for old attach messages", async () => {
 		const factory = {
 			attributes,
-			channelConfigurationProtocolVersion: 1,
 		} as unknown as IChannelFactory;
 		const result = await loadChannelFactoryAndAttributes(
 			new MockFluidDataStoreContext(),
@@ -108,6 +82,25 @@ describe("Channel configuration compatibility", () => {
 		);
 		assert.equal("configuration" in result.attributes, false);
 		assert.equal(result.attributes, factory.attributes);
+	});
+
+	it("does not inherit unsupported factory configuration for old attach messages", async () => {
+		const factoryAttributes = {
+			...attributes,
+			configuration: { ...snapshot, version: 2 },
+		};
+		const factory = {
+			attributes: factoryAttributes,
+		} as unknown as IChannelFactory;
+		const result = await loadChannelFactoryAndAttributes(
+			new MockFluidDataStoreContext(),
+			{ objectStorage: { contains: async () => false } } as unknown as ChannelServiceEndpoints,
+			"dds",
+			{ get: () => factory },
+			attributes.type,
+		);
+		assert.deepEqual(result.attributes, attributes);
+		assert.equal(factory.attributes, factoryAttributes);
 	});
 
 	for (const [name, saved] of [
@@ -121,7 +114,7 @@ describe("Channel configuration compatibility", () => {
 			},
 		],
 	] as const) {
-		it(`loads ${name} without inheriting factory configuration or requiring factory support`, async () => {
+		it(`loads ${name} without inheriting factory configuration`, async () => {
 			const factory = {
 				attributes: channel().attributes,
 				load: async (
@@ -158,22 +151,23 @@ describe("Channel configuration compatibility", () => {
 	}
 
 	it("recognizes absent and supported persisted configuration", () => {
-		assert.equal(hasChannelConfiguration(attributes), false);
+		assert.equal(isConfiguredChannelAttributes(attributes), false);
 		for (const configuration of [
 			snapshot,
 			{ ...snapshot, extra: true },
 			{ ...snapshot, revision: -0 },
 		]) {
 			const configuredAttributes = { ...attributes, configuration };
-			assert.equal(hasChannelConfiguration(configuredAttributes), true);
+			assert.equal(isChannelConfigurationSnapshotV1(configuration), true);
+			assert.equal(isConfiguredChannelAttributes(configuredAttributes), true);
 		}
 	});
 
-	for (const [message, configurations] of [
-		["Configuration is missing properties", [undefined, { version: 1, revision: 0 }]],
-		["Unsupported persisted configuration version", [{ ...snapshot, version: 2 }]],
+	for (const [name, configurations] of [
+		["missing properties", [undefined, { version: 1, revision: 0 }]],
+		["unsupported version", [{ ...snapshot, version: 2 }]],
 		[
-			"Invalid revision",
+			"invalid revision",
 			[
 				{ ...snapshot, revision: undefined },
 				{ ...snapshot, revision: -1 },
@@ -182,19 +176,22 @@ describe("Channel configuration compatibility", () => {
 			],
 		],
 		[
-			"Configuration values must be an object",
+			"invalid values",
 			[
 				{ ...snapshot, values: JSON.parse("null") as unknown },
 				{ ...snapshot, values: [] },
 			],
 		],
 	] as const) {
-		it(`rejects malformed persisted configuration: ${message}`, () => {
+		it(`returns false for malformed persisted configuration: ${name}`, () => {
 			for (const configuration of configurations) {
-				assert.throws(
-					() =>
-						hasChannelConfiguration({ ...attributes, configuration } as IChannelAttributes),
-					validateAssertionError(message),
+				assert.equal(isChannelConfigurationSnapshotV1(configuration), false);
+				assert.equal(
+					isConfiguredChannelAttributes({
+						...attributes,
+						configuration,
+					} as IChannelAttributes),
+					false,
 				);
 			}
 		});
@@ -217,149 +214,33 @@ describe("Channel configuration compatibility", () => {
 				createMockLoggerExt(),
 				"dds",
 			),
-			validateAssertionError("Unsupported persisted configuration version"),
+			(error: IFluidErrorBase) => {
+				assert.equal(error.errorType, FluidErrorTypes.dataCorruptionError);
+				assert.equal(error.message, "Invalid persisted channel configuration");
+				return true;
+			},
 		);
 		assert.equal(loaded, false);
 	});
 
-	it("rejects a loaded channel that loses its configuration attributes", async () => {
-		await assert.rejects(
-			loadChannel(
+	for (const [name, savedAttributes, loadedAttributes] of [
+		["configuration preservation", channel().attributes, attributes],
+		["legacy configuration activation", attributes, channel().attributes],
+	] as const) {
+		it(`leaves ${name} to the channel factory`, async () => {
+			const loaded = { attributes: loadedAttributes } as IChannel;
+			const result = await loadChannel(
 				runtime,
-				channel().attributes,
+				savedAttributes,
 				{
 					attributes,
-					channelConfigurationProtocolVersion: 1,
-					load: async () => ({ ...channel(), attributes }),
+					load: async () => loaded,
 				} as unknown as IChannelFactory,
 				{} as ChannelServiceEndpoints,
 				createMockLoggerExt(),
 				"dds",
-			),
-			validateAssertionError("Configured channel lost its persisted attributes"),
-		);
-	});
-
-	it("rejects a loaded channel that changes its persisted configuration", async () => {
-		const savedAttributes = {
-			...attributes,
-			configuration: { ...snapshot, revision: 4, values: { enabled: false } },
-		};
-		for (const configuration of [
-			{ ...savedAttributes.configuration, values: { enabled: true } },
-			{ ...savedAttributes.configuration, revision: 0 },
-		]) {
-			await assert.rejects(
-				loadChannel(
-					runtime,
-					savedAttributes,
-					{
-						attributes,
-						channelConfigurationProtocolVersion: 1,
-						load: async () => ({
-							...channel(),
-							attributes: { ...attributes, configuration },
-						}),
-					} as unknown as IChannelFactory,
-					{} as ChannelServiceEndpoints,
-					createMockLoggerExt(),
-					"dds",
-				),
-				validateAssertionError(
-					"Configured channel did not preserve its persisted configuration",
-				),
 			);
-		}
-	});
-
-	it("rejects a factory that activates configuration while loading legacy attributes", async () => {
-		await assert.rejects(
-			loadChannel(
-				runtime,
-				attributes,
-				{
-					attributes,
-					channelConfigurationProtocolVersion: 1,
-					load: async () => channel(),
-				} as unknown as IChannelFactory,
-				{} as ChannelServiceEndpoints,
-				createMockLoggerExt(),
-				"dds",
-			),
-			validateAssertionError("Factory should not opt a legacy channel into configuration"),
-		);
-	});
-
-	for (const contextKind of ["rehydrated", "remote"] as const) {
-		it(`rejects a ${contextKind} channel without instance support before replaying queued messages`, async () => {
-			const dataStoreContext = new MockFluidDataStoreContext();
-			const configured = channel();
-			const order: string[] = [];
-			const factory = {
-				attributes,
-				channelConfigurationProtocolVersion: 1,
-				load: async (
-					_runtime: IFluidDataStoreRuntime,
-					_id: string,
-					services: ChannelServiceEndpoints,
-				) => {
-					order.push("loaded");
-					services.deltaConnection.attach({
-						processMessages: () => order.push("replayed"),
-						setConnectionState: () => order.push("connected"),
-						reSubmit: () => {},
-						applyStashedOp: () => {},
-					});
-					return { attributes: configured.attributes } as IChannel;
-				},
-			} as unknown as IChannelFactory;
-			const snapshotTree = { trees: {}, blobs: { ".attributes": "attributes-blob" } };
-			const blobs = new Map([
-				["attributes-blob", stringToBuffer(JSON.stringify(configured.attributes), "utf8")],
-			]);
-			const registry = { get: () => factory };
-			const createNode: CreateChildSummarizerNodeFn = () =>
-				({ invalidate: () => {} }) as unknown as ISummarizerNodeWithGC;
-			const context =
-				contextKind === "rehydrated"
-					? new RehydratedLocalChannelContext(
-							"dds",
-							registry,
-							runtime,
-							dataStoreContext,
-							dataStoreContext.storage,
-							createMockLoggerExt(),
-							() => {},
-							() => {},
-							snapshotTree,
-							blobs,
-						)
-					: new RemoteChannelContext(
-							{ ...runtime, logger: createMockLoggerExt() },
-							dataStoreContext,
-							dataStoreContext.storage,
-							() => {},
-							() => {},
-							"dds",
-							snapshotTree,
-							registry,
-							blobs,
-							createNode,
-						);
-			if (context instanceof RehydratedLocalChannelContext) {
-				context.makeVisible();
-			}
-			context.processMessages({
-				local: false,
-				envelope: { sequenceNumber: 7 },
-				messagesContent: [{ clientSequenceNumber: 1, contents: {} }],
-			} as unknown as IRuntimeMessageCollection);
-			assert.deepEqual(order, []);
-			await assert.rejects(context.getChannel(), {
-				errorType: ContainerErrorTypes.dataProcessingError,
-				message: "Configured channel did not declare configuration support",
-			});
-			assert.deepEqual(order, ["loaded"]);
+			assert.equal(result, loaded);
 		});
 	}
 });

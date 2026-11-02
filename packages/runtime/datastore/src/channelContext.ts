@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -30,10 +29,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
-import {
-	requireChannelConfigurationController,
-	hasChannelConfiguration,
-} from "./channelConfiguration.js";
+import { isConfiguredChannelAttributes } from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -193,7 +189,7 @@ export async function loadChannelFactoryAndAttributes(
 		// If the factory includes configuration in its attributes, that configuration only necessarily applies to newly created instances.
 		// It must already support transitioning from an unconfigured channel to a configured one,
 		// so omitting configuration from load here reduces the problem to that case.
-		if (hasChannelConfiguration(attributes)) {
+		if ("configuration" in attributes) {
 			const { configuration: _configuration, ...legacyAttributes } = attributes;
 			attributes = legacyAttributes;
 		}
@@ -209,9 +205,15 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
-	const savedConfiguration = hasChannelConfiguration(attributes)
-		? attributes.configuration
-		: undefined;
+	if ("configuration" in attributes && !isConfiguredChannelAttributes(attributes)) {
+		throw new DataCorruptionError(
+			"Invalid persisted channel configuration",
+			tagCodeArtifacts({
+				channelId,
+				channelType: attributes.type,
+			}),
+		);
+	}
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -227,50 +229,5 @@ export async function loadChannel(
 		});
 	}
 
-	const channel = await factory.load(dataStoreRuntime, channelId, services, attributes);
-	if (savedConfiguration === undefined) {
-		// Having a factory immediately transition to some "default" configuration under its
-		// attributes on load is problematic for cross-client compatibility, as we are strict
-		// about enforcing only channels that declare support for configuration are allowed to load
-		// persisted summaries that have configuration.
-		assert(
-			!hasChannelConfiguration(channel.attributes),
-			"Factory should not opt a legacy channel into configuration",
-		);
-	} else {
-		requireChannelConfigurationController(channel);
-		assert(
-			hasChannelConfiguration(channel.attributes),
-			"Configured channel lost its persisted attributes",
-		);
-		assert(
-			areJsonValuesEqual(channel.attributes.configuration, savedConfiguration),
-			"Configured channel did not preserve its persisted configuration",
-		);
-	}
-	return channel;
-}
-
-function areJsonValuesEqual(first: unknown, second: unknown): boolean {
-	if (first === second) {
-		return true;
-	}
-	if (Array.isArray(first) || Array.isArray(second)) {
-		return (
-			Array.isArray(first) &&
-			Array.isArray(second) &&
-			first.length === second.length &&
-			first.every((value, index) => areJsonValuesEqual(value, second[index]))
-		);
-	}
-	if (!isObject(first) || !isObject(second)) {
-		return false;
-	}
-	const keys = Object.keys(first);
-	return (
-		keys.length === Object.keys(second).length &&
-		keys.every(
-			(key) => Object.hasOwn(second, key) && areJsonValuesEqual(first[key], second[key]),
-		)
-	);
+	return factory.load(dataStoreRuntime, channelId, services, attributes);
 }

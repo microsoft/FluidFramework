@@ -3,67 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { assert, isObject } from "@fluidframework/core-utils/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
 import type {
+	ChannelConfigurationSnapshotV1,
 	ConfiguredChannelAttributes,
-	IChannel,
 	IChannelAttributes,
-	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 
 /**
- * Returns whether a channel or its factory declares support for the configuration protocol.
- * This checks reader support, not whether configuration is active for a channel instance.
- * @internal
+ * Returns whether the value is a valid version 1 channel configuration snapshot.
+ * The channel implementation validates the contents of the values.
  */
-export function supportsChannelConfiguration(
-	channelOrFactory: IChannel | IChannelFactory,
-): boolean {
+export function isChannelConfigurationSnapshotV1(
+	value: unknown,
+): value is ChannelConfigurationSnapshotV1 {
 	return (
-		"channelConfigurationProtocolVersion" in channelOrFactory &&
-		channelOrFactory.channelConfigurationProtocolVersion === 1
+		isObject(value) &&
+		"version" in value &&
+		"revision" in value &&
+		"values" in value &&
+		value.version === 1 &&
+		typeof value.revision === "number" &&
+		0 <= value.revision &&
+		Number.isSafeInteger(value.revision) &&
+		isObject(value.values) &&
+		!Array.isArray(value.values)
 	);
 }
 
 /**
- * Returns whether the attributes contain channel configuration.
- * Validates the generic persisted format, including that the values are an object.
- * The channel implementation validates the values' contents.
+ * Returns whether the attributes contain valid channel configuration.
  */
-export function hasChannelConfiguration(
+export function isConfiguredChannelAttributes(
 	attributes: IChannelAttributes,
 ): attributes is ConfiguredChannelAttributes {
-	if (!("configuration" in attributes)) {
-		return false;
-	}
-	const configuration = attributes.configuration;
-	assert(
-		isObject(configuration) &&
-			"version" in configuration &&
-			"revision" in configuration &&
-			"values" in configuration,
-		"Configuration is missing properties",
-	);
-	assert(configuration.version === 1, "Unsupported persisted configuration version");
-	assert(
-		typeof configuration.revision === "number" &&
-			0 <= configuration.revision &&
-			Number.isSafeInteger(configuration.revision),
-		"Invalid revision",
-	);
-	assert(
-		isObject(configuration.values) && !Array.isArray(configuration.values),
-		"Configuration values must be an object",
-	);
-	return true;
-}
-
-/**
- * Checks that a marked instance installed the shared protocol rather than legacy dispatch.
- */
-export function requireChannelConfigurationController(channel: IChannel): void {
-	assert(
-		supportsChannelConfiguration(channel),
-		"Configured channel did not declare configuration support",
+	return (
+		"configuration" in attributes && isChannelConfigurationSnapshotV1(attributes.configuration)
 	);
 }
