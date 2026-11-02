@@ -1,0 +1,2 @@
+/azp run Build - protocol-definitions,Build - test-tools,server-gitrest,server-gitssh,server-historian,server-routerlicious,Build - client packages,repo-policy-check
+/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid
