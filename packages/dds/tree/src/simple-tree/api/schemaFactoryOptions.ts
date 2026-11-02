@@ -194,6 +194,10 @@ export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
 	 *     },
 	 * });
 	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
 	 */
 	readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
 }
@@ -235,6 +239,10 @@ export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
 	 *     },
 	 * });
 	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
 	 */
 	readonly objectOptions?: ObjectSchemaOptionsAlpha<never>;
 }
