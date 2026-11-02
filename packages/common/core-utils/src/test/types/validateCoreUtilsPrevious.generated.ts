@@ -150,6 +150,7 @@ declare type current_as_old_for_TypeAlias_PromiseCacheExpiry = requireAssignable
  * typeValidation.broken:
  * "Variable_assert": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_assert = requireAssignableTo<TypeOnly<typeof current.assert>, TypeOnly<typeof old.assert>>
 
 /*
