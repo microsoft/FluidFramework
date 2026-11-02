@@ -833,6 +833,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Disconnect from the websocket
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
+		// The response listener has been removed, so an in-flight flush can no longer complete.
+		this.flushOpNonce = undefined;
+		this.flushDeferred?.reject(err);
+		this.flushDeferred = undefined;
+
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;

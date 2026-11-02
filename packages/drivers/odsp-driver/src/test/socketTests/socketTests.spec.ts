@@ -15,7 +15,7 @@ import {
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
-import { stub } from "sinon";
+import { spy, stub } from "sinon";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -123,6 +123,208 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			getSocketCreationStub.restore();
 		}
 	}
+
+	describe("flush settlement", () => {
+		const connections: OdspDocumentDeltaConnection[] = [];
+
+		async function createConnection(): Promise<OdspDocumentDeltaConnection> {
+			const connection = await mockSocket(socket as unknown as Socket, async () =>
+				OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					socketReferenceKeyPrefix,
+				),
+			);
+			connections.push(connection);
+			return connection;
+		}
+
+		function startFlush(connection: OdspDocumentDeltaConnection): {
+			promise: ReturnType<OdspDocumentDeltaConnection["flush"]>;
+			nonce: string;
+		} {
+			assert(socket !== undefined);
+			const emitSpy = spy(socket, "emit");
+			try {
+				const promise = connection.flush();
+				const requests = emitSpy.getCalls().filter((call) => call.args[0] === "flush_ops");
+				assert.equal(requests.length, 1, "flush should emit exactly one request");
+				assert.equal(requests[0].args[1], connection.clientId);
+				const { nonce } = requests[0].args[2] as { nonce: string };
+				assert.equal(typeof nonce, "string");
+				return { promise, nonce };
+			} finally {
+				emitSpy.restore();
+			}
+		}
+
+		async function promptly<T>(promise: Promise<T>): Promise<T> {
+			let timeout: ReturnType<typeof setTimeout> | undefined;
+			try {
+				return await Promise.race([
+					promise,
+					new Promise<never>((resolve, reject) => {
+						timeout = setTimeout(
+							() => reject(new Error("flush did not settle promptly")),
+							500,
+						);
+					}),
+				]);
+			} finally {
+				clearTimeout(timeout);
+			}
+		}
+
+		beforeEach(() => {
+			socket = new ClientSocketMock({
+				connect_document: {
+					eventToEmit: "connect_document_success",
+					connectMessage: {
+						clientId: uuid(),
+						existing: true,
+						initialClients: [],
+						initialMessages: [],
+						initialSignals: [],
+						maxMessageSize: 1000,
+						mode: client.mode,
+						version: "^0.4.0",
+						serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
+						claims: {
+							documentId,
+							scopes: client.scopes,
+							tenantId,
+							ver: "1.0.0",
+							iat: 10,
+							exp: 10,
+							user: client.user,
+						},
+						supportedVersions: ["^0.4.0"],
+						supportedFeatures: { api_flush_ops: true },
+						epoch: "testEpoch",
+					},
+				},
+			});
+		});
+
+		afterEach(() => {
+			for (const connection of connections.splice(0)) {
+				connection.dispose();
+			}
+			socket?.sendServerDisconnectEvent({ message: "Test cleanup", code: 400 });
+			assert(socket !== undefined);
+			checkListenerCount(socket);
+		});
+
+		for (const disconnect of [
+			"dispose",
+			"server",
+			"server-client",
+			"socket",
+			"error",
+		] as const) {
+			it(`rejects a pending flush on ${disconnect} disconnect`, async () => {
+				const connection = await createConnection();
+				assert(socket !== undefined);
+				const { promise, nonce } = startFlush(connection);
+				let disconnectReason: IAnyDriverError | undefined;
+				connection.on("disconnect", (reason: IAnyDriverError) => {
+					disconnectReason = reason;
+				});
+				const rejected = assert.rejects(
+					promise,
+					(error: unknown) => error === disconnectReason,
+				);
+				switch (disconnect) {
+					case "dispose": {
+						connection.dispose(new Error("Disposed during flush"));
+						break;
+					}
+					case "server": {
+						socket.sendServerDisconnectEvent({ message: "Server disconnect", code: 400 });
+						break;
+					}
+					case "server-client": {
+						socket.sendServerDisconnectEvent(
+							{ message: "Server disconnect", code: 400 },
+							connection.clientId,
+						);
+						break;
+					}
+					case "socket": {
+						socket.sendDisconnectEvent();
+						break;
+					}
+					case "error": {
+						socket.sendErrorEvent();
+						break;
+					}
+					default: {
+						assert.fail("Unexpected disconnect type");
+					}
+				}
+				assert(
+					disconnectReason !== undefined,
+					"connection should report its disconnect reason",
+				);
+				assert(connection.disposed);
+				assert.equal(socket.listenerCount("flush_ops_response"), 0);
+				await promptly(rejected);
+				connection.dispose();
+				socket.emit("flush_ops_response", {
+					nonce,
+					code: 200,
+					lastPersistedSequenceNumber: 123,
+				});
+			});
+		}
+
+		it("preserves a successful flush result after repeated disposal and late responses", async () => {
+			const connection = await createConnection();
+			assert(socket !== undefined);
+			const { promise, nonce } = startFlush(connection);
+			const response = { nonce, code: 200, lastPersistedSequenceNumber: 123 };
+			socket.emit("flush_ops_response", response);
+			assert.deepEqual(await promptly(promise), response);
+			connection.dispose();
+			connection.dispose();
+			socket.emit("flush_ops_response", { ...response, lastPersistedSequenceNumber: 456 });
+			assert.deepEqual(await promise, response);
+		});
+
+		it("rejects only the disposed connection's flush on a shared socket", async () => {
+			const connection = await createConnection();
+			const sibling = await createConnection();
+			assert(socket !== undefined);
+			const first = startFlush(connection);
+			const second = startFlush(sibling);
+			const rejected = assert.rejects(first.promise);
+			let siblingSettled = false;
+			const siblingResult = second.promise.finally(() => {
+				siblingSettled = true;
+			});
+			connection.dispose();
+			connection.dispose();
+			socket.emit("flush_ops_response", {
+				nonce: first.nonce,
+				code: 200,
+				lastPersistedSequenceNumber: 456,
+			});
+			await promptly(rejected);
+			assert(socket.connected, "disposing one connection should preserve the shared socket");
+			assert(!sibling.disposed);
+			assert(!siblingSettled, "a stale response should not settle the sibling's flush");
+			assert.equal(socket.listenerCount("flush_ops_response"), 1);
+			const response = { nonce: second.nonce, code: 200, lastPersistedSequenceNumber: 123 };
+			socket.emit("flush_ops_response", response);
+			assert.deepEqual(await promptly(siblingResult), response);
+		});
+	});
 
 	it("Connect document success on connection", async () => {
 		socket = new ClientSocketMock();
