@@ -16,7 +16,8 @@ import {
 	type IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/legacy";
 
-const registers: IConsensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+const registers: IConsensusRegisterCollection<string> =
+	ConsensusRegisterCollection.create(runtime);
 const factory = ConsensusRegisterCollection.getFactory();
 ```
 
