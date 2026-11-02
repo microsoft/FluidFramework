@@ -54,6 +54,7 @@ export async function createNewContainerOnExistingFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	eTag?: string,
+	propagateAuthChallenges?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	if (createNewSummary === undefined) {
 		throw new UsageError("createNewSummary must exist to create a new container");
@@ -83,6 +84,7 @@ export async function createNewContainerOnExistingFile(
 		telemetryName: "CreateNewContainerOnExistingFile",
 		fetchType: "uploadSummary",
 		additionalHeaders,
+		propagateAuthChallenges,
 	});
 
 	const odspUrl = createOdspUrl({ ...fileInfo, dataStorePath: "/" });

@@ -54,6 +54,7 @@ async function createVersionManager(
 	epochTracker: EpochTracker,
 	getStorageToken: IOdspPointInTimeDocumentServiceImplementationProps["getStorageToken"],
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges?: boolean,
 ): Promise<IOdspVersionManager> {
 	const urlParts: IOdspUrlParts = {
 		siteUrl: odspResolvedUrl.siteUrl,
@@ -71,6 +72,7 @@ async function createVersionManager(
 		epochTracker,
 		logger,
 		requestHeaders,
+		propagateAuthChallenges,
 	});
 }
 
@@ -125,6 +127,7 @@ export async function createPointInTimeDocumentServiceCore(
 		persistedCache,
 		getStorageToken,
 		requestHeaders,
+		propagateAuthChallenges,
 		createDocumentService,
 	}: IOdspPointInTimeDocumentServiceImplementationProps,
 	dependencies: IPointInTimeDocumentServiceDependencies = {},
@@ -157,6 +160,7 @@ export async function createPointInTimeDocumentServiceCore(
 					epochTracker,
 					getStorageToken,
 					requestHeaders,
+					propagateAuthChallenges,
 				))
 		)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
 		baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);

@@ -37,6 +37,7 @@ import {
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
+	isAuthChallengeError,
 	snapshotWithLoadingGroupIdSupported,
 	toInstrumentedOdspStorageTokenFetcher,
 	type TokenFetchOptionsEx,
@@ -60,8 +61,11 @@ import {
  * @param _fetchBinarySnapshotFormat - Deprecated and not used.
  * @param _snapshotFormatFetchType - Deprecated and not used.
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
+ * @param propagateAuthChallenges - Propagate claims challenges instead of refreshing tokens or returning false.
+ * Defaults to the factory's policy when a factory is provided, or false otherwise.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
+ * @throws An authorization error containing `wwwAuthenticate` when claims challenge propagation is enabled.
  * @legacy
  * @beta
  */
@@ -76,6 +80,8 @@ export async function prefetchLatestSnapshot(
 	_fetchBinarySnapshotFormat?: boolean,
 	_snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
+	propagateAuthChallenges: boolean = odspDocumentServiceFactory?.propagateAuthChallenges ??
+		false,
 ): Promise<boolean> {
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
@@ -136,6 +142,8 @@ export async function prefetchLatestSnapshot(
 			const prefetchStartTime = performanceNow();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
 			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
+			// A prefetch can fail before any load starts awaiting the cached promise.
+			snapshotContentsWithEpochP.promise.catch(() => {});
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
 			const snapshotNonPersistentCache =
 				odspDocumentServiceFactory?.snapshotPrefetchResultCache;
@@ -154,6 +162,7 @@ export async function prefetchLatestSnapshot(
 				loadingGroupIds,
 				enableRedeemFallback,
 				odspDocumentServiceFactory?.requestHeaders,
+				propagateAuthChallenges,
 			)
 				.then(async (value) => {
 					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);
@@ -187,6 +196,9 @@ export async function prefetchLatestSnapshot(
 		},
 	).catch(async (error) => {
 		odspLogger.sendErrorEvent({ eventName: "PrefetchLatestSnapshotError" }, error);
+		if (propagateAuthChallenges && isAuthChallengeError(error)) {
+			throw error;
+		}
 		return false;
 	});
 }

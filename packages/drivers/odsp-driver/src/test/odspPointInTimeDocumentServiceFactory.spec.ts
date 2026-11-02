@@ -83,6 +83,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			getStorageToken,
 			getWebsocketToken: undefined,
 			persistedCache,
+			hostPolicy: { propagateAuthChallenges: true },
 			pointInTimeDocumentServiceImplementation: async (props) => {
 				capturedProps = props;
 				return expectedService;
@@ -95,6 +96,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedProps?.targetSequenceNumber, 42);
 		assert.equal(capturedProps?.getStorageToken, getStorageToken);
 		assert.equal(capturedProps?.persistedCache, persistedCache);
+		assert.equal(capturedProps?.propagateAuthChallenges, true);
 		assert.equal(typeof capturedProps?.createDocumentService, "function");
 	});
 

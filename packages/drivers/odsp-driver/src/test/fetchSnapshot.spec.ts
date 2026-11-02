@@ -8,10 +8,13 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
 	type ISnapshotTree,
+	type IAuthorizationError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
@@ -112,6 +115,8 @@ describe("Tests1 for snapshot fetch", () => {
 	});
 
 	beforeEach(async () => {
+		hostPolicy.propagateAuthChallenges = false;
+		hostPolicy.summarizerClient = true;
 		localCache = createUtLocalCache();
 		mockLogger = new MockLogger();
 		logger = createChildLogger({ logger: mockLogger });
@@ -533,6 +538,122 @@ describe("Tests1 for snapshot fetch", () => {
 				},
 			]),
 			"unexpected events",
+		);
+	});
+
+	for (const status of [401, 403]) {
+		it(`propagates a ${status} snapshot challenge without refreshing or redeeming the sharing link`, async () => {
+			hostPolicy.propagateAuthChallenges = true;
+			hostPolicy.enableRedeemFallback = true;
+			resolved.shareLinkInfo = {
+				sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+			};
+			const header =
+				'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+			await assert.rejects(
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[async () => createResponse({ "www-authenticate": header }, undefined, status)],
+				),
+				(error: unknown) => {
+					assert.equal((error as IAuthorizationError).wwwAuthenticate, header);
+					assert.equal((error as IAuthorizationError).canRetry, false);
+					return true;
+				},
+			);
+		});
+	}
+
+	it("retains token refresh and sharing-link redemption for headers without claims challenges", async () => {
+		hostPolicy.propagateAuthChallenges = true;
+		hostPolicy.enableRedeemFallback = true;
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		const authResponse = async (): Promise<MockResponse> =>
+			createResponse({ "www-authenticate": 'Bearer realm="tenant"' }, undefined, 401);
+		await mockFetchMultiple(
+			async () => service.getSnapshot({}),
+			[
+				authResponse,
+				authResponse,
+				async () => okResponse({}, {}),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+						convertToCompactSnapshot({
+							...content,
+							snapshotTree: snapshotTreeWithGroupId,
+							blobContents,
+						}),
+						200,
+					),
+			],
+		);
+	});
+
+	for (const [operation, run] of Object.entries({
+		createBlob: async (storage: OdspDocumentStorageService) =>
+			storage.createBlob(new ArrayBuffer(1)),
+		readBlob: async (storage: OdspDocumentStorageService) => storage.readBlob("blob"),
+		getVersions: async (storage: OdspDocumentStorageService) => storage.getVersions(null, 2),
+		getSnapshotTree: async (storage: OdspDocumentStorageService) =>
+			storage.getSnapshotTree({ id: "version", treeId: "version" }),
+		uploadSummary: async (storage: OdspDocumentStorageService) =>
+			storage.uploadSummaryWithContext(
+				{ type: SummaryType.Tree, tree: {} },
+				{ referenceSequenceNumber: 0, ackHandle: undefined, proposalHandle: undefined },
+			),
+	})) {
+		it(`${operation} propagates an authorization challenge without retrying`, async () => {
+			hostPolicy.propagateAuthChallenges = true;
+			const header =
+				'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+			await assert.rejects(
+				mockFetchMultiple(
+					async () => run(service),
+					[async () => createResponse({ "www-authenticate": header }, undefined, 401)],
+				),
+				(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+			);
+		});
+	}
+
+	it("fails on a network challenge without waiting for a concurrent cache lookup", async () => {
+		hostPolicy.propagateAuthChallenges = true;
+		hostPolicy.summarizerClient = false;
+		const cacheRead = new Deferred<undefined>();
+		const getCacheStub = stub(localCache, "get").returns(cacheRead.promise);
+		const header =
+			'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+		try {
+			await assert.rejects(
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[async () => createResponse({ "www-authenticate": header }, undefined, 401)],
+				),
+				(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+			);
+		} finally {
+			cacheRead.resolve(undefined);
+			getCacheStub.restore();
+		}
+	});
+
+	it("propagates a challenge during sharing-link redemption instead of fetching the snapshot again", async () => {
+		hostPolicy.propagateAuthChallenges = true;
+		hostPolicy.enableRedeemFallback = true;
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		const header =
+			'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+		await assert.rejects(
+			mockFetchMultiple(
+				async () => service.getSnapshot({}),
+				[notFound, async () => createResponse({ "www-authenticate": header }, undefined, 401)],
+			),
+			(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
 		);
 	});
 

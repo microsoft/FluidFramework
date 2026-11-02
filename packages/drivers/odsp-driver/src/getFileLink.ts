@@ -24,6 +24,7 @@ import { mockify } from "./mockify.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
+	isAuthChallengeError,
 	toInstrumentedOdspStorageTokenFetcher,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -50,9 +51,10 @@ export const getFileLink = mockify(
 		resolvedUrl: IOdspResolvedUrl,
 		logger: TelemetryLoggerExt,
 		requestHeaders?: Readonly<Record<string, string>>,
+		propagateAuthChallenges: boolean = false,
 	): Promise<string> => {
 		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
-		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
+		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}_${propagateAuthChallenges}`;
 		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
 		if (maybeFileLinkCacheEntry !== undefined) {
 			return maybeFileLinkCacheEntry;
@@ -71,6 +73,7 @@ export const getFileLink = mockify(
 									resolvedUrl,
 									logger,
 									immutableRequestHeaders,
+									propagateAuthChallenges,
 								),
 							"getFileLinkCore",
 							logger,
@@ -130,6 +133,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 	resolvedUrl: IOdspResolvedUrl,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<string> {
 	// We can have chains of location redirection one after the other, so have a for loop
 	// so that we can keep handling the same type of error. Set max number of redirection to 5.
@@ -137,7 +141,13 @@ async function getFileLinkWithLocationRedirectionHandling(
 	let locationRedirected = false;
 	for (let count = 1; count <= 5; count++) {
 		try {
-			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger, requestHeaders);
+			const fileItem = await getFileItemLite(
+				getToken,
+				resolvedUrl,
+				logger,
+				requestHeaders,
+				propagateAuthChallenges,
+			);
 			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
 			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
 			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
@@ -151,8 +161,18 @@ async function getFileLinkWithLocationRedirectionHandling(
 				});
 				renameTenantInOdspResolvedUrl(resolvedUrl, newSiteDomain);
 			}
-			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem, requestHeaders);
+			return await getFileLinkCore(
+				getToken,
+				resolvedUrl,
+				logger,
+				fileItem,
+				requestHeaders,
+				propagateAuthChallenges,
+			);
 		} catch (error: unknown) {
+			if (propagateAuthChallenges && isAuthChallengeError(error)) {
+				throw error;
+			}
 			lastError = error;
 			// If the getSharingLink call fails with the 401/403/404 error, then it could be due to that the file has moved
 			// to another location. This could occur in case we have more than 1 tenant rename. In that case, we should retry
@@ -177,6 +197,7 @@ async function getFileLinkCore(
 	logger: TelemetryLoggerExt,
 	fileItem: FileItemLite,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<string> {
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
@@ -234,7 +255,7 @@ async function getFileLinkCore(
 					);
 				}
 				return directUrl;
-			});
+			}, propagateAuthChallenges);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			event.end({ ...additionalProps, attempts });
 			return fileLink;
@@ -274,6 +295,7 @@ async function getFileItemLite(
 	odspUrlParts: IOdspUrlParts,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -318,7 +340,7 @@ async function getFileItemLite(
 					);
 				}
 				return responseJson;
-			});
+			}, propagateAuthChallenges);
 			event.end({ ...additionalProps, attempts });
 			return fileItem;
 		},

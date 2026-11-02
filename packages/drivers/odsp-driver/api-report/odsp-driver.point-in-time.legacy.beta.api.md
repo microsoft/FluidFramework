@@ -77,6 +77,7 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly logger?: ITelemetryBaseLogger;
     readonly persistedCache: IPersistedCache;
+    readonly propagateAuthChallenges?: boolean;
     readonly requestHeaders?: Readonly<Record<string, string>>;
     readonly resolvedUrl: IResolvedUrl;
     readonly targetSequenceNumber: number;

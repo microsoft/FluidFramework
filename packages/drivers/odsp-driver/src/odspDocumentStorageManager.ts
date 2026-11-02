@@ -65,6 +65,7 @@ import {
 	type IOdspResponse,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	isAuthChallengeError,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
@@ -172,7 +173,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					return res;
 				},
 			);
-		});
+		}, this.hostPolicy.propagateAuthChallenges);
 
 		return response.content;
 	}
@@ -222,7 +223,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					return res.content;
 				},
 			);
-		});
+		}, this.hostPolicy.propagateAuthChallenges);
 		this.blobCache.setBlob(blobId, blob);
 		return blob;
 	}
@@ -365,7 +366,12 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						// do want to attempt to succeed with cached data!
 						const promiseRaceWinner = await promiseRaceWithWinner([
 							cachedSnapshotP.catch(() => undefined),
-							networkSnapshotP.catch(() => undefined),
+							networkSnapshotP.catch((error) => {
+								if (this.hostPolicy.propagateAuthChallenges && isAuthChallengeError(error)) {
+									throw error;
+								}
+								return undefined;
+							}),
 						]);
 						retrievedSnapshot = promiseRaceWinner.value;
 						method = promiseRaceWinner.index === 0 ? "cache" : "network";
@@ -549,7 +555,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					treeId: undefined!,
 				};
 			});
-		});
+		}, this.hostPolicy.propagateAuthChallenges);
 	}
 
 	private async fetchSnapshotFromNetwork(
@@ -604,6 +610,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					return response;
 				})
 				.catch(async (error) => {
+					if (this.hostPolicy.propagateAuthChallenges && isAuthChallengeError(error)) {
+						throw error;
+					}
 					this.logger.sendTelemetryEvent(
 						{
 							eventName: "PrefetchSnapshotError",
@@ -677,6 +686,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
 				this.hostPolicy.hostProvidedRequestHeaders,
+				this.hostPolicy.propagateAuthChallenges,
 			);
 			return odspSnapshot;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -719,6 +729,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
 					this.hostPolicy.hostProvidedRequestHeaders,
+					this.hostPolicy.propagateAuthChallenges,
 				);
 				return odspSnapshot;
 			}
@@ -809,6 +820,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					pendingRename,
 					this.logger,
 					this.epochTracker,
+					this.hostPolicy.propagateAuthChallenges,
 				),
 			);
 			this.odspResolvedUrl.pendingRename = undefined;
@@ -837,6 +849,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			this.logger,
 			this.epochTracker,
 			this.relayServiceTenantAndSessionId,
+			this.hostPolicy.propagateAuthChallenges,
 		);
 		return this.odspSummaryUploadManager;
 	}
@@ -912,6 +925,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			// If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
 			// will be the actual id of tree to be fetched.
 			return this.commitCache.get(id) ?? this.commitCache.get(treeId);
-		});
+		}, this.hostPolicy.propagateAuthChallenges);
 	}
 }

@@ -50,6 +50,7 @@ export class OdspSummaryUploadManager {
 		logger: TelemetryLoggerExt,
 		private readonly epochTracker: EpochTracker,
 		private readonly relayServiceTenantAndSessionId: () => string | undefined,
+		private readonly propagateAuthChallenges: boolean = false,
 	) {
 		this.mc = loggerToMonitoringContext(logger);
 	}
@@ -151,7 +152,7 @@ export class OdspSummaryUploadManager {
 					return response.content;
 				},
 			);
-		});
+		}, this.propagateAuthChallenges);
 	}
 
 	/**

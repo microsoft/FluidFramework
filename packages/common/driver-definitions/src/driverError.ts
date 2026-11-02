@@ -189,6 +189,11 @@ export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
 	readonly claims?: string;
 	readonly tenantId?: string;
+	/**
+	 * The complete `www-authenticate` response header, when available.
+	 * This value can contain sensitive authentication data and must not be logged.
+	 */
+	readonly wwwAuthenticate?: string;
 }
 
 /**

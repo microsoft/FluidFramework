@@ -277,11 +277,22 @@ export function createOdspNetworkError(
 					driverProps,
 				);
 			} else {
-				const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
-				const tenantId = response?.headers
-					? parseAuthErrorTenant(response.headers)
-					: undefined;
-				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
+				const wwwAuthenticate = response?.headers.get("www-authenticate") ?? undefined;
+				let claims: string | undefined;
+				let tenantId: string | undefined;
+				try {
+					claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+					tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
+				} catch {
+					// Preserve the raw challenge even when its claims or tenant cannot be parsed.
+				}
+				error = new AuthorizationError(
+					errorMessage,
+					claims,
+					tenantId,
+					driverProps,
+					wwwAuthenticate,
+				);
 			}
 			break;
 		}

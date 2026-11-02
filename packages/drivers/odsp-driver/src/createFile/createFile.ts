@@ -64,6 +64,7 @@ export async function createNewFluidFile(
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
 	resolvedUrl?: IOdspResolvedUrl,
+	propagateAuthChallenges?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -85,6 +86,7 @@ export async function createNewFluidFile(
 			newFileInfo,
 			logger,
 			epochTracker,
+			propagateAuthChallenges,
 		);
 		itemId = content.itemId;
 		pendingRename = newFileInfo.filename;
@@ -96,6 +98,7 @@ export async function createNewFluidFile(
 			createNewSummary,
 			epochTracker,
 			forceAccessTokenViaAuthorizationHeader,
+			propagateAuthChallenges,
 		);
 		itemId = content.itemId;
 		summaryHandle = content.id;
@@ -206,6 +209,7 @@ export async function createNewEmptyFluidFile(
 	newFileInfo: INewFileInfo,
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
+	propagateAuthChallenges?: boolean,
 ): Promise<{ itemId: string; fileName: string }> {
 	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
@@ -265,7 +269,7 @@ export async function createNewEmptyFluidFile(
 			},
 			{ end: true, cancel: "error" },
 		);
-	});
+	}, propagateAuthChallenges);
 }
 
 export async function renameEmptyFluidFile(
@@ -274,6 +278,7 @@ export async function renameEmptyFluidFile(
 	requestedFileName: string,
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
+	propagateAuthChallenges?: boolean,
 ): Promise<IRenameFileResponse> {
 	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
 		odspParts.driveId
@@ -326,7 +331,7 @@ export async function renameEmptyFluidFile(
 			},
 			{ end: true, cancel: "error" },
 		);
-	});
+	}, propagateAuthChallenges);
 }
 
 export async function createNewFluidFileFromSummary(
@@ -336,6 +341,7 @@ export async function createNewFluidFileFromSummary(
 	createNewSummary: ISummaryTree,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
+	propagateAuthChallenges?: boolean,
 ): Promise<ICreateFileResponse> {
 	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
@@ -361,6 +367,7 @@ export async function createNewFluidFileFromSummary(
 		epochTracker,
 		telemetryName: "CreateNewFile",
 		fetchType: "createFile",
+		propagateAuthChallenges,
 		validateResponseCallback: (content) => {
 			if (!content?.itemId) {
 				throw new NonRetryableError(

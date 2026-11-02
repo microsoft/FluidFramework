@@ -14,9 +14,9 @@ import type {
 	ISnapshot,
 	IContainerPackageInfo,
 	ICacheEntry,
+	IAuthorizationError,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type AuthorizationError,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
@@ -95,6 +95,22 @@ function headersToMap(headers: Headers): Map<string, string> {
 }
 
 /**
+ * Identifies authorization errors with a response header and nonempty decoded challenge claims.
+ */
+export function isAuthChallengeError(error: unknown): error is IAuthorizationError {
+	if (typeof error !== "object" || error === null) {
+		return false;
+	}
+	const authError = error as Partial<IAuthorizationError>;
+	return (
+		authError.errorType === OdspErrorTypes.authorizationError &&
+		typeof authError.wwwAuthenticate === "string" &&
+		typeof authError.claims === "string" &&
+		authError.claims.length > 0
+	);
+}
+
+/**
  * This API should be used with pretty much all network calls (fetch, webSocket connection) in order
  * to correctly handle expired tokens. It relies on callback fetching token, and be able to refetch
  * token on failure. Only specific cases get retry call with refresh = true, all other / unknown errors
@@ -102,13 +118,17 @@ function headersToMap(headers: Headers): Map<string, string> {
  */
 export async function getWithRetryForTokenRefresh<T>(
 	get: (options: TokenFetchOptionsEx) => Promise<T>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<T> {
 	return get({ refresh: false }).catch(async (error) => {
 		const options: TokenFetchOptionsEx = { refresh: true, previousError: error };
 		switch ((error as Partial<IFluidErrorBase>).errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
 			case OdspErrorTypes.authorizationError: {
-				const authError = error as AuthorizationError;
+				if (propagateAuthChallenges && isAuthChallengeError(error)) {
+					throw error;
+				}
+				const authError = error as IAuthorizationError;
 				return get({ ...options, claims: authError.claims, tenantId: authError.tenantId });
 			}
 

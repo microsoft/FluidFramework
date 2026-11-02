@@ -108,6 +108,10 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
 	/** Host-owned attribution metadata for ODSP requests. */
 	readonly requestHeaders?: Readonly<Record<string, string>>;
 	/**
+	 * Whether the host handles ODSP claims challenges without driver retries.
+	 */
+	readonly propagateAuthChallenges?: boolean;
+	/**
 	 * Creates an ODSP document service for a resolved URL.
 	 *
 	 * @param resolvedUrl - The resolved URL for the document or file version to load.
@@ -146,6 +150,11 @@ export class OdspDocumentServiceFactoryCore
 	private readonly socketReferenceKeyPrefix?: string;
 	private readonly hostPolicy: HostStoragePolicy;
 	public readonly requestHeaders?: Readonly<Record<string, string>>;
+
+	/**
+	 * Whether the host handles ODSP claims challenges without driver retries.
+	 */
+	public readonly propagateAuthChallenges?: boolean;
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -270,6 +279,7 @@ export class OdspDocumentServiceFactoryCore
 								odspResolvedUrl.isClpCompliantApp,
 								this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 								odspResolvedUrl,
+								this.hostPolicy.propagateAuthChallenges,
 							)
 						: module.createNewContainerOnExistingFile(
 								getAuthHeader,
@@ -282,6 +292,7 @@ export class OdspDocumentServiceFactoryCore
 								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 								odspResolvedUrl.isClpCompliantApp,
 								odspResolvedUrl.fileMetadata?.eTag,
+								this.hostPolicy.propagateAuthChallenges,
 							);
 				});
 				const docService = this.createDocumentServiceCore(
@@ -316,6 +327,7 @@ export class OdspDocumentServiceFactoryCore
 		hostPolicy: HostStoragePolicy = {},
 	) {
 		this.requestHeaders = copyRequestHeaders(hostPolicy.hostProvidedRequestHeaders);
+		this.propagateAuthChallenges = hostPolicy.propagateAuthChallenges;
 		this.hostPolicy =
 			this.requestHeaders === undefined
 				? hostPolicy

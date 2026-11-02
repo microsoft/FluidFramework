@@ -54,6 +54,13 @@ export interface ShareLinkFetcherProps {
 	 * Driver-owned headers take precedence on case-insensitive collisions.
 	 */
 	requestHeaders?: Readonly<Record<string, string>>;
+	/**
+	 * Propagate ODSP claims challenges without refreshing tokens.
+	 * Other authentication responses retain their existing handling.
+	 * The complete response header is available on the error's `wwwAuthenticate` property.
+	 * @defaultValue `false`
+	 */
+	propagateAuthChallenges?: boolean;
 }
 
 /**
@@ -217,6 +224,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			resolvedUrl,
 			this.logger,
 			this.shareLinkFetcherProps.requestHeaders,
+			this.shareLinkFetcherProps.propagateAuthChallenges,
 		).catch((error) => {
 			// This should imply that error is a non-retriable error.
 			this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
