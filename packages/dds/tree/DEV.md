@@ -26,6 +26,8 @@ It has no tree, schema, cursor, or forest dependencies.
 The unhydrated field holds `StringSequence` directly, alongside its leaf schema identifier.
 `StringSequenceCursor` reads that storage without creating a node for each atom.
 MapTree fields can supply a cursor through a representation-independent field hook.
+`FieldDelegatingCursor` composes those field cursors over an ordinary `StackCursor`.
+The wrapper handles field boundaries and path prefixes; the stack cursor only handles ordinary tree navigation.
 `StringChunk` adapts string pieces to the chunked forest.
 Each buffer contains at most 4096 UTF-16 code units.
 Pieces share buffers when split, and contiguous pieces from the same buffer coalesce without copying.

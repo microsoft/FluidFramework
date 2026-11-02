@@ -23,6 +23,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand, StringSequence } from "../../util/index.js";
 import { testSpecializedFieldCursor } from "../cursorTestSuite.js";
+import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("leaf-sequence-string");
 const objectType: TreeNodeSchemaIdentifier = brand("leaf-sequence-object");
@@ -154,9 +155,29 @@ describe("string sequence cursors", () => {
 		assert.equal(tryGetStringSequence(cursor), leaves);
 		const nodeFork = cursor.fork();
 		const nodePath = nodeFork.getPath();
+		const prefixParent = {
+			parent: undefined,
+			parentField: brand<FieldKey>("owner"),
+			parentIndex: 7,
+		};
+		const prefix = {
+			parent: prefixParent,
+			rootFieldOverride: brand<FieldKey>("prefixed"),
+			indexOffset: 10,
+		};
+		const prefixedNodePath = {
+			parent: prefixParent,
+			parentField: prefix.rootFieldOverride,
+			parentIndex: 11,
+		};
+		expectEqualPaths(nodeFork.getPath(prefix), prefixedNodePath);
 		cursor.enterField(second);
 		const emptyFork = cursor.fork();
 		assert.equal(emptyFork.getFieldLength(), 0);
+		expectEqualFieldPaths(emptyFork.getFieldPath(prefix), {
+			parent: prefixedNodePath,
+			field: second,
+		});
 		emptyFork.exitField();
 		assert.equal(emptyFork.value, "\u{1F600}");
 		assert.deepEqual(emptyFork.getPath(), nodePath);
