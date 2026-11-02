@@ -767,35 +767,6 @@ async function waitForCatchUp(
 }
 
 /**
- * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
- *
- * @remarks
- * By default, success requires submission and broadcast, without an additional acknowledgement wait.
- * To obtain an acknowledged snapshot version, use {@link loadSummarizerContainerAndMakeAcknowledgedSummary}.
- * The proposal's `summaryInfo.handle` need not equal the acknowledged snapshot version.
- *
- * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
- * @returns A result indicating success with summary details, or failure with an error for host-side handling.
- * @legacy @beta
- */
-export async function loadSummarizerContainerAndMakeSummary(
-	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
-): Promise<LoadSummarizerSummaryResult> {
-	let result = await loadSummarizerContainerAndMakeSummaryInternal(
-		loadSummarizerContainerProps,
-	);
-	if (!result.success) {
-		/**
-		 * We retry once as there is potential for a race condition when loading a snapshot.
-		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
-		 * will be closed so it can load from the new snapshot.
-		 */
-		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
-	}
-	return result;
-}
-
-/**
  * Loads a summarizer container, creates a summary, waits for service acknowledgement, and disposes the container.
  *
  * @remarks
@@ -905,6 +876,35 @@ async function summarizeAndWaitForAcknowledgement(
 		version: acknowledgement.data.summaryAckOp.contents.handle,
 		referenceSequenceNumber: broadcast.data.summarizeOp.referenceSequenceNumber,
 	};
+}
+
+/**
+ * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
+ *
+ * @remarks
+ * By default, success requires submission and broadcast, without an additional acknowledgement wait.
+ * To obtain an acknowledged snapshot version, use {@link loadSummarizerContainerAndMakeAcknowledgedSummary}.
+ * The proposal's `summaryInfo.handle` need not equal the acknowledged snapshot version.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns A result indicating success with summary details, or failure with an error for host-side handling.
+ * @legacy @beta
+ */
+export async function loadSummarizerContainerAndMakeSummary(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<LoadSummarizerSummaryResult> {
+	let result = await loadSummarizerContainerAndMakeSummaryInternal(
+		loadSummarizerContainerProps,
+	);
+	if (!result.success) {
+		/**
+		 * We retry once as there is potential for a race condition when loading a snapshot.
+		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
+		 * will be closed so it can load from the new snapshot.
+		 */
+		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
+	}
+	return result;
 }
 
 async function loadSummarizerContainerAndMakeSummaryInternal(
