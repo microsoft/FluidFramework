@@ -124,14 +124,15 @@ function resolveObjectSchemaOptions<
 	factoryOptions: TFactory | undefined,
 	schemaOptions: TSchema | undefined,
 ): ObjectSchemaOptions & TFactory & TSchema {
-	return {
+	const resolved: ObjectSchemaOptions & TFactory & TSchema = {
 		...factoryOptions,
 		...schemaOptions,
 		allowUnknownOptionalFields:
 			schemaOptions?.allowUnknownOptionalFields ??
 			factoryOptions?.allowUnknownOptionalFields ??
 			true,
-	} as ObjectSchemaOptions & TFactory & TSchema;
+	};
+	return resolved;
 }
 
 // TODO:
