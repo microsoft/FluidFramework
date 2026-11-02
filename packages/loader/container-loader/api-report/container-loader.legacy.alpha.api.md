@@ -4,6 +4,12 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
 // @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
@@ -188,6 +194,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @beta @legacy
+export function loadAndSummarize(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
