@@ -40,6 +40,9 @@ export interface CommitMetadata {
 }
 
 // @public
+export function composeSchemaFactoryOptions(base: SchemaFactoryOptions, override: SchemaFactoryOptions): SchemaFactoryOptions;
+
+// @public
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -816,8 +819,9 @@ export interface SchemaCompatibilityStatus {
 
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
-    constructor(
-    scope: TScope);
+    constructor(scopeOrOptions: TScope | (SchemaFactoryOptions & {
+        readonly scope: TScope;
+    }));
     array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T, undefined>;
     array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T, undefined>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, System_Unsafe.TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>, {
@@ -833,10 +837,17 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     readonly scope: TScope;
+    scopedFactory<const T extends TName>(name: T, settings?: SchemaFactoryOptions): SchemaFactory<ScopedSchemaName<TScope, T>>;
+    readonly settings: SchemaFactoryOptions;
 }
 
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
+
+// @public
+export interface SchemaFactoryOptions {
+    readonly objectOptions?: (name: number | string, fields: RestrictiveStringRecord<ImplicitFieldSchema>, options: ObjectSchemaOptions | undefined) => ObjectSchemaOptions | undefined;
+}
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
