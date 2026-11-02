@@ -926,9 +926,6 @@ export class SchemaFactoryBeta<
 	 */
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
-	/**
-	 * {@inheritDoc SchemaFactory.scopedFactory}
-	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
 		settings: SchemaFactoryBetaOptions = this.settings,
@@ -1722,9 +1719,6 @@ export class SchemaFactoryAlpha<
 		>;
 	}
 
-	/**
-	 * {@inheritDoc SchemaFactory.scopedFactory}
-	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
 		settings: SchemaFactoryAlphaOptions = this.settings,
