@@ -98,6 +98,25 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
+/**
+ * Merges factory settings for all API tiers.
+ *
+ * @param base - Settings inherited from the parent factory.
+ * @param overrides - Settings whose provided object-option properties take precedence.
+ * @returns Settings with shallowly merged object options.
+ */
+function mergeSchemaFactoryOptions(
+	base: SchemaFactoryAlphaOptions,
+	overrides: SchemaFactoryAlphaOptions,
+): SchemaFactoryAlphaOptions {
+	return {
+		objectOptions: {
+			...base.objectOptions,
+			...overrides.objectOptions,
+		},
+	};
+}
+
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -307,11 +326,8 @@ export class SchemaFactory<
 		settings: SchemaFactoryOptions = {},
 	): SchemaFactory<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactory({
+			...mergeSchemaFactoryOptions(this.settings, settings),
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: {
-				...this.settings.objectOptions,
-				...settings.objectOptions,
-			},
 		});
 	}
 
@@ -952,11 +968,8 @@ export class SchemaFactoryBeta<
 		settings: SchemaFactoryBetaOptions = {},
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryBeta({
+			...mergeSchemaFactoryOptions(this.settings, settings),
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: {
-				...this.settings.objectOptions,
-				...settings.objectOptions,
-			},
 		});
 	}
 
@@ -1762,11 +1775,8 @@ export class SchemaFactoryAlpha<
 		settings: SchemaFactoryAlphaOptions = {},
 	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryAlpha({
+			...mergeSchemaFactoryOptions(this.settings, settings),
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: {
-				...this.settings.objectOptions,
-				...settings.objectOptions,
-			},
 		});
 	}
 }
