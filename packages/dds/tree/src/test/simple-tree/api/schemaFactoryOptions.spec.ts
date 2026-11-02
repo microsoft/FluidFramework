@@ -35,7 +35,7 @@ describe("schemaFactoryOptions", () => {
 					for (const factory of [
 						sf,
 						sf.scopedFactory("child"),
-						sf.scopedFactory("replacement", {}),
+						sf.scopedFactory("empty", {}),
 					]) {
 						assert.equal(allowsUnknownOptionalFields(factory.object("Object", {})), false);
 						assert.equal(
@@ -70,12 +70,63 @@ describe("schemaFactoryOptions", () => {
 					true,
 				);
 			});
+
+			it("inherits defaults when derived settings are omitted or empty", () => {
+				const sf: SchemaFactory = new Factory({
+					scope: "test",
+					objectOptions: { allowUnknownOptionalFields: true },
+				});
+				for (const settings of [undefined, {}, { objectOptions: {} }]) {
+					const child = sf.scopedFactory("child", settings);
+					assert.equal(allowsUnknownOptionalFields(child.object("Object", {})), true);
+					assert.equal(
+						allowsUnknownOptionalFields(child.objectRecursive("Recursive", {})),
+						true,
+					);
+					assert.equal(
+						allowsUnknownOptionalFields(
+							child.scopedFactory("nested", {}).object("Nested", {}),
+						),
+						true,
+					);
+				}
+			});
 		});
 	}
 
 	for (const Factory of [SchemaFactoryBeta, SchemaFactoryAlpha]) {
 		describe(`${Factory.name} metadata defaults`, () => {
-			it("preserves defaults when callers extend a child factory's options", () => {
+			it("merges partial child settings without mutating either input", () => {
+				const defaults = Object.freeze({
+					allowUnknownOptionalFields: true,
+					metadata: Object.freeze({ description: "factory default" }),
+				});
+				const sf = new Factory({
+					scope: "test",
+					objectOptions: defaults,
+				});
+				Object.freeze(sf.settings);
+				const settings = Object.freeze({
+					objectOptions: Object.freeze({ allowUnknownOptionalFields: false }),
+				});
+				const child = sf.scopedFactory("child", settings);
+				const Schema = child.object("Child", {});
+				assert.equal(allowsUnknownOptionalFields(Schema), false);
+				assert.equal(Schema.metadata.description, "factory default");
+				const Original = sf.object("Original", {});
+				assert.equal(allowsUnknownOptionalFields(Original), true);
+				assert.equal(Original.metadata.description, "factory default");
+
+				const nested = child.scopedFactory("nested", {
+					objectOptions: { metadata: { description: "nested" } },
+				});
+				const Nested = nested.object("Nested", {});
+				assert.equal(allowsUnknownOptionalFields(Nested), false);
+				assert.equal(Nested.metadata.description, "nested");
+				assert.equal(Schema.metadata.description, "factory default");
+			});
+
+			it("replaces supplied child metadata as a whole while inheriting other options", () => {
 				const sf = new Factory({
 					scope: "test",
 					objectOptions: {
@@ -83,16 +134,11 @@ describe("schemaFactoryOptions", () => {
 						metadata: { description: "factory default" },
 					},
 				});
-				const child = sf.scopedFactory("child", {
-					...sf.settings,
-					objectOptions: {
-						...sf.settings.objectOptions,
-						allowUnknownOptionalFields: false,
-					},
-				});
+				const child = sf.scopedFactory("child", { objectOptions: { metadata: {} } });
 				const Schema = child.object("Child", {});
-				assert.equal(allowsUnknownOptionalFields(Schema), false);
-				assert.equal(Schema.metadata.description, "factory default");
+				assert.equal(allowsUnknownOptionalFields(Schema), true);
+				assert.deepEqual(Schema.metadata, {});
+				assert.equal(sf.object("Original", {}).metadata.description, "factory default");
 			});
 
 			it("replaces metadata without changing per-schema custom metadata typing", () => {
@@ -122,6 +168,30 @@ describe("schemaFactoryOptions", () => {
 		]) {
 			assert.equal(Schema.allowUnknownOptionalFields, false);
 		}
+	});
+
+	it("replaces child persisted metadata as a whole while inheriting other alpha options", () => {
+		const sf = new SchemaFactoryAlpha({
+			scope: "test",
+			objectOptions: {
+				allowUnknownOptionalFields: true,
+				metadata: { description: "factory default" },
+				persistedMetadata: { parent: true },
+			},
+		});
+		const child = sf.scopedFactory("child", {
+			objectOptions: { persistedMetadata: { child: true } },
+		});
+		for (const Schema of [
+			child.objectAlpha("Alpha", {}),
+			child.objectRecursive("Recursive", {}),
+			child.objectRecursiveAlpha("RecursiveAlpha", {}),
+		]) {
+			assert.equal(Schema.allowUnknownOptionalFields, true);
+			assert.equal(Schema.metadata.description, "factory default");
+			assert.deepEqual(Schema.persistedMetadata, { child: true });
+		}
+		assert.deepEqual(sf.objectAlpha("Original", {}).persistedMetadata, { parent: true });
 	});
 
 	it("shallowly replaces alpha persisted metadata while preserving other defaults", () => {

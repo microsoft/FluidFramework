@@ -130,9 +130,6 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
  * Pass one object with these options and the scope to {@link SchemaFactory}.
  * You can create these options and read them from {@link SchemaFactory.settings}.
  *
- * Spread these options and their `objectOptions` to create replacement settings for
- * {@link SchemaFactory.scopedFactory}.
- *
  * @public
  */
 export interface SchemaFactoryOptions {
@@ -168,9 +165,6 @@ export interface SchemaFactoryOptions {
  * @remarks
  * Pass one object with these options and the scope to {@link SchemaFactoryBeta}.
  * You can create these options and read them from {@link SchemaFactoryBeta.settings}.
- *
- * Spread these options and their `objectOptions` to create replacement settings for
- * {@link SchemaFactoryBeta.scopedFactory}.
  *
  * @beta
  */

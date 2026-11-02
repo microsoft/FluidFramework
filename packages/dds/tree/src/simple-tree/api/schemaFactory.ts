@@ -286,25 +286,32 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Creates a factory with a child scope and optional replacement settings.
+	 * Creates a factory with a child scope and settings merged with this factory's settings.
 	 *
 	 * @param name - The name to append to this factory's scope.
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * New settings can be combined with {@link SchemaFactory.settings} to create derived settings.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
 	 *
 	 * @typeParam T - The name appended to this factory's scope.
-	 * @returns A new factory with the child scope and the provided or inherited settings.
+	 * @returns A new factory with the child scope and merged settings.
 	 *
-	 * @remarks This does not change the original factory.
+	 * @remarks
+	 * Object-option properties are shallowly merged.
+	 * Nested option objects are replaced as whole values, not recursively merged.
+	 * Omitting `settings`, passing `{}`, or passing `{ objectOptions: {} }` preserves inherited settings.
 	 *
+	 * To create a factory without inherited settings, construct a new {@link SchemaFactory} with the desired scope.
 	 */
 	public scopedFactory<const T extends TName>(
 		name: T,
-		settings: SchemaFactoryOptions = this.settings,
+		settings: SchemaFactoryOptions = {},
 	): SchemaFactory<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactory({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: {
+				...this.settings.objectOptions,
+				...settings.objectOptions,
+			},
 		});
 	}
 
@@ -926,13 +933,30 @@ export class SchemaFactoryBeta<
 	 */
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
+	/**
+	 * Creates a beta factory with a child scope and merged settings.
+	 *
+	 * @param name - The name to append to this factory's scope.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
+	 *
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new beta factory with the child scope and merged settings.
+	 *
+	 * @remarks
+	 * See {@link SchemaFactory.scopedFactory} for merging behavior.
+	 * Provided metadata replaces inherited metadata as a whole value.
+	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
-		settings: SchemaFactoryBetaOptions = this.settings,
+		settings: SchemaFactoryBetaOptions = {},
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryBeta({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: {
+				...this.settings.objectOptions,
+				...settings.objectOptions,
+			},
 		});
 	}
 
@@ -1719,13 +1743,30 @@ export class SchemaFactoryAlpha<
 		>;
 	}
 
+	/**
+	 * Creates an alpha factory with a child scope and merged settings.
+	 *
+	 * @param name - The name to append to this factory's scope.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
+	 *
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new alpha factory with the child scope and merged settings.
+	 *
+	 * @remarks
+	 * See {@link SchemaFactory.scopedFactory} for merging behavior.
+	 * Provided metadata and persisted metadata replace their inherited values as whole objects.
+	 */
 	public override scopedFactory<const T extends TName>(
 		name: T,
-		settings: SchemaFactoryAlphaOptions = this.settings,
+		settings: SchemaFactoryAlphaOptions = {},
 	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryAlpha({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: {
+				...this.settings.objectOptions,
+				...settings.objectOptions,
+			},
 		});
 	}
 }
