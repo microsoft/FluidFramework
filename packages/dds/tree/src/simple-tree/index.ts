@@ -87,6 +87,8 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	scoped,
+	type SchemaFactoryOptions,
+	composeSchemaFactoryOptions,
 	SchemaFactoryBeta,
 	type SchemaFactoryBetaOptions,
 	composeSchemaFactoryBetaOptions,
