@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type FieldKey,
@@ -15,6 +15,7 @@ import {
 	type StoredSchemaCollection,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
+	type TreeValue,
 	type Value,
 	ValueSchema,
 	forEachNode,
@@ -44,113 +45,34 @@ import { type SpecializedNodeEncoderPolicy, baseNodeEncoders } from "./schemaBas
 import type { SpecializationStrategy } from "./schemaBasedEncodeVText.js";
 
 /**
- * The maximum depth below a node of a run field that the strategy reads leaf values from.
- */
-const maxSignatureDepth = 3;
-
-/**
- * The minimum average number of consecutive nodes with the same value of a leaf, for the strategy to pin the leaf.
+ * Creates a {@link SpecializationStrategy} that writes the leaves of run fields as pinned, dictionary or raw values.
  * @remarks
- * A pinned leaf starts a new run each time its value changes, so the leaf must change rarely.
- * This also limits the number of shapes of a pinned leaf to one for each `minAverageRunLength` nodes.
- */
-const minAverageRunLength = 8;
-
-/**
- * The approximate number of bytes that one constant leaf shape adds to the shapes table.
- */
-const dictionaryEntryBytes = 32;
-
-/**
- * The approximate average number of bytes of a shape index in the data, including its comma.
- * @remarks
- * The shapes table is sorted by use, so the most common values get indexes with one digit.
- */
-const averageIndexBytes = 2.5;
-
-/**
- * The minimum fraction of the nodes of a leaf that must have a value in the dictionary,
- * for the strategy to use a dictionary for the leaf.
- * @remarks
- * A value that is not in the dictionary costs a shape index more than it costs without a dictionary.
- */
-const minDictionaryCoverage = 0.75;
-
-/**
- * A required field of an object node type that the strategy reads.
- * @remarks
- * A "value" field holds one string, number or boolean leaf.
- * A "child" field holds one node, which the strategy reads in turn.
- */
-type PlanEntry =
-	| {
-			readonly kind: "value";
-			readonly key: FieldKey;
-			readonly leafType: TreeNodeSchemaIdentifier;
-	  }
-	| { readonly kind: "child"; readonly key: FieldKey; readonly polymorphic: boolean };
-
-/**
- * The fields that the strategy reads for one object node type, in field order.
- */
-type Plan = readonly PlanEntry[];
-
-/**
- * How a run field encodes one leaf of its nodes.
- * @remarks
- * A leaf is identified by its path from the node of the run field.
- * - "pin": the value is a constant of the specialized shape of the node. Nodes with different values have different shapes.
- * - "dictionary": the field of the leaf has the polymorphic shape.
- * Each value in the dictionary is a constant leaf shape, so the data holds only the index of that shape.
- * Other values use the base leaf shape, so the data holds the shape index and the value.
- * - "raw": the base shape encodes the leaf.
- */
-type LeafEncoding =
-	| { readonly kind: "pin" }
-	| { readonly kind: "dictionary"; readonly encoder: DictionaryLeafEncoder }
-	| { readonly kind: "raw" };
-
-/**
- * The statistics of one leaf over the nodes of one run field.
- */
-interface LeafStatistics {
-	readonly leafType: TreeNodeSchemaIdentifier;
-	/**
-	 * The number of nodes that have the leaf.
-	 */
-	count: number;
-	/**
-	 * The number of nodes that have the leaf with a different value than the previous node.
-	 */
-	changes: number;
-	/**
-	 * The number of nodes with each value.
-	 */
-	readonly values: Map<Value, number>;
-}
-
-/**
- * The path of the value of a run field node that is itself a leaf.
- */
-const ownValuePath = "";
-
-/**
- * Creates a {@link SpecializationStrategy} that chooses, for each leaf of the nodes of a sequence field,
- * whether to pin it, encode it with a dictionary, or leave it raw.
- * @remarks
- * The strategy applies to sequence fields that allow only one type, for example the atoms of text.
- * It does not read the batch before the encode.
- * Instead, the encoder of each of these fields reads the nodes of the field before it encodes them,
- * and counts how often each leaf changes between consecutive nodes, and how often each value occurs.
+ * Terms:
  *
- * - A leaf that changes rarely, such as the format of text, is pinned.
- * Consecutive nodes with the same pinned values use one shape, and the encoder writes them as one run.
- * - A leaf that changes often, but has a small set of common values, such as the characters of text,
- * uses a dictionary of constant leaf shapes. The data of each node holds only a shape index.
- * - Other leaves are written as they are.
+ * - Run field: a sequence field that allows only one type of node, for example the atoms of text.
  *
- * The encoder writes each run of two or more nodes as a nested array of the shape of the run.
- * A run of nodes with no data, for example nodes with all leaves pinned, is written as its length.
+ * - Leaf: a string, number or boolean value in a node of a run field, or in its child nodes to a depth of {@link maxSignatureDepth}.
+ * For example, the character and each format property of an atom of text.
+ *
+ * - Pin: the specialized shape of the node keeps the value of the leaf as a constant. The data does not hold the value.
+ *
+ * - Dictionary: each common value of the leaf has a constant leaf shape. The data holds only the index of that shape.
+ * Other values hold the index of the base leaf shape and the value.
+ *
+ * - Raw: the data holds the value.
+ *
+ * - Signature: the values of the pinned leaves of a node, and the types of its child nodes.
+ * Nodes with the same signature use the same shape.
+ *
+ * - Run: nodes that are next to each other and use the same shape. The encoder writes a run as one item.
+ *
+ * The strategy does not read the batch before the encode.
+ * The encoder of each run field reads the nodes of its field, and then writes them.
+ * It pins a leaf that changes rarely, such as a format property.
+ * It uses a dictionary for a leaf that changes often but has few common values, such as a character.
+ * All other leaves are raw.
+ *
+ * Incremental fields keep their usual encoder.
  */
 export function runDictionarySpecialization(): SpecializationStrategy {
 	return (
@@ -165,19 +87,19 @@ export function runDictionarySpecialization(): SpecializationStrategy {
 		}
 		const shared = new SharedEncoders(plans);
 		return (base, schemaName) => {
-			const keys = runFields.get(schemaName);
-			if (keys === undefined) {
+			const elementTypes = runFields.get(schemaName);
+			if (elementTypes === undefined) {
 				return base;
 			}
 			return new NodeShapeBasedEncoder(
 				base.type,
 				base.value,
-				base.specializedFieldEncoders.map((field) =>
-					// The incremental encoder encodes incremental fields separately, so they keep their encoder.
-					keys.has(field.key) && field.encoder !== incrementalFieldEncoder
-						? { key: field.key, encoder: new RunFieldEncoder(shared) }
-						: field,
-				),
+				base.specializedFieldEncoders.map((field) => {
+					const elementType = elementTypes.get(field.key);
+					return elementType === undefined || field.encoder === incrementalFieldEncoder
+						? field
+						: { key: field.key, encoder: new RunFieldEncoder(shared, elementType) };
+				}),
 				base.otherFieldsEncoder,
 			);
 		};
@@ -185,404 +107,25 @@ export function runDictionarySpecialization(): SpecializationStrategy {
 }
 
 /**
- * The encoders and caches that all encoders of one encode share.
+ * A required field of an object node type that the strategy reads.
  * @remarks
- * Each shape has only one encoder, so the shapes table holds each shape one time.
+ * A "value" field holds one leaf. A "child" field holds one node, and the strategy reads the fields of that node too.
  */
-class SharedEncoders {
-	private readonly constantLeaves: NestedMap<
-		TreeNodeSchemaIdentifier,
-		Value,
-		NodeShapeBasedEncoder
-	> = new Map();
-	private readonly specialized = new Map<string, NodeEncoder>();
-	private readonly fieldEncoders = new Map<NodeEncoder, FieldEncoder>();
-	private readonly runShapes = new Map<NodeEncoder, NestedArrayShape>();
-	private readonly dictionaries = new Map<string, DictionaryLeafEncoder>();
-	private readonly incrementalKeys = new Map<NodeShapeBasedEncoder, ReadonlySet<FieldKey>>();
-
-	public constructor(public readonly plans: ReadonlyMap<TreeNodeSchemaIdentifier, Plan>) {}
-
-	/**
-	 * Gets the encoder of a leaf of type `leafType` with the constant `value`.
-	 */
-	public constantLeaf(leafType: TreeNodeSchemaIdentifier, value: Value): NodeEncoder {
-		return getOrCreateInNestedMap(
-			this.constantLeaves,
-			leafType,
-			value,
-			() => new NodeShapeBasedEncoder(leafType, [value], [], undefined),
-		);
-	}
-
-	/**
-	 * Gets the shape of a run of nodes that `encoder` encodes.
-	 */
-	public runShape(encoder: NodeEncoder): NestedArrayShape {
-		return getOrCreate(this.runShapes, encoder, () => new NestedArrayShape(encoder.shape));
-	}
-
-	/**
-	 * Gets the dictionary encoder for leaves of type `leafType` with the values in `admitted`.
-	 */
-	public dictionary(
-		leafType: TreeNodeSchemaIdentifier,
-		admitted: readonly Value[],
-	): DictionaryLeafEncoder {
-		const values = admitted.map((value) => JSON.stringify(value)).sort();
-		return getOrCreate(
-			this.dictionaries,
-			`${leafType}:${JSON.stringify(values)}`,
-			() =>
-				new DictionaryLeafEncoder(this.dictionaries.size, leafType, new Set(admitted), this),
-		);
-	}
-
-	/**
-	 * Gets the specialized encoder for the node at `cursor`.
-	 * @param base - The encoder of the type of the node, from the context.
-	 * @param path - The path of the node from the node of the run field.
-	 * @param encodings - The encoding of each leaf of the nodes of the run field, by path.
-	 * @returns The encoder, and a key that is the same for nodes with the same encoder.
-	 */
-	public specialize(
-		cursor: ITreeCursorSynchronous,
-		base: NodeEncoder,
-		depth: number,
-		path: string,
-		encodings: ReadonlyMap<string, LeafEncoding>,
-		context: EncoderContext,
-	): { encoder: NodeEncoder; key: string } {
-		const ownEncoding = depth === 0 ? encodings.get(ownValuePath) : undefined;
-		if (ownEncoding !== undefined) {
-			// The node is a leaf.
-			// Only nodes of a run field are leaves with an encoding, and the run field does not use their key.
-			const value = cursor.value;
-			const leafEncoder =
-				ownEncoding.kind === "pin" ||
-				(ownEncoding.kind === "dictionary" && ownEncoding.encoder.admitted.has(value))
-					? this.constantLeaf(cursor.type, value)
-					: base;
-			return { encoder: leafEncoder, key: cursor.type };
-		}
-
-		const plan = depth < maxSignatureDepth ? this.plans.get(cursor.type) : undefined;
-		if (plan === undefined || !(base instanceof NodeShapeBasedEncoder)) {
-			return { encoder: base, key: cursor.type };
-		}
-		const incremental = getOrCreate(
-			this.incrementalKeys,
-			base,
-			() =>
-				new Set(
-					base.specializedFieldEncoders
-						.filter((field) => field.encoder === incrementalFieldEncoder)
-						.map((field) => field.key),
-				),
-		);
-		const overrides: KeyedFieldEncoder[] = [];
-		let key = `${cursor.type}(`;
-		for (const entry of plan) {
-			// The incremental encoder encodes incremental fields separately, so they keep their encoder.
-			if (incremental.has(entry.key)) {
-				continue;
-			}
-			cursor.enterField(entry.key);
-			if (cursor.getFieldLength() !== 1) {
-				cursor.exitField();
-				return { encoder: base, key: cursor.type };
-			}
-			cursor.enterNode(0);
-			if (entry.kind === "value") {
-				const encoding = encodings.get(`${path}/${entry.key}`);
-				if (encoding?.kind === "pin") {
-					key += `${JSON.stringify(cursor.value)},`;
-					overrides.push({
-						key: entry.key,
-						encoder: this.asField(this.constantLeaf(entry.leafType, cursor.value)),
-					});
-				} else if (encoding?.kind === "dictionary") {
-					key += `~${encoding.encoder.id},`;
-					overrides.push({ key: entry.key, encoder: encoding.encoder });
-				} else {
-					key += "_,";
-				}
-			} else {
-				const childBase = context.nodeEncoderFromSchema(cursor.type);
-				const child = this.specialize(
-					cursor,
-					childBase,
-					depth + 1,
-					`${path}/${entry.key}:${cursor.type}`,
-					encodings,
-					context,
-				);
-				// The "@" makes the key of a child different from a JSON value.
-				key += `@${child.key},`;
-				if (entry.polymorphic || child.encoder !== childBase) {
-					overrides.push({ key: entry.key, encoder: this.asField(child.encoder) });
-				}
-			}
-			cursor.exitNode();
-			cursor.exitField();
-		}
-		if (overrides.length === 0) {
-			return { encoder: base, key: cursor.type };
-		}
-		key += ")";
-		const encoder = getOrCreate(
-			this.specialized,
-			key,
-			() => new SpecializedNodeShapeEncoder(base, overrides),
-		);
-		return { encoder, key };
-	}
-
-	private asField(encoder: NodeEncoder): FieldEncoder {
-		return getOrCreate(this.fieldEncoders, encoder, () => asFieldEncoder(encoder));
-	}
-}
+type PlanEntry =
+	| {
+			readonly kind: "value";
+			readonly key: FieldKey;
+			readonly leafType: TreeNodeSchemaIdentifier;
+	  }
+	| { readonly kind: "child"; readonly key: FieldKey; readonly polymorphic: boolean };
 
 /**
- * Encodes a field of one leaf with a dictionary of constant leaf shapes.
- * @remarks
- * The shape of the field is polymorphic, so the data of each leaf starts with the index of its shape.
- * A value in the dictionary uses its constant leaf shape, so the data holds only the index.
- * Another value uses the base leaf shape, so the data also holds the value.
+ * The fields that the strategy reads from the nodes of one object node type, in field order.
  */
-class DictionaryLeafEncoder implements FieldEncoder {
-	public constructor(
-		/**
-		 * A number that is different for each dictionary of an encode.
-		 */
-		public readonly id: number,
-		private readonly leafType: TreeNodeSchemaIdentifier,
-		public readonly admitted: ReadonlySet<Value>,
-		private readonly shared: SharedEncoders,
-	) {}
-
-	public get shape(): AnyShape {
-		return AnyShape.instance;
-	}
-
-	public encodeField(
-		cursor: ITreeCursorSynchronous,
-		context: EncoderContext,
-		outputBuffer: BufferFormat,
-	): void {
-		forEachNode(cursor, () => {
-			const value = cursor.value;
-			const encoder = this.admitted.has(value)
-				? this.shared.constantLeaf(this.leafType, value)
-				: context.nodeEncoderFromSchema(this.leafType);
-			AnyShape.encodeNode(cursor, context, outputBuffer, encoder);
-		});
-	}
-}
+type Plan = readonly PlanEntry[];
 
 /**
- * The shape of a field that {@link RunFieldEncoder} encodes.
- * @remarks
- * This shape is a nested array. Each item of the array starts with its shape.
- */
-const runFieldShape = new NestedArrayShape(AnyShape.instance);
-
-/**
- * Encodes a sequence field of one type, and writes consecutive nodes with the same shape as one run.
- * @remarks
- * The encoder reads the nodes of the field three times:
- * to choose the encoding of each leaf, to choose the shape of each node, and to encode the runs.
- *
- * Each item of the nested array starts with a shape.
- * For one node, this shape is the shape of the node, and the data of the node follows.
- * For a run of nodes, this shape is a nested array of the shape of the node, and a nested array with the data of all nodes follows.
- * If the nodes have no data, the length of the run replaces this nested array.
- */
-class RunFieldEncoder implements FieldEncoder {
-	public constructor(private readonly shared: SharedEncoders) {}
-
-	public get shape(): NestedArrayShape {
-		return runFieldShape;
-	}
-
-	public encodeField(
-		cursor: ITreeCursorSynchronous,
-		context: EncoderContext,
-		outputBuffer: BufferFormat,
-	): void {
-		const length = cursor.getFieldLength();
-		if (length === 0) {
-			// The format encodes a nested array with no items as its length.
-			outputBuffer.push(0);
-			return;
-		}
-
-		const encodings = this.chooseEncodings(cursor);
-		const choices: NodeEncoder[] = [];
-		// If all leaves are raw, all nodes use the base shape of their type, so the encoder does not read their leaves again.
-		const allRaw = [...encodings.values()].every((encoding) => encoding.kind === "raw");
-		forEachNode(cursor, () => {
-			const base = context.nodeEncoderFromSchema(cursor.type);
-			choices.push(
-				allRaw
-					? base
-					: this.shared.specialize(cursor, base, 0, ownValuePath, encodings, context).encoder,
-			);
-		});
-
-		const buffer: BufferFormat = [];
-		cursor.firstNode();
-		for (let start = 0; start < length; ) {
-			const encoder = choices[start] ?? fail("missing choice");
-			let end = start + 1;
-			for (; end < length; end++) {
-				if (choices[end] !== encoder) {
-					break;
-				}
-			}
-			// Each branch moves the cursor to the node after the run.
-			if (end - start === 1) {
-				AnyShape.encodeNode(cursor, context, buffer, encoder);
-				cursor.nextNode();
-			} else {
-				buffer.push(this.shared.runShape(encoder));
-				const items: BufferFormat = [];
-				let allNonZeroSize = true;
-				for (let index = start; index < end; index++) {
-					const before = items.length;
-					encoder.encodeNode(cursor, context, items);
-					allNonZeroSize &&= items.length !== before;
-					cursor.nextNode();
-				}
-				if (items.length === 0) {
-					buffer.push(end - start);
-				} else {
-					assert(allNonZeroSize, "all nodes of a run must have data, or none of them");
-					buffer.push(items);
-				}
-			}
-			start = end;
-		}
-		outputBuffer.push(buffer);
-	}
-
-	/**
-	 * Reads the nodes of the field at `cursor`, and chooses the encoding of each leaf.
-	 * @returns The encoding of each leaf, by path.
-	 */
-	private chooseEncodings(cursor: ITreeCursorSynchronous): Map<string, LeafEncoding> {
-		cursor.enterNode(0);
-		const type = cursor.type;
-		const isLeaf = !this.shared.plans.has(type) && cursor.value !== undefined;
-		cursor.exitNode();
-		if (isLeaf) {
-			// Fast path for a field of leaves, which has only one path.
-			const leaf: LeafStatistics = { leafType: type, count: 0, changes: 0, values: new Map() };
-			let previousValue: Value;
-			forEachNode(cursor, () => {
-				const value = cursor.value;
-				if (leaf.count > 0 && value !== previousValue) {
-					leaf.changes++;
-				}
-				leaf.count++;
-				leaf.values.set(value, (leaf.values.get(value) ?? 0) + 1);
-				previousValue = value;
-			});
-			return new Map([[ownValuePath, this.chooseEncoding(leaf)]]);
-		}
-
-		const statistics = new Map<string, LeafStatistics>();
-		let previous = new Map<string, Value>();
-		let current = new Map<string, Value>();
-		forEachNode(cursor, () => {
-			current.clear();
-			readLeaves(cursor, this.shared.plans, (path, leafType, value) => {
-				const leaf = getOrCreate(statistics, path, () => ({
-					leafType,
-					count: 0,
-					changes: 0,
-					values: new Map<Value, number>(),
-				}));
-				leaf.count++;
-				leaf.values.set(value, (leaf.values.get(value) ?? 0) + 1);
-				if (previous.has(path) && previous.get(path) !== value) {
-					leaf.changes++;
-				}
-				current.set(path, value);
-			});
-			[previous, current] = [current, previous];
-		});
-
-		const encodings = new Map<string, LeafEncoding>();
-		for (const [path, leaf] of statistics) {
-			encodings.set(path, this.chooseEncoding(leaf));
-		}
-		return encodings;
-	}
-
-	/**
-	 * Chooses the encoding of one leaf from its statistics.
-	 */
-	private chooseEncoding(leaf: LeafStatistics): LeafEncoding {
-		if (leaf.changes * minAverageRunLength <= leaf.count) {
-			return { kind: "pin" };
-		}
-		// A value is in the dictionary if the bytes it saves in the data are more than the bytes of its shape.
-		const admitted: Value[] = [];
-		let covered = 0;
-		for (const [value, count] of leaf.values) {
-			const savedBytes = JSON.stringify(value).length + 1 - averageIndexBytes;
-			if (count * savedBytes > dictionaryEntryBytes) {
-				admitted.push(value);
-				covered += count;
-			}
-		}
-		if (covered >= leaf.count * minDictionaryCoverage) {
-			return { kind: "dictionary", encoder: this.shared.dictionary(leaf.leafType, admitted) };
-		}
-		return { kind: "raw" };
-	}
-}
-
-/**
- * Calls `visit` for each leaf that the strategy reads from the node at `cursor`.
- * @remarks
- * If the node is a leaf, its path is {@link ownValuePath}.
- * The path of a leaf below the node includes the key of each field and the type of each node on the way to the leaf.
- * The function puts the cursor back where it was.
- */
-function readLeaves(
-	cursor: ITreeCursorSynchronous,
-	plans: ReadonlyMap<TreeNodeSchemaIdentifier, Plan>,
-	visit: (path: string, leafType: TreeNodeSchemaIdentifier, value: Value) => void,
-): void {
-	if (!plans.has(cursor.type)) {
-		if (cursor.value !== undefined) {
-			visit(ownValuePath, cursor.type, cursor.value);
-		}
-		return;
-	}
-	const read = (path: string, depth: number): void => {
-		const plan = depth < maxSignatureDepth ? plans.get(cursor.type) : undefined;
-		for (const entry of plan ?? []) {
-			cursor.enterField(entry.key);
-			if (cursor.getFieldLength() === 1) {
-				cursor.enterNode(0);
-				if (entry.kind === "value") {
-					visit(`${path}/${entry.key}`, entry.leafType, cursor.value);
-				} else {
-					read(`${path}/${entry.key}:${cursor.type}`, depth + 1);
-				}
-				cursor.exitNode();
-			}
-			cursor.exitField();
-		}
-	};
-	read(ownValuePath, 0);
-}
-
-/**
- * Returns true if `nodeSchema` is a leaf with a string, number or boolean value.
+ * Returns true if `nodeSchema` is the schema of a leaf with a string, number or boolean value.
  */
 function isValueLeaf(nodeSchema: TreeNodeStoredSchema | undefined): boolean {
 	return (
@@ -596,9 +139,9 @@ function isValueLeaf(nodeSchema: TreeNodeStoredSchema | undefined): boolean {
 /**
  * Makes the {@link Plan} of each object node type.
  * @remarks
- * A plan includes the required fields that are not identifier fields,
- * if they hold a string, number or boolean leaf, or an object node, or allow more than one type.
- * Types without fields in their plan are not in the result.
+ * A plan holds the required fields that are not identifier fields,
+ * if they hold a leaf or an object node, or if they allow more than one type.
+ * Types with no fields in their plan are not in the result.
  */
 function makePlans(
 	schema: StoredSchemaCollection,
@@ -635,16 +178,15 @@ function makePlans(
 }
 
 /**
- * Finds the sequence fields that allow only one type,
- * if that type has a plan or is a leaf with a string, number or boolean value.
- * @returns The keys of these fields, by node type.
+ * Finds the run fields whose node type has a {@link Plan} or is a leaf type.
+ * @returns The node type of each run field, by parent node type and then by field key.
  */
 function findRunFields(
 	schema: StoredSchemaCollection,
 	policy: SchemaPolicy,
 	plans: ReadonlyMap<TreeNodeSchemaIdentifier, Plan>,
-): Map<TreeNodeSchemaIdentifier, Set<FieldKey>> {
-	const result = new Map<TreeNodeSchemaIdentifier, Set<FieldKey>>();
+): Map<TreeNodeSchemaIdentifier, Map<FieldKey, TreeNodeSchemaIdentifier>> {
+	const result = new Map<TreeNodeSchemaIdentifier, Map<FieldKey, TreeNodeSchemaIdentifier>>();
 	for (const [type, nodeSchema] of schema.nodeSchema) {
 		if (!(nodeSchema instanceof ObjectNodeStoredSchema)) {
 			continue;
@@ -656,9 +198,576 @@ function findRunFields(
 				(plans.has(elementType) || isValueLeaf(schema.nodeSchema.get(elementType))) &&
 				policy.fieldKinds.get(field.kind)?.multiplicity === Multiplicity.Sequence
 			) {
-				getOrCreate(result, type, () => new Set()).add(key);
+				getOrCreate(result, type, () => new Map()).set(key, elementType);
 			}
 		}
 	}
 	return result;
+}
+
+/**
+ * Writes a required field of one leaf with a dictionary.
+ * @remarks
+ * The field shape is polymorphic, so the data starts with a shape index.
+ * A value in the dictionary writes the index of its constant leaf shape only.
+ * Other values write the index of the base leaf shape and the value.
+ */
+class DictionaryLeafEncoder implements FieldEncoder {
+	public readonly shape = AnyShape.instance;
+
+	public constructor(
+		private readonly leafType: TreeNodeSchemaIdentifier,
+		/**
+		 * The constant leaf encoder of each value in the dictionary.
+		 */
+		public readonly encoders: ReadonlyMap<Value, NodeEncoder>,
+	) {}
+
+	public encodeField(
+		cursor: ITreeCursorSynchronous,
+		context: EncoderContext,
+		outputBuffer: BufferFormat,
+	): void {
+		cursor.enterNode(0);
+		const encoder =
+			this.encoders.get(cursor.value) ?? context.nodeEncoderFromSchema(this.leafType);
+		AnyShape.encodeNode(cursor, context, outputBuffer, encoder);
+		cursor.exitNode();
+	}
+}
+
+/**
+ * How a run field writes a leaf: "pin", a {@link DictionaryLeafEncoder}, or `undefined` for raw.
+ */
+type LeafEncoding = "pin" | DictionaryLeafEncoder | undefined;
+
+/**
+ * A leaf of the nodes of one run field, and its values in these nodes.
+ */
+class LeafPath {
+	/**
+	 * The value in each node that has the leaf, in node order.
+	 */
+	public readonly values: Value[] = [];
+	/**
+	 * The number of nodes whose value is different from the value in the previous node.
+	 */
+	public changes = 0;
+	/**
+	 * How the run field writes the leaf. The run field sets it after it reads all nodes.
+	 */
+	public encoding: LeafEncoding;
+	private previousIndex = -1;
+
+	public constructor(public readonly leafType: TreeNodeSchemaIdentifier) {}
+
+	/**
+	 * Adds the value of the leaf in the node at `index` of the run field. Add the nodes in order.
+	 */
+	public add(index: number, value: Value): void {
+		if (this.previousIndex === index - 1 && this.values.at(-1) !== value) {
+			this.changes++;
+		}
+		this.values.push(value);
+		this.previousIndex = index;
+	}
+}
+
+/**
+ * The maximum depth of the child nodes of a run field node that the strategy reads leaves from.
+ */
+const maxSignatureDepth = 3;
+
+/**
+ * A token of a signature: the value of a leaf, or the type of a child node.
+ */
+type Token = Value | TreeNodeSchemaIdentifier;
+
+/**
+ * The fields that the strategy reads from the nodes of one type, at one position in the child nodes of the nodes of a run field.
+ * @remarks
+ * A leaf field has a {@link LeafPath}. A child field has one path node for each type of child node.
+ * The path nodes of a run field make a tree, so the encoder finds the {@link LeafPath} of a leaf without a string path.
+ */
+class PathNode {
+	/**
+	 * The fields that the strategy reads, in {@link Plan} order.
+	 */
+	public readonly fields: readonly FieldPath[];
+
+	/**
+	 * @param depth - The depth of the nodes in the child nodes of the nodes of the run field.
+	 * @param leaves - Receives the {@link LeafPath} of each leaf field of this path node and of its child path nodes.
+	 */
+	public constructor(
+		type: TreeNodeSchemaIdentifier,
+		private readonly depth: number,
+		private readonly plans: ReadonlyMap<TreeNodeSchemaIdentifier, Plan>,
+		private readonly leaves: LeafPath[],
+	) {
+		const plan = depth < maxSignatureDepth ? plans.get(type) : undefined;
+		this.fields = (plan ?? []).map((entry): FieldPath => {
+			if (entry.kind === "child") {
+				return { key: entry.key, polymorphic: entry.polymorphic, types: new Map() };
+			}
+			const leaf = new LeafPath(entry.leafType);
+			leaves.push(leaf);
+			return { key: entry.key, leaf };
+		});
+	}
+
+	/**
+	 * Adds the leaves of the node at `cursor` to their {@link LeafPath}s, and adds one {@link Token} for each field to `trace`.
+	 * @param index - The index of the node in the run field.
+	 * @returns `false` if a field of the node does not have exactly one node. A node like this has no signature.
+	 */
+	public add(cursor: ITreeCursorSynchronous, index: number, trace: Token[]): boolean {
+		for (const field of this.fields) {
+			cursor.enterField(field.key);
+			if (cursor.getFieldLength() !== 1) {
+				cursor.exitField();
+				return false;
+			}
+			cursor.enterNode(0);
+			let complete = true;
+			if ("leaf" in field) {
+				const value = cursor.value;
+				field.leaf.add(index, value);
+				trace.push(value);
+			} else {
+				const type = cursor.type;
+				trace.push(type);
+				complete = getOrCreate(
+					field.types,
+					type,
+					() => new PathNode(type, this.depth + 1, this.plans, this.leaves),
+				).add(cursor, index, trace);
+			}
+			cursor.exitNode();
+			cursor.exitField();
+			if (!complete) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+/**
+ * A field of a {@link PathNode}: a leaf field or a child field.
+ */
+type FieldPath =
+	| { readonly key: FieldKey; readonly leaf: LeafPath }
+	| {
+			readonly key: FieldKey;
+			readonly polymorphic: boolean;
+			readonly types: Map<TreeNodeSchemaIdentifier, PathNode>;
+	  };
+
+/**
+ * A node of a trie of the signatures of the nodes of one run field. Each edge is a {@link Token}.
+ */
+interface TrieNode {
+	readonly children: Map<Token, TrieNode>;
+	/**
+	 * The encoder of the nodes whose signature ends at this trie node.
+	 * The run field sets it at the first node with this signature.
+	 */
+	encoder?: NodeEncoder;
+}
+
+/**
+ * Makes a {@link TrieNode} with no children.
+ */
+const newTrieNode = (): TrieNode => ({ children: new Map() });
+
+/**
+ * Finds the trie node where the signature of a node ends, and adds the missing trie nodes.
+ * @remarks
+ * Reads the tokens that {@link PathNode.add} added to `trace` for the node.
+ * Uses the tokens of pinned leaves and child types, and skips the tokens of other leaves.
+ * @param path - The path node of the node.
+ * @param reader - The position of the next token in `trace`. The function moves it past the tokens of the node.
+ */
+function replaySignature(
+	path: PathNode,
+	node: TrieNode,
+	trace: readonly Token[],
+	reader: { position: number },
+): TrieNode {
+	let current = node;
+	for (const field of path.fields) {
+		const token = trace[reader.position++];
+		if (!("leaf" in field)) {
+			const type = token as TreeNodeSchemaIdentifier;
+			const childPath = field.types.get(type) ?? fail("child type was not read");
+			current = replaySignature(
+				childPath,
+				getOrCreate(current.children, type, newTrieNode),
+				trace,
+				reader,
+			);
+		} else if (field.leaf.encoding === "pin") {
+			current = getOrCreate(current.children, token, newTrieNode);
+		}
+	}
+	return current;
+}
+
+/**
+ * The encoders that all run fields of one encode share.
+ * @remarks
+ * The shapes table holds one shape for each encoder object, so this class keeps one encoder object for each shape.
+ */
+class SharedEncoders {
+	private readonly constantLeaves: NestedMap<TreeNodeSchemaIdentifier, Value, NodeEncoder> =
+		new Map();
+	private readonly dictionaries = new Map<string, DictionaryLeafEncoder>();
+	/**
+	 * The specialized encoders, by their base encoder and the encoders of their fields.
+	 */
+	private readonly specialized = new Map<string, NodeEncoder>();
+	/**
+	 * A number for each field key and encoder in the keys of {@link SharedEncoders.specialized}.
+	 */
+	private readonly ids = new Map<unknown, number>();
+
+	public constructor(public readonly plans: ReadonlyMap<TreeNodeSchemaIdentifier, Plan>) {}
+
+	/**
+	 * Gets the encoder of a leaf of type `leafType` with the constant `value`.
+	 */
+	public constantLeaf(leafType: TreeNodeSchemaIdentifier, value: Value): NodeEncoder {
+		return getOrCreateInNestedMap(
+			this.constantLeaves,
+			leafType,
+			value,
+			() => new NodeShapeBasedEncoder(leafType, [value], [], undefined),
+		);
+	}
+
+	/**
+	 * Gets the {@link DictionaryLeafEncoder} for leaves of type `leafType` with the values in `admitted`.
+	 */
+	public dictionary(
+		leafType: TreeNodeSchemaIdentifier,
+		admitted: readonly Value[],
+	): DictionaryLeafEncoder {
+		const values = admitted.map((value) => JSON.stringify(value)).sort();
+		return getOrCreate(
+			this.dictionaries,
+			`${leafType}:${JSON.stringify(values)}`,
+			() =>
+				new DictionaryLeafEncoder(
+					leafType,
+					new Map(admitted.map((value) => [value, this.constantLeaf(leafType, value)])),
+				),
+		);
+	}
+
+	/**
+	 * Gets the specialized encoder for the node at `cursor`.
+	 * @remarks
+	 * The shape keeps each pinned leaf as a constant, and writes each dictionary leaf with its {@link DictionaryLeafEncoder}.
+	 * It keeps the encoder of a child node if the child is specialized or its field allows more than one type.
+	 * Incremental fields keep their encoder.
+	 * Returns `base` if nothing is specialized.
+	 * Each field that `path` reads must have exactly one node.
+	 * @param base - The encoder of the type of the node.
+	 * @param path - The {@link PathNode} of the node.
+	 */
+	public specialize(
+		cursor: ITreeCursorSynchronous,
+		base: NodeEncoder,
+		path: PathNode,
+		context: EncoderContext,
+	): NodeEncoder {
+		if (!(base instanceof NodeShapeBasedEncoder)) {
+			return base;
+		}
+		const overrides: KeyedFieldEncoder[] = [];
+		let key = `${this.id(base)}`;
+		for (const field of path.fields) {
+			if (
+				base.specializedFieldEncoders.some(
+					(baseField) =>
+						baseField.key === field.key && baseField.encoder === incrementalFieldEncoder,
+				)
+			) {
+				continue;
+			}
+			cursor.enterField(field.key);
+			cursor.enterNode(0);
+			let override: NodeEncoder | DictionaryLeafEncoder | undefined;
+			if ("leaf" in field) {
+				const encoding = field.leaf.encoding;
+				override =
+					encoding === "pin" ? this.constantLeaf(field.leaf.leafType, cursor.value) : encoding;
+			} else {
+				const childBase = context.nodeEncoderFromSchema(cursor.type);
+				const childPath = field.types.get(cursor.type) ?? fail("child type was not read");
+				const child = this.specialize(cursor, childBase, childPath, context);
+				override = field.polymorphic || child !== childBase ? child : undefined;
+			}
+			cursor.exitNode();
+			cursor.exitField();
+			if (override !== undefined) {
+				overrides.push({
+					key: field.key,
+					encoder:
+						override instanceof DictionaryLeafEncoder ? override : asFieldEncoder(override),
+				});
+				key += `,${this.id(field.key)}=${this.id(override)}`;
+			}
+		}
+		return overrides.length === 0
+			? base
+			: getOrCreate(
+					this.specialized,
+					key,
+					() => new SpecializedNodeShapeEncoder(base, overrides),
+				);
+	}
+
+	private id(value: unknown): number {
+		return getOrCreate(this.ids, value, () => this.ids.size);
+	}
+}
+
+/**
+ * The strategy pins a leaf if its value changes at most one time in this number of nodes, on average.
+ * @remarks
+ * Each change of a pinned leaf starts a new run, and each value of a pinned leaf adds shapes.
+ */
+const minAverageRunLength = 8;
+
+/**
+ * The approximate number of bytes that one constant leaf shape adds to the shapes table.
+ */
+const dictionaryEntryBytes = 32;
+
+/**
+ * The approximate average number of bytes of a shape index and its comma in the data.
+ */
+const averageIndexBytes = 2.5;
+
+/**
+ * The maximum number of different values of a leaf that the strategy counts.
+ * @remarks
+ * Other values are not in the dictionary. This limits the time and memory for leaves with many values.
+ */
+const maxCountedValues = 1000;
+
+/**
+ * The minimum part of the nodes of a leaf that must have a value in the dictionary, for the leaf to use the dictionary.
+ * @remarks
+ * A value that is not in the dictionary writes one more shape index than a raw value.
+ */
+const minDictionaryCoverage = 0.75;
+
+/**
+ * Returns true if a value in `count` nodes saves more bytes in the data than its constant leaf shape adds to the shapes table.
+ * @param jsonLength - The length of the value as JSON.
+ */
+function savesBytes(count: number, jsonLength: number): boolean {
+	return count * (jsonLength + 1 - averageIndexBytes) > dictionaryEntryBytes;
+}
+
+/**
+ * Chooses how a run field writes a leaf.
+ * @remarks
+ * Returns "pin" if the leaf changes rarely.
+ * If not, admits each value that {@link savesBytes}, to a maximum of {@link maxCountedValues} different values.
+ * Returns a dictionary of these values if they cover enough nodes, and `undefined` (raw) if not.
+ * A fast maximum JSON length removes most values before the exact length is calculated.
+ */
+function chooseLeafEncoding(leaf: LeafPath, shared: SharedEncoders): LeafEncoding {
+	const count = leaf.values.length;
+	if (leaf.changes * minAverageRunLength <= count) {
+		return "pin";
+	}
+	const counts = new Map<Value, number>();
+	for (const value of leaf.values) {
+		const valueCount = counts.get(value);
+		if (valueCount !== undefined) {
+			counts.set(value, valueCount + 1);
+		} else if (counts.size < maxCountedValues) {
+			counts.set(value, 1);
+		}
+	}
+	const admitted: Value[] = [];
+	let covered = 0;
+	for (const [value, valueCount] of counts) {
+		const maxJsonLength = typeof value === "string" ? value.length * 6 + 2 : 24;
+		if (
+			savesBytes(valueCount, maxJsonLength) &&
+			savesBytes(valueCount, JSON.stringify(value).length)
+		) {
+			admitted.push(value);
+			covered += valueCount;
+		}
+	}
+	return covered >= count * minDictionaryCoverage
+		? shared.dictionary(leaf.leafType, admitted)
+		: undefined;
+}
+
+/**
+ * The shape of the data of a run field: a nested array where each item starts with its shape.
+ */
+const runFieldShape = new NestedArrayShape(AnyShape.instance);
+
+/**
+ * Writes a run field.
+ * @remarks
+ * Reads the leaves of each node one time, to choose how to write each leaf and to record the signature of each node.
+ * Then it chooses the shape of each node from its signature, and writes the runs.
+ */
+class RunFieldEncoder implements FieldEncoder {
+	public readonly shape = runFieldShape;
+
+	/**
+	 * @param elementType - The type of the nodes of the field.
+	 */
+	public constructor(
+		private readonly shared: SharedEncoders,
+		private readonly elementType: TreeNodeSchemaIdentifier,
+	) {}
+
+	/**
+	 * Writes the field at `cursor`.
+	 * @remarks
+	 * An empty field writes 0, as the format requires for an empty nested array.
+	 * If the nodes are leaves, the encoder writes their values without the cursor:
+	 * a constant leaf has no data, and the base leaf has only its value.
+	 */
+	public encodeField(
+		cursor: ITreeCursorSynchronous,
+		context: EncoderContext,
+		outputBuffer: BufferFormat,
+	): void {
+		if (cursor.getFieldLength() === 0) {
+			outputBuffer.push(0);
+			return;
+		}
+		const base = context.nodeEncoderFromSchema(this.elementType);
+		if (this.shared.plans.has(this.elementType)) {
+			const choices = this.chooseNodeEncoders(cursor, base, context);
+			cursor.firstNode();
+			outputBuffer.push(
+				this.encodeRuns(choices, context, (encoder, buffer) => {
+					encoder.encodeNode(cursor, context, buffer);
+					cursor.nextNode();
+				}),
+			);
+			return;
+		}
+		const leaf = new LeafPath(this.elementType);
+		let index = 0;
+		forEachNode(cursor, () => leaf.add(index++, cursor.value));
+		const encoding = chooseLeafEncoding(leaf, this.shared);
+		const leafChoices = leaf.values.map((value) =>
+			encoding === "pin"
+				? this.shared.constantLeaf(this.elementType, value)
+				: (encoding?.encoders.get(value) ?? base),
+		);
+		outputBuffer.push(
+			this.encodeRuns(leafChoices, context, (encoder, buffer, node) => {
+				if (encoder === base) {
+					buffer.push(leaf.values[node] as TreeValue);
+				}
+			}),
+		);
+	}
+
+	/**
+	 * Writes the runs of nodes with the same encoder.
+	 * @remarks
+	 * A run of one node writes the node shape and the node data.
+	 * A longer run writes a nested array shape and an array of the data of its nodes.
+	 * If the nodes have no data, the run writes the number of nodes in place of the array.
+	 * All nodes of a run have the same shape, so all of them have data or none of them do.
+	 * @param choices - The encoder of each node of the field.
+	 * @param encodeNode - Writes the node at `index` with `encoder` to `buffer`. It is called for each node, in order.
+	 * @returns The data of the field.
+	 */
+	private encodeRuns(
+		choices: readonly NodeEncoder[],
+		context: EncoderContext,
+		encodeNode: (encoder: NodeEncoder, buffer: BufferFormat, index: number) => void,
+	): BufferFormat {
+		const buffer: BufferFormat = [];
+		for (let start = 0; start < choices.length; ) {
+			const encoder = choices[start] ?? fail("missing choice");
+			let end = start + 1;
+			for (; end < choices.length; end++) {
+				if (choices[end] !== encoder) {
+					break;
+				}
+			}
+			if (end - start === 1) {
+				buffer.push(encoder.shape);
+				encodeNode(encoder, buffer, start);
+			} else {
+				buffer.push(context.nestedArrayEncoder(encoder).shape);
+				const items: BufferFormat = [];
+				for (let index = start; index < end; index++) {
+					encodeNode(encoder, items, index);
+				}
+				buffer.push(items.length === 0 ? end - start : items);
+			}
+			start = end;
+		}
+		return buffer;
+	}
+
+	/**
+	 * Chooses the encoder of each node of a field of object nodes.
+	 * @remarks
+	 * A node without a signature, and every node when all leaves are raw, uses `base`.
+	 * The cursor reads a node again only for the first node with each signature, to make its specialized encoder.
+	 */
+	private chooseNodeEncoders(
+		cursor: ITreeCursorSynchronous,
+		base: NodeEncoder,
+		context: EncoderContext,
+	): NodeEncoder[] {
+		const leaves: LeafPath[] = [];
+		const root = new PathNode(this.elementType, 0, this.shared.plans, leaves);
+		const trace: Token[] = [];
+		const starts: number[] = [];
+		forEachNode(cursor, () => {
+			const start = trace.length;
+			if (root.add(cursor, starts.length, trace)) {
+				starts.push(start);
+			} else {
+				trace.length = start;
+				starts.push(-1);
+			}
+		});
+		let allRaw = true;
+		for (const leaf of leaves) {
+			leaf.encoding = chooseLeafEncoding(leaf, this.shared);
+			allRaw &&= leaf.encoding === undefined;
+		}
+		if (allRaw) {
+			return starts.map(() => base);
+		}
+
+		const trie = newTrieNode();
+		const reader = { position: 0 };
+		return starts.map((start, index) => {
+			if (start < 0) {
+				return base;
+			}
+			reader.position = start;
+			const match = replaySignature(root, trie, trace, reader);
+			if (match.encoder === undefined) {
+				cursor.enterNode(index);
+				match.encoder = this.shared.specialize(cursor, base, root, context);
+				cursor.exitNode();
+			}
+			return match.encoder;
+		});
+	}
 }
