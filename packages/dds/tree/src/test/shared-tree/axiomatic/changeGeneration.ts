@@ -9,13 +9,15 @@ import { tagChange, type TaggedChange } from "../../../core/index.js";
 import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
 
 /**
- * A synchronous candidate edit, applied to an isolated fork of the input checkout.
+ * A synchronous candidate edit that can be applied to a checkout.
  */
 export interface SharedTreeTestOperation {
+	/** Human-readable description of the change */
 	readonly description: string;
 	/**
-	 * Submit exactly one commit, using a transaction if multiple editor calls are needed.
-	 * Do not dispose the checkout or retain resources beyond the operation's exploration scope.
+	 * A callback that applies the change.
+	 * It must generate exactly one commit, using a transaction if multiple editor calls are needed.
+	 * It must not dispose the checkout.
 	 */
 	readonly apply: (checkout: TreeCheckout) => void;
 }
@@ -24,11 +26,11 @@ export interface SharedTreeTestOperation {
  * A generated state that remains valid until enumeration advances or closes.
  */
 export interface GeneratedSharedTreeChange {
+	/** Human-readable description of the change */
 	readonly description: string;
+	/** The checkout on which the change was applied */
 	readonly checkout: TreeCheckout;
-	/**
-	 * The complete committed change, even if it leaves visible content unchanged.
-	 */
+	/** The change applied */
 	readonly change: TaggedChange<SharedTreeChange>;
 }
 

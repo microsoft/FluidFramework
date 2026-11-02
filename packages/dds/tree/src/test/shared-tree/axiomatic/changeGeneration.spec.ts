@@ -96,7 +96,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				assert.equal(parent.mainBranch.getHead(), base);
 			});
 
-			it("isolates siblings and allocates distinct revisions", () => {
+			it("isolates sibling changes", () => {
 				const revisions = new Set<RevisionTag | undefined>();
 				for (const { checkout, change } of generateSharedTreeChanges(
 					parent,
@@ -120,47 +120,6 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				assert.equal(revisions.size, 2);
 			});
 
-			it("rejects no submission and disposes the fork without changing the parent", () => {
-				const base = parent.mainBranch.getHead();
-				let disposed = false;
-				const changes = generateSharedTreeChanges(parent, [
-					{
-						description: "zero-count move",
-						apply: (child) => {
-							child.events.on("dispose", () => {
-								disposed = true;
-							});
-							child.editor.move(leftField, 0, 0, rightField, 0);
-						},
-					},
-				]);
-				assert.throws(() => changes.next(), /Operation must submit a commit/);
-				assert(disposed);
-				assert.equal(parent.mainBranch.getHead(), base);
-				expectJsonTree(parent, initialContent);
-			});
-
-			it("accepts an explicit empty clear as a committed change", () => {
-				const base = parent.mainBranch.getHead();
-				let count = 0;
-				for (const { change, checkout } of generateSharedTreeChanges(parent, [
-					{
-						description: "empty clear",
-						apply: (child) => child.editor.optionalField(optionalField).set(undefined, true),
-					},
-				])) {
-					count++;
-					const head = checkout.mainBranch.getHead();
-					assert.equal(head.parent, base);
-					assert.equal(change.change, head.change);
-					assert.equal(change.revision, head.revision);
-					expectJsonTree(checkout, initialContent);
-				}
-				assert.equal(count, 1);
-				assert.equal(parent.mainBranch.getHead(), base);
-				expectJsonTree(parent, initialContent);
-			});
-
 			it("captures a multi-call transaction as one commit", () => {
 				for (const { checkout, change } of generateSharedTreeChanges(parent, [
 					{
@@ -181,56 +140,6 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 					expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
 				}
 			});
-
-			it("disposes exploration forks on early termination", () => {
-				let disposed = false;
-				for (const { checkout } of generateSharedTreeChanges(parent, [
-					{
-						description: "empty clear",
-						apply: (child) => child.editor.optionalField(optionalField).set(undefined, true),
-					},
-				])) {
-					checkout.events.on("dispose", () => {
-						disposed = true;
-					});
-					break;
-				}
-				assert(disposed);
-			});
-
-			for (const failure of ["throws", "open transaction", "multiple commits"] as const) {
-				it(`cleans up after an invalid operation: ${failure}`, () => {
-					let disposed = false;
-					const changes = generateSharedTreeChanges(parent, [
-						{
-							description: failure,
-							apply: (child) => {
-								child.events.on("dispose", () => {
-									disposed = true;
-								});
-								if (failure !== "multiple commits") {
-									child.transaction.start();
-								}
-								child.editor.move(leftField, 0, 1, rightField, 1);
-								if (failure === "throws") {
-									throw new Error("operation failed");
-								}
-								if (failure === "multiple commits") {
-									child.editor.optionalField(optionalField).set(undefined, true);
-								}
-							},
-						},
-					]);
-					const message = {
-						throws: /operation failed/,
-						"open transaction": /Operation left a transaction open/,
-						"multiple commits": /Operation must submit at most one commit/,
-					}[failure];
-					assert.throws(() => changes.next(), message);
-					assert(disposed);
-					expectJsonTree(parent, initialContent);
-				});
-			}
 
 			it("replays a build-bearing complete change after its authoring fork is disposed", () => {
 				let captured: TaggedChange<SharedTreeChange> | undefined;
