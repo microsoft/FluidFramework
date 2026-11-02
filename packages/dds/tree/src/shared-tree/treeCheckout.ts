@@ -1335,6 +1335,11 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return false;
 	}
 
+	public get unknownFieldSchemas(): undefined {
+		// A checkout has no view schema.
+		return undefined;
+	}
+
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
