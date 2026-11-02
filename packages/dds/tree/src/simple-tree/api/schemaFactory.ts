@@ -100,6 +100,12 @@ export {
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
 
+function bindObjectOptions<TOptions extends SchemaFactoryOptions>(
+	options: TOptions,
+): TOptions["objectOptions"] {
+	return options.objectOptions?.bind(options);
+}
+
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -287,7 +293,7 @@ export class SchemaFactory<
 		this.scope = typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions;
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
+				? { objectOptions: bindObjectOptions(scopeOrOptions) }
 				: {};
 	}
 
@@ -311,7 +317,7 @@ export class SchemaFactory<
 	): SchemaFactory<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactory({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: bindObjectOptions(settings),
 		});
 	}
 
@@ -891,10 +897,10 @@ export class SchemaFactoryBeta<
 	public constructor(
 		scopeOrOptions: TScope | (SchemaFactoryBetaOptions & { readonly scope: TScope }),
 	) {
-		super(scopeOrOptions);
+		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
+				? { objectOptions: bindObjectOptions(scopeOrOptions) }
 				: {};
 	}
 
@@ -959,7 +965,7 @@ export class SchemaFactoryBeta<
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryBeta({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: bindObjectOptions(settings),
 		});
 	}
 
@@ -1319,10 +1325,10 @@ export class SchemaFactoryAlpha<
 	public constructor(
 		scopeOrOptions: TScope | (SchemaFactoryAlphaOptions & { readonly scope: TScope }),
 	) {
-		super(scopeOrOptions);
+		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
 			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
+				? { objectOptions: bindObjectOptions(scopeOrOptions) }
 				: {};
 	}
 
@@ -1785,7 +1791,7 @@ export class SchemaFactoryAlpha<
 	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryAlpha({
 			scope: scoped<TScope, TName, T>(this, name),
-			objectOptions: settings.objectOptions,
+			objectOptions: bindObjectOptions(settings),
 		});
 	}
 }

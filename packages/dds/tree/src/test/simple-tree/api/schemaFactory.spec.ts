@@ -1535,9 +1535,10 @@ describe("schemaFactory", () => {
 		it("preserves callbacks defined on a prototype", () => {
 			class Options {
 				public readonly scope = "test";
+				readonly #allowUnknownOptionalFields = true;
 
 				public objectOptions(): { allowUnknownOptionalFields: boolean } {
-					return { allowUnknownOptionalFields: true };
+					return { allowUnknownOptionalFields: this.#allowUnknownOptionalFields };
 				}
 			}
 			const options = new Options();
@@ -1549,6 +1550,19 @@ describe("schemaFactory", () => {
 				allowsUnknownOptionalFields(sf.scopedFactory("child").object("Child", {})),
 				true,
 			);
+		});
+
+		it("reads options accessors once", () => {
+			let reads = 0;
+			const sf = new SchemaFactory({
+				scope: "test",
+				get objectOptions() {
+					reads++;
+					return () => ({ allowUnknownOptionalFields: true });
+				},
+			});
+			assert.equal(reads, 1);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Object", {})), true);
 		});
 
 		it("propagates callback errors", () => {
@@ -1710,9 +1724,10 @@ describe("schemaFactory", () => {
 		it("preserves callbacks defined on a prototype", () => {
 			class Options {
 				public readonly scope = "test";
+				readonly #allowUnknownOptionalFields = true;
 
 				public objectOptions(): { allowUnknownOptionalFields: boolean } {
-					return { allowUnknownOptionalFields: true };
+					return { allowUnknownOptionalFields: this.#allowUnknownOptionalFields };
 				}
 			}
 			const options = new Options();
@@ -1724,6 +1739,19 @@ describe("schemaFactory", () => {
 				allowsUnknownOptionalFields(sf.scopedFactory("child").object("Child", {})),
 				true,
 			);
+		});
+
+		it("reads options accessors once", () => {
+			let reads = 0;
+			const sf = new SchemaFactoryBeta({
+				scope: "test",
+				get objectOptions() {
+					reads++;
+					return () => ({ allowUnknownOptionalFields: true });
+				},
+			});
+			assert.equal(reads, 1);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Object", {})), true);
 		});
 
 		it("propagates callback errors", () => {
@@ -1757,9 +1785,10 @@ describe("schemaFactory", () => {
 		it("preserves callbacks defined on a prototype", () => {
 			class Options {
 				public readonly scope = "test";
+				readonly #allowUnknownOptionalFields = true;
 
 				public objectOptions(): { allowUnknownOptionalFields: boolean } {
-					return { allowUnknownOptionalFields: true };
+					return { allowUnknownOptionalFields: this.#allowUnknownOptionalFields };
 				}
 			}
 
@@ -1772,6 +1801,19 @@ describe("schemaFactory", () => {
 				sf.scopedFactory("child").objectAlpha("Child", {}).allowUnknownOptionalFields,
 				true,
 			);
+		});
+
+		it("reads options accessors once", () => {
+			let reads = 0;
+			const sf = new SchemaFactoryAlpha({
+				scope: "test",
+				get objectOptions() {
+					reads++;
+					return () => ({ allowUnknownOptionalFields: true });
+				},
+			});
+			assert.equal(reads, 1);
+			assert.equal(sf.objectAlpha("Object", {}).allowUnknownOptionalFields, true);
 		});
 
 		it("objectOptions applies allowUnknownOptionalFields factory-wide", () => {
