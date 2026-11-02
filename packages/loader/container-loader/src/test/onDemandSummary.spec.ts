@@ -198,6 +198,27 @@ describe("On-demand summary acknowledgement", () => {
 		assert.equal(second.dispose.callCount, 1);
 	});
 
+	it("retries when the loaded container is already terminated without waiting for another event", async () => {
+		const first = attempt(new Deferred<Ack>().promise, "first-proposal", 10);
+		const second = attempt(Promise.resolve(ack("second-version")), "second-proposal", 20);
+		sandbox.stub(first.container, "closed").value(true);
+		sandbox.stub(first.container, "disposed").value(true);
+		sandbox.stub(first.container, "getEntryPoint").returns(new Promise<never>(() => {}));
+		const resolve = sandbox.stub(Loader.prototype, "resolve");
+		resolve.onFirstCall().resolves(first.container);
+		resolve.onSecondCall().resolves(second.container);
+
+		const result = await loadSummarizerContainerAndMakeAcknowledgedSummary(props);
+
+		assert.deepEqual(result, { version: "second-version", referenceSequenceNumber: 20 });
+		assert.equal(resolve.callCount, 2);
+		assert.equal(first.dispose.callCount, 1);
+		assert.equal(second.dispose.callCount, 1);
+		assert.equal(first.events.listenerCount("closed"), 0);
+		assert.equal(first.events.listenerCount("disposed"), 0);
+		assert.equal(first.events.listenerCount("disconnected"), 0);
+	});
+
 	it("does not start an abandoned summary when its entry point resolves after retry", async () => {
 		const first = attempt(new Deferred<Ack>().promise, "first-proposal", 10);
 		const second = attempt(Promise.resolve(ack("second-version")), "second-proposal", 20);
