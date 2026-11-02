@@ -132,7 +132,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const loaded = await provider.loadTestContainer(testContainerConfig, {
 			[LoaderHeader.version]: version,
 			[LoaderHeader.cache]: false,
-			[LoaderHeader.loadMode]: { opsBeforeReturn: "cached", deltaConnection: "none" },
+			[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 		});
 		try {
 			const entry = (await loaded.getEntryPoint()) as ITestFluidObject;
