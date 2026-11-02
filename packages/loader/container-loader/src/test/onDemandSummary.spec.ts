@@ -12,7 +12,11 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	GenericError,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { createSandbox, type SinonSpy } from "sinon";
 
 import {
@@ -166,6 +170,7 @@ describe("On-demand summary acknowledgement", () => {
 				await current.started.promise;
 				if (failure === "closed" || failure === "disposed" || failure === "disconnected") {
 					current.events.emit(failure);
+					await clock.tickAsync(0);
 				}
 			}
 			await rejected;
@@ -228,10 +233,24 @@ describe("On-demand summary acknowledgement", () => {
 					return true;
 				});
 				await first.started.promise;
+				raiseConnectedEvent(
+					createChildLogger({}),
+					first.events,
+					false,
+					undefined,
+					"Closing DeltaManager",
+				);
 				first.events.emit(event, error);
 				// Disposal may follow closure; preserve the first termination error.
 				first.events.emit("disposed");
 				await second.started.promise;
+				raiseConnectedEvent(
+					createChildLogger({}),
+					second.events,
+					false,
+					undefined,
+					"Closing DeltaManager",
+				);
 				second.events.emit(event, error);
 				second.events.emit("disposed");
 				await outcome;

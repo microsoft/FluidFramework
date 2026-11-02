@@ -1039,6 +1039,7 @@ function createContainerFailureMonitor(container: IContainer): {
 	dispose(): void;
 } {
 	let onTermination: (error?: unknown) => void;
+	let onDisconnected: () => void;
 	let settled = false;
 	const failure = new Promise<never>((_resolve, reject) => {
 		onTermination = (error) => {
@@ -1052,9 +1053,14 @@ function createContainerFailureMonitor(container: IContainer): {
 					: normalizeError(error),
 			);
 		};
+		onDisconnected = () => {
+			// Closing a connected container disconnects before emitting the terminal error.
+			// Let that same-turn close/dispose event take precedence over this fallback.
+			queueMicrotask(() => onTermination());
+		};
 		container.on("closed", onTermination);
 		container.on("disposed", onTermination);
-		container.on("disconnected", onTermination);
+		container.on("disconnected", onDisconnected);
 		if (container.closed || container.disposed === true) {
 			onTermination();
 		}
@@ -1062,9 +1068,10 @@ function createContainerFailureMonitor(container: IContainer): {
 	return {
 		failure,
 		dispose: () => {
+			settled = true;
 			container.off("closed", onTermination);
 			container.off("disposed", onTermination);
-			container.off("disconnected", onTermination);
+			container.off("disconnected", onDisconnected);
 		},
 	};
 }
