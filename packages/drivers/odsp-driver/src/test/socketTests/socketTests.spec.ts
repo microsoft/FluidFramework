@@ -329,13 +329,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 						connection.clientId,
 					);
 				}
+				assert(connection.disposed, "the selected action should disconnect the target");
+				assert(disconnectReason !== undefined);
 				connection.dispose();
 				socket.emit("flush_ops_response", {
 					nonce: first.nonce,
 					code: 200,
 					lastPersistedSequenceNumber: 456,
 				});
-				assert(disconnectReason !== undefined);
 				assert.deepEqual(await promptly(firstResult), [
 					{ status: "rejected", reason: disconnectReason },
 				]);
