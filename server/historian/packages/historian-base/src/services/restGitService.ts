@@ -31,6 +31,7 @@ import * as winston from "winston";
 import { Constants, getRequestErrorTranslator } from "../utils";
 
 import type { ICache } from "./definitions";
+import type { IDocumentAccessProof } from "./documentAccess";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -78,6 +79,7 @@ export class RestGitService {
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
 		private readonly simplifiedCustomData?: string,
+		private readonly accessProof?: IDocumentAccessProof,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -98,6 +100,15 @@ export class RestGitService {
 		}
 		if (this.simplifiedCustomData) {
 			defaultHeaders[Constants.SimplifiedCustomData] = this.simplifiedCustomData;
+		}
+		if (this.accessProof?.physicalContainerName !== undefined) {
+			if (this.accessProof.layoutVersion === undefined) {
+				throw new NetworkError(500, "Document storage layout is missing.");
+			}
+			defaultHeaders[Constants.DocumentContainerName] =
+				this.accessProof.physicalContainerName;
+			defaultHeaders[Constants.DocumentStorageLayout] = this.accessProof.layoutVersion;
+			defaultHeaders[Constants.DocumentLifecycleVersion] = this.accessProof.lifecycleVersion;
 		}
 
 		// We set the flag only for ephemeral containers
@@ -549,32 +560,42 @@ export class RestGitService {
 	 */
 	private setCache<T>(key: string, value: T): void {
 		if (this.cache) {
+			const cacheKey = this.getNamespacedCacheKey(key);
 			// Attempt to cache to Redis - log any errors but don't fail
 			runWithRetry(
-				async () => this.cache?.set(key, value) /* api */,
+				async () => this.cache?.set(cacheKey, value) /* api */,
 				"RestGitService.setCache" /* callName */,
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
 				this.lumberProperties /* telemetryProperties */,
 			).catch((error) => {
-				winston.error(`Error caching ${key} to redis`, error);
-				Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
+				winston.error(`Error caching ${cacheKey} to redis`, error);
+				Lumberjack.error(
+					`Error caching ${cacheKey} to redis`,
+					this.lumberProperties,
+					error,
+				);
 			});
 		}
 	}
 
 	private async getCache<T>(key: string): Promise<T | undefined> {
 		if (this.cache) {
+			const cacheKey = this.getNamespacedCacheKey(key);
 			// Attempt to cache to Redis - log any errors but don't fail
 			const cachedValue = await runWithRetry(
-				async () => this.cache?.get<T>(key) /* api */,
+				async () => this.cache?.get<T>(cacheKey) /* api */,
 				"RestGitService.getCache" /* callName */,
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
 				this.lumberProperties /* telemetryProperties */,
 			).catch((error) => {
-				winston.error(`Error fetching ${key} from cache`, error);
-				Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
+				winston.error(`Error fetching ${cacheKey} from cache`, error);
+				Lumberjack.error(
+					`Error fetching ${cacheKey} from cache`,
+					this.lumberProperties,
+					error,
+				);
 				return undefined;
 			});
 			if (cachedValue !== null) {
@@ -602,11 +623,12 @@ export class RestGitService {
 	 */
 	private deleteFromCache(key: string): void {
 		if (this.cache) {
+			const cacheKey = this.getNamespacedCacheKey(key);
 			// Attempt to delete the key from Redis - log any errors but don't fail
-			this.cache.delete(key).catch((error) => {
-				winston.error(`Error deleting key ${key} from Redis cache`, error);
+			this.cache.delete(cacheKey).catch((error) => {
+				winston.error(`Error deleting key ${cacheKey} from Redis cache`, error);
 				Lumberjack.error(
-					`Error deleting key ${key} from Redis cache`,
+					`Error deleting key ${cacheKey} from Redis cache`,
 					this.lumberProperties,
 					error,
 				);
@@ -630,6 +652,22 @@ export class RestGitService {
 		}
 
 		return fetch();
+	}
+
+	private getNamespacedCacheKey(key: string): string {
+		if (this.accessProof === undefined) {
+			return key;
+		}
+		return [
+			encodeURIComponent(this.tenantId),
+			encodeURIComponent(this.documentId),
+			"authorized",
+			encodeURIComponent(this.storageName ?? ""),
+			encodeURIComponent(this.accessProof.physicalContainerName ?? ""),
+			encodeURIComponent(this.accessProof.layoutVersion ?? ""),
+			encodeURIComponent(this.accessProof.lifecycleVersion),
+			key,
+		].join(":");
 	}
 
 	private getSummaryCacheKey(type: IWholeSummaryPayloadType, extraIdentifier?: string): string {

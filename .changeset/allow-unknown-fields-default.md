@@ -25,18 +25,20 @@ class StrictPerson extends schemaFactory.object(
 ) {}
 ```
 
-Customers using alpha and beta APIs can also set `allowUnknownOptionalFields: false` once on [`SchemaFactoryBeta`](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class) or [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class) to preserve the previous default for all object schemas created by that factory.
-The factory-level [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactorybetaoptions-interface#objectoptions-propertysignature) configuration is beta functionality and may change without notice.
+Applications can also set `allowUnknownOptionalFields: false` once on the public [`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) to preserve the previous default for all object schemas created by that factory.
+Set the factory's [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) property bag when constructing it:
 
 ```typescript
-const factory = new SchemaFactoryBeta({
+const factory = new SchemaFactory({
 	scope: "com.example",
-	objectOptions: (_name, _fields, options) => ({
+	objectOptions: {
 		allowUnknownOptionalFields: false,
-		...options,
-	}),
+	},
 });
 ```
+
+Options passed directly to `object` or `objectRecursive` override the factory default through a shallow merge.
+The beta and alpha schema factories support corresponding tier-specific object options in the same property-bag form.
 
 #### Behavior to review
 

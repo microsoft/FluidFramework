@@ -6,12 +6,19 @@
 import { strict as assert } from "assert";
 
 import * as services from "@fluidframework/server-services";
-import type { IDocumentManager } from "@fluidframework/server-services-core";
+import type { IDocumentManager, IStorageNameRetriever } from "@fluidframework/server-services-core";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import * as nconf from "nconf";
+import sinon from "sinon";
 
 import type { IHistorianResourcesCustomizations } from "../customizations";
 import { HistorianResourcesFactory } from "../runnerFactory";
+import type {
+	IDocumentAccessAuthorizer,
+	IDocumentAccessControlFactory,
+	ISimplifiedCustomDataRetriever,
+	ITrustedCreateContextResolver,
+} from "../services";
 import { TestDocumentManager } from "./utils";
 
 const throttleConfig = {
@@ -20,19 +27,24 @@ const throttleConfig = {
 	minCooldownIntervalInMs: 1000,
 };
 
-function createConfig(): nconf.Provider {
+function createConfig(
+	options: {
+		disableGitCache?: boolean;
+		storagePerDocEnabled?: boolean;
+	} = {},
+): nconf.Provider {
 	return new nconf.Provider({}).defaults({
 		alfred: "http://alfred",
 		maxTokenLifetimeSec: 3600,
 		redis: {},
 		redisForThrottling: {},
 		restGitService: {
-			disableGitCache: true,
+			disableGitCache: options.disableGitCache ?? true,
 			ephemeralDocumentTTLSec: 86400,
 		},
 		riddler: "http://riddler",
 		storage: {
-			perDocEnabled: false,
+			perDocEnabled: options.storagePerDocEnabled ?? false,
 		},
 		system: {
 			httpServer: {},
@@ -83,6 +95,54 @@ describe("HistorianResourcesFactory", () => {
 			);
 
 			assert.ok(resources.documentManager instanceof services.DocumentManager);
+
+			await resources.dispose();
+		});
+
+		it("creates the document access customization from the initialized dependencies", async () => {
+			const config = createConfig({
+				disableGitCache: false,
+				storagePerDocEnabled: true,
+			});
+
+			const documentManager = new TestDocumentManager();
+			const storageNameRetriever: IStorageNameRetriever = {
+				get: sinon.stub().resolves("storage"),
+			};
+			const simplifiedCustomDataRetriever: ISimplifiedCustomDataRetriever = {
+				get: sinon.stub().returns("{}"),
+			};
+			const authorizer: IDocumentAccessAuthorizer = {
+				authorize: sinon.stub().rejects(new Error("not called by resource creation")),
+			};
+			const trustedCreateContextResolver: ITrustedCreateContextResolver = {
+				resolve: sinon.stub().rejects(new Error("not called by resource creation")),
+			};
+			const create = sinon.stub().returns({
+				authorizer,
+				trustedCreateContextResolver,
+			});
+			const documentAccessControlFactory: IDocumentAccessControlFactory = { create };
+
+			const resources = await new HistorianResourcesFactory().create(config, {
+				...createCustomizations(documentManager),
+				storageNameRetriever,
+				simplifiedCustomDataRetriever,
+				documentAccessControlFactory,
+			});
+
+			sinon.assert.calledOnceWithMatch(create, {
+				documentManager,
+				storageNameRetriever,
+				gitCache: resources.cache,
+				simplifiedCustomDataRetriever,
+			});
+			assert.ok(create.firstCall.args[0].tenantManager instanceof services.TenantManager);
+			assert.strictEqual(resources.documentAccessAuthorizer, authorizer);
+			assert.strictEqual(
+				resources.trustedCreateContextResolver,
+				trustedCreateContextResolver,
+			);
 
 			await resources.dispose();
 		});
