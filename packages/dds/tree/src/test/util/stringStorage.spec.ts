@@ -15,7 +15,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/stringStorage.js";
 
-describe("forest-independent string storage", () => {
+describe("StringSequence", () => {
 	for (const text of ["", "abc", "a\u{1F600}b", "\uD800x\uDC00", "ab\u{1F600}".repeat(3000)]) {
 		it(`preserves ${text.length} UTF-16 units as code-point atoms`, () => {
 			const sequence = StringSequence.fromString(text);
@@ -33,29 +33,6 @@ describe("forest-independent string storage", () => {
 		});
 	}
 
-	it("bounds visible buffers without splitting surrogate pairs", () => {
-		const text = `${"x".repeat(stringBufferSize - 1)}\u{1F600}${"y".repeat(stringBufferSize)}`;
-		const pieces = StringPiece.fromString(text);
-		assert(pieces.every((piece) => piece.text.length <= stringBufferSize));
-		assert.deepEqual(
-			pieces.flatMap((piece) => [...piece.values(0)]),
-			[...text],
-		);
-	});
-
-	it("shares complete pieces and restores contiguous slices", () => {
-		const piece = StringPiece.fromString("abc\u{1F600}def")[0];
-		assert(piece !== undefined);
-		assert.equal(piece.slice(0, piece.length), piece);
-		const left = piece.slice(0, 4);
-		const right = piece.slice(4, piece.length);
-		const combined = left.tryAppend(right);
-		assert(combined !== undefined);
-		assert.equal(combined.text, piece.text);
-		assert.equal(left.text, "abc\u{1F600}");
-		assert.equal(right.text, "def");
-	});
-
 	it("preserves independently inserted surrogate halves", () => {
 		const sequence = StringSequence.fromString("\uD800").concat(
 			StringSequence.fromString("\uDC00"),
@@ -67,8 +44,8 @@ describe("forest-independent string storage", () => {
 	});
 
 	it("bounds cross-buffer coalescing", () => {
-		const small = StringSequence.fromString("a".repeat(128)).concat(
-			StringSequence.fromString("b".repeat(128)),
+		const small = StringSequence.fromString("a".repeat(stringBufferSize / 2)).concat(
+			StringSequence.fromString("b".repeat(stringBufferSize / 2)),
 		);
 		assert.equal(small.pieces.length, 1);
 		assert.equal(small.concat(StringSequence.fromString("c")).pieces.length, 2);
@@ -102,5 +79,30 @@ describe("forest-independent string storage", () => {
 		}
 		assert.throws(() => sequence.slice(2, 1));
 		assert.throws(() => sequence.slice(0, 4));
+	});
+});
+
+describe("StringPiece", () => {
+	it("bounds visible buffers without splitting surrogate pairs", () => {
+		const text = `${"x".repeat(stringBufferSize - 1)}\u{1F600}${"y".repeat(stringBufferSize)}`;
+		const pieces = StringPiece.fromString(text);
+		assert(pieces.every((piece) => piece.text.length <= stringBufferSize));
+		assert.deepEqual(
+			pieces.flatMap((piece) => [...piece.values(0)]),
+			[...text],
+		);
+	});
+
+	it("shares complete pieces and restores contiguous slices", () => {
+		const piece = StringPiece.fromString("abc\u{1F600}def")[0];
+		assert(piece !== undefined);
+		assert.equal(piece.slice(0, piece.length), piece);
+		const left = piece.slice(0, 4);
+		const right = piece.slice(4, piece.length);
+		const combined = left.tryAppend(right);
+		assert(combined !== undefined);
+		assert.equal(combined.text, piece.text);
+		assert.equal(left.text, "abc\u{1F600}");
+		assert.equal(right.text, "def");
 	});
 });

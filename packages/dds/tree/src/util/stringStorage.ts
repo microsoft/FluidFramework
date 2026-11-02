@@ -29,7 +29,6 @@ const checkpointStride = 64;
  * JavaScript string slices can share larger allocations, so this is not a physical memory limit.
  */
 export const stringBufferSize = 4096;
-const coalesceSize = 256;
 
 /** Immutable text and sparse code-point offsets shared by pieces. */
 class StringBuffer {
@@ -190,7 +189,7 @@ export class StringPiece {
 	 * @returns A new piece, or undefined if the pieces must remain separate.
 	 * @remarks
 	 * Adjacent ranges in the same buffer join without copying text.
-	 * Other ranges join only when their combined text is at most 256 UTF-16 code units.
+	 * Other ranges join only when their combined text is at most {@link stringBufferSize} UTF-16 code units.
 	 * That case creates a new buffer.
 	 * The join is rejected if it would combine two separate surrogate-half atoms into one atom.
 	 */
@@ -202,7 +201,7 @@ export class StringPiece {
 			this.#buffer.offset(this.#start + this.length) - this.#buffer.offset(this.#start);
 		const rightLength =
 			other.#buffer.offset(other.#start + other.length) - other.#buffer.offset(other.#start);
-		if (leftLength + rightLength > coalesceSize) {
+		if (leftLength + rightLength > stringBufferSize) {
 			return undefined;
 		}
 		const buffer = new StringBuffer(this.text + other.text);
