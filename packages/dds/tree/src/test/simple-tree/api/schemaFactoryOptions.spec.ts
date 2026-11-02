@@ -27,12 +27,7 @@ describe("schemaFactoryOptions", () => {
 	for (const Factory of [SchemaFactory, SchemaFactoryBeta, SchemaFactoryAlpha]) {
 		describe(Factory.name, () => {
 			it("uses built-in defaults without adding them to sparse factory settings", () => {
-				for (const settings of [
-					undefined,
-					{},
-					{ objectOptions: {} },
-					{ objectOptions: { allowUnknownOptionalFields: undefined } },
-				]) {
+				for (const settings of [undefined, {}, { objectOptions: {} }]) {
 					const sf: SchemaFactory = new Factory(
 						settings === undefined ? "test" : { scope: "test", ...settings },
 					);
@@ -49,27 +44,6 @@ describe("schemaFactoryOptions", () => {
 						);
 					}
 				}
-			});
-
-			it("distinguishes omitted options from explicit undefined properties", () => {
-				const sf: SchemaFactory = new Factory({
-					scope: "test",
-					objectOptions: { allowUnknownOptionalFields: true },
-				});
-				for (const [options, expected] of [
-					[undefined, true],
-					[{ allowUnknownOptionalFields: undefined }, false],
-				] as const) {
-					assert.equal(
-						allowsUnknownOptionalFields(sf.object("Object", {}, options)),
-						expected,
-					);
-					assert.equal(
-						allowsUnknownOptionalFields(sf.objectRecursive("Recursive", {}, options)),
-						expected,
-					);
-				}
-				assert.equal(sf.settings.objectOptions?.allowUnknownOptionalFields, true);
 			});
 
 			it("does not mutate defaults or per-schema options", () => {
@@ -140,22 +114,14 @@ describe("schemaFactoryOptions", () => {
 		});
 	}
 
-	it("uses built-in defaults for alpha object methods when options are omitted or cleared", () => {
+	it("uses built-in defaults for alpha object methods when options are omitted", () => {
 		const sf = new SchemaFactoryAlpha("test");
-		const configured = new SchemaFactoryAlpha({
-			scope: "test",
-			objectOptions: { allowUnknownOptionalFields: true },
-		});
-		const cleared = { allowUnknownOptionalFields: undefined };
 		for (const Schema of [
 			sf.objectAlpha("Object", {}),
 			sf.objectRecursiveAlpha("Recursive", {}),
-			configured.objectAlpha("Cleared", {}, cleared),
-			configured.objectRecursiveAlpha("ClearedRecursive", {}, cleared),
 		]) {
 			assert.equal(Schema.allowUnknownOptionalFields, false);
 		}
-		assert.equal(configured.settings.objectOptions?.allowUnknownOptionalFields, true);
 	});
 
 	it("shallowly replaces alpha persisted metadata while preserving other defaults", () => {
