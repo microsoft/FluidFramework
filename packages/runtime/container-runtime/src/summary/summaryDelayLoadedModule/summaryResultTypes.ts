@@ -58,9 +58,8 @@ export interface INackSummaryResult {
 
 /**
  * @deprecated This detailed summarizer result interface will become internal.
- * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadAndSummarize}
  * from `@fluidframework/container-loader/legacy`.
- * Its result does not expose the same stage promises or acknowledgement results.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */

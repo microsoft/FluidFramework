@@ -144,7 +144,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 /**
  * Options affecting summarize behavior.
  * @deprecated Direct summarizer control is deprecated and will become internal.
- * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadAndSummarize}
  * from `@fluidframework/container-loader/legacy`.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
@@ -184,7 +184,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 
 /**
  * @deprecated Direct summarizer control is deprecated and will become internal.
- * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadAndSummarize}
  * from `@fluidframework/container-loader/legacy`.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
@@ -378,7 +378,8 @@ export type SubmitSummaryResult =
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
  * @deprecated This summarizer implementation stage type will become internal.
- * For application-requested summary results, use {@link @fluidframework/container-loader#LoadSummarizerSummaryResult}.
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadAndSummarize}
+ * from `@fluidframework/container-loader/legacy`.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
@@ -415,7 +416,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 
 /**
  * @deprecated Direct summarizer control is deprecated and will become internal.
- * For application-requested summaries, use {@link @fluidframework/container-loader#loadSummarizerContainerAndMakeSummary}
+ * For application-requested summaries, use {@link @fluidframework/container-loader#loadAndSummarize}
  * from `@fluidframework/container-loader/legacy`.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
