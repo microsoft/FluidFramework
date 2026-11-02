@@ -468,22 +468,6 @@ describe("Runtime", () => {
 				}
 			}
 
-			it("rejects the removed minVersionForCollab option", async () => {
-				await assert.rejects(
-					async () =>
-						ContainerRuntime.loadRuntime2({
-							context: getMockContext() as IContainerContext,
-							registry: new FluidDataStoreRegistry([]),
-							existing: false,
-							runtimeOptions: { enableRuntimeIdCompressor: "on" },
-							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error The removed beta property is rejected at compile time and runtime.
-							minVersionForCollab: "3.4.0",
-						}),
-					/minVersionForCollab is no longer supported/,
-				);
-			});
-
 			for (const source of ["summary", "pending state"] as const) {
 				for (const serializedVersion of [SerializationVersion.V2, SerializationVersion.V3]) {
 					for (const [oldestSupportedClient, requestedVersion] of [
@@ -5401,7 +5385,7 @@ describe("Runtime", () => {
 		});
 
 		describe("Default Configurations", () => {
-			it("minVersionForCollab not provided", async () => {
+			it("oldestSupportedClient not provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -5474,8 +5458,8 @@ describe("Runtime", () => {
 				assert.equal(runtime.minVersionForCollab, "2.40.1");
 			});
 
-			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 2.0.0 and less than or equal to
+			// These are examples of oldestSupportedClient inputs that are not valid.
+			// oldestSupportedClient must be at least 2.0.0 and less than or equal to
 			// the current pkgVersion.
 			const invalidVersions = [
 				"1.99.0",
@@ -5484,7 +5468,7 @@ describe("Runtime", () => {
 				"100.0.0",
 			] as const;
 			for (const version of invalidVersions) {
-				it(`throws when minVersionForCollab = ${version}`, async () => {
+				it(`throws when oldestSupportedClient = ${version}`, async () => {
 					const logger = new MockLogger();
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime2({
@@ -5500,8 +5484,8 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
-				const minVersionForCollab = "2.0.0";
+			it("oldestSupportedClient = 2.0.0 (explicit)", async () => {
+				const oldestSupportedClient = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -5509,7 +5493,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					oldestSupportedClient: minVersionForCollab,
+					oldestSupportedClient,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -5535,20 +5519,20 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: oldestSupportedClient,
 					},
 				]);
 			});
 
-			it("minVersionForCollab = 2.20.0", async () => {
-				const minVersionForCollab = "2.20.0";
+			it("oldestSupportedClient = 2.20.0", async () => {
+				const oldestSupportedClient = "2.20.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
-					oldestSupportedClient: minVersionForCollab,
+					oldestSupportedClient,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -5574,12 +5558,12 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: oldestSupportedClient,
 					},
 				]);
 			});
 
-			it("minVersionForCollab not provided, with manual configs", async () => {
+			it("oldestSupportedClient not provided, with manual configs", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -5690,8 +5674,8 @@ describe("Runtime", () => {
 
 			// Note: We may need to update `expectedRuntimeOptions` for this test
 			// when we bump to certain versions.
-			it("minVersionForCollab = cleanedPackageVersion", async () => {
-				const minVersionForCollab = cleanedPackageVersion;
+			it("oldestSupportedClient = cleanedPackageVersion", async () => {
+				const oldestSupportedClient = cleanedPackageVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -5699,7 +5683,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					oldestSupportedClient: minVersionForCollab,
+					oldestSupportedClient,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -5725,7 +5709,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: oldestSupportedClient,
 					},
 				]);
 			});
@@ -5751,7 +5735,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("throws if the default minVersionForCollab is incompatible with runtimeOptions", async () => {
+			it("throws if the default oldestSupportedClient is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
 				await assert.rejects(
 					ContainerRuntime.loadRuntime2({

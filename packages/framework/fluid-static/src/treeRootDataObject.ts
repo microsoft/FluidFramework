@@ -30,7 +30,6 @@ import type {
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { defaultRuntimeOptionsForOldestSupportedClient } from "./compatibilityConfiguration.js";
 import type {
@@ -228,12 +227,6 @@ export function createTreeContainerRuntimeFactory(props: {
 }): IRuntimeFactory {
 	const { oldestSupportedClient, rootDataStoreRegistry, runtimeOptionOverrides, schema } =
 		props;
-
-	if ("minVersionForCollaboration" in props || oldestSupportedClient === undefined) {
-		throw new UsageError(
-			"Specify oldestSupportedClient. minVersionForCollaboration is no longer supported.",
-		);
-	}
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);

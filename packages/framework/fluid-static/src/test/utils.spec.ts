@@ -197,25 +197,4 @@ describe("createTreeContainerRuntimeFactory", () => {
 			}),
 		);
 	});
-
-	it("rejects minVersionForCollaboration", () => {
-		assert.throws(
-			// @ts-expect-error The removed beta property is rejected at compile time and runtime.
-			() => createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration: "2.0.0" }),
-			/minVersionForCollaboration is no longer supported/,
-		);
-	});
-
-	it("rejects multiple version options", () => {
-		const props = {
-			schema,
-			oldestSupportedClient: "2.0.0",
-			minVersionForCollaboration: "2.0.0",
-		} as const;
-
-		assert.throws(
-			() => createTreeContainerRuntimeFactory(props),
-			/minVersionForCollaboration is no longer supported/,
-		);
-	});
 });
