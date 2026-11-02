@@ -137,7 +137,7 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
  */
 export interface SchemaFactoryOptions {
 	/**
-	 * Default options for schemas created with {@link SchemaFactory.object}.
+	 * Options for schemas created with {@link SchemaFactory.object}.
 	 *
 	 * @remarks
 	 * This also applies to {@link SchemaFactory.objectRecursive}.
@@ -176,7 +176,7 @@ export interface SchemaFactoryOptions {
  */
 export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
 	/**
-	 * Default options for schemas created with {@link SchemaFactoryBeta.object}.
+	 * Options for schemas created with {@link SchemaFactoryBeta.object}.
 	 *
 	 * @remarks
 	 * This also applies to {@link SchemaFactoryBeta.objectRecursive}.
@@ -213,7 +213,7 @@ export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
  */
 export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
 	/**
-	 * Default options for schemas created with {@link SchemaFactoryAlpha.objectAlpha}.
+	 * Options for schemas created with {@link SchemaFactoryAlpha.objectAlpha}.
 	 *
 	 * @remarks
 	 * This also applies to the inherited {@link SchemaFactoryBeta.object} method,
