@@ -86,14 +86,6 @@ export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
 		NodeSchemaOptionsAlpha<TCustomMetadata> {}
 
 /**
- * Default options for Object node schema creation.
- * @remarks Omits parameters that are not relevant for common use cases.
- */
-export const defaultSchemaFactoryObjectOptions: Required<ObjectSchemaOptions> = {
-	allowUnknownOptionalFields: false,
-};
-
-/**
  * Additional information to provide to Node Schema creation.
  *
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
@@ -216,9 +208,6 @@ export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
  * @remarks
  * Pass one object with these options and the scope to {@link SchemaFactoryAlpha}.
  * You can create these options and read them from {@link SchemaFactoryAlpha.settings}.
- *
- * Spread these options and their `objectOptions` to create replacement settings for
- * {@link SchemaFactoryAlpha.scopedFactory}.
  *
  * @alpha
  */
