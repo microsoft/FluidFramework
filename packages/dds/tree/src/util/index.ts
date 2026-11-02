@@ -167,7 +167,7 @@ export {
 	createTupleComparator,
 } from "./bTreeUtils.js";
 
-export { cloneWithReplacements } from "./cloneWithReplacements.js";
+export { cloneWithReplacements, deepClone } from "./clone.js";
 
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
 

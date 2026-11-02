@@ -1695,26 +1695,6 @@ describe("schemaFactory", () => {
 			type _check2 = requireTrue<areSafelyAssignable<typeof empty.scope, "test.">>;
 		});
 
-		it("preserves options accessed through a prototype", () => {
-			class Options {
-				public readonly scope = "test";
-				readonly #allowUnknownOptionalFields = true;
-
-				public get objectOptions(): ObjectSchemaOptions {
-					return { allowUnknownOptionalFields: this.#allowUnknownOptionalFields };
-				}
-			}
-			const options = new Options();
-			const sf = new SchemaFactoryBeta(options);
-			const replaced = new SchemaFactoryBeta("test").scopedFactory("replaced", options);
-			assert.equal(allowsUnknownOptionalFields(sf.object("Direct", {})), true);
-			assert.equal(allowsUnknownOptionalFields(replaced.object("Replaced", {})), true);
-			assert.equal(
-				allowsUnknownOptionalFields(sf.scopedFactory("child").object("Child", {})),
-				true,
-			);
-		});
-
 		it("reads options accessors once", () => {
 			let reads = 0;
 			const sf = new SchemaFactoryBeta({

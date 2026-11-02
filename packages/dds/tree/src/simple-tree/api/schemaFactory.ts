@@ -6,7 +6,12 @@
 import { debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type RestrictiveStringRecord, compareSets, getOrCreate } from "../../util/index.js";
+import {
+	type RestrictiveStringRecord,
+	compareSets,
+	deepClone,
+	getOrCreate,
+} from "../../util/index.js";
 import { normalizeAllowedTypes } from "../core/index.js";
 import type {
 	NodeKind,
@@ -97,6 +102,18 @@ export {
 	type ScopedSchemaName,
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
+
+/**
+ * Copies the settings retained by factory constructors, including nested metadata.
+ *
+ * @param options - Constructor settings to snapshot.
+ * @returns Settings independent of caller-owned option objects.
+ */
+function copySchemaFactoryOptions(
+	options: SchemaFactoryAlphaOptions,
+): SchemaFactoryAlphaOptions {
+	return Object.freeze(deepClone({ objectOptions: options.objectOptions }));
+}
 
 /**
  * Merges factory settings for all API tiers.
@@ -299,9 +316,7 @@ export class SchemaFactory<
 		super();
 		this.scope = typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions;
 		this.settings =
-			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
-				: {};
+			typeof scopeOrOptions === "object" ? copySchemaFactoryOptions(scopeOrOptions) : {};
 	}
 
 	/**
@@ -904,9 +919,7 @@ export class SchemaFactoryBeta<
 	) {
 		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
-			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
-				: {};
+			typeof scopeOrOptions === "object" ? copySchemaFactoryOptions(scopeOrOptions) : {};
 	}
 
 	/**
@@ -1326,9 +1339,7 @@ export class SchemaFactoryAlpha<
 	) {
 		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
-			typeof scopeOrOptions === "object"
-				? { objectOptions: scopeOrOptions.objectOptions }
-				: {};
+			typeof scopeOrOptions === "object" ? copySchemaFactoryOptions(scopeOrOptions) : {};
 	}
 
 	/**
