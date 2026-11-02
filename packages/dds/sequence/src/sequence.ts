@@ -62,6 +62,7 @@ import type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,
@@ -375,6 +376,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
  * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedSegmentSequence<T>
 {

@@ -173,7 +173,6 @@ export function addSummarizeResultToSummary(
 
 /**
  * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
- * @legacy @beta
  */
 export interface SummaryTreeBuilderParams {
 	/**

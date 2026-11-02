@@ -595,6 +595,7 @@ module.exports = {
 				// Mocha configs are okay to match package.json (help migrate to simple ESM all the time)
 				// (Just under client packages for now)
 				"^packages/.+/.mocharc.js$",
+				"^examples/utils/webpack-fluid-loader/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
 				"website/static/trusted-types-policy.js",

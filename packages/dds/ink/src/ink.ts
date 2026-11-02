@@ -18,6 +18,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -107,6 +108,7 @@ const snapshotFileName = "header";
  * @sealed
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class Ink extends SharedObject<IInkEvents> implements IInk {
 	/**
 	 * Create a new Ink.

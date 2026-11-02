@@ -688,7 +688,11 @@ export class UnhydratedSequenceField
 		if (i === undefined) {
 			return undefined;
 		}
-		return this.unboxed(i);
+		return this.atIndex(i);
+	}
+
+	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		return this.unboxed(index);
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);

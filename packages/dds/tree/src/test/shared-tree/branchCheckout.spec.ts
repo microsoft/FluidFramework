@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 import { forkBranch, type TreeBranchHandleAlpha } from "@fluidframework/tree/alpha";
 
 import type { RevertibleAlpha } from "../../core/index.js";
@@ -275,7 +278,7 @@ describe("BranchCheckout", () => {
 					view.checkout.forkWith(
 						(options) => new BranchCheckout({ ...options, isSharedBranch: true }),
 					),
-				/BranchCheckout cannot represent a shared branch/,
+				validateAssertionError("BranchCheckout cannot represent a shared branch"),
 			);
 		});
 

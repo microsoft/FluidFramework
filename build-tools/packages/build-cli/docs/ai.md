@@ -41,7 +41,7 @@ EXAMPLES
 
   Use a specific model for the launcher assistant.
 
-    $ flub ai --model claude-sonnet-4.5
+    $ flub ai --model gpt-6-luna
 ```
 
 _See code: [src/commands/ai.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/ai.ts)_
