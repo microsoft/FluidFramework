@@ -76,7 +76,7 @@ describe("BranchCheckout", () => {
 					view.checkout.forkWith(
 						(options) => new BranchCheckout({ ...options, isSharedBranch: true }),
 					),
-				/BranchCheckout cannot represent a shared branch/,
+				validateAssertionError("BranchCheckout cannot represent a shared branch"),
 			);
 		});
 

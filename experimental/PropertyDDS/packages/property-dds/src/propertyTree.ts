@@ -36,6 +36,7 @@ import {
 	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import lodash from "lodash";
@@ -159,6 +160,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
  * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class SharedPropertyTree extends SharedObject {
 	tipView: SerializedChangeSet = {};
 	remoteTipView: SerializedChangeSet = {};

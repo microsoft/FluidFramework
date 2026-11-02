@@ -1,6 +1,6 @@
 ---
 name: fluid-release
-description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. In autonomous mode, auto-detects state from the schedule and repo, attempts to execute, and falls back to a GitHub issue on failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
+description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. In autonomous mode, auto-detects state from the repo, attempts to execute, and falls back to a GitHub issue on failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
 ---
 
 # Fluid Framework Client Release
@@ -13,6 +13,15 @@ Check the `CI` environment variable at the start of every session:
 
 - **`CI=true`**: Running in a GitHub Actions workflow. Use only `origin` (no `upstream`). Use CI-safe commands (see [CI-safe alternatives](#ci-safe-command-alternatives)). Never prompt for input. Log blockers and phase completions to workflow output for human review.
 - **`CI` unset or false**: Running locally. Use `upstream`/`origin` detection as described in Key Context.
+
+Select the remote once for repository-state checks:
+
+```bash
+release_remote=origin
+if [ "$CI" != "true" ] && git remote get-url upstream >/dev/null 2>&1; then
+    release_remote=upstream
+fi
+```
 
 ## Mode Selection
 
@@ -28,37 +37,50 @@ Run commands autonomously but pause before creating PRs, pushing branches, or tr
 
 ### Autonomous Mode
 
-Run the entire selected phase end-to-end without pausing. Auto-detect the release state from the schedule and repo (see below). If the user provides version info upfront, skip the version questions entirely.
+Run the entire selected phase end-to-end without pausing. Auto-detect the release state from the repo (see below). If the user provides version info upfront, skip the version questions entirely.
 
 Requirements:
 
-- **Version info upfront:** The user must provide all version numbers before starting (current release version and/or next version, depending on phase). Do not prompt for versions mid-flow. If the user doesn't provide versions, detect them from the schedule and repo state (see below).
+- **Version detection:** Infer version numbers from repo state by default (see below).
+  If the user provides versions, use them unless they conflict with repo state.
 - **No confirmation pauses:** Create PRs, push branches, and run `flub release` without asking. Include clear commit messages and PR descriptions.
 - **Phase-scoped execution:** Each phase runs to completion, then reports what the user needs to do next (e.g., "queue the ADO release build", "queue the ADO publish pipeline", or "wait for npm feeds, then re-invoke for type test updates").
 - **Fallback to issues:** If any step fails (permission errors, CI-safe command failures, git push rejected, or any other error that prevents progress), **stop and open a GitHub issue** in `microsoft/FluidFramework` describing what was completed, what failed, and what remains. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode.
 
 #### Auto-detecting release state (autonomous mode and CI)
 
-Auto-detect the release state from the schedule and repo. Read the [release schedule](references/release-schedule.md) and run the detection steps below. In interactive mode, this detection also runs when the user gives a generic request like "do the release" without specifying a version or phase.
+Auto-detect the release state from the repo using the detection steps below. In interactive mode, this detection also runs when the user gives a generic request like "do the release" without specifying a version or phase.
 
 **Step 1: Identify the most recent release.**
 
 ```bash
 # Get the latest client release tag
-git tag -l 'client_v2.*' --sort=-version:refname | head -1
+git tag -l 'client_v*' --sort=-version:refname | head -1
 ```
 
-**Step 2: Identify the next scheduled release.**
+**Step 2: Identify the release version from repo state.**
 
-Compare today's date against the schedule. The next release is the earliest scheduled entry whose proposed date is >= today and whose version is greater than the most recently released version. Also check if a release is _overdue_ (proposed date < today but no tag exists).
+Inspect release-prep branches/PRs, release branches, and tags for a release already in progress.
+Use the version on `main` for a new minor release and increment its minor version by 1 for the next development version.
+If the version bump has already merged, use the release-prep PR or pre-bump commit to recover the release version.
+
+```bash
+# Inspect the development version and existing release branches
+git fetch "$release_remote" main
+git show "${release_remote}/main:package.json"
+git ls-remote --heads "$release_remote" 'release-prep/*' 'release/client/*'
+```
+
+Ask for clarification only when repo state is ambiguous or conflicts with user-provided versions or phase.
+In CI, report the ambiguity or conflict and stop instead of prompting.
 
 **Step 3: Check if a release is in progress.**
 
 ```bash
 # Check for release-prep branches for the next version
-git ls-remote --heads upstream 'release-prep/<NEXT_VERSION>/*'
+git ls-remote --heads "$release_remote" 'release-prep/<NEXT_VERSION>/*'
 # Check for the release branch
-git ls-remote --heads upstream 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
+git ls-remote --heads "$release_remote" 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
 # Check for a release tag
 git tag -l 'client_v<NEXT_VERSION>'
 # Check for open PRs
@@ -82,26 +104,23 @@ For a release branch with no completed release, also inspect ADO pipeline state:
 | Successful public publish run exists, exact GitHub/npm release not yet available | Wait for publication to propagate; investigate the publish run if it does not appear |
 | Exact GitHub/npm release verified, no patch bump PR | Resume **release execution** — do the patch bump (Step 7) |
 | Release tag exists, patch bump done, no type test PRs | Start **type test updates** (Steps 8-9) |
-| All phases complete | Report that the release is fully done and show the next scheduled release |
+| All phases complete | Report that the release is fully done and show the next release version from `main` |
 
 Present the detected state and chosen action to the user (or in the issue body). Example:
 
-> **Detected state:** 2.91.0 is scheduled for 03/16/26. No release-prep branches found. The most recent release is 2.90.0.
+> **Detected state:** `main` is at 2.91.0. No release-prep branches found. The most recent release is 2.90.0.
 > **Action:** Minor release prep needed for 2.91.0 (next version on main: 2.92.0).
-
-## Release Schedule
-
-The release schedule is in [references/release-schedule.md](references/release-schedule.md). It contains proposed dates, release versions, and the corresponding "main" version after each release. Use this to determine version numbers and timing in autonomous mode.
 
 ## Workflow Selection
 
-Ask the user which phase they need (or auto-detect in autonomous mode — see above):
+Use the requested phase, or auto-detect it from repo state as described above.
+Ask only if the phase is ambiguous or conflicts with the request; in CI, report the blocker and stop.
 
 | Phase | When to use | CI-automatable? | Reference |
 |-------|-------------|-----------------|-----------|
 | **Minor release prep** | Starting a new minor release from `main` (Steps 1-5) | Yes (Steps 1-4 create PRs; Step 5 is a human step) | [minor-release-prep.md](references/minor-release-prep.md) |
 | **Release execution** | Running and publishing the release build + patch bump (Steps 6-7). Also used for **patch releases** on existing branches. | Partially (Step 6 = human queues ADO build and publish pipelines; Step 7 = CI-automatable) | [release-execution.md](references/release-execution.md) |
-| **Type test updates** | Day after release: update baselines on main and release branch (Steps 8-9) | Yes (must be resilient to failure if npm packages not yet available) | [type-test-updates.md](references/type-test-updates.md) |
+| **Type test updates** | After release: update baselines on main and release branch (Steps 8-9) | Yes (must be resilient to failure if npm packages not yet available) | [type-test-updates.md](references/type-test-updates.md) |
 
 For **patch releases**, skip directly to release execution on an existing release branch.
 
@@ -159,8 +178,8 @@ Example for releasing 2.90.0 with next version 2.91.0:
 Before starting any phase, check for existing progress by looking at branches and PRs:
 
 ```bash
-# Check for existing release-prep branches on upstream
-git ls-remote --heads upstream 'release-prep/<VERSION>/*'
+# Check for existing release-prep branches on the selected remote
+git ls-remote --heads "$release_remote" 'release-prep/<VERSION>/*'
 # Check for open release-prep PRs
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
 ```
@@ -199,7 +218,7 @@ Use the `build:` conventional commit prefix for all release PR titles (e.g., `bu
 | Creating PRs | Pause and confirm | Create automatically with descriptive titles/bodies |
 | Pushing branches | Pause and confirm | Push automatically |
 | Running `flub release` | Pause and confirm | Run automatically |
-| Version determination | Ask user to confirm | Use version provided upfront or auto-detect |
+| Version determination | Infer from repo state; ask only if ambiguous or conflicting | Use version provided upfront or auto-detect |
 | Announcing releases | Remind user | Remind user (never auto-announce) |
 | ADO release/publish pipeline queuing | Instruct user | Instruct user (cannot be automated) |
 

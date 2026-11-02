@@ -141,7 +141,7 @@ export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
     readonly readOnly?: boolean;
 } & AllOrNone<IContainerLoadDriverProps>;
 
-// @alpha @legacy
+// @beta @legacy @input
 export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
 
 // @beta @legacy
@@ -217,10 +217,10 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 // @alpha @legacy
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
-// @alpha @legacy
+// @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
 
-// @alpha @legacy
+// @beta @sealed @legacy
 export type LoadSummarizerSummaryResult = {
     readonly success: true;
     readonly summaryResults: OnDemandSummaryResults;
@@ -229,7 +229,7 @@ export type LoadSummarizerSummaryResult = {
     readonly error: IErrorBase;
 };
 
-// @alpha @legacy
+// @beta @sealed @legacy
 export interface OnDemandSummaryResults {
     readonly summaryInfo: {
         readonly stage?: SummaryStage;
@@ -270,7 +270,7 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy

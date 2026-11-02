@@ -37,7 +37,7 @@ export function makeHandlesSerializable(value: unknown, serializer: IFluidSerial
 // @beta @legacy
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
     telemetryContextPrefix: string);
@@ -53,7 +53,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext, fullTree?: boolean): ISummaryTreeWithStats;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(
     id: string,

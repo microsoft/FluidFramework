@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";
+import { ValueSchema } from "../../../core/index.js";
 import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
@@ -33,6 +34,8 @@ import {
 	stringSchema,
 	numberSchema,
 	allowUnused,
+	FieldKind,
+	NodeKind,
 } from "../../../simple-tree/index.js";
 import { testSchema } from "../../testTrees.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -44,6 +47,45 @@ const nodeFileSystem = {
 };
 
 describe("snapshotCompatibilityChecker", () => {
+	it("accepts existing snapshots with unsorted definitions without changing compatibility", () => {
+		const snapshot = {
+			version: 1,
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: {
+					[stringSchema.identifier]: { isStaged: false },
+					[numberSchema.identifier]: { isStaged: false },
+				},
+			},
+			definitions: {
+				[stringSchema.identifier]: {
+					leaf: { kind: NodeKind.Leaf, leafKind: ValueSchema.String },
+				},
+				[numberSchema.identifier]: {
+					leaf: { kind: NodeKind.Leaf, leafKind: ValueSchema.Number },
+				},
+			},
+		};
+		const current = new TreeViewConfigurationAlpha({
+			schema: [stringSchema, numberSchema],
+		});
+		const original = importCompatibilitySchemaSnapshot(snapshot);
+		const regenerated = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(current),
+		);
+
+		for (const parsed of [original, regenerated]) {
+			const result = getCompatibility(current, parsed);
+			assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+			assert.equal(result.identicalCompatibility, true);
+		}
+		assert.deepEqual(Object.keys(snapshot.definitions), [
+			stringSchema.identifier,
+			numberSchema.identifier,
+		]);
+	});
+
 	it("parse and snapshot can roundtrip schema", () => {
 		const factory = new SchemaFactory("test");
 		const Schema = factory.optional(factory.string, {});

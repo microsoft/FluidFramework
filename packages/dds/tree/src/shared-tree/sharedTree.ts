@@ -213,9 +213,18 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
+		const retainHistory = optionsParam.retainHistory;
+		if (
+			retainHistory !== undefined &&
+			typeof retainHistory !== "boolean" &&
+			(!Number.isSafeInteger(retainHistory) || retainHistory < 0)
+		) {
+			throw new UsageError("retainHistory must be a boolean or a nonnegative safe integer");
+		}
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
+			retainHistory: retainHistory ?? defaultSharedTreeOptions.retainHistory,
 		};
 		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
@@ -663,19 +672,27 @@ export interface SharedTreeOptions
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 
 	/**
-	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
-	 * the collaboration window.
+	 * Configures the minimum amount of available sequenced edit history this SharedTree instance retains.
 	 *
 	 * @defaultValue `false`
 	 *
 	 * @remarks
+	 * A positive safe integer retains the newest specified number of available main-branch commits.
+	 * Each sequenced commit counts separately, including commits in the same batch.
+	 * Set to `true` to retain all available history, or `false` or `0` to disable extra retention.
+	 * Collaboration and existing branches can require retaining additional commits, so the policy is not a hard cap. There are two other situations that can cause the number of retained commits to temporarily exceed the limit set by the policy:
+	 * - While the container is detached, commits are only trimmed when a summary is generated.
+	 * - When a summary is loaded, no trimming is performed until the client receives information about the current collaboration window from the service.
+	 *
+	 * This policy is local to each SharedTree instance; it is not stored in the document or propagated to other clients.
+	 * Increasing retention cannot recover history that has already been removed.
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
 	 * local branches), to bound memory usage and document size.
-	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * Setting this option to `true` retains all available trunk commits - this increases memory usage and document size
 	 * over time and should be used with care.
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
