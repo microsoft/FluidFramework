@@ -60,16 +60,15 @@ import type {
 import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import { schemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 import { schemaStaticsBeta } from "./schemaFactoryBeta.js";
-import {
-	defaultSchemaFactoryObjectOptions,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type ObjectSchemaOptions,
-	type ObjectSchemaOptionsAlpha,
-	type ObjectSchemaOptionsBeta,
-	type SchemaFactoryAlphaOptions,
-	type SchemaFactoryBetaOptions,
-	type SchemaFactoryOptions,
+import type {
+	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
+	ObjectSchemaOptions,
+	ObjectSchemaOptionsAlpha,
+	ObjectSchemaOptionsBeta,
+	SchemaFactoryAlphaOptions,
+	SchemaFactoryBetaOptions,
+	SchemaFactoryOptions,
 } from "./schemaFactoryOptions.js";
 import { scoped, structuralName, type ScopedSchemaName } from "./schemaFactoryUtils.js";
 import { SchemaFactory_base, schemaStatics } from "./schemaStatics.js";
@@ -83,14 +82,13 @@ import type {
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 
-export {
-	defaultSchemaFactoryObjectOptions,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type ObjectSchemaOptions,
-	type ObjectSchemaOptionsAlpha,
-	type ObjectSchemaOptionsBeta,
-	type SchemaFactoryOptions,
+export type {
+	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
+	ObjectSchemaOptions,
+	ObjectSchemaOptionsAlpha,
+	ObjectSchemaOptionsBeta,
+	SchemaFactoryOptions,
 } from "./schemaFactoryOptions.js";
 export {
 	schemaFromValue,
@@ -338,7 +336,6 @@ export class SchemaFactory<
 		T
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
 			...this.settings.objectOptions,
 			...options,
 		}) as TreeNodeSchemaClass<
@@ -977,7 +974,6 @@ export class SchemaFactoryBeta<
 		TCustomMetadata
 	> {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
 			...this.settings.objectOptions,
 			...options,
 		}) as TreeNodeSchemaClass<
@@ -1331,7 +1327,6 @@ export class SchemaFactoryAlpha<
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
 			...this.settings.objectOptions,
 			...options,
 		});
