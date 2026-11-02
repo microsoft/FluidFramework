@@ -37,8 +37,7 @@ const factory = new SchemaFactory({
 });
 ```
 
-Options passed directly to `object` or `objectRecursive` override the factory default through a shallow merge.
-The beta and alpha schema factories support corresponding tier-specific object options in the same property-bag form.
+Individual schemas can still override this factory default.
 
 #### Behavior to review
 

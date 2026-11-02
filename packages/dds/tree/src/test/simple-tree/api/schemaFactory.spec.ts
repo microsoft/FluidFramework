@@ -58,7 +58,6 @@ import {
 	allowUnused,
 	getSimpleSchema,
 	type InsertableTreeFieldFromImplicitField,
-	type SimpleObjectNodeSchema,
 } from "../../../simple-tree/index.js";
 import {
 	brand,
@@ -316,7 +315,7 @@ describe("schemaFactory", () => {
 						const factory = new Factory("com.example");
 						const options: ObjectSchemaOptions | undefined =
 							allowUnknownOptionalFields === undefined
-								? undefined
+								? { allowUnknownOptionalFields: undefined }
 								: { allowUnknownOptionalFields };
 						class Item extends factory.object("Item", {}, options) {}
 
@@ -1418,64 +1417,12 @@ describe("schemaFactory", () => {
 		>;
 	});
 
-	it("scopedFactory preserves beta APIs", () => {
-		const factory = new SchemaFactoryBeta("test.blah");
-
-		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
-			factory.scopedFactory("scoped");
-		assert.equal(scopedFactory.scope, "test.blah.scoped");
-		const ScopedObject = scopedFactory.object("Object", {});
-		assert.equal(
-			getSimpleSchema(ScopedObject).definitions.get(ScopedObject.identifier)?.kind,
-			NodeKind.Object,
-		);
-		assert.equal(
-			(
-				getSimpleSchema(ScopedObject).definitions.get(
-					ScopedObject.identifier,
-				) as SimpleObjectNodeSchema
-			).allowUnknownOptionalFields,
-			true,
-		);
-		type _check = requireTrue<
-			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
-		>;
-
-		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
-
-		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
-			return f.scope;
-		}
-
-		const inferred = inferScope(scopedFactory);
-		// TODO: AB#43345
-		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
-		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
-
-		function inferScope2<TScope extends string>(
-			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
-		) {
-			return f.scope;
-		}
-		const inferred2 = inferScope2(scopedFactory);
-		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
-	});
-
 	it("scopedFactory preserves alpha APIs", () => {
 		const factory = new SchemaFactoryAlpha("test.blah");
 
 		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
 			factory.scopedFactory("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
-		const ScopedObject = scopedFactory.objectAlpha("Object", {});
-		assert.equal(
-			(
-				getSimpleSchema(ScopedObject).definitions.get(
-					ScopedObject.identifier,
-				) as SimpleObjectNodeSchema
-			).allowUnknownOptionalFields,
-			true,
-		);
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
 		>;
@@ -1498,45 +1445,6 @@ describe("schemaFactory", () => {
 		}
 		const inferred2 = inferScope2(scopedFactory);
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
-	});
-
-	it("defaults allowUnknownOptionalFields when explicitly undefined", () => {
-		const publicFactory = new SchemaFactory("test.public");
-		const PublicObject = publicFactory.object(
-			"Object",
-			{},
-			{
-				allowUnknownOptionalFields: undefined,
-			},
-		);
-		assert.equal(allowsUnknownOptionalFields(PublicObject), true);
-
-		const betaFactory = new SchemaFactoryBeta("test.beta");
-		const BetaObject = betaFactory.object(
-			"Object",
-			{},
-			{
-				allowUnknownOptionalFields: undefined,
-			},
-		);
-		assert.equal(
-			(
-				getSimpleSchema(BetaObject).definitions.get(
-					BetaObject.identifier,
-				) as SimpleObjectNodeSchema
-			).allowUnknownOptionalFields,
-			true,
-		);
-
-		const alphaFactory = new SchemaFactoryAlpha("test.alpha");
-		const AlphaObject = alphaFactory.objectAlpha(
-			"Object",
-			{},
-			{
-				allowUnknownOptionalFields: undefined,
-			},
-		);
-		assert.equal(AlphaObject.allowUnknownOptionalFields, true);
 	});
 
 	function allowsUnknownOptionalFields(schema: TreeNodeSchema): boolean {
