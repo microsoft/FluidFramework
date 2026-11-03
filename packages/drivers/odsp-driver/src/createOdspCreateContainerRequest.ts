@@ -16,10 +16,11 @@ import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtil
 /**
  * Options for creating a new file on OneDrive or SharePoint in a folder identified by its item ID.
  * @remarks Pass these options to the `createOdspCreateContainerRequest` overload that takes an options object.
+ * @input
  * @legacy
  * @beta
  */
-export interface IOdspCreateContainerRequestOptions {
+export interface OdspCreateContainerRequestOptions {
 	/**
 	 * Base URL of the OneDrive or SharePoint site.
 	 */
@@ -58,18 +59,18 @@ export interface IOdspCreateContainerRequestOptions {
 
 /**
  * Creates the request object, with URL and headers, for creating a new file on OneDrive or SharePoint
- * in the folder identified by {@link IOdspCreateContainerRequestOptions.parentFolderId}.
+ * in the folder identified by {@link OdspCreateContainerRequestOptions.parentFolderId}.
  * @remarks
  * Use this overload when the folder might be renamed or moved,
  * because a folder's item ID stays the same when that happens, but its path doesn't.
  * @param options - Specifies where to create the file and what to create along with it.
  * @returns The request to pass when attaching the container.
- * @throws An error whose `errorType` is `"usageError"` if {@link IOdspCreateContainerRequestOptions.parentFolderId} is empty.
+ * @throws An error whose `errorType` is `"usageError"` if {@link OdspCreateContainerRequestOptions.parentFolderId} is empty.
  * @legacy
  * @beta
  */
 export function createOdspCreateContainerRequest(
-	options: IOdspCreateContainerRequestOptions,
+	options: OdspCreateContainerRequestOptions,
 ): IRequest;
 
 // Keep this overload last.
@@ -78,7 +79,7 @@ export function createOdspCreateContainerRequest(
 /**
  * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
  * @remarks
- * To identify the folder by its item ID instead of its path, use the overload that takes {@link IOdspCreateContainerRequestOptions}.
+ * To identify the folder by its item ID instead of its path, use the overload that takes {@link OdspCreateContainerRequestOptions}.
  * @param siteUrl - Base url for OneDrive
  * @param driveId - drive identifier
  * @param filePath - path where file needs to be created
@@ -106,7 +107,7 @@ export function createOdspCreateContainerRequest(
  */
 export function createOdspCreateContainerRequest(
 	...args:
-		| [options: IOdspCreateContainerRequestOptions]
+		| [options: OdspCreateContainerRequestOptions]
 		| [
 				siteUrl: string,
 				driveId: string,
@@ -146,7 +147,7 @@ function buildCreateNewRequest(
 		createShareLinkType,
 		containerPackageInfo,
 	}: Pick<
-		IOdspCreateContainerRequestOptions,
+		OdspCreateContainerRequestOptions,
 		"siteUrl" | "fileName" | "createShareLinkType" | "containerPackageInfo"
 	>,
 	locationQuery: string,

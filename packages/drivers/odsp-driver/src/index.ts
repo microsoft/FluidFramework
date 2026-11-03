@@ -41,7 +41,7 @@ export {
 // File creation
 export {
 	createOdspCreateContainerRequest,
-	type IOdspCreateContainerRequestOptions,
+	type OdspCreateContainerRequestOptions,
 } from "./createOdspCreateContainerRequest.js";
 
 // URI Resolver functionality, URI management

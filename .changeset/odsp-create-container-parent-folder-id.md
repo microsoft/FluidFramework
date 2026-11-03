@@ -4,11 +4,9 @@
 ---
 New containers can be created in a OneDrive or SharePoint folder identified by its item ID
 
-`createOdspCreateContainerRequest` has a new overload that takes an `IOdspCreateContainerRequestOptions` object.
+[`createOdspCreateContainerRequest`](https://fluidframework.com/docs/api/odsp-driver/#createodspcreatecontainerrequest-function) has a new overload that takes an `OdspCreateContainerRequestOptions` object.
 Use it to identify the folder for the new file by its item ID (`parentFolderId`) instead of its path.
 Unlike a folder's path, its item ID doesn't change when the folder is renamed or moved.
-
-The existing overload, which takes a folder path, is unchanged.
 
 ```typescript
 import { createOdspCreateContainerRequest } from "@fluidframework/odsp-driver/legacy";
@@ -21,3 +19,5 @@ const request = createOdspCreateContainerRequest({
 });
 await container.attach(request);
 ```
+
+The existing overload, which takes a folder path, is unchanged.

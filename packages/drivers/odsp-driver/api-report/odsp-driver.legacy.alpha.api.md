@@ -11,7 +11,7 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @beta @legacy
-export function createOdspCreateContainerRequest(options: IOdspCreateContainerRequestOptions): IRequest;
+export function createOdspCreateContainerRequest(options: OdspCreateContainerRequestOptions): IRequest;
 
 // @beta @legacy
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
@@ -95,16 +95,6 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 // @beta @legacy
-export interface IOdspCreateContainerRequestOptions {
-    readonly containerPackageInfo?: IContainerPackageInfo | undefined;
-    readonly createShareLinkType?: ISharingLinkKind | undefined;
-    readonly driveId: string;
-    readonly fileName: string;
-    readonly parentFolderId: string;
-    readonly siteUrl: string;
-}
-
-// @beta @legacy
 export interface IOdspDocumentServiceFactoryOptions {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
@@ -183,6 +173,16 @@ export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
 // @beta @legacy (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
+
+// @beta @legacy @input
+export interface OdspCreateContainerRequestOptions {
+    readonly containerPackageInfo?: IContainerPackageInfo | undefined;
+    readonly createShareLinkType?: ISharingLinkKind | undefined;
+    readonly driveId: string;
+    readonly fileName: string;
+    readonly parentFolderId: string;
+    readonly siteUrl: string;
+}
 
 // @beta @legacy
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
