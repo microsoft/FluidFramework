@@ -12,11 +12,13 @@ import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discr
 import {
 	checkSchemaCompatibility,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
+	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	schemaStatics,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
-import { TestSchemaRepository } from "../../utils.js";
+import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
@@ -220,6 +222,160 @@ describe("Schema Evolution Examples", () => {
 				enabledUpgrades: new Map(),
 			});
 		}
+	});
+
+	/**
+	 * This user story follows four application schema versions on the same document.
+	 * Each version keeps the "Task" type identifier, preserves existing stored field keys,
+	 * and enables `allowUnknownOptionalFields`.
+	 *
+	 * 1. `TaskWithNotes` declares a required `title` and optional `experimentalNotes` containing a `Notes` node.
+	 * Initialize a document with both fields. A second client opens it with this schema and
+	 * keeps that view for the rest of the test.
+	 *
+	 * 2. `TaskWithoutNotes` removes `experimentalNotes` from the view schema to simulate a feature rollback.
+	 * The application can still edit the title, but the notes are now an unknown optional field.
+	 * Calling upgradeSchema must make no change: the stored field, Notes schema, and data remain.
+	 *
+	 * 3. `TaskWithLabel` adds an optional `label` without restoring `experimentalNotes` to the view schema.
+	 * This requires a stored-schema upgrade. The upgrade must add label while retaining the
+	 * unknown notes field and its Notes schema, even though neither is declared by this view.
+	 * The second client must remain compatible. It sees the `title` edit and can still edit the `notes`,
+	 * while treating `label` as an unknown optional field.
+	 *
+	 * 4. `TaskWithRestoredNotes` keeps `label` and restores the original `experimentalNotes` declaration.
+	 * This view must work without another schema upgrade. It exposes the retained `notes`,
+	 * including the second client's edit, and preserves the `title` and `label`.
+	 *
+	 * Removing a field from the view must not delete its stored data nor prevent later compatible upgrades.
+	 */
+	it("removes an optional field, upgrades another field, and restores the retained data", () => {
+		const factory = new SchemaFactoryBeta("optional-field-removal");
+		class Notes extends factory.object("Notes", { text: factory.string }) {}
+
+		const provider = new TestTreeProviderLite(2);
+		const [tree, collaboratorTree] = provider.trees;
+
+		// #region Step 1: Initialize with `TaskV1`. The collaborator keeps this schema throughout.
+
+		// Schema version 1: Task with optional experimental notes
+		class TaskV1 extends factory.object(
+			"Task",
+			{
+				title: factory.string,
+				experimentalNotes: factory.optional(Notes),
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const originalConfig = new TreeViewConfiguration({ schema: TaskV1 });
+		const originalView = tree.viewWith(originalConfig);
+		originalView.initialize({
+			title: "Try an experimental feature",
+			experimentalNotes: { text: "Keep these notes" },
+		});
+		provider.synchronizeMessages();
+		const collaboratorView = collaboratorTree.viewWith(originalConfig);
+		assert.equal(collaboratorView.root.experimentalNotes?.text, "Keep these notes");
+		originalView.dispose();
+
+		// #endregion Step 1
+
+		// #region Step 2: Switch to `TaskV2` to roll back the feature while the collaborator still uses it.
+
+		// Schema version 2: Task with experimental notes removed
+		class TaskV2 extends factory.object(
+			"Task",
+			{
+				title: factory.string,
+				// Removed field: `experimentalNotes`
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const reducedView = tree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+		assert.equal(reducedView.compatibility.canView, true);
+		assert.deepEqual(Object.keys(reducedView.root), ["title"]);
+		reducedView.root.title = "Feature removed";
+		provider.synchronizeMessages();
+		assert.equal(collaboratorView.root.title, "Feature removed");
+		assert.equal(collaboratorView.root.experimentalNotes?.text, "Keep these notes");
+
+		// Removing only the view field must leave upgrades available, but require no stored-schema change.
+		assert.equal(
+			reducedView.compatibility.canUpgrade,
+			true,
+			"Removing an optional field must not prevent later schema upgrades",
+		);
+		assert.equal(reducedView.compatibility.isEquivalent, true);
+		const rootBeforeUpgrade = reducedView.root;
+		reducedView.upgradeSchema();
+		assert.equal(reducedView.root, rootBeforeUpgrade);
+		provider.synchronizeMessages();
+		assert.equal(collaboratorView.root.experimentalNotes?.text, "Keep these notes");
+		reducedView.dispose();
+
+		// #endregion Step 2
+
+		// #region Step 3: Switch to `TaskV3` and upgrade to add `label` without declaring the old notes or their type.
+
+		// Schema version 3: Task with a new optional label field
+		class TaskV3 extends factory.object(
+			"Task",
+			{
+				title: factory.string,
+				label: factory.optional(factory.string), // New
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const labelView = tree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+		assert.equal(labelView.compatibility.canView, false);
+		assert.equal(labelView.compatibility.canUpgrade, true);
+		labelView.upgradeSchema();
+		assert.equal(labelView.compatibility.canView, true);
+		assert.equal(labelView.compatibility.isEquivalent, true);
+		assert.equal(labelView.root.title, "Feature removed");
+		assert.equal("experimentalNotes" in labelView.root, false);
+		labelView.root.label = "Ready";
+		provider.synchronizeMessages();
+
+		// The collaborator can still edit the retained notes after the upgrade.
+		assert.equal(collaboratorView.compatibility.canView, true);
+		const retainedNotes = collaboratorView.root.experimentalNotes;
+		assert(retainedNotes !== undefined);
+		assert.equal(retainedNotes.text, "Keep these notes");
+		retainedNotes.text = "Updated by the older client";
+		provider.synchronizeMessages();
+		assert.equal(labelView.root.label, "Ready");
+		labelView.dispose();
+
+		// #endregion Step 3
+
+		// #region Step 4: Switch to `TaskV4` to read the retained data and remote edits without upgrading.
+
+		// Schema version 4: Task with restored experimental notes (retains label)
+		class TaskV4 extends factory.object(
+			"Task",
+			{
+				title: factory.string,
+				label: factory.optional(factory.string), // Retained
+				experimentalNotes: factory.optional(Notes), // New - matches old removed field
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const restoredView = tree.viewWith(new TreeViewConfiguration({ schema: TaskV4 }));
+		assert.equal(restoredView.compatibility.canView, true);
+		assert.equal(restoredView.compatibility.isEquivalent, true);
+		assert.equal(restoredView.root.title, "Feature removed");
+		assert.equal(restoredView.root.label, "Ready");
+		assert(restoredView.root.experimentalNotes instanceof Notes);
+		assert.equal(restoredView.root.experimentalNotes.text, "Updated by the older client");
+		restoredView.dispose();
+		collaboratorView.dispose();
+
+		// #endregion Step 4
 	});
 
 	// TODO: support adapters.
