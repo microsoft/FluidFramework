@@ -12,14 +12,14 @@ import {
 } from "./simpleSchemaFormatV1.js";
 
 /**
- * format version for schema compatibility snapshots
+ * Defines the format version for schema compatibility snapshots.
  */
 export const SimpleSchemaFormatVersion = {
 	v2: 2,
 } as const;
 
 /**
- * snapshot format for schema compatibility and application-defined versions
+ * Defines a snapshot format for schema compatibility and application-defined versions.
  *
  * @see {@link SimpleTreeSchema}
  */

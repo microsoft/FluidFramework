@@ -11,7 +11,7 @@ This allows an application to have separate versions for different features, com
 For example, a notes feature and a comments feature can each track changes to their part of the schema without sharing a single application-wide version.
 
 [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) accepts the version map in its `schemaVersion` option.
-The result is passed to the `schemaIdentity` option of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
+The result is passed to the [`schemaIdentity`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class#schemaidentity-property) option of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
 Storing versions requires the experimental schema format, enabled through [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function).
 The example below configures separate versions for notes and comments:
 
@@ -53,9 +53,9 @@ This records which feature's schema changed without assigning a new version to e
 
 [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface) exposes two version maps:
 
-- `schemaVersion` contains the versions configured by the application.
-- `storedSchemaVersion` contains the versions stored in the document.
-  This property is also available on [`ITreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface).
+- [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) contains the versions configured by the application.
+- [`storedSchemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#storedschemaversion-property) contains the versions stored in the document.
+  This property is also available on [`ViewableTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/viewabletreealpha-interface).
 
 Comparing these maps can help explain a schema compatibility issue.
 For example, the application might expect notes version `4` while the document stores version `3`.

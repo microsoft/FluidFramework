@@ -30,33 +30,33 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
 /**
  * Creates a schema identity with runtime hashing and optional application versions.
  *
- * @param options - optional hash check and application-defined versions
+ * @param options - An optional hash check and application-defined versions.
  *
- * @returns an immutable {@link SchemaIdentity} that uses SHA-256 hashing
+ * @returns An immutable {@link SchemaIdentity} that uses SHA-256 hashing.
  *
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
  * Application versions do not affect the runtime hash.
  * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
- * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
+ * Bundles that do not use this function can omit the hash algorithm.
  *
  * @alpha
  */
 export function identifySchemaAlpha(
 	options: {
 		/**
-		 * optional hash used to detect unintended schema changes
+		 * Specifies an optional hash used to detect unintended schema changes.
 		 *
 		 * @remarks
 		 * The hash uses the view schema and configured staged upgrade policy.
 		 * It does not depend on the document or application versions.
 		 * If the hashes differ, view construction throws a usage error with both hashes.
-		 * If the schema change is intentional, update this value with the actual hash from the error.
+		 * For an intentional schema change, use the actual hash reported in the error.
 		 * Omit this value to enable telemetry without a construction check.
 		 */
 		readonly expectedHash?: string;
 		/**
-		 * application-defined versions to store on {@link SchemaIdentity.schemaVersion}
+		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
 		 */
 		readonly schemaVersion?: SchemaVersionMap;
 	} = {},

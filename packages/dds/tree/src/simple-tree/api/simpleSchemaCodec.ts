@@ -36,17 +36,17 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
 /**
  * Encodes a view or stored schema for snapshot compatibility checks.
  *
- * @param simpleSchema - schema to encode
+ * @param simpleSchema - The schema to encode.
  *
- * @returns a JSON-compatible schema snapshot
+ * @returns A JSON-compatible schema snapshot.
  *
  * @remarks
  * Use this snapshot only to compare schema compatibility.
  * It does not include metadata or persisted metadata.
  * Schemas without an application version map use snapshot v1.
  * Schemas with an application version map use snapshot v2.
- * Definition order is independent of the input map's iteration order.
- * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
+ * Node definitions are sorted by identifier.
+ * Field and allowed-type entries keep their input order.
  *
  * @privateRemarks
  * TODO: Replace this export with a higher-level snapshot compatibility API.
@@ -90,12 +90,13 @@ export function encodeSchemaCompatibilitySnapshot(
 /**
  * Decodes a schema compatibility snapshot into a {@link SimpleTreeSchema}.
  *
- * @param encodedSchema - snapshot to decode
- * @param validator - optional validator for the snapshot format
+ * @param encodedSchema - The snapshot to decode.
+ * @param validator - An optional validator for the snapshot format.
  *
- * @returns the decoded schema
+ * @returns The decoded schema.
  *
- * @throws a usage error if validation fails or the application version map is invalid
+ * @throws An error with `errorType: "usageError"` if validation fails or
+ * the application version map is invalid.
  *
  * @privateRemarks
  * Without a validator, this function assumes the input has a supported snapshot format.

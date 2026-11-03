@@ -41,14 +41,14 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	 */
 	v2: 2,
 	/**
-	 * experimental format with application-defined schema versions
+	 * Supports application-defined schema versions in an experimental format.
 	 */
 	v3Experimental: "schemaVersion",
 });
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 /**
- * identifier for a library that defines a schema version
+ * Identifies a library that defines a schema version.
  *
  * @remarks
  * Library identifiers are stored in documents and must stay the same across releases.
@@ -61,7 +61,7 @@ export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" };
 
 /**
- * application-defined schema versions keyed by {@link LibraryId}
+ * Maps each {@link LibraryId} to an application-defined schema version.
  *
  * @remarks
  * Each version must be a non-negative safe integer.
@@ -454,7 +454,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	readonly rootFieldSchema: TreeFieldStoredSchema;
 
 	/**
-	 * application-defined versions for this schema
+	 * Contains the application-defined versions for this schema.
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
 }

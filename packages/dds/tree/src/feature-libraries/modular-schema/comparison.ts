@@ -25,7 +25,7 @@ import { isNeverField, isNeverTree } from "./isNeverTree.js";
 /**
  * Returns whether `superset` accepts every tree that `original` accepts.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
+ * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
  *
  * @remarks
  * Equivalent schemas return `true`.
@@ -148,7 +148,7 @@ export function allowsValueSuperset(
 /**
  * Returns whether `superset` accepts every field that `original` accepts.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
+ * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
  *
  * @remarks
  * Equivalent schemas return `true`.
@@ -208,7 +208,7 @@ export function allowsTreeSchemaIdentifierSuperset(
 /**
  * Returns whether `superset` accepts every document that `original` accepts.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - whether to enforce additive-only upgrade rules
+ * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
  *
  * @remarks
  * Equivalent schemas return `true`.

@@ -188,7 +188,7 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * schema identity for runtime hashing and application-defined versions
+	 * Specifies the schema identity for runtime hashing and application-defined versions.
 	 *
 	 * @remarks
 	 * Create with {@link identifySchemaAlpha}.
@@ -310,7 +310,7 @@ export class TreeViewConfigurationAlpha<
 	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
 
 	/**
-	 * application-defined versions from {@link TreeViewConfigurationAlpha.schemaIdentity}
+	 * Returns the versions from {@link TreeViewConfigurationAlpha.schemaIdentity}.
 	 */
 	public get schemaVersion(): SchemaVersionMap | undefined {
 		return this.schemaIdentity?.schemaVersion;

@@ -26,10 +26,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 /**
  * Checks whether a client can view or upgrade a document's schema.
  *
- * @param documentViewConfiguration - document schema and application-defined versions
- * @param clientViewConfiguration - client schema and application-defined versions
+ * @param documentViewConfiguration - The document schema and application-defined versions.
+ * @param clientViewConfiguration - The client schema and application-defined versions.
  *
- * @returns whether the client can view or upgrade the document schema
+ * @returns Whether the client can view or upgrade the document schema.
  *
  * @remarks
  * This check uses the default restrictive staged upgrade policy.
@@ -92,9 +92,9 @@ export function checkCompatibility(
 /**
  * Exports a schema compatibility snapshot.
  *
- * @param config - schema and application-defined versions to snapshot
+ * @param config - The schema and application-defined versions to snapshot.
  *
- * @returns a JSON-compatible schema snapshot
+ * @returns A JSON-compatible schema snapshot.
  *
  * @remarks
  * The same or newer package versions can load these snapshots.
@@ -134,11 +134,11 @@ export function exportCompatibilitySchemaSnapshot(
 /**
  * Imports a schema compatibility snapshot.
  *
- * @param config - JSON-compatible schema snapshot to load
+ * @param config - The JSON-compatible schema snapshot to load.
  *
- * @returns a {@link TreeViewConfigurationAlpha} with the schema and application versions
+ * @returns A {@link TreeViewConfigurationAlpha} with the schema and application versions.
  *
- * @throws a usage error if the application version map is invalid
+ * @throws An error with `errorType: "usageError"` if the application version map is invalid.
  *
  * @remarks
  * This can load snapshots from the same or older package versions.

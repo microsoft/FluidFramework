@@ -14,7 +14,7 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
 /**
- * schema identity for runtime hashing and application-defined versions
+ * Represents a schema identity for runtime hashing and application-defined versions.
  *
  * @remarks
  * Create with {@link identifySchemaAlpha}.
@@ -23,16 +23,18 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  */
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
 	/**
-	 * application-defined versions for the view schema
+	 * Contains the application-defined versions for the view schema.
 	 *
 	 * @remarks
 	 * Each value must be a non-negative safe integer.
 	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store these versions.
 	 * Stored versions cannot decrease, and library identifiers cannot be removed.
 	 *
-	 * By default, upgrades must keep all existing documents valid and cannot be reversed.
-	 * Stored versions let you make other changes that keep all existing documents valid.
-	 * For these changes, increase at least one version.
+	 * Schema upgrades normally follow the additive upgrade rules.
+	 * Other changes require version maps in both the stored schema and the new view schema.
+	 * At least one version must increase, or a library identifier must be added.
+	 * The new schema must still allow all content accepted by the stored schema.
+	 * Adding a version map for the first time does not bypass the additive upgrade rules.
 	 *
 	 * Versions use an experimental stored schema format.
 	 * Until the format is stable, all clients that load or collaborate on the document
@@ -44,7 +46,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * Increase the version to change a required string field to an identifier field.
 	 * Older applications cannot reverse this change because stored versions cannot decrease.
 	 *
-	 * Configure {@link configuredSharedTreeAlpha} to write the experimental format:
+	 * Configure {@link configuredSharedTreeAlpha} to write the experimental format.
 	 *
 	 * ```typescript
 	 * const SharedTree = configuredSharedTreeAlpha({
@@ -53,7 +55,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 *
-	 * Pass versions to {@link identifySchemaAlpha} with a stable {@link LibraryId}:
+	 * Pass versions to {@link identifySchemaAlpha} with a stable {@link LibraryId}.
 	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
@@ -72,7 +74,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 }
 
 /**
- * runtime implementation of {@link SchemaIdentity} without the hash algorithm
+ * Implements {@link SchemaIdentity} without the hash algorithm.
  *
  * @remarks
  * Compatibility snapshots restore versions without runtime hash checks or telemetry.
