@@ -310,9 +310,9 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		if (!this.hasStagedSchema) {
 			// Cache one canonical result when conversion is policy-independent.
-			const stored = this.#storedSchemas;
-			assert(!(stored instanceof WeakMap), "Expected a policy-independent cache");
-			return (this.#storedSchemas = stored ?? this.#convertStoredSchema(options));
+			assert(!(this.#storedSchemas instanceof WeakMap), "Expected a policy-independent cache");
+			this.#storedSchemas ??= this.#convertStoredSchema(options);
+			return this.#storedSchemas;
 		}
 		this.#storedSchemas ??= new WeakMap();
 		assert(this.#storedSchemas instanceof WeakMap, "Expected a policy-dependent cache");
