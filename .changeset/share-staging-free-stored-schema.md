@@ -9,10 +9,7 @@ SharedTree reuses schema analysis and view-schema definitions across overlapping
 
 Schema definitions without reachable staged upgrades can also share conversions across upgrade policies.
 
-Configuration-specific validation still runs for each configuration.
-Simple-schema copies and compatibility snapshots continue to return fresh output structures.
-Default unhydrated contexts are shared by roots that reference the same schema component.
-Hydrated contexts remain document-specific.
-
-Definition map iteration order is unspecified.
+Definition map iteration order may change but remains unspecified.
 Schema hashes and persisted schema encoding are unchanged.
+
+These changes can reduce startup time and memory use for applications with large schemas.
