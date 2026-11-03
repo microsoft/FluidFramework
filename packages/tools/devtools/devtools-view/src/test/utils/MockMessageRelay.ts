@@ -38,10 +38,6 @@ export class MockMessageRelay
 		super();
 	}
 
-	/**
-	 * {@inheritDoc IMessageRelay.postMessage}
-	 */
-
 	public postMessage(message: IDevtoolsMessage): void {
 		const response = this.messageHandler(message);
 		if (response !== undefined) {

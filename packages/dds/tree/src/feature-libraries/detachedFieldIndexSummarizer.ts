@@ -5,14 +5,27 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import type { DetachedFieldIndex } from "../core/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type IJsonCodec,
+} from "../codec/index.js";
+import {
+	type DetachedFieldIndex,
+	type DetachedFieldSummaryData,
+	type RevisionTagCodec,
+	detachedFieldIndexCodecBuilder,
+} from "../core/index.js";
 import {
 	type Summarizable,
 	type SummaryElementParser,
@@ -53,7 +66,7 @@ const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToDetachedFieldIndexSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): DetachedFieldIndexSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return DetachedFieldIndexSummaryFormatVersion.v2;
@@ -66,16 +79,31 @@ export class DetachedFieldIndexSummarizer
 	extends VersionedSummarizer<DetachedFieldIndexSummaryFormatVersion>
 	implements Summarizable
 {
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
+
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
-		minVersionForCollab: MinimumVersionForCollab,
+		revisionTagCodec: RevisionTagCodec,
+		idCompressor: IIdCompressor,
+		options?: CodecWriteOptions,
 	) {
+		const normalizedOptions = options ?? {
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
 		super(
 			"DetachedFieldIndex",
-			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
+			minVersionToDetachedFieldIndexSummaryFormatVersion(
+				normalizedOptions.minVersionForCollab,
+			),
 			supportedVersions,
 			true,
 		);
+		this.codec = detachedFieldIndexCodecBuilder.build({
+			...normalizedOptions,
+			revisionTagCodec,
+			idCompressor,
+		});
 	}
 
 	protected summarizeInternal(props: {
@@ -84,10 +112,11 @@ export class DetachedFieldIndexSummarizer
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const data = this.detachedFieldIndex.encode();
+		const data = this.codec.encode(this.detachedFieldIndex.getSummaryData());
 		builder.addBlob(detachedFieldIndexBlobKey, stringify(data));
 	}
 
@@ -99,7 +128,8 @@ export class DetachedFieldIndexSummarizer
 			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
 			const parsed = parse(treeBufferString) as JsonCompatibleReadOnly;
-			this.detachedFieldIndex.loadData(parsed);
+			const decoded = this.codec.decode(parsed);
+			this.detachedFieldIndex.loadData(decoded);
 		}
 	}
 }

@@ -4,6 +4,7 @@
  */
 
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { cleanupEphemeralService } from "@fluidframework/local-driver/internal";
 
 /*
  * This file has top level mocha hooks which should be applied to all tests in this package.
@@ -36,3 +37,6 @@ if (emulateProduction) {
 		emulateProductionBuild(false);
 	});
 }
+
+// Ensure any use of `startEphemeralService` is cleaned up after each test.
+afterEach(async () => cleanupEphemeralService());

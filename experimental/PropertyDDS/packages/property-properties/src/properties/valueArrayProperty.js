@@ -7,21 +7,23 @@
  * @fileoverview Definition of the valuearray property class
  */
 
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const {
+import {
+	constants,
 	BaseDataArray,
 	UniversalDataArray,
 	BoolDataArray,
 	Uint64,
 	Int64,
-} = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+} from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { Int64Property, Uint64Property } = require("../properties/intProperties");
+import { Int64Property, Uint64Property } from "../properties/intProperties.js";
 
-const { ArrayProperty } = require("./arrayProperty");
-const { BaseProperty } = require("./baseProperty");
-const { _castFunctors } = require("./primitiveTypeCasts");
+import { ArrayProperty } from "./arrayProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { _castFunctors } from "./primitiveTypeCasts.js";
+
+const { MSG } = constants;
 
 /**
  * An array property which stores primitive values

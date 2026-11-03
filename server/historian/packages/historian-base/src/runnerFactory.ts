@@ -41,6 +41,8 @@ export class HistorianResources implements core.IResources {
 		public readonly readinessCheck?: core.IReadinessCheck,
 		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
 		public readonly postEphemeralContainerChecker?: historianServices.IPostEphemeralContainerChecker,
+		public readonly documentAccessAuthorizer?: historianServices.IDocumentAccessAuthorizer,
+		public readonly trustedCreateContextResolver?: historianServices.ITrustedCreateContextResolver,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -227,14 +229,19 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			riddlerEndpoint,
 			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
-		const documentManager: core.IDocumentManager = new services.DocumentManager(
-			alfredEndpoint,
-			tenantManager,
-			gitCache,
-		);
+		const documentManager: core.IDocumentManager =
+			customizations?.documentManager ??
+			new services.DocumentManager(alfredEndpoint, tenantManager, gitCache);
 		const simplifiedCustomDataRetriever =
 			customizations?.simplifiedCustomDataRetriever ??
 			new historianServices.SimplifiedCustomDataRetriever();
+		const documentAccessControl = customizations?.documentAccessControlFactory?.create({
+			documentManager,
+			tenantManager,
+			storageNameRetriever,
+			gitCache,
+			simplifiedCustomDataRetriever,
+		});
 
 		// Token revocation
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
@@ -273,6 +280,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			customizations?.readinessCheck,
 			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
+			documentAccessControl?.authorizer,
+			documentAccessControl?.trustedCreateContextResolver,
 		);
 	}
 }
@@ -296,6 +305,8 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.readinessCheck,
 			resources.simplifiedCustomDataRetriever,
 			resources.postEphemeralContainerChecker,
+			resources.documentAccessAuthorizer,
+			resources.trustedCreateContextResolver,
 		);
 	}
 }

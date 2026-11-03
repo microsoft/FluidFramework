@@ -27,7 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { OldestSupportedClientVersion } from "./compatibilityDefinitions.js";
 import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
@@ -50,6 +50,7 @@ import type {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary.js";
+import type { IVersionMarkResolver } from "./versionMarks.js";
 
 /**
  * Runtime flush mode handling
@@ -241,6 +242,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
+	/**
+	 * Host-facing resolver for app-stored version mark locators.
+	 */
+	readonly versionMarkResolver: IVersionMarkResolver;
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
@@ -585,11 +590,31 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * To keep these documents compatible with the specified client version, distributed data structures can use this value to select feature flags and formats.
+	 * As a result, an older version can limit available features and write formats.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for details about this compatibility setting.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the
+	 * runtime.
+	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for more details.
+	 *
+	 * @remarks
+	 * Both names remain available for consumers from different package versions.
+	 * New consumers use {@link IFluidParentContext.oldestSupportedClient}.
+	 *
+	 * @deprecated 3.10.0. Will be removed in a future release.
+	 * Use {@link IFluidParentContext.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

@@ -1,0 +1,431 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+import { Buffer } from "node:buffer";
+
+import * as BufferBrowser from "../../bufferBrowser.js";
+import * as BufferNode from "../../bufferNode.js";
+
+function oob(): never {
+	throw new Error("Out of bounds");
+}
+
+describe("Buffer isomorphism", () => {
+	it("returns the expected implementation", () => {
+		// BufferNode should create a native Node.js Buffer instance
+		assert.strictEqual(BufferNode.IsoBuffer, globalThis.Buffer);
+		const nodeBuffer = BufferNode.IsoBuffer.from("", "utf8");
+		assert.equal(nodeBuffer.constructor.name, "Buffer");
+
+		// BufferBrowser should create our partial Buffer polyfill.
+		const browserBuffer = BufferBrowser.IsoBuffer.from("", "utf8");
+		assert.equal(browserBuffer.constructor.name, "IsoBuffer");
+	});
+
+	/**
+	 * A hypothetical bug involving base64 encoded content in a Node environment. Allocates a
+	 * buffer for the same content using the Node and browser variants (in a Node test environment),
+	 * slices them both to clone the data. In the Node case this does not actually clone anything
+	 * but creates an alias. Later the "original" content is modified. In the case of Node this
+	 * corrupts the "clone" as it is merely pointing to the old array.
+	 */
+	it("reproduces an IdCompressor alignment failure from an aliased Node.js Buffer body", () => {
+		const serialized = BufferBrowser.bufferToString(
+			new Float64Array([2, 0, 0, 0]).buffer,
+			"base64",
+		);
+		const content = JSON.stringify(serialized);
+		const nodeBody = BufferNode.IsoBuffer.from(content, "utf8");
+		const browserBody = BufferBrowser.IsoBuffer.from(content, "utf8");
+
+		// Fetch shims can use slice(0) to clone typed-array response bodies.
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const nodeClone = nodeBody.slice(0);
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const browserClone = browserBody.slice(0);
+		// Overwrite a byte in both originals. In the browser case `browserClone` is a true copy,
+		// so it is unaffected. In the Node.js case `Buffer#slice` returns a view over the same
+		// memory, so `nodeClone` is an alias and this write corrupts it as well.
+		nodeBody[9] = "=".codePointAt(0) ?? oob();
+		browserBody[9] = "=".codePointAt(0) ?? oob();
+
+		const nodeSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(nodeClone, "utf8"),
+		);
+		const browserSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(browserClone, "utf8"),
+		);
+		assert(typeof nodeSerialized === "string");
+		assert(typeof browserSerialized === "string");
+		assert.equal(nodeClone.byteLength, browserClone.byteLength);
+		assert.equal(browserSerialized, serialized);
+
+		const nodeDecoded = BufferBrowser.stringToBuffer(nodeSerialized, "base64");
+		const browserDecoded = BufferBrowser.stringToBuffer(browserSerialized, "base64");
+		assert.equal(nodeDecoded.byteLength, 6);
+		assert.equal(browserDecoded.byteLength, 32);
+		assert.throws(() => new Float64Array(nodeDecoded), {
+			name: "RangeError",
+			message: "byte length of Float64Array should be a multiple of 8",
+		});
+		assert.doesNotThrow(() => new Float64Array(browserDecoded));
+	});
+
+	it("from string utf-8/16 is compatible", () => {
+		const testArray = [
+			"",
+			"asdfasdf", // ascii range
+			"比特币", // non-ascii range
+			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
+			"\u0080\u0080", // invalid sequence of utf-8 continuation codes
+			"\uD800", // single utf-16 surrogate without pair
+			"\u2962\u0000\uFFFF\uAAAA", // garbage
+		];
+
+		for (const item of testArray) {
+			const nodeBuffer = BufferNode.IsoBuffer.from(item);
+			const browserBuffer = BufferBrowser.IsoBuffer.from(item);
+
+			assert.equal(nodeBuffer.toString(), browserBuffer.toString());
+		}
+
+		{
+			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1] ?? oob());
+			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1] ?? oob());
+			assert.equal(nodeBuffer.toString("utf8"), browserBuffer.toString("utf8"));
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
+			assert.equal(nodeBuffer.toString("utf-8"), browserBuffer.toString("utf-8"));
+		}
+	});
+
+	it("from string base64 is compatible", () => {
+		const testArray = [
+			"",
+			"aa_/-",
+			"a==",
+			"a=======",
+			"äa=bb==cc==",
+			"Not A Base64 String 🤪",
+			"YXNkZmFzZGY=", // asdfasdf
+			"5q+U54m55biB", // 比特币
+			"8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC", // 😂💁🏼‍♂️💁🏼‍💁‍♂
+		];
+
+		for (const item of testArray) {
+			const nodeBuffer = BufferNode.IsoBuffer.from(item, "base64");
+			const browserBuffer = BufferBrowser.IsoBuffer.from(item, "base64");
+
+			assert.equal(nodeBuffer.toString("base64"), browserBuffer.toString("base64"));
+		}
+	});
+
+	it("from arraybuffer is compatible", () => {
+		const testArray = [
+			"",
+			"asdfasdf", // ascii range
+			"比特币", // non-ascii range
+			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
+		];
+
+		for (const item of testArray) {
+			const encoded = new TextEncoder().encode(item).buffer;
+			const nodeBuffer = BufferNode.IsoBuffer.from(encoded);
+			const browserBuffer = BufferBrowser.IsoBuffer.from(encoded);
+
+			assert.equal(nodeBuffer.toString(), browserBuffer.toString());
+		}
+	});
+
+	it("utf8 base64 conversion is compatible", () => {
+		const testArrayUtf8 = [
+			"",
+			"asdfasdf", // ascii range
+			"比特币", // non-ascii range
+			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
+		];
+
+		const testArrayBase64 = [
+			"",
+			"YXNkZmFzZGY=", // asdfasdf
+			"5q+U54m55biB", // 比特币
+			"8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC", // 😂💁🏼‍♂️💁🏼‍💁‍♂
+		];
+
+		for (let i = 0; i < testArrayUtf8.length; i++) {
+			const nodeBuffer1 = BufferNode.IsoBuffer.from(testArrayUtf8[i] ?? oob());
+			assert.equal(nodeBuffer1.toString("base64"), testArrayBase64[i]);
+
+			const nodeBuffer2 = BufferNode.IsoBuffer.from(nodeBuffer1.toString("base64"), "base64");
+			assert.equal(nodeBuffer2.toString(), testArrayUtf8[i]);
+
+			const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i] ?? oob());
+			assert.equal(browserBuffer1.toString("base64"), testArrayBase64[i]);
+
+			const browserBuffer2 = BufferBrowser.IsoBuffer.from(
+				browserBuffer1.toString("base64"),
+				"base64",
+			);
+			assert.equal(browserBuffer2.toString(), testArrayUtf8[i]);
+		}
+	});
+
+	it("bytelength is compatible", () => {
+		const testString = "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC";
+
+		const nodeBufferUtf8 = BufferNode.IsoBuffer.from(testString);
+		const browserBufferUtf8 = BufferBrowser.IsoBuffer.from(testString);
+		assert.equal(nodeBufferUtf8.byteLength, browserBufferUtf8.byteLength);
+
+		const nodeBufferBase64 = BufferNode.IsoBuffer.from(testString, "base64");
+		const browserBufferBase64 = BufferBrowser.IsoBuffer.from(testString, "base64");
+		assert.equal(nodeBufferBase64.byteLength, browserBufferBase64.byteLength);
+	});
+
+	it("Views are supported", () => {
+		const testArray = [
+			"",
+			"asdfasdf", // ascii range
+			"比特币", // non-ascii range
+			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
+		];
+
+		for (const item of testArray) {
+			const encoded = new TextEncoder().encode(`aa${item}bb`).buffer;
+			const view = new Uint8Array(encoded, 2, encoded.byteLength - 4);
+			const nodeBuffer = BufferNode.IsoBuffer.from(view);
+			const browserBuffer = BufferBrowser.IsoBuffer.from(view);
+
+			assert.equal(nodeBuffer.toString(), browserBuffer.toString());
+
+			const encodedWithoutView = new TextEncoder().encode(item).buffer;
+			const nodeBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
+			const browserBufferWithoutView = BufferBrowser.IsoBuffer.from(encodedWithoutView);
+
+			assert.equal(nodeBufferWithoutView.toString("base64"), nodeBuffer.toString("base64"));
+			assert.equal(
+				browserBufferWithoutView.toString("base64"),
+				browserBuffer.toString("base64"),
+			);
+
+			assert.equal(nodeBufferWithoutView.toString("utf8"), nodeBuffer.toString("utf8"));
+			assert.equal(browserBufferWithoutView.toString("utf8"), browserBuffer.toString("utf8"));
+
+			assert.equal(nodeBufferWithoutView.byteLength, nodeBuffer.byteLength);
+			assert.equal(browserBufferWithoutView.byteLength, browserBuffer.byteLength);
+
+			assert.equal(
+				BufferNode.bufferToString(nodeBufferWithoutView, "base64"),
+				BufferNode.bufferToString(nodeBuffer, "base64"),
+			);
+			assert.equal(
+				BufferBrowser.bufferToString(browserBufferWithoutView, "base64"),
+				BufferBrowser.bufferToString(browserBuffer, "base64"),
+			);
+
+			assert.equal(
+				BufferNode.bufferToString(nodeBufferWithoutView, "utf8"),
+				BufferNode.bufferToString(nodeBuffer, "utf8"),
+			);
+			assert.equal(
+				BufferBrowser.bufferToString(browserBufferWithoutView, "utf8"),
+				BufferBrowser.bufferToString(browserBuffer, "utf8"),
+			);
+		}
+	});
+
+	it("Ranges parameters are ignored when passing views", () => {
+		const testArray = [
+			"", // The specified view lies outside of the string
+			"abcdefg", // The specified view lies within the string
+		];
+
+		for (const item of testArray) {
+			const encoded = new TextEncoder().encode(`aa${item}bb`).buffer;
+
+			const uint8View = new Uint8Array(encoded, 2, encoded.byteLength - 4);
+
+			const fullBuffer = BufferNode.IsoBuffer.from(uint8View);
+
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
+			const subsetUInt8ViewNode = BufferNode.IsoBuffer.from(uint8View, 2, 4);
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
+			const subsetFullBufferNode = BufferNode.IsoBuffer.from(fullBuffer, 2, 4);
+			assert.equal(fullBuffer.toString(), subsetUInt8ViewNode.toString());
+			assert.equal(fullBuffer.toString(), subsetFullBufferNode.toString());
+
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
+			const subsetUInt8ViewBrowser = BufferBrowser.IsoBuffer.from(uint8View, 2, 4);
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
+			const subsetFullBufferBrowser = BufferBrowser.IsoBuffer.from(fullBuffer, 2, 4);
+			assert.equal(fullBuffer.toString(), subsetUInt8ViewBrowser.toString());
+			assert.equal(fullBuffer.toString(), subsetFullBufferBrowser.toString());
+		}
+	});
+
+	it("Uint8ArrayToString is compatible", () => {
+		const testArray = new Uint8Array([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]);
+
+		const nodeStringUtf8 = BufferNode.Uint8ArrayToString(testArray, "utf8");
+		const browserStringUtf8 = BufferBrowser.Uint8ArrayToString(testArray, "utf8");
+		assert.equal(nodeStringUtf8, browserStringUtf8);
+
+		const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
+		const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
+		assert.equal(nodeStringBase64, browserStringBase64);
+	});
+
+	describe("partial views over a larger buffer", () => {
+		const content = "比特币 payload";
+		const padding = "!!!!";
+
+		/**
+		 * Creates views of `content` that do not start at offset 0 nor span their whole backing
+		 * buffer: a Node.js `Buffer` subarray, a pooled Node.js `Buffer`, and a plain `Uint8Array`.
+		 */
+		function createViews(): [string, Uint8Array][] {
+			const backing = Buffer.from(`${padding}${content}${padding}`, "utf8");
+			const contentByteLength = Buffer.byteLength(content, "utf8");
+			const nodeSubarray = backing.subarray(
+				padding.length,
+				padding.length + contentByteLength,
+			);
+			const pooled = Buffer.from(content, "utf8");
+			const plainView = new Uint8Array(
+				nodeSubarray.buffer,
+				nodeSubarray.byteOffset,
+				nodeSubarray.byteLength,
+			);
+			for (const view of [nodeSubarray, pooled, plainView]) {
+				// Precondition: each view covers only part of its backing buffer.
+				assert(view.buffer.byteLength > view.byteLength);
+			}
+			return [
+				["Node.js Buffer subarray", nodeSubarray],
+				["pooled Node.js Buffer", pooled],
+				["Uint8Array view", plainView],
+			];
+		}
+
+		const expectedBase64 = Buffer.from(content, "utf8").toString("base64");
+
+		for (const [name, view] of createViews()) {
+			it(`Uint8ArrayToString respects ${name}`, () => {
+				assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "utf8"), content);
+				assert.equal(BufferNode.Uint8ArrayToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.Uint8ArrayToString(view, "base64"), expectedBase64);
+			});
+
+			it(`bufferToString respects ${name}`, () => {
+				assert.equal(BufferNode.bufferToString(view, "utf8"), content);
+				assert.equal(BufferBrowser.bufferToString(view, "utf8"), content);
+				assert.equal(BufferNode.bufferToString(view, "base64"), expectedBase64);
+				assert.equal(BufferBrowser.bufferToString(view, "base64"), expectedBase64);
+			});
+
+			it(`IsoBuffer.from copies only the logical bytes of ${name}`, () => {
+				for (const iso of [
+					BufferNode.IsoBuffer.from(view),
+					BufferBrowser.IsoBuffer.from(view),
+				]) {
+					assert.equal(iso.byteLength, view.byteLength);
+					assert.equal(iso.toString("utf8"), content);
+					// Node.js `Buffer.from(array)` copies into the shared internal pool whenever the
+					// size is less than `Buffer.poolSize >>> 1` (`poolSize` defaults to 8 KiB), per
+					// https://nodejs.org/api/buffer.html#static-method-bufferfromarray and
+					// https://nodejs.org/api/buffer.html#static-method-bufferallocunsafesize.
+					// The copy can therefore share a backing `ArrayBuffer` with a pooled `view`, so
+					// check for independence by mutation rather than by comparing backing buffers.
+					iso.fill(0);
+					assert.equal(BufferNode.Uint8ArrayToString(view, "utf8"), content);
+				}
+			});
+		}
+	});
+
+	it("stringToBuffer returns only the encoded bytes for pooled Node.js Buffers", () => {
+		for (const { input, encoding, expectedByteLength } of [
+			// 5 ASCII characters, 1 UTF-8 byte each.
+			{ input: "hello", encoding: "utf8", expectedByteLength: 5 },
+			// 3 CJK characters, 3 UTF-8 bytes each.
+			{ input: "比特币", encoding: "utf8", expectedByteLength: 9 },
+			// Base64 for "hello": 8 characters (including 1 padding character) decode to 5 bytes.
+			{ input: "aGVsbG8=", encoding: "base64", expectedByteLength: 5 },
+		] as const) {
+			// Precondition: Node.js allocates this small Buffer from a larger shared pool.
+			const pooled = BufferNode.IsoBuffer.from(input, encoding);
+			assert(pooled.buffer.byteLength > pooled.byteLength);
+
+			const nodeBuffer = BufferNode.stringToBuffer(input, encoding);
+			const browserBuffer = BufferBrowser.stringToBuffer(input, encoding);
+			assert.equal(nodeBuffer.byteLength, expectedByteLength);
+			assert.equal(browserBuffer.byteLength, expectedByteLength);
+			assert.deepEqual(new Uint8Array(nodeBuffer), new Uint8Array(browserBuffer));
+			assert.equal(BufferNode.bufferToString(nodeBuffer, encoding), input);
+		}
+	});
+
+	it("stringToBuffer is compatible", () => {
+		const test = "hello";
+		const nodeBufferUtf8 = BufferNode.stringToBuffer(test, "utf8");
+		const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
+		assert.deepEqual(nodeBufferUtf8, browserBufferUtf8);
+
+		const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
+		const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
+		assert.deepEqual(nodeBufferBase64, browserBufferBase64);
+	});
+
+	it("bufferToString with utf8 encoding is compatible", () => {
+		const test = "hello";
+		const nodeBufferUtf8 = BufferNode.stringToBuffer(test, "utf8");
+		const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
+
+		const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferUtf8, "utf8");
+		const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferUtf8, "utf8");
+		assert.equal(nodeStringUtf8, browserStringUtf8);
+		assert.equal(nodeStringUtf8, test);
+		assert.equal(browserStringUtf8, test);
+
+		const nodeStringBase64 = BufferNode.bufferToString(nodeBufferUtf8, "base64");
+		const browserStringBase64 = BufferBrowser.bufferToString(browserBufferUtf8, "base64");
+		assert.equal(nodeStringBase64, browserStringBase64);
+		assert.equal(nodeStringBase64, "aGVsbG8=");
+		assert.equal(browserStringBase64, "aGVsbG8=");
+	});
+
+	it("bufferToString with base64 encoding is compatible", () => {
+		const test = "aGVsbG90aGVyZQ==";
+		const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
+		const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
+
+		const nodeStringBase64 = BufferNode.bufferToString(nodeBufferBase64, "base64");
+		const browserStringBase64 = BufferBrowser.bufferToString(browserBufferBase64, "base64");
+		assert.equal(nodeStringBase64, browserStringBase64);
+		assert.equal(nodeStringBase64, test);
+		assert.equal(browserStringBase64, test);
+
+		const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferBase64, "utf8");
+		const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferBase64, "utf8");
+		assert.equal(nodeStringUtf8, browserStringUtf8);
+		assert.equal(nodeStringUtf8, "hellothere");
+		assert.equal(browserStringUtf8, "hellothere");
+	});
+
+	it("bufferToString working with IsoBuffer", () => {
+		const test = "aGVsbG90aGVyZQ==";
+
+		const browserBuffer = BufferBrowser.IsoBuffer.from(test, "base64");
+		assert.equal(BufferBrowser.bufferToString(browserBuffer, "base64"), test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+		assert.equal(BufferBrowser.bufferToString(browserBuffer, "utf-8"), "hellothere");
+
+		const nodeBuffer = BufferNode.IsoBuffer.from(test, "base64");
+		assert.equal(BufferNode.bufferToString(nodeBuffer, "base64"), test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+		assert.equal(BufferNode.bufferToString(nodeBuffer, "utf-8"), "hellothere");
+	});
+});

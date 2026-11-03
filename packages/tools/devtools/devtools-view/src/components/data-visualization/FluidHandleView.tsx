@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Spinner } from "@fluentui/react-components";
 import {
 	CloseDataVisualization,
 	DataVisualization,
@@ -17,12 +16,15 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../../FluentUi.cjs";
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
 import { TreeHeader } from "./TreeHeader.js";
 import { TreeItem } from "./TreeItem.js";
+
+const { Spinner } = FluentReactComponents;
 
 const loggingContext = "EXTENSION(HandleView)";
 

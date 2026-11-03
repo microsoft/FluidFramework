@@ -144,9 +144,6 @@ class _DocumentWriter implements DocumentWriter {
 		this._isWritingBeforeStack = false;
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).getText}
-	 */
 	public getText(): string {
 		return this._builder.toString();
 	}
@@ -155,25 +152,16 @@ class _DocumentWriter implements DocumentWriter {
 		return this.getText();
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).increaseIndent}
-	 */
 	public increaseIndent(indentPrefix?: string): void {
 		this._indentStack.push(indentPrefix ?? defaultIndentPrefix);
 		this._updateIndentText();
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).decreaseIndent}
-	 */
 	public decreaseIndent(): void {
 		this._indentStack.pop();
 		this._updateIndentText();
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).ensureNewLine}
-	 */
 	public ensureNewLine(): void {
 		const lastCharacter: string = this.peekLastCharacter();
 		if (lastCharacter !== "\n" && lastCharacter !== "") {
@@ -181,9 +169,6 @@ class _DocumentWriter implements DocumentWriter {
 		}
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).ensureSkippedLine}
-	 */
 	public ensureSkippedLine(): void {
 		if (this.peekLastCharacter() !== "\n") {
 			this._writeNewLine();
@@ -195,9 +180,6 @@ class _DocumentWriter implements DocumentWriter {
 		}
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).write}
-	 */
 	public write(message: string): void {
 		if (message.length === 0) {
 			return;
@@ -228,9 +210,6 @@ class _DocumentWriter implements DocumentWriter {
 		}
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).writeLine}
-	 */
 	public writeLine(message?: string): void {
 		if (message !== undefined && message.length > 0) {
 			this.write(message);
@@ -241,16 +220,10 @@ class _DocumentWriter implements DocumentWriter {
 		this._writeNewLine();
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).peekLastCharacter}
-	 */
 	public peekLastCharacter(): string {
 		return this._latestChunk?.slice(-1) ?? "";
 	}
 
-	/**
-	 * {@inheritDoc (DocumentWriter:interface).peekSecondLastCharacter}
-	 */
 	public peekSecondLastCharacter(): string {
 		if (this._latestChunk !== undefined) {
 			if (this._latestChunk.length > 1) {

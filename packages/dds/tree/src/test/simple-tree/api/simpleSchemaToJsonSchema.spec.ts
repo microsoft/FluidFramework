@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { ValueSchema } from "../../../core/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	convertObjectNodeSchema,
 	toJsonSchema,
@@ -22,9 +22,10 @@ import {
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
-	TreeBeta,
+	TreeViewConfigurationAlpha,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
+	type TreeSchemaEncodingOptions,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import type {
@@ -46,6 +47,30 @@ function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 }
 
 describe("simpleSchemaToJsonSchema", () => {
+	it("orders definitions independently of insertion order and locale", () => {
+		const sf = new SchemaFactoryAlpha("ordering");
+		class Lower extends sf.object("a", {}) {}
+		class Upper extends sf.object("Z", {}) {}
+		class Accented extends sf.object("\u00E4", {}) {}
+		const root = [Accented, Lower, Upper] as const;
+		const schema = new TreeViewConfigurationAlpha({ schema: root });
+		const options: Required<TreeSchemaEncodingOptions> = {
+			requireFieldsWithDefaults: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
+		};
+		const expectedOrder = [Upper.identifier, Lower.identifier, Accented.identifier];
+		const forward = toJsonSchema(schema, options);
+		const reverse = toJsonSchema(
+			{ root: schema.root, definitions: new Map([...schema.definitions].reverse()) },
+			options,
+		);
+
+		assert.deepEqual(Object.keys(forward.$defs), expectedOrder);
+		assert.deepEqual(Object.keys(reverse.$defs), expectedOrder);
+		assert.equal(JSON.stringify(forward), JSON.stringify(reverse));
+		assert.equal(JSON.stringify(getJsonSchema(root, options)), JSON.stringify(forward));
+	});
+
 	it("Leaf schema", () => {
 		const input: SimpleTreeSchema = {
 			root: {
@@ -366,7 +391,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowUnknownOptionalFields: false,
+						allowUnknownOptionalFields: true,
 						fields: new Map([
 							[
 								"foo",
@@ -435,7 +460,7 @@ describe("simpleSchemaToJsonSchema", () => {
 							description: "Unique identifier for the test object.",
 						},
 					},
-					required: ["bar", "id"],
+					required: ["bar"],
 					additionalProperties: false,
 				},
 				[numberSchema.identifier]: {
@@ -468,7 +493,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			{
 				bar: "Hello World",
 			},
-			false,
+			true,
 		);
 		validator(
 			{
@@ -512,7 +537,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowUnknownOptionalFields: false,
+						allowUnknownOptionalFields: true,
 						fields: new Map([
 							[
 								"id",
@@ -542,9 +567,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					properties: {
 						id: { $ref: "#/$defs/com.fluidframework.leaf.string" },
 					},
-					// The identifier field is technically required, it just has a default provider.
-					// TODO: Support for generating schema for insertable content (concise tree with fields that have default providers as optional) is now implemented: refactor tests so it can be validated.
-					required: ["id"],
+					required: [],
 					additionalProperties: false,
 				},
 				"com.fluidframework.leaf.string": {
@@ -573,7 +596,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowUnknownOptionalFields: false,
+						allowUnknownOptionalFields: true,
 						fields: new Map([
 							[
 								"foo",
@@ -644,7 +667,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Object,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowUnknownOptionalFields: false,
+						allowUnknownOptionalFields: true,
 						fields: new Map([
 							[
 								"foo",

@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.crossPackage.base.json",
+	"compilerOptions": {
+		"outDir": "./lib/crossPackage/nodenext",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+	},
+}

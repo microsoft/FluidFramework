@@ -37,6 +37,9 @@ export const Constants = Object.freeze({
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
 	SimplifiedCustomData: "Simplified-Custom-Data",
+	DocumentContainerName: "Fluid-Document-Container-Name",
+	DocumentStorageLayout: "Fluid-Document-Storage-Layout",
+	DocumentLifecycleVersion: "Fluid-Document-Lifecycle-Version",
 	invalidTokenCachePrefix: "invalidTokenCache",
 });
 

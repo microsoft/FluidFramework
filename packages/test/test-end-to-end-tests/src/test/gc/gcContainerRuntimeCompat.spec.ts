@@ -25,6 +25,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
@@ -93,6 +94,7 @@ describeCompat(
 				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: dataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 					runtimeOptions,
 				},

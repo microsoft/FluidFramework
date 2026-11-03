@@ -12,7 +12,7 @@ import type { IUser } from "@fluidframework/driver-definitions";
 import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import type { ContainerSchema, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 
 /**
  * Props for initializing a new AzureClient instance
@@ -46,10 +46,10 @@ export interface AzureClientPropsInternal extends AzureClientProps {
 	 */
 	readonly createContainerRuntimeFactory?: ({
 		schema,
-		minVersionForCollaboration,
+		oldestSupportedClient,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: MinimumVersionForCollab;
+		oldestSupportedClient: OldestSupportedClientVersion;
 	}) => IRuntimeFactory;
 }
 

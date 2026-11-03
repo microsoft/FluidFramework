@@ -46,6 +46,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
@@ -64,18 +65,22 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidHandleContext(): this;
     readonly ILayerCompatDetails?: unknown;
+    // (undocumented)
     get inStagingMode(): boolean;
     // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
     get isDirty(): boolean;
+    // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     // (undocumented)
@@ -111,9 +116,12 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 // @beta @legacy
 export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
+    // (undocumented)
     readonly absolutePath: string;
+    // (undocumented)
     attachGraph(): void;
     get(): Promise<any>;
+    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;
@@ -132,7 +140,7 @@ export interface ISharedObjectRegistry {
 // @beta @legacy
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime, setCurrentSummarizeStep: (currentStep: string) => void) => Promise<{
     path: string[];
     content: string;

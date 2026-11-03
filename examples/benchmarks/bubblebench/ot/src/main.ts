@@ -60,7 +60,10 @@ export class Bubblebench extends DataObject {
 	}
 
 	private get tree(): SharedJson1 {
-		return this.maybeTree ?? fail("tree not initialized");
+		if (this.maybeTree === undefined) {
+			throw new Error("tree not initialized");
+		}
+		return this.maybeTree;
 	}
 
 	public get appState(): AppState {

@@ -1,0 +1,83 @@
+{
+	"skill_name": "review-pr-local",
+	"evals": [
+		{
+			"id": 1,
+			"name": "ado-pr-url-trigger",
+			"prompt": "review https://dev.azure.com/myorg/myproject/_git/myrepo/pullrequest/1234 in my editor locally",
+			"expected_output": "Detects Azure DevOps from the URL, resolves PR metadata, and checks the PR out into an isolated worktree without disturbing the user's current checkout.",
+			"files": [],
+			"expectations": [
+				"Detects the platform as Azure DevOps from the URL host",
+				"Parses org, project, repo, and id from the URL rather than hardcoding them",
+				"Uses az repos pr show to resolve source/target branches and head/base commits",
+				"Creates an isolated detached git worktree instead of running git checkout in the user's working directory"
+			]
+		},
+		{
+			"id": 2,
+			"name": "github-pr-url-trigger",
+			"prompt": "can you pull https://github.com/octocat/hello-world/pull/42 so I can review it in VSCode",
+			"expected_output": "Detects GitHub from the URL, resolves head/base via gh pr view, fetches pull/42/head, and creates an isolated worktree.",
+			"files": [],
+			"expectations": [
+				"Detects the platform as GitHub from the URL host",
+				"Parses owner=octocat, repo=hello-world, number=42 from the URL",
+				"Uses gh pr view --json to resolve head/base refs and commits",
+				"Fetches the head via pull/42/head so fork PRs work, then creates an isolated worktree"
+			]
+		},
+		{
+			"id": 3,
+			"name": "surface-diff-in-editor",
+			"prompt": "I checked out the PR worktree but Source Control shows no changes",
+			"expected_output": "Explains that Source Control only shows uncommitted changes and soft-resets the worktree to the PR merge-base so the changes appear as staged.",
+			"files": [],
+			"expectations": [
+				"Explains the editor Source Control panel only shows uncommitted changes, so a committed PR branch looks empty",
+				"Computes the merge-base between head and base commits",
+				"Runs git reset --soft to the merge-base so the PR changes surface as staged changes",
+				"Warns the user not to run git pull in the worktree"
+			]
+		},
+		{
+			"id": 4,
+			"name": "post-human-dictated-comment",
+			"prompt": "post comment on line 53 of src/container/pageWrite.ts - this returns before the lock is released",
+			"expected_output": "Parses file/line/body and posts the human's verbatim text as an inline comment via the platform-appropriate mechanism.",
+			"files": [],
+			"expectations": [
+				"Parses the request into file=src/container/pageWrite.ts, line=53, and the body text",
+				"Posts the human's text verbatim without rewriting or expanding it",
+				"For ADO uses the ado MCP tool or the az rest fallback with a threadContext anchored to the file and line",
+				"For GitHub uses gh api to post an inline comment anchored to the file and line"
+			]
+		},
+		{
+			"id": 5,
+			"name": "ai-drafted-comment-on-request",
+			"prompt": "draft a comment on the null check in pageWrite.ts about the missing validation, then post it",
+			"expected_output": "Drafts a terse high-signal comment for the specified spot, shows it for approval, and posts only after the human approves.",
+			"files": [],
+			"expectations": [
+				"Drafts a concise comment (1-3 sentences) citing the specific file and line",
+				"Presents the draft to the human for approval before posting",
+				"Does not post until the human approves",
+				"Keeps the comment high-signal and does not add praise, summaries, or style nits"
+			]
+		},
+		{
+			"id": 6,
+			"name": "does-not-clobber-user-checkout",
+			"prompt": "review this ADO PR locally but I have uncommitted work on my current branch",
+			"expected_output": "Uses an isolated worktree so the user's current checkout and uncommitted work are never touched.",
+			"files": [],
+			"expectations": [
+				"Does not run git checkout or gh pr checkout in the user's working directory",
+				"Creates a separate git worktree as a sibling of the repo root",
+				"The user's current branch and uncommitted changes remain untouched",
+				"Provides a git worktree remove cleanup step for when the review is finished"
+			]
+		}
+	]
+}

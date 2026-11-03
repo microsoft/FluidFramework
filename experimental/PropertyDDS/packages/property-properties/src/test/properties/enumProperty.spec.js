@@ -8,27 +8,27 @@
  * described in /src/properties/enumProperty.js
  */
 
-var PropertyFactory,
-	TestEnumTemplate,
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
+
+var TestEnumTemplate,
 	TestInlineEnumTemplate,
 	TestEnumArrayTemplate,
-	BaseProperty,
-	ChangeSet,
 	TestBaseContainingEnumTemplate,
-	MSG,
-	deepCopy,
-	_;
+	deepCopy;
 
 describe("Test EnumProperty", function () {
 	/**
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-		_ = require("lodash");
 		deepCopy = _.cloneDeep;
 
 		// the following templates are copies from the specification

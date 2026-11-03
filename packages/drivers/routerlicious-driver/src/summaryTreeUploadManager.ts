@@ -90,8 +90,11 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 	private async writeSummaryBlob(content: string | Uint8Array): Promise<string> {
 		const { parsedContent, encoding } =
 			typeof content === "string"
-				? { parsedContent: content, encoding: "utf-8" }
-				: { parsedContent: Uint8ArrayToString(content, "base64"), encoding: "base64" };
+				? ({ parsedContent: content, encoding: "utf-8" } as const)
+				: ({
+						parsedContent: Uint8ArrayToString(content, "base64"),
+						encoding: "base64",
+					} as const);
 
 		// The gitHashFile would return the same hash as returned by the server as blob.sha
 		const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));

@@ -164,6 +164,18 @@ export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
  */
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
 	/**
+	 * Starts sharing the handle's payload without attaching the handle to the Fluid object graph.
+	 *
+	 * @remarks
+	 * This method starts the same asynchronous payload-sharing process that normally begins when the
+	 * handle is attached. Calling it multiple times has no additional effect, and calling it for an
+	 * already-shared payload is a no-op.
+	 *
+	 * This method does not wait for the payload to be uploaded or shared. Progress and failures can be
+	 * observed through {@link ILocalFluidHandle.events}.
+	 */
+	sharePayload?(): void;
+	/**
 	 * The error encountered by the handle while sharing the payload, if one has occurred.  Undefined if no error has occurred.
 	 */
 	readonly payloadShareError: unknown;
@@ -177,9 +189,7 @@ export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
  * Symbol which must only be used on an {@link (IFluidHandle:interface)}, and is used to identify such objects.
  *
  * @remarks
- * To narrow arbitrary objects to handles do not simply check for this symbol:
- * instead use {@link @fluidframework/runtime-utils#isFluidHandle} which has improved compatibility
- * with older implementations of handles that may exist due to dynamic code loading of older packages.
+ * To narrow arbitrary objects to handles use {@link @fluidframework/runtime-utils#isFluidHandle}.
  *
  * @privateRemarks
  * Normally `Symbol` would be used here instead of `Symbol.for` since just using Symbol (and avoiding the global symbol registry) removes the risk of collision, which is the main point of using a symbol for this in the first place.

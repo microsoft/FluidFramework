@@ -16,8 +16,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
-	type OutboundBatchMessage,
 	type IChunkedOp,
+	type OutboundBatchMessage,
 	OpSplitter,
 	isChunkedMessage,
 	splitOp,
@@ -186,6 +186,113 @@ describe("OpSplitter", () => {
 			mockLogger,
 		);
 		assert.throws(() => opSplitter.processChunk(chunks[2]));
+	});
+
+	it("Discards only an initial partial chunk stream when configured for historical processing", () => {
+		const partialChunks = wrapChunkedOps(
+			splitOp(generateChunkableOp(chunkSizeInBytes * 3), chunkSizeInBytes),
+			"testClient",
+		);
+		const completeOp = generateChunkableOp(chunkSizeInBytes * 2);
+		const completeChunks = wrapChunkedOps(splitOp(completeOp, chunkSizeInBytes), "testClient");
+		const opSplitter = new OpSplitter(
+			[],
+			mockSubmitBatchFn,
+			0,
+			maxBatchSizeInBytes,
+			mockLogger,
+			{ allowInitialPartialChunkStream: true },
+		);
+
+		for (const chunk of partialChunks.slice(1)) {
+			assert.equal(opSplitter.processChunk(chunk).isFinalChunk, false);
+		}
+
+		let reconstructed: ISequencedDocumentMessage | undefined;
+		for (const chunk of completeChunks) {
+			const result = opSplitter.processChunk(chunk);
+			if (result.isFinalChunk) {
+				reconstructed = result.message;
+			}
+		}
+		assert.ok(reconstructed !== undefined);
+		assertSameMessage(reconstructed, completeOp);
+
+		assert.throws(
+			() => opSplitter.processChunk(partialChunks[1]),
+			/Chunk Id mismatch/,
+			"ordering is strict after the client's initial stream",
+		);
+	});
+
+	it("Tracks an initial partial stream independently from an interleaved complete stream", () => {
+		const partialChunks = wrapChunkedOps(
+			splitOp(generateChunkableOp(chunkSizeInBytes * 2), chunkSizeInBytes),
+			"partialClient",
+		);
+		const completeOp = generateChunkableOp(chunkSizeInBytes * 2);
+		const completeChunks = wrapChunkedOps(
+			splitOp(completeOp, chunkSizeInBytes),
+			"completeClient",
+		);
+		const opSplitter = new OpSplitter(
+			[],
+			mockSubmitBatchFn,
+			0,
+			maxBatchSizeInBytes,
+			mockLogger,
+			{ allowInitialPartialChunkStream: true },
+		);
+
+		assert.equal(opSplitter.processChunk(partialChunks[1]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(completeChunks[0]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(partialChunks[2]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(completeChunks[1]).isFinalChunk, false);
+		const completeResult = opSplitter.processChunk(completeChunks[2]);
+
+		assert.equal(completeResult.isFinalChunk, true);
+		assertSameMessage(completeResult.message, completeOp);
+	});
+
+	it("Throws on a malformed tolerated initial stream (gap, duplicate, or restart)", () => {
+		// A four-chunk op so the tolerated initial stream can begin after chunk 1 and still have a
+		// following chunk to malform (gap to 4, duplicate 2, or restart at 1 while 3 is expected).
+		const chunks = wrapChunkedOps(
+			splitOp(generateChunkableOp(chunkSizeInBytes * 4), chunkSizeInBytes),
+			"testClient",
+		);
+		// Begins a tolerated partial stream at chunk 2, leaving the splitter expecting chunk 3 next.
+		const startedPartialStream = (): OpSplitter => {
+			const opSplitter = new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				0,
+				maxBatchSizeInBytes,
+				mockLogger,
+				{ allowInitialPartialChunkStream: true },
+			);
+			assert.equal(opSplitter.processChunk(chunks[1]).isFinalChunk, false);
+			return opSplitter;
+		};
+
+		// Gap: chunk 4 arrives while chunk 3 is expected.
+		assert.throws(
+			() => startedPartialStream().processChunk(chunks[3]),
+			/Chunk Id mismatch/,
+			"a gap in the tolerated initial stream must throw",
+		);
+		// Duplicate: chunk 2 repeats while chunk 3 is expected.
+		assert.throws(
+			() => startedPartialStream().processChunk(chunks[1]),
+			/Chunk Id mismatch/,
+			"a duplicate in the tolerated initial stream must throw",
+		);
+		// Restart: chunk 1 arrives while chunk 3 is expected.
+		assert.throws(
+			() => startedPartialStream().processChunk(chunks[0]),
+			/Chunk Id mismatch/,
+			"a restart in the tolerated initial stream must throw",
+		);
 	});
 
 	it("Don't accept non-chunked ops", () => {

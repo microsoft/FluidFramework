@@ -9,5 +9,22 @@ export { createLocalDocumentService, LocalDocumentService } from "./localDocumen
 export { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
 export { LocalDocumentStorageService } from "./localDocumentStorageService.js";
 export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
-export { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
+export {
+	localDriverCompatDetailsForLoader,
+	localDriverCompatRequirementsForLoader,
+} from "./localLayerCompatState.js";
 export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
+export type {
+	EphemeralService,
+	EphemeralServiceOptions,
+	LocalService,
+	LocalServiceClient,
+	LocalServiceOptions,
+	SessionService,
+} from "./ephemeralService.js";
+export {
+	startEphemeralService,
+	getSessionService,
+	cleanupEphemeralService,
+	getDefaultEphemeralService,
+} from "./ephemeralService.js";

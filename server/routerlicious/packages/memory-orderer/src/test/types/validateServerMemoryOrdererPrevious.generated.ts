@@ -96,6 +96,7 @@ declare type current_as_old_for_Class_LocalNodeFactory = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_LocalOrderer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalOrderer = requireAssignableTo<TypeOnly<old.LocalOrderer>, TypeOnly<current.LocalOrderer>>
 
 /*

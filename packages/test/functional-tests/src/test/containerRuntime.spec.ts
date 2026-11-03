@@ -30,6 +30,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
@@ -146,6 +147,7 @@ describe("Container Runtime", () => {
 					new ConnectionManager(
 						() => service,
 						() => false,
+						() => false,
 						client as IClient,
 						false,
 						createChildLogger({ namespace: "fluid:testConnectionManager" }),
@@ -160,6 +162,7 @@ describe("Container Runtime", () => {
 				context: getMockContext(deltaManager) as IContainerContext,
 				registryEntries: [],
 				existing: true,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				runtimeOptions: {},
 				provideEntryPoint: mockProvideEntryPoint,
 			});
@@ -357,6 +360,7 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service2,
+						() => false,
 						() => false,
 						client as IClient,
 						true,

@@ -5,9 +5,6 @@
 ```ts
 
 // @beta @legacy
-export function assert(condition: boolean, message: string | number, debugMessageBuilder?: () => string): asserts condition;
-
-// @beta @legacy
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
 // @beta @legacy

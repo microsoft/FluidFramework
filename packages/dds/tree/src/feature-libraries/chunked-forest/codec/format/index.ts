@@ -26,7 +26,8 @@ export {
 	EncodedFieldBatchV2,
 	EncodedFieldBatchVTextExperimental,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
+	supportsSpecializedNodeShapes,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedFieldBatchV1AndV2,
 	type EncodedChunkShape,
 } from "./versions.js";

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as axe from "axe-core";
+import { strict as assert } from "node:assert";
+
+import axe from "axe-core";
 
 /**
  * Represents an accessibility violation found by axe
@@ -30,5 +32,5 @@ export async function assertNoAccessibilityViolations(container: HTMLElement): P
 		}
 	}
 
-	expect(results.violations).toStrictEqual([]);
+	assert.deepEqual(results.violations, []);
 }

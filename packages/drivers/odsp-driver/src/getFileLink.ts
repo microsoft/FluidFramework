@@ -27,6 +27,7 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { copyRequestHeaders, mergeRequestHeaders } from "./requestHeaders.js";
 import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
@@ -48,7 +49,9 @@ export const getFileLink = mockify(
 		getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 		resolvedUrl: IOdspResolvedUrl,
 		logger: TelemetryLoggerExt,
+		requestHeaders?: Readonly<Record<string, string>>,
 	): Promise<string> => {
+		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
 		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
 		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
 		if (maybeFileLinkCacheEntry !== undefined) {
@@ -63,7 +66,12 @@ export const getFileLink = mockify(
 					async () =>
 						runWithRetryForCoherencyAndServiceReadOnlyErrors(
 							async () =>
-								getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
+								getFileLinkWithLocationRedirectionHandling(
+									getToken,
+									resolvedUrl,
+									logger,
+									immutableRequestHeaders,
+								),
 							"getFileLinkCore",
 							logger,
 						),
@@ -121,6 +129,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	resolvedUrl: IOdspResolvedUrl,
 	logger: TelemetryLoggerExt,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<string> {
 	// We can have chains of location redirection one after the other, so have a for loop
 	// so that we can keep handling the same type of error. Set max number of redirection to 5.
@@ -128,7 +137,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 	let locationRedirected = false;
 	for (let count = 1; count <= 5; count++) {
 		try {
-			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger);
+			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger, requestHeaders);
 			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
 			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
 			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
@@ -142,7 +151,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 				});
 				renameTenantInOdspResolvedUrl(resolvedUrl, newSiteDomain);
 			}
-			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem);
+			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem, requestHeaders);
 		} catch (error: unknown) {
 			lastError = error;
 			// If the getSharingLink call fails with the 401/403/404 error, then it could be due to that the file has moved
@@ -167,6 +176,7 @@ async function getFileLinkCore(
 	odspUrlParts: IOdspUrlParts,
 	logger: TelemetryLoggerExt,
 	fileItem: FileItemLite,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<string> {
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
@@ -202,11 +212,11 @@ async function getFileLinkCore(
 				const headers = getHeadersWithAuth(authHeader);
 				const requestInit = {
 					method,
-					headers: {
+					headers: mergeRequestHeaders(requestHeaders, {
 						"Content-Type": "application/json;odata=verbose",
-						"Accept": "application/json;odata=verbose",
+						Accept: "application/json;odata=verbose",
 						...headers,
-					},
+					}),
 				};
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
@@ -263,6 +273,7 @@ async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: TelemetryLoggerExt,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -290,7 +301,10 @@ async function getFileItemLite(
 				);
 
 				const headers = getHeadersWithAuth(authHeader);
-				const requestInit = { method, headers };
+				const requestInit = {
+					method,
+					headers: mergeRequestHeaders(requestHeaders, headers),
+				};
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 

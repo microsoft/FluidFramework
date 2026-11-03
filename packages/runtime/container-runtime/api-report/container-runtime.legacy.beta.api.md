@@ -57,7 +57,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 // @beta @legacy (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;
 }) | (ISummarizeResults & {
@@ -68,7 +68,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IAckedSummary {
     // (undocumented)
     readonly summaryAck: ISummaryAckMessage;
@@ -76,7 +76,7 @@ export interface IAckedSummary {
     readonly summaryOp: ISummaryOpMessage;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IAckSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
@@ -84,7 +84,7 @@ export interface IAckSummaryResult {
     readonly summaryAckOp: ISummaryAckMessage;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IBaseSummarizeResult {
     readonly error: IRetriableFailureError | undefined;
     // (undocumented)
@@ -94,7 +94,7 @@ export interface IBaseSummarizeResult {
     readonly stage: "base";
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IBroadcastSummaryResult {
     // (undocumented)
     readonly broadcastDuration: number;
@@ -102,7 +102,7 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IClientSummaryWatcher extends IDisposable {
     // (undocumented)
     waitFlushed(): Promise<IAckedSummary | undefined>;
@@ -122,7 +122,7 @@ export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 // @beta @legacy
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
@@ -164,7 +164,7 @@ export interface IGCRuntimeOptions {
     sweepGracePeriodMs?: number;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
     readonly gcBlobNodeCount?: number;
@@ -174,7 +174,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly summaryNumber: number;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
     readonly generateDuration: number;
     // (undocumented)
@@ -183,7 +183,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryTree: ISummaryTree;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface INackSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
@@ -194,19 +194,19 @@ export interface INackSummaryResult {
 // @beta @deprecated @legacy
 export const InactiveResponseHeaderKey = "isInactive";
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
     readonly retryOnFailure?: boolean;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
     // (undocumented)
@@ -214,12 +214,12 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
     readonly submitOpDuration: number;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
@@ -232,14 +232,14 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISummary {
     // (undocumented)
     readonly clientId: string;
@@ -251,7 +251,7 @@ export interface ISummary {
     waitBroadcast(): Promise<ISummaryOpMessage>;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     // (undocumented)
     contents: ISummaryAck;
@@ -266,7 +266,7 @@ export interface ISummaryBaseConfiguration {
     maxOpsSinceLastSummary: number;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
     // (undocumented)
     (event: OpActionEventName, listener: OpActionEventListener): any;
@@ -307,7 +307,7 @@ export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseC
     state: "summaryOnRequest";
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     // (undocumented)
     contents: ISummaryNack;
@@ -315,7 +315,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     type: MessageType.SummaryNack;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
     // (undocumented)
     contents: ISummaryContent;
@@ -330,12 +330,19 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
     readonly handle: string;
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
+}
+
+// @beta @sealed @legacy
+export interface IVersionMarkResolver {
+    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
+    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
+    sealAndCaptureVersionMark(): VersionMarkCapture;
 }
 
 // @beta @legacy
@@ -346,7 +353,9 @@ export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
-    minVersionForCollab?: MinimumVersionForCollab;
+    // @deprecated
+    minVersionForCollab?: OldestSupportedClientVersion;
+    oldestSupportedClient?: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -357,25 +366,38 @@ export interface LoadContainerRuntimeParams {
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
 
 // @beta @deprecated @legacy
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
 // @beta @legacy
+export type ResolveResult = {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+} | {
+    readonly kind: "pending";
+    readonly reason?: string;
+} | {
+    readonly kind: "unresolvable";
+    readonly reason?: string;
+};
+
+// @beta @deprecated @legacy
 export interface SubmitSummaryFailureData {
     // (undocumented)
     stage: SummaryStage;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
     data: TSuccess;
@@ -386,7 +408,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     error: IRetriableFailureError;
 };
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryBaseLogger);
     // (undocumented)
@@ -410,11 +432,22 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @beta @legacy
 export const TombstoneResponseHeaderKey = "isTombstoned";
+
+// @beta @legacy
+export type VersionMarkCapture = {
+    readonly kind: "pending";
+    readonly batchId: string;
+    readonly sequenceNumberLowerBound: number;
+} | {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+};
 
 // (No @packageDocumentation comment for this package)
 

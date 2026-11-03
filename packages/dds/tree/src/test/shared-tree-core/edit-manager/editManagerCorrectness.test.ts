@@ -7,26 +7,45 @@ import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import {
+	type ChangeFamilyEditor,
+	CommitKind,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
 	SharedTreeBranch,
 } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
+import type { TestChangeFamily } from "../../testChange.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
-import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
+import {
+	checkChangeList,
+	testChangeEditManagerFactory,
+	type TestEditManager,
+} from "./editManagerTestUtils.js";
 
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
 
+/**
+ * A {@link Commit} that is also usable as a {@link GraphCommit}.
+ * @remarks
+ * {@link Commit} declares `customMetadata` optionally, but these commits are handed to
+ * `addSequencedChanges`, which requires the `GraphCommit` shape where the property is always present.
+ */
+type SequencedTestCommit = GraphCommit<TestChange> & { readonly sessionId: SessionId };
+
 export function testCorrectness(): void {
-	describe("Correctness", () => {
+	describe("Rebasing Correctness", () => {
 		describe("Unit Tests", () => {
 			runUnitTestScenario(
 				"Can handle non-concurrent local changes being sequenced immediately",
@@ -618,6 +637,7 @@ export function testCorrectness(): void {
 								revision,
 								sessionId: "0" as SessionId,
 								sequenceNumber: brand(1),
+								customMetadata: undefined,
 							},
 						],
 						peerLocalBranches: new Map(),
@@ -628,6 +648,7 @@ export function testCorrectness(): void {
 						{
 							change: TestChange.mint([0, 1], [2]),
 							revision: mintRevisionTag(),
+							customMetadata: undefined,
 						},
 					],
 					"1" as SessionId,
@@ -751,18 +772,30 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					const revision2 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision2 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision2 },
+							CommitKind.Default,
+							undefined,
+						);
 					const commit1 = {
 						change: TestChange.emptyChange,
 						revision: mintRevisionTag(),
@@ -773,6 +806,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -785,6 +819,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -799,19 +834,28 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					manager.addSequencedChanges(
 						[
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -824,6 +868,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -836,6 +881,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -890,52 +936,632 @@ export function testCorrectness(): void {
 			});
 		});
 	});
+	describe("Eventing Correctness", () => {
+		it("the main branch should not emit a sequencing event for local commits that are not yet sequenced", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			// Act
+			applyLocalCommit(manager);
+
+			// Verify
+			assert.deepStrictEqual(emitted, []);
+		});
+		it("the main branch should not emit a sequencing event for sequenced commits from peers", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			// Act
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emitted, []);
+		});
+		it("the main branch should emit a sequencing event for commits that are sequenced without being rebased", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+			applyLocalCommit(manager);
+			const localCommit = main.getHead();
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommit],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emitted, [localCommit]);
+		});
+		it("the main branch should emit a sequencing event for commits that are sequenced after being rebased", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			applyLocalCommit(manager);
+			const localCommitV1 = main.getHead();
+
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			const localCommitV2 = main.getHead();
+
+			// Self-check: the local commit should have been rebased onto the peer commit
+			assert.equal(localCommitV1.revision, localCommitV2.revision);
+			assert.notEqual(localCommitV1, localCommitV2);
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitV1],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			// The rebased version of the local commit should be emitted, not the original version
+			assert.deepStrictEqual(emitted, [localCommitV2]);
+		});
+		it("a fork that does not have the sequenced commit should not emit a sequencing event", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			// note: the fork is created before this commit is applied, so it will not have that commit
+			applyLocalCommit(manager);
+
+			// Act
+			const mainCommit = main.getHead();
+			manager.addSequencedChanges(
+				[mainCommit],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, []);
+		});
+		it("a fork that has a different version of the sequenced commit should not emit a sequencing event", () => {
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+
+			// note: the fork is created after this commit is applied, so it will have that commit
+			applyLocalCommit(manager);
+			const localCommitV1 = main.getHead();
+
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Self-check: the fork and main branches should have different versions of the local commit
+			const localCommitV2 = main.getHead();
+			assert.equal(localCommitV1.revision, localCommitV2.revision);
+			assert.equal(fork.getHead(), localCommitV1);
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitV2],
+				manager.localSessionId,
+				brand(2),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, []);
+		});
+		it("a fork that has the same version of the sequenced commit should emit a sequencing event", () => {
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+
+			// note: the fork is created after this commit is applied, so it will have commit A
+			applyLocalCommit(manager);
+			const localCommitA = main.getHead();
+
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			// note: the fork is created before this commit is applied, so it will not have commit B yet
+			applyLocalCommit(manager);
+			const localCommitB = main.getHead();
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitA],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, [localCommitA]);
+
+			// Setup
+			// Make the fork acquire commit B by rebasing it onto the main branch
+			fork.rebaseOnto(main);
+
+			// Act
+			emittedOnFork.length = 0;
+			manager.addSequencedChanges(
+				[localCommitB],
+				manager.localSessionId,
+				brand(2),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, [localCommitB]);
+		});
+	});
+
+	describe("History Retention", () => {
+		/**
+		 * Sequences `count` commits, each building on the last.
+		 * @param manager - The edit manager to sequence commits on.
+		 * @param count - The number of commits to sequence.
+		 * @param startSequenceNumber - the sequence number of the first commit to sequence.
+		 * @param startIntention - the intention of the first commit to sequence.
+		 * @param sessionId - The session ID of the peer sequencing the commits. Defaults to `peer1`.
+		 */
+		function sequencePeerCommits(
+			manager: EditManager<ChangeFamilyEditor, TestChange>,
+			count: number,
+			startSequenceNumber: number,
+			startIntention: number,
+			sessionId: SessionId = peer1,
+		): void {
+			for (let i = 0; i < count; i += 1) {
+				const intention = startIntention + i;
+				manager.addSequencedChanges(
+					[
+						{
+							change: TestChange.mint(
+								makeArray(intention - 1, (j) => j + 1),
+								[intention],
+							),
+							revision: mintRevisionTag(),
+							customMetadata: undefined,
+						},
+					],
+					sessionId,
+					brand(startSequenceNumber + i),
+					brand(startSequenceNumber + i - 1),
+					"main",
+				);
+			}
+		}
+
+		function maxCountFromPolicy(policy: boolean | number): number {
+			if (policy === false) {
+				return 0;
+			}
+			if (policy === true) {
+				return Number.POSITIVE_INFINITY;
+			}
+			return policy;
+		}
+
+		function setupManager({
+			commitCount,
+			startingPolicy,
+			retainedByMsn,
+			retainedByFork,
+		}: {
+			commitCount: number;
+			startingPolicy: number | boolean;
+			retainedByMsn: number;
+			retainedByFork: number;
+		}): TestEditManager {
+			const { manager } = testChangeEditManagerFactory({
+				historyRetention: startingPolicy,
+			});
+			if (retainedByFork > 0) {
+				const forkFrom = retainedByFork - 1;
+				const countInFirstBatch = commitCount - forkFrom;
+				sequencePeerCommits(manager, countInFirstBatch, 1, 1);
+				const fork = manager.getLocalBranch("main").fork();
+				sequencePeerCommits(manager, forkFrom, countInFirstBatch + 1, countInFirstBatch + 1);
+				assert(fork.getHead() === manager.getTrunkCommits("main").at(-retainedByFork));
+			} else {
+				sequencePeerCommits(manager, commitCount, 1, 1);
+			}
+			manager.advanceMinimumSequenceNumber(brand(commitCount - retainedByMsn));
+			assert.equal(
+				manager.getTrunkCommits("main").length,
+				Math.min(
+					commitCount,
+					Math.max(maxCountFromPolicy(startingPolicy), retainedByMsn, retainedByFork),
+				),
+				"Setup must retain the history required by the initial policy, MSN, and fork",
+			);
+			return manager;
+		}
+
+		describe("getHistoryRetention", () => {
+			it("returns false by default", () => {
+				const { manager } = testChangeEditManagerFactory({});
+				assert.equal(manager.getHistoryRetention(), false);
+			});
+		});
+
+		describe("setHistoryRetention", () => {
+			describe("Updates the policy when passed valid policy values", () => {
+				for (const policy of [false, 0, 1, 3, true, Number.MAX_SAFE_INTEGER] as const) {
+					it(`${policy}`, () => {
+						// Setup
+						const { manager } = testChangeEditManagerFactory({});
+						// Act
+						manager.setHistoryRetention(policy);
+						// Verify
+						assert.equal(manager.getHistoryRetention(), policy);
+					});
+				}
+			});
+
+			describe("Throws when passed invalid policy values", () => {
+				for (const policy of [
+					-1,
+					1.5,
+					Number.NaN,
+					Infinity,
+					-Infinity,
+					Number.MAX_SAFE_INTEGER + 1,
+				]) {
+					it(`${policy}`, () => {
+						// Setup
+						const message = "historyRetention must be a boolean or a nonnegative safe integer";
+						const { manager } = testChangeEditManagerFactory({ historyRetention: 3 });
+						// Act & Verify
+						assert.throws(
+							() => manager.setHistoryRetention(policy),
+							validateAssertionError(message),
+						);
+						// Verify that the policy remains unchanged
+						assert.equal(manager.getHistoryRetention(), 3);
+					});
+				}
+			});
+
+			it("trims sequenced history without discarding pending local commits", () => {
+				// Setup
+				const { manager } = testChangeEditManagerFactory({ historyRetention: 2 });
+				sequencePeerCommits(manager, 5, 1, 1);
+				manager.advanceMinimumSequenceNumber(brand(5));
+				applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+				applyLocalCommit(manager, [1, 2, 3, 4, 5, 6], 7);
+				const expectedLocalCommits = [...manager.getLocalCommits("main")];
+				const expected = [manager.getTrunkHead("main")];
+				// Act
+				manager.setHistoryRetention(1);
+				// Verify
+				assert.deepEqual(manager.getTrunkCommits("main"), expected);
+				assert.deepEqual(manager.getLocalCommits("main"), expectedLocalCommits);
+			});
+
+			it("trims superfluous commits if any", () => {
+				for (const startingPolicy of [true, 3, 2, 1, 0, false] as const) {
+					for (const newPolicy of [true, 3, 2, 1, 0, false] as const) {
+						for (const retainedByFork of [3, 2, 1, 0]) {
+							for (const retainedByMsn of [3, 2, 1, 0]) {
+								// Setup
+								const manager = setupManager({
+									commitCount: 3,
+									startingPolicy,
+									retainedByMsn,
+									retainedByFork,
+								});
+								const commitsBefore = manager.getTrunkCommits("main");
+								const maxHistoryAfter = Math.min(
+									commitsBefore.length,
+									maxCountFromPolicy(newPolicy),
+								);
+								const expectedCount = Math.max(retainedByMsn, retainedByFork, maxHistoryAfter);
+								const trimCount = Math.max(0, commitsBefore.length - expectedCount);
+								const expectedCommits = commitsBefore.slice(trimCount);
+								// Act
+								manager.setHistoryRetention(newPolicy);
+								// Verify
+								assert.deepEqual(manager.getTrunkCommits("main"), expectedCommits);
+							}
+						}
+					}
+				}
+			});
+		});
+
+		it("advanceMinimumSequenceNumber trims superfluous commits if any", () => {
+			for (const startingPolicy of [true, 3, 2, 1, 0, false] as const) {
+				for (const retainedByFork of [3, 2, 1, 0]) {
+					for (const retainedByInitialMsn of [3, 2, 1, 0]) {
+						for (
+							let retainedByAdvancedMsn = retainedByInitialMsn;
+							retainedByAdvancedMsn >= 0;
+							retainedByAdvancedMsn -= 1
+						) {
+							// Setup
+							const manager = setupManager({
+								commitCount: 3,
+								startingPolicy,
+								retainedByMsn: retainedByInitialMsn,
+								retainedByFork,
+							});
+							const commitsBefore = manager.getTrunkCommits("main");
+							const maxHistoryAfter = Math.min(
+								commitsBefore.length,
+								maxCountFromPolicy(startingPolicy),
+							);
+							const expectedCount = Math.max(
+								retainedByAdvancedMsn,
+								retainedByFork,
+								maxHistoryAfter,
+							);
+							const trimCount = Math.max(0, commitsBefore.length - expectedCount);
+							const expectedCommits = commitsBefore.slice(trimCount);
+							// Act
+							manager.advanceMinimumSequenceNumber(brand(3 - retainedByAdvancedMsn));
+							// Verify
+							assert.deepEqual(manager.getTrunkCommits("main"), expectedCommits);
+						}
+					}
+				}
+			}
+		});
+
+		it("addSequencedChanges trims superfluous commits if any by default", () => {
+			for (const startingPolicy of [true, 3, 2, 1, 0, false] as const) {
+				for (const initialCommitCount of [3, 2, 1, 0]) {
+					for (
+						let retainedByFork = initialCommitCount;
+						retainedByFork >= 0;
+						retainedByFork -= 1
+					) {
+						for (
+							let retainedByMsn = initialCommitCount;
+							retainedByMsn >= 0;
+							retainedByMsn -= 1
+						) {
+							for (const addedCommitCount of [3, 2, 1]) {
+								// Setup
+								const manager = setupManager({
+									commitCount: initialCommitCount,
+									startingPolicy,
+									retainedByMsn,
+									retainedByFork,
+								});
+								const initialMsn = initialCommitCount - retainedByMsn;
+								const addedCommits = makeArray(addedCommitCount, (i) => {
+									const intention = initialMsn + 1 + i;
+									const context = makeArray(intention - 1, (j) => j + 1);
+									return {
+										change: TestChange.mint(context, [intention]),
+										revision: mintRevisionTag(),
+										customMetadata: undefined,
+									};
+								});
+								const commitsBefore = manager.getTrunkCommits("main");
+								const allRevisions = [...commitsBefore, ...addedCommits].map(
+									(commit) => commit.revision,
+								);
+								const maxHistoryAfter = Math.min(
+									allRevisions.length,
+									maxCountFromPolicy(startingPolicy),
+								);
+								const expectedCount = Math.max(
+									retainedByMsn + addedCommitCount,
+									retainedByFork === 0 ? 0 : retainedByFork + addedCommitCount,
+									maxHistoryAfter,
+								);
+								const expectedRevisions = allRevisions.slice(-expectedCount);
+
+								// Act
+								manager.addSequencedChanges(
+									addedCommits,
+									peer2,
+									brand(initialCommitCount + 1),
+									brand(initialMsn),
+									"main",
+								);
+								// Verify
+								const actualRevisions = manager
+									.getTrunkCommits("main")
+									.map((commit) => commit.revision);
+								assert.deepEqual(actualRevisions, expectedRevisions);
+							}
+						}
+					}
+				}
+			}
+		});
+
+		it("branch.apply does not count or discard unsequenced local commits", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({ historyRetention: 2 });
+			sequencePeerCommits(manager, 5, 1, 1);
+			manager.advanceMinimumSequenceNumber(brand(5));
+			const expected = manager.getTrunkCommits("main");
+			assert.equal(expected.length, 2);
+
+			// Act
+			applyLocalCommit(manager, [1, 2, 3, 4, 5], 6);
+			// Verify
+			assert.deepEqual(manager.getTrunkCommits("main"), expected);
+			assert.deepEqual(manager.getLocalCommits("main"), [
+				manager.getLocalBranch("main").getHead(),
+			]);
+		});
+
+		it("summary creation only keep commits required by MSN and the history retention policy", () => {
+			for (const startingPolicy of [true, 3, 2, 1, 0, false] as const) {
+				for (const retainedByFork of [3, 2, 1, 0]) {
+					for (const retainedByMsn of [3, 2, 1, 0]) {
+						// Setup
+						const manager = setupManager({
+							commitCount: 3,
+							startingPolicy,
+							retainedByMsn,
+							retainedByFork,
+						});
+						const maxHistory = Math.min(3, maxCountFromPolicy(startingPolicy));
+						const expectedCount = Math.max(retainedByMsn, maxHistory);
+						const allRevisions = manager
+							.getTrunkCommits("main")
+							.map((commit) => commit.revision);
+						// TODO: investigate why the trunk length is at least 1 even when the policy is 0
+						const expectedRevisions = allRevisions.slice(-Math.max(1, expectedCount));
+						// Act
+						const summary = manager.getSummaryData();
+						// Verify
+						const actualRevisions = summary.main.trunk.map((commit) => commit.revision);
+						assert.deepEqual(actualRevisions, expectedRevisions);
+					}
+				}
+			}
+		});
+
+		it("summary load only keep commits required by MSN and the history retention policy", () => {
+			for (const summarizerPolicy of [true, 3, 2, 1, 0, false] as const) {
+				for (const retainedByMsn of [3, 2, 1, 0]) {
+					// Setup
+					const manager = setupManager({
+						commitCount: 3,
+						startingPolicy: summarizerPolicy,
+						retainedByMsn,
+						retainedByFork: 0,
+					});
+					const summary = manager.getSummaryData();
+					const summarizedRevisions = summary.main.trunk.map((commit) => commit.revision);
+					for (const loaderPolicy of [true, 3, 2, 1, 0, false] as const) {
+						const maxHistory = Math.min(
+							summarizedRevisions.length,
+							maxCountFromPolicy(loaderPolicy),
+						);
+						// Summaries do not currently include a minimum sequence number, so the loader must conservatively retain all revisions from the summary.
+						// This prevents the trimming of superfluous commits when the summarizer's history retention policy is more generous than the loader's policy.
+						// If this changes, update the next line to adjust this test's expectations.
+						const retainedByLoaderMsn = summarizedRevisions.length;
+						const expectedCount = Math.max(retainedByLoaderMsn, maxHistory);
+						const expectedRevisions = summarizedRevisions.slice(-expectedCount);
+						const { manager: loader } = testChangeEditManagerFactory({
+							historyRetention: loaderPolicy,
+						});
+						// Act
+						loader.loadSummaryData(summary);
+						// Verify
+						const actualRevisions = loader
+							.getTrunkCommits("main")
+							.map((commit) => commit.revision);
+						assert.deepEqual(actualRevisions, expectedRevisions);
+					}
+				}
+			}
+		});
+	});
 }
 
 function applyLocalCommit(
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return applyBranchCommit(manager.getLocalBranch("main"), inputContext, intention);
 }
 
 function applyBranchCommit(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	const revision = mintRevisionTag();
-	branch.apply({
-		change: TestChange.mint(inputContext, intention),
-		revision,
-	});
+	branch.apply(
+		{
+			change: TestChange.mint(inputContext, intention),
+			revision,
+		},
+		CommitKind.Default,
+		undefined,
+	);
 	const commit = branch.getHead();
 	return {
 		change: commit.change,
 		revision: commit.revision,
 		sessionId: localSessionId,
+		customMetadata: commit.customMetadata,
 	};
 }
 
 function peerCommit(
-	peer: typeof peer1 | typeof peer2,
+	peer: typeof peer1 | typeof peer2 = peer1,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return {
 		change: TestChange.mint(inputContext, intention),
 		revision: mintRevisionTag(),
 		sessionId: peer,
+		customMetadata: undefined,
 	};
 }
 
 function trackTrimmed(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
 	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {

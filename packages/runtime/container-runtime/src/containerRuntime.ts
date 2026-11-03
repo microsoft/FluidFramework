@@ -22,6 +22,7 @@ import type {
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainerContext,
+	IContainerContextInternal,
 	IGetPendingLocalStateProps,
 	IRuntime,
 	IDeltaManager,
@@ -105,6 +106,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import {
@@ -130,7 +132,7 @@ import type {
 	ISummarizerNodeWithGC,
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -162,8 +164,6 @@ import {
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
-	// eslint-disable-next-line import-x/no-deprecated
-	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -175,7 +175,7 @@ import {
 	normalizeError,
 	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { gt } from "semver-ts";
+import { gt, gte as greaterThanOrEqual } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -252,6 +252,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	tryGetDeserializedRuntimeOpCopy,
 	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
@@ -270,6 +271,11 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+import {
+	VersionMarkResolver,
+	type IVersionMarkResolver,
+	inboundVersionMarkUpdate,
+} from "./versionMarks/index.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
@@ -278,9 +284,11 @@ import {
 	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
 	electedSummarizerBlobName,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
@@ -290,9 +298,13 @@ import {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGeneratedSummaryStats,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGenerateSummaryTreeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
@@ -300,22 +312,23 @@ import {
 	isSummariesDisabled,
 	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientCollection,
-	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
 	summarizerClientType,
 	summarizerRequestUrl,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryCollection,
 	SummaryManager,
 	validateSummaryHeuristicConfiguration,
@@ -585,14 +598,13 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 const defaultStagingCommitOptions = { squash: false };
 
 /**
- * @deprecated
- * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
- * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
- * its usage is removed from TaggedLoggerAdapter fallback.
+ * Events raised by the ContainerRuntime for its own internal use.
  */
-interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
-	logger: ITelemetryBaseLogger;
-	taggedLogger: undefined;
+interface IContainerRuntimeInternalEvents {
+	/**
+	 * Raised when the container transitions from having pending local operations to having none.
+	 */
+	opsSaved: () => void;
 }
 
 /**
@@ -798,25 +810,47 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * The input should be a string that represents the minimum version of the FF runtime that should be
-	 * supported for collaboration. The format of the string must be in valid semver format.
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version. The value must be valid SemVer.
 	 *
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
 	 * @example
-	 * minVersionForCollab: "2.0.0"
+	 * oldestSupportedClient: "2.0.0"
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
-	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
-	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
+	 * For example, let's say that feature `foo` was added in 2.40 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.40 to enable/disable `foo` since clients prior to 2.40 would not
+	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * Internal features introduced by version:
+	 *
+	 * - `3.4.0` - Uses the V3 serialization format for the ID compressor.
+	 *
 	 */
-	minVersionForCollab?: MinimumVersionForCollab;
+	oldestSupportedClient?: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 *
+	 * @remarks
+	 * See {@link LoadContainerRuntimeParams.oldestSupportedClient} for compatibility implications.
+	 *
+	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
+	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	minVersionForCollab?: OldestSupportedClientVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -827,7 +861,10 @@ export interface LoadContainerRuntimeParams {
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	return ContainerRuntime.loadRuntime(params);
+	return ContainerRuntime.loadRuntime({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
 }
 
 /**
@@ -836,6 +873,10 @@ export async function loadContainerRuntime(
  *
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns An object containing the runtime.
+ *
+ * @privateRemarks
+ * By using loadRuntime2 instead of loadRuntime, this prevents mixinAttributor's overriding of loadRuntime from affecting this new API:
+ * this might cause unexpected issues.
  *
  * @legacy @alpha
  */
@@ -903,6 +944,8 @@ export class ContainerRuntime
 	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
 	 * @privateRemarks
 	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 * To enable this code to know what version of this API it should use, loadRuntimeAPIVersion has been added.
+	 * This is a workaround for the relevant code in test-utils not tracking the package version, so it can't special case it off of that.
 	 *
 	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
 	 * that will have to be updated if changing the signature of this function as well.
@@ -911,20 +954,20 @@ export class ContainerRuntime
 	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
-		params: LoadContainerRuntimeParams & {
-			/**
-			 * Constructor to use to create the ContainerRuntime instance.
-			 * @remarks
-			 * Defaults to {@link ContainerRuntime}.
-			 */
+		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			registry: IFluidDataStoreRegistry;
 			containerRuntimeCtor?: typeof ContainerRuntime;
+			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
 	): Promise<ContainerRuntime> {
-		return ContainerRuntime.loadRuntime2({
-			...params,
-			registry: new FluidDataStoreRegistry(params.registryEntries),
-		}).then((r) => r.runtime);
+		return ContainerRuntime.loadRuntime2(params).then((r) => r.runtime);
 	}
+
+	/**
+	 * Hack to allow test-utils to detect which version of loadRuntime API to expect.
+	 * See note in loadRuntime's private remarks.
+	 */
+	public static readonly loadRuntimeAPIVersion: number | undefined = 2;
 
 	/**
 	 * Load the stores from a snapshot and returns an object containing the runtime.
@@ -960,18 +1003,33 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			minVersionForCollab = defaultMinVersionForCollab,
+			oldestSupportedClient: oldestSupportedClientParam,
+			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
+			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
 
-		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
-		const passLogger =
-			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import-x/no-deprecated
-			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
+		if (
+			oldestSupportedClientParam !== undefined &&
+			deprecatedMinVersionForCollab !== undefined
+		) {
+			throw new UsageError(
+				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
+			);
+		}
+		// Both internal names remain available while older Runtime, DataStore, and DDS packages migrate.
+		const minVersionForCollab =
+			oldestSupportedClientParam ??
+			deprecatedMinVersionForCollab ??
+			defaultMinVersionForCollab;
+
+		if (context.taggedLogger === undefined) {
+			const error = new UsageError("Loader must provide a tagged logger");
+			context.closeFn(error);
+			throw error;
+		}
+
 		const logger = createChildLogger({
-			logger: passLogger,
+			logger: context.taggedLogger,
 			properties: {
 				all: {
 					runtimeVersion: pkgVersion,
@@ -983,8 +1041,8 @@ export class ContainerRuntime
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
-		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
+		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
+		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
@@ -1179,6 +1237,10 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		const idCompressorSerializationVersion = greaterThanOrEqual(minVersionForCollab, "3.4.0")
+			? SerializationVersion.V3
+			: SerializationVersion.V2;
+
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1200,16 +1262,20 @@ export class ContainerRuntime
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						pendingLocalState.pendingIdCompressorState,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
+				return toIdCompressorWithCore(
+					createIdCompressor(idCompressorSerializationVersion, compressorLogger),
+				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						serializedIdCompressor,
 						createSessionId(),
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
@@ -1311,6 +1377,10 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, unknown>;
 
 	private readonly _getClientId: () => string | undefined;
+	public get oldestSupportedClient(): OldestSupportedClientVersion {
+		return this.minVersionForCollab;
+	}
+
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -1424,9 +1494,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
-	 */
 	public generateDocumentUniqueId(): string | number {
 		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
@@ -1522,12 +1589,39 @@ export class ContainerRuntime
 	}
 
 	private lastEmittedDirty: boolean;
+	/**
+	 * The op-only portion of dirty state as of the last evaluation.
+	 *
+	 * @remarks Tracked separately from {@link ContainerRuntime.lastEmittedDirty} so internal consumers
+	 * that specifically care about operation acknowledgement do not depend on the host-facing aggregate.
+	 */
+	private lastOpDirty: boolean;
+	/**
+	 * Blob-aware dirty state requires separate loader-side op tracking to preserve reconnect ordering.
+	 */
+	private readonly blobWorkContributesToDirtyState: boolean;
 	private emitDirtyDocumentEvent = true;
+	/**
+	 * Tracks in-progress pending-op-state notifications.
+	 *
+	 * @remarks Used to defer host-facing dirty-state publication to the outermost notification. See
+	 * {@link ContainerRuntime.publishDirtyState}.
+	 */
+	private readonly pendingOpStateNotificationRunner = new RunCounter();
 	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
 	private readonly signalTelemetryManager = new SignalTelemetryManager();
+
+	private readonly internalEvents = createEmitter<IContainerRuntimeInternalEvents>();
+
+	/**
+	 * Reports op-only dirty state to loaders that can keep it separate from host-facing dirty state.
+	 */
+	private readonly updatePendingOpState:
+		| IContainerContextInternal["updatePendingOpState"]
+		| undefined;
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1541,11 +1635,19 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
+	private readonly versionMarkResolverInternal: VersionMarkResolver;
+	/**
+	 * Host-facing version mark resolver.
+	 */
+	public get versionMarkResolver(): IVersionMarkResolver {
+		return this.versionMarkResolverInternal;
+	}
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
+	private versionMarkInboundBatchId: string | undefined;
 
 	/**
 	 * The last message processed at the time of the last summary.
@@ -1641,7 +1743,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		public readonly minVersionForCollab: MinimumVersionForCollab,
+		public readonly minVersionForCollab: OldestSupportedClientVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1677,6 +1779,7 @@ export class ContainerRuntime
 			getConnectionState,
 		} = context;
 
+		this.updatePendingOpState = (context as IContainerContextInternal).updatePendingOpState;
 		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
@@ -1879,6 +1982,59 @@ export class ContainerRuntime
 				},
 			},
 		);
+		// fetchOps is an internal-only capability the loader injects (IContainerContextInternal), not part
+		// of the public IContainerContext contract, so narrow to read it.
+		const fetchOps = (context as IContainerContextInternal).fetchOps;
+		this.versionMarkResolverInternal = new VersionMarkResolver({
+			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			getCurrentTimestamp: () => this.getCurrentReferenceTimestampMs(),
+			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
+			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
+			logger: createChildLogger({
+				logger: this.baseLogger,
+				namespace: "VersionMarkResolver",
+			}),
+			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
+			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
+			flushPendingBatch: () => this.flush(),
+			// Keep this optional while a supported older loader may not provide fetchOps. AB#81034 tracks
+			// making it required once the Runtime -> Loader compatibility window reaches generation 21.
+			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
+			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
+			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.
+			createHistoricalOpUnpacker: fetchOps
+				? () => {
+						// A fresh processor per scan: it holds chunk-reassembly state, so it must not share
+						// the live inbound processor's state. submit/size args are unused on the read path.
+						const scanProcessor = new RemoteMessageProcessor(
+							new OpSplitter(
+								[],
+								submitBatchFn,
+								runtimeOptions.chunkSizeInBytes,
+								runtimeOptions.maxBatchSizeInBytes,
+								this.mc.logger,
+								{ allowInitialPartialChunkStream: true },
+							),
+							new OpDecompressor(this.mc.logger),
+							new OpGroupingManager(
+								{ groupedBatchingEnabled: this.groupedBatchingEnabled },
+								this.mc.logger,
+							),
+						);
+						return (op) => {
+							// Only runtime ops carry batches; deserialize a copy so the reader-owned op stays untouched.
+							const messageCopy = tryGetDeserializedRuntimeOpCopy(op);
+							if (messageCopy === undefined) {
+								return undefined;
+							}
+							return scanProcessor.process(
+								messageCopy,
+								getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type),
+							);
+						};
+					}
+				: undefined,
+		});
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
@@ -2193,9 +2349,18 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
+		this.blobWorkContributesToDirtyState =
+			this.updatePendingOpState !== undefined &&
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBlobAwareDirtyState") !== true;
+
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
+		this.lastOpDirty = this.computeCurrentOpDirtyState();
+		this.updatePendingOpState?.(this.lastOpDirty);
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
+
+		// Restored blobs are counted before subscription; seed their dirty state above.
+		this.blobManager.events.on("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
@@ -2299,11 +2464,11 @@ export class ContainerRuntime
 	// #region `IFluidParentContext` APIs that should not be called on Root
 
 	public makeLocallyVisible(): void {
-		assert(false, 0x8eb /* should not be called */);
+		fail(0x8eb /* should not be called */);
 	}
 
 	public setChannelDirty(address: string): void {
-		assert(false, 0x909 /* should not be called */);
+		fail(0x909 /* should not be called */);
 	}
 
 	// #endregion
@@ -2355,6 +2520,7 @@ export class ContainerRuntime
 						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryCollection: SummaryCollection = new SummaryCollection(
 			this.deltaManager,
 			this.baseLogger,
@@ -2396,32 +2562,14 @@ export class ContainerRuntime
 			!onRequestMode &&
 			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
 		) {
-			// Only create a SummaryManager and SummarizerClientElection
-			// if summaries are enabled and we are not the summarizer client.
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
+			// Interactive clients coordinate automatic summarizer creation.
+			this.summarizerClientElection = new SummarizerClientElection(
+				this.baseLogger,
 				this.innerDeltaManager,
 				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
 				summaryCollection,
-				orderedClientElectionForSummarizer,
 				maxOpsSinceLastSummary,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 			);
 
 			const defaultAction = (): void => {
@@ -2491,6 +2639,7 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		this.blobManager.events.off("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -2498,6 +2647,8 @@ export class ContainerRuntime
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
+				opDirty: this.isOpDirty,
+				hasOutstandingBlobWork: this.blobManager.hasOutstandingBlobWork,
 				lastSequenceNumber: this.deltaManager.lastSequenceNumber,
 				attachState: this.attachState,
 			},
@@ -2722,9 +2873,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
-	 */
 	public async getEntryPoint(): Promise<FluidObject> {
 		return this.entryPoint;
 	}
@@ -2890,6 +3038,7 @@ export class ContainerRuntime
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
 		const oldState = this.lastEmittedDirty;
+		const oldOpState = this.lastOpDirty;
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
 
@@ -2904,6 +3053,7 @@ export class ContainerRuntime
 		} finally {
 			// Restore the old state, re-enable event emit
 			this.lastEmittedDirty = oldState;
+			this.lastOpDirty = oldOpState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
@@ -3134,6 +3284,13 @@ export class ContainerRuntime
 
 		if (canSendOpsChanged) {
 			this.replayPendingStates();
+			// replayPendingStates() can synchronously reenter this method, e.g. via a host listener
+			// reacting to a dirty-state change by calling disconnect(). The nested call has already
+			// propagated the newer connection state, so continuing here would overwrite it -- and leave
+			// the runtime disagreeing with its children -- using our now-stale argument.
+			if (this.canSendOps !== canSendOps) {
+				return;
+			}
 		}
 
 		this.channelCollection.setConnectionState(canSendOps, clientId);
@@ -3295,6 +3452,28 @@ export class ContainerRuntime
 				message: ISequencedDocumentMessage;
 				localOpMetadata?: unknown;
 			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
+
+			// Record the version-mark point for a completed batch (its last op's sequence number), carrying
+			// the batch id across a piecemeal batch's messages. This runs only AFTER processInboundMessages
+			// has validated the batch: that call throws (fork detection / pending-content mismatch) for a
+			// batch that must be rejected. processInboundBatch synchronously notifies listeners, which an
+			// app uses to promote a mark in an external store - an irreversible side effect - so it must not
+			// fire for a batch validation is about to reject. Gated on isTracking so a container that never
+			// uses version marks does no per-batch work here (mirrors #22497's DuplicateBatchDetector gating).
+			if (this.versionMarkResolverInternal.isTracking) {
+				const versionMarkUpdate = inboundVersionMarkUpdate(
+					inboundResult,
+					this.versionMarkInboundBatchId,
+				);
+				if (versionMarkUpdate.sequenced !== undefined) {
+					this.versionMarkResolverInternal.processInboundBatch(
+						versionMarkUpdate.sequenced.batchId,
+						versionMarkUpdate.sequenced.sequenceNumber,
+						versionMarkUpdate.sequenced.timestamp,
+					);
+				}
+				this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
+			}
 
 			if (inboundResult.type !== "fullBatch") {
 				assert(
@@ -3568,7 +3747,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
+				fail(0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
 				break;
@@ -3732,9 +3911,6 @@ export class ContainerRuntime
 		this.updateHasStagedChangesState();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
-	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let stageControls: StageControlsInternal | undefined;
@@ -4032,8 +4208,7 @@ export class ContainerRuntime
 	private readonly signalAudience?: IAudience;
 
 	/**
-	 * Returns true of container is dirty, i.e. there are some pending local changes that
-	 * either were not sent out to delta stream or were not yet acknowledged.
+	 * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.isDirty}
 	 */
 	public get isDirty(): boolean {
 		// Rather than recomputing the dirty state in this moment,
@@ -4042,14 +4217,33 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
+	 * Returns true if the container is dirty: not attached, has pending user messages (ignoring
+	 * "non-dirtyable" ones), or has outstanding blob work.
 	 */
 	private computeCurrentDirtyState(): boolean {
+		return (
+			this.computeCurrentOpDirtyState() ||
+			(this.blobWorkContributesToDirtyState && this.blobManager.hasOutstandingBlobWork)
+		);
+	}
+
+	/**
+	 * Returns the operation-only portion of dirty state: not attached, or has pending user messages
+	 * (ignoring non-dirtyable messages).
+	 */
+	private computeCurrentOpDirtyState(): boolean {
 		return (
 			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
 		);
+	}
+
+	/**
+	 * The op-only portion of dirty state as of the last evaluation.
+	 */
+	private get isOpDirty(): boolean {
+		return this.lastOpDirty;
 	}
 
 	/**
@@ -4361,6 +4555,24 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.getDataStorePackagePath}
+	 */
+	public async getDataStorePackagePath(
+		nodePath: string,
+	): Promise<readonly string[] | undefined> {
+		// This lookup does not depend on GC; its node type taxonomy distinguishes data store paths from other paths.
+		switch (this.getNodeType(nodePath)) {
+			case GCNodeType.DataStore:
+			case GCNodeType.SubDataStore: {
+				return this.channelCollection.getDataStorePackagePath(nodePath);
+			}
+			default: {
+				return undefined;
+			}
+		}
+	}
+
+	/**
 	 * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
 	 * data store or an attachment blob.
 	 */
@@ -4382,7 +4594,7 @@ export class ContainerRuntime
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
 			default: {
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+				fail(0x2de /* "Package path requested for unsupported node type." */);
 			}
 		}
 	}
@@ -4472,6 +4684,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4511,32 +4724,40 @@ export class ContainerRuntime
 			);
 		}
 
-		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
-		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
-		// saved within the timeout, check if it should be failed or can continue.
-		if (this.isDirty) {
+		// Pending unacknowledged operations can make the summary inconsistent. Wait for the op-only state
+		// to become saved rather than coupling summarization to the host-facing aggregate dirty state.
+		if (this.isOpDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
 				this.mc.config.getNumber("Fluid.Summarizer.waitForPendingOpsTimeoutMs") ??
 				defaultPendingOpsWaitTimeoutMs;
 			await new Promise<void>((resolve, reject) => {
-				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
-				this.once("saved", () => {
-					clearTimeout(timeoutId);
+				const timeoutId = setTimeout(() => {
+					cleanup();
+					resolve();
+				}, pendingOpsTimeout);
+				const offOpsSaved = this.internalEvents.on("opsSaved", () => {
+					cleanup();
 					resolve();
 				});
-				this.once("dispose", () => {
-					clearTimeout(timeoutId);
+				const onDispose = (): void => {
+					cleanup();
 					reject(new Error("Runtime is disposed while summarizing"));
-				});
+				};
+				const cleanup = (): void => {
+					clearTimeout(timeoutId);
+					offOpsSaved();
+					this.off("dispose", onDispose);
+				};
+				this.once("dispose", onDispose);
 			});
 
 			// Log that there are pending ops while summarizing. This will help us gather data on how often this
 			// happens, whether we attempted to wait for these ops to be acked and what was the result.
 			summaryNumberLogger.sendTelemetryEvent({
 				eventName: "PendingOpsWhileSummarizing",
-				saved: !this.isDirty,
+				saved: !this.isOpDirty,
 				timeout: pendingOpsTimeout,
 				countBefore,
 				countAfter: this.pendingMessagesCount,
@@ -4728,6 +4949,7 @@ export class ContainerRuntime
 					? undefined
 					: calculateStats(summaryTree.tree[gcTreeKey]);
 
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.channelCollection.size,
 				summarizedDataStoreCount: this.channelCollection.size - handleCount,
@@ -4737,6 +4959,7 @@ export class ContainerRuntime
 				summaryNumber,
 				...partialStats,
 			};
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
 				referenceSequenceNumber: summaryRefSeqNum,
 				minimumSequenceNumber,
@@ -4838,9 +5061,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
-	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
+	 * This helper is called during summarization. If there are pending unacknowledged operations, it will
+	 * return a failed summarize result (IBaseSummarizeResult) unless this is the final summarize attempt,
+	 * in which case the summary is allowed to proceed to make progress.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4854,8 +5077,9 @@ export class ContainerRuntime
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<IBaseSummarizeResult | undefined> {
-		if (!this.isDirty) {
+		if (!this.isOpDirty) {
 			return;
 		}
 
@@ -4917,15 +5141,59 @@ export class ContainerRuntime
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = this.computeCurrentDirtyState();
+		const opDirty = this.computeCurrentOpDirtyState();
+		const opDirtyChanged = this.lastOpDirty !== opDirty;
+		this.lastOpDirty = opDirty;
 
+		if (!this.emitDirtyDocumentEvent) {
+			this.lastEmittedDirty = opDirty;
+			return;
+		}
+
+		if (opDirtyChanged) {
+			// These notifications can synchronously release reconnect waiters and raise "connected",
+			// whose listeners may submit another op and reenter this method. Track the nesting so only
+			// the outermost notification publishes host-facing dirty state.
+			this.pendingOpStateNotificationRunner.run(() => {
+				this.updatePendingOpState?.(opDirty);
+				// Only announce drained ops if that is still true after the callback above, which may
+				// have reentered this method and made the container dirty again.
+				if (!opDirty && this.lastOpDirty === opDirty) {
+					this.internalEvents.emit("opsSaved");
+				}
+			});
+		}
+
+		this.publishDirtyState();
+	}
+
+	/**
+	 * Emit "dirty" or "saved" if host-facing dirty state has changed since the last emit.
+	 *
+	 * @remarks Publication is deferred while a pending-op-state notification is in progress. Such a
+	 * notification can synchronously drive a full connection-state propagation, and publishing from
+	 * inside one lets a listener (e.g. a host calling disconnect() on "saved") reenter that propagation,
+	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
+	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
+	 * frame publishes whatever state is current once nesting unwinds.
+	 *
+	 * Publication is suppressed after disposal and during op replay, which publishes its own net change.
+	 */
+	private readonly publishDirtyState = (): void => {
+		if (
+			this.disposed ||
+			!this.emitDirtyDocumentEvent ||
+			this.pendingOpStateNotificationRunner.running
+		) {
+			return;
+		}
+
+		const dirty = this.computeCurrentDirtyState();
 		if (this.lastEmittedDirty !== dirty) {
 			this.lastEmittedDirty = dirty;
-			if (this.emitDirtyDocumentEvent) {
-				this.emit(dirty ? "dirty" : "saved");
-			}
+			this.emit(dirty ? "dirty" : "saved");
 		}
-	}
+	};
 
 	/**
 	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
@@ -5596,6 +5864,7 @@ export class ContainerRuntime
 			.catch(this.closeFn);
 	};
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.summarizeOnDemand(options);
@@ -5609,6 +5878,7 @@ export class ContainerRuntime
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.enqueueSummarize(options);

@@ -32,8 +32,7 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNode,
@@ -335,8 +334,7 @@ function createProxyHandler(
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
-			// eslint-disable-next-line import-x/no-deprecated
-			if (propertyKey === typeNameSymbol) {
+			if (propertyKey === schemaIdentifierBrand) {
 				return schema.identifier;
 			}
 
@@ -633,8 +631,7 @@ export function objectSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			nodeOptions.persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {

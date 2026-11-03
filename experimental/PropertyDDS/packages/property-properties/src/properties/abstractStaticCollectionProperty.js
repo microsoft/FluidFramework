@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-const { PathHelper, ChangeSet } = require("@fluid-experimental/property-changeset");
-const { ConsoleUtils, constants } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { PathHelper, ChangeSet } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { BaseProperty } = require("./baseProperty");
-const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
+import { BaseProperty } from "./baseProperty.js";
+import { LazyLoadedProperties as Property } from "./lazyLoadedProperties.js";
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;

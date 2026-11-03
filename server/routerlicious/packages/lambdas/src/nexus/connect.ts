@@ -131,6 +131,7 @@ function composeConnectedMessage(
 	claims: ITokenClaims,
 	version: string,
 	clients: ISignalClient[],
+	checkpointSequenceNumber?: number,
 ): IConnected {
 	const connectedMessage: IConnected = {
 		claims,
@@ -150,6 +151,7 @@ function composeConnectedMessage(
 			submit_signals_v2: true,
 		},
 		version,
+		checkpointSequenceNumber,
 	};
 	return connectedMessage;
 }
@@ -260,6 +262,7 @@ async function connectOrderer(
 		claims,
 		version,
 		clients,
+		await ordererManager.getCheckpointSequenceNumber(tenantId, documentId),
 	);
 
 	return {
@@ -705,6 +708,10 @@ export async function connectDocument(
 						claims,
 						version,
 						clients,
+						await lambdaDependencies.ordererManager.getCheckpointSequenceNumber(
+							tenantId,
+							documentId,
+						),
 					),
 					disposeOrdererConnectionListener: (): void => {},
 			  };

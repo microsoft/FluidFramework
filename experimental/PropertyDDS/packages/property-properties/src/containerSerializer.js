@@ -7,12 +7,10 @@
  * @namespace property-properties
  */
 
-const { PathHelper } = require("@fluid-experimental/property-changeset");
+import { PathHelper } from "@fluid-experimental/property-changeset";
 
-const {
-	AbstractStaticCollectionProperty,
-} = require("./properties/abstractStaticCollectionProperty");
-const { LazyLoadedProperties: Property } = require("./properties/lazyLoadedProperties");
+import { AbstractStaticCollectionProperty } from "./properties/abstractStaticCollectionProperty.js";
+import { LazyLoadedProperties as Property } from "./properties/lazyLoadedProperties.js";
 
 var MSG = {
 	NOTHING_TO_DESERIALIZE: "Repository deserialize(), no input given",

@@ -61,15 +61,21 @@ parameters:
 - name: publishOverride
   type: string
 
+# Indicates who owns the publish step for this build:
+#   true  - publishing happens as part of this build pipeline's own publish stages.
+#   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+#           and publish-metadata.json produced here.
+# This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+# Deliberately has no default: every pipeline must state which side owns its publishing, so that a search
+# for `publishAsPartOfBuild: true` is an accurate list of what has not been migrated yet.
+- name: publishAsPartOfBuild
+  type: boolean
+
 - name: releaseBuildOverride
   type: string
 
 - name: tagName
   type: string
-
-- name: isReleaseGroup
-  type: boolean
-  default: false
 
 - name: buildToolsVersionToInstall
   type: string
@@ -454,6 +460,11 @@ extends:
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
 
+                  - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+                    parameters:
+                      publishOverride: ${{ parameters.publishOverride }}
+                      publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
+
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
@@ -621,31 +632,12 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-      # Publish stage
-      - ${{ if eq(parameters.publish, true) }}:
-        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
-            isReleaseGroup: ${{ parameters.isReleaseGroup }}
-            buildDirectory: ${{ parameters.buildDirectory }}
-
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
             dependsOn:
               - build
-              # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
-              - publish_npm_internal_test
-              - publish_npm_internal_build
-              - publish_npm_public
-              # NOTE: This is brittle; since the publish_npm_internal_dev stage is added to the pipeline conditionally,
-              # we create a dependency on it based on the same condition.
-              # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
-              # At some point it might be preferable to always create the stage, control its execution solely with
-              # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
-              - ${{ if eq(parameters.isReleaseGroup, true) }}:
-                - publish_npm_internal_dev
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self

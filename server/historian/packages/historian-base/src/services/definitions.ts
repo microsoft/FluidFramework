@@ -12,6 +12,13 @@ import type {
 import type { Query } from "express-serve-static-core";
 import type * as nconf from "nconf";
 
+import type {
+	DocumentAccessOperation,
+	IDocumentAccessAuthorizer,
+	IDocumentAccessProof,
+	ITrustedCreateContext,
+} from "./documentAccess";
+
 /**
  * Interface for a git object cache
  */
@@ -32,11 +39,73 @@ export interface ICache {
 	delete(key: string): Promise<boolean>;
 }
 
+export interface IEphemeralSummaryAccessRecord {
+	version: 1;
+	state: "active" | "deleted";
+	createTime: number;
+}
+
+export interface ISummaryAccessContext {
+	tenantId: string;
+	documentId: string;
+	isEphemeralContainer: boolean;
+	createTime: number;
+	storageName?: string;
+	source: "localEphemeral" | "alfred";
+	/**
+	 * Candidate proof produced by the ephemeral lifecycle fast path. A configured document
+	 * authorizer must validate and return it before Historian uses it for routing or cache
+	 * isolation. It is ignored when document authorization is disabled.
+	 */
+	accessProof?: IDocumentAccessProof;
+}
+
+export class MalformedEphemeralSummaryAccessRecordError extends Error {}
+
+export type ActivateSummaryAccessResult = "created" | "alreadyActive" | "deleted";
+
+export interface IEphemeralSummaryAccessStore {
+	readSummaryAccess(
+		tenantId: string,
+		documentId: string,
+	): Promise<IEphemeralSummaryAccessRecord | undefined>;
+
+	activateSummaryAccessIfNotDeleted(
+		tenantId: string,
+		documentId: string,
+		createTime: number,
+		expiresAt: number,
+	): Promise<ActivateSummaryAccessResult>;
+
+	markSummaryAccessDeleted(
+		tenantId: string,
+		documentId: string,
+		createTime: number,
+		expiresAt: number,
+	): Promise<void>;
+}
+
+export function isEphemeralSummaryAccessStore(
+	cache: ICache | undefined,
+): cache is ICache & IEphemeralSummaryAccessStore {
+	const candidate = cache as Partial<IEphemeralSummaryAccessStore> | undefined;
+	return (
+		typeof candidate?.readSummaryAccess === "function" &&
+		typeof candidate.activateSummaryAccessIfNotDeleted === "function" &&
+		typeof candidate.markSummaryAccessDeleted === "function"
+	);
+}
+
 export interface ICreateGitServiceArgs {
 	config: nconf.Provider;
 	tenantId: string;
 	authorization: string | undefined;
 	tenantService: ITenantService;
+	/**
+	 * Tenant details already returned by tenantService for this request's authorization token.
+	 * This is used only when a caller must perform authenticated work before creating the service.
+	 */
+	authenticatedTenantDetails?: ITenantConfig;
 	storageNameRetriever?: IStorageNameRetriever;
 	documentManager: IDocumentManager;
 	cache?: ICache;
@@ -48,6 +117,23 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 	query?: Query;
+	/**
+	 * Required when documentAccessAuthorizer is configured. It remains optional so callers that do
+	 * not enable document authorization retain the existing createGitService contract.
+	 */
+	accessOperation?: DocumentAccessOperation;
+	/**
+	 * Selects the first safe ownership lookup for the authorizer without determining routing.
+	 */
+	containerTypeHint?: "ephemeral" | "durable";
+	/**
+	 * Candidate lifecycle or storage proof resolved earlier in the request. A configured
+	 * authorizer must validate and return it before Historian uses it.
+	 */
+	existingAccessProof?: IDocumentAccessProof;
+	trustedCreateContext?: ITrustedCreateContext;
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer;
+	summaryAccessContext?: ISummaryAccessContext;
 }
 
 export interface ITenantService {

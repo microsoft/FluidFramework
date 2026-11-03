@@ -32,7 +32,8 @@ async function isFluidRootPackage(dir: string): Promise<boolean> {
 		return false;
 	}
 
-	const parsed = await readJson(filename);
+	// The parsed JSON is untyped; only the `private` field is read here.
+	const parsed = (await readJson(filename)) as { private?: unknown };
 	if (parsed.private === true) {
 		return true;
 	}
@@ -66,7 +67,8 @@ async function inferRoot(buildRoot: boolean): Promise<string | undefined> {
 				return gitRoot;
 			}
 			// For build root, we require it to have fluidBuild property.
-			const parsed = await readJson(gitRootPackageJson);
+			// The parsed JSON is untyped; only the presence of `fluidBuild` is checked here.
+			const parsed = (await readJson(gitRootPackageJson)) as { fluidBuild?: unknown };
 			if (parsed.fluidBuild !== undefined) {
 				return gitRoot;
 			}
@@ -178,7 +180,9 @@ export function getFluidBuildConfig(
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
-	const config = configResult.config;
+	// lilconfig loads the config file dynamically and returns it untyped. The version is validated
+	// below; the rest of the shape is trusted.
+	const config = configResult.config as IFluidBuildConfig;
 	if (config.version === undefined) {
 		log.warning(
 			"fluidBuild config has no version field. This field will be required in a future release.",

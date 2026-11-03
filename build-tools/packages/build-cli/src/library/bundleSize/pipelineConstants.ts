@@ -25,3 +25,12 @@ export const bundleSizeArtifactsPrPipeline = {
 	definitionId: 11,
 	bundleAnalyzerJsonArtifactName: "bundleAnalyzerJson",
 } as const;
+
+/**
+ * The GitHub repo the pipelines above build, and therefore the one whose commits their
+ * `sourceVersion`s refer to.
+ */
+export const bundleSizeArtifactsGitHubRepo = {
+	owner: "microsoft",
+	repo: "FluidFramework",
+} as const;

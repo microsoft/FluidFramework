@@ -6,15 +6,20 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
+import {
+	UniversalDataArray,
+	ConsoleUtils,
+	constants,
+} from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
-const { ReferenceProperty } = require("./referenceProperty");
-const { ValueArrayProperty } = require("./valueArrayProperty");
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { ReferenceProperty } from "./referenceProperty.js";
+import { ValueArrayProperty } from "./valueArrayProperty.js";
+
+const { MSG } = constants;
 
 /**
  * An ArrayProperty which stores reference values

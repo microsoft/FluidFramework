@@ -36,3 +36,4 @@ extends:
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default
+    publishAsPartOfBuild: true

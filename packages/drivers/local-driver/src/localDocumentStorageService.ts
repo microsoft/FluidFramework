@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { IsoBufferEncoding } from "@fluid-internal/client-utils";
 import {
+	ArrayBufferLikeToArrayBuffer,
 	IsoBuffer,
 	Uint8ArrayToString,
 	bufferToString,
@@ -150,7 +152,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const groupId = await this.readGroupId(tree);
 		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
-				blobContents.set(id, await this.readBlob(id));
+				blobContents.set(id, ArrayBufferLikeToArrayBuffer(await this.readBlob(id)));
 			}
 			await Promise.all(
 				Object.values(tree.trees).map(async (childTree) => {
@@ -204,7 +206,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		// Collect blobsIds so that we can return blob contents only for these blobs.
 		if (groupIdInLoadingGroupIds || isChildOfAncestorWithGroupId) {
 			for (const id of Object.values(tree.blobs)) {
-				blobContents.set(id, await this.readBlob(id));
+				blobContents.set(id, ArrayBufferLikeToArrayBuffer(await this.readBlob(id)));
 			}
 		}
 		// Keep tree if it has a child that has a groupId that is in loadingGroupIds
@@ -291,7 +293,11 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		const blob = await this.manager.getBlob(blobId);
 		this.blobsShaCache.set(blob.sha, "");
-		const bufferContent = stringToBuffer(blob.content, blob.encoding);
+		// stringToBuffer has only ever reliably supported limited encodings.
+		// Despite server `IBlob.encoding` type being string, cast as one of
+		// the supported types and expect throw under browser if not.
+		// TODO: AB:#81373: Consider formalizing `IBlob.encoding` literals allowed.
+		const bufferContent = stringToBuffer(blob.content, blob.encoding as IsoBufferEncoding);
 		return bufferContent;
 	}
 

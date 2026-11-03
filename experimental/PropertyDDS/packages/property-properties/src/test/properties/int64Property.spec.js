@@ -10,29 +10,22 @@
  * described in /src/shared/property_sets/properties/int_property.js
  */
 
-var PropertyFactory,
-	nodeProp,
-	containedInt64Prop,
-	directInt64Prop,
-	Int64,
-	Uint64,
-	BaseProperty,
-	ChangeSet,
-	TestInt64ArrayTemplate,
-	MSG;
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { Int64, Uint64, constants } from "@fluid-experimental/property-common";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
+
+var nodeProp, containedInt64Prop, directInt64Prop, TestInt64ArrayTemplate;
 
 describe("Test Int64Property", function () {
 	/**
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		Int64 = require("@fluid-experimental/property-common").Int64;
-		Uint64 = require("@fluid-experimental/property-common").Uint64;
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-
 		TestInt64ArrayTemplate = {
 			typeid: "autodesk.tests:Int64TestID-1.0.0",
 			properties: [

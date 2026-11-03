@@ -8,12 +8,19 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import type { JsonableTree } from "../core/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	toInitialSchema,
+} from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
 import {
 	createSnapshotCompressor,
+	getView,
 	prepareTreeForCompare,
 	snapshotSessionId,
+	validateViewConsistency,
 } from "./utils.js";
 
 describe("Test utils", () => {
@@ -88,6 +95,72 @@ describe("Test utils", () => {
 				const stable = compressor.decompress(compressed);
 				assert.equal(stable, "beefbeef-beef-4000-8000-000000000002");
 			}
+		});
+	});
+
+	describe("validateViewConsistency", () => {
+		const config = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(SchemaFactory.number),
+		});
+
+		for (const difference of ["tree", "schema", "removed"] as const) {
+			it(`detects a difference in ${difference}`, () => {
+				const view = getView(config);
+				view.initialize(1);
+				view.root = 2;
+				const checkout = view.checkout;
+				const fork = checkout.fork();
+				validateViewConsistency(checkout, fork);
+				switch (difference) {
+					case "tree": {
+						fork.viewWith(config).root = 3;
+						break;
+					}
+					case "schema": {
+						fork.updateSchema(
+							toInitialSchema(
+								SchemaFactory.optional([SchemaFactory.number, SchemaFactory.string]),
+							),
+						);
+						break;
+					}
+					case "removed": {
+						const removed = fork.getRemovedRoots();
+						assert(removed.length > 0);
+						removed[0][2] = { ...removed[0][2], value: 3 };
+						fork.getRemovedRoots = () => removed;
+						break;
+					}
+					default: {
+						assert.fail("Unexpected snapshot difference");
+					}
+				}
+				assert.throws(
+					() => validateViewConsistency(checkout, fork, difference),
+					new RegExp(`Inconsistent .*: ${difference}`),
+				);
+				fork.dispose();
+				view.dispose();
+			});
+		}
+		it("compares the detached content of both checkouts", () => {
+			const view = getView(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
+			);
+			view.initialize(1);
+			view.root = undefined;
+			const fork = view.checkout.fork();
+			validateViewConsistency(view.checkout, fork);
+			const removed = fork.getRemovedRoots();
+			assert(removed.length > 0);
+			removed[0][2] = { ...removed[0][2], value: 2 };
+			fork.getRemovedRoots = () => removed;
+			assert.throws(
+				() => validateViewConsistency(view.checkout, fork),
+				/Inconsistent removed trees json representation/,
+			);
+			fork.dispose();
+			view.dispose();
 		});
 	});
 });

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { benchmarkIt, benchmarkMemoryUse, memoryUseOfValue } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
@@ -34,7 +34,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
-	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
+	const json = typeof content === "string" ? content : Uint8ArrayToString(content, "utf8");
 	return JSON.parse(json);
 }
 

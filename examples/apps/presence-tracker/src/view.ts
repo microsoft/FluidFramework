@@ -4,6 +4,11 @@
  */
 
 import { Picker } from "emoji-picker-element";
+// Emoji data served from this app's own origin (webpack emits it as a local asset; see the
+// `emoji-data-url` alias in webpack.config.cjs). emoji-picker-element otherwise fetches its data
+// from a public CDN at runtime, which fails in environments without public internet access.
+// eslint-disable-next-line import-x/no-unresolved -- resolved by a webpack alias
+import emojiDataUrl from "emoji-data-url";
 
 import type { FocusTracker, IFocusState } from "./FocusTracker.js";
 import type { MouseTracker } from "./MouseTracker.js";
@@ -109,7 +114,7 @@ export function renderControlPanel(
 	reactionLabelDiv.append(selectedSpan);
 
 	// Create the emoji-picker element and add it to the panel
-	const picker = new Picker();
+	const picker = new Picker({ dataSource: emojiDataUrl });
 	reactionsConfigDiv.append(picker);
 	controlPanel.append(reactionsConfigDiv);
 

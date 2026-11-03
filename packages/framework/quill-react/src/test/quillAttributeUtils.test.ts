@@ -6,14 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { independentView, FormattedTextAsTreeDefault } from "@fluidframework/tree/internal";
+import { independentView } from "@fluidframework/tree/alpha";
 import globalJsdom from "global-jsdom";
-import DeltaPackage from "quill-delta";
 
+import { FormattedTextDefault } from "../formatted/index.js";
 import {
 	clipboardFormatMatcher,
 	defaultFont,
 	defaultSize,
+	Delta,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	parseCssFontFamily,
@@ -25,8 +26,6 @@ import {
 	sizeToQuillAttribute,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillAttributeUtils.js";
-
-const Delta = DeltaPackage.default;
 
 /**
  * Build a fresh, hydrated CharacterFormat with the given properties.
@@ -41,13 +40,13 @@ function makeFormat(
 		size: number;
 		font: string;
 	}> = {},
-): FormattedTextAsTreeDefault.CharacterFormat {
+): FormattedTextDefault.CharacterFormat {
 	const tree = independentView(
-		new TreeViewConfiguration({ schema: FormattedTextAsTreeDefault.Tree }),
+		new TreeViewConfiguration({ schema: FormattedTextDefault.Tree }),
 		{},
 	);
-	tree.initialize(FormattedTextAsTreeDefault.Tree.fromString(""));
-	return new FormattedTextAsTreeDefault.CharacterFormat({
+	tree.initialize(FormattedTextDefault.Tree.fromString(""));
+	return new FormattedTextDefault.CharacterFormat({
 		bold: props.bold ?? false,
 		italic: props.italic ?? false,
 		underline: props.underline ?? false,
@@ -70,8 +69,7 @@ function makeElement(style: { fontSize?: string; fontFamily?: string } = {}): HT
 }
 
 describe("quillAttributeUtils", () => {
-	// JSDOM is set up once in mochaHooks.ts but torn down before tests run; reinitialize
-	// here so `document` is available for the parseCss*/clipboardFormatMatcher cases.
+	// Set up JSDOM so `document` is available for the parseCss*/clipboardFormatMatcher cases.
 	let cleanup: () => void;
 	before(() => {
 		cleanup = globalJsdom();
@@ -126,30 +124,24 @@ describe("quillAttributeUtils", () => {
 		});
 
 		it("maps Quill header levels to LineTag values", () => {
-			assert.deepEqual(parseLineTag({ header: 1 }), FormattedTextAsTreeDefault.LineTag("h1"));
-			assert.deepEqual(parseLineTag({ header: 5 }), FormattedTextAsTreeDefault.LineTag("h5"));
+			assert.deepEqual(parseLineTag({ header: 1 }), FormattedTextDefault.LineTag("h1"));
+			assert.deepEqual(parseLineTag({ header: 5 }), FormattedTextDefault.LineTag("h5"));
 		});
 
 		it("falls back to h5 for unsupported header levels", () => {
-			assert.deepEqual(parseLineTag({ header: 99 }), FormattedTextAsTreeDefault.LineTag("h5"));
+			assert.deepEqual(parseLineTag({ header: 99 }), FormattedTextDefault.LineTag("h5"));
 		});
 
 		it("maps Quill list types to LineTag values", () => {
-			assert.deepEqual(
-				parseLineTag({ list: "bullet" }),
-				FormattedTextAsTreeDefault.LineTag("li"),
-			);
-			assert.deepEqual(
-				parseLineTag({ list: "ordered" }),
-				FormattedTextAsTreeDefault.LineTag("ol"),
-			);
+			assert.deepEqual(parseLineTag({ list: "bullet" }), FormattedTextDefault.LineTag("li"));
+			assert.deepEqual(parseLineTag({ list: "ordered" }), FormattedTextDefault.LineTag("ol"));
 			assert.deepEqual(
 				parseLineTag({ list: "checked" }),
-				FormattedTextAsTreeDefault.LineTag("checked"),
+				FormattedTextDefault.LineTag("checked"),
 			);
 			assert.deepEqual(
 				parseLineTag({ list: "unchecked" }),
-				FormattedTextAsTreeDefault.LineTag("unchecked"),
+				FormattedTextDefault.LineTag("unchecked"),
 			);
 		});
 
@@ -160,11 +152,11 @@ describe("quillAttributeUtils", () => {
 		it("maps blockquote and code-block", () => {
 			assert.deepEqual(
 				parseLineTag({ blockquote: true }),
-				FormattedTextAsTreeDefault.LineTag("blockquote"),
+				FormattedTextDefault.LineTag("blockquote"),
 			);
 			assert.deepEqual(
 				parseLineTag({ "code-block": "plain" }),
-				FormattedTextAsTreeDefault.LineTag("codeBlock"),
+				FormattedTextDefault.LineTag("codeBlock"),
 			);
 		});
 

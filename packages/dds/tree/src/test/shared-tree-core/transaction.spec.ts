@@ -15,6 +15,7 @@ import {
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
@@ -29,6 +30,15 @@ import {
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
+
+/**
+ * The internal {@link ChangeProcessor} context type for the default change family:
+ * a function that receives the change and its owning change family and returns a change.
+ */
+type DefaultChangeProcessor = ChangeProcessor<
+	DefaultChangeset,
+	DefaultChangeProcessingContext
+>;
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -52,6 +62,43 @@ describe("TransactionStacks", () => {
 		transaction.start();
 		transaction.abort();
 		assert.equal(aborting, true);
+	});
+
+	it("emit an event after abort callbacks complete, including for nested transactions", () => {
+		const calls: string[] = [];
+		const transaction = new TransactionStack(() => ({
+			onPop: (result) => {
+				assert.equal(result, TransactionResult.Abort);
+				calls.push(`rollback ${transaction.size}`);
+			},
+		}));
+		transaction.events.on("aborting", () => {
+			calls.push(`aborting ${transaction.size}`);
+		});
+		transaction.events.on("aborted", () => {
+			calls.push(`aborted ${transaction.size}`);
+		});
+		transaction.start();
+		transaction.start();
+		transaction.abort();
+		transaction.abort();
+		assert.deepEqual(calls, [
+			"aborting 2",
+			"rollback 1",
+			"aborted 1",
+			"aborting 1",
+			"rollback 0",
+			"aborted 0",
+		]);
+	});
+
+	it("does not emit aborted when committing a transaction", () => {
+		const transaction = new TransactionStack();
+		transaction.events.on("aborted", () =>
+			assert.fail("Committed transaction must not abort"),
+		);
+		transaction.start();
+		transaction.commit();
 	});
 
 	it("emit an event just before committing a transaction", () => {
@@ -370,17 +417,21 @@ describe("SquashingTransactionStacks", () => {
 		 * records the changes it receives (and returns them unchanged).
 		 */
 		function createWithSpyProcessor(applicability: ChangeProcessorApplicability): {
-			transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
+			transaction: SquashingTransactionStack<
+				DefaultEditBuilder,
+				DefaultChangeset,
+				DefaultChangeProcessingContext
+			>;
 			branch: DefaultBranch;
 			/** A post-processor to pass via the transaction options. */
-			postProcessor: ChangeProcessor<DefaultChangeset>;
+			postProcessor: DefaultChangeProcessor;
 			/** The changes passed to the post-processor, in invocation order. */
 			received: DefaultChangeset[];
 		} {
 			const branch = createBranch();
 			const received: DefaultChangeset[] = [];
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
-			const postProcessor: ChangeProcessor<DefaultChangeset> = {
+			const postProcessor: DefaultChangeProcessor = {
 				applicability,
 				processChange: (change) => {
 					received.push(change);
@@ -398,7 +449,7 @@ describe("SquashingTransactionStacks", () => {
 			applicability: ChangeProcessorApplicability,
 			received: { processor: string; change: DefaultChangeset }[],
 			label: string,
-		): ChangeProcessor<DefaultChangeset> {
+		): DefaultChangeProcessor {
 			return {
 				applicability,
 				processChange: (change) => {
@@ -731,7 +782,7 @@ describe("SquashingTransactionStacks", () => {
 			const branch = createBranch();
 			// A post-processor that replaces the squashed change with an empty change.
 			const replacement = defaultChangeFamily.rebaser.compose([]);
-			const postProcessor: ChangeProcessor<DefaultChangeset> = {
+			const postProcessor: DefaultChangeProcessor = {
 				applicability: ChangeProcessorApplicability.IfOutermost,
 				processChange: () => replacement,
 			};
@@ -749,7 +800,11 @@ describe("SquashingTransactionStacks", () => {
 		});
 	});
 
-	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+	type DefaultBranch = SharedTreeBranch<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeProcessingContext
+	>;
 	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: FluidClientVersion.v2_0,
@@ -760,9 +815,12 @@ describe("SquashingTransactionStacks", () => {
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: defaultChangeFamily.rebaser.compose([]),
 			revision: initialRevision,
+			customMetadata: undefined,
 		};
 
-		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag, {
+			trimmedCommitCount: 0,
+		});
 	}
 
 	function editBranch(branch: DefaultBranch, value: string): RevisionTag {

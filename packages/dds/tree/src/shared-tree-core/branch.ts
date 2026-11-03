@@ -17,6 +17,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
 	type GraphCommit,
 	type RevisionTag,
 	type TaggedChange,
@@ -56,13 +57,20 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** The commits removed from the head of the branch by this operation */
+			removedCommits: readonly GraphCommit<TChange>[];
+			/** The commits appended to the head of the branch by this operation */
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange>
-	extends BranchTrimmingEvents {
+export interface SharedTreeBranchEvents<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeProcessingContext,
+> extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
@@ -79,7 +87,18 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
-	fork(fork: SharedTreeBranch<TEditor, TChange>): void;
+	fork(fork: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>): void;
+
+	/**
+	 * Fired when a commit is ordered by the sequencing service.
+	 * @param commit - The commit that was sequenced
+	 *
+	 * @remarks
+	 * Once a commit is sequenced, the following guarantees hold:
+	 * 1. The changes carried by the commit have been persisted and other peers are able to see them.
+	 * 2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+	 */
+	commitSequenced(commit: GraphCommit<TChange>): void;
 
 	/**
 	 * Fired after this branch is disposed
@@ -105,34 +124,95 @@ export interface BranchTrimmingEvents {
 }
 
 /**
- * A branch of changes that can be applied to a SharedTree.
+ * Count bookkeeping for branches whose ancestry is trimmed together.
+ * @remarks
+ * Branches share a reference to the same trim state, allowing implicit updating to all of their commit counts without O(branch count) updates.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
-	readonly #events = createEmitter<SharedTreeBranchEvents<TEditor, TChange>>();
-	public readonly events: Listenable<SharedTreeBranchEvents<TEditor, TChange>> = this.#events;
+export interface BranchTrimState {
+	/**
+	 * The cumulative number of commits trimmed from the shared ancestry.
+	 * @remarks The owner must update this before emitting any notifications.
+	 */
+	readonly trimmedCommitCount: number;
+}
+
+/**
+ * A branch of changes that can be applied to a SharedTree.
+ * @remarks
+ * A `SharedTreeBranch` tracks a linear history of commits terminating at a {@link SharedTreeBranch.getHead | head} commit,
+ * and provides an {@link SharedTreeBranch.editor | editor} for {@link SharedTreeBranch.apply | applying} new changes onto that history.
+ *
+ * A branch may be {@link SharedTreeBranch.fork | forked} into a new, independent branch.
+ * Changes applied to one branch do not affect the other until the two are reconciled:
+ * {@link SharedTreeBranch.merge | merging} incorporates another branch's divergent commits into this branch,
+ * while {@link SharedTreeBranch.rebaseOnto | rebasing} replays this branch's divergent commits onto another branch's head.
+ *
+ * See {@link SharedTreeBranchEvents} for events emitted by SharedTreeBranch instances.
+ */
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeProcessingContext,
+> {
+	readonly #events =
+		createEmitter<SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>>();
+	public readonly events: Listenable<
+		SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>
+	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
-	private readonly unsubscribeBranchTrimmer?: () => void;
+	/**
+	 * The cached commit count before subtracting {@link BranchTrimState.trimmedCommitCount}.
+	 * @remarks `undefined` until the count is first requested or inherited from a fork's parent.
+	 */
+	private logicalCommitCount?: number;
+	/**
+	 * The event source that notifies this branch when its ancestry is trimmed.
+	 * See {@link BranchTrimmingEvents} for details on trimming.
+	 * Set through {@link SharedTreeBranch.trimmer} and cleared when this branch is disposed.
+	 */
+	private branchTrimmer?: Listenable<BranchTrimmingEvents>;
+	private unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
-	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
-	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
+	 * @param trimState - shared count of commits trimmed from this branch's ancestry.
+	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
+		private readonly trimState: BranchTrimState,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
 	) {
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
-			this.apply(change),
+			this.apply(change, CommitKind.Default, undefined),
 		);
+	}
+
+	/**
+	 * Sets the source of ancestry trimming notifications for this branch.
+	 *
+	 * @remarks
+	 * Replacing or clearing the trimmer removes the previous subscription.
+	 * Forks of this branch will be initialized with independent subscriptions to this branch's trimmer.
+	 * Disposing a branch clears the trimmer and setting the trimmer to any value other than `undefined` thereafter will throw an error.
+	 * Clearing only stops forwarding notifications; it does not prevent history trimming.
+	 *
+	 * @param branchTrimmer - The event source for ancestry trimming notifications, or `undefined` to clear it.
+	 */
+	public set trimmer(branchTrimmer: Listenable<BranchTrimmingEvents> | undefined) {
+		if (branchTrimmer !== undefined) {
+			this.assertNotDisposed();
+		}
+
+		this.unsubscribeBranchTrimmer?.();
+		this.branchTrimmer = branchTrimmer;
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
 		});
@@ -140,11 +220,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/**
 	 * Sets the head of this branch.
+	 * @param head - the new head.
+	 * @param commitCountDelta - the difference in commit count between the new and old heads.
 	 * @remarks This is a "manual override" of sorts, for when the branch needs to be set to a certain state without going through the usual flow of edits.
 	 * This might be necessary as a performance optimization, or to prevent parts of the system updating incorrectly (this method emits no change events!).
 	 */
-	public setHead(head: GraphCommit<TChange>): void {
+	public setHead(head: GraphCommit<TChange>, commitCountDelta: number): void {
 		this.assertNotDisposed();
+		if (head === this.head) {
+			return;
+		}
+		if (this.logicalCommitCount !== undefined) {
+			this.logicalCommitCount += commitCountDelta;
+		}
 		this.head = head;
 	}
 
@@ -152,9 +240,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * Apply a change to this branch.
 	 * @param change - the change to apply
 	 * @param kind - the kind of change to apply
+	 * @param customMetadata - {@link GraphCommit.customMetadata | metadata} to attach to the new commit.
+	 * Callers reconstructing an existing commit, rather than minting one, must pass that commit's metadata.
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
-	public apply(change: TaggedChange<TChange>, kind: CommitKind = CommitKind.Default): void {
+	public apply(
+		change: TaggedChange<TChange>,
+		kind: CommitKind,
+		customMetadata: CustomMetadataTree | undefined,
+	): void {
 		this.assertNotDisposed();
 
 		const revisionTag = change.revision;
@@ -163,6 +257,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,
 			change: change.change,
+			customMetadata,
 		});
 
 		const changeEvent = {
@@ -173,8 +268,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.head = newHead;
+		this.setHead(newHead, 1);
 		this.#events.emit("afterChange", changeEvent);
+	}
+
+	/**
+	 * Notifies the branch that a commit has been sequenced by the sequencing service.
+	 * @param commit - The commit that was sequenced
+	 */
+	public commitWasSequenced(commit: GraphCommit<TChange>): void {
+		this.#events.emit("commitSequenced", commit);
 	}
 
 	/**
@@ -182,6 +285,30 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
+	}
+
+	/**
+	 * Gets the number of commits in this branch.
+	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
+	 * @remarks
+	 * The first call has linear complexity in the number of commits in the branch and subsequent calls are O(1)
+	 * Cannot be called after this branch is disposed.
+	 */
+	public getCommitCount(): number {
+		this.assertNotDisposed();
+		const trimmedCommitCount = this.trimState.trimmedCommitCount;
+		if (this.logicalCommitCount === undefined) {
+			let count = -1; // Exclude the sentinel commit at the root.
+			for (
+				let commit: GraphCommit<TChange> | undefined = this.head;
+				commit !== undefined;
+				commit = commit.parent
+			) {
+				count++;
+			}
+			this.logicalCommitCount = count + trimmedCommitCount;
+		}
+		return this.logicalCommitCount - trimmedCommitCount;
 	}
 
 	/**
@@ -194,14 +321,18 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public fork(
 		commit: GraphCommit<TChange> = this.head,
 		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
-	): SharedTreeBranch<TEditor, TChange> {
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
 			this.changeFamily,
 			mintRevisionTag,
-			this.branchTrimmer,
+			this.trimState,
 		);
+		if (commit === this.head) {
+			fork.logicalCommitCount = this.logicalCommitCount;
+		}
+		fork.trimmer = this.branchTrimmer;
 		this.#events.emit("fork", fork);
 		return fork;
 	}
@@ -215,7 +346,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
-		branch: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = branch.getHead(),
 	): void {
 		this.assertNotDisposed();
@@ -243,7 +374,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.head = newSourceHead;
+		this.setHead(newSourceHead, newCommits.length - deletedSourceCommits.length);
 		this.#events.emit("afterChange", changeEvent);
 	}
 
@@ -280,7 +411,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.head = commit;
+		this.setHead(commit, -removedCommits.length);
 		this.#events.emit("afterChange", changeEvent);
 	}
 
@@ -291,7 +422,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
 	public merge(
-		branch: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
@@ -321,15 +452,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		);
 
 		this.#events.emit("beforeChange", changeEvent);
-		this.head = rebaseResult.newSourceHead;
+		this.setHead(rebaseResult.newSourceHead, sourceCommits.length);
 		this.#events.emit("afterChange", changeEvent);
 		return { sourceCommits };
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
-		branch: SharedTreeBranch<TEditor, TChange>,
-		onto: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
+		onto: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = onto.getHead(),
 	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;
@@ -338,13 +469,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		}
 
 		const { duration, output } = measure(() =>
-			rebaseBranch(
-				this.mintRevisionTag,
-				this.changeFamily.rebaser,
-				head,
-				upTo,
-				onto.getHead(),
-			),
+			rebaseBranch(this.mintRevisionTag, this.changeFamily, head, upTo, onto.getHead()),
 		);
 
 		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });
@@ -357,10 +482,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	}
 
 	/**
-	 * Dispose this branch, freezing its state.
+	 * Dispose this branch, preventing further mutations and commit count reads.
 	 *
 	 * @remarks
 	 * Attempts to further mutate the branch will error.
+	 * Shared ancestry may still be trimmed after disposal.
 	 * Any transactions in progress will be aborted.
 	 * Calling dispose more than once has no effect.
 	 */
@@ -369,7 +495,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			return;
 		}
 
-		this.unsubscribeBranchTrimmer?.();
+		this.trimmer = undefined;
 
 		this.disposed = true;
 		this.#events.emit("dispose");

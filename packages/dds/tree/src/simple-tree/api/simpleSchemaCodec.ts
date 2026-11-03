@@ -13,7 +13,7 @@ import {
 	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
-import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type {
@@ -35,6 +35,8 @@ import * as Format from "../simpleSchemaFormatV1.js";
  *
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
+ * Definition order is independent of the input map's iteration order.
+ * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the schema.
  *
@@ -51,7 +53,9 @@ export function encodeSchemaCompatibilitySnapshot(
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
-	for (const [identifier, schema] of simpleSchema.definitions) {
+	for (const [identifier, schema] of [...simpleSchema.definitions].sort(([a], [b]) =>
+		compareStrings(a, b),
+	)) {
 		const encodedDefinition = encodeNodeSchema(schema);
 		encodedDefinitions[identifier] = encodedDefinition;
 	}

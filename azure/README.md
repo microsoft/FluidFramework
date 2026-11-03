@@ -31,7 +31,7 @@ See the [package README](./packages/external-controller/README.md) for more info
 ### Adding/updating dependencies
 
 For information on adding and removing dependencies, see [Managing
-dependencies](https://github.com/microsoft/FluidFramework/wiki/Managing-dependencies) in our wiki.
+dependencies](../docs/content/Contributing/Managing-Dependencies.md) in our documentation.
 
 ### Dependency overrides
 
@@ -53,7 +53,7 @@ install it as a dependency when using azure-client, but we don't install it alon
 # Help
 
 Not finding what you're looking for in this README?
-Check out our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Check out our [developer documentation](../docs/content/Home.md) or [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](../docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 Thank you!

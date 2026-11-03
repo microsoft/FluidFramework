@@ -10,6 +10,7 @@ import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
+import { isObjectRecord } from "./messageTypes.js";
 import type {
 	ConnectCommand,
 	MessageFromChild,
@@ -19,6 +20,7 @@ import type {
 	LatestMapValueGetResponseEvent,
 	MessageToChild,
 	EventEntry,
+	ErrorEvent,
 } from "./messageTypes.js";
 
 /**
@@ -41,6 +43,44 @@ export const testConsole = {
 	warn: console.warn,
 	error: console.error,
 };
+
+interface ErrorWithNetworkTelemetry {
+	errorType?: unknown;
+	statusCode?: unknown;
+}
+
+/**
+ * Detects a Bad Gateway (HTTP 502) network error, i.e. a gateway could not reach the service
+ * behind it.
+ *
+ * @remarks
+ * This check is service-agnostic: it says nothing about *which* service failed. Callers that
+ * only want to act on a specific service (for example, skipping tests during an AFR
+ * availability dip — see AB#59980) must additionally verify that the run targets that service.
+ *
+ * Matching is deliberately limited to the structured `genericNetworkError` + HTTP 502 pair
+ * rather than the wording of a gateway's error page. A 502 is emitted when the gateway cannot
+ * reach the origin, so it cannot be produced by a client-side regression — which is the failure
+ * callers must avoid masking. Matching on error page text would therefore add no protection
+ * against that risk, while making detection silently dependent on the contents of a
+ * service-owned HTML page that this repo does not control.
+ */
+export function isBadGatewayError(error: unknown): boolean {
+	if (!isObjectRecord(error)) {
+		return false;
+	}
+
+	const { errorType, statusCode } = error as ErrorWithNetworkTelemetry;
+	return errorType === "genericNetworkError" && statusCode === 502;
+}
+
+function createChildProcessError(childId: number | string, msg: ErrorEvent): Error {
+	const error = new Error(`Child ${childId} process error: ${msg.error}`) as Error &
+		ErrorWithNetworkTelemetry;
+	error.errorType = msg.errorType;
+	error.statusCode = msg.statusCode;
+	return error;
+}
 
 interface ChildProcess extends AnyChildProcess {
 	send(message: MessageToChild): boolean;
@@ -195,7 +235,7 @@ function listenForConnectedResponse({
 			onConnected(msg);
 		} else if (msg.event === "error") {
 			child.off("message", listener);
-			reject(new Error(`Child ${childId} process error: ${msg.error}`));
+			reject(createChildProcessError(childId, msg));
 		} else if (msg.event !== "ack") {
 			child.off("message", listener);
 			// This is not strictly required, but is current expectation.

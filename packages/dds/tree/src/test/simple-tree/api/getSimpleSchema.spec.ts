@@ -32,7 +32,7 @@ import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { HasUnknownOptionalFields } from "../../testTrees.js";
+import { AllowsUnknownOptionalFields } from "../../testTrees.js";
 
 const simpleString: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.String,
@@ -82,6 +82,30 @@ function copySimpleTreeSchemaWithoutMetadata(simpleTree: SimpleTreeSchema): Simp
 
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
+
+	it("encodes snapshot definitions independently of insertion order and locale", () => {
+		const sf = new SchemaFactoryAlpha("snapshotOrdering");
+		class Lower extends sf.object("a", {}) {}
+		class Upper extends sf.object("Z", {}) {}
+		class Accented extends sf.object("\u00E4", {}) {}
+		const schema = createTreeSchema([Accented, Lower, Upper]);
+		const expectedOrder = [Upper.identifier, Lower.identifier, Accented.identifier];
+		const forward = encodeSchemaCompatibilitySnapshot(schema);
+		const reverse = encodeSchemaCompatibilitySnapshot({
+			root: schema.root,
+			definitions: new Map([...schema.definitions].reverse()),
+		});
+
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(forward, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(reverse, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.equal(JSON.stringify(forward), JSON.stringify(reverse));
+	});
 
 	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
@@ -372,7 +396,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map<string, SimpleObjectFieldSchema>([
 								[
 									"foo",
@@ -448,7 +472,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"id",
@@ -512,7 +536,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",
@@ -577,7 +601,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",
@@ -660,7 +684,7 @@ describe("getSimpleSchema", () => {
 	});
 
 	describe("With allowUnknownOptionalFields in object schema", () => {
-		const schema = HasUnknownOptionalFields;
+		const schema = AllowsUnknownOptionalFields;
 
 		it("Should preserve allowUnknownOptionalFields when converting to SimpleTreeSchema", () => {
 			const expected: SimpleTreeSchema = {

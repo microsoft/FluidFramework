@@ -10,11 +10,14 @@ import { strict as assert } from "node:assert";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- fake-indexeddb has no clean API surface
+import FDBFactoryModule from "fake-indexeddb/build/FDBFactory.js";
 import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";
 import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
 
+const FDBFactory = FDBFactoryModule.default;
 const mockPartitionKey = "FAKEPARTITIONKEY";
 
 function getFluidCache(config?: {
@@ -78,8 +81,6 @@ describe("FluidCacheTimer tests", () => {
 
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
-		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
-		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 		(window.indexedDB as unknown) = new FDBFactory();
 	});
 

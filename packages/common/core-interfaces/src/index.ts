@@ -9,6 +9,8 @@ export type { AllOrNone } from "./allOrNone.js";
 
 export type { IDisposable } from "./disposable.js";
 
+export type { FluidReadonlyArray } from "./fluidArray.js";
+
 export type {
 	FluidIterable,
 	FluidIterableIterator,

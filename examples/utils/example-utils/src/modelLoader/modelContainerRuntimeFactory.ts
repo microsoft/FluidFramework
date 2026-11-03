@@ -16,6 +16,8 @@ import {
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
+import { exampleOldestSupportedClient } from "../exampleCompatibility.js";
+
 /**
  * @internal
  */
@@ -57,6 +59,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 			}),
 			runtimeOptions: this.runtimeOptions,
 			existing,
+			oldestSupportedClient: exampleOldestSupportedClient,
 		});
 
 		if (!existing) {

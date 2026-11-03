@@ -193,7 +193,7 @@ function generate(name: string, input: any[], output: any[]): void {
 					return value;
 				})
 				.catch((reason) => {
-					assert(false, "Unexpected promise rejection");
+					assert.fail("Unexpected promise rejection");
 				});
 
 			const addP1 = collection1.add(input[0]);

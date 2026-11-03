@@ -403,7 +403,7 @@ export interface StateMap<K extends string, V> {
     forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
     get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     has(key: K): boolean;
-    keys(): IterableIterator<K>;
+    keys(): FluidIterableIterator<K>;
     set(key: K, value: JsonSerializable<V>): this;
     readonly size: number;
 }

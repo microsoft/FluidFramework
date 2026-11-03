@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	CommitKind,
 	type RevertibleAlpha,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 } from "@fluidframework/tree/internal";
 
 import { areSetsDisjoint, findLastIndex } from "./utilities.js";
@@ -177,7 +177,7 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
  * Tracks tree branches currently viewed by an {@link UndoRedoManager} instance.
  * Used to prevent multiple managers from attaching to the same branch, which is not currently supported.
  */
-const attachedBranches = new WeakSet<TreeBranchAlpha>();
+const attachedBranches = new WeakSet<UntypedTreeViewAlpha>();
 
 /**
  * Concrete implementation of {@link UndoRedo} for a SharedTree branch.
@@ -202,7 +202,7 @@ class UndoRedoManager implements UndoRedo {
 	 * The branch this manager is attached to.
 	 * @remarks Retained after construction so it can be removed from {@link attachedBranches} on dispose.
 	 */
-	readonly #branch: TreeBranchAlpha;
+	readonly #branch: UntypedTreeViewAlpha;
 
 	/** Whether or not this instance has been disposed. */
 	#disposed = false;
@@ -211,7 +211,7 @@ class UndoRedoManager implements UndoRedo {
 	 * @param branch - The tree branch whose commits this manager will track.
 	 * @throws If a manager is already attached to `branch`.
 	 */
-	public constructor(branch: TreeBranchAlpha) {
+	public constructor(branch: UntypedTreeViewAlpha) {
 		if (attachedBranches.has(branch)) {
 			throw new UsageError("An UndoRedoManager is already attached to this branch.");
 		}
@@ -330,6 +330,6 @@ class UndoRedoManager implements UndoRedo {
  * @throws If a manager is already attached to `branch`.
  * @internal
  */
-export function createUndoRedo(branch: TreeBranchAlpha): UndoRedo {
+export function createUndoRedo(branch: UntypedTreeViewAlpha): UndoRedo {
 	return new UndoRedoManager(branch);
 }

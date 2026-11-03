@@ -919,24 +919,15 @@ describe("Map", () => {
 				this.map2 = createConnectedMap("map2", this.containerRuntimeFactory);
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
-			 */
 			public get sharedObject(): SharedMap {
 				// Return the remote SharedMap because we want to verify its summary data.
 				return this.map2;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
-			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
-			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const newSubMapId = `subMap-${++this.subMapCount}`;
 				const subMap = createLocalMap(newSubMapId);
@@ -945,9 +936,6 @@ describe("Map", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
-			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
 				const subMapId = `subMap-${this.subMapCount}`;
@@ -962,9 +950,6 @@ describe("Map", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
-			 */
 			public async addNestedHandles(): Promise<void> {
 				const subMapId1 = `subMap-${++this.subMapCount}`;
 				const subMapId2 = `subMap-${++this.subMapCount}`;

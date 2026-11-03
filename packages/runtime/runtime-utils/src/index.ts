@@ -16,6 +16,7 @@ export {
 	compareFluidHandles,
 	encodeHandleForSerialization,
 	FluidHandleBase,
+	getDataStorePackagePath,
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
@@ -82,3 +83,21 @@ export type {
 	MinimumMinorSemanticVersion,
 	SemanticVersion,
 } from "./compatibilityBase.js";
+export type { Audience } from "./serviceClientBase.js";
+export {
+	DataStoreKindImplementation,
+	ServiceContainerBase,
+	getContainerAudience,
+} from "./serviceClientBase.js";
+export {
+	convertRegistry,
+	makeCodeLoader,
+	normalizeRegistry,
+	rootDataStoreId,
+	ServiceClientImplementation,
+} from "./serviceClientUtils.js";
+export type {
+	ContainerRuntimeLoader,
+	ContainerRuntimeLoaderParams,
+	ServiceContainerStatics,
+} from "./serviceClientUtils.js";

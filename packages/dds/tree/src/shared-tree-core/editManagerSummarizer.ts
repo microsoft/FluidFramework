@@ -10,16 +10,20 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
-import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
-import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import type {
+	EditManagerDecodingContext,
+	EditManagerEncodingContext,
+} from "./editManagerCodecsCommons.js";
 import type {
 	Summarizable,
 	SummaryElementParser,
@@ -56,7 +60,7 @@ const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToEditManagerSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): EditManagerSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return EditManagerSummaryFormatVersion.v2;
@@ -65,7 +69,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset>
+export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
@@ -74,16 +78,17 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
-			ChangeFamily<ChangeFamilyEditor, TChangeset>
+			TChangeProcessingContext
 		>,
 		private readonly codec: IJsonCodec<
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			EditManagerEncodingContext
+			EditManagerEncodingContext<TChangeset>,
+			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: OldestSupportedClientVersion,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,
@@ -102,14 +107,15 @@ export class EditManagerSummarizer<TChangeset>
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const context: EditManagerEncodingContext = {
+		const context: EditManagerEncodingContext<TChangeset> = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
+			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
-			healing: this.healing,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);

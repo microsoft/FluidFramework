@@ -18,6 +18,7 @@ import type {
 } from "../../../feature-libraries/index.js";
 import {
 	allowsMultiplicitySuperset,
+	DefaultAtomIdAliasAllocator,
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -30,7 +31,7 @@ import {
 	requiredFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/requiredField.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, fakeIdAllocator } from "../../../util/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
@@ -245,7 +246,7 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				taggedChange.change,
 				true,
-				idAllocatorFromMaxId(),
+				new DefaultAtomIdAliasAllocator(),
 				mintRevisionTag(),
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),

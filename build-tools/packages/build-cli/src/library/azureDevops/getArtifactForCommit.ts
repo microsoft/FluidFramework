@@ -46,12 +46,12 @@ function buildMatches(b: Build, match: BuildMatch): boolean {
 }
 
 /**
- * Failure variants shared by {@link FindBuildIdResult} and {@link GetArtifactForCommitResult}.
+ * Failure variants shared by {@link FindBuildResult} and {@link GetArtifactForCommitResult}.
  *
  * - `no-build`: no candidate builds matched the SHA — too stale, or never queued.
- * - `in-progress`: at least one candidate is actively running (NotStarted / InProgress / Postponed) and none have succeeded yet. Retrying later may help.
- * - `all-failed`: every candidate completed but none succeeded.
- * - `no-id`: at least one candidate Succeeded but is missing an `id` — an ADO state anomaly that shouldn't happen in practice.
+ * - `in-progress`: at least one candidate is actively running (NotStarted / InProgress / Postponed) and none are usable yet. Retrying later may help.
+ * - `all-failed`: every candidate completed but none succeeded or partially succeeded.
+ * - `no-id`: at least one candidate succeeded or partially succeeded but is missing an `id` — an ADO state anomaly that shouldn't happen in practice.
  */
 export type ArtifactLookupFailure =
 	| { kind: "no-build" }
@@ -60,32 +60,39 @@ export type ArtifactLookupFailure =
 	| { kind: "no-id" };
 
 /**
- * Outcome of looking up a build for a {@link BuildMatch}. `completed` carries
- * the usable build's id; the failure variants are {@link ArtifactLookupFailure}.
+ * Outcome of looking up a build for a {@link BuildMatch}. `completed` carries the id of the usable
+ * build and the commit it checked out; the failure variants are {@link ArtifactLookupFailure}.
  */
-export type FindBuildIdResult = { kind: "completed"; buildId: number } | ArtifactLookupFailure;
+export type FindBuildResult =
+	| { kind: "completed"; buildId: number; sourceVersion: string | undefined }
+	| ArtifactLookupFailure;
 
 /**
  * Find a usable build matching `match` — one with an id, status Completed,
- * and result Succeeded. Scans all matches (a SHA can map to multiple builds
- * via re-runs/retries), not just the first. Prioritizes "still running" over
- * "all failed" in the failure cases since retrying later may help.
+ * and result Succeeded or PartiallySucceeded. Scans all matches (a SHA can
+ * map to multiple builds via re-runs/retries), not just the first. Fully
+ * successful builds are preferred over partially successful builds, whose
+ * required artifact is still validated by the download and parsing paths.
+ * Prioritizes "still running" over "all failed" in the failure cases since
+ * retrying later may help.
  */
-function findBuildId(builds: Build[], match: BuildMatch): FindBuildIdResult {
+export function findBuild(builds: Build[], match: BuildMatch): FindBuildResult {
 	const candidates = builds.filter((b) => buildMatches(b, match));
 
 	if (candidates.length === 0) {
 		return { kind: "no-build" };
 	}
 
-	const usable = candidates.find(
-		(b): b is Build & { id: number } =>
-			b.id !== undefined &&
-			b.status === BuildStatus.Completed &&
-			b.result === BuildResult.Succeeded,
-	);
+	const findCompletedBuild = (result: BuildResult): (Build & { id: number }) | undefined =>
+		candidates.find(
+			(b): b is Build & { id: number } =>
+				b.id !== undefined && b.status === BuildStatus.Completed && b.result === result,
+		);
+	const usable =
+		findCompletedBuild(BuildResult.Succeeded) ??
+		findCompletedBuild(BuildResult.PartiallySucceeded);
 	if (usable !== undefined) {
-		return { kind: "completed", buildId: usable.id };
+		return { kind: "completed", buildId: usable.id, sourceVersion: usable.sourceVersion };
 	}
 
 	// Report the most actionable failure state. Actively-running gets priority
@@ -98,11 +105,13 @@ function findBuildId(builds: Build[], match: BuildMatch): FindBuildIdResult {
 	if (candidates.some(isActivelyRunning)) {
 		return { kind: "in-progress" };
 	}
-	if (candidates.every((b) => b.result !== BuildResult.Succeeded)) {
+	const isAcceptableResult = (b: Build): boolean =>
+		b.result === BuildResult.Succeeded || b.result === BuildResult.PartiallySucceeded;
+	if (candidates.every((b) => !isAcceptableResult(b))) {
 		return { kind: "all-failed" };
 	}
-	// At least one candidate Succeeded but is missing an `id` — an ADO state
-	// anomaly that shouldn't happen, but `id` is typed `number | undefined`.
+	// At least one candidate succeeded or partially succeeded but is missing an
+	// `id` — an ADO state anomaly, but `id` is typed `number | undefined`.
 	return { kind: "no-id" };
 }
 
@@ -126,7 +135,16 @@ export interface GetArtifactForCommitArgs {
  * etc.) still propagate as thrown exceptions.
  */
 export type GetArtifactForCommitResult =
-	| { kind: "completed"; contents: ArtifactContents }
+	| {
+			kind: "completed";
+			contents: ArtifactContents;
+			/**
+			 * The `sourceVersion` of the build the artifact came from — the commit the build
+			 * actually checked out. For PR builds this is the ephemeral test-merge commit
+			 * (`refs/pull/<n>/merge`), *not* the PR HEAD.
+			 */
+			sourceVersion: string | undefined;
+	  }
 	| ArtifactLookupFailure;
 
 /**
@@ -147,13 +165,13 @@ export async function getArtifactForCommit(
 		definitions: [definitionId],
 		maxBuildsPerDefinition: recentBuildsToFetch,
 	});
-	const lookup = findBuildId(builds, match);
+	const lookup = findBuild(builds, match);
 	if (lookup.kind !== "completed") {
 		return lookup;
 	}
 
 	const contents = await downloadArtifact(adoApi, project, lookup.buildId, artifactName);
-	return { kind: "completed", contents };
+	return { kind: "completed", contents, sourceVersion: lookup.sourceVersion };
 }
 
 /**
@@ -169,9 +187,9 @@ export function describeArtifactFailure(
 		case "no-build":
 			return `No build found for ${subject}.`;
 		case "in-progress":
-			return `Found an in-progress build for ${subject}; none have succeeded yet.`;
+			return `Found an in-progress build for ${subject}; none are usable yet.`;
 		case "all-failed":
-			return `All builds for ${subject} have completed but none succeeded.`;
+			return `All builds for ${subject} have completed but none succeeded or partially succeeded.`;
 		case "no-id":
 			return `No build for ${subject} has a usable build id.`;
 		default:

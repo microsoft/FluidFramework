@@ -1,7 +1,7 @@
 # Fuzz Test Cases
 
 This folder contains test files which aren't executed by outermost mocha tests,
-but are instead executed as individual test cases as part of `ddsFuzzHarness.spec.ts`.
+but are instead executed as individual test cases as part of `ddsFuzzHarness.spec.ts` or `clientConfiguration.spec.ts`.
 This enables testing things like:
 
 -   failure behavior of the harness

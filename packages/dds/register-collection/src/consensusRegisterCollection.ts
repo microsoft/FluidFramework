@@ -19,6 +19,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -122,10 +123,10 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
- * @legacy @beta
+ * @internal
  */
 export class ConsensusRegisterCollection<T>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<IConsensusRegisterCollectionEvents>
 	implements IConsensusRegisterCollection<T>
 {
@@ -151,7 +152,7 @@ export class ConsensusRegisterCollection<T>
 	 * Creates a new register or writes a new value.
 	 * Returns a promise that will resolve when the write is acked.
 	 *
-	 * @returns Promise<true> if write was non-concurrent
+	 * @returns A promise resolving to `true` if the write was non-concurrent
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
 		if (this.runtime.disposed) {
@@ -255,9 +256,6 @@ export class ConsensusRegisterCollection<T>
 		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob(snapshotFileName);
 		const header = bufferToString(blob, "utf8");

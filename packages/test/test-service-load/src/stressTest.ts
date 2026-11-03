@@ -6,18 +6,29 @@
 import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import { assertOdspEndpoint, getOdspCredentials } from "@fluid-private/test-drivers";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	TelemetryLoggerExt,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
-import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
 
-const createLoginEnv = (userName: string, password: string): string =>
-	`{"${userName}": "${password}"}`;
+/**
+ * Resolves the list of ODSP usernames the runners can be distributed across.
+ * Returns an empty list for non-ODSP drivers, which don't select a user.
+ */
+function getOdspUsernames(testDriver: ITestDriver): string[] {
+	if (testDriver.type !== "odsp") {
+		return [];
+	}
+	const endpointName = testDriver.endpointName ?? "odsp";
+	assertOdspEndpoint(endpointName);
+	return getOdspCredentials(endpointName, 0).map((credentials) => credentials.username);
+}
 
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -32,7 +43,6 @@ export async function stressTest(
 		seed: number;
 		enableMetrics: boolean;
 		createTestId: boolean;
-		testUsers: TestUsers | undefined;
 		profileName: string;
 		logger: TelemetryLoggerExt;
 		outputDir: string;
@@ -45,7 +55,6 @@ export async function stressTest(
 		seed,
 		enableMetrics,
 		createTestId,
-		testUsers,
 		profileName,
 		logger,
 		outputDir,
@@ -73,10 +82,14 @@ export async function stressTest(
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
 
-	const runnerArgs: string[][] = [];
+	// Assign users to runners round-robin so load is spread evenly across the available test users.
+	const usernames = getOdspUsernames(testDriver);
+
+	const runners: { childArgs: string[]; username: string | undefined }[] = [];
 	for (let i = 0; i < profile.numClients; i++) {
+		const username = usernames.length > 0 ? usernames[i % usernames.length] : undefined;
 		const childArgs: string[] = [
-			"./dist/runner.js",
+			"./lib/runner.js",
 			"--driver",
 			testDriver.type,
 			"--profile",
@@ -105,9 +118,13 @@ export async function stressTest(
 			childArgs.push(`--driverEndpoint`, testDriver.endpointName);
 		}
 
-		runnerArgs.push(childArgs);
+		if (username !== undefined) {
+			childArgs.push("--username", username);
+		}
+
+		runners.push({ childArgs, username });
 	}
-	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
+	console.log(runners.map(({ childArgs }) => childArgs.join(" ")).join("\n"));
 
 	if (enableMetrics) {
 		setInterval(() => {
@@ -118,12 +135,15 @@ export async function stressTest(
 				},
 				(_, results) => {
 					if (results !== undefined) {
-						logger.send({
-							category: "metric",
-							eventName: "Runner Processes",
-							testHarnessEvent: true,
-							value: results.length,
-						});
+						logger.send(
+							{
+								category: "metric",
+								eventName: "Runner Processes",
+								testHarnessEvent: true,
+								value: results.length,
+							},
+							LogLevel.essential,
+						);
 					}
 				},
 			);
@@ -131,22 +151,9 @@ export async function stressTest(
 	}
 
 	await Promise.all(
-		runnerArgs.map(async (childArgs, index) => {
-			const testUser =
-				testUsers !== undefined ? testUsers[index % testUsers.length] : undefined;
-			const username = testUser !== undefined ? testUser.username : undefined;
-			const password = testUser !== undefined ? testUser.password : undefined;
-			const envVar = { ...process.env };
-			if (username !== undefined && password !== undefined) {
-				if (testDriver.endpointName === "odsp") {
-					envVar.login__odsp__test__accounts = createLoginEnv(username, password);
-				} else if (testDriver.endpointName === "odsp-df") {
-					envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
-				}
-			}
+		runners.map(async ({ childArgs, username }, index) => {
 			const runnerProcess = child_process.spawn("node", childArgs, {
 				stdio: "inherit",
-				env: envVar,
 			});
 
 			setupTelemetry(runnerProcess, logger, index, username);
@@ -171,24 +178,30 @@ function setupTelemetry(
 	runId: number,
 	username: string | undefined,
 ): void {
-	logger.send({
-		category: "metric",
-		eventName: "Runner Started",
-		testHarnessEvent: true,
-		value: 1,
-		username,
-		runId,
-	});
-
-	process.once("error", (e) => {
-		logger.send({
+	logger.send(
+		{
 			category: "metric",
-			eventName: "Runner Start Error",
+			eventName: "Runner Started",
 			testHarnessEvent: true,
 			value: 1,
 			username,
 			runId,
-		});
+		},
+		LogLevel.essential,
+	);
+
+	process.once("error", (e) => {
+		logger.send(
+			{
+				category: "metric",
+				eventName: "Runner Start Error",
+				testHarnessEvent: true,
+				value: 1,
+				username,
+				runId,
+			},
+			LogLevel.essential,
+		);
 		logger.sendErrorEvent(
 			{
 				eventName: "Runner Start Error",
@@ -201,15 +214,18 @@ function setupTelemetry(
 	});
 
 	process.once("exit", (code) => {
-		logger.send({
-			category: "metric",
-			eventName: "Runner Exited",
-			testHarnessEvent: true,
-			value: 1,
-			username,
-			runId,
-			exitCode: code ?? 0,
-		});
+		logger.send(
+			{
+				category: "metric",
+				eventName: "Runner Exited",
+				testHarnessEvent: true,
+				value: 1,
+				username,
+				runId,
+				exitCode: code ?? 0,
+			},
+			LogLevel.essential,
+		);
 		console.log(`RunId: ${runId} exited with code ${code}`);
 	});
 }
@@ -225,15 +241,18 @@ function setupDataTelemetry(
 		const data = String(chunk);
 		console.log(data);
 		if (data.replace(/\./g, "").length > 0) {
-			logger.send({
-				eventName: "Runner Console",
-				testHarnessEvent: true,
-				category: "generic",
-				lineNo: stdOutLine,
-				runId,
-				username,
-				data,
-			});
+			logger.send(
+				{
+					eventName: "Runner Console",
+					testHarnessEvent: true,
+					category: "generic",
+					lineNo: stdOutLine,
+					runId,
+					username,
+					data,
+				},
+				LogLevel.essential,
+			);
 			stdOutLine++;
 		}
 	});
@@ -242,16 +261,19 @@ function setupDataTelemetry(
 	process.stderr?.on("data", (chunk) => {
 		const data = String(chunk);
 		console.log(data);
-		logger.send({
-			eventName: "Runner Error",
-			testHarnessEvent: true,
-			category: "error",
-			lineNo: stdErrLine,
-			runId,
-			username,
-			data,
-			error: data.split("\n")[0],
-		});
+		logger.send(
+			{
+				eventName: "Runner Error",
+				testHarnessEvent: true,
+				category: "error",
+				lineNo: stdErrLine,
+				runId,
+				username,
+				data,
+				error: data.split("\n")[0],
+			},
+			LogLevel.essential,
+		);
 		stdErrLine++;
 	});
 }

@@ -4,6 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
 	AttendeeId,
@@ -152,7 +153,7 @@ class ValueMapImpl<T, K extends string> implements StateMap<K, T> {
 	public get size(): number {
 		return this.countDefined;
 	}
-	public keys(): IterableIterator<K> {
+	public keys(): FluidIterableIterator<K> {
 		const keys: K[] = [];
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {

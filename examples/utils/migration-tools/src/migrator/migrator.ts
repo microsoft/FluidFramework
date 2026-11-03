@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 
 import type {

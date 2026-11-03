@@ -16,6 +16,7 @@ import {
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	FlexFieldKind,
@@ -38,7 +39,7 @@ import { makeValueCodec } from "../../codec/index.js";
 export function lastWriteWinsRebaser<TChange>(data: {
 	noop: TChange;
 	invert: (changes: TChange) => TChange;
-	mute: (changes: TChange) => TChange;
+	filterEdits: FieldChangeRebaser<TChange>["filterEdits"];
 }): FieldChangeRebaser<TChange> {
 	const compose = (_change1: TChange, change2: TChange) => change2;
 	const rebase = (change: TChange, _over: TChange) => change;
@@ -80,8 +81,8 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
 		},
-		mute: (_change: ReplaceOp<T>) => {
-			return 0;
+		filterEdits: (change: ReplaceOp<T>, options) => {
+			return options.preserveOtherEdits ? change : 0;
 		},
 	});
 }
@@ -91,7 +92,10 @@ export type ValueChangeset = ReplaceOp<number>;
 export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () => {
-		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+		const inner = makeValueCodec<
+			TUnsafe<ValueChangeset>,
+			FieldChangeEncodingContext | FieldChangeDecodingContext
+		>(
 			// As this is just a test rebaser, it is acceptable to not use a proper schema, and thus not detect invalid data here.
 			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
 		);

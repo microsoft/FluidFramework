@@ -104,7 +104,7 @@ async function createContainerAndRenderInElement(
 		containerId,
 		createDOProviderContainerRuntimeFactory({
 			schema: diceRollerContainerSchema,
-			minVersionForCollaboration: "2.0.0",
+			oldestSupportedClient: "2.0.0",
 		}),
 		createNewFlag,
 	);

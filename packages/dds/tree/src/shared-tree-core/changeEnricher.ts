@@ -13,7 +13,12 @@ export interface ChangeEnricher<TChange> {
 	 * Runs a batch of change enrichments.
 	 * @param context - The branch head after which the `changes` would apply.
 	 * @param changes - The changes to be enriched.
-	 * @returns The enriched changes.
+	 * @param forceValidation - Attempt to validate enriched changes before submission in order to fail (throw) locally rather than risk corrupting persisted data.
+	 * See {@link SharedTreeOptions.validateCommitsOnFirstSubmission} and {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission}.
 	 */
-	enrich(context: GraphCommit<TChange>, changes: readonly TaggedChange<TChange>[]): TChange[];
+	enrich(
+		context: GraphCommit<TChange>,
+		changes: readonly TaggedChange<TChange>[],
+		forceValidation: boolean,
+	): TChange[];
 }

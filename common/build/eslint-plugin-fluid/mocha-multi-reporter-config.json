@@ -1,6 +1,0 @@
-{
-	"reporterEnabled": "spec,xunit",
-	"xunitReporterOptions": {
-		"output": "nyc/junit-report.xml"
-	}
-}

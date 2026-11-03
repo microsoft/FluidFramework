@@ -3,12 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	encodeHandleForSerialization,
 	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
+import {
+	DataCorruptionError,
+	extractSafePropertiesFromMessage,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
@@ -25,8 +33,39 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
 	// This should become unconditional once Loader LTS reaches 2.4 or later.
 	// There will be a long time of needing both cases, until LTS advances to that point.
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-		mutableMessage.contents = JSON.parse(mutableMessage.contents);
+		let deserializedContents: unknown;
+		try {
+			deserializedContents = JSON.parse(mutableMessage.contents);
+		} catch (error) {
+			throw wrapError(
+				error,
+				(message) =>
+					new DataCorruptionError(message, {
+						dataProcessingCodepath: "ensureContentsDeserialized",
+						...extractSafePropertiesFromMessage(mutableMessage),
+					}),
+			);
+		}
+		mutableMessage.contents = deserializedContents;
 	}
+}
+
+/**
+ * If `message` is a modern runtime-envelope op (type "op" with a client id), returns a shallow copy
+ * with its contents deserialized ({@link ensureContentsDeserialized}); otherwise `undefined`.
+ *
+ * @remarks Only runtime ops may be deserialized (system ops carry non-JSON payloads), and copying keeps
+ * the caller's op untouched for the unpack pipeline. Shared so callers don't re-derive the invariant.
+ */
+export function tryGetDeserializedRuntimeOpCopy(
+	message: ISequencedDocumentMessage,
+): (ISequencedDocumentMessage & { clientId: string }) | undefined {
+	if (message.type !== MessageType.Operation || typeof message.clientId !== "string") {
+		return undefined;
+	}
+	const messageCopy = { ...message };
+	ensureContentsDeserialized(messageCopy);
+	return messageCopy as ISequencedDocumentMessage & { clientId: string };
 }
 
 /**

@@ -82,6 +82,10 @@ describe("versionUtils", () => {
 			createTest("2.20.0", -1, adjustPublicMajor, "~2.13.0");
 			createTest("2.20.0", -2, adjustPublicMajor, "~2.5.0");
 			createTest("2.20.0", -3, adjustPublicMajor, "^2.0.0-rc.5.0.0");
+			// Major versions beyond 2 should not fall into the legacy 2.x minor-decade/RC scheme; N-1 of a 3.x
+			// base version should simply resolve to the latest published 2.x release.
+			createTest("3.0.0", -1, adjustPublicMajor, "^2.0.0");
+			createTest("3.5.0", -1, adjustPublicMajor, "^2.0.0");
 		});
 
 		describe("bumping public releases (adjustPublicMajor = true)", () => {
@@ -211,6 +215,27 @@ describe("versionUtils", () => {
 			createTest("2.0.0-dev-rc.1.5.3.223149", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
 			createTest("2.0.0-dev-rc.2.0.0.233243", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
 			createTest("2.0.0-dev-rc.2.0.0.233243", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+		});
+	});
+
+	describe("3.x compatibility ranges", () => {
+		for (const [baseVersion, requested, expected] of [
+			["3.0.0", -1, ">=2.110.0-0 <2.120.0-0"],
+			["3.9.0", -1, ">=2.110.0-0 <2.120.0-0"],
+			["3.10.0", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.10.0-12345", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.19.2", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.10.0", -2, ">=2.110.0-0 <2.120.0-0"],
+			["3.10.0", -3, ">=2.100.0-0 <2.110.0-0"],
+			["3.10.0", -14, ">=2.0.0-rc.5.0.0 <2.0.0-rc.6.0.0"],
+		] as const) {
+			it(`${baseVersion}, ${requested} resolves to ${expected}`, () => {
+				assert.strictEqual(calculateRequestedRange(baseVersion, requested), expected);
+			});
+		}
+
+		it("preserves public-major adjustment", () => {
+			assert.strictEqual(calculateRequestedRange("3.10.0", -1, true), "^2.0.0-0");
 		});
 	});
 

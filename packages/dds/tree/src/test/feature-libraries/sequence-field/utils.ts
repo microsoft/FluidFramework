@@ -29,6 +29,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	DefaultAtomIdAliasAllocator,
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
@@ -87,7 +88,6 @@ import {
 	type IdAllocator,
 	type Mutable,
 	brand,
-	fakeIdAllocator,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -477,32 +477,20 @@ export function invertDeep(
 
 export function testInvert(
 	change: TaggedChange<Changeset>,
-	revision: RevisionTag | undefined,
+	inverseRevision: RevisionTag | undefined,
 	isRollback = true,
 ): Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
-	let inverted = invert(
-		change.change,
-		isRollback,
-		// Sequence fields should not generate IDs during invert
-		fakeIdAllocator,
-		revision,
-		table,
-	);
+	const genId = new DefaultAtomIdAliasAllocator();
+	genId.reserve(change.revision, brand(Number.MAX_SAFE_INTEGER));
+	let inverted = invert(change.change, isRollback, genId, inverseRevision, table);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = invert(
-			change.change,
-			isRollback,
-			// Sequence fields should not generate IDs during invert
-			fakeIdAllocator,
-			revision,
-			table,
-		);
+		inverted = invert(change.change, isRollback, genId, inverseRevision, table);
 	}
 
 	return inverted;

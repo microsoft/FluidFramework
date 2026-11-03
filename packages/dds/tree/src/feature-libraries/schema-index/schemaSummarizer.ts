@@ -10,8 +10,9 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../../codec/index.js";
@@ -57,7 +58,7 @@ const supportedVersions = new Set<SchemaSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToSchemaSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): SchemaSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return SchemaSummaryFormatVersion.v2;
@@ -76,7 +77,7 @@ export class SchemaSummarizer
 		private readonly schema: MutableTreeStoredSchema,
 		collabWindow: CollabWindow,
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: OldestSupportedClientVersion,
 	) {
 		super(
 			"Schema",
@@ -97,6 +98,7 @@ export class SchemaSummarizer
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { builder, incrementalSummaryContext, stringify, fullTree = false } = props;

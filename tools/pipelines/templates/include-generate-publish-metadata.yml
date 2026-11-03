@@ -1,0 +1,92 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: publishOverride
+  type: string
+
+# Indicates who owns the publish step for this build:
+#   true  - publishing happens as part of this build pipeline's own publish stages.
+#   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+#           and publish-metadata.json produced here.
+# This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+# Deliberately has no default: every pipeline must state which side owns its publishing, so that a search
+# for `publishAsPartOfBuild: true` is an accurate list of what has not been migrated yet.
+- name: publishAsPartOfBuild
+  type: boolean
+
+steps:
+- task: Bash@3
+  displayName: Generate publish metadata
+  condition: and(succeeded(), eq(variables['System.TeamProject'], 'internal'))
+  env:
+    VERSION: $(SetVersion.version)
+    RELEASE: $(release)
+    PUBLISH_OVERRIDE: ${{ parameters.publishOverride }}
+    IS_LATEST: $(SetVersion.isLatest)
+    PUBLISH_AS_PART_OF_BUILD: ${{ parameters.publishAsPartOfBuild }}
+  inputs:
+    targetType: inline
+    workingDirectory: $(Build.ArtifactStagingDirectory)/pack
+    script: |
+      set -eu -o pipefail
+
+      if [ -z "${VERSION:-}" ]; then
+        echo "##vso[task.logissue type=error]Missing version: SetVersion.version output was empty"
+        exit 1
+      fi
+
+      case "${RELEASE:-}" in
+        "") release=none ;;
+        none|prerelease|release) release="$RELEASE" ;;
+        *)
+          echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'"
+          exit 1
+          ;;
+      esac
+
+      case "$PUBLISH_OVERRIDE" in
+        default|force|skip) ;;
+        *)
+          echo "##vso[task.logissue type=error]Invalid publishOverride value '$PUBLISH_OVERRIDE'"
+          exit 1
+          ;;
+      esac
+
+      # SetVersion.isLatest is currently only emitted for latest release builds, so an
+      # unresolved macro means false. Remove this normalization after
+      # https://github.com/microsoft/FluidFramework/pull/27840 is available in build-tools.
+      isLatest=false
+      if [ "${IS_LATEST:-}" = "true" ]; then
+        isLatest=true
+      fi
+
+      # Unlike the other fields there is no safe fallback here: guessing wrong either
+      # double-publishes or drops the release entirely, so require an explicit boolean.
+      case "${PUBLISH_AS_PART_OF_BUILD:-}" in
+        false|False) publishAsPartOfBuild=false ;;
+        true|True) publishAsPartOfBuild=true ;;
+        *)
+          echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '${PUBLISH_AS_PART_OF_BUILD:-}'"
+          exit 1
+          ;;
+      esac
+
+      jq -n \
+        --argjson schemaVersion 1 \
+        --arg version "$VERSION" \
+        --arg release "$release" \
+        --arg publishOverride "$PUBLISH_OVERRIDE" \
+        --argjson isLatest "$isLatest" \
+        --argjson publishAsPartOfBuild "$publishAsPartOfBuild" \
+        '{
+          schemaVersion: $schemaVersion,
+          version: $version,
+          release: $release,
+          publishOverride: $publishOverride,
+          isLatest: $isLatest,
+          publishAsPartOfBuild: $publishAsPartOfBuild
+        }' > publish-metadata.json
+
+      echo "Generated publish-metadata.json:"
+      cat publish-metadata.json

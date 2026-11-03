@@ -16,6 +16,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { JsonParse } from "@fluidframework/core-interfaces/internal";
 import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -143,7 +144,7 @@ function logIfFalse(
 		typeof event === "string"
 			? { eventName: event, category: "error" }
 			: { category: "error", ...event };
-	logger.send(newEvent);
+	logger.send(newEvent, LogLevel.essential);
 	return false;
 }
 
@@ -566,10 +567,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	/**
-	 * Sets the sequence number from which inbound messages should be returned
-	 * @param snapshotSequenceNumber - The sequence number of the snapshot at which the document loaded from.
-	 * @param lastProcessedSequenceNumber - The last processed sequence number, for offline, it should be greater than the sequence number.
-	 * Setting lastProcessedSequenceNumber allows the DeltaManager to skip downloading and processing ops that have already been processed.
+	 * Initializes sequence number tracking, attaches the handler for inbound ops and signals, and
+	 * resumes the inbound queues.
+	 *
+	 * @param minSequenceNumber - The document's current minimum sequence number. This is used for client-side
+	 * protocol validation.
+	 * @param snapshotSequenceNumber - The sequence number of the snapshot from which the document
+	 * was loaded.
+	 * @param handler - The op/signal handler to attach.
+	 * @param prefetchType - Controls how missing ops are fetched before the returned promise resolves:
+	 * `"none"` does not initiate a fetch; `"all"` waits for all available missing ops from storage;
+	 * and `"cached"` waits only for cached ops before continuing the remaining storage fetch in the
+	 * background.
+	 * @param lastProcessedSequenceNumber - The latest sequence number already reflected in the
+	 * loaded state. It defaults to `snapshotSequenceNumber`. Offline loads may provide a later
+	 * sequence number so the DeltaManager skips downloading and processing ops already included in
+	 * that state.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,

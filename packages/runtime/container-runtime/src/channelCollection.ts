@@ -15,7 +15,7 @@ import type {
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert, fail, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type {
 	ISnapshot,
@@ -47,7 +47,7 @@ import type {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -59,6 +59,7 @@ import {
 	GCDataBuilder,
 	RequestParser,
 	RuntimeHeaders,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -150,7 +151,8 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
 /**
@@ -265,6 +267,7 @@ export function formParentContext<
 			return context.setChannelDirty(address);
 		},
 		minVersionForCollab: context.minVersionForCollab,
+		oldestSupportedClient: context.oldestSupportedClient,
 		getExtension: context.getExtension.bind(context),
 	};
 }
@@ -805,7 +808,7 @@ export class ChannelCollection
 				return this.resubmitDataStoreOp(message.contents, localOpMetadata, squash);
 			}
 			default: {
-				assert(false, 0x907 /* unknown op type */);
+				fail(0x907 /* unknown op type */);
 			}
 		}
 	};
@@ -862,7 +865,7 @@ export class ChannelCollection
 				return this.applyStashedChannelChannelOp(opContents.contents);
 			}
 			default: {
-				assert(false, 0x908 /* unknon type of op */);
+				fail(0x908 /* unknon type of op */);
 			}
 		}
 	}
@@ -943,7 +946,7 @@ export class ChannelCollection
 				break;
 			}
 			default: {
-				assert(false, 0x8e9 /* unreached */);
+				fail(0x8e9 /* unreached */);
 			}
 		}
 	}
@@ -1289,6 +1292,7 @@ export class ChannelCollection
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: FluidDataStoreContext) => {
@@ -1414,6 +1418,7 @@ export class ChannelCollection
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
@@ -1585,7 +1590,7 @@ export class ChannelCollection
 	}
 
 	/**
-	 * Called by GC to retrieve the package path of a data store node with the given path.
+	 * Returns the package path of the data store containing the given node without loading the data store.
 	 */
 	public async getDataStorePackagePath(
 		nodePath: string,

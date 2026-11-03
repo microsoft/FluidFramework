@@ -16,7 +16,7 @@ import {
 	type FieldSchema,
 	type FieldSchemaAlpha,
 } from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
+import type { LeafSchema, StringSchema } from "../leafNodeSchema.js";
 import {
 	stringSchema,
 	numberSchema,
@@ -25,6 +25,7 @@ import {
 	handleSchema,
 } from "../leafNodeSchema.js";
 
+import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
@@ -252,16 +253,45 @@ export const schemaStatics = {
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<
 		FieldKind.Identifier,
-		typeof stringSchema,
+		StringSchema,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
 		return createFieldSchema(FieldKind.Identifier, stringSchema, {
-			defaultProvider: undefined,
+			defaultProvider: defaultIdentifierProvider,
 			...props,
 		});
 	},
 } as const;
+
+const schemaStaticsPublic: SchemaStatics = schemaStatics;
+
+/**
+ * Create a class with `Statics` as both static properties and member properties.
+ * @privateRemarks
+ * An attempt was made to let this take in a base class so it could be used again on SchemaFactoryAlpha.
+ * This was unsuccessful, mostly due to issues with trying to manipulate constructor types.
+ */
+function classWithStatics<Statics extends object>(
+	statics: Statics,
+): Statics & (new () => Statics) {
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class WithStatics {}
+
+	Object.assign(WithStatics.prototype, statics);
+	Object.assign(WithStatics, statics);
+	return WithStatics as Statics & (new () => Statics);
+}
+
+/**
+ * Base class for SchemaFactory, exposes {@link SchemaStatics} as both static properties and member properties.
+ * @remarks
+ * Do not use this directly, use {@link SchemaFactory} instead.
+ * @privateRemarks
+ * Exported only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
+ * @system @public
+ */
+export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
 
 /**
  * {@link Unenforced} version of {@link createFieldSchema}.

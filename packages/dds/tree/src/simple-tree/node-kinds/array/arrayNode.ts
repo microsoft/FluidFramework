@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
+import type {
+	FluidIterableIterator,
+	FluidReadonlyArray,
+} from "@fluidframework/core-interfaces";
+import { Lazy, oob, fail, assert, clamp } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
+import { EmptyKey, ObjectNodeStoredSchema, type DeltaMark } from "../../../core/index.js";
 import type {
 	FlexibleFieldContent,
 	FlexTreeNode,
@@ -23,14 +27,12 @@ import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	NodeKind,
 	type TreeNode,
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
-	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
 	getInnerNode,
 	type TreeNodeSchemaClass,
@@ -84,7 +86,7 @@ import type {
  * @system @sealed @public
  */
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
-	extends ReadonlyArray<T>,
+	extends FluidReadonlyArray<T>,
 		Awaited<TreeNode & WithType<string, NodeKind.Array>> {}
 
 /**
@@ -94,6 +96,9 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @typeParam T - Use Default: Do not specify. Type of values to read from the array.
  * @typeParam TNew - Use Default: Do not specify. Type of values to write into the array.
  * @typeParam TMoveFrom - Use Default: Do not specify. Type of node from which children can be moved into this array.
+ *
+ * @see {@link TreeArrayNodeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:5)} to access alpha APIs on this node
  *
  * @sealed @public
  */
@@ -158,6 +163,11 @@ export interface TreeArrayNode<
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
+	 * @remarks
+	 * The item to remove is determined when this method is called, not when the resulting edit is sequenced.
+	 * This means that, once the edit is sequenced, the item being removed may no longer be at `index`,
+	 * and may in fact no longer be in this array at all (for example, if a concurrent edit moved it to another array).
+	 * This operation removes that item from wherever it then resides.
 	 */
 	removeAt(index: number): void;
 
@@ -458,11 +468,14 @@ export interface TreeArrayNode<
 	/**
 	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
 	 */
-	values(): IterableIterator<T>;
+	values(): FluidIterableIterator<T>;
 }
 
 /**
  * {@link (TreeArrayNode:interface)} with additional alpha APIs.
+ *
+ * @see {@link (asAlpha:5)} to access these APIs on an existing {@link (TreeArrayNode:interface)}
+ *
  * @alpha @sealed
  */
 export interface TreeArrayNodeAlpha<
@@ -483,14 +496,73 @@ export interface TreeArrayNodeAlpha<
 	at(index: number): T | undefined;
 
 	/**
+	 * Returns the last item in the array for which the given type guard returns `true`,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @typeParam S - The subtype of `T` asserted by the `predicate` type guard.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns `true` (narrowed to the guarded type), or `undefined` if there is no such item.
+	 */
+	findLast<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+
+	/**
+	 * Returns the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns a truthy value, or `undefined` if there is no such item.
+	 */
+	findLast(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): T | undefined;
+
+	/**
+	 * Returns the index of the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex | Array.prototype.findLastIndex}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The index of the last item for which `predicate` returns a truthy value, or `-1` if there is no such item.
+	 */
+	findLastIndex(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): number;
+
+	/**
 	 * Removes the last item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 * @remarks
+	 * Equivalent to `removeAt(array.length - 1)`, additionally returning the removed item:
+	 * see {@link (TreeArrayNode:interface).removeAt} for details, including merge semantics with concurrent edits.
+	 * In particular, the item removed is the one that is last at the time this method is called,
+	 * not the one that is last at the time the resulting edit is sequenced.
 	 */
 	pop(): T | undefined;
 
 	/**
 	 * Removes the first item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 * @remarks
+	 * Equivalent to `removeAt(0)`, additionally returning the removed item:
+	 * see {@link (TreeArrayNode:interface).removeAt} for details, including merge semantics with concurrent edits.
+	 * In particular, the item removed is the one that is first at the time this method is called,
+	 * not the one that is first at the time the resulting edit is sequenced.
 	 */
 	shift(): T | undefined;
 
@@ -501,8 +573,10 @@ export interface TreeArrayNodeAlpha<
 	 * @remarks
 	 * Unlike `Array.prototype.unshift`, this method does not return the new length of the array.
 	 *
-	 * Equivalent to `insertAt(0, ...value)`:
-	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
+	 * All items inserted by a single call to this method are inserted consecutively.
+	 * The order of the inserted items relative to other concurrently inserted items is fully specified:
+	 * Concurrently unshifting `[A, B]` and `[X, Y]` will yield `[A, B, X, Y]` if the edit unshifting `[A, B]`
+	 * is sequenced after the edit unshifting `[X, Y]`.
 	 */
 	unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
@@ -514,6 +588,8 @@ export interface TreeArrayNodeAlpha<
 	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
 	 * @param items - The item(s) to insert at `start`.
 	 * @returns An array containing the item(s) that were removed.
+	 * @remarks
+	 * See {@link (TreeArrayNode:interface).insertAt} for the merge semantics of the inserted items.
 	 */
 	splice(
 		start: number,
@@ -669,15 +745,15 @@ const TreeNodeWithArrayFeatures = (() => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
-	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
+	implements Pick<FluidReadonlyArray<T>, (typeof arrayPrototypeKeys)[number]>
 {
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
-	entries(): IterableIterator<[number, T]>;
+	entries(): FluidIterableIterator<[number, T]>;
 	every<S extends T>(
 		predicate: (value: T, index: number, array: readonly T[]) => value is S,
 		thisArg?: any,
-	): this is readonly S[];
+	): this is FluidReadonlyArray<S>;
 	every(
 		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		thisArg?: any,
@@ -714,7 +790,7 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	includes(searchElement: T, fromIndex?: number | undefined): boolean;
 	indexOf(searchElement: T, fromIndex?: number | undefined): number;
 	join(separator?: string | undefined): string;
-	keys(): IterableIterator<number>;
+	keys(): FluidIterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
 	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
 	reduce(
@@ -780,13 +856,10 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
 /**
- * Attempts to coerce the given property key to an integer index property.
+ * Attempts to coerce the given property key to a canonical non-negative integer index.
  * @param key - The property key to coerce.
- * @param exclusiveMax - This restricts the range in which the resulting index is allowed to be.
- * The coerced index of `key` must be less than `exclusiveMax` or else this function will return `undefined`.
- * This is useful for reading an array within the bounds of its length, e.g. `asIndex(key, array.length)`.
  */
-export function asIndex(key: string | symbol, exclusiveMax: number): number | undefined {
+export function asIndex(key: string | symbol): number | undefined {
 	if (typeof key !== "string") {
 		return undefined;
 	}
@@ -806,7 +879,23 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 	}
 
 	// TODO: See 'matrix/range.ts' for fast integer coercing + range check.
-	return 0 <= asNumber && asNumber < exclusiveMax ? asNumber : undefined;
+	return 0 <= asNumber ? asNumber : undefined;
+}
+
+/**
+ * Returns the index represented by `key` if it is within the field's bounds.
+ * @param key - The property key to coerce.
+ * @param field - The field whose length bounds the index.
+ * @remarks
+ * Accepts the field rather than its length so the length is queried only when the key represents an index.
+ * Computing the length can be expensive for some field implementations.
+ */
+export function asIndexWithinBounds(
+	key: string | symbol,
+	field: Pick<readonly unknown[], "length">,
+): number | undefined {
+	const index = asIndex(key);
+	return index !== undefined && index < field.length ? index : undefined;
 }
 
 /**
@@ -829,7 +918,7 @@ function createArrayNodeProxy(
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
 			const field = getSequenceField(receiver);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 
 			if (maybeIndex === undefined) {
 				if (key === "length") {
@@ -842,15 +931,27 @@ function createArrayNodeProxy(
 					return proxyTarget.constructor;
 				}
 
+				// If the property is a function on Array.prototype but not on the dispatch target,
+				// return a function that throws a descriptive TypeError when called.
+				if (
+					typeof key === "string" &&
+					!(key in dispatchTarget) &&
+					key in Array.prototype &&
+					typeof (Array.prototype as unknown as Record<string, unknown>)[key] === "function"
+				) {
+					return () => {
+						throw new TypeError(
+							`ArrayNode does not support '${key}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+						);
+					};
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const maybeContent = field.at(maybeIndex);
-			return maybeContent === undefined
-				? undefined
-				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
+			return getOrCreateNodeFromInnerUnboxedNode(field.atIndex(maybeIndex));
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -868,8 +969,8 @@ function createArrayNodeProxy(
 			}
 
 			// Array nodes treat all non-negative integer indexes as array access.
-			// Using Infinity here (rather than length) ensures that indexing past the end doesn't create additional session local properties.
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			// Do not check bounds: indexing past the end must not create additional session local properties.
+			const maybeIndex = asIndex(key);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
@@ -881,7 +982,7 @@ function createArrayNodeProxy(
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
 		},
 		ownKeys: (target) => {
@@ -903,13 +1004,13 @@ function createArrayNodeProxy(
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
+			const maybeIndex = asIndexWithinBounds(key, field);
 			if (maybeIndex !== undefined) {
-				const val = field.at(maybeIndex);
+				const val = field.atIndex(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
+					value: getOrCreateNodeFromInnerUnboxedNode(val),
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
@@ -927,7 +1028,7 @@ function createArrayNodeProxy(
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
 		defineProperty(target, key, attributes) {
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			const maybeIndex = asIndex(key);
 			if (maybeIndex !== undefined) {
 				throw new UsageError("Shadowing of array indices is not permitted.");
 			}
@@ -1017,7 +1118,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail(0xadb /* Proxy should intercept length */);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public [Symbol.iterator](): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		return this.values();
 	}
 
@@ -1033,13 +1134,65 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		index: number,
 	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
 		const field = getSequenceField(this);
-		const val = field.boxedAt(index);
+		const val = field.at(index);
 
 		if (val === undefined) {
 			return val;
 		}
 
-		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerUnboxedNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+	}
+	public findLast<S extends TreeNodeFromImplicitAllowedTypes<T>>(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return value;
+			}
+		}
+		return undefined;
+	}
+	public findLastIndex(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): number {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return index;
+			}
+		}
+		return -1;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
@@ -1094,7 +1247,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		deleteCount?: number,
 		...items: Insertable<T>
 	): TreeNodeFromImplicitAllowedTypes<T>[] {
-		const length = this.length;
+		const field = getSequenceField(this);
+		const length = field.length;
 		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
 		const actualDeleteCount =
 			deleteCount === undefined
@@ -1103,12 +1257,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		validateIndexRange(
 			actualStart,
 			actualStart + actualDeleteCount,
-			getSequenceField(this),
+			field,
 			"TreeArrayNode.splice",
 		);
 		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
 		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
-			removed.push(this.at(index) ?? oob());
+			removed.push(
+				getOrCreateNodeFromInnerUnboxedNode(
+					field.atIndex(index),
+				) as TreeNodeFromImplicitAllowedTypes<T>,
+			);
 		}
 
 		const innerNode = getInnerNode(this);
@@ -1263,7 +1421,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 
-	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		return this.generateValues(getKernel(this).generationNumber);
 	}
 	private *generateValues(
@@ -1273,8 +1431,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
-		for (let i = 0; i < this.length; i++) {
-			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
+		for (let i = 0; ; i++) {
+			// Resolve the field again after each yield: an unhydrated array may have been hydrated.
+			const field = getSequenceField(this);
+			if (i >= field.length) {
+				return;
+			}
+			yield getOrCreateNodeFromInnerUnboxedNode(
+				field.atIndex(i),
+			) as TreeNodeFromImplicitAllowedTypes<T>;
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
@@ -1376,7 +1541,7 @@ export function arraySchema<
 					// Search prototype keys and check for positive integers. Throw if any are found.
 					// Shadowing of index properties on array nodes is not supported.
 					for (const key of Object.getOwnPropertyNames(prototype)) {
-						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						const maybeIndex = asIndex(key);
 						if (maybeIndex !== undefined) {
 							throw new UsageError(
 								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,
@@ -1414,8 +1579,7 @@ export function arraySchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {
@@ -1548,11 +1712,25 @@ export interface ArrayPlaceAnchor {
 	 * The current index within the array that this anchor refers to.
 	 * @remarks
 	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
-	 * This index may take on a value from 0 to the length of the array (inclusive).
+	 * Outside change-event callbacks, this index is a value from 0 to the current length of the array (inclusive).
 	 * If used as the index to insert content into the array, this means it can point to any location in the array,
 	 * including just after the last child.
+	 * During change-event callbacks, the index can temporarily be stale or outside these bounds.
+	 * See {@link createArrayInsertionAnchor} for details.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the anchor has been {@link ArrayPlaceAnchor.dispose | disposed}.
 	 */
 	get index(): number;
+
+	/**
+	 * Stop tracking this anchor and release any resources it holds.
+	 * @remarks
+	 * If you own this anchor, call this when it is no longer needed (for example when a tracked cursor position is discarded).
+	 * Interacting with an anchor (including reading its properties) after it has been disposed is invalid and will throw.
+	 * Disposing an already disposed anchor has no effect.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} may be thrown when attempting to dispose a borrowed anchor.
+	 * Borrowed anchors must not be disposed by the caller.
+	 */
+	dispose(): void;
 }
 
 /**
@@ -1564,15 +1742,51 @@ export interface ArrayPlaceAnchor {
  * This anchor will track the logical position in the array across changes.
  * As long as the subsection of the array surrounding the anchor point is not edited,
  * this anchor will move with them, keeping its relative position to those children fixed.
- * How exactly it behaves when the adjacent portion of the array is modified is subject to change,
- * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ * How exactly it behaves when the adjacent portion of the array is modified is subject to change.
+ * Outside change-event callbacks, this reports a valid index to insert content at (which can be the index after the last item in the array).
  *
  * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
  * make it behave better for such uses.
  *
- * The current implementation is known to behave particularly poorly if the child which was at the original anchor point's index is removed
- * (jumps to the end of the array): this behavior is subject to change.
+ * In rare cases the tracked index cannot be updated precisely and the anchor falls back to best-effort behavior:
+ * after change-event delivery completes, it reports a valid in-bounds index, but that index may no longer correspond to the same logical position
+ * as before the change (this can happen when an incremental delta is unavailable for a change, such as during a
+ * schema change). Consumers that require an accurate position across such changes should re-derive it from their
+ * own state rather than relying solely on this anchor.
+ *
+ * During change-event callbacks, an anchor can temporarily report a stale index even though the tree already reflects the changes.
+ * This can occur during individual edits as well as merged batches.
+ * The stale index can be outside the current array bounds.
+ * After the synchronous edit or merge returns, the index is updated, subject to the best-effort limitations described above.
  * @privateRemarks
+ * The index is maintained incrementally from the shallow (insert/remove) delta delivered by the array node's
+ * `childrenChangedAfterBatch` event: inserts and removes before the anchor point shift it, while edits after it
+ * (or a removal of the span it sits between) leave it in place. This keeps the anchor pinned to the gap between
+ * children even when the child originally at its index is removed.
+ *
+ * The best-effort behavior noted in the public remarks is the no-delta path: when the composed delta is unavailable
+ * (see {@link NodeChangedDataDelta.delta}), the exact shift is unknown so the index is only clamped back into range.
+ * This is intentionally weak rather than reintroducing a per-edit O(n) snapshot of the array to diff old-vs-new
+ * (which would defeat the point of delta-based tracking) for a case that is rare and, for this alpha API, acceptable
+ * to degrade. A stronger fallback could instead let a consumer that already maintains the array contents re-seed the
+ * anchor's position on this path, so it lives with the consumer that has the data instead of being duplicated here.
+ *
+ * TODO: The no-delta case above is one of several places whose behavior is limited by changes for which a composed
+ * delta cannot be produced (see {@link NodeChangedDataDelta.delta}). The underlying eventing limitation should be
+ * fixed so a delta is always available; when adding new code constrained by it, note it here (or track it centrally)
+ * so the full set of affected call sites is known and can be prioritized.
+ *
+ * TODO: Restore anchor positions across transaction rollback and undo of removals.
+ * Removal collapses anchors inside the removed span, losing their original offsets.
+ * Reinserting the removed content does not restore those offsets, even when a transaction rolls back.
+ * For example, removing [0, 3) moves an anchor at index 1 to 0; rollback restores the content but moves the anchor to 3, not 1.
+ * The extrinsic range tracker compensates for nested transaction rollback by restoring saved endpoints after the rollback.
+ * Standalone insertion anchors do not have that protection.
+ *
+ * TODO: Fix or improve the event ordering that causes the stale indices described above.
+ * This may require better APIs for applications to control update ordering between dependent content.
+ * See the skipped tests for this function covering array listeners registered before the anchor and descendant events during merges.
+ *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
  * How this would work, especially for unhydrated nodes is not yet clear.
@@ -1582,17 +1796,82 @@ export function createArrayInsertionAnchor(
 	node: TreeArrayNode,
 	currentIndex: number,
 ): ArrayPlaceAnchor {
+	// An out-of-range or non-integer index is a usage error. An index equal to the array length is valid
+	// (it points just past the last child).
 	const field = getInnerNode(node).getBoxed(EmptyKey);
-	const child = field.boxedAt(currentIndex);
+	validateIndex(currentIndex, field, "createArrayInsertionAnchor", /* allowOnePastEnd */ true);
+	let trackedIndex = currentIndex;
+
+	const kernel = getKernel(node);
+	let off: (() => void) | undefined = kernel.events.on(
+		"childrenChangedAfterBatch",
+		({ fieldMarks }) => {
+			const marks = fieldMarks.get(EmptyKey);
+			// This event fires after the change is applied, so the field reflects the post-edit length.
+			const length = getInnerNode(node).getBoxed(EmptyKey).length;
+			if (marks === undefined) {
+				// No-delta path: the composed delta is unavailable, so the exact shift is unknown. Keep the
+				// index valid by clamping it to the current length (best-effort). See this function's
+				// @privateRemarks for when this happens and why the fallback is intentionally weak.
+				trackedIndex = clamp(trackedIndex, 0, length);
+				return;
+			}
+			// Clamp defensively so a malformed or partial delta can never push the tracked index outside the
+			// valid insertion range while the anchor is live (adjustIndexForArrayDelta has no final clamp).
+			trackedIndex = clamp(adjustIndexForArrayDelta(trackedIndex, marks), 0, length);
+		},
+	);
+
 	return {
 		get index() {
-			if (child === undefined) {
-				return field.length;
+			if (off === undefined) {
+				throw new UsageError("Cannot read the index of a disposed ArrayPlaceAnchor.");
 			}
-			if (child.parentField.parent !== field) {
-				return field.length;
-			}
-			return child.parentField.index;
+			return trackedIndex;
+		},
+		dispose() {
+			off?.();
+			off = undefined;
 		},
 	};
+}
+
+/**
+ * Compute the new index of an {@link ArrayPlaceAnchor} after applying a shallow array delta.
+ * @remarks
+ * The marks cover the array's sequence field in order. `readPosition` walks the pre-edit array as the marks are
+ * consumed while `index` stays fixed at the anchor's pre-edit location; comparing the two (both in pre-edit
+ * coordinates) shifts `newIndex` to keep the anchor in the same gap between children as content is inserted or
+ * removed around it. Each mark is a removal (`detach`), an insertion (`attach`), or a retain (neither); a mark may
+ * carry both `detach` and `attach`, which is handled as a removal followed by an insertion. The per-mark behavior is
+ * commented inline below.
+ */
+function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): number {
+	let readPosition = 0;
+	let newIndex = index;
+	for (const mark of marks) {
+		// A removal consumes pre-edit content: if it lies entirely before the anchor it pulls the anchor left,
+		// and if it contains the anchor's position the anchor collapses to the start of the removed span.
+		if (mark.detach !== undefined) {
+			const removeEnd = readPosition + mark.count;
+			if (removeEnd <= index) {
+				newIndex -= mark.count;
+			} else if (readPosition < index) {
+				newIndex -= index - readPosition;
+			}
+			readPosition += mark.count;
+		}
+		if (mark.attach !== undefined) {
+			// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor leaves the
+			// anchor after the new content (insertion-point behavior). Inserted content is new, so it does not
+			// advance the pre-edit read position.
+			if (readPosition <= index) {
+				newIndex += mark.count;
+			}
+		} else if (mark.detach === undefined) {
+			// Retain: existing content that was neither inserted nor removed.
+			readPosition += mark.count;
+		}
+	}
+	return newIndex;
 }

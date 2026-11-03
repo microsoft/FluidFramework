@@ -14,16 +14,19 @@ import {
 	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -42,7 +45,11 @@ import {
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+	FieldChangeHandler,
+} from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -66,19 +73,27 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import {
+	areEquivalent,
+	fieldKindsFromConfiguration,
+	isChangesetValid,
+	nodeChangeFromId,
+} from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangesetV1,
 	EncodedModularChangesetV1,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 >;
 
 type FieldChangesetCodecs = Map<
@@ -105,18 +120,16 @@ export function encodeFieldChangesForJson(
 	change: FieldChangeMap,
 	context: ChangeEncodingContext,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const fieldContext: FieldChangeEncodingContext = {
 		baseContext: context,
 
 		encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-			const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
-			assert(node !== undefined, 0x92e /* Unknown node ID */);
+			const node = nodeChangeFromId(nodeChanges, nodeId, nodeAliases);
 			return encodeNodeChangesForJson(node, fieldContext, fieldChangesetCodecs);
 		},
-
-		decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 	};
 
 	return encodeFieldChangesForJsonI(change, fieldContext, fieldChangesetCodecs);
@@ -180,7 +193,7 @@ export function decodeFieldChangesFromJson(
 	encodedChange: EncodedFieldChangeMap,
 	parentId: NodeId | undefined,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -200,10 +213,8 @@ export function decodeFieldChangesFromJson(
 			field: field.fieldKey,
 		};
 
-		const fieldContext: FieldChangeEncodingContext = {
+		const fieldContext: FieldChangeDecodingContext = {
 			baseContext: context,
-
-			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				const nodeId: NodeId = {
@@ -252,7 +263,7 @@ export function decodeNodeChangesetFromJson(
 	encodedChange: EncodedNodeChangeset,
 	id: NodeId,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -337,7 +348,7 @@ export function encodeDetachedNodes(
 
 export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -430,7 +441,7 @@ export function encodeRevisionInfos(
 
 export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -487,6 +498,7 @@ export function encodeChange(
 			change.fieldChanges,
 			context,
 			change.nodeChanges,
+			change.nodeAliases,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -509,7 +521,7 @@ export function encodeChange(
 
 export function decodeChange(
 	encodedChange: EncodedModularChangesetV1,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
@@ -647,17 +659,29 @@ export function makeModularChangeCodecV1(
 	);
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) =>
-			encodeChange(
+		encode: (change, context) => {
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
-		decode: (encodedChange, context) =>
-			decodeChange(
+			);
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+			return encoded;
+		},
+		decode: (encodedChange, context) => {
+			const decoded = decodeChange(
 				encodedChange,
 				context,
 				fieldKinds,
@@ -665,7 +689,12 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return decoded;
+		},
 	};
 
 	return withSchemaValidation(

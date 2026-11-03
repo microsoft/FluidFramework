@@ -46,7 +46,6 @@
 @fluidframework/fluid-static
 fluid-framework
 @fluid-experimental/dds-interceptions
-@fluid-experimental/data-object-base
 @fluidframework/fluid-telemetry
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor

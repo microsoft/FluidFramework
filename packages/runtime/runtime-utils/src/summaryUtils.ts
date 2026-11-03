@@ -173,7 +173,6 @@ export function addSummarizeResultToSummary(
 
 /**
  * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
- * @legacy @beta
  */
 export interface SummaryTreeBuilderParams {
 	/**
@@ -185,6 +184,9 @@ export interface SummaryTreeBuilderParams {
 /**
  * A helper class for building summary trees.
  * @remarks Uses the builder pattern.
+ * @deprecated This summary-tree building utility exposes runtime implementation details and will become internal.
+ * There is no supported replacement for this implementation utility.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -290,6 +292,9 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @deprecated This legacy snapshot conversion utility exposes runtime implementation details and will become internal.
+ * There is no supported replacement for this implementation utility.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export function convertToSummaryTreeWithStats(
@@ -384,9 +389,7 @@ export function convertSnapshotTreeToSummaryTree(
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
 		} else if (snapshot.blobs[id] !== undefined) {
-			// Non null asserting here because of the undefined check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);
@@ -502,16 +505,10 @@ export function processAttachMessageGCData(
 export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
 	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
-	 */
 	public set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
-	 */
 	public setMultiple(
 		prefix: string,
 		property: string,

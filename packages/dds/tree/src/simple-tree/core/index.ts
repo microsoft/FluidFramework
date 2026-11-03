@@ -18,7 +18,7 @@ export {
 } from "./treeNodeKernel.js";
 export {
 	type WithType,
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 } from "./withType.js";
@@ -86,7 +86,13 @@ export type {
 	AllowedTypesFullFromMixed,
 	NumberKeys,
 } from "./allowedTypes.js";
-export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
+export {
+	walkAllowedTypes,
+	walkNodeSchema,
+	walkSchema,
+	type SchemaVisitor,
+	type IncrementalSchemaVisitor,
+} from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,
@@ -115,7 +121,8 @@ export {
 export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 export {
 	type StoredSchemaGenerationOptions,
-	type StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	ExpectStored,
 	type SimpleSchemaTransformationOptions,
 	Unchanged,

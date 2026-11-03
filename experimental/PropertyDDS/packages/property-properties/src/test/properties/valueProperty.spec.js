@@ -9,10 +9,10 @@
  * @fileoverview In this file, we will test ValueProperty object described in /src/properties/valueProperty.js
  */
 
-const { Int64, Uint64 } = require("@fluid-experimental/property-common");
+import { Int64, Uint64 } from "@fluid-experimental/property-common";
 
-const { PropertyFactory } = require("../..");
-const { ValueProperty } = require("../../properties/valueProperty");
+import { PropertyFactory } from "../../index.js";
+import { ValueProperty } from "../../properties/valueProperty.js";
 
 describe("ValueProperty", function () {
 	var OurTestTemplate;

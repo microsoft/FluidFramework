@@ -14,6 +14,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -103,6 +104,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory2,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory2.registryEntry, childObjectFactory.registryEntry],
 		runtimeOptions,
 	});

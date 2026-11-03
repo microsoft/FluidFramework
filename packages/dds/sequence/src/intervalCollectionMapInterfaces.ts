@@ -52,6 +52,7 @@ export interface SequenceOptions
 		| "mergeTreeEnableObliterate"
 		| "mergeTreeEnableSidedObliterate"
 		| "mergeTreeEnableAnnotateAdjust"
+		| "newMergeTreeSnapshotFormat"
 	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and

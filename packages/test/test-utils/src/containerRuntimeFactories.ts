@@ -28,10 +28,12 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 const defaultDataStoreId = "default";
 
@@ -68,10 +70,26 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * Oldest Fluid Framework client version that must be able to process documents written by the
+	 * runtime.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for more details.
+	 *
+	 * @remarks
+	 * The property name is retained while the cross-layer dual-property migration in
+	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab?: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * The factory uses this setting to select compatible runtime features and write formats for the test.
+	 * If this property is absent, the factory accepts {@link ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab} for compatibility with older test configurations.
+	 * If neither property supplies a version, the factory uses {@link defaultTestOldestSupportedClient}, currently `"2.0.0"`.
+	 */
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 }
 
 /**
@@ -88,9 +106,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
-	 */
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.registry;
 	}
@@ -120,7 +135,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	/**
 	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab}
 	 */
-	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	private readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 		super();
@@ -147,7 +162,10 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		this.provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 		this.requestHandlers = [getDefaultObject];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.minVersionForCollab = props.minVersionForCollab;
+		this.minVersionForCollab =
+			props.oldestSupportedClient ??
+			props.minVersionForCollab ??
+			defaultTestOldestSupportedClient;
 	}
 
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
@@ -172,7 +190,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			// eslint-disable-next-line import-x/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
-			minVersionForCollab: this.minVersionForCollab,
+			oldestSupportedClient: this.minVersionForCollab,
 		});
 	}
 

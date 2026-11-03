@@ -7,12 +7,16 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
+	makeDetachedFieldIndex,
 	makeDetachedNodeId,
 	RevisionTagCodec,
 } from "../../../core/index.js";
@@ -49,6 +53,7 @@ const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
 
 const unfinalizedIdCompressor = createIdCompressor(
 	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+	SerializationVersion.V3,
 );
 
 const malformedData: readonly [string, JsonCompatibleReadOnly][] = [
@@ -227,35 +232,37 @@ function generateTestCases(
 	];
 }
 
-function makeDetachedFieldIndex(): DetachedFieldIndex {
-	return new DetachedFieldIndex(
-		"test",
-		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+const defaultCodecWriteOptions: CodecWriteOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+
+function makeDetachedFieldIndexCodec(
+	idCompressor: IIdCompressor = testIdCompressor,
+	options: CodecWriteOptions = defaultCodecWriteOptions,
+) {
+	return detachedFieldIndexCodecBuilder.build({
+		...options,
+		revisionTagCodec: new RevisionTagCodec(idCompressor),
+		idCompressor,
+	});
 }
 
 describe("DetachedFieldIndex Codecs", () => {
-	const options: CodecWriteOptions = {
-		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	};
-
 	it("encodes with a version stamp.", () => {
 		const detachedFieldIndex = new DetachedFieldIndex(
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-			testRevisionTagCodec,
-			testIdCompressor,
-			options,
 		);
 		const expected = {
 			version: 1,
 			data: [],
 			maxId: -1,
 		};
-		assert.deepEqual(detachedFieldIndex.encode(), expected);
+		const codec = makeDetachedFieldIndexCodec();
+		const data = detachedFieldIndex.getSummaryData();
+		const encoded = codec.encode(data);
+		assert.deepEqual(encoded, expected);
 	});
 
 	describe("round-trip through JSON", () => {
@@ -274,7 +281,7 @@ describe("DetachedFieldIndex Codecs", () => {
 					}
 					it(`version ${codec.formatVersion}`, () => {
 						const inner = codec.codec({
-							...options,
+							...defaultCodecWriteOptions,
 							revisionTagCodec: new RevisionTagCodec(idCompressor),
 							idCompressor,
 						});
@@ -288,7 +295,7 @@ describe("DetachedFieldIndex Codecs", () => {
 	});
 	describe("loadData", () => {
 		const codec = detachedFieldIndexCodecBuilder.build({
-			...options,
+			...defaultCodecWriteOptions,
 			revisionTagCodec: testRevisionTagCodec,
 			idCompressor: testIdCompressor,
 		});
@@ -328,7 +335,7 @@ describe("DetachedFieldIndex Codecs", () => {
 					useSnapshotDirectory(dir);
 					it(`version ${version}`, () => {
 						const codec = format.codec({
-							...options,
+							...defaultCodecWriteOptions,
 							revisionTagCodec: new RevisionTagCodec(idCompressor),
 							idCompressor,
 						});
@@ -471,10 +478,11 @@ describe("DetachedFieldIndex methods", () => {
 		const revisionTag2 = mintRevisionTag();
 		const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
 
-		const encodedDetachedIndex = detachedIndex.encode();
+		const codec = makeDetachedFieldIndexCodec();
+		const encodedDetachedIndex = codec.encode(detachedIndex.getSummaryData());
 
 		const detachedIndex2 = makeDetachedFieldIndex();
-		detachedIndex2.loadData(encodedDetachedIndex);
+		detachedIndex2.loadData(codec.decode(encodedDetachedIndex));
 		assert.equal(detachedIndex2.tryGetEntry(detachedNodeId), rootId);
 
 		// Check that loadData set the latestRelevantRevision to undefined.
@@ -494,10 +502,11 @@ describe("DetachedFieldIndex methods", () => {
 		const revisionTag2 = mintRevisionTag();
 		const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
 
-		const encodedDetachedIndex = detachedIndex.encode();
+		const codec = makeDetachedFieldIndexCodec();
+		const encodedDetachedIndex = codec.encode(detachedIndex.getSummaryData());
 
 		const detachedIndex2 = makeDetachedFieldIndex();
-		detachedIndex2.loadData(encodedDetachedIndex);
+		detachedIndex2.loadData(codec.decode(encodedDetachedIndex));
 		assert.equal(detachedIndex2.tryGetEntry(detachedNodeId), rootId);
 
 		// Sets the new revision tag after loading
@@ -575,16 +584,16 @@ describe("DetachedFieldIndex methods", () => {
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
-			const originalData = index.encode();
+			const originalData = index.getSummaryData();
 			const restore = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
 			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
-			assert.notDeepEqual(index.encode(), originalData);
+			assert.notDeepEqual(index.getSummaryData(), originalData);
 
 			restore();
-			assert.deepEqual(index.encode(), originalData);
+			assert.deepEqual(index.getSummaryData(), originalData);
 		});
 
 		it("multiple checkpoints can exist for the same index", () => {
@@ -592,22 +601,22 @@ describe("DetachedFieldIndex methods", () => {
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
-			const originalData = index.encode();
+			const originalData = index.getSummaryData();
 			const restore1 = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
 			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
-			assert.notDeepEqual(index.encode(), originalData);
+			assert.notDeepEqual(index.getSummaryData(), originalData);
 
-			const changedData = index.encode();
+			const changedData = index.getSummaryData();
 			const restore2 = index.createCheckpoint();
 
 			restore1();
-			assert.deepEqual(index.encode(), originalData);
+			assert.deepEqual(index.getSummaryData(), originalData);
 
 			restore2();
-			assert.deepEqual(index.encode(), changedData);
+			assert.deepEqual(index.getSummaryData(), changedData);
 		});
 
 		it("a checkpoint can be restored multiple times", () => {
@@ -615,23 +624,23 @@ describe("DetachedFieldIndex methods", () => {
 			const revisionTag1 = mintRevisionTag();
 			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
 
-			const originalData = index.encode();
+			const originalData = index.getSummaryData();
 			const restore = index.createCheckpoint();
 
 			// Make changes to the index
 			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
 			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
-			assert.notDeepEqual(index.encode(), originalData);
+			assert.notDeepEqual(index.getSummaryData(), originalData);
 
 			restore();
-			assert.deepEqual(index.encode(), originalData);
+			assert.deepEqual(index.getSummaryData(), originalData);
 
 			// Make more changes to the index
 			index.createEntry(makeDetachedNodeId(revisionTag1, 3), revisionTag1);
-			assert.notDeepEqual(index.encode(), originalData);
+			assert.notDeepEqual(index.getSummaryData(), originalData);
 
 			restore();
-			assert.deepEqual(index.encode(), originalData);
+			assert.deepEqual(index.getSummaryData(), originalData);
 		});
 	});
 });

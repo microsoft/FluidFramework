@@ -23,29 +23,29 @@ export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
  */
 export const LayerCompatibilityPolicyWindowMonths = {
 	/**
-	 * Driver is compatible with Loader versions up to 12 months (or generations) older.
+	 * A newer Driver is compatible with Loader versions up to 12 months (or generations) older.
 	 */
-	DriverLoader: 12,
+	NewDriverOldLoader: 12,
 	/**
-	 * Loader is compatible with Driver versions up to 12 months (or generations) older.
+	 * A newer Loader is compatible with Driver versions up to 12 months (or generations) older.
 	 */
-	LoaderDriver: 12,
+	NewLoaderOldDriver: 12,
 	/**
-	 * Runtime is compatible with Loader versions up to 12 months (or generations) older.
+	 * A newer Runtime is compatible with Loader versions up to 12 months (or generations) older.
 	 */
-	RuntimeLoader: 12,
+	NewRuntimeOldLoader: 12,
 	/**
-	 * Loader is compatible with Runtime versions up to 3 months (or generations) older.
+	 * A newer Loader is compatible with Runtime versions up to 3 months (or generations) older.
 	 */
-	LoaderRuntime: 3,
+	NewLoaderOldRuntime: 3,
 	/**
-	 * Runtime is compatible with DataStore versions up to 3 months (or generations) older.
+	 * A newer Runtime is compatible with DataStore versions up to 3 months (or generations) older.
 	 */
-	RuntimeDataStore: 3,
+	NewRuntimeOldDataStore: 3,
 	/**
-	 * DataStore is compatible with Runtime versions up to 3 months (or generations) older.
+	 * A newer DataStore is compatible with Runtime versions up to 3 months (or generations) older.
 	 */
-	DataStoreRuntime: 3,
+	NewDataStoreOldRuntime: 3,
 } as const;
 
 /**
@@ -120,10 +120,38 @@ export const defaultLayerCompatDetails: ILayerCompatDetails = {
 };
 
 /**
- * The requirements that a layer needs another layer to support for them to be compatible.
+ * Key used to look up {@link (ILayerCompatSupportRequirements:interface)} on a `FluidObject`.
  * @internal
  */
-export interface ILayerCompatSupportRequirements {
+export const ILayerCompatSupportRequirements: keyof IProvideLayerCompatSupportRequirements =
+	"ILayerCompatSupportRequirements";
+
+/**
+ * Provides {@link (ILayerCompatSupportRequirements:interface)} so that a layer can publish, as a `FluidObject`, the
+ * requirements another layer must meet to be compatible with it.
+ * @internal
+ */
+export interface IProvideLayerCompatSupportRequirements {
+	readonly ILayerCompatSupportRequirements: ILayerCompatSupportRequirements;
+}
+
+/**
+ * The requirements that a layer needs another layer to support for them to be compatible.
+ *
+ * @remarks
+ * A layer can also publish its requirements across a boundary as a `FluidObject` (via
+ * {@link IProvideLayerCompatSupportRequirements}) for the case where this layer cannot run the compatibility
+ * validation itself and instead needs the layer on the other side of the boundary to check itself against the
+ * published requirements. Most boundaries are validated by both layers because each holds
+ * a reference to the other (e.g. the Loader and the Runtime). The Driver / Loader boundary is asymmetric: the
+ * Loader holds a reference to the Driver, but the Driver has no reference to the Loader and so cannot validate it.
+ * To still validate in both directions, the Driver publishes its requirements for the Loader and the Loader
+ * validates itself against them on the Driver's behalf.
+ *
+ * @internal
+ */
+export interface ILayerCompatSupportRequirements
+	extends Partial<IProvideLayerCompatSupportRequirements> {
 	/**
 	 * The minimum supported generation the other layer needs to be at.
 	 */

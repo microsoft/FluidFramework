@@ -30,6 +30,20 @@ export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 	return isChunkedContents(message.contents);
 }
 
+/**
+ * Configures inbound chunk processing.
+ *
+ * @internal
+ */
+export interface OpSplitterOptions {
+	/**
+	 * Allows the first observed chunk stream for each client to begin after chunk 1. The unreconstructable
+	 * remainder of that stream is discarded, after which chunk ordering is strict. Historical readers use
+	 * this because their requested range can begin within a stream; live processing leaves it disabled.
+	 */
+	readonly allowInitialPartialChunkStream?: boolean;
+}
+
 interface IChunkedContents {
 	readonly type: typeof ContainerMessageType.ChunkedOp;
 	readonly contents: IChunkedOp;
@@ -45,6 +59,8 @@ function isChunkedContents(contents: unknown): contents is IChunkedContents {
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
 	private readonly chunkMap: Map<string, string[]>;
+	// No entry = unseen; 1 = aligned; >1 = the next initial partial chunk to discard.
+	private readonly nextInitialChunkIdByClient = new Map<string, number>();
 	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
@@ -55,8 +71,14 @@ export class OpSplitter {
 		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
 		logger: ITelemetryBaseLogger,
+		private readonly options: OpSplitterOptions = {},
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
+		if (this.options.allowInitialPartialChunkStream === true) {
+			for (const clientId of this.chunkMap.keys()) {
+				this.nextInitialChunkIdByClient.set(clientId, 1);
+			}
+		}
 		this.logger = createChildLogger({ logger, namespace: "OpSplitter" });
 	}
 
@@ -76,6 +98,19 @@ export class OpSplitter {
 		}
 	}
 
+	private throwChunkIdMismatch(
+		originalMessage: ISequencedDocumentMessage,
+		chunkedContent: IChunkedOp,
+		expectedChunkId: number,
+	): never {
+		throw new DataCorruptionError("Chunk Id mismatch", {
+			...extractSafePropertiesFromMessage(originalMessage),
+			chunkMapLength: expectedChunkId - 1,
+			chunkId: chunkedContent.chunkId,
+			totalChunks: chunkedContent.totalChunks,
+		});
+	}
+
 	private addChunk(
 		clientId: string,
 		chunkedContent: IChunkedOp,
@@ -91,12 +126,7 @@ export class OpSplitter {
 			// We are expecting the chunks to be processed sequentially, in the same order as they are sent.
 			// Therefore, the chunkId of the incoming op needs to match the length of the array (1-based indexing)
 			// holding the existing chunks for that particular clientId.
-			throw new DataCorruptionError("Chunk Id mismatch", {
-				...extractSafePropertiesFromMessage(originalMessage),
-				chunkMapLength: map.length,
-				chunkId: chunkedContent.chunkId,
-				totalChunks: chunkedContent.totalChunks,
-			});
+			this.throwChunkIdMismatch(originalMessage, chunkedContent, map.length + 1);
 		}
 
 		map.push(chunkedContent.contents);
@@ -214,6 +244,33 @@ export class OpSplitter {
 
 		const clientId = message.clientId as string;
 		const chunkedContent = contents.contents;
+		if (this.options.allowInitialPartialChunkStream === true) {
+			const nextInitialChunkId = this.nextInitialChunkIdByClient.get(clientId);
+			if (nextInitialChunkId !== 1) {
+				if (
+					nextInitialChunkId !== undefined &&
+					chunkedContent.chunkId !== nextInitialChunkId
+				) {
+					this.throwChunkIdMismatch(message, chunkedContent, nextInitialChunkId);
+				}
+
+				if (
+					nextInitialChunkId === undefined &&
+					(chunkedContent.chunkId <= 1 || chunkedContent.chunkId > chunkedContent.totalChunks)
+				) {
+					this.nextInitialChunkIdByClient.set(clientId, 1);
+				} else {
+					this.nextInitialChunkIdByClient.set(
+						clientId,
+						chunkedContent.chunkId < chunkedContent.totalChunks
+							? chunkedContent.chunkId + 1
+							: 1,
+					);
+					return { isFinalChunk: false };
+				}
+			}
+		}
+
 		this.addChunk(clientId, chunkedContent, message);
 
 		if (chunkedContent.chunkId < chunkedContent.totalChunks) {

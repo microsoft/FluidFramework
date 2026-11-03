@@ -4,6 +4,7 @@
  */
 
 export {
+	appendDebugMessage,
 	assert,
 	fail,
 	debugAssert,
@@ -11,6 +12,8 @@ export {
 	nonProductionConditionalsIncluded,
 	emulateProductionBuild,
 	onAssertionFailure,
+	prefixPredicate,
+	skipInProduction,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";
@@ -34,4 +37,5 @@ export { unreachableCase } from "./unreachable.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { oob } from "./oob.js";
 export { transformMapValues } from "./map.js";
+export { clamp } from "./math.js";
 export { validateAllOrNone, type AllOrNoneResult } from "./allOrNone.js";

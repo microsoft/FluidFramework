@@ -8,6 +8,6 @@
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
-config.spec = "dist/test";
+config.spec = "lib/test";
 config.timeout = false;
 module.exports = config;

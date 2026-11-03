@@ -11,18 +11,21 @@ AI-powered assistant that helps you launch the right AI agent.
 
 ```
 USAGE
-  $ flub ai [-v | --quiet] [--aliasFile <value>] [--githubToken <value>] [--launchFile <value>] [--model
-    <value>]
+  $ flub ai [-v | --quiet] [--aliasFile <value>] [--assetDirectory <value>] [--githubToken <value>]
+    [--launchFile <value>] [--model <value>]
 
 FLAGS
-  --aliasFile=<value>    [env: FLUB_AI_ALIAS_FILE] Path to the agent-aliases.sh file. Defaults to the AI-enabled
-                         Codespace locations.
-  --githubToken=<value>  [env: COPILOT_GITHUB_TOKEN] GitHub token for the launcher assistant. Defaults to
-                         COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.
-  --launchFile=<value>   Write the launch command to this file instead of executing it. Used by shell wrappers to run
-                         the alias as a separate process.
-  --model=<value>        The AI model to use for the launcher assistant. Defaults to the model specified in
-                         launcher-prompt.md frontmatter.
+  --aliasFile=<value>       [env: FLUB_AI_ALIAS_FILE] Path to the agent-aliases.sh file. Defaults to the AI-enabled
+                            Codespace locations.
+  --assetDirectory=<value>  [env: FLUB_AI_ASSET_DIRECTORY] Directory containing assets used by the AI launcher. The
+                            configured directory must exist. When unset, searches supported locations under the resolved
+                            repository root.
+  --githubToken=<value>     [env: COPILOT_GITHUB_TOKEN] GitHub token for the launcher assistant. Defaults to
+                            COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.
+  --launchFile=<value>      Write the launch command to this file instead of executing it. Used by shell wrappers to run
+                            the alias as a separate process.
+  --model=<value>           The AI model to use for the launcher assistant. Defaults to the model specified in
+                            launcher-prompt.md frontmatter.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -38,7 +41,7 @@ EXAMPLES
 
   Use a specific model for the launcher assistant.
 
-    $ flub ai --model claude-sonnet-4.5
+    $ flub ai --model gpt-6-luna
 ```
 
 _See code: [src/commands/ai.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/ai.ts)_

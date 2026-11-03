@@ -20,6 +20,7 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	defaultTestOldestSupportedClient,
 	TestObjectProvider,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
@@ -144,6 +145,7 @@ const rootDOFactory = new DataObjectFactory({
 });
 const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: rootDOFactory,
+	oldestSupportedClient: defaultTestOldestSupportedClient,
 	registryEntries: [rootDOFactory.registryEntry],
 	runtimeOptions,
 });

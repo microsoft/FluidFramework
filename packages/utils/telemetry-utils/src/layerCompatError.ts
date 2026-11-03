@@ -37,58 +37,77 @@ const strictCheckBypassLoggedForPair: Set<string> = new Set<string>();
  * Validates the compatibility between two layers using their compatibility details and support requirements.
  * If the layers are incompatible, it logs a "LayerIncompatibilityError" error event. It will also call the dispose
  * function with the error and throw the error.
- * @param layer1 - The name of the first layer.
- * @param layer2 - The name of the second layer.
- * @param compatDetailsLayer1 - The compatibility details of the first layer.
- * @param compatSupportRequirementsLayer1 - The support requirements that the second layer must meet to be compatible
- * with the first layer.
- * @param maybeCompatDetailsLayer2 - The compatibility details of the second layer. This can be undefined if the
- * second layer does not provide compatibility details.
- * @param disposeFn - A function that will be called with the error if the layers are incompatible.
- * @param mc - The monitoring context for logging and reading configuration.
- * @param strictCompatibilityCheck - If true, the function will use default compatibility details for the second layer if
- * they are missing and use it for validation.
- * If false, it will skip the compatibility check if the details are missing and just log an error.
- * Defaults to false.
+ *
+ * @param validatingLayer - The layer whose support requirements define compatibility. The `targetLayer` must meet
+ * these requirements to be considered compatible.
+ * - `layer`: The name of this layer.
+ * - `packageInfo`: The package version / generation of this layer, used for telemetry attribution.
+ * - `compatSupportRequirements`: The requirements the `targetLayer` must satisfy to be compatible with this layer.
+ * @param targetLayer - The layer being validated against the `validatingLayer`'s requirements.
+ * - `layer`: The name of this layer.
+ * - `compatDetails`: The compatibility details of this layer. Can be undefined if this layer does not provide them.
+ * - `strictCompatibilityCheck`: If true, default compatibility details are used for this layer when its details are missing, and validation proceeds. If false (default), the compatibility check is skipped when details are missing and an error is logged instead.
+ * @param context - Ambient dependencies for the validation.
+ * - `disposeFn`: A function that will be called with the error if the layers are incompatible.
+ * - `mc`: The monitoring context for logging and reading configuration.
  *
  * @internal
  */
 export function validateLayerCompatibility(
-	layer1: FluidLayer,
-	layer2: FluidLayer,
-	compatDetailsLayer1: Pick<ILayerCompatDetails, "pkgVersion" | "generation">,
-	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
-	maybeCompatDetailsLayer2: ILayerCompatDetails | undefined,
-	disposeFn: (error?: IErrorBase) => void,
-	mc: MonitoringContext,
-	strictCompatibilityCheck: boolean = false,
+	validatingLayer: {
+		layer: FluidLayer;
+		packageInfo: Pick<ILayerCompatDetails, "pkgVersion" | "generation">;
+		compatSupportRequirements: ILayerCompatSupportRequirements;
+	},
+	targetLayer: {
+		layer: FluidLayer;
+		compatDetails: ILayerCompatDetails | undefined;
+		strictCompatibilityCheck?: boolean;
+	},
+	context: {
+		disposeFn: (error?: IErrorBase) => void;
+		mc: MonitoringContext;
+	},
 ): void {
+	const {
+		layer: validatingLayerName,
+		packageInfo: validatingLayerPackageInfo,
+		compatSupportRequirements: validatingLayerSupportRequirements,
+	} = validatingLayer;
+	const {
+		layer: targetLayerName,
+		compatDetails: maybeTargetLayerCompatDetails,
+		strictCompatibilityCheck = false,
+	} = targetLayer;
+	const { disposeFn, mc } = context;
+
 	const layerCheckResult = checkLayerCompatibility(
-		compatSupportRequirementsLayer1,
-		maybeCompatDetailsLayer2,
+		validatingLayerSupportRequirements,
+		maybeTargetLayerCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
 		const coreProperties = {
-			layer: layer1,
-			incompatibleLayer: layer2,
-			layerVersion: compatDetailsLayer1.pkgVersion,
-			incompatibleLayerVersion: maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
+			layer: validatingLayerName,
+			incompatibleLayer: targetLayerName,
+			layerVersion: validatingLayerPackageInfo.pkgVersion,
+			incompatibleLayerVersion: maybeTargetLayerCompatDetails?.pkgVersion ?? "unknown",
 			compatibilityRequirementsInMonths:
-				compatDetailsLayer1.generation -
-				compatSupportRequirementsLayer1.minSupportedGeneration,
+				validatingLayerPackageInfo.generation -
+				validatingLayerSupportRequirements.minSupportedGeneration,
 			actualDifferenceInMonths:
-				compatDetailsLayer1.generation - (maybeCompatDetailsLayer2?.generation ?? 0),
+				validatingLayerPackageInfo.generation -
+				(maybeTargetLayerCompatDetails?.generation ?? 0),
 		};
 		const detailedProperties = {
-			layerGeneration: compatDetailsLayer1.generation,
-			incompatibleLayerGeneration: maybeCompatDetailsLayer2?.generation,
-			minSupportedGeneration: compatSupportRequirementsLayer1.minSupportedGeneration,
+			layerGeneration: validatingLayerPackageInfo.generation,
+			incompatibleLayerGeneration: maybeTargetLayerCompatDetails?.generation,
+			minSupportedGeneration: validatingLayerSupportRequirements.minSupportedGeneration,
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 			unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 		};
 
 		const error = new LayerIncompatibilityError(
-			`The versions of the ${layer1} and ${layer2} are not compatible`,
+			`The versions of the ${validatingLayerName} and ${targetLayerName} are not compatible`,
 			{
 				...coreProperties,
 				details: JSON.stringify(detailedProperties),
@@ -112,21 +131,21 @@ export function validateLayerCompatibility(
 			return;
 		}
 
-		if (maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck) {
-			// If there is no compatibility details for layer2 and strictCompatibilityCheck is false, do not fail.
-			// There can be a couple of scenarios where this can happen:
-			// 1. layer2's version is older than the version where compatibility enforcement was introduced. In this
-			//    case, the behavior is the same as before compatibility enforcement was introduced.
-			// 2. layer2 has a custom implementation which doesn't provide compatibility details. In this case,
-			//    we don't know for sure that it is incompatible. It may fail at a later point when it tries to use
-			//    some feature that the Runtime doesn't support.
-			if (!strictCheckBypassLoggedForPair.has(`${layer1}-${layer2}`)) {
+		if (maybeTargetLayerCompatDetails === undefined && !strictCompatibilityCheck) {
+			// If there is no compatibility details for the target layer and strictCompatibilityCheck is false, do not
+			// fail. There can be a couple of scenarios where this can happen:
+			// 1. The target layer's version is older than the version where compatibility enforcement was introduced.
+			//    In this case, the behavior is the same as before compatibility enforcement was introduced.
+			// 2. The target layer has a custom implementation which doesn't provide compatibility details. In this
+			//    case, we don't know for sure that it is incompatible. It may fail at a later point when it tries to
+			//    use some feature that the Runtime doesn't support.
+			if (!strictCheckBypassLoggedForPair.has(`${validatingLayerName}-${targetLayerName}`)) {
 				// This event is only logged once per session per layer combination to avoid flooding telemetry.
-				strictCheckBypassLoggedForPair.add(`${layer1}-${layer2}`);
+				strictCheckBypassLoggedForPair.add(`${validatingLayerName}-${targetLayerName}`);
 				mc.logger.sendTelemetryEvent(
 					{
 						eventName: "LayerIncompatibilityDetectedButBypassed",
-						reason: `No compatibility details provided for ${layer2} and strictCompatibilityCheck is false`,
+						reason: `No compatibility details provided for ${targetLayerName} and strictCompatibilityCheck is false`,
 					},
 					error,
 				);

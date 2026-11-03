@@ -13,6 +13,7 @@ export {
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
+	loadAndSummarize,
 	type ICaptureFullContainerStateProps,
 	type IContainerDriverServices,
 	type IContainerHostProps,
@@ -25,6 +26,7 @@ export {
 	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
 export type {
+	AcknowledgedSummary,
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummaryStage,
@@ -41,8 +43,13 @@ export {
 	loaderCoreCompatDetails,
 	runtimeSupportRequirementsForLoader,
 	loaderCompatDetailsForRuntime,
+	loaderCompatDetailsForDriver,
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
+export {
+	loadContainerToSequenceNumber,
+	type ILoadContainerToSequenceNumberProps,
+} from "./loadContainerToSequenceNumber.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,

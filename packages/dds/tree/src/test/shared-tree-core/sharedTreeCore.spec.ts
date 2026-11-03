@@ -14,7 +14,6 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -31,7 +30,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
@@ -267,7 +265,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -294,7 +292,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -356,12 +354,8 @@ describe("SharedTreeCore", () => {
 	 */
 	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
-		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 		const factory = new SharedTreeTestFactory(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -627,9 +621,7 @@ describe("SharedTreeCore", () => {
 				resubmitMachine: machine,
 			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -654,9 +646,7 @@ describe("SharedTreeCore", () => {
 				resubmitMachine: machine,
 			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -678,9 +668,7 @@ describe("SharedTreeCore", () => {
 				resubmitMachine: machine,
 			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -710,9 +698,7 @@ describe("SharedTreeCore", () => {
 				resubmitMachine: machine,
 			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -733,9 +719,7 @@ describe("SharedTreeCore", () => {
 				resubmitMachine: machine,
 			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			const runtime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -822,19 +806,19 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<TChange, TEditor extends DefaultEditBuilder>(
-	tree: SharedTreeCore<TEditor, TChange>,
+function changeTree<TChange, TEditor extends DefaultEditBuilder, TChangeProcessingContext>(
+	tree: SharedTreeCore<TEditor, TChange, TChangeProcessingContext>,
 ): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, chunkFromJsonableTrees([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */
-function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
-	tree: SharedTreeCore<TEditor, TChange>,
+function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange, TChangeProcessingContext>(
+	tree: SharedTreeCore<TEditor, TChange, TChangeProcessingContext>,
 ): number {
 	const { editManager } = tree as unknown as {
-		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
+		editManager: EditManager<TEditor, TChange>;
 	};
 	assert(
 		editManager !== undefined,

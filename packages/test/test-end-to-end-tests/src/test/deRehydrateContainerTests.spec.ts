@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
+import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IContainerRuntimeBase,
@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	createDataStoreFactory,
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -243,6 +244,7 @@ describeCompat(
 			(defaultFactory as any).IRuntimeFactory =
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 					runtimeOptions: {},
 				});
@@ -461,7 +463,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -501,7 +503,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -541,7 +543,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
 					await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-				const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+				const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =

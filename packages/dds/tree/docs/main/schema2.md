@@ -15,7 +15,7 @@ Mostly implemented, but some significant changes were made after implementation:
 
 The current schema system has several issues:
 
-1. It's cluttered with features that are not used in most cases. (ex: extraLocalFields, extraGlobalFields, global fields and values are not used on almost all schema)
+1. It's cluttered with features that are not used in most cases. (ex: extraLocalFields, extraGlobalFields, global fields and values are not used on almost all schemas)
 2. It's not clear to users which features to use when and why they all exist.
 3. global value fields and extra global fields don't interact in a clear well defined way (would such value fields be required on all nodes with extraGlobalFields or are they implicitly made optional when used via extra global fields?)
 4. Extra local fields can result in types TypeScript can't model, since our schema system only applies the schema for the extra fields to all fields not explicitly listed. This [can't be done in TypeScript](https://www.typescriptlang.org/play?noPropertyAccessFromIndexSignature=true&ts=4.5.5#code/PTAEBUCcE9QFwPagLYEMDWBTUr7QA7YDuAFppNgGYCWmANgCagBEqzo1AzqJ3JNQDsA5gBocAphV44KoAQFdkAI3IAuAFDqQoACIJM3AQjigiCSOnVwC2AMrVk+OtgC8oAN7qAkAG0ssQR4+QSEAXVVQf1BMAA84TAluVnYAfiD+YVAIhWVyAG51AF8CrTA9AzljU3N0DWtCUFtg4U4AeTgySHASVAEAHnBouISGbl4MoQA+UDd-BEoPUD9MAIFQAApBgB90kIBKcMiVofjEiFA0gUwAN3Iso9hiqxtG5qE2jvJu3oAmAZORmM3tM3ABRGIAYzo8gYmD64xCYnAkxK2gAQsYSPAyJxsKhZAAreTSAAGCOEJOeDVsM1eEw+nW+-WSKKpdh+tKa9PajJ6Aj+LNRZX0hiqSnk1EY6kE8UglFQELsDicmA5ni8qAi5KEBV8UUCnEOckUKkgBSepV0IsqJnFkoY0oEsvlisayucau8mt2wl1y1WjSNOVN5pKEIQAmkAH0GKg4KgAIwReyOZy09w4CLMGLsJ7hyMmGNx1A-ZPu1yLb3Z5hiJQRACsoCe2gAAnBOABaWKECFwLuQSDmUyDzL504meqYdT56Ox+MAZjLqYrGe9jebYDbne7mF7-cHkGHEaEoDHCQnNmnEdnxYALEuVenMywc7Ws9Bc7rNF4gA)
@@ -58,7 +58,7 @@ This means Struct Nodes can have scheme-aware APIs that don't have to use symbol
 We will keep a method to look up fields by their keys to cover generic code as well.
 
 Custom field names make it practical to use long collision resistant names for fields, and this usage pattern can replace most of the need for global field keys.
-The other use case, where the same field is desired on multiple schema can be handled in other ways, like putting it on a reused child node, or just putting the field directly on each schema it is desired on.
+The other use case, where the same field is desired on multiple schemas can be handled in other ways, like putting it on a reused child node, or just putting the field directly on each schema it is desired on.
 
 Map nodes will not expose a JavaScript object like API, and instead expose a JavaScript Map like API.
 This avoids the need to use a Proxy for any of the node implementations, as well as avoids needing to support custom field names for Map nodes to deal with possible API name collisions.
@@ -100,9 +100,9 @@ and does not involve exposing any stored schema editing to users.
 Workstream 1
 
 1. (Done) Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive).
-2. (Done) Update all schema to use new API.
+2. (Done) Update all schemas to use new API.
 3. (Done) Remove old schema builder API.
-4. Capture which kind of node schema the view schema are in the data and type produced by the schema builder.
+4. Capture which kind of node schemas the view schemas are in the data and type produced by the schema builder.
 
 Workstream 2
 

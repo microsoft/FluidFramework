@@ -21,11 +21,13 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	toIDeltaManagerFull,
 	createSummarizerFromFactory,
@@ -110,6 +112,7 @@ describeCompat(
 		// The 1st runtime factory, V1 of the code
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [dataObjectFactory.registryEntry],
 			runtimeOptions,
 		});
@@ -489,11 +492,14 @@ describeCompat(
 						"submitSummary should fail in base stage because summarizer is behind",
 					);
 				} else {
-					dataObjectA1.logger.send({
-						category: "error",
-						eventName: "FluidDataStoreContext:RealizeError",
-						error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
-					});
+					dataObjectA1.logger.send(
+						{
+							category: "error",
+							eventName: "FluidDataStoreContext:RealizeError",
+							error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+						},
+						LogLevel.essential,
+					);
 				}
 			},
 		);

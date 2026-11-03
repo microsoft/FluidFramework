@@ -344,10 +344,15 @@ export function testChangeFamilyFactory(
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		codecs: TestChange.codecs,
+		hasSchemaChange: () => false,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
+		buildProcessor: (): never => {
+			assert.fail("Unexpected buildProcessor call");
+		},
+		validator: (change: TestChange): true | string => true,
 	};
 	return family;
 }

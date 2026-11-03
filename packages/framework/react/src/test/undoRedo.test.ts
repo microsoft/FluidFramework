@@ -9,7 +9,7 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import {
 	CommitKind,
 	independentView,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -298,7 +298,7 @@ describe("createUndoRedo", () => {
 		// Minimal branch mock that lets the test fire controlled changed events with
 		// revertibles whose revert() behavior we control.
 		function createMockBranch(): {
-			branch: TreeBranchAlpha;
+			branch: UntypedTreeViewAlpha;
 			fireChanged: (
 				isLocal: boolean,
 				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
@@ -320,7 +320,7 @@ describe("createUndoRedo", () => {
 						};
 					},
 				},
-			} as unknown as TreeBranchAlpha;
+			} as unknown as UntypedTreeViewAlpha;
 			return {
 				branch,
 				fireChanged: (isLocal, getRevertible, kind = CommitKind.Default) => {

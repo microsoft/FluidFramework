@@ -7,8 +7,8 @@
  * @fileoverview Definition of the Float*Property classes
  */
 
-const { _castFunctors } = require("./primitiveTypeCasts");
-const { ValueProperty } = require("./valueProperty");
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ValueProperty } from "./valueProperty.js";
 
 /**
  * A primitive property for a 32 bit floating point value.

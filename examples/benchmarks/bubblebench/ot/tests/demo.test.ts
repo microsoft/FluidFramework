@@ -3,24 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config.cjs";
+import { expect, test } from "@playwright/test";
 
-describe("Bubblebench", () => {
-	describe("SharedOT", () => {
-		beforeAll(async () => {
-			// Wait for the page to load first before running any tests
-			// so this time isn't attributed to the first test
-			await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		}, 45000);
+/* eslint-disable @typescript-eslint/dot-notation */
 
-		beforeEach(async () => {
-			await page.goto(globals.PATH, { waitUntil: "load" });
+test.describe("Bubblebench", () => {
+	test.describe("SharedOT", () => {
+		test.beforeEach(async ({ page }) => {
+			await page.goto("/", { waitUntil: "load" });
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("The page loads and displays current FPS", async () => {
-			// Validate there is a button that can be clicked
-			await expect(page).toMatchTextContent("FPS", { timeout: 0 });
-		}, 20000);
+		test("The page loads and displays current FPS", async ({ page }) => {
+			await expect(page.getByText("FPS").first()).toBeVisible();
+		});
 	});
 });

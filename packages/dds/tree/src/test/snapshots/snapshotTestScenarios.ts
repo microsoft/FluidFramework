@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -371,6 +372,44 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 					}),
 				);
 				view.initialize(undefined);
+				provider.synchronizeMessages();
+				await takeSnapshot(tree, "final");
+			},
+		},
+		{
+			/**
+			 * Locks the persisted representation of custom commit metadata, including its absence before
+			 * the version that introduced it. `retainHistory` keeps the annotated commit in the summary.
+			 */
+			name: "custom-metadata",
+			runScenario: async (takeSnapshot) => {
+				const sf = new SchemaFactory("test trees");
+				const provider = new TestTreeProviderLite(
+					1,
+					configuredSharedTree({ ...factoryOptions, retainHistory: true }).getFactory(),
+					true,
+				);
+				const tree = provider.trees[0];
+				const view = asAlpha(
+					tree.viewWith(
+						new TreeViewConfiguration({
+							schema: sf.array(sf.string),
+							enableSchemaValidation,
+						}),
+					),
+				);
+				view.initialize([]);
+				view.runTransaction(
+					() => {
+						view.runTransaction(
+							() => {
+								view.root.insertAtEnd("annotated");
+							},
+							{ customMetadata: { step: "inner" } },
+						);
+					},
+					{ customMetadata: { intent: "annotated-edit" } },
+				);
 				provider.synchronizeMessages();
 				await takeSnapshot(tree, "final");
 			},

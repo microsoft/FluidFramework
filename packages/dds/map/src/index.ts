@@ -18,7 +18,6 @@
 export type {
 	FluidMapLegacy,
 	IDirectory,
-	IDirectoryBeta,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,

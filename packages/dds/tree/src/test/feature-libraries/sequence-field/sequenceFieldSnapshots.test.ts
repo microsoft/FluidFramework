@@ -37,7 +37,6 @@ export function testSnapshots(): void {
 						const encoded = codec.encode(changeset, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
-							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});

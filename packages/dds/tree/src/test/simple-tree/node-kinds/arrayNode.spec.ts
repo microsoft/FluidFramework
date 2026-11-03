@@ -11,12 +11,14 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
+	TreeArrayNode,
 	TreeViewConfiguration,
-	type TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
+	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
@@ -34,8 +36,12 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-import { TestTreeProviderLite } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
+
+// `TreeArrayNodeAlpha` should be assignable to `TreeArrayNode`.
+type _arrayAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeArrayNodeAlpha<TAllowedTypes>, TreeArrayNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -91,6 +97,63 @@ describe("ArrayNode", () => {
 		it("passes Array.isArray", () => {
 			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
 			assert.equal(Array.isArray(array), true);
+		});
+	});
+
+	// Insertion tests in addition to the ones inside of testArrayFromSchemaType below
+	describeHydration("inserting nodes", (init, hydrated) => {
+		// This validation is done in a place that is non array specific, but can only be hit by arrays,
+		// and impacts the public API surface of arrays so testing it here makes sense.
+		it("inserting the same node more than once in a single insert throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const array = init(ItemArray, []);
+			const item = new Item({});
+			const message = `A "ArrayNodeTest.Item" node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`;
+			assert.throws(() => array.insertAtEnd(item, item), validateUsageError(message));
+			assert.throws(
+				() => array.insertAtEnd(TreeArrayNode.spread([item, item])),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAt(0, TreeArrayNode.spread([item]), item),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAtEnd(new Item({}), item, item),
+				validateUsageError(message),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("inserting already inserted node throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			const array = init(ItemArray, [item]);
+			assert.throws(
+				() => array.insertAtEnd(item),
+				validateUsageError(
+					hydrated
+						? // The case of hydrating a node has extra context and stricter validation using that context.
+							// One sideeffect of that is we give nicer errors.
+							`A node with schema "ArrayNodeTest.Item" (name: "Item") was inserted into the tree more than once. This is not supported.`
+						: "A node may not be in more than one place in the tree",
+				),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("constructing an array with the same child twice throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			assert.throws(
+				() => init(ItemArray, [item, item]),
+				validateUsageError("A node may not be in more than one place in the tree"),
+			);
 		});
 	});
 
@@ -165,7 +228,7 @@ describe("ArrayNode", () => {
 				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
 				const list = init(schemaType, initial);
-				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				return asAlpha(list);
 			}
 
 			it("fails at runtime if attempting to set content via index assignment", () => {
@@ -190,6 +253,19 @@ describe("ArrayNode", () => {
 				const jsArray = [0, 1, 2];
 				const array = init(schemaType, jsArray);
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+
+			it("preserves indexed access bounds", () => {
+				const array = init(schemaType, [0, 1, 2]);
+				assert.equal(array[0], 0);
+				assert.equal(array[2], 2);
+				for (const index of [-1, 0.5, 3, Number.NaN, Number.POSITIVE_INFINITY]) {
+					assert.equal(array[index], undefined);
+					assert.equal(Object.getOwnPropertyDescriptor(array, `${index}`), undefined);
+				}
+				const empty = init(schemaType, []);
+				assert.equal(empty[0], undefined);
+				assert.equal(Object.getOwnPropertyDescriptor(empty, "0"), undefined);
 			});
 
 			describe("at", () => {
@@ -250,6 +326,156 @@ describe("ArrayNode", () => {
 					const array = buildAlphaArray([]);
 					assert.equal(array.shift(), undefined);
 					assert.deepEqual([...array], []);
+				});
+			});
+
+			describe("findLast", () => {
+				it("returns the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLast((value) => value % 2 === 0),
+						4,
+					);
+					assert.equal(
+						array.findLast((value) => value < 3),
+						2,
+					);
+				});
+
+				it("returns undefined when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLast((value) => value > 10),
+						undefined,
+					);
+				});
+
+				it("visits items from last to first, passing the index and array to the predicate", () => {
+					const array = buildAlphaArray([5, 6, 7]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index, items) => {
+						assert.deepEqual([...items], [5, 6, 7]);
+						visited.push({ value, index });
+						return false;
+					});
+					assert.deepEqual(visited, [
+						{ value: 7, index: 2 },
+						{ value: 6, index: 1 },
+						{ value: 5, index: 0 },
+					]);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index) => {
+						if (index === 3) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 2 holds 4 and index 0 holds 2.
+					// This matches Array.prototype.findLast run with an equivalent mutating callback.
+					assert.deepEqual(visited, [
+						{ value: 4, index: 3 },
+						{ value: 4, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("returns the matched item even if the predicate moves it", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result = array.findLast((value) => {
+						array.removeAt(0);
+						return value === 3;
+					});
+					assert.equal(result, 3);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLast((value) => value % 2),
+						1,
+					);
+				});
+
+				it("narrows the result type when passed a type-guard predicate", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result: 2 | undefined = array.findLast((value): value is 2 => value === 2);
+					assert.equal(result, 2);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLast(isTarget, context);
+					assert.equal(result, 2);
+				});
+			});
+
+			describe("findLastIndex", () => {
+				it("returns the index of the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2 === 0),
+						3,
+					);
+					assert.equal(
+						array.findLastIndex((value) => value < 3),
+						1,
+					);
+				});
+
+				it("returns -1 when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLastIndex((value) => value > 10),
+						-1,
+					);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLastIndex((value, index) => {
+						if (index === 2) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 1 holds 3 and index 0 holds 2.
+					assert.deepEqual(visited, [
+						{ value: 3, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2),
+						0,
+					);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLastIndex(isTarget, context);
+					assert.equal(result, 1);
 				});
 			});
 
@@ -420,6 +646,13 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
+				it("removes and returns null elements", () => {
+					const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+					const array = init(schema, [1, null, 2]);
+					assert.deepEqual(asAlpha(array).splice(1, 1), [null]);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
@@ -847,6 +1080,82 @@ describe("ArrayNode", () => {
 					assert.deepEqual([...array], [2, 3, 1]);
 				});
 
+				// Hydrated and unhydrated implementations must produce the same contents for every valid range move.
+				// Enumerate the small input domain to cover interior gaps, boundaries, empty/full ranges,
+				// and forward/backward moves, with both overloads for specifying the same source array.
+				for (const specifySource of [false, true]) {
+					it(`moves ranges correctly for every valid destination gap (${
+						specifySource ? "specified" : "implicit"
+					} source)`, () => {
+						const initialState = [0, 1, 2, 3, 4, 5];
+						for (let sourceStart = 0; sourceStart <= initialState.length; sourceStart++) {
+							for (
+								let sourceEnd = sourceStart;
+								sourceEnd <= initialState.length;
+								sourceEnd++
+							) {
+								for (
+									let destinationGap = 0;
+									destinationGap <= initialState.length;
+									destinationGap++
+								) {
+									const array = init(schemaType, initialState);
+									const expected = [...initialState];
+									// Gaps within the source range, including its boundaries, leave content unchanged.
+									if (destinationGap < sourceStart || destinationGap > sourceEnd) {
+										const moved = expected.splice(sourceStart, sourceEnd - sourceStart);
+										// The gap is measured before removal; forward moves need a shifted insertion index.
+										const destinationIndex =
+											destinationGap > sourceEnd
+												? destinationGap - moved.length
+												: destinationGap;
+										expected.splice(destinationIndex, 0, ...moved);
+									}
+									if (specifySource) {
+										array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd, array);
+									} else {
+										array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+									}
+									assert.deepEqual(
+										[...array],
+										expected,
+										JSON.stringify({
+											sourceStart,
+											sourceEnd,
+											destinationGap,
+										}),
+									);
+								}
+							}
+						}
+					});
+				}
+
+				it("preserves large arrays when the destination gap is inside the moved range", () => {
+					// The unhydrated editor switches from splice to slice-based insertion at 1000 items.
+					// Keep a suffix after the moved range to expose unintended relocation on that path.
+					const initialState = Array.from({ length: 1002 }, (_, index) => index);
+					const array = init(schemaType, initialState);
+					array.moveRangeToIndex(1, 0, 1000);
+					assert.deepEqual([...array], initialState);
+				});
+
+				it("validates indices before overlapping range moves", () => {
+					const array = init(schemaType, [1, 2, 3]);
+					// Both gaps are numerically inside their source ranges, but invalid inputs must still throw.
+					assert.throws(
+						() => array.moveRangeToIndex(2, 1, 4),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
+						),
+					);
+					assert.throws(
+						() => array.moveRangeToIndex(1.5, 0, 2),
+						validateUsageError(/Expected a safe integer/),
+					);
+					assert.deepEqual([...array], [1, 2, 3]);
+				});
+
 				it("cross-field move", () => {
 					const schema = schemaFactory.object("parent", {
 						array1: schemaFactory.array(schemaFactory.number),
@@ -855,6 +1164,22 @@ describe("ArrayNode", () => {
 					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
 					array1.moveRangeToIndex(0, 0, 2, array2);
 					assert.deepEqual([...array1], [1, 2, 1, 2]);
+				});
+
+				it("cross-field move with overlapping indices", () => {
+					// Equal numeric positions in different arrays are not overlapping locations.
+					// The same-array no-op shortcut must not suppress this actual transfer.
+					const schema = schemaFactory.object("parent", {
+						array1: schemaFactory.array(schemaFactory.number),
+						array2: schemaFactory.array(schemaFactory.number),
+					});
+					const { array1, array2 } = init(schema, {
+						array1: [4, 5, 6],
+						array2: [1, 2, 3],
+					});
+					array1.moveRangeToIndex(1, 0, 2, array2);
+					assert.deepEqual([...array1], [4, 1, 2, 5, 6]);
+					assert.deepEqual([...array2], [3]);
 				});
 
 				it("move within empty field", () => {
@@ -913,27 +1238,22 @@ describe("ArrayNode", () => {
 	}
 
 	it("asIndex helper returns expected values", () => {
-		// Expected indices with no max
-		assert.equal(asIndex("0", Number.POSITIVE_INFINITY), 0);
-		assert.equal(asIndex("1", Number.POSITIVE_INFINITY), 1);
-		assert.equal(asIndex("999", Number.POSITIVE_INFINITY), 999);
-		// Expected indices with max
-		assert.equal(asIndex("0", 2), 0);
-		assert.equal(asIndex("1", 2), 1);
-		assert.equal(asIndex("2", 2), undefined);
-		assert.equal(asIndex("999", 2), undefined);
+		assert.equal(asIndex("0"), 0);
+		assert.equal(asIndex("1"), 1);
+		assert.equal(asIndex("999"), 999);
 		// Non-index values
-		assert.equal(asIndex("-0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("Infinity", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("NaN", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("-1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.5", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" ", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("0x1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" 1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
+		assert.equal(asIndex("-0"), undefined);
+		assert.equal(asIndex("Infinity"), undefined);
+		assert.equal(asIndex("NaN"), undefined);
+		assert.equal(asIndex("-1"), undefined);
+		assert.equal(asIndex("1.5"), undefined);
+		assert.equal(asIndex(""), undefined);
+		assert.equal(asIndex(" "), undefined);
+		assert.equal(asIndex("0x1"), undefined);
+		assert.equal(asIndex(" 1"), undefined);
+		assert.equal(asIndex("1.0"), undefined);
+		assert.equal(asIndex("1 "), undefined);
+		assert.equal(asIndex(Symbol.iterator), undefined);
 	});
 
 	describeHydration(
@@ -1015,6 +1335,12 @@ describe("ArrayNode", () => {
 	describeHydration(
 		"Iteration",
 		(init) => {
+			it("iterates over null elements", () => {
+				const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+				const array = init(schema, [1, null, 2]);
+				assert.deepEqual([...array], [1, null, 2]);
+			});
+
 			it("Iterates through the values of the array", () => {
 				const array = init(CustomizableNumberArray, [1, 2, 3]);
 				const result = [];
@@ -1048,6 +1374,14 @@ describe("ArrayNode", () => {
 			});
 		},
 		() => {
+			it("continues iterating when the array is hydrated between yields", () => {
+				const array = new CustomizableNumberArray([1, 2, 3]);
+				const values = array.values();
+				assert.deepEqual(values.next(), { value: 1, done: false });
+				hydrate(CustomizableNumberArray, array);
+				assert.deepEqual([...values], [2, 3]);
+			});
+
 			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
 				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
 
@@ -1181,49 +1515,234 @@ describe("ArrayNode", () => {
 		});
 	});
 
-	describeHydration("createArrayInsertionAnchor", (init) => {
-		it("creates valid anchors", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
+	describe("createArrayInsertionAnchor", () => {
+		describeHydration("local edits", (init) => {
+			it("creates valid anchors", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+			});
+
+			it("updates anchors correctly", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				array.removeAt(0);
+				assert.equal(anchor.index, 0);
+				array.insertAtStart(4);
+				assert.equal(anchor.index, 1);
+			});
+
+			for (const event of ["nodeChanged", "treeChanged"] as const) {
+				it(`updates anchors before ${event} listeners registered after the anchor`, () => {
+					const array = init(CustomizableNumberArray, [1, 2, 3]);
+					const anchor = createArrayInsertionAnchor(array, 1);
+					const observed: { content: number[]; index: number }[] = [];
+					TreeBeta.on(array, event, () => {
+						observed.push({ content: [...array], index: anchor.index });
+					});
+					array.insertAtStart(9);
+					assert.equal(anchor.index, 2);
+					array.removeAt(0);
+					assert.equal(anchor.index, 1);
+					assert.deepEqual(observed, [
+						{ content: [9, 1, 2, 3], index: 2 },
+						{ content: [1, 2, 3], index: 1 },
+					]);
+				});
+
+				// TODO: Anchor updates run after previously registered change listeners.
+				// Enable this regression test when the anchor event-ordering bug is fixed.
+				it.skip(`updates anchors before ${event} listeners registered before the anchor`, () => {
+					const array = init(CustomizableNumberArray, [1, 2, 3]);
+					const observed: { content: number[]; index: number }[] = [];
+					TreeBeta.on(array, event, () => {
+						observed.push({ content: [...array], index: anchor.index });
+					});
+					const anchor = createArrayInsertionAnchor(array, 1);
+					array.insertAtStart(9);
+					assert.equal(anchor.index, 2);
+					array.removeAt(0);
+					assert.equal(anchor.index, 1);
+					assert.deepEqual(observed, [
+						{ content: [9, 1, 2, 3], index: 2 },
+						{ content: [1, 2, 3], index: 1 },
+					]);
+				});
+			}
+
+			it("past end", () => {
+				const array = init(CustomizableNumberArray, [1]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				array.insertAt(anchor.index, 4);
+				assert.equal(anchor.index, 2);
+			});
+
+			it("empty array", () => {
+				const array = init(CustomizableNumberArray, []);
+				const anchor = createArrayInsertionAnchor(array, 0);
+				assert.equal(anchor.index, 0);
+				array.insertAt(anchor.index, 4);
+				assert.equal(anchor.index, 1);
+				array.insertAt(anchor.index, 5);
+				assert.equal(anchor.index, 2);
+			});
+
+			it("removed item", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				array.removeAt(1);
+				// The item originally at the anchor point is gone; the anchor rests between the surviving
+				// neighbors (now [1, 3]).
+				assert.equal(anchor.index, 1);
+				anchor.dispose();
+			});
+
+			it("throws when reading index after dispose", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				anchor.dispose();
+				// Reading the index of a disposed anchor is a usage error.
+				assert.throws(() => anchor.index, validateUsageError(/disposed/));
+				// Disposing again is a no-op.
+				anchor.dispose();
+			});
+
+			it("shifts left when a multi-element range before the anchor is removed", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 4); // gap between 40 and 50
+				array.removeRange(0, 2); // remove 10, 20 -> [30, 40, 50]
+				assert.equal(anchor.index, 2); // still in the gap between 40 and 50
+				anchor.dispose();
+			});
+
+			it("collapses to the removal start when the removed range contains the anchor's position", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
+				array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
+				// The anchor's position (the gap between 30 and 40) was in the middle of the removed range, so
+				// it collapses to where that range started.
+				assert.equal(anchor.index, 1); // between 10 and 50
+				anchor.dispose();
+			});
+
+			it("tracks across a move within the array", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 2); // gap between 20 and 30
+				array.moveToIndex(0, 4); // move 50 to the front -> [50, 10, 20, 30, 40]
+				// The moved node is inserted before the anchor (shifting it right by one); its removal is
+				// after the anchor and so does not move it.
+				assert.equal(anchor.index, 3); // still in the gap between 20 and 30
+				anchor.dispose();
+			});
+
+			it("throws on an out-of-range initial index", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				// One past the end is valid (an insertion point after the last child).
+				const anchor = createArrayInsertionAnchor(array, 3);
+				assert.equal(anchor.index, 3);
+				anchor.dispose();
+				// Anything beyond that, or negative, is a usage error.
+				assert.throws(
+					() => createArrayInsertionAnchor(array, 4),
+					validateUsageError(/out of bounds/),
+				);
+				assert.throws(
+					() => createArrayInsertionAnchor(array, -1),
+					validateUsageError(/non-negative/),
+				);
+			});
 		});
 
-		it("updates anchors correctly", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
-			array.removeAt(0);
-			assert.equal(anchor.index, 0);
-			array.insertAtStart(4);
-			assert.equal(anchor.index, 1);
-		});
+		// Multiple edits being processed at once can complicate anchor handling.
+		// We ideally should ensure that the entire view of the tree, including anchors, is consistent
+		// when any event is triggered.
+		// If we can not ensure this, we must clearly document the limitations of anchor consistency during merged edits.
+		describe("merged edits", () => {
+			/**
+			 * An item we can edit and get events for.
+			 */
+			class Item extends schemaFactory.object("AnchorItem", {
+				value: schemaFactory.number,
+			}) {}
+			/**
+			 * An array we can edit, and have anchors into.
+			 */
+			class Items extends schemaFactory.array("AnchorItems", Item) {}
 
-		it("past end", () => {
-			const array = init(CustomizableNumberArray, [1]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
-			array.insertAt(anchor.index, 4);
-			assert.equal(anchor.index, 2);
+			for (const event of ["nodeChanged", "treeChanged"] as const) {
+				for (const insertFirst of [false, true]) {
+					// TODO: Anchor updates must precede descendant events, not just array listeners.
+					// Enable this regression test when the anchor event-ordering bug is fixed.
+					it.skip(`updates anchors before descendant ${event} during merge, insert first: ${insertFirst}`, () => {
+						const view = getView(new TreeViewConfiguration({ schema: Items }));
+						view.initialize([{ value: 1 }, { value: 2 }]);
+						const child = view.root[0];
+						const anchor = createArrayInsertionAnchor(view.root, 1);
+						const observed: { content: number[]; index: number }[] = [];
+						TreeBeta.on(child, event, () => {
+							observed.push({
+								content: Array.from(view.root, (item) => item.value),
+								index: anchor.index,
+							});
+						});
+						const fork = view.fork();
+						if (insertFirst) {
+							fork.root.insertAtStart({ value: 0 });
+							fork.root[1].value = 10;
+						} else {
+							fork.root[0].value = 10;
+							fork.root.insertAtStart({ value: 0 });
+						}
+						view.merge(fork);
+						assert.equal(view.root[1], child);
+						assert.equal(anchor.index, 2);
+						assert.deepEqual(observed, [{ content: [0, 10, 2], index: 2 }]);
+					});
+				}
+			}
 		});
+	});
 
-		it("empty array", () => {
-			const array = init(CustomizableNumberArray, []);
-			const anchor = createArrayInsertionAnchor(array, 0);
-			assert.equal(anchor.index, 0);
-			array.insertAt(anchor.index, 4);
-			assert.equal(anchor.index, 1);
-			array.insertAt(anchor.index, 5);
-			assert.equal(anchor.index, 2);
-		});
+	it("throws descriptive TypeError for an unsupported Array.prototype method", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const sort = (array as unknown as Record<string, unknown>).sort as (
+			...args: unknown[]
+		) => unknown;
+		assert.equal(typeof sort, "function");
+		assert.throws(
+			() => sort.call(array),
+			(error: Error) =>
+				error instanceof TypeError &&
+				error.message ===
+					"ArrayNode does not support 'sort'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).",
+		);
+	});
 
-		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
-		it("removed item", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			array.removeAt(1);
-			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
-			assert.equal(anchor.index, 2);
-		});
+	it("throws descriptive TypeError for future unsupported Array.prototype methods", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const methodName = "__testUnsupportedArrayMethod__";
+		(Array.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+			return "should not reach here";
+		};
+		try {
+			const method = (array as unknown as Record<string, unknown>)[methodName] as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof method, "function");
+			assert.throws(
+				() => method.call(array),
+				(error: Error) =>
+					error instanceof TypeError &&
+					error.message ===
+						`ArrayNode does not support '${methodName}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+			);
+		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Array.prototype
+			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
+		}
 	});
 });
 

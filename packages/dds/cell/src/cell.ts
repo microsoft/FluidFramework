@@ -21,6 +21,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -65,6 +66,7 @@ const snapshotFileName = "header";
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedCell<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedCellEvents<T>>
 	implements ISharedCell<T>
 {
@@ -105,16 +107,10 @@ export class SharedCell<T = any>
 		this.options = runtime.options as ICellOptions;
 	}
 
-	/**
-	 * {@inheritDoc ISharedCell.get}
-	 */
 	public get(): Serializable<T> | undefined {
 		return this.data;
 	}
 
-	/**
-	 * {@inheritDoc ISharedCell.set}
-	 */
 	public set(value: Serializable<T>): void {
 		// Set the value locally.
 		const previousValue = this.setCore(value);
@@ -136,9 +132,6 @@ export class SharedCell<T = any>
 		this.submitCellMessage(op, previousValue);
 	}
 
-	/**
-	 * {@inheritDoc ISharedCell.delete}
-	 */
 	public delete(): void {
 		// Delete the value locally.
 		const previousValue = this.deleteCore();
@@ -155,16 +148,10 @@ export class SharedCell<T = any>
 		this.submitCellMessage(op, previousValue);
 	}
 
-	/**
-	 * {@inheritDoc ISharedCell.empty}
-	 */
 	public empty(): boolean {
 		return this.data === undefined;
 	}
 
-	/**
-	 * {@inheritDoc ISharedCell.getAttribution}
-	 */
 	public getAttribution(): AttributionKey | undefined {
 		return this.attribution;
 	}
@@ -199,9 +186,6 @@ export class SharedCell<T = any>
 		);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
@@ -314,9 +298,6 @@ export class SharedCell<T = any>
 		return localMetadata;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 */
 	protected applyStashedOp(content: unknown): void {
 		const cellContent = content as ICellOperation;
 		switch (cellContent.type) {

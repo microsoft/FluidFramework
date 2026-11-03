@@ -23,6 +23,7 @@ import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -119,6 +120,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory.registryEntry],
 		runtimeOptions,
 	});

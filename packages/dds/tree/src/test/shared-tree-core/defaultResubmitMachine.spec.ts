@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
+import type {
+	CustomMetadataTree,
+	GraphCommit,
+	RevisionTag,
+	TaggedChange,
+} from "../../core/index.js";
 import { type ChangeEnricher, DefaultResubmitMachine } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 
@@ -55,6 +60,11 @@ const revision1 = testIdCompressor.generateCompressedId();
 const revision2 = testIdCompressor.generateCompressedId();
 const revision3 = testIdCompressor.generateCompressedId();
 
+/** Distinct per-commit metadata, so that assertions catch it being dropped or mixed up. */
+function metadata(commit: number): CustomMetadataTree {
+	return { metadata: { commit }, children: [] };
+}
+
 const commit0: GraphCommit<MockEnrichableChange> = {
 	change: {
 		inputContext: revisionRoot,
@@ -62,6 +72,7 @@ const commit0: GraphCommit<MockEnrichableChange> = {
 		updateCount: 0,
 	},
 	revision: revision0,
+	customMetadata: metadata(0),
 };
 
 const commit1: GraphCommit<MockEnrichableChange> = {
@@ -72,6 +83,7 @@ const commit1: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision1,
 	parent: commit0,
+	customMetadata: metadata(1),
 };
 const commit2: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -81,6 +93,7 @@ const commit2: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision2,
 	parent: commit1,
+	customMetadata: metadata(2),
 };
 const commit3: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -90,13 +103,14 @@ const commit3: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision3,
 	parent: commit2,
+	customMetadata: metadata(3),
 };
 
 describe("DefaultResubmitMachine", () => {
 	describe("omits already sequenced commits from resubmit phase", () => {
 		it("omits sequenced commits that were not rebased", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 			// Simulate the sequencing of commit 1
@@ -114,7 +128,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("omits sequenced commits that were rebased", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
@@ -140,7 +154,7 @@ describe("DefaultResubmitMachine", () => {
 
 	it("can resubmit a subset of commits (skipping the first)", () => {
 		const enricher = new MockChangeEnricher();
-		const machine = new DefaultResubmitMachine(enricher);
+		const machine = new DefaultResubmitMachine(enricher, true);
 
 		// Submit three commits in order
 		machine.onCommitSubmitted(commit1);
@@ -174,7 +188,7 @@ describe("DefaultResubmitMachine", () => {
 	describe("enriches commits for resubmit", () => {
 		it("when the commits do not undergo rebasing", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 
@@ -199,7 +213,7 @@ describe("DefaultResubmitMachine", () => {
 		for (const scenario of ["only", "and before"]) {
 			it(`when the commits undergo rebasing at resubmit time ${scenario}`, () => {
 				const enricher = new MockChangeEnricher();
-				const machine = new DefaultResubmitMachine(enricher);
+				const machine = new DefaultResubmitMachine(enricher, true);
 				machine.onCommitSubmitted(commit1);
 
 				if (scenario === "and before") {
@@ -237,6 +251,7 @@ describe("DefaultResubmitMachine", () => {
 					},
 					revision: revision1,
 					parent: commit0,
+					customMetadata: metadata(1),
 				});
 
 				machine.onCommitSubmitted(enriched1Resubmit);
@@ -253,6 +268,7 @@ describe("DefaultResubmitMachine", () => {
 					},
 					revision: revision2,
 					parent: rebased1,
+					customMetadata: metadata(2),
 				});
 				machine.onCommitSubmitted(enriched2Resubmit);
 
@@ -277,7 +293,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("when the commits undergo rebasing before resubmit time", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 
@@ -314,6 +330,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision1,
 				parent: commit0,
+				customMetadata: metadata(1),
 			});
 
 			machine.onCommitSubmitted(enriched1Resubmit);
@@ -330,6 +347,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision2,
 				parent: rebased1,
+				customMetadata: metadata(2),
 			});
 
 			machine.onCommitSubmitted(enriched2Resubmit);
@@ -366,7 +384,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("enriches only rebased commits when resubmitting a subset", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 
 			// Submit three commits in order
 			machine.onCommitSubmitted(commit1);
@@ -398,6 +416,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision2,
 				parent: commit1,
+				customMetadata: metadata(2),
 			});
 
 			machine.onCommitSubmitted(enriched2Resubmit);

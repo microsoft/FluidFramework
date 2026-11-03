@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/legacy";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
 import { PropertySet } from "@fluidframework/sequence/legacy";
 
@@ -55,10 +54,11 @@ export function createTableWithInterception<T extends ITable>(
 	) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
-		assert(
-			executingCallback === false,
-			"Interception wrapper method called recursively from the interception callback",
-		);
+		if (executingCallback) {
+			throw new Error(
+				"Interception wrapper method called recursively from the interception callback",
+			);
+		}
 
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
@@ -73,10 +73,11 @@ export function createTableWithInterception<T extends ITable>(
 	tableWithInterception.annotateCell = (row: number, col: number, properties: PropertySet) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
-		assert(
-			executingCallback === false,
-			"Interception wrapper method called recursively from the interception callback",
-		);
+		if (executingCallback) {
+			throw new Error(
+				"Interception wrapper method called recursively from the interception callback",
+			);
+		}
 
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;

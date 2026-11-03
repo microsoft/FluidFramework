@@ -1,0 +1,41 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+steps:
+- task: Bash@3
+  displayName: Add Docker image digest to publish metadata
+  env:
+    CANDIDATE_IMAGE: $(containerTag)
+  inputs:
+    targetType: inline
+    workingDirectory: $(Build.ArtifactStagingDirectory)/pack
+    script: |
+      set -eu -o pipefail
+
+      digest=
+      for attempt in 1 2 3 4 5; do
+        inspection="$(docker buildx imagetools inspect "$CANDIDATE_IMAGE" 2>/dev/null)" || true
+        digest="$(printf '%s\n' "$inspection" | awk '$1 == "Digest:" { print $2; exit }')"
+        if [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+          break
+        fi
+        if [ "$attempt" -lt 5 ]; then
+          sleep 5
+        fi
+      done
+
+      if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+        echo "##vso[task.logissue type=error]Unable to resolve a valid digest for the pushed Docker candidate"
+        exit 1
+      fi
+
+      metadataFile=publish-metadata.json
+      if [ ! -f "$metadataFile" ]; then
+        echo "##vso[task.logissue type=error]$metadataFile was not generated before the Docker candidate push"
+        exit 1
+      fi
+
+      jq --arg digest "$digest" '. + {dockerImageDigest: $digest}' "$metadataFile" > "$metadataFile.tmp"
+      mv "$metadataFile.tmp" "$metadataFile"
+
+      echo "Added Docker image digest to publish-metadata.json"

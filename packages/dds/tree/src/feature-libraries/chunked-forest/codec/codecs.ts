@@ -23,7 +23,7 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
-	brandedNumberType,
+	brandedIntegerType,
 	IdDecodingContext,
 	type Brand,
 	type IdDecoderOptionsOriginatorless,
@@ -36,19 +36,25 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	EncodedFieldBatchVTextExperimental,
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
-import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
+import { schemaCompressedEncodeVTextExperimental } from "./schemaBasedEncodeVText.js";
+import {
+	uncompressedEncodeV1,
+	uncompressedEncodeV2,
+	uncompressedEncodeVTextExperimental,
+} from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
+const ChunkReferenceId = brandedIntegerType<ChunkReferenceId>({ minimum: 0 });
 
 /**
  * Properties for incremental encoding.
@@ -75,7 +81,7 @@ export interface IncrementalEncoder {
 	 */
 	encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchAnyVersion,
 	): ChunkReferenceId[];
 }
 
@@ -95,7 +101,7 @@ export interface IncrementalDecoder {
 	 */
 	decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
+		chunkDecoder: (encoded: EncodedFieldBatchAnyVersion) => TreeChunk,
 	): TreeChunk;
 }
 /**
@@ -133,10 +139,10 @@ export interface FieldBatchEncodingContext {
 /**
  * Decode-side context for {@link FieldBatchCodec}.
  *
- * Carries the per-call `resolveEncodedId` function that encapsulates the
- * originator-session lookup and (for the forest-summarizer's legacy heal path)
- * the deterministic UUIDv5 synthesis. Heal and originator-session flags live
- * inside that function, not on this context.
+ * Composes an {@link IdDecodingContext} (which carries the per-call `resolveEncodedId`
+ * function encapsulating the originator-session lookup and, for the forest-summarizer's
+ * legacy heal path, the deterministic UUIDv5 synthesis) together with the optional
+ * incremental decoder for this batch.
  *
  * Constructed via one of the two named static factories — {@link forOp} or
  * {@link forSummary} — depending on the call site's semantics. The constructor
@@ -144,18 +150,19 @@ export interface FieldBatchEncodingContext {
  * op-style and summary-style decoding is load-bearing (different invariants
  * apply, and bugs in this area are typically the result of conflating them).
  */
-export class FieldBatchDecodingContext extends IdDecodingContext {
+export class FieldBatchDecodingContext {
 	private constructor(
-		private readonly options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+		/**
+		 * Resolves the encoded identifiers contained in this batch.
+		 */
+		public readonly idDecodingContext: IdDecodingContext,
 		/**
 		 * Decoder for incremental fields. Defined when the encoded batch contains
 		 * incremental chunks. Only populated on summary-style contexts; op-style
 		 * contexts always have this undefined.
 		 */
 		public readonly incrementalDecoder?: IncrementalDecoder,
-	) {
-		super(options);
-	}
+	) {}
 
 	/**
 	 * Construct a decode context for an op.
@@ -167,7 +174,7 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 	 * a UUID. Incremental decoding is not used for ops.
 	 */
 	public static forOp(options: IdDecoderOptionsWithOriginator): FieldBatchDecodingContext {
-		return new FieldBatchDecodingContext(options);
+		return new FieldBatchDecodingContext(new IdDecodingContext(options));
 	}
 
 	/**
@@ -189,7 +196,7 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 	public static forSummary(
 		options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
 	): FieldBatchDecodingContext {
-		return new FieldBatchDecodingContext(options);
+		return new FieldBatchDecodingContext(new IdDecodingContext(options));
 	}
 
 	/**
@@ -206,10 +213,10 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 		// This mitigates the risk of using incorrect originator session ID identifiers in incremental chunks.
 		// See also private remarks on forSummary.
 		assert(
-			!this.hasOriginatorSessionId,
+			!this.idDecodingContext.hasOriginatorSessionId,
 			0xd0c /* withIncrementalDecoder can only be called on contexts without an originator session ID */,
 		);
-		return new FieldBatchDecodingContext(this.options, incrementalDecoder);
+		return new FieldBatchDecodingContext(this.idDecodingContext, incrementalDecoder);
 	}
 }
 
@@ -229,7 +236,7 @@ export type FieldBatchCodec = VersionDispatchingCodec<
  */
 function makeFieldBatchCodecForVersion(
 	version: FieldBatchFormatVersion,
-	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchV1OrV2,
+	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchAnyVersion,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
 		policy: SchemaPolicy,
@@ -237,21 +244,21 @@ function makeFieldBatchCodecForVersion(
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
 		isSummary: boolean,
-	) => EncodedFieldBatchV1OrV2,
+	) => EncodedFieldBatchAnyVersion,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	return {
 		encode: (
 			data: FieldBatch,
 			context: FieldBatchEncodingContext,
-		): EncodedFieldBatchV1OrV2 => {
+		): EncodedFieldBatchAnyVersion => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: EncodedFieldBatchV1OrV2;
+			let encoded: EncodedFieldBatchAnyVersion;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -294,11 +301,13 @@ function makeFieldBatchCodecForVersion(
 			return encoded;
 		},
 		decode: (
-			data: EncodedFieldBatchV1OrV2,
+			data: EncodedFieldBatchAnyVersion,
 			context: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, context, context.incrementalDecoder).map((chunk) => chunk.cursor());
+			return decode(data, context.idDecodingContext, context.incrementalDecoder).map((chunk) =>
+				chunk.cursor(),
+			);
 		},
 		schema: encodedFieldBatchType,
 	};
@@ -326,6 +335,19 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 			uncompressedEncodeV2,
 			schemaCompressedEncodeV2,
 			EncodedFieldBatchV2,
+		),
+	},
+	{
+		// Experimental: no minVersionForCollab, so only a write version override can select it.
+		// Removing the override does not guarantee compatibility with older clients:
+		// incremental summaries may still reference unchanged chunks encoded in this format.
+		minVersionForCollab: undefined,
+		formatVersion: FieldBatchFormatVersion.vTextExperimental,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.vTextExperimental,
+			uncompressedEncodeVTextExperimental,
+			schemaCompressedEncodeVTextExperimental,
+			EncodedFieldBatchVTextExperimental,
 		),
 	},
 ]);

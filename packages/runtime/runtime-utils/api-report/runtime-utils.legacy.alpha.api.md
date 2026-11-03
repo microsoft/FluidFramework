@@ -10,10 +10,13 @@ export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeB
 // @alpha @legacy
 export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
 
+// @alpha @sealed
+export type Audience = IAudience;
+
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
 // @beta @legacy
@@ -33,6 +36,12 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)
     abstract readonly isAttached: boolean;
 }
+
+// @alpha
+export function getContainerAudience(container: FluidContainerAttached): Audience;
+
+// @beta @legacy
+export function getDataStorePackagePath(containerRuntime: IContainerRuntimeBase, handle: IFluidHandle): Promise<PackagePath | undefined>;
 
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
@@ -75,7 +84,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;

@@ -9,11 +9,13 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { IJsonCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
 import {
+	copyProperty,
 	mapIterable,
 	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
@@ -21,6 +23,7 @@ import {
 } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
@@ -30,20 +33,34 @@ import type {
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
 
-export interface EditManagerEncodingContext {
+export interface EditManagerEncodingContext<TChangeset> {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * Returns whether a changeset contains a schema change.
+	 */
+	readonly hasSchemaChange: (change: TChangeset) => boolean;
 	/**
 	 * See {@link ChangeEncodingContext.isSummary}. EditManager codec callers
 	 * always set this to `true` (the codec is only invoked for summaries),
 	 * but it is carried explicitly so downstream codecs can read it.
 	 */
 	readonly isSummary: boolean;
+}
+
+/**
+ * Context required for decoding the {@link EditManager}'s {@link SummaryData}.
+ * @remarks
+ * Unlike {@link EditManagerEncodingContext}, this carries {@link IdentifierHealingConfig} (used only
+ * on decode) and omits `schema` and `hasSchemaChange` (only consulted when encoding).
+ */
+export interface EditManagerDecodingContext {
+	readonly idCompressor: IIdCompressor;
+	readonly isSummary: boolean;
 	/** See {@link IdentifierHealingConfig}. */
 	readonly healing?: IdentifierHealingConfig;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	changeCodec: IJsonCodec<
 		TChangeset,
@@ -59,17 +76,22 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	>,
 	commit: T,
 	context: ChangeEncodingContext,
-) {
-	return {
-		...commit,
+	includeCustomMetadata: boolean,
+): Mutable<EncodedCommit<JsonCompatibleReadOnly>> {
+	const encoded: Mutable<EncodedCommit<JsonCompatibleReadOnly>> = {
+		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
 			isSummary: context.isSummary,
 		}),
-		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
+		sessionId: commit.sessionId,
 	};
+	if (includeCustomMetadata && commit.customMetadata !== undefined) {
+		encoded.customMetadata = encodeCustomMetadataTree(commit.customMetadata);
+	}
+	return encoded;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -87,7 +109,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		ChangeEncodingContext
 	>,
 	commit: T,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 ) {
 	const revision = revisionTagCodec.decode(commit.revision, {
 		originatorId: commit.sessionId,
@@ -97,9 +119,10 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 	});
 
 	return {
-		...commit,
+		sessionId: commit.sessionId,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
+		customMetadata: decodeCustomMetadataTree(commit.customMetadata),
 	};
 }
 
@@ -117,39 +140,63 @@ export function encodeSharedBranch<TChangeset>(
 		ChangeEncodingContext
 	>,
 	data: SharedBranchSummaryData<TChangeset>,
-	context: EditManagerEncodingContext,
+	context: EditManagerEncodingContext<TChangeset>,
 	originatorId: SessionId | undefined,
-): EncodedSharedBranch<TChangeset> {
-	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
-		trunk: data.trunk.map((commit) =>
-			encodeCommit(changeCodec, revisionTagCodec, commit, {
-				originatorId: commit.sessionId,
-				idCompressor: context.idCompressor,
-				schema: context.schema,
-				revision: undefined,
-				isSummary: context.isSummary,
-			}),
-		),
-		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{
-				base: revisionTagCodec.encode(branch.base, {
-					originatorId: sessionId,
+	includeCustomMetadata: boolean,
+): EncodedSharedBranch<JsonCompatibleReadOnly> {
+	const json: Mutable<EncodedSharedBranch<JsonCompatibleReadOnly>> = {
+		trunk: data.trunk.map((commit) => {
+			const encoded = encodeCommit(
+				changeCodec,
+				revisionTagCodec,
+				commit,
+				{
+					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,
+					schema: context.schema,
 					revision: undefined,
 					isSummary: context.isSummary,
-				}),
-				commits: branch.commits.map((commit) =>
-					encodeCommit(changeCodec, revisionTagCodec, commit, {
-						originatorId: commit.sessionId,
+				},
+				includeCustomMetadata,
+			);
+			copyProperty(commit, "sequenceNumber", encoded);
+			copyProperty(commit, "indexInBatch", encoded);
+			return encoded;
+		}),
+		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => {
+			// A peer's schema change may be rejected on the trunk while its original commits remain here.
+			// Without schema changes, peer data remains compatible with the trunk's schema upgrades.
+			// Otherwise, omit the inherited schema; the change codec can still use schemas within a commit.
+			const schema = branch.commits.some((commit) => context.hasSchemaChange(commit.change))
+				? undefined
+				: context.schema;
+			return [
+				sessionId,
+				{
+					base: revisionTagCodec.encode(branch.base, {
+						originatorId: sessionId,
 						idCompressor: context.idCompressor,
-						schema: context.schema,
 						revision: undefined,
 						isSummary: context.isSummary,
 					}),
-				),
-			},
-		]),
+					commits: branch.commits.map((commit) =>
+						encodeCommit(
+							changeCodec,
+							revisionTagCodec,
+							commit,
+							{
+								originatorId: commit.sessionId,
+								idCompressor: context.idCompressor,
+								schema,
+								revision: undefined,
+								isSummary: context.isSummary,
+							},
+							includeCustomMetadata,
+						),
+					),
+				},
+			];
+		}),
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;
@@ -192,23 +239,23 @@ export function decodeSharedBranch<TChangeset>(
 		ChangeEncodingContext
 	>,
 	json: EncodedSharedBranch<TChangeset>,
-	context: EditManagerEncodingContext,
+	context: EditManagerDecodingContext,
 	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
-	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.
 	const trunk = json.trunk as readonly (EncodedCommit<JsonCompatibleReadOnly> & SequenceId)[];
 	const data: Mutable<SharedBranchSummaryData<TChangeset>> = {
-		trunk: trunk.map(
-			(commit): SequencedCommit<TChangeset> =>
-				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				decodeCommit(changeCodec, revisionTagCodec, commit, {
-					originatorId: commit.sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-					isSummary: context.isSummary,
-					healing: context.healing,
-				}),
-		),
+		trunk: trunk.map((commit): SequencedCommit<TChangeset> => {
+			const decoded = decodeCommit(changeCodec, revisionTagCodec, commit, {
+				originatorId: commit.sessionId,
+				idCompressor: context.idCompressor,
+				revision: undefined,
+				isSummary: context.isSummary,
+				healing: context.healing,
+			});
+			copyProperty(commit, "sequenceNumber", decoded);
+			copyProperty(commit, "indexInBatch", decoded);
+			return decoded;
+		}),
 		peerLocalBranches: new Map(
 			mapIterable(json.peers, ([sessionId, branch]) => [
 				sessionId,
@@ -220,7 +267,6 @@ export function decodeSharedBranch<TChangeset>(
 						isSummary: context.isSummary,
 					}),
 					commits: branch.commits.map((commit) =>
-						// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 						decodeCommit(
 							changeCodec,
 							revisionTagCodec,

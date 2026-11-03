@@ -9,6 +9,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	TelemetryEventBatcher,
+	UsageError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -16,6 +17,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -28,6 +30,7 @@ import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js"
 
 import {
 	SharedTreeBranch,
+	type BranchTrimState,
 	type BranchTrimmingEvents,
 	onForkTransitive,
 	type BranchId,
@@ -73,11 +76,15 @@ const maxRebaseStatsAggregationCount = 1000;
 export class EditManager<
 	TEditor extends ChangeFamilyEditor,
 	TChangeset,
-	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
+	TChangeProcessingContext = never,
 > {
-	private readonly _events = createEmitter<BranchTrimmingEvents>();
+	private readonly trimmer = createEmitter<BranchTrimmingEvents>();
+	private readonly trimState = { trimmedCommitCount: 0 };
 
-	private readonly sharedBranches = new Map<BranchId, SharedBranch<TEditor, TChangeset>>();
+	private readonly sharedBranches = new Map<
+		BranchId,
+		SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
+	>();
 
 	/**
 	 * Tracks where on the trunk of the main branch all registered branches are based.
@@ -89,7 +96,7 @@ export class EditManager<
 	 */
 	private readonly trunkBranches = new BTree<
 		SequenceId,
-		Set<SharedTreeBranch<TEditor, TChangeset>>
+		Set<SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>>
 	>(undefined, sequenceIdComparator);
 
 	/**
@@ -99,6 +106,14 @@ export class EditManager<
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
+
+	/**
+	 * Local retention policy, always a boolean or a nonnegative safe integer.
+	 * `false` or zero disables extra retention; `true` retains all available history.
+	 * A positive safe integer retains the newest specified number of available sequenced main-branch commits.
+	 * Collaboration and registered branches can require retaining additional history.
+	 */
+	private historyRetention: boolean | number = false;
 
 	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
@@ -117,19 +132,19 @@ export class EditManager<
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
-	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted.
 	 */
 	public constructor(
-		public readonly changeFamily: TChangeFamily,
+		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: TelemetryLoggerExt,
-		private readonly retainHistory: boolean = false,
 	) {
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
+			customMetadata: undefined,
+			wasTrimmed: true,
 		};
 
 		if (logger !== undefined) {
@@ -147,19 +162,116 @@ export class EditManager<
 			this.trunkBase,
 			changeFamily,
 			mintRevisionTag,
-			this._events,
+			this.trimState,
 			this.telemetryEventBatcher,
 		);
+		mainTrunk.trimmer = this.trimmer;
 
-		this.createAndAddSharedBranch("main", undefined, undefined, mainTrunk);
+		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
 	}
 
-	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
+	/**
+	 * Gets this manager's current local history retention policy.
+	 * @returns The configured boolean or nonnegative safe integer, defaulting to `false`.
+	 */
+	public getHistoryRetention(): boolean | number {
+		return this.historyRetention;
+	}
+
+	/**
+	 * Sets this manager's local retention policy for sequenced main-branch commits.
+	 *
+	 * @param value - `true` to retain all available history, `false` or zero to disable extra retention,
+	 * or a positive safe integer to retain the newest specified number of available commits.
+	 *
+	 * @remarks
+	 * If this method is never called, extra retention is disabled (`false`).
+	 * Each call replaces the current policy; there is no separate fallback policy.
+	 *
+	 * Collaboration and local branches can require retaining more commits than the policy specifies.
+	 * Commits that are sequenced in batches are individually counted toward the retention limit.
+	 * Unsequenced local commits do not count toward the retention limit.
+	 *
+	 * Calling this method immediately checks for history that can be trimmed.
+	 * Increasing retention preserves available history but does not recover trimmed commits.
+	 */
+	public setHistoryRetention(value: boolean | number): void {
+		assert(
+			typeof value === "boolean" || (Number.isSafeInteger(value) && value >= 0),
+			0xd79 /* historyRetention must be a boolean or a nonnegative safe integer */,
+		);
+		this.historyRetention = value;
+		this.trimHistory();
+	}
+
+	/**
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the retention policy,
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForHistory(): SequenceId {
+		if (this.historyRetention === true) {
+			return minimumPossibleSequenceId;
+		}
+		const sequenceIdToCommit = this.getSharedBranch("main").sequenceIdToCommit;
+		if (this.historyRetention === false || this.historyRetention === 0) {
+			return sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId;
+		}
+		// The map includes the trimmed base, which does not count toward retention.
+		if (this.historyRetention < sequenceIdToCommit.size - 1) {
+			let remaining = this.historyRetention;
+			for (const [sequenceId] of sequenceIdToCommit.entriesReversed()) {
+				remaining--;
+				if (remaining === 0) {
+					return getUpperBoundOfPreviousSequenceId(sequenceId);
+				}
+			}
+		}
+		return minimumPossibleSequenceId;
+	}
+
+	/**
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on local forks (excluding peer branches maintained by EditManager),
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForLocalForks(): SequenceId {
+		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
+		return minimumBranchBaseSequenceId === undefined
+			? (this.getSharedBranch("main").sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId)
+			: getUpperBoundOfPreviousSequenceId(minimumBranchBaseSequenceId);
+	}
+
+	/**
+	 * Returns an inclusive upper bound for commits to be removed by trimming based on the minimum sequence number,
+	 * @remarks
+	 * The bound need not identify an existing commit.
+	 */
+	private getUpperTrimmingBoundForMinimumSequenceNumber(): SequenceId {
+		return {
+			sequenceNumber: this.minimumSequenceNumber,
+			indexInBatch: Number.POSITIVE_INFINITY,
+		};
+	}
+
+	public getLocalBranch(
+		branchId: BranchId,
+	): SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext> {
 		return this.getSharedBranch(branchId).localBranch;
 	}
 
-	private getSharedBranch(branchId: BranchId): SharedBranch<TEditor, TChangeset> {
-		return this.sharedBranches.get(branchId) ?? fail(0xc56 /* Branch does not exist */);
+	public getSharedBranchName(branchId: BranchId): string | undefined {
+		return this.getSharedBranch(branchId).branchName;
+	}
+
+	private getSharedBranch(
+		branchId: BranchId,
+	): SharedBranch<TEditor, TChangeset, TChangeProcessingContext> {
+		const branch = this.sharedBranches.get(branchId);
+		if (branch === undefined) {
+			throw new UsageError("No shared branch with such ID");
+		}
+		return branch;
 	}
 
 	/**
@@ -171,7 +283,9 @@ export class EditManager<
 	 * TODO#AB6925: Maintain the divergence point between each branch and the trunk so that we don't have to recompute
 	 * it so often.
 	 */
-	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
+	private registerBranch(
+		branch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+	): void {
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
@@ -195,7 +309,9 @@ export class EditManager<
 		});
 	}
 
-	private trackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
+	private trackBranch(
+		b: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+	): void {
 		const main = this.getSharedBranch("main");
 		const trunkCommit =
 			findCommonAncestor(main.trunk.getHead(), b.getHead()) ??
@@ -207,7 +323,9 @@ export class EditManager<
 		branches.add(b);
 	}
 
-	private untrackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
+	private untrackBranch(
+		b: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+	): void {
 		const main = this.getSharedBranch("main");
 		const trunkCommit =
 			findCommonAncestor(main.trunk.getHead(), b.getHead()) ??
@@ -243,12 +361,13 @@ export class EditManager<
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
 	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
 	public advanceMinimumSequenceNumber(
 		minimumSequenceNumber: SeqNumber,
-		trimHistory = true,
+		allowHistoryTrimming = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
 			return;
@@ -260,40 +379,23 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
-		if (trimHistory) {
+		if (allowHistoryTrimming) {
 			this.trimHistory();
 		}
 	}
 
 	/**
-	 * Examines the latest known minimum sequence number and the trunk bases of any registered branches to determine
-	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
+	 * Uses the retention policy, latest known minimum sequence number, and registered branch bases
+	 * to evict trunk commits that are no longer needed.
 	 */
 	private trimHistory(): void {
-		if (this.retainHistory) {
-			// When history retention is enabled, trunk commits are never evicted.
-			return;
-		}
-
-		/** The sequence id of the most recent commit on the trunk that will be trimmed */
-		let trunkTailSequenceId: SequenceId = {
-			sequenceNumber: this.minimumSequenceNumber,
-			indexInBatch: Number.POSITIVE_INFINITY,
-		};
-		// If there are any outstanding registered branches, get the one that is the oldest (has the "most behind" trunk base)
-		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
-		if (minimumBranchBaseSequenceId !== undefined) {
-			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
-			// even if those commits are behind the minimum sequence id
-			const sequenceIdBeforeMinimumBranchBase = getUpperBoundOfPreviousSequenceId(
-				minimumBranchBaseSequenceId,
-			);
-			trunkTailSequenceId = minSequenceId(
-				trunkTailSequenceId,
-				sequenceIdBeforeMinimumBranchBase,
-			);
-		}
-
+		const msnBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
+		const forkBound = this.getUpperTrimmingBoundForLocalForks();
+		const historyBound = this.getUpperTrimmingBoundForHistory();
+		const trunkTailSequenceId = minSequenceId(
+			msnBound,
+			minSequenceId(forkBound, historyBound),
+		);
 		const mainBranch = this.getSharedBranch("main");
 
 		const [sequenceId, latestEvicted] = mainBranch.getClosestTrunkCommit(
@@ -316,21 +418,28 @@ export class EditManager<
 		// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
 		// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
 		// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
-		const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
+		const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
 
 		// collect the revisions that will be trimmed to send as part of the branch trimmed event
-		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase);
+		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase) as Mutable<
+			GraphCommit<TChangeset>
+		>[];
 		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
 
 		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
 		mainBranch.trimHistory(latestEvicted, sequenceId);
 
-		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
+		// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
+		// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
+		// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
+		newTrunkBase.customMetadata = undefined;
+
+		// Access to the intrinsic properties of trimmed commits indicates a bug in SharedTree.
+		// Throwing lowers the risk of such a bug causing data loss or corruption.
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
-				get: () =>
-					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
+				get: () => fail(0xa5e /* Should not access 'change' property of an evicted commit */),
 			});
 			Reflect.defineProperty(commit, "revision", {
 				get: () =>
@@ -339,17 +448,25 @@ export class EditManager<
 						0xa5f /* Should not access 'revision' property of an evicted commit */,
 					),
 			});
+			Reflect.defineProperty(commit, "customMetadata", {
+				get: () =>
+					fail(0xd36 /* Should not access 'customMetadata' property of an evicted commit */),
+			});
 			Reflect.defineProperty(commit, "parent", {
 				get: () =>
 					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
 			});
+			commit.wasTrimmed = true;
 		}
 
-		// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
+		// Dropping the parent field (transitively) removes references to the evicted commits so they can be garbage collected.
+		// Allowing the `parent` property to be read from the trunk base (despite it being a trimmed commit) spares readers from having to check `wasTrimmed` in order to safely find the root commit.
 		delete newTrunkBase.parent;
+		newTrunkBase.wasTrimmed = true;
 		this.trunkBase = newTrunkBase;
+		this.trimState.trimmedCommitCount += trimmedRevisions.length;
 
-		this._events.emit("ancestryTrimmed", trimmedRevisions);
+		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
 	}
 
 	public isEmpty(): boolean {
@@ -366,11 +483,15 @@ export class EditManager<
 		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
 		this.trimHistory();
 
+		const mainBranch = this.getSharedBranch("main");
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
-		let minBaseSeqId: SequenceId = minSeqNumberToSummarize;
-		const mainBranch = this.getSharedBranch("main");
+		const historyBound = this.getUpperTrimmingBoundForHistory();
+		let minBaseSeqId = minSequenceId(
+			minSeqNumberToSummarize,
+			mainBranch.sequenceIdToCommit.nextHigherKey(historyBound) ?? minSeqNumberToSummarize,
+		);
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
 			if (branchId !== "main") {
@@ -402,16 +523,24 @@ export class EditManager<
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
+				const baseCommit =
+					trunkRevisionCache.get(branchData.base ?? rootRevision) ??
+					fail("Expected summary branch base to be in trunk cache");
 				const branch = this.createSharedBranch(
 					branchId,
+					branchData.name,
 					branchData.session,
 					mainBranch,
-					mainBranch.trunk.fork(),
+					mainBranch.trunk.fork(baseCommit),
 				);
 				branch.loadSummaryData(branchData, trunkRevisionCache);
 				this.addSharedBranch(branchId, branch);
 			}
 		}
+		// Summaries do not currently include a minimum sequence number,so the loader must conservatively retain all revisions from the summary.
+		// This prevents the trimming of superfluous commits when the summarizer's history retention policy is more generous than the loader's policy.
+		// If this changes, uncomment the next line to trim superfluous commits.
+		// this.trimHistory();
 	}
 
 	public getTrunkHead(branchId: BranchId): GraphCommit<TChangeset> {
@@ -451,6 +580,7 @@ export class EditManager<
 		sessionId: SessionId,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
+		branchName?: string,
 	): void {
 		if (sessionId === this.localSessionId) {
 			assert(this.sharedBranches.has(branchId), 0xc59 /* Expected branch to already exist */);
@@ -459,13 +589,14 @@ export class EditManager<
 
 		const mainBranch = this.getSharedBranch("main");
 		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
-		this.createAndAddSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
+		this.createAndAddSharedBranch(branchId, branchName, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addNewBranch(branchId: BranchId): void {
+	public addNewBranch(branchId: BranchId, branchName?: string): void {
 		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
 		this.createAndAddSharedBranch(
 			branchId,
+			branchName,
 			this.localSessionId,
 			main,
 			this.getLocalBranch("main").fork(),
@@ -484,18 +615,25 @@ export class EditManager<
 
 	private createAndAddSharedBranch(
 		branchId: BranchId,
+		branchName: string | undefined,
 		sessionId: SessionId | undefined,
-		parent: SharedBranch<TEditor, TChangeset> | undefined,
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SharedBranch<TEditor, TChangeset> {
-		const sharedBranch = this.createSharedBranch(branchId, sessionId, parent, branch);
+		parent: SharedBranch<TEditor, TChangeset, TChangeProcessingContext> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+	): SharedBranch<TEditor, TChangeset, TChangeProcessingContext> {
+		const sharedBranch = this.createSharedBranch(
+			branchId,
+			branchName,
+			sessionId,
+			parent,
+			branch,
+		);
 		this.addSharedBranch(branchId, sharedBranch);
 		return sharedBranch;
 	}
 
 	private addSharedBranch(
 		branchId: BranchId,
-		branch: SharedBranch<TEditor, TChangeset>,
+		branch: SharedBranch<TEditor, TChangeset, TChangeProcessingContext>,
 	): void {
 		assert(
 			!this.sharedBranches.has(branchId),
@@ -516,19 +654,22 @@ export class EditManager<
 
 	private createSharedBranch(
 		branchId: BranchId,
+		branchName: string | undefined,
 		sessionId: SessionId | undefined,
-		parent: SharedBranch<TEditor, TChangeset> | undefined,
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SharedBranch<TEditor, TChangeset> {
+		parent: SharedBranch<TEditor, TChangeset, TChangeProcessingContext> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+	): SharedBranch<TEditor, TChangeset, TChangeProcessingContext> {
 		const sharedBranch = new SharedBranch(
 			parent,
 			branch,
 			branchId,
+			branchName,
 			sessionId,
 			minimumPossibleSequenceId,
 			this.changeFamily,
 			this.mintRevisionTag,
-			this._events,
+			this.trimmer,
+			this.trimState,
 			this.telemetryEventBatcher,
 		);
 
@@ -544,6 +685,9 @@ export class EditManager<
 	 *   - They are all from the same client.
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
+	 *
+	 * @param allowHistoryTrimming - Whether this call may trim history according to the retention policy after sequencing the entire bunch.
+	 * Set to false for detached edits to defer trimming.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
 	public addSequencedChanges(
@@ -552,6 +696,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
+		allowHistoryTrimming = true,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
@@ -566,6 +711,7 @@ export class EditManager<
 			sequenceId: SequenceId,
 			previousSequenceId: SequenceId,
 		): void => {
+			branch.localBranch.commitWasSequenced(commit);
 			// Next, we need to update the sequence IDs that our local branches (user's branches, not peer branches) are associated with.
 			// In particular, if a local branch is based on the previous trunk head (the branch's first ancestor in the trunk is the commit that was the head before we pushed the new commit)
 			// and also branches off of the local branch (it has an ancestor that is part of the local branch), it needs to have its sequence number advanced to be that of the new trunk head.
@@ -583,6 +729,7 @@ export class EditManager<
 					if (findAncestor(forkedBranch.getHead(), (c) => c === commit) !== undefined) {
 						newBranches.add(forkedBranch);
 						currentBranches.delete(forkedBranch);
+						forkedBranch.commitWasSequenced(commit);
 					}
 				}
 				// Clean up our trunk branches map by removing any empty sets.
@@ -604,6 +751,9 @@ export class EditManager<
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
+		if (allowHistoryTrimming) {
+			this.trimHistory();
+		}
 	}
 
 	public findLocalCommit(
@@ -654,19 +804,21 @@ function getPathFromBase<TCommit extends { parent?: TCommit }>(
 	return path;
 }
 
-class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
+class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProcessingContext> {
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
-	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
+	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>;
 
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
-		new Map();
+	private readonly peerLocalBranches: Map<
+		SessionId,
+		SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>
+	> = new Map();
 
 	/**
 	 * A map from a sequence id to the commit which has that sequence id.
@@ -693,23 +845,28 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	>();
 
 	public constructor(
-		public readonly parentBranch: SharedBranch<TEditor, TChangeset> | undefined,
-		public readonly trunk: SharedTreeBranch<TEditor, TChangeset>,
+		public readonly parentBranch:
+			| SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
+			| undefined,
+		public readonly trunk: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
 		private readonly id: BranchId,
+		public readonly branchName: string | undefined,
 		private readonly sessionId: SessionId | undefined,
 		baseCommitSequenceId: SequenceId,
-		private readonly changeFamily: ChangeFamily<TEditor, TChangeset>,
+		private readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
+		private readonly trimState: BranchTrimState,
 		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
 	) {
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
-			branchTrimmer,
+			trimState,
 			telemetryEventBatcher,
 		);
+		this.localBranch.trimmer = branchTrimmer;
 
 		this.sequenceIdToCommit.set(baseCommitSequenceId, this.trunk.getHead());
 
@@ -779,11 +936,15 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
-			peerLocalBranch.setHead(this.trunk.getHead());
+			peerLocalBranch.setHead(this.trunk.getHead(), newCommits.length);
 		} else {
 			// Otherwise, push the changes to the peer local branch and merge the branch into the trunk.
 			for (const newCommit of newCommits) {
-				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
+				peerLocalBranch.apply(
+					tagChange(newCommit.change, newCommit.revision),
+					CommitKind.Default,
+					newCommit.customMetadata,
+				);
 			}
 			const result = this.trunk.merge(peerLocalBranch);
 			if (result !== undefined) {
@@ -815,18 +976,26 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	public rebasePeer(
 		sessionId: SessionId,
 		referenceSequenceNumber: SeqNumber,
-	): SharedTreeBranch<TEditor, TChangeset> {
+	): SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext> {
 		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+			() =>
+				new SharedTreeBranch(
+					baseRevisionInTrunk,
+					this.changeFamily,
+					this.mintRevisionTag,
+					this.trimState,
+				),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 		return peerLocalBranch;
 	}
 
-	public getPeerBranchOrTrunk(sessionId: SessionId): SharedTreeBranch<TEditor, TChangeset> {
+	public getPeerBranchOrTrunk(
+		sessionId: SessionId,
+	): SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext> {
 		return this.peerLocalBranches.get(sessionId) ?? this.trunk;
 	}
 
@@ -963,7 +1132,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		graphCommit: GraphCommit<TChangeset>,
 		sessionId: SessionId,
 	): void {
-		this.trunk.setHead(graphCommit);
+		this.trunk.setHead(graphCommit, 1);
 		this.registerSequencedCommit(sequenceId, sessionId, graphCommit);
 	}
 
@@ -1048,6 +1217,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 				revision: c.revision,
 				sequenceNumber: metadata.sequenceId.sequenceNumber,
 				sessionId: metadata.sessionId,
+				customMetadata: c.customMetadata,
 			};
 			if (metadata.sequenceId.indexInBatch !== undefined) {
 				commit.indexInBatch = metadata.sequenceId.indexInBatch;
@@ -1073,6 +1243,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 								change: c.change,
 								revision: c.revision,
 								sessionId,
+								customMetadata: c.customMetadata,
 							};
 							return commit;
 						}),
@@ -1083,7 +1254,14 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 		const trunkBase =
 			this.parentBranch === undefined ? undefined : forkPointFromMainTrunk.revision;
-		return { trunk, peerLocalBranches, base: trunkBase, id: this.id, session: this.sessionId };
+		return {
+			trunk,
+			peerLocalBranches,
+			base: trunkBase,
+			id: this.id,
+			name: this.branchName,
+			session: this.sessionId,
+		};
 	}
 
 	public loadSummaryData(
@@ -1094,10 +1272,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			(this.parentBranch === undefined) === (data.base === undefined),
 			0xc60 /* Expected branch base to match presence of parent branch */,
 		);
-		const parentTrunkBase =
-			trunkRevisionCache.get(data.base ?? rootRevision) ??
-			fail(0xc61 /* Expected base revision to be in trunk cache */);
-		let trunkHead = parentTrunkBase;
+		let trunkHead = this.trunk.getHead();
+		assert(
+			trunkHead.revision === (data.base ?? rootRevision) &&
+				this.localBranch.getHead() === trunkHead,
+			0xc61 /* Expected base revision to be in trunk cache */,
+		);
 		for (const c of data.trunk) {
 			const sequenceId: SequenceId =
 				c.indexInBatch === undefined
@@ -1117,9 +1297,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			trunkRevisionCache.set(c.revision, commit);
 			trunkHead = commit;
 		}
-		this.trunk.setHead(trunkHead);
+		this.trunk.setHead(trunkHead, data.trunk.length);
 
-		this.localBranch.setHead(this.trunk.getHead());
+		this.localBranch.setHead(this.trunk.getHead(), data.trunk.length);
 
 		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
@@ -1132,7 +1312,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			}
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(branchHead, this.changeFamily, this.mintRevisionTag),
+				new SharedTreeBranch(
+					branchHead,
+					this.changeFamily,
+					this.mintRevisionTag,
+					this.trimState,
+				),
 			);
 		}
 	}

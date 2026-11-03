@@ -1,10 +1,12 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"extends": "../../../common/build/build-common/tsconfig.node20.json",
 	"compilerOptions": {
+		"isolatedModules": true,
 		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["jest"],
+		"types": ["react", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
+	// Playwright transpiles the tests and configuration at runtime.
 	"include": ["src/**/*"],
 }

@@ -66,9 +66,9 @@ export {
 	type MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
-	TaggedLoggerAdapter,
 	tagData,
 	tagCodeArtifacts,
+	tagSchemaArtifacts,
 	TelemetryDataTag,
 	toITelemetryLoggerExt,
 } from "./logger.js";

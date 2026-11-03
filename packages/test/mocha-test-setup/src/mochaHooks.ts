@@ -5,6 +5,7 @@
 
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
@@ -31,7 +32,7 @@ const _global: any = global;
 class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	private currentTestName: string | undefined;
 
-	send(event: ITelemetryBaseEvent): void {
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		// TODO: Remove when issue #7061 is resolved.
 		// Don't log this event as we generate too much.
 		if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
@@ -42,13 +43,16 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			event.testName = this.currentTestName;
 		}
 		event.testVariant = testVariant;
-		this.parentLogger.send({
-			...event,
-			// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
-			// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
-			hostName: envLoggerProps?.hostName ?? pkgName,
-			testEnvProps: JSON.stringify(envLoggerProps),
-		});
+		this.parentLogger.send(
+			{
+				...event,
+				// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
+				// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
+				hostName: envLoggerProps?.hostName ?? pkgName,
+				testEnvProps: JSON.stringify(envLoggerProps),
+			},
+			logLevel,
+		);
 	}
 	async flush(): Promise<void> {
 		return this.parentLogger.flush();
@@ -147,27 +151,60 @@ export const mochaHooks = {
 		}
 		testLogger.setCurrentTest(testTitle);
 
-		testLogger.send({
-			category: "generic",
-			eventName: "fluid:telemetry:Test_start",
-		});
+		testLogger.send(
+			{
+				category: "generic",
+				eventName: "fluid:telemetry:Test_start",
+			},
+			LogLevel.essential,
+		);
 	},
 	afterEach(this: Mocha.Context) {
 		ensureTestRunLoggerIsInitialized(testLogger);
-		testLogger.send({
-			category: "generic",
-			eventName: "fluid:telemetry:Test_end",
-			state: this.currentTest?.state,
-			duration: this.currentTest?.duration,
-			timedOut: this.currentTest?.timedOut,
-			error: this.currentTest?.err?.message,
-			stack: this.currentTest?.err?.stack,
-		});
+		testLogger.send(
+			{
+				category: "generic",
+				eventName: "fluid:telemetry:Test_end",
+				state: this.currentTest?.state,
+				duration: this.currentTest?.duration,
+				timedOut: this.currentTest?.timedOut,
+				error: this.currentTest?.err?.message,
+				stack: this.currentTest?.err?.stack,
+			},
+			LogLevel.essential,
+		);
 
 		// Restore console output now that the current test is done running.
 		console.log = log;
 		console.error = error;
 		console.warn = warn;
+
+		const testError = this.currentTest?.err;
+		// Targeted diagnostics for the recurring ODSP benchmark lookup failure; the benchmark reporter only prints the error message.
+		// Remove this handler and its focused tests once the root cause is fixed and stability is verified.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/72105
+		if (testError?.message === "Unable to get drive/item id from path") {
+			const diagnostics: Record<string, string | number> = {};
+			// Only copy diagnostic fields, never request URLs, tokens, or arbitrary error properties.
+			for (const property of [
+				"statusCode",
+				"retryAfterSeconds",
+				"sprequestguid",
+				"requestId",
+				"clientRequestId",
+			] as const) {
+				if (property in testError) {
+					const value: unknown = testError[property];
+					if (typeof value === "number" || typeof value === "string") {
+						diagnostics[property] = value;
+					}
+				}
+			}
+			console.error(
+				`${testError.message}; ODSP lookup failure diagnostics:`,
+				JSON.stringify(diagnostics),
+			);
+		}
 
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.

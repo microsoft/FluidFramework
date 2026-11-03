@@ -264,9 +264,6 @@ export class PromiseTimer implements IPromiseTimer {
 	private deferred: Deferred<IPromiseTimerResult> | undefined;
 	private readonly timer: Timer;
 
-	/**
-	 * {@inheritDoc Timer.hasTimer}
-	 */
 	public get hasTimer(): boolean {
 		return this.timer.hasTimer;
 	}
@@ -275,9 +272,6 @@ export class PromiseTimer implements IPromiseTimer {
 		this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
 	}
 
-	/**
-	 * {@inheritDoc IPromiseTimer.start}
-	 */
 	public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
 		this.clear();
 		this.deferred = new Deferred<IPromiseTimerResult>();

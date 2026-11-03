@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TreeAlpha, type TextAsTree } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
+import { TreeAlpha, type PlainText } from "@fluidframework/tree/internal";
+import {
+	type ChangeEvent,
+	type FC,
+	type SyntheticEvent,
+	useCallback,
+	useLayoutEffect,
+	useRef,
+} from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
@@ -18,17 +25,17 @@ import { useTreeSynchronizedString } from "./useTreeSynchronizedString.js";
  */
 export interface MainViewProps extends TextEditorProps {
 	/** The plain text tree to edit. */
-	readonly root: PropTreeNode<TextAsTree.Tree>;
+	readonly root: PropTreeNode<PlainText.Tree>;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {
-	readonly root: TextAsTree.Tree;
+	readonly root: PlainText.Tree;
 };
 
 /**
  * A React component for plain text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
+ * Uses {@link @fluidframework/tree#PlainText.Tree} for the data-model and an HTML textarea for the UI.
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
@@ -44,22 +51,22 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
 
 /**
  * A plain text editor view component using a native HTML textarea.
- * Uses TextAsTree for collaborative plain text storage.
+ * Uses PlainText for collaborative plain text storage.
  *
  * @remarks
  * A controlled textarea driven by {@link useTreeSynchronizedString} (tree → string); local edits
  * are written back to the tree via {@link syncTextToTree}, wrapped in a transaction so each edit is
  * atomically undoable/redoable (string → tree). Doubles as a reference
- * for binding a text input to a {@link @fluidframework/tree#TextAsTree.Tree}.
+ * for binding a text input to a {@link @fluidframework/tree#PlainText.Tree}.
  */
 const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
 	const effectiveLabel = editLabel ?? root;
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	// Distinguishes the local user's own edit (browser keeps the caret) from a remote one.
-	const isLocalEditRef = useRef<boolean>(false);
+	const isLocalEditRef = useRef(false);
 
 	// Tree → string (one-way). The component supplies the other direction below.
-	const { text, selection } = useTreeSynchronizedString(root);
+	const { text, selection, setSelection } = useTreeSynchronizedString(root);
 
 	// A controlled value resets the caret on every change. For the user's own edit the browser
 	// already placed the caret correctly, so only restore the tracked selection for remote edits.
@@ -82,8 +89,22 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, event.target.value), {
 				label: effectiveLabel,
 			});
+			setSelection({
+				start: event.target.selectionStart ?? 0,
+				end: event.target.selectionEnd ?? 0,
+			});
 		},
-		[root, effectiveLabel],
+		[root, effectiveLabel, setSelection],
+	);
+
+	const onSelect = useCallback(
+		(event: SyntheticEvent<HTMLTextAreaElement>) => {
+			setSelection({
+				start: event.currentTarget.selectionStart ?? 0,
+				end: event.currentTarget.selectionEnd ?? 0,
+			});
+		},
+		[setSelection],
 	);
 
 	return (
@@ -141,6 +162,7 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 				ref={textareaRef}
 				value={text}
 				onChange={onChange}
+				onSelect={onSelect}
 				placeholder="Start typing..."
 				style={{
 					flex: 1,

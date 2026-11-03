@@ -40,6 +40,10 @@ interface OwnedState {
 	readonly removedRoots: DetachedFieldIndex;
 }
 
+/**
+ * A helper for enriching `SharedTreeChange`s.
+ * It lazily forks the borrowed state (which it does not mutate) and lazily applies {@link enqueueChange|changes} to the forked state when {@link enrich|commit enrichment} requires access to detached root data.
+ */
 export class SharedTreeChangeEnricher {
 	/**
 	 * Queue of changes to be applied before querying for detached roots.
@@ -76,6 +80,13 @@ export class SharedTreeChangeEnricher {
 		};
 	}
 
+	/**
+	 * Enriches a change.
+	 * @param change - The change to enrich (not mutated)
+	 * @returns An enriched copy of the given `change`.
+	 * @remarks
+	 * Invoking this method will flush {@link enqueueChange|queued} changes if the enrichment process requires reading detached roots from the forest.
+	 */
 	public enrich(change: SharedTreeChange): SharedTreeChange {
 		this.onEnrichCommit?.();
 		return updateRefreshers(
@@ -104,13 +115,23 @@ export class SharedTreeChangeEnricher {
 		return undefined;
 	}
 
+	/**
+	 * Enqueues a change to be applied before reading detached root data during the next {@link enrich|enrichment}.
+	 * @param change - The change to apply or a function that returns the change to apply.
+	 * If a function is provided, it will be invoked during a future call to {@link enrich} (if at all).
+	 */
 	public enqueueChange(
 		change: TaggedChange<SharedTreeChange> | (() => TaggedChange<SharedTreeChange>),
 	): void {
 		this.changeQueue.push(typeof change === "function" ? change : () => change);
 	}
 
-	private purgeChangeQueue(): void {
+	/**
+	 * Flushes all {@link enqueueChange|queued} changes by applying the data changes to a forked forest and detached field index.
+	 * @remarks
+	 * This validates that the data changes are valid.
+	 */
+	public purgeChangeQueue(): void {
 		if (this.changeQueue.length === 0) {
 			return;
 		}
@@ -150,6 +171,9 @@ export class SharedTreeChangeEnricher {
 		this.changeQueue.length = 0;
 	}
 
+	/**
+	 * Dispose of this object and its resources.
+	 */
 	public [disposeSymbol](): void {
 		// TODO: in the future, forest and/or its AnchorSet may require disposal.
 	}

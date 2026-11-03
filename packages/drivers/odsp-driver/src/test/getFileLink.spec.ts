@@ -65,6 +65,34 @@ describe("getFileLink", () => {
 		);
 	});
 
+	it("should apply host headers to file item and sharing information requests", async () => {
+		const validateHeaders = async (
+			headers?: Record<string, string>,
+		): Promise<MockResponse> => {
+			assert.strictEqual(headers?.["x-agent-id"], "agent");
+			assert.notStrictEqual(headers?.authorization, "host-authorization");
+			return okResponse({}, fileItemResponse);
+		};
+		const result = await mockFetchMultiple(
+			async () =>
+				getFileLink(
+					storageTokenFetcher,
+					getOdspResolvedUrl("requestHeadersItem"),
+					logger.toTelemetryLogger(),
+					{ "X-Agent-Id": "agent", authorization: "host-authorization" },
+				),
+			[
+				validateHeaders,
+				async (headers): Promise<MockResponse> => {
+					assert.strictEqual(headers?.["x-agent-id"], "agent");
+					assert.notStrictEqual(headers?.authorization, "host-authorization");
+					return okResponse({}, { d: { directUrl: "sharelink-with-headers" } });
+				},
+			],
+		);
+		assert.strictEqual(result, "sharelink-with-headers");
+	});
+
 	it("should reject if file web dav url is missing", async () => {
 		await assert.rejects(
 			mockFetchMultiple(

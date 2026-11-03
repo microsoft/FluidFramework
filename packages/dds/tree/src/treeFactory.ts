@@ -13,6 +13,7 @@ import {
 	type SharedKernelFactory,
 	type SharedObjectOptions,
 	type FactoryOut,
+	type SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -83,7 +84,6 @@ function treeKernelFactory(
 			args.submitLocalMessage,
 			args.lastSequenceNumber,
 			args.initialSequenceNumber,
-			args.logger,
 			args.idCompressor,
 			adjustedOptions,
 		);
@@ -111,7 +111,14 @@ function treeKernelFactory(
  * of objects, arrays, and other data types.
  * @legacy @beta
  */
-export const SharedTree = configuredSharedTree({});
+export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree> =
+	configuredSharedTree({});
+
+/**
+ * {@link SharedTree} but without legacy types, and with alpha types.
+ * @alpha
+ */
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree> = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -155,12 +162,16 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
- * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions} and
+ * {@link @fluidframework/shared-object-base#SharedObjectKindAlpha} capabilities.
+ *
+ * @param options - Configuration options for the SharedTree kind.
+ * @returns A configured SharedTree kind with experimental capabilities.
  * @alpha
  */
 export function configuredSharedTreeAlpha(
 	options: SharedTreeOptions,
-): SharedObjectKind<ITree> {
+): SharedObjectKindAlpha<ITree> {
 	return configuredSharedTree(options);
 }
 
@@ -189,14 +200,14 @@ export function configuredSharedTreeAlpha(
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const internalOptions = resolveOptions(options);
 	return configuredSharedTreeInternal(internalOptions);
 }
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,

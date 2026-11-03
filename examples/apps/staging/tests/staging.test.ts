@@ -3,24 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config.cjs";
+import { test } from "@playwright/test";
 
-describe("staging", () => {
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
-
-	describe("Smoke test", () => {
-		beforeEach(async () => {
-			await page.goto(globals.PATH, { waitUntil: "load" });
+test.describe("staging", () => {
+	test.describe("Smoke test", () => {
+		test.beforeEach(async ({ page }) => {
+			await page.goto("/", { waitUntil: "load" });
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("loads and there's an input", async () => {
-			// Validate the input shows up
+		test("loads and there's an input", async ({ page }) => {
 			await page.waitForSelector("input");
 		});
 	});

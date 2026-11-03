@@ -1,21 +1,26 @@
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:packageJsonPath=./package.json) -->
-
+<!-- markdown-magic:begin {"transform":"example-app-readme-header","packageJsonPath":"./package.json","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 
-You can run this example using the following steps:
+Complete these steps to run the example:
 
-1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
-1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
-    - For an even faster build, you can add the package name to the build command, like this:
-      `pnpm run build:fast --nolint @fluidframework/test-package`
-1. In a separate terminal, start a Tinylicious server by running `pnpm tinylicious` in this directory.
-1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. See [sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port) for how to do this.
-1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
-1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run `pnpm start:spo` or `pnpm start:spo-df` and open <http://localhost:8080> like above.
+1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
+2. From the `FluidFramework` root directory, run `pnpm install`.
+3. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
+   - To build only this package, add the package name to the command:
+     `pnpm run build:fast --nolint @fluidframework/test-package`
+4. In a separate terminal, run `pnpm tinylicious` from this directory to start Tinylicious.
+5. If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).
+6. Run `pnpm start` from this directory.
+7. Open <http://localhost:8080> in a web browser.
+
+To run the example with SharePoint, complete these steps:
+
+1. Follow the [webpack-fluid-loader instructions](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get authentication credentials.
+2. Run `pnpm start:spo` or `pnpm start:spo-df` from this directory.
+3. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

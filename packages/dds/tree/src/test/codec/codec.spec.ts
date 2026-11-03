@@ -5,11 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 
-import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
-import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import {
+	extractJsonValidator,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../../codec/index.js";
+import {
+	FormatValidatorBasic,
+	FormatValidatorInterpreted,
+} from "../../external-utilities/index.js";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {
@@ -32,6 +43,20 @@ describe("Codec APIs", () => {
 					validateAssertionError(/Data being decoded should validate/),
 				);
 			});
+
+			it("using a per-call custom error handler", () => {
+				assert.throws(
+					() =>
+						codec.decode("bad data" as unknown as number, undefined, (message) => {
+							throw new UsageError(message ?? "Invalid input");
+						}),
+					validateUsageError("Encoded data does not match the expected schema."),
+				);
+				assert.throws(
+					() => codec.decode("bad data" as unknown as number),
+					validateAssertionError(/Data being decoded should validate/),
+				);
+			});
 		});
 
 		describe("accepts valid data", () => {
@@ -44,6 +69,25 @@ describe("Codec APIs", () => {
 				assert.equal(codec.decode(0), 0);
 				assert.equal(codec.decode(91), 91);
 			});
+		});
+	});
+
+	describe("FormatValidatorInterpreted", () => {
+		it("validates without dynamic code generation", () => {
+			const originalFunction = globalThis.Function;
+			globalThis.Function = (() => {
+				throw new Error("Dynamic code generation is disabled.");
+			}) as unknown as FunctionConstructor;
+
+			try {
+				const validator = extractJsonValidator(FormatValidatorInterpreted).compile(
+					Type.Number(),
+				);
+				assert.equal(validator.check(42), true);
+				assert.equal(validator.check("42"), false);
+			} finally {
+				globalThis.Function = originalFunction;
+			}
 		});
 	});
 });

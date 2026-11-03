@@ -202,15 +202,23 @@ export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union
  * For the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
  * For this to be possible, there must be no duplicate or overlapping types.
  * This is fragile and must be used with care.
+ * @param items - The array to treat as a tuple.
+ * @returns The same array, typed as a tuple containing each member of its element type union.
  *
  * @remarks
  * The main use-case for this is recovering lost information from {@link AllowedTypes} which is necessary to preserve when using them with {@link Input} APIs.
  * Since {@link AllowedTypes} is actually order independent, it is somewhat safer when used to produce `AllowedTypes`.
  *
+ * Prefer preserving more accurate types, for example by using `as const` on an array literal, instead of using this unsafe conversion.
+ * Use this helper only when providing a more specific type is not practical.
+ *
+ * See {@link https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree#why-is-my-insertable-content-getting-typed-as-never | Why is my insertable content getting typed as never?}
+ * for examples of the type inference problem and the runtime risks of this workaround.
+ *
  * @example
  * ```typescript
  * // Gives imprecise type (typeof A | typeof B)[]
- * const schemaBad = [A, B];
+ * const schemaBad = [A, B]; // Adding `as const` would be a better fix in this simple example.
  * // Fixes the type to be [typeof A, typeof B]
  * const schema = unsafeArrayToTuple(schemaBad);
  *

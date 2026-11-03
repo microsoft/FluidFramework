@@ -1,0 +1,33 @@
+{
+	"name": "fluid-framework-docs",
+	"version": "0.0.0",
+	"private": true,
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "docs"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"scripts": {
+		"format": "npm run prettier:fix",
+		"preinstall": "node ../scripts/only-pnpm.cjs",
+		"lint": "concurrently npm:prettier npm:markdownlint",
+		"lint:fix": "npm run prettier:fix && npm run markdownlint:fix",
+		"markdownlint": "markdownlint-cli2 \"**/*.md\"",
+		"markdownlint:fix": "markdownlint-cli2 --fix \"**/*.md\"",
+		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore"
+	},
+	"devDependencies": {
+		"concurrently": "^10.0.3",
+		"markdownlint-cli2": "^0.22.0",
+		"markdownlint-rule-relative-links": "^5.1.1",
+		"prettier": "^3.3.3"
+	},
+	"packageManager": "pnpm@11.27.0+sha512.ad12821463bb143295f1fa3ecde77a6b9b97a7990386da800ff57bffc3964dc64b7b1c7559d5dbe5c337aea659ed9c8937d4370bd198ca2009bc6fa0249808e7",
+	"engines": {
+		"node": ">=22.22.2"
+	}
+}

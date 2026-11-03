@@ -22,13 +22,14 @@ import {
 	type ModularChangeset,
 	newChangeAtomIdBTree,
 	type NodeId,
+	setInChangeAtomIdMap,
 } from "../../../feature-libraries/index.js";
 import {
 	getChangeHandler,
 	getParentFieldId,
 	normalizeFieldId,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+} from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
@@ -40,10 +41,10 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	assertStructuralEquality,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
-import { assertStructuralEquality } from "../../objMerge.js";
 
 export const Change = {
 	build,
@@ -110,6 +111,7 @@ interface BuildArgs {
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
+	aliases?: { from: NodeId; to: NodeId }[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -140,6 +142,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.revisions !== undefined) {
 		result.revisions = args.revisions;
+	}
+
+	if (args.aliases !== undefined) {
+		for (const alias of args.aliases) {
+			setInChangeAtomIdMap(result.nodeAliases, alias.from, alias.to);
+		}
 	}
 
 	return result;

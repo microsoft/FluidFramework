@@ -40,6 +40,7 @@ try {
 				config.outputPath,
 				config.uriRoot,
 				version,
+				config.manifestPath,
 			);
 
 			console.log(

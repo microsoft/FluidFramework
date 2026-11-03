@@ -5,15 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { encodeHandleForSerialization } from "@fluidframework/runtime-utils/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	ContainerMessageType,
 	type LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
-import { ensureContentsDeserialized, serializeOp } from "../../opLifecycle/index.js";
+import {
+	ensureContentsDeserialized,
+	serializeOp,
+	tryGetDeserializedRuntimeOpCopy,
+} from "../../opLifecycle/index.js";
 
 describe("opSerialization", () => {
 	describe("ensureContentsDeserialized", () => {
@@ -46,6 +53,36 @@ describe("opSerialization", () => {
 			ensureContentsDeserialized(message as ISequencedDocumentMessage);
 
 			assert.strictEqual(message.contents, "");
+		});
+
+		it("should classify malformed JSON as data corruption", () => {
+			const malformedContents = '{"key":"value",}';
+			const parseError = (() => {
+				try {
+					JSON.parse(malformedContents);
+				} catch (error) {
+					assert(error instanceof Error);
+					return error;
+				}
+				assert.fail("JSON.parse should throw");
+			})();
+			const message: Partial<ISequencedDocumentMessage> = {
+				sequenceNumber: 42,
+				contents: malformedContents,
+			};
+
+			assert.throws(
+				() => ensureContentsDeserialized(message as ISequencedDocumentMessage),
+				(error: IFluidErrorBase) => {
+					assert.strictEqual(error.errorType, FluidErrorTypes.dataCorruptionError);
+					assert.strictEqual(error.message, parseError.message);
+
+					const props = error.getTelemetryProperties();
+					assert.strictEqual(props.dataProcessingCodepath, "ensureContentsDeserialized");
+					assert.strictEqual(props.messageSequenceNumber, message.sequenceNumber);
+					return true;
+				},
+			);
 		});
 	});
 
@@ -105,6 +142,52 @@ describe("opSerialization", () => {
 			const serializedWithJSONStringify = JSON.stringify(op);
 
 			assert.strictEqual(serializedWithFunction.content, serializedWithJSONStringify);
+		});
+	});
+
+	describe("tryGetDeserializedRuntimeOpCopy", () => {
+		it("returns a copy with deserialized contents for a runtime op, leaving the source unchanged", () => {
+			const op: Partial<ISequencedDocumentMessage> = {
+				type: MessageType.Operation,
+				clientId: "client-1",
+				contents: '{"key":"value"}',
+			};
+
+			const copy = tryGetDeserializedRuntimeOpCopy(op as ISequencedDocumentMessage);
+
+			assert.notStrictEqual(copy, undefined);
+			assert.notStrictEqual(copy, op, "must be a copy, not the source op");
+			assert.deepStrictEqual(copy?.contents, { key: "value" });
+			assert.strictEqual(op.contents, '{"key":"value"}', "source op must not be mutated");
+		});
+
+		it("returns undefined for a non-runtime op and does not deserialize its (non-JSON) contents", () => {
+			// A system/server op may carry a non-JSON string payload; deserializing it would JSON.parse-throw.
+			const op: Partial<ISequencedDocumentMessage> = {
+				type: MessageType.ClientJoin,
+				clientId: "client-1",
+				contents: "not json {{{",
+			};
+
+			assert.strictEqual(
+				tryGetDeserializedRuntimeOpCopy(op as ISequencedDocumentMessage),
+				undefined,
+			);
+			assert.strictEqual(op.contents, "not json {{{", "non-runtime op must be left untouched");
+		});
+
+		it("returns undefined for a runtime op without a client id", () => {
+			const op: Partial<ISequencedDocumentMessage> = {
+				type: MessageType.Operation,
+				// eslint-disable-next-line unicorn/no-null -- mirrors ISequencedDocumentMessage.clientId (string | null) for server-generated ops
+				clientId: null,
+				contents: '{"key":"value"}',
+			};
+
+			assert.strictEqual(
+				tryGetDeserializedRuntimeOpCopy(op as ISequencedDocumentMessage),
+				undefined,
+			);
 		});
 	});
 });

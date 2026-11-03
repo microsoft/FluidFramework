@@ -13,6 +13,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	defaultTestOldestSupportedClient,
 	createSummarizerFromFactory,
 	createTestConfigProvider,
 	getRequiredPendingLocalState,
@@ -78,6 +79,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory.registryEntry],
 		runtimeOptions,
 	});
