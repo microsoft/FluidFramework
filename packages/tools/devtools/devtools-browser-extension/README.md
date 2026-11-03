@@ -1,5 +1,12 @@
 # @fluid-internal/devtools-browser-extension
 
+> [!WARNING]
+> This package is deprecated and will no longer be maintained.
+> We are no longer publishing this to the browser extension stores.
+>
+> For now, if you wish to use this extension, you may install it via the [](#local-extension-testing) flow.
+> But we may remove this code in the future without warning.
+
 This package contains a browser (Chrome) developer tools extension for use with [@fluidframework/devtools][].
 It offers visual insights into the workings of the Fluid Framework in your application.
 
@@ -121,8 +128,7 @@ You should now see the Devtools usage telemetry events appear!
 
 ### Publishing
 
-Note: The browser extensions may only be published by Microsoft employees.
-For details on the steps required, see [here](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/infrastructure/devtools/publishing-the-browser-extension) (Microsoft only).
+We are no longer publishing this extension.
 
 #### Store Assets
 
