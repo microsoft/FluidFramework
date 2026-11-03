@@ -202,7 +202,7 @@ describeCompat(
 			const snapshotTree2 = await getSnapshotTreeSpy2.returnValues[0];
 			assert(snapshotTree2 !== null, "Did not find snapshot tree");
 			const fetchSnapshotRefSeq = await getSnapshotSequenceNumber(
-				containerRuntime2,
+				mainDataStore.context.containerRuntime as IContainerRuntime,
 				snapshotTree2,
 			);
 			assert.strictEqual(
