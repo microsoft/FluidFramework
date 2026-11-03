@@ -100,6 +100,17 @@ export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;
 
 	/**
+	 * When true, propagate ODSP authorization errors whose `www-authenticate` response header contains a claims challenge.
+	 * A claims challenge has `error="insufficient_claims"` and nonempty decoded claims.
+	 * The driver does not refresh the token or retry the request.
+	 * The complete header is available on the error's `wwwAuthenticate` property.
+	 * When false or omitted, the driver retries with a refreshed token and passes any claims and tenant ID from the challenge to the token provider.
+	 * Authorization responses without a claims challenge retain their existing handling.
+	 * @defaultValue `false`
+	 */
+	propagateAuthChallenges?: boolean;
+
+	/**
 	 * Immutable host-owned attribution metadata applied to every outbound ODSP HTTP request.
 	 *
 	 * Driver-owned request headers take precedence on case-insensitive name collisions. This

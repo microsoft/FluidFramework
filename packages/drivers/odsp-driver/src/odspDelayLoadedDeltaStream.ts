@@ -45,6 +45,7 @@ import {
 	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
+	isAuthChallengeError,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";
@@ -265,7 +266,7 @@ export class OdspDelayLoadedDeltaStream {
 				}
 				throw normalizedError;
 			}
-		});
+		}, this.hostPolicy.propagateAuthChallenges);
 	}
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
@@ -323,6 +324,7 @@ export class OdspDelayLoadedDeltaStream {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				this.clearJoinSessionTimer();
+				const connection = this.currentConnection;
 				// Clear the timer as it is going to be scheduled again as part of refreshing join session.
 				getWithRetryForTokenRefresh(async (options) => {
 					await this.joinSession(
@@ -333,7 +335,10 @@ export class OdspDelayLoadedDeltaStream {
 						displayName,
 					);
 					resolve();
-				}).catch((error) => {
+				}, this.hostPolicy.propagateAuthChallenges).catch((error) => {
+					if (this.hostPolicy.propagateAuthChallenges && isAuthChallengeError(error)) {
+						connection?.dispose(normalizeError(error));
+					}
 					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				});

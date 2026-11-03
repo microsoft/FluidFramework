@@ -107,6 +107,7 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly logger?: ITelemetryBaseLogger;
     readonly persistedCache: IPersistedCache;
+    readonly propagateAuthChallenges?: boolean;
     readonly requestHeaders?: Readonly<Record<string, string>>;
     readonly resolvedUrl: IResolvedUrl;
     readonly targetSequenceNumber: number;
@@ -193,6 +194,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
+    readonly propagateAuthChallenges?: boolean;
     // (undocumented)
     readonly requestHeaders?: Readonly<Record<string, string>>;
     // (undocumented)
@@ -235,11 +237,12 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 export type OdspPointInTimeDocumentServiceImplementation = (props: IOdspPointInTimeDocumentServiceImplementationProps) => Promise<IDocumentService>;
 
 // @beta @legacy
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory, propagateAuthChallenges?: boolean): Promise<boolean>;
 
 // @beta @legacy
 export interface ShareLinkFetcherProps {
     identityType: IdentityType;
+    propagateAuthChallenges?: boolean;
     requestHeaders?: Readonly<Record<string, string>>;
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
 }

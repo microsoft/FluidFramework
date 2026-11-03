@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
@@ -172,6 +173,109 @@ describe("joinSessions Tests", () => {
 		await tickClock(100000);
 		assert(joinSessionStub.notCalled, "Should not be called ever");
 		joinSessionStub.restore();
+	});
+
+	async function enableChallengePropagation(): Promise<void> {
+		const factory = new OdspDocumentServiceFactory(
+			async () => "token",
+			async () => "token",
+			undefined,
+			{ propagateAuthChallenges: true },
+		);
+		const resolvedUrl = await resolver.resolve({
+			url: createOdspUrl({ siteUrl, driveId, itemId, dataStorePath: "/" }),
+		});
+		service = (await factory.createDocumentService(
+			resolvedUrl,
+			logger,
+		)) as OdspDocumentService;
+	}
+
+	function createChallenge(): ReturnType<typeof createOdspNetworkError> {
+		return createOdspNetworkError(
+			"Authorization failed",
+			401,
+			undefined,
+			new Response(undefined, {
+				headers: {
+					"www-authenticate":
+						'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="',
+				},
+			}),
+		);
+	}
+
+	it("propagates the initial join-session challenge without retrying", async () => {
+		await enableChallengePropagation();
+		const error = createChallenge();
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).rejects(error);
+		try {
+			await assert.rejects(
+				service.connectToDeltaStream(client),
+				(caught: unknown) => caught === error,
+			);
+			assert(joinSessionStub.calledOnce);
+		} finally {
+			joinSessionStub.restore();
+			service.dispose();
+		}
+	});
+
+	it("delivers a periodic join-session challenge to the connection without retrying", async () => {
+		await enableChallengePropagation();
+		const error = createChallenge();
+		const joinSessionStub = stub(fetchJoinSession, mockify.key);
+		joinSessionStub
+			.onFirstCall()
+			.resolves({ ...joinSessionResponse, refreshSessionDurationSeconds: 100 });
+		joinSessionStub.onSecondCall().rejects(error);
+		const createConnectionStub = stub(
+			odspDocumentDeltaConnection.OdspDocumentDeltaConnection,
+			"create",
+		).resolves(deltaConnection as OdspDocumentDeltaConnection);
+		const disposeStub = stub(deltaConnection, "dispose");
+		try {
+			await service.connectToDeltaStream(client);
+			await tickClock(70000);
+			assert.equal(joinSessionStub.callCount, 2);
+			assert(disposeStub.calledOnceWithExactly(error));
+		} finally {
+			joinSessionStub.restore();
+			createConnectionStub.restore();
+			disposeStub.restore();
+			service.dispose();
+		}
+	});
+
+	it("refreshes a periodic join-session header without claims instead of closing the connection", async () => {
+		await enableChallengePropagation();
+		const error = createOdspNetworkError(
+			"Authorization failed",
+			401,
+			undefined,
+			new Response(undefined, { headers: { "www-authenticate": 'Bearer realm="tenant"' } }),
+		);
+		const response = { ...joinSessionResponse, refreshSessionDurationSeconds: 100 };
+		const joinSessionStub = stub(fetchJoinSession, mockify.key);
+		joinSessionStub.onFirstCall().resolves(response);
+		joinSessionStub.onSecondCall().rejects(error);
+		joinSessionStub.onThirdCall().resolves(response);
+		const createConnectionStub = stub(
+			odspDocumentDeltaConnection.OdspDocumentDeltaConnection,
+			"create",
+		).resolves(deltaConnection as OdspDocumentDeltaConnection);
+		const disposeStub = stub(deltaConnection, "dispose");
+		try {
+			await service.connectToDeltaStream(client);
+			await tickClock(70000);
+			assert.equal(joinSessionStub.callCount, 3);
+			assert(disposeStub.notCalled);
+		} finally {
+			joinSessionStub.restore();
+			createConnectionStub.restore();
+			disposeStub.restore();
+			service.dispose();
+		}
 	});
 
 	it("Check periodic join session call does not lead to duplicate refresh", async () => {

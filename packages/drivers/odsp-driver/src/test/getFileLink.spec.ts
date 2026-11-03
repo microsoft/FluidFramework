@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IAuthorizationError } from "@fluidframework/driver-definitions/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -63,6 +64,40 @@ describe("getFileLink", () => {
 			"sharelink",
 			"File link should match url returned from sharing information",
 		);
+	});
+
+	it("propagates sharing-information challenges after a tenant redirect without restarting the lookup", async () => {
+		const header =
+			'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+		let tokenFetches = 0;
+		await assert.rejects(
+			mockFetchMultiple(
+				async () =>
+					getFileLink(
+						async () => {
+							tokenFetches++;
+							return "token";
+						},
+						getOdspResolvedUrl("challengeAfterTenantRedirect"),
+						new MockLogger().toTelemetryLogger(),
+						undefined,
+						true,
+					),
+				[
+					async () =>
+						okResponse(
+							{},
+							{
+								...fileItemResponse,
+								sharepointIds: { ...fileItemResponse.sharepointIds, siteUrl: newSiteUrl },
+							},
+						),
+					async () => createResponse({ "www-authenticate": header }, undefined, 401),
+				],
+			),
+			(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+		);
+		assert.equal(tokenFetches, 2);
 	});
 
 	it("should apply host headers to file item and sharing information requests", async () => {

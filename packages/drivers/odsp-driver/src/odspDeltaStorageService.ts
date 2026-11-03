@@ -35,6 +35,7 @@ export class OdspDeltaStorageService {
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
 		private readonly logger: TelemetryLoggerExt,
+		private readonly propagateAuthChallenges: boolean = false,
 	) {}
 
 	/**
@@ -91,8 +92,8 @@ export class OdspDeltaStorageService {
 					const abort = new AbortController();
 					const timer = setTimeout(() => abort.abort(), 30000);
 
-					const response =
-						await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
+					const response = await this.epochTracker
+						.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
 							url,
 							{
 								headers,
@@ -103,8 +104,8 @@ export class OdspDeltaStorageService {
 							"ops",
 							true,
 							scenarioName,
-						);
-					clearTimeout(timer);
+						)
+						.finally(() => clearTimeout(timer));
 					const deltaStorageResponse = response.content;
 					const messages =
 						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
@@ -123,7 +124,7 @@ export class OdspDeltaStorageService {
 					return { messages, partialResult: false };
 				},
 			);
-		});
+		}, this.propagateAuthChallenges);
 	}
 
 	public buildUrl(from: number, to: number): string {

@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentService,
+	IAuthorizationError,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
@@ -21,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { getOdspResolvedUrl } from "../odspUtils.js";
 
-import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
+import { createResponse, mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";
@@ -117,6 +120,32 @@ describe("Odsp Create Container Test", () => {
 			"Snapshot url should match",
 		);
 	});
+
+	for (const summary of [undefined, createSummary(true, true)]) {
+		it(`propagates create-container challenges ${summary === undefined ? "without" : "with"} a summary`, async () => {
+			let tokenFetches = 0;
+			const factory = new OdspDocumentServiceFactory(
+				async () => {
+					tokenFetches++;
+					return "token";
+				},
+				undefined,
+				undefined,
+				{ propagateAuthChallenges: true },
+			);
+			const resolved = await resolver.resolve(request);
+			const header =
+				'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+			await assert.rejects(
+				mockFetchMultiple(
+					async () => factory.createContainer(summary, resolved, new MockLogger()),
+					[async () => createResponse({ "www-authenticate": header }, undefined, 403)],
+				),
+				(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+			);
+			assert.equal(tokenFetches, 1);
+		});
+	}
 
 	it("No App Summary", async () => {
 		const resolved = await resolver.resolve(request);

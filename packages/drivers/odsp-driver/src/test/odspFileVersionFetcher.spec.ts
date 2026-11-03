@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotTree,
+	IAuthorizationError,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -318,6 +322,37 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			"the first attempt uses a cached token; the retry forces a refresh",
 		);
 	});
+
+	for (const operation of [
+		"listFileVersions",
+		"resolveSequenceNumber",
+		"getLiveDocumentEpoch",
+		"getRecoverableVersionEpoch",
+	] as const) {
+		it(`${operation} propagates an authorization challenge without refreshing`, async () => {
+			const refreshFlags: boolean[] = [];
+			const challengeFetcher = createOdspFileVersionFetcher({
+				urlParts,
+				getAuthHeader: async (options) => {
+					refreshFlags.push(options.refresh);
+					return "token";
+				},
+				epochTracker,
+				logger,
+				propagateAuthChallenges: true,
+			});
+			const header =
+				'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+			await assert.rejects(
+				withFetch(
+					[await createResponse({ "www-authenticate": header }, undefined, 401)],
+					async () => challengeFetcher[operation]("42.0"),
+				),
+				(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+			);
+			assert.deepEqual(refreshFlags, [false]);
+		});
+	}
 
 	it("resolveSequenceNumber surfaces a non-success response as an error", async () => {
 		// @q F-ERROR-03

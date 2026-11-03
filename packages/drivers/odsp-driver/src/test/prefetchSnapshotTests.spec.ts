@@ -14,10 +14,13 @@ import {
 	type ICacheEntry,
 	type ISnapshot,
 	type ISnapshotTree,
+	type IAuthorizationError,
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import {
@@ -35,7 +38,13 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { type INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
-import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
+import {
+	createResponse,
+	mockFetchMultiple,
+	mockFetchSingle,
+	notFound,
+	type MockResponse,
+} from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -151,6 +160,111 @@ describe("Tests for prefetching snapshot", () => {
 
 	before(async () => {
 		hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+	});
+
+	for (const useFactory of [false, true]) {
+		it(`propagates prefetch challenges ${useFactory ? "using factory policy" : "without a factory"}`, async () => {
+			const cache = createUtLocalCache();
+			const resolvedUrl = await resolver.resolve({ url: odspUrl });
+			const logger = new MockLogger();
+			let tokenFetches = 0;
+			const getToken = async (): Promise<string> => {
+				tokenFetches++;
+				return "token";
+			};
+			const factory = useFactory
+				? new OdspDocumentServiceFactory(getToken, undefined, cache, {
+						propagateAuthChallenges: true,
+					})
+				: undefined;
+			const header =
+				'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+			await assert.rejects(
+				mockFetchSingle(
+					async () =>
+						prefetchLatestSnapshot(
+							resolvedUrl,
+							getToken,
+							cache,
+							true,
+							logger,
+							undefined,
+							true,
+							undefined,
+							undefined,
+							factory,
+							useFactory ? undefined : true,
+						),
+					async () => createResponse({ "www-authenticate": header }, undefined, 401),
+				),
+				(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+			);
+			assert.equal(tokenFetches, 1);
+		});
+	}
+
+	it("refreshes and returns false for a prefetch header without a claims challenge", async () => {
+		const cache = createUtLocalCache();
+		const resolvedUrl = await resolver.resolve({ url: odspUrl });
+		let tokenFetches = 0;
+		const authResponse = async (): Promise<MockResponse> =>
+			createResponse({ "www-authenticate": 'Bearer realm="tenant"' }, undefined, 401);
+		const result = await mockFetchMultiple(
+			async () =>
+				prefetchLatestSnapshot(
+					resolvedUrl,
+					async () => {
+						tokenFetches++;
+						return "token";
+					},
+					cache,
+					true,
+					new MockLogger(),
+					undefined,
+					false,
+					undefined,
+					undefined,
+					undefined,
+					true,
+				),
+			[authResponse, authResponse],
+		);
+		assert.equal(result, false);
+		assert.equal(tokenFetches, 2);
+	});
+
+	it("propagates a prefetched challenge to the load caller instead of fetching again", async () => {
+		const resolvedUrl = await resolver.resolve({ url: odspUrl });
+		const factory = new OdspDocumentServiceFactory(
+			async () => "token",
+			undefined,
+			createUtLocalCache(),
+			{ propagateAuthChallenges: true, concurrentSnapshotFetch: false },
+		);
+		const documentService = await factory.createDocumentService(resolvedUrl, new MockLogger());
+		const storage = await documentService.connectToStorage();
+		const error = createOdspNetworkError(
+			"Authorization failed",
+			401,
+			undefined,
+			new Response(undefined, {
+				headers: {
+					"www-authenticate":
+						'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="',
+				},
+			}),
+		);
+		const prefetchStub = stub(factory.snapshotPrefetchResultCache, "get").rejects(error);
+		try {
+			await assert.rejects(
+				mockFetchMultiple(async () => storage.getVersions(null, 1), []),
+				(caught: unknown) => caught === error,
+			);
+			assert(prefetchStub.calledOnce);
+		} finally {
+			prefetchStub.restore();
+			documentService.dispose();
+		}
 	});
 
 	describe("Tests for prefetching snapshot: Concurrent snapshot fetch: Using GetVersions Api", () => {

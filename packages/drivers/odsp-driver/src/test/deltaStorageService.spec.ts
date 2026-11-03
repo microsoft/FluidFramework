@@ -9,6 +9,7 @@ import type {
 	IDeltasFetchResult,
 	IFileEntry,
 	ISequencedDocumentMessage,
+	IAuthorizationError,
 } from "@fluidframework/driver-definitions/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -22,7 +23,7 @@ import {
 } from "../odspDeltaStorageService.js";
 import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 
-import { mockFetchOk } from "./mockFetch.js";
+import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
 const createUtEpochTracker = (
@@ -48,6 +49,31 @@ describe("DeltaStorageService", () => {
 		odspResolvedUrl: true,
 	} as unknown as IOdspResolvedUrl;
 	const fileEntry = { docId: "docId", resolvedUrl };
+
+	it("propagates delta-storage authorization challenges without refreshing", async () => {
+		const logger = new MockLogger().toTelemetryLogger();
+		let tokenFetches = 0;
+		const service = new OdspDeltaStorageService(
+			testDeltaStorageUrl,
+			async () => {
+				tokenFetches++;
+				return "token";
+			},
+			createUtEpochTracker(fileEntry, logger),
+			logger,
+			true,
+		);
+		const header =
+			'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+		await assert.rejects(
+			mockFetchSingle(
+				async () => service.get(1, 2, {}),
+				async () => createResponse({ "www-authenticate": header }, undefined, 401),
+			),
+			(error: unknown) => (error as IAuthorizationError).wwwAuthenticate === header,
+		);
+		assert.equal(tokenFetches, 1);
+	});
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
 		const loggerMock = new MockLogger();

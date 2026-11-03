@@ -61,6 +61,7 @@ import {
 	getWithRetryForTokenRefresh,
 	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
+	isAuthChallengeError,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
@@ -133,6 +134,7 @@ export async function fetchSnapshotWithRedeem(
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -151,12 +153,22 @@ export async function fetchSnapshotWithRedeem(
 		putInCache,
 		loadingGroupIds,
 		enableRedeemFallback,
+		propagateAuthChallenges,
 	)
 		.catch(async (error) => {
+			if (propagateAuthChallenges && isAuthChallengeError(error)) {
+				throw error;
+			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
-				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger, requestHeaders);
+				await redeemSharingLink(
+					odspResolvedUrl,
+					storageTokenFetcher,
+					logger,
+					requestHeaders,
+					propagateAuthChallenges,
+				);
 
 				const shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo };
 				delete shareLinkInfo.sharingLinkToRedeem;
@@ -186,6 +198,8 @@ export async function fetchSnapshotWithRedeem(
 					snapshotDownloader,
 					putInCache,
 					loadingGroupIds,
+					undefined,
+					propagateAuthChallenges,
 				);
 			} else if (
 				isLocationRedirectionError(error) &&
@@ -212,8 +226,12 @@ export async function fetchSnapshotWithRedeem(
 						storageTokenFetcher,
 						logger,
 						requestHeaders,
+						propagateAuthChallenges,
 					);
 				} catch (redeemError) {
+					if (propagateAuthChallenges && isAuthChallengeError(redeemError)) {
+						throw redeemError;
+					}
 					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
 				}
 				throw error;
@@ -244,6 +262,7 @@ async function redeemSharingLink(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateAuthChallenges: boolean = false,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -284,7 +303,7 @@ async function redeemSharingLink(
 						headers: mergeRequestHeaders(requestHeaders, headers),
 						method,
 					});
-				});
+				}, propagateAuthChallenges);
 			}
 
 			const details = JSON.stringify({
@@ -325,6 +344,7 @@ async function fetchLatestSnapshotCore(
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
+	propagateAuthChallenges: boolean = false,
 ): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
@@ -626,7 +646,7 @@ async function fetchLatestSnapshotCore(
 			}
 			throw error;
 		});
-	});
+	}, propagateAuthChallenges);
 }
 
 export interface ISnapshotRequestAndResponseOptions {

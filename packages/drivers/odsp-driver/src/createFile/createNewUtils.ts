@@ -217,6 +217,7 @@ export async function createNewFluidContainerCore<T>(args: {
 	fetchType: FetchType;
 	validateResponseCallback?: (content: T) => void;
 	additionalHeaders?: { [key: string]: string };
+	propagateAuthChallenges?: boolean;
 }): Promise<T> {
 	const {
 		containerSnapshot,
@@ -228,6 +229,7 @@ export async function createNewFluidContainerCore<T>(args: {
 		fetchType,
 		validateResponseCallback,
 		additionalHeaders = {},
+		propagateAuthChallenges,
 	} = args;
 	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
@@ -320,5 +322,5 @@ export async function createNewFluidContainerCore<T>(args: {
 				return fetchResponse.content;
 			},
 		);
-	});
+	}, propagateAuthChallenges);
 }

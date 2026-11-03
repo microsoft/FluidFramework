@@ -98,6 +98,7 @@ export interface OdspFileVersionFetcherProps {
 	readonly epochTracker: EpochTracker;
 	readonly logger: TelemetryLoggerExt;
 	readonly requestHeaders?: Readonly<Record<string, string>>;
+	readonly propagateAuthChallenges?: boolean;
 }
 
 /**
@@ -106,7 +107,14 @@ export interface OdspFileVersionFetcherProps {
 export function createOdspFileVersionFetcher(
 	props: OdspFileVersionFetcherProps,
 ): IOdspFileVersionFetcher {
-	const { urlParts, getAuthHeader, epochTracker, logger, requestHeaders } = props;
+	const {
+		urlParts,
+		getAuthHeader,
+		epochTracker,
+		logger,
+		requestHeaders,
+		propagateAuthChallenges,
+	} = props;
 	const { siteUrl, driveId, itemId } = urlParts;
 
 	const listFileVersions = async (): Promise<OdspFileVersionRef[]> =>
@@ -138,7 +146,7 @@ export function createOdspFileVersionFetcher(
 				url = page["@odata.nextLink"] ?? "";
 			} while (url);
 			return versions;
-		});
+		}, propagateAuthChallenges);
 
 	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
 		getWithRetryForTokenRefresh(async (options) => {
@@ -194,7 +202,7 @@ export function createOdspFileVersionFetcher(
 				);
 			}
 			return sequenceNumber;
-		});
+		}, propagateAuthChallenges);
 
 	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
 
@@ -216,7 +224,7 @@ export function createOdspFileVersionFetcher(
 				headers: mergeRequestHeaders(requestHeaders, headers),
 			});
 			return response.headers.get("x-fluid-epoch") ?? undefined;
-		});
+		}, propagateAuthChallenges);
 
 	const getLiveDocumentEpoch = async (): Promise<string | undefined> =>
 		// The (unversioned) live snapshot endpoint is a current-file read, so its epoch is the live

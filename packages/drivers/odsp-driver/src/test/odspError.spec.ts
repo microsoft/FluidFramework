@@ -20,6 +20,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, normalizeError } from "@fluidframework/telemetry-utils/internal";
 
 import type { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
@@ -301,6 +302,150 @@ describe("Odsp Error", () => {
 			}
 		});
 		assert.equal(res, 1, "did not successfully retried with claims");
+	});
+
+	const claimsChallengeHeader =
+		'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="';
+
+	for (const status of [401, 403]) {
+		it(`propagates a ${status} claims challenge without refreshing or logging it`, async () => {
+			const header = claimsChallengeHeader;
+			const response = new Response(undefined, {
+				status,
+				headers: { "WWW-Authenticate": header },
+			});
+			const error = createOdspNetworkError(
+				"Authorization failed",
+				status,
+				undefined,
+				response,
+			);
+			let attempts = 0;
+			await assert.rejects(
+				getWithRetryForTokenRefresh(async () => {
+					attempts++;
+					throw error;
+				}, true),
+				(caught: unknown) => caught === error,
+			);
+			assert.equal(attempts, 1);
+			assert(isIAuthorizationError(error));
+			assert.equal(error.canRetry, false);
+			assert.equal(error.wwwAuthenticate, header);
+			assert.equal(normalizeError(error), error);
+			assert.equal(error.getTelemetryProperties().wwwAuthenticate, undefined);
+			const logger = new MockLogger();
+			logger.toTelemetryLogger().sendErrorEvent({ eventName: "Challenge" }, error);
+			assert.equal(logger.events[0]?.wwwAuthenticate, undefined);
+		});
+
+		for (const [description, header] of Object.entries({
+			"realm only": 'Bearer realm="tenant"',
+			"missing claims": 'Bearer realm="tenant", error="insufficient_claims"',
+			"empty claims": 'Bearer realm="tenant", error="insufficient_claims", claims=""',
+			"missing error indicator":
+				'Bearer realm="tenant", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="',
+			"other error indicator":
+				'Bearer realm="tenant", error="invalid_token", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="',
+			"malformed claims":
+				'Bearer realm="tenant", error="insufficient_claims", claims=malformed',
+			"empty header": "",
+		})) {
+			it(`refreshes a ${status} response with ${description} when propagation is enabled`, async () => {
+				const response = new Response(undefined, {
+					status,
+					headers: { "www-authenticate": header },
+				});
+				const error = createOdspNetworkError(
+					"Authorization failed",
+					status,
+					undefined,
+					response,
+				);
+				const attempts: boolean[] = [];
+				const result = await getWithRetryForTokenRefresh(async (options) => {
+					attempts.push(options.refresh);
+					if (!options.refresh) {
+						throw error;
+					}
+					assert(isIAuthorizationError(error));
+					assert(!options.claims);
+					assert.equal(options.claims, error.claims);
+					assert.equal(options.tenantId, error.tenantId);
+					if (description === "realm only") {
+						assert.equal(options.tenantId, "tenant");
+					}
+					assert.equal(options.previousError, error);
+					return "success";
+				}, true);
+				assert.equal(result, "success");
+				assert.deepEqual(attempts, [false, true]);
+			});
+		}
+
+		for (const propagateAuthChallenges of [undefined, false, true]) {
+			it(`refreshes a ${status} error without a header when propagation is ${propagateAuthChallenges}`, async () => {
+				const attempts: boolean[] = [];
+				const result = await getWithRetryForTokenRefresh(async (options) => {
+					attempts.push(options.refresh);
+					if (!options.refresh) {
+						throw createOdspNetworkError("Authorization failed", status);
+					}
+					return "success";
+				}, propagateAuthChallenges);
+				assert.equal(result, "success");
+				assert.deepEqual(attempts, [false, true]);
+			});
+		}
+
+		for (const propagateAuthChallenges of [undefined, false]) {
+			it(`refreshes a ${status} challenge with claims and tenant when propagation is ${propagateAuthChallenges}`, async () => {
+				const response = new Response(undefined, {
+					status,
+					headers: {
+						"www-authenticate":
+							'Bearer realm="tenant", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnt9fQ=="',
+					},
+				});
+				const error = createOdspNetworkError(
+					"Authorization failed",
+					status,
+					undefined,
+					response,
+				);
+				let attempts = 0;
+				await getWithRetryForTokenRefresh(async (options) => {
+					attempts++;
+					if (!options.refresh) {
+						throw error;
+					}
+					assert.equal(options.claims, '{"access_token":{}}');
+					assert.equal(options.tenantId, "tenant");
+					assert.equal(options.previousError, error);
+				}, propagateAuthChallenges);
+				assert.equal(attempts, 2);
+				assert.equal(error.getTelemetryProperties().claims, undefined);
+				assert.equal(error.getTelemetryProperties().tenantId, undefined);
+			});
+		}
+	}
+
+	it("propagates a challenge received after an ordinary token refresh", async () => {
+		const challenge = createOdspNetworkError(
+			"Authorization failed",
+			401,
+			undefined,
+			new Response(undefined, { headers: { "www-authenticate": claimsChallengeHeader } }),
+		);
+		let attempts = 0;
+		await assert.rejects(
+			getWithRetryForTokenRefresh(async (options) => {
+				attempts++;
+				throw options.refresh ? challenge : createOdspNetworkError("Expired token", 401);
+			}, true),
+			(error: unknown) => error === challenge,
+		);
+		assert.equal(attempts, 2);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
