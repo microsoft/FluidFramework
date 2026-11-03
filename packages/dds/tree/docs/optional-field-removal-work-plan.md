@@ -275,6 +275,15 @@ This change does not update previously deployed package versions.
 
 Use the existing test suites and fixtures.
 
+For every client/document pair in the scenarios below, verify the expected read/write capabilities as well as the schema compatibility status:
+
+- If no upgrade is required, verify that the client can read supported fields and write valid values without upgrading.
+- If an upgrade is required, apply the upgrade and verify that the expected reads and writes succeed afterward.
+- Verify that unknown optional fields are not exposed as normal view properties and that edits to known fields preserve existing unknown-field data.
+- When multiple clients participate, synchronize them and verify that each client can read the resulting values for fields known to its view.
+
+Include these checks within the existing scenarios.
+
 | Area | Required coverage | Existing test location |
 | --- | --- | --- |
 | Basic removal | Retain an omitted optional field. Verify compatibility and a no-op upgrade. | [Compatibility tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/schemaCompatibilityTester.spec.ts) |
@@ -359,17 +368,127 @@ Full implementation and integration validation remain required.
 
 ## Developer's Notes
 
-### Interesting test cases
+### Test Cases
 
-#### New view schema field conflicts with old removed field
+Apply the read/write verification requirements in section 7 to every client/document pair below.
 
-1. Schema version 1: Object schema declares optional field `foo`
-2. Schema version 2: Optional field `foo` is removed
-3. Schema version 3: New optional field `foo` is added to the same schema
+The examples below use TypeScript field notation.
+For example, `foo?: number` means an optional field named `foo` that allows numbers.
+The property names in these examples are also the stored keys.
 
-View schema version 1 should be able to read documents with schema version 3 if and only if the superset rules apply.
-The same is true for a view schema of version 3 opening a document with version 1.
+#### Remove optional field
 
-Question: Can this lead to situations where clients continually "upgrade" each others schema changes?
-My intuition is that, so long as the superset rule is adhered to, they should be guaranteed to converge.
-But this should be validated.
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo`.
+
+Verify:
+- V2 client can open V1 document (no upgrade)
+- V1 client can open V2 document (requires upgrade)
+
+#### Remove optional field and add new field
+
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo` and adds `bar?: string`.
+
+Verify:
+- V2 client can open V1 document (requires upgrade)
+- V1 client can open V2 document (requires upgrade)
+
+#### Remove optional field and later restore it
+
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo`.
+3. V3 restores `foo?: number`, with the same stored key and allowed type as V1.
+
+Verify:
+- V1 client can open V2 document (requires upgrade)
+- V1 client can open V3 document (no upgrade)
+- V2 client can open V1 document (no upgrade)
+- V2 client can open V3 document (no upgrade)
+- V3 client can open V1 document (no upgrade)
+- V3 client can open V2 document (requires upgrade)
+
+Additional sanity-check verification:
+- V1 client can open a V2 document that was previously upgraded by a V3 client (no further upgrade should be required)
+- V3 client can open a V2 document that was previously upgraded by a V1 client (no further upgrade should be required)
+
+##### Variation: Restore the field with a wider set of allowed types
+
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo`.
+3. V3 restores the same stored key as `foo?: number | string`.
+
+V3 permits all values allowed by V1, but V1 does not permit all values allowed by V3.
+This change supports upgrades in only one direction.
+
+Verify:
+- V3 client can open V1 document (requires upgrade to permit strings)
+- V1 client can neither view nor upgrade a V3 document
+- V1 client can open a document created with V2 that has not been upgraded (requires upgrade)
+- V3 client can open a document created with V2 that has not been upgraded (requires upgrade)
+- V3 client can open a V2 document that was previously upgraded by a V1 client (requires a further upgrade to permit strings)
+- V1 client can neither view nor upgrade a V2 document that was previously upgraded by a V3 client
+
+These expectations apply even when `foo` is empty or contains only a number.
+Compatibility depends on the stored schema, not only on the current field value.
+
+#### Remove optional field, then later add a conflicting field with the same name
+
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo`.
+3. V3 adds `foo?: string`, reusing the stored key with an incompatible allowed type.
+
+Verify:
+- V1 client can neither view nor upgrade a V3 document
+- V3 client can neither view nor upgrade a V1 document
+- V1 client can neither view nor upgrade a V2 document that was previously upgraded by a V3 client
+- V3 client can neither view nor upgrade a V2 document that was previously upgraded by a V1 client
+
+#### Removing an optional field allows removing a node type only referenced by that field
+
+1. Schema V1 includes `foo?: Foo`, where `Foo` is an object node type with a required `text: string` field. The `Foo` type is *only* used in this location.
+2. V2 removes `foo` and also removes the `Foo` type from its schema.
+
+Verify:
+- V1 client can open V2 document (requires upgrade)
+- V2 client can open V1 document (no upgrade)
+
+#### Repeated upgrades after replacing an optional field
+
+1. Schema V1 includes `foo?: number`.
+2. V2 removes `foo` and adds `bar?: string`.
+3. Create a document with V1 and populate `foo`.
+4. Open it with V2 and upgrade to add `bar` while retaining `foo`.
+5. Synchronize both clients, then populate `bar` and synchronize again.
+6. Alternate calls to `upgradeSchema()` from V1 and V2, synchronizing after each call.
+
+Verify:
+- Both clients can view the document after the initial upgrade.
+- The stored schema retains both fields.
+- Each client can read and edit its known field without deleting the other field's data.
+- After synchronization, both clients report `canUpgrade: true`.
+- Each subsequent upgrade call is a no-op: no schema operation, schema-change event, or view node replacement.
+- Neither client repeatedly removes and restores the other client's field schema.
+
+Repeat with a document created with V2 and a populated `bar`, then upgrade first with V1.
+The final stored schema must be equivalent in both histories.
+
+### Prerequisite Test Cases
+
+These cases protect existing schema safety rules.
+They do not require the optional-field preservation feature.
+Check the existing tests first and add only missing coverage.
+We can add and merge these tests in a separate pull request before implementing the feature.
+They must continue to pass after implementation.
+
+For each case, keep the same object type identifier and stored field keys.
+Create a document with the original schema, then evaluate the changed view.
+
+| Case | Original schema | Changed view | Expected result |
+| --- | --- | --- | --- |
+| Remove an optional field without the object option | Object declares `foo?: number`. | Object omits `foo` and does not enable `allowUnknownOptionalFields`. | Cannot view or upgrade. |
+| Remove a required field | Object declares required `foo: number`. | Object omits `foo` and enables `allowUnknownOptionalFields`. | Cannot view or upgrade. The option permits only unknown optional fields. |
+| Narrow a declared field's allowed types | Object declares `foo?: number | string`. | Object declares `foo?: number` and enables `allowUnknownOptionalFields`. | Cannot view or upgrade. The field is known, so unknown-field tolerance does not apply. |
+| Reuse a node-type identifier with an incompatible definition | Object declares `foo?: Foo`. `Foo` has required `text: string`. | Object still declares `foo?: Foo`, but the same `Foo` identifier now has required `text: number`. The object enables `allowUnknownOptionalFields`. | Cannot view or upgrade. Matching identifiers do not make conflicting definitions compatible. |
+
+Verify that rejected upgrade attempts do not change the stored schema or document content.

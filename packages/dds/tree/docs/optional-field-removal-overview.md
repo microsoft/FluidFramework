@@ -2,11 +2,20 @@
 
 **Status:** Proposed behavior. This capability is not implemented.
 
+## Background
+
+It is not currently possible with SharedTree to remove fields or types from schema.
+We refer to this concept as "narrowing" the schema.
+This means that in-development applications will, over time, accrue unused fields and types in their schema that are not referenced by modern versions of the application.
+Additionally, regarding for fields of object schema in particular, it is currently impossible to "roll back" unwanted additions to schema that have ever been shipped to customers.
+
+The following proposal is aimed at addressing these concerns for *optional fields* specifically.
+
 ## Summary
 
 Let applications remove optional fields from object schemas that enable `allowUnknownOptionalFields`.
 Existing documents would keep the removed fields and their data.
-The application would treat them as unknown optional fields and could still make later compatible schema upgrades.
+Future versions of the application would treat them as unknown optional fields and could still make later compatible schema upgrades.
 
 This would make it easier to roll back application changes or remove experimental features without deleting document data.
 
