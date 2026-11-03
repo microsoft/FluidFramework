@@ -12,7 +12,7 @@ import {
 
 import type { Revertible } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
@@ -650,6 +650,7 @@ describe("simple-tree tree", () => {
 			fork.root = 44;
 
 			// Verify
+			assert(fork.checkout instanceof TreeCheckout);
 			fork.checkout.switchBranch(branchBeforeRewind);
 			assert.equal(fork.branchHistory.length, 2);
 			assert.equal(fork.root, 2);

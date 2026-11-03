@@ -5,10 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import { expect } from "chai";
-import { spy } from "sinon";
+import { spy, useFakeTimers } from "sinon";
 import type Sinon from "sinon";
 
 import {
@@ -22,6 +23,7 @@ import {
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	type IFluidTelemetry,
 } from "../index.js";
 
 /**
@@ -29,18 +31,77 @@ import {
  * The rest of the functionality of IFluidContainer is irrelevant.
  */
 class MockFluidContainer extends TypedEventEmitter<IFluidContainerEvents> {
+	public connectionState: ConnectionState = ConnectionState.Disconnected;
+
 	public connect(): void {
+		this.connectionState = ConnectionState.Connected;
 		this.emit(IFluidContainerSystemEventNames.CONNECTED);
 	}
 
 	public disconnect(): void {
+		this.connectionState = ConnectionState.Disconnected;
 		this.emit(IFluidContainerSystemEventNames.DISCONNECTED);
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
+		this.connectionState = ConnectionState.Disconnected;
 		this.emit(IFluidContainerSystemEventNames.DISPOSED, error);
 	}
 }
+
+describe("container heartbeat telemetry", () => {
+	const heartbeatIntervalMs = 60000;
+	let clock: Sinon.SinonFakeTimers;
+	let mockFluidContainer: MockFluidContainer;
+	let consumedTelemetry: IFluidTelemetry[];
+
+	beforeEach(() => {
+		clock = useFakeTimers();
+		mockFluidContainer = new MockFluidContainer();
+		consumedTelemetry = [];
+		startTelemetry({
+			container: mockFluidContainer as unknown as IFluidContainer,
+			containerId: "mockContainerId",
+			consumers: [{ consume: (telemetry) => consumedTelemetry.push(telemetry) }],
+		});
+	});
+
+	afterEach(() => {
+		clock.restore();
+	});
+
+	// The heartbeat event name is not part of the ContainerTelemetryEventName union, so compare as a string.
+	const heartbeatCount = (): number =>
+		consumedTelemetry.filter(
+			(t) => (t.eventName as string) === "fluidframework.container.heartbeat",
+		).length;
+
+	it("emits heartbeat telemetry only while connected", () => {
+		clock.tick(heartbeatIntervalMs);
+		expect(heartbeatCount()).to.equal(0);
+
+		mockFluidContainer.connect();
+		clock.tick(heartbeatIntervalMs);
+		expect(heartbeatCount()).to.equal(1);
+
+		mockFluidContainer.disconnect();
+		clock.tick(heartbeatIntervalMs);
+		expect(heartbeatCount()).to.equal(1);
+	});
+
+	it("clears the heartbeat timer when the container is disposed", () => {
+		mockFluidContainer.connect();
+		expect(clock.countTimers()).to.equal(1);
+
+		mockFluidContainer.dispose();
+		expect(clock.countTimers()).to.equal(0);
+
+		// Even if the container somehow reports as connected afterwards, no further heartbeats are emitted.
+		mockFluidContainer.connectionState = ConnectionState.Connected;
+		clock.tick(heartbeatIntervalMs * 3);
+		expect(heartbeatCount()).to.equal(0);
+	});
+});
 
 describe("container telemetry via", () => {
 	let mockFluidContainer: MockFluidContainer;

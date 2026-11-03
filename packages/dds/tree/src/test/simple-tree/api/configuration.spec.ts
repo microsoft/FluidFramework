@@ -21,7 +21,7 @@ import {
 import {
 	type TreeNodeSchema,
 	type LibraryId,
-	identifySchema,
+	identifySchemaAlpha,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
@@ -278,7 +278,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: -1 } }),
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: -1 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -286,7 +286,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1.5 } }),
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1.5 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -295,7 +295,7 @@ describe("simple-tree configuration", () => {
 	it("accepts zero as a schema version", () => {
 		const config = new TreeViewConfigurationAlpha({
 			schema: [],
-			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 0 } }),
+			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 0 } }),
 		});
 
 		assert.equal(config.schemaVersion?.[testLibraryId], 0);
@@ -304,7 +304,7 @@ describe("simple-tree configuration", () => {
 
 	it("copies and freezes application versions on the schema identity", () => {
 		const versions = { [testLibraryId]: 1 };
-		const identity = identifySchema({ schemaVersion: versions });
+		const identity = identifySchemaAlpha({ schemaVersion: versions });
 		versions[testLibraryId] = 2;
 
 		assert.deepEqual(identity.schemaVersion, { test: 1 });
@@ -315,7 +315,7 @@ describe("simple-tree configuration", () => {
 	});
 
 	it("preserves identities without application versions", () => {
-		const identity = identifySchema();
+		const identity = identifySchemaAlpha();
 		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
 		assert.equal(identity.schemaVersion, undefined);
 		assert.equal(config.schemaVersion, undefined);
@@ -327,7 +327,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: version } }),
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: version } }),
 				}),
 			/non-negative safe integer/,
 		);

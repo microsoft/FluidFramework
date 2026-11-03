@@ -44,14 +44,6 @@ export {
 	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
-	type IOrderedClientCollection,
-	type IOrderedClientElection,
-	type ISerializedElection,
-	type ITrackedClient,
-	OrderedClientCollection,
-	OrderedClientElection,
-} from "./orderedClientElection.js";
-export {
 	type IAckedSummary,
 	type ISummaryCollectionOpEvents,
 	type ISummaryOpMessage,
@@ -64,6 +56,7 @@ export {
 	type OpActionEventName,
 } from "./summaryCollection.js";
 export {
+	type ISerializedElection,
 	type ISummarizerClientElection,
 	type ISummarizerClientElectionEvents,
 	SummarizerClientElection,

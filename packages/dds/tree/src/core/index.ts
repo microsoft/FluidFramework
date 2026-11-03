@@ -238,6 +238,10 @@ export {
 	comparePartialChangesetLocalIds,
 	diffHistories,
 	type RevisionReplacer,
+	cheapRebaseValidation,
+	strictRebaseValidation,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./rebase/index.js";
 
 export {

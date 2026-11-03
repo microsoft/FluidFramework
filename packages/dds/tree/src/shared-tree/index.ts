@@ -27,6 +27,7 @@ export { ForestTypeExpensiveDebug } from "./forestTypeExpensiveDebug.js";
 
 export {
 	createTreeCheckout,
+	CheckoutBase,
 	TreeCheckout,
 	type TreeCheckoutOptions,
 	type ITreeCheckout,
@@ -35,6 +36,8 @@ export {
 } from "./treeCheckout.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+
+export { BranchCheckout, forkAsBranchCheckout } from "./branchCheckout.js";
 
 export { initialize, initializerFromChunk } from "./schematizeTree.js";
 

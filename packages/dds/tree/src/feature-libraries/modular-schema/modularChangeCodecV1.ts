@@ -14,17 +14,19 @@ import {
 	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -71,7 +73,12 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import { nodeChangeFromId } from "./modularChangeUtils.js";
+import {
+	areEquivalent,
+	fieldKindsFromConfiguration,
+	isChangesetValid,
+	nodeChangeFromId,
+} from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -652,17 +659,29 @@ export function makeModularChangeCodecV1(
 	);
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) =>
-			encodeChange(
+		encode: (change, context) => {
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
-		decode: (encodedChange, context) =>
-			decodeChange(
+			);
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+			return encoded;
+		},
+		decode: (encodedChange, context) => {
+			const decoded = decodeChange(
 				encodedChange,
 				context,
 				fieldKinds,
@@ -670,7 +689,12 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return decoded;
+		},
 	};
 
 	return withSchemaValidation(

@@ -10,7 +10,7 @@ These versions are provided as a version map, where each version is keyed by a s
 This allows an application to have separate versions for different features, components, or libraries.
 For example, a notes feature and a comments feature can each track changes to their part of the schema without sharing a single application-wide version.
 
-[`identifySchema`](https://fluidframework.com/docs/api/fluid-framework/identifyschema-function) accepts the version map in its `schemaVersion` option.
+[`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) accepts the version map in its `schemaVersion` option.
 The result is passed to the `schemaIdentity` option of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
 Storing versions requires the experimental schema format, enabled through [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function).
 The example below configures separate versions for notes and comments:
@@ -18,7 +18,7 @@ The example below configures separate versions for notes and comments:
 ```typescript
 import {
 	configuredSharedTreeAlpha,
-	identifySchema,
+	identifySchemaAlpha,
 	type LibraryId,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
@@ -39,7 +39,7 @@ const SharedTree = configuredSharedTreeAlpha({
 
 const config = new TreeViewConfigurationAlpha({
 	schema: AppSchema,
-	schemaIdentity: identifySchema({
+	schemaIdentity: identifySchemaAlpha({
 		schemaVersion: {
 			[notesId]: 3,
 			[commentsId]: 1,

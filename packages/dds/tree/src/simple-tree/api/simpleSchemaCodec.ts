@@ -45,6 +45,8 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
  * It does not include metadata or persisted metadata.
  * Schemas without an application version map use snapshot v1.
  * Schemas with an application version map use snapshot v2.
+ * Definition order is independent of the input map's iteration order.
+ * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  *
  * @privateRemarks
  * TODO: Replace this export with a higher-level snapshot compatibility API.
@@ -57,7 +59,9 @@ export function encodeSchemaCompatibilitySnapshot(
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
-	for (const [identifier, schema] of simpleSchema.definitions) {
+	for (const [identifier, schema] of [...simpleSchema.definitions].sort(([a], [b]) =>
+		compareStrings(a, b),
+	)) {
 		const encodedDefinition = encodeNodeSchema(schema);
 		encodedDefinitions[identifier] = encodedDefinition;
 	}

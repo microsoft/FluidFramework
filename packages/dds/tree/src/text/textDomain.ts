@@ -64,9 +64,13 @@ export function expensiveInternalValidationAssert(condition: () => true | string
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
-	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-	})
+	extends sf.object(
+		"Text",
+		{
+			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements PlainText.Members, IExposedMethods
 {
 	/**

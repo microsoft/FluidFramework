@@ -191,7 +191,7 @@ export interface ITreeViewConfigurationAlpha<
 	 * schema identity for runtime hashing and application-defined versions
 	 *
 	 * @remarks
-	 * Create with {@link identifySchema}.
+	 * Create with {@link identifySchemaAlpha}.
 	 * See {@link SchemaIdentity.schemaVersion} for application version requirements.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;
@@ -199,6 +199,10 @@ export interface ITreeViewConfigurationAlpha<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
+ *
+ * @see {@link TreeViewConfigurationAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:4)} to access alpha APIs on this configuration
+ *
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -278,8 +282,9 @@ export class TreeViewConfiguration<
 
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
- * @remarks
- * See {@link (asAlpha:2)} for an API to downcast from {@link TreeViewConfiguration} to this type.
+ *
+ * @see {@link (asAlpha:4)} to access these APIs on an existing {@link TreeViewConfiguration}
+ *
  * @sealed @alpha
  */
 export class TreeViewConfigurationAlpha<
@@ -311,6 +316,10 @@ export class TreeViewConfigurationAlpha<
 		return this.schemaIdentity?.schemaVersion;
 	}
 
+	// TODO: Consider an async creator so identifySchemaAlpha can use native Web Crypto hashing APIs,
+	// saving approximately 2 KB of compressed bundle size.
+	// This is worth pursuing if there is another reason to make configuration creation async,
+	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);

@@ -24,7 +24,7 @@ import {
 	type StagedUpgradeStatus,
 	type ValidateRecursiveSchema,
 	schemaStatics,
-	identifySchema,
+	identifySchemaAlpha,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
@@ -385,7 +385,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
-						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
 					});
 					const { discrepancies, enabledUpgrades, ...compatibility } =
 						checkSchemaCompatibility(view, stored);
@@ -404,7 +404,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
-						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
 					});
 					assert.equal(checkSchemaCompatibility(view, stored).canUpgrade, false);
 				});
@@ -415,7 +415,7 @@ describe("checkSchemaCompatibility", () => {
 					});
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.string,
-						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
 					});
 
 					assert.equal(checkSchemaCompatibility(view, stored).isEquivalent, false);
@@ -581,7 +581,7 @@ describe("checkSchemaCompatibility", () => {
 
 				// Note: the decision to not allow is policy. See
 				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
-				it("stored schema has additional optional fields which view schema did not allow", () => {
+				it("the stored schema has additional optional fields, which the view schema allows", () => {
 					class Point2D extends factory.objectAlpha("Point", {
 						x: factory.number,
 						y: factory.number,
@@ -591,7 +591,14 @@ describe("checkSchemaCompatibility", () => {
 						y: factory.number,
 						z: factory.optional(factory.number),
 					}) {}
-					expectCompatibility({ view: Point2D, stored: toUpgradeSchema(Point3D) }, expected);
+					expectCompatibility(
+						{ view: Point2D, stored: toUpgradeSchema(Point3D) },
+						{
+							canView: true,
+							canUpgrade: false,
+							isEquivalent: false,
+						},
+					);
 				});
 
 				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema

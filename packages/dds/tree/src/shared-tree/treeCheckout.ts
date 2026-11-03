@@ -286,10 +286,11 @@ export type TreeTransactor = Transactor<
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
  * @privateRemarks
  * API for interacting with a {@link SharedTreeBranch}.
+ * Does not require branch retargeting: {@link TreeCheckout} supports rewind, while retained checkouts do not.
  * Implementations of this interface must implement the {@link branchKey} property.
  */
 export interface ITreeCheckout
-	extends UntypedTreeViewAlpha,
+	extends Omit<UntypedTreeViewAlpha, "rewindTo" | "fork">,
 		AnchorLocator,
 		ViewableTree,
 		WithBreakable {
@@ -427,6 +428,7 @@ export function createTreeCheckout(
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
+			{ trimmedCommitCount: 0 },
 		);
 
 	return new TreeCheckout({
@@ -448,7 +450,7 @@ export function createTreeCheckout(
 /**
  * Metrics derived from a revert operation.
  *
- * @see {@link TreeCheckout.revertRevertible}.
+ * @see {@link CheckoutBase.revertRevertible}.
  */
 export interface RevertMetrics {
 	/**
@@ -460,10 +462,10 @@ export interface RevertMetrics {
 }
 
 /**
- * Get the {@link TreeCheckout} associated with a given {@link UntypedTreeView}.
+ * Get the {@link CheckoutBase} associated with a given {@link UntypedTreeView}.
  */
-function getCheckout(context: UntypedTreeView): TreeCheckout {
-	if (context instanceof TreeCheckout) {
+function getCheckout(context: UntypedTreeView): CheckoutBase {
+	if (context instanceof CheckoutBase) {
 		return context;
 	}
 	if (context instanceof SchematizingSimpleTreeView) {
@@ -544,8 +546,8 @@ export function assertValidConstraint(
 }
 
 /**
- * Components and policies used to construct a {@link TreeCheckout}.
- * Also supplied to factories passed to {@link TreeCheckout.forkWith}.
+ * Components and policies used to construct a {@link CheckoutBase}.
+ * Also supplied to factories passed to {@link CheckoutBase.forkWith}.
  */
 export interface TreeCheckoutOptions {
 	/**
@@ -622,9 +624,14 @@ export interface TreeCheckoutOptions {
 }
 
 /**
- * An implementation of {@link ITreeCheckout}.
+ * Shared implementation of the internal tree checkouts, {@link TreeCheckout} and `BranchCheckout`.
+ *
+ * @remarks
+ * Provides common editing, schema, history, and view-creation behavior.
+ * Concrete subclasses determine whether the underlying branch can be replaced
+ * and whether disposing a view also disposes its checkout.
  */
-export class TreeCheckout implements ITreeCheckout {
+export abstract class CheckoutBase implements ITreeCheckout {
 	public disposed = false;
 
 	/**
@@ -660,15 +667,15 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @remarks
 	 * The label tree is always isomorphic to the actual transaction tree — every transaction
 	 * (whether labeled or not) gets its own node. To find the "current" (deepest open) node,
-	 * walk down the right side of the tree, stopping at {@link TreeCheckout.mostRecentlyClosedLabelNode}.
+	 * walk down the right side of the tree, stopping at {@link CheckoutBase.mostRecentlyClosedLabelNode}.
 	 *
-	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
+	 * Cleared by {@link CheckoutBase.runWithTransactionLabel} after the commit event is emitted.
 	 */
 	private labelTreeNode: LabelTree | undefined;
 
 	/**
 	 * Points to the most recently closed (committed) label node.
-	 * Used by {@link TreeCheckout.currentLabelNode} to stop descending past committed nodes.
+	 * Used by {@link CheckoutBase.currentLabelNode} to stop descending past committed nodes.
 	 */
 	private mostRecentlyClosedLabelNode: LabelTree | undefined;
 
@@ -703,7 +710,7 @@ export class TreeCheckout implements ITreeCheckout {
 	>();
 
 	/**
-	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
+	 * The name of the telemetry event logged for calls to {@link CheckoutBase.revertRevertible}.
 	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
@@ -720,10 +727,10 @@ export class TreeCheckout implements ITreeCheckout {
 	private locationRevisionSource?: () => LocationRevisionSource;
 
 	/**
-	 * Whether disposing a view also disposes this checkout by default.
+	 * Whether disposing a view also disposes this checkout.
 	 *
 	 * @remarks
-	 * By default, this is false when {@link TreeCheckout.isSharedBranch} is true, and true otherwise.
+	 * By default, this is false when {@link CheckoutBase.isSharedBranch} is true, and true otherwise.
 	 * A shared branch is stored in the document and shared with other clients.
 	 * This does not mean that multiple views share a checkout object.
 	 * A view of a shared branch does not own the checkout.
@@ -933,7 +940,7 @@ export class TreeCheckout implements ITreeCheckout {
 	/**
 	 * Returns the deepest open node on the right side of the label tree, which corresponds
 	 * to the current (most recently pushed, not yet committed or aborted) transaction.
-	 * Returns `undefined` when {@link TreeCheckout.labelTreeNode} is not set.
+	 * Returns `undefined` when {@link CheckoutBase.labelTreeNode} is not set.
 	 */
 	private currentLabelNode(): LabelTree | undefined {
 		if (this.labelTreeNode === undefined) {
@@ -1226,7 +1233,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * "forbidden during a change event" {@link UsageError} via {@link EditLock.checkUnlocked}.
 	 *
 	 * @remarks
-	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
+	 * Shared by both the local and remote `changed` emission paths in {@link CheckoutBase.onAfterBranchChange}.
 	 * The `try`/`finally` ensures the lock is released even if a listener throws.
 	 */
 	private emitChangedLocked(
@@ -1321,14 +1328,17 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.isView();
 	}
 
-	public isView(): this is UntypedTreeViewAlpha {
-		return true;
-	}
+	public abstract isView(): this is UntypedTreeViewAlpha;
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		_schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
 		return false;
+	}
+
+	public get unknownFieldSchemas(): undefined {
+		// A checkout has no view schema.
+		return undefined;
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
@@ -1471,7 +1481,7 @@ export class TreeCheckout implements ITreeCheckout {
 				);
 				this.storedSchema.apply(newSchema);
 				this.logger?.sendTelemetryEvent({
-					eventName: TreeCheckout.schemaChangeTelemetryEventName,
+					eventName: CheckoutBase.schemaChangeTelemetryEventName,
 					...tagCodeArtifacts({
 						details: JSON.stringify({
 							...telemetryMetrics,
@@ -1544,11 +1554,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	/**
 	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
-	 * Revision must exist in the given {@link TreeCheckout}'s branch.
+	 * Revision must exist in the given {@link CheckoutBase}'s branch.
 	 *
 	 * @param revision - The revision tag identifying the change to be made revertible.
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
-	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
+	 * @param checkout - The {@link CheckoutBase} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
 	 * @param labelTree - The {@link LabelTree} (if any) active when the original commit was produced.
 	 * The revert commit inherits these labels so that commits and their reverts can be associated.
@@ -1557,7 +1567,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private createRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
-		checkout: TreeCheckout,
+		checkout: CheckoutBase,
 		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
 		labelTree: LabelTree | undefined,
 	): RevertibleAlpha {
@@ -1586,7 +1596,7 @@ export class TreeCheckout implements ITreeCheckout {
 					checkout.snapshotCustomMetadata(options),
 				);
 				checkout.logger?.sendTelemetryEvent({
-					eventName: TreeCheckout.revertTelemetryEventName,
+					eventName: CheckoutBase.revertTelemetryEventName,
 					...revertMetrics,
 				});
 
@@ -1656,7 +1666,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Creates a schematized view of this checkout.
 	 * @param config - The schema and behavior configuration for the view.
 	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
-	 * Defaults to this checkout's {@link TreeCheckout.disposesWithView} policy.
+	 * Defaults to this checkout's {@link CheckoutBase.disposesWithView} policy.
 	 * @remarks
 	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
 	 */
@@ -1712,9 +1722,7 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChangeProcessingContext
 	>;
 
-	public fork(): TreeCheckout {
-		return this.forkWith((options) => new TreeCheckout(options));
-	}
+	public abstract fork(): CheckoutBase;
 
 	/**
 	 * Forks this checkout using the supplied factory.
@@ -1728,7 +1736,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Receives {@link TreeCheckoutOptions} with a local branch and no finalized-history override.
 	 */
 	@throwIfBroken
-	public forkWith<T extends TreeCheckout>(
+	public forkWith<T extends CheckoutBase>(
 		checkoutFactory: (options: TreeCheckoutOptions) => T,
 	): T {
 		this.checkNotDisposed(
@@ -1759,13 +1767,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return checkout;
 	}
 
-	public switchBranch(
-		branch: SharedTreeBranch<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
-	): void {
+	private checkCanSwitchBranch(): void {
 		this.editLock.checkUnlocked("Switching branches");
 		assert(
 			this.#transaction.size === 0,
@@ -1776,6 +1778,16 @@ export class TreeCheckout implements ITreeCheckout {
 				"Cannot switch a view away from a shared branch. Consider forking first.",
 			);
 		}
+	}
+
+	protected switchBranchInternal(
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): void {
+		this.checkCanSwitchBranch();
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1787,7 +1799,6 @@ export class TreeCheckout implements ITreeCheckout {
 
 		this.#transaction = this.createTransactionStack(branch);
 		this.branch = branch;
-		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
 		this.disposeLocations();
 		this.locationRevisionSource = undefined;
@@ -1799,7 +1810,10 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
-	public rewindTo(revisionString: string): void {
+	protected rewindToInternal(
+		revisionString: string,
+		switchBranch: (branch: CheckoutBase["mainBranch"]) => void,
+	): void {
 		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Rewinding is not supported during transactions.");
@@ -1815,7 +1829,10 @@ export class TreeCheckout implements ITreeCheckout {
 		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
 		}
-		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+		this.checkCanSwitchBranch();
+		this.breaker.run(() => {
+			switchBranch(this.#transaction.branch.fork(targetCommit));
+		});
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
@@ -1952,11 +1969,13 @@ export class TreeCheckout implements ITreeCheckout {
 		view: UntypedTreeView,
 	): JsonCompatibleReadOnly | undefined {
 		const viewCheckout = getCheckout(view);
+		const target = viewCheckout.#transaction.branch.getHead();
 		const rebased = rebaseBranch(
 			this.mintRevisionTag,
-			this.changeFamily.rebaser,
+			this.changeFamily,
 			this.#transaction.branch.getHead(),
-			viewCheckout.#transaction.branch.getHead(),
+			target,
+			target,
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -2026,7 +2045,6 @@ export class TreeCheckout implements ITreeCheckout {
 			view.dispose();
 		}
 		this.#events.emit("dispose");
-		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
 		this.disposeLocations();
 	}
@@ -2110,7 +2128,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 			change = tagChange(
 				rebaseChange(
-					this.changeFamily.rebaser,
+					this.changeFamily,
 					change,
 					commitToRevert,
 					headCommit,
@@ -2333,6 +2351,28 @@ export class TreeCheckout implements ITreeCheckout {
 	// #endregion Enrichment
 }
 
+/**
+ * A checkout that supports switching its underlying branch.
+ */
+export class TreeCheckout extends CheckoutBase implements UntypedTreeViewAlpha {
+	public override fork(): TreeCheckout {
+		return this.forkWith((options) => new TreeCheckout(options));
+	}
+
+	public override isView(): this is UntypedTreeViewAlpha {
+		return true;
+	}
+
+	public switchBranch(branch: CheckoutBase["mainBranch"]): void {
+		this.switchBranchInternal(branch);
+	}
+
+	@throwIfBroken
+	public rewindTo(revisionString: string): void {
+		this.rewindToInternal(revisionString, (branch) => this.switchBranch(branch));
+	}
+}
+
 function getSchemaChangeTelemetryMetrics(
 	oldSchema: TreeStoredSchema,
 	newSchema: TreeStoredSchema,
@@ -2401,7 +2441,7 @@ function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
 }
 
 /**
- * A helper class that assists {@link TreeCheckout} in preventing functionality from being used while the tree is in the middle of being edited.
+ * A helper class that assists {@link CheckoutBase} in preventing functionality from being used while the tree is in the middle of being edited.
  */
 class EditLock {
 	/**

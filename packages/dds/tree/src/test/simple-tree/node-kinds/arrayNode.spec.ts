@@ -18,6 +18,7 @@ import {
 	TreeViewConfiguration,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
+	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
@@ -37,6 +38,10 @@ import type {
 } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
+
+// `TreeArrayNodeAlpha` should be assignable to `TreeArrayNode`.
+type _arrayAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeArrayNodeAlpha<TAllowedTypes>, TreeArrayNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -223,7 +228,7 @@ describe("ArrayNode", () => {
 				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
 				const list = init(schemaType, initial);
-				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				return asAlpha(list);
 			}
 
 			it("fails at runtime if attempting to set content via index assignment", () => {
@@ -248,6 +253,19 @@ describe("ArrayNode", () => {
 				const jsArray = [0, 1, 2];
 				const array = init(schemaType, jsArray);
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+
+			it("preserves indexed access bounds", () => {
+				const array = init(schemaType, [0, 1, 2]);
+				assert.equal(array[0], 0);
+				assert.equal(array[2], 2);
+				for (const index of [-1, 0.5, 3, Number.NaN, Number.POSITIVE_INFINITY]) {
+					assert.equal(array[index], undefined);
+					assert.equal(Object.getOwnPropertyDescriptor(array, `${index}`), undefined);
+				}
+				const empty = init(schemaType, []);
+				assert.equal(empty[0], undefined);
+				assert.equal(Object.getOwnPropertyDescriptor(empty, "0"), undefined);
 			});
 
 			describe("at", () => {
@@ -628,6 +646,13 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
+				it("removes and returns null elements", () => {
+					const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+					const array = init(schema, [1, null, 2]);
+					assert.deepEqual(asAlpha(array).splice(1, 1), [null]);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
@@ -1213,27 +1238,22 @@ describe("ArrayNode", () => {
 	}
 
 	it("asIndex helper returns expected values", () => {
-		// Expected indices with no max
-		assert.equal(asIndex("0", Number.POSITIVE_INFINITY), 0);
-		assert.equal(asIndex("1", Number.POSITIVE_INFINITY), 1);
-		assert.equal(asIndex("999", Number.POSITIVE_INFINITY), 999);
-		// Expected indices with max
-		assert.equal(asIndex("0", 2), 0);
-		assert.equal(asIndex("1", 2), 1);
-		assert.equal(asIndex("2", 2), undefined);
-		assert.equal(asIndex("999", 2), undefined);
+		assert.equal(asIndex("0"), 0);
+		assert.equal(asIndex("1"), 1);
+		assert.equal(asIndex("999"), 999);
 		// Non-index values
-		assert.equal(asIndex("-0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("Infinity", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("NaN", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("-1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.5", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" ", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("0x1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" 1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
+		assert.equal(asIndex("-0"), undefined);
+		assert.equal(asIndex("Infinity"), undefined);
+		assert.equal(asIndex("NaN"), undefined);
+		assert.equal(asIndex("-1"), undefined);
+		assert.equal(asIndex("1.5"), undefined);
+		assert.equal(asIndex(""), undefined);
+		assert.equal(asIndex(" "), undefined);
+		assert.equal(asIndex("0x1"), undefined);
+		assert.equal(asIndex(" 1"), undefined);
+		assert.equal(asIndex("1.0"), undefined);
+		assert.equal(asIndex("1 "), undefined);
+		assert.equal(asIndex(Symbol.iterator), undefined);
 	});
 
 	describeHydration(
@@ -1315,6 +1335,12 @@ describe("ArrayNode", () => {
 	describeHydration(
 		"Iteration",
 		(init) => {
+			it("iterates over null elements", () => {
+				const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+				const array = init(schema, [1, null, 2]);
+				assert.deepEqual([...array], [1, null, 2]);
+			});
+
 			it("Iterates through the values of the array", () => {
 				const array = init(CustomizableNumberArray, [1, 2, 3]);
 				const result = [];
@@ -1348,6 +1374,14 @@ describe("ArrayNode", () => {
 			});
 		},
 		() => {
+			it("continues iterating when the array is hydrated between yields", () => {
+				const array = new CustomizableNumberArray([1, 2, 3]);
+				const values = array.values();
+				assert.deepEqual(values.next(), { value: 1, done: false });
+				hydrate(CustomizableNumberArray, array);
+				assert.deepEqual([...values], [2, 3]);
+			});
+
 			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
 				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
 

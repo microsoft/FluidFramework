@@ -26,6 +26,8 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
@@ -85,10 +87,14 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	type SchemaFactoryOptions,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
@@ -250,8 +256,6 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type UntypedTreeView,
-	type TreeBranch,
-	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchEventsBeta,
@@ -386,7 +390,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, unsafeArrayToTuple } from "./util/index.js";
 
 import type * as InternalTypes from "./internalTypes.js";
 /**
@@ -419,6 +423,7 @@ export {
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { ExtrinsicLocations } from "./extrinsic-locations/index.js";
 export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
@@ -426,7 +431,6 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	computeSchemaHash,
-	identifySchema,
+	identifySchemaAlpha,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";

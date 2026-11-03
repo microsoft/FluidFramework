@@ -284,9 +284,11 @@ import {
 	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
 	electedSummarizerBlobName,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
@@ -296,9 +298,13 @@ import {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGeneratedSummaryStats,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGenerateSummaryTreeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
@@ -306,22 +312,23 @@ import {
 	isSummariesDisabled,
 	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientCollection,
-	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
 	summarizerClientType,
 	summarizerRequestUrl,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryCollection,
 	SummaryManager,
 	validateSummaryHeuristicConfiguration,
@@ -1009,9 +1016,7 @@ export class ContainerRuntime
 				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
 			);
 		}
-		// Internally this value is still threaded through as `minVersionForCollab`. Renaming the
-		// Runtime/DataStore/DDS propagation path crosses API layers and requires a staged migration
-		// where both names coexist for old and new consumers. See #27851.
+		// Both internal names remain available while older Runtime, DataStore, and DDS packages migrate.
 		const minVersionForCollab =
 			oldestSupportedClientParam ??
 			deprecatedMinVersionForCollab ??
@@ -1372,6 +1377,10 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, unknown>;
 
 	private readonly _getClientId: () => string | undefined;
+	public get oldestSupportedClient(): OldestSupportedClientVersion {
+		return this.minVersionForCollab;
+	}
+
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -1587,6 +1596,10 @@ export class ContainerRuntime
 	 * that specifically care about operation acknowledgement do not depend on the host-facing aggregate.
 	 */
 	private lastOpDirty: boolean;
+	/**
+	 * Blob-aware dirty state requires separate loader-side op tracking to preserve reconnect ordering.
+	 */
+	private readonly blobWorkContributesToDirtyState: boolean;
 	private emitDirtyDocumentEvent = true;
 	/**
 	 * Tracks in-progress pending-op-state notifications.
@@ -2336,11 +2349,18 @@ export class ContainerRuntime
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
+		this.blobWorkContributesToDirtyState =
+			this.updatePendingOpState !== undefined &&
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBlobAwareDirtyState") !== true;
+
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
 		this.lastOpDirty = this.computeCurrentOpDirtyState();
 		this.updatePendingOpState?.(this.lastOpDirty);
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
+
+		// Restored blobs are counted before subscription; seed their dirty state above.
+		this.blobManager.events.on("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
@@ -2500,6 +2520,7 @@ export class ContainerRuntime
 						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryCollection: SummaryCollection = new SummaryCollection(
 			this.deltaManager,
 			this.baseLogger,
@@ -2541,32 +2562,14 @@ export class ContainerRuntime
 			!onRequestMode &&
 			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
 		) {
-			// Only create a SummaryManager and SummarizerClientElection
-			// if summaries are enabled and we are not the summarizer client.
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
+			// Interactive clients coordinate automatic summarizer creation.
+			this.summarizerClientElection = new SummarizerClientElection(
+				this.baseLogger,
 				this.innerDeltaManager,
 				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
 				summaryCollection,
-				orderedClientElectionForSummarizer,
 				maxOpsSinceLastSummary,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 			);
 
 			const defaultAction = (): void => {
@@ -2636,6 +2639,7 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		this.blobManager.events.off("outstandingBlobWorkChanged", this.publishDirtyState);
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -2643,6 +2647,8 @@ export class ContainerRuntime
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
+				opDirty: this.isOpDirty,
+				hasOutstandingBlobWork: this.blobManager.hasOutstandingBlobWork,
 				lastSequenceNumber: this.deltaManager.lastSequenceNumber,
 				attachState: this.attachState,
 			},
@@ -4202,8 +4208,7 @@ export class ContainerRuntime
 	private readonly signalAudience?: IAudience;
 
 	/**
-	 * Returns true of container is dirty, i.e. there are some pending local changes that
-	 * either were not sent out to delta stream or were not yet acknowledged.
+	 * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.isDirty}
 	 */
 	public get isDirty(): boolean {
 		// Rather than recomputing the dirty state in this moment,
@@ -4212,10 +4217,14 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
+	 * Returns true if the container is dirty: not attached, has pending user messages (ignoring
+	 * "non-dirtyable" ones), or has outstanding blob work.
 	 */
 	private computeCurrentDirtyState(): boolean {
-		return this.computeCurrentOpDirtyState();
+		return (
+			this.computeCurrentOpDirtyState() ||
+			(this.blobWorkContributesToDirtyState && this.blobManager.hasOutstandingBlobWork)
+		);
 	}
 
 	/**
@@ -4675,6 +4684,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4939,6 +4949,7 @@ export class ContainerRuntime
 					? undefined
 					: calculateStats(summaryTree.tree[gcTreeKey]);
 
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.channelCollection.size,
 				summarizedDataStoreCount: this.channelCollection.size - handleCount,
@@ -4948,6 +4959,7 @@ export class ContainerRuntime
 				summaryNumber,
 				...partialStats,
 			};
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
 				referenceSequenceNumber: summaryRefSeqNum,
 				minimumSequenceNumber,
@@ -5065,6 +5077,7 @@ export class ContainerRuntime
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<IBaseSummarizeResult | undefined> {
 		if (!this.isOpDirty) {
 			return;
@@ -5163,9 +5176,15 @@ export class ContainerRuntime
 	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
 	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
 	 * frame publishes whatever state is current once nesting unwinds.
+	 *
+	 * Publication is suppressed after disposal and during op replay, which publishes its own net change.
 	 */
-	private publishDirtyState(): void {
-		if (this.pendingOpStateNotificationRunner.running) {
+	private readonly publishDirtyState = (): void => {
+		if (
+			this.disposed ||
+			!this.emitDirtyDocumentEvent ||
+			this.pendingOpStateNotificationRunner.running
+		) {
 			return;
 		}
 
@@ -5174,7 +5193,7 @@ export class ContainerRuntime
 			this.lastEmittedDirty = dirty;
 			this.emit(dirty ? "dirty" : "saved");
 		}
-	}
+	};
 
 	/**
 	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
@@ -5845,6 +5864,7 @@ export class ContainerRuntime
 			.catch(this.closeFn);
 	};
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.summarizeOnDemand(options);
@@ -5858,6 +5878,7 @@ export class ContainerRuntime
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.enqueueSummarize(options);

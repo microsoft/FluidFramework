@@ -17,7 +17,7 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * schema identity for runtime hashing and application-defined versions
  *
  * @remarks
- * Create with {@link identifySchema}.
+ * Create with {@link identifySchemaAlpha}.
  *
  * @sealed @alpha
  */
@@ -53,18 +53,18 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 *
-	 * Pass versions to {@link identifySchema} with a stable {@link LibraryId}:
+	 * Pass versions to {@link identifySchemaAlpha} with a stable {@link LibraryId}:
 	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
 	 * const libraryId = "com.example" as LibraryId;
 	 * const oldConfig = new TreeViewConfigurationAlpha({
 	 * 	schema: schemaFactory.string,
-	 * 	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 0 } }),
+	 * 	schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 0 } }),
 	 * });
 	 * const newConfig = new TreeViewConfigurationAlpha({
 	 * 	schema: schemaFactory.identifier,
-	 * 	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
+	 * 	schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 1 } }),
 	 * });
 	 * ```
 	 */
@@ -106,7 +106,7 @@ export class SchemaIdentityInternal
 
 	public static extract(identity: SchemaIdentity): SchemaIdentityInternal {
 		if (!(identity instanceof SchemaIdentityInternal)) {
-			throw new UsageError("schemaIdentity must be created with identifySchema.");
+			throw new UsageError("schemaIdentity must be created with identifySchemaAlpha.");
 		}
 		return identity;
 	}

@@ -11,6 +11,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	summarizerClientType,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type ISummarizer,
 	type ISummaryConfiguration,
 	type ISummaryConfigurationDisableSummarizer,
@@ -61,6 +62,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 /**
  * Returns a function that will create and retrieve a Summarizer.
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummarizer> {
 	return async () => {
 		const request: IRequest = {
@@ -77,6 +79,7 @@ export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummariz
 		};
 
 		const resolvedContainer = await loader.resolve(request);
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		let fluidObject: FluidObject<ISummarizer> | undefined;
 
 		// Older containers may not have the "getEntryPoint" API

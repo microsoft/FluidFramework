@@ -9,16 +9,43 @@
 		}
 	},
 	"definitions": {
-		"com.fluidframework.leaf.string": {
-			"leaf": {
-				"kind": 3,
-				"leafKind": 1
+		"com.fluidframework.example.cli.Item": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"position": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.example.cli.Point": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "location"
+					},
+					"name": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "name"
+					}
+				},
+				"allowUnknownOptionalFields": true
 			}
 		},
-		"com.fluidframework.leaf.number": {
-			"leaf": {
-				"kind": 3,
-				"leafKind": 0
+		"com.fluidframework.example.cli.List": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.leaf.string": {
+						"isStaged": false
+					},
+					"com.fluidframework.example.cli.Item": {
+						"isStaged": false
+					}
+				}
 			}
 		},
 		"com.fluidframework.example.cli.Point": {
@@ -44,46 +71,19 @@
 						"storedKey": "y"
 					}
 				},
-				"allowUnknownOptionalFields": false
+				"allowUnknownOptionalFields": true
 			}
 		},
-		"com.fluidframework.example.cli.Item": {
-			"object": {
-				"kind": 2,
-				"fields": {
-					"position": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.example.cli.Point": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "location"
-					},
-					"name": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.leaf.string": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "name"
-					}
-				},
-				"allowUnknownOptionalFields": false
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
 			}
 		},
-		"com.fluidframework.example.cli.List": {
-			"array": {
-				"kind": 1,
-				"simpleAllowedTypes": {
-					"com.fluidframework.leaf.string": {
-						"isStaged": false
-					},
-					"com.fluidframework.example.cli.Item": {
-						"isStaged": false
-					}
-				}
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
 			}
 		}
 	}
