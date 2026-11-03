@@ -31,7 +31,11 @@ import {
 import { asAlpha } from "../../api.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import { type RevertibleAlpha, RevertibleStatus } from "../../core/index.js";
+import {
+	type ChangeMetadata,
+	type RevertibleAlpha,
+	RevertibleStatus,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeViewConfiguration,
@@ -60,6 +64,7 @@ const config = new TreeViewConfiguration({ schema: StringArray });
 interface MetadataOptions {
 	readonly retainHistory?: boolean;
 	readonly minVersionForCollab?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
+	readonly flushMode?: FlushMode;
 }
 
 /** A factory whose defaults enable persisted commit metadata. */
@@ -86,7 +91,12 @@ function createConnectedViews(
 	count: number,
 	options: MetadataOptions = {},
 ): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof StringArray>[] } {
-	const provider = new TestTreeProviderLite(count, makeFactory(options));
+	const provider = new TestTreeProviderLite(
+		count,
+		makeFactory(options),
+		true,
+		options.flushMode,
+	);
 	const first = asAlpha(provider.trees[0].viewWith(config));
 	first.initialize([]);
 	provider.synchronizeMessages();
@@ -139,6 +149,271 @@ async function loadFreshClient(
 }
 
 describe("custom commit metadata", () => {
+	describe("changed events", () => {
+		it("supplies history metadata for local and remote commits", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+			const events: ChangeMetadata[] = [];
+			view1.events.on("changed", (metadata) => events.push(metadata));
+			view2.events.on("changed", (metadata) => events.push(metadata));
+
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("a");
+				},
+				{ customMetadata: { tag: "annotated" } },
+			);
+			provider.synchronizeMessages();
+
+			assert.deepEqual(
+				events.map(({ isLocal, commits }) => ({
+					isLocal,
+					commits: commits.map(({ revision, custom, customTree }) => ({
+						revision,
+						custom,
+						customTree,
+					})),
+				})),
+				[true, false].map((isLocal) => ({
+					isLocal,
+					commits: [
+						{
+							revision: view1.branchHistory.getHead()?.revision,
+							custom: { tag: "annotated" },
+							customTree: { metadata: { tag: "annotated" }, children: [] },
+						},
+					],
+				})),
+			);
+			for (const { commits } of events) {
+				assert.equal(
+					commits[0]?.getParent()?.revision,
+					view1.branchHistory.getHead()?.getParent()?.revision,
+				);
+			}
+		});
+
+		it("includes unannotated commits and preserves empty metadata objects", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+			const events: ChangeMetadata[] = [];
+			view2.events.on("changed", (metadata) => events.push(metadata));
+
+			view1.root.insertAtEnd("unannotated");
+			provider.synchronizeMessages();
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("empty");
+				},
+				{ customMetadata: {} },
+			);
+			provider.synchronizeMessages();
+
+			assert.deepEqual(
+				events.map(({ commits }) =>
+					commits.map(({ custom, customTree }) => ({ custom, customTree })),
+				),
+				[
+					[{ custom: undefined, customTree: undefined }],
+					[{ custom: {}, customTree: { metadata: {}, children: [] } }],
+				],
+			);
+		});
+
+		it("preserves nested transaction metadata on local and remote events", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+			const events: ChangeMetadata[] = [];
+			view1.events.on("changed", (metadata) => events.push(metadata));
+			view2.events.on("changed", (metadata) => events.push(metadata));
+
+			view1.runTransaction(
+				() => {
+					view1.runTransaction(
+						() => {
+							view1.root.insertAtEnd("a");
+						},
+						{ customMetadata: { inner: true, shared: "inner" } },
+					);
+				},
+				{ customMetadata: { shared: "outer" } },
+			);
+			provider.synchronizeMessages();
+
+			assert.equal(events.length, 2);
+			for (const { commits } of events) {
+				assert.equal(commits.length, 1);
+				assert.deepEqual(commits[0]?.custom, { inner: true, shared: "outer" });
+				assert.deepEqual(commits[0]?.customTree, {
+					metadata: { shared: "outer" },
+					children: [{ metadata: { inner: true, shared: "inner" }, children: [] }],
+				});
+			}
+		});
+
+		it("reports every commit in a remote batch in application order", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2, { flushMode: FlushMode.TurnBased });
+			const localEvents: ChangeMetadata[] = [];
+			const remoteEvents: ChangeMetadata[] = [];
+			view1.events.on("changed", (metadata) => localEvents.push(metadata));
+			view2.events.on("changed", (metadata) => remoteEvents.push(metadata));
+
+			const fork = view1.fork();
+			for (const tag of ["first", "second"]) {
+				fork.runTransaction(
+					() => {
+						fork.root.insertAtEnd(tag);
+					},
+					{ customMetadata: { tag } },
+				);
+			}
+			view1.merge(fork);
+			provider.synchronizeMessages();
+
+			assert.deepEqual(
+				localEvents.map(({ commits }) => commits.map((commit) => commit.custom?.tag)),
+				[["first"], ["second"]],
+			);
+			assert.equal(remoteEvents.length, 1);
+			assert.deepEqual(
+				remoteEvents[0]?.commits.map((commit) => commit.custom?.tag),
+				["first", "second"],
+			);
+			assert.deepEqual(
+				remoteEvents[0]?.commits.map((commit) => commit.revision),
+				localEvents.flatMap(({ commits }) => commits.map((commit) => commit.revision)),
+			);
+		});
+
+		it("excludes pending local commits replayed over a remote commit", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+			const events: ChangeMetadata[] = [];
+			view2.events.on("changed", (metadata) => {
+				if (!metadata.isLocal) {
+					events.push(metadata);
+				}
+			});
+
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("remote");
+				},
+				{ customMetadata: { tag: "remote" } },
+			);
+			view2.runTransaction(
+				() => {
+					view2.root.insertAtEnd("local");
+				},
+				{ customMetadata: { tag: "local" } },
+			);
+			provider.synchronizeMessages();
+
+			assert.deepEqual(
+				events.map(({ commits }) => commits.map((commit) => commit.custom?.tag)),
+				[["remote"]],
+			);
+		});
+
+		it("excludes revisions deduplicated during a remote rebase", () => {
+			const {
+				provider,
+				views: [view],
+			} = createConnectedViews(1);
+			const branch = provider.trees[0].kernel.getLocalBranch();
+			let forkBranch: typeof branch | undefined;
+			const unsubscribe = branch.events.on("fork", (newBranch) => {
+				forkBranch = newBranch;
+			});
+			const fork = view.fork();
+			unsubscribe();
+			assert(forkBranch !== undefined);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("already-present");
+				},
+				{ customMetadata: { tag: "already-present" } },
+			);
+			fork.runTransaction(
+				() => {
+					fork.root.insertAtEnd("new");
+				},
+				{ customMetadata: { tag: "new" } },
+			);
+			fork.merge(view, false);
+			const events: ChangeMetadata[] = [];
+			view.events.on("changed", (metadata) => events.push(metadata));
+
+			// Apply the remote history through the same rebase used when receiving sequenced commits.
+			branch.rebaseOnto(forkBranch);
+
+			assert.equal(events.length, 1);
+			assert.equal(events[0]?.isLocal, false);
+			assert.deepEqual(
+				events[0]?.commits.map((commit) => commit.custom?.tag),
+				["new"],
+			);
+		});
+
+		it("does not emit commits for rolled-back or empty transactions", () => {
+			const view = createView();
+			const events: ChangeMetadata[] = [];
+			view.events.on("changed", (metadata) => events.push(metadata));
+
+			view.runTransaction(() => {}, { customMetadata: { tag: "empty" } });
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("rolled-back");
+					return { rollback: true } as const;
+				},
+				{ customMetadata: { tag: "rolled-back" } },
+			);
+
+			assert.deepEqual(events, []);
+		});
+
+		it("supplies the revert commit's own metadata locally and remotely", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.events);
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("a");
+				},
+				{ customMetadata: { tag: "original" } },
+			);
+			provider.synchronizeMessages();
+			const events: ChangeMetadata[] = [];
+			view1.events.on("changed", (metadata) => events.push(metadata));
+			view2.events.on("changed", (metadata) => events.push(metadata));
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined);
+
+			revertible.revert({ customMetadata: { tag: "revert" } });
+			provider.synchronizeMessages();
+
+			assert.deepEqual(
+				events.map(({ commits }) => commits.map((commit) => commit.custom)),
+				[[{ tag: "revert" }], [{ tag: "revert" }]],
+			);
+			unsubscribe();
+		});
+	});
+
 	describe("Reading", () => {
 		it("is readable on the commit it was attached to, and undefined on other commits", () => {
 			const view = createView();
