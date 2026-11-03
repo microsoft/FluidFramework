@@ -40,7 +40,7 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
  */
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 	/**
-	 * How to handle field keys.
+	 * How to handle field keys, and which fields to include.
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 *
@@ -60,7 +60,7 @@ export type TreeParsingOptions = TreeEncodingOptions<
 >;
 
 /**
- * Options for how to encode keys in a tree.
+ * Options for how to encode keys in a tree, and which fields to include.
  * @beta
  * @input
  */
@@ -87,11 +87,12 @@ export enum KeyEncodingOptions {
 	 */
 	knownStoredKeys = "knownStoredKeys",
 	/**
-	 * Use stored keys, and include only {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
+	 * Use stored keys, and include only the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}, and the known content needed to locate them.
 	 * @remarks
 	 * Currently only supported for export.
-	 * This applies to each node: a node of a type that is in the view schema keeps only its unknown optional fields.
-	 * A node of a type that is not in the view schema keeps all of its fields.
+	 *
+	 * The full content of each unknown optional field is included, as with {@link KeyEncodingOptions.allStoredKeys}.
+	 * A known field of an object node is included only if there are unknown optional fields under it.
 	 */
 	unknownStoredKeys = "unknownStoredKeys",
 }
@@ -136,16 +137,17 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
  * @param childHandler - Function to handle children of the cursor.
  *
  * @remarks
- * This can handle unknown optional fields only because they are included in the `storedSchema` and `schema` is only needed when using property keys, which also skips unknown optional fields.
+ * This can handle unknown optional fields only because they are included in the `storedSchema`,
+ * and `schema` is only needed outside of unknown optional fields.
  */
 export function customFromCursor<TChild>(
 	reader: ITreeCursor,
-	options: Required<TreeEncodingOptions>,
+	options: CustomFromCursorOptions,
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 	childHandler: (
 		reader: ITreeCursor,
-		options: Required<TreeEncodingOptions>,
+		options: CustomFromCursorOptions,
 		storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 		schema: ReadonlyMap<string, TreeNodeSchema>,
 	) => TChild,
@@ -172,6 +174,20 @@ export function customFromCursor<TChild>(
 				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 
+			// With `unknownStoredKeys`, an object node keeps a known field only if unknown optional fields were exported under it.
+			// Other options ignore `options.unknownFields`, since the content of unknown optional fields is exported with `allStoredKeys`.
+			// The outermost call creates the counter, and the calls for its descendants share it.
+			const unknownFields =
+				options.keys === KeyEncodingOptions.unknownStoredKeys
+					? (options.unknownFields ?? { count: 0 })
+					: undefined;
+			const childOptions =
+				unknownFields !== undefined && options.unknownFields === undefined
+					? { ...options, unknownFields }
+					: options;
+			const filterKnownFields =
+				unknownFields !== undefined && nodeSchema instanceof ObjectNodeStoredSchema;
+
 			if (arrayTypes === undefined) {
 				const fields: Record<string, TChild> = {};
 				forEachField(reader, () => {
@@ -179,27 +195,53 @@ export function customFromCursor<TChild>(
 					const storedKey = reader.getFieldKey();
 					const key = getKeyFromOptions(options.keys, type, storedKey, schema);
 					if (key === undefined) {
-						// Skip the fields that `options` excludes.
+						// Skip unknown optional fields when using property keys or only known stored keys.
 						return;
 					}
 
 					reader.enterNode(0);
-					fields[key] = childHandler(reader, options, storedSchema, schema);
+					if (
+						unknownFields !== undefined &&
+						getKeyFromOptions(KeyEncodingOptions.knownStoredKeys, type, storedKey, schema) ===
+							undefined
+					) {
+						// This content might not have view schema, which `allStoredKeys` does not need.
+						const allOptions = { ...options, keys: KeyEncodingOptions.allStoredKeys };
+						fields[key] = childHandler(reader, allOptions, storedSchema, schema);
+						unknownFields.count++;
+					} else {
+						const countBefore = unknownFields?.count;
+						const child = childHandler(reader, childOptions, storedSchema, schema);
+						if (!filterKnownFields || unknownFields?.count !== countBefore) {
+							fields[key] = child;
+						}
+					}
 					reader.exitNode();
 				});
 				return fields;
 			} else {
-				if (options.keys === KeyEncodingOptions.unknownStoredKeys && schema.has(type)) {
-					// An array node of a type that is in the view schema has no unknown fields.
-					return [];
-				}
 				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
+					mapCursorField(reader, () =>
+						childHandler(reader, childOptions, storedSchema, schema),
+					),
 				);
 				return fields;
 			}
 		}
 	}
+}
+
+/**
+ * {@link customFromCursor} options, with state for {@link KeyEncodingOptions.unknownStoredKeys}.
+ */
+interface CustomFromCursorOptions extends Required<TreeEncodingOptions> {
+	/**
+	 * Counts the unknown optional fields exported so far.
+	 * @remarks
+	 * Only used with {@link KeyEncodingOptions.unknownStoredKeys}.
+	 * Created by the outermost {@link customFromCursor} call, and shared by the calls for its descendants.
+	 */
+	readonly unknownFields?: { count: number };
 }
 
 /**
@@ -213,7 +255,7 @@ export function customFromCursor<TChild>(
  *
  * @remarks
  * Asserts that if encountering an unknown optional field, the schema allows them.
- * This is not robustly validated in all cases: when in allStoredKeys or unknownStoredKeys, it is not checked
+ * This is not robustly validated in all cases: when in allStoredKeys, it is not checked
  * (since the view schema might not even be available).
  */
 function getKeyFromOptions(
@@ -223,23 +265,12 @@ function getKeyFromOptions(
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): string | undefined {
 	switch (options) {
-		case KeyEncodingOptions.allStoredKeys: {
+		case KeyEncodingOptions.allStoredKeys:
+		case KeyEncodingOptions.unknownStoredKeys: {
 			// Since this case might be inside of an unknown optional field,
 			// it must not depend on there being a view schema.
 			// Fortunately, its possible to implement this case without one.
 			return storedKey;
-		}
-		case KeyEncodingOptions.unknownStoredKeys: {
-			const viewSchema = schema.get(type);
-			if (viewSchema === undefined) {
-				// All fields of a node type that is not in the view schema are unknown.
-				return storedKey;
-			}
-			if (isObjectNodeSchema(viewSchema)) {
-				return viewSchema.storedKeyToPropertyKey.has(storedKey) ? undefined : storedKey;
-			}
-			// Other node kinds in the view schema have no unknown fields.
-			return undefined;
 		}
 		case KeyEncodingOptions.usePropertyKeys:
 		case KeyEncodingOptions.knownStoredKeys: {

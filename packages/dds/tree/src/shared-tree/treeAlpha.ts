@@ -226,7 +226,7 @@ export interface TreeIdentifierUtils {
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
  * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
- * if they are using {@link KeyEncodingOptions.allStoredKeys}.
+ * if they are using {@link KeyEncodingOptions.allStoredKeys} or {@link KeyEncodingOptions.unknownStoredKeys}.
  *
  * @privateRemarks
  * TODO:

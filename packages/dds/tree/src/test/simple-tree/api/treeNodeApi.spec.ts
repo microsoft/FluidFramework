@@ -85,6 +85,9 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	AllowsUnknownOptionalFields,
+	AllowsUnknownOptionalFieldsV2,
+	Minimal,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -3931,6 +3934,15 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(exportedKnown, exportedCloneKnown);
 
+					const exportedUnknown = TreeBeta.exportConcise(view.root, {
+						keys: KeyEncodingOptions.unknownStoredKeys,
+					});
+					const exportedCloneUnknown = TreeBeta.exportConcise(clone, {
+						keys: KeyEncodingOptions.unknownStoredKeys,
+					});
+
+					assert.deepEqual(exportedUnknown, exportedCloneUnknown);
+
 					if (testCase.hasUnknownOptionalFields) {
 						assert.notDeepEqual(exported, exportedKnown);
 					} else {
@@ -4111,50 +4123,80 @@ describe("treeNodeApi", () => {
 				);
 			});
 
-			describe("unknownStoredKeys", () => {
-				const sfNew = new SchemaFactoryAlpha("unknownStoredKeys");
-				class PersonNew extends sfNew.object("Person", {
-					name: sfNew.string,
-					nickname: sfNew.optional(sfNew.string),
+			it("unknownStoredKeys", () => {
+				// The fields of `AllowsUnknownOptionalFieldsV2` are unknown to `AllowsUnknownOptionalFields`.
+				const sf = new SchemaFactoryAlpha("com.example");
+				class Holder extends sf.object("Holder", {
+					name: sf.string,
+					other: AllowsUnknownOptionalFields,
+					known: AllowsUnknownOptionalFields,
+					list: sf.array([AllowsUnknownOptionalFields, sf.string]),
+					map: sf.map([AllowsUnknownOptionalFields, sf.number]),
+				}) {}
+				const sfV2 = new SchemaFactoryAlpha("com.example");
+				class HolderV2 extends sfV2.object("Holder", {
+					name: sfV2.string,
+					other: AllowsUnknownOptionalFieldsV2,
+					known: AllowsUnknownOptionalFieldsV2,
+					list: sfV2.array([AllowsUnknownOptionalFieldsV2, sfV2.string]),
+					map: sfV2.map([AllowsUnknownOptionalFieldsV2, sfV2.number]),
 				}) {}
 
-				const sfOld = new SchemaFactoryAlpha("unknownStoredKeys");
-				class PersonOld extends sfOld.objectAlpha(
-					"Person",
-					{ name: sfOld.string },
-					{ allowUnknownOptionalFields: true },
-				) {}
-
-				/**
-				 * Gets the root of a document with `content`, viewed with the older schema.
-				 */
-				function rootWithOldSchema(content: PersonNew): TreeNode {
-					const view = testDocumentIndependentView({
-						ambiguous: false,
-						schema: PersonOld,
-						schemaData: toInitialSchema(PersonNew),
-						treeFactory: () =>
-							jsonableTreeFromFieldCursor(fieldCursorFromInsertable(PersonNew, content)),
-					});
-					assert(isTreeNode(view.root));
-					return view.root;
-				}
-
-				it("exports only unknown optional fields", () => {
-					const root = rootWithOldSchema(new PersonNew({ name: "Alice", nickname: "Ali" }));
-					assert.deepEqual(
-						TreeAlpha.exportVerbose(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
-						{ type: PersonOld.identifier, fields: { nickname: "Ali" } },
-					);
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: Holder,
+					schemaData: toInitialSchema(HolderV2),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(HolderV2, {
+								name: "x",
+								other: {},
+								known: { leaf: "a", minimal: {} },
+								list: ["s", {}, { leaf: "b" }],
+								map: new Map<string, AllowsUnknownOptionalFieldsV2 | number>([
+									["a", new AllowsUnknownOptionalFieldsV2({ leaf: "c" })],
+									["b", new AllowsUnknownOptionalFieldsV2({})],
+									["c", 1],
+								]),
+							}),
+						),
 				});
+				const root = view.root;
+				assert(Tree.is(root, Holder));
 
-				it("exports no fields when there are no unknown optional fields", () => {
-					const root = rootWithOldSchema(new PersonNew({ name: "Alice" }));
-					assert.deepEqual(
-						TreeAlpha.exportVerbose(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
-						{ type: PersonOld.identifier, fields: {} },
-					);
-				});
+				const type = AllowsUnknownOptionalFields.identifier;
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
+					{
+						type: Holder.identifier,
+						fields: {
+							// Known fields are kept only to hold the unknown optional fields under them.
+							// Unknown optional fields are exported in full, even though `Minimal` is not in the view schema.
+							known: {
+								type,
+								fields: { leaf: "a", minimal: { type: Minimal.identifier, fields: {} } },
+							},
+							// Arrays and maps keep every element and entry.
+							list: {
+								type: Tree.schema(root.list).identifier,
+								fields: ["s", { type, fields: {} }, { type, fields: { leaf: "b" } }],
+							},
+							map: {
+								type: Tree.schema(root.map).identifier,
+								fields: { a: { type, fields: { leaf: "c" } }, b: { type, fields: {} }, c: 1 },
+							},
+						},
+					},
+				);
+
+				assert.deepEqual(
+					TreeBeta.exportConcise(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
+					{
+						known: { leaf: "a", minimal: {} },
+						list: ["s", {}, { leaf: "b" }],
+						map: { a: { leaf: "c" }, b: {}, c: 1 },
+					},
+				);
 			});
 
 			describe("test-documents", () => {
@@ -4262,22 +4304,6 @@ describe("treeNodeApi", () => {
 										assert(imported !== undefined);
 										const reexported = TreeAlpha.exportVerbose(imported);
 										assert.deepEqual(exported, reexported);
-									}
-
-									// Only unknown stored keys
-									{
-										const options = { keys: KeyEncodingOptions.unknownStoredKeys };
-										const exported = TreeAlpha.exportVerbose(root, options);
-										// Hydrated and unhydrated nodes export the same unknown content.
-										const hydratedRoot = view.root;
-										assert(hydratedRoot !== undefined);
-										assert.deepEqual(exported, TreeAlpha.exportVerbose(hydratedRoot, options));
-										if (!testCase.hasUnknownOptionalFields && isTreeNode(root)) {
-											assert.deepEqual(
-												Object.keys((exported as { fields: object }).fields),
-												[],
-											);
-										}
 									}
 								}
 							});
