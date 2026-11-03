@@ -1,5 +1,20 @@
 # @fluidframework/tree
 
+## 3.11.0
+
+### Minor Changes
+
+- Reduce repeated schema processing in SharedTree ([#28530](https://github.com/microsoft/FluidFramework/pull/28530)) [4890b806f9b](https://github.com/microsoft/FluidFramework/commit/4890b806f9b61176f7d52f29a8b900ac7f49dc9e)
+
+  SharedTree reuses schema analysis and view-schema definitions across overlapping and recursive schemas, reducing repeated work during view configuration, context creation, index setup, and schema export.
+
+  Schema definitions without reachable staged upgrades can also share conversions across upgrade policies.
+
+  Definition map iteration order may change but remains unspecified.
+  Schema hashes and persisted schema encoding are unchanged.
+
+  These changes can reduce startup time and memory use for applications with large schemas.
+
 ## 3.10.0
 
 ### Minor Changes
