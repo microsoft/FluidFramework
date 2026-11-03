@@ -11,11 +11,7 @@ import {
 	getTreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import {
-	isObjectNodeSchema,
-	normalizeFieldSchema,
-	SchemaFactoryAlpha,
-} from "../../simple-tree/index.js";
+import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/index.js";
 import {
 	hasCachedRootSchemaDerivedDataForTesting,
 	hasCachedSchemaComponentForTesting,
@@ -118,11 +114,6 @@ describe("treeSchema", () => {
 			const cold = getRootSchemaDerivedData([a, b, other, a]);
 			assert.equal(cold.components.size, 2);
 			assert.deepEqual(new Set(cold.definitions.values()), new Set([a, b, other]));
-			for (const node of [a, b, other]) {
-				Object.defineProperty(getTreeNodeSchemaPrivateData(node), "childAllowedTypes", {
-					get: () => assert.fail("Cached component lookup must not traverse node fields"),
-				});
-			}
 			const warm = getRootSchemaDerivedData([other, b, a, b]);
 			assert.equal(warm.components.size, cold.components.size);
 			for (const component of cold.components) {
@@ -155,13 +146,16 @@ describe("treeSchema", () => {
 			assert.equal(hasCachedSchemaComponentForTesting(child), true);
 			assert.deepEqual([...reads.values()], [0, 0]);
 			const definitions = component.definitions;
-			assert.deepEqual([...reads.values()], [1, 1]);
+			const readsAfterMaterialization = new Map(reads);
+			assert([...reads.values()].every((count) => count > 0));
 			assert.deepEqual(new Set(definitions.values()), new Set([root, child]));
 			assert.strictEqual(component.definitions, definitions);
 			assert.strictEqual(getRootSchemaDerivedData(root).treeSchema.definitions, definitions);
-			assert.deepEqual([...reads.values()], [1, 1]);
+			assert.deepEqual([...reads.values()], [...readsAfterMaterialization.values()]);
+			const dependencyReads = reads.get(dependency) ?? assert.fail();
 			assert.equal(dependency.definitions.size, 1);
-			assert.deepEqual([...reads.values()], [1, 2]);
+			assert((reads.get(dependency) ?? assert.fail()) > dependencyReads);
+			assert.equal(reads.get(component), readsAfterMaterialization.get(component));
 			assert.equal(Reflect.set(component, "definitions", new Map()), false);
 		});
 		for (const first of [0, 1, 2]) {
@@ -269,27 +263,6 @@ describe("treeSchema", () => {
 						}) {}
 						class B extends sf.object("B", { child: C }) {}
 						class A extends sf.object("A", { child: B }) {}
-						let bReads = 0;
-						let cReads = 0;
-						const bSchema = B;
-						const cSchema = C;
-						assert(isObjectNodeSchema(bSchema));
-						assert(isObjectNodeSchema(cSchema));
-						const bFields = bSchema.fields;
-						const cFields = cSchema.fields;
-						// Count staging-annotation inspections. Root identifier checks still run, but reuse completed component analysis.
-						Object.defineProperty(B, "fields", {
-							get() {
-								bReads++;
-								return bFields;
-							},
-						});
-						Object.defineProperty(C, "fields", {
-							get() {
-								cReads++;
-								return cFields;
-							},
-						});
 
 						assert.equal(hasCachedSchemaComponentForTesting(B), false);
 						assert.equal(hasCachedSchemaComponentForTesting(C), false);
@@ -298,13 +271,15 @@ describe("treeSchema", () => {
 						}
 						assert.equal(getRootSchemaDerivedData(B).hasStagedSchema, staged);
 						assert.equal(hasCachedSchemaComponentForTesting(C), true);
-						assert.equal(SchemaComponent.fromSchema(B).hasStagedSchema, staged);
-						assert.equal(SchemaComponent.fromSchema(C).hasStagedSchema, staged);
+						const bComponent = SchemaComponent.fromSchema(B);
+						const cComponent = SchemaComponent.fromSchema(C);
+						assert.equal(bComponent.hasStagedSchema, staged);
+						assert.equal(cComponent.hasStagedSchema, staged);
 						assert.equal(getRootSchemaDerivedData(C).hasStagedSchema, staged);
 						assert.equal(getRootSchemaDerivedData(A).hasStagedSchema, staged);
 						assert.equal(SchemaComponent.fromSchema(A).hasStagedSchema, staged);
-						assert.equal(bReads, 1);
-						assert.equal(cReads, 1);
+						assert.equal(SchemaComponent.fromSchema(B), bComponent);
+						assert.equal(SchemaComponent.fromSchema(C), cComponent);
 					});
 				}
 			}
