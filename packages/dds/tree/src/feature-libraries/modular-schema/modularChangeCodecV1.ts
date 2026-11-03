@@ -99,7 +99,6 @@ import {
 	areEquivalent,
 	fieldKindsFromConfiguration,
 	isChangesetValid,
-	nodeChangeFromId,
 } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<

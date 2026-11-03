@@ -50,13 +50,11 @@ import {
 	hasConflicts,
 	makeCrossFieldKeyTable,
 	isChangesetValid,
-	makeChangesetInversions,
 	makeModularChangeset,
 	newConstraintState,
 	newRootTable,
 	normalizeFieldId,
 	updateConstraints,
-	validateChangeset,
 } from "./modularChangeUtils.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import {

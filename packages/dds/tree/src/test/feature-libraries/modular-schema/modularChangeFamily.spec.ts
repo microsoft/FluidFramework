@@ -52,10 +52,6 @@ import {
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
-	chunkFieldSingle,
-	cursorForJsonableTreeField,
-	defaultChunkPolicy,
-	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,

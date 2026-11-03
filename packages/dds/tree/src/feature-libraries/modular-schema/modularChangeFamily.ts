@@ -145,7 +145,6 @@ import {
 	revisionInfoFromTaggedChange,
 	tryRemoveDetachLocation,
 	updateConstraints,
-	validateChangeset,
 	type FieldIdKey,
 	isChangesetValid,
 	debugOnlyChangesetValidator,

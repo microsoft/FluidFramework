@@ -59,7 +59,6 @@ import {
 	getOldRootIdFromNewRootId,
 	nodeChangeFromId,
 	normalizeNodeId,
-	validateChangeset,
 	isChangesetValid,
 } from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";

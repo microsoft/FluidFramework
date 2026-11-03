@@ -50,6 +50,7 @@ import {
 import {
 	removeAliases,
 	validateChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeUtils.js";
 import type {
 	NodeId,

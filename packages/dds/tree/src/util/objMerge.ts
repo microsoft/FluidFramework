@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Merged {}

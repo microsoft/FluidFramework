@@ -17,13 +17,7 @@ import {
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import type {
-	TreeStoredSchemaRepository,
-	FieldKey,
-	FieldUpPath,
-	UpPath,
-} from "../../../core/index.js";
-import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
+import type { TreeStoredSchemaRepository } from "../../../core/index.js";
 import { Tree, type ITreePrivate, type CheckoutBase } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";

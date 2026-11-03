@@ -7,20 +7,17 @@ import { strict as assert } from "node:assert";
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import {
-	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
-	type ChangeAtomId,
-	type ChangeAtomIdMap,
-	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
-	type DeltaFieldMap,
-	type DeltaMark,
-	type DeltaRoot,
-	type FieldKey,
-	type FieldKindIdentifier,
-	type RevisionInfo,
-	type RevisionMetadataSource,
+import type {
+	ChangeAtomId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaRoot,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionInfo,
+	RevisionMetadataSource,
 } from "../../../core/index.js";
 import {
 	chunkFieldSingle,
@@ -42,44 +39,34 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	cloneRootTable,
-	getFieldKind,
 	type RenameDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	addNodeRename,
 	getChangeHandler,
-	getNodeParent,
 	newRootTable,
 	normalizeChangeset,
-	normalizeFieldId,
-	normalizeNodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldRangeTable,
-	type CrossFieldKey,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
 	type NodeLocation,
 	type RebaseVersion,
-	type RootNodeTable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeMap,
-	type RangeMapEntry,
 	type RangeQueryResult,
 	areAdjacentIntegerRanges,
 	assertStructuralEquality,
 	brand,
 	idAllocatorFromMaxId,
-	setInNestedMap,
-	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import { testIdCompressor } from "../../utils.js";
 
