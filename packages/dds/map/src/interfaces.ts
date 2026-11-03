@@ -149,16 +149,6 @@ export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set"
 	 * Executes the provided function once per each key/value pair in the map.
 	 */
 	forEach(
-		callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void,
-		// Typing inherited from FluidMap.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		thisArg?: any,
-	): void;
-
-	/**
-	 * Executes the provided function once per each key/value pair in the map.
-	 */
-	forEach(
 		callbackfn: (value: V, key: K, map: Map<K, V>) => void,
 		// Typing inherited from Map.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -436,7 +426,7 @@ export interface ISharedMap
 	extends ISharedObject<ISharedMapEvents>,
 		// TODO: Use `unknown` instead (breaking change).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		FluidMap<string, any> {
+		Omit<FluidMap<string, any>, "forEach"> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from
@@ -453,6 +443,21 @@ export interface ISharedMap
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	/**
+	 * Executes the provided function once per each key/value pair in the map.
+	 *
+	 * @privateRemarks
+	 * Override `FluidMap`'s forEach method to maintain compatibility with the `Map` interface.
+	 * Note that `map` historically does not refer to `this` instance.
+	 */
+	forEach(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		callbackfn: (value: any, key: string, map: Map<string, any>) => void,
+		// Typing inherited from Map.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		thisArg?: any,
+	): void;
 
 	/**
 	 * Removes all entries from the map.
@@ -474,6 +479,8 @@ export interface ISharedMap
  * @legacy @beta
  */
 export interface ISharedMapBeta
+	// Keep all from ISharedMap except for FluidMap that aren't "get" or "set" (which as not present in FluidMapLegacy).
+	// Should get same result as using `Omit<ISharedMap, keyof FluidMapLegacy<string, any>>`
 	extends Omit<ISharedMap, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		FluidMapLegacy<string, any> {}
