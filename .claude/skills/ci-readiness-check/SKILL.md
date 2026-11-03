@@ -20,7 +20,7 @@ When neither exception applies, ask the user and wait for their response. Immedi
 Tasks to create by mode:
 
 - Check: Run CI script → Review output → Report final status
-- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → API changes review → Run build:docs → Regenerate type tests → Report final status
+- Build: Run CI script → Review output → Build unbuilt packages → Run repo fast build when relevant → ESLint auto-fix → Regenerate API reports → API changes review → Run build:docs → Regenerate type tests → Report final status
 - Test: same as Build, plus Run tests
 
 For Build/Test: if `@fluidframework/tree` is among the changed packages and its API surface likely changed, add a "Cascade API reports to aggregator packages" task after "Regenerate API reports".
@@ -84,6 +84,19 @@ Check mode stops here — skip steps 4–8 entirely. Note what was skipped in th
 ```bash
 cd $PKG && pnpm exec fluid-build . --task compile
 ```
+
+## 4a. Run the repository fast build when relevant
+
+Run `pnpm build:fast` from the repository root when changed files affect the repository build graph beyond one isolated package.
+Relevant changes include:
+
+- `package.json` task, dependency, export, or entry-point changes;
+- `pnpm-workspace.yaml`, `pnpm-lock.yaml`, or root build configuration changes;
+- files matched by a registered package's declarative task inputs; and
+- cross-package TypeScript contract or generated-artifact changes.
+
+Do not substitute a package-scoped compile for this command.
+Skip it only when the changes are demonstrably outside registered package build inputs, such as documentation-only changes, and report the reason in the final status.
 
 # Step 5: ESLint auto-fix (Build and Test only)
 
