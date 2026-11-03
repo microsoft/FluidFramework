@@ -74,7 +74,7 @@ class StringBuffer {
 	 * The index at length maps to the end of the string.
 	 */
 	public offset(index: number): number {
-		assert(index >= 0 && index <= this.length, "Character offset out of bounds");
+		assert(index >= 0 && index <= this.length, 0xd8c /* Character offset out of bounds */);
 		if (this.#checkpoints === undefined || index === this.length) {
 			return index === this.length ? this.text.length : index;
 		}
@@ -148,7 +148,10 @@ export class StringPiece {
 	 * Negative indexes are not supported.
 	 */
 	public at(index: number): string {
-		assert(Number.isInteger(index) && index >= 0 && index < this.length, "Invalid atom index");
+		assert(
+			Number.isInteger(index) && index >= 0 && index < this.length,
+			0xd8d /* Invalid atom index */,
+		);
 		const offset = this.#buffer.offset(this.#start + index);
 		return this.#buffer.text.slice(offset, offset + characterWidth(this.#buffer.text, offset));
 	}
@@ -162,7 +165,7 @@ export class StringPiece {
 	public *values(start: number): IterableIterator<string> {
 		assert(
 			Number.isInteger(start) && start >= 0 && start <= this.length,
-			"Invalid atom index",
+			0xd8e /* Invalid atom index */,
 		);
 		let offset = this.#buffer.offset(this.#start + start);
 		for (let index = start; index < this.length; index++) {
@@ -187,7 +190,7 @@ export class StringPiece {
 				start >= 0 &&
 				start < end &&
 				end <= this.length,
-			"Invalid string piece range",
+			0xd8f /* Invalid string piece range */,
 		);
 		return start === 0 && end === this.length
 			? this
@@ -280,7 +283,10 @@ export class StringSequence {
 	 * Use values for sequential reads to avoid repeating that scan for each atom.
 	 */
 	public at(index: number): string {
-		assert(Number.isInteger(index) && index >= 0 && index < this.length, "Invalid atom index");
+		assert(
+			Number.isInteger(index) && index >= 0 && index < this.length,
+			0xd90 /* Invalid atom index */,
+		);
 		let offset = index;
 		for (const piece of this.pieces) {
 			if (offset < piece.length) {
@@ -301,7 +307,7 @@ export class StringSequence {
 	public *values(start: number): IterableIterator<string> {
 		assert(
 			Number.isInteger(start) && start >= 0 && start <= this.length,
-			"Invalid atom index",
+			0xd91 /* Invalid atom index */,
 		);
 		let offset = start;
 		for (const piece of this.pieces) {
@@ -331,7 +337,7 @@ export class StringSequence {
 				start >= 0 &&
 				start <= end &&
 				end <= this.length,
-			"Invalid string sequence range",
+			0xd92 /* Invalid string sequence range */,
 		);
 		const pieces: StringPiece[] = [];
 		let offset = 0;
