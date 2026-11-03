@@ -822,13 +822,18 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (
-			typeof window === "object" &&
-			window?.performance?.mark !== undefined &&
-			window?.performance?.mark !== null
-		) {
-			this.startMark = `${event.eventName}-start`;
-			window.performance.mark(this.startMark);
+		try {
+			if (
+				typeof window === "object" &&
+				window?.performance?.mark !== undefined &&
+				window?.performance?.mark !== null
+			) {
+				const startMark = `${event.eventName}-start`;
+				window.performance.mark(startMark);
+				this.startMark = startMark;
+			}
+		} catch {
+			// Optional browser User Timing can be unavailable after window teardown.
 		}
 	}
 
@@ -859,11 +864,16 @@ export class PerformanceEvent {
 	}
 
 	private performanceEndMark(): void {
-		if (this.startMark !== undefined && this.event) {
-			const endMark = `${this.event.eventName}-end`;
-			window.performance.mark(endMark);
-			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
-			this.startMark = undefined;
+		const startMark = this.startMark;
+		this.startMark = undefined;
+		if (startMark !== undefined && this.event) {
+			try {
+				const endMark = `${this.event.eventName}-end`;
+				window.performance.mark(endMark);
+				window.performance.measure(`${this.event.eventName}`, startMark, endMark);
+			} catch {
+				// Optional browser User Timing must not change the operation's outcome.
+			}
 		}
 	}
 

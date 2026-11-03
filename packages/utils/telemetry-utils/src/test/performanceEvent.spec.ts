@@ -100,6 +100,158 @@ describe("PerformanceEvent", () => {
 		);
 	});
 
+	describe("Best-effort browser User Timing", () => {
+		let originalWindow: PropertyDescriptor | undefined;
+		let browserWindow: { performance?: unknown };
+		let mark: sinon.SinonStub;
+		let measure: sinon.SinonStub;
+		const timingError = new Error("Browser timing is unavailable");
+
+		beforeEach(() => {
+			originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+			mark = sinon.stub();
+			measure = sinon.stub();
+			// Keep browser User Timing separate from the global duration clock.
+			browserWindow = { performance: { mark, measure } };
+			Object.defineProperty(globalThis, "window", {
+				configurable: true,
+				value: browserWindow,
+			});
+		});
+
+		afterEach(() => {
+			if (originalWindow === undefined) {
+				Reflect.deleteProperty(globalThis, "window");
+			} else {
+				Object.defineProperty(globalThis, "window", originalWindow);
+			}
+		});
+
+		const makeUnavailable = (api: "getter" | "mark" | "measure"): void => {
+			if (api === "getter") {
+				Object.defineProperty(browserWindow, "performance", {
+					configurable: true,
+					get: () => {
+						throw timingError;
+					},
+				});
+			} else if (api === "mark") {
+				mark.throws(timingError);
+			} else {
+				measure.throws(timingError);
+			}
+		};
+
+		for (const mode of ["sync", "async", "explicit end"] as const) {
+			const execute = (work: (event: PerformanceEvent) => number): number | Promise<number> =>
+				mode === "async"
+					? PerformanceEvent.timedExecAsync(logger, { eventName: "Timing" }, async (event) =>
+							work(event),
+						)
+					: PerformanceEvent.timedExec(logger, { eventName: "Timing" }, work);
+
+			for (const phase of ["start", "end"] as const) {
+				for (const api of ["getter", "mark", "measure"] as const) {
+					if (phase === "start" && api === "measure") {
+						continue;
+					}
+
+					it(`Preserves ${mode} results when the ${phase} ${api} throws`, async () => {
+						if (phase === "start") {
+							makeUnavailable(api);
+						}
+						let capturedEvent: PerformanceEvent | undefined;
+						const result = await execute((event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							if (phase === "end") {
+								makeUnavailable(api);
+							} else {
+								// Restore healthy APIs to expose completion using a failed start mark.
+								Object.defineProperty(browserWindow, "performance", {
+									configurable: true,
+									value: { mark, measure },
+								});
+								mark.resetBehavior();
+							}
+							if (mode === "explicit end") {
+								event.end();
+							}
+							return 42;
+						});
+
+						assert.equal(result, 42);
+						assert.equal(callbackCalls, 1);
+						assert.deepEqual(
+							logger.events.map((event) => event.eventName),
+							["Timing_end"],
+						);
+						assert.equal(logger.errorsLogged, 0);
+						assert.equal(typeof logger.events[0]?.duration, "number");
+						assert(capturedEvent !== undefined);
+						assert.equal(
+							Reflect.get(capturedEvent, "startMark"),
+							undefined,
+							"No pending start mark remains",
+						);
+						const calls = [mark.callCount, measure.callCount];
+						capturedEvent.end();
+						capturedEvent.cancel();
+						assert.deepEqual([mark.callCount, measure.callCount], calls);
+						assert.equal(logger.eventsLogged, 1);
+						if (phase === "start") {
+							sinon.assert.notCalled(measure);
+						}
+					});
+
+					if (mode !== "explicit end") {
+						it(`Preserves ${mode} callback errors when the ${phase} ${api} is unavailable`, async () => {
+							const callbackError = new Error("Operation failed");
+							if (phase === "start") {
+								makeUnavailable(api);
+							}
+							await assert.rejects(
+								async () =>
+									execute(() => {
+										callbackCalls++;
+										makeUnavailable(api);
+										throw callbackError;
+									}),
+								(error: unknown) => error === callbackError,
+							);
+							assert.equal(callbackCalls, 1);
+							assert.deepEqual(
+								logger.events.map((event) => event.eventName),
+								["Timing_cancel"],
+							);
+						});
+					}
+				}
+			}
+		}
+
+		it("Keeps healthy marking and explicit end/cancel behavior", () => {
+			const ended = PerformanceEvent.start(logger, { eventName: "Ended" });
+			ended.end();
+			ended.end();
+			ended.cancel();
+			sinon.assert.calledWithExactly(mark.firstCall, "Ended-start");
+			sinon.assert.calledWithExactly(mark.secondCall, "Ended-end");
+			sinon.assert.calledOnceWithExactly(measure, "Ended", "Ended-start", "Ended-end");
+
+			PerformanceEvent.timedExec(logger, { eventName: "Cancelled" }, (event) => {
+				event.cancel();
+				event.end();
+			});
+			sinon.assert.calledThrice(mark);
+			sinon.assert.calledOnce(measure);
+			assert.deepEqual(
+				logger.events.map((event) => event.eventName),
+				["Ended_end", "Cancelled_cancel"],
+			);
+		});
+	});
+
 	describe("Log level escalation", () => {
 		it("Logs below-threshold end events at the configured log level", () => {
 			const perfEvent = PerformanceEvent.start(
