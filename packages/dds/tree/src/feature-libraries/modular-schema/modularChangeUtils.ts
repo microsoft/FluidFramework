@@ -710,7 +710,7 @@ export function normalizeChangeset(
 			normalizedId.revision,
 			normalizedId.localId,
 		);
-		assert(newId !== undefined, "Unknown node ID");
+		assert(newId !== undefined, 0xd98 /* Unknown node ID */);
 		return newId;
 	};
 
@@ -726,7 +726,7 @@ export function normalizeChangeset(
 			normalizedId.revision,
 			normalizedId.localId,
 		]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
+		assert(nodeChangeset !== undefined, 0xd99 /* Unknown node ID */);
 
 		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
 		setInNestedMap(idRemappings, normalizedId.revision, normalizedId.localId, newId);
@@ -745,7 +745,7 @@ export function normalizeChangeset(
 		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
 
 		const parent = change.nodeToParent.get([normalizedId.revision, normalizedId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
+		assert(parent !== undefined, 0xd9a /* Every node should have a parent */);
 		const normalizedParent = normalizeFieldId(parent, change.nodeAliases);
 		const newParent = remapFieldId(normalizedParent);
 		nodeToParent.set([newId.revision, newId.localId], newParent);
@@ -769,7 +769,7 @@ export function normalizeChangeset(
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
 			for (const { key, count } of crossFieldKeys) {
 				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
+				assert(prevId !== undefined, 0xd9b /* Should be an entry for each cross-field key */);
 				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
 			}
 		}

@@ -31,7 +31,7 @@ The wrapper handles field boundaries and path prefixes; the stack cursor only ha
 `StringChunk` adapts string pieces to the chunked forest.
 Each buffer contains at most 4096 UTF-16 code units.
 Pieces share buffers when split, and contiguous pieces from the same buffer coalesce without copying.
-Small pieces from different buffers can coalesce up to 256 code units.
+Pieces from different buffers can coalesce up to 4096 code units.
 Sparse checkpoints every 64 code points support random cursor access; sequential traversal advances a stored offset.
 Separate surrogate-half leaves stay separate, even when adjacent.
 Other leaf values use the existing representation.

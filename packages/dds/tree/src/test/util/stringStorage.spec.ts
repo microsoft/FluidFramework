@@ -10,12 +10,13 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	StringPiece,
 	StringSequence,
+	checkpointStride,
 	stringBufferSize,
 	// Allow importing the independently testable storage implementation:
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/stringStorage.js";
 
-describe("forest-independent string storage", () => {
+describe("StringSequence", () => {
 	for (const text of ["", "abc", "a\u{1F600}b", "\uD800x\uDC00", "ab\u{1F600}".repeat(3000)]) {
 		it(`preserves ${text.length} UTF-16 units as code-point atoms`, () => {
 			const sequence = StringSequence.fromString(text);
@@ -23,38 +24,24 @@ describe("forest-independent string storage", () => {
 			assert.equal(sequence.length, atoms.length);
 			assert.equal(sequence.text, text);
 			assert.deepEqual([...sequence.values(0)], atoms);
-			for (const index of [0, 1, 63, 64, 65, atoms.length - 1]) {
-				if (index >= 0 && index < atoms.length) {
-					assert.equal(sequence.at(index), atoms[index]);
-					assert.deepEqual([...sequence.values(index)], atoms.slice(index));
+			let pieceStart = 0;
+			for (const piece of sequence.pieces) {
+				for (const index of [
+					pieceStart,
+					pieceStart + 1,
+					pieceStart + Math.floor(piece.length / 2),
+					pieceStart + piece.length - 1,
+				]) {
+					if (index < atoms.length) {
+						assert.equal(sequence.at(index), atoms[index]);
+						assert.deepEqual([...sequence.values(index)], atoms.slice(index));
+					}
 				}
+				pieceStart += piece.length;
 			}
 			assert.deepEqual([...sequence.values(sequence.length)], []);
 		});
 	}
-
-	it("bounds visible buffers without splitting surrogate pairs", () => {
-		const text = `${"x".repeat(stringBufferSize - 1)}\u{1F600}${"y".repeat(stringBufferSize)}`;
-		const pieces = StringPiece.fromString(text);
-		assert(pieces.every((piece) => piece.text.length <= stringBufferSize));
-		assert.deepEqual(
-			pieces.flatMap((piece) => [...piece.values(0)]),
-			[...text],
-		);
-	});
-
-	it("shares complete pieces and restores contiguous slices", () => {
-		const piece = StringPiece.fromString("abc\u{1F600}def")[0];
-		assert(piece !== undefined);
-		assert.equal(piece.slice(0, piece.length), piece);
-		const left = piece.slice(0, 4);
-		const right = piece.slice(4, piece.length);
-		const combined = left.tryAppend(right);
-		assert(combined !== undefined);
-		assert.equal(combined.text, piece.text);
-		assert.equal(left.text, "abc\u{1F600}");
-		assert.equal(right.text, "def");
-	});
 
 	it("preserves independently inserted surrogate halves", () => {
 		const sequence = StringSequence.fromString("\uD800").concat(
@@ -67,8 +54,8 @@ describe("forest-independent string storage", () => {
 	});
 
 	it("bounds cross-buffer coalescing", () => {
-		const small = StringSequence.fromString("a".repeat(128)).concat(
-			StringSequence.fromString("b".repeat(128)),
+		const small = StringSequence.fromString("a".repeat(stringBufferSize / 2)).concat(
+			StringSequence.fromString("b".repeat(stringBufferSize / 2)),
 		);
 		assert.equal(small.pieces.length, 1);
 		assert.equal(small.concat(StringSequence.fromString("c")).pieces.length, 2);
@@ -102,5 +89,40 @@ describe("forest-independent string storage", () => {
 		}
 		assert.throws(() => sequence.slice(2, 1));
 		assert.throws(() => sequence.slice(0, 4));
+	});
+});
+
+describe("StringPiece", () => {
+	it("reads atoms around checkpoint boundaries", () => {
+		const piece = StringPiece.fromString("ab\u{1F600}".repeat(checkpointStride))[0];
+		assert(piece !== undefined);
+		const atoms = [...piece.text];
+		for (const index of [checkpointStride - 1, checkpointStride, checkpointStride + 1]) {
+			assert.equal(piece.at(index), atoms[index]);
+			assert.deepEqual([...piece.values(index)], atoms.slice(index));
+		}
+	});
+
+	it("bounds visible buffers without splitting surrogate pairs", () => {
+		const text = `${"x".repeat(stringBufferSize - 1)}\u{1F600}${"y".repeat(stringBufferSize)}`;
+		const pieces = StringPiece.fromString(text);
+		assert(pieces.every((piece) => piece.text.length <= stringBufferSize));
+		assert.deepEqual(
+			pieces.flatMap((piece) => [...piece.values(0)]),
+			[...text],
+		);
+	});
+
+	it("shares complete pieces and restores contiguous slices", () => {
+		const piece = StringPiece.fromString("abc\u{1F600}def")[0];
+		assert(piece !== undefined);
+		assert.equal(piece.slice(0, piece.length), piece);
+		const left = piece.slice(0, 4);
+		const right = piece.slice(4, piece.length);
+		const combined = left.tryAppend(right);
+		assert(combined !== undefined);
+		assert.equal(combined.text, piece.text);
+		assert.equal(left.text, "abc\u{1F600}");
+		assert.equal(right.text, "def");
 	});
 });

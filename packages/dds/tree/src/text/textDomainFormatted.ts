@@ -357,13 +357,13 @@ export namespace FormattedText {
 				}
 				assert(
 					TreeStatic.is(ranges, Ranges),
-					"Range storage must use the expected map schema.",
+					0xd88 /* Range storage must use the expected map schema. */,
 				);
 				return ranges;
 			}
 
 			#getRangeTracker(): Tracker {
-				assert(includeRanges, "Range methods require a range-enabled schema.");
+				assert(includeRanges, 0xd89 /* Range methods require a range-enabled schema. */);
 				return (this.#rangeTracker ??= new ExtrinsicRangeTracker<
 					StringArray,
 					ExtrinsicRange,

@@ -123,8 +123,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
- * @legacy @beta
+ * @internal
  */
 export class ConsensusRegisterCollection<T>
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
