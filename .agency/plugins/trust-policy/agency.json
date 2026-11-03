@@ -1,0 +1,9 @@
+{
+	"engines": ["copilot", "claude"],
+	"category": "developer-tools",
+	"governance": {
+		"layer": 4,
+		"certification": "draft",
+		"organization": "Fluid Framework"
+	}
+}

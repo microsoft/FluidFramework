@@ -1,0 +1,15 @@
+{
+	"$schema": "../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"root": false,
+	"extends": "//",
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": false,
+			"style": {
+				// Matches Fluid's ESLint `curly` rule, which this plugin does not run.
+				"useBlockStatements": "error"
+			}
+		}
+	}
+}
