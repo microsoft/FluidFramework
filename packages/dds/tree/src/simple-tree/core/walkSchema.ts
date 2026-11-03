@@ -76,7 +76,7 @@ export function walkSchema(
 	assert(
 		wasComponentVisited === undefined ||
 			(visitor.stronglyConnectedComponent !== undefined && visitor.node === undefined),
-		"Incremental component visits require a component callback without node callbacks",
+		0xd9c /* Incremental component visits require a component callback without node callbacks */,
 	);
 	/**
 	 * Zero-based ordinal assigned when a node is first analyzed.
@@ -228,7 +228,7 @@ export function walkSchema(
 			let member: TarjanNodeState;
 			do {
 				const popped = componentAnalysis.stack.pop();
-				assert(popped !== undefined, "Expected a component member");
+				assert(popped !== undefined, 0xd9d /* Expected a component member */);
 				member = popped;
 				member.onStack = false;
 				members.push(member.schema);
