@@ -87,7 +87,7 @@ export class Collection<T> implements ICollection<T> {
 			_.extend(value, set);
 			return this.insertOne(value);
 		} else {
-			return this.insertOne(set);
+			return this.insertOne({ ...filter, ...set });
 		}
 	}
 
