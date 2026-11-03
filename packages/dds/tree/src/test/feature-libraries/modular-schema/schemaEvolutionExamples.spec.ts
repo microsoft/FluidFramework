@@ -243,8 +243,7 @@ describe("Schema Evolution Examples", () => {
 	/**
 	 * User stories for removing optional fields from view schemas.
 	 */
-	// eslint-disable-next-line no-only-tests/no-only-tests -- TESTING
-	describe.only("optional field removal", () => {
+	describe("optional field removal", () => {
 		const factory = new SchemaFactoryBeta("optional-field-removal");
 
 		/**
