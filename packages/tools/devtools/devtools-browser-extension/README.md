@@ -4,7 +4,7 @@
 > This package is deprecated and will no longer be maintained.
 > We are no longer publishing this to the browser extension stores.
 >
-> For now, if you wish to use this extension, you may install it via the [](#local-extension-testing) flow.
+> For now, if you wish to use this extension, you may install it via the [Local Extension Testing](#local-extension-testing) flow.
 > But we may remove this code in the future without warning.
 
 This package contains a browser (Chrome) developer tools extension for use with [@fluidframework/devtools][].
