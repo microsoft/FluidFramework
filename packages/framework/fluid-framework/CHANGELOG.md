@@ -197,7 +197,7 @@
 
   The beta and alpha schema factories support their corresponding tier-specific options.
 
-- Fix SharedTree history length tracking during trimming ([#28601](https://github.com/microsoft/FluidFramework/pull/28601)) [f547c212e5d](https://github.com/microsoft/FluidFramework/commit/f547c212e5d2bf32d54fb739e79dc869b5353070)
+- Fix SharedTree history length tracking during trimming ([#28522](https://github.com/microsoft/FluidFramework/pull/28522)) [77e3f67ccc8](https://github.com/microsoft/FluidFramework/commit/77e3f67ccc8226ec48559a733da8addaa0da44cc)
 
   Reading branch history no longer causes a commit-count assertion when rebasing a branch triggers history trimming.
   Branch lengths are now directly computed and cached on the branch itself rather than relying on event listening, which is subject to timing issues and interleaving.
