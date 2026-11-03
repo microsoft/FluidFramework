@@ -5,23 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { EmptyKey, rootFieldKey, type NormalizedFieldUpPath } from "../../../core/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import type { ForestType, TreeCheckout } from "../../../shared-tree/index.js";
-import { toInitialSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { Tree, type ForestType, type TreeCheckout } from "../../../shared-tree/index.js";
+import { TreeViewConfiguration, toInitialSchema } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-import {
-	checkoutWithContent,
-	chunkFromJsonTrees,
-	testIdCompressor,
-	jsonTreeFromCheckout,
-} from "../../utils.js";
+import { checkoutWithContent, testIdCompressor } from "../../utils.js";
 
 import type { SharedTreeTestOperation } from "./changeGeneration.js";
 
 type SequenceField = "left" | "right";
-type FixtureField = SequenceField | "optional";
+const viewConfiguration = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
 
 /**
  * Create a JSON object root containing two arrays and an initially absent optional property.
@@ -37,54 +30,33 @@ export function createMultiFieldFixture(forestType: ForestType): TreeCheckout {
 	);
 }
 
-function field(key: FixtureField): NormalizedFieldUpPath {
-	const property: NormalizedFieldUpPath = {
-		parent: {
-			parent: undefined,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-			detachedNodeId: undefined,
-		},
-		field: brand(key),
-	};
-	return key === "optional"
-		? property
-		: {
-				parent: {
-					parent: property.parent,
-					parentField: property.field,
-					parentIndex: 0,
-					detachedNodeId: undefined,
-				},
-				field: EmptyKey,
-			};
-}
-
 /**
- * Read attached content without retaining a cursor across an edit.
- * This reader is specific to the fixture, not an arbitrary-schema generator.
+ * Access fixture nodes through a temporary view without taking ownership of the checkout.
+ * The callback must not retain nodes beyond the view's lifetime.
  */
-function readFields(checkout: TreeCheckout): {
-	left: string[];
-	right: string[];
-	optional: string | undefined;
-} {
-	const roots = jsonTreeFromCheckout(checkout);
-	assert.equal(roots.length, 1);
-	const root = roots[0];
-	assert(typeof root === "object" && root !== null && !Array.isArray(root));
-	for (const key of Object.keys(root)) {
-		assert(["left", "right", "optional"].includes(key));
+function withFields<T>(
+	checkout: TreeCheckout,
+	callback: (
+		root: JsonAsTree.JsonObject,
+		fields: Record<SequenceField, JsonAsTree.Array>,
+	) => T,
+): T {
+	const view = checkout.viewWithInternal(viewConfiguration, false);
+	try {
+		const root = view.root;
+		for (const key of Object.keys(root)) {
+			assert(["left", "right", "optional"].includes(key));
+		}
+		const { left, right, optional } = root;
+		assert(Tree.is(left, JsonAsTree.Array));
+		assert(Tree.is(right, JsonAsTree.Array));
+		assert(left.every((value) => typeof value === "string"));
+		assert(right.every((value) => typeof value === "string"));
+		assert(optional === undefined || typeof optional === "string");
+		return callback(root, { left, right });
+	} finally {
+		view.dispose();
 	}
-	const { left, right, optional } = root;
-	assert(
-		Array.isArray(left) && left.every((value): value is string => typeof value === "string"),
-	);
-	assert(
-		Array.isArray(right) && right.every((value): value is string => typeof value === "string"),
-	);
-	assert(optional === undefined || typeof optional === "string");
-	return { left, right, optional };
 }
 
 /**
@@ -104,18 +76,21 @@ export function* multiFieldOperationDescriptors(
 	checkout: TreeCheckout,
 	depth: number,
 ): IterableIterator<MultiFieldOperationDescriptor> {
-	const fields = readFields(checkout);
+	const lengths = withFields(checkout, (_root, fields) => ({
+		left: fields.left.length,
+		right: fields.right.length,
+	}));
 	for (const source of ["left", "right"] as const) {
 		const destination = source === "left" ? "right" : "left";
-		if (fields[source].length > 0 && fields[destination].length < 2) {
+		if (lengths[source] > 0 && lengths[destination] < 2) {
 			yield { type: "move", source };
 		}
 	}
 	const value = `N${depth}`;
-	if (fields.left.length < 2) {
+	if (lengths.left < 2) {
 		yield { type: "insert", value };
 	}
-	if (fields.left.length > 0) {
+	if (lengths.left > 0) {
 		yield { type: "remove" };
 	}
 	yield { type: "setOptional", value };
@@ -123,66 +98,44 @@ export function* multiFieldOperationDescriptors(
 }
 
 /**
- * Apply a descriptor to a compatible fixture state, resolving fresh paths and preconditions.
+ * Apply a descriptor through simple-tree nodes resolved from the target checkout.
  */
 export function applyMultiFieldOperation(
 	checkout: TreeCheckout,
 	operation: MultiFieldOperationDescriptor,
 ): void {
-	const fields = readFields(checkout);
-	switch (operation.type) {
-		case "move": {
-			const destination = operation.source === "left" ? "right" : "left";
-			assert(fields[operation.source].length > 0 && fields[destination].length < 2);
-			checkout.editor.move(
-				field(operation.source),
-				0,
-				1,
-				field(destination),
-				fields[destination].length,
-			);
-			return;
-		}
-		case "remove": {
-			assert(fields.left.length > 0);
-			checkout.editor.sequenceField(field("left")).remove(0, 1);
-			return;
-		}
-		case "clearOptional": {
-			checkout.editor
-				.optionalField(field("optional"))
-				.set(undefined, fields.optional === undefined);
-			return;
-		}
-		case "insert":
-		case "setOptional": {
-			const chunk = chunkFromJsonTrees([operation.value]);
-			try {
-				switch (operation.type) {
-					case "insert": {
-						assert(fields.left.length < 2);
-						checkout.editor.sequenceField(field("left")).insert(fields.left.length, chunk);
-						break;
-					}
-					case "setOptional": {
-						checkout.editor
-							.optionalField(field("optional"))
-							.set(chunk, fields.optional === undefined);
-						break;
-					}
-					default: {
-						assert.fail("Unknown content operation");
-					}
-				}
-			} finally {
-				chunk.referenceRemoved();
+	withFields(checkout, (root, fields) => {
+		switch (operation.type) {
+			case "move": {
+				const destination = operation.source === "left" ? "right" : "left";
+				assert(fields[operation.source].length > 0 && fields[destination].length < 2);
+				fields[destination].moveToEnd(0, fields[operation.source]);
+				break;
 			}
-			return;
+			case "remove": {
+				assert(fields.left.length > 0);
+				fields.left.removeAt(0);
+				break;
+			}
+			case "clearOptional": {
+				// Assignment, unlike deleting an absent property, submits an empty clear.
+				root.optional = undefined;
+				break;
+			}
+			case "insert": {
+				assert(fields.left.length < 2);
+				fields.left.insertAtEnd(operation.value);
+				break;
+			}
+			case "setOptional": {
+				root.optional = operation.value;
+				break;
+			}
+			default: {
+				assert.fail("Unknown fixture operation");
+			}
 		}
-		default: {
-			assert.fail("Unknown fixture operation");
-		}
-	}
+	});
 }
 
 /**

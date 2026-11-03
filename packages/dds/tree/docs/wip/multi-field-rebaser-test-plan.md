@@ -422,6 +422,20 @@ Build, formatting, and lint checks pass.
 The affected history and axiom suites report 57 passing tests and the same two structural-rebase failures on the remove/move/move case.
 Those failures remain enabled and are unrelated to the removed required-field coverage.
 
+### Fixture revision: simple-tree reads and edits
+
+The multi-field fixture now reads and edits through temporary simple-tree views over each checkout.
+Views do not own their checkout and are disposed in `finally`, including when validation or an operation fails.
+Enumeration snapshots array lengths before yielding candidates; operation callbacks resolve fresh nodes on the target fork.
+Array insertion, removal, and cross-array moves use the simple-tree array methods.
+Optional properties use assignment, including assignment to `undefined` so an absent clear still submits a commit.
+Manual field paths, chunk allocation, and forest snapshots have been removed from the fixture's operation implementation.
+Initialization still uses the JSON cursor helper without authoring setup commits, and full-change capture is unchanged.
+
+Validation on 2026-11-03: build, formatting, and lint pass.
+The current history and axiom suites report 13 passing tests and the existing remove/move/move structural-rebase failure.
+The history tests include non-owning view lifetime, absence of setup commits, and cleanup after an operation fails.
+
 ### Implementation steps and remaining extensions
 
 1. **Establish a baseline and coverage inventory.**

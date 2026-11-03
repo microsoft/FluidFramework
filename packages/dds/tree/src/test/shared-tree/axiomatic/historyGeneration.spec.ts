@@ -118,6 +118,31 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 		assert.deepEqual(histories, [[]]);
 	});
 
+	it("temporary views leave the checkout alive and author no setup commits", () => {
+		const child = parent.fork();
+		try {
+			const before = child.mainBranch.getHead();
+			assert.equal([...multiFieldOperationDescriptors(child, 0)].length, 6);
+			assert.equal(child.mainBranch.getHead(), before);
+			applyMultiFieldOperation(child, { type: "clearOptional" });
+			assert.equal(child.mainBranch.getHead().parent, before);
+			assert.equal(child.disposed, false);
+			expectJsonTree(child, [{ left: ["A"], right: ["B"] }]);
+		} finally {
+			child.dispose();
+		}
+	});
+
+	it("releases the temporary view when an operation fails", () => {
+		applyMultiFieldOperation(parent, { type: "remove" });
+		const before = parent.mainBranch.getHead();
+		assert.throws(() => applyMultiFieldOperation(parent, { type: "remove" }));
+		assert.equal(parent.mainBranch.getHead(), before);
+		// A subsequent operation must be able to open a new view on the same checkout.
+		applyMultiFieldOperation(parent, { type: "setOptional", value: "after failure" });
+		expectJsonTree(parent, [{ left: [], right: ["B"], optional: "after failure" }]);
+	});
+
 	for (const [length, count] of [
 		[1, 6],
 		[2, 28],
