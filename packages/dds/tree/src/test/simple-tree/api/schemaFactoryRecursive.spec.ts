@@ -146,7 +146,7 @@ describe("SchemaFactory Recursive methods", () => {
 						assert(schema.kind === NodeKind.Object);
 						assert.equal(
 							schema.allowUnknownOptionalFields,
-							allowUnknownOptionalFields ?? false,
+							allowUnknownOptionalFields ?? true,
 						);
 					});
 				}
