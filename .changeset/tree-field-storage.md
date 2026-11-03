@@ -22,6 +22,10 @@ Unhydrated nodes have not yet been inserted into a SharedTree view; hydrated nod
 | Unhydrated array edits | 2-4% more |
 | Unhydrated record leaf reads and repeated insertion/removal of entries | 8% more |
 
+Object reads and hydrated object/array edits showed comparatively small changes overall.
+Hydrated cases ranged from about 3% less to 2% more elapsed time, while unhydrated object reads ranged from about 5% less to 3% more.
+Separate focused unhydrated object-read benchmarks were within 1% of the previous implementation.
+
 These comparisons used identical benchmark code before and after the change, Node.js 22.22.3 on Linux x64, and production emulation.
 Results are averages from four fresh processes per version, run serially in balanced order.
 The improvements are workload-specific, not whole-application speedups, and smaller differences can be affected by run-to-run variation.
