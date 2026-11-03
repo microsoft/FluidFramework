@@ -313,17 +313,17 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 			const stored = this.#storedSchemas;
 			assert(!(stored instanceof WeakMap), "Expected a policy-independent cache");
 			return (this.#storedSchemas =
-				stored ?? this.convertStoredSchema(StagedSchemaUpgradePolicy.permissive));
+				stored ?? this.#convertStoredSchema(StagedSchemaUpgradePolicy.permissive));
 		}
 		this.#storedSchemas ??= new WeakMap();
 		assert(this.#storedSchemas instanceof WeakMap, "Expected a policy-dependent cache");
-		return getOrCreate(this.#storedSchemas, options, () => this.convertStoredSchema(options));
+		return getOrCreate(this.#storedSchemas, options, () => this.#convertStoredSchema(options));
 	}
 
 	/**
 	 * Converts the cached view schema, following only references retained by the policy.
 	 */
-	private convertStoredSchema(policy: StagedSchemaUpgradePolicy): TreeStoredSchema {
+	#convertStoredSchema(policy: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		return runSchemaInitialization(() =>
 			simpleStoredSchemaToStoredSchema(transformSimpleSchema(this.treeSchema, policy)),
 		);
