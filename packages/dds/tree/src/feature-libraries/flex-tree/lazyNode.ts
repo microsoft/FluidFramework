@@ -258,8 +258,11 @@ export abstract class LazyTreeNode extends LazyEntity<Anchor> implements Hydrate
 		const key = this.anchorNode.parentField;
 		const parent = this.anchorNode.parent?.slots.get(flexTreeSlot);
 		if (parent !== undefined) {
-			assert(parent.context === this.context, "Parent context must match child context");
-			assert(parent instanceof LazyTreeNode, "Expected a lazy parent node");
+			assert(
+				parent.context === this.context,
+				0xd96 /* Parent context must match child context */,
+			);
+			assert(parent instanceof LazyTreeNode, 0xd97 /* Expected a lazy parent node */);
 			const cached = getCachedField(parent, key);
 			if (cached !== undefined) {
 				return { parent: cached, index };

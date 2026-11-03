@@ -10,16 +10,15 @@ import type { NodeSchemaMetadata } from "../core/index.js";
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
  * @input
- * @beta
+ * @public
  */
-export interface ObjectSchemaOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+export interface ObjectSchemaOptions {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
 	 * that has upgraded the document's schema to include those optional fields.
 	 *
-	 * @defaultValue `false`
+	 * @defaultValue `true`
 	 * @remarks
 	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
 	 * upgrade documents to include schema for new optional features.
@@ -64,24 +63,27 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown>
 }
 
 /**
+ * Options when declaring an {@link SchemaFactoryBeta.object|object node}'s schema, including custom metadata.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the node schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @input
+ * @beta
+ */
+export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown>
+	extends ObjectSchemaOptions,
+		NodeSchemaOptions<TCustomMetadata> {}
+
+/**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
  *
  * @input
  * @alpha
  */
 export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
-	extends ObjectSchemaOptions<TCustomMetadata>,
+	extends ObjectSchemaOptionsBeta<TCustomMetadata>,
 		NodeSchemaOptionsAlpha<TCustomMetadata> {}
-
-/**
- * Default options for Object node schema creation.
- * @remarks Omits parameters that are not relevant for common use cases.
- */
-export const defaultSchemaFactoryObjectOptions: Required<
-	Pick<ObjectSchemaOptions, "allowUnknownOptionalFields">
-> = {
-	allowUnknownOptionalFields: false,
-};
 
 /**
  * Additional information to provide to Node Schema creation.
@@ -119,4 +121,128 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactory} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactory}.
+ * You can create these options and read them from {@link SchemaFactory.settings}.
+ *
+ * @input
+ * @public
+ */
+export interface SchemaFactoryOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactory.object}.
+	 *
+	 * @remarks
+	 * This also applies to {@link SchemaFactory.objectRecursive}.
+	 *
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for object schemas.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *     },
+	 * });
+	 * ```
+	 */
+	readonly objectOptions?: ObjectSchemaOptions;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryBeta} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryBeta}.
+ * You can create these options and read them from {@link SchemaFactoryBeta.settings}.
+ *
+ * @input
+ * @beta
+ */
+export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactoryBeta.object}.
+	 *
+	 * @remarks
+	 * This also applies to {@link SchemaFactoryBeta.objectRecursive}.
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge, so per-schema metadata replaces the default metadata.
+	 * Custom metadata must be provided per-schema to preserve its inferred type.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for object schemas.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *         metadata: { description: "Default description" },
+	 *     },
+	 * });
+	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
+	 */
+	readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryAlpha} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryAlpha}.
+ * You can create these options and read them from {@link SchemaFactoryAlpha.settings}.
+ *
+ * @input
+ * @alpha
+ */
+export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactoryAlpha.objectAlpha}.
+	 *
+	 * @remarks
+	 * This also applies to the inherited {@link SchemaFactoryBeta.object} method,
+	 * {@link SchemaFactoryAlpha.objectRecursive}, and
+	 * {@link SchemaFactoryAlpha.objectRecursiveAlpha}.
+	 *
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge, so per-schema metadata replaces the default metadata.
+	 * Custom metadata must be provided per-schema to preserve its inferred type.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for all object schemas created with these methods.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryAlpha({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *         persistedMetadata: { library: "com.example" },
+	 *     },
+	 * });
+	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
+	 */
+	readonly objectOptions?: ObjectSchemaOptionsAlpha<never>;
 }

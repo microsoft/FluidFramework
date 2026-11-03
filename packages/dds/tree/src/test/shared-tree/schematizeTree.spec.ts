@@ -38,7 +38,6 @@ import {
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
-	type TreeBranchAlpha,
 	type TreeView,
 	type TreeViewAlpha,
 	type TreeViewConfiguration,
@@ -218,7 +217,7 @@ describe("schematizeTree", () => {
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			isBranch(): this is TreeBranchAlpha {
+			isBranch(): this is UntypedTreeViewAlpha {
 				return true;
 			},
 			isView(): this is UntypedTreeViewAlpha {
@@ -228,6 +227,9 @@ describe("schematizeTree", () => {
 				_schema: TSchema,
 			): this is TreeViewAlpha<TSchema> {
 				return false;
+			},
+			get unknownFieldSchemas(): never {
+				throw new Error("Function not implemented.");
 			},
 			revertTo(): void {
 				throw new Error("Function not implemented.");

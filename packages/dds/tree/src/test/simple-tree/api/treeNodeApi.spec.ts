@@ -69,6 +69,7 @@ import {
 	type TreeChangeEvents,
 	type TreeLeafValue,
 	type TreeNode,
+	type TreeView,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
 	type UnsafeUnknownSchema,
@@ -2196,6 +2197,87 @@ describe("treeNodeApi", () => {
 				// Clear optional field
 				testNode.child = undefined;
 				assert.deepEqual(log, ['nodeChanged: ["child"]', `treeChanged`]);
+			});
+
+			describe("unknown optional fields", () => {
+				// The newer schema has the `extra` field. The older schema does not.
+				// `extra` uses a custom stored key, to check that events report the stored key.
+				const factoryNew = new SchemaFactoryAlpha("unknownOptionalFields");
+				class PersonNew extends factoryNew.object("Person", {
+					known: factoryNew.optional(factoryNew.string),
+					extra: factoryNew.optional(factoryNew.string, { key: "extraKey" }),
+				}) {}
+				const factoryOld = new SchemaFactoryAlpha("unknownOptionalFields");
+				class PersonOld extends factoryOld.object(
+					"Person",
+					{ known: factoryOld.optional(factoryOld.string) },
+					{ allowUnknownOptionalFields: true },
+				) {}
+
+				/**
+				 * Two clients sharing the same document, one with each schema.
+				 */
+				interface Clients {
+					/**
+					 * Provider for both clients. Call `synchronizeMessages` to deliver edits between them.
+					 */
+					readonly provider: TestTreeProviderLite;
+					/**
+					 * View of the client with the newer schema. Edits to `extra` are made through this view.
+					 */
+					readonly viewNew: TreeView<typeof PersonNew>;
+					/**
+					 * Data of each `nodeChanged` event on the root of the client with the older schema, in order.
+					 */
+					readonly events: readonly unknown[];
+				}
+
+				/**
+				 * Creates a client with the newer schema and a client with the older schema, sharing the same document.
+				 * Records the `nodeChanged` events on the older client's root.
+				 */
+				function setup(): Clients {
+					const provider = new TestTreeProviderLite(2);
+					const viewNew = provider.trees[0].viewWith(
+						new TreeViewConfiguration({ schema: PersonNew }),
+					);
+					viewNew.initialize(new PersonNew({}));
+					provider.synchronizeMessages();
+					const viewOld = provider.trees[1].viewWith(
+						new TreeViewConfiguration({ schema: PersonOld }),
+					);
+					const events: unknown[] = [];
+					TreeBeta.on(viewOld.root, "nodeChanged", (data) => events.push(data));
+					return { provider, viewNew, events };
+				}
+
+				it("nodeChanged reports only unknown optional fields", () => {
+					const { provider, viewNew, events } = setup();
+
+					viewNew.root.extra = "x";
+					provider.synchronizeMessages();
+
+					assert.deepEqual(events, [
+						{ changedProperties: new Set(), changedUnknownProperties: new Set(["extraKey"]) },
+					]);
+				});
+
+				it("nodeChanged reports known and unknown optional fields changed in the same batch", () => {
+					const { provider, viewNew, events } = setup();
+
+					(viewNew as SchematizingSimpleTreeView<typeof PersonNew>).runTransaction(() => {
+						viewNew.root.known = "a";
+						viewNew.root.extra = "b";
+					});
+					provider.synchronizeMessages();
+
+					assert.deepEqual(events, [
+						{
+							changedProperties: new Set(["known"]),
+							changedUnknownProperties: new Set(["extraKey"]),
+						},
+					]);
+				});
 			});
 		});
 

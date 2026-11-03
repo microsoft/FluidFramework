@@ -15,12 +15,19 @@ import { withObservation } from "../../feature-libraries/flex-tree/observer.js";
 import {
 	SchemaFactory,
 	type NodeFromSchema,
+	type ImplicitAllowedTypes,
+	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	isTreeNode,
 	getInnerNode,
 } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
+import { brand, type requireAssignableTo } from "../../util/index.js";
 
 import { describeHydration } from "./utils.js";
+
+// `TreeMapNodeAlpha` should be assignable to `TreeMapNode`.
+type _mapAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeMapNodeAlpha<TAllowedTypes>, TreeMapNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("Test");
 

@@ -333,7 +333,16 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
+							summarizeType === SummarizeType.disabled
+								? { state: "disabled" }
+								: summarizeType === SummarizeType.onDemand
+									? {
+											state: "disableHeuristics",
+											initialSummarizerDelayMs: 0,
+											maxAckWaitTime: 20000,
+											maxOpsSinceLastSummary: 7000,
+										}
+									: undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -1623,6 +1632,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
 		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
+	}
+	public get unknownFieldSchemas(): never {
+		throw new Error("Property 'unknownFieldSchemas' not implemented in MockTreeCheckout.");
 	}
 	public runTransaction(): never {
 		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");

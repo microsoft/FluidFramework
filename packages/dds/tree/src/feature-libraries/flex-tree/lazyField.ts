@@ -440,7 +440,10 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
 		const cached = parent?.slots.get(flexTreeSlot);
 		if (cached !== undefined) {
-			assert(cached.context === this.context, "Parent context must match field context");
+			assert(
+				cached.context === this.context,
+				0xd94 /* Parent context must match field context */,
+			);
 			return cached;
 		}
 
@@ -503,7 +506,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			this.anchor.parent === undefined
 				? undefined
 				: (this.context.checkout.forest.anchors.locate(this.anchor.parent) ??
-					fail("Field parent anchor must exist"));
+					fail(0xd95 /* Field parent anchor must exist */));
 		return { parent, field: this.key };
 	}
 

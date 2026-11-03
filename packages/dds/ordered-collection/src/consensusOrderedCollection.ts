@@ -17,9 +17,11 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -110,6 +112,7 @@ const idForLocalUnattachedClient = undefined;
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ConsensusOrderedCollection<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<IConsensusOrderedCollectionEvents<T>>
 	implements IConsensusOrderedCollection<T>
 {
@@ -210,6 +213,7 @@ export class ConsensusOrderedCollection<T = any>
 		// then we are losing all checked out work!
 		this.removeClient(idForLocalUnattachedClient);
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		let blobContent = this.serializeValue(this.data.asArray(), serializer);
 		builder.addBlob(snapshotFileNameData, blobContent);

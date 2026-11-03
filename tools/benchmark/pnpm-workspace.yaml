@@ -42,6 +42,9 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
