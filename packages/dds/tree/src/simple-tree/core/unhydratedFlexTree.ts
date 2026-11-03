@@ -662,14 +662,16 @@ export class UnhydratedFlexTreeField
 			return;
 		}
 		// Clear parents for all old map trees.
-		for (const tree of this.children) {
+		const children = this.children;
+		for (const tree of children) {
 			tree.adoptBy(undefined);
 		}
 
-		this.lazyChildren = edit(this.children) ?? this.children;
+		const updatedChildren = edit(children) ?? children;
+		this.lazyChildren = updatedChildren;
 
 		// Set parents for all new map trees.
-		for (const [index, tree] of this.children.entries()) {
+		for (const [index, tree] of updatedChildren.entries()) {
 			tree.adoptBy(this, index);
 		}
 
@@ -720,9 +722,10 @@ export class UnhydratedOptionalField
 		ValueFieldEditBuilder<FlexibleNodeContent>;
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
-		const value = this.children[0];
-		if (value !== undefined) {
-			return this.unboxed(0);
+		const child = this.children[0];
+		if (child !== undefined) {
+			const value = child.value;
+			return value === undefined ? child : value;
 		}
 
 		return undefined;
@@ -735,11 +738,12 @@ class UnhydratedRequiredField
 {
 	public override get content(): FlexTreeUnknownUnboxed {
 		// This cannot use ?? since null is a legal value here.
+		const content = super.content;
 		assert(
-			super.content !== undefined,
+			content !== undefined,
 			0xa57 /* Expected EagerMapTree required field to have a value */,
 		);
-		return super.content;
+		return content;
 	}
 }
 

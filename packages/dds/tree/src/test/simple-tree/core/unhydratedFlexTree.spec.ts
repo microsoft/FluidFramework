@@ -21,6 +21,7 @@ import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/ind
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {
 	createUnhydratedFlexTreeNode,
+	createField,
 	UnhydratedContext,
 	UnhydratedFlexTreeNode,
 	UnhydratedGeneralNode,
@@ -134,6 +135,67 @@ describe("unhydratedFlexTree", () => {
 		assert(arrayNode instanceof UnhydratedObjectNode);
 		assert(object instanceof UnhydratedObjectNode);
 	});
+
+	for (const Node of [UnhydratedGeneralNode, UnhydratedObjectNode]) {
+		for (const kind of [FieldKinds.required, FieldKinds.optional]) {
+			it(`preserves field values and parentage with ${Node.name} ${kind.identifier}`, () => {
+				const sf = new SchemaFactory(`${Node.name}-${kind.identifier}`);
+				class Child extends sf.object("Child", {}) {}
+				const allowed = [sf.number, sf.boolean, sf.string, sf.null, Child];
+				class Parent extends sf.object("Parent", {
+					value: kind === FieldKinds.optional ? sf.optional(allowed) : allowed,
+				}) {}
+				const localContext = getUnhydratedContext(Parent);
+				const fieldKey: FieldKey = brand("value");
+				const makeChild = (type: string, value: Value): UnhydratedFlexTreeNode =>
+					unhydratedFlexTreeFromCursor(
+						localContext,
+						cursorForMapTreeNode({ type: brand(type), value, fields: new Map() }),
+					);
+				let previous = makeChild(sf.number.identifier, 1);
+				const field = createField(localContext.flexContext, kind.identifier, fieldKey, [
+					previous,
+				]);
+				const node = new Node(
+					{ type: brand(Parent.identifier) },
+					new Map([[fieldKey, field]]),
+					localContext,
+				);
+				assert(field.is(FieldKinds.required) || field.is(FieldKinds.optional));
+				let notifications = 0;
+				const off = node.events.on("childrenChangedAfterBatch", () => {
+					assert.equal(node.getStoredField(fieldKey), field);
+					assert.equal(field.boxedAt(0)?.parentField.parent, field);
+					notifications++;
+				});
+				for (const [type, value] of [
+					[sf.number.identifier, 0],
+					[sf.boolean.identifier, false],
+					[sf.string.identifier, ""],
+					[sf.null.identifier, null],
+					[Child.identifier, undefined],
+				] as const) {
+					const child = makeChild(type, value);
+					field.editor.set(child, false);
+					assert.equal(field.content, value === undefined ? child : value);
+					assert.equal(field.boxedAt(0), child);
+					assert.equal(child.parentField.parent, field);
+					assert.equal(previous.parentField.parent.parent, undefined);
+					previous = child;
+				}
+				assert.equal(notifications, 5);
+				off();
+				if (kind === FieldKinds.optional) {
+					const optional = node.getBoxed(fieldKey);
+					assert(optional.is(FieldKinds.optional));
+					optional.editor.set(undefined, false);
+					assert.equal(optional.content, undefined);
+					assert.equal(previous.parentField.parent.parent, undefined);
+					assert.equal(node.allFieldsLazy.size, Node === UnhydratedObjectNode ? 1 : 0);
+				}
+			});
+		}
+	}
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");

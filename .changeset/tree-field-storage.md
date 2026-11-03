@@ -13,7 +13,7 @@ Previously returned field wrappers remain usable after an empty field is evicted
 
 The original measurements below describe the earlier map/record-specific implementation.
 They are preserved as historical evidence, not measurements of the generalized implementation.
-The final section reports the generalized implementation separately.
+Later sections report the generalized implementation and subsequent tuning separately.
 
 #### Retained-memory measurements
 
@@ -155,6 +155,7 @@ The slowest formatting cases have within-process relative margins of error as hi
 
 #### Generalized field-storage measurements
 
+These measurements describe the redesign before the mainline merge and tuning reported in the next section.
 The generalized implementation was compared against pre-field-storage mainline commit `2a411f38e168c300844d8d6d96e153225ac5cdbe`, not the preceding feature-branch implementation.
 Both versions used identical benchmark code, including new sequence-map and array-edit coverage.
 The timing comparison selected 78 cases: 54 navigation cases and 24 text controls.
@@ -208,3 +209,46 @@ In particular, sequence-map reads and unhydrated object workloads have measured 
 A 5% regression tolerance was only a proposed practical threshold, not an accepted requirement.
 Further performance acceptance remains open.
 Large sequence-map traversal, sequence-map move performance, and hydrated churn retention isolated from edit history were not measured.
+
+#### Updated mainline comparison and object-access tuning
+
+After merging mainline commit `a7801b2c836ac2a9aa0e6ca6279422265a0f4aea`, the implementation was compared against that exact commit.
+Required and optional field reads now resolve their child once, and edits reuse the resolved child arrays instead of repeatedly resolving the field.
+This keeps the general implementation's eviction and retained-wrapper behavior without adding another specialization.
+
+Both versions used identical navigation benchmark code and installed dependencies, Node.js 22.22.3 on Linux x64, and production emulation.
+Each comparison ran four fresh processes per version, serially in balanced order: main, candidate, candidate, main, main, candidate, candidate, main.
+The full comparison selected 48 object, array, optional-map, and record cases.
+Sequence maps remain covered by correctness tests but are excluded from this performance comparison because the public API cannot create them.
+Builds and other test runs did not overlap these measurements.
+
+A separate focused object-read/edit comparison reproduced a 10-12% unhydrated read slowdown before tuning.
+After tuning, the focused shallow/deep read changes were +0.62% and -0.48%, and edit changes were +1.08% and +2.93%.
+All four focused comparisons had overlapping process ranges.
+
+The full-suite results below show mean microseconds per iteration and process minimum/maximum.
+Positive elapsed-time changes mean slower.
+Process ranges are not confidence intervals, and differences between focused and full-suite runs show that benchmark context matters.
+
+| Unhydrated workload | Main (process range) | Tuned redesign (process range) | More elapsed time |
+| --- | --- | --- | --- |
+| Shallow object reads | 0.540 (0.530-0.557) | 0.514 (0.502-0.520) | -4.80% |
+| Deep object reads | 0.510 (0.493-0.529) | 0.525 (0.485-0.572) | +2.87% |
+| Shallow object edits | 1.817 (1.797-1.835) | 1.890 (1.873-1.933) | +4.01% |
+| Deep object edits | 2.314 (2.267-2.357) | 2.393 (2.339-2.470) | +3.40% |
+| Shallow array edits | 4.119 (4.015-4.220) | 4.206 (4.120-4.254) | +2.10% |
+| Deep array edits | 5.208 (5.174-5.245) | 5.438 (5.317-5.544) | +4.43% |
+| Record Read leaf | 0.379 (0.363-0.404) | 0.409 (0.404-0.415) | +7.95% |
+| Record Key churn | 5.620 (5.491-5.728) | 6.085 (5.891-6.202) | +8.28% |
+
+Hydrated object reads, object edits, and array edits had mean changes between -2.81% and +1.79%.
+Unhydrated missing-map reads improved by 32.37%, with nonoverlapping process ranges.
+ChunkedForest missing-map reads were 6.18% slower and ObjectForest map leaf reads were 5.99% slower, both with overlapping process ranges.
+ObjectForest map leaf reads had been 43.28% slower in the earlier full-suite run, but a separate focused comparison measured -0.61%, with overlapping ranges.
+These results do not establish a stable reference-forest map-read regression of that earlier magnitude.
+
+The object-read regression is substantially reduced, but this is not a no-regression result.
+Shallow unhydrated object edits, deep array edits, and unhydrated record reads/churn remain slower with nonoverlapping process ranges.
+These are further tuning targets, not accepted regressions.
+General and specialized storage correctness tests, including retention, replacement, defaults, and sequence-map behavior, pass after tuning.
+Text correctness tests also pass; text timings and retained-heap measurements were not repeated after this tuning.
