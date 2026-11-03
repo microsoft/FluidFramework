@@ -26,7 +26,6 @@ But the removed field prevents you from making a later schema upgrade, even if t
 ## Proposed behavior
 
 The current view must enable `allowUnknownOptionalFields` on the object from which you remove a field.
-No new option is proposed.
 
 | Action | Expected result |
 | --- | --- |
@@ -53,7 +52,7 @@ You decide to remove the notes feature:
 2. Keep `allowUnknownOptionalFields` enabled on `Task`.
 3. Open an existing document. You can still read and edit task titles, but the view does not expose the notes.
 4. Later, add another optional field, such as `label`, and upgrade the document. The old notes remain stored.
-5. If you restore a compatible notes feature, it can read the retained notes.
+5. If you restore a compatible notes feature (i.e. add a new field with the same name and compatible type(s)), it can read the retained notes.
 
 The same approach supports a rollback to application code that does not declare the experimental field.
 That code must still enable the object option and use a `tree` version that supports this capability.
@@ -66,7 +65,6 @@ The option would support both:
 - **Backwards compatibility:** A view that removes optional fields tolerates older documents that still contain them and can make later compatible upgrades.
 
 An unknown optional field can therefore come from either a newer schema or an older schema.
-The option is not a general permission to ignore incompatible changes.
 
 ### Existing documents and new documents are different
 
@@ -87,25 +85,17 @@ Those tests must continue to detect the new-document limitation.
 - Removing required fields remains unsupported.
 - Narrowing allowed types or reusing a stored field key with an incompatible definition remains unsupported.
 - The feature does not delete historical data, reduce document storage, or provide a general schema downgrade.
-- Preservation during schema upgrades does not make every application edit lossless. Reconstructing a node from only its visible properties can still omit unknown fields.
-- Previously deployed `tree` versions do not gain this behavior automatically.
+- Preservation during schema upgrades does not make every application edit lossless.
+  Reconstructing a node from only its visible properties can still omit unknown fields.
 
 Existing tools that preserve unknown fields, such as whole-node moves and `TreeBeta.clone`, retain their role.
-Removing a feature is not a data-erasure mechanism.
 
-## Delivery expectations
+## Open Questions
 
-Before release, verify that removed fields survive later upgrades, collaboration, and document reloads.
-Also verify that restoring a compatible field exposes the retained data and that incompatible changes are rejected.
+### Optional field removal + schema versioning
 
-Update the documentation for `allowUnknownOptionalFields` and the website's schema-evolution guide.
-Both should explain the two compatibility directions, a rollback example, and the difference between existing and new documents.
+Under the above proposal, an older client reading a newer document whose schema does not contain (removed) optional fields would need to perform a schema upgrade in order to view the newer document.
+So long as this upgrade is strictly additive (i.e. doesn't remove features enabled in the document that are unknown by the older client's view schema), then such an "upgrade" should be compatible with newer clients collaborating on the document.
 
-## Related documentation
-
-These links describe the existing behavior at the source revision used for this proposal.
-They do not indicate that the proposed capability is available.
-
-- [Object schema options and unknown-field data handling](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14).
-- [Schema compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115).
-- [Website schema-evolution guide](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/website/docs/data-structures/tree/schema-evolution/index.mdx).
+But having an older client "upgrade" a newer document seems odd.
+Additionally, it isn't immediately clear how this would interact with our plans for explicit, persisted schema versioning.
