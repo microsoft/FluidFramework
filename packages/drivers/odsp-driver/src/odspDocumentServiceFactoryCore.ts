@@ -50,6 +50,7 @@ import {
 	type INewFileInfo,
 	createOdspLogger,
 	getJoinSessionCacheKey,
+	getNewFileLocation,
 	getOdspResolvedUrl,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
@@ -197,16 +198,18 @@ export class OdspDocumentServiceFactoryCore
 		} else if (odspResolvedUrl.fileName) {
 			const [, queryString] = odspResolvedUrl.url.split("?");
 			const searchParams = new URLSearchParams(queryString);
-			const filePath = searchParams.get("path");
-			if (filePath === undefined || filePath === null) {
-				throw new Error("File path should be provided!!");
+			const location = getNewFileLocation(searchParams);
+			if (location === undefined) {
+				throw new Error(
+					"Exactly one of a file path or a parent folder ID must be provided to create a new file",
+				);
 			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
 				driveId: odspResolvedUrl.driveId,
 				siteUrl: odspResolvedUrl.siteUrl,
-				filePath,
+				...location,
 				filename: odspResolvedUrl.fileName,
 				createLinkType: createShareLinkParam,
 			};
@@ -244,6 +247,7 @@ export class OdspDocumentServiceFactoryCore
 			{
 				eventName: "CreateNew",
 				isWithSummaryUpload: true,
+				isWithParentFolderId: fileInfo.type === "New" && fileInfo.parentFolderId !== undefined,
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,

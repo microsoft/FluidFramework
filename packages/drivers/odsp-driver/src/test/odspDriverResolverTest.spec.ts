@@ -7,6 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import {
+	SharingLinkRole,
+	SharingLinkScope,
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -471,5 +475,119 @@ describe("Odsp Driver Resolver", () => {
 			"testContainerPackageName",
 			"containerPackageName should match",
 		);
+	});
+
+	describe("Create new in a folder identified by its item ID", () => {
+		const parentFolderId = "01VUXKMZBAWJETO47NOFDJ6F4ALDI23UL5";
+
+		it("Can create new request", async () => {
+			const idRequest = createOdspCreateContainerRequest({
+				siteUrl,
+				driveId,
+				parentFolderId,
+				fileName,
+			});
+			assert.strictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				idRequest.headers?.[DriverHeader.createNew].fileName,
+				fileName,
+				"Request should contain fileName",
+			);
+			assert.strictEqual(
+				idRequest.url,
+				`${siteUrl}?driveId=${driveId}&parentFolderId=${parentFolderId}`,
+				"Request url should match",
+			);
+		});
+
+		it("Should create request with all options and resolve it", async () => {
+			const idRequest = createOdspCreateContainerRequest({
+				siteUrl,
+				driveId,
+				parentFolderId,
+				fileName,
+				createShareLinkType: {
+					scope: SharingLinkScope.organization,
+					role: SharingLinkRole.edit,
+				},
+				containerPackageInfo: { name: packageName },
+			});
+			assert.strictEqual(
+				idRequest.url,
+				`${siteUrl}?driveId=${driveId}&parentFolderId=${parentFolderId}` +
+					`&containerPackageName=${packageName}&createLinkScope=organization&createLinkRole=edit`,
+				"Request url should match",
+			);
+
+			const resolvedUrl = await resolver.resolve(idRequest);
+			assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
+			assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
+			assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
+			assert.strictEqual(resolvedUrl.itemId, "", "Item id should be absent");
+			assert.strictEqual(
+				resolvedUrl.codeHint?.containerPackageName,
+				packageName,
+				"containerPackageName should match",
+			);
+		});
+
+		it("Encodes the parent folder ID so that it can't add query params", async () => {
+			const unsafeParentFolderId = "id&path=other";
+			const { searchParams } = new URL(
+				createOdspCreateContainerRequest({
+					siteUrl,
+					driveId,
+					parentFolderId: unsafeParentFolderId,
+					fileName,
+				}).url,
+			);
+			assert.strictEqual(
+				searchParams.get("parentFolderId"),
+				unsafeParentFolderId,
+				"parentFolderId should round-trip",
+			);
+			assert.strictEqual(searchParams.has("path"), false, "path should be absent");
+		});
+
+		it("Throws a usage error for an empty parent folder ID", async () => {
+			assert.throws(
+				() =>
+					createOdspCreateContainerRequest({
+						siteUrl,
+						driveId,
+						parentFolderId: "",
+						fileName,
+					}),
+				{ errorType: "usageError" },
+			);
+		});
+	});
+
+	describe("Validates the folder of a createNew request", () => {
+		const createNewRequest = (folderQuery: string): IRequest => ({
+			url: `${siteUrl}?driveId=${driveId}&${folderQuery}`,
+			headers: { [DriverHeader.createNew]: { fileName } },
+		});
+
+		it("Should resolve an empty path, which refers to the drive root", async () => {
+			const resolvedUrl = await resolver.resolve(createNewRequest("path="));
+			assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
+		});
+
+		const invalidFolderQueries = [
+			{
+				description: "both a path and a parent folder ID",
+				query: "path=path&parentFolderId=id",
+			},
+			{ description: "an empty parent folder ID", query: "parentFolderId=" },
+			{ description: "neither a path nor a parent folder ID", query: "" },
+		];
+		for (const { description, query } of invalidFolderQueries) {
+			it(`Should reject a request with ${description}`, async () => {
+				await assert.rejects(resolver.resolve(createNewRequest(query)), {
+					message: "Proper new file params should be there",
+				});
+			});
+		}
 	});
 });

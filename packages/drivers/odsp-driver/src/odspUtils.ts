@@ -307,15 +307,46 @@ export interface IFileInfoBase {
 	driveId: string;
 }
 
-export interface INewFileInfo extends IFileInfoBase {
+interface INewFileInfoBase extends IFileInfoBase {
 	type: "New";
 	filename: string;
-	filePath: string;
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
 	 */
 	createLinkType?: ISharingLinkKind;
+}
+
+/**
+ * Location of the folder in which to create a new file:
+ * either its path relative to the drive root, or its item ID.
+ */
+export type NewFileLocation =
+	| {
+			filePath: string;
+			parentFolderId?: undefined;
+	  }
+	| {
+			parentFolderId: string;
+			filePath?: undefined;
+	  };
+
+export type INewFileInfo = INewFileInfoBase & NewFileLocation;
+
+/**
+ * Reads the location of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @returns The location, or `undefined` if the parameters don't specify exactly one valid location.
+ * An empty path is valid and refers to the drive root, but an empty parent folder ID is not.
+ */
+export function getNewFileLocation(
+	searchParams: URLSearchParams,
+): NewFileLocation | undefined {
+	const filePath = searchParams.get("path");
+	const parentFolderId = searchParams.get("parentFolderId");
+	if (parentFolderId === null) {
+		return filePath === null ? undefined : { filePath };
+	}
+	return filePath === null && parentFolderId !== "" ? { parentFolderId } : undefined;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {

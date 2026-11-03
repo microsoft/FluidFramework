@@ -21,7 +21,7 @@ import { ClpCompliantAppHeader, FileMetadataHeader } from "./contractsPublic.js"
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { getOdspResolvedUrl } from "./odspUtils.js";
+import { getNewFileLocation, getOdspResolvedUrl } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 
 function getUrlBase(
@@ -107,9 +107,10 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
-			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
-			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+			if (
+				!(fileName && siteURL && driveID && getNewFileLocation(searchParams) !== undefined)
+			) {
 				throw new NonRetryableError(
 					"Proper new file params should be there",
 					OdspErrorTypes.genericError,

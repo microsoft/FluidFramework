@@ -21,7 +21,12 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { getOdspResolvedUrl } from "../odspUtils.js";
 
-import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
+import {
+	mockFetchMultiple,
+	mockFetchOk,
+	mockFetchOkAndGetUrl,
+	okResponse,
+} from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";
@@ -164,6 +169,52 @@ describe("Odsp Create Container Test", () => {
 				"ODSP CreateFile call returned no item ID",
 				"Message should be correct",
 			);
+		}
+	});
+
+	describe("Creates the file in the requested folder", () => {
+		const parentFolderId = "01VUXKMZBAWJETO47NOFDJ6F4ALDI23UL5";
+		const testCases = [
+			{
+				folder: "the folder at the file path",
+				createRequest: (): IRequest =>
+					createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName),
+				fileItemPath: `root:%2F${filePath}/${fileName}`,
+				isWithParentFolderId: false,
+			},
+			{
+				folder: "the folder with the parent folder ID",
+				createRequest: (): IRequest =>
+					createOdspCreateContainerRequest({ siteUrl, driveId, parentFolderId, fileName }),
+				fileItemPath: `${parentFolderId}:/${fileName}`,
+				isWithParentFolderId: true,
+			},
+		];
+		for (const { folder, createRequest, fileItemPath, isWithParentFolderId } of testCases) {
+			it(`Should create the file in ${folder}`, async () => {
+				const resolved = await resolver.resolve(createRequest());
+				const { result: docService, url } = await mockFetchOkAndGetUrl(
+					async () => createService(createSummary(true, true), resolved),
+					expectedResponse,
+					{ "x-fluid-epoch": "epoch1" },
+				);
+				assert.strictEqual(
+					url,
+					`${siteUrl}/_api/v2.1/drives/${driveId}/items/${fileItemPath}:/opStream/snapshots/snapshot?ump=1`,
+					"Create file url should match",
+				);
+				assert.strictEqual(
+					getOdspResolvedUrl(docService.resolvedUrl).itemId,
+					itemId,
+					"ItemId should match",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "OdspDriver:CreateNew_end", isWithParentFolderId }],
+					undefined /* message */,
+					false /* inlineDetailsProp */,
+					false /* clearEventsAfterCheck */,
+				);
+			});
 		}
 	});
 });

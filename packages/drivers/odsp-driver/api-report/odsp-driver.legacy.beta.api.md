@@ -11,6 +11,9 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @beta @legacy
+export function createOdspCreateContainerRequest(options: IOdspCreateContainerRequestOptions): IRequest;
+
+// @beta @legacy
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
 
 // @beta @legacy
@@ -89,6 +92,16 @@ export interface INonPersistentCache {
 // @beta @legacy
 export interface IOdspCache extends INonPersistentCache {
     readonly persistedCache: IPersistedFileCache;
+}
+
+// @beta @legacy
+export interface IOdspCreateContainerRequestOptions {
+    readonly containerPackageInfo?: IContainerPackageInfo | undefined;
+    readonly createShareLinkType?: ISharingLinkKind | undefined;
+    readonly driveId: string;
+    readonly fileName: string;
+    readonly parentFolderId: string;
+    readonly siteUrl: string;
 }
 
 // @beta @legacy
