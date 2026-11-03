@@ -17,7 +17,11 @@ import {
 	type TaggedChange,
 } from "../../../core/index.js";
 import { intoDelta } from "../../../feature-libraries/index.js";
-import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
+import {
+	TreeBeta,
+	type SharedTreeChange,
+	type TreeCheckout,
+} from "../../../shared-tree/index.js";
 import {
 	SharedTreeChangeFamily,
 	// eslint-disable-next-line import-x/no-internal-modules -- Exercise the production change family directly.
@@ -26,7 +30,11 @@ import {
 	assertModularChangesetsEqual,
 	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the modular changeset assertion helper.
 } from "../../feature-libraries/modular-schema/modularChangesetUtil.js";
-import { defaultRevisionMetadataFromChanges, jsonTreeFromCheckout } from "../../utils.js";
+import {
+	defaultRevisionMetadataFromChanges,
+	jsonTreeFromCheckout,
+	validateViewConsistency,
+} from "../../utils.js";
 
 /**
  * Bind algebraic operations to the production SharedTree family.
@@ -180,9 +188,7 @@ export function assertSharedTreeReplayEqual(
 					);
 				}
 			}
-			assert.deepEqual(jsonTreeFromCheckout(left), jsonTreeFromCheckout(right));
-			assert.deepEqual(left.storedSchema.rootFieldSchema, right.storedSchema.rootFieldSchema);
-			assert.deepEqual(left.storedSchema.nodeSchema, right.storedSchema.nodeSchema);
+			validateViewConsistency(left, right);
 		} finally {
 			right.dispose();
 		}

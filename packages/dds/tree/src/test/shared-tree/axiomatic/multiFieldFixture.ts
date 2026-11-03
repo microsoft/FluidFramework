@@ -5,16 +5,46 @@
 
 import { strict as assert } from "node:assert";
 
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { Tree, type ForestType, type TreeCheckout } from "../../../shared-tree/index.js";
-import { TreeViewConfiguration, toInitialSchema } from "../../../simple-tree/index.js";
-import { fieldJsonCursor } from "../../json/index.js";
-import { checkoutWithContent, testIdCompressor } from "../../utils.js";
+import {
+	Tree,
+	type ForestType,
+	type SchematizingSimpleTreeView,
+	type TreeCheckout,
+} from "../../../shared-tree/index.js";
+import {
+	TreeViewConfiguration,
+	SchemaFactory,
+	toInitialSchema,
+	type ValidateRecursiveSchema,
+} from "../../../simple-tree/index.js";
+import {
+	checkoutWithContent,
+	fieldCursorFromInsertable,
+	testIdCompressor,
+} from "../../utils.js";
 
 import type { SharedTreeTestOperation } from "./changeGeneration.js";
 
-type SequenceField = "left" | "right";
-const viewConfiguration = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
+type SequenceFieldKey = "l" | "r";
+
+const sf = new SchemaFactory("axioms");
+class Nod extends sf.objectRecursive("Nod", {
+	l: sf.requiredRecursive([() => NodArray]),
+	r: sf.requiredRecursive([() => NodArray]),
+	id: sf.required(sf.string),
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof Nod>;
+}
+class NodArray extends sf.arrayRecursive("NodArray", [() => Nod]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof NodArray>;
+}
+
+function nod(id: string, l?: Nod[], r?: Nod[]): Nod {
+	return new Nod({ id, l: new NodArray(l), r: new NodArray(r) });
+}
+const viewConfiguration = new TreeViewConfiguration({ schema: Nod });
 
 /**
  * Create a JSON object root containing two arrays and an initially absent optional property.
@@ -23,10 +53,18 @@ const viewConfiguration = new TreeViewConfiguration({ schema: JsonAsTree.JsonObj
 export function createMultiFieldFixture(forestType: ForestType): TreeCheckout {
 	return checkoutWithContent(
 		{
-			schema: toInitialSchema(JsonAsTree.JsonObject),
-			initialTree: fieldJsonCursor([{ left: ["A"], right: ["B"] }]),
+			schema: toInitialSchema(Nod),
+			initialTree: fieldCursorFromInsertable(Nod, makeInitialTree()),
 		},
 		{ forestType, idCompressor: testIdCompressor },
+	);
+}
+
+export function makeInitialTree(): Nod {
+	return nod(
+		"root",
+		[nod("L1"), nod("L2", [nod("LL")], [])],
+		[nod("R1"), nod("R2", [], [nod("RR")])],
 	);
 }
 
@@ -34,67 +72,116 @@ export function createMultiFieldFixture(forestType: ForestType): TreeCheckout {
  * Access fixture nodes through a temporary view without taking ownership of the checkout.
  * The callback must not retain nodes beyond the view's lifetime.
  */
-function withFields<T>(
+function withView<T>(
 	checkout: TreeCheckout,
-	callback: (
-		root: JsonAsTree.JsonObject,
-		fields: Record<SequenceField, JsonAsTree.Array>,
-	) => T,
+	callback: (view: SchematizingSimpleTreeView<typeof Nod>) => T,
 ): T {
 	const view = checkout.viewWithInternal(viewConfiguration, false);
 	try {
-		const root = view.root;
-		for (const key of Object.keys(root)) {
-			assert(["left", "right", "optional"].includes(key));
-		}
-		const { left, right, optional } = root;
-		assert(Tree.is(left, JsonAsTree.Array));
-		assert(Tree.is(right, JsonAsTree.Array));
-		assert(left.every((value) => typeof value === "string"));
-		assert(right.every((value) => typeof value === "string"));
-		assert(optional === undefined || typeof optional === "string");
-		return callback(root, { left, right });
+		return callback(view);
 	} finally {
 		view.dispose();
 	}
+}
+
+export interface FieldLocation {
+	readonly parent: string;
+	readonly field: SequenceFieldKey;
+	readonly index: number;
 }
 
 /**
  * Serializable intentions for the bounded fixture vocabulary.
  * Moves and removals target the first node; moves and inserts append to the destination.
  */
-export type MultiFieldOperationDescriptor =
-	| { readonly type: "move"; readonly source: SequenceField }
-	| { readonly type: "insert" | "setOptional"; readonly value: string }
-	| { readonly type: "remove" | "clearOptional" };
-
+export interface MultiFieldOperationDescriptor {
+	readonly node: string;
+	readonly src: FieldLocation;
+	readonly dst: FieldLocation;
+	readonly remove: boolean;
+}
 /**
  * Enumerate valid candidates in a stable order from the checkout's current forest.
  * Each depth uses a new content label; sequence destinations contain at most two nodes.
  */
-export function* multiFieldOperationDescriptors(
+export function* operationDescriptorsFromCheckout(
 	checkout: TreeCheckout,
 	depth: number,
 ): IterableIterator<MultiFieldOperationDescriptor> {
-	const lengths = withFields(checkout, (_root, fields) => ({
-		left: fields.left.length,
-		right: fields.right.length,
-	}));
-	for (const source of ["left", "right"] as const) {
-		const destination = source === "left" ? "right" : "left";
-		if (lengths[source] > 0 && lengths[destination] < 2) {
-			yield { type: "move", source };
+	const view = checkout.viewWithInternal(viewConfiguration, false);
+	try {
+		const allNods = new Map<string, Nod>();
+		const ancestors = new Set<Nod>();
+		getAllNods(view.root, allNods);
+		yield* operationDescriptorsFromNod(view.root, allNods, ancestors);
+	} finally {
+		view.dispose();
+	}
+}
+
+export function getAllNods(node: Nod, allNods: Map<string, Nod>): void {
+	allNods.set(node.id, node);
+	for (const child of node.l) {
+		getAllNods(child, allNods);
+	}
+	for (const child of node.r) {
+		getAllNods(child, allNods);
+	}
+}
+
+export function* operationDescriptorsFromNod(
+	node: Nod,
+	allNods: Map<string, Nod>,
+	ancestors: Set<Nod>,
+): IterableIterator<MultiFieldOperationDescriptor> {
+	ancestors.add(node);
+	yield* operationDescriptorsFromNodField(node, "l", allNods, ancestors);
+	yield* operationDescriptorsFromNodField(node, "r", allNods, ancestors);
+	ancestors.delete(node);
+}
+
+export function* operationDescriptorsFromNodField(
+	parent: Nod,
+	fieldKey: SequenceFieldKey,
+	allNods: Map<string, Nod>,
+	ancestors: Set<Nod>,
+): IterableIterator<MultiFieldOperationDescriptor> {
+	const childCount = parent[fieldKey].length;
+	if (childCount === 0) {
+		// Do not move nodes into empty arrays
+		return;
+	}
+	for (const [id, node] of allNods.entries()) {
+		if (!ancestors.has(node)) {
+			const src = nodeLocation(node);
+			if (node === parent && src.field === fieldKey) {
+				// Do not move nodes within the same field of the same parent
+				continue;
+			}
+			yield {
+				node: id,
+				src,
+				dst: { parent: parent.id, field: fieldKey, index: 0 },
+				remove: true,
+			};
+			yield {
+				node: id,
+				src,
+				dst: { parent: parent.id, field: fieldKey, index: childCount },
+				remove: true,
+			};
 		}
 	}
-	const value = `N${depth}`;
-	if (lengths.left < 2) {
-		yield { type: "insert", value };
-	}
-	if (lengths.left > 0) {
-		yield { type: "remove" };
-	}
-	yield { type: "setOptional", value };
-	yield { type: "clearOptional" };
+}
+
+export function nodeLocation(node: Nod): FieldLocation {
+	const parentArray = Tree.parent(node);
+	assert(Tree.is(parentArray, NodArray), "Nod must be under a NodArray");
+	const parentNod = Tree.parent(parentArray);
+	assert(Tree.is(parentNod, Nod), "NodArray must be under a Nod");
+	const field = parentNod.l === parentArray ? "l" : "r";
+	const index = parentArray.indexOf(node);
+	return { parent: parentNod.id ?? node.id, field, index };
 }
 
 /**
@@ -104,38 +191,27 @@ export function applyMultiFieldOperation(
 	checkout: TreeCheckout,
 	operation: MultiFieldOperationDescriptor,
 ): void {
-	withFields(checkout, (root, fields) => {
-		switch (operation.type) {
-			case "move": {
-				const destination = operation.source === "left" ? "right" : "left";
-				assert(fields[operation.source].length > 0 && fields[destination].length < 2);
-				fields[destination].moveToEnd(0, fields[operation.source]);
-				break;
+	const view = checkout.viewWithInternal(viewConfiguration, false);
+	try {
+		const allNods = new Map<string, Nod>();
+		getAllNods(view.root, allNods);
+		const moved = allNods.get(operation.node);
+		const srcParent = allNods.get(operation.src.parent);
+		const dstParent = allNods.get(operation.dst.parent);
+		assert(moved !== undefined, "Moved node not found");
+		assert(srcParent !== undefined, "Source parent not found");
+		assert(dstParent !== undefined, "Destination parent not found");
+		const srcField = srcParent[operation.src.field];
+		const dstField = dstParent[operation.dst.field];
+		view.runTransaction(() => {
+			dstField.moveToIndex(operation.dst.index, operation.src.index, srcField);
+			if (operation.remove) {
+				dstField.removeAt(Tree.key(moved) as number);
 			}
-			case "remove": {
-				assert(fields.left.length > 0);
-				fields.left.removeAt(0);
-				break;
-			}
-			case "clearOptional": {
-				// Assignment, unlike deleting an absent property, submits an empty clear.
-				root.optional = undefined;
-				break;
-			}
-			case "insert": {
-				assert(fields.left.length < 2);
-				fields.left.insertAtEnd(operation.value);
-				break;
-			}
-			case "setOptional": {
-				root.optional = operation.value;
-				break;
-			}
-			default: {
-				assert.fail("Unknown fixture operation");
-			}
-		}
-	});
+		});
+	} finally {
+		view.dispose();
+	}
 }
 
 /**
@@ -146,7 +222,7 @@ export function* multiFieldOperations(
 	checkout: TreeCheckout,
 	depth: number,
 ): IterableIterator<SharedTreeTestOperation> {
-	for (const operation of multiFieldOperationDescriptors(checkout, depth)) {
+	for (const operation of operationDescriptorsFromCheckout(checkout, depth)) {
 		yield {
 			description: JSON.stringify(operation),
 			apply: (child) => applyMultiFieldOperation(child, operation),
