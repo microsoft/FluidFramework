@@ -350,7 +350,6 @@ export {
 	evaluateLazySchema, 
 	exportCompatibilitySchemaSnapshot, 
 	extractPersistedSchema, 
-	forkBranch, 
 	generateSchemaFromSimpleSchema, 
 	getJsonSchema, 
 	getSimpleSchema, 

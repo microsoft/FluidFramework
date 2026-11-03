@@ -40,7 +40,6 @@ export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 export {
 	BranchCheckout,
 	forkAsBranchCheckout,
-	forkBranch,
 	type TreeBranchHandleAlpha,
 } from "./branchCheckout.js";
 

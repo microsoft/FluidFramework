@@ -675,7 +675,7 @@ export class SchematizingSimpleTreeView<
 	public rewindTo(revision: string): void {
 		if (!(this.checkout instanceof TreeCheckout)) {
 			throw new UsageError(
-				"Rewinding is not supported on a branch created by `forkBranch` or on its views. Consider `revertTo` instead.",
+				"Rewinding is not supported on a branch created by `tree.forkBranch()` or `branch.fork()`, or on its views. Consider `revertTo` instead.",
 			);
 		}
 		this.checkout.rewindTo(revision);

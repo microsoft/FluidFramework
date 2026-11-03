@@ -19,6 +19,7 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
+	TreeBranchHandleAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -123,6 +124,26 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
+	/**
+	 * Creates an independent branch from this tree's current state.
+	 *
+	 * @remarks
+	 * For an {@link ITreeAlpha}, this method forks the main branch.
+	 * You do not need a view.
+	 * Each call creates a new branch.
+	 * Changes to the new branch do not affect this tree until you merge them into a view of this tree.
+	 * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the new branch.
+	 * Use {@link TreeBranchHandleAlpha.fork | fork} to create child branches.
+	 *
+	 * You own the returned branch.
+	 * Dispose the branch when you no longer need it.
+	 * If you dispose a view of the source tree or the new branch, the new branch remains available.
+	 *
+	 * @returns A new, independent branch that you own.
+	 * @throws A `UsageError` if this tree's branch has a pending transaction or is disposed.
+	 */
+	forkBranch(): TreeBranchHandleAlpha;
+
 	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
@@ -292,14 +313,15 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	fork(): UntypedTreeView;
 
 	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - A view of a related branch, such as one created by {@link UntypedTreeView.fork} or {@link TreeBranchHandleAlpha.viewWith}.
-	 * @param disposeMerged - Whether or not to dispose the source branch and its `view` after the merge completes.
-	 * Defaults to true.
-	 * Pass false to keep the source branch and its view alive.
-	 * The target branch and this view are not disposed by the merge.
-	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
-	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 * Applies all new changes from the source view to this view.
+	 * @param view - The source view of a related branch.
+	 * For example, use a view from {@link UntypedTreeView.fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * @param disposeMerged - If true, dispose the source branch and its view after a successful merge.
+	 * The default is true.
+	 * Pass false to keep the source branch and its view available.
+	 * The merge does not dispose the target branch or this view.
+	 * A call to dispose the {@link UntypedTreeView | main view} has no effect.
+	 * @remarks The merge commits all pending transactions in the source view before it applies the changes.
 	 */
 	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
@@ -607,18 +629,19 @@ export interface UntypedTreeViewAlpha
 	fork(): UntypedTreeViewAlpha;
 
 	/**
-	 * Switches this view to a new underlying branch with the given commit as the head, updating the view state accordingly.
+	 * Switches this view to a new branch with the specified commit as its head.
+	 * Updates the view to match that state.
 	 *
-	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
-	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore.
+	 * Find the revision in the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 *
 	 * @remarks
-	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this does not apply a change to the underlying branch.
-	 * The original underlying branch will be disposed.
-	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
-	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
-	 * Also not valid on permanently bound branches or their views, such as branches created by `forkBranch`
-	 * or views obtained through {@link TreeBranchHandleAlpha.viewWith}.
+	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this method does not apply a change to the current branch.
+	 * Instead, it disposes the current branch.
+	 * Use {@link UntypedTreeViewAlpha.fork | fork} first to keep a copy of the current state.
+	 * Do not call this method on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Do not call it on a view whose branch cannot be replaced.
+	 * This restriction applies to branches from {@link ViewableTreeAlpha.forkBranch} and views from {@link TreeBranchHandleAlpha.viewWith}.
 	 */
 	rewindTo(revision: CommitRevision): void;
 

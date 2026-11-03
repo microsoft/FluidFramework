@@ -54,21 +54,36 @@ From the perspective of a single Fluid client, there can be several relevant bra
     They can be used to experiment with a copy of the document, work offline for extended periods while preserving history when merging,
     or just as a way to have a user-controlled snapshot.
 
-    SharedTree exposes an alpha API for this model: [`forkBranch(view)` and `branch.viewWith(config)`](../../src/shared-tree/branchCheckout.ts)
-    create an independent branch and a view of it.
-    The branch owns its state and history; a view provides schema-aware access to that state.
-    Each call to `forkBranch` creates a new branch, even when the source view was created by `branch.viewWith(config)`.
-    Edits stay separate from the source view and its underlying branch until you merge them with `view.merge(branchView)`.
+    Use the alpha method [`tree.forkBranch()`](../../src/simple-tree/api/tree.ts) to create an independent branch.
+    `ViewableTreeAlpha` defines this method, and `ITreeAlpha` inherits it.
+    For `ITreeAlpha`, the method forks the SharedTree main branch.
+    For a tree from [`createIndependentTreeAlpha`](../../src/shared-tree/independentView.ts), the method forks that tree's current state.
+    You do not need a source view or a schema configuration to fork the tree.
+    You can fork the tree before you create a view or after you dispose a view.
+    Each call creates a new branch from the tree, not from a view.
 
-    The caller owns the returned branch and must dispose it when it is no longer needed.
-    Disposing a view created by `branch.viewWith(config)` does not dispose the branch.
-    Disposing the branch also disposes its view.
-    A successful merge disposes the source branch and its view by default, not the target branch or its view.
-    Use `view.merge(branchView, false)` to keep the source branch and its view alive.
-    Unlike a view created with `branch.viewWith(config)`, a view returned by `view.fork()` owns its new branch.
-    Disposing that view also disposes its branch.
+    Use [`branch.viewWith(config)`](../../src/shared-tree/branchCheckout.ts) to create a view of the branch.
+    The branch owns its state and history.
+    The view uses the configured schema to read and edit that state.
+    Edits affect only this branch until you merge them into a view of the source tree.
+    To merge the edits, call [`view.merge(branchView)`](../../src/shared-tree/schematizingTreeView.ts).
+
+    You own the returned branch.
+    Dispose the branch when you no longer need it.
+    Call [`branch.fork()`](../../src/shared-tree/branchCheckout.ts) to create an independent child branch.
+    If you dispose a parent branch, its children remain available.
+    If you dispose a child branch, its parent remains available.
+    If you dispose a view from `branch.viewWith(config)`, the branch remains available.
+    If you dispose the branch, it also disposes its view.
+    By default, a successful merge disposes the source branch and its view.
+    It does not dispose the target branch or its view.
+    Use `view.merge(branchView, false)` to keep the source branch and its view available.
+    A view from `view.fork()` owns its new branch.
+    If you dispose that view, it also disposes its branch.
     The branch and its views do not support `rewindTo`.
-    To create another independent branch, pass a view created with `branch.viewWith(config)` to `forkBranch`.
+    Both `tree.forkBranch()` and `branch.fork()` call [`forkWith`](../../src/shared-tree/treeCheckout.ts).
+    This method checks for broken or disposed state.
+    It also rejects forks while a transaction is pending.
 
 TODO: diagrams showing branch diagram for a couple clients over time.
 
