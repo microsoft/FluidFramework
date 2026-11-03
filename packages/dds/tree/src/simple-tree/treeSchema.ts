@@ -64,8 +64,13 @@ export interface TransitiveSchemaInfo {
 	readonly definitions: TreeSchema["definitions"];
 
 	/**
-	 * Whether this schema or anything reachable from it contains staged allowed types or staged optional fields.
-	 * `false` permits policy-independent stored conversion.
+	 * Whether this schema or anything reachable from it contains staging controlled by {@link (StagedSchemaUpgradePolicy:interface)}.
+	 * @remarks
+	 * This includes {@link SchemaStaticsBeta.staged | staged allowed types} and {@link SchemaStaticsAlpha.stagedOptional | staged optional fields}.
+	 * Any additional kind of staging controlled by the policy must also be included.
+	 * When this is `false`, conversion into {@link TreeStoredSchema | stored schema}
+	 * is independent of the policy passed to {@link toStoredSchema}.
+	 * A `true` result does not guarantee different results for different policies, since staging can be redundant.
 	 */
 	readonly hasStagedSchema: boolean;
 
@@ -82,6 +87,8 @@ export interface TransitiveSchemaInfo {
  * Does not certify identifier uniqueness or configuration-specific union validity.
  * Retains only members and outgoing dependencies, never parents or configurations.
  * Reachable definitions are materialized only for requested components, not eagerly for every descendant.
+ * Staging on a reference belongs to the referencing component, not its target.
+ * Root-field staging is not part of a node component.
  *
  * Get using {@link fromSchema}.
  */
@@ -109,12 +116,6 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		 * Includes staged references and retains no reverse dependents.
 		 */
 		public readonly dependencies: ReadonlySet<SchemaComponent>,
-		/**
-		 * Whether any member or transitively reachable schema contains staged allowed types or staged optional fields.
-		 * Staging on a reference belongs to the referencing schema, not its target.
-		 * Root-field staging is not part of a node component.
-		 * `false` permits policy-independent stored conversion.
-		 */
 		public readonly hasStagedSchema: boolean,
 	) {
 		assert(members.length > 0, "A schema component must contain at least one node");
@@ -211,6 +212,7 @@ function runSchemaInitialization<T>(initialize: () => T): T {
  * Data derived from an {@link ImplicitFieldSchema} root, obtained via {@link getRootSchemaDerivedData}.
  * Owns root-specific conversion results for {@link toStoredSchema}.
  * Root field kind, annotations and metadata remain distinct even when definitions are shared.
+ * Staging includes the root field as well as reachable nodes.
  */
 export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	/**
@@ -234,11 +236,6 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	 * Single-component roots reuse the component's context instead.
 	 */
 	#context: Context | undefined;
-	/**
-	 * Whether staging on the root field or any reachable node prevents policy-independent root conversion.
-	 * Includes references that are themselves staged.
-	 * A `true` result does not guarantee different results for different policies, since staging can be redundant.
-	 */
 	public readonly hasStagedSchema: boolean;
 
 	/**
@@ -305,13 +302,14 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	}
 
 	/**
-	 * Converts and caches this root under the supplied policy, reusing its cached view schema.
-	 * Roots without staging use the permissive policy for all requests.
+	 * Converts this root using {@link toStoredSchema}'s caching semantics.
+	 * @remarks
 	 * Subject to the callback and failure constraints of {@link runSchemaInitialization}.
 	 * @throws A {@link UsageError} if a callback starts nested schema initialization.
 	 */
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		if (!this.hasStagedSchema) {
+			// Use one canonical policy when conversion is policy-independent.
 			const stored = this.#storedSchemas;
 			assert(!(stored instanceof WeakMap), "Expected a policy-independent cache");
 			return (this.#storedSchemas =
@@ -403,7 +401,7 @@ export function toInitialSchema(
  *
  * @remarks
  * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
- * Roots without {@link RootSchemaDerivedData.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
+ * Roots without {@link TransitiveSchemaInfo.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
  * including {@link toUnhydratedSchema} for unhydrated contexts.
  * Conversion reuses cached view-schema analysis and follows only references retained by the policy.
  * Different root identities have separate result caches, even when they share view-schema definitions.
