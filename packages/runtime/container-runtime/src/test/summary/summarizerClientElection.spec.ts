@@ -588,6 +588,28 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
+		it("Should not promote an ignored summarizer when restoring after the incumbent leaves", () => {
+			const election = createElection([
+				["a", 1, true],
+				["b", 2, true],
+			]);
+			addClient("s1", 3, false, summarizerClientType);
+			addClient("s2", 4, false, summarizerClientType);
+			removeClient("s1");
+			assertState(election, "a", "a", 5, "incumbent departure returns election to parent");
+			const restored = createElection([], election.serialize());
+			assert.deepEqual(restored.serialize(), election.serialize());
+			removeClient("a");
+			assertState(election, "b", "b", 6, "next parent may create a replacement");
+			assert.deepEqual(restored.serialize(), election.serialize());
+			addClient("s3", 7, false, summarizerClientType);
+			assertState(election, "s3", "b", 7, "replacement becomes incumbent");
+			assert.deepEqual(restored.serialize(), election.serialize());
+			removeClient("s2");
+			assert.deepEqual(restored.serialize(), election.serialize());
+			assertState(restored, "s3", "b", 7, "ignored child's departure has no effect");
+		});
+
 		it("Should derive the oldest parent from a legacy younger-parent snapshot while retaining its child", () => {
 			const election = createElection([
 				["a", 1, true],

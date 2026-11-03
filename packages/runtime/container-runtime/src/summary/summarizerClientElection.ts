@@ -68,8 +68,8 @@ export interface ISummarizerClientElection
  * Parent succession retains the incumbent child until its quorum departure.
  * When electedClientId === electedParentId, the parent may create a new child.
  *
- * The parent is derived from quorum, including on load. Restored elections retain
- * a valid recorded summarizer child and the summary-progress baseline.
+ * On load, choose the parent from quorum and restore the summary-progress baseline.
+ * Keep the recorded child if it is still a summarizer in quorum.
  */
 export class SummarizerClientElection
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
@@ -176,7 +176,12 @@ export class SummarizerClientElection
 		});
 	}
 
-	/** Restores a valid recorded child; parent responsibility always comes from quorum. */
+	/**
+	 * Keep the recorded child if it is still a summarizer in quorum.
+	 * If the recorded client is interactive, elect the oldest eligible parent.
+	 * If the recorded client is absent or ineligible, choose the oldest summarizer,
+	 * or the parent if no summarizer exists.
+	 */
 	private initFromSerializedState(state: ISerializedElection): void {
 		const members = this.quorum.getMembers();
 
@@ -195,9 +200,12 @@ export class SummarizerClientElection
 				clientCount: members.size,
 			});
 		} else if (isClientEligible(member)) {
-			if (member.client.details.type === summarizerClientType) {
-				this._electedClientId = state.electedClientId;
-			}
+			// A recorded interactive client means no child was elected.
+			// Do not elect another child just because it is in quorum.
+			this._electedClientId =
+				member.client.details.type === summarizerClientType
+					? state.electedClientId
+					: this.electedParentId;
 		} else {
 			this.logger.sendErrorEvent({
 				eventName: "InitialElectedClientIneligible",

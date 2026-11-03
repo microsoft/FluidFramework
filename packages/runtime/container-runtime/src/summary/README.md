@@ -33,7 +33,7 @@ All the clients connected to the document participate in a process called "summa
 
 ### Historical election state
 
-Snapshots retain the elected client and parent identity fields for older readers. New readers derive the parent from quorum, retain a valid recorded summarizer child, and restore the summary-progress baseline. Missing or ineligible recorded identities do not delay parent election until the next op.
+Snapshots retain the elected client and parent identity fields for older readers. On load, new readers choose the oldest eligible parent from quorum and restore the summary-progress baseline. They keep the recorded child if it is still a summarizer in quorum. Missing or ineligible recorded clients no longer delay parent election until the next op.
 
 The timeout-driven succession mechanism that could elect a younger parent was removed in [PR #12942](https://github.com/microsoft/FluidFramework/pull/12942) in November 2022. An old snapshot can still record such a parent, but catch-up is expected to process those historical sessions' departures and converge on the oldest remaining eligible client. Deriving the parent directly from quorum removes the need to reconstruct that obsolete succession state. Overlapping summary attempts are already handled by summary acceptance checks and the existing nack/retry flow.
 
