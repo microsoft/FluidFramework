@@ -35,15 +35,11 @@ const defaultCache = new TestCache();
 const createTestProvider = (
 	reuseCustomerAccessTokenForSummaryOwnership = false,
 	ignoreEphemeralFlag = true,
-	enforceServerGeneratedDocumentId = false,
+	alfredEnforcesServerGeneratedDocumentId = false,
 ): nconf.Provider => {
 	const provider = new nconf.Provider({}).defaults({
-		...(enforceServerGeneratedDocumentId
-			? {
-					alfred: {
-						enforceServerGeneratedDocumentId: true,
-					},
-			  }
+		...(alfredEnforcesServerGeneratedDocumentId
+			? { alfredEnforcesServerGeneratedDocumentId: true }
 			: {}),
 		auth: {
 			maxTokenLifetimeSec: 1000000,
@@ -1454,8 +1450,12 @@ describe("summary ownership routes", () => {
 		);
 	});
 
-	it("serves repeated local EC GETs without durable storage lookup", async () => {
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
+	it("serves repeated local EC GETs with a string Alfred endpoint", async () => {
+		const config = createTestProvider(false, false);
+		config.use("memory");
+		config.set("alfred", testUrl);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		superTest = createSummaryOwnershipSuperTest(config);
 		const createTime = Date.now();
 		await cache.activateSummaryAccessIfNotDeleted(
 			tenantId,
@@ -1499,6 +1499,39 @@ describe("summary ownership routes", () => {
 		for (const event of creationEvents) {
 			assert.doesNotMatch(event.args[0], /Storage-Name|durable-custom-data-storage/);
 		}
+	});
+
+	it("does not enable local EC access from the Alfred service config namespace", async () => {
+		const config = createTestProvider(false, false);
+		config.use("memory");
+		config.set("alfred", {
+			enforceServerGeneratedDocumentId: true,
+		});
+		superTest = createSummaryOwnershipSuperTest(config);
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			createTime,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 	});
 
 	it("uses Alfred authorization without durable storage routing for an EC", async () => {

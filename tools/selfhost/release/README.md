@@ -14,6 +14,31 @@ than editing files under `release-artifacts/<id>/` by hand.
 `generate-release.sh` creates a complete release bundle. `create-and-deploy-release.sh` provisions or
 reuses a build registry, generates the release bundle, and deploys it with `azure/deploy.sh`.
 
+## Recommended path
+
+Configure `azure/deploy.parameters.json` first, including `fluidRepoDir` pointing to a dedicated, clean checkout outside this repository.
+Run from `tools/selfhost`:
+
+```bash
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> r0.1.0
+```
+
+The first argument selects source; the second names your immutable release bundle.
+The combined command defaults `FLUID_DIR` to the parameters file's `fluidRepoDir`.
+You can override the build checkout with `FLUID_DIR=/path/to/separate/clone`.
+It validates the checkout and deployment configuration before provisioning the build registry or building images.
+It creates/reuses the build registry and authenticates automatically, then builds, pins, and deploys the bundle.
+The deployment repeats preflight against the deployment checkout and current Azure state.
+You do not need to run the manual release steps or preflight separately.
+
+After a deployment failure, reuse a **completed** bundle:
+
+```bash
+./release/create-and-deploy-release.sh r0.1.0 --skip-build
+```
+
+If generation failed, rerun with the same release ID without `--skip-build`.
+
 ## Prerequisites
 
 - Bash, `git`, `jq`, `shasum`, and network access to the FluidFramework repository.
@@ -24,6 +49,19 @@ reuses a build registry, generates the release bundle, and deploys it with `azur
   example `ACR_LOGIN_SERVER=myacr.azurecr.io` after `az acr login -n myacr`.
 - Optional registry provisioning: Azure CLI logged in with permission to create or reuse the target
   resource group and ACR.
+
+## Registry authentication
+
+The combined command creates/reuses `.buildAcr.name` and runs `az acr login` before pushing images.
+Deployment creates/reuses `.deployAcr.name` and runs its own login.
+No manual ACR login is required before either registry exists.
+If you supply `ACR_LOGIN_SERVER`, provisioning is skipped; create and log into that build registry first.
+For standalone build commands, also log into the existing build ACR first.
+An expired build login can be refreshed with `az acr login -n <build-acr-name>`.
+
+To optionally authenticate Docker Hub image imports and reduce unauthenticated throttling, set both `DOCKERHUB_USERNAME` (your Docker Hub username) and `DOCKERHUB_TOKEN` (your read-only access token) in your environment before deployment.
+Without these variables, imports use anonymous access.
+See [Docker Hub access tokens](https://docs.docker.com/security/access-tokens/) for token information.
 
 ## Generate a release bundle
 
@@ -165,6 +203,9 @@ Options:
 
 - `--skip-build` - deploy an existing release id instead of generating a new bundle.
 - `--skip-deploy` - generate the bundle only.
+- `--skip-preflight` - explicitly bypass Azure preflight in both orchestration and deployment.
+  Local argument, checkout, and release-bundle validation still runs.
+  Do not use this to hide unsupported settings after changing your configuration.
 - `-p, --parameters <file>` - deploy parameters file; the script defaults to
   `azure/deploy.parameters.json`.
 

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangesetLocalId,
-	FieldKindIdentifier,
-	RevisionTag,
+import {
+	strictRebaseValidation,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type FieldKindIdentifier,
+	type RevisionTag,
 } from "../../core/index.js";
 import { brand, type Mutable, type TupleBTree } from "../../util/index.js";
 import {
@@ -30,6 +31,7 @@ import type {
 import {
 	fieldIdKeyFromFieldId,
 	getChangeHandler,
+	isChangesetValid,
 	nodeChangeFromId,
 	normalizeFieldId,
 	tryRemoveDetachLocation,
@@ -41,6 +43,10 @@ export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	strictRebaseValidation("Malformed prune input", () =>
+		isChangesetValid(changeset, fieldKinds),
+	);
+
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -78,6 +84,9 @@ export function pruneChangeset(
 		fieldKinds,
 	);
 
+	strictRebaseValidation("Malformed prune output", () =>
+		isChangesetValid(prunedChangeset, fieldKinds),
+	);
 	return prunedChangeset;
 }
 function pruneFieldMap(

@@ -117,12 +117,12 @@ export class LocationReplay {
 				field = undefined;
 			},
 			enterNode: (index) => {
-				assert(field !== undefined, "Expected a field while replaying a location");
+				assert(field !== undefined, 0xd6c /* Expected a field while replaying a location */);
 				parent = { parent, parentField: field, parentIndex: index };
 				field = undefined;
 			},
 			exitNode: () => {
-				assert(parent !== undefined, "Expected a node while replaying a location");
+				assert(parent !== undefined, 0xd6d /* Expected a node while replaying a location */);
 				field = parent.parentField;
 				parent = parent.parent;
 			},
@@ -153,7 +153,7 @@ export class LocationReplay {
 			if (neighbor !== undefined) {
 				const path = this.anchors.locate(neighbor);
 				if (path?.parent !== undefined && getDetachedFieldContainingPath(path) === rootField) {
-					assert(location.gap !== undefined, "Expected a sequence gap");
+					assert(location.gap !== undefined, 0xd6e /* Expected a sequence gap */);
 					const next = this.anchors.track(path.parent);
 					this.anchors.forget(location.anchor);
 					location.anchor = next;

@@ -29,6 +29,7 @@ import {
 	fieldKinds as defaultFieldKinds,
 	jsonableTreeFromFieldCursor,
 	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 	type ComposeNodeManager,
 	type FieldChangeHandler,
@@ -50,6 +51,7 @@ import {
 	getChangeHandler,
 	getNodeParent,
 	newRootTable,
+	normalizeChangeset,
 	normalizeFieldId,
 	normalizeNodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -73,12 +75,12 @@ import {
 	type RangeMapEntry,
 	type RangeQueryResult,
 	areAdjacentIntegerRanges,
+	assertStructuralEquality,
 	brand,
 	idAllocatorFromMaxId,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
-import { assertStructuralEquality } from "../../objMerge.js";
 import { testIdCompressor } from "../../utils.js";
 
 export const Change = {
@@ -111,7 +113,8 @@ export function assertEqual<T>(actual: T, expected: T): void {
 export function assertModularChangesetsEqual(
 	a: ModularChangeset,
 	b: ModularChangeset,
-	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = defaultFieldKinds,
+	ignoreRevertConstraints: boolean = false,
 ): void {
 	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
 	const aMaxId = a.maxId;
@@ -124,155 +127,16 @@ export function assertModularChangesetsEqual(
 
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aNormalized = { ...normalizeChangeset(a, fieldKinds), maxId };
-	const bNormalized = { ...normalizeChangeset(b, fieldKinds), maxId };
+	const aNormalized = {
+		...normalizeChangeset(a, fieldKinds, ignoreRevertConstraints, deepCloneChunkedTree),
+		maxId,
+	};
+	const bNormalized = {
+		...normalizeChangeset(b, fieldKinds, ignoreRevertConstraints, deepCloneChunkedTree),
+		maxId,
+	};
 
 	assertEqual(aNormalized, bNormalized);
-}
-
-export function assertModularChangesetsEqualIgnoreRebaseVersion(
-	actual: ModularChangeset,
-	expected: ModularChangeset,
-	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): void {
-	assertModularChangesetsEqual(
-		upgradeToRebaseVersionV2(actual),
-		upgradeToRebaseVersionV2(expected),
-		fieldKinds,
-	);
-}
-
-export function normalizeChangeset(
-	change: ModularChangeset,
-	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): ModularChangeset {
-	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change), fieldKinds));
-}
-
-function normalizeNodeIds(
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = defaultFieldKinds,
-): ModularChangeset {
-	const idAllocator = idAllocatorFromMaxId();
-
-	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
-	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
-	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
-
-	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
-		assert(newId !== undefined, "Unknown node ID");
-		return newId;
-	};
-
-	const remapFieldId = (fieldId: FieldId): FieldId => {
-		return fieldId.nodeId === undefined
-			? fieldId
-			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
-	};
-
-	const remapNodeLocation = (location: NodeLocation): NodeLocation => {
-		const remapped: NodeLocation =
-			location.field === undefined ? location : { field: remapFieldId(location.field) };
-
-		return remapped;
-	};
-
-	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
-
-		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
-		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
-
-		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
-		const newParent = remapNodeLocation(parent);
-		nodeToParent.set([newId.revision, newId.localId], newParent);
-
-		const normalizedNodeChangeset: Mutable<NodeChangeset> = { ...nodeChangeset };
-		if (normalizedNodeChangeset.fieldChanges !== undefined) {
-			normalizedNodeChangeset.fieldChanges = normalizeNodeIdsInFields(
-				normalizedNodeChangeset.fieldChanges,
-			);
-		}
-
-		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
-
-		return newId;
-	};
-
-	function normalizeNodeIdsInFields(fields: FieldChangeMap): FieldChangeMap {
-		const normalizedFieldChanges: FieldChangeMap = new Map();
-
-		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
-
-			// TODO: This relies on field kinds calling prune child on all changes,
-			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(field, {
-				...fieldChange,
-				change: changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
-			});
-
-			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const { key, count } of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
-			}
-		}
-
-		return normalizedFieldChanges;
-	}
-
-	function normalizeRootNodeIds(roots: RootNodeTable): RootNodeTable {
-		const normalizedRoots: RootNodeTable = cloneRootTable(roots);
-		for (const [detachId, nodeId] of roots.nodeChanges.entries()) {
-			normalizedRoots.nodeChanges.set(detachId, normalizeNodeChanges(nodeId));
-		}
-
-		for (const entry of roots.detachLocations.entries()) {
-			normalizedRoots.detachLocations.set(
-				entry.start,
-				entry.length,
-				remapFieldId(entry.value),
-			);
-		}
-
-		for (const entry of roots.outputDetachLocations.entries()) {
-			normalizedRoots.outputDetachLocations.set(
-				entry.start,
-				entry.length,
-				remapFieldId(entry.value),
-			);
-		}
-
-		return normalizedRoots;
-	}
-
-	const fieldChanges = normalizeNodeIdsInFields(change.fieldChanges);
-	const rootNodes = normalizeRootNodeIds(change.rootNodes);
-	assert(nodeChanges.size === change.nodeChanges.size);
-
-	const normal: Mutable<ModularChangeset> = {
-		...change,
-		rootNodes,
-		nodeChanges,
-		fieldChanges,
-		nodeToParent,
-		crossFieldKeys: crossFieldKeyTable,
-	};
-
-	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
-	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
-	}
-	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
-	}
-	return normal;
 }
 
 function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
@@ -285,86 +149,16 @@ function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 	return clone;
 }
 
-function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
-	return {
-		...change,
-		crossFieldKeys: normalizeRangeMap(
-			change.crossFieldKeys,
-			areEqualCrossFieldKeys,
-			areEqualFieldIds,
-		),
-		rootNodes: {
-			nodeChanges: change.rootNodes.nodeChanges,
-			oldToNewId: normalizeRangeMap(
-				change.rootNodes.oldToNewId,
-				areEqualChangeAtomIds,
-				areEqualChangeAtomIds,
-			),
-			newToOldId: normalizeRangeMap(
-				change.rootNodes.newToOldId,
-				areEqualChangeAtomIds,
-				areEqualChangeAtomIds,
-			),
-			firstIntermediateRenames: normalizeRangeMap(
-				change.rootNodes.firstIntermediateRenames,
-				areEqualChangeAtomIds,
-				areEqualChangeAtomIds,
-			),
-			detachLocations: normalizeRangeMap(
-				change.rootNodes.detachLocations,
-				areEqualChangeAtomIds,
-				areEqualFieldIds,
-			),
-			outputDetachLocations: normalizeRangeMap(
-				change.rootNodes.outputDetachLocations,
-				areEqualChangeAtomIds,
-				areEqualFieldIds,
-			),
-		},
-	};
-}
-
-function normalizeRangeMap<K, V>(
-	map: RangeMap<K, V>,
-	areEqualKeys: EqualityFunc<K>,
-	areEqualValues: EqualityFunc<V>,
-): RangeMap<K, V> {
-	const normalized = map.clone();
-	normalized.clear();
-
-	let prevEntry: RangeMapEntry<K, V> | undefined;
-
-	for (const entry of map.entries()) {
-		if (prevEntry === undefined) {
-			prevEntry = entry;
-		} else {
-			if (
-				areEqualKeys(map.offsetKey(prevEntry.start, prevEntry.length), entry.start) &&
-				areEqualValues(map.offsetValue(prevEntry.value, prevEntry.length), entry.value)
-			) {
-				prevEntry = { ...prevEntry, length: prevEntry.length + entry.length };
-			} else {
-				normalized.set(prevEntry.start, prevEntry.length, prevEntry.value);
-				prevEntry = entry;
-			}
-		}
-	}
-
-	if (prevEntry !== undefined) {
-		normalized.set(prevEntry.start, prevEntry.length, prevEntry.value);
-	}
-
-	return normalized;
-}
-
-type EqualityFunc<T> = (a: T, b: T) => boolean;
-
-function areEqualCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): boolean {
-	return areEqualChangeAtomIds(a, b) && a.target === b.target;
-}
-
-function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
-	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
+export function assertModularChangesetsEqualIgnoreRebaseVersion(
+	actual: ModularChangeset,
+	expected: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
+	assertModularChangesetsEqual(
+		upgradeToRebaseVersionV2(actual),
+		upgradeToRebaseVersionV2(expected),
+		fieldKinds,
+	);
 }
 
 export function empty(): ModularChangeset {
@@ -568,6 +362,7 @@ interface BuildArgs {
 		count: number;
 		newLocation: FieldId;
 	}[];
+	aliases?: { from: NodeId; to: NodeId }[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -652,6 +447,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	if (args.detachedMoves !== undefined) {
 		for (const { detachId, count, newLocation } of args.detachedMoves) {
 			result.rootNodes.outputDetachLocations.set(detachId, count, newLocation);
+		}
+	}
+
+	if (args.aliases !== undefined) {
+		for (const alias of args.aliases) {
+			setInChangeAtomIdMap(result.nodeAliases, alias.from, alias.to);
 		}
 	}
 
@@ -790,50 +591,6 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 	tryGetInfo: unsupportedFunc,
 	hasRollback: unsupportedFunc,
 };
-
-export function removeAliases(changeset: ModularChangeset): ModularChangeset {
-	const updatedNodeToParent = changeset.nodeToParent.mapValues((_field, [revision, localId]) =>
-		getNodeParent(changeset, { revision, localId }),
-	);
-
-	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
-	for (const entry of changeset.crossFieldKeys.entries()) {
-		updatedCrossFieldKeys.set(
-			entry.start,
-			entry.length,
-			normalizeFieldId(entry.value, changeset.nodeAliases),
-		);
-	}
-
-	const updatedRootTable = cloneRootTable(changeset.rootNodes);
-	for (const [rootId, nodeId] of changeset.rootNodes.nodeChanges.entries()) {
-		updatedRootTable.nodeChanges.set(rootId, normalizeNodeId(nodeId, changeset.nodeAliases));
-	}
-
-	for (const entry of changeset.rootNodes.detachLocations.entries()) {
-		updatedRootTable.detachLocations.set(
-			entry.start,
-			entry.length,
-			normalizeFieldId(entry.value, changeset.nodeAliases),
-		);
-	}
-
-	for (const entry of changeset.rootNodes.outputDetachLocations.entries()) {
-		updatedRootTable.outputDetachLocations.set(
-			entry.start,
-			entry.length,
-			normalizeFieldId(entry.value, changeset.nodeAliases),
-		);
-	}
-
-	return {
-		...changeset,
-		nodeToParent: brand(updatedNodeToParent),
-		crossFieldKeys: updatedCrossFieldKeys,
-		nodeAliases: newChangeAtomIdBTree(),
-		rootNodes: updatedRootTable,
-	};
-}
 
 function upgradeToRebaseVersionV2(change: ModularChangeset): ModularChangeset {
 	const updatedRootTable = cloneRootTable(change.rootNodes);

@@ -14,6 +14,7 @@ export {
 	emulateProductionBuild,
 	onAssertionFailure,
 	prefixPredicate,
+	skipInProduction,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";

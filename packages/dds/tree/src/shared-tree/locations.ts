@@ -36,6 +36,7 @@ import {
 	isTreeNode,
 	treeNodeApi,
 	type TreeLocation,
+	type TextLocationNode,
 	type CapturedTreeLocation,
 	type TreeGapCaptureOptions,
 	type TreeNode,
@@ -43,6 +44,7 @@ import {
 	type TreeLocationResolver,
 	type TreeLocationResolution,
 } from "../simple-tree/index.js";
+import { isTextLocationNode, textLocationArray } from "../text/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 
 import {
@@ -51,7 +53,7 @@ import {
 	type TrackedLocation,
 } from "./locationReplay.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { CheckoutBase } from "./treeCheckout.js";
 import {
 	capturedTreeLocationSchema,
 	capturedTreeLocationEnvelopeSchema,
@@ -127,7 +129,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	>;
 
 	public constructor(
-		private readonly checkout: TreeCheckout,
+		private readonly checkout: CheckoutBase,
 		private readonly idCompressor: IIdCompressor,
 		jsonValidator: FormatValidator,
 		private readonly rebaser: ChangeRebaser<SharedTreeChange>,
@@ -199,7 +201,16 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			if (!isTreeNode(location.node)) {
 				throw new UsageError("A captured location requires a SimpleTree node.");
 			}
-			const kernel = getKernel(location.node);
+			if (location.kind !== "node" && location.kind !== "sequence") {
+				throw new UsageError("Unrecognized tree location kind.");
+			}
+			let target = location.node;
+			let text = false;
+			if (location.kind === "sequence" && isTextLocationNode(location.node)) {
+				target = location.node[textLocationArray];
+				text = true;
+			}
+			const kernel = getKernel(target);
 			if (
 				!kernel.isHydrated() ||
 				kernel.anchorNode.anchorSet !== this.checkout.forest.anchors ||
@@ -207,28 +218,29 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			) {
 				throw new UsageError("The captured node must belong to this view's document.");
 			}
-			if (location.kind !== "node" && location.kind !== "sequence") {
-				throw new UsageError("Unrecognized tree location kind.");
-			}
 			if (
-				location.kind === "sequence" &&
+				location.kind !== "node" &&
 				location.movePolicy !== undefined &&
 				location.movePolicy !== "follow"
 			) {
 				throw new UsageError('Only the "follow" move policy is supported.');
 			}
+			const length =
+				isArrayNodeSchema(kernel.schema) && treeNodeApi.is(target, kernel.schema)
+					? target.length
+					: undefined;
 			if (
-				location.kind === "sequence" &&
-				(!isArrayNodeSchema(kernel.schema) ||
+				location.kind !== "node" &&
+				(length === undefined ||
 					!Number.isSafeInteger(location.index) ||
 					location.index < 0 ||
-					location.index > location.node.length ||
+					location.index > length ||
 					(location.affinity !== undefined &&
 						location.affinity !== "before" &&
 						location.affinity !== "after"))
 			) {
 				throw new UsageError(
-					"A sequence location requires an array, an in-bounds gap index, and a valid affinity if provided.",
+					"A sequence location requires an array or supported text node, an in-bounds gap index, and a valid affinity if provided.",
 				);
 			}
 			const node: CapturedNodeReference = {
@@ -238,7 +250,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 					step.parentField,
 					step.parentIndex,
 				]),
-				...(location.kind === "sequence" ? { length: location.node.length } : {}),
+				...(location.kind === "node" ? {} : { length }),
 			};
 			const capture: CapturedTreeLocationInternal = {
 				revision,
@@ -246,7 +258,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 					location.kind === "node"
 						? { kind: "node", node }
 						: {
-								kind: "sequence",
+								kind: text ? "text" : "sequence",
 								node,
 								index: location.index,
 								affinity: location.affinity ?? "before",
@@ -262,7 +274,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	}
 
 	public captureGap(
-		node: TreeArrayNode,
+		node: TreeArrayNode | TextLocationNode,
 		index: number,
 		options?: TreeGapCaptureOptions,
 	): CapturedTreeLocation {
@@ -302,14 +314,20 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			const resolved = this.#resolveRevision(revision, locations, source);
 			for (const [index, result] of resolved.entries()) {
 				const target = indices[index];
-				assert(target !== undefined, "Expected a result index for every captured location");
+				assert(
+					target !== undefined,
+					0xd6f /* Expected a result index for every captured location */,
+				);
 				results[target] = result;
 			}
 		}
 		if (isReadonlyArray(captured)) {
 			return results;
 		}
-		assert(results[0] !== undefined, "Expected a result for a single captured location");
+		assert(
+			results[0] !== undefined,
+			0xd70 /* Expected a result for a single captured location */,
+		);
 		return results[0];
 	}
 
@@ -353,38 +371,43 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			}
 			const activeReplay = new LocationReplay(detached);
 			replay = activeReplay;
-			const tracked = locations.map((location): TrackedLocation | undefined => {
-				if (!this.locationValidator.check(location)) {
-					return undefined;
-				}
-				const reference = decodeReference(location.node, revision);
-				if (reference === undefined) {
-					return undefined;
-				}
-				if (location.kind === "node") {
-					return activeReplay.track(reference.path);
-				}
-				if (
-					location.kind !== "sequence" ||
-					(location.movePolicy !== undefined && location.movePolicy !== "follow") ||
-					reference.length === undefined ||
-					location.index > reference.length ||
-					(location.affinity !== "before" && location.affinity !== "after")
-				) {
-					return undefined;
-				}
-				return activeReplay.track(reference.path, {
-					index: location.index,
-					affinity: location.affinity,
-				});
-			});
+			const tracked = locations.map(
+				(location): { location: TrackedLocation; text: boolean } | undefined => {
+					if (!this.locationValidator.check(location)) {
+						return undefined;
+					}
+					const reference = decodeReference(location.node, revision);
+					if (reference === undefined) {
+						return undefined;
+					}
+					if (location.kind === "node") {
+						return { location: activeReplay.track(reference.path), text: false };
+					}
+					if (
+						(location.kind !== "sequence" && location.kind !== "text") ||
+						(location.movePolicy !== undefined && location.movePolicy !== "follow") ||
+						reference.length === undefined ||
+						location.index > reference.length ||
+						(location.affinity !== "before" && location.affinity !== "after")
+					) {
+						return undefined;
+					}
+					return {
+						location: activeReplay.track(reference.path, {
+							index: location.index,
+							affinity: location.affinity,
+						}),
+						text: location.kind === "text",
+					};
+				},
+			);
 			for (const { delta, revision: deltaRevision } of deltas) {
 				activeReplay.apply(delta, deltaRevision);
 			}
-			return tracked.map((location) =>
-				location === undefined
+			return tracked.map((entry) =>
+				entry === undefined
 					? unavailable("invalid-location")
-					: this.#materialize(activeReplay, location),
+					: this.#materialize(activeReplay, entry.location, entry.text),
 			);
 		} finally {
 			replay?.dispose();
@@ -399,7 +422,11 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		}
 	}
 
-	#materialize(replay: LocationReplay, location: TrackedLocation): TreeLocationResolution {
+	#materialize(
+		replay: LocationReplay,
+		location: TrackedLocation,
+		text: boolean,
+	): TreeLocationResolution {
 		const path = replay.snapshot(location);
 		if (path === undefined) {
 			return unavailable("target-deleted");
@@ -419,7 +446,10 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				cursor.enterNode(step.parentIndex);
 			}
 			const context = this.checkout.forest.anchors.slots.get(ContextSlot);
-			assert(context !== undefined, "Expected a FlexTree context for the receiving view");
+			assert(
+				context !== undefined,
+				0xd71 /* Expected a FlexTree context for the receiving view */,
+			);
 			const node = getOrCreateNodeFromInnerNode(
 				getOrCreateHydratedFlexTreeNode(context, cursor),
 			);
@@ -436,6 +466,19 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				location.gap.index > node.length
 			) {
 				return unavailable("invalid-location");
+			}
+			if (text) {
+				const owner = treeNodeApi.parent(node);
+				if (
+					owner !== undefined &&
+					isTextLocationNode(owner) &&
+					owner[textLocationArray] === node
+				) {
+					return {
+						status: "resolved",
+						location: { kind: "text", node: owner, ...location.gap },
+					};
+				}
 			}
 			return { status: "resolved", location: { kind: "sequence", node, ...location.gap } };
 		} finally {

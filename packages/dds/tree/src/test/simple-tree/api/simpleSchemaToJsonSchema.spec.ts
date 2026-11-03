@@ -22,8 +22,10 @@ import {
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
+	TreeViewConfigurationAlpha,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
+	type TreeSchemaEncodingOptions,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import type {
@@ -45,6 +47,30 @@ function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 }
 
 describe("simpleSchemaToJsonSchema", () => {
+	it("orders definitions independently of insertion order and locale", () => {
+		const sf = new SchemaFactoryAlpha("ordering");
+		class Lower extends sf.object("a", {}) {}
+		class Upper extends sf.object("Z", {}) {}
+		class Accented extends sf.object("\u00E4", {}) {}
+		const root = [Accented, Lower, Upper] as const;
+		const schema = new TreeViewConfigurationAlpha({ schema: root });
+		const options: Required<TreeSchemaEncodingOptions> = {
+			requireFieldsWithDefaults: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
+		};
+		const expectedOrder = [Upper.identifier, Lower.identifier, Accented.identifier];
+		const forward = toJsonSchema(schema, options);
+		const reverse = toJsonSchema(
+			{ root: schema.root, definitions: new Map([...schema.definitions].reverse()) },
+			options,
+		);
+
+		assert.deepEqual(Object.keys(forward.$defs), expectedOrder);
+		assert.deepEqual(Object.keys(reverse.$defs), expectedOrder);
+		assert.equal(JSON.stringify(forward), JSON.stringify(reverse));
+		assert.equal(JSON.stringify(getJsonSchema(root, options)), JSON.stringify(forward));
+	});
+
 	it("Leaf schema", () => {
 		const input: SimpleTreeSchema = {
 			root: {

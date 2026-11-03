@@ -40,6 +40,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 // @alpha
 export function getContainerAudience(container: FluidContainerAttached): Audience;
 
+// @beta @legacy
+export function getDataStorePackagePath(containerRuntime: IContainerRuntimeBase, handle: IFluidHandle): Promise<PackagePath | undefined>;
+
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 

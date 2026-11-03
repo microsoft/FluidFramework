@@ -30,7 +30,8 @@ export const capturedTreeLocationSchema = Type.Union([
 		node: nodeReferenceSchema,
 	}),
 	Type.Object({
-		kind: Type.Literal("sequence"),
+		// Retain the caller's node representation for resolution; both use "sequence" inputs publicly.
+		kind: Type.Union([Type.Literal("sequence"), Type.Literal("text")]),
 		node: nodeReferenceSchema,
 		index: indexSchema,
 		affinity: Type.Union([Type.Literal("before"), Type.Literal("after")]),

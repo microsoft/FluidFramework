@@ -11,12 +11,14 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,
 	TreeViewConfiguration,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
+	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
@@ -34,8 +36,12 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-import { TestTreeProviderLite } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
+
+// `TreeArrayNodeAlpha` should be assignable to `TreeArrayNode`.
+type _arrayAlphaAssignableToPublic<TAllowedTypes extends ImplicitAllowedTypes> =
+	requireAssignableTo<TreeArrayNodeAlpha<TAllowedTypes>, TreeArrayNode<TAllowedTypes>>;
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -222,7 +228,7 @@ describe("ArrayNode", () => {
 				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
 				const list = init(schemaType, initial);
-				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				return asAlpha(list);
 			}
 
 			it("fails at runtime if attempting to set content via index assignment", () => {
@@ -247,6 +253,19 @@ describe("ArrayNode", () => {
 				const jsArray = [0, 1, 2];
 				const array = init(schemaType, jsArray);
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+
+			it("preserves indexed access bounds", () => {
+				const array = init(schemaType, [0, 1, 2]);
+				assert.equal(array[0], 0);
+				assert.equal(array[2], 2);
+				for (const index of [-1, 0.5, 3, Number.NaN, Number.POSITIVE_INFINITY]) {
+					assert.equal(array[index], undefined);
+					assert.equal(Object.getOwnPropertyDescriptor(array, `${index}`), undefined);
+				}
+				const empty = init(schemaType, []);
+				assert.equal(empty[0], undefined);
+				assert.equal(Object.getOwnPropertyDescriptor(empty, "0"), undefined);
 			});
 
 			describe("at", () => {
@@ -627,6 +646,13 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
+				it("removes and returns null elements", () => {
+					const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+					const array = init(schema, [1, null, 2]);
+					assert.deepEqual(asAlpha(array).splice(1, 1), [null]);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
@@ -1212,27 +1238,22 @@ describe("ArrayNode", () => {
 	}
 
 	it("asIndex helper returns expected values", () => {
-		// Expected indices with no max
-		assert.equal(asIndex("0", Number.POSITIVE_INFINITY), 0);
-		assert.equal(asIndex("1", Number.POSITIVE_INFINITY), 1);
-		assert.equal(asIndex("999", Number.POSITIVE_INFINITY), 999);
-		// Expected indices with max
-		assert.equal(asIndex("0", 2), 0);
-		assert.equal(asIndex("1", 2), 1);
-		assert.equal(asIndex("2", 2), undefined);
-		assert.equal(asIndex("999", 2), undefined);
+		assert.equal(asIndex("0"), 0);
+		assert.equal(asIndex("1"), 1);
+		assert.equal(asIndex("999"), 999);
 		// Non-index values
-		assert.equal(asIndex("-0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("Infinity", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("NaN", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("-1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.5", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" ", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("0x1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex(" 1", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
-		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
+		assert.equal(asIndex("-0"), undefined);
+		assert.equal(asIndex("Infinity"), undefined);
+		assert.equal(asIndex("NaN"), undefined);
+		assert.equal(asIndex("-1"), undefined);
+		assert.equal(asIndex("1.5"), undefined);
+		assert.equal(asIndex(""), undefined);
+		assert.equal(asIndex(" "), undefined);
+		assert.equal(asIndex("0x1"), undefined);
+		assert.equal(asIndex(" 1"), undefined);
+		assert.equal(asIndex("1.0"), undefined);
+		assert.equal(asIndex("1 "), undefined);
+		assert.equal(asIndex(Symbol.iterator), undefined);
 	});
 
 	describeHydration(
@@ -1314,6 +1335,12 @@ describe("ArrayNode", () => {
 	describeHydration(
 		"Iteration",
 		(init) => {
+			it("iterates over null elements", () => {
+				const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
+				const array = init(schema, [1, null, 2]);
+				assert.deepEqual([...array], [1, null, 2]);
+			});
+
 			it("Iterates through the values of the array", () => {
 				const array = init(CustomizableNumberArray, [1, 2, 3]);
 				const result = [];
@@ -1347,6 +1374,14 @@ describe("ArrayNode", () => {
 			});
 		},
 		() => {
+			it("continues iterating when the array is hydrated between yields", () => {
+				const array = new CustomizableNumberArray([1, 2, 3]);
+				const values = array.values();
+				assert.deepEqual(values.next(), { value: 1, done: false });
+				hydrate(CustomizableNumberArray, array);
+				assert.deepEqual([...values], [2, 3]);
+			});
+
 			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
 				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
 
@@ -1480,105 +1515,194 @@ describe("ArrayNode", () => {
 		});
 	});
 
-	describeHydration("createArrayInsertionAnchor", (init) => {
-		it("creates valid anchors", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
+	describe("createArrayInsertionAnchor", () => {
+		describeHydration("local edits", (init) => {
+			it("creates valid anchors", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+			});
+
+			it("updates anchors correctly", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				array.removeAt(0);
+				assert.equal(anchor.index, 0);
+				array.insertAtStart(4);
+				assert.equal(anchor.index, 1);
+			});
+
+			for (const event of ["nodeChanged", "treeChanged"] as const) {
+				it(`updates anchors before ${event} listeners registered after the anchor`, () => {
+					const array = init(CustomizableNumberArray, [1, 2, 3]);
+					const anchor = createArrayInsertionAnchor(array, 1);
+					const observed: { content: number[]; index: number }[] = [];
+					TreeBeta.on(array, event, () => {
+						observed.push({ content: [...array], index: anchor.index });
+					});
+					array.insertAtStart(9);
+					assert.equal(anchor.index, 2);
+					array.removeAt(0);
+					assert.equal(anchor.index, 1);
+					assert.deepEqual(observed, [
+						{ content: [9, 1, 2, 3], index: 2 },
+						{ content: [1, 2, 3], index: 1 },
+					]);
+				});
+
+				// TODO: Anchor updates run after previously registered change listeners.
+				// Enable this regression test when the anchor event-ordering bug is fixed.
+				it.skip(`updates anchors before ${event} listeners registered before the anchor`, () => {
+					const array = init(CustomizableNumberArray, [1, 2, 3]);
+					const observed: { content: number[]; index: number }[] = [];
+					TreeBeta.on(array, event, () => {
+						observed.push({ content: [...array], index: anchor.index });
+					});
+					const anchor = createArrayInsertionAnchor(array, 1);
+					array.insertAtStart(9);
+					assert.equal(anchor.index, 2);
+					array.removeAt(0);
+					assert.equal(anchor.index, 1);
+					assert.deepEqual(observed, [
+						{ content: [9, 1, 2, 3], index: 2 },
+						{ content: [1, 2, 3], index: 1 },
+					]);
+				});
+			}
+
+			it("past end", () => {
+				const array = init(CustomizableNumberArray, [1]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				array.insertAt(anchor.index, 4);
+				assert.equal(anchor.index, 2);
+			});
+
+			it("empty array", () => {
+				const array = init(CustomizableNumberArray, []);
+				const anchor = createArrayInsertionAnchor(array, 0);
+				assert.equal(anchor.index, 0);
+				array.insertAt(anchor.index, 4);
+				assert.equal(anchor.index, 1);
+				array.insertAt(anchor.index, 5);
+				assert.equal(anchor.index, 2);
+			});
+
+			it("removed item", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				array.removeAt(1);
+				// The item originally at the anchor point is gone; the anchor rests between the surviving
+				// neighbors (now [1, 3]).
+				assert.equal(anchor.index, 1);
+				anchor.dispose();
+			});
+
+			it("throws when reading index after dispose", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const anchor = createArrayInsertionAnchor(array, 1);
+				assert.equal(anchor.index, 1);
+				anchor.dispose();
+				// Reading the index of a disposed anchor is a usage error.
+				assert.throws(() => anchor.index, validateUsageError(/disposed/));
+				// Disposing again is a no-op.
+				anchor.dispose();
+			});
+
+			it("shifts left when a multi-element range before the anchor is removed", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 4); // gap between 40 and 50
+				array.removeRange(0, 2); // remove 10, 20 -> [30, 40, 50]
+				assert.equal(anchor.index, 2); // still in the gap between 40 and 50
+				anchor.dispose();
+			});
+
+			it("collapses to the removal start when the removed range contains the anchor's position", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
+				array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
+				// The anchor's position (the gap between 30 and 40) was in the middle of the removed range, so
+				// it collapses to where that range started.
+				assert.equal(anchor.index, 1); // between 10 and 50
+				anchor.dispose();
+			});
+
+			it("tracks across a move within the array", () => {
+				const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+				const anchor = createArrayInsertionAnchor(array, 2); // gap between 20 and 30
+				array.moveToIndex(0, 4); // move 50 to the front -> [50, 10, 20, 30, 40]
+				// The moved node is inserted before the anchor (shifting it right by one); its removal is
+				// after the anchor and so does not move it.
+				assert.equal(anchor.index, 3); // still in the gap between 20 and 30
+				anchor.dispose();
+			});
+
+			it("throws on an out-of-range initial index", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				// One past the end is valid (an insertion point after the last child).
+				const anchor = createArrayInsertionAnchor(array, 3);
+				assert.equal(anchor.index, 3);
+				anchor.dispose();
+				// Anything beyond that, or negative, is a usage error.
+				assert.throws(
+					() => createArrayInsertionAnchor(array, 4),
+					validateUsageError(/out of bounds/),
+				);
+				assert.throws(
+					() => createArrayInsertionAnchor(array, -1),
+					validateUsageError(/non-negative/),
+				);
+			});
 		});
 
-		it("updates anchors correctly", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
-			array.removeAt(0);
-			assert.equal(anchor.index, 0);
-			array.insertAtStart(4);
-			assert.equal(anchor.index, 1);
-		});
+		// Multiple edits being processed at once can complicate anchor handling.
+		// We ideally should ensure that the entire view of the tree, including anchors, is consistent
+		// when any event is triggered.
+		// If we can not ensure this, we must clearly document the limitations of anchor consistency during merged edits.
+		describe("merged edits", () => {
+			/**
+			 * An item we can edit and get events for.
+			 */
+			class Item extends schemaFactory.object("AnchorItem", {
+				value: schemaFactory.number,
+			}) {}
+			/**
+			 * An array we can edit, and have anchors into.
+			 */
+			class Items extends schemaFactory.array("AnchorItems", Item) {}
 
-		it("past end", () => {
-			const array = init(CustomizableNumberArray, [1]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
-			array.insertAt(anchor.index, 4);
-			assert.equal(anchor.index, 2);
-		});
-
-		it("empty array", () => {
-			const array = init(CustomizableNumberArray, []);
-			const anchor = createArrayInsertionAnchor(array, 0);
-			assert.equal(anchor.index, 0);
-			array.insertAt(anchor.index, 4);
-			assert.equal(anchor.index, 1);
-			array.insertAt(anchor.index, 5);
-			assert.equal(anchor.index, 2);
-		});
-
-		it("removed item", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			array.removeAt(1);
-			// The item originally at the anchor point is gone; the anchor rests between the surviving
-			// neighbors (now [1, 3]).
-			assert.equal(anchor.index, 1);
-			anchor.dispose();
-		});
-
-		it("throws when reading index after dispose", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 1);
-			assert.equal(anchor.index, 1);
-			anchor.dispose();
-			// Reading the index of a disposed anchor is a usage error.
-			assert.throws(() => anchor.index, validateUsageError(/disposed/));
-			// Disposing again is a no-op.
-			anchor.dispose();
-		});
-
-		it("shifts left when a multi-element range before the anchor is removed", () => {
-			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
-			const anchor = createArrayInsertionAnchor(array, 4); // gap between 40 and 50
-			array.removeRange(0, 2); // remove 10, 20 -> [30, 40, 50]
-			assert.equal(anchor.index, 2); // still in the gap between 40 and 50
-			anchor.dispose();
-		});
-
-		it("collapses to the removal start when the removed range contains the anchor's position", () => {
-			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
-			const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
-			array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
-			// The anchor's position (the gap between 30 and 40) was in the middle of the removed range, so
-			// it collapses to where that range started.
-			assert.equal(anchor.index, 1); // between 10 and 50
-			anchor.dispose();
-		});
-
-		it("tracks across a move within the array", () => {
-			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
-			const anchor = createArrayInsertionAnchor(array, 2); // gap between 20 and 30
-			array.moveToIndex(0, 4); // move 50 to the front -> [50, 10, 20, 30, 40]
-			// The moved node is inserted before the anchor (shifting it right by one); its removal is
-			// after the anchor and so does not move it.
-			assert.equal(anchor.index, 3); // still in the gap between 20 and 30
-			anchor.dispose();
-		});
-
-		it("throws on an out-of-range initial index", () => {
-			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			// One past the end is valid (an insertion point after the last child).
-			const anchor = createArrayInsertionAnchor(array, 3);
-			assert.equal(anchor.index, 3);
-			anchor.dispose();
-			// Anything beyond that, or negative, is a usage error.
-			assert.throws(
-				() => createArrayInsertionAnchor(array, 4),
-				validateUsageError(/out of bounds/),
-			);
-			assert.throws(
-				() => createArrayInsertionAnchor(array, -1),
-				validateUsageError(/non-negative/),
-			);
+			for (const event of ["nodeChanged", "treeChanged"] as const) {
+				for (const insertFirst of [false, true]) {
+					// TODO: Anchor updates must precede descendant events, not just array listeners.
+					// Enable this regression test when the anchor event-ordering bug is fixed.
+					it.skip(`updates anchors before descendant ${event} during merge, insert first: ${insertFirst}`, () => {
+						const view = getView(new TreeViewConfiguration({ schema: Items }));
+						view.initialize([{ value: 1 }, { value: 2 }]);
+						const child = view.root[0];
+						const anchor = createArrayInsertionAnchor(view.root, 1);
+						const observed: { content: number[]; index: number }[] = [];
+						TreeBeta.on(child, event, () => {
+							observed.push({
+								content: Array.from(view.root, (item) => item.value),
+								index: anchor.index,
+							});
+						});
+						const fork = view.fork();
+						if (insertFirst) {
+							fork.root.insertAtStart({ value: 0 });
+							fork.root[1].value = 10;
+						} else {
+							fork.root[0].value = 10;
+							fork.root.insertAtStart({ value: 0 });
+						}
+						view.merge(fork);
+						assert.equal(view.root[1], child);
+						assert.equal(anchor.index, 2);
+						assert.deepEqual(observed, [{ content: [0, 10, 2], index: 2 }]);
+					});
+				}
+			}
 		});
 	});
 

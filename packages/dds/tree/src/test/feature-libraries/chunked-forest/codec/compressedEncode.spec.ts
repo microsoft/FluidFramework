@@ -11,7 +11,6 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
 
 import {
 	VersionDispatchingCodecBuilder,
@@ -25,7 +24,6 @@ import type {
 } from "../../../../core/index.js";
 import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
-	decode,
 	readValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -55,8 +53,6 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	type EncodedChunkShapeV1,
-	EncodedFieldBatchV1,
-	EncodedFieldBatchV2,
 	type EncodedFieldBatchAnyVersion,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
@@ -105,7 +101,6 @@ const constantFooShape = new NodeShapeBasedEncoder(brand("foo"), false, [], unde
 function makeFieldBatchCodec(
 	options: ICodecOptions,
 	encoderContext: EncoderContext,
-	format: TSchema,
 	version: FieldBatchFormatVersion,
 ): IJsonCodec<
 	FieldBatch,
@@ -114,31 +109,29 @@ function makeFieldBatchCodec(
 	FieldBatchEncodingContext,
 	FieldBatchDecodingContext
 > {
-	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
-		{
-			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: version,
+	const name = "TestCompressedFieldBatch";
+	// Reuse the real registry so every format, including experimental ones, can be selected with an override.
+	// Only encode is replaced: the real codec cannot use the provided encoderContext, which these tests need to control shapes.
+	const builder = VersionDispatchingCodecBuilder.build(
+		name,
+		fieldBatchCodecBuilder.registry.map(({ minVersionForCollab, formatVersion, codec }) => ({
+			minVersionForCollab,
+			formatVersion,
 			codec: {
+				...codec(options),
 				encode: (
 					data: FieldBatch,
-					context: FieldBatchEncodingContext,
-				): EncodedFieldBatchAnyVersion => {
-					return compressedEncode(data, encoderContext);
-				},
-				decode: (
-					data: EncodedFieldBatchAnyVersion,
-					fieldBatchContext: FieldBatchDecodingContext,
-				): FieldBatch => {
-					// TODO: consider checking data is in schema.
-					return decode(data, fieldBatchContext.idDecodingContext).map((chunk) =>
-						chunk.cursor(),
-					);
-				},
-				schema: format,
+					_context: FieldBatchEncodingContext,
+				): EncodedFieldBatchAnyVersion => compressedEncode(data, encoderContext),
 			},
-		},
-	]);
-	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });
+		})),
+	);
+	return builder.build({
+		...options,
+		minVersionForCollab: lowestMinVersionForCollab,
+		writeVersionOverrides: new Map([[name, version]]),
+		allowPossiblyIncompatibleWriteVersionOverrides: true,
+	});
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
@@ -168,7 +161,6 @@ describe("compressedEncode", () => {
 					const codec = makeFieldBatchCodec(
 						{ jsonValidator: FormatValidatorBasic },
 						context,
-						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
 						version,
 					);
 					const { encode, decode: decodeContext } = makeTestFieldBatchContexts({

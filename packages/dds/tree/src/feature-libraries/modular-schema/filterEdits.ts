@@ -6,6 +6,7 @@
 import {
 	makeChangeAtomId,
 	offsetChangeAtomId,
+	strictRebaseValidation,
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
@@ -26,7 +27,12 @@ import type {
 	NodeId,
 	RootNodeTable,
 } from "./modularChangeTypes.js";
-import { addNodeRename, makeChangesetInversions, newRootTable } from "./modularChangeUtils.js";
+import {
+	addNodeRename,
+	makeChangesetInversions,
+	newRootTable,
+	isChangesetValid,
+} from "./modularChangeUtils.js";
 import { pruneChangeset } from "./prune.js";
 
 export function removeAllDetachesFilter(
@@ -69,6 +75,10 @@ export function filterEdits(
 		| undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	strictRebaseValidation("Malformed filterEdits input", () =>
+		isChangesetValid(change, fieldKinds),
+	);
+
 	const filteredFieldChanges = filterFieldMapEdits(
 		change.fieldChanges,
 		undefined,

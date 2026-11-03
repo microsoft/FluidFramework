@@ -4,6 +4,7 @@
  */
 
 import {
+	cheapRebaseValidation,
 	deltaFieldMapHasChanges,
 	makeAnonChange,
 	makeChangeAtomId,
@@ -59,6 +60,7 @@ import {
 	nodeChangeFromId,
 	normalizeNodeId,
 	validateChangeset,
+	isChangesetValid,
 } from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
@@ -98,6 +100,9 @@ class ModularChangeMinimizer {
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {
+		cheapRebaseValidation("Malformed minimize input", () =>
+			isChangesetValid(change, fieldKinds),
+		);
 		this.outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 		const nodeInfo = getNodeInfo(change, fieldKinds);
 		this.builtNodeIds = nodeInfo.builtNodeIds;
@@ -117,7 +122,9 @@ class ModularChangeMinimizer {
 
 		this.squashBuilds(residualChange, forestFactory);
 
-		validateChangeset(residualChange, this.fieldKinds);
+		cheapRebaseValidation("Malformed minimize output", () =>
+			isChangesetValid(residualChange, this.fieldKinds),
+		);
 		return residualChange;
 	}
 
