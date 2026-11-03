@@ -12,10 +12,11 @@ import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
 	Context,
-	NodeKind,
 	StagedSchemaUpgradePolicy,
 	UnhydratedContext,
 	getTreeNodeSchemaPrivateData,
+	normalizeAllowedTypesInternal,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	walkSchema,
 	type SchemaUpgrade,
 	type TreeNodeSchema,
@@ -25,6 +26,7 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
+import { isObjectNodeSchema } from "./node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import {
 	resolveStoredSchemaGenerationOptions,
@@ -253,10 +255,8 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		public readonly components: ReadonlySet<SchemaComponent>,
 	) {
 		this.hasStagedSchema =
-			isStagedOptional(root) ||
-			root.allowedTypesFull
-				.evaluate()
-				.types.some((type) => type.metadata.stagedSchemaUpgrade !== undefined) ||
+			root.isStagedOptional !== false ||
+			normalizeAllowedTypesInternal(root.allowedTypesFull).hasStagedTypes ||
 			[...components].some((component) => component.hasStagedSchema);
 	}
 
@@ -471,19 +471,21 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 				const dependencies = new Set<SchemaComponent>();
 				let hasStagedSchema = false;
 				for (const schema of members) {
+					// Allowed type staging
 					for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-						for (const type of field.evaluate().types) {
-							hasStagedSchema ||= type.metadata.stagedSchemaUpgrade !== undefined;
+						const allowedTypes = normalizeAndEvaluateAnnotatedAllowedTypes(field);
+						hasStagedSchema ||= allowedTypes.hasStagedTypes;
+						for (const type of allowedTypes.types) {
 							if (!identities.has(type.type)) {
 								dependencies.add(getCompletedComponent(type.type));
 							}
 						}
 					}
-					// Optional-field staging is not an allowed-type annotation.
-					const view = schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema;
-					if (view.kind === NodeKind.Object) {
-						for (const field of view.fields.values()) {
-							hasStagedSchema ||= isStagedOptional(field);
+
+					// Optional-field staging
+					if (isObjectNodeSchema(schema)) {
+						for (const field of schema.fields.values()) {
+							hasStagedSchema ||= field.isStagedOptional !== false;
 						}
 					}
 				}
@@ -498,14 +500,6 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 		});
 		return getCompletedComponent(root);
 	});
-}
-
-/**
- * Detects a staged optional field without applying a policy.
- * Both omitted staging data and explicit `false` mean no staged optionality.
- */
-function isStagedOptional(field: { readonly isStagedOptional?: unknown }): boolean {
-	return field.isStagedOptional !== undefined && field.isStagedOptional !== false;
 }
 
 /**
