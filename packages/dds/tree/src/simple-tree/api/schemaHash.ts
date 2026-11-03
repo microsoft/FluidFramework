@@ -32,7 +32,7 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  *
  * @param options - optional hash check and application-defined versions
  *
- * @returns an immutable {@link SchemaIdentity} that uses {@link computeSchemaHash}
+ * @returns an immutable {@link SchemaIdentity} that uses SHA-256 hashing
  *
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.

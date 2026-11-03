@@ -224,7 +224,9 @@ describe("snapshotCompatibilityChecker", () => {
 			() =>
 				exportCompatibilitySchemaSnapshot({
 					schema: SchemaFactory.number,
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { ["test" as LibraryId]: -1 } }),
+					schemaIdentity: identifySchemaAlpha({
+						schemaVersion: { ["test" as LibraryId]: -1 },
+					}),
 				}),
 			/must be a non-negative safe integer/,
 		);
