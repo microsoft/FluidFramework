@@ -100,7 +100,7 @@ describe("PerformanceEvent", () => {
 		);
 	});
 
-	describe("Best-effort browser User Timing", () => {
+	describe("Browser profiling failures preserve operation outcomes", () => {
 		let originalWindow: PropertyDescriptor | undefined;
 		let browserWindow: { performance?: unknown };
 		let mark: sinon.SinonStub;

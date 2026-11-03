@@ -833,7 +833,7 @@ export class PerformanceEvent {
 				this.startMark = startMark;
 			}
 		} catch {
-			// Optional browser User Timing can be unavailable after window teardown.
+			// Diagnostic performance marking and measurement failures must not change the operation's outcome.
 		}
 	}
 
@@ -872,7 +872,7 @@ export class PerformanceEvent {
 				window.performance.mark(endMark);
 				window.performance.measure(`${this.event.eventName}`, startMark, endMark);
 			} catch {
-				// Optional browser User Timing must not change the operation's outcome.
+				// Diagnostic performance marking and measurement failures must not change the operation's outcome.
 			}
 		}
 	}
