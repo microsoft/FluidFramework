@@ -117,22 +117,15 @@ function mergeSchemaFactoryOptions(
 	};
 }
 
-function resolveObjectSchemaOptions<
-	TFactory extends ObjectSchemaOptions,
-	TSchema extends ObjectSchemaOptions,
->(
-	factoryOptions: TFactory | undefined,
-	schemaOptions: TSchema | undefined,
-): ObjectSchemaOptions & TFactory & TSchema {
-	const resolved: ObjectSchemaOptions & TFactory & TSchema = {
+function resolveObjectSchemaOptions(
+	factoryOptions: ObjectSchemaOptions | undefined,
+	schemaOptions: ObjectSchemaOptions | undefined,
+): ObjectSchemaOptions {
+	return {
+		allowUnknownOptionalFields: true,
 		...factoryOptions,
 		...schemaOptions,
-		allowUnknownOptionalFields:
-			schemaOptions?.allowUnknownOptionalFields ??
-			factoryOptions?.allowUnknownOptionalFields ??
-			true,
 	};
-	return resolved;
 }
 
 // TODO:
