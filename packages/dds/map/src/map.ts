@@ -18,6 +18,7 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this summary utility.
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 // eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
@@ -178,6 +179,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		let headerBlob: IMapDataObjectSerializable = {};
 		const blobs: string[] = [];
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 
 		const data = this.kernel.getSerializedStorage(serializer);
