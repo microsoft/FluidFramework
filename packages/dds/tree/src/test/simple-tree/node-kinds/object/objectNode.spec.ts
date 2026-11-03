@@ -13,7 +13,7 @@ import { FieldKinds } from "../../../../feature-libraries/index.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import {
 	createField,
-	UnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -910,7 +910,7 @@ describeHydration(
 				brand("b"),
 				[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
 			);
-			const flex = new UnhydratedFlexTreeNode(
+			const flex = new UnhydratedGeneralNode(
 				{ type: brand(A.identifier) },
 				new Map([[brand("b"), field]]),
 				getUnhydratedContext(A),

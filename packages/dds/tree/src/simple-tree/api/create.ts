@@ -18,7 +18,6 @@ import {
 import {
 	defaultSchemaPolicy,
 	isFieldInSchema,
-	isOptionalMapSchema,
 	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
 import {
@@ -26,7 +25,6 @@ import {
 	getOrCreateNodeFromInnerNode,
 	type Unhydrated,
 	type UnhydratedFlexTreeNode,
-	UnhydratedMapField,
 	createUnhydratedFlexTreeNode,
 	createField,
 } from "../core/index.js";
@@ -89,10 +87,6 @@ export function unhydratedFlexTreeFromCursor(
 	const storedSchema =
 		context.flexContext.schema.nodeSchema.get(identifier) ?? unknownTypeError(identifier);
 
-	const createNodeField = isOptionalMapSchema(storedSchema)
-		? (...args: ConstructorParameters<typeof UnhydratedMapField>) =>
-				new UnhydratedMapField(...args)
-		: createField;
 	const fields = new Map(
 		mapCursorFields(cursor, () => {
 			const fieldSchema = storedSchema.getFieldSchema(cursor.getFieldKey());
@@ -109,7 +103,7 @@ export function unhydratedFlexTreeFromCursor(
 			}
 			return [
 				cursor.getFieldKey(),
-				createNodeField(
+				createField(
 					context.flexContext,
 					fieldSchema.kind,
 					cursor.getFieldKey(),

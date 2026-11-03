@@ -23,7 +23,8 @@ import {
 	createUnhydratedFlexTreeNode,
 	UnhydratedContext,
 	UnhydratedFlexTreeNode,
-	UnhydratedMapNode,
+	UnhydratedGeneralNode,
+	UnhydratedObjectNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
@@ -122,16 +123,16 @@ describe("unhydratedFlexTree", () => {
 					new Map(),
 					contextWithoutLookup,
 				);
-				assert(!(leaf instanceof UnhydratedMapNode));
+				assert(leaf instanceof UnhydratedGeneralNode);
 				assert.equal(leaf.value, value);
 			});
 		}
 	});
 
 	it("classifies non-leaf fields using their schema", () => {
-		assert(map instanceof UnhydratedMapNode);
-		assert(!(arrayNode instanceof UnhydratedMapNode));
-		assert(!(object instanceof UnhydratedMapNode));
+		assert(map instanceof UnhydratedGeneralNode);
+		assert(arrayNode instanceof UnhydratedObjectNode);
+		assert(object instanceof UnhydratedObjectNode);
 	});
 
 	it("can get their type", () => {

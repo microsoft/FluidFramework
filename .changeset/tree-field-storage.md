@@ -8,6 +8,13 @@ Reduce memory overhead for SharedTree maps and records
 Maps retain less memory after reads of missing keys, and maps and records no longer retain empty fields after key churn.
 These improvements require no application code changes.
 
+Field storage now also bounds empty-field retention for other supported stored field kinds and undeclared object keys.
+Previously returned field wrappers remain usable after an empty field is evicted and subsequently refilled.
+
+The original measurements below describe the earlier map/record-specific implementation.
+They are preserved as historical evidence, not measurements of the generalized implementation.
+The final section reports the generalized implementation separately.
+
 #### Retained-memory measurements
 
 Reading 10,000 distinct missing map keys reduces the measured increase in retained heap by approximately 99% in these cases.
@@ -145,3 +152,59 @@ Every text workload has overlapping process ranges.
 Some means are slower, including plain-text reads on ChunkedForest and formatted-text reads on ObjectForest.
 These measurements do not establish a general text speedup or prove that text workloads cannot regress.
 The slowest formatting cases have within-process relative margins of error as high as approximately 47%, so their small mean differences are inconclusive.
+
+#### Generalized field-storage measurements
+
+The generalized implementation was compared against pre-field-storage mainline commit `2a411f38e168c300844d8d6d96e153225ac5cdbe`, not the preceding feature-branch implementation.
+Both versions used identical benchmark code, including new sequence-map and array-edit coverage.
+The timing comparison selected 78 cases: 54 navigation cases and 24 text controls.
+Four fresh processes per version ran serially in the same balanced order described above.
+The following tables use equal-weight process means.
+
+For 10,000 distinct keys, every candidate memory probe retained zero additional stored fields or anchor-owning wrappers, compared with 10,000 on mainline.
+Heap growth remained nonzero; these are additional retained-heap measurements, not whole-document memory reductions.
+The churn probes are unhydrated to avoid attributing collaborative edit history to field storage.
+
+| Storage | Stored schema and workload | Before (MiB) | After (MiB) |
+| --- | --- | --- | --- |
+| ChunkedForest | Sequence map: missing boxed fields | 11.467 | 0.183 |
+| ChunkedForest | Optional map: missing boxed fields | 10.780 | 0.185 |
+| ChunkedForest | Object: undeclared boxed fields | 9.482 | 0.136 |
+| Unhydrated | Sequence map: missing boxed fields | 4.314 | 0.053 |
+| Unhydrated | Optional map: missing boxed fields | 3.086 | 0.050 |
+| Unhydrated | Object: undeclared boxed fields | 1.794 | 0.060 |
+| Unhydrated | Sequence map: insert and remove keys | 4.411 | 0.142 |
+| Unhydrated | Optional map: set and delete keys | 3.179 | 0.141 |
+
+Selected timing results follow.
+Times are microseconds per benchmark iteration, with process minimum and maximum in parentheses.
+Unlike the historical tables above, positive elapsed-time changes below mean **slower**.
+Process ranges are not confidence intervals.
+
+| Storage | Workload | Before (process range) | After (process range) | More elapsed time |
+| --- | --- | --- | --- | --- |
+| ChunkedForest | Shallow object reads | 1.552 (1.496-1.627) | 1.618 (1.570-1.669) | +4.29% |
+| ChunkedForest | Deep object reads | 1.596 (1.557-1.625) | 1.603 (1.491-1.682) | +0.47% |
+| ChunkedForest | Shallow object edits | 50.058 (47.330-52.274) | 48.102 (47.268-49.588) | -3.91% |
+| ChunkedForest | Deep object edits | 89.242 (83.523-92.804) | 88.783 (86.312-90.692) | -0.51% |
+| ChunkedForest | Shallow array edits | 76.011 (75.003-76.590) | 78.395 (73.981-81.839) | +3.14% |
+| ChunkedForest | Deep array edits | 184.795 (176.771-192.815) | 182.286 (179.765-185.405) | -1.36% |
+| ChunkedForest | Sequence map: read leaf | 2.029 (1.911-2.110) | 2.272 (2.152-2.436) | +11.93% |
+| ObjectForest | Sequence map: read leaf | 0.904 (0.882-0.944) | 1.174 (1.155-1.207) | +29.90% |
+| Unhydrated | Sequence map: read leaf | 0.256 (0.245-0.268) | 0.304 (0.286-0.311) | +18.97% |
+| Unhydrated | Sequence map: key churn | 4.139 (3.850-4.466) | 4.832 (4.562-5.343) | +16.76% |
+| Unhydrated | Shallow object reads | 0.530 (0.513-0.553) | 0.598 (0.585-0.614) | +12.83% |
+| Unhydrated | Deep object reads | 0.530 (0.511-0.561) | 0.571 (0.551-0.625) | +7.74% |
+| Unhydrated | Shallow object edits | 1.855 (1.813-1.897) | 1.988 (1.939-2.017) | +7.14% |
+| Unhydrated | Deep object edits | 2.287 (2.264-2.339) | 2.434 (2.394-2.502) | +6.46% |
+
+The selected ChunkedForest text-control mean changes range from -3.07% to +4.33%.
+The 10,000-character formatting control is +3.49%, with nonoverlapping process ranges; other controls remain noisy or overlapping.
+This does not establish text-performance equivalence.
+Unhydrated plain-text insertion is also slower by 7.13%.
+
+These results do not establish universal gains or satisfy a no-regression criterion.
+In particular, sequence-map reads and unhydrated object workloads have measured slowdowns.
+A 5% regression tolerance was only a proposed practical threshold, not an accepted requirement.
+Further performance acceptance remains open.
+Large sequence-map traversal, sequence-map move performance, and hydrated churn retention isolated from edit history were not measured.

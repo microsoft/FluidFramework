@@ -187,7 +187,6 @@ export {
 	LazyEntity,
 	treeStatusFromAnchorCache,
 	indexForAt,
-	isOptionalMapSchema,
 	FlexTreeEntityKind,
 	type FlexibleNodeContent,
 	type FlexibleFieldContent,

@@ -14,6 +14,24 @@ import {
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	ValueSchema,
+} from "../../../core/index.js";
+import {
+	Context,
+	cursorForMapTreeNode,
+	defaultSchemaPolicy,
+	FieldKinds,
+	type FlexTreeNode,
+	type FlexibleNodeContent,
+	MockNodeIdentifierManager,
+} from "../../../feature-libraries/index.js";
+import {
 	createIndependentTreeAlpha,
 	ForestTypeOptimized,
 	ForestTypeReference,
@@ -26,8 +44,15 @@ import {
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { configureBenchmarkHooks } from "../../utils.js";
+/* eslint-disable import-x/no-internal-modules -- Raw FlexTree schemas require internal construction APIs. */
+import {
+	Context as SimpleContext,
+	UnhydratedContext,
+} from "../../../simple-tree/core/index.js";
+import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
+/* eslint-enable import-x/no-internal-modules */
+import { brand, disposeSymbol } from "../../../util/index.js";
+import { checkoutWithContent, configureBenchmarkHooks } from "../../utils.js";
 
 // These benchmarks compare hydrated and unhydrated FlexTree navigation, mostly through the public simple-tree API.
 // Their timings include the simple-tree layer and assertions, rather than isolating FlexTree costs.
@@ -40,6 +65,114 @@ describe("FlexTree navigation benchmarks", () => {
 		["Unhydrated", undefined],
 	] as const) {
 		describe(name, () => {
+			describe("Sequence map navigation", () => {
+				const type: TreeNodeSchemaIdentifier = brand("sequence-map-navigation");
+				const leafType: TreeNodeSchemaIdentifier = brand("com.fluidframework.leaf.number");
+				const schema: TreeStoredSchema = {
+					rootFieldSchema: {
+						kind: FieldKinds.required.identifier,
+						types: new Set([type]),
+						persistedMetadata: undefined,
+					},
+					nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+						[
+							type,
+							new MapNodeStoredSchema({
+								kind: FieldKinds.sequence.identifier,
+								types: new Set([leafType]),
+								persistedMetadata: undefined,
+							}),
+						],
+						[leafType, new LeafNodeStoredSchema(ValueSchema.Number)],
+					]),
+				};
+				const number = (value: number): MapTree => ({
+					type: leafType,
+					value,
+					fields: new Map(),
+				});
+				const content: MapTree = {
+					type,
+					fields: new Map([[brand("value"), [number(1), number(2)]]]),
+				};
+				const build = (): {
+					node: FlexTreeNode;
+					makeNumber: (value: number) => FlexibleNodeContent;
+					dispose: () => void;
+				} => {
+					if (forest === undefined) {
+						const simpleContext = new SimpleContext(
+							new UnhydratedContext(defaultSchemaPolicy, schema),
+							new Map(),
+						);
+						return {
+							node: unhydratedFlexTreeFromCursor(simpleContext, cursorForMapTreeNode(content)),
+							makeNumber: (value) =>
+								unhydratedFlexTreeFromCursor(
+									simpleContext,
+									cursorForMapTreeNode(number(value)),
+								),
+							dispose: () => {},
+						};
+					}
+					const checkout = checkoutWithContent(
+						{ schema, initialTree: cursorForMapTreeNode(content) },
+						{ forestType: forest },
+					);
+					const context = new Context(
+						defaultSchemaPolicy,
+						checkout,
+						new MockNodeIdentifierManager(),
+					);
+					const node = context.root.boxedAt(0) ?? assert.fail();
+					return {
+						node,
+						makeNumber: number,
+						dispose: () => {
+							context[disposeSymbol]();
+							checkout.dispose();
+						},
+					};
+				};
+				for (const operation of ["Read leaf", "Key churn"] as const) {
+					benchmarkIt({
+						title: operation,
+						type: BenchmarkType.Measurement,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let access = build();
+								let samples = 0;
+								let running: boolean;
+								do {
+									running = state.time(() => {
+										const field = access.node.getBoxed(
+											brand(operation === "Read leaf" ? "value" : `churn-${samples}`),
+										);
+										assert(field.is(FieldKinds.sequence));
+										if (operation === "Read leaf") {
+											assert.equal(field.atIndex(0), 1);
+											assert.equal(field.length, 2);
+										} else {
+											field.editor.insert(0, [access.makeNumber(3)]);
+											assert.equal(field.atIndex(0), 3);
+											field.editor.remove(0, 1);
+											assert.equal(field.length, 0);
+										}
+									});
+									if (++samples === 256) {
+										access.dispose();
+										access = build();
+										samples = 0;
+									}
+								} while (running);
+								access.dispose();
+							},
+							maxBenchmarkDurationSeconds: 1,
+						}),
+					});
+				}
+			});
+
 			describe("Object and array navigation", () => {
 				const sf = new SchemaFactory("flex-navigation-bench");
 				class Item extends sf.object("Item", {
@@ -59,6 +192,7 @@ describe("FlexTree navigation benchmarks", () => {
 					for (const operation of [
 						"reads",
 						"edits",
+						"array edits",
 						"parent and key",
 						"cached field",
 					] as const) {
@@ -94,6 +228,12 @@ describe("FlexTree navigation benchmarks", () => {
 												return () => {
 													// Change the value each time so repeated edits are not no-ops.
 													item.value = ++value;
+												};
+											}
+											case "array edits": {
+												return () => {
+													items.insertAtEnd(3);
+													items.removeAt(3);
 												};
 											}
 											case "parent and key": {

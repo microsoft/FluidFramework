@@ -115,9 +115,13 @@ export const ContextSlot = anchorSlot<Context>();
  * an existing node would still use the old schema even if that field had never been accessed.
  *
  * - Node implementation selection must remain valid.
- * Optional map fields, including records, use specialized node storage and resource-free field wrappers.
- * Switching between this policy and fixed-field storage requires invalidation;
+ * General nodes support every stored schema with resource-free field wrappers.
+ * Stored object schemas may instead use fixed-field storage as a performance optimization.
+ * Switching an existing wrapper between these storage policies requires invalidation;
  * the existing wrappers cannot change their cache ownership, cleanup subscriptions, or navigation strategy in place.
+ * Stored object schemas retain resource-owning wrappers only for declared keys.
+ * Their undeclared fields and all leaf fields use uncached forbidden-field wrappers.
+ * Adding a declared field therefore requires invalidation even if an old forbidden-field wrapper was never cached.
  *
  * - Existing field wrappers retain their field kind, implementation, and editor behavior.
  * Changes such as optional to sequence, or a change to the root field kind, require invalidating those wrappers.

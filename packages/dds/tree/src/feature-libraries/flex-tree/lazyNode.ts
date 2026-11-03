@@ -12,6 +12,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	ObjectNodeStoredSchema,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -34,9 +35,14 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField, MapField, unboxedFlexNode } from "./lazyField.js";
+import {
+	getCachedField,
+	makeField,
+	makeGeneralField,
+	UncachedForbiddenField,
+	unboxedFlexNode,
+} from "./lazyField.js";
 import { currentObserver } from "./observer.js";
-import { isOptionalMapSchema } from "./utilities.js";
 
 /**
  * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
@@ -59,7 +65,8 @@ export function getOrCreateHydratedFlexTreeNode(
 		return cached;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("Missing node schema");
-	const NodeClass = isOptionalMapSchema(schema) ? LazyMapNode : LazyObjectNode;
+	const NodeClass =
+		schema instanceof ObjectNodeStoredSchema ? LazyObjectNode : LazyGeneralNode;
 	return new NodeClass(context, cursor.type, cursor, anchorNode, anchor, schema);
 }
 
@@ -83,14 +90,16 @@ export abstract class LazyTreeNode extends LazyEntity<Anchor> implements Hydrate
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
-	private readonly storedSchema: TreeNodeStoredSchema;
+	protected readonly storedSchema: TreeNodeStoredSchema;
 
 	/**
 	 * Node-owned field storage, read directly by cache lookups.
 	 * @remarks
-	 * {@link LazyObjectNode} retains wrappers until disposal because those wrappers own cursors,
-	 * anchors, and lifetime registrations.
-	 * {@link LazyMapNode} instead caches only populated fields and evicts them when they become empty.
+	 * {@link LazyObjectNode} retains resource-owning wrappers until disposal.
+	 * For stored object schemas, only declared keys use that storage.
+	 * Undeclared object fields borrow the node's resources and are not cached.
+	 * {@link LazyGeneralNode} works for every stored schema and caches only populated fields,
+	 * evicting them when they become empty.
 	 * The Map is allocated on demand, so leaves and unboxed field reads do not allocate one.
 	 */
 	public fieldCache: Map<FieldKey, FlexTreeField> | undefined;
@@ -307,28 +316,37 @@ export abstract class LazyTreeNode extends LazyEntity<Anchor> implements Hydrate
 }
 
 /**
- * A node whose field wrappers own their navigation resources and remain cached until disposal.
- * Used for objects, arrays, leaves, and other schemas without optional-map storage.
+ * Preserves resource-owning field wrappers for stored object fields, including array content.
+ * Undeclared object fields are forbidden and are not retained.
+ * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
  */
 export class LazyObjectNode extends LazyTreeNode {
 	public override getOrCreateField(
 		cursor: ITreeSubscriptionCursor,
 		createField: () => FlexTreeField,
 	): FlexTreeField {
+		const key = cursor.getFieldKey();
+		assert(
+			this.storedSchema instanceof ObjectNodeStoredSchema,
+			"Fixed-field storage requires a stored object schema",
+		);
+		if (!this.storedSchema.objectNodeFields.has(key)) {
+			return new UncachedForbiddenField(this, key);
+		}
 		return getOrCreate(
 			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()),
-			cursor.getFieldKey(),
+			key,
 			createField,
 		);
 	}
 }
 
 /**
- * A map or record node which owns its bounded cache of resource-free field facades.
+ * A node for any stored schema with a bounded cache of resource-free field facades.
  * Empty fields are not cached, and batch cleanup examines only changed cached keys.
  * Retained fields remain usable after eviction because they navigate through this node.
  */
-export class LazyMapNode extends LazyTreeNode {
+export class LazyGeneralNode extends LazyTreeNode {
 	readonly #removeFieldChangeCallback: () => void;
 
 	public constructor(...args: ConstructorParameters<typeof LazyTreeNode>) {
@@ -365,7 +383,7 @@ export class LazyMapNode extends LazyTreeNode {
 		if (cached !== undefined) {
 			return cached;
 		}
-		const field = new MapField(this, key);
+		const field = makeGeneralField(this, key, this.storedSchema.getFieldSchema(key).kind);
 		if (cursor.getFieldLength() !== 0) {
 			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()).set(key, field);
 		}

@@ -41,7 +41,7 @@ import {
 	Context,
 	createField,
 	UnhydratedContext,
-	UnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -4135,7 +4135,7 @@ describe("treeNodeApi", () => {
 					unhydratedFlexTreeFromInsertable(1, SchemaFactory.number),
 				]);
 
-				const flex = new UnhydratedFlexTreeNode(
+				const flex = new UnhydratedGeneralNode(
 					{ type: brand(PointUnknown.identifier) },
 					new Map([[brand("x"), field]]),
 					context,
