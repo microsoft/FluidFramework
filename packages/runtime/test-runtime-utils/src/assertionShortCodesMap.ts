@@ -1694,7 +1694,6 @@ export const shortCodeMap = {
 	"0xbf7": "Got a local delete message we weren't expecting",
 	"0xbf8": "Couldn't match local set message to pending lifetime",
 	"0xbf9": "Got a local set message we weren't expecting",
-	"0xbfa": "all field schema should be FieldSchemaAlpha",
 	"0xbfb": "Unexpected undefined revision",
 	"0xbfc": "Major revision cannot be 'root'",
 	"0xbfd": "Expected root, stable, or final compressed id",
@@ -1837,7 +1836,6 @@ export const shortCodeMap = {
 	"0xca4": "Expected applied commit to be parented",
 	"0xca5": "Cannot encode vSharedBranches summary without originator",
 	"0xca6": "Unsupported write version requested.",
-	"0xca7": "getUnhydratedContext should not be reentrant",
 	"0xca8": "missing schema",
 	"0xca9": "missing schema",
 	"0xcaa": "Reachable schema missing from input TreeSchema",
@@ -2055,6 +2053,13 @@ export const shortCodeMap = {
 	"0xd99": "Unknown node ID",
 	"0xd9a": "Every node should have a parent",
 	"0xd9b": "Should be an entry for each cross-field key",
-	"0xd9c": "Incremental component visits require a component callback without node callbacks",
-	"0xd9d": "Expected a component member"
+	"0xd9d": "Expected a component member",
+	"0xd9e": "A schema component must contain at least one node",
+	"0xd9f": "Expected a validated schema component",
+	"0xda0": "A schema component must contain at least one node",
+	"0xda1": "Expected a policy-independent cache",
+	"0xda2": "Expected a policy-dependent cache",
+	"0xda3": "Expected a validated root graph",
+	"0xda4": "Expected completed schema component",
+	"0xda5": "Incremental component visits require a component callback without node or allowed-type callbacks"
 };

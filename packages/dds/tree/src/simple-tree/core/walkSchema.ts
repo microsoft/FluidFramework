@@ -78,7 +78,7 @@ export function walkSchema(
 			(visitor.stronglyConnectedComponent !== undefined &&
 				visitor.node === undefined &&
 				visitor.allowedTypes === undefined),
-		"Incremental component visits require a component callback without node or allowed-type callbacks",
+		0xda5 /* Incremental component visits require a component callback without node or allowed-type callbacks */,
 	);
 	/**
 	 * Zero-based ordinal assigned when a node is first analyzed.

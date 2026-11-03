@@ -120,7 +120,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		public readonly dependencies: ReadonlySet<SchemaComponent>,
 		public readonly hasStagedSchema: boolean,
 	) {
-		assert(members.length > 0, "A schema component must contain at least one node");
+		assert(members.length > 0, 0xd9e /* A schema component must contain at least one node */);
 	}
 
 	/**
@@ -135,7 +135,10 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 */
 	public static fromSchema(schema: TreeNodeSchema): SchemaComponent {
 		const component = getOrCreateSchemaComponent(schema);
-		assert(component.definitions !== undefined, "Expected a validated schema component");
+		assert(
+			component.definitions !== undefined,
+			0xd9f /* Expected a validated schema component */,
+		);
 		return component;
 	}
 
@@ -166,7 +169,10 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 			return this.#context;
 		}
 		const member = this.members[0];
-		assert(member !== undefined, "A schema component must contain at least one node");
+		assert(
+			member !== undefined,
+			0xda0 /* A schema component must contain at least one node */,
+		);
 		const data = getRootSchemaDerivedData(member);
 		return (this.#context = new Context(
 			new UnhydratedContext(
@@ -310,12 +316,18 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
 		if (!this.hasStagedSchema) {
 			// Cache one canonical result when conversion is policy-independent.
-			assert(!(this.#storedSchemas instanceof WeakMap), "Expected a policy-independent cache");
+			assert(
+				!(this.#storedSchemas instanceof WeakMap),
+				0xda1 /* Expected a policy-independent cache */,
+			);
 			this.#storedSchemas ??= this.#convertStoredSchema(options);
 			return this.#storedSchemas;
 		}
 		this.#storedSchemas ??= new WeakMap();
-		assert(this.#storedSchemas instanceof WeakMap, "Expected a policy-dependent cache");
+		assert(
+			this.#storedSchemas instanceof WeakMap,
+			0xda2 /* Expected a policy-dependent cache */,
+		);
 		return getOrCreate(this.#storedSchemas, options, () => this.#convertStoredSchema(options));
 	}
 
@@ -369,7 +381,7 @@ export function getRootSchemaDerivedData(
 		// Root staging metadata can also invoke user code, independently of component discovery.
 		return runSchemaInitialization(() => {
 			const data = new RootSchemaDerivedData(root, components);
-			assert(data.treeSchema !== undefined, "Expected a validated root graph");
+			assert(data.treeSchema !== undefined, 0xda3 /* Expected a validated root graph */);
 			return data;
 		});
 	});
@@ -506,7 +518,7 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
  */
 function getCompletedComponent(schema: TreeNodeSchema): SchemaComponent {
 	const component = schemaComponentCache.get(schema);
-	assert(component !== undefined, "Expected completed schema component");
+	assert(component !== undefined, 0xda4 /* Expected completed schema component */);
 	return component;
 }
 
