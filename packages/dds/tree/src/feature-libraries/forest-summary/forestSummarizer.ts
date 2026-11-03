@@ -10,6 +10,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
@@ -140,6 +141,7 @@ export class ForestSummarizer
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, fullTree = false, incrementalSummaryContext, builder } = props;

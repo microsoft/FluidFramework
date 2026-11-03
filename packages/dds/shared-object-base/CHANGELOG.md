@@ -1,5 +1,26 @@
 # @fluidframework/shared-object-base
 
+## 3.10.0
+
+### Minor Changes
+
+- Deprecate shared object implementation classes ([#28533](https://github.com/microsoft/FluidFramework/pull/28533)) [e68833f5ae1](https://github.com/microsoft/FluidFramework/commit/e68833f5ae17b58cb91a3983b1c61aa90e00ccd5)
+
+  `SharedObject` and `SharedObjectCore` from `@fluidframework/shared-object-base` are deprecated.
+  These classes will become internal in release 3.20.0.
+  Use existing distributed data structures instead of custom subclasses.
+  For types that do not need implementation details, use `ISharedObject` instead:
+
+  ```typescript
+  import type { ISharedObject } from "@fluidframework/shared-object-base/legacy";
+
+  function getSharedObjectId(sharedObject: ISharedObject): string {
+    return sharedObject.id;
+  }
+  ```
+
+  See [issue #26284](https://github.com/microsoft/FluidFramework/issues/26284) for details.
+
 ## 3.7.0
 
 Dependency updates only.

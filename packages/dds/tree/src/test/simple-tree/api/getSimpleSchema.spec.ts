@@ -440,7 +440,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map<string, SimpleObjectFieldSchema>([
 								[
 									"foo",
@@ -516,7 +516,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"id",
@@ -580,7 +580,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",
@@ -645,7 +645,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",

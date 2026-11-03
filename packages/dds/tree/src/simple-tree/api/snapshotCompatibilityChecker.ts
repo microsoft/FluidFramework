@@ -815,9 +815,13 @@ export class SnapshotCompatibilityChecker {
 			this.getSnapshotFileName(snapshotName),
 		);
 		this.ensureSnapshotDirectoryExists();
-		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
-			encoding: "utf8",
-		});
+		this.fileSystemMethods.writeFileSync(
+			fullPath,
+			`${JSON.stringify(snapshot, undefined, "\t")}\n`,
+			{
+				encoding: "utf8",
+			},
+		);
 	}
 
 	public readSchemaSnapshot(snapshotName: string): TreeViewConfiguration {

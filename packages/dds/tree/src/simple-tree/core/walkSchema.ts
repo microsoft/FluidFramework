@@ -222,7 +222,7 @@ export function walkSchema(
 			let member: TarjanNodeState;
 			do {
 				const popped = componentAnalysis.stack.pop();
-				assert(popped !== undefined, "Expected a component member");
+				assert(popped !== undefined, 0xd9d /* Expected a component member */);
 				member = popped;
 				member.onStack = false;
 				members.push(member.schema);
