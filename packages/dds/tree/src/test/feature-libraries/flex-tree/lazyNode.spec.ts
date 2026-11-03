@@ -7,6 +7,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { asAlpha } from "../../../api.js";
 import {
 	type Anchor,
@@ -530,7 +532,10 @@ describe("LazyNode", () => {
 			checkContent(1);
 			const checkout = node.context.checkout;
 			view.dispose();
-			assert.throws(() => field.borrowCursor(), /Cannot access a freed FlexTree entity/);
+			assert.throws(
+				() => field.borrowCursor(),
+				validateAssertionError("Cannot access a freed FlexTree entity"),
+			);
 			checkout.dispose();
 		});
 
