@@ -14,7 +14,10 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import {
+	createOdspCreateContainerRequest,
+	createOdspCreateContainerRequestFromOptions,
+} from "../createOdspCreateContainerRequest.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
@@ -185,7 +188,12 @@ describe("Odsp Create Container Test", () => {
 			{
 				folder: "the folder with the parent folder ID",
 				createRequest: (): IRequest =>
-					createOdspCreateContainerRequest({ siteUrl, driveId, parentFolderId, fileName }),
+					createOdspCreateContainerRequestFromOptions({
+						siteUrl,
+						driveId,
+						parentFolderId,
+						fileName,
+					}),
 				fileItemPath: `${parentFolderId}:/${fileName}`,
 				isWithParentFolderId: true,
 			},
@@ -214,6 +222,40 @@ describe("Odsp Create Container Test", () => {
 					false /* inlineDetailsProp */,
 					false /* clearEventsAfterCheck */,
 				);
+			});
+		}
+	});
+
+	describe("Rejects a new file request without exactly one valid folder", () => {
+		const testCases = [
+			{
+				folder: "no folder",
+				query: "",
+				message:
+					"Either a file path or a parent folder ID must be provided to create a new file",
+			},
+			{
+				folder: "both a file path and a parent folder ID",
+				query: "&path=path&parentFolderId=id",
+				message:
+					"Only one of a file path or a parent folder ID can be provided to create a new file",
+			},
+			{
+				folder: "an empty parent folder ID",
+				query: "&parentFolderId=",
+				message: "The parent folder ID for a new file must not be empty",
+			},
+		];
+		for (const { folder, query, message } of testCases) {
+			it(`Should reject a request with ${folder}`, async () => {
+				// The resolver rejects these requests, so modify a resolved URL to reach the factory's checks.
+				const resolved: IOdspResolvedUrl = {
+					...(await resolver.resolve(request)),
+					url: `https://placeholder?driveId=${driveId}${query}`,
+				};
+				await assert.rejects(createService(createSummary(true, true), resolved), {
+					message,
+				});
 			});
 		}
 	});

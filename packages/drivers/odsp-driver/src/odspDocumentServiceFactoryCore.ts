@@ -48,13 +48,15 @@ import {
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
+	type NewFileLocation,
 	createOdspLogger,
 	getJoinSessionCacheKey,
-	getNewFileLocation,
 	getOdspResolvedUrl,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
+	tryGetNewFileParentFolderId,
+	tryGetNewFilePath,
 } from "./odspUtils.js";
 import { copyRequestHeaders } from "./requestHeaders.js";
 
@@ -199,11 +201,6 @@ export class OdspDocumentServiceFactoryCore
 			const [, queryString] = odspResolvedUrl.url.split("?");
 			const searchParams = new URLSearchParams(queryString);
 			const location = getNewFileLocation(searchParams);
-			if (location === undefined) {
-				throw new Error(
-					"Exactly one of a file path or a parent folder ID must be provided to create a new file",
-				);
-			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
@@ -445,6 +442,32 @@ export class OdspDocumentServiceFactoryCore
 			clientIsSummarizer,
 		);
 	}
+}
+
+/**
+ * Gets the location of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @throws An `Error` if the parameters don't identify exactly one folder by either its path or a non-empty item ID.
+ */
+function getNewFileLocation(searchParams: URLSearchParams): NewFileLocation {
+	const filePath = tryGetNewFilePath(searchParams);
+	const parentFolderId = tryGetNewFileParentFolderId(searchParams);
+	if (parentFolderId === undefined) {
+		if (filePath === undefined) {
+			throw new Error(
+				"Either a file path or a parent folder ID must be provided to create a new file",
+			);
+		}
+		return { filePath };
+	}
+	if (filePath !== undefined) {
+		throw new Error(
+			"Only one of a file path or a parent folder ID can be provided to create a new file",
+		);
+	}
+	if (parentFolderId === "") {
+		throw new Error("The parent folder ID for a new file must not be empty");
+	}
+	return { parentFolderId };
 }
 
 /**

@@ -41,6 +41,8 @@ export {
 // File creation
 export {
 	createOdspCreateContainerRequest,
+	createOdspCreateContainerRequestFromOptions,
+	type OdspCreateContainerRequestBaseOptions,
 	type OdspCreateContainerRequestOptions,
 } from "./createOdspCreateContainerRequest.js";
 

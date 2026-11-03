@@ -12,7 +12,11 @@ import {
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import {
+	type OdspCreateContainerRequestOptions,
+	createOdspCreateContainerRequest,
+	createOdspCreateContainerRequestFromOptions,
+} from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { OdspDriverUrlResolver, decodeOdspUrl } from "../odspDriverUrlResolver.js";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink.js";
@@ -477,11 +481,66 @@ describe("Odsp Driver Resolver", () => {
 		);
 	});
 
-	describe("Create new in a folder identified by its item ID", () => {
+	describe("createOdspCreateContainerRequestFromOptions", () => {
 		const parentFolderId = "01VUXKMZBAWJETO47NOFDJ6F4ALDI23UL5";
 
-		it("Can create new request", async () => {
-			const idRequest = createOdspCreateContainerRequest({
+		it("Should create the same request as createOdspCreateContainerRequest for a file path", async () => {
+			const createShareLinkType = {
+				scope: SharingLinkScope.organization,
+				role: SharingLinkRole.edit,
+			};
+			const containerPackageInfo = { name: packageName };
+			// The empty path refers to the root of the drive, and the other path needs encoding.
+			for (const folderPath of ["", "/Apps/Run 5 & more"]) {
+				assert.deepStrictEqual(
+					createOdspCreateContainerRequestFromOptions({
+						siteUrl,
+						driveId,
+						filePath: folderPath,
+						fileName,
+						createShareLinkType,
+						containerPackageInfo,
+					}),
+					createOdspCreateContainerRequest(
+						siteUrl,
+						driveId,
+						folderPath,
+						fileName,
+						createShareLinkType,
+						containerPackageInfo,
+					),
+					`Request for path "${folderPath}" should match`,
+				);
+			}
+		});
+
+		it("Should treat an explicitly undefined folder option as not provided", async () => {
+			assert.deepStrictEqual(
+				createOdspCreateContainerRequestFromOptions({
+					siteUrl,
+					driveId,
+					fileName,
+					filePath,
+					parentFolderId: undefined,
+				}),
+				createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName),
+				"Request for a file path should match",
+			);
+			assert.strictEqual(
+				createOdspCreateContainerRequestFromOptions({
+					siteUrl,
+					driveId,
+					fileName,
+					filePath: undefined,
+					parentFolderId,
+				}).url,
+				`${siteUrl}?driveId=${driveId}&parentFolderId=${parentFolderId}`,
+				"Request url for a parent folder ID should match",
+			);
+		});
+
+		it("Can create new request with a parent folder ID", async () => {
+			const idRequest = createOdspCreateContainerRequestFromOptions({
 				siteUrl,
 				driveId,
 				parentFolderId,
@@ -500,8 +559,8 @@ describe("Odsp Driver Resolver", () => {
 			);
 		});
 
-		it("Should create request with all options and resolve it", async () => {
-			const idRequest = createOdspCreateContainerRequest({
+		it("Should create request with a parent folder ID and all options and resolve it", async () => {
+			const idRequest = createOdspCreateContainerRequestFromOptions({
 				siteUrl,
 				driveId,
 				parentFolderId,
@@ -534,7 +593,7 @@ describe("Odsp Driver Resolver", () => {
 		it("Encodes the parent folder ID so that it can't add query params", async () => {
 			const unsafeParentFolderId = "id&path=other";
 			const { searchParams } = new URL(
-				createOdspCreateContainerRequest({
+				createOdspCreateContainerRequestFromOptions({
 					siteUrl,
 					driveId,
 					parentFolderId: unsafeParentFolderId,
@@ -549,18 +608,40 @@ describe("Odsp Driver Resolver", () => {
 			assert.strictEqual(searchParams.has("path"), false, "path should be absent");
 		});
 
-		it("Throws a usage error for an empty parent folder ID", async () => {
-			assert.throws(
-				() =>
-					createOdspCreateContainerRequest({
-						siteUrl,
-						driveId,
-						parentFolderId: "",
-						fileName,
-					}),
-				{ errorType: "usageError" },
-			);
-		});
+		const invalidOptions: { description: string; options: object; message: string }[] = [
+			{
+				description: "both filePath and parentFolderId",
+				options: { siteUrl, driveId, fileName, filePath, parentFolderId },
+				message: "Only one of filePath or parentFolderId can be provided",
+			},
+			{
+				description: "filePath and an empty parentFolderId",
+				options: { siteUrl, driveId, fileName, filePath, parentFolderId: "" },
+				message: "Only one of filePath or parentFolderId can be provided",
+			},
+			{
+				description: "neither filePath nor parentFolderId",
+				options: { siteUrl, driveId, fileName },
+				message: "Either filePath or parentFolderId must be provided",
+			},
+			{
+				description: "an empty parentFolderId",
+				options: { siteUrl, driveId, fileName, parentFolderId: "" },
+				message: "parentFolderId must not be empty",
+			},
+		];
+		for (const { description, options, message } of invalidOptions) {
+			it(`Should throw a usage error for ${description}`, async () => {
+				assert.throws(
+					() =>
+						createOdspCreateContainerRequestFromOptions(
+							// Callers that aren't type-checked can pass options that the type rejects.
+							options as OdspCreateContainerRequestOptions,
+						),
+					{ errorType: "usageError", message },
+				);
+			});
+		}
 	});
 
 	describe("Validates the folder of a createNew request", () => {
@@ -578,6 +659,10 @@ describe("Odsp Driver Resolver", () => {
 			{
 				description: "both a path and a parent folder ID",
 				query: "path=path&parentFolderId=id",
+			},
+			{
+				description: "both a path and an empty parent folder ID",
+				query: "path=path&parentFolderId=",
 			},
 			{ description: "an empty parent folder ID", query: "parentFolderId=" },
 			{ description: "neither a path nor a parent folder ID", query: "" },

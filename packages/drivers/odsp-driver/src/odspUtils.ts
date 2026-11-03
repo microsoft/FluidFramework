@@ -334,19 +334,23 @@ export type NewFileLocation =
 export type INewFileInfo = INewFileInfoBase & NewFileLocation;
 
 /**
- * Reads the location of the folder in which to create a new file from the query parameters of a create-new request URL.
- * @returns The location, or `undefined` if the parameters don't specify exactly one valid location.
- * An empty path is valid and refers to the drive root, but an empty parent folder ID is not.
+ * Reads the path of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @returns The path, or `undefined` if the parameters don't include one.
+ * An empty path refers to the root of the drive.
  */
-export function getNewFileLocation(
+export function tryGetNewFilePath(searchParams: URLSearchParams): string | undefined {
+	return searchParams.get("path") ?? undefined;
+}
+
+/**
+ * Reads the item ID of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @returns The item ID, or `undefined` if the parameters don't include one.
+ * An empty item ID is returned as is, so that callers can reject it.
+ */
+export function tryGetNewFileParentFolderId(
 	searchParams: URLSearchParams,
-): NewFileLocation | undefined {
-	const filePath = searchParams.get("path");
-	const parentFolderId = searchParams.get("parentFolderId");
-	if (parentFolderId === null) {
-		return filePath === null ? undefined : { filePath };
-	}
-	return filePath === null && parentFolderId !== "" ? { parentFolderId } : undefined;
+): string | undefined {
+	return searchParams.get("parentFolderId") ?? undefined;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
