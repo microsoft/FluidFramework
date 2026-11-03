@@ -161,7 +161,7 @@ function composeMarkLists(
  * Its input range should be the same as `baseMark`'s output range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
-function composeMarks(
+export function composeMarks(
 	baseMark: Mark,
 	newMark: Mark,
 	composeChild: NodeChangeComposer,
@@ -450,7 +450,7 @@ function handleMovePivot(
 	}
 }
 
-function createNoopMark(
+export function createNoopMark(
 	length: number,
 	nodeChange: NodeId | undefined,
 	cellId?: ChangeAtomId,
@@ -498,7 +498,7 @@ function composeChildChanges(
 	return composeChild(baseChange, newChange);
 }
 
-function composeMark<TMark extends Mark>(
+export function composeMark<TMark extends Mark>(
 	mark: TMark,
 	moveEffects: MoveEffectTable,
 	composeChild: (node: NodeId) => NodeId | undefined,
@@ -638,7 +638,7 @@ interface ComposeMarks {
 	newMark?: Mark;
 }
 
-function getMovedChangesFromMark(
+export function getMovedChangesFromMark(
 	moveEffects: MoveEffectTable,
 	markEffect: MarkEffect,
 ): NodeId | undefined {
