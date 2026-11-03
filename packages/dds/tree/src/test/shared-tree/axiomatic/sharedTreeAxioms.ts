@@ -29,7 +29,7 @@ import {
 import { defaultRevisionMetadataFromChanges, jsonTreeFromCheckout } from "../../utils.js";
 
 /**
- * Bind algebraic operations to the unwrapped production SharedTree family.
+ * Bind algebraic operations to the production SharedTree family.
  * All inputs and outputs retain the complete SharedTree envelope.
  */
 export class SharedTreeAxiomAdapter {
@@ -200,8 +200,8 @@ export function verifySharedTreeRebaseOverComposition(
 	bases: readonly TaggedChange<SharedTreeChange>[],
 ): TaggedChange<SharedTreeChange> {
 	const metadata = defaultRevisionMetadataFromChanges([...bases, change]);
-	const singles = adapter.rebaseOverSingles(change, bases, metadata);
-	const composed = adapter.rebaseOverComposition(change, bases, metadata);
-	assertSharedTreeChangesEqual(singles, composed);
-	return composed;
+	const overSingles = adapter.rebaseOverSingles(change, bases, metadata);
+	const overComposed = adapter.rebaseOverComposition(change, bases, metadata);
+	assertSharedTreeChangesEqual(overSingles, overComposed);
+	return overComposed;
 }

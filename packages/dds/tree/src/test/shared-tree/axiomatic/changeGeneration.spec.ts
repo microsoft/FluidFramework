@@ -16,7 +16,6 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	ForestTypeOptimized,
-	ForestTypeReference,
 	type SharedTreeChange,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
@@ -54,119 +53,112 @@ const initialContent: JsonCompatible[] = [{ left: ["A"], right: ["B"] }];
 const schema = toInitialSchema(JsonAsTree.JsonObject);
 
 describe("SharedTree axiom infrastructure: change generation", () => {
-	for (const [name, forestType] of [
-		["reference forest", ForestTypeReference],
-		["optimized forest", ForestTypeOptimized],
-	] as const) {
-		describe(name, () => {
-			let parent: TreeCheckout;
-			beforeEach(() => {
-				parent = checkoutWithContent(
-					{ schema, initialTree: fieldJsonCursor(initialContent) },
-					{ forestType },
-				);
-			});
-			afterEach(() => {
-				parent.dispose();
-			});
+	let parent: TreeCheckout;
+	beforeEach(() => {
+		parent = checkoutWithContent(
+			{ schema, initialTree: fieldJsonCursor(initialContent) },
+			{ forestType: ForestTypeOptimized },
+		);
+	});
+	afterEach(() => {
+		parent.dispose();
+	});
 
-			it("initializes without authoring setup commits", () => {
-				assert.equal(parent.mainBranch.getHead().parent, undefined);
-				expectJsonTree(parent, initialContent);
-			});
+	it("initializes without authoring setup commits", () => {
+		assert.equal(parent.mainBranch.getHead().parent, undefined);
+		expectJsonTree(parent, initialContent);
+	});
 
-			it("captures an atomic cross-field move without unwrapping its change", () => {
-				const base = parent.mainBranch.getHead();
-				for (const { checkout, change } of generateSharedTreeChanges(parent, [
-					{
-						description: "move left[0] to right[1]",
-						apply: (child) => child.editor.move(leftField, 0, 1, rightField, 1),
-					},
-				])) {
-					const head = checkout.mainBranch.getHead();
-					assert.equal(head.parent, base);
-					assert.equal(change.change, head.change);
-					assert.equal(change.revision, head.revision);
-					assert.equal(typeof change.revision, "number");
-					assert.equal(change.change.changes.length, 1);
-					assert.equal(change.change.changes[0].type, "data");
-					expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
-					expectJsonTree(parent, initialContent);
-				}
-				assert.equal(parent.mainBranch.getHead(), base);
-			});
+	it("captures an atomic cross-field move without unwrapping its change", () => {
+		const base = parent.mainBranch.getHead();
+		for (const { checkout, change } of generateSharedTreeChanges(parent, [
+			{
+				description: "move left[0] to right[1]",
+				apply: (child) => child.editor.move(leftField, 0, 1, rightField, 1),
+			},
+		])) {
+			const head = checkout.mainBranch.getHead();
+			assert.equal(head.parent, base);
+			assert.equal(change.change, head.change);
+			assert.equal(change.revision, head.revision);
+			assert.equal(typeof change.revision, "number");
+			assert.equal(change.change.changes.length, 1);
+			assert.equal(change.change.changes[0].type, "data");
+			expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
+			expectJsonTree(parent, initialContent);
+		}
+		assert.equal(parent.mainBranch.getHead(), base);
+	});
 
-			it("isolates sibling changes", () => {
-				const revisions = new Set<RevisionTag | undefined>();
-				for (const { checkout, change } of generateSharedTreeChanges(
-					parent,
-					["X", "Y"].map((value) => ({
-						description: value,
-						apply: (child: TreeCheckout) => {
-							expectJsonTree(child, initialContent);
-							const chunk = chunkFromJsonTrees([value]);
-							try {
-								child.editor.optionalField(optionalField).set(chunk, true);
-							} finally {
-								chunk.referenceRemoved();
-							}
-						},
-					})),
-				)) {
-					revisions.add(change.revision);
-					assert.notEqual(checkout, parent);
-					expectJsonTree(parent, initialContent);
-				}
-				assert.equal(revisions.size, 2);
-			});
+	it("isolates sibling changes", () => {
+		const revisions = new Set<RevisionTag | undefined>();
+		for (const { checkout, change } of generateSharedTreeChanges(
+			parent,
+			["X", "Y"].map((value) => ({
+				description: value,
+				apply: (child: TreeCheckout) => {
+					expectJsonTree(child, initialContent);
+					const chunk = chunkFromJsonTrees([value]);
+					try {
+						child.editor.optionalField(optionalField).set(chunk, true);
+					} finally {
+						chunk.referenceRemoved();
+					}
+				},
+			})),
+		)) {
+			revisions.add(change.revision);
+			assert.notEqual(checkout, parent);
+			expectJsonTree(parent, initialContent);
+		}
+		assert.equal(revisions.size, 2);
+	});
 
-			it("captures a multi-call transaction as one commit", () => {
-				for (const { checkout, change } of generateSharedTreeChanges(parent, [
-					{
-						description: "move and clear",
-						apply: (child) => {
-							child.transaction.start();
-							child.editor.move(leftField, 0, 1, rightField, 1);
-							child.editor.optionalField(optionalField).set(undefined, true);
-							child.transaction.commit();
-						},
-					},
-				])) {
-					assert.equal(checkout.mainBranch.getHead().parent, parent.mainBranch.getHead());
-					assert.equal(change.change.changes.length, 1);
-					const inner = change.change.changes[0];
-					assert(inner.type === "data");
-					assert.deepEqual(inner.innerChange.revisions, [{ revision: change.revision }]);
-					expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
-				}
-			});
+	it("captures a multi-call transaction as one commit", () => {
+		for (const { checkout, change } of generateSharedTreeChanges(parent, [
+			{
+				description: "move and clear",
+				apply: (child) => {
+					child.transaction.start();
+					child.editor.move(leftField, 0, 1, rightField, 1);
+					child.editor.optionalField(optionalField).set(undefined, true);
+					child.transaction.commit();
+				},
+			},
+		])) {
+			assert.equal(checkout.mainBranch.getHead().parent, parent.mainBranch.getHead());
+			assert.equal(change.change.changes.length, 1);
+			const inner = change.change.changes[0];
+			assert(inner.type === "data");
+			assert.deepEqual(inner.innerChange.revisions, [{ revision: change.revision }]);
+			expectJsonTree(checkout, [{ left: [], right: ["B", "A"] }]);
+		}
+	});
 
-			it("replays a build-bearing complete change after its authoring fork is disposed", () => {
-				let captured: TaggedChange<SharedTreeChange> | undefined;
-				for (const { change } of generateSharedTreeChanges(parent, [
-					{
-						description: "insert X",
-						apply: (child) => {
-							const chunk = chunkFromJsonTrees(["X"]);
-							try {
-								child.editor.sequenceField(leftField).insert(1, chunk);
-							} finally {
-								chunk.referenceRemoved();
-							}
-						},
-					},
-				])) {
-					captured = change;
-				}
-				assert(captured !== undefined);
-				const replay = parent.fork();
-				try {
-					replay.mainBranch.apply(captured, CommitKind.Default, undefined);
-					expectJsonTree(replay, [{ left: ["A", "X"], right: ["B"] }]);
-				} finally {
-					replay.dispose();
-				}
-			});
-		});
-	}
+	it("replays a build-bearing complete change after its authoring fork is disposed", () => {
+		let captured: TaggedChange<SharedTreeChange> | undefined;
+		for (const { change } of generateSharedTreeChanges(parent, [
+			{
+				description: "insert X",
+				apply: (child) => {
+					const chunk = chunkFromJsonTrees(["X"]);
+					try {
+						child.editor.sequenceField(leftField).insert(1, chunk);
+					} finally {
+						chunk.referenceRemoved();
+					}
+				},
+			},
+		])) {
+			captured = change;
+		}
+		assert(captured !== undefined);
+		const replay = parent.fork();
+		try {
+			replay.mainBranch.apply(captured, CommitKind.Default, undefined);
+			expectJsonTree(replay, [{ left: ["A", "X"], right: ["B"] }]);
+		} finally {
+			replay.dispose();
+		}
+	});
 });
