@@ -33,6 +33,7 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	type ISnapshot,
@@ -5834,7 +5835,13 @@ describe("Runtime", () => {
 				it("pauses and resumes idempotently without exiting staging mode", async () => {
 					const controls = containerRuntime.enterStagingMode();
 					const { inbound, inboundSignal, outbound } = deltaManager;
-					const pause = sandbox.spy(inbound, "pause");
+					// Keep the pause pending to simulate inbound processing that has not stopped yet.
+					const processingStopped = new Deferred<void>();
+					const pauseQueue = inbound.pause.bind(inbound);
+					const pause = sandbox.stub(inbound, "pause").callsFake(async () => {
+						await pauseQueue();
+						return processingStopped.promise;
+					});
 					const resume = sandbox.spy(inbound, "resume");
 					assert.equal(
 						inbound.paused,
@@ -5842,9 +5849,29 @@ describe("Runtime", () => {
 						"Entering staging mode should not pause inbound",
 					);
 
-					const paused = controls.pauseInbound();
+					let pauseSettled = false;
+					let repeatedPauseSettled = false;
+					const paused = controls.pauseInbound().then(() => {
+						pauseSettled = true;
+					});
 					assert.equal(inbound.paused, true, "Inbound should be paused immediately");
-					await Promise.all([paused, controls.pauseInbound()]);
+					const repeatedPause = controls.pauseInbound().then(() => {
+						repeatedPauseSettled = true;
+					});
+					await clock.tickAsync(0);
+					assert.equal(
+						pauseSettled,
+						false,
+						"Pausing should wait for inbound processing to stop",
+					);
+					assert.equal(
+						repeatedPauseSettled,
+						false,
+						"Repeated pauses should also wait for inbound processing to stop",
+					);
+
+					processingStopped.resolve();
+					await Promise.all([paused, repeatedPause]);
 					assert.equal(pause.callCount, 1, "Repeated calls should acquire only one pause");
 					assert.equal(inboundSignal.paused, false, "Inbound signals should not be paused");
 					assert.equal(outbound.paused, false, "Outbound processing should not be paused");
