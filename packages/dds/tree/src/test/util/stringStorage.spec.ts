@@ -10,6 +10,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	StringPiece,
 	StringSequence,
+	checkpointStride,
 	stringBufferSize,
 	// Allow importing the independently testable storage implementation:
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -23,11 +24,20 @@ describe("StringSequence", () => {
 			assert.equal(sequence.length, atoms.length);
 			assert.equal(sequence.text, text);
 			assert.deepEqual([...sequence.values(0)], atoms);
-			for (const index of [0, 1, 63, 64, 65, atoms.length - 1]) {
-				if (index >= 0 && index < atoms.length) {
-					assert.equal(sequence.at(index), atoms[index]);
-					assert.deepEqual([...sequence.values(index)], atoms.slice(index));
+			let pieceStart = 0;
+			for (const piece of sequence.pieces) {
+				for (const index of [
+					pieceStart,
+					pieceStart + 1,
+					pieceStart + Math.floor(piece.length / 2),
+					pieceStart + piece.length - 1,
+				]) {
+					if (index < atoms.length) {
+						assert.equal(sequence.at(index), atoms[index]);
+						assert.deepEqual([...sequence.values(index)], atoms.slice(index));
+					}
 				}
+				pieceStart += piece.length;
 			}
 			assert.deepEqual([...sequence.values(sequence.length)], []);
 		});
@@ -83,6 +93,16 @@ describe("StringSequence", () => {
 });
 
 describe("StringPiece", () => {
+	it("reads atoms around checkpoint boundaries", () => {
+		const piece = StringPiece.fromString("ab\u{1F600}".repeat(checkpointStride))[0];
+		assert(piece !== undefined);
+		const atoms = [...piece.text];
+		for (const index of [checkpointStride - 1, checkpointStride, checkpointStride + 1]) {
+			assert.equal(piece.at(index), atoms[index]);
+			assert.deepEqual([...piece.values(index)], atoms.slice(index));
+		}
+	});
+
 	it("bounds visible buffers without splitting surrogate pairs", () => {
 		const text = `${"x".repeat(stringBufferSize - 1)}\u{1F600}${"y".repeat(stringBufferSize)}`;
 		const pieces = StringPiece.fromString(text);

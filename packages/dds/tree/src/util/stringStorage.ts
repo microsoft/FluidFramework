@@ -22,7 +22,12 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-const checkpointStride = 64;
+/**
+ * The number of atoms between checkpoints in a string buffer.
+ * @remarks
+ * Exported for testing.
+ */
+export const checkpointStride = 64;
 
 /**
  * Maximum visible length of a new backing buffer, in UTF-16 code units.
