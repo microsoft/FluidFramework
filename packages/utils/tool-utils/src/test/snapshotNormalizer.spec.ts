@@ -215,7 +215,7 @@ describe("Snapshot Normalizer", () => {
 		);
 	});
 
-	it("can normalize legacy catchupOps blobs with metadata property in ops", () => {
+	it("can normalize runtime-layer properties in legacy catchupOps blobs", () => {
 		const catchupOp = {
 			"clientId": "0c200397-abdc-47ca-905d-ab3ef7329c8f",
 			"clientSequenceNumber": 82,
@@ -224,6 +224,7 @@ describe("Snapshot Normalizer", () => {
 				"seg": {},
 				"type": 0,
 			},
+			"indexInBatch": 0,
 			"metadata": {
 				"batch": true,
 			},
@@ -243,10 +244,11 @@ describe("Snapshot Normalizer", () => {
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot);
 		const normalizedCatchupOpBlob = normalizedSnapshot.entries[0].value as IBlob;
 
-		const catchupOpWithoutMetadata = { ...catchupOp, metadata: undefined };
+		const { indexInBatch: _, ...catchupOpWithoutIndexInBatch } = catchupOp;
+		const normalizedCatchupOp = { ...catchupOpWithoutIndexInBatch, metadata: undefined };
 		assert.deepStrictEqual(
 			normalizedCatchupOpBlob.contents,
-			JSON.stringify([catchupOpWithoutMetadata]),
+			JSON.stringify([normalizedCatchupOp]),
 			"Legacy catchupOps blob not normalized",
 		);
 	});

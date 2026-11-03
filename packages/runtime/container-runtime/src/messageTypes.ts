@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import type {
 	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
+	ISequencedRuntimeMessage,
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { IDataStoreAliasMessage } from "./dataStore.js";
@@ -193,7 +193,7 @@ export type LocalContainerRuntimeMessage =
  * promoted up to the outer object
  */
 export type InboundSequencedContainerRuntimeMessage = Omit<
-	ISequencedDocumentMessage,
+	ISequencedRuntimeMessage,
 	"type" | "contents"
 > &
 	InboundContainerRuntimeMessage;

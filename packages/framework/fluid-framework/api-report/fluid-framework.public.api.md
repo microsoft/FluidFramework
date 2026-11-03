@@ -712,6 +712,9 @@ export interface ObjectSchemaOptions {
 // @public
 export type Off = () => void;
 
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
+
 // @public @sealed @system
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends FluidReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
 }

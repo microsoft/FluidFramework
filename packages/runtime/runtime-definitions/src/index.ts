@@ -64,12 +64,14 @@ export type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
+	ISequencedRuntimeMessage,
 	ISequencedMessageEnvelope,
 	IRuntimeStorageService,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	runtimeMessagesHaveIndexInBatch,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	IVersionMarkResolver,

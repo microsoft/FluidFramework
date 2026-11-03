@@ -985,6 +985,9 @@ export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown> extends Obje
 // @public
 export type Off = () => void;
 
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
+
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
