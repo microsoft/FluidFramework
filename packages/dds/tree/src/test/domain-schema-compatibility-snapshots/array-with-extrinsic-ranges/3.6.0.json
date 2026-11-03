@@ -1,0 +1,106 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Manager": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
+			}
+		},
+		"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Content": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.leaf.number": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
+			}
+		},
+		"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Range": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"data": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "data"
+					},
+					"start": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "start"
+					},
+					"end": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "end"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Ranges": {
+			"map": {
+				"kind": 0,
+				"simpleAllowedTypes": {
+					"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Range": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Manager": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Content": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					},
+					"rangeStorage": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Ranges": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "ranges"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		}
+	}
+}

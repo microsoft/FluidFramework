@@ -252,6 +252,21 @@ testModes.forEach((mode) => {
 				});
 
 				describe("Blobs", () => {
+					it("Rejects an invalid authorized physical root", async () => {
+						return supertest
+							.get(
+								`/repos/${testOwnerName}/${testRepoName}/git/blobs/b45ef6fec89518d314f546fd6c3025367b721684`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.set(Constants.DocumentContainerNameHeader, "../victim")
+							.set(Constants.DocumentStorageLayoutHeader, "v2")
+							.set(Constants.DocumentLifecycleVersionHeader, "generation-1")
+							.expect(400);
+					});
+
 					it("Can create and retrieve a blob", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						const result = await createBlob(

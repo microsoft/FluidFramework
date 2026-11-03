@@ -85,10 +85,14 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	type SchemaFactoryOptions,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
@@ -417,6 +421,7 @@ export {
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { ExtrinsicLocations } from "./extrinsic-locations/index.js";
 export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";

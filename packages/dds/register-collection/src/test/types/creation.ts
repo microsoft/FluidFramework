@@ -12,7 +12,7 @@ import {
 	type IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/legacy";
 
-// @ts-expect-error The implementation class is not a supported export.
+// @ts-expect-error Do not expose the implementation class to consumers. Use the interface and creation APIs instead.
 export type { ConsensusRegisterCollectionClass } from "@fluidframework/register-collection/legacy";
 
 declare function use(value: unknown): void;
@@ -21,11 +21,13 @@ declare function use(value: unknown): void;
  * Checks the supported creation APIs and the interface alias.
  */
 export function checkCreation(runtime: IFluidDataStoreRuntime): void {
+	const registers: IConsensusRegisterCollection<string> =
+		ConsensusRegisterCollection.create(runtime);
 	const kind: ISharedObjectKind<IConsensusRegisterCollection> = ConsensusRegisterCollection;
 	const fromKind: IConsensusRegisterCollection = kind.create(runtime);
 	const alias: ConsensusRegisterCollection<string> =
 		new ConsensusRegisterCollectionFactory().create(runtime, "register");
 	const fromAlias: IConsensusRegisterCollection<string> = alias;
 	const factory: ConsensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
-	use([fromKind, fromAlias, factory]);
+	use([registers, fromKind, fromAlias, factory]);
 }
