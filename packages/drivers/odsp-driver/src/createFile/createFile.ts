@@ -37,6 +37,8 @@ import {
 } from "./../odspUtils.js";
 import { pkgVersion as driverVersion } from "./../packageVersion.js";
 import { runWithRetry } from "./../retryUtils.js";
+import { OdspOperation } from "../odspOperation.js";
+import { withOdspOperation } from "../requestControl.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
@@ -206,12 +208,25 @@ export async function createNewEmptyFluidFile(
 	newFileInfo: INewFileInfo,
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
+	operation?: OdspOperation,
 ): Promise<{ itemId: string; fileName: string }> {
 	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+	if (operation === undefined) {
+		return new OdspOperation(logger, epochTracker, "createFile", initialUrl).run(
+			async (context) =>
+				createNewEmptyFluidFile(
+					getAuthHeader,
+					newFileInfo,
+					context.logger,
+					epochTracker,
+					context,
+				),
+		);
+	}
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;
@@ -238,15 +253,20 @@ export async function createNewEmptyFluidFile(
 					async () =>
 						epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
 							url,
-							{
-								body: undefined,
-								headers,
-								method,
-							},
+							withOdspOperation(
+								{
+									body: undefined,
+									headers,
+									method,
+								},
+								operation,
+							),
 							"createFile",
 						),
 					"createFile",
 					logger,
+					undefined,
+					operation,
 				);
 
 				const content = fetchResponse.content;
@@ -274,10 +294,24 @@ export async function renameEmptyFluidFile(
 	requestedFileName: string,
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
+	operation?: OdspOperation,
 ): Promise<IRenameFileResponse> {
 	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
 		odspParts.driveId
 	}/items/${odspParts.itemId}?@name.conflictBehavior=rename`;
+	if (operation === undefined) {
+		return new OdspOperation(logger, epochTracker, "renameFile", initialUrl).run(
+			async (context) =>
+				renameEmptyFluidFile(
+					getAuthHeader,
+					odspParts,
+					requestedFileName,
+					context.logger,
+					epochTracker,
+					context,
+				),
+		);
+	}
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;
@@ -298,17 +332,22 @@ export async function renameEmptyFluidFile(
 					async () =>
 						epochTracker.fetchAndParseAsJSON<IRenameFileResponse>(
 							url,
-							{
-								body: JSON.stringify({
-									name: requestedFileName,
-								}),
-								headers,
-								method: "PATCH",
-							},
+							withOdspOperation(
+								{
+									body: JSON.stringify({
+										name: requestedFileName,
+									}),
+									headers,
+									method: "PATCH",
+								},
+								operation,
+							),
 							"renameFile",
 						),
 					"renameFile",
 					logger,
+					undefined,
+					operation,
 				);
 
 				const content = fetchResponse.content;

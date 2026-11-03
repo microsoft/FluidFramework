@@ -29,9 +29,11 @@ import {
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { copyRequestHeaders, mergeRequestHeaders } from "./requestHeaders.js";
 import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
+import { OdspOperation } from "./odspOperation.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
+const fileLinkOperations = new WeakMap<Promise<string>, OdspOperation>();
 
 /**
  * Returns file link for a file with given drive and item ids.
@@ -53,62 +55,75 @@ export const getFileLink = mockify(
 	): Promise<string> => {
 		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
 		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
-		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
-		if (maybeFileLinkCacheEntry !== undefined) {
-			return maybeFileLinkCacheEntry;
-		}
-
-		const fileLinkGenerator = async function (): Promise<string> {
-			let fileLinkCore: string;
-			try {
-				let retryCount = 0;
-				fileLinkCore = await runWithRetry(
-					async () =>
-						runWithRetryForCoherencyAndServiceReadOnlyErrors(
-							async () =>
-								getFileLinkWithLocationRedirectionHandling(
-									getToken,
-									resolvedUrl,
-									logger,
-									immutableRequestHeaders,
-								),
-							"getFileLinkCore",
-							logger,
-						),
-					"getShareLink",
-					logger,
-					{
-						// TODO: use a stronger type
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						onRetry(_delayInMs: number, error: any) {
-							retryCount++;
-							if (retryCount === 5) {
-								if (error !== undefined && typeof error === "object") {
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-									error.canRetry = false;
-									throw error;
-								}
-								throw error;
-							}
-						},
-					},
-				);
-			} catch (error) {
-				// Delete from the cache to permit retrying later.
-				fileLinkCache.delete(cacheKey);
-				throw error;
+		const operation = new OdspOperation(logger, getToken, "getFileLink", cacheKey);
+		return operation.run(async () => {
+			const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
+			if (maybeFileLinkCacheEntry !== undefined) {
+				operation.logger.sendTelemetryEvent({
+					eventName: "OdspOperationCoalesced",
+					sharedOperationId: fileLinkOperations.get(maybeFileLinkCacheEntry)?.id,
+				});
+				return maybeFileLinkCacheEntry;
 			}
 
-			// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
-			assert(
-				fileLinkCore !== undefined,
-				0x292 /* "Unexpected undefined result from getFileLinkCore" */,
-			);
-			return fileLinkCore;
-		};
-		const fileLink = fileLinkGenerator();
-		fileLinkCache.set(cacheKey, fileLink);
-		return fileLink;
+			const fileLinkGenerator = async function (): Promise<string> {
+				let fileLinkCore: string;
+				try {
+					let retryCount = 0;
+					fileLinkCore = await runWithRetry(
+						async () =>
+							runWithRetryForCoherencyAndServiceReadOnlyErrors(
+								async () =>
+									getFileLinkWithLocationRedirectionHandling(
+										getToken,
+										resolvedUrl,
+										operation.logger,
+										immutableRequestHeaders,
+										operation,
+									),
+								"getFileLinkCore",
+								operation.logger,
+								undefined,
+								operation,
+							),
+						"getShareLink",
+						operation.logger,
+						{
+							// TODO: use a stronger type
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							onRetry(delayInMs: number, error: any) {
+								retryCount++;
+								if (retryCount === 5) {
+									operation.markExhausted();
+									if (error !== undefined && typeof error === "object") {
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+										error.canRetry = false;
+										throw error;
+									}
+									throw error;
+								}
+								operation.recordRetry(delayInMs, error, "getFileLink");
+							},
+						},
+					);
+				} catch (error) {
+					// Delete from the cache to permit retrying later.
+					fileLinkCache.delete(cacheKey);
+					throw error;
+				}
+
+				// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
+				assert(
+					fileLinkCore !== undefined,
+					0x292 /* "Unexpected undefined result from getFileLinkCore" */,
+				);
+				return fileLinkCore;
+			};
+			const fileLink = fileLinkGenerator();
+			fileLinkCache.set(cacheKey, fileLink);
+			fileLinkOperations.set(fileLink, operation);
+			return fileLink;
+		});
 	},
 );
 
@@ -130,6 +145,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 	resolvedUrl: IOdspResolvedUrl,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	operation?: OdspOperation,
 ): Promise<string> {
 	// We can have chains of location redirection one after the other, so have a for loop
 	// so that we can keep handling the same type of error. Set max number of redirection to 5.
@@ -137,7 +153,13 @@ async function getFileLinkWithLocationRedirectionHandling(
 	let locationRedirected = false;
 	for (let count = 1; count <= 5; count++) {
 		try {
-			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger, requestHeaders);
+			const fileItem = await getFileItemLite(
+				getToken,
+				resolvedUrl,
+				logger,
+				requestHeaders,
+				operation,
+			);
 			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
 			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
 			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
@@ -151,7 +173,14 @@ async function getFileLinkWithLocationRedirectionHandling(
 				});
 				renameTenantInOdspResolvedUrl(resolvedUrl, newSiteDomain);
 			}
-			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem, requestHeaders);
+			return await getFileLinkCore(
+				getToken,
+				resolvedUrl,
+				logger,
+				fileItem,
+				requestHeaders,
+				operation,
+			);
 		} catch (error: unknown) {
 			lastError = error;
 			// If the getSharingLink call fails with the 401/403/404 error, then it could be due to that the file has moved
@@ -177,6 +206,7 @@ async function getFileLinkCore(
 	logger: TelemetryLoggerExt,
 	fileItem: FileItemLite,
 	requestHeaders?: Readonly<Record<string, string>>,
+	operation?: OdspOperation,
 ): Promise<string> {
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
@@ -218,7 +248,9 @@ async function getFileLinkCore(
 						...headers,
 					}),
 				};
-				const response = await fetchHelper(url, requestInit);
+				const response = await (operation === undefined
+					? fetchHelper(url, requestInit)
+					: operation.request(async () => fetchHelper(url, requestInit)));
 				additionalProps = response.propsToLog;
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -274,6 +306,7 @@ async function getFileItemLite(
 	odspUrlParts: IOdspUrlParts,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	operation?: OdspOperation,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -305,7 +338,9 @@ async function getFileItemLite(
 					method,
 					headers: mergeRequestHeaders(requestHeaders, headers),
 				};
-				const response = await fetchHelper(url, requestInit);
+				const response = await (operation === undefined
+					? fetchHelper(url, requestInit)
+					: operation.request(async () => fetchHelper(url, requestInit)));
 				additionalProps = response.propsToLog;
 
 				const responseJson: unknown = await response.content.json();

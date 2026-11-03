@@ -7,6 +7,8 @@ The ODSP Fluid service is not a publicly available service, and currently it is 
 to connect to it. This driver is present as an illustration of a different Fluid driver implementation.
 Developers should not depend on this driver for their own solutions.
 
+For operation IDs, retry timing, terminal outcomes, and Kusto queries, see [ODSP operation telemetry](./odsp-operation-telemetry.md).
+
 ## Telemetry Event names to SPO API mapping:
 
 These event names are suffixed by `_end` in case they are successful API calls or by `_cancel` in case they are failures.

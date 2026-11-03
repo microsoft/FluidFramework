@@ -13,6 +13,7 @@ import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { Odsp409Error } from "./epochTracker.js";
+import type { OdspOperation } from "./odspOperation.js";
 
 /**
  * This method retries only for retriable coherency and service read only errors.
@@ -22,11 +23,13 @@ export async function runWithRetry<T>(
 	callName: string,
 	logger: TelemetryLoggerExt,
 	checkDisposed?: () => void,
+	operation?: OdspOperation,
 ): Promise<T> {
 	let retryAfter = 1000;
 	const start = performanceNow();
 	let lastError: unknown;
 	for (let attempts = 1; ; attempts++) {
+		operation?.checkDisposed();
 		if (checkDisposed !== undefined) {
 			checkDisposed();
 		}
@@ -79,6 +82,7 @@ export async function runWithRetry<T>(
 			// That multiplied to 5 suggests need to reconsider current design, as client spends
 			// too much time / bandwidth doing the same thing without any progress.
 			if (attempts === 5) {
+				operation?.markExhausted();
 				logger.sendErrorEvent(
 					{
 						eventName: coherencyError
@@ -97,7 +101,13 @@ export async function runWithRetry<T>(
 			}
 
 			retryAfter = getRetryDelayFromError(error) ?? retryAfter;
-			await delay(Math.floor(retryAfter));
+			await (operation === undefined
+				? delay(Math.floor(retryAfter))
+				: operation.waitForRetry(
+						Math.floor(retryAfter),
+						error,
+						coherencyError ? "coherency" : "serviceReadOnly",
+					));
 			retryAfter += (retryAfter / 4) * (1 + Math.random());
 			lastError = error;
 		}

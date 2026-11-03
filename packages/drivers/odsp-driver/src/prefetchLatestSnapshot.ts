@@ -33,6 +33,7 @@ import {
 } from "./fetchSnapshot.js";
 import type { IPrefetchSnapshotContents } from "./odspCache.js";
 import type { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
+import type { OdspOperation } from "./odspOperation.js";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
@@ -103,6 +104,7 @@ export async function prefetchLatestSnapshot(
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
+		operation?: OdspOperation,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
@@ -116,6 +118,7 @@ export async function prefetchLatestSnapshot(
 			undefined,
 			undefined,
 			odspDocumentServiceFactory?.requestHeaders,
+			operation,
 		);
 	};
 	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);

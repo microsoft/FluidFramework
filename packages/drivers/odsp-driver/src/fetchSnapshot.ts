@@ -69,6 +69,8 @@ import {
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 import { mergeRequestHeaders } from "./requestHeaders.js";
+import { OdspOperation } from "./odspOperation.js";
+import { withOdspOperation } from "./requestControl.js";
 
 /**
  * Enum to support different types of snapshot formats.
@@ -127,13 +129,39 @@ export async function fetchSnapshotWithRedeem(
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
+		operation?: OdspOperation,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 	requestHeaders?: Readonly<Record<string, string>>,
+	operation?: OdspOperation,
 ): Promise<ISnapshot> {
+	if (operation === undefined) {
+		const context = new OdspOperation(
+			logger,
+			storageTokenFetcher,
+			"fetchSnapshot",
+			JSON.stringify([odspResolvedUrl.hashedDocumentId, loadingGroupIds]),
+		);
+		return context.run(async () =>
+			fetchSnapshotWithRedeem(
+				odspResolvedUrl,
+				storageTokenFetcher,
+				snapshotOptions,
+				context.logger,
+				snapshotDownloader,
+				putInCache,
+				removeEntries,
+				loadingGroupIds,
+				enableRedeemFallback,
+				requestHeaders,
+				context,
+			),
+		);
+	}
+	const operationLogger = operation.logger;
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
@@ -146,17 +174,24 @@ export async function fetchSnapshotWithRedeem(
 		odspResolvedUrl,
 		storageTokenFetcher,
 		snapshotOptions,
-		logger,
+		operationLogger,
 		snapshotDownloader,
 		putInCache,
 		loadingGroupIds,
 		enableRedeemFallback,
+		operation,
 	)
 		.catch(async (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
-				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger, requestHeaders);
+				await redeemSharingLink(
+					odspResolvedUrl,
+					storageTokenFetcher,
+					operationLogger,
+					requestHeaders,
+					operation,
+				);
 
 				const shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo };
 				delete shareLinkInfo.sharingLinkToRedeem;
@@ -169,7 +204,7 @@ export async function fetchSnapshotWithRedeem(
 				// If redeem failed, that most likely means user has no permissions to access a file,
 				// and thus it's not worth it logging extra errors - same error will be logged by end-to-end
 				// flow (container open) based on a failure above.
-				logger.sendTelemetryEvent(
+				operationLogger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -182,10 +217,12 @@ export async function fetchSnapshotWithRedeem(
 					odspResolvedUrlWithoutShareLink,
 					storageTokenFetcher,
 					snapshotOptions,
-					logger,
+					operationLogger,
 					snapshotDownloader,
 					putInCache,
 					loadingGroupIds,
+					undefined,
+					operation,
 				);
 			} else if (
 				isLocationRedirectionError(error) &&
@@ -196,7 +233,7 @@ export async function fetchSnapshotWithRedeem(
 					// now against the redirected URL rather than waiting until the error reaches the
 					// resolveWithLocationRedirectionHandling handler as it will call getAbsoluteURL
 					// and would fail due to permission issues since it will not attempt to redeem.
-					logger.sendTelemetryEvent(
+					operationLogger.sendTelemetryEvent(
 						{
 							eventName: "RedirectRedeemFallback",
 							errorType: error.errorType,
@@ -210,11 +247,15 @@ export async function fetchSnapshotWithRedeem(
 					await redeemSharingLink(
 						redirectedResolvedUrl,
 						storageTokenFetcher,
-						logger,
+						operationLogger,
 						requestHeaders,
+						operation,
 					);
 				} catch (redeemError) {
-					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
+					operationLogger.sendErrorEvent(
+						{ eventName: "RedirectRedeemFallbackError" },
+						redeemError,
+					);
 				}
 				throw error;
 			} else {
@@ -244,6 +285,7 @@ async function redeemSharingLink(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: TelemetryLoggerExt,
 	requestHeaders?: Readonly<Record<string, string>>,
+	operation?: OdspOperation,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -280,10 +322,13 @@ async function redeemSharingLink(
 					);
 					const headers = getHeadersWithAuth(authHeader);
 					headers.prefer = isRedemptionNonDurable ? "nonDurableRedeem" : "redeemSharingLink";
-					await fetchAndParseAsJSONHelper(url, {
+					const options = {
 						headers: mergeRequestHeaders(requestHeaders, headers),
 						method,
-					});
+					};
+					await (operation === undefined
+						? fetchAndParseAsJSONHelper(url, options)
+						: operation.request(async () => fetchAndParseAsJSONHelper(url, options)));
 				});
 			}
 
@@ -321,10 +366,12 @@ async function fetchLatestSnapshotCore(
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
+		operation?: OdspOperation,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
+	operation?: OdspOperation,
 ): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
@@ -371,6 +418,7 @@ async function fetchLatestSnapshotCore(
 					loadingGroupIds,
 					snapshotOptions,
 					controller,
+					operation,
 				),
 			).finally(() => {
 				// Clear the fetchTimeout once the response is fetched.
@@ -747,6 +795,7 @@ export const downloadSnapshot = mockify(
 		epochTracker?: EpochTracker,
 		scenarioName?: string,
 		requestHeaders?: Readonly<Record<string, string>>,
+		operation?: OdspOperation,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -822,11 +871,14 @@ export const downloadSnapshot = mockify(
 
 		const odspResponse = await (epochTracker?.fetch(
 			url,
-			fetchOptions,
+			withOdspOperation(fetchOptions, operation),
 			"treesLatest",
 			true,
 			scenarioName,
-		) ?? fetchHelper(url, fetchOptions));
+		) ??
+			(operation === undefined
+				? fetchHelper(url, fetchOptions)
+				: operation.request(async () => fetchHelper(url, fetchOptions))));
 		logger?.sendTelemetryEvent({ eventName: "SnapshotFetchResponseReceived" });
 
 		return {
