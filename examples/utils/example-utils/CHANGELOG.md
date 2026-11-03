@@ -1,5 +1,9 @@
 # @fluid-example/example-utils
 
+## 3.10.0
+
+Dependency updates only.
+
 ## 3.7.0
 
 Dependency updates only.
