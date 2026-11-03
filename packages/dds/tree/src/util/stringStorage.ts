@@ -35,7 +35,12 @@ export const checkpointStride = 64;
  */
 export const stringBufferSize = 4096;
 
-/** Immutable text and sparse code-point offsets shared by pieces. */
+/**
+ * Immutable text and sparse code-point offsets shared by {@link StringPiece}s.
+ *
+ * @remarks
+ * This class represents an immutable string buffer with sparse checkpoints for efficient atom-to-UTF-16 offset conversion.
+ */
 class StringBuffer {
 	/**
 	 * The length of this buffer in logical code-point atoms.
@@ -44,7 +49,7 @@ class StringBuffer {
 	 */
 	public readonly length: number;
 	/**
-	 * #checkpoints[i] stores the UTF-16 offset of the i-th checkpoint, which is at index `i * checkpointStride`
+	 * #checkpoints[i] stores the UTF-16 offset (in code units) of the i-th checkpoint, which is the text atom at index `i * checkpointStride`
 	 *
 	 * If `text` happens to have exactly one atom per code unit, checkpoints are not needed and this field is undefined.
 	 */
