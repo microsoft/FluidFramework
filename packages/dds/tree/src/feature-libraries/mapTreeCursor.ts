@@ -61,6 +61,11 @@ export interface MinimalFieldMap<TField> {
  * Subset of array, so can be implemented by `TNode[]`.
  */
 export interface MapTreeFieldViewGeneric<TNode> {
+	/**
+	 * Optional field cursor that avoids enumerating node objects.
+	 * Returns undefined when the ordinary node representation should be used.
+	 */
+	tryGetCursor?(): CursorWithNode<TNode> | undefined;
 	readonly [Symbol.iterator]: () => Iterator<TNode>;
 	readonly length: number;
 }
@@ -134,6 +139,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 }
 
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
+	getFieldCursor: (node, key) => node.fields.get(key)?.tryGetCursor?.(),
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),
