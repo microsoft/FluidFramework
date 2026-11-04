@@ -41,6 +41,7 @@ import {
 	Context,
 	createField,
 	UnhydratedContext,
+	UnhydratedFlexTreeNode,
 	UnhydratedGeneralNode,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";

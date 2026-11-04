@@ -111,7 +111,7 @@ function storedSchema(nodeSchema: TreeNodeStoredSchema): TreeStoredSchema {
 
 function unhydrated(content: MapTree, schema: TreeStoredSchema): UnhydratedGeneralNode {
 	const context = new SimpleContext(
-		new UnhydratedContext(defaultSchemaPolicy, schema),
+		new UnhydratedContext(defaultSchemaPolicy, schema.nodeSchema),
 		new Map(),
 	);
 	const build = (tree: MapTree): UnhydratedGeneralNode =>
@@ -593,7 +593,7 @@ describe("General field storage", () => {
 	it("retains pending defaults but evicts a general field when its default resolves empty", () => {
 		const schema = storedSchema(objectSchema);
 		const context = new SimpleContext(
-			new UnhydratedContext(defaultSchemaPolicy, schema),
+			new UnhydratedContext(defaultSchemaPolicy, schema.nodeSchema),
 			new Map(),
 		);
 		let calls = 0;

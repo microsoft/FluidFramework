@@ -102,7 +102,7 @@ describe("FlexTree navigation benchmarks", () => {
 				} => {
 					if (forest === undefined) {
 						const simpleContext = new SimpleContext(
-							new UnhydratedContext(defaultSchemaPolicy, schema),
+							new UnhydratedContext(defaultSchemaPolicy, schema.nodeSchema),
 							new Map(),
 						);
 						return {

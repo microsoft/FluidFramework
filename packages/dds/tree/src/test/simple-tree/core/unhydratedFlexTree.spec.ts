@@ -113,10 +113,7 @@ describe("unhydratedFlexTree", () => {
 			it(`skips schema lookup for ${schema.identifier}`, () => {
 				const original = getUnhydratedContext(schema);
 				const contextWithoutLookup = new Context(
-					new UnhydratedContext(original.flexContext.schemaPolicy, {
-						...original.flexContext.schema,
-						nodeSchema: new NoSchemaLookup(),
-					}),
+					new UnhydratedContext(original.flexContext.schemaPolicy, new NoSchemaLookup()),
 					original.schema,
 				);
 				const leaf = createUnhydratedFlexTreeNode(
