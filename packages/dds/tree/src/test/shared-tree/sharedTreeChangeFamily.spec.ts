@@ -16,8 +16,6 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
@@ -42,11 +40,13 @@ import type {
 	SharedTreeInnerChange,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
+import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import {
 	chunkFromJsonTrees,
 	failCodecFamily,
 	mintRevisionTag,
+	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../utils.js";
 
@@ -99,20 +99,31 @@ const treeDataChange1: SharedTreeChange = {
 const treeDataChange2: SharedTreeChange = {
 	changes: [{ type: "data", innerChange: modularDataChange2 }],
 };
-const treeConstraint: SharedTreeChange = {
-	changes: [{ type: "data", innerChange: modularConstraint }],
+const stringSchema = toInitialSchema(SchemaFactory.string);
+const stringNumberSchema = toInitialSchema([SchemaFactory.string, SchemaFactory.number]);
+const stringBooleanSchema = toInitialSchema([SchemaFactory.string, SchemaFactory.boolean]);
+const stringNumberBooleanSchema = toInitialSchema([
+	SchemaFactory.string,
+	SchemaFactory.number,
+	SchemaFactory.boolean,
+]);
+const innerSchemaChange = {
+	schema: { old: stringSchema, new: stringNumberSchema },
+	isInverse: false,
 };
-const emptySchema: TreeStoredSchema = {
-	nodeSchema: new Map(),
-	rootFieldSchema: {
-		kind: forbidden.identifier,
-		types: new Set(),
-		persistedMetadata: undefined,
-	},
-};
-const innerSchemaChange = { schema: { new: emptySchema, old: emptySchema }, isInverse: false };
 const treeSchemaChange: SharedTreeChange = {
 	changes: [{ type: "schema", innerChange: innerSchemaChange }],
+};
+const treeSchemaChange2: SharedTreeChange = {
+	changes: [
+		{
+			type: "schema",
+			innerChange: {
+				schema: { old: stringNumberSchema, new: stringNumberBooleanSchema },
+				isInverse: false,
+			},
+		},
+	],
 };
 const emptyTreeChange: SharedTreeChange = {
 	changes: [],
@@ -125,6 +136,29 @@ const sharedTreeFamily = new SharedTreeChangeFamily(
 );
 
 describe("SharedTreeChangeFamily", () => {
+	const changeCases = {
+		_: { changes: [] }, // No changes
+		C: { changes: [treeDataChange1.changes[0]] }, // Content change
+		S: { changes: [treeSchemaChange.changes[0]] }, // Schema change
+		CS: { changes: [treeDataChange1.changes[0], treeSchemaChange.changes[0]] },
+		SC: { changes: [treeSchemaChange.changes[0], treeDataChange2.changes[0]] },
+		CSC: {
+			changes: [
+				treeDataChange1.changes[0],
+				treeSchemaChange.changes[0],
+				treeDataChange2.changes[0],
+			],
+		},
+		SCS: {
+			changes: [
+				treeSchemaChange.changes[0],
+				treeDataChange1.changes[0],
+				treeSchemaChange2.changes[0],
+			],
+		},
+		SS: { changes: [treeSchemaChange.changes[0], treeSchemaChange2.changes[0]] },
+	} as const satisfies Record<string, SharedTreeChange>;
+
 	it("composition composes runs of data changes", () => {
 		assert.deepEqual(
 			sharedTreeFamily.compose([
@@ -158,128 +192,304 @@ describe("SharedTreeChangeFamily", () => {
 		);
 	});
 
-	it("empty changes result in no-op rebases", () => {
+	it("composition without schema changes matches ModularChangeFamily", () => {
 		assert.deepEqual(
-			sharedTreeFamily.rebase(
-				makeAnonChange(treeSchemaChange),
-				makeAnonChange(emptyTreeChange),
-				revisionMetadataSourceFromInfo([]),
-			),
-			treeSchemaChange,
-		);
-
-		assert.deepEqual(
-			sharedTreeFamily.rebase(
+			sharedTreeFamily.compose([
 				makeAnonChange(treeDataChange1),
-				makeAnonChange(emptyTreeChange),
-				revisionMetadataSourceFromInfo([]),
-			),
-			treeDataChange1,
-		);
-	});
-
-	it("schema edits cause all concurrent changes to conflict", () => {
-		assert.deepEqual(
-			sharedTreeFamily.rebase(
-				makeAnonChange(treeSchemaChange),
-				makeAnonChange(treeDataChange1),
-				revisionMetadataSourceFromInfo([]),
-			),
+				makeAnonChange(treeDataChange2),
+			]),
 			{
-				changes: [],
-			},
-		);
-
-		assert.deepEqual(
-			sharedTreeFamily.rebase(
-				makeAnonChange(treeDataChange1),
-				makeAnonChange(treeSchemaChange),
-				revisionMetadataSourceFromInfo([]),
-			),
-			{
-				changes: [],
-			},
-		);
-
-		assert.deepEqual(
-			sharedTreeFamily.rebase(
-				makeAnonChange(treeSchemaChange),
-				makeAnonChange(treeSchemaChange),
-				revisionMetadataSourceFromInfo([]),
-			),
-			{
-				changes: [],
+				changes: [
+					{
+						type: "data",
+						innerChange: modularFamily.compose([
+							makeAnonChange(modularDataChange1),
+							makeAnonChange(modularDataChange2),
+						]),
+					},
+				],
 			},
 		);
 	});
 
-	describe("without schema edits should behave identically to ModularChangeFamily", () => {
-		it("when composing", () => {
-			assert.deepEqual(
-				sharedTreeFamily.compose([
-					makeAnonChange(treeDataChange1),
-					makeAnonChange(treeDataChange2),
-				]),
-				{
-					changes: [
-						{
-							type: "data",
-							innerChange: modularFamily.compose([
-								makeAnonChange(modularDataChange1),
-								makeAnonChange(modularDataChange2),
-							]),
-						},
-					],
-				},
-			);
+	describe("rebase", () => {
+		const metadata = revisionMetadataSourceFromInfo([]);
+
+		describe("change cases", () => {
+			for (const [shape, forwardChange] of Object.entries(changeCases)) {
+				for (const [overShape, overChange] of Object.entries(changeCases)) {
+					for (const isRollback of [false, true]) {
+						it(`${shape} over ${overShape}${isRollback ? " (rollback)" : ""}`, () => {
+							const change = isRollback
+								? sharedTreeFamily.invert(
+										makeAnonChange(forwardChange),
+										true,
+										mintRevisionTag(),
+									)
+								: forwardChange;
+
+							const over = isRollback
+								? sharedTreeFamily.invert(
+										makeAnonChange(
+											overChange === changeCases.C ? treeDataChange2 : overChange,
+										),
+										true,
+										mintRevisionTag(),
+									)
+								: overChange === changeCases.C
+									? treeDataChange2
+									: overChange;
+
+							let expected: SharedTreeChange;
+							if (forwardChange === changeCases._ || overChange === changeCases._) {
+								expected = change;
+							} else if (forwardChange === changeCases.C && overChange === changeCases.C) {
+								const content = change.changes[0];
+								const overContent = over.changes[0];
+								assert(content.type === "data" && overContent.type === "data");
+								expected = {
+									changes: [
+										{
+											type: "data",
+											innerChange: modularFamily.rebase(
+												makeAnonChange(content.innerChange),
+												makeAnonChange(overContent.innerChange),
+												metadata,
+											),
+										},
+									],
+								};
+							} else {
+								expected = emptyTreeChange;
+							}
+							const rebased = sharedTreeFamily.rebase(
+								makeAnonChange(change),
+								makeAnonChange(over),
+								metadata,
+							);
+							assert.deepEqual(rebased, expected);
+							assert.equal(
+								getConstraintStatus(rebased),
+								expected.changes.length === 0
+									? ConstraintStatus.ImplicitViolation
+									: ConstraintStatus.Satisfied,
+							);
+						});
+					}
+				}
+			}
 		});
 
-		it("when rebasing", () => {
-			assert.deepEqual(
-				sharedTreeFamily.rebase(
-					makeAnonChange(treeDataChange1),
-					makeAnonChange(treeDataChange2),
-					revisionMetadataSourceFromInfo([]),
-				),
-				{
-					changes: [
-						{
-							type: "data",
-							innerChange: modularFamily.rebase(
-								makeAnonChange(modularDataChange1),
-								makeAnonChange(modularDataChange2),
-								revisionMetadataSourceFromInfo([]),
-							),
-						},
-					],
-				},
-			);
+		describe("schema relationships", () => {
+			const cases: readonly [string, TreeStoredSchema, TreeStoredSchema][] = [
+				["equal", stringBooleanSchema, stringBooleanSchema],
+				["strict superset", stringBooleanSchema, stringSchema],
+				["strict subset", stringSchema, stringBooleanSchema],
+				["divergent", stringNumberSchema, stringBooleanSchema],
+			];
+			for (const [name, proposed, overSchema] of cases) {
+				it(`drops schema changes with ${name} outputs`, () => {
+					const [receive, getChanges] = testChangeReceiver(sharedTreeFamily);
+					const editor = sharedTreeFamily.buildEditor(mintRevisionTag, receive);
+					editor.schema.setStoredSchema(stringSchema, proposed);
+					editor.schema.setStoredSchema(stringSchema, overSchema);
+					const [change, over] = getChanges();
+					const rebased = sharedTreeFamily.rebase(
+						makeAnonChange(change),
+						makeAnonChange(over),
+						metadata,
+					);
+					assert.deepEqual(rebased, emptyTreeChange);
+					assert.equal(getConstraintStatus(rebased), ConstraintStatus.ImplicitViolation);
+				});
+			}
 		});
 
-		for (const isRollback of [true, false]) {
-			it(`when inverting (isRollback = ${isRollback})`, () => {
-				const tag = mintRevisionTag();
-				const inverted = sharedTreeFamily.invert(
-					makeAnonChange(treeDataChange1),
-					isRollback,
-					tag,
-				);
+		const constrainedData = modularFamily.compose([
+			makeAnonChange(modularConstraint),
+			makeAnonChange(modularDataChange1),
+		]);
+		const violatedData = modularFamily.rebase(
+			makeAnonChange(constrainedData),
+			makeAnonChange(modularDataChange2),
+			metadata,
+		);
 
-				const expected = {
-					changes: [
-						{
-							type: "data",
-							innerChange: modularFamily.invert(
-								makeAnonChange(modularDataChange1),
-								isRollback,
-								tag,
-							),
+		describe("no-change constraints", () => {
+			for (const [state, innerChange] of [
+				["satisfied", constrainedData],
+				["violated", violatedData],
+			] as const) {
+				for (const [overShape, over] of [
+					["_", emptyTreeChange],
+					["C", treeDataChange2],
+					["S", treeSchemaChange],
+				] as const) {
+					for (const ignoreNoChangeViolation of [undefined, true]) {
+						it(`${state} constraint over ${overShape}, ignoreNoChangeViolation = ${ignoreNoChangeViolation ?? "default"}`, () => {
+							const change: SharedTreeChange = {
+								changes: [{ type: "data", innerChange }],
+							};
+							const rebased = sharedTreeFamily.rebase(
+								makeAnonChange(change),
+								makeAnonChange(over),
+								metadata,
+								ignoreNoChangeViolation,
+							);
+							const expected: SharedTreeChange =
+								over === emptyTreeChange
+									? change
+									: over === treeSchemaChange
+										? emptyTreeChange
+										: {
+												changes: [
+													{
+														type: "data",
+														innerChange: modularFamily.rebase(
+															makeAnonChange(innerChange),
+															makeAnonChange(modularDataChange2),
+															metadata,
+															ignoreNoChangeViolation,
+														),
+													},
+												],
+											};
+							assert.deepEqual(rebased, expected);
+							assert.equal(
+								getConstraintStatus(rebased),
+								over === treeSchemaChange
+									? ConstraintStatus.ImplicitViolation
+									: state === "violated" ||
+											(over === treeDataChange2 && !ignoreNoChangeViolation)
+										? ConstraintStatus.ExplicitViolation
+										: ConstraintStatus.Satisfied,
+							);
+						});
+					}
+				}
+			}
+		});
+
+		describe("no-effect and conflicted changes", () => {
+			const emptyContent: SharedTreeChange = {
+				changes: [{ type: "data", innerChange: modularFamily.compose([]) }],
+			};
+			const identitySchema: SharedTreeChange = {
+				changes: [
+					{
+						type: "schema",
+						innerChange: {
+							schema: { old: stringSchema, new: stringSchema },
+							isInverse: false,
 						},
+					},
+				],
+			};
+			const cases: readonly [string, SharedTreeChange, SharedTreeChange, SharedTreeChange][] =
+				[
+					// S = schema change, C = content change, _ = empty change
+					["empty content over _", emptyContent, emptyTreeChange, emptyContent],
+					["empty content over S", emptyContent, treeSchemaChange, emptyTreeChange],
+					["S over empty content", treeSchemaChange, emptyContent, emptyTreeChange],
+					["identity schema over C", identitySchema, treeDataChange1, emptyTreeChange],
+					["C over identity schema", treeDataChange1, identitySchema, emptyTreeChange],
+					[
+						"S over explicitly conflicted content",
+						treeSchemaChange,
+						{ changes: [{ type: "data", innerChange: violatedData }] },
+						emptyTreeChange,
 					],
-				};
+				];
+			for (const [name, change, over, expected] of cases) {
+				it(name, () => {
+					const rebased = sharedTreeFamily.rebase(
+						makeAnonChange(change),
+						makeAnonChange(over),
+						metadata,
+					);
+					assert.deepEqual(rebased, expected);
+					assert.equal(
+						getConstraintStatus(rebased),
+						expected.changes.length === 0
+							? ConstraintStatus.ImplicitViolation
+							: ConstraintStatus.Satisfied,
+					);
+				});
+			}
+		});
 
-				assert.deepEqual(inverted, expected);
-			});
+		describe("successive rebases", () => {
+			const schemaRollback = sharedTreeFamily.invert(
+				makeAnonChange(treeSchemaChange),
+				true,
+				mintRevisionTag(),
+			);
+			for (const [name, first, second] of [
+				["upgrade then rollback", treeSchemaChange, schemaRollback],
+				["rollback then upgrade", schemaRollback, treeSchemaChange],
+			] as const) {
+				it(`does not restore dropped content after ${name}`, () => {
+					let rebased = treeDataChange1;
+					for (const over of [first, second]) {
+						rebased = sharedTreeFamily.rebase(
+							makeAnonChange(rebased),
+							makeAnonChange(over),
+							metadata,
+						);
+						assert.deepEqual(rebased, emptyTreeChange);
+						assert.equal(getConstraintStatus(rebased), ConstraintStatus.ImplicitViolation);
+					}
+				});
+			}
+		});
+	});
+
+	describe("invert", () => {
+		for (const [shape, change] of Object.entries(changeCases)) {
+			for (const isRollback of [false, true]) {
+				it(`${shape}, isRollback = ${isRollback}`, () => {
+					const revision = mintRevisionTag();
+					const inverseRevision = mintRevisionTag();
+					const inverted = sharedTreeFamily.invert(
+						tagChange(change, revision),
+						isRollback,
+						inverseRevision,
+					);
+					const expected: SharedTreeChange = {
+						changes: change.changes
+							.map(
+								(inner): SharedTreeInnerChange =>
+									inner.type === "data"
+										? {
+												type: "data",
+												innerChange: modularFamily.invert(
+													tagChange(inner.innerChange, revision),
+													isRollback,
+													inverseRevision,
+												),
+											}
+										: {
+												type: "schema",
+												innerChange: {
+													schema: {
+														old: inner.innerChange.schema.new,
+														new: inner.innerChange.schema.old,
+													},
+													isInverse: true,
+												},
+											},
+							)
+							.reverse(),
+					};
+					assert.deepEqual(inverted, expected);
+					assert.equal(
+						getConstraintStatus(inverted),
+						change === changeCases._
+							? ConstraintStatus.ImplicitViolation
+							: ConstraintStatus.Satisfied,
+					);
+				});
+			}
 		}
 	});
 
@@ -474,62 +684,6 @@ describe("SharedTreeChangeFamily", () => {
 				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
 			);
 			checkConsistency(updated);
-		});
-	});
-	describe("getConstraintStatus", () => {
-		it("returns Satisfied for a change that has no constraint violations", () => {
-			const status = getConstraintStatus(treeDataChange1);
-			assert.equal(status, ConstraintStatus.Satisfied);
-		});
-		it("returns ExplicitViolation for a change that has explicit constraint violations", () => {
-			const hasViolatedExplicitConstraint = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(treeConstraint),
-				makeAnonChange(treeDataChange1),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const status = getConstraintStatus(hasViolatedExplicitConstraint);
-			assert.equal(status, ConstraintStatus.ExplicitViolation);
-		});
-		it("returns ImplicitViolation for a data change rebased over a schema change", () => {
-			const dataOverSchema = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(treeDataChange1),
-				makeAnonChange(treeSchemaChange),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const status = getConstraintStatus(dataOverSchema);
-			assert.equal(status, ConstraintStatus.ImplicitViolation);
-		});
-		it("returns ImplicitViolation for a schema change rebased over a data change", () => {
-			const schemaOverData = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(treeSchemaChange),
-				makeAnonChange(treeDataChange1),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const status = getConstraintStatus(schemaOverData);
-			assert.equal(status, ConstraintStatus.ImplicitViolation);
-		});
-		it("returns ImplicitViolation for a schema change rebased over a schema change", () => {
-			const schemaOverSchema = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(treeSchemaChange),
-				makeAnonChange(treeSchemaChange),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const status = getConstraintStatus(schemaOverSchema);
-			assert.equal(status, ConstraintStatus.ImplicitViolation);
-		});
-		it("returns ImplicitViolation for a data change with a violated constraint that is rebased over a schema change", () => {
-			const hasViolatedExplicitConstraint = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(treeConstraint),
-				makeAnonChange(treeDataChange1),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const hasBothKindsOfViolations = sharedTreeFamily.rebaser.rebase(
-				makeAnonChange(hasViolatedExplicitConstraint),
-				makeAnonChange(treeSchemaChange),
-				revisionMetadataSourceFromInfo([]),
-			);
-			const status = getConstraintStatus(hasBothKindsOfViolations);
-			assert.equal(status, ConstraintStatus.ImplicitViolation);
 		});
 	});
 });
