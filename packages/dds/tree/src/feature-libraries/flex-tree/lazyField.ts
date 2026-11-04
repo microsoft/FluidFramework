@@ -204,6 +204,8 @@ abstract class NodeBackedField extends LazyField {
 	}
 
 	public override borrowCursor(): ITreeCursorSynchronous {
+		// TODO: Convert borrowCursor to a synchronous callback API so this can reuse and restore the parent's tracked cursor,
+		// avoiding an unregistered cursor and the root-path walk. The callback contract need not guarantee recovery after exceptions.
 		const { parent, field } = this.getFieldPath();
 		// Use an independent, unregistered forest cursor to avoid boxing children or moving the parent's cursor.
 		const cursor = this.context.checkout.forest.getCursorAboveDetachedFields();
