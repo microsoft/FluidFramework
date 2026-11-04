@@ -46,6 +46,10 @@ UPCOMING.md
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
 
+# Prevent legacy Claude configuration from being committed.
+**/.claude/
+CLAUDE.local.md
+
 # Output from benchmarks
 **/benchmark*Output.json
 

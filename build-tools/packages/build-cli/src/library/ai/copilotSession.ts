@@ -29,7 +29,7 @@ export interface AiSessionUi {
  * Configuration for an interactive AI launcher session.
  */
 export interface AiSessionOptions {
-	model?: string;
+	model: string;
 	prompt: string;
 	githubToken?: string;
 	ui: AiSessionUi;
@@ -106,13 +106,9 @@ export async function runAiSession(
 		await preflight(client);
 		ui.info?.("Authenticated.");
 
-		ui.info?.(
-			model === undefined
-				? "Starting session with the Copilot default model..."
-				: `Starting session (model: ${model})...`,
-		);
+		ui.info?.(`Starting session (model: ${model})...`);
 		session = await client.createSession({
-			...(model !== undefined ? { model } : {}),
+			model,
 			streaming: true,
 			tools: [selectAliasTool],
 			onPermissionRequest: approveAll,
