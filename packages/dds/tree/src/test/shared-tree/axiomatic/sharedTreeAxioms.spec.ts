@@ -26,7 +26,7 @@ import {
 } from "../../utils.js";
 
 import { generateSharedTreeHistories, type SharedTreeHistory } from "./historyGeneration.js";
-import { createMultiFieldFixture, multiFieldOperations } from "./multiFieldFixture.js";
+import { createMultiFieldFixture, operationGenerator } from "./multiFieldFixture.js";
 import {
 	SharedTreeAxiomAdapter,
 	assertSharedTreeChangeHasNoEffects,
@@ -74,7 +74,9 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 
 	it("composition and rebase identities for initial operations", () => {
 		let count = 0;
-		for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 1)) {
+		for (const history of generateSharedTreeHistories(parent, operationGenerator, 1, {
+			removeMovedNode: true,
+		})) {
 			withTrace([history], () => {
 				const edit = history[0].change;
 				const empty = adapter.empty();
@@ -94,7 +96,9 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 	});
 
 	it("composes each operation with its rollback to a change with no effects", () => {
-		for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 1)) {
+		for (const history of generateSharedTreeHistories(parent, operationGenerator, 1, {
+			removeMovedNode: true,
+		})) {
 			withTrace([history], () => {
 				const edit = history[0].change;
 				const rollback = adapter.invert(edit, true);
@@ -109,7 +113,9 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 
 	it("composition matches sequential replay for all two-edit histories", () => {
 		let count = 0;
-		for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 2)) {
+		for (const history of generateSharedTreeHistories(parent, operationGenerator, 2, {
+			removeMovedNode: true,
+		})) {
 			withTrace([history], () => {
 				const edits = changes(history);
 				assertSharedTreeReplayEqual(
@@ -125,7 +131,9 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 
 	it("composition is associative for all three-edit histories", () => {
 		let count = 0;
-		for (const history of generateSharedTreeHistories(parent, multiFieldOperations, 3)) {
+		for (const history of generateSharedTreeHistories(parent, operationGenerator, 3, {
+			removeMovedNode: true,
+		})) {
 			withTrace([history], () => {
 				const [a, b, c] = changes(history);
 				const left = adapter.compose([adapter.compose([a, b]), c]);
@@ -137,8 +145,16 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 	});
 
 	it.skip("rebases initial operations over all two-edit histories", () => {
-		const locals = [...generateSharedTreeHistories(parent, multiFieldOperations, 1)];
-		const bases = [...generateSharedTreeHistories(parent, multiFieldOperations, 2)];
+		const locals = [
+			...generateSharedTreeHistories(parent, operationGenerator, 1, {
+				removeMovedNode: true,
+			}),
+		];
+		const bases = [
+			...generateSharedTreeHistories(parent, operationGenerator, 2, {
+				removeMovedNode: true,
+			}),
+		];
 		let count = 0;
 		for (const local of locals) {
 			for (const base of bases) {

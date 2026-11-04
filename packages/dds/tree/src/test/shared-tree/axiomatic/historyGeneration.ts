@@ -12,6 +12,7 @@ import {
 	generateSharedTreeChanges,
 	type SharedTreeTestOperation,
 } from "./changeGeneration.js";
+import type { OperationGeneratorConfig } from "./multiFieldFixture.js";
 
 /**
  * A complete committed change and the description of the operation that authored it.
@@ -39,8 +40,13 @@ export type SharedTreeHistory = readonly NamedSharedTreeChange[];
  */
 export function* generateSharedTreeHistories(
 	parent: TreeCheckout,
-	operations: (state: TreeCheckout, depth: number) => Iterable<SharedTreeTestOperation>,
+	operations: (
+		state: TreeCheckout,
+		depth: number,
+		config: OperationGeneratorConfig,
+	) => Iterable<SharedTreeTestOperation>,
 	length: number,
+	config: OperationGeneratorConfig,
 ): IterableIterator<SharedTreeHistory> {
 	assert(
 		Number.isInteger(length) && length >= 0,
@@ -57,7 +63,7 @@ export function* generateSharedTreeHistories(
 		}
 		for (const candidate of generateSharedTreeChanges(
 			state,
-			operations(state, history.length),
+			operations(state, history.length, config),
 		)) {
 			yield* visit(candidate.checkout, [
 				...history,

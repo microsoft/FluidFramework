@@ -100,6 +100,11 @@ export interface MultiFieldOperationDescriptor {
 	readonly dst: FieldLocation;
 	readonly remove: boolean;
 }
+
+export interface OperationGeneratorConfig {
+	readonly removeMovedNode: boolean;
+}
+
 /**
  * Enumerate valid candidates in a stable order from the checkout's current forest.
  * Each depth uses a new content label; sequence destinations contain at most two nodes.
@@ -107,13 +112,14 @@ export interface MultiFieldOperationDescriptor {
 export function* operationDescriptorsFromCheckout(
 	checkout: TreeCheckout,
 	depth: number,
+	config: OperationGeneratorConfig,
 ): IterableIterator<MultiFieldOperationDescriptor> {
 	const view = checkout.viewWithInternal(viewConfiguration, false);
 	try {
 		const allNods = new Map<string, Nod>();
 		const ancestors = new Set<Nod>();
 		getAllNods(view.root, allNods);
-		yield* operationDescriptorsFromNod(view.root, allNods, ancestors);
+		yield* operationDescriptorsFromNod(view.root, allNods, ancestors, config);
 	} finally {
 		view.dispose();
 	}
@@ -133,10 +139,11 @@ export function* operationDescriptorsFromNod(
 	node: Nod,
 	allNods: Map<string, Nod>,
 	ancestors: Set<Nod>,
+	config: OperationGeneratorConfig,
 ): IterableIterator<MultiFieldOperationDescriptor> {
 	ancestors.add(node);
-	yield* operationDescriptorsFromNodField(node, "l", allNods, ancestors);
-	yield* operationDescriptorsFromNodField(node, "r", allNods, ancestors);
+	yield* operationDescriptorsFromNodField(node, "l", allNods, ancestors, config);
+	yield* operationDescriptorsFromNodField(node, "r", allNods, ancestors, config);
 	ancestors.delete(node);
 }
 
@@ -145,6 +152,7 @@ export function* operationDescriptorsFromNodField(
 	fieldKey: SequenceFieldKey,
 	allNods: Map<string, Nod>,
 	ancestors: Set<Nod>,
+	config: OperationGeneratorConfig,
 ): IterableIterator<MultiFieldOperationDescriptor> {
 	const childCount = parent[fieldKey].length;
 	if (childCount === 0) {
@@ -162,13 +170,13 @@ export function* operationDescriptorsFromNodField(
 				node: id,
 				src,
 				dst: { parent: parent.id, field: fieldKey, index: 0 },
-				remove: true,
+				remove: config.removeMovedNode,
 			};
 			yield {
 				node: id,
 				src,
 				dst: { parent: parent.id, field: fieldKey, index: childCount },
-				remove: true,
+				remove: config.removeMovedNode,
 			};
 		}
 	}
@@ -218,11 +226,12 @@ export function applyMultiFieldOperation(
  * Convert serializable descriptors to callbacks for the existing change-capture helper.
  * Descriptions are JSON so a retained history also records its operation intentions.
  */
-export function* multiFieldOperations(
+export function* operationGenerator(
 	checkout: TreeCheckout,
 	depth: number,
+	config: OperationGeneratorConfig,
 ): IterableIterator<SharedTreeTestOperation> {
-	for (const operation of operationDescriptorsFromCheckout(checkout, depth)) {
+	for (const operation of operationDescriptorsFromCheckout(checkout, depth, config)) {
 		yield {
 			description: JSON.stringify(operation),
 			apply: (child) => applyMultiFieldOperation(child, operation),

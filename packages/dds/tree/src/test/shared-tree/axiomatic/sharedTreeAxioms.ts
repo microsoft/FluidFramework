@@ -17,11 +17,7 @@ import {
 	type TaggedChange,
 } from "../../../core/index.js";
 import { intoDelta } from "../../../feature-libraries/index.js";
-import {
-	TreeBeta,
-	type SharedTreeChange,
-	type TreeCheckout,
-} from "../../../shared-tree/index.js";
+import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
 import {
 	SharedTreeChangeFamily,
 	// eslint-disable-next-line import-x/no-internal-modules -- Exercise the production change family directly.
@@ -30,11 +26,7 @@ import {
 	assertModularChangesetsEqual,
 	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the modular changeset assertion helper.
 } from "../../feature-libraries/modular-schema/modularChangesetUtil.js";
-import {
-	defaultRevisionMetadataFromChanges,
-	jsonTreeFromCheckout,
-	validateViewConsistency,
-} from "../../utils.js";
+import { defaultRevisionMetadataFromChanges, validateViewConsistency } from "../../utils.js";
 
 /**
  * Bind algebraic operations to the production SharedTree family.
