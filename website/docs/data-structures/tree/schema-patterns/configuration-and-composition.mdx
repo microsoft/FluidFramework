@@ -47,7 +47,7 @@ Two patterns are useful:
 | Pattern             | Identifier construction                                               | Examples                                                                                                                                                                                                                                     |
 | ------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Caller-owned scope  | The library supplies names within a scope reserved by the caller.     | <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" /> use enum values as names.                                                                                              |
-| Library-owned scope | The library incorporates the supplied scope into its own identifiers. | <ApiLink package="fluid-framework" api="TableSchema" /> uses `com.fluidframework.table<user-scope>.Table`; <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> uses `com.fluidframework.text.formatted<user-scope>.Text`. |
+| Library-owned scope | The library incorporates the supplied scope into its own identifiers. | <ApiLink package="fluid-framework" api="TableSchema" /> uses `com.fluidframework.tableV2<user-scope>.TableRoot`; <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> uses `com.fluidframework.text.formatted<user-scope>.Text`. |
 
 Give separate enums distinct scopes when values overlap.
 

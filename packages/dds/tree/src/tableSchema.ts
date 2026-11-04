@@ -1472,7 +1472,7 @@ export namespace System_TableSchema {
 
 /**
  * Sets up scope for table schema built-in types.
- * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
+ * @remarks User-provided factory scoping will be applied as `com.fluidframework.tableV2<user-scope>`.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createTableScopedFactory<TUserScope extends string>(
