@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	TreeViewAlpha,
 	TreeViewConfiguration,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	UntypedTreeView,
 	UntypedTreeViewAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 	ViewableTreeAlpha,
@@ -62,7 +65,7 @@ export class BranchCheckout extends CheckoutBase implements TreeBranchHandleAlph
 		return false;
 	}
 
-	// A `BranchCheckout` is viewless by construction, so the `TreeViewAlpha` type predicate is always false.
+	// A `BranchCheckout` is not a view, even when it has an attached view.
 	public override hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		_schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
@@ -85,36 +88,26 @@ export function forkAsBranchCheckout(parent: CheckoutBase): BranchCheckout {
  * An independent branch of a tree that you own.
  *
  * @remarks
- * Use {@link ViewableTreeAlpha.forkBranch} to create a branch.
+ * Use {@link ViewableTreeAlpha.forkBranch} to create a branch from a tree.
+ * Use {@link TreeBranchHandleAlpha.fork | fork} to fork this branch.
  * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the branch.
- * The branch owns its state and history.
- * The view uses the configured schema to read and edit that state.
- * Edits affect only this branch until you merge them into another view with `merge`.
- * By default, a successful merge disposes this branch and its view.
- * It does not dispose the target branch or its view.
- * Pass `false` as the second argument to `merge` to keep this branch and its view available.
- * If you do not dispose the branch through a merge, call {@link TreeBranchHandleAlpha.dispose | dispose} when you no longer need it.
- *
- * The branch and its views do not support `rewindTo`.
- * Do not implement this interface yourself.
+ * The branch retains its state and history independently of its views.
+ * Call {@link TreeBranchHandleAlpha.dispose | dispose} when you no longer need it.
  *
  * @sealed @alpha
  */
-export interface TreeBranchHandleAlpha {
+export interface TreeBranchHandleAlpha extends IDisposable {
 	/**
-	 * True if a call to {@link TreeBranchHandleAlpha.dispose | dispose} or a merge disposed the branch.
-	 */
-	readonly disposed: boolean;
-
-	/**
-	 * Creates an independent branch from this branch.
+	 * Creates an independent branch from this branch's current state.
 	 *
 	 * @remarks
 	 * Each call creates a new branch.
-	 * Changes to the new branch do not affect this branch until you merge them into it.
+	 * You do not need an active view to fork this branch.
+	 * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} on the returned branch to create its view.
+	 * Changes to the new branch do not affect this branch until you {@link UntypedTreeView.merge | merge} them through views of the branches.
 	 * If you dispose one branch, the other branch remains available.
 	 *
-	 * @returns A new, independent branch that you own.
+	 * @returns A new, independent branch handle that you own from this branch, with no active view.
 	 *
 	 * @throws A `UsageError` if this branch has a pending transaction or is disposed.
 	 */
@@ -129,15 +122,10 @@ export interface TreeBranchHandleAlpha {
 	 * Access to {@link TreeView.root | root} throws an error until the schemas are compatible.
 	 *
 	 * Edits through the view affect this branch.
-	 * To merge the edits, call `merge` on the target view and pass this view as the first argument.
-	 * By default, a successful merge disposes this branch and its view.
-	 * It does not dispose the target branch or its view.
-	 * Pass `false` as the second argument to `merge` to keep this branch and its view available.
-	 * If you dispose the returned view, this branch remains available.
-	 * If you dispose this branch, it also disposes its view.
-	 * A view from `view.fork()` owns its new branch.
-	 * If you dispose that view, it also disposes its branch.
-	 * The returned view does not support `rewindTo`.
+	 * Disposing the view preserves this branch so you can create another view.
+	 * However, disposing this branch also disposes its active view.
+	 * Only one view of this branch can be active at a time.
+	 * The returned view does not support {@link UntypedTreeViewAlpha.rewindTo | rewindTo}.
 	 *
 	 * @typeParam TSchema - The schema type of the tree view.
 	 * @param config - The schema configuration for the view.
@@ -152,8 +140,9 @@ export interface TreeBranchHandleAlpha {
 	/**
 	 * Disposes this branch and its view, if it has one.
 	 * @remarks
-	 * If you dispose a view from {@link TreeBranchHandleAlpha.viewWith | viewWith}, this branch remains available.
-	 * If you dispose the source branch or its view, this branch remains available.
+	 * Disposing this branch does not dispose its parent or child branches.
+	 *
+	 * @throws A `UsageError` if this branch is already disposed.
 	 */
 	dispose(): void;
 }

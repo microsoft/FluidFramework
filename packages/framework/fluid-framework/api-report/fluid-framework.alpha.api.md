@@ -2778,9 +2778,8 @@ export interface TreeBranchEventsBeta {
 }
 
 // @alpha @sealed
-export interface TreeBranchHandleAlpha {
+export interface TreeBranchHandleAlpha extends IDisposable {
     dispose(): void;
-    readonly disposed: boolean;
     fork(): TreeBranchHandleAlpha;
     viewWith<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 }

@@ -131,7 +131,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	 * For an {@link ITreeAlpha}, this method forks the main branch.
 	 * You do not need a view.
 	 * Each call creates a new branch.
-	 * Changes to the new branch do not affect this tree until you merge them into a view of this tree.
+	 * Changes to the new branch do not affect this tree until you {@link UntypedTreeView.merge | merge} them into a view of this tree.
 	 * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the new branch.
 	 * Use {@link TreeBranchHandleAlpha.fork | fork} to create child branches.
 	 *
@@ -306,9 +306,14 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	>;
 
 	/**
-	 * Fork a new branch off of this branch which is based off of this branch's current state.
-	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
-	 * The view should be disposed when no longer needed, either {@link UntypedTreeView.dispose | explicitly} or {@link UntypedTreeView.merge | implicitly when merging} into another view.
+	 * Creates a view of a new branch based on this branch's current state.
+	 *
+	 * @remarks
+	 * Changes through the returned view do not affect this branch until you {@link UntypedTreeView.merge | merge} them back.
+	 * The returned view owns its branch: disposing the view also disposes that branch.
+	 *
+	 * @returns A view that owns the new branch.
+	 * @throws A `UsageError` if this branch has a pending transaction or is disposed.
 	 */
 	fork(): UntypedTreeView;
 
@@ -319,9 +324,14 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	 * @param disposeMerged - If true, dispose the source branch and its view after a successful merge.
 	 * The default is true.
 	 * Pass false to keep the source branch and its view available.
-	 * The merge does not dispose the target branch or this view.
-	 * A call to dispose the {@link UntypedTreeView | main view} has no effect.
-	 * @remarks The merge commits all pending transactions in the source view before it applies the changes.
+	 *
+	 * @remarks
+	 * The disposal policy also applies when the source view was created through {@link TreeBranchHandleAlpha.viewWith}:
+	 * a successful merge disposes its branch handle and view unless `disposeMerged` is false.
+	 * Shared source branches, including the main branch, are not disposed.
+	 * The merge does not dispose this view or its target branch.
+	 *
+	 * @throws A `UsageError` if either branch has a pending transaction or is disposed.
 	 */
 	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
@@ -329,7 +339,8 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	 * Advance this view forward such that all new changes on the target view become part of this view.
 	 * @param view - The view to rebase onto.
 	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
-	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
+	 * This method can be called on views from {@link UntypedTreeView.fork | fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * Shared branches, including the main branch, cannot be rebased onto another branch.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
@@ -642,6 +653,7 @@ export interface UntypedTreeViewAlpha
 	 * Do not call this method on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
 	 * Do not call it on a view whose branch cannot be replaced.
 	 * This restriction applies to branches from {@link ViewableTreeAlpha.forkBranch} and views from {@link TreeBranchHandleAlpha.viewWith}.
+	 * Use {@link TreeBranchCommitMetadata.revertTo} to restore earlier content without replacing the branch.
 	 */
 	rewindTo(revision: CommitRevision): void;
 
