@@ -130,9 +130,9 @@ The aggregate command installs Playwright's browser dependencies before running 
 
 ## User Telemetry
 
-The website no longer initializes Application Insights from the homepage.
-As a result, it does not use this SDK to collect usage telemetry or create user and session cookies.
-If a browser retains a `userId` cookie from an older deployment, the website ignores it until it expires or the visitor deletes it.
+The website previously used Application Insights and a custom `userId` cookie to associate visits with the same browser.
+Now that the homepage no longer initializes the SDK, it no longer collects this telemetry or creates the associated cookies.
+This change does not clear older cookies, so an unused `userId` cookie can remain until it expires or the visitor deletes it.
 
 ## Deployment
 
