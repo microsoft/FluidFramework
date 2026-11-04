@@ -98,41 +98,13 @@ export const ContextSlot = anchorSlot<Context>();
  *
  * Schema changes and FlexTree entity lifetime:
  *
- * {@link Context.schema} reads the current stored schema, but existing FlexTree node and field instances do not refresh their captured schema-dependent behavior.
- * This context does not subscribe to schema changes.
- * Callers currently clear or dispose it on every stored-schema change, before accessing its trees again.
- * Clearing cursors for a forest edit does not invalidate or refresh these instances.
+ * {@link Context.schema} reflects stored-schema changes, but existing node and field instances retain schema-dependent state.
+ * This context does not subscribe to those changes; callers currently {@link Context.clear | clear} or dispose it after every change, before further access.
  *
- * FlexTree can tolerate changes limited to allowed child-type sets or persisted metadata without replacing node and field instances.
- * It can also tolerate adding schema definitions for previously unused node identifiers.
- * Replacing schema objects with equivalent definitions does not itself require invalidation.
- * This assumes the accessed content remains valid, its node types have schema definitions,
- * and the following constraints are preserved:
+ * Future work to support retaining instances across a schema change would require either:
  *
- * - Each existing FlexTree node instance retains its node schema for field-kind lookup.
- * The field kind must remain unchanged for every possible key on that node type, not just populated fields or cached field instances.
- * For example, adding an optional object field changes its kind from forbidden to optional:
- * an existing node would still use the old schema even if that field had never been accessed.
- *
- * - Node implementation selection must remain valid.
- * General nodes support every stored schema with fields that borrow the node's navigation resources.
- * They cache only populated fields and evict fields when they become empty.
- * Nodes with stored object schemas may instead cache all declared field instances, including empty fields, as a performance optimization.
- * Switching an existing node instance between these implementations requires invalidation;
- * existing node and field instances cannot change their cache ownership, cleanup subscriptions, or navigation strategy in place.
- * This optimization retains fields that own cursors and anchors only for declared keys.
- * Their undeclared fields and all leaf fields use uncached forbidden-field instances.
- * Adding a declared field therefore requires invalidation even if an old forbidden-field instance was never cached.
- *
- * - Existing FlexTree field instances retain their field kind, implementation, and editor behavior.
- * Changes such as optional to sequence, or a change to the root field kind, require invalidating those instances.
- * Include retained root and detached-field instances when checking this constraint.
- *
- * Any conditional invalidation must account for retained removed or detached content, not just the in-document tree.
- * These are FlexTree implementation constraints, not permission to perform a schema edit.
- * A valid schema upgrade or continued view-schema compatibility alone does not establish that existing FlexTree node and field instances can be retained.
- * If these FlexTree constraints are not preserved, call {@link Context.clear} or dispose the context before using trees under the new schema.
- * Higher-level views must also preserve their own schema-dependent state before skipping invalidation.
+ * - Removing schema-dependent FlexTree node and field specialization, and invalidating or refreshing cached schema-dependent state.
+ * - Retaining instances only for schema changes that preserve their existing behavior and cached state.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
 	/**
