@@ -219,6 +219,12 @@ export class UncachedForbiddenField extends ParentField {
 /**
  * Cursor-based field operations which borrow navigation only for the duration of a read.
  * No cursor, anchor, event subscription, or context registration is retained by these fields.
+ * @remarks
+ * Iteration and {@link GeneralSequenceField.map} restart indexed navigation for each child so the parent cursor is restored before callbacks or yields.
+ * Each lookup can scan preceding chunks, making traversal quadratic when a sequence contains many one-node chunks.
+ * This is a deliberate fallback: public schemas cannot create sequence-valued maps, and public arrays use specialized object-field storage.
+ * Keeping this path simple avoids managing an additional cursor across callbacks or yields.
+ * Revisit this tradeoff if sequence-valued maps become public or general sequence fields are used on a performance-sensitive path.
  */
 abstract class GeneralField extends ParentField {
 	protected withCursor<T>(read: (cursor: ITreeSubscriptionCursor) => T): T {
