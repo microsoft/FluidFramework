@@ -7,6 +7,13 @@ The work is not implemented.
 
 The code investigation used [Fluid Framework commit `7a49a6e`](https://github.com/microsoft/FluidFramework/commit/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7).
 
+This document owns the feature requirements, user-facing test scenarios, and delivery checklist.
+The [implementation plan][implementation-plan] owns the algorithms, diagnostic contracts, specific code changes, and implementation-level validation.
+The [overview][overview] explains the proposal for application authors.
+
+Document links follow the feature branch so they refer to the current plans after publication.
+Source-code links remain pinned to the investigation revision.
+
 ## 1. Goal
 
 Let an application remove an optional field from an object schema that enables `allowUnknownOptionalFields`.
@@ -52,152 +59,31 @@ It does not matter whether another application version added the field or the cu
 
 See [unknown optional field checks](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/discrepancies.ts#L509).
 
-The restriction occurs when the package constructs an upgrade target:
+The restriction affects later upgrades.
+Their target is derived from the view schema alone, so it omits fields the application no longer declares.
+The stored-schema safety check rejects that target.
 
-1. Derive a stored schema from the view schema and the staged upgrade policy.
-2. Check that the result permits a superset of the existing stored schema.
-3. Write the result if it changes the schema.
+See the implementation plan's [code findings][implementation-findings] for the affected functions and call paths.
 
-The first step has no existing-document input.
-Thus, a field absent from the view schema is also absent from the upgrade target.
-The superset check rejects the target because it would remove a stored field.
+## 4. Implementation scope
 
-The target is currently constructed in two places:
+Use the implementation plan as the source for technical decisions:
 
-- [Compatibility calculation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaCompatibilityTester.ts#L134).
-- [Schema upgrade execution](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L339).
+| Area | Implementation plan section |
+| --- | --- |
+| Construct a target from the view and existing document | [Shared upgrade-target construction][implementation-target] |
+| Preserve referenced types, handle staging, and isolate cached results | [Shared upgrade-target construction][implementation-target] |
+| Compute compatibility flags and execute safe upgrades | [Compatibility and upgrade execution][implementation-runtime] |
+| Explain retained fields separately from viewing blockers | [Informational diagnostics][implementation-diagnostics] |
+| Update offline comparisons and snapshot assumptions | [Snapshot and offline checks][implementation-snapshots] |
 
-Both use [conversion that has no existing-document input](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/toStoredSchema.ts#L106).
-
-## 4. Required implementation changes
-
-### 4.1 Construct the upgrade target from the view and the document
-
-Add one internal helper for upgrade-target construction.
-Use the existing [schema conversion module](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/toStoredSchema.ts) where practical.
-
-The helper needs three inputs:
-
-- The complete view schema.
-- The existing stored schema.
-- The effective staged upgrade policy.
-
-Use the helper for both compatibility calculation and upgrade execution.
-Do not implement separate preservation rules in those paths.
-
-For each affected object type:
-
-1. Derive the application-declared fields with the existing conversion rules.
-2. Check that the current view object enables `allowUnknownOptionalFields`.
-3. Find stored fields whose stored keys are absent from that view object.
-4. Retain each such field only if its stored field kind is optional.
-5. Preserve its allowed types and persisted metadata.
-6. Include the node schemas needed by the retained fields.
-
-Compare stored keys, not property names.
-A property rename that preserves its stored key is not a field removal.
-
-Check the view node kind explicitly.
-Arrays also use `ObjectNodeStoredSchema` internally, but this feature must apply only to view object schemas.
-
-### 4.2 Preserve the required node schemas
-
-A removed field can be the only application reference to an entire group of node schemas.
-Those schemas can contain objects, arrays, maps, leaf types, and recursive references.
-
-Follow all references from retained fields.
-Use a visited set or an equivalent method to handle recursive references.
-Do not inspect current tree content to decide which schema definitions to preserve.
-A field must remain supported even when it is empty.
-
-For each referenced type:
-
-- If the view does not know the type, retain its existing stored definition.
-- If the view knows the type, use the current view definition and the effective staged policy.
-- Apply the optional-field preservation rules to view-known object types as needed.
-- Do not replace a conflicting current declaration with an old declaration.
-
-Preserve metadata on stored-only definitions.
-For view-known definitions, keep the existing metadata conversion behavior.
-
-The final superset check must still cover the complete existing schema repository.
-Detached content can use a node schema that is not reachable from the document root.
-Do not treat absence from the visible tree as permission to delete a definition.
-
-See [repository-wide superset checks](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/feature-libraries/modular-schema/comparison.ts#L196).
-
-### 4.3 Handle staged schema declarations correctly
-
-Use the complete view definitions when you decide whether the application knows a type.
-Do not use only the definitions present in the initially generated stored schema.
-
-The existing conversion removes types that are reachable only through disabled staged declarations.
-A retained unknown field can still refer to one of those types.
-
-See [definition filtering](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/toStoredSchema.ts#L192).
-
-For example:
-
-1. A stored optional field refers to type `Detail`.
-2. The application removes that field.
-3. The application still declares `Detail` through a disabled staged type at another location.
-4. The new `Detail` declaration has an incompatible field shape.
-
-If target construction copies the old `Detail` definition, the superset check can pass.
-However, the resulting document is still incompatible with the view.
-
-Use the current declaration to detect this conflict.
-Also test a compatible version of this case.
-
-Retaining a type definition must not enable that type at another field where the staged policy excludes it.
-Keep the existing behavior for staged allowed types, staged optional fields, and already-enabled upgrades.
-
-See [staged upgrade policies](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/core/toStored.ts).
-
-### 4.4 Keep the stored-schema safety rules
-
-Do not weaken the general superset check to permit field deletion.
-Instead, construct a target that retains the eligible fields and passes the existing check.
-
-Keep the check in both the compatibility path and the schema update path.
-See [schema update enforcement](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/shared-tree/treeCheckout.ts#L2013).
-
-The following changes must remain invalid:
-
-- Remove a required field.
-- Remove an optional field from an object not configured with `allowUnknownOptionalFields`.
-- Narrow the allowed types of a field that the view still declares.
-- Reuse a stored key with an incompatible field schema.
-- Reuse a node-type identifier with an incompatible node schema.
-- Make an unsupported root or field-kind change.
-
-After a valid upgrade, the resulting stored schema must support the view.
-Test this condition as well as the superset condition.
-
-### 4.5 Keep initialization and caches separate
-
-New-document initialization must continue to use only the view schema and its configured staged policy.
-It must not add historical fields from another document.
-
-Keep these operations independent of document history:
-
-- Initial stored-schema generation.
-- Persisted-schema extraction from an application schema.
-- Schema identity hashing for view configuration checks.
-
-See [initial schema generation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/toStoredSchema.ts#L116) and [schema identity hashing](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaHash.ts#L38).
-
-Do not modify cached conversion results.
-The same view configuration can open documents with different historical fields.
-Create separate maps for document-specific changes.
-
-Do not cache a target by mutable stored-repository identity alone.
-The target must reflect subsequent stored-schema changes.
+Keep detailed algorithms and diagnostic shapes there rather than duplicating them in this document.
+The requirements and scenarios here remain the basis for acceptance.
 
 ## 5. Compatibility status and events
 
-Use the same document-specific target for upgrade permission and equivalence.
-Keep view compatibility based on the current document.
+The implementation must meet these application-facing expectations.
+The [calculation and execution details][implementation-runtime] are defined in the implementation plan.
 
 For a field removal with no other schema change, the proposed result is:
 
@@ -224,33 +110,22 @@ It must not replace the current view nodes.
 Preserve the existing event and view-update behavior when an upgrade changes the stored schema.
 Unknown-field content changes must retain their existing notification behavior.
 
-See [compatibility status contracts](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115) and [upgrade execution](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L339).
+Applications must also be able to identify fields retained by an upgrade without treating them as compatibility errors.
+See the [informational diagnostic contract][implementation-diagnostics].
 
 ## 6. Offline compatibility and snapshot checks
 
-### 6.1 Use the same target construction
+### 6.1 Match live compatibility results
 
 Offline compatibility checks must report the same result as a live view with the same inputs.
+The implementation plan defines the [shared calculation and affected helpers][implementation-snapshots].
 
-The existing [persisted-schema comparison](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/storedSchema.ts#L107) calls the shared compatibility implementation.
-Keep this connection and add regression tests.
+### 6.2 Preserve directional compatibility results
 
-### 6.2 Remove the symmetry assumption for effective-target equivalence
-
-The [snapshot comparison helper](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts#L905) asserts that equivalence is symmetric.
-The proposed target behavior makes that assumption invalid.
-
-Consider two schemas:
-
-- `WithFeature` declares an optional field.
-- `WithoutFeature` removes it and permits unknown optional fields.
-
-`WithoutFeature` can use a `WithFeature` document without a stored-schema change.
-However, `WithFeature` must add the field schema to a new `WithoutFeature` document before it can use that document.
-
-Update the helper to permit these different results.
-Keep the separate `identicalCompatibility` check.
-It must still detect the difference between the two application schemas.
+A reduced view can use a historical document without changing its stored schema.
+The original view may need to upgrade a newly created reduced document.
+Snapshot comparisons must preserve these different results.
+See the implementation plan's [snapshot changes][implementation-snapshots] for the necessary code updates.
 
 ### 6.3 Keep the new-document collaboration limit visible
 
@@ -284,24 +159,15 @@ For every client/document pair in the scenarios below, verify the expected read/
 
 Include these checks within the existing scenarios.
 
-| Area | Required coverage | Existing test location |
-| --- | --- | --- |
-| Basic removal | Retain an omitted optional field. Verify compatibility and a no-op upgrade. | [Compatibility tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/schemaCompatibilityTester.spec.ts) |
-| Removal and addition | Retain an old field while adding a new field. Verify access after the upgrade. | [Live-view tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/shared-tree/schematizingTreeView.spec.ts) |
-| Schema definitions | Preserve nested and recursive definitions. Include arrays, maps, shared types, and stored-only types. | [Conversion tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/toStoredSchema.spec.ts) |
-| Empty fields | Preserve the field schema when no node currently contains field data. | [Unknown-field fixtures](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/testTrees.ts#L673) |
-| Stored keys | Distinguish field removal from a property rename that retains its stored key. | [Conversion tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/toStoredSchema.spec.ts) |
-| Rejected changes | Reject required-field removal, missing opt-in, narrowed types, and incompatible key or identifier reuse. | [Compatibility tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/schemaCompatibilityTester.spec.ts) |
-| Staged changes | Test both compatible and conflicting view-known types filtered from the initial target. Preserve policy behavior at other locations. | [Staged-upgrade tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts) |
-| Data preservation | Verify that retained data survives later upgrades. Reintroduce the field and read the original content. | [Live-view tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/shared-tree/schematizingTreeView.spec.ts) |
-| Events and repeated calls | Verify that a no-op upgrade submits no schema change and emits no schema-change events. Verify normal events for actual changes. | [Live-view tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/shared-tree/schematizingTreeView.spec.ts) |
-| New documents and caches | Use one configuration with different document histories. Verify no schema leakage into another document or fresh initialization. | [Conversion tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/toStoredSchema.spec.ts) |
-| Metadata | Retain metadata on unknown fields and stored-only node definitions. | [Conversion tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/toStoredSchema.spec.ts) |
-| Offline checks | Verify live/offline agreement, directional equivalence, and the new-document collaboration failure. | [Snapshot tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/snapshotCompatibilityChecker.spec.ts) and [persisted-schema tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/simple-tree/api/storedSchema.spec.ts) |
-| Persistence and collaboration | Upgrade through a reduced view, synchronize clients, save a summary, and reload. Verify retained content and schemas. | [SharedTree integration tests](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/test/shared-tree/sharedTree.spec.ts) |
+The Developer's Notes below define the scenario matrix and separate prerequisite safety checks.
+The [user-story fixture][scenario-tests] contains the executable scenarios.
+Do not weaken those assertions to accommodate the implementation.
 
-Update existing tests that explicitly expect unknown optional fields to prevent upgrades.
-Do not update unrelated expected results.
+The implementation plan specifies the [focused regression tests and affected test helpers][implementation-tests].
+Use that list for target construction, caching, metadata, staged definitions, diagnostics, and offline checks.
+
+Also verify that retained schema and content survive synchronization, summary creation, and reload through the existing integration tests.
+The implementation plan contains the [validation commands and code-work order][implementation-validation].
 
 ## 8. Documentation and delivery
 
@@ -311,6 +177,9 @@ Update the following application programming interface (API) documentation:
 - [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe the document-specific target.
 - [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): update upgrade and equivalence rules.
 - [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and new-document limits.
+
+Document the new beta informational report according to the [diagnostic contract][implementation-diagnostics].
+Include an example that distinguishes retained fields from blocking discrepancies.
 
 Update the documentation for `allowUnknownOptionalFields` and the related guides to explain both compatibility directions:
 
@@ -329,6 +198,10 @@ Update the website [schema evolution guide](https://github.com/microsoft/FluidFr
 - Explain the difference between existing documents and new documents, including the collaboration limits.
 - Keep the distinction clear: view schemas can remove eligible fields, but stored schemas remain additive.
 
+Update the [types-of-schema-changes guide](https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/website/docs/data-structures/tree/schema-evolution/types-of-changes.mdx) as well.
+Distinguish removing an eligible optional field from removing a required field.
+Do not change versioned documentation for releases that lack this capability.
+
 Remove the current statement that applications must retain added optional fields forever to permit future upgrades.
 Retain the warnings about data loss when applications reconstruct nodes from visible properties.
 This feature does not change those operations.
@@ -337,18 +210,16 @@ No new public option is proposed.
 No persisted format change is expected.
 Keep the low-level schema comparison rules, codecs, and general schema-change concurrency behavior unchanged.
 
-Recommended work order:
+Delivery checklist:
 
-1. Add target-construction tests and the shared helper.
-2. Connect compatibility calculation and upgrade execution to that helper.
-3. Update snapshot assumptions and related tests.
-4. Add collaboration, persistence, and rollback regression tests.
-5. Update documentation and add a changeset for the behavior change.
-6. Run focused tests, type checks, and the package's existing lint checks.
+- Complete the [implementation steps and focused validation][implementation-validation].
+- Complete the documentation updates in this section.
+- Follow the repository API-change review guidance for the new beta property.
+- Regenerate the affected API reports for both `@fluidframework/tree` and its `fluid-framework` aggregator. Do not edit reports by hand.
+- Regenerate entrypoint sources only if top-level exports change; no new named export is currently proposed.
+- Add a changeset for both packages covering field-preserving upgrades and the informational diagnostic.
 
 Use the [package scripts](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/package.json) and [changeset guidelines](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/.changeset/README.md).
-Regenerate API reports if required.
-Do not edit generated reports by hand.
 
 ## 9. Investigation evidence
 
@@ -365,6 +236,17 @@ The probes confirmed:
 The probes checked representative schema behavior.
 They did not implement the general helper or test persistence.
 Full implementation and integration validation remain required.
+
+[implementation-plan]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md
+[implementation-findings]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#1-findings-from-the-code
+[implementation-target]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#2-shared-upgrade-target-construction
+[implementation-runtime]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#3-compatibility-and-upgrade-execution
+[implementation-diagnostics]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#4-informational-diagnostics
+[implementation-snapshots]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#5-snapshot-and-offline-checks
+[implementation-tests]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#7-test-work
+[implementation-validation]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#8-implementation-order-and-validation
+[overview]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-overview.md
+[scenario-tests]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.ts
 
 ## Developer's Notes
 
