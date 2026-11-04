@@ -26,7 +26,6 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { opSize } from "../../opProperties.js";
 import type {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -123,28 +122,6 @@ export class RunningSummarizer
 				error,
 			);
 		});
-
-		// Update heuristic counts
-		// By the time we get here, there are potentially ops missing from the heuristic summary counts
-		// Examples of where this could happen:
-		// 1. Op is processed during the time that we are initiating the RunningSummarizer instance but before we
-		//    listen for the op events (will get missed by the handlers in the current workflow)
-		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
-		const diff =
-			runtime.deltaManager.lastSequenceNumber -
-			(heuristicData.lastSuccessfulSummary.refSequenceNumber +
-				heuristicData.numNonRuntimeOps +
-				heuristicData.numRuntimeOps);
-		heuristicData.hasMissingOpData = diff > 0;
-
-		if (heuristicData.hasMissingOpData) {
-			// Split the diff 50-50 and increment the counts appropriately
-			heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
-			heuristicData.numRuntimeOps += Math.floor(diff / 2);
-		}
-
-		// Update last seq number (in case the handlers haven't processed anything yet)
-		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
@@ -443,16 +420,7 @@ export class RunningSummarizer
 	private heuristicRunnerMicroTaskExists = false;
 
 	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
-		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
-
-		if (runtimeMessage) {
-			this.heuristicData.numRuntimeOps++;
-		} else {
-			this.heuristicData.numNonRuntimeOps++;
-		}
-
-		this.heuristicData.totalOpsSize += opSize(op);
-
+		// Summarizer's listener updates the shared counts before this scheduling listener runs.
 		// Check for enqueued on-demand summaries; Intentionally do nothing otherwise
 		if (
 			this.initialized &&
@@ -559,6 +527,14 @@ export class RunningSummarizer
 		this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
 		if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
+			// Counts are collected from the loaded checkpoint. Rebasing them to an external
+			// summary's reference sequence requires historical counter snapshots.
+			if (
+				waitStartResult.value.summaryOp.referenceSequenceNumber >
+				this.heuristicData.lastSuccessfulSummary.refSequenceNumber
+			) {
+				this.heuristicData.hasMissingOpData = true;
+			}
 			this.heuristicData.updateWithLastSummaryAckInfo({
 				refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
 				// This will be the Summarizer starting point so only use timestamps from client's machine.

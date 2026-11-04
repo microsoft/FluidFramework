@@ -36,6 +36,8 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
+import { textLocationArray } from "./textLocationAdapter.js";
+
 /**
  * Enables expensive debug assertions for formatted text.
  */
@@ -62,11 +64,25 @@ export function expensiveInternalValidationAssert(condition: () => true | string
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
-	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-	})
+	extends sf.object(
+		"Text",
+		{
+			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements PlainText.Members, IExposedMethods
 {
+	/**
+	 * Exposes the current array-node representation of this text.
+	 * @remarks
+	 * Depending on this accessor also depends on text being represented by an array node.
+	 * Future text optimizations may change that representation, so such dependencies should generally be avoided.
+	 */
+	public get [textLocationArray](): TreeArrayNode {
+		return this.content;
+	}
+
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 		methods.exposeMethod(
 			TextNode,

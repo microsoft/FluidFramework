@@ -24,7 +24,7 @@ import {
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
-import type { TreeCheckout } from "../shared-tree/index.js";
+import { type CheckoutBase, TreeCheckout } from "../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { brand } from "../util/index.js";
 
@@ -59,7 +59,7 @@ export class HostImplementation implements Sandboxing.Host {
 	/** Internal synchronization state exposed for testing. */
 	public readonly synchronization: HostSynchronization;
 	/** The checkout extracted from the application-provided view. */
-	private readonly mainCheckout: TreeCheckout;
+	private readonly mainCheckout: CheckoutBase;
 
 	/**
 	 * The port connecting this Host to the Guest.
@@ -327,7 +327,7 @@ export class HostImplementation implements Sandboxing.Host {
 
 	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
 		const initialization = this.synchronization.guestInitialization;
-		const checkout = this.mainCheckout.fork();
+		const checkout = this.mainCheckout.forkWith((options) => new TreeCheckout(options));
 		try {
 			const branch = checkout.mainBranch;
 			const base = findAncestor(

@@ -83,6 +83,60 @@ describe("isomorphic-git manager", () => {
 		fsFactory.volume.reset();
 	});
 
+	describe("ref SHA validation", () => {
+		const canonicalSha = "0123456789abcdef0123456789abcdef01234567";
+
+		for (const sha of [
+			"refs/heads/main",
+			"../heads/main",
+			"",
+			canonicalSha.slice(1),
+			`${canonicalSha}0`,
+			canonicalSha.toUpperCase(),
+			`g${canonicalSha.slice(1)}`,
+			`${canonicalSha}\n`,
+		]) {
+			it(`rejects creating a ref with noncanonical SHA ${JSON.stringify(sha)}`, async () => {
+				const repoManager = await repoManagerFactory.create(repoManagerParams);
+				await repoManager.createRef({ ref: "refs/heads/main", sha: canonicalSha });
+
+				await assert.rejects(repoManager.createRef({ ref: "refs/heads/other", sha }), {
+					name: "NetworkError",
+					code: 400,
+				});
+			});
+
+			it(`rejects patching a ref with noncanonical SHA ${JSON.stringify(sha)}`, async () => {
+				const repoManager = await repoManagerFactory.create(repoManagerParams);
+				await repoManager.createRef({ ref: "refs/heads/main", sha: canonicalSha });
+
+				await assert.rejects(
+					repoManager.patchRef("refs/heads/main", { sha, force: true }),
+					{ name: "NetworkError", code: 400 },
+				);
+			});
+		}
+
+		it("creates and patches refs with canonical SHAs", async () => {
+			const repoManager = await repoManagerFactory.create(repoManagerParams);
+			const created = await repoManager.createRef({
+				ref: "refs/heads/main",
+				sha: canonicalSha,
+			});
+			assert.strictEqual(created.object.sha, canonicalSha);
+			const updatedSha = "abcdef0123456789abcdef0123456789abcdef01";
+			const patched = await repoManager.patchRef("refs/heads/main", {
+				sha: updatedSha,
+				force: true,
+			});
+			assert.strictEqual(patched.object.sha, updatedSha);
+			assert.strictEqual(
+				(await repoManager.getRef("refs/heads/main")).object.sha,
+				updatedSha,
+			);
+		});
+	});
+
 	it("should create/read a blob", async () => {
 		const repoManager = await repoManagerFactory.create(repoManagerParams);
 		const base64BlobContents = Buffer.from("Hello, World!", "utf-8").toString("base64");

@@ -21,6 +21,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type {
@@ -39,6 +40,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedSignalEvents<T>>
 	implements ISharedSignal<T>
 {

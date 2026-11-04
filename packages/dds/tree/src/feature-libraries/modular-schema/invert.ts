@@ -8,6 +8,7 @@ import {
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
 	revisionMetadataSourceFromInfo,
+	strictRebaseValidation,
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 	type RevisionInfo,
@@ -48,12 +49,12 @@ import {
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
 	makeCrossFieldKeyTable,
+	isChangesetValid,
 	makeModularChangeset,
 	newConstraintState,
 	newRootTable,
 	normalizeFieldId,
 	updateConstraints,
-	validateChangeset,
 } from "./modularChangeUtils.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import {
@@ -77,6 +78,10 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	strictRebaseValidation("Malformed invert input", () =>
+		isChangesetValid(change.change, fieldKinds),
+	);
+
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
@@ -202,7 +207,7 @@ export function invertModularChange(
 		);
 	}
 
-	const inverted = makeModularChangeset({
+	const inverse = makeModularChangeset({
 		rebaseVersion: change.change.rebaseVersion,
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
@@ -218,8 +223,10 @@ export function invertModularChange(
 		destroys,
 	});
 
-	validateChangeset(inverted, fieldKinds);
-	return inverted;
+	strictRebaseValidation("Malformed invert output", () =>
+		isChangesetValid(inverse, fieldKinds),
+	);
+	return inverse;
 }
 
 function invertFieldMap(

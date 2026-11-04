@@ -10,6 +10,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	EmptyKey,
 	type FieldAnchor,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
@@ -24,6 +25,7 @@ import {
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
+	sequenceLengthCacheThreshold,
 	unboxedFlexNode,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
@@ -34,19 +36,25 @@ import {
 	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
+	flexTreeSlot,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
 import {
+	getInnerNode,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 	toInitialSchema,
 	StagedSchemaUpgradePolicy,
 	toStoredSchema,
+	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import {
+	checkoutWithContent,
+	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
 	forestWithContent,
@@ -69,6 +77,37 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
+	it("gets editing paths without recovering cursors or materializing parents", () => {
+		const factory = new SchemaFactory("anchor-path");
+		class Struct extends factory.object("Struct", { value: factory.number }) {}
+		const { context, cursor } = readonlyTreeWithContent({
+			schema: Struct,
+			initialTree: { value: 1 },
+		});
+		cursor.enterNode(0);
+		cursor.enterField(brand("value"));
+		const anchor = cursor.buildFieldAnchor();
+		assert(anchor.parent !== undefined);
+		const parent = context.checkout.forest.anchors.locate(anchor.parent);
+		assert(parent !== undefined);
+		const field = new TestLazyField(context, FieldKinds.required.identifier, cursor, anchor);
+		cursor.free();
+		field.prepareForEdit();
+		assert.equal(parent.slots.get(flexTreeSlot), undefined);
+		assert.deepEqual(field.getFieldPathForEditing(), {
+			parent,
+			field: "value",
+		});
+		assert.equal(context.withCursors.size, 0);
+		assert.equal(parent.slots.get(flexTreeSlot), undefined);
+		context[disposeSymbol]();
+		assert.throws(() => field.getFieldPath());
+		assert.throws(
+			() => field.getFieldPathForEditing(),
+			/only allowed on fields with TreeStatus.InDocument status/,
+		);
+	});
+
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const schema = toInitialSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
@@ -210,6 +249,7 @@ describe("LazyField", () => {
 		const v = forest.anchors.acquireVisitor();
 		v.destroy(rootFieldKey, 1);
 		assert(field.isFreed());
+		assert.throws(() => holder.getBoxed(brand("f")));
 
 		// Should not double free.
 		context[disposeSymbol]();
@@ -442,6 +482,143 @@ describe("LazyField", () => {
 	});
 
 	describe("LazySequence", () => {
+		describe("length cache", () => {
+			const factory = new SchemaFactory("length-cache");
+			class Item extends factory.object("Item", { value: factory.number }) {}
+			class Items extends factory.array("Items", Item) {}
+			class Holder extends factory.object("Holder", { items: Items, other: Items }) {}
+			const config = new TreeViewConfiguration({ schema: Holder });
+			const threshold = sequenceLengthCacheThreshold;
+			const content = (length: number) => Array.from({ length }, (_, value) => ({ value }));
+
+			for (const [name, forestType] of [
+				["ChunkedForest", ForestTypeOptimized],
+				["ObjectForest", ForestTypeReference],
+			] as const) {
+				describe(name, () => {
+					function setup(size = threshold) {
+						const checkout = checkoutWithContent(
+							{
+								schema: toInitialSchema(Holder),
+								initialTree: fieldCursorFromInsertable(Holder, {
+									items: content(size),
+									other: content(size),
+								}),
+							},
+							{ forestType },
+						);
+						const view = checkout.viewWith(config);
+						const field = getInnerNode(view.root.items).getBoxed(EmptyKey);
+						assert(field instanceof LazySequence);
+						const parent = field.parent;
+						assert(parent !== undefined);
+						return { checkout, view, field, parent };
+					}
+
+					function testLengthCaching(size: number, expectCaching: boolean): void {
+						const { view, field } = setup(size);
+						const cursor = field.cursor;
+						const getFieldLength = cursor.getFieldLength.bind(cursor);
+						let reads = 0;
+						cursor.getFieldLength = () => {
+							reads++;
+							return getFieldLength();
+						};
+						assert.equal(field.length, size);
+						assert.equal(reads, 1);
+						assert.equal(field.length, size);
+						assert.equal(reads, expectCaching ? 1 : 2);
+						view.root.items[0].value++;
+						const readsBefore = reads;
+						assert.equal(field.length, size);
+						assert.equal(reads, expectCaching ? 1 : readsBefore + 1);
+						view.dispose();
+					}
+
+					it("reuses the cached length across reads and descendant edits at the threshold", () => {
+						testLengthCaching(threshold, true);
+					});
+
+					it("does not cache length across reads and descendant edits below the threshold", () => {
+						testLengthCaching(threshold - 1, false);
+					});
+
+					it("updates lengths after insertion, removal, and moves", () => {
+						const { view, field } = setup();
+						const other = getInnerNode(view.root.other).getBoxed(EmptyKey);
+						assert.equal(field.length, threshold);
+						assert.equal(other.length, threshold);
+						view.root.items.insertAtEnd({ value: -1 });
+						assert.equal(field.length, threshold + 1);
+						view.root.items.removeRange(0, 2);
+						assert.equal(field.length, threshold - 1);
+						view.root.other.moveRangeToEnd(0, 5, view.root.items);
+						assert.equal(field.length, threshold - 6);
+						assert.equal(other.length, threshold + 5);
+						view.root.items.removeRange();
+						assert.equal(field.length, 0);
+						view.root.items.insertAtEnd({ value: -2 });
+						assert.equal(field.length, 1);
+						view.dispose();
+					});
+
+					it("invalidates during transactions and rollback", () => {
+						const { checkout, view, field } = setup();
+						assert.equal(field.length, threshold);
+						checkout.transaction.start();
+						view.root.items.insertAtEnd({ value: -1 });
+						assert.equal(field.length, threshold + 1);
+						view.root.items.insertAtEnd({ value: -2 });
+						assert.equal(field.length, threshold + 2);
+						checkout.transaction.abort();
+						assert.equal(field.length, threshold);
+						view.dispose();
+					});
+
+					it("invalidates edits to a detached array before undo reattaches it", () => {
+						const { checkout, view, field } = setup();
+						const fork = checkout.fork();
+						const forkView = fork.viewWith(config);
+						const { undoStack, unsubscribe } = createTestUndoRedoStacks(checkout.events);
+						const original = view.root.items;
+						assert.equal(field.length, threshold);
+						view.root.items = new Items([]);
+						const undoRemoval = undoStack.pop();
+						assert(undoRemoval !== undefined);
+						forkView.root.items.insertAtEnd({ value: -1 });
+						checkout.merge(fork);
+						assert.equal(original.length, threshold + 1);
+						undoRemoval.revert();
+						assert.equal(view.root.items, original);
+						assert.equal(field.length, threshold + 1);
+						unsubscribe();
+						view.dispose();
+					});
+
+					it("cleans up on context disposal and rejects reads after disposal", () => {
+						const { view, field, parent } = setup();
+						assert.equal(field.length, threshold);
+						view.dispose();
+						assert.equal(parent.anchorNode.events.hasListeners("childrenChanging"), false);
+						assert(field.isFreed());
+						assert.throws(() => field.length);
+					});
+
+					it("cleans up when the parent anchor is destroyed", () => {
+						const { checkout, view, field, parent } = setup();
+						assert.equal(field.length, threshold);
+						const visitor = checkout.forest.anchors.acquireVisitor();
+						visitor.destroy(rootFieldKey, 1);
+						visitor.free();
+						assert.equal(parent.anchorNode.events.hasListeners("childrenChanging"), false);
+						assert(field.isFreed());
+						assert.throws(() => field.length);
+						view.dispose();
+					});
+				});
+			}
+		});
+
 		const rootSchema: TreeFieldStoredSchema = {
 			kind: FieldKinds.sequence.identifier,
 			types: new Set([brand(numberSchema.identifier)]),

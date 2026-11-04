@@ -85,6 +85,7 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	hasUnknownOptionalFieldsDocument,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -1496,6 +1497,69 @@ describe("treeNodeApi", () => {
 				assert(isTreeNode(child));
 				assert.equal(Tree.parent(child), tree);
 			}
+		});
+	});
+
+	describe("hasUnknownChildren", () => {
+		for (const testKind of ["hydrated", "unhydrated"] as const) {
+			/**
+			 * Gets the root of the test document, as a hydrated or unhydrated node.
+			 */
+			const getRoot = (testCase: (typeof testDocuments)[number]): unknown => {
+				const view = testDocumentIndependentView(testCase);
+				return testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
+			};
+
+			describe(testKind, () => {
+				it("is false for test documents without unknown optional fields", () => {
+					for (const testCase of testDocuments) {
+						const root = getRoot(testCase);
+						if (testCase.hasUnknownOptionalFields !== true && isTreeNode(root)) {
+							assert.equal(TreeAlpha.hasUnknownChildren(root), false, testCase.name);
+						}
+					}
+				});
+
+				it("is true for a test document with unknown optional fields at the root", () => {
+					const root = getRoot(hasUnknownOptionalFieldsDocument);
+					assert(isTreeNode(root));
+					assert.equal(TreeAlpha.hasUnknownChildren(root), true);
+				});
+			});
+		}
+
+		it("compares stored keys, not property keys", () => {
+			// `renamed` is a known property with stored key `renamedKey`.
+			// The unknown field `other` has stored key `renamed`.
+			const factoryNew = new SchemaFactoryAlpha("hasUnknownChildrenKeys");
+			class KeysNew extends factoryNew.object("Keys", {
+				renamed: factoryNew.optional(factoryNew.string, { key: "renamedKey" }),
+				other: factoryNew.optional(factoryNew.string, { key: "renamed" }),
+			}) {}
+			const factoryOld = new SchemaFactoryAlpha("hasUnknownChildrenKeys");
+			class KeysOld extends factoryOld.object(
+				"Keys",
+				{ renamed: factoryOld.optional(factoryOld.string, { key: "renamedKey" }) },
+				{ allowUnknownOptionalFields: true },
+			) {}
+
+			function hasUnknownChildren(content: KeysNew): boolean {
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: KeysOld,
+					schemaData: toInitialSchema(KeysNew),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(KeysNew, content)),
+				});
+				assert(isTreeNode(view.root));
+				return TreeAlpha.hasUnknownChildren(view.root);
+			}
+
+			assert.equal(hasUnknownChildren(new KeysNew({ renamed: "known" })), false);
+			assert.equal(
+				hasUnknownChildren(new KeysNew({ renamed: "known", other: "unknown" })),
+				true,
+			);
 		});
 	});
 

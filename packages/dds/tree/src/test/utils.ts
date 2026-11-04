@@ -170,6 +170,7 @@ import {
 	type ITreeCheckout,
 	type SharedTreeContentSnapshot,
 	type TreeCheckout,
+	type CheckoutBase,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	createIndependentTreeViewAlpha,
@@ -215,6 +216,7 @@ import {
 	tryGetFromNestedMap,
 	isReadonlyArray,
 	brand,
+	assertStructuralEquality,
 } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -225,7 +227,6 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { assertStructuralEquality } from "./objMerge.js";
 
 // Testing utilities
 
@@ -332,7 +333,16 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
+							summarizeType === SummarizeType.disabled
+								? { state: "disabled" }
+								: summarizeType === SummarizeType.onDemand
+									? {
+											state: "disableHeuristics",
+											initialSummarizerDelayMs: 0,
+											maxAckWaitTime: 20000,
+											maxOpsSinceLastSummary: 7000,
+										}
+									: undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -1560,7 +1570,7 @@ export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdComp
  * Views the supplied checkout with the given schema.
  */
 export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
-	checkout: TreeCheckout,
+	checkout: CheckoutBase,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
 	return new SchematizingSimpleTreeView<TSchema>(

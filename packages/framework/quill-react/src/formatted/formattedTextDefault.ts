@@ -47,13 +47,17 @@ export namespace FormattedTextDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export class CharacterFormat extends sf.object("CharacterFormat", {
-		bold: SchemaFactory.boolean,
-		italic: SchemaFactory.boolean,
-		underline: SchemaFactory.boolean,
-		size: SchemaFactory.number,
-		font: SchemaFactory.string,
-	}) {
+	export class CharacterFormat extends sf.object(
+		"CharacterFormat",
+		{
+			bold: SchemaFactory.boolean,
+			italic: SchemaFactory.boolean,
+			underline: SchemaFactory.boolean,
+			size: SchemaFactory.number,
+			font: SchemaFactory.string,
+		},
+		{ allowUnknownOptionalFields: false },
+	) {
 		public static readonly defaultFormat = new CharacterFormat(defaultFormat);
 	}
 
@@ -93,10 +97,14 @@ export namespace FormattedTextDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export class StringLineAtom extends sf.object("StringLineAtom", {
-		tag: LineTag.schema,
-		indent: SchemaFactory.number,
-	}) {
+	export class StringLineAtom extends sf.object(
+		"StringLineAtom",
+		{
+			tag: LineTag.schema,
+			indent: SchemaFactory.number,
+		},
+		{ allowUnknownOptionalFields: false },
+	) {
 		public readonly content = "\n";
 	}
 

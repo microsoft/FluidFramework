@@ -88,14 +88,15 @@ import {
 	testRevisionTagCodec,
 	treeChunkFromCursor,
 } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { removeAliases } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import {
 	assertEqual,
+	assertModularChangesetsEqual,
 	assertModularChangesetsEqualIgnoreRebaseVersion,
 	Change,
-	normalizeChangeset,
-	removeAliases,
 } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
@@ -1322,9 +1323,7 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(change1, fieldKinds);
-			const normalized2 = normalizeChangeset(change2, fieldKinds);
-			assertEqual(normalized1, normalized2);
+			assertModularChangesetsEqual(change1, change2, fieldKinds, true);
 		}
 
 		const sessionId = "session1" as SessionId;

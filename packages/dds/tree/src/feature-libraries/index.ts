@@ -100,6 +100,7 @@ export {
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
+	isModularChangesetValid,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";

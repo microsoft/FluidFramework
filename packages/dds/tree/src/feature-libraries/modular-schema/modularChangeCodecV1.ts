@@ -31,6 +31,8 @@ import {
 	type RevisionInfo,
 	type RevisionTag,
 	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	brand,
@@ -94,6 +96,9 @@ import {
 	newRootTable,
 	normalizeFieldId,
 	type FieldIdKey,
+	areEquivalent,
+	fieldKindsFromConfiguration,
+	isChangesetValid,
 } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
@@ -400,8 +405,11 @@ export function makeModularChangeCodecV1(
 	);
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) =>
-			encodeChange(
+		encode: (change, context) => {
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldKinds,
@@ -409,10 +417,21 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
 
-		decode: (encodedChange, context) =>
-			decodeChange(
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+
+			return encoded;
+		},
+
+		decode: (encodedChange, context) => {
+			const decoded = decodeChange(
 				encodedChange,
 				context,
 				fieldKinds,
@@ -420,7 +439,13 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
+
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return decoded;
+		},
 	};
 
 	return withSchemaValidation(

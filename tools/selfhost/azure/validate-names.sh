@@ -96,9 +96,11 @@ fi
 
 # Azure Managed Redis: 1-60 chars, alphanumerics and hyphens, start/end alphanumeric,
 # no consecutive hyphens.
-check "Azure Managed Redis" ".redis.clusterName" "$(jqr '.redis.clusterName')" \
-  '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$' 1 60 \
-  "1-60 chars: alphanumerics and hyphens; start and end alphanumeric, no consecutive hyphens" \
+redis_name_max=60
+[[ "$(jqr '.redis.useDeprecated')" == true ]] && redis_name_max=63
+check "Redis" ".redis.clusterName" "$(jqr '.redis.clusterName')" \
+  '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$' 1 "$redis_name_max" \
+  "1-$redis_name_max chars: alphanumerics and hyphens; start and end alphanumeric, no consecutive hyphens" \
   nohyphen
 
 # AKS managed cluster: 1-63 chars, alphanumerics, '-' and '_', start/end alphanumeric.
