@@ -100,6 +100,12 @@ describe("PerformanceEvent", () => {
 		);
 	});
 
+	// Firefox can throw from User Timing APIs after a window is torn down. These diagnostic
+	// failures must neither prevent the callback from running nor replace its result or error.
+	// The matrix below exercises failures in the performance getter, mark(), and measure(),
+	// before the callback (start marking) or after successful start marking (completion).
+	// It covers synchronous and asynchronous wrappers, plus end() called inside the callback.
+	// Separate window stubs simulate the failures without replacing the duration clock.
 	describe("Browser profiling failures preserve operation outcomes", () => {
 		let originalWindow: PropertyDescriptor | undefined;
 		let browserWindow: { performance?: unknown };
@@ -143,6 +149,7 @@ describe("PerformanceEvent", () => {
 		};
 
 		for (const mode of ["sync", "async", "explicit end"] as const) {
+			// Explicit-end cases use the synchronous wrapper and finish inside the callback below.
 			const execute = (work: (event: PerformanceEvent) => number): number | Promise<number> =>
 				mode === "async"
 					? PerformanceEvent.timedExecAsync(logger, { eventName: "Timing" }, async (event) =>
@@ -152,11 +159,13 @@ describe("PerformanceEvent", () => {
 
 			for (const phase of ["start", "end"] as const) {
 				for (const api of ["getter", "mark", "measure"] as const) {
+					// Start marking does not call measure(); it is only used during completion.
 					if (phase === "start" && api === "measure") {
 						continue;
 					}
 
 					it(`Preserves ${mode} results when the ${phase} ${api} throws`, async () => {
+						// Fail during construction to verify that start marking cannot block the callback.
 						if (phase === "start") {
 							makeUnavailable(api);
 						}
@@ -165,9 +174,11 @@ describe("PerformanceEvent", () => {
 							callbackCalls++;
 							capturedEvent = event;
 							if (phase === "end") {
+								// Construction succeeded; simulate teardown before completion marking.
 								makeUnavailable(api);
 							} else {
-								// Restore healthy APIs to expose completion using a failed start mark.
+								// Restore healthy APIs so an incorrect attempt to measure a failed start
+								// would be observable, rather than hidden by another timing exception.
 								Object.defineProperty(browserWindow, "performance", {
 									configurable: true,
 									value: { mark, measure },
@@ -175,11 +186,13 @@ describe("PerformanceEvent", () => {
 								mark.resetBehavior();
 							}
 							if (mode === "explicit end") {
+								// Exercise completion inside the callback; other modes auto-end on return.
 								event.end();
 							}
 							return 42;
 						});
 
+						// Profiling failure must preserve the result and normal end telemetry.
 						assert.equal(result, 42);
 						assert.equal(callbackCalls, 1);
 						assert.deepEqual(
@@ -194,12 +207,14 @@ describe("PerformanceEvent", () => {
 							undefined,
 							"No pending start mark remains",
 						);
+						// Later lifecycle calls must not retry browser completion or emit more telemetry.
 						const calls = [mark.callCount, measure.callCount];
 						capturedEvent.end();
 						capturedEvent.cancel();
 						assert.deepEqual([mark.callCount, measure.callCount], calls);
 						assert.equal(logger.eventsLogged, 1);
 						if (phase === "start") {
+							// No measurement is valid when the start mark was never created.
 							sinon.assert.notCalled(measure);
 						}
 					});
@@ -207,6 +222,7 @@ describe("PerformanceEvent", () => {
 					if (mode !== "explicit end") {
 						it(`Preserves ${mode} callback errors when the ${phase} ${api} is unavailable`, async () => {
 							const callbackError = new Error("Operation failed");
+							// Start failures must still allow the callback to run and throw its own error.
 							if (phase === "start") {
 								makeUnavailable(api);
 							}
@@ -214,12 +230,15 @@ describe("PerformanceEvent", () => {
 								async () =>
 									execute(() => {
 										callbackCalls++;
+										// Keep profiling unavailable while the wrapper handles a real failure.
 										makeUnavailable(api);
 										throw callbackError;
 									}),
+								// Preserve error identity, not merely its message or type.
 								(error: unknown) => error === callbackError,
 							);
 							assert.equal(callbackCalls, 1);
+							// A genuine callback failure still follows normal cancellation reporting.
 							assert.deepEqual(
 								logger.events.map((event) => event.eventName),
 								["Timing_cancel"],
