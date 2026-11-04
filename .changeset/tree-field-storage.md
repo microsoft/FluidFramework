@@ -13,11 +13,13 @@ These improvements require no application code changes.
 
 Benchmarks show improvements in some read workloads, with tradeoffs in others.
 Unhydrated nodes have not yet been inserted into a SharedTree view; hydrated nodes have been inserted.
+Hydrated storage is configured through [ForestOptions.forest](https://fluidframework.com/docs/api/fluid-framework/forestoptions-interface#forest-propertysignature).
 
 | Workload | Approximate change in elapsed time |
 | --- | --- |
 | Unhydrated map reads of missing keys | 32% less |
-| Hydrated record leaf reads with default storage | 16% less |
+| Hydrated record leaf reads with [ForestTypeReference](https://fluidframework.com/docs/api/fluid-framework/#foresttypereference-variable) (default) | 22% less |
+| Hydrated record leaf reads with [ForestTypeOptimized](https://fluidframework.com/docs/api/fluid-framework/#foresttypeoptimized-variable) | 16% less |
 | Unhydrated object edits | 3-4% more |
 | Unhydrated array edits | 2-4% more |
 | Unhydrated record leaf reads and repeated insertion/removal of entries | 8% more |
