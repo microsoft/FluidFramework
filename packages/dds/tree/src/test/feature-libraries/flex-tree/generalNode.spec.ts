@@ -552,7 +552,7 @@ describe("General field storage", () => {
 		assert.equal(identifier.content, "new-id");
 	});
 
-	it("keeps retained unhydrated sequence facades canonical for edits and alias moves", () => {
+	it("resolves retained unhydrated sequence field instances for edits and alias moves", () => {
 		const schema = storedSchema(
 			new MapNodeStoredSchema(fieldSchema(FieldKinds.sequence.identifier)),
 		);

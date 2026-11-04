@@ -22,7 +22,7 @@ import {
 } from "./core/index.js";
 
 /**
- * Reads field content without allocating a field wrapper or boxing leaf nodes.
+ * Reads field content without allocating a FlexTree field instance or boxing leaf nodes.
  */
 export function getTreeNodeForField(
 	node: FlexTreeNode,

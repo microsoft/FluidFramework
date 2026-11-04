@@ -295,7 +295,7 @@ describe("LazyField", () => {
 			["empty string", ""],
 			["null", null],
 		] as const) {
-			it(`preserves ${name} without allocating wrappers`, () => {
+			it(`preserves ${name} without allocating FlexTree node or field instances`, () => {
 				const { context, cursor } = readonlyTreeWithContent({
 					schema: sf.optional([sf.number, sf.boolean, sf.string, sf.null]),
 					initialTree: value,
@@ -310,7 +310,7 @@ describe("LazyField", () => {
 			});
 		}
 
-		it("reuses non-leaf wrappers and restores the cursor", () => {
+		it("reuses non-leaf FlexTree node instances and restores the cursor", () => {
 			const { context, cursor } = readonlyTreeWithContent({
 				schema: JsonAsTree.JsonObject,
 				initialTree: { x: 1 },

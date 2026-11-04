@@ -406,7 +406,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		thisArg?: unknown,
 	): void {
 		const node = getInnerNode(this);
-		// Preserve live unhydrated traversal without allocating hydrated field wrappers.
+		// Preserve live unhydrated traversal without allocating hydrated FlexTree field instances.
 		const keys = node.isHydrated() ? node.keys() : mapIterable(node.fields, ([key]) => key);
 		for (const key of keys) {
 			const value = getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>;

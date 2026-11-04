@@ -78,10 +78,10 @@ function cleanupTree(anchor: AnchorNode): void {
 }
 
 /**
- * Shared implementation of hydrated {@link FlexTreeNode} wrappers.
+ * Shared implementation of hydrated {@link FlexTreeNode}s.
  * @remarks
  * Node implementations capture schema-dependent behavior.
- * See {@link Context} for the schema changes that can preserve wrappers and those that require invalidation.
+ * See {@link Context} for the schema changes that can preserve node instances and those that require invalidation.
  */
 export abstract class LazyTreeNode
 	extends AnchoredEntity<Anchor>
@@ -98,7 +98,7 @@ export abstract class LazyTreeNode
 	/**
 	 * Node-owned field storage, read directly by cache lookups.
 	 * @remarks
-	 * {@link LazyObjectNode} retains resource-owning wrappers until disposal.
+	 * {@link LazyObjectNode} retains fields that own cursors and anchors until disposal.
 	 * For stored object schemas, only declared keys use that storage.
 	 * Undeclared object fields borrow the node's resources and are not cached.
 	 * {@link LazyGeneralNode} works for every stored schema and caches only populated fields,
@@ -108,23 +108,23 @@ export abstract class LazyTreeNode
 	public fieldCache: Map<FieldKey, FlexTreeField> | undefined;
 
 	/**
-	 * Creates a wrapper for an existing node in the context's forest.
-	 * @param context - Owns the wrapper's lifetime and supplies the forest, stored schema, and editing services.
+	 * Creates a FlexTree node instance at the supplied cursor's location in the context's forest.
+	 * @param context - Owns the FlexTree node's lifetime and supplies the forest, stored schema, and editing services.
 	 * @param type - The node's stored type identifier. Must equal `cursor.type`.
 	 * @param cursor - A cursor from the context's forest, positioned on the node in nodes mode.
-	 * The wrapper forks this cursor; the caller retains ownership of the supplied cursor.
+	 * The new instance forks this cursor; the caller retains ownership of the supplied cursor.
 	 * @param anchorNode - The anchor-set node for the same node as `cursor` and `anchor`.
-	 * Its {@link flexTreeSlot} must not already contain a wrapper.
+	 * Its {@link flexTreeSlot} must not already contain a FlexTree node instance.
 	 * @param anchor - An owned anchor for the node in the context's forest.
-	 * Ownership transfers to this wrapper, which forgets the anchor when disposed.
+	 * Ownership transfers to the new instance, which forgets the anchor when disposed.
 	 * @param storedSchema - The current stored schema for `type`, as obtained from `context.schema.nodeSchema`.
 	 * Supply it when the caller has already resolved it, such as when selecting the node implementation,
 	 * to avoid a second lookup. Omit it to have the constructor perform that lookup.
 	 * This is not a schema override: it must describe the same type under the context's current schema
 	 * and match the selected implementation's storage policy.
-	 * The wrapper retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
+	 * The new instance retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
 	 * @remarks
-	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing wrappers and selects the schema-dependent implementation.
+	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing node instances and selects the schema-dependent implementation.
 	 */
 	public constructor(
 		context: Context,
@@ -322,7 +322,7 @@ export abstract class LazyTreeNode
 }
 
 /**
- * Preserves resource-owning field wrappers for stored object fields, including array content.
+ * Preserves field instances that own cursors and anchors for stored object fields, including array content.
  * Undeclared object fields are forbidden and are not retained.
  * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
  */
@@ -348,7 +348,7 @@ export class LazyObjectNode extends LazyTreeNode {
 }
 
 /**
- * A node for any stored schema with a bounded cache of resource-free field facades.
+ * A node for any stored schema with a bounded cache of field instances that borrow its navigation resources.
  * Empty fields are not cached, and batch cleanup examines only changed cached keys.
  * Retained fields remain usable after eviction because they navigate through this node.
  */
@@ -380,7 +380,7 @@ export class LazyGeneralNode extends LazyTreeNode {
 	}
 
 	/**
-	 * Gets a field facade at the supplied cursor's location.
+	 * Gets a FlexTree field instance at the supplied cursor's location.
 	 * The cursor must be in a field of this node.
 	 */
 	public override getOrCreateField(cursor: ITreeSubscriptionCursor): FlexTreeField {

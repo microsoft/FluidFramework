@@ -29,7 +29,7 @@ export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
 
 /**
  * Common lifetime and cursor-access contract for hydrated FlexTree implementations.
- * Wrappers supply their node or field identity separately from resource ownership.
+ * Node and field implementations supply their identity separately from resource ownership.
  */
 export abstract class LazyEntity {
 	public abstract readonly context: Context;

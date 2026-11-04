@@ -246,7 +246,7 @@ export abstract class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Resolves the current field wrapper without observing its contents.
+	 * Resolves the current FlexTree field instance without observing its contents.
 	 */
 	public getStoredField(key: FieldKey): UnhydratedFlexTreeField | undefined {
 		return this.fieldsAll.get(key);
@@ -605,8 +605,8 @@ export class UnhydratedFlexTreeField
 	}
 
 	/**
-	 * Retained general-field facades follow replacements after eviction.
-	 * Fixed declared fields keep a stable wrapper and do not need a map lookup.
+	 * For general nodes, retained field instances resolve replacements after eviction.
+	 * Declared fields on fixed-field nodes retain the same instance and do not need a map lookup.
 	 */
 	protected get currentField(): UnhydratedFlexTreeField {
 		const parent = this.parent;

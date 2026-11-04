@@ -65,15 +65,15 @@ export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField
 }
 
 /**
- * Gets a field wrapper, reusing the owning node's cache when appropriate.
+ * Gets a FlexTree field instance, reusing the owning node's cache when appropriate.
  * @param context - Owns the field's lifetime and supplies its forest and schema policy.
  * @param schema - The field kind for the cursor's current field under the context's stored schema.
  * @param cursor - A cursor in the context's forest, positioned in fields mode.
  * Remains positioned on the same field; ownership stays with the caller.
  * @remarks
  * Fields without a parent node own their navigation resources and are not cached here.
- * Other fields use the parent node's storage policy, creating its wrapper if necessary.
- * Resource-owning field wrappers take ownership of the temporary parent anchor.
+ * Other fields use the parent node's storage policy, creating its FlexTree node instance if necessary.
+ * Fields that own navigation resources take ownership of the temporary parent anchor.
  * Cache hits and resource-free fields release that temporary anchor instead.
  */
 export function makeField(
@@ -177,9 +177,9 @@ function getEditor(context: Context): IDefaultEditBuilder<ITreeCursorSynchronous
 /**
  * A hydrated field identified by a containing node and field key.
  * @remarks
- * This wrapper owns no persistent cursor, anchor, event subscription, or context registration.
+ * This field owns no persistent cursor, anchor, event subscription, or context registration.
  * It obtains its context, lifetime, and current field path from the containing node.
- * Cache eviction requires no explicit resource cleanup; retained wrappers remain usable while the node remains valid.
+ * Cache eviction requires no explicit resource cleanup; retained field instances remain usable while the node remains valid.
  * Fields without a containing node use {@link AnchoredField} instead.
  */
 abstract class NodeBackedField extends LazyField {
@@ -389,7 +389,7 @@ class GeneralSequenceField extends GeneralField implements FlexTreeSequenceField
 }
 
 /**
- * Creates a field facade for any supported stored field kind without owning navigation resources.
+ * Creates a FlexTree field instance for any supported stored field kind, borrowing navigation resources from its parent node.
  */
 export function makeGeneralField(
 	parent: LazyTreeNode,

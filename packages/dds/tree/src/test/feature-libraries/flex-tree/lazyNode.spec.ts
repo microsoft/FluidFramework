@@ -375,7 +375,7 @@ describe("LazyNode", () => {
 			checkout.dispose();
 		});
 
-		it(`reads map leaves without field wrappers or leaf anchors (${name})`, () => {
+		it(`reads map leaves without FlexTree field instances or leaf anchors (${name})`, () => {
 			const sf = new SchemaFactory("unboxed-map");
 			class Values extends sf.map("Values", [sf.number, sf.string, sf.boolean, sf.null]) {}
 			const view = createIndependentTreeAlpha({ forest }).viewWith(
