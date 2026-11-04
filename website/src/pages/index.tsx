@@ -6,9 +6,6 @@
 import Layout from "@theme/Layout";
 import type { ReactElement } from "react";
 
-// Preserve telemetry initialization without a custom user identifier.
-// eslint-disable-next-line import/no-unassigned-import
-import "@site/src/appInsights";
 import { Homepage } from "@site/src/components/home";
 
 /**

@@ -130,28 +130,9 @@ The aggregate command installs Playwright's browser dependencies before running 
 
 ## User Telemetry
 
-The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
-This telemetry supports the following usage metrics:
-
--   Daily / Monthly users
--   Pages visited
--   User flow
-
-To associate visits from the same browser, Application Insights uses its default user and session identifiers and SDK cookies.
-The website does not create or read an additional `userId` cookie, so it no longer overrides the SDK user ID.
-If a browser still has an older `userId` cookie, the website ignores it until it expires or the visitor deletes it.
-
-This data is collected in compliance with relevant privacy standards.
-For more information, please refer to our [privacy policy.](https://www.microsoft.com/privacy/privacystatement).
-If you have any concerns about telemetry, please reach out to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
-
-To test this telemetry locally add the following key to the .env file.
-This key is used to instantiate Application Insights so that usage events can be tracked.
-The key can be requested from internal Microsoft Fluid Framework engineers.
-
-```
-INSTRUMENTATION_KEY=<key>
-```
+The website no longer initializes Application Insights from the homepage.
+As a result, it does not use this SDK to collect usage telemetry or create user and session cookies.
+If a browser retains a `userId` cookie from an older deployment, the website ignores it until it expires or the visitor deletes it.
 
 ## Deployment
 

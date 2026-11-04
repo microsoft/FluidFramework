@@ -24,7 +24,7 @@ afterEach(() => {
 
 describe("Homepage telemetry", () => {
 	for (const cookies of ["", "userId=existing-user-id"]) {
-		it(`does not access cookies or replace the SDK user ID with document.cookie=${JSON.stringify(cookies)}`, async () => {
+		it(`does not initialize Application Insights or access cookies with document.cookie=${JSON.stringify(cookies)}`, async () => {
 			const readCookie = vi.fn(() => cookies);
 			const writeCookie = vi.fn();
 			vi.stubGlobal(
@@ -34,7 +34,7 @@ describe("Homepage telemetry", () => {
 
 			await vi.importActual("../../src/pages/index.js");
 
-			expect(initializeAppInsights).toHaveBeenCalledOnce();
+			expect(initializeAppInsights).not.toHaveBeenCalled();
 			expect(readCookie).not.toHaveBeenCalled();
 			expect(writeCookie).not.toHaveBeenCalled();
 			expect(appInsights.context.user.id).toBe("sdk-user-id");
