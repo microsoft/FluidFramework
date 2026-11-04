@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Reduce memory overhead and improve selected SharedTree reads
+Speed up and reduce memory overhead of some SharedTree reads
 
 SharedTree maps retain less memory when reading missing keys.
 Maps and records also avoid retaining empty-field metadata after entries are removed, reducing memory growth when applications use many distinct keys.
