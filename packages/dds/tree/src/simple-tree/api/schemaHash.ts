@@ -22,7 +22,7 @@ import {
 } from "../../util/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import { toInitialSchema } from "../toStoredSchema.js";
+import { toInitialSchema } from "../treeSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
@@ -110,7 +110,7 @@ function serializeNode(schema: TreeNodeStoredSchema): JsonCompatibleReadOnly {
 			metadata: schema.metadata,
 		};
 	}
-	fail("Unsupported schema node kind.");
+	fail(0xd7b /* Unsupported schema node kind. */);
 }
 
 /**

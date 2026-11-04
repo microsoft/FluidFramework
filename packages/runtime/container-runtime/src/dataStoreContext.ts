@@ -357,6 +357,11 @@ export abstract class FluidDataStoreContext
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient: OldestSupportedClientVersion;
+
 	private baseSnapshotSequenceNumber: number | undefined;
 
 	/**
@@ -466,7 +471,9 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
-		this.minVersionForCollab = props.parentContext.minVersionForCollab;
+		this.oldestSupportedClient =
+			props.parentContext.oldestSupportedClient ?? props.parentContext.minVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;

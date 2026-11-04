@@ -65,7 +65,7 @@ describe("isomorphic-git manager", () => {
 		undefined /* apiSamplingPeriod */,
 		gitMaxBlobSizeBytes,
 	);
-	const repoManagerParams: Required<IRepoManagerParams> = {
+	const repoManagerParams: IRepoManagerParams = {
 		repoOwner: "fluid",
 		repoName: "test",
 		storageRoutingId: {
@@ -81,6 +81,124 @@ describe("isomorphic-git manager", () => {
 
 	afterEach(() => {
 		fsFactory.volume.reset();
+	});
+
+	it("uses the authorized physical container as the repository root", async () => {
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		const repoManager = await repoManagerFactory.create({
+			...repoManagerParams,
+			repoName: "physical-root-test",
+			storageRoutingId: {
+				tenantId: "fluid",
+				documentId: "physical-root-test",
+			},
+			fileSystemManagerParams: {
+				...repoManagerParams.fileSystemManagerParams,
+				physicalContainerName,
+				storageLayoutVersion: "v2",
+				storageLifecycleVersion: "generation-1",
+			},
+		});
+
+		assert.strictEqual(repoManager.path, `${physicalContainerName}/physical-root-test`);
+	});
+
+	it("rejects physical-container routing when repo-per-document mode is disabled", async () => {
+		const repoPerTenantFactory = new IsomorphicGitManagerFactory(
+			{ useRepoOwner: false },
+			{ defaultFileSystemManagerFactory: fsFactory },
+			new NullExternalStorageManager(),
+			false /* repoPerDocEnabled */,
+			false /* enableRepositoryManagerMetrics */,
+			true /* enableSlimGitInit */,
+			undefined /* apiSamplingPeriod */,
+			gitMaxBlobSizeBytes,
+		);
+
+		await assert.rejects(
+			repoPerTenantFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			(error: unknown) =>
+				error instanceof Error &&
+				error.message === "Physical-container routing requires repo-per-document mode.",
+		);
+	});
+
+	it("rejects an invalid physical container supplied directly to the factory", async () => {
+		await assert.rejects(
+			repoManagerFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName: "../victim",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			/Invalid physical container name/,
+		);
+	});
+
+	describe("ref SHA validation", () => {
+		const canonicalSha = "0123456789abcdef0123456789abcdef01234567";
+
+		for (const sha of [
+			"refs/heads/main",
+			"../heads/main",
+			"",
+			canonicalSha.slice(1),
+			`${canonicalSha}0`,
+			canonicalSha.toUpperCase(),
+			`g${canonicalSha.slice(1)}`,
+			`${canonicalSha}\n`,
+		]) {
+			it(`rejects creating a ref with noncanonical SHA ${JSON.stringify(sha)}`, async () => {
+				const repoManager = await repoManagerFactory.create(repoManagerParams);
+				await repoManager.createRef({ ref: "refs/heads/main", sha: canonicalSha });
+
+				await assert.rejects(repoManager.createRef({ ref: "refs/heads/other", sha }), {
+					name: "NetworkError",
+					code: 400,
+				});
+			});
+
+			it(`rejects patching a ref with noncanonical SHA ${JSON.stringify(sha)}`, async () => {
+				const repoManager = await repoManagerFactory.create(repoManagerParams);
+				await repoManager.createRef({ ref: "refs/heads/main", sha: canonicalSha });
+
+				await assert.rejects(
+					repoManager.patchRef("refs/heads/main", { sha, force: true }),
+					{ name: "NetworkError", code: 400 },
+				);
+			});
+		}
+
+		it("creates and patches refs with canonical SHAs", async () => {
+			const repoManager = await repoManagerFactory.create(repoManagerParams);
+			const created = await repoManager.createRef({
+				ref: "refs/heads/main",
+				sha: canonicalSha,
+			});
+			assert.strictEqual(created.object.sha, canonicalSha);
+			const updatedSha = "abcdef0123456789abcdef0123456789abcdef01";
+			const patched = await repoManager.patchRef("refs/heads/main", {
+				sha: updatedSha,
+				force: true,
+			});
+			assert.strictEqual(patched.object.sha, updatedSha);
+			assert.strictEqual(
+				(await repoManager.getRef("refs/heads/main")).object.sha,
+				updatedSha,
+			);
+		});
 	});
 
 	it("should create/read a blob", async () => {

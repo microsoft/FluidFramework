@@ -878,6 +878,7 @@ export class MockFluidDataStoreRuntime
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: OldestSupportedClientVersion;
+		oldestSupportedClient?: OldestSupportedClientVersion;
 		inStagingMode?: boolean;
 		isDirty?: boolean;
 	}) {
@@ -903,7 +904,11 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.oldestSupportedClient =
+			overrides?.oldestSupportedClient ??
+			overrides?.minVersionForCollab ??
+			defaultMinVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 		this.inStagingMode = overrides?.inStagingMode ?? false;
 		this.isDirty = overrides?.isDirty ?? false;
 	}
@@ -914,9 +919,14 @@ export class MockFluidDataStoreRuntime
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	/**
-	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.minVersionForCollab}
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient?: OldestSupportedClientVersion;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

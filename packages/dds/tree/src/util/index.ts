@@ -115,6 +115,7 @@ export {
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
+export { StringPiece, StringSequence, stringBufferSize } from "./stringStorage.js";
 
 export type {
 	_RecursiveTrick,
@@ -188,3 +189,5 @@ export {
 	type IdDecoderOptionsOriginatorless,
 	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";
+
+export { merge, assertStructuralEquality, hasConflict } from "./objMerge.js";

@@ -36,7 +36,10 @@ import { CheckoutBase, type TreeCheckoutOptions } from "./treeCheckout.js";
  */
 export class BranchCheckout extends CheckoutBase {
 	public constructor(options: TreeCheckoutOptions) {
-		assert(!options.isSharedBranch, "BranchCheckout cannot represent a shared branch");
+		assert(
+			!options.isSharedBranch,
+			0xd77 /* BranchCheckout cannot represent a shared branch */,
+		);
 		super(options);
 	}
 

@@ -511,11 +511,14 @@ export namespace System_TableSchema {
 		 * The implicit typing is intentional.
 		 */
 		const tableFields = {
-			table: schemaFactory.required(schemaFactory.object("Table", tableInnerFields), {
-				// Use an empty key in the stored schema format to help prevent schema-unaware edits from being
-				// made to the table, which may violate intended invariants.
-				key: EmptyKey,
-			}),
+			table: schemaFactory.required(
+				schemaFactory.object("Table", tableInnerFields, { allowUnknownOptionalFields: false }),
+				{
+					// Use an empty key in the stored schema format to help prevent schema-unaware edits from being
+					// made to the table, which may violate intended invariants.
+					key: EmptyKey,
+				},
+			),
 		} as const satisfies Record<string, ImplicitFieldSchema>;
 
 		type TableValueType = TreeNode &

@@ -25,6 +25,17 @@ export {
 	isEphemeralSummaryAccessStore,
 	MalformedEphemeralSummaryAccessRecordError,
 } from "./definitions";
+export type {
+	DocumentAccessOperation,
+	IAuthorizeDocumentAccessInput,
+	IDocumentAccessAuthorizer,
+	IDocumentAccessControl,
+	IDocumentAccessControlFactory,
+	IDocumentAccessProof,
+	ITrustedCreateContext,
+	ITrustedCreateContextResolver,
+} from "./documentAccess";
+export { getReusableDocumentAccessProof } from "./documentAccess";
 export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";
 export { type IDocument, RestGitService } from "./restGitService";
