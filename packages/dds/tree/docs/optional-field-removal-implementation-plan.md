@@ -14,19 +14,19 @@ The [work plan][work-plan] owns the requirements, user-facing test scenarios, an
 The [overview][overview] describes the application-facing behavior.
 
 Use the work plan's [required behavior][requirements] and [compatibility expectations][compatibility-expectations] as the acceptance requirements.
-The new informational diagnostic, `compatibility.retainedOptionalFields`, is specified in section 4.
+The new alpha informational diagnostic, `compatibility.retainedUnknownOptionalFields`, is specified in section 4.
 
 ## 1. Findings from the code
 
 | Area | Current behavior | Required change |
 | --- | --- | --- |
-| [Stored-schema conversion][conversion] | `toUpgradeSchema` derives its result from the view and staged policy only. It has no document input. | Add a shared, document-aware upgrade-target builder. |
-| [Compatibility calculation][compatibility] | `canUpgrade` compares the document against that view-only target. | Compare against the target that retains eligible unknown fields. Return the new information separately from blocking discrepancies. |
+| [Stored-schema conversion][conversion] | `toUpgradeSchema` derives its result from the view schema and staged policy only. It does not consider the existing stored schema. | Add a shared builder that derives the target from both schemas and the effective staged-upgrade policy. |
+| [Compatibility calculation][compatibility] | `canUpgrade` compares the existing stored schema against that view-only target. | Compare against the target that retains eligible unknown fields. Return the new information separately from blocking discrepancies. |
 | [Upgrade execution][runtime-upgrade] | `upgradeSchema` independently derives the view-only target and rejects field removal. | Use the same target builder as the compatibility checker. |
 | [Viewing discrepancies][discrepancies] | Unknown optional fields are already tolerated when the view object enables the option. | Keep that rule. Do not turn retained fields into viewing errors. |
 | [Stored-schema comparison][comparison] | Upgrades must satisfy the superset rules for the root and all existing node definitions. | Keep these safety rules unchanged. |
 | [Live compatibility updates][live-status] | A stored-schema change recomputes compatibility and forwards its result to the view. | Include and refresh the new informational property through this path. |
-| [Snapshot comparison][snapshot-comparison] | The helper asserts that equivalence is symmetric between two view configurations. | Remove that assumption for document-specific upgrade targets. |
+| [Snapshot comparison][snapshot-comparison] | The helper asserts that equivalence is symmetric between two view configurations. | Remove that assumption and update documentation accordingly. |
 | [Persisted-schema comparison][persisted-schema] | The offline helper calls the shared compatibility checker. | Inherit the new upgrade decisions and verify agreement with live views. |
 
 The root cause is target construction, not the general definition of a safe stored-schema upgrade.
@@ -44,24 +44,43 @@ Do not add it to the customer-facing entry points.
 Inputs:
 
 - The complete `TreeSchema` for the view.
-- The document's current `TreeStoredSchema`.
+- The existing `TreeStoredSchema`.
 - The effective `StagedSchemaUpgradePolicy`.
+
+Use the complete `TreeSchema`, which includes the root field and all reachable view definitions.
+A single node schema does not describe root optionality or root-level unions.
+
+These inputs are sufficient to determine the target.
+The helper is a pure schema operation: it does not inspect document content or require a tree instance, checkout, or runtime.
+Retaining a field must not depend on whether any node currently contains a value for it.
 
 Outputs:
 
 - The proposed `TreeStoredSchema`.
 - A list of retained optional field locations.
 
+The proposed schema is a complete candidate stored schema, not a patch or an executable upgrade object.
+The helper does not apply the upgrade or guarantee that the candidate passes the upgrade checks.
+Its callers validate the candidate before applying it.
+
 Both compatibility calculation and upgrade execution must use this helper.
 Return the diagnostic locations from the same construction pass so the report describes what the target actually retains.
 
-Keep the existing document-independent conversion available.
-Initialization, extraction, and other callers that have no existing document must not receive retained historical fields.
+Keep the existing view-only conversion available.
+Initialization and extraction derive their result from the view schema and policy without using an existing stored schema.
+They must not receive retained historical fields.
 
 ### 2.2 Construction rules
 
-1. Generate the normal target from the view and effective staged policy.
-2. Copy its node-definition map before making document-specific changes.
+Convert the view schema to its stored representation before combining or comparing schema structures.
+Keep the original view schema available to determine which objects permit unknown optional fields and to resolve view-known types excluded by staging.
+
+Perform field retention and the final stored-schema upgrade checks on stored-schema representations.
+The original view supplies the policy and declaration information that conversion does not preserve.
+Section 2.4 describes how this applies to staged declarations.
+
+1. Generate the normal stored-schema target from the view and effective staged policy.
+2. Copy its node-definition map before retaining definitions from the existing stored schema.
 3. Process its definitions with a work queue and a visited set.
 4. For a view object that enables `allowUnknownOptionalFields`, inspect the matching stored object definition.
 5. Retain stored fields whose stored keys are absent from the view object and whose stored kind is optional.
@@ -119,16 +138,16 @@ See [staged-upgrade policies][staged-policy].
 ### 2.5 Mutation and caching
 
 The existing view-to-stored conversion is cached by view schema and policy.
-Never mutate a cached result, the view definitions, or the document's current stored schema.
+Never mutate a cached result, the view definitions, or the supplied stored schema.
 
 Copy maps that need modification.
 Reuse immutable stored field and node definitions where possible.
 Preserve stored-only node metadata.
 Keep the existing conversion behavior for metadata on view-known definitions.
 
-Initially, build the document-specific result on demand.
+Initially, build the result from both schemas and the effective policy on demand.
 Do not cache it only by mutable repository identity.
-The same repository can change, and the same view configuration can open documents with different histories.
+The same repository can change, and one view configuration can be used with different stored schemas.
 
 ## 3. Compatibility and upgrade execution
 
@@ -140,7 +159,16 @@ Continue to collect staged-upgrade status even when viewing is blocked.
 Use the shared target for:
 
 - `canUpgrade`: the existing stored schema can be upgraded to that target under the superset rules.
-- `isEquivalent`: the view can already be used and the existing schema and target satisfy the upgrade rules in both directions.
+- `isEquivalent`: the view can already access the document, and the proposed upgrade target is equivalent to the document's current stored schema under the schema upgrade rules.
+
+Keep the `isEquivalent` name and update its public documentation to make these semantics explicit:
+
+- The comparison is between the document's current stored schema and the proposed stored-schema target, including retained fields and the effective staged-upgrade policy.
+- Both must permit an upgrade to the other under the existing rules. The reverse check establishes equivalence; it does not perform a downgrade.
+- A `true` result also requires `canView` to be true. It implies `canUpgrade` is true and `upgradeSchema()` will make no stored-schema change.
+- It does not require identical serialized schemas. Metadata differences ignored by the upgrade checks do not affect the result.
+- It does not mean that initialization with this view would produce the same schema, or that different application versions can view each other's documents.
+- A `false` result alone does not mean that viewing or upgrading is forbidden. Applications must use `canView` and `canUpgrade` for those decisions.
 
 These calculations implement the work plan's [compatibility expectations][compatibility-expectations].
 After a successful upgrade, the resulting stored schema must support viewing.
@@ -151,7 +179,7 @@ Test that postcondition as well as the superset condition.
 In [SchematizingSimpleTreeView.upgradeSchema][runtime-upgrade]:
 
 1. Capture the current stored schema.
-2. Obtain the document-specific target using the effective staged policy.
+2. Obtain the target from the captured stored schema, the view schema, and the effective staged policy.
 3. Run the existing superset check.
 4. Keep the existing no-op return when the reverse check also succeeds.
 5. Otherwise, write the target through the existing schema-edit path.
@@ -164,19 +192,32 @@ This satisfies the work plan's no-op event and identity requirements without add
 
 ## 4. Informational diagnostics
 
-### 4.1 Approved API shape
+### 4.1 Alpha API shape
 
-Add this optional property to the existing beta [SchemaCompatibilityStatusBeta][status-api] interface:
+Introduce `SchemaCompatibilityStatusAlpha` as an alpha extension of the existing beta [SchemaCompatibilityStatusBeta][status-api] interface:
 
 ```typescript
-readonly retainedOptionalFields?: readonly {
-    readonly nodeType: string;
-    readonly fieldKey: string;
-}[];
+/**
+ * Schema compatibility status with additional upgrade diagnostics.
+ *
+ * @sealed @alpha
+ */
+export interface SchemaCompatibilityStatusAlpha extends SchemaCompatibilityStatusBeta {
+    readonly retainedUnknownOptionalFields?: readonly {
+        readonly nodeType: string;
+        readonly fieldKey: string;
+    }[];
+}
 ```
 
+Declare `TreeViewAlpha.compatibility` with this extended type.
+Leave the public and beta compatibility interfaces unchanged.
+Applications access the new information through an alpha-capable view, such as `asAlpha(view).compatibility`.
+Keeping the report alpha allows its design to change independently of the beta discrepancy contract.
+
+Export the new status type through the [API barrel][api-index], [simple-tree barrel][simple-tree-index], and [package index][tree-index].
+Generate the entrypoint sources so the type is available at the alpha tier, but not the beta or public tiers.
 No separate exported location type is required for this shape.
-Applications access it through a beta-capable view, such as `asBeta(view).compatibility`.
 
 Contract:
 
@@ -198,7 +239,8 @@ Do not add these entries to telemetry without a separate need and the existing s
 
 ### 4.2 Relationship to blocking discrepancies
 
-Keep the existing `discrepancies` contract:
+Reworking `discrepancies` is outside this project.
+Keep its existing beta contract:
 
 - It is `undefined` when `canView` is true.
 - Otherwise, it identifies the differences that prevent viewing the current document.
@@ -206,7 +248,7 @@ Keep the existing `discrepancies` contract:
 
 For example, a stored `Task` has optional `foo`, and the current view omits it:
 
-- With no other changes, `discrepancies` is `undefined`; `retainedOptionalFields` identifies `Task.foo`.
+- With no other changes, `discrepancies` is `undefined`; `retainedUnknownOptionalFields` identifies `Task.foo`.
 - If the view also adds `bar`, the blocking discrepancy identifies missing `bar`; the retained-field list still identifies `foo`.
 - If another declared field has incompatible types, report that existing blocking discrepancy alongside the retained-field information.
 
@@ -217,6 +259,8 @@ The two properties let applications distinguish "cannot open yet" from "data rem
 
 [computeCompatibility][live-status] already forwards compatibility results to the live view.
 Use that path rather than adding a second diagnostic cache.
+Update the internal compatibility result, cached status, and getter types to carry `SchemaCompatibilityStatusAlpha`.
+The same runtime object can serve all view tiers; the public and beta types must not expose the new property.
 
 Verify that remote schema changes refresh the report through the existing `schemaChanged` flow.
 A preserved field must not cause a new error or force view invalidation merely because it appears in the informational report.
@@ -241,11 +285,11 @@ Leave the snapshot tool's forward-viewability checks unchanged: continue to chec
 The work plan explains the [fresh-document collaboration restriction][collaboration-limit] that this preserves.
 
 The existing [offline helpers][persisted-schema] should inherit the new decisions from the shared checker.
-Keep their existing return types unless exposing additional beta information there is separately required.
+Keep their existing return types; exposing the new alpha diagnostics through those helpers is outside this change.
 
 There are already skipped tests for staged-policy handling in the snapshot helpers.
 Do not expand this work into a general repair of those unrelated cases.
-Fix only assumptions directly affected by document-specific field preservation.
+Fix only assumptions directly affected by retaining fields from the existing stored schema.
 
 ## 6. Unaffected code paths
 
@@ -257,6 +301,9 @@ These paths do not need implementation changes:
 - Low-level stored-schema formats, codecs, and field-kind upgrade policies.
 - Unknown-field access, export, and clone semantics.
 - Schema-change concurrency, conflict resolution, and retry behavior.
+
+Renaming, replacing, or deprecating `isEquivalent` is outside this work.
+Only clarify its documentation and update its calculation to use the shared upgrade target.
 
 The feature boundaries and prerequisite safety rules remain in the [work plan][work-plan].
 Do not expand the user-story matrix as part of this implementation.
@@ -293,11 +340,12 @@ Update [schemaCompatibilityTester.spec.ts][compatibility-tests]:
 
 - Change the existing "viewable but not upgradeable" expectation for eligible unknown optional fields.
 - Update the test helper that currently validates upgrade safety using a view-only conversion.
-- Check the actual document-specific target with the effective staged policy.
+- Check the actual target derived from both schemas and the effective staged policy.
 - Test the new diagnostic property when compatible, upgradeable but not viewable, and incompatible for another reason.
 - Verify omission when no fields are retained, stable ordering, and one entry per schema field.
 - Verify stored keys in diagnostics when application property names differ.
 - Keep `getSchemaIncompatibilityDetails` and blocking-discrepancy expectations unchanged for permitted omissions.
+- Add type checks that alpha views expose `retainedUnknownOptionalFields`, while public and beta views do not.
 
 Keep [discrepancy tests][discrepancy-tests] focused on viewing blockers.
 Add a regression there only if an implementation change directly affects that logic.
@@ -308,7 +356,7 @@ Update [schematizingTreeView.spec.ts][view-tests]:
 
 - Correct the two existing unknown-field compatibility expectations.
 - Verify the actual target retains fields and node definitions after a non-no-op upgrade.
-- Verify no-op behavior and the new property through beta view access.
+- Verify no-op behavior and the new property through alpha view access.
 - Verify that live compatibility information changes after a synchronized schema update.
 
 Update [snapshotCompatibilityChecker.spec.ts][snapshot-tests] and [storedSchema.spec.ts][stored-tests]:
@@ -325,14 +373,16 @@ Add only focused coverage for interactions introduced by the target builder.
 
 1. Add the target builder and focused target-construction tests.
 2. Connect both compatibility calculation and live upgrades to it.
-3. Add the beta diagnostic property and its tests.
+3. Add the alpha status type, diagnostic property, exports, and tests.
 4. Update snapshot assumptions and directly affected expectations.
 5. Complete the work plan's [documentation and delivery checklist][delivery].
 6. Run validation and inspect failures before expanding the test scope.
 
-From `packages/dds/tree`, compile the implementation before the tests:
+From `packages/dds/tree`, regenerate entrypoint sources after adding the alpha type to the package index.
+Rebuild immediately afterward, before compiling the tests:
 
 ```bash
+pnpm run generate:entrypoint-sources
 pnpm run build:esm
 pnpm run build:test:esm
 ```
@@ -368,6 +418,8 @@ Use the [work plan][work-plan] for feature acceptance and delivery requirements 
 [overview]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-overview.md
 [conversion]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/toStoredSchema.ts
 [simple-tree-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/index.ts
+[api-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/api/index.ts
+[tree-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/index.ts
 [tree-schema]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/treeSchema.ts
 [compatibility]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/api/schemaCompatibilityTester.ts
 [runtime-upgrade]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L339

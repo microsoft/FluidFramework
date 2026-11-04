@@ -71,7 +71,7 @@ Use the implementation plan as the source for technical decisions:
 
 | Area | Implementation plan section |
 | --- | --- |
-| Construct a target from the view and existing document | [Shared upgrade-target construction][implementation-target] |
+| Construct a target from the stored and view schemas and the effective staged-upgrade policy | [Shared upgrade-target construction][implementation-target] |
 | Preserve referenced types, handle staging, and isolate cached results | [Shared upgrade-target construction][implementation-target] |
 | Compute compatibility flags and execute safe upgrades | [Compatibility and upgrade execution][implementation-runtime] |
 | Explain retained fields separately from viewing blockers | [Informational diagnostics][implementation-diagnostics] |
@@ -94,7 +94,7 @@ For a field removal with no other schema change, the proposed result is:
 | `isEquivalent` | `true` |
 | `upgradeSchema()` | No stored-schema change |
 
-Here, equivalence compares the existing stored schema with the target for that document.
+Here, equivalence compares the existing stored schema with the target derived from both schemas and the effective staged-upgrade policy.
 It does not mean that a new document would receive the same schema.
 
 For a removal combined with a new optional field:
@@ -174,12 +174,13 @@ The implementation plan contains the [validation commands and code-work order][i
 Update the following application programming interface (API) documentation:
 
 - [Object schema options](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14): explain field removal, retained data, and rollback.
-- [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe the document-specific target.
-- [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): update upgrade and equivalence rules.
+- [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the effective staged-upgrade policy determine the target.
+- [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify `isEquivalent` and the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Keep the existing property name; renaming and deprecation are out of scope.
 - [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and new-document limits.
 
-Document the new beta informational report according to the [diagnostic contract][implementation-diagnostics].
+Document the new alpha informational report according to the [diagnostic contract][implementation-diagnostics].
 Include an example that distinguishes retained fields from blocking discrepancies.
+Leave the existing beta `discrepancies` contract unchanged; redesigning it is outside this project.
 
 Update the documentation for `allowUnknownOptionalFields` and the related guides to explain both compatibility directions:
 
@@ -214,9 +215,9 @@ Delivery checklist:
 
 - Complete the [implementation steps and focused validation][implementation-validation].
 - Complete the documentation updates in this section.
-- Follow the repository API-change review guidance for the new beta property.
+- Follow the repository API-change review guidance for the new alpha status type and property.
 - Regenerate the affected API reports for both `@fluidframework/tree` and its `fluid-framework` aggregator. Do not edit reports by hand.
-- Regenerate entrypoint sources only if top-level exports change; no new named export is currently proposed.
+- Regenerate entrypoint sources for the new alpha status type, then rebuild before generating reports.
 - Add a changeset for both packages covering field-preserving upgrades and the informational diagnostic.
 
 Use the [package scripts](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/package.json) and [changeset guidelines](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/.changeset/README.md).
