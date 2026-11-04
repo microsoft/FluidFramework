@@ -115,11 +115,11 @@ export function assertModularChangesetsEqual(
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
 	const aNormalized = {
-		...normalizeChangeset(a, fieldKinds, ignoreRevertConstraints, deepCloneChunkedTree),
+		...normalizeChangeset(a, fieldKinds, ignoreRevertConstraints, false, deepCloneChunkedTree),
 		maxId,
 	};
 	const bNormalized = {
-		...normalizeChangeset(b, fieldKinds, ignoreRevertConstraints, deepCloneChunkedTree),
+		...normalizeChangeset(b, fieldKinds, ignoreRevertConstraints, false, deepCloneChunkedTree),
 		maxId,
 	};
 
