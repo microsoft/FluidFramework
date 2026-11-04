@@ -6,6 +6,8 @@ yarn.lock                    merge=binary
 *     text !filter !merge !diff
 *     text=auto eol=lf
 *.txt text=auto !eol
+
+# Keep pipeline commands LF-only: carriage returns would invalidate the curl script's JSON payloads.
 /.claude/skills/trigger-pipelines-for-copilot-pr/scripts/pipeline-commands.txt text eol=lf
 
 *.png -text
