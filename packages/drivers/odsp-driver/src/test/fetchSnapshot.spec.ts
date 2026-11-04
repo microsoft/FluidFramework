@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type {
@@ -23,15 +24,18 @@ import type {
 } from "@fluidframework/telemetry-utils/internal";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
-import { stub } from "sinon";
+import { type SinonStub, stub } from "sinon";
 
+import { currentReadVersion } from "../compactSnapshotParser.js";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import type { HostStoragePolicyInternal } from "../contracts.js";
+import { ClpCompliantAppHeader } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import {
 	downloadSnapshot,
 	type ISnapshotRequestAndResponseOptions,
+	SnapshotFormatSupportType,
 } from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
@@ -53,6 +57,179 @@ import {
 } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
+
+describe("Snapshot download authorization", () => {
+	let resolved: IOdspResolvedUrl;
+	let epochTracker: EpochTracker;
+	let fetchStub: SinonStub<Parameters<typeof fetch>, ReturnType<typeof fetch>>;
+	let getAuthHeader: SinonStub<
+		Parameters<InstrumentedStorageTokenFetcher>,
+		ReturnType<InstrumentedStorageTokenFetcher>
+	>;
+	const sharingLink = "https://example.com/share?key=value";
+	const hostHeaders = { "X-Agent-Id": "snapshot-agent" };
+
+	beforeEach(async () => {
+		resolved = {
+			...(await new OdspDriverUrlResolver().resolve({
+				url: createOdspUrl({
+					siteUrl: "https://microsoft.sharepoint.com/siteUrl",
+					driveId: "driveId",
+					itemId: "itemId",
+					dataStorePath: "/",
+				}),
+			})),
+			isClpCompliantApp: true,
+			shareLinkInfo: { sharingLinkToRedeem: sharingLink },
+		};
+		epochTracker = new EpochTracker(
+			createUtLocalCache(),
+			{ docId: resolved.hashedDocumentId, resolvedUrl: resolved },
+			createChildLogger({ logger: new MockLogger() }),
+			undefined,
+			hostHeaders,
+		);
+		epochTracker.setEpoch("epoch1", true, "test");
+		fetchStub = stub(globalThis, "fetch").resolves(
+			new Response("{}", { headers: { "x-fluid-epoch": "epoch1" } }),
+		);
+		getAuthHeader = stub<
+			Parameters<InstrumentedStorageTokenFetcher>,
+			ReturnType<InstrumentedStorageTokenFetcher>
+		>().callsFake(async (options) => {
+			assert(options.request !== undefined);
+			return `AT_POP ${options.request.method} ${options.request.url}`;
+		});
+	});
+
+	afterEach(async () => {
+		fetchStub.restore();
+		await epochTracker.removeEntries();
+	});
+
+	for (const scheme of ["Bearer", "bearer"]) {
+		it(`preserves the multipart request for ${scheme} authorization`, async () => {
+			const authHeader = `${scheme} storage-token`;
+			getAuthHeader.resolves(authHeader);
+			await downloadSnapshot(
+				resolved,
+				getAuthHeader,
+				{ refresh: false },
+				undefined,
+				{ blobs: 2, timeout: 2000 },
+				undefined,
+				undefined,
+				undefined,
+				epochTracker,
+			);
+
+			assert(fetchStub.calledOnce);
+			assert(getAuthHeader.calledOnce);
+			const [url, options] = fetchStub.firstCall.args;
+			assert(typeof url === "string" && options !== undefined);
+			assert.deepEqual(getAuthHeader.firstCall.args[0].request, {
+				url,
+				method: "POST",
+			});
+			assert.equal(options.method, "POST");
+			assert.equal(new URL(url).searchParams.get("ump"), "1");
+			assert.equal(new URL(url).searchParams.get("blobs"), "2");
+			assert.equal(new URL(url).searchParams.has("timeout"), false);
+			const headers = new Headers(options.headers);
+			assert.match(headers.get("content-type") ?? "", /^multipart\/form-data;boundary=/);
+			assert.equal(headers.has("authorization"), false);
+			assert.equal(headers.get("x-agent-id"), "snapshot-agent");
+			assert(typeof options.body === "string");
+			for (const entry of [
+				`Authorization: ${authHeader}`,
+				"X-HTTP-Method-Override: GET",
+				"prefer: manualredirect",
+				`sl: ${sharingLink}`,
+				"x-fluid-epoch: epoch1",
+				`${ClpCompliantAppHeader.isClpCompliantApp}: true`,
+			]) {
+				assert(options.body.includes(entry), `Multipart body should contain ${entry}`);
+			}
+		});
+	}
+
+	for (const useEpochTracker of [false, true]) {
+		it(`authorizes the actual non-bearer GET with epoch tracker ${useEpochTracker}`, async () => {
+			resolved.shareLinkInfo = {
+				sharingLinkToRedeem: sharingLink,
+				isRedemptionNonDurable: useEpochTracker,
+			};
+			const tokenFetchOptions = {
+				refresh: true,
+				claims: "claims-challenge",
+				tenantId: "tenant",
+			};
+			const controller = new AbortController();
+			const result = await downloadSnapshot(
+				resolved,
+				getAuthHeader,
+				tokenFetchOptions,
+				["group-a", "group b"],
+				{ blobs: 2, deltas: 1, timeout: 2000 },
+				undefined,
+				useEpochTracker ? SnapshotFormatSupportType.Binary : undefined,
+				controller,
+				useEpochTracker ? epochTracker : undefined,
+				"snapshot-test",
+				hostHeaders,
+			);
+
+			assert(fetchStub.calledOnce);
+			const [url, options] = fetchStub.firstCall.args;
+			assert(typeof url === "string" && options !== undefined);
+			assert.equal(options.method, "GET");
+			assert.equal(options.body, undefined);
+			assert.equal(options.signal, controller.signal);
+			assert.equal(result.requestUrl, url);
+			const parsedUrl = new URL(url);
+			assert.equal(parsedUrl.searchParams.has("ump"), false);
+			assert.equal(parsedUrl.searchParams.get("blobs"), "2");
+			assert.equal(parsedUrl.searchParams.get("deltas"), "1");
+			assert.equal(parsedUrl.searchParams.get("groupId"), "group-a,group b");
+			assert.equal(parsedUrl.searchParams.has("timeout"), false);
+			assert(getAuthHeader.calledTwice);
+			assert.deepEqual(getAuthHeader.secondCall.args[0], {
+				...tokenFetchOptions,
+				request: { url, method: "GET" },
+			});
+
+			const headers = new Headers(options.headers);
+			assert.equal(headers.get("authorization"), `AT_POP GET ${url}`);
+			assert.equal(headers.has("content-type"), false);
+			assert.equal(headers.has("x-http-method-override"), false);
+			assert.equal(headers.get("sl"), sharingLink);
+			assert.equal(
+				headers.get("prefer"),
+				useEpochTracker ? "manualredirect, nonDurableRedeem" : "manualredirect",
+			);
+			assert.equal(headers.get(ClpCompliantAppHeader.isClpCompliantApp), "true");
+			assert.equal(headers.get("x-agent-id"), "snapshot-agent");
+			assert.equal(
+				headers.get("accept"),
+				`${useEpochTracker ? "" : "application/json, "}application/ms-fluid; v=${currentReadVersion}`,
+			);
+			if (useEpochTracker) {
+				assert.equal(headers.get("x-fluid-epoch"), "epoch1");
+				assert(headers.get("x-requeststats")?.includes("snapshot-test"));
+			}
+		});
+	}
+
+	it("does not send a request if authorization for the GET fails", async () => {
+		const error = new Error("Could not authorize the snapshot GET");
+		getAuthHeader.onSecondCall().rejects(error);
+		await assert.rejects(
+			downloadSnapshot(resolved, getAuthHeader, { refresh: false }, undefined, undefined),
+			(candidate: unknown) => candidate === error,
+		);
+		assert(fetchStub.notCalled);
+	});
+});
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
