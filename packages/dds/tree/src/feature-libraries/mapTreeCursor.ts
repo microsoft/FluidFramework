@@ -62,8 +62,12 @@ export interface MinimalFieldMap<TField> {
  */
 export interface MapTreeFieldViewGeneric<TNode> {
 	/**
-	 * Optional field cursor that avoids enumerating node objects.
-	 * Returns undefined when the ordinary node representation should be used.
+	 * Optional specialized cursor for traversing the field.
+	 *
+	 * When undefined, generic cursors traversing the field can still be used, e.g. see {@link cursorForMapTreeField}.
+	 * @remarks
+	 * This allows specialized storage to provide optimized cursor representations.
+	 * This is useful for fields that have specialized storage formats, such as packed arrays or other optimized representations.
 	 */
 	tryGetCursor?(): CursorWithNode<TNode> | undefined;
 	readonly [Symbol.iterator]: () => Iterator<TNode>;

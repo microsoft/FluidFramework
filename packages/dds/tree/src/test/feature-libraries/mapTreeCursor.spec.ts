@@ -20,6 +20,11 @@ testGeneralPurposeTreeCursor(
 	mapTreeFromCursor,
 );
 
+/**
+ * convert a MapTree into one which recursively "specializes" its fields' cursors with the generic mapTree cursor.
+ *
+ * This is useful for testing the correctness of `FieldDelegatingCursor`.
+ */
 function withDelegatedFields(tree: MapTree): MinimalMapTreeNodeView {
 	return {
 		type: tree.type,
@@ -33,7 +38,7 @@ function withDelegatedFields(tree: MapTree): MinimalMapTreeNodeView {
 						length: nodes.length,
 						tryGetCursor: () => cursorForMapTreeField(nodes),
 						[Symbol.iterator](): Iterator<MinimalMapTreeNodeView> {
-							throw new Error("Delegated fields must not enumerate node objects");
+							throw new Error("Delegated fields should construct a cursor rather than enumerate field contents directly.");
 						},
 					},
 				];

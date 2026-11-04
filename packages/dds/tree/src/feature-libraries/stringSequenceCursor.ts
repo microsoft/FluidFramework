@@ -44,6 +44,7 @@ export class StringSequenceCursor<TNode>
 	 * @param nodeType - Schema identifier shared by all string leaves.
 	 * @param sequence - Immutable storage read by the cursor.
 	 * @param nodeAt - Supplies the corresponding node object only when getNode is called.
+	 * This callback determines node identity and is shared by forks.
 	 * @param chunk - Optional chunk covering the same sequence.
 	 * The caller must retain its owning reference while using this cursor.
 	 */
@@ -227,7 +228,14 @@ export class StringSequenceCursor<TNode>
 }
 
 /**
- * Creates a string field cursor without allocating per-atom nodes.
+ * Creates a string field cursor without allocating per-atom nodes during traversal.
+ * @remarks
+ * String storage has no underlying node objects.
+ * Each call to {@link CursorWithNode.getNode | getNode} creates a new read-only view of the current atom,
+ * including repeated calls at the same index and calls on forks.
+ * These views do not have stable object identity and are not the sequence's backing storage.
+ * The caller is responsible for determining whether this behavior satisfies its use case's identity requirements.
+ * Use {@link StringSequenceCursor} with a suitable `nodeAt` callback when access to existing node objects is required.
  */
 export function cursorForStringSequence(
 	type: TreeNodeSchemaIdentifier,
