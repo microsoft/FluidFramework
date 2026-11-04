@@ -1,5 +1,9 @@
 # @fluid-experimental/odsp-end-to-end-tests
 
+## 3.11.0
+
+Dependency updates only.
+
 ## 3.10.0
 
 Dependency updates only.
