@@ -999,6 +999,7 @@ export function normalizeChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	dropRevertConstraint: boolean,
+	dropRevisionInfo: boolean,
 	chunkNormalizer: (chunk: TreeChunk) => TreeChunk,
 ): ModularChangeset {
 	const normalized: Mutable<ModularChangeset> = normalizeRangeMaps(
@@ -1022,8 +1023,13 @@ function normalizeNodeIds(
 	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
-		assert(newId !== undefined, "Unknown node ID");
+		const normalizedId = normalizeNodeId(nodeId, change.nodeAliases);
+		const newId = tryGetFromNestedMap(
+			idRemappings,
+			normalizedId.revision,
+			normalizedId.localId,
+		);
+		assert(newId !== undefined, 0xd98 /* Unknown node ID */);
 		return newId;
 	};
 
@@ -1041,13 +1047,17 @@ function normalizeNodeIds(
 	};
 
 	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
+		const normalizedId = normalizeNodeId(nodeId, change.nodeAliases);
+		const nodeChangeset = change.nodeChanges.get([
+			normalizedId.revision,
+			normalizedId.localId,
+		]);
+		assert(nodeChangeset !== undefined, 0xd99 /* Unknown node ID */);
 
 		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
 		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
 
-		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
+		const parent = change.nodeToParent.get([normalizedId.revision, normalizedId.localId]);
 		assert(parent !== undefined, "Every node should have a parent");
 		const newParent = remapNodeLocation(parent);
 		nodeToParent.set([newId.revision, newId.localId], newParent);
@@ -1064,7 +1074,6 @@ function normalizeNodeIds(
 		}
 
 		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
-
 		return newId;
 	};
 
@@ -1084,7 +1093,7 @@ function normalizeNodeIds(
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
 			for (const { key, count } of crossFieldKeys) {
 				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
+				assert(prevId !== undefined, 0xd9b /* Should be an entry for each cross-field key */);
 				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
 			}
 		}
@@ -1266,18 +1275,21 @@ export function areEquivalent(
 	change2: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	ignoreRevertConstraint: boolean = true,
+	ignoreRevisionInfo: boolean = true,
 	chunkNormalizer: (chunk: TreeChunk) => TreeChunk = makeDummyChunk,
 ): boolean {
 	const normalized1 = normalizeChangeset(
 		change1,
 		fieldKinds,
 		ignoreRevertConstraint,
+		ignoreRevisionInfo,
 		chunkNormalizer,
 	);
 	const normalized2 = normalizeChangeset(
 		change2,
 		fieldKinds,
 		ignoreRevertConstraint,
+		ignoreRevisionInfo,
 		chunkNormalizer,
 	);
 	const diff = merge(normalized1, normalized2, (item: object) =>

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Merged {}
@@ -44,10 +44,8 @@ export function assertStructuralEquality<T>(
 		readonly transform?: ObjectTransform;
 	} = {},
 ): void {
-	const diff = merge(actual, expected, options.transform ?? identityTransform);
-	if (hasConflict(diff)) {
-		fail(options.message ?? "Objects are not structurally equal");
-	}
+	const diff = merge(actual, expected, options.transform);
+	assert(!hasConflict(diff), 0xd8a /* Objects are not structurally equal */);
 }
 
 // TODO: In theory we should also look at object fields on maps and arrays.
@@ -62,7 +60,7 @@ export function merge<T>(
 	transform: ObjectTransform = identityTransform,
 ): Conflicted | Conflict | ConflictedMap | T {
 	if (hasConflict(lhs) || hasConflict(rhs)) {
-		fail("This function does not accept its output type as an input type");
+		fail(0xd8b /* This function does not accept its output type as an input type */);
 	}
 
 	// === is not reflective because of how NaN is handled, so use Object.is instead.
