@@ -102,9 +102,8 @@ describe("PerformanceEvent", () => {
 
 	// Firefox can throw from User Timing APIs after a window is torn down. These diagnostic
 	// failures must neither prevent the callback from running nor replace its result or error.
-	// The matrix below exercises failures in the performance getter, mark(), and measure(),
-	// before the callback (start marking) or after successful start marking (completion).
-	// It covers synchronous and asynchronous wrappers, plus end() called inside the callback.
+	// Start and completion failures are tested separately for synchronous and asynchronous
+	// wrappers, plus end() called inside the callback. Each scenario varies only the failing API.
 	// Separate window stubs simulate the failures without replacing the duration clock.
 	describe("Browser profiling failures preserve operation outcomes", () => {
 		let originalWindow: PropertyDescriptor | undefined;
@@ -148,106 +147,223 @@ describe("PerformanceEvent", () => {
 			}
 		};
 
-		for (const mode of ["sync", "async", "explicit end"] as const) {
-			// Explicit-end cases use the synchronous wrapper and finish inside the callback below.
-			const execute = (work: (event: PerformanceEvent) => number): number | Promise<number> =>
-				mode === "async"
-					? PerformanceEvent.timedExecAsync(logger, { eventName: "Timing" }, async (event) =>
-							work(event),
-						)
-					: PerformanceEvent.timedExec(logger, { eventName: "Timing" }, work);
+		const restoreBrowserTiming = (): void => {
+			// Expose any incorrect completion attempt using a start mark that was never created.
+			Object.defineProperty(browserWindow, "performance", {
+				configurable: true,
+				value: { mark, measure },
+			});
+			mark.resetBehavior();
+		};
 
-			for (const phase of ["start", "end"] as const) {
-				for (const api of ["getter", "mark", "measure"] as const) {
-					// Start marking does not call measure(); it is only used during completion.
-					if (phase === "start" && api === "measure") {
-						continue;
-					}
+		const assertEndedAndIgnoresLaterLifecycleCalls = (
+			event: PerformanceEvent | undefined,
+		): void => {
+			assert.equal(callbackCalls, 1);
+			assert.deepEqual(
+				logger.events.map((entry) => entry.eventName),
+				["Timing_end"],
+			);
+			assert.equal(logger.errorsLogged, 0);
+			assert.equal(typeof logger.events[0]?.duration, "number");
+			assert(event !== undefined);
+			assert.equal(
+				Reflect.get(event, "startMark"),
+				undefined,
+				"No pending start mark remains",
+			);
 
-					it(`Preserves ${mode} results when the ${phase} ${api} throws`, async () => {
-						// Fail during construction to verify that start marking cannot block the callback.
-						if (phase === "start") {
-							makeUnavailable(api);
-						}
-						let capturedEvent: PerformanceEvent | undefined;
-						const result = await execute((event) => {
+			// Later lifecycle calls must not retry browser completion or emit more telemetry.
+			const calls = [mark.callCount, measure.callCount];
+			event.end();
+			event.cancel();
+			assert.deepEqual([mark.callCount, measure.callCount], calls);
+			assert.equal(logger.eventsLogged, 1);
+		};
+
+		const assertCancelled = (): void => {
+			assert.equal(callbackCalls, 1);
+			assert.deepEqual(
+				logger.events.map((event) => event.eventName),
+				["Timing_cancel"],
+			);
+		};
+
+		describe("Browser timing is unavailable before callback execution", () => {
+			// Start marking does not call measure(); only the getter and mark() can fail here.
+			for (const api of ["getter", "mark"] as const) {
+				it(`Preserves the synchronous callback result when the ${api} throws`, () => {
+					makeUnavailable(api);
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = PerformanceEvent.timedExec(
+						logger,
+						{ eventName: "Timing" },
+						(event) => {
 							callbackCalls++;
 							capturedEvent = event;
-							if (phase === "end") {
-								// Construction succeeded; simulate teardown before completion marking.
-								makeUnavailable(api);
-							} else {
-								// Restore healthy APIs so an incorrect attempt to measure a failed start
-								// would be observable, rather than hidden by another timing exception.
-								Object.defineProperty(browserWindow, "performance", {
-									configurable: true,
-									value: { mark, measure },
-								});
-								mark.resetBehavior();
-							}
-							if (mode === "explicit end") {
-								// Exercise completion inside the callback; other modes auto-end on return.
-								event.end();
-							}
+							restoreBrowserTiming();
 							return 42;
-						});
+						},
+					);
 
-						// Profiling failure must preserve the result and normal end telemetry.
-						assert.equal(result, 42);
-						assert.equal(callbackCalls, 1);
-						assert.deepEqual(
-							logger.events.map((event) => event.eventName),
-							["Timing_end"],
-						);
-						assert.equal(logger.errorsLogged, 0);
-						assert.equal(typeof logger.events[0]?.duration, "number");
-						assert(capturedEvent !== undefined);
-						assert.equal(
-							Reflect.get(capturedEvent, "startMark"),
-							undefined,
-							"No pending start mark remains",
-						);
-						// Later lifecycle calls must not retry browser completion or emit more telemetry.
-						const calls = [mark.callCount, measure.callCount];
-						capturedEvent.end();
-						capturedEvent.cancel();
-						assert.deepEqual([mark.callCount, measure.callCount], calls);
-						assert.equal(logger.eventsLogged, 1);
-						if (phase === "start") {
-							// No measurement is valid when the start mark was never created.
-							sinon.assert.notCalled(measure);
-						}
-					});
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+					// Completion must skip measurement even though the APIs are now healthy.
+					sinon.assert.notCalled(measure);
+				});
 
-					if (mode !== "explicit end") {
-						it(`Preserves ${mode} callback errors when the ${phase} ${api} is unavailable`, async () => {
-							const callbackError = new Error("Operation failed");
-							// Start failures must still allow the callback to run and throw its own error.
-							if (phase === "start") {
-								makeUnavailable(api);
-							}
-							await assert.rejects(
-								async () =>
-									execute(() => {
-										callbackCalls++;
-										// Keep profiling unavailable while the wrapper handles a real failure.
-										makeUnavailable(api);
-										throw callbackError;
-									}),
-								// Preserve error identity, not merely its message or type.
-								(error: unknown) => error === callbackError,
-							);
-							assert.equal(callbackCalls, 1);
-							// A genuine callback failure still follows normal cancellation reporting.
-							assert.deepEqual(
-								logger.events.map((event) => event.eventName),
-								["Timing_cancel"],
-							);
-						});
-					}
-				}
+				it(`Preserves the asynchronous callback result when the ${api} throws`, async () => {
+					makeUnavailable(api);
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = await PerformanceEvent.timedExecAsync(
+						logger,
+						{ eventName: "Timing" },
+						async (event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							restoreBrowserTiming();
+							return 42;
+						},
+					);
+
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+					sinon.assert.notCalled(measure);
+				});
+
+				it(`Preserves the synchronous callback result with explicit end when the ${api} throws`, () => {
+					makeUnavailable(api);
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = PerformanceEvent.timedExec(
+						logger,
+						{ eventName: "Timing" },
+						(event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							restoreBrowserTiming();
+							event.end();
+							return 42;
+						},
+					);
+
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+					sinon.assert.notCalled(measure);
+				});
+
+				it(`Preserves the synchronous callback error when the ${api} is unavailable`, () => {
+					makeUnavailable(api);
+					const callbackError = new Error("Operation failed");
+					assert.throws(
+						() =>
+							PerformanceEvent.timedExec(logger, { eventName: "Timing" }, () => {
+								callbackCalls++;
+								throw callbackError;
+							}),
+						(error: unknown) => error === callbackError,
+					);
+					assertCancelled();
+				});
+
+				it(`Preserves the asynchronous callback error when the ${api} is unavailable`, async () => {
+					makeUnavailable(api);
+					const callbackError = new Error("Operation failed");
+					await assert.rejects(
+						PerformanceEvent.timedExecAsync(logger, { eventName: "Timing" }, async () => {
+							callbackCalls++;
+							throw callbackError;
+						}),
+						(error: unknown) => error === callbackError,
+					);
+					assertCancelled();
+				});
 			}
-		}
+		});
+
+		describe("Browser timing becomes unavailable during callback execution", () => {
+			for (const api of ["getter", "mark", "measure"] as const) {
+				it(`Preserves the synchronous callback result when the ${api} throws`, () => {
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = PerformanceEvent.timedExec(
+						logger,
+						{ eventName: "Timing" },
+						(event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							// Simulate teardown after construction, before the wrapper auto-ends.
+							makeUnavailable(api);
+							return 42;
+						},
+					);
+
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+				});
+
+				it(`Preserves the asynchronous callback result when the ${api} throws`, async () => {
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = await PerformanceEvent.timedExecAsync(
+						logger,
+						{ eventName: "Timing" },
+						async (event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							makeUnavailable(api);
+							return 42;
+						},
+					);
+
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+				});
+
+				it(`Preserves the synchronous callback result with explicit end when the ${api} throws`, () => {
+					let capturedEvent: PerformanceEvent | undefined;
+					const result = PerformanceEvent.timedExec(
+						logger,
+						{ eventName: "Timing" },
+						(event) => {
+							callbackCalls++;
+							capturedEvent = event;
+							makeUnavailable(api);
+							// Completion inside the callback must not prevent the following return.
+							event.end();
+							return 42;
+						},
+					);
+
+					assert.equal(result, 42);
+					assertEndedAndIgnoresLaterLifecycleCalls(capturedEvent);
+				});
+
+				it(`Preserves the synchronous callback error when the ${api} is unavailable`, () => {
+					const callbackError = new Error("Operation failed");
+					assert.throws(
+						() =>
+							PerformanceEvent.timedExec(logger, { eventName: "Timing" }, () => {
+								callbackCalls++;
+								makeUnavailable(api);
+								throw callbackError;
+							}),
+						(error: unknown) => error === callbackError,
+					);
+					assertCancelled();
+				});
+
+				it(`Preserves the asynchronous callback error when the ${api} is unavailable`, async () => {
+					const callbackError = new Error("Operation failed");
+					await assert.rejects(
+						PerformanceEvent.timedExecAsync(logger, { eventName: "Timing" }, async () => {
+							callbackCalls++;
+							makeUnavailable(api);
+							throw callbackError;
+						}),
+						(error: unknown) => error === callbackError,
+					);
+					assertCancelled();
+				});
+			}
+		});
 
 		it("Keeps healthy marking and explicit end/cancel behavior", () => {
 			const ended = PerformanceEvent.start(logger, { eventName: "Ended" });
