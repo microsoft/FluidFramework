@@ -8,6 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	compareUpPaths,
 	CursorLocationType,
 	type FieldKey,
 	type MapTree,
@@ -24,6 +25,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import {
+	assertFlexTreeEntityNotFreed,
 	Context,
 	FieldKinds,
 	MockNodeIdentifierManager,
@@ -35,6 +37,7 @@ import {
 	LazyGeneralNode,
 	LazyTreeNode,
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import { AnchoredField, LazyField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import { Context as SimpleContext } from "../../../simple-tree/core/context.js";
 import {
@@ -135,6 +138,134 @@ describe("General field storage", () => {
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
 	] as const) {
+		for (const kind of [FieldKinds.optional, FieldKinds.sequence]) {
+			it(`borrows ${kind.identifier} map cursors without boxing children or owning resources (${name})`, () => {
+				const schema = storedSchema(
+					new MapNodeStoredSchema({
+						...fieldSchema(kind.identifier),
+						types: new Set([numberType, rootType]),
+					}),
+				);
+				const childCount = kind === FieldKinds.optional ? 1 : 128;
+				const content: MapTree = {
+					type: rootType,
+					fields: new Map([
+						[
+							key("nested"),
+							[
+								{
+									type: rootType,
+									fields: new Map([
+										[key("items"), Array.from({ length: childCount }, (_, i) => number(i))],
+									]),
+								},
+							],
+						],
+					]),
+				};
+				const checkout = checkoutWithContent(
+					{ schema, initialTree: cursorForMapTreeNode(content) },
+					{ forestType },
+				);
+				const context = new Context(
+					defaultSchemaPolicy,
+					checkout,
+					new MockNodeIdentifierManager(),
+				);
+				try {
+					const root = context.root;
+					assert(root instanceof LazyField);
+					assert(root instanceof AnchoredField);
+					assertFlexTreeEntityNotFreed(root);
+					const outer = root.boxedAt(0) ?? assert.fail();
+					const container = outer.getBoxed(key("nested"));
+					const node = container.boxedAt(0);
+					assert(node instanceof LazyGeneralNode);
+					const field = node.getBoxed(key("items"));
+					const missing = node.getBoxed(key("missing"));
+					assert(field instanceof LazyField);
+					assert(missing instanceof LazyField);
+					assert(!(field instanceof AnchoredField));
+					assert(!(missing instanceof AnchoredField));
+					assertFlexTreeEntityNotFreed(field);
+					const parentCursor = node.cursor;
+					const parentPath = parentCursor.getPath();
+					const anchors = context.withAnchors.size;
+					const cursors = context.withCursors.size;
+					const cursor = field.borrowCursor();
+					assert.equal(cursor.mode, CursorLocationType.Fields);
+					assert.equal(cursor.getFieldKey(), key("items"));
+					assert.equal(cursor.getFieldLength(), childCount);
+					assert.equal(context.withAnchors.size, anchors);
+					assert(cursor.firstNode());
+					for (let i = 0; i < childCount; i++) {
+						assert.equal(cursor.value, i);
+						assert.equal(cursor.type, numberType);
+						assert.equal(cursor.nextNode(), i + 1 < childCount);
+					}
+					assert.equal(cursor.mode, CursorLocationType.Fields);
+					cursor.exitField();
+					assert.equal(cursor.type, rootType);
+					cursor.enterField(key("items"));
+					assert.equal(missing.borrowCursor().getFieldLength(), 0);
+					assert.equal(parentCursor.mode, CursorLocationType.Nodes);
+					assert(compareUpPaths(parentCursor.getPath(), parentPath));
+					assert.equal(context.withAnchors.size, anchors);
+					assert.equal(context.withCursors.size, cursors);
+
+					for (const entity of context.withCursors) entity.prepareForEdit();
+					assert.equal(field.borrowCursor().getFieldLength(), childCount);
+					assert.equal(context.withCursors.size, 0);
+
+					if (field.is(FieldKinds.optional)) {
+						field.editor.set(undefined, false);
+					} else {
+						assert(field.is(FieldKinds.sequence));
+						field.editor.remove(0, childCount);
+					}
+					assert.equal(field.borrowCursor().getFieldLength(), 0);
+					if (field.is(FieldKinds.optional)) {
+						field.editor.set(number(7), true);
+					} else {
+						assert(field.is(FieldKinds.sequence));
+						field.editor.insert(0, [number(7)]);
+					}
+					assert.equal(field.borrowCursor().getFieldLength(), 1);
+					assert.equal(context.withAnchors.size, anchors);
+
+					if (container.is(FieldKinds.optional)) {
+						container.editor.set(undefined, false);
+					} else {
+						assert(container.is(FieldKinds.sequence));
+						const destination = outer.getBoxed(key("moved"));
+						assert(destination.is(FieldKinds.sequence));
+						checkout.editor.move(
+							container.getFieldPath(),
+							0,
+							1,
+							destination.getFieldPath(),
+							0,
+						);
+						assert.equal(field.borrowCursor().getFieldLength(), 1);
+						destination.editor.remove(0, 1);
+					}
+					const removedCursor = field.borrowCursor();
+					assert.equal(removedCursor.getFieldKey(), key("items"));
+					removedCursor.enterNode(0);
+					assert.equal(removedCursor.value, 7);
+					removedCursor.exitNode();
+					context.clear();
+					assert.equal(root.isFreed(), true);
+					assert.equal(field.isFreed(), true);
+					assert.throws(() => assertFlexTreeEntityNotFreed(field));
+					assert.throws(() => field.borrowCursor());
+				} finally {
+					context[disposeSymbol]();
+					checkout.dispose();
+				}
+			});
+		}
+
 		it(`supports every field kind on objects without fixed specialization (${name})`, () => {
 			const schema = storedSchema(objectSchema);
 			const checkout = checkoutWithContent(
@@ -159,6 +290,10 @@ describe("General field storage", () => {
 			const optional = node.getBoxed(key("optional"));
 			const identifier = node.getBoxed(key("identifier"));
 			const sequence = node.getBoxed(key("sequence"));
+			for (const field of [required, optional, identifier, sequence]) {
+				assert(field instanceof LazyField);
+				assert(!(field instanceof AnchoredField));
+			}
 			assert(required.is(FieldKinds.required));
 			assert(optional.is(FieldKinds.optional));
 			assert(identifier.is(FieldKinds.identifier));

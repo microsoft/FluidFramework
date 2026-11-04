@@ -22,6 +22,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import {
+	AnchoredField,
 	LazyField,
 	LazyOptionalField,
 	LazySequence,
@@ -74,9 +75,9 @@ const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
 
 /**
- * Test {@link LazyField} implementation.
+ * Test {@link AnchoredField} implementation.
  */
-class TestLazyField extends LazyField {}
+class TestAnchoredField extends AnchoredField {}
 
 describe("LazyField", () => {
 	it("gets editing paths without recovering cursors or materializing parents", () => {
@@ -92,7 +93,12 @@ describe("LazyField", () => {
 		assert(anchor.parent !== undefined);
 		const parent = context.checkout.forest.anchors.locate(anchor.parent);
 		assert(parent !== undefined);
-		const field = new TestLazyField(context, FieldKinds.required.identifier, cursor, anchor);
+		const field = new TestAnchoredField(
+			context,
+			FieldKinds.required.identifier,
+			cursor,
+			anchor,
+		);
 		cursor.free();
 		field.prepareForEdit();
 		assert.equal(parent.slots.get(flexTreeSlot), undefined);
@@ -184,7 +190,7 @@ describe("LazyField", () => {
 			initialTree: { foo: 5 },
 		});
 
-		const rootField = new TestLazyField(
+		const rootField = new TestAnchoredField(
 			context,
 			schema.rootFieldSchema.kind,
 			cursor,
@@ -203,7 +209,7 @@ describe("LazyField", () => {
 		cursor.enterNode(0);
 		cursor.enterField(brand("foo"));
 
-		const leafField = new TestLazyField(context, FieldKinds.required.identifier, cursor, {
+		const leafField = new TestAnchoredField(context, FieldKinds.required.identifier, cursor, {
 			parent: parentAnchor,
 			fieldKey: brand("foo"),
 		});
@@ -220,7 +226,7 @@ describe("LazyField", () => {
 		const context = getReadonlyContext(forest, SchemaFactory.number);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
-		const field = new TestLazyField(
+		const field = new TestAnchoredField(
 			context,
 			schema.rootFieldSchema.kind,
 			cursor,

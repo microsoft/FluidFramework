@@ -34,7 +34,7 @@ import {
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import { LazyEntity } from "./lazyEntity.js";
+import { AnchoredEntity } from "./lazyEntity.js";
 import {
 	getCachedField,
 	makeField,
@@ -83,7 +83,10 @@ function cleanupTree(anchor: AnchorNode): void {
  * Node implementations capture schema-dependent behavior.
  * See {@link Context} for the schema changes that can preserve wrappers and those that require invalidation.
  */
-export abstract class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
+export abstract class LazyTreeNode
+	extends AnchoredEntity<Anchor>
+	implements HydratedFlexTreeNode
+{
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}

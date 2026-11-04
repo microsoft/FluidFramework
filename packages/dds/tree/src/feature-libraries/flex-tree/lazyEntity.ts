@@ -14,11 +14,7 @@ import {
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 
 import type { Context } from "./context.js";
-import {
-	type FlexTreeEntity,
-	type FlexTreeEntityKind,
-	flexTreeMarker,
-} from "./flexTreeTypes.js";
+import type { FlexTreeEntity } from "./flexTreeTypes.js";
 
 /**
  * Assert `entity` is not deleted.
@@ -32,28 +28,41 @@ export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
 }
 
 /**
- * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
+ * Common lifetime and cursor-access contract for hydrated FlexTree implementations.
+ * Wrappers supply their node or field identity separately from resource ownership.
  */
-export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, IDisposable {
+export abstract class LazyEntity {
+	public abstract readonly context: Context;
+	public abstract borrowCursor(): ITreeCursorSynchronous;
+	public abstract isFreed(): boolean;
+}
+
+/**
+ * Owns a persistent cursor and anchor, registered with its context for edit preparation and disposal.
+ * Nodes inherit this implementation; resource-owning fields compose it beneath their shared field base.
+ */
+export abstract class AnchoredEntity<TAnchor = unknown>
+	extends LazyEntity
+	implements IDisposable
+{
 	readonly #lazyCursor: ITreeSubscriptionCursor;
 	public readonly anchor: TAnchor;
 
 	protected constructor(
-		public readonly context: Context,
+		public override readonly context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchor: TAnchor,
 	) {
+		super();
 		this.anchor = anchor;
 		this.#lazyCursor = cursor.fork("LazyEntity Fork");
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
 	}
 
-	public borrowCursor(): ITreeCursorSynchronous {
+	public override borrowCursor(): ITreeCursorSynchronous {
 		return this.cursor as ITreeCursorSynchronous;
 	}
-
-	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
 
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
@@ -67,16 +76,16 @@ export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, I
 		this.context.withCursors.delete(this);
 	}
 
-	public isFreed(): boolean {
+	public override isFreed(): boolean {
 		return this.#lazyCursor.state === ITreeSubscriptionCursorState.Freed;
 	}
 
 	/**
 	 * Validates this entity's derived state and external references can be safely used.
-	 * {@link LazyEntity.cursor} does sufficient validation on its own, so only cases which don't use the cursor must call this.
+	 * {@link AnchoredEntity.cursor} does sufficient validation on its own, so only cases which don't use the cursor must call this.
 	 * @remarks
 	 * Call this before accessing cached or anchor-derived data that bypasses the cursor getter's lifetime and broken-forest checks.
-	 * This check is redundant when the access uses {@link LazyEntity.cursor}.
+	 * This check is redundant when the access uses {@link AnchoredEntity.cursor}.
 	 *
 	 * @throws If this entity has been freed.
 	 * @throws A usage error if the cursor is not current and the forest is broken.

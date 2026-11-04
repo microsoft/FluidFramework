@@ -32,7 +32,11 @@ import {
 	LazyObjectNode,
 	LazyTreeNode,
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
-import { getCachedField, LazyField } from "../../../feature-libraries/flex-tree/lazyField.js";
+import {
+	AnchoredField,
+	getCachedField,
+	LazyField,
+} from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import {
 	FieldKinds,
@@ -95,6 +99,7 @@ describe("LazyNode", () => {
 			const node = getInnerNode(view.root);
 			assert(node instanceof LazyObjectNode);
 			const declared = node.getBoxed(brand("value"));
+			assert(declared instanceof AnchoredField);
 			assert(declared instanceof LazyField);
 			const leaf = declared.boxedAt(0);
 			assert(leaf instanceof LazyTreeNode);
@@ -102,6 +107,9 @@ describe("LazyNode", () => {
 			const key: FieldKey = brand("missing");
 			const retained = [node.getBoxed(key), leaf.getBoxed(key)];
 			for (const field of retained) {
+				assert(field instanceof LazyField);
+				assert(!(field instanceof AnchoredField));
+				assert.equal(field.isFreed(), false);
 				assert.equal(Object.hasOwn(field, flexTreeMarker), false);
 				assert.equal(Object.hasOwn(field, "schema"), false);
 				assert.equal(Object.hasOwn(field, "length"), false);
@@ -133,6 +141,8 @@ describe("LazyNode", () => {
 			view.dispose();
 			assert.equal(node.fieldCache, undefined);
 			for (const field of retained) {
+				assert(field instanceof LazyField);
+				assert.equal(field.isFreed(), true);
 				assert.throws(() => field.parent);
 				assert.equal(field.length, 0);
 				assert.equal(field.boxedAt(0), undefined);
@@ -164,7 +174,7 @@ describe("LazyNode", () => {
 			assert.equal(typeof item.id, "string");
 			const key: FieldKey = brand("optional");
 			const field = node.getBoxed(key);
-			assert(field instanceof LazyField);
+			assert(field instanceof AnchoredField);
 			assert(field.is(FieldKinds.optional));
 			const resources = node.context.withAnchors.size;
 			for (const entity of node.context.withCursors) entity.prepareForEdit();
@@ -185,7 +195,7 @@ describe("LazyNode", () => {
 			);
 			assert.equal(observations, 1);
 			assert(node.context.withCursors.has(node));
-			assert(node.context.withCursors.has(field));
+			assert.equal(node.context.withCursors.size, 2);
 			assert.equal(node.context.withAnchors.size, resources);
 			field.editor.set(undefined, false);
 			assert.equal(item.optional, undefined);
@@ -196,7 +206,7 @@ describe("LazyNode", () => {
 			assert.equal(node.tryGetField(key), field);
 			const array = getInnerNode(view.root);
 			const sequence = array.getBoxed(EmptyKey);
-			assert(sequence instanceof LazyField);
+			assert(sequence instanceof AnchoredField);
 			assert(sequence.is(FieldKinds.sequence));
 			view.root.insertAtEnd({ value: 2 });
 			view.root.removeAt(0);

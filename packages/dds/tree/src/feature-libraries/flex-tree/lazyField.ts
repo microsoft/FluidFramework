@@ -21,8 +21,9 @@ import {
 	iterateCursorField,
 	mapCursorField,
 	rootFieldKey,
+	topDownPath,
 } from "../../core/index.js";
-import { disposeSymbol } from "../../util/index.js";
+import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import { combineChunks } from "../chunked-forest/index.js";
 import {
 	FieldKinds,
@@ -32,14 +33,13 @@ import {
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
-import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -52,7 +52,7 @@ import {
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import { LazyEntity } from "./lazyEntity.js";
+import { AnchoredEntity, LazyEntity } from "./lazyEntity.js";
 import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -119,23 +119,50 @@ export function makeField(
 }
 
 /**
- * Gets an in-document edit path after validating the field and its owning entity.
+ * Common base for hydrated FlexTree fields, independent of navigation-resource ownership.
+ * @remarks
+ * {@link NodeBackedField} identifies a field through a containing node without owning persistent navigation resources.
+ * {@link AnchoredField} owns those resources and also supports fields without a containing node, including root fields.
+ * Subclasses provide content access, traversal, and any supported editing operations.
  */
-function getFieldPathForEditing(
-	field: LazyField | ParentField,
-	isFreed: boolean,
-): NormalizedFieldUpPath {
-	if (!isFreed) {
-		const path = field.getFieldPath();
-		if (
-			path.parent === undefined
-				? path.field === rootFieldKey
-				: treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
-		) {
-			return path;
-		}
+export abstract class LazyField extends LazyEntity implements FlexTreeField {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
+		return FlexTreeEntityKind.Field;
 	}
-	throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+
+	public abstract readonly key: FieldKey;
+	public abstract readonly schema: FieldKindIdentifier;
+	public abstract readonly length: number;
+	public abstract readonly parent: HydratedFlexTreeNode | undefined;
+	public abstract boxedAt(index: number): HydratedFlexTreeNode | undefined;
+	public abstract [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode>;
+	public abstract getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey };
+
+	public is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind> {
+		assert(
+			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
+			"Narrowing must use a field kind from this context",
+		);
+		return this.schema === kind.identifier;
+	}
+
+	/**
+	 * Gets an in-document edit path after validating the field's lifetime.
+	 * The path must not be retained across edits.
+	 */
+	public getFieldPathForEditing(): NormalizedFieldUpPath {
+		if (!this.isFreed()) {
+			const path = this.getFieldPath();
+			if (
+				path.parent === undefined
+					? path.field === rootFieldKey
+					: treeStatusFromAnchorCache(path.parent) === TreeStatus.InDocument
+			) {
+				return path;
+			}
+		}
+		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+	}
 }
 
 /**
@@ -148,48 +175,47 @@ function getEditor(context: Context): IDefaultEditBuilder<ITreeCursorSynchronous
 }
 
 /**
- * Field identity and resource access provided by a parent node, without per-field ownership.
+ * A hydrated field identified by a containing node and field key.
+ * @remarks
+ * This wrapper owns no persistent cursor, anchor, event subscription, or context registration.
+ * It obtains its context, lifetime, and current field path from the containing node.
+ * Cache eviction requires no explicit resource cleanup; retained wrappers remain usable while the node remains valid.
+ * Fields without a containing node use {@link AnchoredField} instead.
  */
-abstract class ParentField implements FlexTreeField {
-	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
-		return FlexTreeEntityKind.Field;
-	}
-
-	public abstract get schema(): FieldKindIdentifier;
-	public abstract get length(): number;
-	public abstract boxedAt(index: number): HydratedFlexTreeNode | undefined;
-	public abstract [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode>;
-
+abstract class NodeBackedField extends LazyField {
 	public constructor(
 		protected readonly parentNode: LazyTreeNode,
-		public readonly key: FieldKey,
-	) {}
+		public override readonly key: FieldKey,
+	) {
+		super();
+	}
 
-	public get context(): Context {
+	public override get context(): Context {
 		return this.parentNode.context;
 	}
 
-	public get parent(): HydratedFlexTreeNode {
+	public override get parent(): HydratedFlexTreeNode {
 		this.getFieldPath();
 		return this.parentNode;
 	}
 
-	public is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind> {
-		assert(
-			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
-			"Narrowing must use a field kind from this context",
-		);
-		return this.schema === kind.identifier;
+	public override isFreed(): boolean {
+		return this.parentNode.isFreed();
 	}
 
-	public borrowCursor(): ITreeCursorSynchronous {
-		this.getFieldPath();
-		const cursor = cursorForMapTreeNode<FlexTreeNode>(this.parentNode);
-		cursor.enterField(this.key);
+	public override borrowCursor(): ITreeCursorSynchronous {
+		const { parent, field } = this.getFieldPath();
+		// Use an independent, unregistered forest cursor to avoid boxing children or moving the parent's cursor.
+		const cursor = this.context.checkout.forest.getCursorAboveDetachedFields();
+		for (const step of topDownPath(parent)) {
+			cursor.enterField(step.parentField);
+			cursor.enterNode(step.parentIndex);
+		}
+		cursor.enterField(field);
 		return cursor;
 	}
 
-	public getFieldPath(): { parent: AnchorNode; field: FieldKey } {
+	public override getFieldPath(): { parent: AnchorNode; field: FieldKey } {
 		return this.parentNode.getFieldPath(this.key);
 	}
 }
@@ -197,7 +223,7 @@ abstract class ParentField implements FlexTreeField {
 /**
  * A forbidden field with constant empty results that do not access the parent's state.
  */
-export class UncachedForbiddenField extends ParentField {
+export class UncachedForbiddenField extends NodeBackedField {
 	public override get schema(): FieldKindIdentifier {
 		return FieldKinds.forbidden.identifier;
 	}
@@ -226,7 +252,7 @@ export class UncachedForbiddenField extends ParentField {
  * Keeping this path simple avoids managing an additional cursor across callbacks or yields.
  * Revisit this tradeoff if sequence-valued maps become public or general sequence fields are used on a performance-sensitive path.
  */
-abstract class GeneralField extends ParentField {
+abstract class GeneralField extends NodeBackedField {
 	protected withCursor<T>(read: (cursor: ITreeSubscriptionCursor) => T): T {
 		const cursor = this.parentNode.cursor;
 		cursor.enterField(this.key);
@@ -272,10 +298,6 @@ abstract class GeneralField extends ParentField {
 				),
 			);
 		}
-	}
-
-	protected getFieldPathForEditing(): NormalizedFieldUpPath {
-		return getFieldPathForEditing(this, this.parentNode.isFreed());
 	}
 }
 
@@ -393,51 +415,53 @@ export function makeGeneralField(
 }
 
 /**
- * Base type for fields implementing {@link FlexTreeField} using cursors.
+ * A hydrated field with its own persistent cursor, anchor, and disposal registration.
+ * @remarks
+ * Supports root fields as well as fields within nodes.
+ * Fixed-schema nodes use this implementation to retain navigation resources for repeated access.
+ * Resource management is composed rather than inherited so all hydrated fields share {@link LazyField}.
  */
-export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexTreeField {
-	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
-		return FlexTreeEntityKind.Field;
-	}
-	public readonly key: FieldKey;
-
-	/**
-	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
-	 * if/when the Anchor is destroyed.
-	 */
-	private readonly offAfterDestroy?: () => void;
+export abstract class AnchoredField extends LazyField implements IDisposable {
+	public override readonly key: FieldKey;
+	private readonly resources: FieldResources;
 
 	public constructor(
-		context: Context,
-		public readonly schema: FieldKindIdentifier,
+		public override readonly context: Context,
+		public override readonly schema: FieldKindIdentifier,
 		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
+		public readonly anchor: FieldAnchor,
 	) {
-		super(context, cursor, fieldAnchor);
+		super();
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
-		// Fields currently live as long as their parent does.
-		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
-		if (fieldAnchor.parent !== undefined) {
-			const anchorNode =
-				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
-				fail(0xb11 /* parent anchor node should always exist since field is under a node */);
-			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
-				this[disposeSymbol]();
-			});
-		}
+		this.resources = new FieldResources(this, cursor);
 	}
 
-	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
-		assert(
-			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
-			0xa26 /* Narrowing must be done to a kind that exists in this context */,
-		);
-
-		return this.schema === kind.identifier;
+	public get cursor(): ITreeSubscriptionCursor {
+		return this.resources.cursor;
 	}
 
-	public get parent(): HydratedFlexTreeNode | undefined {
+	public override borrowCursor(): ITreeCursorSynchronous {
+		return this.resources.borrowCursor();
+	}
+
+	public override isFreed(): boolean {
+		return this.resources.isFreed();
+	}
+
+	public prepareForEdit(): void {
+		this.resources.prepareForEdit();
+	}
+
+	public [disposeSymbol](): void {
+		this.resources.disposeFromOwner();
+	}
+
+	protected ensureValidForAccess(): void {
+		this.resources.ensureValidForAccess();
+	}
+
+	public override get parent(): HydratedFlexTreeNode | undefined {
 		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
@@ -460,19 +484,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return output;
 	}
 
-	protected override tryMoveCursorToAnchor(
-		cursor: ITreeSubscriptionCursor,
-	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
-	}
-
-	protected override forgetAnchor(): void {
-		this.offAfterDestroy?.();
-		if (this.anchor.parent === undefined) return;
-		this.context.checkout.forest.anchors.forget(this.anchor.parent);
-	}
-
-	public get length(): number {
+	public override get length(): number {
 		return this.cursor.getFieldLength();
 	}
 
@@ -482,7 +494,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
+	public override boxedAt(index: number): HydratedFlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
@@ -500,13 +512,13 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
+	public override [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
 		return iterateCursorField(this.cursor, (cursor) =>
 			getOrCreateHydratedFlexTreeNode(this.context, cursor),
 		);
 	}
 
-	public getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey } {
+	public override getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey } {
 		this.ensureValidForAccess();
 		const parent =
 			this.anchor.parent === undefined
@@ -515,13 +527,54 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 					fail(0xd95 /* Field parent anchor must exist */));
 		return { parent, field: this.key };
 	}
+}
 
-	/**
-	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
-	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
-	 */
-	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		return getFieldPathForEditing(this, this.isFreed());
+/**
+ * Navigation resources owned by an {@link AnchoredField}.
+ * Context and parent-destruction cleanup is routed through the field so subclasses also release their state.
+ * The field then calls {@link FieldResources.disposeFromOwner} to release this component.
+ */
+class FieldResources extends AnchoredEntity<FieldAnchor> {
+	private readonly offAfterDestroy?: () => void;
+
+	public constructor(
+		private readonly field: AnchoredField,
+		cursor: ITreeSubscriptionCursor,
+	) {
+		super(field.context, cursor, field.anchor);
+		if (this.anchor.parent !== undefined) {
+			const anchorNode =
+				this.context.checkout.forest.anchors.locate(this.anchor.parent) ??
+				fail("A field's parent anchor must exist");
+			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
+				this.field[disposeSymbol]();
+			});
+		}
+	}
+
+	public override [disposeSymbol](): void {
+		this.field[disposeSymbol]();
+	}
+
+	public disposeFromOwner(): void {
+		super[disposeSymbol]();
+	}
+
+	public override ensureValidForAccess(): void {
+		super.ensureValidForAccess();
+	}
+
+	protected override tryMoveCursorToAnchor(
+		cursor: ITreeSubscriptionCursor,
+	): TreeNavigationResult {
+		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
+	}
+
+	protected override forgetAnchor(): void {
+		this.offAfterDestroy?.();
+		if (this.anchor.parent !== undefined) {
+			this.context.checkout.forest.anchors.forget(this.anchor.parent);
+		}
 	}
 }
 
@@ -554,7 +607,7 @@ interface SequenceLengthCache {
 	readonly unsubscribe: () => void;
 }
 
-export class LazySequence extends LazyField implements FlexTreeSequenceField {
+export class LazySequence extends AnchoredField implements FlexTreeSequenceField {
 	/**
 	 * Length-cache state, or `undefined` if caching has not been activated.
 	 * @remarks
@@ -598,10 +651,10 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		return length;
 	}
 
-	protected override forgetAnchor(): void {
+	public override [disposeSymbol](): void {
 		this.lengthCache?.unsubscribe();
 		this.lengthCache = undefined;
-		super.forgetAnchor();
+		super[disposeSymbol]();
 	}
 
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
@@ -632,7 +685,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 	}
 }
 
-export class LazyValueField extends LazyField implements FlexTreeRequiredField {
+export class LazyValueField extends AnchoredField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
@@ -650,7 +703,7 @@ export class LazyValueField extends LazyField implements FlexTreeRequiredField {
 	}
 }
 
-export class LazyOptionalField extends LazyField implements FlexTreeOptionalField {
+export class LazyOptionalField extends AnchoredField implements FlexTreeOptionalField {
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
 			this.optionalEditor().set(
@@ -671,7 +724,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	}
 }
 
-export class LazyForbiddenField extends LazyField {}
+export class LazyForbiddenField extends AnchoredField {}
 
 type Builder = new (
 	context: Context,
@@ -679,7 +732,7 @@ type Builder = new (
 	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-) => LazyField;
+) => AnchoredField;
 
 const builderList: [FieldKindIdentifier, Builder][] = [
 	[FieldKinds.forbidden.identifier, LazyForbiddenField],

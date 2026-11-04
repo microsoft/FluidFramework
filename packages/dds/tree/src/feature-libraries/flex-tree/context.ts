@@ -21,7 +21,7 @@ import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
-import type { LazyEntity } from "./lazyEntity.js";
+import type { AnchoredEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
@@ -134,8 +134,12 @@ export const ContextSlot = anchorSlot<Context>();
  * Higher-level views must also preserve their own schema-dependent state before skipping invalidation.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
-	public readonly withCursors: Set<LazyEntity> = new Set();
-	public readonly withAnchors: Set<LazyEntity> = new Set();
+	/**
+	 * Persistent resource owners with live cursors.
+	 * Nodes register themselves; anchored fields register their resource component.
+	 */
+	public readonly withCursors: Set<AnchoredEntity> = new Set();
+	public readonly withAnchors: Set<AnchoredEntity> = new Set();
 
 	/**
 	 * Callbacks to run when disposing.
