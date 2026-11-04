@@ -785,17 +785,17 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
 
 	public editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
 		insert: (index, newContent) => {
-			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
+			this.#sequenceEditor().insert(index, cursorForMapTreeField(newContent));
 		},
 		remove: (index, count) => {
-			this.sequenceEditor().remove(index, count);
+			this.#sequenceEditor().remove(index, count);
 		},
 	};
 
 	/**
 	 * Gets a sequence editor at this field's current in-document path.
 	 */
-	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
+	#sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
 		return getEditor(this.context).sequenceField(fieldPath);
 	}
@@ -807,14 +807,14 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
 export class LazyValueField extends AnchoredField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
 		set: (newContent) => {
-			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
+			this.#valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
 	};
 
 	/**
 	 * Gets a single-child editor at this field's current in-document path.
 	 */
-	private valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
+	#valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = getEditor(this.context).valueField(fieldPath);
 		return fieldEditor;
@@ -831,7 +831,7 @@ export class LazyValueField extends AnchoredField implements FlexTreeRequiredFie
 export class LazyOptionalField extends AnchoredField implements FlexTreeOptionalField {
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
-			this.optionalEditor().set(
+			this.#optionalEditor().set(
 				newContent === undefined ? newContent : cursorForMapTreeField([newContent]),
 				wasEmpty,
 			);
@@ -841,7 +841,7 @@ export class LazyOptionalField extends AnchoredField implements FlexTreeOptional
 	/**
 	 * Gets an optional-field editor at this field's current in-document path.
 	 */
-	private optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
+	#optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = getEditor(this.context).optionalField(fieldPath);
 		return fieldEditor;
