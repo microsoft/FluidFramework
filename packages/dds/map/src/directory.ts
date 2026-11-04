@@ -22,6 +22,7 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
@@ -1004,6 +1005,7 @@ export class SharedDirectory
 	): ISummaryTreeWithStats {
 		const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		let counter = 0;
 		const blobs: string[] = [];

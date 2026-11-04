@@ -9,7 +9,9 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
@@ -47,6 +49,7 @@ const summarizerClientType = "summarizer";
  * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 async function getSummarizerBackCompat(container: IContainer): Promise<ISummarizer> {
 	if (container.getEntryPoint !== undefined) {
 		const entryPoint = await container.getEntryPoint();
@@ -55,11 +58,13 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
 		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
 		if (entryPoint !== undefined) {
+			// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 			return entryPoint as ISummarizer;
 		}
 	}
 	const response: IResponse = await (container as any).request({ url: "_summarizer" });
 	assert(response.status === 200, "requesting '/' should return default data object");
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	return response.value as ISummarizer;
 }
 
@@ -72,6 +77,7 @@ export async function createSummarizerCore(
 	summaryVersion?: string,
 ): Promise<{
 	container: IContainer;
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	summarizer: ISummarizer;
 }> {
 	const absoluteUrl = await container.getAbsoluteUrl("");
@@ -131,6 +137,7 @@ export async function createSummarizerFromFactory(
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		// eslint-disable-next-line import-x/no-deprecated
@@ -165,6 +172,7 @@ export async function createSummarizer(
 	config?: ITestContainerConfig,
 	summaryVersion?: string,
 	logger?: ITelemetryBaseLogger,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
 		...config,
@@ -192,9 +200,12 @@ export async function createSummarizer(
  * @internal
  */
 export async function summarizeNow(
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	summarizer: ISummarizer,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
 ): Promise<SummaryInfo> {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	const options: IOnDemandSummarizeOptions =
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);

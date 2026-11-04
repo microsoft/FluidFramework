@@ -525,7 +525,7 @@ export class EditManager<
 			for (const [branchId, branchData] of data.branches) {
 				const baseCommit =
 					trunkRevisionCache.get(branchData.base ?? rootRevision) ??
-					fail("Expected summary branch base to be in trunk cache");
+					fail(0xd87 /* Expected summary branch base to be in trunk cache */);
 				const branch = this.createSharedBranch(
 					branchId,
 					branchData.name,

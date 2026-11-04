@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { summarizerClientType } from "./summarizerTypes.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 function isClientEligible(client: ISequencedClient): boolean {
@@ -100,6 +101,7 @@ export class SummarizerClientElection
 		logger: ITelemetryBaseLogger,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
 		private readonly quorum: Pick<IQuorumClients, "getMembers" | "getMember" | "on">,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		private readonly maxOpsSinceLastSummary: number,
 		initialState: ISerializedElection | number,

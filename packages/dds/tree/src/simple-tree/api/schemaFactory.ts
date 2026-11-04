@@ -117,6 +117,17 @@ function mergeSchemaFactoryOptions(
 	};
 }
 
+function resolveObjectSchemaOptions(
+	factoryOptions: ObjectSchemaOptions | undefined,
+	schemaOptions: ObjectSchemaOptions | undefined,
+): ObjectSchemaOptions {
+	return {
+		allowUnknownOptionalFields: true,
+		...factoryOptions,
+		...schemaOptions,
+	};
+}
+
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
 // API-Extractor requires such links to be qualified with the class, so it can't work.
@@ -357,10 +368,12 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(scoped(this, name), fields, true, {
-			...this.settings.objectOptions,
-			...options,
-		}) as TreeNodeSchemaClass<
+		return objectSchema(
+			scoped(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
@@ -1002,10 +1015,12 @@ export class SchemaFactoryBeta<
 		never,
 		TCustomMetadata
 	> {
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...this.settings.objectOptions,
-			...options,
-		}) as TreeNodeSchemaClass<
+		return objectSchema(
+			scoped<TScope, TName, Name>(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
@@ -1351,10 +1366,12 @@ export class SchemaFactoryAlpha<
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...this.settings.objectOptions,
-			...options,
-		});
+		return objectSchema(
+			scoped<TScope, TName, Name>(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		);
 	}
 
 	/**

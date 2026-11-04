@@ -37,10 +37,10 @@ describe("schemaFactoryOptions", () => {
 						sf.scopedFactory("child"),
 						sf.scopedFactory("empty", {}),
 					]) {
-						assert.equal(allowsUnknownOptionalFields(factory.object("Object", {})), false);
+						assert.equal(allowsUnknownOptionalFields(factory.object("Object", {})), true);
 						assert.equal(
 							allowsUnknownOptionalFields(factory.objectRecursive("Recursive", {})),
-							false,
+							true,
 						);
 					}
 				}
@@ -166,7 +166,7 @@ describe("schemaFactoryOptions", () => {
 			sf.objectAlpha("Object", {}),
 			sf.objectRecursiveAlpha("Recursive", {}),
 		]) {
-			assert.equal(Schema.allowUnknownOptionalFields, false);
+			assert.equal(Schema.allowUnknownOptionalFields, true);
 		}
 	});
 
