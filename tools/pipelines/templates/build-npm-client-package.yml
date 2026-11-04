@@ -243,16 +243,120 @@ extends:
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
               - bash: |
-                  set -e
-                  echo "=== OS ==="
-                  cat /etc/os-release
-                  echo "=== Installed packages ==="
-                  apt list --installed
-                  echo "=== Available updates ==="
-                  apt list --upgradable
-                  echo "=== Cached Node versions ==="
-                  n ls
+                  set +e
+                  set -u -o pipefail
+                  diagnostics_dir="$BUILD_ARTIFACTSTAGINGDIRECTORY/agent-image-diagnostics"
+                  mkdir -p "$diagnostics_dir" || exit 1
+                  exec > >(tee "$diagnostics_dir/inventory.log") 2>&1
+
+                  probe() {
+                    local label="$1"
+                    shift
+                    printf '\n=== %s ===\nCommand:' "$label"
+                    printf ' %q' "$@"
+                    printf '\n'
+                    timeout --kill-after=5s 15s "$@"
+                    local result=$?
+                    printf 'Exit code: %s\n' "$result"
+                    if [ "$result" -ne 0 ]; then
+                      printf '##vso[task.logissue type=warning]Agent image diagnostic "%s" returned %s; continuing.\n' "$label" "$result"
+                    fi
+                    return 0
+                  }
+
+                  echo "=== Build and agent identity ==="
+                  date -u '+UTC: %Y-%m-%dT%H:%M:%SZ'
+                  printf 'Pool: %s\nBuild: %s\nJob: %s\nJob ID: %s\nAttempt: %s\n' \
+                    "$DIAGNOSTIC_POOL" "${BUILD_BUILDID:-unknown}" "${SYSTEM_JOBDISPLAYNAME:-unknown}" \
+                    "${SYSTEM_JOBID:-unknown}" "${SYSTEM_JOBATTEMPT:-unknown}"
+                  printf 'Agent: %s\nAgent version: %s\nMachine: %s\n' \
+                    "${AGENT_NAME:-unknown}" "${AGENT_VERSION:-unknown}" "${AGENT_MACHINENAME:-unknown}"
+                  printf 'ImageOS: %s\nImageVersion: %s\n' "${ImageOS:-not supplied}" "${ImageVersion:-not supplied}"
+                  echo "Confirm the exact custom image name/version in the Initialize job log; ImageVersion may describe the base image."
+
+                  probe "OS" cat /etc/os-release
+                  probe "Running kernel" uname -r
+                  probe "Machine architecture" uname -m
+                  probe "Installed packages (including installation status)" \
+                    dpkg-query -W '-f=${binary:Package}\t${Version}\t${Architecture}\t${db:Status-Status}\n'
+                  probe "Kernel packages" dpkg-query -W 'linux-image*' 'linux-headers*' 'linux-azure*'
+                  for marker in /var/run/reboot-required /var/run/reboot-required.pkgs; do
+                    if [ -f "$marker" ]; then
+                      probe "Reboot marker: $marker" cat "$marker"
+                    else
+                      printf 'Not present: %s\n' "$marker"
+                    fi
+                  done
+
+                  echo "APT results below use existing cached metadata; no repository refresh or upgrade is performed."
+                  probe "Available updates (cached metadata)" apt list --upgradable
+                  probe "pip and Azure kernel package candidates (cached metadata)" \
+                    apt-cache policy python3-pip python3-pip-whl linux-azure linux-image-azure
+                  probe "Held packages" apt-mark showhold
+                  probe "pip wheel package files" dpkg-query -L python3-pip-whl
+
+                  probe "Tool executable locations" bash -c \
+                    'for tool in node npm npx n dotnet python3 pip pip3; do type -a "$tool"; done'
+                  probe "Active Node.js version before pipeline setup" node --version
+                  probe "Cached Node.js versions" n ls
+                  for root in /usr/local/n/versions/node /opt/nodejs /usr/local/bin /usr/bin \
+                    "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}/node" "${AGENT_HOMEDIRECTORY:-/opt/agent}/externals"; do
+                    if [ -d "$root" ]; then
+                      probe "Node.js executables in $root" find -H "$root" -maxdepth 7 \
+                        \( -type f -o -type l \) -name node -exec bash -c '
+                          result=0
+                          for binary do
+                            printf "\nNode.js executable: %s\n" "$binary"
+                            readlink -f "$binary"
+                            timeout --kill-after=2s 5s "$binary" --version || result=$?
+                          done
+                          exit "$result"
+                        ' bash {} +
+                    fi
+                  done
+                  echo "Agent-bundled Node.js copies are inventoried separately, not removed."
+
+                  probe ".NET information" dotnet --info
+                  probe ".NET SDKs" dotnet --list-sdks
+                  probe ".NET runtimes" dotnet --list-runtimes
+                  for root in /usr/share/dotnet /usr/lib/dotnet /usr/local/share/dotnet "$HOME/.dotnet" \
+                    "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}/dotnet"; do
+                    if [ -d "$root" ]; then
+                      probe ".NET installations in $root" find -H "$root" -maxdepth 6 \
+                        \( -type f -o -type l \) -name dotnet -exec bash -c '
+                          result=0
+                          for binary do
+                            printf "\n.NET executable: %s\n" "$binary"
+                            readlink -f "$binary"
+                            timeout --kill-after=2s 5s "$binary" --list-sdks || result=$?
+                            timeout --kill-after=2s 5s "$binary" --list-runtimes || result=$?
+                          done
+                          exit "$result"
+                        ' bash {} +
+                      probe "SkiaSharp file paths in $root" find -H "$root" -maxdepth 8 -iname '*skiasharp*' -print
+                    fi
+                  done
+
+                  probe "Python version" python3 --version
+                  probe "Python and pip module locations" python3 -c \
+                    'import sys, pip; print("Python:", sys.executable); print("pip:", pip.__file__)'
+                  probe "pip version" python3 -m pip --version
+                  probe "Python package inventory" python3 -m pip inspect
+                  probe "Docker client and server versions" docker version
+                  probe "Docker storage and cgroup configuration" docker info --format \
+                    'StorageDriver={{.Driver}} CgroupDriver={{.CgroupDriver}} Architecture={{.Architecture}}'
+                  probe "Preloaded Docker images" docker image ls --digests --no-trunc
+                  probe "Disk space" df -h
+                  probe "Memory" free -h
+                  probe "Process resource limits" bash -c 'ulimit -a'
+                  echo "Diagnostics complete. No packages, runtimes, or images were installed, upgraded, or removed."
                 displayName: Inspect agent image
+                continueOnError: true
+                timeoutInMinutes: 10
+                env:
+                  DIAGNOSTIC_POOL: ${{ parameters.poolBuild }}
+                  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
 
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
@@ -529,6 +633,14 @@ extends:
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
+                - output: pipelineArtifact
+                  displayName: Publish Artifact - agent image diagnostics
+                  condition: always()
+                  targetPath: $(Build.ArtifactStagingDirectory)/agent-image-diagnostics
+                  artifactName: agent-image-diagnostics-$(System.JobAttempt)
+                  sbomEnabled: false
+                  publishLocation: pipeline
+
                 - output: pipelineArtifact
                   displayName: Publish Artifact - build_output_archive
                   targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
