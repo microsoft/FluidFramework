@@ -184,7 +184,7 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
 	 * Observes the field's contents, including when the field is empty.
 	 * Non-leaf children are returned as FlexTree nodes and may require creating a FlexTree node instance.
 	 */
-	getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined;
+	getFirstFieldChild(key: FieldKey): FlexTreeUnknownUnboxed | undefined;
 
 	/**
 	 * The field this tree is in, and the index within that field.

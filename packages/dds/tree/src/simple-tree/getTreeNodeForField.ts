@@ -22,13 +22,15 @@ import {
 } from "./core/index.js";
 
 /**
- * Reads field content without allocating a FlexTree field instance or boxing leaf nodes.
+ * Reads the first child of the field at `key`, returning a TreeNode for non-leaves or the value for leaves.
+ * Returns undefined if the field is empty.
+ * Does not allocate a FlexTree field instance or box leaf nodes.
  */
-export function getTreeNodeForField(
+export function tryGetTreeNodeForFieldKey(
 	node: FlexTreeNode,
 	key: FieldKey,
 ): TreeNode | TreeValue | undefined {
-	const content = node.getFieldContent(key);
+	const content = node.getFirstFieldChild(key);
 	return content === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(content);
 }
 

@@ -41,7 +41,7 @@ import {
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForFieldKey } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
@@ -105,7 +105,7 @@ function createRecordNodeProxy(
 
 			if (typeof key === "string") {
 				const innerNode = getInnerNode(receiver);
-				return getTreeNodeForField(innerNode, brand(key));
+				return tryGetTreeNodeForFieldKey(innerNode, brand(key));
 			}
 
 			return undefined;
@@ -154,7 +154,7 @@ function createRecordNodeProxy(
 			}
 
 			const innerNode = getInnerNode(proxy);
-			const value = getTreeNodeForField(innerNode, brand(key));
+			const value = tryGetTreeNodeForFieldKey(innerNode, brand(key));
 			if (value === undefined) {
 				return undefined;
 			}
@@ -416,7 +416,7 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	// but every key reported by the inner node has associated content, so the values yielded here are always defined.
 	const innerNode = getInnerNode(record);
 	for (const key of innerNode.keys()) {
-		const value = getTreeNodeForField(innerNode, key);
+		const value = tryGetTreeNodeForFieldKey(innerNode, key);
 		assert(value !== undefined, "Expected content for each key of the inner node");
 		yield [key, value as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>];
 	}

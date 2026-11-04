@@ -55,7 +55,7 @@ import {
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForFieldKey } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
@@ -334,12 +334,12 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public *entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = this.innerNode;
 		for (const key of node.keys()) {
-			yield [key, getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>];
+			yield [key, tryGetTreeNodeForFieldKey(node, key) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
-		return getTreeNodeForField(node, brand(key)) as TreeNodeFromImplicitAllowedTypes<T>;
+		return tryGetTreeNodeForFieldKey(node, brand(key)) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -409,7 +409,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		// Preserve live unhydrated traversal without allocating hydrated FlexTree field instances.
 		const keys = node.isHydrated() ? node.keys() : mapIterable(node.fields, ([key]) => key);
 		for (const key of keys) {
-			const value = getTreeNodeForField(node, key) as TreeNodeFromImplicitAllowedTypes<T>;
+			const value = tryGetTreeNodeForFieldKey(
+				node,
+				key,
+			) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, value, key, this);
 		}
 	}

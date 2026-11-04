@@ -127,7 +127,7 @@ describe("unhydratedFlexTree", () => {
 		}
 	});
 
-	it("classifies non-leaf fields using their schema", () => {
+	it("selects node implementations using their stored schema", () => {
 		assert(map instanceof UnhydratedGeneralNode);
 		assert(arrayNode instanceof UnhydratedObjectNode);
 		assert(object instanceof UnhydratedObjectNode);

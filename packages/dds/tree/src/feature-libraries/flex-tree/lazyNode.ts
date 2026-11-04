@@ -38,7 +38,7 @@ import { AnchoredEntity } from "./lazyEntity.js";
 import {
 	getCachedField,
 	makeField,
-	makeGeneralField,
+	makeNodeBackedField,
 	UncachedForbiddenField,
 	unboxedFlexNode,
 } from "./lazyField.js";
@@ -96,10 +96,10 @@ export abstract class LazyTreeNode
 	protected readonly storedSchema: TreeNodeStoredSchema;
 
 	/**
-	 * Node-owned field storage, read directly by cache lookups.
+	 * Node-owned cache of field instances, read directly during field lookup.
 	 * @remarks
 	 * {@link LazyObjectNode} retains fields that own cursors and anchors until disposal.
-	 * For stored object schemas, only declared keys use that storage.
+	 * This optimization caches only keys declared by the stored object schema.
 	 * Undeclared object fields borrow the node's resources and are not cached.
 	 * {@link LazyGeneralNode} works for every stored schema and caches only populated fields,
 	 * evicting them when they become empty.
@@ -121,7 +121,7 @@ export abstract class LazyTreeNode
 	 * Supply it when the caller has already resolved it, such as when selecting the node implementation,
 	 * to avoid a second lookup. Omit it to have the constructor perform that lookup.
 	 * This is not a schema override: it must describe the same type under the context's current schema
-	 * and match the selected implementation's storage policy.
+	 * and be supported by the selected node implementation.
 	 * The new instance retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
 	 * @remarks
 	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing node instances and selects the schema-dependent implementation.
@@ -224,7 +224,7 @@ export abstract class LazyTreeNode
 		});
 	}
 
-	public getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
+	public getFirstFieldChild(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
 		currentObserver?.observeNodeField(this, key);
 		return inCursorField(this.cursor, key, (cursor) =>
 			cursor.getFieldLength() === 0
@@ -322,7 +322,8 @@ export abstract class LazyTreeNode
 }
 
 /**
- * Preserves field instances that own cursors and anchors for stored object fields, including array content.
+ * Caches declared field instances for stored object schemas, including empty fields and array content.
+ * Each cached field owns its cursor and anchor.
  * Undeclared object fields are forbidden and are not retained.
  * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
  */
@@ -334,7 +335,7 @@ export class LazyObjectNode extends LazyTreeNode {
 		const key = cursor.getFieldKey();
 		assert(
 			this.storedSchema instanceof ObjectNodeStoredSchema,
-			"Fixed-field storage requires a stored object schema",
+			"Caching declared fields requires a stored object schema",
 		);
 		if (!this.storedSchema.objectNodeFields.has(key)) {
 			return new UncachedForbiddenField(this, key);
@@ -389,7 +390,7 @@ export class LazyGeneralNode extends LazyTreeNode {
 		if (cached !== undefined) {
 			return cached;
 		}
-		const field = makeGeneralField(this, key, this.storedSchema.getFieldSchema(key).kind);
+		const field = makeNodeBackedField(this, key, this.storedSchema.getFieldSchema(key).kind);
 		if (cursor.getFieldLength() !== 0) {
 			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()).set(key, field);
 		}

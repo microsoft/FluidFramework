@@ -99,7 +99,7 @@ type LocationInField = FlexTreeNode["parentField"];
 const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 
 /**
- * Creates an unhydrated node with the field-storage policy selected by its stored schema.
+ * Creates an unhydrated node with the implementation selected by its stored schema.
  * @param data - The node's type and value, consistent with the context's schema.
  * A defined value identifies a leaf, including falsy values and null.
  * @param fields - The node's initial fields, whose ownership transfers to the new node.
@@ -111,7 +111,8 @@ const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
  * This is not a schema override and must agree with the context's schema.
  * Leaf construction neither uses this argument nor looks up the schema.
  * @remarks
- * Stored object schemas use optional fixed-field storage; all other schemas use general storage.
+ * For stored object schemas, the selected implementation retains declared field instances even when empty.
+ * For other schemas, it retains only non-empty fields and fields with pending defaults.
  */
 export function createUnhydratedFlexTreeNode(
 	data: NodeData,
@@ -180,9 +181,9 @@ export abstract class UnhydratedFlexTreeNode
 		 */
 		public readonly data: NodeData,
 		/**
-		 * All {@link UnhydratedFlexTreeField} for this node that have been created so far.
+		 * The retained {@link UnhydratedFlexTreeField} instances for this node.
 		 * @remarks
-		 * For fixed-field nodes, this also includes empty fields which have been previously requested.
+		 * {@link UnhydratedObjectNode} retains declared fields which have been previously requested, even when empty.
 		 * General nodes retain only non-empty fields and fields with pending defaults.
 		 */
 		protected readonly fieldsAll: Map<FieldKey, UnhydratedFlexTreeField>,
@@ -254,7 +255,7 @@ export abstract class UnhydratedFlexTreeNode
 
 	/**
 	 * Updates field storage before change notifications.
-	 * Only the fixed-field optimization retains empty declared fields.
+	 * Only {@link UnhydratedObjectNode} retains empty declared fields without pending defaults.
 	 */
 	public updateField(field: UnhydratedFlexTreeField): void {
 		if (field.pendingDefault || field.length > 0 || this.retainsEmptyField(field.key)) {
@@ -336,7 +337,7 @@ export abstract class UnhydratedFlexTreeNode
 		return this.getOrCreateField(fieldKey);
 	}
 
-	public getFieldContent(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
+	public getFirstFieldChild(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
 		currentObserver?.observeNodeField(this, key);
 		const child = this.fieldsAll.get(key)?.children[0];
 		if (child === undefined) {
@@ -447,7 +448,7 @@ export abstract class UnhydratedFlexTreeNode
 }
 
 /**
- * Storage for any schema, retaining only non-empty fields and pending defaults.
+ * An unhydrated node for any stored schema, retaining only non-empty fields and fields with pending defaults.
  */
 export class UnhydratedGeneralNode extends UnhydratedFlexTreeNode {
 	public constructor(
@@ -469,7 +470,8 @@ export class UnhydratedGeneralNode extends UnhydratedFlexTreeNode {
 }
 
 /**
- * Optional fixed-field optimization which retains declared object fields, even when empty.
+ * An optimization for stored object schemas which retains declared field instances, even when empty.
+ * {@link UnhydratedGeneralNode} also supports stored object schemas but does not retain empty fields without pending defaults.
  */
 export class UnhydratedObjectNode extends UnhydratedFlexTreeNode {
 	protected override retainsEmptyField(key: FieldKey): boolean {
@@ -606,7 +608,7 @@ export class UnhydratedFlexTreeField
 
 	/**
 	 * For general nodes, retained field instances resolve replacements after eviction.
-	 * Declared fields on fixed-field nodes retain the same instance and do not need a map lookup.
+	 * Declared fields on {@link UnhydratedObjectNode} retain the same instance and do not need a map lookup.
 	 */
 	protected get currentField(): UnhydratedFlexTreeField {
 		const parent = this.parent;

@@ -124,7 +124,7 @@ describe("RecordNode", () => {
 	});
 
 	describeHydration("POJO emulation", (init) => {
-		it("does not retain empty dynamic fields and keeps retained field instances usable", () => {
+		it("does not retain empty record fields and keeps retained field instances usable", () => {
 			const record = init(PojoEmulationNumberRecord, {});
 			const inner = getInnerNode(record);
 			const retained = inner.getBoxed(brand("key"));

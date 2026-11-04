@@ -49,7 +49,7 @@ const initialTree = {
 describeHydration(
 	"MapNode",
 	(init) => {
-		it("does not retain empty dynamic fields", () => {
+		it("does not retain empty map fields", () => {
 			class Values extends schemaFactory.map("bounded-fields", schemaFactory.number) {}
 			const map = init(Values, {});
 			const inner = getInnerNode(map);
@@ -90,7 +90,7 @@ describeHydration(
 			assert.equal(field.content, 3);
 		});
 
-		it("updates dynamic field storage before notifying change listeners", () => {
+		it("updates retained map fields before notifying change listeners", () => {
 			class Values extends schemaFactory.map("field-notifications", schemaFactory.number) {}
 			const map = init(Values, {});
 			const inner = getInnerNode(map);

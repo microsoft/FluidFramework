@@ -116,10 +116,11 @@ export const ContextSlot = anchorSlot<Context>();
  *
  * - Node implementation selection must remain valid.
  * General nodes support every stored schema with fields that borrow the node's navigation resources.
- * Stored object schemas may instead use fixed-field storage as a performance optimization.
- * Switching an existing node instance between these storage policies requires invalidation;
+ * They cache only populated fields and evict fields when they become empty.
+ * Nodes with stored object schemas may instead cache all declared field instances, including empty fields, as a performance optimization.
+ * Switching an existing node instance between these implementations requires invalidation;
  * existing node and field instances cannot change their cache ownership, cleanup subscriptions, or navigation strategy in place.
- * Nodes using fixed-field storage retain fields that own cursors and anchors only for declared keys.
+ * This optimization retains fields that own cursors and anchors only for declared keys.
  * Their undeclared fields and all leaf fields use uncached forbidden-field instances.
  * Adding a declared field therefore requires invalidation even if an old forbidden-field instance was never cached.
  *

@@ -133,7 +133,7 @@ function unhydrated(content: MapTree, schema: TreeStoredSchema): UnhydratedGener
 	return build(content);
 }
 
-describe("General field storage", () => {
+describe("General FlexTree nodes", () => {
 	for (const [name, forestType] of [
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
@@ -266,7 +266,7 @@ describe("General field storage", () => {
 			});
 		}
 
-		it(`supports every field kind on objects without fixed specialization (${name})`, () => {
+		it(`supports every field kind on objects without caching empty fields (${name})`, () => {
 			const schema = storedSchema(objectSchema);
 			const checkout = checkoutWithContent(
 				{ schema, initialTree: cursorForMapTreeNode(object) },
@@ -318,7 +318,7 @@ describe("General field storage", () => {
 			);
 			assert.equal(observations, 1);
 			assert.deepEqual(
-				sequence.map((value) => [value, node.getFieldContent(key("required"))]),
+				sequence.map((value) => [value, node.getFirstFieldChild(key("required"))]),
 				[
 					[2, 1],
 					[3, 1],
@@ -331,7 +331,7 @@ describe("General field storage", () => {
 			const iterator = sequence[Symbol.iterator]();
 			assert.equal(iterator.next().value?.value, 2);
 			assert.equal(node.cursor.mode, CursorLocationType.Nodes);
-			assert.equal(node.getFieldContent(key("required")), 1);
+			assert.equal(node.getFirstFieldChild(key("required")), 1);
 			iterator.return?.();
 			for (let i = 0; i < 10_000; i++) {
 				assert.equal(node.getBoxed(key(`missing-${i}`)).length, 0);

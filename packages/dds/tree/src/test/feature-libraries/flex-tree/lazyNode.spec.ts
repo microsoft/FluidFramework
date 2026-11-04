@@ -154,8 +154,8 @@ describe("LazyNode", () => {
 			checkout.dispose();
 		});
 
-		it(`preserves owned fixed-field reads and edits (${name})`, () => {
-			const sf = new SchemaFactory("fixed-field-storage");
+		it(`preserves reads and edits through cached declared fields (${name})`, () => {
+			const sf = new SchemaFactory("declared-field-cache");
 			class Item extends sf.object("Item", {
 				value: sf.number,
 				optional: sf.optional(sf.boolean),
@@ -267,7 +267,7 @@ describe("LazyNode", () => {
 			assert(field.is(FieldKinds.sequence));
 			assert.equal(field.length, 2);
 			assert.equal(field.at(-1), 2);
-			assert.equal(node.getFieldContent(key), 1);
+			assert.equal(node.getFirstFieldChild(key), 1);
 			assert.equal(field.boxedAt(1)?.parentField.parent, field);
 			field.editor.remove(0, 2);
 			assert.equal(field.length, 0);
@@ -344,12 +344,12 @@ describe("LazyNode", () => {
 			const updated = getInnerNode(upgraded.root);
 			assert(updated.getBoxed(key).is(FieldKinds.optional));
 			upgraded.root.added = 2;
-			assert.equal(updated.getFieldContent(key), 2);
+			assert.equal(updated.getFirstFieldChild(key), 2);
 			upgraded.dispose();
 			checkout.dispose();
 		});
 
-		it(`selects dynamic storage only for maps and records (${name})`, () => {
+		it(`caches empty declared fields for objects and arrays but not maps, records or leaves (${name})`, () => {
 			const sf = new SchemaFactoryAlpha("storage-policy");
 			class Values extends sf.map("Values", sf.number) {}
 			class Record extends sf.record("Record", sf.number) {}
@@ -422,7 +422,7 @@ describe("LazyNode", () => {
 			assert.equal(node.fieldCache, undefined);
 			const checkout = node.context.checkout;
 			view.dispose();
-			assert.throws(() => node.getFieldContent(brand("number")));
+			assert.throws(() => node.getFirstFieldChild(brand("number")));
 			checkout.dispose();
 		});
 

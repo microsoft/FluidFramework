@@ -72,9 +72,9 @@ export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField
  * Remains positioned on the same field; ownership stays with the caller.
  * @remarks
  * Fields without a parent node own their navigation resources and are not cached here.
- * Other fields use the parent node's storage policy, creating its FlexTree node instance if necessary.
+ * Other fields use the parent node's field cache when appropriate, creating its FlexTree node instance if necessary.
  * Fields that own navigation resources take ownership of the temporary parent anchor.
- * Cache hits and resource-free fields release that temporary anchor instead.
+ * Cache hits and fields that borrow their parent's navigation resources release that temporary anchor instead.
  */
 export function makeField(
 	context: Context,
@@ -245,16 +245,16 @@ export class UncachedForbiddenField extends NodeBackedField {
 }
 
 /**
- * Cursor-based field operations which borrow navigation only for the duration of a read.
+ * Field operations which borrow the parent node's cursor only for the duration of a read.
  * No cursor, anchor, event subscription, or context registration is retained by these fields.
  * @remarks
- * Iteration and {@link GeneralSequenceField.map} restart indexed navigation for each child so the parent cursor is restored before callbacks or yields.
+ * Iteration and {@link NodeBackedSequenceField.map} restart indexed navigation for each child so the parent cursor is restored before callbacks or yields.
  * Each lookup can scan preceding chunks, making traversal quadratic when a sequence contains many one-node chunks.
- * This is a deliberate fallback: public schemas cannot create sequence-valued maps, and public arrays use specialized object-field storage.
+ * This is a deliberate fallback: public schemas cannot create sequence-valued maps, and public arrays use {@link LazySequence}, which owns a cursor.
  * Keeping this path simple avoids managing an additional cursor across callbacks or yields.
- * Revisit this tradeoff if sequence-valued maps become public or general sequence fields are used on a performance-sensitive path.
+ * Revisit this tradeoff if sequence-valued maps become public or node-backed sequence fields are used on a performance-sensitive path.
  */
-abstract class GeneralField extends NodeBackedField {
+abstract class NodeBackedCursorField extends NodeBackedField {
 	protected withCursor<T>(read: (cursor: ITreeSubscriptionCursor) => T): T {
 		const cursor = this.parentNode.cursor;
 		cursor.enterField(this.key);
@@ -303,7 +303,7 @@ abstract class GeneralField extends NodeBackedField {
 	}
 }
 
-class GeneralOptionalField extends GeneralField implements FlexTreeOptionalField {
+class NodeBackedOptionalField extends NodeBackedCursorField implements FlexTreeOptionalField {
 	public override get schema(): FieldKindIdentifier {
 		return FieldKinds.optional.identifier;
 	}
@@ -330,7 +330,7 @@ class GeneralOptionalField extends GeneralField implements FlexTreeOptionalField
 	};
 }
 
-class GeneralValueField extends GeneralField implements FlexTreeRequiredField {
+class NodeBackedValueField extends NodeBackedCursorField implements FlexTreeRequiredField {
 	public constructor(
 		parent: LazyTreeNode,
 		key: FieldKey,
@@ -357,7 +357,7 @@ class GeneralValueField extends GeneralField implements FlexTreeRequiredField {
 	};
 }
 
-class GeneralSequenceField extends GeneralField implements FlexTreeSequenceField {
+class NodeBackedSequenceField extends NodeBackedCursorField implements FlexTreeSequenceField {
 	public override get schema(): FieldKindIdentifier {
 		return FieldKinds.sequence.identifier;
 	}
@@ -391,7 +391,7 @@ class GeneralSequenceField extends GeneralField implements FlexTreeSequenceField
 /**
  * Creates a FlexTree field instance for any supported stored field kind, borrowing navigation resources from its parent node.
  */
-export function makeGeneralField(
+export function makeNodeBackedField(
 	parent: LazyTreeNode,
 	key: FieldKey,
 	kind: FieldKindIdentifier,
@@ -401,14 +401,14 @@ export function makeGeneralField(
 			return new UncachedForbiddenField(parent, key);
 		}
 		case FieldKinds.optional.identifier: {
-			return new GeneralOptionalField(parent, key);
+			return new NodeBackedOptionalField(parent, key);
 		}
 		case FieldKinds.required.identifier:
 		case FieldKinds.identifier.identifier: {
-			return new GeneralValueField(parent, key, kind);
+			return new NodeBackedValueField(parent, key, kind);
 		}
 		case FieldKinds.sequence.identifier: {
-			return new GeneralSequenceField(parent, key);
+			return new NodeBackedSequenceField(parent, key);
 		}
 		default: {
 			return fail("Unsupported field kind");
@@ -420,7 +420,8 @@ export function makeGeneralField(
  * A hydrated field with its own persistent cursor, anchor, and disposal registration.
  * @remarks
  * Supports root fields as well as fields within nodes.
- * Fixed-schema nodes use this implementation to retain navigation resources for repeated access.
+ * The optimization for stored object schemas caches these field instances for declared keys, including empty fields.
+ * This retains their navigation resources for repeated access.
  * Resource management is composed rather than inherited so all hydrated fields share {@link LazyField}.
  */
 export abstract class AnchoredField extends LazyField implements IDisposable {
