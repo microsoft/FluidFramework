@@ -34,7 +34,9 @@ But the removed field prevents you from making a later schema upgrade, even if t
 
 ## Proposed behavior
 
-The current view must enable `allowUnknownOptionalFields` on the object from which you remove a field.
+The current view must allow unknown optional fields on the object from which you remove a field.
+This is now the default for object schemas on `main`; applications can disable it with `allowUnknownOptionalFields: false`.
+The default change does not itself implement the field-preserving upgrades proposed here.
 
 | Action | Expected result |
 | --- | --- |

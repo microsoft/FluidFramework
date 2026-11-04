@@ -32,9 +32,13 @@ This behavior supports two primary use cases:
 - Preserve its stored field schema and the node schemas needed to interpret that data.
 - Preserve this information during later compatible schema upgrades.
 - Omit the removed field when the application initializes a new document.
-- Require `allowUnknownOptionalFields` on the affected object in the current application schema.
-- Keep the existing rules for objects that do not enable this option.
+- Require the affected view object's resolved `allowUnknownOptionalFields` setting to be `true`.
+- Keep the existing strict rules for objects configured with `allowUnknownOptionalFields: false`.
 - Continue to reject other incompatible schema changes.
+
+Object schemas now allow unknown optional fields by default on `main`.
+The same preservation rule applies whether that setting comes from the default, factory settings, or an explicit object option.
+This broadens the feature's applicability without permitting removal from objects that explicitly disable the option.
 
 This feature does not delete stored data.
 It does not remove the field schema from existing documents.
@@ -369,7 +373,7 @@ Create a document with the original schema, then evaluate the changed view.
 
 | Case | Original schema | Changed view | Expected result |
 | --- | --- | --- | --- |
-| Remove an optional field without the object option | Object declares `foo?: number`. | Object omits `foo` and does not enable `allowUnknownOptionalFields`. | Cannot view or upgrade. |
+| Remove an optional field with unknown optional fields disabled | Object declares `foo?: number`. | Object omits `foo` and explicitly sets `allowUnknownOptionalFields: false`. | Cannot view or upgrade. |
 | Remove a required field | Object declares required `foo: number`. | Object omits `foo` and enables `allowUnknownOptionalFields`. | Cannot view or upgrade. The option permits only unknown optional fields. |
 | Narrow a declared field's allowed types | Object declares `foo?: number | string`. | Object declares `foo?: number` and enables `allowUnknownOptionalFields`. | Cannot view or upgrade. The field is known, so unknown-field tolerance does not apply. |
 | Reuse a node-type identifier with an incompatible definition | Object declares `foo?: Foo`. `Foo` has required `text: string`. | Object still declares `foo?: Foo`, but the same `Foo` identifier now has required `text: number`. The object enables `allowUnknownOptionalFields`. | Cannot view or upgrade. Matching identifiers do not make conflicting definitions compatible. |

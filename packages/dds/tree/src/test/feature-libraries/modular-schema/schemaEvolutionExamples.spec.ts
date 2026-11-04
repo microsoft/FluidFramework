@@ -1443,7 +1443,11 @@ describe("Schema Evolution Examples", () => {
 				};
 			}
 
-			class WithoutOptIn extends factory.object("Task", { title: factory.string }) {}
+			class StrictTask extends factory.object(
+				"Task",
+				{ title: factory.string },
+				{ allowUnknownOptionalFields: false },
+			) {}
 			class RequiredFoo extends factory.object(
 				"Task",
 				{ title: factory.string, foo: factory.number },
@@ -1473,8 +1477,8 @@ describe("Schema Evolution Examples", () => {
 			 */
 			for (const { name, initialize, changed, content } of [
 				{
-					name: "cannot remove an optional field without the object option",
-					changed: WithoutOptIn,
+					name: "cannot remove an optional field when unknown optional fields are disabled",
+					changed: StrictTask,
 					...withDocument(TaskWithFoo, { title: initialTitle, foo: 42 }),
 				},
 				{

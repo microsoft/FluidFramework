@@ -5,8 +5,9 @@
 This is an implementation plan, not a description of completed functionality.
 Do not begin source-code changes until the plan has been reviewed.
 
-The exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
-Source-code links are absolute GitHub links pinned to that commit.
+The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
+The plan was checked again against [main at `75902eb`][main-baseline] when merging upstream changes.
+Source-code links are absolute GitHub links pinned to the relevant investigation revision.
 Document links follow the feature branch so they refer to the current plans after publication.
 
 This document owns the algorithms, diagnostic contracts, specific code changes, and implementation-level validation for schema upgrades and compatibility.
@@ -28,6 +29,8 @@ The new alpha informational diagnostic, `compatibility.retainedUnknownOptionalFi
 | [Live compatibility updates][live-status] | A stored-schema change recomputes compatibility and forwards its result to the view. | Include and refresh the new informational property through this path. |
 | [Snapshot comparison][snapshot-comparison] | The helper asserts that equivalence is symmetric between two view configurations. | Remove that assumption and update documentation accordingly. |
 | [Persisted-schema comparison][persisted-schema] | The offline helper calls the shared compatibility checker. | Inherit the new upgrade decisions and verify agreement with live views. |
+| [Object schema options][factory-options] | Unknown optional fields are now allowed by default. Factory settings and per-schema options can override the default. | Use the resolved view option; strict negative tests must explicitly set it to `false`. |
+| [Unknown-field inspection][unknown-field-schemas] | The alpha context already exposes stored definitions of unknown optional fields. | Keep that inspection API distinct from the proposed upgrade-target report; see section 4.4. |
 
 The root cause is target construction, not the general definition of a safe stored-schema upgrade.
 The proposed target currently omits fields that the application no longer declares.
@@ -37,7 +40,9 @@ The superset check correctly rejects that target.
 
 ### 2.1 Internal interface
 
-Add one internal helper, with a working name of `getSchemaUpgrade`, alongside the existing conversion functions in [toStoredSchema.ts][conversion].
+Add one internal helper, with a working name of `getSchemaUpgrade`, alongside the root conversion functions in [treeSchema.ts][conversion].
+The functions `toStoredSchema`, `toInitialSchema`, and `toUpgradeSchema` moved there on main.
+Reuse the lower-level transformations that remain in [toStoredSchema.ts][conversion-transforms].
 Expose it through the package-internal [simple-tree barrel][simple-tree-index] for the live upgrade path.
 Do not add it to the customer-facing entry points.
 
@@ -88,6 +93,9 @@ Section 2.4 describes how this applies to staged declarations.
 7. Process all node-type references required by the resulting definitions.
 8. Return the completed target and retained-field locations.
 
+Use the resolved `allowUnknownOptionalFields` value from the view object, not the presence of an explicitly supplied option.
+The factory now defaults this value to `true`, and applications can override it at factory or object scope.
+
 Check the view node kind, not only the stored node class.
 Arrays also use `ObjectNodeStoredSchema`, but they do not opt into unknown object fields.
 
@@ -137,8 +145,14 @@ See [staged-upgrade policies][staged-policy].
 
 ### 2.5 Mutation and caching
 
-The existing view-to-stored conversion is cached by view schema and policy.
+Root conversion results now belong to `RootSchemaDerivedData` in [treeSchema.ts][tree-schema].
+Roots with staging cache results by policy identity; roots without staging share one result across policies.
+Complete view definitions can also be shared across roots through schema components.
 Never mutate a cached result, the view definitions, or the supplied stored schema.
+
+Reuse the complete graph already available through the view configuration or `getRootSchemaDerivedData`.
+Do not rebuild that graph or attach stored-schema-specific retained fields to its shared caches.
+Definition iteration order is unspecified, so sort diagnostic output explicitly.
 
 Copy maps that need modification.
 Reuse immutable stored field and node definitions where possible.
@@ -265,6 +279,21 @@ The same runtime object can serve all view tiers; the public and beta types must
 Verify that remote schema changes refresh the report through the existing `schemaChanged` flow.
 A preserved field must not cause a new error or force view invalidation merely because it appears in the informational report.
 
+### 4.4 Relationship to existing unknown-field inspection
+
+Main now provides [TreeContextAlpha.unknownFieldSchemas][unknown-field-schemas].
+It maps view object schemas to the stored definitions of their unknown optional fields.
+The view computes it lazily and invalidates its cache when the stored schema changes.
+
+The proposed `retainedUnknownOptionalFields` report instead identifies locations retained in the candidate upgrade target.
+Keep the approved report alpha and do not replace either surface as part of this merge.
+Document the distinction so applications do not mistake current-schema inspection for upgrade permission.
+
+The existing [inspection helper][unknown-field-inspection] skips fields with no allowed types.
+Do not use that filtered report as the sole input for preservation: a stored field definition can still need to be retained even if it cannot contain a value.
+The upgrade-target builder must remain a schema-only operation rather than requiring a live view or context.
+If selection logic is shared during implementation, keep these different contracts explicit.
+
 ## 5. Snapshot and offline checks
 
 ### 5.1 Remove the invalid symmetry assumption
@@ -331,6 +360,9 @@ Extend [toStoredSchema.spec.ts][conversion-tests] with focused checks for:
 - Isolating results for two documents with different histories under the same view.
 - Keeping initialization independent of retained document fields.
 
+Run the new [root-derived-schema tests][root-schema-tests] as well.
+They protect the shared graph and conversion caches that the target builder must not mutate.
+
 Assert exact target schemas, not only success flags.
 For accepted targets, verify both the superset condition and view compatibility.
 
@@ -390,7 +422,17 @@ pnpm run build:test:esm
 Run the directly affected suites together:
 
 ```bash
-MOCHA_SPEC='lib/test/{feature-libraries/modular-schema/schemaEvolutionExamples,simple-tree/toStoredSchema,simple-tree/api/{schemaCompatibilityTester,discrepancies,stagedSchemaUpgrade,snapshotCompatibilityChecker,storedSchema},shared-tree/schematizingTreeView}.spec.js' pnpm run test:mocha:esm --reporter spec
+MOCHA_SPEC='lib/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.js' \
+pnpm run test:mocha:esm --reporter spec \
+  lib/test/simple-tree/toStoredSchema.spec.js \
+  lib/test/simple-tree/treeSchema.spec.js \
+  lib/test/simple-tree/api/schemaFactoryOptions.spec.js \
+  lib/test/simple-tree/api/schemaCompatibilityTester.spec.js \
+  lib/test/simple-tree/api/discrepancies.spec.js \
+  lib/test/simple-tree/api/stagedSchemaUpgrade.spec.js \
+  lib/test/simple-tree/api/snapshotCompatibilityChecker.spec.js \
+  lib/test/simple-tree/api/storedSchema.spec.js \
+  lib/test/shared-tree/schematizingTreeView.spec.js
 ```
 
 Use the package's existing Biome and ESLint commands on changed source files.
@@ -409,6 +451,7 @@ Implementation validation is complete when the shared target and diagnostic test
 Use the [work plan][work-plan] for feature acceptance and delivery requirements rather than maintaining a second checklist here.
 
 [baseline]: https://github.com/Josmithr/FluidFramework/commit/95965373ea4b80c823892482f4cabe7402ab9e71
+[main-baseline]: https://github.com/microsoft/FluidFramework/commit/75902eb593f79625ac003c03dcb7e9d2f8f69497
 [work-plan]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md
 [requirements]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#required-behavior
 [compatibility-expectations]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#5-compatibility-status-and-events
@@ -416,14 +459,19 @@ Use the [work plan][work-plan] for feature acceptance and delivery requirements 
 [testing-requirements]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#7-required-tests
 [delivery]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#8-documentation-and-delivery
 [overview]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-overview.md
-[conversion]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/toStoredSchema.ts
+[conversion]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/treeSchema.ts#L393
+[conversion-transforms]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/toStoredSchema.ts
+[factory-options]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts
+[unknown-field-schemas]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/api/tree.ts#L464
+[unknown-field-inspection]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L104
+[root-schema-tests]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/test/simple-tree/treeSchema.spec.ts
 [simple-tree-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/index.ts
 [api-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/api/index.ts
 [tree-index]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/index.ts
-[tree-schema]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/treeSchema.ts
+[tree-schema]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/treeSchema.ts
 [compatibility]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/api/schemaCompatibilityTester.ts
-[runtime-upgrade]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L339
-[live-status]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L478
+[runtime-upgrade]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L399
+[live-status]: https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/shared-tree/schematizingTreeView.ts#L618
 [discrepancies]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/simple-tree/api/discrepancies.ts#L509
 [comparison]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/feature-libraries/modular-schema/comparison.ts#L196
 [checkout]: https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/packages/dds/tree/src/shared-tree/treeCheckout.ts#L2013
