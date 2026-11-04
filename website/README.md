@@ -128,12 +128,6 @@ pnpm test
 The aggregate command installs Playwright's browser dependencies before running the suites.
 `pnpm run build:test` type-checks all test code without executing it.
 
-## User Telemetry
-
-The website previously used Application Insights and a custom `userId` cookie to associate visits with the same browser.
-Now that the homepage no longer initializes the SDK, it no longer collects this telemetry or creates the associated cookies.
-This change does not clear older cookies, so an unused `userId` cookie can remain until it expires or the visitor deletes it.
-
 ## Deployment
 
 The Fluid Framework website is deployed using the build-docs pipeline. `INSTRUMENTATION_KEY`
