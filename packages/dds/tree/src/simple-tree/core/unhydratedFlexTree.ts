@@ -133,7 +133,8 @@ export function createUnhydratedFlexTreeNode(
 }
 
 /**
- * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
+ * Base for FlexTree nodes whose content has not been inserted into a forest.
+ * Subclasses determine whether empty field instances are retained.
  */
 export abstract class UnhydratedFlexTreeNode
 	implements FlexTreeNode, MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
@@ -173,7 +174,11 @@ export abstract class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Create a new UnhydratedFlexTreeNode.
+	 * Creates an unhydrated node and assigns its fields to it.
+	 * @param data - Node type and value consistent with the context's schema.
+	 * @param fieldsAll - Initial fields. Ownership of the map and its fields transfers to this node;
+	 * the fields must not belong to another node. Leaves must have no fields.
+	 * @param simpleContext - Supplies schemas for this node and its descendants.
 	 */
 	public constructor(
 		/**
@@ -220,9 +225,10 @@ export abstract class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Gets all fields, without filtering out empty ones.
+	 * Gets all retained field instances, including any retained empty fields.
 	 * @remarks
-	 * This avoids forcing the evaluating of pending defaults in the fields, and also saves a copy on access.
+	 * Returns the live field map without evaluating pending defaults or making a copy.
+	 * Evicted field instances are not included even if a caller still holds them.
 	 */
 	public get allFieldsLazy(): ReadonlyMap<FieldKey, UnhydratedFlexTreeField> {
 		return this.fieldsAll;
@@ -232,6 +238,11 @@ export abstract class UnhydratedFlexTreeNode
 		return this.data.type;
 	}
 
+	/**
+	 * Gets a retained field or creates an empty one using this node's stored schema.
+	 * Newly created fields are retained only when {@link UnhydratedFlexTreeNode.retainsEmptyField} allows it.
+	 * This does not observe the field or evaluate pending defaults.
+	 */
 	protected getOrCreateField(key: FieldKey): UnhydratedFlexTreeField {
 		const existing = this.fieldsAll.get(key);
 		if (existing !== undefined) {
@@ -247,7 +258,8 @@ export abstract class UnhydratedFlexTreeNode
 	}
 
 	/**
-	 * Resolves the current FlexTree field instance without observing its contents.
+	 * Gets the retained field at `key`, or undefined if none is retained.
+	 * Does not create a field, observe its contents, or evaluate pending defaults.
 	 */
 	public getStoredField(key: FieldKey): UnhydratedFlexTreeField | undefined {
 		return this.fieldsAll.get(key);
@@ -255,7 +267,10 @@ export abstract class UnhydratedFlexTreeNode
 
 	/**
 	 * Updates field storage before change notifications.
-	 * Only {@link UnhydratedObjectNode} retains empty declared fields without pending defaults.
+	 * @param field - The current field instance for its key, parented to this node.
+	 * @remarks
+	 * Retains populated fields and pending defaults; empty fields are retained only when
+	 * {@link UnhydratedFlexTreeNode.retainsEmptyField} allows it. Does not emit notifications.
 	 */
 	public updateField(field: UnhydratedFlexTreeField): void {
 		if (field.pendingDefault || field.length > 0 || this.retainsEmptyField(field.key)) {
@@ -265,6 +280,9 @@ export abstract class UnhydratedFlexTreeNode
 		}
 	}
 
+	/**
+	 * Reports whether an empty field at `key` should be retained when it has no pending default.
+	 */
 	protected abstract retainsEmptyField(key: FieldKey): boolean;
 
 	/**
@@ -451,6 +469,12 @@ export abstract class UnhydratedFlexTreeNode
  * An unhydrated node for any stored schema, retaining only non-empty fields and fields with pending defaults.
  */
 export class UnhydratedGeneralNode extends UnhydratedFlexTreeNode {
+	/**
+	 * Creates an unhydrated node, removing empty fields without pending defaults from its initial field map.
+	 * @param data - Node type and value consistent with the context's schema.
+	 * @param fields - Initial fields, owned by the new node. Fields must not belong to another node; leaves must have none.
+	 * @param context - Supplies schemas for this node and its descendants.
+	 */
 	public constructor(
 		data: NodeData,
 		fields: Map<FieldKey, UnhydratedFlexTreeField>,
@@ -470,7 +494,7 @@ export class UnhydratedGeneralNode extends UnhydratedFlexTreeNode {
 }
 
 /**
- * An optimization for stored object schemas which retains declared field instances, even when empty.
+ * An unhydrated node for stored object schemas that retains declared field instances, even when empty.
  * {@link UnhydratedGeneralNode} also supports stored object schemas but does not retain empty fields without pending defaults.
  */
 export class UnhydratedObjectNode extends UnhydratedFlexTreeNode {
@@ -543,6 +567,13 @@ export class UnhydratedFlexTreeField
 
 	public parent: UnhydratedFlexTreeNode | undefined = undefined;
 
+	/**
+	 * Creates a field and assigns parentage to any supplied children.
+	 * @param context - Supplies the field's schema policy.
+	 * @param schema - The stored field kind.
+	 * @param key - The field key on its eventual parent.
+	 * @param lazyChildren - Unparented children whose array ownership transfers to this field, or a pending contextual default.
+	 */
 	public constructor(
 		public readonly context: FlexTreeContext,
 		public readonly schema: FieldKindIdentifier,
@@ -576,9 +607,10 @@ export class UnhydratedFlexTreeField
 	}
 
 	/**
-	 * Populate pending default (if present) using the provided context.
+	 * Evaluates this field's pending default, if any, using the supplied hydrated context.
 	 * @remarks
-	 * This apply to just this field: caller will likely want to recursively walk the tree.
+	 * Follows any replacement field instance and updates its parent's retained fields before returning.
+	 * Does not recurse into children or emit change notifications.
 	 * @see {@link pendingDefault}.
 	 */
 	public fillPendingDefaults(context: FlexTreeHydratedContextMinimal): void {
@@ -596,7 +628,8 @@ export class UnhydratedFlexTreeField
 	}
 
 	/**
-	 * Returns true if this field has a pending default due to defined defined using a {@link ContextualFieldProvider}.
+	 * Reports whether the current field instance has an unevaluated {@link ContextualFieldProvider}.
+	 * Does not evaluate the provider.
 	 */
 	public get pendingDefault(): boolean {
 		const current = this.currentField;
@@ -607,8 +640,9 @@ export class UnhydratedFlexTreeField
 	}
 
 	/**
-	 * For general nodes, retained field instances resolve replacements after eviction.
-	 * Declared fields on {@link UnhydratedObjectNode} retain the same instance and do not need a map lookup.
+	 * The field instance to use for current content and edits.
+	 * For general nodes, resolves any retained replacement at the same key after eviction.
+	 * Returns this instance when no replacement exists; declared fields on {@link UnhydratedObjectNode} always keep their instance.
 	 */
 	protected get currentField(): UnhydratedFlexTreeField {
 		const parent = this.parent;
@@ -617,6 +651,11 @@ export class UnhydratedFlexTreeField
 			: (parent.getStoredField(this.key) ?? this);
 	}
 
+	/**
+	 * The current children, following any replacement field instance.
+	 * Evaluates pending defaults using the global context and updates the parent's retained fields.
+	 * Mutations must go through {@link UnhydratedFlexTreeField.edit} to maintain parentage and notifications.
+	 */
 	public get children(): UnhydratedFlexTreeNode[] {
 		const current = this.currentField;
 		if (current !== this) {
@@ -653,12 +692,12 @@ export class UnhydratedFlexTreeField
 	}
 
 	/**
-	 * Mutate this field.
-	 * @param edit - A function which receives the current `MapTree`s that comprise the contents of the field so that it may be mutated.
-	 * The function may mutate the array in place or return a new array.
-	 * If a new array is returned then it will be used as the new contents of the field, otherwise the original array will be continue to be used.
-	 * @remarks All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
-	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
+	 * Edits the current field instance, maintaining child parentage and notifying its parent.
+	 * @param edit - Mutates the current child array in place or returns a replacement array.
+	 * Children are unparented before the callback and adopted by the current field afterward.
+	 * @remarks
+	 * Follows any replacement field instance and updates the parent's retained fields before emitting notifications.
+	 * All mutations to field content must use this method.
 	 */
 	protected edit(
 		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
@@ -734,6 +773,9 @@ export class UnhydratedOptionalField
 	} satisfies OptionalFieldEditBuilder<FlexibleNodeContent> &
 		ValueFieldEditBuilder<FlexibleNodeContent>;
 
+	/**
+	 * The current child with leaf values unboxed, or undefined if the field is empty.
+	 */
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const child = this.children[0];
 		if (child !== undefined) {
@@ -745,10 +787,16 @@ export class UnhydratedOptionalField
 	}
 }
 
+/**
+ * An unhydrated field containing exactly one child, returned with leaf values unboxed.
+ */
 class UnhydratedRequiredField
 	extends UnhydratedOptionalField
 	implements FlexTreeRequiredField
 {
+	/**
+	 * The field's single child, with leaf values unboxed.
+	 */
 	public override get content(): FlexTreeUnknownUnboxed {
 		// This cannot use ?? since null is a legal value here.
 		const content = super.content;
@@ -767,6 +815,12 @@ export class UnhydratedSequenceField
 	extends UnhydratedFlexTreeField
 	implements FlexTreeSequenceField
 {
+	/**
+	 * {@inheritDoc FlexTreeSequenceField.editor}
+	 * @privateRemarks
+	 * Resolves retained field instances to their replacements.
+	 * Moves between two instances of the same field are treated as within-field moves.
+	 */
 	public readonly editor = {
 		insert: (index, newContent): void => {
 			for (const c of newContent) {

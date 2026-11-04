@@ -112,6 +112,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Nodes register themselves; anchored fields register their resource component.
 	 */
 	public readonly withCursors: Set<AnchoredEntity> = new Set();
+	/**
+	 * Navigation-resource owners registered for disposal, including those with cleared cursors.
+	 * Fields that borrow their parent's resources are not registered separately.
+	 */
 	public readonly withAnchors: Set<AnchoredEntity> = new Set();
 
 	/**

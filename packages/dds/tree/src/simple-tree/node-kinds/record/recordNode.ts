@@ -408,6 +408,10 @@ export function recordSchema<
 	return output;
 }
 
+/**
+ * Iterates over a record's populated entries without allocating FlexTree fields.
+ * Entry order is unspecified.
+ */
 function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
 ): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {

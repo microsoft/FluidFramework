@@ -45,9 +45,11 @@ import {
 import { currentObserver } from "./observer.js";
 
 /**
- * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
+ * Gets the existing hydrated FlexTree node at the cursor's location, or creates one using its stored schema.
+ * @param context - The context whose forest and schema describe the node.
+ * @param cursor - A current cursor from that forest, positioned in nodes mode. Ownership stays with the caller.
  * @remarks
- * This does not take ownership of this cursor: Node will fork it as needed.
+ * Leaves the cursor at its original position. New instances fork it and are retained until destruction or context invalidation.
  */
 export function getOrCreateHydratedFlexTreeNode(
 	context: Context,
@@ -93,6 +95,10 @@ export abstract class LazyTreeNode
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
+	/**
+	 * The node schema captured at construction for field-kind lookup.
+	 * It is not refreshed after schema changes; see {@link Context} for invalidation requirements.
+	 */
 	protected readonly storedSchema: TreeNodeStoredSchema;
 
 	/**
@@ -154,6 +160,9 @@ export abstract class LazyTreeNode
 		return this.context.checkout.forest.tryMoveCursorToNode(this.anchor, cursor);
 	}
 
+	/**
+	 * Releases this node's anchor, cached fields, and destruction subscription.
+	 */
 	protected override forgetAnchor(): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
@@ -173,7 +182,9 @@ export abstract class LazyTreeNode
 	 * The cursor must be in a field of this node, and the caller must validate this node's lifetime.
 	 * @param cursor - A cursor in this node's forest, positioned on the requested field.
 	 * @param createField - Creates a field which owns its navigation resources.
+	 * Called only on a cache miss for a field that needs its own resources; the result must match the cursor's field and stored schema.
 	 * Implementations whose fields borrow this node's resources do not call this factory.
+	 * @returns A cached or newly created field. The cursor remains at its original position.
 	 */
 	public abstract getOrCreateField(
 		cursor: ITreeSubscriptionCursor,
@@ -237,6 +248,9 @@ export abstract class LazyTreeNode
 
 	/**
 	 * Gets an anchor-derived field path without recovering this node's cursor.
+	 * @param key - The field key on this node, whether or not the field is populated.
+	 * @remarks
+	 * Validates this node's lifetime. The returned path must not be retained across edits.
 	 */
 	public getFieldPath(key: FieldKey): { parent: AnchorNode; field: FieldKey } {
 		this.ensureValidForAccess();
@@ -322,7 +336,7 @@ export abstract class LazyTreeNode
 }
 
 /**
- * Caches declared field instances for stored object schemas, including empty fields and array content.
+ * A hydrated node for stored object schemas that caches declared field instances, including empty fields and array content.
  * Each cached field owns its cursor and anchor.
  * Undeclared object fields are forbidden and are not retained.
  * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
@@ -356,6 +370,10 @@ export class LazyObjectNode extends LazyTreeNode {
 export class LazyGeneralNode extends LazyTreeNode {
 	readonly #removeFieldChangeCallback: () => void;
 
+	/**
+	 * Creates a node that evicts cached fields when they become empty.
+	 * @param args - The construction arguments and ownership requirements described by {@link LazyTreeNode}.
+	 */
 	public constructor(...args: ConstructorParameters<typeof LazyTreeNode>) {
 		super(...args);
 		this.#removeFieldChangeCallback = this.anchorNode.events.on(
@@ -381,8 +399,9 @@ export class LazyGeneralNode extends LazyTreeNode {
 	}
 
 	/**
-	 * Gets a FlexTree field instance at the supplied cursor's location.
-	 * The cursor must be in a field of this node.
+	 * Gets or creates a field that borrows this node's resources, caching only populated fields.
+	 * @param cursor - A current cursor on a field of this node, left at the same position.
+	 * The caller must validate this node's lifetime before calling.
 	 */
 	public override getOrCreateField(cursor: ITreeSubscriptionCursor): FlexTreeField {
 		const key = cursor.getFieldKey();
@@ -397,6 +416,9 @@ export class LazyGeneralNode extends LazyTreeNode {
 		return field;
 	}
 
+	/**
+	 * Unsubscribes field-cache cleanup before releasing this node's anchor and cached fields.
+	 */
 	protected override forgetAnchor(): void {
 		this.#removeFieldChangeCallback();
 		super.forgetAnchor();

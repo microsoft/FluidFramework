@@ -308,6 +308,9 @@ const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	},
 };
 
+/**
+ * Shared map-node implementation that reads and edits entries through its FlexTree node.
+ */
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
 	MapNodeInsertableData<T>
 > {
@@ -327,16 +330,25 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getInnerNode(this);
 	}
 
+	/**
+	 * {@inheritDoc TreeMapNode.delete}
+	 */
 	public delete(key: string): void {
 		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 		field.editor.set(undefined, field.length === 0);
 	}
+	/**
+	 * {@inheritDoc TreeMapNode.entries}
+	 */
 	public *entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = this.innerNode;
 		for (const key of node.keys()) {
 			yield [key, tryGetTreeNodeForFieldKey(node, key) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
+	/**
+	 * Gets the value at `key`, or undefined if the entry is absent, without allocating a FlexTree field.
+	 */
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
 		return tryGetTreeNodeForFieldKey(node, brand(key)) as TreeNodeFromImplicitAllowedTypes<T>;
@@ -348,6 +360,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const node = this.innerNode;
 		yield* node.keys();
 	}
+	/**
+	 * {@inheritDoc TreeMapNode.set}
+	 */
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
@@ -400,6 +415,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			yield value;
 		}
 	}
+	/**
+	 * {@inheritDoc TreeMapNode.forEach}
+	 */
 	public forEach<TThis extends TreeMapNodeAlpha<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,

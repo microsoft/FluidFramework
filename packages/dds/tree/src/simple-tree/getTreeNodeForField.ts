@@ -22,9 +22,11 @@ import {
 } from "./core/index.js";
 
 /**
- * Reads the first child of the field at `key`, returning a TreeNode for non-leaves or the value for leaves.
+ * Reads the first child of the field at `key`, returning a {@link TreeNode} for non-leaves or the value for leaves.
  * Returns undefined if the field is empty.
  * Does not allocate a FlexTree field instance or box leaf nodes.
+ * @param node - The containing node, with a simple-tree context capable of representing its children.
+ * @param key - The field key to read. Records a dependency on this field even when empty.
  */
 export function tryGetTreeNodeForFieldKey(
 	node: FlexTreeNode,
