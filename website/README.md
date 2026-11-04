@@ -131,11 +131,15 @@ The aggregate command installs Playwright's browser dependencies before running 
 ## User Telemetry
 
 The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
-The telemetry data includes anonymous information such as:
+This telemetry supports the following usage metrics:
 
 -   Daily / Monthly users
 -   Pages visited
 -   User flow
+
+To associate visits from the same browser, Application Insights uses its default user and session identifiers and SDK cookies.
+The website does not create or read an additional `userId` cookie, so it no longer overrides the SDK user ID.
+If a browser still has an older `userId` cookie, the website ignores it until it expires or the visitor deletes it.
 
 This data is collected in compliance with relevant privacy standards.
 For more information, please refer to our [privacy policy.](https://www.microsoft.com/privacy/privacystatement).
