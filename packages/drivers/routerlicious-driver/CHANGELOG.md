@@ -1,5 +1,13 @@
 # @fluidframework/routerlicious-driver
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
 ## 3.7.0
 
 Dependency updates only.

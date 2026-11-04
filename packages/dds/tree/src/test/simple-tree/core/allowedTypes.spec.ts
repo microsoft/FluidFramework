@@ -12,6 +12,7 @@ import {
 	AnnotatedAllowedTypesInternal,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
+	normalizeAllowedTypesInternal,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypes,
@@ -33,6 +34,7 @@ import {
 	allowUnused,
 	numberSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	stringSchema,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
@@ -292,6 +294,38 @@ describe("allowedTypes", () => {
 	});
 
 	describe("AnnotatedAllowedTypesInternal", () => {
+		it("detects shallow staging without evaluating lazy references", () => {
+			const sf = new SchemaFactoryAlpha("test");
+			let evaluations = 0;
+			for (const staged of [false, true]) {
+				const lazy = () => {
+					evaluations++;
+					return sf.number;
+				};
+				const types = normalizeAllowedTypesInternal(
+					staged ? sf.types([sf.staged(lazy)]) : [lazy],
+				);
+				const before = evaluations;
+				assert.equal(types.hasStagedTypes, staged);
+				assert.equal(evaluations, before);
+				assert.equal(types.evaluate().hasStagedTypes, staged);
+				assert.equal(evaluations, before + 1);
+			}
+		});
+
+		it("does not include staging within referenced schemas", () => {
+			const sf = new SchemaFactoryAlpha("test");
+			class Child extends sf.object("Child", {
+				value: sf.stagedOptional(sf.number),
+			}) {}
+			assert.equal(normalizeAllowedTypesInternal([]).hasStagedTypes, false);
+			assert.equal(normalizeAllowedTypesInternal(Child).hasStagedTypes, false);
+			assert.equal(
+				normalizeAllowedTypesInternal(sf.types([sf.number, sf.staged(Child)])).hasStagedTypes,
+				true,
+			);
+		});
+
 		it("create", () => {
 			const types = AnnotatedAllowedTypesInternal.create(
 				[{ metadata: {}, type: schema.string }],

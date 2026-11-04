@@ -26,12 +26,8 @@ import {
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
-import {
-	toInitialSchema,
-	toUnhydratedSchema,
-	transformSimpleSchema,
-} from "../toStoredSchema.js";
-import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
+import { toUnhydratedSchema, transformSimpleSchema } from "../toStoredSchema.js";
+import { getRootSchemaDerivedData, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
@@ -253,12 +249,11 @@ export class TreeViewConfiguration<
 		this.enableSchemaValidation = config.enableSchemaValidation;
 		this.preventAmbiguity = config.preventAmbiguity;
 
-		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
+		// Collect ambiguity errors so validation failures encountered during this walk take priority.
+		// Reachable identifier uniqueness is checked later when the derived root graph is requested.
 		const ambiguityErrors: string[] = [];
 
-		// Validate the schema and collect ambiguity errors.
-		// This does a lot of validation (throwing usage errors as a side effect) in addition to just collecting ambiguity errors.
-		// ambiguityErrors are considered a lower priority, so only thrown if no other errors are found.
+		// Configuration-specific validation must visit every field, independently of cached component data.
 		walkFieldSchema(config.schema, {
 			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
@@ -312,7 +307,7 @@ export class TreeViewConfigurationAlpha<
 	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
-		const treeSchema = createTreeSchema(this.schema);
+		const { treeSchema } = getRootSchemaDerivedData(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 

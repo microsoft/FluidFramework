@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { createSchemaGraph } from "./schemaTestUtils.js";
 
 import {
 	validateAssertionError,
@@ -29,25 +30,6 @@ type _incrementalIsNotOrdinary = requireFalse<
 	isAssignableTo<IncrementalSchemaVisitor, SchemaVisitor>
 >;
 
-/**
- * Creates fresh schema identities from adjacency lists, with lazy references supporting forward edges and cycles.
- * `edges[i]` lists the indices of schemas referenced by returned schema `i`.
- */
-function createSchemaGraph(edges: readonly (readonly number[])[]): TreeNodeSchema[] {
-	const sf = new SchemaFactoryAlpha("components");
-	const nodes: TreeNodeSchema[] = [];
-	for (const [index, children] of edges.entries()) {
-		nodes.push(
-			class extends sf.objectRecursive(`N${index}`, {
-				child: sf.optionalRecursive(
-					children.map((child) => () => nodes[child] ?? assert.fail()),
-				),
-			}) {},
-		);
-	}
-	return nodes;
-}
-
 // Tests component and incremental traversal; ordinary traversal coverage is in walkSchema.spec.ts.
 describe("schema component visitor", () => {
 	it("filters references before querying previous component visits", () => {
@@ -65,50 +47,43 @@ describe("schema component visitor", () => {
 		assert.deepEqual(components, [[Parent]]);
 	});
 
-	// Test pruning and field-reporting modes to ensure both reuse completed components.
-	for (const observeFields of [false, true]) {
-		// Include and exclude the staged back-edge to test reuse with cyclic and acyclic filtered graphs.
-		for (const includeStaged of [false, true]) {
-			it(`reuses completed components within a filtered graph (fields: ${observeFields}, staged: ${includeStaged})`, () => {
-				const sf = new SchemaFactoryAlpha("incrementalFiltering");
-				class A extends sf.objectRecursive("A", {
-					child: sf.optionalRecursive([() => B]),
-				}) {}
-				class B extends sf.objectRecursive("B", {
-					child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
-				}) {}
-				const completed = new Set<TreeNodeSchema>();
-				const components: (readonly TreeNodeSchema[])[] = [];
-				const fields: AllowedTypesFullEvaluated[] = [];
-				const visitor: IncrementalSchemaVisitor = {
-					allowedTypeFilter: (type) =>
-						includeStaged || type.metadata.stagedSchemaUpgrade === undefined,
-					wasComponentVisited: (schema) => completed.has(schema),
-					allowedTypes: observeFields ? (types) => fields.push(types) : undefined,
-					stronglyConnectedComponent: (members) => {
-						components.push(members);
-						for (const member of members) {
-							completed.add(member);
-						}
-					},
-				};
-				walkSchema([B], visitor);
-				assert.deepEqual(
-					components.map((members) => new Set(members)),
-					includeStaged ? [new Set([A, B])] : [new Set([B])],
-				);
-				walkSchema([A], visitor);
-				assert.deepEqual(
-					components.map((members) => new Set(members)),
-					includeStaged ? [new Set([A, B])] : [new Set([B]), new Set([A])],
-				);
-				components.length = 0;
-				fields.length = 0;
-				walkSchema([A], visitor);
-				assert.deepEqual(components, []);
-				assert.equal(fields.length, observeFields ? 2 : 0);
-			});
-		}
+	// Include and exclude the staged back-edge to test reuse with cyclic and acyclic filtered graphs.
+	for (const includeStaged of [false, true]) {
+		it(`reuses completed components within a filtered graph (staged: ${includeStaged})`, () => {
+			const sf = new SchemaFactoryAlpha("incrementalFiltering");
+			class A extends sf.objectRecursive("A", {
+				child: sf.optionalRecursive([() => B]),
+			}) {}
+			class B extends sf.objectRecursive("B", {
+				child: sf.optionalRecursive(sf.types([sf.staged(() => A)])),
+			}) {}
+			const completed = new Set<TreeNodeSchema>();
+			const components: (readonly TreeNodeSchema[])[] = [];
+			const visitor: IncrementalSchemaVisitor = {
+				allowedTypeFilter: (type) =>
+					includeStaged || type.metadata.stagedSchemaUpgrade === undefined,
+				wasComponentVisited: (schema) => completed.has(schema),
+				stronglyConnectedComponent: (members) => {
+					components.push(members);
+					for (const member of members) {
+						completed.add(member);
+					}
+				},
+			};
+			walkSchema([B], visitor);
+			assert.deepEqual(
+				components.map((members) => new Set(members)),
+				includeStaged ? [new Set([A, B])] : [new Set([B])],
+			);
+			walkSchema([A], visitor);
+			assert.deepEqual(
+				components.map((members) => new Set(members)),
+				includeStaged ? [new Set([A, B])] : [new Set([B]), new Set([A])],
+			);
+			components.length = 0;
+			walkSchema([A], visitor);
+			assert.deepEqual(components, []);
+		});
 	}
 
 	it("validates incremental visitor requirements in types and at runtime", () => {
@@ -119,6 +94,7 @@ describe("schema component visitor", () => {
 		walkSchema([], incremental);
 		const missingCallback = { wasComponentVisited: () => false };
 		const withNode = { ...incremental, node: () => {} };
+		const withAllowedTypes = { ...incremental, allowedTypes: () => {} };
 		const withFilter = { ...incremental, allowedTypeFilter: () => true };
 		type _missingComponentCallback = requireFalse<
 			isAssignableTo<typeof missingCallback, Parameters<typeof walkSchema>[1]>
@@ -126,12 +102,15 @@ describe("schema component visitor", () => {
 		type _nodeCallbackExcluded = requireFalse<
 			isAssignableTo<typeof withNode, Parameters<typeof walkSchema>[1]>
 		>;
+		type _allowedTypesCallbackExcluded = requireFalse<
+			isAssignableTo<typeof withAllowedTypes, Parameters<typeof walkSchema>[1]>
+		>;
 		type _filterAllowed = requireTrue<
 			isAssignableTo<typeof withFilter, Parameters<typeof walkSchema>[1]>
 		>;
 		walkSchema([], withFilter);
-		// Reject both missing component callbacks and incompatible node callbacks, even through variables.
-		for (const visitor of [missingCallback, withNode]) {
+		// Reject missing component callbacks and incompatible observation callbacks, even through variables.
+		for (const visitor of [missingCallback, withNode, withAllowedTypes]) {
 			assert.throws(
 				// @ts-expect-error Invalid combinations are rejected even through variables.
 				() => walkSchema([], visitor),
@@ -144,23 +123,17 @@ describe("schema component visitor", () => {
 		const [a, b, c] = createSchemaGraph([[1, 1, 2], [0, 2], []]);
 		assert(a !== undefined && b !== undefined && c !== undefined);
 		const earlierVisits = new Set([c]);
-		// Test both traversal modes to ensure cycle detection does not depend on updating the caller's results.
-		for (const observeFields of [false, true]) {
-			const components: (readonly TreeNodeSchema[])[] = [];
-			let fieldCallbackCount = 0;
-			const visitor: IncrementalSchemaVisitor = {
-				wasComponentVisited: (schema) => earlierVisits.has(schema),
-				stronglyConnectedComponent: (members) => components.push(members),
-				allowedTypes: observeFields ? () => fieldCallbackCount++ : undefined,
-			};
-			walkSchema([a, b, c], visitor);
-			assert.deepEqual(
-				components.map((members) => new Set(members)),
-				[new Set([a, b])],
-			);
-			assert.equal(fieldCallbackCount, observeFields ? 3 : 0);
-			assert.deepEqual(earlierVisits, new Set([c]));
-		}
+		const components: (readonly TreeNodeSchema[])[] = [];
+		const visitor: IncrementalSchemaVisitor = {
+			wasComponentVisited: (schema) => earlierVisits.has(schema),
+			stronglyConnectedComponent: (members) => components.push(members),
+		};
+		walkSchema([a, b, c], visitor);
+		assert.deepEqual(
+			components.map((members) => new Set(members)),
+			[new Set([a, b])],
+		);
+		assert.deepEqual(earlierVisits, new Set([c]));
 	});
 
 	it("uses schema identity rather than identifiers", () => {
@@ -324,7 +297,7 @@ describe("schema component visitor", () => {
 		);
 	});
 
-	it("does not evaluate completed components' fields when field callbacks are absent", () => {
+	it("does not evaluate completed components' fields", () => {
 		const sf = new SchemaFactoryAlpha("prunedFields");
 		class Cached extends sf.objectRecursive("Cached", {
 			child: sf.optionalRecursive([
@@ -342,7 +315,7 @@ describe("schema component visitor", () => {
 		assert.deepEqual(components, [[Parent]]);
 	});
 
-	it("reports complete annotations for each field despite filtering and completed dependencies", () => {
+	it("reports complete annotations for each field despite filtering and repeated dependencies", () => {
 		const sf = new SchemaFactoryAlpha("fieldAnnotations");
 		const types = sf.types([sf.number, sf.staged(sf.number), sf.string]);
 		class Parent extends sf.objectAlpha("Parent", { first: types, second: types }) {}
@@ -350,60 +323,41 @@ describe("schema component visitor", () => {
 		const components: (readonly TreeNodeSchema[])[] = [];
 		walkSchema([Parent], {
 			allowedTypeFilter: ({ type }) => type !== sf.string,
-			wasComponentVisited: (schema) => schema === sf.number,
 			allowedTypes: (field) => fields.push(field),
 			stronglyConnectedComponent: (members) => components.push(members),
 		});
-		assert.deepEqual(components, [[Parent]]);
+		assert.deepEqual(components, [[sf.number], [Parent]]);
 		assert.deepEqual(fields, [types.evaluate(), types.evaluate()]);
 	});
 
-	it("validates most-derived identity before querying previous visits when field callbacks are enabled", () => {
-		const sf = new SchemaFactoryAlpha("validationBeforeCache");
+	it("validates most-derived identity before reporting fields or components", () => {
+		const sf = new SchemaFactoryAlpha("validationBeforeCallbacks");
 		const Base = sf.object("Base", {});
 		class Used extends Base {}
 		class Invalid extends Base {}
 		walkSchema([Used], {});
-		let queries = 0;
 		assert.throws(
 			() =>
 				walkSchema([Invalid], {
-					stronglyConnectedComponent: () => {},
-					allowedTypes: () => {},
-					wasComponentVisited: () => {
-						queries++;
-						throw new Error("Previous visit queried before schema validation");
-					},
+					stronglyConnectedComponent: () => assert.fail("Invalid nodes must not be reported"),
+					allowedTypes: () => assert.fail("Invalid nodes' fields must not be reported"),
 				}),
 			validateUsageError(/Two schema classes were used/),
 		);
-		assert.equal(queries, 0);
 	});
 
-	it("visits cached and uncached fields in the same order as the ordinary walk", () => {
-		const [a, , c] = createSchemaGraph([[1, 2, 1], [0], [3], []]);
-		assert(a !== undefined && c !== undefined);
+	it("preserves ordinary allowed-type callback order when component callbacks are present", () => {
+		const [a] = createSchemaGraph([[1, 2, 1], [0], [3], []]);
+		assert(a !== undefined);
 		const expected: AllowedTypesFullEvaluated[] = [];
 		walkSchema([a], {
 			allowedTypes: (types) => expected.push(types),
 		});
-		// Cache nothing, a dependency subgraph, or the entire graph; field callbacks must keep the same order.
-		for (const cachedRoot of [undefined, c, a]) {
-			const completed = new Set<TreeNodeSchema>();
-			if (cachedRoot !== undefined) {
-				walkSchema([cachedRoot], {
-					stronglyConnectedComponent: (members) => {
-						for (const member of members) {
-							completed.add(member);
-						}
-					},
-				});
-			}
+		for (let i = 0; i < 2; i++) {
 			const actual: AllowedTypesFullEvaluated[] = [];
 			walkSchema([a], {
 				stronglyConnectedComponent: () => {},
 				allowedTypes: (types) => actual.push(types),
-				wasComponentVisited: (schema) => completed.has(schema),
 			});
 			assert.deepEqual(actual, expected);
 		}
