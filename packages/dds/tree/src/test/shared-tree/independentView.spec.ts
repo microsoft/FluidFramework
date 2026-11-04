@@ -36,7 +36,6 @@ import {
 	TreeViewConfigurationAlpha,
 	asTreeViewAlpha,
 	identifySchemaAlpha,
-	computeSchemaHash,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	type LibraryId,
@@ -126,13 +125,11 @@ describe("independentView", () => {
 			assert.deepEqual(view.storedSchemaVersion, { test: 1 });
 		});
 
-		it("checks runtime hashes independently of stored application versions", () => {
+		it("upgrades stored application versions without hashing", () => {
 			const testLibraryId = "test" as LibraryId;
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
-			const expectedHash = computeSchemaHash(SchemaFactory.number);
 			for (const version of [1, 2]) {
 				const identity = identifySchemaAlpha({
-					expectedHash,
 					schemaVersion: { [testLibraryId]: version },
 				});
 				const view = asTreeViewAlpha(
@@ -159,19 +156,6 @@ describe("independentView", () => {
 				assert.equal(view.root, 1);
 				view.dispose();
 			}
-			assert.throws(
-				() =>
-					tree.viewWith(
-						new TreeViewConfigurationAlpha({
-							schema: SchemaFactory.number,
-							schemaIdentity: identifySchemaAlpha({
-								expectedHash: computeSchemaHash(SchemaFactory.string),
-								schemaVersion: { [testLibraryId]: 3 },
-							}),
-						}),
-					),
-				/Expected schema hash does not match/,
-			);
 			assert.deepEqual(tree.storedSchemaVersion, { test: 2 });
 		});
 
@@ -179,7 +163,6 @@ describe("independentView", () => {
 			const original = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
 				schemaIdentity: identifySchemaAlpha({
-					expectedHash: "not-part-of-the-snapshot",
 					schemaVersion: { ["test" as LibraryId]: 1 },
 				}),
 			});

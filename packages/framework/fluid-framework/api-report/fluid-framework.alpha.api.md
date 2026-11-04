@@ -901,6 +901,11 @@ export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
 export function identifySchemaAlpha(options?: {
+    readonly schemaVersion?: SchemaVersionMap;
+}): SchemaIdentity;
+
+// @alpha
+export function identifySchemaWithHashAlpha(options?: {
     readonly expectedHash?: string;
     readonly schemaVersion?: SchemaVersionMap;
 }): SchemaIdentity;

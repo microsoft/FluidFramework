@@ -49,7 +49,8 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
-	identifySchemaAlpha,
+	identifySchemaWithHashAlpha,
+	type LibraryId,
 	FieldKind,
 	isTreeNode,
 } from "../../simple-tree/index.js";
@@ -106,7 +107,9 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha({ expectedHash: computeSchemaHash(root) }),
+						schemaIdentity: identifySchemaWithHashAlpha({
+							expectedHash: computeSchemaHash(root),
+						}),
 					}),
 				);
 
@@ -117,7 +120,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchemaAlpha({
+					schemaIdentity: identifySchemaWithHashAlpha({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -139,11 +142,58 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 			});
 
+			it("suggests increasing a version on hash mismatch without hashing versions", () => {
+				const libraryId = "test" as LibraryId;
+				const previousHash = computeSchemaHash(schema.number);
+				const actualHash = computeSchemaHash(root);
+				const checkout = checkoutWithInitialTree(config, 5);
+				const beforeSchema = checkout.storedSchema.clone();
+				const beforeContent = jsonTreeFromCheckout(checkout);
+				for (const version of [1, 2]) {
+					const schemaVersion = { [libraryId]: version };
+					const viewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHashAlpha({
+							expectedHash: previousHash,
+							schemaVersion,
+						}),
+					});
+					assert.throws(
+						() =>
+							new SchematizingSimpleTreeView(
+								checkout,
+								viewConfig,
+								new MockNodeIdentifierManager(),
+							),
+						validateUsageError(
+							`Expected schema hash does not match the configured schema. Expected "${previousHash}", got "${actualHash}". For an intentional schema change, consider increasing the relevant application-defined schema version.`,
+						),
+					);
+					assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
+					assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
+					const updatedViewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHashAlpha({
+							expectedHash: actualHash,
+							schemaVersion,
+						}),
+					});
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						updatedViewConfig,
+						new MockNodeIdentifierManager(),
+					);
+					assert.deepEqual(updatedViewConfig.schemaVersion, schemaVersion);
+					assert.equal(view.compatibility.canView, true);
+					view.dispose();
+				}
+			});
+
 			it("skips the construction check when no expected hash is provided", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha(),
+						schemaIdentity: identifySchemaWithHashAlpha(),
 					}),
 				);
 				view.dispose();
@@ -170,7 +220,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHashAlpha(),
 				}),
 			);
 
@@ -197,7 +247,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHashAlpha(),
 				}),
 			);
 

@@ -278,8 +278,13 @@ export class SchematizingSimpleTreeView<
 			assert(hasher !== undefined, "An expected schema hash requires a hasher.");
 			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
 			if (actualHash !== expectedHash) {
+				const versionSuggestion =
+					identity.schemaVersion !== undefined &&
+					Object.keys(identity.schemaVersion).length > 0
+						? " For an intentional schema change, consider increasing the relevant application-defined schema version."
+						: "";
 				throw new UsageError(
-					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
+					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.${versionSuggestion}`,
 				);
 			}
 		}

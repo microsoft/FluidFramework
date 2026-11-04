@@ -77,6 +77,7 @@ export {
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
 	identifySchemaAlpha,
+	identifySchemaWithHashAlpha,
 	type SchemaIdentity,
 	SchemaIdentityInternal,
 	type ITreeViewConfiguration,

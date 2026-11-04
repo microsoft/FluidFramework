@@ -14,7 +14,7 @@ import { createTreeSchema } from "../treeSchema.js";
 
 import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
-import { SchemaIdentityInternal } from "./schemaIdentity.js";
+import { identifySchemaAlpha } from "./schemaIdentity.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -172,7 +172,7 @@ export function importCompatibilitySchemaSnapshot(
 		schemaIdentity:
 			simpleSchema.schemaVersion === undefined
 				? undefined
-				: new SchemaIdentityInternal(undefined, undefined, simpleSchema.schemaVersion),
+				: identifySchemaAlpha({ schemaVersion: simpleSchema.schemaVersion }),
 	});
 }
 

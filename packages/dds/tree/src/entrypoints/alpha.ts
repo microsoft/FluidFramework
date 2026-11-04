@@ -354,6 +354,7 @@ export {
 	getJsonSchema, 
 	getSimpleSchema, 
 	identifySchemaAlpha, 
+	identifySchemaWithHashAlpha,
 	importCompatibilitySchemaSnapshot, 
 	incrementalEncodingPolicyForAllowedTypes, 
 	incrementalSummaryHint, 

@@ -42,6 +42,7 @@ import {
 	FieldKind,
 	NodeKind,
 	identifySchemaAlpha,
+	identifySchemaWithHashAlpha,
 } from "../../../simple-tree/index.js";
 import { testSchema } from "../../testTrees.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -151,7 +152,10 @@ describe("snapshotCompatibilityChecker", () => {
 		});
 		const withCheck = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ expectedHash: "runtime-only", schemaVersion }),
+			schemaIdentity: identifySchemaWithHashAlpha({
+				expectedHash: "runtime-only",
+				schemaVersion,
+			}),
 		});
 		assert.deepEqual(withCheck, withoutCheck);
 		const restored = importCompatibilitySchemaSnapshot(withCheck);

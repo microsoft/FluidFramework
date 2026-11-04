@@ -17,7 +17,8 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * Represents a schema identity for runtime hashing and application-defined versions.
  *
  * @remarks
- * Create with {@link identifySchemaAlpha}.
+ * Create with {@link identifySchemaAlpha} for application-defined versions only.
+ * Use {@link identifySchemaWithHashAlpha} to also enable hash checks and hash telemetry.
  *
  * @sealed @alpha
  */
@@ -74,6 +75,34 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 }
 
 /**
+ * Creates a schema identity with optional application-defined versions and no hashing.
+ *
+ * @param options - The application-defined versions.
+ *
+ * @returns An immutable {@link SchemaIdentity} without runtime hashing.
+ *
+ * @remarks
+ * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
+ * This function does not compute hashes or log hash telemetry.
+ * Bundles that only use this function can omit the hash algorithm.
+ * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
+ *
+ * @see {@link identifySchemaWithHashAlpha} to enable hash checks and hash telemetry.
+ *
+ * @alpha
+ */
+export function identifySchemaAlpha(
+	options: {
+		/**
+		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
+		 */
+		readonly schemaVersion?: SchemaVersionMap;
+	} = {},
+): SchemaIdentity {
+	return new SchemaIdentityInternal(undefined, undefined, options.schemaVersion);
+}
+
+/**
  * Implements {@link SchemaIdentity} without the hash algorithm.
  *
  * @remarks
@@ -108,7 +137,9 @@ export class SchemaIdentityInternal
 
 	public static extract(identity: SchemaIdentity): SchemaIdentityInternal {
 		if (!(identity instanceof SchemaIdentityInternal)) {
-			throw new UsageError("schemaIdentity must be created with identifySchemaAlpha.");
+			throw new UsageError(
+				"schemaIdentity must be created with identifySchemaAlpha or identifySchemaWithHashAlpha.",
+			);
 		}
 		return identity;
 	}

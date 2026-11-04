@@ -36,13 +36,15 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  *
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
+ * Initialization and schema upgrades log the runtime hash in telemetry.
  * Application versions do not affect the runtime hash.
  * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
- * Bundles that do not use this function can omit the hash algorithm.
+ *
+ * @see {@link identifySchemaAlpha} to use application versions without hashing.
  *
  * @alpha
  */
-export function identifySchemaAlpha(
+export function identifySchemaWithHashAlpha(
 	options: {
 		/**
 		 * Specifies an optional hash used to detect unintended schema changes.
@@ -52,6 +54,7 @@ export function identifySchemaAlpha(
 		 * It does not depend on the document or application versions.
 		 * If the hashes differ, view construction throws a usage error with both hashes.
 		 * For an intentional schema change, use the actual hash reported in the error.
+		 * When versions are configured, the error also suggests increasing the relevant version.
 		 * Omit this value to enable telemetry without a construction check.
 		 */
 		readonly expectedHash?: string;
@@ -72,16 +75,16 @@ export function identifySchemaAlpha(
  * Computes a hash from a view schema.
  *
  * @remarks
- * The hash includes the schema structure and persisted metadata, with the provided
- * enabled staged upgrades.
+ * The hash includes schema structure and persisted metadata, but not application versions.
+ * Enabled staged upgrades are included.
  * Object key order and allowed-type order do not affect the hash, but metadata array order does.
  *
- * @param schema - the view schema to hash
- * @param stagedSchemaUpgrades - the {@link SchemaUpgrade | staged upgrades} to include,
- * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them
+ * @param schema - The view schema to hash.
+ * @param stagedSchemaUpgrades - The {@link SchemaUpgrade | staged upgrades} to include,
+ * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them.
  * If not provided, no staged upgrades are included.
  *
- * @returns the first 128 bits of the schema's SHA-256 hash, as 32 hexadecimal characters
+ * @returns The first 128 bits of the SHA-256 hash, as 32 hexadecimal characters.
  *
  * @internal
  */

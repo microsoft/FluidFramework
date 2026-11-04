@@ -51,6 +51,20 @@ const config = new TreeViewConfigurationAlpha({
 If a later release changes the notes schema but leaves comments unchanged, the notes version can increase from `3` to `4` while the comments version stays at `1`.
 This records which feature's schema changed without assigning a new version to every feature in the application.
 
+#### Configure versions with or without schema hashing
+
+Two functions create a schema identity, and both accept the same `schemaVersion` map:
+
+- [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) configures versions without hashing or hash telemetry, allowing bundles to omit the hashing implementation.
+- [`identifySchemaWithHashAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhashalpha-function) configures versions and enables hash telemetry, with an optional `expectedHash` to detect unintended changes.
+
+When `expectedHash` is provided, view construction checks it against a hash of the configured schema.
+The version map is not included in the hash, so changing only a version number does not require an updated `expectedHash`.
+
+Existing uses of [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) for hash checks or telemetry must switch to [`identifySchemaWithHashAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhashalpha-function).
+
+#### Inspect schema versions
+
 [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface) exposes two version maps:
 
 - [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) contains the versions configured by the application.
