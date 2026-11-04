@@ -39,8 +39,9 @@ import {
 } from "../../simple-tree/createContext.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
+import { brand, getOrCreate } from "../../util/index.js";
 
+// Node initialization exercises getTreeNodeSchemaInitializedData; context caching is covered in createContext.spec.ts.
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedGeneralNode {
 		public constructor(public readonly simpleSchema: TreeNodeSchema) {
@@ -158,7 +159,8 @@ describe("TreeNodeValid", () => {
 	it("multiple subclass valid", () => {
 		const log: string[] = [];
 
-		let privateData: TreeNodeSchemaPrivateData | undefined;
+		// This mock permits independent most-derived schemas, each of which must own separate private data.
+		const privateData = new WeakMap<object, TreeNodeSchemaPrivateData>();
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -187,7 +189,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return getOrCreate(privateData, this, () => createTreeNodeSchemaPrivateData(this, []));
 			}
 		}
 
