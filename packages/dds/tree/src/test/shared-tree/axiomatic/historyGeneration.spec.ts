@@ -50,7 +50,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 		parent.dispose();
 	});
 
-	it("generated operations serializable", () => {
+	it("generated operations are serializable", () => {
 		const descriptors = [
 			...operationDescriptorsFromCheckout(parent, 0, { removeMovedNode: true }),
 		];
@@ -58,7 +58,7 @@ describe("SharedTree axiom infrastructure: history generation", () => {
 		assert.deepEqual(JSON.parse(JSON.stringify(descriptors)), descriptors);
 	});
 
-	it("generated operations are deterministic", () => {
+	it("operation generation is deterministic", () => {
 		const descriptors1 = [
 			...operationDescriptorsFromCheckout(parent, 0, { removeMovedNode: true }),
 		];

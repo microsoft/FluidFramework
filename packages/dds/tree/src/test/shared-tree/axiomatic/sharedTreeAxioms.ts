@@ -34,7 +34,7 @@ import { defaultRevisionMetadataFromChanges, validateViewConsistency } from "../
  */
 export class SharedTreeAxiomAdapter {
 	public constructor(
-		private readonly family: SharedTreeChangeFamily,
+		public readonly family: SharedTreeChangeFamily,
 		private readonly mintRevision: () => RevisionTag,
 	) {}
 
@@ -95,16 +95,23 @@ export class SharedTreeAxiomAdapter {
 /**
  * Compare tags and ordered envelope entries, normalizing only corresponding data payloads.
  */
-export function assertSharedTreeChangesEqual(
+export function assertTaggedSharedTreeChangesEqual(
 	actual: TaggedChange<SharedTreeChange>,
 	expected: TaggedChange<SharedTreeChange>,
 ): void {
 	assert.equal(actual.revision, expected.revision);
 	assert.equal(actual.rollbackOf, expected.rollbackOf);
-	assert.equal(actual.change.changes.length, expected.change.changes.length);
-	for (let index = 0; index < actual.change.changes.length; index++) {
-		const a = actual.change.changes[index];
-		const b = expected.change.changes[index];
+	assertSharedTreeChangesEqual(actual.change, expected.change);
+}
+
+export function assertSharedTreeChangesEqual(
+	actual: SharedTreeChange,
+	expected: SharedTreeChange,
+): void {
+	assert.equal(actual.changes.length, expected.changes.length);
+	for (let index = 0; index < actual.changes.length; index++) {
+		const a = actual.changes[index];
+		const b = expected.changes[index];
 		assert.equal(a.type, b.type);
 		if (a.type === "data" && b.type === "data") {
 			assertModularChangesetsEqual(a.innerChange, b.innerChange);
@@ -200,6 +207,6 @@ export function verifySharedTreeRebaseOverComposition(
 	const metadata = defaultRevisionMetadataFromChanges([...bases, change]);
 	const overSingles = adapter.rebaseOverSingles(change, bases, metadata);
 	const overComposed = adapter.rebaseOverComposition(change, bases, metadata);
-	assertSharedTreeChangesEqual(overSingles, overComposed);
+	assertTaggedSharedTreeChangesEqual(overSingles, overComposed);
 	return overComposed;
 }
