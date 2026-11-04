@@ -79,6 +79,57 @@ test("a secret that exists is returned", async () => {
 	assert.equal(vaultCall.init.headers.Authorization, "Bearer vault-access-token");
 });
 
+for (const [authorityHost, suffix] of [
+	["https://login.microsoftonline.us/", "vault.usgovcloudapi.net"],
+	["https://login.chinacloudapi.cn/", "vault.azure.cn"],
+	["https://login.partner.microsoftonline.cn/", "vault.azure.cn"],
+]) {
+	test(`Key Vault reads and access-token scopes match ${authorityHost}`, async () => {
+		const fetchImpl = fakeFetch({});
+		const credentialFactory = fakeCredentialFactory();
+		await getSecret("my-kv", "test-secret", {
+			env: { ...envWith(), AZURE_AUTHORITY_HOST: authorityHost },
+			fetchImpl,
+			credentialFactory,
+		});
+		assert.equal(
+			fetchImpl.calls[0].url,
+			`https://my-kv.${suffix}/secrets/test-secret?api-version=7.4`,
+		);
+		assert.equal(credentialFactory.calls[0].scope, `https://${suffix}/.default`);
+		assert.equal(credentialFactory.calls[0].options.authorityHost, authorityHost);
+	});
+}
+
+test("Key Vault uses the suffix supplied by the active cloud for custom clouds", async () => {
+	const fetchImpl = fakeFetch({});
+	const credentialFactory = fakeCredentialFactory();
+	await getSecret("my-kv", "test-secret", {
+		env: {
+			...envWith(),
+			AZURE_AUTHORITY_HOST: "https://login.custom.example",
+			AZURE_KEYVAULT_DNS_SUFFIX: "vault.custom.example",
+		},
+		fetchImpl,
+		credentialFactory,
+	});
+	assert.match(fetchImpl.calls[0].url, /^https:\/\/my-kv\.vault\.custom\.example\//);
+	assert.equal(credentialFactory.calls[0].scope, "https://vault.custom.example/.default");
+});
+
+test("unknown cloud authorities cannot silently read the commercial vault", async () => {
+	const fetchImpl = fakeFetch({});
+	await assert.rejects(
+		getSecret("my-kv", "test-secret", {
+			env: { ...envWith(), AZURE_AUTHORITY_HOST: "https://login.custom.example" },
+			fetchImpl,
+			credentialFactory: fakeCredentialFactory(),
+		}),
+		/AZURE_KEYVAULT_DNS_SUFFIX/,
+	);
+	assert.equal(fetchImpl.calls.length, 0);
+});
+
 test("a missing secret reports found:false rather than throwing", async () => {
 	// This is the "no token service uses this tenant" path. It must be distinguishable from a
 	// failure, or a tenant with no token service could never be rotated.

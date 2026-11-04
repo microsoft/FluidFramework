@@ -191,6 +191,37 @@ class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
 const holder = new Holder({ item: new ItemA({ a: 42 }) });
 ```
 
+If you cannot preserve the tuple type with `as const`, the alpha API [`unsafeArrayToTuple`](https://fluidframework.com/docs/api/fluid-framework/unsafearraytotuple-function) treats an array as a tuple containing each member of its element type union.
+It returns the original array with its type converted using [`UnionToTuple`](https://fluidframework.com/docs/api/fluid-framework/uniontotuple-typealias):
+
+```typescript
+import { unsafeArrayToTuple } from "@fluidframework/tree/alpha";
+
+const itemTypes = [ItemA, ItemB];
+// Adding `as const` above would be a better fix in this simple example.
+const allowedTypes = unsafeArrayToTuple(itemTypes);
+class Holder extends schemaFactory.object("Holder", { item: allowedTypes }) {}
+const holder = new Holder({ item: new ItemA({ a: 42 }) });
+```
+
+Prefer `as const` when possible.
+`unsafeArrayToTuple` does not validate or change the array at runtime.
+An array's element type can include schemas that are not actually in the array.
+The helper makes TypeScript accept those missing schemas as allowed types, but using them fails at runtime:
+
+```typescript
+function makeHolder(itemType: typeof ItemA | typeof ItemB) {
+	const allowedTypes = unsafeArrayToTuple([itemType]);
+	return class extends schemaFactory.object("Holder", { item: allowedTypes }) {};
+}
+
+class HolderA extends makeHolder(ItemA) {} // Only ItemA is allowed at runtime.
+const holder = new HolderA({ item: new ItemB({ b: "hello" }) }); // Compiles, but throws at runtime.
+```
+
+The parameter type means `ItemA` **or** `ItemB`, not that both schemas are present.
+Only use this helper for allowed types when you can ensure that every schema in the element type union is present in the array.
+
 ### How do I effectively use SharedTree when using TypeScript's `isolatedDeclarations`?
 
 SharedTree schema heavily use expression types and class expressions as base classes, both of which `isolatedDeclarations` disallows.

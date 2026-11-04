@@ -21,7 +21,11 @@ import { ClpCompliantAppHeader, FileMetadataHeader } from "./contractsPublic.js"
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { getOdspResolvedUrl } from "./odspUtils.js";
+import {
+	getOdspResolvedUrl,
+	tryGetNewFileParentFolderId,
+	tryGetNewFilePath,
+} from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 
 function getUrlBase(
@@ -107,9 +111,16 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
-			const filePath = searchParams.get("path");
+			const filePath = tryGetNewFilePath(searchParams);
+			const parentFolderId = tryGetNewFileParentFolderId(searchParams);
 			const packageName = searchParams.get("containerPackageName");
-			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+			// Exactly one of the folder's path or item ID must be provided.
+			// An empty path refers to the root of the drive, but an empty item ID is invalid.
+			const hasValidFolder =
+				parentFolderId === undefined
+					? filePath !== undefined
+					: filePath === undefined && parentFolderId !== "";
+			if (!(fileName && siteURL && driveID && hasValidFolder)) {
 				throw new NonRetryableError(
 					"Proper new file params should be there",
 					OdspErrorTypes.genericError,

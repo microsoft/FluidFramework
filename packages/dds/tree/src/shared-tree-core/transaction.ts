@@ -21,6 +21,7 @@ import {
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
+	cheapRebaseValidation,
 } from "../core/index.js";
 import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
@@ -93,6 +94,11 @@ export interface TransactionEvents {
 	 * @remarks When this event fires, {@link Transactor.size} will still be greater than 0 because the transaction has not yet ended.
 	 */
 	aborting(): void;
+	/**
+	 * Raised after a transaction has been aborted and its rollback callbacks have completed.
+	 * @remarks The aborted transaction has already been removed from {@link Transactor.size}.
+	 */
+	aborted(): void;
 	/**
 	 * Raised just before a transaction is committed.
 	 * @remarks When this event fires, {@link Transactor.size} will still be greater than 0 because the transaction has not yet ended.
@@ -205,6 +211,7 @@ export class TransactionStack<TOptions> implements Transactor<TOptions>, IDispos
 		}
 		this.#events.emit("aborting");
 		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Abort);
+		this.#events.emit("aborted");
 	}
 
 	public dispose(): void {
@@ -503,6 +510,10 @@ export class SquashingTransactionStack<
 								}
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
+								cheapRebaseValidation("Malformed composed transaction", () =>
+									changeFamily.validator(squash),
+								);
+
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
 								// "minimize" it so that it contains no extraneous information).
 								const change =
@@ -547,8 +558,9 @@ export class SquashingTransactionStack<
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
 										mintRevisionTag,
-										rebaser,
+										changeFamily,
 										unrebasedHead,
+										branch.getHead(),
 										branch.getHead(),
 									);
 									assert(

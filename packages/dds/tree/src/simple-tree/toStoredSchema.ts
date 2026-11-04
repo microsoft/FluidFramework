@@ -39,10 +39,12 @@ import {
 	SchemaUpgrade,
 	StagedSchemaUpgradePolicy,
 	Unchanged,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	type TreeNodeSchema,
 	type SimpleSchemaTransformationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import { FieldKind } from "./fieldSchema.js";
 import type {
 	SchemaType,
 	SimpleAllowedTypeAttributes,
@@ -56,17 +58,11 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { createTreeSchema } from "./treeSchema.js";
 
 // TODO: this file, src/simple-tree/api/storedSchema.ts and src/simple-tree/core/toStored.ts should be refactored to group the logic more logically.
 // The content of src/simple-tree/api/storedSchema.ts should probably removed from the API surface, replaced by simple schema snapshotting APIs.
 // The logic from this file for converting stored-simple-schema to the persisted format can be moved to its own file.
 // The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
-
-const viewToStoredCache = new WeakMap<
-	StagedSchemaUpgradePolicy,
-	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
->();
 
 function isStagedSchemaUpgradePolicy(
 	stagedSchemaUpgrades: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
@@ -98,26 +94,6 @@ export function resolveStoredSchemaGenerationOptions(
 }
 
 /**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
- */
-export function toUpgradeSchema(
-	root: ImplicitFieldSchema,
-	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
-}
-
-/**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
- */
-export function toInitialSchema(
-	root: ImplicitFieldSchema,
-	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
-}
-
-/**
  * Permissive staged schema upgrade policy used for unhydrated node schema generation.
  * @remarks
  * This allows as much as possible, relying on further validation when inserting the content.
@@ -126,31 +102,6 @@ export function toInitialSchema(
  */
 export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
 	StagedSchemaUpgradePolicy.permissive;
-
-/**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
- *
- * @privateRemarks
- * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
- * a staged allowed type has been upgraded and if so, include it in the conversion.
- *
- * Even if this took in a SimpleTreeSchema,
- * it would still need to walk the schema to avoid including schemas that become unreachable due to filtered out staged schema.
- *
- * @throws
- * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
- */
-export function toStoredSchema(
-	root: ImplicitFieldSchema,
-	options: StagedSchemaUpgradePolicy,
-): TreeStoredSchema {
-	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
-	return getOrCreate(cache, root, () => {
-		const treeSchema = createTreeSchema(normalizeFieldSchema(root));
-		const simpleSchema = transformSimpleSchema(treeSchema, options);
-		return simpleStoredSchemaToStoredSchema(simpleSchema);
-	});
-}
 
 /**
  * Converts a {@link SimpleTreeSchema} from `SchemaType.View` to `SchemaType.Stored`.
@@ -207,12 +158,16 @@ export function transformSimpleSchema(
 				case NodeKind.Array:
 				case NodeKind.Map:
 				case NodeKind.Record: {
-					queue.push(...transformed.simpleAllowedTypes.keys());
+					for (const type of transformed.simpleAllowedTypes.keys()) {
+						queue.push(type);
+					}
 					break;
 				}
 				case NodeKind.Object: {
 					for (const fieldSchema of transformed.fields.values()) {
-						queue.push(...fieldSchema.simpleAllowedTypes.keys());
+						for (const type of fieldSchema.simpleAllowedTypes.keys()) {
+							queue.push(type);
+						}
 					}
 					break;
 				}
@@ -341,9 +296,10 @@ export function transformSimpleNodeSchema(
 ): SimpleNodeSchema;
 
 /**
- * TODO: Persist node metadata once schema FormatV2 is supported.
- *
- * This is only exported for use by tests: if other users need them more overloads could be provided, but this is currently sufficient.
+ * Copies a node's fields and metadata according to the transformation options.
+ * @remarks
+ * Performs a shallow transformation: child types remain identifiers and referenced node definitions are not converted.
+ * Persisted metadata values are retained by reference; view-only metadata follows the selected transformation options.
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema,

@@ -10,7 +10,7 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 
 import type { ChangeMetadata, GraphCommit, RevisionTag } from "../core/index.js";
 import { findAncestor } from "../core/index.js";
-import type { SharedTreeChange, TreeCheckout } from "../shared-tree/index.js";
+import type { CheckoutBase, SharedTreeChange } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 
 import {
@@ -72,7 +72,7 @@ export class GuestSynchronization {
 	 * Disposal releases this checkout. After a failure,
 	 * the Guest can inspect it until application-managed cleanup calls {@link dispose}.
 	 */
-	public readonly checkout: TreeCheckout;
+	public readonly checkout: CheckoutBase;
 	/** Guest changes sent to the Host that have not been acknowledged. */
 	private readonly pendingChanges = new Set<GuestChangeId>();
 	/** The promise and resolver for acknowledgment of all pending Guest changes. */
@@ -107,7 +107,7 @@ export class GuestSynchronization {
 
 	public constructor(
 		/** The Guest's initial copy of the Host main branch. This class owns and disposes it. */
-		public readonly hostCheckout: TreeCheckout,
+		public readonly hostCheckout: CheckoutBase,
 		/** The revisions and commits needed to initialize the Host branch. */
 		initialization: GuestBranchInitialization,
 		/** The independent child compressor owned by this class and used by both Guest views. */

@@ -17,7 +17,11 @@ import {
 	rebaseBranch,
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../core/rebase/index.js";
-import { type NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
+import {
+	type NonEmptyTestChange,
+	TestChange,
+	testChangeFamilyFactory,
+} from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";
 
 function newCommit(
@@ -87,12 +91,12 @@ describe("rebaseBranch", () => {
 		const n3 = newCommit(3);
 
 		assert.throws(
-			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n2),
+			() => rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n3, n2),
 			validateAssertionError("branches must be related"),
 		);
 
 		assert.throws(
-			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n2, n3, n1),
+			() => rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n2, n3, n1),
 			validateAssertionError("target commit is not in target branch"),
 		);
 	});
@@ -111,7 +115,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n1);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n3, n1);
 		assert.equal(n3_1, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
@@ -138,7 +142,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n3);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n5, n3);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
@@ -178,7 +182,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n3);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n5, n2, n3);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
@@ -220,7 +224,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n4);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3],
@@ -254,7 +258,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3, 4],
@@ -289,7 +293,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n6, n2, n5);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n6, n2, n5);
 		const newPath = getPath(n2, n6_1);
 		assertChanges(
 			newPath,
@@ -323,7 +327,7 @@ describe("rebaseBranch", () => {
 			sourceChange,
 			commits,
 			telemetryProperties,
-		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3_1, n3, n4);
+		} = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n3_1, n3, n4);
 		assert.equal(n3_2, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
@@ -348,7 +352,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─(2)
 		//     └─ 3'─ 4'
-		const { newSourceHead } = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n4, n2);
+		const { newSourceHead } = rebaseBranch(mintRevisionTag, testChangeFamilyFactory(), n4, n2);
 		assert.deepEqual(
 			getPath(n2, newSourceHead).map((c) => c.customMetadata),
 			[meta("three"), undefined],

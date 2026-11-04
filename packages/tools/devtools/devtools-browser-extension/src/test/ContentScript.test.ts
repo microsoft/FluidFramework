@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
 	TelemetryEvent,
@@ -117,19 +116,44 @@ describe("Content Script unit tests", () => {
 		// Spy on the Background port's `postMessage` so we can later verify it was called.
 		const backgroundPostMessageSpy = sandbox.spy(backgroundPort, "postMessage");
 
-		// Post message from the Background script
+		// jsdom's postMessage omits the sender; supply the source that browsers provide.
 		const windowMessage = {
 			...TelemetryEvent.createMessage({} as unknown as TelemetryEvent.MessageData),
 			source: devtoolsMessageSource,
 		};
-		window.postMessage(windowMessage, "*");
-
-		// The window's `postMessage` method has async components, so we have to wait for the associated
-		// continuations to run before we can verify the message was forwarded.
-		await delay(500);
+		window.dispatchEvent(
+			new window.MessageEvent("message", { data: windowMessage, source: window }),
+		);
 
 		// Verify that the message was forwarded to the Devtools port
 		expect(backgroundPostMessageSpy.calledWith(windowMessage)).to.be.true;
+	});
+
+	it("Does not forward Devtools messages from other windows or missing senders", async () => {
+		const { window } = globals;
+		const { backgroundPort } = await initializeContentScript();
+		const backgroundPostMessageSpy = sandbox.spy(backgroundPort, "postMessage");
+		const windowMessage = {
+			...TelemetryEvent.createMessage({} as unknown as TelemetryEvent.MessageData),
+			source: devtoolsMessageSource,
+		};
+		const iframe = window.document.createElement("iframe");
+		window.document.body.append(iframe);
+		try {
+			expect(iframe.contentWindow).to.exist;
+			for (const source of [iframe.contentWindow, undefined]) {
+				window.dispatchEvent(
+					new window.MessageEvent("message", {
+						data: windowMessage,
+						source,
+						origin: window.location.origin,
+					}),
+				);
+			}
+			expect(backgroundPostMessageSpy.called).to.be.false;
+		} finally {
+			iframe.remove();
+		}
 	});
 
 	it("Does not forward message with unrecognized source from Window to Background script", async () => {
@@ -145,11 +169,9 @@ describe("Content Script unit tests", () => {
 			data: "some-data",
 			source: "unrecognized-source",
 		};
-		window.postMessage(windowMessage, "*");
-
-		// The window's `postMessage` method has async components, so we have to wait for the associated
-		// continuations to run before we can verify the message was forwarded.
-		await delay(500);
+		window.dispatchEvent(
+			new window.MessageEvent("message", { data: windowMessage, source: window }),
+		);
 
 		// Verify that the message was forwarded to the Devtools port
 		expect(backgroundPostMessageSpy.called).to.be.false;

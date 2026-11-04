@@ -1,5 +1,68 @@
 # @fluidframework/container-loader
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- On-demand summaries can return an acknowledged snapshot version ([#28613](https://github.com/microsoft/FluidFramework/pull/28613)) [5f18a5c07b8](https://github.com/microsoft/FluidFramework/commit/5f18a5c07b823f9c96ca6c17f6c51d9cd6c922f3)
+
+  `loadAndSummarize` creates a summary and waits for service acknowledgement.
+  It returns an `AcknowledgedSummary` with required `version` and `referenceSequenceNumber` fields, and rejects on error.
+  Use `version` with `LoaderHeader.version` to load the acknowledged snapshot.
+  The reference sequence number comes from the matching summary proposal and identifies the document state captured by the summary.
+
+  ```typescript
+  import { LoaderHeader } from "@fluidframework/container-definitions/legacy";
+  import {
+    loadExistingContainer,
+    loadAndSummarize,
+  } from "@fluidframework/container-loader/legacy";
+
+  // props supplies the loader services and request.
+  const { version, referenceSequenceNumber } = await loadAndSummarize(props);
+  const container = await loadExistingContainer({
+    ...props,
+    request: {
+      ...props.request,
+      headers: { ...props.request.headers, [LoaderHeader.version]: version },
+    },
+  });
+  // Use container, then dispose it when finished.
+  ```
+
+  `loadAndSummarize` rejects if summarization cannot recover from NACK, timeout, or premature container termination.
+  The runtime handles summary-stage retries.
+  The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+  A fresh load can succeed if a transient condition has resolved, but recovery is not guaranteed.
+  Both returned values identify the successful attempt.
+  The summarizer container is disposed before the promise settles.
+
+  `loadSummarizerContainerAndMakeSummary` returns `summaryResults.summaryInfo.handle`, which identifies the broadcast summary proposal.
+  It is not guaranteed to identify an acknowledged snapshot that can be loaded with `LoaderHeader.version`.
+  Use the `version` returned by `loadAndSummarize` when an acknowledged snapshot version is required.
+
+- On-demand summarization API is now beta ([#28546](https://github.com/microsoft/FluidFramework/pull/28546)) [2a411f38e16](https://github.com/microsoft/FluidFramework/commit/2a411f38e168c300844d8d6d96e153225ac5cdbe)
+
+  [`loadSummarizerContainerAndMakeSummary`](https://fluidframework.com/docs/api/container-loader/#loadsummarizercontainerandmakesummary-function) is promoted from `@alpha` to `@beta`, together with [`ILoadSummarizerContainerProps`](https://fluidframework.com/docs/api/container-loader/iloadsummarizercontainerprops-typealias), [`LoadSummarizerSummaryResult`](https://fluidframework.com/docs/api/container-loader/loadsummarizersummaryresult-typealias), [`OnDemandSummaryResults`](https://fluidframework.com/docs/api/container-loader/ondemandsummaryresults-interface), and [`SummaryStage`](https://fluidframework.com/docs/api/container-loader/summarystage-typealias).
+  These APIs can now be imported from `@fluidframework/container-loader/legacy`.
+
+## 3.7.0
+
+### Minor Changes
+
+- Binary summary blob contents can no longer include neighboring bytes in Node.js when a Buffer is a view into a larger allocation ([#28485](https://github.com/microsoft/FluidFramework/pull/28485)) [c3f918bb7b2](https://github.com/microsoft/FluidFramework/commit/c3f918bb7b22e509086f01d5c877ef3c459a15dd)
+
+  In Node.js, binary summary blob content provided as a `Buffer` which covered only part of its underlying memory could be converted into an `ArrayBuffer` containing the underlying memory rather than just the blob's bytes.
+  For example: a small pooled `Buffer` or the result of `subarray`.
+  This affected snapshots produced from detached container summaries and files created via the ODSP driver from a detached summary, and could result in extra or unrelated bytes being stored with a blob.
+
+  Only the bytes belonging to the blob are now included.
+  Browser environments were not affected.
+
 ## 3.6.0
 
 Dependency updates only.

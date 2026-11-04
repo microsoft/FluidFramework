@@ -47,6 +47,8 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
+	makeChangeAtomId,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -95,7 +97,6 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
-	unifyAliases,
 	CrossFieldManagerI,
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
@@ -111,6 +112,8 @@ import {
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
+	isChangesetValid,
+	debugOnlyChangesetValidator,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
@@ -128,6 +131,10 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
+
+	public readonly validator = (change: ModularChangeset): true | string => {
+		return debugOnlyChangesetValidator(change, this.fieldKinds);
+	};
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
@@ -152,7 +159,16 @@ export class ModularChangeFamily
 	public buildProcessor(
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
-		return (change: ModularChangeset) => processFn(change, this);
+		return (change: ModularChangeset) => {
+			strictRebaseValidation("Malformed processor input", () =>
+				isChangesetValid(change, this.fieldKinds),
+			);
+			const processed = processFn(change, this);
+			strictRebaseValidation("Malformed processor output", () =>
+				isChangesetValid(processed, this.fieldKinds),
+			);
+			return processed;
+		};
 	}
 
 	/**
@@ -234,9 +250,12 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
-		// Uncomment the following lines to facilitate debugging
-		// validateChangeset(change1, this.fieldKinds);
-		// validateChangeset(change2, this.fieldKinds);
+		strictRebaseValidation("Malformed composePair input1", () =>
+			isChangesetValid(change1, this.fieldKinds),
+		);
+		strictRebaseValidation("Malformed composePair input2", () =>
+			isChangesetValid(change2, this.fieldKinds),
+		);
 
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
 			this.composeAllFields(change1, change2, revInfos, idState);
@@ -266,9 +285,9 @@ export class ModularChangeFamily
 			refreshers: allRefreshers,
 		});
 
-		// Uncomment the following line to facilitate debugging
-		// validateChangeset(composed, this.fieldKinds);
-
+		strictRebaseValidation("Malformed composePair output", () =>
+			isChangesetValid(composed, this.fieldKinds),
+		);
 		return composed;
 	}
 
@@ -302,21 +321,8 @@ export class ModularChangeFamily
 		const composedNodeToParent: ChangeAtomIdBTree<FieldId> = brand(
 			mergeTupleBTrees(change1.nodeToParent, change2.nodeToParent),
 		);
-		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(change1.nodeAliases.clone());
-		for (const [[aliasRevision, aliasLocalId], target] of change2.nodeAliases.entries()) {
-			unifyAliases(
-				composedNodeAliases,
-				{ revision: aliasRevision, localId: aliasLocalId },
-				target,
-			);
-		}
 
-		const crossFieldTable = newComposeTable(
-			change1,
-			change2,
-			composedNodeToParent,
-			composedNodeAliases,
-		);
+		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
 
 		const composedFields = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -332,7 +338,6 @@ export class ModularChangeFamily
 			composedFields,
 			composedNodeChanges,
 			composedNodeToParent,
-			composedNodeAliases,
 			genId,
 			revisionMetadata,
 		);
@@ -342,6 +347,13 @@ export class ModularChangeFamily
 			change1.crossFieldKeys,
 			change2.crossFieldKeys,
 		);
+
+		const composedNodeAliases = composeNodeAliases(
+			change1.nodeAliases,
+			change2.nodeAliases,
+			crossFieldTable.newToBaseNodeId,
+		);
+
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
@@ -401,7 +413,6 @@ export class ModularChangeFamily
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
@@ -419,7 +430,6 @@ export class ModularChangeFamily
 					table.newChange.nodeChanges,
 					composedNodes,
 					composedNodeToParent,
-					nodeAliases,
 					id1,
 					id2,
 					genId,
@@ -437,7 +447,6 @@ export class ModularChangeFamily
 				pending.affectedBaseFields,
 				composedFields,
 				composedNodes,
-				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -449,7 +458,6 @@ export class ModularChangeFamily
 				pending.affectedNewFields,
 				composedFields,
 				composedNodes,
-				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -488,7 +496,6 @@ export class ModularChangeFamily
 		affectedFields: BTree<FieldIdKey, true>,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
@@ -533,7 +540,11 @@ export class ModularChangeFamily
 			const nodeId =
 				getFromChangeAtomIdMap(table.newToBaseNodeId, fieldId.nodeId) ?? fieldId.nodeId;
 
-			let nodeChangeset = nodeChangeFromId(composedNodes, nodeId, nodeAliases);
+			let nodeChangeset = nodeChangeFromId(
+				composedNodes,
+				nodeId,
+				table.baseChange.nodeAliases,
+			);
 			if (!table.composedNodes.has(nodeChangeset)) {
 				nodeChangeset = cloneNodeChangeset(nodeChangeset);
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
@@ -654,7 +665,6 @@ export class ModularChangeFamily
 		nodeChanges2: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		id1: NodeId,
 		id2: NodeId,
 		idAllocator: IdAllocator,
@@ -682,17 +692,14 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		const parentInChange1 = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
-		// While `parentInChange1` is normalized with respect to the base change,
-		// it may not be normalized with respect to the composed changeset.
-		const normalizedParentInComposedChange = normalizeFieldId(parentInChange1, nodeAliases);
-		const composedId = unifyAliases(nodeAliases, normalizedId2, normalizedId1);
+		const parentFieldId = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
+		const composedId = id1;
 		composedNodes.delete([normalizedId1.revision, normalizedId1.localId]);
 		composedNodes.delete([normalizedId2.revision, normalizedId2.localId]);
 		composedNodeToParent.delete([normalizedId1.revision, normalizedId1.localId]);
 		composedNodeToParent.delete([normalizedId2.revision, normalizedId2.localId]);
 		setInChangeAtomIdMap(composedNodes, composedId, composedNodeChangeset);
-		setInChangeAtomIdMap(composedNodeToParent, composedId, normalizedParentInComposedChange);
+		setInChangeAtomIdMap(composedNodeToParent, composedId, parentFieldId);
 
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
@@ -760,9 +767,12 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
-		// Uncomment the following lines to facilitate debugging
-		// validateChangeset(taggedChange.change, this.fieldKinds);
-		// validateChangeset(potentiallyConflictedOver.change, this.fieldKinds);
+		strictRebaseValidation("Malformed rebase input change", () =>
+			isChangesetValid(taggedChange.change, this.fieldKinds),
+		);
+		strictRebaseValidation("Malformed rebase input base", () =>
+			isChangesetValid(potentiallyConflictedOver.change, this.fieldKinds),
+		);
 
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -854,9 +864,6 @@ export class ModularChangeFamily
 			destroys: change.destroys,
 			refreshers: change.refreshers,
 		});
-
-		// Uncomment the following line to facilitate debugging
-		// validateChangeset(rebased, this.fieldKinds);
 
 		return pruneChangeset(rebased, this.fieldKinds);
 	}
@@ -1320,6 +1327,10 @@ export class ModularChangeFamily
 		change: ModularChangeset,
 		replacer: RevisionReplacer,
 	): ModularChangeset {
+		strictRebaseValidation("Malformed changeRevision input", () =>
+			isChangesetValid(change, this.fieldKinds),
+		);
+
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
 			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
@@ -1360,6 +1371,9 @@ export class ModularChangeFamily
 
 		updated.revisions = [{ revision: replacer.updatedRevision }];
 
+		strictRebaseValidation("Malformed changeRevision output", () =>
+			isChangesetValid(updated, this.fieldKinds),
+		);
 		return updated;
 	}
 
@@ -1423,12 +1437,18 @@ export class ModularChangeFamily
 	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
 	 */
 	private muteChange(change: ModularChangeset): ModularChangeset {
+		strictRebaseValidation("Malformed muteChange input", () =>
+			isChangesetValid(change, this.fieldKinds),
+		);
 		const muted: Mutable<ModularChangeset> = {
 			...change,
 			crossFieldKeys: newCrossFieldKeyTable(),
 			fieldChanges: this.muteFieldChanges(change.fieldChanges),
 			nodeChanges: brand(change.nodeChanges.mapValues((v) => this.muteNodeChange(v))),
 		};
+		strictRebaseValidation("Malformed muteChange output", () =>
+			isChangesetValid(muted, this.fieldKinds),
+		);
 		return muted;
 	}
 
@@ -1915,7 +1935,6 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-	composedNodeAliases: ChangeAtomIdBTree<NodeId>,
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
@@ -1925,7 +1944,6 @@ function newComposeTable(
 		newFieldToBaseField: new Map(),
 		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
-		composedNodeAliases,
 		composedNodeToParent,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
@@ -1945,7 +1963,6 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly fieldToContext: Map<FieldChange, ComposeFieldContext>;
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
-	readonly composedNodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -2127,11 +2144,9 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(
-			this.table.composedNodeToParent,
-			normalizeNodeId(id, this.table.composedNodeAliases),
-			this.fieldId,
-		);
+		if (getFromChangeAtomIdMap(this.table.newToBaseNodeId, id) === undefined) {
+			setInChangeAtomIdMap(this.table.composedNodeToParent, id, this.fieldId);
+		}
 	}
 
 	public override moveKey(
@@ -2159,7 +2174,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 		codecOptions: CodecWriteOptions,
 	) {
-		super(changeReceiver);
+		super((change: TaggedChange<ModularChangeset>) => {
+			strictRebaseValidation("Malformed built change", () =>
+				isChangesetValid(change.change, fieldKinds),
+			);
+			changeReceiver(change);
+		});
 		this.idAllocator = idAllocatorFromMaxId();
 		this.codecOptions = codecOptions;
 	}
@@ -2583,3 +2603,28 @@ const compareFieldIdKeys = createTupleComparator([
 	comparePartialChangesetLocalIds,
 	compareStrings<FieldKey>,
 ]);
+
+/**
+ * Composes the node aliases for two changesets.
+ * @param aliases1 - The node aliases from the first changeset.
+ * @param aliases2 - The node aliases from the second changeset.
+ * @param nodeId2ToId1 - A mapping from canonical node ID in the second changeset to the corresponding canonical ID in the first changeset.
+ */
+function composeNodeAliases(
+	aliases1: ChangeAtomIdBTree<NodeId>,
+	aliases2: ChangeAtomIdBTree<NodeId>,
+	nodeId2ToId1: ChangeAtomIdBTree<NodeId>,
+): ChangeAtomIdBTree<NodeId> {
+	const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
+		mergeTupleBTrees(aliases1, aliases2),
+	);
+
+	for (const [id2Key, id1] of nodeId2ToId1.entries()) {
+		const id2 = makeChangeAtomId(id2Key[1], id2Key[0]);
+		if (!areEqualChangeAtomIds(id2, id1)) {
+			setInChangeAtomIdMap(composedNodeAliases, id2, id1);
+			composedNodeAliases.delete([id1.revision, id1.localId]);
+		}
+	}
+	return composedNodeAliases;
+}
