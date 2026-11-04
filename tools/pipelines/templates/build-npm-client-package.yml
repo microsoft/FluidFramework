@@ -242,6 +242,18 @@ extends:
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
+              - bash: |
+                  set -e
+                  echo "=== OS ==="
+                  cat /etc/os-release
+                  echo "=== Installed packages ==="
+                  apt list --installed
+                  echo "=== Available updates ==="
+                  apt list --upgradable
+                  echo "=== Cached Node versions ==="
+                  n ls
+                displayName: Inspect agent image
+
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
                   echo "##vso[task.setvariable variable=COMMIT_SHA;isOutput=true]$(Build.SourceVersion)"
