@@ -320,7 +320,10 @@ export function isFieldInSchema<T extends NotUndefined>(
 	}
 
 	let index = 0;
-	for (const node of childNodes) {
+	const uniformLeaf = childNodes.uniformLeaf;
+	const nodes =
+		childNodes.length === 0 ? [] : uniformLeaf === undefined ? childNodes : [uniformLeaf];
+	for (const node of nodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
 			const allowedTypes = [...schema.types].sort();

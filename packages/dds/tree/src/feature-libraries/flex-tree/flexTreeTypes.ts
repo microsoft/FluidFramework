@@ -326,6 +326,13 @@ export type FlexibleNodeContent = MinimalMapTreeNodeView;
  */
 export interface FlexTreeSequenceField extends FlexTreeField {
 	/**
+	 * Optional sequential unboxed traversal starting at a validated index.
+	 * Must observe unhydrated edits between yields, like repeated atIndex calls.
+	 * The caller must replace the iterator if hydration replaces the field.
+	 * Returns undefined when indexed access is preferred for the current representation.
+	 */
+	valuesFrom?(index: number): IterableIterator<FlexTreeUnknownUnboxed> | undefined;
+	/**
 	 * Gets a node with unboxing at an already validated index.
 	 * @param index - A non-negative integer strictly less than the field length.
 	 * @remarks

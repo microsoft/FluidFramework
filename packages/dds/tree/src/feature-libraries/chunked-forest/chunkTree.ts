@@ -23,6 +23,7 @@ import {
 	ValueSchema,
 	type TreeChunk,
 	tryGetChunk,
+	tryGetStringSequence,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
@@ -38,6 +39,7 @@ import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
+import { StringChunk, stringBufferSize } from "./stringChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
 export interface Disposable {
@@ -53,6 +55,7 @@ export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
 	policy: SchemaPolicy,
 	shouldEncodeIncrementally: IncrementalEncodingPolicy,
+	stringChunks = false,
 ): IChunker {
 	return new Chunker(
 		schema,
@@ -75,6 +78,7 @@ export function makeTreeChunker(
 				},
 				type,
 			),
+		stringChunks,
 	);
 }
 
@@ -176,6 +180,7 @@ export class Chunker implements IChunker {
 			 */
 			chunkerSchema: TreeStoredSchema,
 		) => ShapeInfo,
+		public readonly stringChunks = false,
 	) {}
 
 	public clone(schema: TreeStoredSchemaSubscription): IChunker {
@@ -189,6 +194,7 @@ export class Chunker implements IChunker {
 			this.uniformChunkNodeCount,
 			this.uniformChunkNodeCountDynamicTargetMax,
 			this.tryShapeWithSchema,
+			this.stringChunks,
 		);
 	}
 
@@ -469,6 +475,8 @@ export const basicOnlyChunkPolicy: ChunkPolicy = {
  * Policy for how to chunk a tree.
  */
 export interface ChunkPolicy {
+	/** Enables the experimental string-leaf piece representation. */
+	readonly stringChunks?: boolean;
 	/**
 	 * Group sequences longer than this into into sequence chunks of this length or less.
 	 *
@@ -534,6 +542,39 @@ function newBasicChunkTree(
 }
 
 /**
+ * Adopts shared string storage and returns the number of consumed nodes, or zero to use normal chunking.
+ * Keep this work outside chunkRange's frame, which is retained during recursive subtree chunking.
+ */
+function tryChunkStringRange(
+	cursor: ITreeCursorSynchronous,
+	source: TreeChunk | undefined,
+	remaining: number,
+	skipLastNavigation: boolean,
+	output: TreeChunk[],
+): number {
+	const offset = cursor.fieldIndex - cursor.chunkStart;
+	let count: number;
+	if (source instanceof StringChunk) {
+		if (offset === 0 && remaining >= source.topLevelLength) {
+			return 0;
+		}
+		count = Math.min(remaining, source.topLevelLength - offset);
+		output.push(source.slice(offset, offset + count));
+	} else {
+		const sequence = tryGetStringSequence(cursor);
+		if (sequence === undefined) {
+			return 0;
+		}
+		count = Math.min(remaining, sequence.length - offset);
+		for (const piece of sequence.slice(offset, offset + count).pieces) {
+			output.push(new StringChunk(cursor.type, piece));
+		}
+	}
+	cursor.seekNodes(count - (skipLastNavigation && count === remaining ? 1 : 0));
+	return count;
+}
+
+/**
  * Chunk a portion of a field.
  *
  * @param cursor - cursor at the starting node in the field.
@@ -559,11 +600,34 @@ export function chunkRange(
 	let remaining = length;
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
+		const source = tryGetChunk(cursor);
+		const stringCount =
+			chunkCompressor.policy.stringChunks === true
+				? tryChunkStringRange(cursor, source, remaining, skipLastNavigation, output)
+				: 0;
+		if (stringCount > 0) {
+			remaining -= stringCount;
+			continue;
+		}
 		const start = cursor.chunkStart;
 		let reusedChunk = false;
 		// symbol based fast path to check for chunk:
 		// return existing chunk with a increased ref count if possible.
-		if (start === cursor.fieldIndex) {
+		// Convert directly encountered string leaves, but retain reuse of container chunks.
+		// Repacking nested content decoded from older formats is outside this prototype.
+		if (
+			start === cursor.fieldIndex &&
+			!(
+				chunkCompressor.policy.stringChunks === true &&
+				((source instanceof BasicChunk &&
+					source.fields.size === 0 &&
+					isPackableTextAtomContent(cursor.value)) ||
+					(source instanceof UniformChunk &&
+						source.shape.treeShape.fields.size === 0 &&
+						isPackableTextAtomContent(cursor.value)))
+			) &&
+			!(chunkCompressor.policy.stringChunks !== true && source instanceof StringChunk)
+		) {
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
@@ -597,6 +661,36 @@ export function chunkRange(
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
+			if (
+				chunkCompressor.policy.stringChunks === true &&
+				shape instanceof TreeShape &&
+				shape.fields.size === 0 &&
+				isPackableTextAtomContent(cursor.value)
+			) {
+				const characters: string[] = [];
+				let units = 0;
+				while (remaining > 0 && cursor.type === type) {
+					const value = cursor.value;
+					if (!isPackableTextAtomContent(value) || units + value.length > stringBufferSize) {
+						break;
+					}
+					// Keep separately stored surrogate halves distinct.
+					if (
+						characters.length > 0 &&
+						joinsSurrogates(characters[characters.length - 1] ?? oob(), value)
+					) {
+						break;
+					}
+					characters.push(value);
+					units += value.length;
+					remaining--;
+					if (!skipLastNavigation || remaining !== 0) {
+						cursor.nextNode();
+					}
+				}
+				output.push(...StringChunk.fromString(type, characters.join("")));
+				continue;
+			}
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
@@ -658,6 +752,7 @@ export function chunkRange(
  * @remarks
  * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
  * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
+ * String pieces instead split directly at the requested boundary and share their immutable buffer.
  *
  * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
  * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
@@ -691,6 +786,11 @@ export function splitFieldAtIndex(
 		}
 
 		// nodeIndex falls within this chunk, so split the chunk.
+		if (chunk instanceof StringChunk) {
+			chunks.splice(chunkIndex, 1, chunk.slice(0, remaining), chunk.slice(remaining, total));
+			chunk.referenceRemoved();
+			return chunkIndex + 1;
+		}
 		// This does not move the chunkIndex forward: the next iteration might need to split again at the same index.
 		//
 		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
@@ -712,6 +812,7 @@ export function splitFieldAtIndex(
 
 /**
  * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
+ * Also coalesces adjacent {@link StringChunk}s using their buffer-sharing and bounded-copy rules.
  *
  * @param chunks - The chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
@@ -751,10 +852,17 @@ export function coalesceUniformChunks(
 	for (let chunkIndex = rangeStart + 1; chunkIndex < rangeEnd; chunkIndex++) {
 		const current = chunks[chunkIndex] ?? oob();
 		const previous = result.at(-1) ?? oob();
-		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
+		const coalesced =
+			previous instanceof StringChunk && current instanceof StringChunk
+				? previous.tryAppend(current)
+				: tryCoalesceUniformChunks(previous, current, policy);
 		if (coalesced === undefined) {
 			result.push(current);
 		} else {
+			if (previous instanceof StringChunk && current instanceof StringChunk) {
+				previous.referenceRemoved();
+				current.referenceRemoved();
+			}
 			result[result.length - 1] = coalesced;
 			mutated = true;
 		}
@@ -763,6 +871,24 @@ export function coalesceUniformChunks(
 	if (mutated) {
 		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
 	}
+}
+
+/**
+ * Tests whether a primitive value can be stored as one packed text atom.
+ * The string must produce exactly one element under JavaScript string iteration, including a lone surrogate.
+ * Empty and longer strings remain valid leaf values but use the ordinary chunk representation.
+ */
+function isPackableTextAtomContent(value: Value): value is string {
+	return (
+		typeof value === "string" &&
+		(value.length === 1 || (value.length === 2 && (value.codePointAt(0) ?? 0) > 0xffff))
+	);
+}
+
+function joinsSurrogates(left: string, right: string): boolean {
+	const high = left.codePointAt(left.length - 1) ?? oob();
+	const low = right.codePointAt(0) ?? oob();
+	return high >= 0xd800 && high <= 0xdbff && low >= 0xdc00 && low <= 0xdfff;
 }
 
 /**

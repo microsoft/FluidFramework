@@ -279,6 +279,9 @@ function walkMapTree(
 
 		for (const [key, field] of node.allFieldsLazy) {
 			field.fillPendingDefaults(context);
+			if (field.uniformLeaf !== undefined) {
+				continue;
+			}
 			for (const [i, child] of field.children.entries()) {
 				nexts.push([
 					{

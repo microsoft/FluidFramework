@@ -8,6 +8,7 @@ export {
 	toDownPath,
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
+export { StringSequenceCursor, cursorForStringSequence } from "./stringSequenceCursor.js";
 
 export {
 	ForestSummarizer,
