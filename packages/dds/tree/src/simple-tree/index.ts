@@ -347,8 +347,10 @@ export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
 export {
 	type TreeSchema,
+	type SchemaUpgradeCandidate,
 	type TransitiveSchemaInfo,
 	createTreeSchema,
+	getSchemaUpgradeCandidate,
 	SchemaComponent,
 	toStoredSchema,
 	toUpgradeSchema,

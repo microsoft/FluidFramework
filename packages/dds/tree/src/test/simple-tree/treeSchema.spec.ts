@@ -6,27 +6,38 @@
 import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import type { TreeStoredSchema } from "../../core/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 
 import {
 	getTreeNodeSchemaPrivateData,
+	StagedSchemaUpgradePolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import {
+	getSchemaIncompatibilityDetails,
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+	SchemaFactoryAlpha,
+} from "../../simple-tree/index.js";
 import {
 	hasCachedRootSchemaDerivedDataForTesting,
 	hasCachedSchemaComponentForTesting,
 	createTreeSchema,
+	getSchemaUpgradeCandidate,
 	getRootSchemaDerivedData,
 	SchemaComponent,
+	toInitialSchema,
 	type TransitiveSchemaInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
-import { oneFromIterable } from "../../util/index.js";
+import { brand, oneFromIterable } from "../../util/index.js";
 import { getStagedSchemaUpgrades, testSchema } from "../testTrees.js";
-import { createSchemaGraph } from "./schemaTestUtils.js";
+import { expectSchemaEqual } from "../utils.js";
+import { createSchemaGraph, getObjectNodeSchema } from "./schemaTestUtils.js";
 
 // Configuration-specific validation is covered in api/configuration.spec.ts.
-// Stored conversion and context integration are covered in toStoredSchema.spec.ts and createContext.spec.ts.
+// View-only stored conversion and context integration are covered in toStoredSchema.spec.ts and createContext.spec.ts.
 describe("treeSchema", () => {
 	describe("createTreeSchema", () => {
 		it("builds independent graphs without populating component analysis", () => {
@@ -402,6 +413,521 @@ describe("treeSchema", () => {
 					}
 				});
 			}
+		});
+	});
+
+	describe("getSchemaUpgradeCandidate", () => {
+		const schemaFactory = new SchemaFactoryAlpha("upgradeTarget");
+
+		// Reuse stored identifiers to model different application versions.
+		// Each view contains only one declaration for each identifier.
+
+		/**
+		 * Verifies that the candidate matches the expected schema, still allows all content permitted by the original stored schema,
+		 * and lets the view read and edit documents that use the candidate schema.
+		 *
+		 * @param viewSchema - The view schema used to construct the proposed upgrade target.
+		 * @param currentStoredSchema - The stored schema before the proposed upgrade.
+		 * @param actualTarget - The generated stored-schema target to validate.
+		 * @param expectedTarget - The expected stored schema after the upgrade, including retained fields and node definitions.
+		 */
+		function verifyUpgradeTarget(
+			viewSchema: ImplicitFieldSchema,
+			currentStoredSchema: TreeStoredSchema,
+			actualTarget: TreeStoredSchema,
+			expectedTarget: TreeStoredSchema,
+		): void {
+			// The target must contain exactly the expected schema, including retained fields and node definitions.
+			expectSchemaEqual(actualTarget, expectedTarget);
+
+			// The upgrade must still permit all content allowed by the original stored schema.
+			assert(allowsRepoSuperset(defaultSchemaPolicy, currentStoredSchema, actualTarget));
+
+			// The application must be able to read and write through its view after the target is applied.
+			assert.equal(
+				getSchemaIncompatibilityDetails(createTreeSchema(viewSchema), actualTarget),
+				undefined,
+			);
+		}
+
+		it("returns an equivalent target and no retained fields when the schemas match", () => {
+			class Task extends schemaFactory.object("Task", { title: schemaFactory.string }) {}
+			const viewSchema = createTreeSchema(Task);
+			const storedSchema = toInitialSchema(Task);
+			const result = getSchemaUpgradeCandidate(
+				viewSchema,
+				storedSchema,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			verifyUpgradeTarget(Task, storedSchema, result.schema, storedSchema);
+
+			// Every stored field is declared by the view, so there are no unknown optional fields to retain.
+			assert.deepEqual(result.retainedUnknownOptionalFields, []);
+		});
+
+		it("retains an omitted optional field and its metadata without replacing view metadata", () => {
+			const estimatedHours = schemaFactory.optional(schemaFactory.number, {
+				persistedMetadata: { unit: "hours" },
+			});
+			class Before extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string, estimatedHours },
+				{ persistedMetadata: { description: "Task with effort estimates" } },
+			) {}
+
+			// Remove `estimatedHours` and update the task description to reflect the retired estimation feature.
+			class After extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string },
+				{ persistedMetadata: { description: "Task without effort estimates" } },
+			) {}
+
+			// Retain `estimatedHours` and its units, but use `After`'s current task description.
+			class Expected extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string, estimatedHours },
+				{ persistedMetadata: { description: "Task without effort estimates" } },
+			) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			verifyUpgradeTarget(After, stored, result.schema, toInitialSchema(Expected));
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "estimatedHours" },
+			]);
+
+			const retained = getObjectNodeSchema(result.schema, After.identifier);
+			assert.deepEqual(retained.getFieldSchema(brand("estimatedHours")).persistedMetadata, {
+				unit: "hours",
+			});
+		});
+
+		// Each version introduces a type the other view does not know.
+		// The candidate must contain both fields and both complete node definitions.
+		describe("mutually unknown node types", () => {
+			class Reminder extends schemaFactory.objectAlpha(
+				"Reminder",
+				{ message: schemaFactory.string },
+				{ persistedMetadata: { feature: "reminders" } },
+			) {}
+			class TaskWithReminder extends schemaFactory.object("Task", {
+				reminder: schemaFactory.optional(Reminder),
+			}) {}
+
+			// Scheduling introduces a distinct node type, not a new definition of `Reminder`.
+			class Schedule extends schemaFactory.object("Schedule", {
+				durationMinutes: schemaFactory.number,
+			}) {}
+
+			// Replace `reminder?: Reminder` with `schedule?: Schedule` while keeping the stored `Task` identifier.
+			class TaskWithSchedule extends schemaFactory.object("Task", {
+				schedule: schemaFactory.optional(Schedule),
+			}) {}
+
+			// Either upgrade direction adds the view's field while retaining the other stored field.
+			// The target therefore includes both `reminder` and `schedule`, along with both node types.
+			class TaskWithBothFeatures extends schemaFactory.object("Task", {
+				reminder: schemaFactory.optional(Reminder),
+				schedule: schemaFactory.optional(Schedule),
+			}) {}
+
+			// Each row retains the original version's field and type while adding the other version's field.
+			for (const [original, view, retainedKey] of [
+				[TaskWithReminder, TaskWithSchedule, "reminder"],
+				[TaskWithSchedule, TaskWithReminder, "schedule"],
+			] as const) {
+				it(`retains ${retainedKey} and its node type while adding the other field`, () => {
+					const stored = toInitialSchema(original);
+					const result = getSchemaUpgradeCandidate(
+						createTreeSchema(view),
+						stored,
+						StagedSchemaUpgradePolicy.restrictive,
+					);
+					verifyUpgradeTarget(
+						view,
+						stored,
+						result.schema,
+						toInitialSchema(TaskWithBothFeatures),
+					);
+					assert.deepEqual(result.retainedUnknownOptionalFields, [
+						{ nodeType: view.identifier, fieldKey: retainedKey },
+					]);
+				});
+			}
+		});
+
+		it("retains recursive definitions reached through unknown map and array fields", () => {
+			class ChecklistStep extends schemaFactory.objectRecursive("ChecklistStep", {
+				instruction: schemaFactory.string,
+				next: schemaFactory.optionalRecursive([() => ChecklistStep]),
+			}) {}
+			class Checklist extends schemaFactory.array("Checklist", ChecklistStep) {}
+			class ChecklistsByCategory extends schemaFactory.map(
+				"ChecklistsByCategory",
+				Checklist,
+			) {}
+			class Before extends schemaFactory.object("Task", {
+				checklists: schemaFactory.optional(ChecklistsByCategory),
+			}) {}
+
+			// Replace categorized checklists with effort estimates, removing all view references to the checklist types.
+			class After extends schemaFactory.object("Task", {
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Add `estimatedHours` while retaining `checklists` and all definitions needed to interpret them.
+			class Expected extends schemaFactory.object("Task", {
+				checklists: schemaFactory.optional(ChecklistsByCategory),
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `After` declares none of `ChecklistsByCategory`, `Checklist`, or `ChecklistStep`.
+			// Following the retained `checklists` field must include the map, array, and item definitions.
+			// `ChecklistStep.next` refers back to `ChecklistStep`; that reference must not cause an endless loop.
+			verifyUpgradeTarget(After, stored, result.schema, toInitialSchema(Expected));
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "checklists" },
+			]);
+		});
+
+		it("uses stored keys when deciding whether a field was removed", () => {
+			class Before extends schemaFactory.object("Task", {
+				notes: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			// Rename the property `notes` to `comments`, keeping its stored key `notes` and optional string type.
+			class After extends schemaFactory.object("Task", {
+				comments: schemaFactory.optional(schemaFactory.string, { key: "notes" }),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `comments` still declares the stored field `notes`; this is a property rename, not field removal.
+			verifyUpgradeTarget(After, stored, result.schema, stored);
+			assert.deepEqual(result.retainedUnknownOptionalFields, []);
+		});
+
+		it("retains a stored key that matches the property name of another declared field", () => {
+			class Before extends schemaFactory.object("Task", {
+				completionPercent: schemaFactory.required(schemaFactory.number, { key: "progress" }),
+				previousCompletionPercent: schemaFactory.optional(schemaFactory.number, {
+					// This field is stored as `completionPercent`, while the property with that name is stored as `progress`.
+					key: "completionPercent",
+				}),
+			}) {}
+
+			// Remove `previousCompletionPercent` (stored key `completionPercent`), but keep the current progress field.
+			class After extends schemaFactory.object("Task", {
+				completionPercent: schemaFactory.required(schemaFactory.number, { key: "progress" }),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `After`'s property `completionPercent` uses stored key `progress`.
+			// Stored key `completionPercent` is therefore still unknown despite matching a current property name.
+			verifyUpgradeTarget(After, stored, result.schema, stored);
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "completionPercent" },
+			]);
+		});
+
+		it("reports each retained schema field once in a stable order", () => {
+			class MemberBefore extends schemaFactory.object("Member", {
+				workdayStartHour: schemaFactory.optional(schemaFactory.number),
+				workdayEndHour: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			class Before extends schemaFactory.object("Task", {
+				assignee: MemberBefore,
+				reviewer: MemberBefore,
+				archiveReason: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			// Retire work-hour tracking without changing the stored `Member` identifier.
+			class MemberAfter extends schemaFactory.object("Member", {}) {}
+
+			// Remove `archiveReason` and use `MemberAfter` for both `assignee` and `reviewer`.
+			class After extends schemaFactory.object("Task", {
+				assignee: MemberAfter,
+				reviewer: MemberAfter,
+			}) {}
+			const stored = toInitialSchema(Before);
+			const view = createTreeSchema(After);
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			verifyUpgradeTarget(After, stored, result.schema, stored);
+
+			// Both `assignee` and `reviewer` use `Member`, but each retained `Member` field must appear only once.
+			// Sort by node identifier and stored key, not by declaration or traversal order.
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: MemberAfter.identifier, fieldKey: "workdayEndHour" },
+				{ nodeType: MemberAfter.identifier, fieldKey: "workdayStartHour" },
+				{ nodeType: After.identifier, fieldKey: "archiveReason" },
+			]);
+		});
+
+		it("does not retain an optional field when the view explicitly disables unknown fields", () => {
+			class Before extends schemaFactory.object("Task", {
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Remove `estimatedHours` and explicitly disable the unknown optional field support used by `Before`.
+			class Strict extends schemaFactory.object(
+				"Task",
+				{},
+				{ allowUnknownOptionalFields: false },
+			) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(Strict),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Because `Strict` rejects unknown optional fields, the candidate must omit `estimatedHours`.
+			// Removing the field disallows previously permitted content, so the upgrade check must reject the candidate.
+			expectSchemaEqual(result.schema, toInitialSchema(Strict));
+			assert.deepEqual(result.retainedUnknownOptionalFields, []);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, result.schema), false);
+		});
+
+		it("does not retain an omitted required field", () => {
+			class Before extends schemaFactory.object("Task", { priority: schemaFactory.number }) {}
+
+			// Remove the required `priority` field, leaving the view object empty.
+			class After extends schemaFactory.object("Task", {}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Only optional fields can be retained as unknown fields, so the candidate omits the required `priority` field.
+			// It no longer permits tasks allowed by the original stored schema, so the upgrade check must reject it.
+			expectSchemaEqual(result.schema, toInitialSchema(After));
+			assert.deepEqual(result.retainedUnknownOptionalFields, []);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, result.schema), false);
+		});
+
+		it("uses a compatible current declaration of a staged-only referenced type", () => {
+			class OldEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.number,
+			}) {}
+			class Before extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(OldEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Add an approval flag to `OldEstimate`, preserving its stored identifier and numeric `hours`.
+			class NewEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.number,
+				isApproved: schemaFactory.optional(schemaFactory.boolean),
+			}) {}
+
+			// Remove `detailedEstimate`.
+			// `estimate` still accepts numbers; it accepts `NewEstimate` only if the staged change is enabled.
+			class After extends schemaFactory.object("Task", {
+				estimate: schemaFactory.optional(
+					schemaFactory.types([schemaFactory.number, schemaFactory.staged(NewEstimate)]),
+				),
+			}) {}
+
+			// The retained `detailedEstimate` field still refers to `EffortEstimate`, so use the view's `NewEstimate` definition.
+			// The staged change is disabled for `estimate`, so that field still accepts only numbers.
+			class Expected extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(NewEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const view = createTreeSchema(After);
+			const stored = toInitialSchema(Before);
+
+			// With the staged change disabled, `estimate` accepts only numbers, so ordinary conversion omits `EffortEstimate`.
+			// The complete view still includes `NewEstimate`, which declares that identifier.
+			assert(view.definitions.has(NewEstimate.identifier));
+			assert(!toInitialSchema(After).nodeSchema.has(brand(NewEstimate.identifier)));
+
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			verifyUpgradeTarget(After, stored, result.schema, toInitialSchema(Expected));
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "detailedEstimate" },
+			]);
+		});
+
+		it("uses an incompatible current declaration of a staged-only referenced type without hiding the conflict", () => {
+			class OldEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.number,
+			}) {}
+
+			// Change numeric `hours` to a string representation and add an approval flag, keeping the same stored identifier.
+			class NewEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.string,
+				isApproved: schemaFactory.optional(schemaFactory.boolean),
+			}) {}
+			class Before extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(OldEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Remove `detailedEstimate`.
+			// Stage `NewEstimate`, with its incompatible `hours: string`, as another allowed type for `estimate`.
+			class After extends schemaFactory.object("Task", {
+				estimate: schemaFactory.optional(
+					schemaFactory.types([schemaFactory.number, schemaFactory.staged(NewEstimate)]),
+				),
+			}) {}
+
+			// Retain `detailedEstimate` using the view's `NewEstimate` declaration, while `estimate` still accepts only numbers.
+			// This candidate is not a permitted upgrade: `NewEstimate` no longer allows the numeric `hours` values allowed by `OldEstimate`.
+			class Expected extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(NewEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const view = createTreeSchema(After);
+			const stored = toInitialSchema(Before);
+
+			// Disabling the staged reference excludes `EffortEstimate` from ordinary conversion, not from the complete view.
+			// When retained `detailedEstimate` needs this type, the builder must use `NewEstimate`, not the stored `OldEstimate`.
+			assert(view.definitions.has(NewEstimate.identifier));
+			assert(!toInitialSchema(After).nodeSchema.has(brand(NewEstimate.identifier)));
+
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			expectSchemaEqual(result.schema, toInitialSchema(Expected));
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "detailedEstimate" },
+			]);
+
+			// The target requires `hours: string`, so it cannot safely replace stored `hours: number`.
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, result.schema), false);
+
+			// The candidate is compatible with the view, but is not a permitted upgrade of the original stored schema.
+			assert.equal(getSchemaIncompatibilityDetails(view, result.schema), undefined);
+		});
+
+		for (const enabled of [false, true]) {
+			it(`applies the supplied staged policy while retaining unknown fields (${enabled ? "enabled" : "disabled"})`, () => {
+				class Before extends schemaFactory.object("Task", {
+					isArchived: schemaFactory.optional(schemaFactory.boolean),
+					estimatedHours: schemaFactory.number,
+					priority: schemaFactory.number,
+				}) {}
+
+				// Remove `isArchived`.
+				// Stage two changes: allow `estimatedHours` to be absent and allow `priority` to contain strings as well as numbers.
+				class After extends schemaFactory.object("Task", {
+					estimatedHours: schemaFactory.stagedOptional(schemaFactory.number),
+					priority: schemaFactory.types([
+						schemaFactory.number,
+						schemaFactory.staged(schemaFactory.string),
+					]),
+				}) {}
+
+				// Always retain `isArchived`. Only the selected policy can make `estimatedHours` optional or allow `string` priorities.
+				// With staging disabled, both declared fields keep their original required numeric constraints.
+				class Expected extends schemaFactory.object("Task", {
+					isArchived: schemaFactory.optional(schemaFactory.boolean),
+					estimatedHours: enabled
+						? schemaFactory.optional(schemaFactory.number)
+						: schemaFactory.required(schemaFactory.number),
+					priority: enabled
+						? [schemaFactory.number, schemaFactory.string]
+						: schemaFactory.number,
+				}) {}
+				const policy = enabled
+					? StagedSchemaUpgradePolicy.permissive
+					: StagedSchemaUpgradePolicy.restrictive;
+				const stored = toInitialSchema(Before);
+				const result = getSchemaUpgradeCandidate(createTreeSchema(After), stored, policy);
+
+				// Retaining `isArchived` must not enable or disable the other schema changes.
+				// The target must still reflect the supplied staging policy.
+				verifyUpgradeTarget(After, stored, result.schema, toInitialSchema(Expected));
+				assert.deepEqual(result.retainedUnknownOptionalFields, [
+					{ nodeType: After.identifier, fieldKey: "isArchived" },
+				]);
+			});
+		}
+
+		it("preserves root constraints instead of hiding an incompatible root change", () => {
+			class Before extends schemaFactory.object("Task", {
+				notes: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			const stored = toInitialSchema(schemaFactory.optional(Before));
+
+			// Remove `notes` from the view.
+			class After extends schemaFactory.object("Task", {}) {}
+
+			// Using `After` directly as the root makes the previously optional root required.
+			const view = createTreeSchema(After);
+
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The stored schema permits an empty root; `After` requires a `Task` object.
+			// Retaining `Task.notes` must not make the candidate's root optional to avoid rejecting the upgrade.
+			assert.deepEqual(result.schema.rootFieldSchema, toInitialSchema(After).rootFieldSchema);
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "notes" },
+			]);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, result.schema), false);
+		});
+
+		/**
+		 * 1. Declare optional `assignment` with an empty set of allowed types.
+		 * 2. Remove `assignment` from the view.
+		 * The upgrade target must retain the stored field declaration even though it cannot contain a value.
+		 */
+		it("retains an optional field with no allowed types", () => {
+			class Before extends schemaFactory.object("Task", {
+				assignment: schemaFactory.optional([]), // No value is permitted.
+			}) {}
+
+			// Remove `assignment` from the view without changing the stored `Task` identifier.
+			class After extends schemaFactory.object("Task", {}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The expected target is the original stored schema: `assignment` remains declared even though no value can be stored in it.
+			verifyUpgradeTarget(After, stored, result.schema, stored);
+			assert.deepEqual(result.retainedUnknownOptionalFields, [
+				{ nodeType: After.identifier, fieldKey: "assignment" },
+			]);
 		});
 	});
 });

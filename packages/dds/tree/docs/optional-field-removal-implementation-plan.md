@@ -2,8 +2,11 @@
 
 ## Status and scope
 
-This is an implementation plan, not a description of completed functionality.
-Do not begin source-code changes until the plan has been reviewed.
+Implementation is proceeding in reviewed slices.
+The first slice is complete: the internal `getSchemaUpgradeCandidate` target builder and focused unit tests are implemented.
+The builder has no live upgrade or compatibility-checker callers yet.
+The remaining integration steps and the alpha diagnostic API described below are still planned.
+Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
 The plan was checked again against [main at `75902eb`][main-baseline] when merging upstream changes.
@@ -40,7 +43,7 @@ The superset check correctly rejects that target.
 
 ### 2.1 Internal interface
 
-Add one internal helper, with a working name of `getSchemaUpgrade`, alongside the root conversion functions in [treeSchema.ts][conversion].
+Add one internal helper, `getSchemaUpgradeCandidate`, alongside the root conversion functions in [treeSchema.ts][conversion].
 The functions `toStoredSchema`, `toInitialSchema`, and `toUpgradeSchema` moved there on main.
 Reuse the lower-level transformations that remain in [toStoredSchema.ts][conversion-transforms].
 Expose it through the package-internal [simple-tree barrel][simple-tree-index] for the live upgrade path.
@@ -347,7 +350,8 @@ The sections below specify additional checks tied to the implementation, not a s
 
 ### 7.2 Target construction
 
-Extend [toStoredSchema.spec.ts][conversion-tests] with focused checks for:
+Keep the `getSchemaUpgradeCandidate` tests in [treeSchema.spec.ts][root-schema-tests], alongside the tests for its implementation module.
+Cover:
 
 - Preserving eligible stored fields, their allowed types, and metadata.
 - Retaining field definitions based on the stored schema without inspecting document content.
@@ -360,7 +364,7 @@ Extend [toStoredSchema.spec.ts][conversion-tests] with focused checks for:
 - Isolating results for two documents with different histories under the same view.
 - Keeping initialization independent of retained document fields.
 
-Run the new [root-derived-schema tests][root-schema-tests] as well.
+Run the existing root-derived-schema tests in the same file and the view-only conversion tests in [toStoredSchema.spec.ts][conversion-tests] as well.
 They protect the shared graph and conversion caches that the target builder must not mutate.
 
 Assert exact target schemas, not only success flags.
@@ -403,12 +407,44 @@ Add only focused coverage for interactions introduced by the target builder.
 
 ## 8. Implementation order and validation
 
-1. Add the target builder and focused target-construction tests.
-2. Connect both compatibility calculation and live upgrades to it.
-3. Add the alpha status type, diagnostic property, exports, and tests.
-4. Update snapshot assumptions and directly affected expectations.
-5. Complete the work plan's [documentation and delivery checklist][delivery].
-6. Run validation and inspect failures before expanding the test scope.
+### Task list
+
+Check a task only after its changes and relevant validation are complete.
+Completion does not imply that the changes have been committed.
+Update this list after each implementation slice.
+
+- [x] **Build the schema-only upgrade target.**
+  - [x] Document the helper's inputs, candidate output, retention report, and mutation restrictions.
+  - [x] Add focused tests and verify the failing baseline before implementation.
+  - [x] Implement `getSchemaUpgradeCandidate` and its package-internal exports without wiring live callers.
+  - [x] Verify exact targets, retained definitions, rejected constraints, staging, metadata, stored keys, cache isolation, and callback safety.
+  - [x] Run the relevant regression suites, TypeScript builds, formatting, and lint.
+- [ ] **Connect compatibility calculation and upgrade execution. Next slice.**
+  - [ ] Use the shared target to calculate `canUpgrade` and `isEquivalent`, keeping viewing-blocker checks unchanged.
+  - [ ] Use the same target in `upgradeSchema`, preserving existing safety checks and the no-op path.
+  - [ ] Update affected test helpers and expectations; verify live upgrades and the existing user-story scenarios.
+- [ ] **Expose alpha upgrade diagnostics.**
+  - [ ] Add `SchemaCompatibilityStatusAlpha` and `retainedUnknownOptionalFields` to the alpha view surface.
+  - [ ] Forward the report through compatibility updates and add the required exports.
+  - [ ] Test diagnostic contents, omission, ordering, coexistence with blockers, and remote updates.
+  - [ ] Verify alpha access and public/beta exclusion with type checks.
+- [ ] **Update snapshot and offline compatibility.**
+  - [ ] Remove the equivalence-symmetry assumption while preserving `identicalCompatibility`.
+  - [ ] Verify agreement with live compatibility results and retain the fresh-document collaboration restriction.
+  - [ ] Update directly affected expectations without repairing unrelated skipped cases.
+- [ ] **Complete documentation and API delivery.**
+  - [ ] Complete the work plan's [documentation and delivery checklist][delivery], including generated entrypoints, API reports, and the changeset.
+- [ ] **Validate the integrated implementation.**
+  - [ ] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
+  - [ ] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
+  - [ ] Pass the affected TypeScript, formatting, lint, and API checks.
+
+First-slice validation: 22 new builder tests pass within 377 passing related tests.
+TypeScript, formatting, and lint checks pass.
+The separate user-story fixture remains at 29 passing tests and seven expected failures because the builder is not yet wired into live upgrades.
+These results describe the completed slice, not final feature validation.
+
+### Validation commands
 
 From `packages/dds/tree`, regenerate entrypoint sources after adding the alpha type to the package index.
 Rebuild immediately afterward, before compiling the tests:
