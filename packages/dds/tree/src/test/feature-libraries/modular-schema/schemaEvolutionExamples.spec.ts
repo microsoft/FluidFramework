@@ -28,6 +28,11 @@ import {
 } from "../../../simple-tree/index.js";
 import { expectSchemaEqual, TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
+// Test TODOs:
+// - We should include some invalid scenario tests, and verify the behavior of the schema compatibility checks. E.g.:
+//     - V1 includes `notes?: string`, V2 removes `notes`, V3 adds `notes?: string[]`.
+//     - V1 includes `notes?: Notes`, V2 removes `notes`, V3 adds `notes?: Notes` where the V1 and V3 versions of `Notes` are not compatible.
+
 /**
  * Asserts that two numeric enum values are equal.
  *
