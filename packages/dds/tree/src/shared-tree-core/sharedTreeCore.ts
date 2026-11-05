@@ -115,10 +115,7 @@ export class SharedTreeCore<
 	implements WithBreakable, Summarizable
 {
 	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
-	private readonly summarizables: readonly [
-		EditManagerSummarizer<TChange, TChangeProcessingContext>,
-		...Summarizable[],
-	];
+	private readonly summarizables: readonly Summarizable[];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -295,29 +292,28 @@ export class SharedTreeCore<
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		const [editManagerSummarizer, ...summarizables] = this.summarizables;
+		// Share a pending load by component identity so dependencies are loaded only once,
+		// even when also reached from the top-level list or another dependent.
 		const loads = new Map<Summarizable, Promise<void>>();
 		const load = async (summarizable: Summarizable): Promise<void> => {
 			const existing = loads.get(summarizable);
 			if (existing !== undefined) {
 				return existing;
 			}
+			// Dependencies are acyclic by contract. Independent loads can run concurrently,
+			// but this component starts only after all of its dependencies have loaded successfully.
 			const pending = Promise.all((summarizable.loadDependencies ?? []).map(load)).then(
 				async () => this.loadSummarizable(summarizable, services, parse),
 			);
 			loads.set(summarizable, pending);
 			return pending;
 		};
-		const loadEditManager = load(editManagerSummarizer);
-		const loadSummarizables = summarizables.map(load);
+		await Promise.all(this.summarizables.map(load));
 
-		if (this.detachedRevision === undefined) {
-			await Promise.all([loadEditManager, ...loadSummarizables]);
-		} else {
-			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
-			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
-			await loadEditManager;
-
+		if (this.detachedRevision !== undefined) {
+			// All components, including the edit manager, are now loaded.
+			// Restore detached sequencing before loading completes so the next local edit
+			// uses a sequence number beyond the loaded history.
 			const latestDetachedSequenceNumber = this.editManager.getLatestSequenceNumber();
 			// When we load a summary for a tree that was never attached,
 			// latestDetachedSequenceNumber is either undefined (no commits in summary) or negative (all commits in summary were made while detached).
@@ -325,7 +321,6 @@ export class SharedTreeCore<
 			if (latestDetachedSequenceNumber !== undefined && latestDetachedSequenceNumber < 0) {
 				this.detachedRevision = latestDetachedSequenceNumber;
 			}
-			await Promise.all(loadSummarizables);
 		}
 	}
 
