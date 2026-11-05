@@ -588,6 +588,33 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
+		it("Should recover an ineligible recorded client to the parent without promoting another child", () => {
+			addClient("a", 1);
+			addClient("ineligible", 2, false);
+			addClient("s", 3, false, summarizerClientType);
+			const election = createElection([], {
+				electedClientId: "ineligible",
+				electedParentId: "a",
+				electionSequenceNumber: 50,
+			});
+			assertState(
+				election,
+				"a",
+				"a",
+				50,
+				"ineligible identity does not promote an unrelated child",
+			);
+			mockLogger.assertMatch([
+				{
+					eventName: "SummarizerClientElection:InitialElectedClientIneligible",
+					expectedClientId: "ineligible",
+					electedClientId: "a",
+				},
+			]);
+			removeClient("s");
+			assertState(election, "a", "a", 50, "untracked child's departure preserves state");
+		});
+
 		it("Should not promote an ignored summarizer when restoring after the incumbent leaves", () => {
 			const election = createElection([
 				["a", 1, true],

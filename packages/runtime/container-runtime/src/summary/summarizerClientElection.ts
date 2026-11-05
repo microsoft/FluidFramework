@@ -48,7 +48,10 @@ export interface ISerializedElection {
 	/** Elected parent or incumbent summarizer child. */
 	readonly electedClientId: string | undefined;
 
-	/** Interactive client responsible for creating the summarizer. */
+	/**
+	 * Compatibility only: readers starting with 3.12 derive the parent from quorum and ignore this field.
+	 * Keep writing the parent identity while readers from 3.11 or earlier remain in the supported compatibility window.
+	 */
 	readonly electedParentId: string | undefined;
 }
 
@@ -125,11 +128,14 @@ export class SummarizerClientElection
 				this.electedClientId !== undefined &&
 				this.quorum.getMember(this.electedClientId)?.client.details?.type ===
 					summarizerClientType;
-			const parentId = this.findOldestEligibleParent();
 			if (this.electedClientId === undefined || (isSummarizer && !electedClientIsSummarizer)) {
-				this.updateElection(isSummarizer ? clientId : parentId, parentId, sequenceNumber);
+				this.updateElection(
+					clientId,
+					isSummarizer ? this.electedParentId : clientId,
+					sequenceNumber,
+				);
 			} else if (this.electedParentId === undefined && !isSummarizer) {
-				this.updateElection(this.electedClientId, parentId, sequenceNumber);
+				this.updateElection(this.electedClientId, clientId, sequenceNumber);
 			}
 		});
 
@@ -165,7 +171,6 @@ export class SummarizerClientElection
 						electedClientId: this.electedClientId,
 						lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
 						electionSequenceNumber: this._electionSequenceNumber,
-						nextElectedClientId: this.findOldestEligibleParent(),
 						opsWithoutSummary,
 					});
 					this.lastReportedSeq = sequenceNumber;
@@ -180,20 +185,22 @@ export class SummarizerClientElection
 
 	/**
 	 * Keep the recorded child if it is still a summarizer in quorum.
-	 * If the recorded client is interactive, elect the oldest eligible parent.
-	 * If the recorded client is absent or ineligible, choose the oldest summarizer,
-	 * or the parent if no summarizer exists.
+	 * If the recorded client is interactive or ineligible, elect the oldest eligible parent.
+	 * If the recorded client is absent, choose the oldest summarizer, or the parent if none exists.
 	 */
 	private initFromSerializedState(state: ISerializedElection): void {
 		const members = this.quorum.getMembers();
 
-		this._electedClientId = this.findSummarizerInQuorum() ?? this.electedParentId;
 		if (state.electedClientId === undefined) {
+			// With no recorded identity, recover from the children currently in quorum.
+			this._electedClientId = this.findSummarizerInQuorum() ?? this.electedParentId;
 			return;
 		}
 
 		const member = members.get(state.electedClientId);
 		if (member === undefined) {
+			// The recorded client has left; retain an existing child if one is available.
+			this._electedClientId = this.findSummarizerInQuorum() ?? this.electedParentId;
 			this.logger.sendErrorEvent({
 				eventName: "InitialElectedClientNotFound",
 				electionSequenceNumber: state.electionSequenceNumber,
@@ -209,6 +216,10 @@ export class SummarizerClientElection
 					? state.electedClientId
 					: this.electedParentId;
 		} else {
+			// Current writers never elect ineligible clients; this only handles legacy or invalid snapshot state.
+			// An ineligible recorded client was not a summarizer. Recover to the parent
+			// rather than promote a child that may have been intentionally ignored.
+			this._electedClientId = this.electedParentId;
 			this.logger.sendErrorEvent({
 				eventName: "InitialElectedClientIneligible",
 				electionSequenceNumber: state.electionSequenceNumber,
