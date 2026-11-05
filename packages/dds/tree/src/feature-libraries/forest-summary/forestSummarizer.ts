@@ -89,6 +89,10 @@ export class ForestSummarizer
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
+	 * @param loadDependencies - Components that SharedTreeCore must load before this forest.
+	 * Include the summarizer that populates the forest's stored schema: loading it mutates the repository used by the forest's chunking policy.
+	 * Rechunking decoded content consults that policy, so the schema must be available before forest loading starts.
+	 * Callers that invoke {@link ForestSummarizer.load} directly must load these dependencies themselves.
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
@@ -127,8 +131,8 @@ export class ForestSummarizer
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
-			(chunk) => {
-				const rechunked = combineChunks(this.forest.chunkField(chunk.cursor(), true));
+			(chunk, shouldRechunk) => {
+				const rechunked = combineChunks(this.forest.chunkField(chunk.cursor(), shouldRechunk));
 				chunk.referenceRemoved();
 				return rechunked;
 			},

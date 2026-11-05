@@ -33,7 +33,9 @@ export interface Summarizable {
 
 	/**
 	 * Components that must finish loading before this component starts loading.
-	 * Dependencies must not form cycles.
+	 * SharedTreeCore schedules these dependencies and loads each component once per load operation, using object identity.
+	 * Dependencies must refer to the same instances registered with that SharedTreeCore and must not form cycles.
+	 * If a dependency fails to load, this component's load is not started.
 	 */
 	readonly loadDependencies?: readonly Summarizable[];
 
