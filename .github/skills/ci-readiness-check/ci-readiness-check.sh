@@ -68,9 +68,9 @@ fi
 section "Detecting changed packages (vs ${BASE_BRANCH_NAME})"
 
 # Find the common ancestor between HEAD and the base branch, then list all
-# files that were Added, Copied, Deleted, Modified, or Renamed since that point.
+# files that were Added, Copied, Modified, or Renamed since that point.
 MERGE_BASE="$(git merge-base HEAD "${BASE_BRANCH_REF}" 2>/dev/null || echo "${BASE_BRANCH_REF}")"
-CHANGED_FILES="$(git diff "${MERGE_BASE}" --name-only --diff-filter=ACDMR)"
+CHANGED_FILES="$(git diff "${MERGE_BASE}" --name-only --diff-filter=ACMR)"
 
 # If nothing changed, there's nothing to check.
 if [ -z "${CHANGED_FILES}" ]; then
@@ -80,7 +80,7 @@ fi
 
 # Print the list of changed files, truncating at 20 for readability.
 TOTAL_FILES="$(echo "${CHANGED_FILES}" | wc -l | tr -d ' ')"
-sed -n '1,20p' <<< "${CHANGED_FILES}"
+echo "${CHANGED_FILES}" | head -20
 if [ "${TOTAL_FILES}" -gt 20 ]; then
     echo "... and $((TOTAL_FILES - 20)) more files"
 fi
@@ -223,15 +223,15 @@ if [ -n "${GIT_STATUS}" ]; then
 
     if [ -n "${OTHER_CHANGES}" ]; then
         warn "Uncommitted changes:"
-        sed -n '1,20p' <<< "${OTHER_CHANGES}"
+        echo "${OTHER_CHANGES}" | head -20
     fi
     if [ -n "${API_REPORTS}" ]; then
         warn "Modified API report files (may need staging):"
-        sed -n '1,10p' <<< "${API_REPORTS}"
+        echo "${API_REPORTS}" | head -10
     fi
     if [ -n "${TYPE_TESTS}" ]; then
         warn "Modified type test files (may need staging):"
-        sed -n '1,10p' <<< "${TYPE_TESTS}"
+        echo "${TYPE_TESTS}" | head -10
     fi
 else
     ok "Working tree clean"
