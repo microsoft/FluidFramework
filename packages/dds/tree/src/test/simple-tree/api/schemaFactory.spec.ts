@@ -313,10 +313,8 @@ describe("schemaFactory", () => {
 				for (const allowUnknownOptionalFields of [undefined, false, true]) {
 					it(`${Factory.name} supports allowUnknownOptionalFields=${allowUnknownOptionalFields}`, () => {
 						const factory = new Factory("com.example");
-						const options: ObjectSchemaOptions | undefined =
-							allowUnknownOptionalFields === undefined
-								? undefined
-								: { allowUnknownOptionalFields };
+						const options: ObjectSchemaOptions =
+							allowUnknownOptionalFields === undefined ? {} : { allowUnknownOptionalFields };
 						class Item extends factory.object("Item", {}, options) {}
 
 						const schema = getSimpleSchema(Item).definitions.get(Item.identifier);
@@ -324,7 +322,7 @@ describe("schemaFactory", () => {
 						assert(schema.kind === NodeKind.Object);
 						assert.equal(
 							schema.allowUnknownOptionalFields,
-							allowUnknownOptionalFields ?? false,
+							allowUnknownOptionalFields ?? true,
 						);
 					});
 				}
@@ -1459,10 +1457,10 @@ describe("schemaFactory", () => {
 			assert.equal(sf.scope, "test");
 			assert.equal("scope" in sf.settings, false);
 			assert.equal(sf.settings.objectOptions, undefined);
-			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), false);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), true);
 			assert.equal(
 				allowsUnknownOptionalFields(new SchemaFactory("test").object("Default", {})),
-				false,
+				true,
 			);
 			type _check = requireTrue<areSafelyAssignable<typeof sf.scope, "test">>;
 		});
@@ -1578,10 +1576,10 @@ describe("schemaFactory", () => {
 			assert.equal(sf.scope, "test");
 			assert.equal("scope" in sf.settings, false);
 			assert.equal(sf.settings.objectOptions, undefined);
-			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), false);
+			assert.equal(allowsUnknownOptionalFields(sf.object("Default", {})), true);
 			assert.equal(
 				allowsUnknownOptionalFields(new SchemaFactoryBeta("test").object("Default", {})),
-				false,
+				true,
 			);
 			type _check = requireTrue<areSafelyAssignable<typeof sf.scope, "test">>;
 		});
@@ -1595,7 +1593,7 @@ describe("schemaFactory", () => {
 			assert.equal(allowsUnknownOptionalFields(sf.objectRecursive("Recursive", {})), true);
 			assert.equal(
 				allowsUnknownOptionalFields(new SchemaFactory("test").object("Stable", {})),
-				false,
+				true,
 			);
 		});
 
@@ -1808,10 +1806,10 @@ describe("schemaFactory", () => {
 			assert.equal(Schema.allowUnknownOptionalFields, false);
 		});
 
-		it("no settings: default allowUnknownOptionalFields is false", () => {
+		it("no settings: default allowUnknownOptionalFields is true", () => {
 			const sf = new SchemaFactoryAlpha("test");
 			const Schema = sf.objectAlpha("Foo", { x: sf.number });
-			assert.equal(Schema.allowUnknownOptionalFields, false);
+			assert.equal(Schema.allowUnknownOptionalFields, true);
 		});
 
 		it("scopedFactory inherits parent settings", () => {
@@ -1848,7 +1846,7 @@ describe("schemaFactory", () => {
 			const sf = new SchemaFactoryAlpha({
 				scope: "test",
 			});
-			assert.equal(sf.objectAlpha("Default", {}).allowUnknownOptionalFields, false);
+			assert.equal(sf.objectAlpha("Default", {}).allowUnknownOptionalFields, true);
 			assert.equal(
 				sf.objectAlpha("Explicit", {}, { allowUnknownOptionalFields: true })
 					.allowUnknownOptionalFields,

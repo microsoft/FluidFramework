@@ -18,7 +18,7 @@ export interface ObjectSchemaOptions {
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
 	 * that has upgraded the document's schema to include those optional fields.
 	 *
-	 * @defaultValue `false`
+	 * @defaultValue `true`
 	 * @remarks
 	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
 	 * upgrade documents to include schema for new optional features.

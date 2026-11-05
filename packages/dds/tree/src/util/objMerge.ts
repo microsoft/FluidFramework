@@ -42,7 +42,7 @@ export function assertStructuralEquality<T>(
 	transform: ObjectTransform = identityTransform,
 ): void {
 	const diff = merge(actual, expected, transform);
-	assert(!hasConflict(diff), "Objects are not structurally equal");
+	assert(!hasConflict(diff), 0xd8a /* Objects are not structurally equal */);
 }
 
 // TODO: In theory we should also look at object fields on maps and arrays.
@@ -57,7 +57,7 @@ export function merge<T>(
 	transform: ObjectTransform = identityTransform,
 ): Conflicted | Conflict | ConflictedMap | T {
 	if (hasConflict(lhs) || hasConflict(rhs)) {
-		fail("This function does not accept its output type as an input type");
+		fail(0xd8b /* This function does not accept its output type as an input type */);
 	}
 
 	// === is not reflective because of how NaN is handled, so use Object.is instead.
