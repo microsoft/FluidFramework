@@ -42,12 +42,19 @@ import {
 	storedEmptyFieldSchema,
 	EmptyKey,
 	RebaseValidation,
+	type TreeChunk,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { BasicChunk } from "../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { SequenceChunk } from "../../feature-libraries/chunked-forest/sequenceChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { UniformChunk } from "../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	ComparisonForest,
 	flexTreeSlot,
@@ -97,6 +104,8 @@ import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { TestAnchor } from "../testAnchor.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Reuse the formatted-text test domain.
+import { FormattedTextTest } from "../text/formattedTextTest.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -432,6 +441,73 @@ describe("SharedTree", () => {
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
 		validateTreeConsistency(provider.trees[0], joinedLaterTree);
+	});
+
+	describe("formatted text chunk counts", () => {
+		const text = "ab".repeat(500);
+		const configuration = new TreeViewConfiguration({ schema: FormattedTextTest.Tree });
+		const factory = configuredSharedTree({
+			jsonValidator: FormatValidatorBasic,
+			forest: ForestTypeOptimized,
+		}).getFactory();
+
+		function assertReasonableChunkCount(tree: ISharedTree, description: string): void {
+			const forest = tree.kernel.checkout.forest;
+			assert(forest instanceof ChunkedForest);
+			const roots = forest.roots.fields.get(rootFieldKey);
+			assert(roots !== undefined);
+			const visited = new Set<TreeChunk>();
+			const pending = [...roots];
+			while (pending.length > 0) {
+				const chunk = pending.pop();
+				assert(chunk !== undefined);
+				if (visited.has(chunk)) {
+					continue;
+				}
+				visited.add(chunk);
+				if (chunk instanceof BasicChunk) {
+					for (const children of chunk.fields.values()) {
+						pending.push(...children);
+					}
+				} else if (chunk instanceof SequenceChunk) {
+					pending.push(...chunk.subChunks);
+				} else {
+					assert(chunk instanceof UniformChunk);
+				}
+			}
+			const maximumChunkCount = text.length * 4;
+			assert(
+				visited.size <= maximumChunkCount,
+				`${description}: expected at most ${maximumChunkCount} chunks for ${text.length} characters, found ${visited.size}`,
+			);
+		}
+
+		it("loads formatted text into a compact chunked forest", async () => {
+			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
+			const view = provider.trees[0].viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			await provider.ensureSynchronized();
+			await provider.summarize();
+			const loadedTree = await provider.createTree();
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Summary load");
+		});
+
+		it("inserts formatted text into compact local and remote chunked forests", () => {
+			const provider = new TestTreeProviderLite(2, factory);
+			const [sender, receiver] = provider.trees;
+			const senderView = sender.viewWith(configuration);
+			senderView.initialize(FormattedTextTest.Tree.fromString(""));
+			provider.synchronizeMessages();
+			const receiverView = receiver.viewWith(configuration);
+			senderView.root.insertAt(0, text);
+			provider.synchronizeMessages();
+			assert.equal(senderView.root.fullString(), text);
+			assert.equal(receiverView.root.fullString(), text);
+			assertReasonableChunkCount(sender, "Local insertion");
+			assertReasonableChunkCount(receiver, "Remote insertion");
+		});
 	});
 
 	it("can summarize and load", async () => {
