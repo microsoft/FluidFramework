@@ -18,10 +18,13 @@ import {
 
 import type {
 	IRefreshSummaryAckOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IRetriableFailureError,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SubmitSummaryFailureData,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SubmitSummaryResult,
 	SummaryGeneratorTelemetry,
 } from "../summarizerTypes.js";
@@ -31,9 +34,11 @@ import {
 	raceTimer,
 	type SummarizeErrorCode,
 } from "../summarizerUtils.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { IClientSummaryWatcher } from "../summaryCollection.js";
 
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { INackSummaryResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 // Send some telemetry if generate summary takes too long
@@ -51,11 +56,13 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly refreshLatestSummaryCallback: (
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: TelemetryLoggerExt,
 	) {
@@ -74,8 +81,10 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 	public summarize(
 		summaryOptions: ISubmitSummaryOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): ISummarizeResults {
 		this.summarizeCore(summaryOptions, resultsBuilder).catch(
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			(error: IRetriableFailureError) => {
 				const message = "UnexpectedSummarizeError";
 				summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
@@ -124,6 +133,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		let summaryData: SubmitSummaryResult | undefined;
 
 		/**
@@ -133,9 +143,12 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 		 */
 		const summaryFail = (
 			errorCode: SummarizeErrorCode,
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			error: IRetriableFailureError,
 			properties?: SummaryGeneratorTelemetry,
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			submitFailureResult?: SubmitSummaryFailureData,
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			nackSummaryResult?: INackSummaryResult,
 		): void => {
 			// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
@@ -381,6 +394,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 	}
 
 	private addSummaryDataToTelemetryProps(
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summaryData: SubmitSummaryResult,
 		initialProps: SummaryGeneratorTelemetry,
 	): SummaryGeneratorTelemetry {
