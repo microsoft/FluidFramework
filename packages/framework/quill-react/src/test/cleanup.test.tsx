@@ -7,14 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { independentView } from "@fluidframework/tree/alpha";
-import { FormattedTextDefault, PlainText } from "@fluidframework/tree/internal";
+import { independentView, PlainText } from "@fluidframework/tree/alpha";
 import { cleanup as rtlCleanup, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import Quill from "quill-next";
 import { StrictMode } from "react";
 
-import { FormattedMainView } from "../formatted/index.js";
+import { FormattedMainView, FormattedTextDefault } from "../formatted/index.js";
 import { QuillMainView } from "../plain/index.js";
 
 function createPlainRoot(text = ""): ReturnType<typeof toPropTreeNode<PlainText.Tree>> {

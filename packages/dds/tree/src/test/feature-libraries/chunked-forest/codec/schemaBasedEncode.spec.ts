@@ -73,7 +73,7 @@ import {
 	toStoredSchema,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/toStoredSchema.js";
+} from "../../../../simple-tree/treeSchema.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
@@ -489,9 +489,12 @@ describe("schemaBasedEncoding", () => {
 						});
 					const idCompressorCore = toIdCompressorWithCore(idCompressor);
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
+					// Select each format with an override so every registered format, including experimental ones, is snapshotted.
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
+						writeVersionOverrides: new Map([[fieldBatchCodecBuilder.name, version]]),
+						allowPossiblyIncompatibleWriteVersionOverrides: true,
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.

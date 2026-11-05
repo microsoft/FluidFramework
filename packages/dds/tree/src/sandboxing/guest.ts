@@ -86,7 +86,10 @@ export class GuestImplementation implements Sandboxing.Guest {
 		blobResponse: (message) => {
 			this.getSynchronizationForMessage("blob response");
 			const blob = getTransportBuffer(message.blob);
-			assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+			assert(
+				blob !== undefined,
+				0xd6b /* Validated blob placeholder must have a registered buffer */,
+			);
 			this.codec.receiveBlobResponse(message.requestId, blob);
 		},
 		blobResponseError: (message) => {
@@ -94,7 +97,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.codec.receiveBlobResponseError(message.requestId, message.error);
 		},
 		sessionFailure: (message) => {
-			this.session.fail(new Error(message.error), false);
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Host"), false);
 		},
 	});
 

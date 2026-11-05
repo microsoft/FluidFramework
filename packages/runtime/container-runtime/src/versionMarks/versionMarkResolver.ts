@@ -63,7 +63,7 @@ export interface VersionMarkResolverRuntimeHooks {
 	 * decompress), so the history scan observes the same restored `batchId` — in particular for chunked
 	 * batches, whose id is stripped from the final chunk's wire metadata and restored only after
 	 * reassembly. A fresh unpacker is created per scan since it holds reassembly state. When absent, the
-	 * history scan cannot identify batches and reports `pending`/`unresolvable`.
+	 * history scan cannot identify batches and reports `pending`.
 	 */
 	readonly createHistoricalOpUnpacker?: () => (
 		op: ISequencedDocumentMessage,
@@ -215,7 +215,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	 * {@link inboundVersionMarkUpdate} derives its batch identity, so virtualized batches resolve here too.
 	 * The injected historical unpacker owns virtualization details, including tolerating a requested range
 	 * that begins within an incomplete chunk stream. On a miss, {@link classifyMiss} distinguishes
-	 * `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
+	 * diagnostic reasons for keeping the mark pending.
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
@@ -254,7 +254,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					}
 				}
 			}
-			// Not found: distinguish "not sequenced yet" from "trimmed" via the tip and where the scan landed.
+			// Not found: keep the mark pending and report what the scan observed.
 			return this.classifyMiss(from, firstScannedSequenceNumber);
 		} finally {
 			// Cancel any in-flight fetch once we stop reading (found or exhausted).
@@ -263,14 +263,13 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	}
 
 	/**
-	 * Classifies a history-scan miss as `pending` or `unresolvable`. See {@link resolveFromHistory}.
+	 * Classifies the diagnostic reason for a pending history-scan miss. See {@link resolveFromHistory}.
 	 */
 	private classifyMiss(
 		from: number,
 		firstScannedSequenceNumber: number | undefined,
 	): ResolveResult {
-		// Invariant: a reader must never return an op before the requested range start. If it does, the
-		// trim inference below is meaningless, so fail loudly rather than misclassify.
+		// Invariant: a reader must never return an op before the requested range start.
 		assert(
 			firstScannedSequenceNumber === undefined || firstScannedSequenceNumber >= from,
 			0xd1c /* historical op reader returned an op before the requested range start */,
@@ -281,14 +280,15 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			return { kind: "pending", reason: "awaitingSequence" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
-			// Empty read though ops should exist in `[from, tip]` → trimmed. ODSP-specific: a strict driver
-			// empties a `from`-misaligned trimmed range (validateMessages); a return-from-earliest driver
-			// would instead surface the trim via the `firstScannedSequenceNumber > from` branch below.
-			return { kind: "unresolvable", reason: "historyTrimmed" };
+			// An empty read is ambiguous: the range may have been trimmed, or a just-submitted batch may
+			// not be visible to the historical-op reader yet. Keep the mark pending so it can be retried or
+			// promoted when the batch sequences live.
+			return { kind: "pending", reason: "emptyHistoryRead" };
 		}
 		if (firstScannedSequenceNumber > from) {
-			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
-			return { kind: "unresolvable", reason: "historyTrimmed" };
+			// The gap proves that some older ops are unavailable, but not that this batch sequenced among
+			// them. A disconnected or resubmitted batch can still sequence later.
+			return { kind: "pending", reason: "historyGapObserved" };
 		}
 		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
 		return { kind: "pending", reason: "awaitingSequence" };

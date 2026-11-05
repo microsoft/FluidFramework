@@ -1,5 +1,58 @@
 # @fluidframework/odsp-driver
 
+## 3.11.0
+
+### Minor Changes
+
+- Cancel pending flush requests promptly when the connection disconnects ([#28623](https://github.com/microsoft/FluidFramework/pull/28623)) [a7801b2c836](https://github.com/microsoft/FluidFramework/commit/a7801b2c836ac2a9aa0e6ca6279422265a0f4aea)
+
+  Pending flush requests now reject with the connection's disconnect error when the connection is disposed or disconnected.
+  This prevents summary uploads waiting on a flush response from remaining pending after disconnection.
+
+- New containers can be created in a OneDrive or SharePoint folder identified by its item ID ([#28634](https://github.com/microsoft/FluidFramework/pull/28634)) [0fe597f852e](https://github.com/microsoft/FluidFramework/commit/0fe597f852e23c7541a9e650adfe2b4d952aeb71)
+
+  The new `createOdspCreateContainerRequestFromOptions` function takes an `OdspCreateContainerRequestOptions` object, which identifies the folder for the new file by either its path (`filePath`) or its item ID (`parentFolderId`).
+  Unlike a folder's path, its item ID doesn't change when the folder is renamed or moved.
+
+  ```typescript
+  import { createOdspCreateContainerRequestFromOptions } from "@fluidframework/odsp-driver/legacy";
+
+  const request = createOdspCreateContainerRequestFromOptions({
+    siteUrl,
+    driveId,
+    parentFolderId, // The folder's item ID, not its path
+    fileName: "Notes.fluid",
+  });
+  await container.attach(request);
+  ```
+
+  The existing [`createOdspCreateContainerRequest`](https://fluidframework.com/docs/api/odsp-driver/#createodspcreatecontainerrequest-function) function, which takes a folder path, is unchanged.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+### Minor Changes
+
+- Binary summary blob contents can no longer include neighboring bytes in Node.js when a Buffer is a view into a larger allocation ([#28485](https://github.com/microsoft/FluidFramework/pull/28485)) [c3f918bb7b2](https://github.com/microsoft/FluidFramework/commit/c3f918bb7b22e509086f01d5c877ef3c459a15dd)
+
+  In Node.js, binary summary blob content provided as a `Buffer` which covered only part of its underlying memory could be converted into an `ArrayBuffer` containing the underlying memory rather than just the blob's bytes.
+  For example: a small pooled `Buffer` or the result of `subarray`.
+  This affected snapshots produced from detached container summaries and files created via the ODSP driver from a detached summary, and could result in extra or unrelated bytes being stored with a blob.
+
+  Only the bytes belonging to the blob are now included.
+  Browser environments were not affected.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

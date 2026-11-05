@@ -1,5 +1,47 @@
 # @fluidframework/register-collection
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Use the register collection interface instead of its implementation class ([#28558](https://github.com/microsoft/FluidFramework/pull/28558)) [9ccc415985f](https://github.com/microsoft/FluidFramework/commit/9ccc415985f9f7cfc2a612b883bfaad510fe231e)
+
+  To keep applications independent of implementation details, the package no longer exports `ConsensusRegisterCollectionClass`.
+  As a result, applications can no longer construct or subclass that class directly.
+
+  For instance annotations, use [`IConsensusRegisterCollection`](https://fluidframework.com/docs/api/register-collection/iconsensusregistercollection-interface) or the [`ConsensusRegisterCollection`](https://fluidframework.com/docs/api/register-collection/consensusregistercollection-typealias) type alias.
+  To create a collection, use the existing [`ConsensusRegisterCollection`](https://fluidframework.com/docs/api/register-collection/#consensusregistercollection-variable) creation value instead of the implementation constructor, as shown below.
+
+  ```typescript
+  import {
+    ConsensusRegisterCollection,
+    type IConsensusRegisterCollection,
+  } from "@fluidframework/register-collection/legacy";
+
+  const registers: IConsensusRegisterCollection<string> =
+    ConsensusRegisterCollection.create(runtime);
+  const factory = ConsensusRegisterCollection.getFactory();
+  ```
+
+  These replacements leave collection interfaces, events, factories, handles, and persisted data formats unchanged.
+  For the removal plan and existing deprecation, see [issue #26691](https://github.com/microsoft/FluidFramework/issues/26691).
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

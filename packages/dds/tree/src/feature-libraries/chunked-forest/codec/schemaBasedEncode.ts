@@ -27,6 +27,7 @@ import {
 	type FieldEncodeBuilder,
 	type KeyedFieldEncoder,
 	type NodeEncodeBuilder,
+	type NodeEncoder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
@@ -35,7 +36,7 @@ import {
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatchV1,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
@@ -57,7 +58,7 @@ export function schemaCompressedEncodeV1(
 	_incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
 ): EncodedFieldBatchV1 {
-	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
+	const encoded: EncodedFieldBatchAnyVersion = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -83,7 +84,7 @@ export function schemaCompressedEncodeV2(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
 ): EncodedFieldBatchV2 {
-	return schemaCompressedEncode(
+	const encoded: EncodedFieldBatchAnyVersion = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -92,6 +93,8 @@ export function schemaCompressedEncodeV2(
 		brand(FieldBatchFormatVersion.v2),
 		isSummary,
 	);
+	// No node encoder policy is passed, so no specialized shapes are produced, and this cast should be safe.
+	return encoded as EncodedFieldBatchV2;
 }
 
 /**
@@ -112,13 +115,38 @@ function schemaCompressedEncode(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchAnyVersion {
 	return compressedEncode(
 		fieldBatch,
 		buildContext(schema, policy, idCompressor, incrementalEncoder, version, isSummary),
 	);
 }
 
+/**
+ * Chooses the node encoder of one node type.
+ * @remarks
+ * `base` is the node encoder that the V2 format uses for the type.
+ * The result can be `base`, a {@link SpecializedNodeShapeEncoder}, or any other {@link NodeEncoder}.
+ *
+ * Called at most one time for each node type in an {@link EncoderContext}.
+ */
+export type SpecializedNodeEncoderPolicy = (
+	base: NodeShapeBasedEncoder,
+	schemaName: TreeNodeSchemaIdentifier,
+	fieldBuilder: FieldEncodeBuilder,
+) => NodeEncoder;
+
+/**
+ * A {@link SpecializedNodeEncoderPolicy} that uses the base node encoder for each node type.
+ */
+export const baseNodeEncoders: SpecializedNodeEncoderPolicy = (base) => base;
+
+/**
+ * Builds the {@link EncoderContext} for schema-based encoding.
+ * @param nodeEncoderFor - Chooses the node encoder of each node type.
+ * Defaults to {@link baseNodeEncoders}, which uses the encoder that {@link getNodeEncoder} selects.
+ * Only formats that support specialized shapes can return a {@link SpecializedNodeShapeEncoder}.
+ */
 export function buildContext(
 	storedSchema: StoredSchemaCollection,
 	policy: SchemaPolicy,
@@ -126,10 +154,15 @@ export function buildContext(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
+	nodeEncoderFor: SpecializedNodeEncoderPolicy = baseNodeEncoders,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
-			getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
+			nodeEncoderFor(
+				getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
+				schemaName,
+				fieldBuilder,
+			),
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
 			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,

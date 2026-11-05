@@ -141,7 +141,7 @@ Ordered delivery places a range before an update that uses its IDs.
 The Fluid runtime, not the sandbox, submits creation ranges for finalization.
 
 Guest disposal does not notify the Host.
-After the application stops or fences the Guest, Host disposal reclaims the child shard from the last accepted Guest progress.
+Host disposal stops receiving Guest messages and reclaims the child shard from the last accepted Guest progress.
 
 ### Message Conversion and Validation
 
@@ -247,6 +247,7 @@ Only the Host binds handles and performs Fluid attachment.
 A Guest proxy sends a `blobRequest`, and the Host replies with either `blobResponse` or `blobResponseError`.
 The request ID matches a response to its pending request and is distinct from the handle token.
 Blob-resolution failures reject only the proxy's `get()` operation.
+The Host logs the original error and sends the Guest a fixed message that the service failed to resolve the handle.
 
 Equivalent Host handle paths reuse one token, and the Guest reuses one proxy for each token.
 Each proxy caches one `get()` promise, including rejection.
@@ -262,26 +263,9 @@ The transport codecs do not implement `IFluidSerializer` or JSON stringification
 
 ### Failure and Lifecycle
 
-[SandboxSessionEndpoint](./session.ts) treats protocol and synchronization failures as terminal.
-It stops local synchronization, rejects pending work, reports the first failure to the application, and notifies the peer when the transport still works.
-A received `sessionFailure` is not echoed.
-Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
-
-The application must stop or fence the Guest, dispose both endpoints, and create a new pair.
-A peer failure notification does not prove that the remote sandbox has been fenced.
-Recovery uses fresh session objects; failed breakers are not reset.
-Host disposal preserves the application-owned main view and changes that the Host already merged.
-Pending Guest edits and unacknowledged Host updates can be lost.
-
-`Guest.dispose()` synchronously stops Guest edits, invalidates its views, releases its checkouts, and disposes its local shard.
-After failure, the authoring checkout can remain available for inspection until disposal, but the application must not edit it.
-Disposing only the Guest does not stop Host updates or release unacknowledged Host snapshots.
-The application must fence an old Guest before Host disposal so an old iframe cannot continue sending messages or restart from its serialized shard.
-If initialization fails after shard creation, the Host reclaims the shard that the Guest did not receive.
-
-The local endpoint wraps the first terminal failure in a session error and retains the original `Error` as its cause.
-This preserves the local distinction between invariant failures, application usage errors, and protocol errors.
-The peer receives only the diagnostic message in `sessionFailure`, not the original error object or classification.
+[Sandbox sessions](./session.ts) fail (and invoke their `handleProtocolError` callback) when they encounter protocol or synchronization errors.
+To end a session, dispose both endpoints; this cleanup is still required after a failure.
+Recovery requires a new session.
 
 ## Threat Model and Security and Privacy Requirements
 
@@ -345,7 +329,7 @@ The remaining limitations are:
 
 - Initialization and change payloads do not yet have complete codec-specific structural validation before mutation.
 - Tree codecs still need verification that they reject handles in structural-record positions without traversing handle internals.
-- The protocol does not enforce limits for message size, nesting depth, pending requests, or blob data.
+- The Host does not enforce rate or size limits for incoming Guest messages.
 - Failures during main-tree merge are not fully isolated.
 - Retained Guest references cannot always be invalidated after a broken tree operation.
 - Cross-realm integration coverage uses `MessagePort` but does not yet include an isolated iframe.
@@ -360,8 +344,11 @@ Do not continue editing a Guest after session failure.
 
 - Complete codec-specific validation of initialization and change payloads before mutation.
 - Verify that tree codecs reject handles in structural-record positions without traversing handle internals.
-- Define limits for message size, nesting depth, pending requests, and blob data.
 - Add malformed-message and protocol-state tests for the remaining message types.
+
+### Rate and Size Limiting
+
+- Add Host-side rate and size limits for incoming Guest messages, enforced before or during transport normalization.
 
 ### Session Fault Isolation
 
@@ -398,6 +385,7 @@ Do not continue editing a Guest after session failure.
 ## Testing
 
 [transport.spec.ts](../test/shared-tree/sandboxing/transport.spec.ts) covers transport values, handles, blobs, markers, and malformed messages.
+[common.spec.ts](../test/shared-tree/sandboxing/common.spec.ts) covers sandbox failure classification, diagnostic separation, and telemetry tagging.
 [sandboxing.spec.ts](../test/shared-tree/sandboxing/sandboxing.spec.ts) covers initialization, synchronization, ID progress, rebasing, undo and redo, session failure, and replacement.
 [demo.integration.ts](../test/shared-tree/sandboxing/demo.integration.ts) covers ServiceClient integration with a V3 ID compressor.
 

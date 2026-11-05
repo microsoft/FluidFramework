@@ -185,6 +185,7 @@ export async function createGuestForHost(
  * @param sessionPortsBuilder - A function that builds the ports and test controls.
  * @param logging - Whether to enable diagnostic logging.
  * @param handleProtocolError - A function that handles protocol errors.
+ * @param hostLogger - An optional telemetry logger for the Host.
  * @returns The session components and test controls.
  * @typeParam TInterop - The test controls for the session's transport.
  * @typeParam TSchema - The schema of the shared tree.
@@ -195,6 +196,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	sessionPortsBuilder: SessionPortsBuilder<TInterop>,
 	logging: boolean = false,
 	handleProtocolError: (error: Error) => void = throwProtocolError,
+	hostLogger?: TelemetryLoggerExt,
 ) {
 	const logger = (message: string) => {
 		if (logging) {
@@ -221,7 +223,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	const host = new HostImplementation({
 		main,
 		port: sessionPorts.hostPort,
-		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
+		logger: hostLogger ?? createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
 	});
 	const local: TreeViewAlpha<TSchema> = host.synchronization.localCheckout.viewWithInternal(

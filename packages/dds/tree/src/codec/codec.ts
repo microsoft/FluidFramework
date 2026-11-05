@@ -85,7 +85,8 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
  * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
  * In such cases, a format validator can help catch issues.
  *
- * Current options are {@link FormatValidatorNoOp} and {@link FormatValidatorBasic}.
+ * Current options are {@link FormatValidatorNoOp}, {@link FormatValidatorBasic}, and
+ * {@link FormatValidatorInterpreted}.
  * @privateRemarks
  * Implement using {@link toFormatValidator}.
  * Consume using {@link extractJsonValidator}.
@@ -154,7 +155,8 @@ export interface ICodecOptions {
 	 * {@link FormatValidator} which SharedTree uses to validate persisted data it reads & writes
 	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
 	 * @remarks
-	 * See {@link FormatValidatorNoOp} and {@link FormatValidatorBasic} for out-of-the-box implementations.
+	 * See {@link FormatValidatorNoOp}, {@link FormatValidatorBasic}, and
+	 * {@link FormatValidatorInterpreted} for out-of-the-box implementations.
 	 *
 	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
 	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.

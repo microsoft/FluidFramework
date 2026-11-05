@@ -6,6 +6,7 @@
 import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import { assertOdspEndpoint, getOdspCredentials } from "@fluid-private/test-drivers";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	TelemetryLoggerExt,
@@ -13,12 +14,21 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
-import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
 
-const createLoginEnv = (userName: string, password: string): string =>
-	`{"${userName}": "${password}"}`;
+/**
+ * Resolves the list of ODSP usernames the runners can be distributed across.
+ * Returns an empty list for non-ODSP drivers, which don't select a user.
+ */
+function getOdspUsernames(testDriver: ITestDriver): string[] {
+	if (testDriver.type !== "odsp") {
+		return [];
+	}
+	const endpointName = testDriver.endpointName ?? "odsp";
+	assertOdspEndpoint(endpointName);
+	return getOdspCredentials(endpointName, 0).map((credentials) => credentials.username);
+}
 
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -33,7 +43,6 @@ export async function stressTest(
 		seed: number;
 		enableMetrics: boolean;
 		createTestId: boolean;
-		testUsers: TestUsers | undefined;
 		profileName: string;
 		logger: TelemetryLoggerExt;
 		outputDir: string;
@@ -46,7 +55,6 @@ export async function stressTest(
 		seed,
 		enableMetrics,
 		createTestId,
-		testUsers,
 		profileName,
 		logger,
 		outputDir,
@@ -74,8 +82,12 @@ export async function stressTest(
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
 
-	const runnerArgs: string[][] = [];
+	// Assign users to runners round-robin so load is spread evenly across the available test users.
+	const usernames = getOdspUsernames(testDriver);
+
+	const runners: { childArgs: string[]; username: string | undefined }[] = [];
 	for (let i = 0; i < profile.numClients; i++) {
+		const username = usernames.length > 0 ? usernames[i % usernames.length] : undefined;
 		const childArgs: string[] = [
 			"./lib/runner.js",
 			"--driver",
@@ -106,9 +118,13 @@ export async function stressTest(
 			childArgs.push(`--driverEndpoint`, testDriver.endpointName);
 		}
 
-		runnerArgs.push(childArgs);
+		if (username !== undefined) {
+			childArgs.push("--username", username);
+		}
+
+		runners.push({ childArgs, username });
 	}
-	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
+	console.log(runners.map(({ childArgs }) => childArgs.join(" ")).join("\n"));
 
 	if (enableMetrics) {
 		setInterval(() => {
@@ -135,22 +151,9 @@ export async function stressTest(
 	}
 
 	await Promise.all(
-		runnerArgs.map(async (childArgs, index) => {
-			const testUser =
-				testUsers !== undefined ? testUsers[index % testUsers.length] : undefined;
-			const username = testUser !== undefined ? testUser.username : undefined;
-			const password = testUser !== undefined ? testUser.password : undefined;
-			const envVar = { ...process.env };
-			if (username !== undefined && password !== undefined) {
-				if (testDriver.endpointName === "odsp") {
-					envVar.login__odsp__test__accounts = createLoginEnv(username, password);
-				} else if (testDriver.endpointName === "odsp-df") {
-					envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
-				}
-			}
+		runners.map(async ({ childArgs, username }, index) => {
 			const runnerProcess = child_process.spawn("node", childArgs, {
 				stdio: "inherit",
-				env: envVar,
 			});
 
 			setupTelemetry(runnerProcess, logger, index, username);

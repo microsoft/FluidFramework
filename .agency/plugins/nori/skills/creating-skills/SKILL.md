@@ -78,9 +78,9 @@ Steps that reference tools and APIs should inline them in the step by step proce
 </bad-example>
 
 <good-example>
-Read https://raw.githubusercontent.com/tilework-tech/nori-skillsets/96012bcfcd9482b248debed7b9a7fc7c345f76e1/src/cli/features/claude-code/profiles/config/amol/skills/finishing-a-development-branch/SKILL.md
+Read `.agency/plugins/nori/skills/finishing-a-development-branch/SKILL.md`
 </good-example>
 
 <good-example>
-Read https://raw.githubusercontent.com/tilework-tech/nori-skillsets/96012bcfcd9482b248debed7b9a7fc7c345f76e1/src/cli/features/claude-code/profiles/config/amol/skills/webapp-testing/SKILL.md
+Read `.agency/plugins/nori/skills/webapp-testing/SKILL.md`
 </good-example>

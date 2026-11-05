@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchemaIdentifier } from "../../core/index.js";
 import type {
 	FlexTreeContext,
 	FlexTreeHydratedContext,
 } from "../../feature-libraries/index.js";
-import { brand } from "../../util/index.js";
 
-import type { AllowedTypesFullEvaluated } from "./allowedTypes.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
-import { walkAllowedTypes } from "./walkSchema.js";
 
 /**
  * Additional information about a collection of {@link TreeNode}s.
@@ -28,22 +24,10 @@ import { walkAllowedTypes } from "./walkSchema.js";
  * This design is the same as {@link FlexTreeContext} with its base type and {@link FlexTreeHydratedContext} extending it.
  */
 export class Context {
-	public static schemaMapFromRootSchema(
-		rootSchema: AllowedTypesFullEvaluated,
-	): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema> {
-		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
-		walkAllowedTypes(rootSchema, {
-			node(nodeSchema) {
-				schema.set(brand(nodeSchema.identifier), nodeSchema);
-			},
-		});
-		return schema;
-	}
-
 	/**
 	 * Builds the context.
 	 * @remarks
-	 * Since this walks the schema, it must not be invoked during schema declaration or schema forward references could fail to be resolved.
+	 * Accepts precomputed lookup data without walking or initializing schema.
 	 */
 	public constructor(
 		public readonly flexContext: FlexTreeContext,
@@ -53,10 +37,12 @@ export class Context {
 		 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
 		 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.
 		 * Having this map in the context addresses this use-case.
+		 * This is immutable lookup data that may be shared across roots and hydrated or unhydrated contexts.
+		 * Sharing the map does not share the context's tree or document state.
 		 * @privateRemarks
 		 * This design mirrors how {@link FlexTreeSchema} are accessed off the {@link FlexTreeContext}, making the migration away from them simpler.
 		 */
-		public readonly schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+		public readonly schema: ReadonlyMap<string, TreeNodeSchema>,
 	) {}
 }
 
@@ -67,7 +53,7 @@ export class Context {
 export class HydratedContext extends Context {
 	public constructor(
 		public override readonly flexContext: FlexTreeHydratedContext,
-		schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+		schema: ReadonlyMap<string, TreeNodeSchema>,
 	) {
 		super(flexContext, schema);
 	}

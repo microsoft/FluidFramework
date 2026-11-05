@@ -1,5 +1,95 @@
 # @fluidframework/container-runtime
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Deprecate summarizer implementation APIs ([#28599](https://github.com/microsoft/FluidFramework/pull/28599)) [d44fce67369](https://github.com/microsoft/FluidFramework/commit/d44fce67369deecee23892b7ac68159bc2099913)
+
+  Direct summarizer control, detailed summarizer results, and summary collection APIs from `@fluidframework/container-runtime` are deprecated.
+  These APIs expose implementation details and are intended to become internal.
+  The following APIs are deprecated:
+  - Direct control: `ISummarizer`, `ISummarizeOptions`, `IOnDemandSummarizeOptions`, and `ISummarizeResults`.
+  - Enqueue support: `IEnqueueSummarizeOptions` and `EnqueueSummarizeResult`.
+  - Result stages: `SummarizeResultPart`, `SubmitSummaryResult`, `IBaseSummarizeResult`, `IGenerateSummaryTreeResult`, `IUploadSummaryResult`, `ISubmitSummaryOpResult`, `SubmitSummaryFailureData`, and `SummaryStage`.
+  - Result metadata and acknowledgements: `IRetriableFailureError`, `IGeneratedSummaryStats`, `IBroadcastSummaryResult`, `IAckSummaryResult`, and `INackSummaryResult`.
+  - Collection and message wrappers: `SummaryCollection`, `ISummary`, `IAckedSummary`, `ISummaryOpMessage`, `ISummaryAckMessage`, and `ISummaryNackMessage`.
+  - Collection watchers and events: `IClientSummaryWatcher`, `ISummaryCollectionOpEvents`, `OpActionEventName`, and `OpActionEventListener`.
+
+  For application-requested summaries, use `loadAndSummarize` from `@fluidframework/container-loader/legacy`.
+  This is the recommended migration API for most customers:
+
+  ```typescript
+  import { loadAndSummarize } from "@fluidframework/container-loader/legacy";
+
+  // props supplies the loader services and request.
+  const { version, referenceSequenceNumber } = await loadAndSummarize(props);
+  ```
+
+  `loadAndSummarize` manages loading and disposing the summarizer container and requests an on-demand summary without requiring the application to manage summarizer implementation details.
+  It waits for service acknowledgement and returns the acknowledged snapshot version and the reference sequence number of its summary proposal.
+  Use `version` with `LoaderHeader.version` on drivers that support loading snapshot versions.
+  The API rejects on failure.
+  Enqueueing, collection watching, and detailed stage promises are implementation-level controls that are intentionally not exposed by this API.
+
+  The older `loadSummarizerContainerAndMakeSummary` API is intended for specialized integrations that do not provide service acknowledgement ops.
+  Most customers should use `loadAndSummarize` instead.
+  The older API's success requires submission and broadcast, and its proposal handle is not guaranteed to identify an acknowledged snapshot version.
+
+  `SummaryTreeBuilder` and `convertToSummaryTreeWithStats` from `@fluidframework/runtime-utils` are also deprecated as implementation utilities intended to become internal.
+  There is no supported replacement for these tree-building and conversion utilities.
+  The loader API is not a replacement for building summary trees.
+
+  This change preserves existing exports, signatures, and behavior.
+  Internal implementations in the Fluid Framework repository can continue using these APIs.
+  No internalization version or date is specified.
+
+## 3.7.0
+
+### Minor Changes
+
+- Container dirty state now accounts for outstanding attachment blob work ([#28459](https://github.com/microsoft/FluidFramework/pull/28459)) [b94b1f3ff60](https://github.com/microsoft/FluidFramework/commit/b94b1f3ff6015742da98385a88870926ff498663)
+
+  [`IContainer.isDirty`](https://fluidframework.com/docs/api/container-definitions/icontainer-interface#isdirty-propertysignature) and [`IFluidContainer.isDirty`](https://fluidframework.com/docs/api/fluid-static/ifluidcontainer-interface#isdirty-propertysignature) now include outstanding attachment blob work, not just operations.
+  Previously, `saved` could fire during a blob upload, allowing hosts to dispose the container and lose the attachment.
+  Do not dispose a container while `isDirty` is `true`.
+
+  Blob work ends when sharing succeeds, fails, or is cancelled.
+  The `saved` event means no local work remains outstanding, not that every blob was shared successfully.
+  Failed or cancelled handles may remain unusable; observe the handle's `payloadShared` and `payloadShareFailed` events for individual outcomes.
+
+  ```ts
+  container.on("saved", () => container.dispose());
+  ```
+
+  Helpers waiting for `saved` now also wait for blob sharing to end.
+  A stalled upload can keep them waiting indefinitely.
+
+  Blob coverage requires `@fluidframework/container-loader` from this release or later.
+  Older loaders retain operation-only tracking; service clients such as `@fluidframework/azure-client` include a matching loader.
+  Setting the runtime configuration flag `Fluid.ContainerRuntime.DisableBlobAwareDirtyState` to `true` restores operation-only dirty tracking.
+  With either fallback, `saved` can fire while blob work remains outstanding.
+
+## 3.6.0
+
+### Minor Changes
+
+- Keep unresolved version marks pending when history is inconclusive ([#28448](https://github.com/microsoft/FluidFramework/pull/28448)) [2e167d8c734](https://github.com/microsoft/FluidFramework/commit/2e167d8c734c76a57eed0135a390d11e1b55ff69)
+
+  Version marks are no longer permanently classified as unresolvable when a historical operation read is empty or starts
+  after the mark's sequence-number lower bound.
+  Neither result proves that the specific batch sequenced in the unavailable range.
+  The runtime keeps the mark pending so a disconnected or resubmitted batch can still sequence and resolve later.
+  Hosts own retry suppression and expiration policy for long-lived pending marks.
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

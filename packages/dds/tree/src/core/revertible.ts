@@ -69,7 +69,7 @@ export interface RevertOptionsAlpha {
 }
 
 /**
- * Options for {@link UntypedTreeViewAlpha.revertTo}.
+ * Options for {@link TreeBranchCommitMetadata.revertTo}.
  *
  * @sealed @alpha
  */

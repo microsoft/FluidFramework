@@ -62,7 +62,10 @@ export class DefaultChangeFamily
 		codecOptions: CodecWriteOptions,
 	) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
+		this.validator = this.modularFamily.validator;
 	}
+
+	public readonly validator: (change: DefaultChangeset) => true | string;
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
 		return this.modularFamily.rebaser;

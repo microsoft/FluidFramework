@@ -19,6 +19,7 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type {
 	IChannelView,
@@ -84,7 +85,7 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * {@inheritDoc SharedTreeOptions.retainHistory}
 	 */
-	readonly retainHistory?: boolean;
+	readonly retainHistory?: boolean | number;
 
 	/**
 	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
@@ -205,8 +206,8 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			coreOptions.retainHistory ?? false,
 		);
+		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
 		this.registerSharedBranch("main");
 
@@ -259,10 +260,12 @@ export class SharedTreeCore<
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, fullTree, telemetryContext, incrementalSummaryContext, builder } =
 			props;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
@@ -393,13 +396,18 @@ export class SharedTreeCore<
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
+			// Prevent sequencing from trimming the new commits before all event handlers
+			// that might read them have completed.
 			this.editManager.addSequencedChanges(
 				[commit],
 				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
 				branchId,
+				false,
 			);
+			// Advancing the MSN also triggers trimming, so suppress it here as well
+			// to keep the new commits readable by the remaining event handlers.
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}

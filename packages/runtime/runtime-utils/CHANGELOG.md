@@ -1,5 +1,85 @@
 # @fluidframework/runtime-utils
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Deprecate summarizer implementation APIs ([#28599](https://github.com/microsoft/FluidFramework/pull/28599)) [d44fce67369](https://github.com/microsoft/FluidFramework/commit/d44fce67369deecee23892b7ac68159bc2099913)
+
+  Direct summarizer control, detailed summarizer results, and summary collection APIs from `@fluidframework/container-runtime` are deprecated.
+  These APIs expose implementation details and are intended to become internal.
+  The following APIs are deprecated:
+  - Direct control: `ISummarizer`, `ISummarizeOptions`, `IOnDemandSummarizeOptions`, and `ISummarizeResults`.
+  - Enqueue support: `IEnqueueSummarizeOptions` and `EnqueueSummarizeResult`.
+  - Result stages: `SummarizeResultPart`, `SubmitSummaryResult`, `IBaseSummarizeResult`, `IGenerateSummaryTreeResult`, `IUploadSummaryResult`, `ISubmitSummaryOpResult`, `SubmitSummaryFailureData`, and `SummaryStage`.
+  - Result metadata and acknowledgements: `IRetriableFailureError`, `IGeneratedSummaryStats`, `IBroadcastSummaryResult`, `IAckSummaryResult`, and `INackSummaryResult`.
+  - Collection and message wrappers: `SummaryCollection`, `ISummary`, `IAckedSummary`, `ISummaryOpMessage`, `ISummaryAckMessage`, and `ISummaryNackMessage`.
+  - Collection watchers and events: `IClientSummaryWatcher`, `ISummaryCollectionOpEvents`, `OpActionEventName`, and `OpActionEventListener`.
+
+  For application-requested summaries, use `loadAndSummarize` from `@fluidframework/container-loader/legacy`.
+  This is the recommended migration API for most customers:
+
+  ```typescript
+  import { loadAndSummarize } from "@fluidframework/container-loader/legacy";
+
+  // props supplies the loader services and request.
+  const { version, referenceSequenceNumber } = await loadAndSummarize(props);
+  ```
+
+  `loadAndSummarize` manages loading and disposing the summarizer container and requests an on-demand summary without requiring the application to manage summarizer implementation details.
+  It waits for service acknowledgement and returns the acknowledged snapshot version and the reference sequence number of its summary proposal.
+  Use `version` with `LoaderHeader.version` on drivers that support loading snapshot versions.
+  The API rejects on failure.
+  Enqueueing, collection watching, and detailed stage promises are implementation-level controls that are intentionally not exposed by this API.
+
+  The older `loadSummarizerContainerAndMakeSummary` API is intended for specialized integrations that do not provide service acknowledgement ops.
+  Most customers should use `loadAndSummarize` instead.
+  The older API's success requires submission and broadcast, and its proposal handle is not guaranteed to identify an acknowledged snapshot version.
+
+  `SummaryTreeBuilder` and `convertToSummaryTreeWithStats` from `@fluidframework/runtime-utils` are also deprecated as implementation utilities intended to become internal.
+  There is no supported replacement for these tree-building and conversion utilities.
+  The loader API is not a replacement for building summary trees.
+
+  This change preserves existing exports, signatures, and behavior.
+  Internal implementations in the Fluid Framework repository can continue using these APIs.
+  No internalization version or date is specified.
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+### Minor Changes
+
+- Stop recognizing pre-symbol in-memory Fluid handles ([#28418](https://github.com/microsoft/FluidFramework/pull/28418)) [97f7061ed43](https://github.com/microsoft/FluidFramework/commit/97f7061ed43804399da0479b3995ffb5f3e6c186)
+
+  In-memory handles created by Fluid Framework client `2.0.0-rc.3.0.0` or earlier are no longer recognized by `isFluidHandle` or accepted by `toFluidHandleInternal`.
+  Applications that dynamically load Fluid layers should ensure all loaded layers use `2.0.0-rc.4.0.0` or later.
+
+- Identify a data store's package path, for use in telemetry ([#28375](https://github.com/microsoft/FluidFramework/pull/28375)) [84015f846aa](https://github.com/microsoft/FluidFramework/commit/84015f846aa88483e74e95f30930feb8607290e7)
+
+  The legacy-beta `getDataStorePackagePath` function lets callers add the containing data store's package path to diagnostic telemetry.
+  For example, the path can identify the package containing a component that takes a long time to load.
+  The package path is diagnostic information, not an input that configures the runtime.
+  If the data store's snapshot details are not yet available, the lookup may fetch an omitted snapshot and read its attributes blob.
+  This work can add latency and affect the timing of other operations, so avoid awaiting the lookup on a latency-sensitive load path.
+  It does not resolve the handle, load the data store, or include the package path of a DDS.
+
+  ```typescript
+  import { getDataStorePackagePath } from "@fluidframework/runtime-utils/legacy";
+
+  const packagePath = await getDataStorePackagePath(containerRuntime, handle);
+  ```
+
+## 3.5.0
+
+Dependency updates only.
+
 ## 3.4.0
 
 Dependency updates only.

@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/devtools-core/alpha";
 import {
 	FormattedMainView,
+	FormattedTextDefault,
 	QuillMainView as PlainQuillView,
 	// TODO: These imports use /internal entrypoints because the underlying APIs
 	// haven't been promoted to public yet. Update to public entrypoints as the
@@ -32,8 +33,6 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- FormattedTextDefault has no public export. TODO: remove or alpha stabilize FormattedTextDefault.
-import { FormattedTextDefault } from "@fluidframework/tree/internal";
 import { TreeViewConfiguration, type ITree } from "fluid-framework";
 import {
 	asAlpha,

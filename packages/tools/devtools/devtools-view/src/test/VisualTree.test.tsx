@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	DataVisualization,
 	type FluidObjectTreeNode,
@@ -13,9 +15,11 @@ import {
 	type UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluidframework/devtools-core/internal";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
+import { TreeHeader } from "../components/data-visualization/TreeHeader.js";
 import {
 	FluidTreeView,
 	UnknownDataView,
@@ -29,6 +33,21 @@ const testFluidObjectId = "test-fluid-object-id";
 const testLabel = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
+	it("TreeHeader information opens below its icon", async (): Promise<void> => {
+		const { container } = render(
+			<TreeHeader label={testLabel} tooltipContents="Node information." />,
+		);
+		const icon = container.querySelector("svg");
+		assert(icon !== null);
+
+		await userEvent.setup().hover(icon);
+
+		const information = await screen.findByRole("tooltip");
+		await waitFor(() => {
+			assert.equal(information.dataset.popperPlacement, "bottom-start");
+		});
+	});
+
 	it("UnknownDataView", async (): Promise<void> => {
 		const input: UnknownObjectNode = {
 			nodeKind: VisualNodeKind.UnknownObjectNode,

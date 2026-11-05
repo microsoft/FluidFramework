@@ -23,7 +23,7 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
-	brandedNumberType,
+	brandedIntegerType,
 	IdDecodingContext,
 	type Brand,
 	type IdDecoderOptionsOriginatorless,
@@ -36,19 +36,25 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	EncodedFieldBatchVTextExperimental,
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
-import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
+import { schemaCompressedEncodeVTextExperimental } from "./schemaBasedEncodeVText.js";
+import {
+	uncompressedEncodeV1,
+	uncompressedEncodeV2,
+	uncompressedEncodeVTextExperimental,
+} from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
+const ChunkReferenceId = brandedIntegerType<ChunkReferenceId>({ minimum: 0 });
 
 /**
  * Properties for incremental encoding.
@@ -75,7 +81,7 @@ export interface IncrementalEncoder {
 	 */
 	encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchAnyVersion,
 	): ChunkReferenceId[];
 }
 
@@ -95,7 +101,7 @@ export interface IncrementalDecoder {
 	 */
 	decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
+		chunkDecoder: (encoded: EncodedFieldBatchAnyVersion) => TreeChunk,
 	): TreeChunk;
 }
 /**
@@ -230,7 +236,7 @@ export type FieldBatchCodec = VersionDispatchingCodec<
  */
 function makeFieldBatchCodecForVersion(
 	version: FieldBatchFormatVersion,
-	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchV1OrV2,
+	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchAnyVersion,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
 		policy: SchemaPolicy,
@@ -238,21 +244,21 @@ function makeFieldBatchCodecForVersion(
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
 		isSummary: boolean,
-	) => EncodedFieldBatchV1OrV2,
+	) => EncodedFieldBatchAnyVersion,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	return {
 		encode: (
 			data: FieldBatch,
 			context: FieldBatchEncodingContext,
-		): EncodedFieldBatchV1OrV2 => {
+		): EncodedFieldBatchAnyVersion => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: EncodedFieldBatchV1OrV2;
+			let encoded: EncodedFieldBatchAnyVersion;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -295,7 +301,7 @@ function makeFieldBatchCodecForVersion(
 			return encoded;
 		},
 		decode: (
-			data: EncodedFieldBatchV1OrV2,
+			data: EncodedFieldBatchAnyVersion,
 			context: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
@@ -329,6 +335,19 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 			uncompressedEncodeV2,
 			schemaCompressedEncodeV2,
 			EncodedFieldBatchV2,
+		),
+	},
+	{
+		// Experimental: no minVersionForCollab, so only a write version override can select it.
+		// Removing the override does not guarantee compatibility with older clients:
+		// incremental summaries may still reference unchanged chunks encoded in this format.
+		minVersionForCollab: undefined,
+		formatVersion: FieldBatchFormatVersion.vTextExperimental,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.vTextExperimental,
+			uncompressedEncodeVTextExperimental,
+			schemaCompressedEncodeVTextExperimental,
+			EncodedFieldBatchVTextExperimental,
 		),
 	},
 ]);

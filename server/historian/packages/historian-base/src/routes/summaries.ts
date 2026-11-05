@@ -6,6 +6,7 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	LatestSummaryId,
+	NetworkError,
 	type IWholeFlatSummary,
 	type IWholeSummaryPayload,
 	type IWriteSummaryResponse,
@@ -35,13 +36,20 @@ import winston from "winston";
 
 import type {
 	ICache,
+	ISummaryAccessContext,
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	RestGitService,
+	IDocumentAccessProof,
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
+	ITrustedCreateContext,
 } from "../services";
-import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
+import { isEphemeralSummaryAccessStore } from "../services";
+import { parseToken, Constants } from "../utils";
 
+import { resolveSummaryAccess } from "./summaryAccess";
 import * as utils from "./utils";
 
 export function create(
@@ -57,6 +65,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const {
 		router,
@@ -67,6 +77,30 @@ export function create(
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 	const reuseCustomerAccessTokenForSummaryOwnership: boolean =
 		config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false;
+	// Local records do not carry a document generation, so they are safe only when
+	// Alfred prevents caller-selected document IDs from being reused.
+	// Historian stores Alfred as an endpoint string, so this capability is separate.
+	const ephemeralSummaryAccessEnabled =
+		config.get("alfredEnforcesServerGeneratedDocumentId") === true;
+	const accessStore =
+		ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache) ? cache : undefined;
+
+	function getEphemeralSummaryAccess(
+		proof: IDocumentAccessProof | undefined,
+	): ISummaryAccessContext | undefined {
+		if (proof?.containerType !== "ephemeral") {
+			return undefined;
+		}
+		return {
+			tenantId: proof.tenantId,
+			documentId: proof.documentId,
+			isEphemeralContainer: true,
+			createTime: proof.ephemeralCreateTime,
+			storageName: undefined,
+			source: "localEphemeral",
+			accessProof: proof,
+		};
+	}
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -111,8 +145,29 @@ export function create(
 		routeType: utils.SummaryRouteType,
 		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<RestGitService> {
-		await utils.validateSummaryDocument({
+	): Promise<{ service: RestGitService; access?: ISummaryAccessContext }> {
+		if (documentAccessAuthorizer !== undefined) {
+			const { service, accessProof } = await utils.createGitServiceWithAccess({
+				config,
+				tenantId,
+				authorization,
+				tenantService,
+				storageNameRetriever,
+				documentManager,
+				cache,
+				allowDisabledTenant,
+				ephemeralDocumentTTLSec,
+				simplifiedCustomDataRetriever,
+				postEphemeralContainerChecker,
+				query,
+				accessOperation:
+					operation === "get" ? "read" : operation === "post" ? "write" : "delete",
+				containerTypeHint: "ephemeral",
+				documentAccessAuthorizer,
+			});
+			return { service, access: getEphemeralSummaryAccess(accessProof) };
+		}
+		const access = await resolveSummaryAccess({
 			tenantId,
 			authorization,
 			documentManager,
@@ -121,8 +176,9 @@ export function create(
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
+			accessStore,
 		});
-		return utils.createGitService({
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
@@ -135,7 +191,12 @@ export function create(
 			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
 			query,
+			accessOperation:
+				operation === "get" ? "read" : operation === "post" ? "write" : "delete",
+			existingAccessProof: access.accessProof,
+			summaryAccessContext: access,
 		});
+		return { service, access };
 	}
 
 	async function getSummary(
@@ -146,7 +207,7 @@ export function create(
 		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
-		const service = await createProtectedSummaryService(
+		const { service } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"get",
@@ -165,26 +226,66 @@ export function create(
 		storageName?: string,
 		isEphemeralContainer?: boolean,
 		query?: Query,
+		opaqueCreateContext?: string,
 	): Promise<IWriteSummaryResponse> {
 		let service: RestGitService;
 		if (initial === true) {
-			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
-				[BaseTelemetryProperties.correlationId]:
-					getGlobalTelemetryContext().getProperties().correlationId,
-				[BaseTelemetryProperties.tenantId]: tenantId,
-				[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-					tenantId,
-					authorization,
-				),
-				operation: "post",
-				routeType: "notApplicable",
-				outcome: "exempted",
-			});
+			const { accessToken, documentId } = utils.getTokenDocumentIdentity(
+				tenantId,
+				authorization,
+			);
+			const authenticatedTenantDetails = await tenantService.getTenant(
+				tenantId,
+				accessToken,
+				false,
+			);
+			let trustedCreateContext: ITrustedCreateContext | undefined;
+			if (documentAccessAuthorizer === undefined) {
+				Lumberjack.info("HistorianInitialSummaryUploadExemption", {
+					[BaseTelemetryProperties.correlationId]:
+						getGlobalTelemetryContext().getProperties().correlationId,
+					[BaseTelemetryProperties.tenantId]: tenantId,
+					[BaseTelemetryProperties.documentId]: documentId,
+					operation: "post",
+					routeType: "notApplicable",
+					outcome: "exempted",
+				});
+			} else {
+				if (
+					trustedCreateContextResolver === undefined ||
+					opaqueCreateContext === undefined
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				try {
+					trustedCreateContext = await trustedCreateContextResolver.resolve({
+						tenantId,
+						documentId,
+						opaqueToken: opaqueCreateContext,
+						containerTypeHint:
+							isEphemeralContainer === undefined
+								? undefined
+								: isEphemeralContainer
+								? "ephemeral"
+								: "durable",
+					});
+				} catch {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				if (
+					trustedCreateContext.tenantId !== tenantId ||
+					trustedCreateContext.documentId !== documentId ||
+					trustedCreateContext.expiresAtMs <= Date.now()
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+			}
 			service = await utils.createGitService({
 				config,
 				tenantId,
 				authorization,
 				tenantService,
+				authenticatedTenantDetails,
 				storageNameRetriever,
 				documentManager,
 				cache,
@@ -195,16 +296,19 @@ export function create(
 				simplifiedCustomDataRetriever,
 				postEphemeralContainerChecker,
 				query,
+				accessOperation: "create",
+				trustedCreateContext,
+				documentAccessAuthorizer,
 			});
 		} else {
-			service = await createProtectedSummaryService(
+			({ service } = await createProtectedSummaryService(
 				tenantId,
 				authorization,
 				"post",
 				"notApplicable",
 				false,
 				query,
-			);
+			));
 		}
 		return service.createSummary(params, initial);
 	}
@@ -214,13 +318,39 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await createProtectedSummaryService(
+		const { service, access } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"delete",
 			"notApplicable",
 			true,
 		);
+		// The Redis tombstone and GitRest deletion are not atomic. Marking access deleted first
+		// may briefly deny an existing summary if GitRest fails, but avoids leaving an active
+		// authorization record during or after deletion.
+		if (access?.isEphemeralContainer === true && accessStore !== undefined) {
+			try {
+				await accessStore.markSummaryAccessDeleted(
+					access.tenantId,
+					access.documentId,
+					access.createTime,
+					access.createTime + (ephemeralDocumentTTLSec ?? 24 * 60 * 60) * 1000,
+				);
+			} catch (error) {
+				utils.logOwnershipOutcome(
+					access.tenantId,
+					access.documentId,
+					"delete",
+					"notApplicable",
+					"dependencyError",
+					error,
+					{
+						source: access.source,
+					},
+				);
+				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
+			}
+		}
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);
@@ -311,6 +441,7 @@ export function create(
 				request.get("StorageName"),
 				isEphemeralContainer,
 				request.query,
+				request.get("Fluid-Create-Context"),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

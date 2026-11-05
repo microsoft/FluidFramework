@@ -13,7 +13,8 @@ import {
 	emulateProductionBuild,
 	nonProductionConditionalsIncluded,
 	onAssertionFailure,
-} from "../assert.js";
+	prefixPredicate,
+} from "../index.js";
 
 describe("assert", () => {
 	it("Validate Shortcode Format", () => {
@@ -148,5 +149,11 @@ describe("assert", () => {
 		strict.throws(() => assert(false, "D"));
 
 		strict.deepEqual(log, ["A", "B", "B", "C"]);
+	});
+
+	it("prefixPredicate", () => {
+		strict.equal(prefixPredicate("Prefix", true), true);
+		strict.equal(prefixPredicate("Prefix", "details"), "Prefix: details");
+		strict.equal(prefixPredicate("Prefix", { toString: () => "details" }), "Prefix: details");
 	});
 });

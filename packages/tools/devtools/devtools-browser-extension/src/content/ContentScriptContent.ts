@@ -66,6 +66,12 @@ export function runContentScript(
 		function relayMessageFromPageToBackground(
 			event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 		): void {
+			if (event.source !== window) {
+				// Accept only messages posted by this window.
+				// See https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns
+				return;
+			}
+
 			const message = event.data;
 
 			// Only relay message if it is one of ours, and if the source is the window's Devtools instance

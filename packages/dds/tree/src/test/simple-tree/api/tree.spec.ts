@@ -12,7 +12,7 @@ import {
 
 import type { Revertible } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
@@ -650,6 +650,7 @@ describe("simple-tree tree", () => {
 			fork.root = 44;
 
 			// Verify
+			assert(fork.checkout instanceof TreeCheckout);
 			fork.checkout.switchBranch(branchBeforeRewind);
 			assert.equal(fork.branchHistory.length, 2);
 			assert.equal(fork.root, 2);
@@ -663,12 +664,12 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize([]);
 
-			const revision1 = view.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
+			const commit1 = view.branchHistory.getHead();
+			assert(commit1 !== undefined, "commit should be defined");
 			// Test with some changes made outside of a transaction
 			view.root.insertAtEnd("A");
-			const revision2 = view.branchHistory.getHead()?.revision;
-			assert(revision2 !== undefined, "revision should be defined");
+			const commit2 = view.branchHistory.getHead();
+			assert(commit2 !== undefined, "commit should be defined");
 			// Test with some changes made in a transaction
 			view.runTransaction(() => {
 				view.root.insertAtEnd("B");
@@ -676,38 +677,42 @@ describe("simple-tree tree", () => {
 			view.runTransaction(() => {
 				view.root.insertAtEnd("C");
 			});
-			const revision4 = view.branchHistory.getHead()?.revision;
-			assert(revision4 !== undefined, "revision should be defined");
+			const commit4 = view.branchHistory.getHead();
+			assert(commit4 !== undefined, "commit should be defined");
 
 			// Consistency check
 			assert.equal(view.branchHistory.length, 4);
 
 			// Act
-			view.revertTo(revision2);
+			assert(commit2.revertTo !== undefined);
+			commit2.revertTo();
 
-			const revision5 = view.branchHistory.getHead()?.revision;
-			assert(revision5 !== undefined, "revision should be defined");
+			const commit5 = view.branchHistory.getHead();
+			assert(commit5 !== undefined, "commit should be defined");
 
 			// Verify
 			assert.deepEqual([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 5);
 
 			// Act
-			view.revertTo(revision1);
+			assert(commit1.revertTo !== undefined);
+			commit1.revertTo();
 
 			// Verify
 			assert.deepEqual([...view.root], []);
 			assert.equal(view.branchHistory.length, 6);
 
 			// Act
-			view.revertTo(revision5);
+			assert(commit5.revertTo !== undefined);
+			commit5.revertTo();
 
 			// Verify
 			assert.deepEqual([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 7);
 
 			// Act
-			view.revertTo(revision4);
+			assert(commit4.revertTo !== undefined);
+			commit4.revertTo();
 
 			// Verify
 			assert.deepEqual([...view.root], ["A", "B", "C"]);
@@ -726,6 +731,10 @@ describe("simple-tree tree", () => {
 					schema: [schema.number, schema.string],
 				}),
 			);
+			const commit = upgradedView.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
 			upgradedView.runTransaction(() => {
 				upgradedView.upgradeSchema();
 				upgradedView.root = "upgraded";
@@ -733,6 +742,8 @@ describe("simple-tree tree", () => {
 			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
 			assert(schemaRevision !== undefined, "revision should be defined");
 
+			assert.equal(commit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
 			assert.throws(
 				() => upgradedView.revertTo(revision),
 				validateUsageError(
@@ -753,8 +764,10 @@ describe("simple-tree tree", () => {
 			originalViewA.initialize(1);
 			provider.synchronizeMessages();
 
-			const revision = originalViewA.branchHistory.getHead()?.revision;
-			assert(revision !== undefined, "revision should be defined");
+			const commit = originalViewA.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
 			originalViewA.dispose();
 
 			const upgradedViewA = treeA.kernel.viewWith(upgradedConfig);
@@ -767,11 +780,12 @@ describe("simple-tree tree", () => {
 			assert.equal(upgradedViewA.root, "upgraded");
 			assert.equal(viewB.compatibility.isEquivalent, true);
 			assert.equal(viewB.root, "upgraded");
-
+			assert.equal(commit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
 			assert.throws(
-				() => upgradedViewA.revertTo(revision),
+				() => upgradedViewA.revertTo(commit.revision),
 				validateUsageError(
-					`Cannot revert to revision ${revision} because the schema changed at intermediate commit ${schemaRevision}.`,
+					`Cannot revert to revision ${commit.revision} because the schema changed at intermediate commit ${schemaRevision}.`,
 				),
 			);
 			provider.synchronizeMessages();
@@ -789,12 +803,13 @@ describe("simple-tree tree", () => {
 				upgradedView.upgradeSchema();
 				upgradedView.root = "upgraded";
 			});
-			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
-			assert(schemaRevision !== undefined, "revision should be defined");
+			const schemaCommit = upgradedView.branchHistory.getHead();
+			assert(schemaCommit !== undefined);
 			const upgradedSchema = upgradedView.checkout.storedSchema.clone();
 			upgradedView.root = "edited";
 
-			upgradedView.revertTo(schemaRevision);
+			assert(schemaCommit.revertTo !== undefined);
+			schemaCommit.revertTo();
 
 			assert.equal(upgradedView.root, "upgraded");
 			expectSchemaEqual(upgradedView.checkout.storedSchema, upgradedSchema);
@@ -805,11 +820,16 @@ describe("simple-tree tree", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision = view.branchHistory.getHead()?.revision;
-			assert(revision !== undefined, "revision should be defined");
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
 
 			// Act
-			view.revertTo(revision);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+			revertTo();
+			assert.throws(() => revertTo(), validateUsageError(/more than once/));
+			assert(commit.revertTo !== undefined);
+			commit.revertTo();
 
 			// Verify
 			assert.equal(view.root, 1);
@@ -821,20 +841,26 @@ describe("simple-tree tree", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision1 = view.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
+			const commit1 = view.branchHistory.getHead();
+			assert(commit1 !== undefined);
 			view.root = 2;
 			view.root = 3;
+			const revertTo = commit1.revertTo;
+			assert(revertTo !== undefined);
 
 			const revertibles: Revertible[] = [];
 			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				assert.equal(commit1.revertTo, undefined);
+				assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
 				if (getRevertible !== undefined) {
 					revertibles.push(getRevertible());
 				}
 			});
 
-			view.revertTo(revision1);
+			assert(commit1.revertTo !== undefined);
+			commit1.revertTo();
 			unsubscribe();
+			assert(commit1.revertTo !== undefined);
 
 			assert.equal(view.root, 1);
 			assert.equal(revertibles.length, 1);
@@ -881,6 +907,91 @@ describe("simple-tree tree", () => {
 			);
 		});
 
+		it("reverts on the originating branch after a rebase", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			const fork = view.fork();
+			fork.root = 2;
+			const commit = fork.branchHistory.getHead();
+			fork.root = 4;
+			view.root = 3;
+
+			fork.rebaseOnto(view);
+			assert(commit?.revertTo !== undefined);
+			commit.revertTo();
+
+			assert.equal(fork.root, 2);
+			assert.equal(view.root, 3);
+		});
+
+		it("rejects a commit obtained from a branch that has been replaced", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			const fork = view.fork();
+			const commit = fork.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+			fork.rewindTo(commit.revision);
+
+			assert.equal(commit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+		});
+
+		it("rejects a saved revert method after an ordinary edit while allowing a fresh method", () => {
+			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+			view.initialize(1);
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+
+			view.root = 2;
+
+			const freshRevertTo = commit.revertTo;
+			assert(freshRevertTo !== undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+			assert.equal(view.root, 2);
+			assert.equal(view.branchHistory.length, 2);
+
+			freshRevertTo();
+			assert.equal(view.root, 1);
+			assert.equal(view.branchHistory.length, 3);
+		});
+
+		it("temporarily disallows reverting during a transaction", () => {
+			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+			view.initialize(1);
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+
+			view.runTransaction(() => {
+				assert.equal(commit.revertTo, undefined);
+				assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+			});
+
+			assert(commit.revertTo !== undefined);
+		});
+
+		it("disallows reverting after the branch is disposed", () => {
+			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+			view.initialize(1);
+			const fork = view.fork();
+			const commit = fork.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+
+			fork.dispose();
+
+			assert.equal(commit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+		});
+
 		it("overwrites concurrent changes that are sequenced before it when they affect the same part of the tree", () => {
 			// Setup: two clients viewing the same tree.
 			const config = new TreeViewConfiguration({ schema: schema.number });
@@ -891,8 +1002,8 @@ describe("simple-tree tree", () => {
 			viewA.initialize(1);
 			provider.synchronizeMessages();
 
-			const revision1 = viewA.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
+			const commit1 = viewA.branchHistory.getHead();
+			assert(commit1 !== undefined);
 			viewA.root = 2;
 			provider.synchronizeMessages();
 
@@ -904,7 +1015,8 @@ describe("simple-tree tree", () => {
 			// Client B edits the root, and client A reverts back to revision1.
 			// The provider sequences ops in the order of submission, so B's edit is sequenced before A's revert.
 			viewB.root = 3;
-			viewA.revertTo(revision1);
+			assert(commit1.revertTo !== undefined);
+			commit1.revertTo();
 
 			// Both clients optimistically see their own change before sequencing.
 			assert.equal(viewA.root, 1);
@@ -935,8 +1047,8 @@ describe("simple-tree tree", () => {
 			viewA.initialize({ foo: 1, bar: 1 });
 			provider.synchronizeMessages();
 
-			const revision1 = viewA.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
+			const commit1 = viewA.branchHistory.getHead();
+			assert(commit1 !== undefined);
 			viewA.root.foo = 2;
 			provider.synchronizeMessages();
 
@@ -948,7 +1060,8 @@ describe("simple-tree tree", () => {
 			// Client B edits `bar`, and client A reverts back to revision1 (which only affects `foo`).
 			// The provider sequences ops in the order of submission, so B's edit is sequenced before A's revert.
 			viewB.root.bar = 3;
-			viewA.revertTo(revision1);
+			assert(commit1.revertTo !== undefined);
+			commit1.revertTo();
 
 			// Both clients optimistically see their own change before sequencing.
 			assert.deepEqual([viewA.root.foo, viewA.root.bar], [1, 1]);

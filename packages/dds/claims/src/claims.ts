@@ -20,6 +20,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -68,6 +69,7 @@ const snapshotFileName = "header";
  * {@inheritDoc IClaims}
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	private readonly _events = createEmitter<IClaimsEvents>();
 	public readonly events: Listenable<IClaimsEvents> = this._events;
