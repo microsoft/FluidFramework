@@ -73,7 +73,10 @@ Automatic summarization uses the standard Fluid runtime's election and summary s
 The elected client starts a separate summarizer that publishes and acknowledges snapshots, including incremental summaries, for subsequent loads.
 Client-side garbage collection uses the standard Fluid runtime defaults and persists its state in summaries.
 This is independent of backend retention: Sea retains stored content and operation history, so automatic summaries do not provide bounded history or background compaction.
-The driver still scans retained history to reconstruct sequence-number mappings before replaying the selected snapshot's suffix.
+Snapshots include versioned driver projection state: the sequence mappings still needed for references and the membership modes at the summary position.
+Opening a document restores this state and reads only the snapshot's suffix, without downloading earlier operations.
+An open client keeps its selected projection base across reconnects so recovery does not skip unprocessed operations when a newer summary appears.
+Snapshots without the current projection format are rejected; there is no legacy-history fallback.
 The wrapper does not add automatic reconnect, authentication, or production membership semantics.
 The driver depends on the standard loader/runtime helpers but still has no transitive SharedTree dependency, including development dependencies.
 

@@ -25,6 +25,8 @@ describe("SEA ServiceClient", () => {
 		const getSnapshotTree = spy(SeaDocumentStorage.prototype, "getSnapshotTree");
 		const containers: FluidContainer[] = [];
 		const publications: bigint[] = [];
+		let requireSnapshotSuffix = false;
+		let suffixReads = 0;
 		try {
 			const root = makeStubDataStoreKind("summary-root");
 			const child = makeStubDataStoreKind("summary-child");
@@ -36,8 +38,21 @@ describe("SEA ServiceClient", () => {
 				oldestSupportedClient: "2.20.0",
 				openSession: async (document, options) => {
 					const session = await service.open(document, options);
+					const floor = requireSnapshotSuffix
+						? (await session.getSnapshot())?.atEvent
+						: undefined;
 					return {
 						...session,
+						read: (after, stopAfter) => {
+							if (floor !== undefined) {
+								assert.ok(
+									after !== undefined && after >= floor,
+									"loading a container must not download pre-snapshot history",
+								);
+								suffixReads++;
+							}
+							return session.read(after, stopAfter);
+						},
 						publishSnapshot: async (...args) => {
 							const snapshot = await session.publishSnapshot(...args);
 							publications.push(snapshot.atEvent);
@@ -76,6 +91,7 @@ describe("SEA ServiceClient", () => {
 				assert.equal(publications.length, summaryIndex + 2);
 				assert.ok((publications[summaryIndex + 1] ?? 0n) > (publications[summaryIndex] ?? 0n));
 			}
+			requireSnapshotSuffix = true;
 			const reloaded = await client.loadContainer(container.id, registry);
 			containers.push(reloaded);
 			const reloadedRuntime = await loadRuntime.lastCall.returnValue;
@@ -93,6 +109,7 @@ describe("SEA ServiceClient", () => {
 				}
 			}
 			assert.ok(reloadedRuntime.runtime.deltaManager.initialSequenceNumber > 0);
+			assert.ok(suffixReads > 0, "load must exercise the guarded history reader");
 			for (const [index, childId] of childIds.entries()) {
 				assert.ok(gcNodes[`/${childId}`], "GC must track the attached child");
 				assert.ok(gcNodes["/"]?.outboundRoutes.includes(`/${childId}`));

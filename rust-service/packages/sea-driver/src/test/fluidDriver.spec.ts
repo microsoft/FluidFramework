@@ -316,15 +316,23 @@ describe("SeaDriver", () => {
 			await observer.openSession(document, encoder.encode("observer-session"));
 			assert.deepEqual(observer.positionForSequence(0), initial);
 			assert.deepEqual(observer.positionForSequence(1), position);
-			assert.equal((await observer.readProjected()).operations[0]?.sequenceNumber, 1n);
+			assert.deepEqual((await observer.readProjected()).operations, []);
+			await assert.rejects(
+				observer.readProjected(initial),
+				/precedes the loaded Fluid snapshot/u,
+			);
 			assert.deepEqual((await observer.snapshot(initial))?.id, initial);
 			assert.deepEqual((await observer.latestSnapshot())?.id, version);
 			assert.equal(await observer.snapshot(encodeU64(999n)), undefined);
 			const firstSubscription = await observer.subscribeProjected();
 			const secondSubscription = await observer.subscribeProjected();
-			assert.deepEqual((await firstSubscription.next()).position, position);
+			const suffix = await writer.submitEvent(
+				encoder.encode(JSON.stringify({ clientSequenceNumber: 2 })),
+				position,
+			);
+			assert.deepEqual((await firstSubscription.next()).position, suffix);
 			await firstSubscription.cancel();
-			assert.deepEqual((await secondSubscription.next()).position, position);
+			assert.deepEqual((await secondSubscription.next()).position, suffix);
 			await secondSubscription.cancel();
 			const connection = new SeaDeltaConnection(
 				"observer",
@@ -359,6 +367,98 @@ describe("SeaDriver", () => {
 			observer.disconnect();
 			await Promise.all([writer.reconnect(), observer.reconnect()]);
 			service.close();
+		}
+	});
+
+	it("restores projection and membership at the summary cut without reading its prefix", async () => {
+		const service = await createMemoryService({ environment: "node" });
+		const writer = new SeaSessionDriverClient(service.open, "clientSelected");
+		let floor: bigint | undefined;
+		const reads: bigint[] = [];
+		const observer = new SeaSessionDriverClient(async (document, options) => {
+			const session = await service.open(document, options);
+			return {
+				...session,
+				read: (after, stopAfter) => {
+					assert.ok(
+						floor !== undefined && after !== undefined && after >= floor,
+						"must not request history before the snapshot",
+					);
+					reads.push(after);
+					return session.read(after, stopAfter);
+				},
+			};
+		}, "readOnly");
+		try {
+			const document = await writer.create();
+			await writer.openSession(document, encoder.encode("writer"));
+			const root = await writer.publishSummary([]);
+			const initial = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
+			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "read" })));
+			const position = await writer.submitEvent(encoder.encode("{}"), initial);
+			await writer.readProjected();
+			const atSequence = 2n;
+			const later = await writer.submitEvent(encoder.encode("{}"), position);
+			await writer.readProjected();
+			await writer.publishSnapshotRoot(initial, position, root.digest);
+			floor = new DataView(
+				position.buffer,
+				position.byteOffset,
+				position.byteLength,
+			).getBigUint64(0);
+			writer.disconnect();
+			await writer.reconnect();
+			await observer.openSession(document, encoder.encode("reader"));
+			const history = await observer.readProjected();
+			assert.deepEqual(
+				history.operations.map((op) => op.sequenceNumber),
+				[atSequence + 1n, atSequence + 2n],
+			);
+			assert.deepEqual(history.operations[0]?.position, later);
+			assert.equal(history.operations[1]?.eventType, "left");
+			assert.equal(history.operations[1]?.membershipMode, "read");
+			assert.deepEqual(observer.positionForSequence(Number(atSequence)), position);
+			observer.disconnect();
+			await observer.reconnect();
+			await observer.openSession(document, encoder.encode("replacement"), history.cursor);
+			assert.deepEqual(
+				(await observer.readProjected(position)).operations,
+				history.operations,
+			);
+			assert.ok(reads.length >= 4);
+		} finally {
+			writer.disconnect();
+			observer.disconnect();
+			await Promise.all([writer.reconnect(), observer.reconnect()]);
+			service.close();
+		}
+	});
+
+	it("rejects missing and unsupported projection checkpoint formats", async () => {
+		for (const version of [undefined, 99]) {
+			const service = await createMemoryService({ environment: "node" });
+			const raw = await service.open(undefined, {});
+			const reader = new SeaSessionDriverClient(service.open, "readOnly");
+			try {
+				const metadata = await raw.putBlob(encoder.encode(JSON.stringify({ version })));
+				const root = await raw.putDirectory(
+					version === undefined ? [] : [{ name: ".sea-fluid-projection", child: metadata }],
+				);
+				const position = await raw.submit(undefined, encoder.encode("{}"));
+				const coordination = await raw.coordinateSnapshots("clientSelected");
+				await coordination.next();
+				await raw.publishSnapshot(undefined, undefined, position, root);
+				await assert.rejects(
+					reader.openSession(raw.document, encoder.encode("reader")),
+					/missing Fluid projection metadata|Unsupported or invalid Fluid projection checkpoint/u,
+				);
+				coordination.cancel();
+			} finally {
+				reader.disconnect();
+				await reader.reconnect();
+				await raw.close();
+				service.close();
+			}
 		}
 	});
 

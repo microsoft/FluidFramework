@@ -48,6 +48,15 @@ interface DirectoryNode {
 	readonly children: Map<string, DirectoryNode | SeaTreeId>;
 }
 
+/** Projection state at one published snapshot, independent of later stream delivery. */
+interface ProjectionCheckpoint {
+	readonly version: 1;
+	readonly atEvent: string;
+	readonly positions: readonly (readonly [string, string])[];
+	readonly members: readonly (readonly [string, string, "read" | "write"])[];
+}
+
+const projectionBlobName = ".sea-fluid-projection";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -72,6 +81,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	public readonly applicationSequenceOffset = 0;
 	/** Announced modes are retained to distinguish read-only audience from writer quorum. */
 	private readonly membershipModes = new Map<string, "read" | "write">();
+	private readonly membershipPositions = new Map<string, { joined: bigint; left?: bigint }>();
+	private readonly minimumReferences = new Map<bigint, bigint | undefined>();
+	private projectionCursor: bigint | undefined;
+	private projectionBase: ProjectionCheckpoint | undefined;
+	private projectionDocument: string | undefined;
 	/** Mapping from opaque SEA positions to Fluid sequence numbers. */
 	private readonly positionSequences = new Map<bigint, bigint>();
 	/** Reverse mapping used by Fluid reference sequence numbers. */
@@ -163,7 +177,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const session = await this.factory(document, {});
 		let stream: SeaStream<SeaLoadResult> | undefined;
 		try {
-			stream = session.read();
+			stream = session.read(this.projectionCursor);
 			await stream.next();
 			return session;
 		} catch (error) {
@@ -187,7 +201,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return this.session.document;
 	}
 
-	/** Opens fresh membership and rebuilds the retained Fluid sequence projection. */
+	/** Opens fresh membership and restores the projection before reading the snapshot suffix. */
 	public openSession(
 		document: Uint8Array,
 		session: Uint8Array,
@@ -210,13 +224,46 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		});
 		this.sessionIdentity = this.session.sessionId.slice();
 		try {
+			if (this.projectionDocument !== bytesKey(document)) {
+				this.projectionBase = undefined;
+				this.projectionDocument = bytesKey(document);
+			}
 			this.positionSequences.clear();
 			this.sequencePositions.clear();
 			this.membershipModes.clear();
+			this.membershipPositions.clear();
+			this.minimumReferences.clear();
+			this.projectionCursor = undefined;
 			this.nextSequence = 1n;
+			if (this.projectionBase === undefined) {
+				const snapshot = await this.current().getSnapshot(reference);
+				if (snapshot !== undefined) {
+					const entries = await this.current().getDirectory(snapshot.root);
+					const metadata = entries.find((entry) => entry.name === projectionBlobName);
+					if (metadata?.child.kind !== "blob")
+						throw new Error("SEA snapshot is missing Fluid projection metadata");
+					this.projectionBase = parseCheckpoint(
+						await this.current().getBlob(metadata.child),
+						snapshot.atEvent,
+					);
+				}
+			}
+			if (this.projectionBase !== undefined) {
+				for (const [position, sequence] of this.projectionBase.positions) {
+					this.positionSequences.set(BigInt(position), BigInt(sequence));
+					this.sequencePositions.set(BigInt(sequence), BigInt(position));
+					this.nextSequence = BigInt(sequence) + 1n;
+				}
+				for (const [id, joined, mode] of this.projectionBase.members) {
+					this.membershipModes.set(id, mode);
+					this.membershipPositions.set(id, { joined: BigInt(joined) });
+				}
+				this.projectionCursor = BigInt(this.projectionBase.atEvent);
+			}
 			await this.readProjectedFrom(this.current());
-			this.eventStream = this.current().read(reference);
-			this.eventResumeAfter = reference;
+			const start = this.readStart(reference);
+			this.eventStream = this.current().read(start);
+			this.eventResumeAfter = start;
 			const stream = await this.current().coordinateSnapshots(this.participation);
 			this.snapshotStream = stream;
 			const state = await stream.next();
@@ -309,7 +356,12 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 								),
 							);
 				if (handle !== undefined) this.stagedSnapshots.delete(handle);
-				await this.readProjectedFrom(session);
+				await this.readProjectedFrom(
+					session,
+					this.projectionCursor === undefined
+						? undefined
+						: encodePosition(this.projectionCursor),
+				);
 				const proposalSequence = Number(this.sequence(position));
 				await session.submit(
 					position,
@@ -399,11 +451,42 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			this.positionSequences.set(position, 0n);
 			this.sequencePositions.set(0n, position);
 		}
+		const sequence = this.positionSequences.get(position);
+		if (sequence === undefined) throw new Error("snapshot position is not projected");
+		const floor = this.minimumReferences.get(position);
+		const checkpoint: ProjectionCheckpoint = {
+			version: 1,
+			atEvent: position.toString(),
+			positions: [...this.positionSequences]
+				.filter(([at]) => at <= position && (floor === undefined || at >= floor))
+				.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+				.map(([at, seq]) => [at.toString(), seq.toString()]),
+			members: [...this.membershipPositions]
+				.filter(
+					([, member]) =>
+						member.joined <= position && (member.left === undefined || member.left > position),
+				)
+				.map(([id, member]) => [
+					id,
+					member.joined.toString(),
+					this.membershipModes.get(id) ?? "write",
+				]),
+		};
+		const session = this.current();
+		const entries = await session.getDirectory({ kind: "directory", bytes: root });
+		if (entries.some((entry) => entry.name === projectionBlobName))
+			throw new Error("summary uses the reserved Fluid projection path");
+		const metadata = await session.putBlob(encoder.encode(JSON.stringify(checkpoint)));
+		const snapshotRoot = await session.putDirectory(
+			[...entries, { name: projectionBlobName, child: metadata }].sort((a, b) =>
+				a.name.localeCompare(b.name),
+			),
+		);
 		const snapshot = await this.current().publishSnapshot(
 			decodePosition(expectedParent),
 			this.snapshotFence,
 			position,
-			{ kind: "directory", bytes: root },
+			snapshotRoot,
 		);
 		return encodePosition(snapshot.atEvent);
 	}
@@ -418,9 +501,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		session: SeaSession,
 		after?: Uint8Array,
 	): Promise<ProjectedReadPage> {
-		const stream = session.read(decodePosition(after));
+		const start = this.readStart(decodePosition(after));
+		const stream = session.read(start);
 		const operations: ProjectedOperation[] = [];
-		let cursor = after;
+		let cursor = start === undefined ? undefined : encodePosition(start);
 		try {
 			for (;;) {
 				const item = await stream.next();
@@ -441,14 +525,24 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		}
 	}
 
+	/** A snapshot replaces its prefix; explicit older cursors cannot be served by this projection. */
+	private readStart(after: bigint | undefined): bigint | undefined {
+		const base =
+			this.projectionBase === undefined ? undefined : BigInt(this.projectionBase.atEvent);
+		if (base !== undefined && after !== undefined && after < base)
+			throw new Error("requested history precedes the loaded Fluid snapshot");
+		return after ?? base;
+	}
+
 	/** Transfers the pre-opened stream once; later subscriptions open independent readers. */
 	public async subscribeProjected(
 		after?: Uint8Array,
 	): Promise<ProjectedOperationSubscription> {
-		if (this.eventStream === undefined || decodePosition(after) !== this.eventResumeAfter) {
+		const start = this.readStart(decodePosition(after));
+		if (this.eventStream === undefined || start !== this.eventResumeAfter) {
 			this.eventStream?.cancel();
-			this.eventStream = this.current().read(decodePosition(after));
-			this.eventResumeAfter = decodePosition(after);
+			this.eventStream = this.current().read(start);
+			this.eventResumeAfter = start;
 		}
 		const stream = this.eventStream;
 		if (stream === undefined) throw new Error("SEA event stream is not open");
@@ -500,7 +594,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return this.withArchiveSession(async (session) => {
 			const entries: SummaryEntry[] = [];
 			await this.flattenDirectory(session, { kind: "directory", bytes: digest }, "", entries);
-			return entries;
+			return entries.filter((entry) => decoder.decode(entry.path) !== projectionBlobName);
 		});
 	}
 
@@ -560,6 +654,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Projects initialization and the durable SEA floor into the same dense sequence space. */
 	private project(item: SeaEvent): ProjectedOperation | undefined {
+		if (this.projectionCursor === undefined || item.position > this.projectionCursor)
+			this.projectionCursor = item.position;
+		this.minimumReferences.set(item.position, item.minimumReference);
 		const message = (
 			item.eventType === "left" ? {} : JSON.parse(decoder.decode(item.payload))
 		) as {
@@ -583,6 +680,12 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const membership = bytesKey(item.session);
 		if (item.eventType === "joined") {
 			this.membershipModes.set(membership, message.mode ?? "write");
+			const previous = this.membershipPositions.get(membership);
+			this.membershipPositions.set(membership, { ...previous, joined: item.position });
+		}
+		if (item.eventType === "left") {
+			const member = this.membershipPositions.get(membership);
+			if (member !== undefined) member.left = item.position;
 		}
 		const membershipMode = this.membershipModes.get(membership);
 		const minimumSequenceNumber =
@@ -654,6 +757,72 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 /** Converts opaque identity bytes to a stable map key. */
 function bytesKey(bytes: Uint8Array): string {
 	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+/** Rejects incompatible or malformed state before exposing any restored projection. */
+function parseCheckpoint(bytes: Uint8Array, atEvent: bigint): ProjectionCheckpoint {
+	const value: unknown = JSON.parse(decoder.decode(bytes));
+	if (
+		typeof value !== "object" ||
+		value === null ||
+		!("version" in value) ||
+		value.version !== 1 ||
+		!("atEvent" in value) ||
+		value.atEvent !== atEvent.toString() ||
+		!("positions" in value) ||
+		!Array.isArray(value.positions) ||
+		!("members" in value) ||
+		!Array.isArray(value.members)
+	)
+		throw new Error("Unsupported or invalid Fluid projection checkpoint");
+	const positions: [string, string][] = [];
+	let previousPosition = -1n;
+	let previousSequence: bigint | undefined;
+	for (const pair of value.positions) {
+		if (
+			!Array.isArray(pair) ||
+			pair.length !== 2 ||
+			!isUnsignedInteger(pair[0]) ||
+			!isUnsignedInteger(pair[1])
+		)
+			throw new Error("Invalid Fluid projection position");
+		const position = BigInt(pair[0]);
+		const sequence = BigInt(pair[1]);
+		if (
+			position <= previousPosition ||
+			position > atEvent ||
+			(previousSequence !== undefined && sequence !== previousSequence + 1n)
+		)
+			throw new Error("Invalid Fluid projection ordering");
+		positions.push([pair[0], pair[1]]);
+		previousPosition = position;
+		previousSequence = sequence;
+	}
+	if (previousPosition !== atEvent)
+		throw new Error("Fluid projection checkpoint does not end at its snapshot");
+	const members: [string, string, "read" | "write"][] = [];
+	const identities = new Set<string>();
+	for (const member of value.members) {
+		if (
+			!Array.isArray(member) ||
+			member.length !== 3 ||
+			typeof member[0] !== "string" ||
+			!/^(?:[0-9a-f]{2})+$/u.test(member[0]) ||
+			!isUnsignedInteger(member[1]) ||
+			BigInt(member[1]) > atEvent ||
+			(member[2] !== "read" && member[2] !== "write") ||
+			identities.has(member[0])
+		)
+			throw new Error("Invalid Fluid projection membership");
+		identities.add(member[0]);
+		members.push([member[0], member[1], member[2]]);
+	}
+	return { version: 1, atEvent: atEvent.toString(), positions, members };
+}
+
+/** JSON stores exact unsigned integers as decimal strings. */
+function isUnsignedInteger(value: unknown): value is string {
+	return typeof value === "string" && /^(?:0|[1-9][0-9]*)$/u.test(value);
 }
 
 /** Inserts a summary path while rejecting ambiguous directory/blob collisions. */
