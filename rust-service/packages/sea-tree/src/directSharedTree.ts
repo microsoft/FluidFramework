@@ -98,7 +98,12 @@ export class DirectSharedTreeClient {
 		host.documentId = createDocument ? await client.create() : document;
 		await client.openSession(host.documentId, session);
 		host.session = client.sessionId ?? session;
-		host.subscription = await client.subscribeProjected();
+		const history = await client.readProjected();
+		if (history.operations.length > 0) {
+			host.applyOperations(history.operations);
+		}
+		host.cursor = history.cursor;
+		host.subscription = await client.subscribeProjected(host.cursor);
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
 	}

@@ -18,6 +18,7 @@ export async function createTree(client: SeaDriverClient): Promise<DirectSharedT
 
 Configure the returned `tree` with a SharedTree view and schema.
 Use the returned `documentId` when opening a peer with `createDocument` set to `false`.
+Opening an existing document replays its current operation history before `create()` returns, so the caller can configure a view immediately.
 `waitForIdle()` waits for the host's current local submissions to be acknowledged and applied; it does not wait for another client to catch up.
 Dispose views when finished, then call `dispose()` to stop subscription processing and disconnect the client.
 

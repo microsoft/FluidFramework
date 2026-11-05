@@ -32,6 +32,10 @@ describe("DirectSharedTreeClient", () => {
 		const clients: DirectSharedTreeClient[] = [];
 		const views: { dispose(): void }[] = [];
 		try {
+			const schemaFactory = new SchemaFactory("sea-package-test");
+			/** Shared root schema for the two package consumers. */
+			class State extends schemaFactory.object("State", { value: schemaFactory.number }) {}
+			const configuration = new TreeViewConfiguration({ schema: State });
 			const writer = await DirectSharedTreeClient.create(
 				new SeaSessionDriverClient(service.open, "seaSelected"),
 				new Uint8Array(),
@@ -40,6 +44,10 @@ describe("DirectSharedTreeClient", () => {
 				true,
 			);
 			clients.push(writer);
+			const writerView = writer.tree.viewWith(configuration);
+			views.push(writerView);
+			writerView.initialize({ value: 0 });
+			await writer.waitForIdle();
 			const observer = await DirectSharedTreeClient.create(
 				new SeaSessionDriverClient(service.open, "seaSelected"),
 				writer.documentId,
@@ -48,14 +56,6 @@ describe("DirectSharedTreeClient", () => {
 				false,
 			);
 			clients.push(observer);
-			const schemaFactory = new SchemaFactory("sea-package-test");
-			/** Shared root schema for the two package consumers. */
-			class State extends schemaFactory.object("State", { value: schemaFactory.number }) {}
-			const configuration = new TreeViewConfiguration({ schema: State });
-			const writerView = writer.tree.viewWith(configuration);
-			views.push(writerView);
-			writerView.initialize({ value: 0 });
-			await waitForPeer(writer, observer);
 			const observerView = observer.tree.viewWith(configuration);
 			views.push(observerView);
 			assert.equal(observerView.root.value, 0);
