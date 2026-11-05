@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
 	IChannel,
@@ -70,6 +71,8 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -434,6 +437,48 @@ describe("SharedTree", () => {
 		validateTreeConsistency(provider.trees[0], joinedLaterTree);
 	});
 
+	it("loads schema before reading forest storage", async () => {
+		const factory = configuredSharedTree({ forest: ForestTypeOptimized }).getFactory();
+		const provider = new TestTreeProviderLite(1, factory);
+		const tree = provider.trees[0];
+		const configuration = new TreeViewConfiguration({ schema: StringArray });
+		tree.viewWith(configuration).initialize(["loaded"]);
+		provider.synchronizeMessages();
+		const { summary } = await tree.summarize();
+		const storage = MockStorage.createFromSummary(summary);
+		const readBlob = storage.readBlob.bind(storage);
+		let schemaReadCompleted = false;
+		let forestRead = false;
+		storage.readBlob = async (path) => {
+			if (path.endsWith("/SchemaString")) {
+				await new Promise<void>((resolve) => setImmediate(resolve));
+				const contents = await readBlob(path);
+				schemaReadCompleted = true;
+				return contents;
+			}
+			if (path.includes("/Forest/")) {
+				assert(schemaReadCompleted, "Forest storage must not be read before schema loading");
+				forestRead = true;
+			}
+			return readBlob(path);
+		};
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: provider.getCompressor(tree),
+		});
+		const loadedTree = await factory.load(
+			runtime,
+			"loaded",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: storage,
+			},
+			factory.attributes,
+		);
+		assert(schemaReadCompleted);
+		assert(forestRead);
+		assert.deepEqual([...loadedTree.viewWith(configuration).root], ["loaded"]);
+	});
+
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
@@ -748,6 +793,124 @@ describe("SharedTree", () => {
 			initialTree: ["b", "c"],
 		});
 	});
+
+	for (const { attachState, lastToFinish } of [
+		AttachState.Detached,
+		AttachState.Attached,
+	].flatMap((runtimeAttachState) =>
+		["edit manager", "schema"].map((componentName) => ({
+			attachState: runtimeAttachState,
+			lastToFinish: componentName,
+		})),
+	)) {
+		it(`restores sequencing while ${attachState} when ${lastToFinish} finishes last`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			const configuration = new TreeViewConfiguration({ schema: StringArray });
+			const sourceView = source.viewWith(configuration);
+			sourceView.initialize(["a"]);
+			asAlpha(sourceView).fork();
+			sourceView.root.insertAtEnd("b");
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const editManagerStarted = new Deferred<void>();
+			const releaseEditManager = new Deferred<void>();
+			const schemaStarted = new Deferred<void>();
+			const releaseSchema = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${stringKey}`)) {
+					editManagerStarted.resolve();
+					await releaseEditManager.promise;
+				} else if (path.endsWith("/SchemaString")) {
+					schemaStarted.resolve();
+					await releaseSchema.promise;
+				}
+				return readBlob(path);
+			};
+			const targetRuntime = new MockFluidDataStoreRuntime({
+				attachState,
+				idCompressor: runtime.idCompressor,
+			});
+			new MockContainerRuntimeFactory().createContainerRuntime(targetRuntime);
+			let loadFinished = false;
+			const loading = factory
+				.load(
+					targetRuntime,
+					"target",
+					{
+						deltaConnection: targetRuntime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				)
+				.then((tree) => {
+					loadFinished = true;
+					return tree;
+				});
+			await Promise.all([editManagerStarted.promise, schemaStarted.promise]);
+			const [first, last] =
+				lastToFinish === "edit manager"
+					? [releaseSchema, releaseEditManager]
+					: [releaseEditManager, releaseSchema];
+			first.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			assert(!loadFinished, "Loading must wait for every component");
+			last.resolve();
+			const target = await loading;
+			const targetView = target.viewWith(configuration);
+			assert.deepEqual([...targetView.root], ["a", "b"]);
+			targetView.root.insertAtEnd("c");
+			assert.deepEqual([...targetView.root], ["a", "b", "c"]);
+		});
+	}
+
+	for (const failingBlob of [stringKey, "SchemaString"]) {
+		it(`rejects a failed ${failingBlob} read while another summary component is pending`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			source.viewWith(new TreeViewConfiguration({ schema: StringArray })).initialize(["a"]);
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const otherBlob = failingBlob === stringKey ? "SchemaString" : stringKey;
+			const failingReadStarted = new Deferred<void>();
+			const otherReadStarted = new Deferred<void>();
+			const failRead = new Deferred<void>();
+			const releaseOtherRead = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${failingBlob}`)) {
+					failingReadStarted.resolve();
+					await failRead.promise;
+					throw new Error("Intentional summary read failure");
+				}
+				if (path.endsWith(`/${otherBlob}`)) {
+					otherReadStarted.resolve();
+					await releaseOtherRead.promise;
+				}
+				return readBlob(path);
+			};
+			const rejected = assert.rejects(
+				factory.load(
+					runtime,
+					"target",
+					{
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				),
+				/Intentional summary read failure/,
+			);
+			await Promise.all([failingReadStarted.promise, otherReadStarted.promise]);
+			failRead.resolve();
+			await rejected;
+			releaseOtherRead.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+		});
+	}
 
 	it("can load a summary while detached", async () => {
 		// This test exercises the case where a detached tree loads a summary from another detached tree.
