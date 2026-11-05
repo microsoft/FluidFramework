@@ -24,52 +24,63 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Checks whether a client can view or upgrade a document's schema.
- *
- * @param documentViewConfiguration - The document schema and application-defined versions.
- * @param clientViewConfiguration - The client schema and application-defined versions.
- *
- * @returns Whether the client can view or upgrade the document schema.
+ * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
+ * (described by `documentViewConfiguration.schema`).
  *
  * @remarks
- * This check uses the default restrictive staged upgrade policy.
- * It ignores schema metadata.
+ * Schema metadata does not affect compatibility.
  * This function does not inspect document content.
  *
- * @example
- * The old schema is a Point2D object with x and y fields.
- * The new schema is a Point3D object with an extra optional z field.
- * The new client can upgrade the old schema.
- * The old client cannot view the new schema because it does not allow unknown optional fields.
+ * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
+ * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
+ * that adds an optional z field.
  *
  * ```ts
+ * // This snapshot is assumed to be the same as Point3D, except missing `z`.
  * const encodedDocumentSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
  * const documentViewConfiguration = importCompatibilitySchemaSnapshot(encodedDocumentSchema);
  *
+ * // Build the current view schema
  * const schemaFactory = new SchemaFactory("test");
  * class Point3D extends schemaFactory.object("Point", {
  * 	x: schemaFactory.number,
  * 	y: schemaFactory.number,
+ *
+ * 	// The current schema has a new optional field that was not present on Point2D
  * 	z: schemaFactory.optional(schemaFactory.number),
  * }) {}
  * const clientViewConfiguration = new TreeViewConfiguration({ schema: Point3D });
  *
- * const backwardsCompatibilityStatus = checkCompatibility(
- * 	documentViewConfiguration,
- * 	clientViewConfiguration,
- * );
+ * // Check to see if the document created by the historical view schema can be opened with the current view schema
+ * const backwardsCompatibilityStatus = checkCompatibility(documentViewConfiguration, clientViewConfiguration);
+ *
+ * // z is not present in Point2D, so the schema must be upgraded
  * assert.equal(backwardsCompatibilityStatus.canView, false);
+ *
+ * // The schema can be upgraded to add the new optional field
  * assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
  *
- * const forwardsCompatibilityStatus = checkCompatibility(
- * 	clientViewConfiguration,
- * 	documentViewConfiguration,
- * );
- * assert.equal(forwardsCompatibilityStatus.canView, false);
+ * // Test what the old version of the application would do with a tree using the new schema:
+ * const forwardsCompatibilityStatus = checkCompatibility(clientViewConfiguration, documentViewConfiguration);
+ *
+ * // If the old schema set `allowUnknownOptionalFields`, this would be true, but since it did not,
+ * // this assert will fail, detecting the forwards compatibility break:
+ * // this means these two versions of the application cannot collaborate on content using these schema.
+ * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
+ * @param documentViewConfiguration - Configuration whose `schema` was used to generate the stored schema persisted in the document.
+ * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
+ * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ *
+ * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
+ *
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
+ * without `canInitialize`.
+ *
  * @privateRemarks
- * TODO: Replace this export with a higher-level snapshot compatibility API.
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
  */
@@ -90,20 +101,18 @@ export function checkCompatibility(
 }
 
 /**
- * Exports a schema compatibility snapshot.
+ * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
+ *
+ * @remarks
+ * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
+ *
+ * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
  * @param config - The schema and application-defined versions to snapshot.
  *
- * @returns A JSON-compatible schema snapshot.
+ * @returns The JSON representation of the schema.
  *
- * @remarks
- * The same or newer package versions can load these snapshots.
- * Older package versions might not support the snapshot format.
- *
- * @see {@link importCompatibilitySchemaSnapshot}
- *
- * @example
- * Create and save a snapshot of a Point2D schema.
+ * @example Create and persist a snapshot of a Point2D schema.
  *
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
@@ -117,7 +126,7 @@ export function checkCompatibility(
  * ```
  *
  * @privateRemarks
- * TODO: Replace this export with a higher-level snapshot compatibility API.
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
  */
@@ -132,22 +141,19 @@ export function exportCompatibilitySchemaSnapshot(
 }
 
 /**
- * Imports a schema compatibility snapshot.
+ * Parse the format exported by {@link exportCompatibilitySchemaSnapshot} into a schema.
  *
- * @param config - The JSON-compatible schema snapshot to load.
+ * Can load snapshots created by the same or older package versions, but not necessarily newer versions.
  *
- * @returns A {@link TreeViewConfigurationAlpha} with the schema and application versions.
+ * @see {@link exportCompatibilitySchemaSnapshot} which creates these snapshots.
  *
- * @throws An error with `errorType: "usageError"` if the application version map is invalid.
+ * @param config - The JSON representation of the schema.
  *
- * @remarks
- * This can load snapshots from the same or older package versions.
- * Snapshots from newer package versions might use an unsupported format.
+ * @returns The schema and application-defined versions in a {@link TreeViewConfigurationAlpha}.
  *
- * @see {@link exportCompatibilitySchemaSnapshot}
+ * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
- * @example
- * Load a snapshot of a Point2D schema.
+ * @example Load and parse a snapshot of a Point2D schema.
  *
  * ```ts
  * const encodedSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
@@ -155,7 +161,7 @@ export function exportCompatibilitySchemaSnapshot(
  * ```
  *
  * @privateRemarks
- * TODO: Replace this export with a higher-level snapshot compatibility API.
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
  */
@@ -165,7 +171,8 @@ export function importCompatibilitySchemaSnapshot(
 	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
-	// Generated schemas can use the default configuration checks.
+	// We construct a TreeViewConfigurationAlpha here with the default parameters. The default set of validation parameters are fine for
+	// a schema produced by `generateSchemaFromSimpleSchema`.
 	return new TreeViewConfigurationAlpha({
 		schema: viewSchema.root,
 		// Snapshots restore versions, not runtime hash checks or telemetry.

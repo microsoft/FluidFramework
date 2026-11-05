@@ -34,22 +34,22 @@ import * as Format from "../simpleSchemaFormatV1.js";
 import * as FormatV2 from "../simpleSchemaFormatV2.js";
 
 /**
- * Encodes a view or stored schema for snapshot compatibility checks.
+ * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
  *
- * @param simpleSchema - The schema to encode.
- *
- * @returns A JSON-compatible schema snapshot.
- *
- * @remarks
- * Use this snapshot only to compare schema compatibility.
- * It does not include metadata or persisted metadata.
+ * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
+ * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
+ * Definition order is independent of the input map's iteration order.
+ * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  * Schemas without an application version map use snapshot v1.
  * Schemas with an application version map use snapshot v2.
- * Node definitions are sorted by identifier.
- * Field and allowed-type entries keep their input order.
+ *
+ * @param simpleSchema - The tree schema to convert.
+ *
+ * @returns A serializable representation of the schema.
  *
  * @privateRemarks
- * TODO: Replace this export with a higher-level snapshot compatibility API.
+ * Encodes to {@link Format.SimpleTreeSchemaFormat} or {@link FormatV2.SimpleTreeSchemaFormat}.
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
  */
@@ -88,21 +88,20 @@ export function encodeSchemaCompatibilitySnapshot(
 }
 
 /**
- * Decodes a schema compatibility snapshot into a {@link SimpleTreeSchema}.
+ * Decodes a JSON-compatible schema into a simple schema.
  *
- * @param encodedSchema - The snapshot to decode.
- * @param validator - An optional validator for the snapshot format.
+ * @param encodedSchema - The encoded schema to decode.
+ * @param validator - The format validator to use to validate the encoded schema.
  *
- * @returns The decoded schema.
+ * @returns A decoded simple schema.
  *
- * @throws An error with `errorType: "usageError"` if validation fails or
- * the application version map is invalid.
+ * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @privateRemarks
- * Without a validator, this function assumes the input has a supported snapshot format.
- * Check this behavior before the API is made stable.
+ * If a validator is not provided, this implicitly performs an unsafe type conversion:
+ * this is something our user facing APIs generally avoid doing, and should be reconsidered before stabilizing.
  *
- * TODO: Replace this export with a higher-level snapshot compatibility API.
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
  */

@@ -23,16 +23,13 @@ import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 /**
- * Returns whether `superset` accepts every tree that `original` accepts.
+ * Returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  *
  * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
- *
- * @remarks
- * Equivalent schemas return `true`.
- * An `undefined` {@link TreeNodeStoredSchema} accepts no trees.
- * Required string fields and identifier fields accept the same stored values.
- * The additive-only rules allow only one upgrade direction between these field kinds.
- * Set the parameter to `false` to check allowed content without those rules.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
@@ -146,17 +143,19 @@ export function allowsValueSuperset(
 }
 
 /**
- * Returns whether `superset` accepts every field that `original` accepts.
+ * Returns true iff `superset` is a superset of `original`.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * @param enforceAdditiveOnlySchemaUpgrades - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+ * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
+ * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
  *
  * @remarks
- * Equivalent schemas return `true`.
- * The additive-only rules prevent clients from repeatedly reversing field-kind changes.
- * Set the parameter to `false` to check allowed content without those rules.
+ * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
  *
  * @privateRemarks
- * See {@link FieldKindOptions.allowMonotonicUpgradeFrom} for allowed field-kind changes.
+ * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
@@ -206,15 +205,15 @@ export function allowsTreeSchemaIdentifierSuperset(
 }
 
 /**
- * Returns whether `superset` accepts every document that `original` accepts.
+ * Returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * A version of this that assumes a specific root field could be slightly more permissive in some simple cases,
+ * however if any extra fields and fields with unconstrained types are reachable,
+ * it would have to compare everything anyway.
  *
  * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
- *
- * @remarks
- * Equivalent schemas return `true`.
- * This checks all node schemas, including schemas not reachable from the root.
- * Detached fields can contain nodes of any stored type.
- * See {@link allowsFieldSuperset} for the field-kind upgrade rules.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,

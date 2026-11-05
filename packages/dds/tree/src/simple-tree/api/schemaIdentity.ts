@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaVersionMap } from "../../core/index.js";
+import type { LibraryId, SchemaVersionMap } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
@@ -28,6 +28,10 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 *
 	 * @remarks
 	 * Each value must be a non-negative safe integer.
+	 * To configure a single version, pass a number to {@link identifySchemaAlpha} or
+	 * {@link identifySchemaWithHashAlpha} instead of a version map.
+	 * The number is normalized to a map with the identifier `"schemaVersion"`.
+	 * This identifier is not reserved and follows the same upgrade rules as other identifiers.
 	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store these versions.
 	 * Stored versions cannot decrease, and library identifiers cannot be removed.
 	 *
@@ -96,16 +100,15 @@ export function identifySchemaAlpha(
 		/**
 		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
 		 */
-		readonly schemaVersion?: SchemaVersionMap;
+		readonly schemaVersion?: SchemaVersionMap | number;
 	} = {},
 ): SchemaIdentity {
 	return new SchemaIdentityInternal(undefined, undefined, options.schemaVersion);
 }
 
 /**
- * Implements {@link SchemaIdentity} without the hash algorithm.
- *
- * @remarks
+ * Runtime implementation of {@link SchemaIdentity}, separate from the hashing implementation
+ * so applications that omit schema identity do not need to load the hash algorithm.
  * Compatibility snapshots restore versions without runtime hash checks or telemetry.
  */
 export class SchemaIdentityInternal
@@ -122,7 +125,7 @@ export class SchemaIdentityInternal
 					stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 			  ) => string)
 			| undefined,
-		schemaVersion?: SchemaVersionMap,
+		schemaVersion?: SchemaVersionMap | number,
 	) {
 		super();
 		if (
@@ -146,20 +149,24 @@ export class SchemaIdentityInternal
 }
 
 /**
- * Validates an application version map and returns a frozen copy.
+ * Normalizes and validates application versions and returns a frozen map.
  */
 function validateSchemaVersion(
-	schemaVersion: SchemaVersionMap | undefined,
+	schemaVersion: SchemaVersionMap | number | undefined,
 ): SchemaVersionMap | undefined {
 	if (schemaVersion === undefined) {
 		return undefined;
 	}
-	for (const [libraryId, version] of Object.entries(schemaVersion)) {
+	const versions =
+		typeof schemaVersion === "number"
+			? { ["schemaVersion" as LibraryId]: schemaVersion }
+			: schemaVersion;
+	for (const [libraryId, version] of Object.entries(versions)) {
 		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError(
 				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative safe integer.`,
 			);
 		}
 	}
-	return Object.freeze({ ...schemaVersion });
+	return Object.freeze({ ...versions });
 }

@@ -302,6 +302,14 @@ describe("simple-tree configuration", () => {
 		assert.equal(config.schemaIdentity?.schemaVersion?.[testLibraryId], 0);
 	});
 
+	it("normalizes a single version using the schemaVersion identifier", () => {
+		const identity = identifySchemaAlpha({ schemaVersion: 1 });
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.deepEqual(identity.schemaVersion, { schemaVersion: 1 });
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+		assert(Object.isFrozen(identity.schemaVersion));
+	});
+
 	it("copies and freezes application versions on the schema identity", () => {
 		const versions = { [testLibraryId]: 1 };
 		const identity = identifySchemaAlpha({ schemaVersion: versions });

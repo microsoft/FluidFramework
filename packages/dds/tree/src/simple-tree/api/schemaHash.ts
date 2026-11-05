@@ -28,17 +28,17 @@ import { toInitialSchema } from "../toStoredSchema.js";
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
 
 /**
- * Creates a schema identity with runtime hashing and optional application versions.
- *
- * @param options - An optional hash check and application-defined versions.
- *
- * @returns An immutable {@link SchemaIdentity} that uses SHA-256 hashing.
- *
+ * Enables schema hash telemetry and optional checks when constructing a view.
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
+ * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
  * Initialization and schema upgrades log the runtime hash in telemetry.
  * Application versions do not affect the runtime hash.
  * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
+ *
+ * @param options - Options for checking the schema hash.
+ *
+ * @returns An immutable schema identity that uses SHA-256 hashing.
  *
  * @see {@link identifySchemaAlpha} to use application versions without hashing.
  *
@@ -47,13 +47,11 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
 export function identifySchemaWithHashAlpha(
 	options: {
 		/**
-		 * Specifies an optional hash used to detect unintended schema changes.
-		 *
+		 * An optional hash used to detect unintended schema changes.
 		 * @remarks
-		 * The hash uses the view schema and configured staged upgrade policy.
-		 * It does not depend on the document or application versions.
-		 * If the hashes differ, view construction throws a usage error with both hashes.
-		 * For an intentional schema change, use the actual hash reported in the error.
+		 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
+		 * View construction throws a UsageError containing the expected and actual hashes if they differ.
+		 * If the schema change is intentional, update this value with the actual hash from the error.
 		 * When versions are configured, the error also suggests increasing the relevant version.
 		 * Omit this value to enable telemetry without a construction check.
 		 */
@@ -61,7 +59,7 @@ export function identifySchemaWithHashAlpha(
 		/**
 		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
 		 */
-		readonly schemaVersion?: SchemaVersionMap;
+		readonly schemaVersion?: SchemaVersionMap | number;
 	} = {},
 ): SchemaIdentity {
 	return new SchemaIdentityInternal(
@@ -75,16 +73,17 @@ export function identifySchemaWithHashAlpha(
  * Computes a hash from a view schema.
  *
  * @remarks
- * The hash includes schema structure and persisted metadata, but not application versions.
- * Enabled staged upgrades are included.
+ * The hash includes the schema structure and persisted metadata, with the provided
+ * enabled staged upgrades.
+ * Application versions are not included.
  * Object key order and allowed-type order do not affect the hash, but metadata array order does.
  *
- * @param schema - The view schema to hash.
- * @param stagedSchemaUpgrades - The {@link SchemaUpgrade | staged upgrades} to include,
- * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them.
+ * @param schema - the view schema to hash
+ * @param stagedSchemaUpgrades - the {@link SchemaUpgrade | staged upgrades} to include,
+ * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them
  * If not provided, no staged upgrades are included.
  *
- * @returns The first 128 bits of the SHA-256 hash, as 32 hexadecimal characters.
+ * @returns the first 128 bits of the schema's SHA-256 hash, as 32 hexadecimal characters
  *
  * @internal
  */
