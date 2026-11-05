@@ -9,6 +9,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import type {
 	ChangeAtomId,
+	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaFieldMap,
@@ -101,27 +102,36 @@ export function assertModularChangesetsEqual(
 	a: ModularChangeset,
 	b: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = defaultFieldKinds,
-	ignoreRevertConstraints: boolean = false,
+	options: { ignoreRevertConstraints?: boolean; ignoreRebaseVersion?: boolean } = {},
 ): void {
 	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
 	const aMaxId = a.maxId;
 	const bMaxId = b.maxId;
-	const maxId =
+	const maxId: ChangesetLocalId | undefined =
 		aMaxId !== undefined || bMaxId !== undefined
 			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				Math.max((aMaxId ?? bMaxId)!, (bMaxId ?? aMaxId)!)
+				brand(Math.max((aMaxId ?? bMaxId)!, (bMaxId ?? aMaxId)!))
 			: undefined;
+
+	const ignoreRevertConstraints = options.ignoreRevertConstraints ?? false;
+	const ignoreRebaseVersion = options.ignoreRebaseVersion ?? false;
 
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aNormalized = {
+	let aNormalized: ModularChangeset = {
 		...normalizeChangeset(a, fieldKinds, ignoreRevertConstraints, false, deepCloneChunkedTree),
 		maxId,
 	};
-	const bNormalized = {
+
+	let bNormalized: ModularChangeset = {
 		...normalizeChangeset(b, fieldKinds, ignoreRevertConstraints, false, deepCloneChunkedTree),
 		maxId,
 	};
+
+	if (ignoreRebaseVersion) {
+		aNormalized = upgradeToRebaseVersionV2(aNormalized);
+		bNormalized = upgradeToRebaseVersionV2(bNormalized);
+	}
 
 	assertEqual(aNormalized, bNormalized);
 }
