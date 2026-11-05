@@ -47,7 +47,7 @@ UPCOMING.md
 build_output_archive
 
 # Prevent legacy Claude configuration from being committed.
-**/.claude/
+**/.claude*
 CLAUDE.local.md
 
 # Output from benchmarks
