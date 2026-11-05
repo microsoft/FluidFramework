@@ -85,15 +85,14 @@ Merge and rebase remain available through existing view APIs, but public branch 
 ## 2. Provide access to existing branches
 
 Applications need a way to access an existing branch without creating a fork.
-An explicit adapter could provide access to the experimental branch model:
+An explicit adapter could distinguish access to the main branch from creation of an independent branch:
 
 ```typescript
-const mainBranch = asAlphaBranchModel(tree);
+const mainBranch = asAlphaBranchModel(tree); // Access the existing branch.
+const alternative = mainBranch.fork();       // Create an independent branch.
 ```
 
-For a SharedTree, the adapter would provide access to the existing main branch without creating a view, forking state, or transferring ownership.
-An explicit adapter would also signal that the application is using an experimental API with its own contracts.
-The adapter and property names shown here are illustrative; see the open questions in [Section 11](#11-additional-considerations).
+The adapter would not create a view and would signal use of an experimental API.
 
 Views should also provide access to their associated branch:
 
@@ -101,21 +100,13 @@ Views should also provide access to their associated branch:
 const branch = view.branch;
 ```
 
-Accessing a branch and creating a branch are different operations:
-
-```typescript
-const mainBranch = asAlphaBranchModel(tree); // Access the existing branch.
-const alternative = mainBranch.fork();       // Create an independent branch.
-```
-
-In either case, accessing a branch does not transfer ownership: the document continues to own its main branch, and an independently created branch remains owned by its creator.
+These names are illustrative; see the [entry-point questions](#branch-access-and-operations) and the [ownership rules](#4-keep-ownership-rules-clear).
 
 ## 3. Put branch operations on public branch interfaces
 
 Applications should be able to fork, merge, rebase, inspect history, and observe branch changes without creating a typed view.
 The following illustrative sketch separates common branch operations from capabilities available only on independently owned branches.
-It is not a final API specification, and the view interface shows only branch association; existing typed-access, schema, observation, and transaction APIs are omitted.
-View switching is discussed separately in [Section 6](#6-move-views-between-branches) because branch-level operations do not depend on it.
+The view interface shows only branch association; existing typed-access, schema, observation, and transaction APIs are omitted.
 
 ```typescript
 interface TreeBranchAlpha {
@@ -149,7 +140,7 @@ interface TreeViewAlpha<TSchema extends ImplicitFieldSchema> {
 ```
 
 **Recommendation:** Initially restrict branch-level merge sources to independently owned handles whose branches share a common ancestor with the destination, as shown here.
-A document-owned source must never be disposed through a merge.
+The [ownership and disposal rules](#4-keep-ownership-rules-clear) apply to these operations.
 
 These APIs would be additive.
 Existing view APIs would remain available; this proposal does not deprecate or remove them.
@@ -173,6 +164,7 @@ Parent and child branches have independent lifetimes: disposing either does not 
 A successful merge disposes an independently owned source branch and its view by default.
 Passing `false` for `disposeMerged` preserves both.
 The destination is not disposed, and a document-owned source must never be disposed through a merge.
+The proposed branch-level merge should initially retain this default.
 
 Applications must dispose independently owned branches when finished; disposing a borrowed view alone does not end the branch's lifetime or its history-retention requirements.
 All view-creation APIs should document their ownership model.
@@ -203,20 +195,11 @@ The branch remains an independent alternative: its edits do not become part of `
 These are separate examples, not a sequence of calls.
 Both operations use SharedTree’s existing rules for combining changes.
 
-**Recommendation:** Initially keep the existing merge default:
-
-```typescript
-main.merge(branch);        // Disposes the source after success.
-main.merge(branch, false); // Keeps the source and its view alive.
-```
-
-Existing view-based merge and rebase reject pending transactions on either participating branch, so callers must finish transactions first.
-The proposed branch API should preserve these restrictions unless a behavior change is designed separately.
-The merged milestone also corrects the `UntypedTreeView.merge` documentation to describe this rejection behavior; it does not change transaction semantics.
+The proposed operations retain the [ownership and disposal rules](#4-keep-ownership-rules-clear) and [transaction restrictions](#8-keep-transactions-as-a-separate-feature).
 
 ## 6. Move views between branches
 
-View switching is a later design step, not a prerequisite for public branch-level operations.
+The following example illustrates proposed view switching.
 A branch-bound checkout keeps the same underlying branch, so switching should move the view rather than replace the checkout's branch:
 
 ```typescript
@@ -232,8 +215,8 @@ view.switchTo(main);
 ```
 
 This example uses a borrowed view.
-Switching should neither merge changes nor dispose either branch, and it must not leave the original branch without an owner or implicitly transfer ownership of the destination.
-The view-switching questions in [Section 11](#11-additional-considerations) must be resolved before adding `switchTo()`.
+Switching should neither merge changes nor dispose either branch.
+The [view-switching questions](#view-switching) cover the remaining contracts, including ownership for branch-owning views.
 
 ## 7. Show unsupported operations in the types
 
@@ -241,7 +224,7 @@ The implemented branch handle does not expose `rewindTo()`, but `viewWith()` ret
 Calling `rewindTo()` on that view, or on a fork of that view, throws a `UsageError` because its checkout does not support replacing the underlying branch.
 
 The proposed API should express that restriction in its types rather than presenting an unsupported operation as generally available.
-This refinement preserves branch identity and does not depend on view switching or historical branch creation.
+This refinement preserves branch identity.
 
 ## 8. Keep transactions as a separate feature
 
@@ -250,6 +233,8 @@ A transaction can be explained as using a temporary branch, but ordinary `fork()
 The core branch API does not require a public squash operation.
 
 The implemented `tree.forkBranch()` and `branch.fork()` APIs reject pending source transactions, while merge and rebase reject pending transactions on either participating branch.
+Callers must finish transactions before invoking these operations.
+The proposed branch API should preserve these restrictions unless a behavior change is designed separately.
 Exposing branch access would not, by itself, expose transaction-local branches; the transaction-access questions are collected in [Section 11](#11-additional-considerations).
 
 ## 9. Separate branch events from view observation
@@ -260,38 +245,16 @@ Internal checkout events could supply the implementation without being exposed d
 
 The branch-event contracts must be defined before those events are exposed; see [Section 11](#11-additional-considerations).
 
-## 10. Delivery sequence and status
+## 10. Delivery sequence
 
-The sequence below is a proposed delivery order, not a commitment to unresolved APIs.
-Each increment should provide useful behavior without requiring the later switching design.
+The proposed delivery order allows branch-level operations and capability refinements to ship without waiting for view switching.
 
-1. Implemented milestone ([`9ea98a1`](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd) on `main`): Expose independently owned branch handles, typed-view creation, and child forks. Keep merge, rebase, history, and branch observation available through existing view APIs.
-2. Existing-branch access and branch-level operations: Provide access to the main branch and a view’s associated branch without forking. Add merge, rebase, history, and events directly on branches; these additions can ship separately once the relevant open questions in [Section 11](#11-additional-considerations) are resolved. Distinguish document-owned branches from independently owned handles and initially restrict merge sources as described in [Section 3](#3-put-branch-operations-on-public-branch-interfaces).
-3. Capability refinements: Make unsupported view operations clear in the types. This can ship independently of switching and historical branch creation.
-4. Separately designed view switching: Resolve the view-switching questions in [Section 11](#11-additional-considerations) before adding `switchTo()`.
+1. [Implemented milestone](#1-what-the-implemented-milestone-provides) ([`9ea98a1`](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd) on `main`): Independently owned branch handles, typed-view creation, and child forks.
+2. [Existing-branch access](#2-provide-access-to-existing-branches) and [branch-level operations](#3-put-branch-operations-on-public-branch-interfaces): Add access, merge, rebase, history, and events as their [contracts](#branch-access-and-operations) are settled. These additions can ship separately.
+3. [Capability refinements](#7-show-unsupported-operations-in-the-types): Express unsupported view operations in the types.
+4. [View switching](#6-move-views-between-branches): Add `switchTo()` after resolving the [view-switching questions](#view-switching).
 
-Multiple active views and `forkAt()` are outside this delivery sequence.
-The proposed increments extend the public branch model; they do not introduce a public checkout model.
-
-| Capability | Status |
-| --- | --- |
-| Public `TreeBranchHandleAlpha` backed by internal `BranchCheckout` | Implemented in the milestone. |
-| `tree.forkBranch()` without a source view or schema configuration | Implemented in the milestone for SharedTree and independent trees. |
-| Public `branch.fork()` | Implemented in the milestone. |
-| Create a typed view through `branch.viewWith(config)` | Implemented in the milestone; one active view per branch. |
-| Retain branch state and create a replacement view after view disposal | Implemented in the milestone. |
-| Independently owned parent and child branches | Implemented; disposing either does not dispose the other. |
-| Merge and rebase through views | Available through existing view APIs; no deprecation is proposed here. |
-| Merge disposal policy | A successful merge disposes an independently owned source branch and its view by default; passing false preserves them. |
-| Transaction restrictions | Forking rejects a pending source transaction. Merge and rebase reject pending transactions on either participating branch. |
-| Merge transaction documentation | Corrected in the milestone to describe rejection of pending transactions on either branch. |
-| Stable underlying branch identity for handle-backed branches | Implemented; their views reject `rewindTo()`. |
-| Access the existing main branch or a view’s associated branch without forking | Proposed; see the open questions in [Section 11](#11-additional-considerations). |
-| Public branch-level merge, rebase, history, and events without an active view | Proposed; existing internal checkout functionality supplies the foundation. |
-| Public capability distinction between document-owned and independently owned branches | Proposed. |
-| Move an existing view between branches | Future design work; see the open questions in [Section 11](#11-additional-considerations). |
-| Types that express unsupported view operations | Proposed; handle-created views currently expose `rewindTo()` in their type but reject it at runtime. |
-| Multiple active views and historical branch creation | Possible future extensions, not commitments. |
+The [future extensions](#future-extensions) are outside this sequence.
 
 ## 11. Additional considerations
 
@@ -299,7 +262,6 @@ The proposed increments extend the public branch model; they do not introduce a 
 
 These questions are grouped by capability.
 Each capability needs its own contracts, but not every question blocks the initial branch API.
-In particular, view-switching questions do not block branch-level operations or capability refinements, and any future deprecation of view APIs is a separate decision.
 
 #### Branch access and operations
 
@@ -308,21 +270,17 @@ In particular, view-switching questions do not block branch-level operations or 
 - **Transaction access:** What does `view.branch` represent during a transaction, and does its association change on commit or rollback?
   Can transaction-local state be accessed or forked, and how would such forks interact with commit and rollback?
   These contracts must be settled before exposing branch access during transactions.
-- **Merge sources and disposal:** Should branch-level merge initially accept only independently owned handles whose branches share a common ancestor with the destination, as recommended in [Section 3](#3-put-branch-operations-on-public-branch-interfaces)?
+- **Merge sources and disposal:** Should branch-level merge use the source restriction recommended in [Section 3](#3-put-branch-operations-on-public-branch-interfaces)?
   If document-owned sources are later allowed, should a disposal request be ignored or should that combination be rejected?
-  A document-owned source must never be disposed through a merge.
-  Any change to the current default of disposing an independently owned source after a successful merge is a separate decision.
+  Any change must preserve the [ownership rules](#4-keep-ownership-rules-clear); changing the existing disposal default would be a separate decision.
 - **History and event contracts:** What history-inspection contract should branches expose without a typed view?
   What are the branch-event contracts for merge, rebase, and transaction completion?
-  Event contracts must be defined before exposing those events.
-  Event order during view switching belongs to the later switching design and need not block branch-level observation.
 - **Existing view APIs:** Should view-based branch operations remain as convenience methods or enter a future deprecation process?
-  This proposal is additive and does not propose deprecation or removal.
+  Any deprecation decision is outside this additive proposal.
 
 #### Capability types
 
 - **Unsupported operations:** How should the types express capabilities so that handle-created views do not expose unsupported operations such as `rewindTo()`?
-  This refinement does not require view switching or historical branch creation.
 
 #### View switching
 
@@ -361,7 +319,7 @@ view.switchTo(historical);
 ```
 
 Unlike reverting, which adds a change to the existing branch, `forkAt()` would create a new independent branch at an available historical revision without replacing the original branch.
-This remains a possible future feature and needs rules for retained history and available revisions.
+It needs rules for retained history and available revisions.
 
 ### Performance considerations for multiple views per branch
 
