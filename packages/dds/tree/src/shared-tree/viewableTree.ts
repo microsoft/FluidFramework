@@ -13,6 +13,7 @@ import type {
 	VerboseTree,
 } from "../simple-tree/index.js";
 
+import { forkAsBranchCheckout, type TreeBranchHandleAlpha } from "./branchCheckout.js";
 import type { CheckoutBase } from "./treeCheckout.js";
 
 /**
@@ -25,6 +26,9 @@ export function createViewableTreeAlpha(
 	return {
 		get storedSchemaVersion() {
 			return checkout.storedSchema.schemaVersion;
+		},
+		forkBranch(): TreeBranchHandleAlpha {
+			return forkAsBranchCheckout(checkout);
 		},
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,

@@ -9,8 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as semver from "semver-ts";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { toInitialSchema } from "../toStoredSchema.js";
-import { createTreeSchema } from "../treeSchema.js";
+import { getRootSchemaDerivedData, toInitialSchema } from "../treeSchema.js";
 
 import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
@@ -128,12 +127,14 @@ export function checkCompatibility(
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
+ * Reuses the internal schema-derived graph but creates a fresh snapshot on every call.
+ *
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaIdentity">,
 ): JsonCompatibleReadOnly {
-	const treeSchema = createTreeSchema(config.schema);
+	const { treeSchema } = getRootSchemaDerivedData(config.schema);
 	return encodeSchemaCompatibilitySnapshot({
 		...treeSchema,
 		schemaVersion: config.schemaIdentity?.schemaVersion,

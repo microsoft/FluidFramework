@@ -19,8 +19,8 @@ import {
 	areSchemaVersionsEqual,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
-import { resolveStoredSchemaGenerationOptions, toUpgradeSchema } from "../toStoredSchema.js";
-import type { TreeSchema } from "../treeSchema.js";
+import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
+import { toUpgradeSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,

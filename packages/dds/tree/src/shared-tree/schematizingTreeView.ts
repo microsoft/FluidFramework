@@ -59,7 +59,6 @@ import {
 	prepareForInsertionContextless,
 	type FieldSchema,
 	tryDisposeTreeNode,
-	FieldSchemaAlpha,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -590,18 +589,9 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
-			assert(
-				this.rootFieldSchema instanceof FieldSchemaAlpha,
-				0xbfa /* all field schema should be FieldSchemaAlpha */,
-			);
 			slots.set(
 				SimpleContextSlot,
-				new HydratedContext(
-					this.flexTreeContext,
-					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.allowedTypesFull.evaluate(),
-					),
-				),
+				new HydratedContext(this.flexTreeContext, this.viewSchema.definitions),
 			);
 
 			// Trigger "rootChanged" events if the root changes in the future.
@@ -772,10 +762,11 @@ export class SchematizingSimpleTreeView<
 
 	@throwIfBroken
 	public rewindTo(revision: string): void {
-		assert(
-			this.checkout instanceof TreeCheckout,
-			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
-		);
+		if (!(this.checkout instanceof TreeCheckout)) {
+			throw new UsageError(
+				"Rewinding is not supported on a branch created by `tree.forkBranch()` or `branch.fork()`, or on its views. Consider `revertTo` instead.",
+			);
+		}
 		this.checkout.rewindTo(revision);
 	}
 

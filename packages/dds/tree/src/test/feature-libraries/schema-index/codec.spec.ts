@@ -31,7 +31,7 @@ import { Format as FormatV3 } from "../../../feature-libraries/schema-index/form
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
+import { toInitialSchema } from "../../../simple-tree/treeSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 
