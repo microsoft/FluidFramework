@@ -31,7 +31,17 @@ function createFormattedTreeView(initialValue = ""): UserView["treeView"] {
 function createTestUserView(id: string, initialValue: string): UserView {
 	return {
 		id,
-		client: { dispose: async () => {} } as unknown as UserView["client"],
+		client: {
+			dispose: async () => {},
+			disconnect: () => {},
+			reconnect: async () => {},
+			onStatusChange: () => () => {},
+			connectionState: "connected",
+			pendingOperationCount: 0,
+			summaryCount: 0,
+			loadedFromSummary: false,
+			lastError: undefined,
+		},
 		treeView: createFormattedTreeView(initialValue),
 	};
 }

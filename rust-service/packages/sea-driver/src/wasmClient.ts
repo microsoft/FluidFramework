@@ -116,6 +116,8 @@ export interface SummaryPublication {
  * @internal
  */
 export interface SeaDriverClient {
+	/** Whether current snapshot coordination permits publication; absent for legacy clients. */
+	readonly canPublishSnapshot?: boolean;
 	/** Allocated identity when supplied by the neutral session implementation. */
 	readonly sessionId?: Uint8Array | undefined;
 	/** Opens independent live membership and reliable Fluid signal delivery. */

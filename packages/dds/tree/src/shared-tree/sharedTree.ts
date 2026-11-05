@@ -6,6 +6,7 @@
 import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import type {
@@ -170,7 +171,14 @@ export interface ITreePrivate extends ITreeInternal {
 
 /** Runtime-free lifecycle exposed by a direct SharedTree kernel. @internal */
 export interface DirectSharedTreeKernel {
+	/** Applies canonical messages, including acknowledgments of local commits. */
 	processSequencedMessages(messages: readonly SequencedSharedTreeMessage[]): void;
+	/** Captures a full summary; the host must first acknowledge all local edits. */
+	getSummary(): ISummaryTree;
+	/** Loads a summary into a fresh kernel before creating application views. */
+	loadCore(services: IChannelStorageService): Promise<void>;
+	/** Re-encodes a proven-unaccepted local message after applying intervening history. */
+	reSubmitCore(content: unknown, localOpMetadata: unknown): void;
 }
 
 /**
@@ -436,6 +444,11 @@ export class SharedTreeKernel
 		this.checkout.load();
 	}
 
+	/** Captures a full summary for a runtime-free host. */
+	public getSummary(): ISummaryTree {
+		return this.summarizeCore(this.serializer, undefined, undefined, true).summary;
+	}
+
 	public override didAttach(): void {
 		for (const checkout of this.checkouts.values()) {
 			if (checkout.transaction.size > 0) {
@@ -501,7 +514,7 @@ export interface DirectSharedTreeOptions extends SharedTreeOptionsInternal {
 	/** ID compressor whose session identifies locally authored commits. */
 	readonly idCompressor: IIdCompressor;
 	/** Receives each encoded SharedTree message for sequencing by the host. */
-	readonly submitLocalMessage: (content: unknown) => void;
+	readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
 	/** Stable local identifier used for diagnostics. */
 	readonly id?: string;
 	/** Last canonical sequence number already applied by the host. */

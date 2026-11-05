@@ -6,14 +6,33 @@
 
 // @internal
 export class DirectSharedTreeClient {
-    static create(client: SeaDriverClient, document: Uint8Array, batchMaxOperations: number, batchMaxPayloadBytes: number, createDocument: boolean): Promise<DirectSharedTreeClient>;
+    get connectionState(): DirectSharedTreeConnectionState;
+    static create(client: SeaDriverClient, document: Uint8Array, batchMaxOperations: number, batchMaxPayloadBytes: number, createDocument: boolean, options?: DirectSharedTreeClientOptions): Promise<DirectSharedTreeClient>;
     deliveredBatchCount: number;
+    disconnect(): void;
     dispose(): Promise<void>;
-    documentId: Uint8Array;
+    readonly documentId: Uint8Array;
     lastAppliedSequenceNumber: number;
+    lastError: unknown;
+    lastSummarySequenceNumber: number;
+    loadedFromSummary: boolean;
+    onStatusChange(listener: () => void): () => void;
     peakDeliveredBatchOperations: number;
+    get pendingOperationCount(): number;
+    reconnect(): Promise<void>;
+    summarize(): Promise<void>;
+    summaryCount: number;
     readonly tree: SharedTreeKernelView;
     waitForIdle(): Promise<void>;
 }
+
+// @internal
+export interface DirectSharedTreeClientOptions {
+    readonly summaryIdleMs?: number;
+    readonly summaryMaxOperations?: number;
+}
+
+// @internal
+export type DirectSharedTreeConnectionState = "connected" | "disconnected" | "reconnecting" | "error" | "disposed";
 
 ```

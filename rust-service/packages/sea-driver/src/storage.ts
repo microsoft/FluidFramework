@@ -160,6 +160,11 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 		await this.client.publishSnapshotRoot(undefined, undefined, uploaded.digest);
 	}
 
+	/** Uploads a full summary without publishing it, for hosts that own snapshot coordination. */
+	public async uploadSummaryTree(summary: ISummaryTree): Promise<Uint8Array> {
+		return (await this.uploadSummary(summary)).digest;
+	}
+
 	/** Flattens, uploads, and publishes a full summary in canonical path order. */
 	private async uploadSummary(
 		summary: ISummaryTree,

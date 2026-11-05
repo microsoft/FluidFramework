@@ -213,4 +213,112 @@ test.describe("text editor", () => {
 			await peerPage.close();
 		}
 	});
+
+	test("takes an idle summary and loads it before applying newer edits", async ({ page }) => {
+		await openNewDocument(page);
+		const writer = userPanel(page, 1);
+		await writer.locator("textarea").fill("Included in the summary");
+		await quillEditor(writer, "Formatted Quill Editor").fill("Summarized formatting");
+		await quillEditor(writer, "Formatted Quill Editor").press("ControlOrMeta+A");
+		await editorCard(writer, "Formatted Quill Editor")
+			.getByRole("button", { name: "Bold" })
+			.click();
+		await expect
+			.poll(async () => Number(await writer.getByTestId("summary-count").textContent()), {
+				timeout: 15_000,
+			})
+			.toBeGreaterThan(0);
+		await writer.locator("textarea").fill("Edit after the summary");
+		await expect(userPanel(page, 2).locator("textarea")).toHaveValue("Edit after the summary");
+		await page.reload();
+		await expect(page.getByText(/^User \d+$/)).toHaveCount(2);
+		await expect(page.getByText("Loaded from summary", { exact: false })).toHaveCount(2);
+		await expect(userPanel(page, 1).locator("textarea")).toHaveValue("Edit after the summary");
+		await expect(quillEditor(userPanel(page, 1), "Formatted Quill Editor")).toHaveText(
+			"Summarized formatting",
+		);
+		await expect(
+			quillEditor(userPanel(page, 1), "Formatted Quill Editor").locator("strong"),
+		).toHaveText("Summarized formatting");
+	});
+
+	test("rebases offline edits on remote edits without replacing the open view", async ({
+		page,
+	}) => {
+		await openNewDocument(page);
+		const writer = userPanel(page, 1);
+		const peer = userPanel(page, 2);
+		await writer.locator("textarea").fill("Base");
+		await expect(peer.locator("textarea")).toHaveValue("Base");
+		await writer.getByRole("button", { name: "Disconnect", exact: true }).click();
+		await writer.locator("textarea").press("End");
+		await writer.locator("textarea").pressSequentially(" offline");
+		await peer.locator("textarea").press("End");
+		await peer.locator("textarea").pressSequentially(" remote");
+		await expect(writer.getByRole("status")).toContainText("disconnected");
+		await writer.getByRole("button", { name: "Reconnect", exact: true }).click();
+		await expect(writer.getByRole("status")).toContainText("connected · 0 pending edits");
+		await expect
+			.poll(
+				async () =>
+					(await writer.locator("textarea").inputValue()) ===
+					(await peer.locator("textarea").inputValue()),
+			)
+			.toBe(true);
+		await expect(writer.locator("textarea")).toHaveValue(/offline/u);
+		await expect(writer.locator("textarea")).toHaveValue(/remote/u);
+	});
+
+	test("automatically reconnects after socket loss and preserves edits made during the outage", async ({
+		page,
+	}) => {
+		let offline = false;
+		const sockets: { close(): void }[] = [];
+		await page.routeWebSocket("**/sea/websocket", (socket) => {
+			if (offline) {
+				socket.close({ code: 1011, reason: "Injected offline interval" });
+				return;
+			}
+			const server = socket.connectToServer();
+			sockets.push({
+				close: () => {
+					server.close({ code: 1011, reason: "Injected connection loss" });
+					socket.close({ code: 1011, reason: "Injected connection loss" });
+				},
+			});
+		});
+		await openNewDocument(page);
+		const peerPage = await page.context().newPage();
+		try {
+			await peerPage.goto(page.url());
+			await expect(peerPage.getByText(/^User \d+$/)).toHaveCount(2);
+			const writer = userPanel(page, 1);
+			const peer = userPanel(peerPage, 1);
+			await writer.locator("textarea").fill("Base");
+			await expect(peer.locator("textarea")).toHaveValue("Base");
+			offline = true;
+			for (const socket of sockets.splice(0)) socket.close();
+			await expect(writer.getByRole("status")).toContainText("reconnecting");
+			await writer.locator("textarea").press("End");
+			await writer.locator("textarea").pressSequentially(" offline");
+			await peer.locator("textarea").press("End");
+			await peer.locator("textarea").pressSequentially(" remote");
+			offline = false;
+			await expect(writer.getByRole("status")).toContainText("connected · 0 pending edits", {
+				timeout: 20_000,
+			});
+			await expect(writer.locator("textarea")).toHaveValue(/offline/u);
+			await expect(writer.locator("textarea")).toHaveValue(/remote/u);
+			await expect(peer.locator("textarea")).toHaveValue(
+				await writer.locator("textarea").inputValue(),
+			);
+			await page.reload();
+			await expect(page.getByText(/^User \d+$/)).toHaveCount(2);
+			await expect(userPanel(page, 1).locator("textarea")).toHaveValue(
+				await peer.locator("textarea").inputValue(),
+			);
+		} finally {
+			await peerPage.close();
+		}
+	});
 });

@@ -13,11 +13,27 @@ Complete these steps to run the example:
 2. From the `FluidFramework` root directory, run `pnpm install`.
 3. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint @fluid-example/text-editor-sea`.
 4. Start the SEA server with its WebSocket listener on port 8081 and allow the `http://localhost:8082` origin.
-5. Run `pnpm start -- --port 8082` from this directory and open <http://localhost:8082> in a web browser.
+5. Run `pnpm exec webpack serve --config webpack.config.cjs --port 8082` from this directory and open <http://localhost:8082> in a web browser.
 
 The app creates a new SEA document when it starts and demonstrates collaboration between the simulated users on that page.
 It writes the SEA document ID to the URL hash.
 Open that URL in another browser or send it to another collaborator to connect direct SharedTree clients to the same document.
+
+## Summaries and connection recovery
+
+Each user panel shows connection state, pending edits, and the number of summaries that client has published.
+The SEA-nominated client summarizes acknowledged state after 100 application operations or five seconds of inactivity.
+Reopening a document loads the latest summary and applies newer operations.
+The panel indicates when it loaded a summary.
+
+Use **Disconnect** to pause one simulated user, edit both that user and a connected peer, then use **Reconnect**.
+The existing view is retained while pending edits are reconciled and rebased.
+Unexpected connection loss triggers automatic reconnect.
+Errors are displayed rather than leaving an apparently connected editor.
+Pending edits exist only in the current tab: do not reload or close it until the pending count reaches zero.
+
+When forwarding the app to a different local port, also forward server port 8081 and add the browser's exact origin to `SEA_WEBSOCKET_ORIGINS`.
+For example, an app opened at `http://localhost:8083` requires that origin even when its remote development server listens on port 8082.
 
 ## Testing
 
@@ -35,3 +51,4 @@ pnpm test:playwright
 
 Playwright starts the webpack development server on port 8082.
 The tests require the SEA WebSocket server to be running on port 8081 and to allow the `http://localhost:8082` origin.
+They cover two-page collaboration, rich-text summary reload, explicit disconnect/reconnect, and real WebSocket loss with edits made during the outage.

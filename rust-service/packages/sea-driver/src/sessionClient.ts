@@ -55,6 +55,15 @@ const decoder = new TextDecoder();
  * @internal
  */
 export class SeaSessionDriverClient implements SeaDriverClient {
+	/** Reports current publication eligibility without transferring the nomination fence. */
+	public get canPublishSnapshot(): boolean {
+		return (
+			this.session !== undefined &&
+			this.snapshotFailure === undefined &&
+			(this.participation === "clientSelected" ||
+				(this.participation === "seaSelected" && this.snapshotFence !== undefined))
+		);
+	}
 	/** Identity assigned to the currently open membership. */
 	public get sessionId(): Uint8Array | undefined {
 		return this.sessionIdentity?.slice();
@@ -540,7 +549,13 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Waits for prior disposal; the subsequent open obtains a fresh session from the factory. */
 	public async reconnect(..._args: readonly unknown[]): Promise<void> {
-		await this.closing;
+		const closing = this.closing;
+		try {
+			await closing;
+		} finally {
+			// Report a failed close once, but do not let its settled promise block every future open.
+			if (this.closing === closing) this.closing = Promise.resolve();
+		}
 	}
 
 	/** Projects initialization and the durable SEA floor into the same dense sequence space. */

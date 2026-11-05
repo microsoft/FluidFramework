@@ -103,7 +103,18 @@ export interface UserView {
 	/**
 	 * This user's direct SEA SharedTree client.
 	 */
-	readonly client: DirectSharedTreeClient;
+	readonly client: Pick<
+		DirectSharedTreeClient,
+		| "dispose"
+		| "disconnect"
+		| "reconnect"
+		| "onStatusChange"
+		| "connectionState"
+		| "pendingOperationCount"
+		| "summaryCount"
+		| "loadedFromSummary"
+		| "lastError"
+	>;
 	/** This user's view of the shared text, rendered and edited by the panel. */
 	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
@@ -297,6 +308,7 @@ const UserPanel: FC<{
 	// Re-render when undo/redo availability changes. Only local commits affect the stacks,
 	// so filtering to isLocal avoids re-renders on every remote keystroke.
 	const [, setVersion] = useState(0);
+	useEffect(() => client.onStatusChange(() => setVersion((v) => v + 1)), [client]);
 	useEffect(() => {
 		const off = treeView.events.on("changed", (data) => {
 			if (data.isLocal) {
@@ -379,6 +391,39 @@ const UserPanel: FC<{
 					)}
 				</div>
 			</div>
+			<div role="status" aria-label={`${label} synchronization status`}>
+				{client.connectionState} · {client.pendingOperationCount} pending edits ·{" "}
+				<span data-testid="summary-count">{client.summaryCount}</span> summaries
+				{client.loadedFromSummary && <span> · Loaded from summary</span>}
+			</div>
+			{client.connectionState === "connected" ? (
+				<button type="button" onClick={() => client.disconnect()}>
+					Disconnect
+				</button>
+			) : client.connectionState === "disconnected" ? (
+				<button
+					type="button"
+					onClick={() => {
+						client.reconnect().catch((error: unknown) => {
+							console.error("Failed to reconnect direct SEA client:", error);
+						});
+					}}
+				>
+					Reconnect
+				</button>
+			) : undefined}
+			{client.connectionState !== "connected" && (
+				<p>Local edits are held in this tab. Do not reload until they synchronize.</p>
+			)}
+			{client.lastError !== undefined && (
+				<p role="alert">
+					{client.lastError instanceof Error
+						? client.lastError.message.split("\n", 1)[0]
+						: typeof client.lastError === "string"
+							? client.lastError
+							: "Synchronization failed. Pending edits remain in this tab."}
+				</p>
+			)}
 			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
 				const isExpanded = !collapsed[viewType];
 				return (

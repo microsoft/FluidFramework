@@ -150,6 +150,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
     };
     readBlob(id: string): Promise<ArrayBufferLike>;
     uploadInitialSummary(summary: ISummaryTree): Promise<void>;
+    uploadSummaryTree(summary: ISummaryTree): Promise<Uint8Array>;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
@@ -166,6 +167,7 @@ export class SeaDriver implements IDocumentServiceFactory {
 export interface SeaDriverClient {
     announceMembership?(metadata: Uint8Array): Promise<void>;
     readonly applicationSequenceOffset?: number;
+    readonly canPublishSnapshot?: boolean;
     create(): Promise<Uint8Array>;
     disconnect(session?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
@@ -210,6 +212,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     constructor(factory: SeaSessionFactory, participation: SeaSnapshotParticipation);
     announceMembership(metadata: Uint8Array): Promise<void>;
     readonly applicationSequenceOffset = 0;
+    get canPublishSnapshot(): boolean;
     create(): Promise<Uint8Array>;
     disconnect(owner?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;

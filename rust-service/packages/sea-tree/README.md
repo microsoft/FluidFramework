@@ -18,7 +18,7 @@ export async function createTree(client: SeaDriverClient): Promise<DirectSharedT
 
 Configure the returned `tree` with a SharedTree view and schema.
 Use the returned `documentId` when opening a peer with `createDocument` set to `false`.
-Opening an existing document replays its current operation history before `create()` returns, so the caller can configure a view immediately.
+Opening an existing document loads its latest direct-host summary and replays the remaining operations before `create()` returns, so the caller can configure a view immediately.
 `waitForIdle()` waits for the host's current local submissions to be acknowledged and applied; it does not wait for another client to catch up.
 Dispose views when finished, then call `dispose()` to stop subscription processing and disconnect the client.
 
@@ -26,11 +26,32 @@ Dispose views when finished, then call `dispose()` to stop subscription processi
 
 The host submits SharedTree messages with their ID creation ranges and applies sequenced operations in bounded batches.
 It retains the mapping between Sea positions and SharedTree sequence numbers for the lifetime of the host.
-Subscription failures are surfaced by `waitForIdle()`.
+Subscription and submission failures trigger automatic reconnect with bounded retry frequency.
+`connectionState`, `pendingOperationCount`, and `lastError` expose progress and failures.
+Use `onStatusChange()` to observe changes without polling.
 
 This is not a Fluid driver or container implementation.
-The host does not implement snapshot persistence, snapshot loading, or automatic reconnect and recovery.
-The caller supplies an initialized client.
+The host retains the existing tree and application views during reconnect.
+It announces author membership, waits for terminal history to establish the old accepted prefix, applies accepted edits exactly once, and asks SharedTree to re-encode only the unaccepted suffix.
+ID-compressor ranges are reset only after that terminal proof.
+Call `disconnect()` to pause transport explicitly and `reconnect()` to resume.
+Automatic recovery requires a client that supports authoritative membership, such as `SeaSessionDriverClient`.
+Invalid canonical history or a failed kernel transformation stops the host in the `error` state rather than retrying it.
+
+Pending edits are held only in memory.
+Closing or reloading a tab before its edits synchronize loses those edits; this is not offline stashing or crash recovery.
+
+The nominated client publishes a full SharedTree summary after 100 applied application operations or five seconds without new application operations.
+The optional sixth argument to `create()` configures `summaryMaxOperations` and `summaryIdleMs`.
+Only acknowledged state is summarized; local pending edits defer publication.
+Unchanged state is not repeatedly summarized, and failed publication is reported and retried after the idle interval.
+Snapshots include finalized ID-compressor state and reference-position mappings, and publication uses the current nomination fence and expected parent.
+`summaryCount`, `lastSummarySequenceNumber`, and `loadedFromSummary` expose snapshot activity.
+`summarize()` requests publication immediately when eligible.
+These are full summaries, not incremental uploads.
+The underlying driver still scans retained history to rebuild its sequence projection, even when SharedTree itself loads from a summary.
+The current host and driver retain history mappings without garbage collection.
+
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
 The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.
 
@@ -43,6 +64,7 @@ pnpm --dir rust-service/packages/sea-tree run build
 pnpm --dir rust-service/packages/sea-tree test
 ```
 
-The build checks TypeScript, API reports, formatting, lint, and exports; Mocha tests two-way collaboration through the package entrypoint.
+The build checks TypeScript, API reports, formatting, lint, and exports.
+Mocha tests collaboration, summary scheduling and loading, offline edits, lost acknowledgments, and failed transport cleanup through the package entrypoint.
 To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-tree --task test:mocha:esm` from the repository root.
 The harness retains the direct SharedTree benchmarks and includes this package test in its aggregate command.

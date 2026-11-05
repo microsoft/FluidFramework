@@ -9,4 +9,8 @@
  * @packageDocumentation
  */
 
-export { DirectSharedTreeClient } from "./directSharedTree.js";
+export {
+	DirectSharedTreeClient,
+	type DirectSharedTreeClientOptions,
+	type DirectSharedTreeConnectionState,
+} from "./directSharedTree.js";

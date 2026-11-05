@@ -633,7 +633,7 @@ export class SharedTreeCore<
 		this.detachedRevision = undefined;
 	}
 
-	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
+	public reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const message = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,
