@@ -284,6 +284,67 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.isEquivalent, false);
 	});
 
+	it("distinguishes removing an optional field from reopening a fresh document with the old schema", () => {
+		const factory = new SchemaFactory("taskRollback");
+
+		class Before extends factory.object("Task", {
+			title: factory.string,
+			notes: factory.optional(factory.string),
+		}) {}
+
+		// Remove the `notes` field.
+		// A client using this schema can still open documents that contain the `notes` field as an unknown optional field.
+		// Documents created with this schema will need to be upgraded before they can be viewed by clients using the `Before` schema.
+		class After extends factory.object("Task", {
+			title: factory.string,
+		}) {}
+
+		const historical = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Before })),
+		);
+		const current = new TreeViewConfiguration({ schema: After });
+		const result = getCompatibility(current, historical);
+
+		// The current view can open an older document; retaining `notes` makes its proposed upgrade a no-op.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+
+		// A fresh document created without `notes` needs an upgrade before the historical view can write that field.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, false);
+
+		// These views produce different initial schemas, even though removing the field permits a no-op upgrade.
+		assert.equal(result.identicalCompatibility, false);
+
+		// The current snapshot policy rejects historical clients that need an upgrade before viewing fresh documents.
+		const [fileSystem] = inMemorySnapshotFileSystem();
+		snapshotSchemaCompatibility({
+			schema: historical,
+			fileSystem,
+			version: "1.0.0",
+			minVersionForCollaboration: "1.0.0",
+			mode: "update",
+			snapshotDirectory: "taskRollback",
+		});
+
+		// TODO: Once snapshot checks permit historical clients to upgrade newer documents, expect this check to succeed.
+		// The historical view must still report `canView: false` until the document is upgraded to add `notes`.
+		assert.throws(
+			() =>
+				snapshotSchemaCompatibility({
+					schema: current,
+					fileSystem,
+					version: "2.0.0",
+					minVersionForCollaboration: "1.0.0",
+					mode: "update",
+					snapshotDirectory: "taskRollback",
+				}),
+			/Historical version "1.0.0" cannot view documents from "2.0.0"/,
+		);
+	});
+
 	it("SnapshotFileSystem", () => {
 		// Validate example for how to use implement SnapshotFileSystem using node fs and path modules works.
 		allowUnused<requireAssignableTo<typeof nodeFileSystem, SnapshotFileSystem>>();
@@ -1193,7 +1254,7 @@ Snapshots exist for versions: [
 			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 		}
 
 		{
@@ -1204,7 +1265,7 @@ Snapshots exist for versions: [
 			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 		}
 
 		{

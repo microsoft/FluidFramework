@@ -39,6 +39,8 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	getEffectiveStagedUpgradePolicy,
+	getSchemaUpgradeCandidate,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -61,7 +63,6 @@ import {
 	tryDisposeTreeNode,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchHistory,
 	type TreeLocationResolver,
 	type TreeLocation,
@@ -400,8 +401,12 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 
 		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
+		const newSchema = getSchemaUpgradeCandidate(
+			this.viewSchema,
+			storedSchema,
+			upgradePolicy,
+		).schema;
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
@@ -451,16 +456,7 @@ export class SchematizingSimpleTreeView<
 			enabledUpgrades !== undefined,
 			0xd3e /* Enabled upgrades must be available for an active view */,
 		);
-		if (enabledUpgrades.size === 0) {
-			return configuredPolicy;
-		}
-
-		return {
-			includeStaged: (upgrade) =>
-				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
-		};
+		return getEffectiveStagedUpgradePolicy(configuredPolicy, enabledUpgrades);
 	}
 
 	/**

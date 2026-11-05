@@ -15,7 +15,7 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
-import { toUpgradeSchema, type TreeSchema } from "../treeSchema.js";
+import { getSchemaUpgradeCandidate, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
@@ -141,8 +141,6 @@ export function checkSchemaCompatibility(
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
-	const includeAlreadyEnabledUpgrades =
-		configuredPolicy.includeAlreadyEnabledUpgrades ?? false;
 
 	// Collect upgrade locations during the discrepancy walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
@@ -179,10 +177,8 @@ export function checkSchemaCompatibility(
 	const canView = discrepancies.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-	const upgradePolicy = includeAlreadyEnabledUpgrades
-		? includeEnabledUpgrades(configuredPolicy, enabledUpgrades)
-		: configuredPolicy;
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradePolicy);
+	const upgradePolicy = getEffectiveStagedUpgradePolicy(configuredPolicy, enabledUpgrades);
+	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, upgradePolicy).schema;
 
 	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 
@@ -200,11 +196,21 @@ export function checkSchemaCompatibility(
 	};
 }
 
-function includeEnabledUpgrades(
+/**
+ * Resolves the staged policy used to construct an upgrade candidate.
+ *
+ * @param configuredPolicy - The policy configured by the application.
+ * @param enabledUpgrades - Staged changes already enabled, in whole or in part, in the current stored schema.
+ * @returns The configured policy, extended to include already-enabled changes if requested.
+ *
+ * @remarks
+ * Compatibility checks and upgrade execution must use the same policy so they agree on the candidate.
+ */
+export function getEffectiveStagedUpgradePolicy(
 	configuredPolicy: StagedSchemaUpgradePolicy,
 	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>,
 ): StagedSchemaUpgradePolicy {
-	if (enabledUpgrades.size === 0) {
+	if (configuredPolicy.includeAlreadyEnabledUpgrades !== true || enabledUpgrades.size === 0) {
 		return configuredPolicy;
 	}
 	return {

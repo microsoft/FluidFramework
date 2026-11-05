@@ -602,8 +602,8 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(viewSpecific.compatibility, {
 			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
+			canUpgrade: true,
+			isEquivalent: true,
 			canInitialize: false,
 			discrepancies: undefined,
 		});
@@ -668,8 +668,8 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(viewSpecific.compatibility, {
 			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
+			canUpgrade: true,
+			isEquivalent: true,
 			canInitialize: false,
 			discrepancies: undefined,
 		});

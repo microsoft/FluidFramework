@@ -152,6 +152,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
+	getEffectiveStagedUpgradePolicy,
 	getSchemaIncompatibilityDetails,
 	type Unenforced,
 	type System_Unsafe,

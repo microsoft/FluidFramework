@@ -10,6 +10,7 @@ import {
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -33,7 +34,7 @@ import {
 	TreeViewConfigurationAlpha,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
+import { expectSchemaEqual, TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -626,6 +627,127 @@ describe("staged optional upgrade", () => {
 
 		const omittedChild = new NodeB({ value: 4 });
 		assert(omittedChild instanceof NodeB);
+	});
+});
+
+describe("optional field removal during staged upgrades", () => {
+	it("preserves removed fields and already-enabled staged changes while adding an optional field", () => {
+		const factory = new SchemaFactoryAlpha("taskRollout");
+
+		class Before extends factory.object("Task", {
+			notes: factory.optional(factory.string),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+		}) {}
+
+		// Remove `notes` and add `isApproved`, while keeping the existing priority and effort changes staged in application code.
+		class After extends factory.object("Task", {
+			priority: factory.types([factory.number, factory.staged(factory.string)]),
+			estimatedHours: factory.stagedOptional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		// Retain `notes` and the already-enabled string priorities and optional effort estimates, then add `isApproved`.
+		class Expected extends factory.object("Task", {
+			notes: factory.optional(factory.string),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+		const provider = new TestTreeProviderLite(2);
+		const [treeBefore, treeAfter] = provider.trees;
+		const before = treeBefore.viewWith(new TreeViewConfiguration({ schema: Before }));
+		before.initialize({ notes: "Discuss with the reviewer", priority: "high" });
+		provider.synchronizeMessages();
+
+		const after = treeAfter.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: After,
+				stagedUpgradePolicy: {
+					...StagedSchemaUpgradePolicy.restrictive,
+					includeAlreadyEnabledUpgrades: true,
+				},
+			}),
+		);
+
+		// The new approval field needs an upgrade, but neither removing `notes` nor preserving enabled changes should block it.
+		assert.equal(after.compatibility.canView, false);
+		assert.equal(after.compatibility.canUpgrade, true);
+		after.upgradeSchema();
+		provider.synchronizeMessages();
+		expectSchemaEqual(treeAfter.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		assert.equal(after.compatibility.isEquivalent, true);
+
+		// The updated client can use the enabled changes and its new field; the older client still sees the retained notes.
+		after.root.priority = "urgent";
+		after.root.estimatedHours = 4;
+		after.root.estimatedHours = undefined;
+		after.root.isApproved = true;
+		provider.synchronizeMessages();
+		assert.equal(after.root.isApproved, true);
+		assert.equal(before.root.priority, "urgent");
+		assert.equal(before.root.estimatedHours, undefined);
+		assert.equal(before.root.notes, "Discuss with the reviewer");
+	});
+
+	it("retains a node definition without enabling its staged use by another field", () => {
+		const factory = new SchemaFactoryAlpha("structuredEstimates");
+
+		class OldEstimate extends factory.object("EffortEstimate", {
+			hours: factory.number,
+		}) {}
+		class Before extends factory.object("Task", {
+			detailedEstimate: factory.optional(OldEstimate),
+			estimate: factory.number,
+		}) {}
+
+		// Add an optional approval flag without changing the stored `EffortEstimate` identifier or numeric `hours`.
+		class NewEstimate extends factory.object("EffortEstimate", {
+			hours: factory.number,
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+		const stagedEstimate = factory.staged(NewEstimate);
+		const upgrade = stagedEstimate.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		// Remove `detailedEstimate` and stage structured values for `estimate`, which otherwise remains numeric.
+		class After extends factory.object("Task", {
+			estimate: factory.types([factory.number, stagedEstimate]),
+		}) {}
+
+		// The retained field needs the view's `NewEstimate` definition, but the disabled staged change must leave `estimate` numeric.
+		class Expected extends factory.object("Task", {
+			detailedEstimate: factory.optional(NewEstimate),
+			estimate: factory.number,
+		}) {}
+		const provider = new TestTreeProviderLite(2);
+		const [treeBefore, treeAfter] = provider.trees;
+		const before = treeBefore.viewWith(new TreeViewConfiguration({ schema: Before }));
+		before.initialize({ detailedEstimate: { hours: 4 }, estimate: 4 });
+		provider.synchronizeMessages();
+
+		const after = asAlpha(
+			treeAfter.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: After,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+				}),
+			),
+		);
+		assert.equal(after.compatibility.canUpgrade, true);
+		after.upgradeSchema();
+		provider.synchronizeMessages();
+
+		// Applying the candidate must preserve the old estimate while adding the new definition's approval field.
+		expectSchemaEqual(treeAfter.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		assert.equal(before.root.detailedEstimate?.hours, 4);
+		assert.equal(after.compatibility.isEquivalent, true);
+
+		// Retaining a definition is not permission to use it at the staged location.
+		assert.equal(after.isStagedUpgradeEnabled(upgrade), "disabled");
+		assert.throws(() => {
+			after.root.estimate = new NewEstimate({ hours: 6 });
+		});
 	});
 });
 

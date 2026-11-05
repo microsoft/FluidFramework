@@ -245,7 +245,7 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * True if and only if the schemas have identical compatibility.
 	 * @remarks
-	 * This includes producing the equivalent stored schema (which currentViewOfSnapshotDocument and snapshotViewOfCurrentDocument also measure)
+	 * This includes producing equivalent initial stored schemas,
 	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
 	 *
 	 * This includes compatibility with all potential future schema changes.
@@ -922,10 +922,9 @@ export function getCompatibility(
 		previousViewSchema,
 	);
 
-	assert(
-		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
-		0xcd3 /* equality should be symmetric */,
-	);
+	// Each direction compares its document's stored schema with a candidate built for the other view.
+	// Removing an optional field can produce a no-op upgrade, while restoring it in a fresh document requires an upgrade.
+	// The two directions therefore need not agree on `isEquivalent`.
 
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
 	const identicalCompatibility =
@@ -936,6 +935,10 @@ export function getCompatibility(
 		assert(
 			backwardsCompatibilityStatus.isEquivalent,
 			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
+		);
+		assert(
+			forwardsCompatibilityStatus.isEquivalent,
+			"Identical compatibility must also have an equivalent upgrade target in the other direction",
 		);
 	}
 

@@ -16,7 +16,9 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
 	checkSchemaCompatibility,
+	getEffectiveStagedUpgradePolicy,
 	getSchemaIncompatibilityDetails,
+	getSchemaUpgradeCandidate,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
@@ -45,10 +47,14 @@ function expectCompatibility(
 	> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
-	stagedSchemaUpgrades?: Parameters<typeof checkSchemaCompatibility>[2],
+	stagedUpgradePolicy?: StagedSchemaUpgradePolicy,
 ) {
-	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
-	const compatibility = checkSchemaCompatibility(viewSchema, stored, stagedSchemaUpgrades);
+	const viewSchema = new TreeViewConfigurationAlpha({ schema: view, stagedUpgradePolicy });
+	const compatibility = checkSchemaCompatibility(
+		viewSchema,
+		stored,
+		viewSchema.stagedUpgradePolicy,
+	);
 	const { discrepancies, ...compatibilityWithoutDiscrepancies } = compatibility;
 	assert.deepEqual(compatibilityWithoutDiscrepancies, {
 		enabledUpgrades: new Map(),
@@ -56,15 +62,24 @@ function expectCompatibility(
 	});
 	assert.equal(discrepancies === undefined, compatibility.canView);
 
-	const viewStored = toUpgradeSchema(view, compatibility.enabledUpgrades.keys());
+	const policy = getEffectiveStagedUpgradePolicy(
+		viewSchema.stagedUpgradePolicy,
+		compatibility.enabledUpgrades,
+	);
+	const candidate = getSchemaUpgradeCandidate(viewSchema, stored, policy).schema;
 
-	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
+	// A permitted upgrade preserves existing content and produces a stored schema that the view can read and edit.
 	if (compatibility.canUpgrade) {
-		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, candidate), true);
+		assert.equal(getSchemaIncompatibilityDetails(viewSchema, candidate), undefined);
 	}
-	// if it is viewable, the old stored schema is also a superset of the new one.
-	if (compatibility.canView) {
-		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
+
+	// Equivalence compares the candidate with the existing stored schema in both directions.
+	// Viewing alone does not imply equivalence: the policy may request additional staged changes.
+	if (compatibility.isEquivalent) {
+		assert.equal(compatibility.canView, true);
+		assert.equal(compatibility.canUpgrade, true);
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, candidate, stored), true);
 	}
 }
 
@@ -441,7 +456,7 @@ describe("checkSchemaCompatibility", () => {
 			);
 		});
 
-		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
+		describe("allows viewing and no-op upgrades when the view permits unknown optional fields", () => {
 			it("due to additional optional fields in the stored schema", () => {
 				class Point2D extends factory.object(
 					"Point",
@@ -458,7 +473,27 @@ describe("checkSchemaCompatibility", () => {
 				}) {}
 				expectCompatibility(
 					{ view: Point2D, stored: toUpgradeSchema(Point3D) },
-					{ canView: true, canUpgrade: false, isEquivalent: false },
+					{ canView: true, canUpgrade: true, isEquivalent: true },
+				);
+			});
+
+			it("the stored schema has additional optional fields, which the view schema allows by default", () => {
+				class Point2D extends factory.objectAlpha("Point", {
+					x: factory.number,
+					y: factory.number,
+				}) {}
+				class Point3D extends factory.objectAlpha("Point", {
+					x: factory.number,
+					y: factory.number,
+					z: factory.optional(factory.number),
+				}) {}
+				expectCompatibility(
+					{ view: Point2D, stored: toUpgradeSchema(Point3D) },
+					{
+						canView: true,
+						canUpgrade: true,
+						isEquivalent: true,
+					},
 				);
 			});
 		});
@@ -533,28 +568,6 @@ describe("checkSchemaCompatibility", () => {
 					canUpgrade: false,
 					isEquivalent: false,
 				};
-
-				// Note: the decision to not allow is policy. See
-				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
-				it("the stored schema has additional optional fields, which the view schema allows", () => {
-					class Point2D extends factory.objectAlpha("Point", {
-						x: factory.number,
-						y: factory.number,
-					}) {}
-					class Point3D extends factory.objectAlpha("Point", {
-						x: factory.number,
-						y: factory.number,
-						z: factory.optional(factory.number),
-					}) {}
-					expectCompatibility(
-						{ view: Point2D, stored: toUpgradeSchema(Point3D) },
-						{
-							canView: true,
-							canUpgrade: false,
-							isEquivalent: false,
-						},
-					);
-				});
 
 				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema
 				it("stored schema has optional fields where view schema expects content", () => {

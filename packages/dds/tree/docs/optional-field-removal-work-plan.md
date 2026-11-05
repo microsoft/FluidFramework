@@ -131,7 +131,7 @@ The original view may need to upgrade a newly created reduced document.
 Snapshot comparisons must preserve these different results.
 See the implementation plan's [snapshot changes][implementation-snapshots] for the necessary code updates.
 
-### 6.3 Keep the new-document collaboration limit visible
+### 6.3 Keep the new-document upgrade requirement visible
 
 An older client that declares the removed field cannot immediately view a new document that omits the field schema.
 The field's optional status does not remove this restriction.
@@ -142,8 +142,14 @@ Thus, these cases are different:
 - Existing document: the stored field schema is retained.
 - New document: the removed field schema is absent.
 
-The snapshot tool can still report a forward-collaboration failure for the new-document case.
-Do not suppress that failure or replace the viewing requirement with an upgrade requirement as part of this work.
+The snapshot tool currently reports a forward-collaboration failure when a supported historical client cannot immediately view a new document.
+As a planned follow-up, permit that client to require a safe upgrade before viewing, just as the current client can require an upgrade before viewing historical documents.
+Within the configured collaboration window, accept an older view if it can either view or upgrade the new document.
+Preserve acceptance for clients that can already view but cannot upgrade, and continue to reject clients that can do neither.
+
+This changes snapshot validation policy, not the meaning of `canView` or the runtime upgrade rules.
+Applications must still perform the required upgrade before accessing the document through an incompatible view.
+Keep the current-to-historical upgrade requirement and the existing collaboration version window unchanged.
 
 See [snapshot collaboration checks](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts#L728).
 
@@ -180,7 +186,7 @@ Update the following application programming interface (API) documentation:
 - [Object schema options](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14): explain field removal, retained data, and rollback.
 - [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the effective staged-upgrade policy determine the target.
 - [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify `isEquivalent` and the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Keep the existing property name; renaming and deprecation are out of scope.
-- [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and new-document limits.
+- [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and permit supported historical clients to require a safe upgrade before viewing newer documents.
 
 Document the new alpha informational report according to the [diagnostic contract][implementation-diagnostics].
 Include an example that distinguishes retained fields from blocking discrepancies.
@@ -193,14 +199,14 @@ Update the documentation for `allowUnknownOptionalFields` and the related guides
 
 Do not describe the option only as support for future field additions.
 An unknown optional field can come from either a newer schema or an older schema.
-Explain that the option does not permit arbitrary incompatible changes or remove the new-document collaboration limits described in section 6.3.
+Explain that the option does not permit arbitrary incompatible changes or remove the new-document upgrade requirement described in section 6.3.
 
 Update the website [schema evolution guide](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/website/docs/data-structures/tree/schema-evolution/index.mdx) to cover this capability:
 
 - Explain how to remove optional fields from view object schemas that enable `allowUnknownOptionalFields`.
 - Explain that existing documents retain the fields, their data, and the required stored schemas during later upgrades.
 - Include an application rollback example.
-- Explain the difference between existing documents and new documents, including the collaboration limits.
+- Explain the difference between existing documents and new documents, including upgrades required before collaboration.
 - Keep the distinction clear: view schemas can remove eligible fields, but stored schemas remain additive.
 
 Update the [types-of-schema-changes guide](https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/website/docs/data-structures/tree/schema-evolution/types-of-changes.mdx) as well.

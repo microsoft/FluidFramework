@@ -4,8 +4,9 @@
 
 Implementation is proceeding in reviewed slices.
 The first slice is complete: the internal `getSchemaUpgradeCandidate` target builder and focused unit tests are implemented.
-The builder has no live upgrade or compatibility-checker callers yet.
-The remaining integration steps and the alpha diagnostic API described below are still planned.
+The live integration slice is also complete: compatibility checks and schema upgrades now use the candidate builder and share effective staged-policy resolution.
+The directly coupled snapshot and offline compatibility checks are updated, and all existing user-story scenarios pass.
+The snapshot collaboration-policy change, alpha diagnostic API, and remaining documentation and API delivery work described below are still planned.
 Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
@@ -20,9 +21,9 @@ The [overview][overview] describes the application-facing behavior.
 Use the work plan's [required behavior][requirements] and [compatibility expectations][compatibility-expectations] as the acceptance requirements.
 The new alpha informational diagnostic, `compatibility.retainedUnknownOptionalFields`, is specified in section 4.
 
-## 1. Findings from the code
+## 1. Findings before implementation
 
-| Area | Current behavior | Required change |
+| Area | Behavior before this feature | Required change |
 | --- | --- | --- |
 | [Stored-schema conversion][conversion] | `toUpgradeSchema` derives its result from the view schema and staged policy only. It does not consider the existing stored schema. | Add a shared builder that derives the target from both schemas and the effective staged-upgrade policy. |
 | [Compatibility calculation][compatibility] | `canUpgrade` compares the existing stored schema against that view-only target. | Compare against the target that retains eligible unknown fields. Return the new information separately from blocking discrepancies. |
@@ -36,8 +37,8 @@ The new alpha informational diagnostic, `compatibility.retainedUnknownOptionalFi
 | [Unknown-field inspection][unknown-field-schemas] | The alpha context already exposes stored definitions of unknown optional fields. | Keep that inspection API distinct from the proposed upgrade-target report; see section 4.4. |
 
 The root cause is target construction, not the general definition of a safe stored-schema upgrade.
-The proposed target currently omits fields that the application no longer declares.
-The superset check correctly rejects that target.
+The previous view-only target omitted fields that the application no longer declared.
+The superset check correctly rejected that target.
 
 ## 2. Shared upgrade-target construction
 
@@ -142,7 +143,7 @@ Otherwise, an incompatible staged declaration could be hidden from the upgrade c
 
 Preserving a definition must not enable a staged allowed type at another location.
 Keep the policy's existing rules for staged types, staged optional fields, and `includeAlreadyEnabledUpgrades`.
-Both callers already resolve the effective policy; preserve agreement between them.
+Both callers use `getEffectiveStagedUpgradePolicy` to resolve the effective policy so compatibility checks and upgrade execution agree.
 
 See [staged-upgrade policies][staged-policy].
 
@@ -301,8 +302,8 @@ If selection logic is shared during implementation, keep these different contrac
 
 ### 5.1 Remove the invalid symmetry assumption
 
-The [snapshot helper][snapshot-comparison] currently asserts that equivalence is symmetric.
-Remove that assertion and add a regression for the two directions:
+The [snapshot helper][snapshot-comparison] previously asserted that equivalence was symmetric.
+The live integration slice removes that assertion and adds a regression for the two directions:
 
 - A reduced view on a historical document retains the old field; its upgrade target is equivalent to that document.
 - The original view on a freshly initialized reduced document must add the field; its upgrade target is not equivalent to that document.
@@ -311,10 +312,28 @@ Keep `identicalCompatibility` as the separate comparison of view-schema snapshot
 Do not redefine it as the conjunction of the directional flags.
 Do not regenerate historical snapshots to erase a real schema difference.
 
-### 5.2 Keep collaboration policy unchanged
+### 5.2 Permit historical clients to upgrade newer documents
 
-Leave the snapshot tool's forward-viewability checks unchanged: continue to check `canView`, not `canUpgrade`.
-The work plan explains the [fresh-document collaboration restriction][collaboration-limit] that this preserves.
+The snapshot tool currently requires supported historical clients to view documents created by the current version without first upgrading them.
+Loosen this policy so an older schema can require a safe upgrade before viewing a newer document, just as a newer schema can require an upgrade before viewing an older document.
+This follow-up is planned; the live integration slice still enforces the original forward-viewability requirement.
+
+For historical versions within `minVersionForCollaboration`, accept `snapshotViewOfCurrentDocument.canView || snapshotViewOfCurrentDocument.canUpgrade`.
+Do not replace the check with `canUpgrade` alone: a historical view may already be able to read and edit the document even when its staged policy prevents an upgrade.
+Keep the current version's existing `currentViewOfSnapshotDocument.canUpgrade` requirement for historical documents and the existing version-window rules.
+Reject forward compatibility only when the supported historical client can neither view nor upgrade the current document.
+
+Update the snapshot validation errors and the `minVersionForCollaboration` documentation to describe collaboration after a permitted upgrade.
+Passing a snapshot check does not apply the upgrade or change the directional compatibility flags.
+When `canView` is false and `canUpgrade` is true, the application must still call `upgradeSchema()` before accessing the document through that view.
+Keep the runtime superset checks unchanged.
+The work plan describes this [new-document upgrade requirement][collaboration-policy].
+
+Update the rollback regression in [snapshotCompatibilityChecker.spec.ts][snapshot-tests] to expect snapshot validation to succeed after this support is implemented.
+Keep its directional assertions: the historical view cannot immediately view the fresh document, can upgrade it, and does not have an equivalent no-op target.
+Also retain coverage for directly viewable historical schemas whose upgrades are forbidden, and for schemas that cannot view or upgrade.
+
+### 5.3 Preserve offline results and unrelated staging behavior
 
 The existing [offline helpers][persisted-schema] should inherit the new decisions from the shared checker.
 Keep their existing return types; exposing the new alpha diagnostics through those helpers is outside this change.
@@ -399,7 +418,8 @@ Update [snapshotCompatibilityChecker.spec.ts][snapshot-tests] and [storedSchema.
 
 - Verify historical documents can be upgraded after eligible field removal.
 - Verify directional equivalence does not trigger an assertion.
-- Keep the fresh-document collaboration failure visible when older versions are still required to collaborate.
+- Once the policy change in section 5.2 is implemented, accept fresh-document collaboration when a supported older view can safely upgrade the document.
+- Preserve rejection when the older view can neither view nor upgrade, and preserve acceptance when it can already view but cannot upgrade.
 - Verify offline flag results agree with live-view results.
 
 Run the existing [staged-upgrade tests][staged-tests] to preserve their policy behavior.
@@ -419,30 +439,41 @@ Update this list after each implementation slice.
   - [x] Implement `getSchemaUpgradeCandidate` and its package-internal exports without wiring live callers.
   - [x] Verify exact targets, retained definitions, rejected constraints, staging, metadata, stored keys, cache isolation, and callback safety.
   - [x] Run the relevant regression suites, TypeScript builds, formatting, and lint.
-- [ ] **Connect compatibility calculation and upgrade execution. Next slice.**
-  - [ ] Use the shared target to calculate `canUpgrade` and `isEquivalent`, keeping viewing-blocker checks unchanged.
-  - [ ] Use the same target in `upgradeSchema`, preserving existing safety checks and the no-op path.
-  - [ ] Update affected test helpers and expectations; verify live upgrades and the existing user-story scenarios.
-- [ ] **Expose alpha upgrade diagnostics.**
+- [x] **Connect compatibility calculation and upgrade execution.**
+  - [x] Use the shared target to calculate `canUpgrade` and `isEquivalent`, keeping viewing-blocker checks unchanged.
+  - [x] Use the same target in `upgradeSchema`, preserving existing safety checks and the no-op path.
+  - [x] Update affected test helpers and expectations; verify live upgrades and the existing user-story scenarios.
+- [ ] **Expose alpha upgrade diagnostics. Next slice.**
   - [ ] Add `SchemaCompatibilityStatusAlpha` and `retainedUnknownOptionalFields` to the alpha view surface.
   - [ ] Forward the report through compatibility updates and add the required exports.
   - [ ] Test diagnostic contents, omission, ordering, coexistence with blockers, and remote updates.
   - [ ] Verify alpha access and public/beta exclusion with type checks.
-- [ ] **Update snapshot and offline compatibility.**
-  - [ ] Remove the equivalence-symmetry assumption while preserving `identicalCompatibility`.
-  - [ ] Verify agreement with live compatibility results and retain the fresh-document collaboration restriction.
-  - [ ] Update directly affected expectations without repairing unrelated skipped cases.
+- [x] **Update snapshot and offline compatibility.**
+  - [x] Remove the equivalence-symmetry assumption while preserving `identicalCompatibility`.
+  - [x] Verify agreement with live compatibility results and cover the current fresh-document upgrade requirement.
+  - [x] Update directly affected expectations without repairing unrelated skipped cases.
+- [ ] **Allow historical clients to upgrade newer documents before collaboration.**
+  - [ ] Accept `canView || canUpgrade` for historical versions within the collaboration window, preserving existing directly viewable cases.
+  - [ ] Keep the current-to-historical upgrade requirement, version-window rules, and runtime superset checks unchanged.
+  - [ ] Change the rollback snapshot test to expect success, while preserving its directional compatibility assertions.
+  - [ ] Cover directly viewable but non-upgradeable historical schemas and reject schemas that can neither view nor upgrade.
+  - [ ] Update snapshot validation errors, collaboration-policy documentation, and the changeset.
 - [ ] **Complete documentation and API delivery.**
-  - [ ] Complete the work plan's [documentation and delivery checklist][delivery], including generated entrypoints, API reports, and the changeset.
+  - [x] Clarify the compatibility flags' API documentation and add the behavior changeset for `@fluidframework/tree` and `fluid-framework`.
+  - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including alpha entrypoints and API reports.
 - [ ] **Validate the integrated implementation.**
   - [ ] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
-  - [ ] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
+  - [x] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
   - [ ] Pass the affected TypeScript, formatting, lint, and API checks.
 
-First-slice validation: 22 new builder tests pass within 377 passing related tests.
-TypeScript, formatting, and lint checks pass.
-The separate user-story fixture remains at 29 passing tests and seven expected failures because the builder is not yet wired into live upgrades.
-These results describe the completed slice, not final feature validation.
+Current validation: 1,233 tests pass across the integration and regression suites listed below, with seven pre-existing skipped snapshot tests unchanged.
+This includes all 16 builder tests and all 36 user-story tests; the seven previously failing preservation scenarios now pass.
+The no-op user-story helper also checks `isEquivalent`, in addition to its existing event, operation, and root-identity checks.
+New tests cover retaining removed fields alongside already-enabled staged changes, retaining a node definition without enabling its staged use elsewhere, and directional snapshot and persisted-schema compatibility.
+The snapshot regression currently records the stricter policy: it rejects a historical client that needs a safe upgrade before viewing a fresh document.
+A TODO marks that assertion for replacement when section 5.2 is implemented.
+`pnpm run build:esm`, `pnpm run build:test:esm`, and the focused Biome, ESLint, and whitespace checks pass.
+These results describe the completed integration slice; the snapshot collaboration-policy change, alpha diagnostic tests, and final API delivery validation remain outstanding.
 
 ### Validation commands
 
@@ -455,21 +486,25 @@ pnpm run build:esm
 pnpm run build:test:esm
 ```
 
-Run the directly affected suites together:
+The live integration slice was validated with these suites together:
 
 ```bash
 MOCHA_SPEC='lib/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.js' \
-pnpm run test:mocha:esm --reporter spec \
-  lib/test/simple-tree/toStoredSchema.spec.js \
-  lib/test/simple-tree/treeSchema.spec.js \
-  lib/test/simple-tree/api/schemaFactoryOptions.spec.js \
+pnpm run test:mocha:esm --reporter dot \
   lib/test/simple-tree/api/schemaCompatibilityTester.spec.js \
-  lib/test/simple-tree/api/discrepancies.spec.js \
+  lib/test/shared-tree/schematizingTreeView.spec.js \
   lib/test/simple-tree/api/stagedSchemaUpgrade.spec.js \
   lib/test/simple-tree/api/snapshotCompatibilityChecker.spec.js \
+  lib/test/simple-tree/treeSchema.spec.js \
+  lib/test/simple-tree/toStoredSchema.spec.js \
+  lib/test/shared-tree/treeCheckout.spec.js \
   lib/test/simple-tree/api/storedSchema.spec.js \
-  lib/test/shared-tree/schematizingTreeView.spec.js
+  lib/test/shared-tree/independentView.spec.js \
+  lib/test/simple-tree/api/schemaHash.spec.js \
+  lib/test/feature-libraries/modular-schema/comparison.spec.js
 ```
+
+Include the affected diagnostic and schema-option suites when adding the alpha diagnostic API.
 
 Use the package's existing Biome and ESLint commands on changed source files.
 Run broader tests only when the focused results or changed code paths require them.
@@ -491,7 +526,7 @@ Use the [work plan][work-plan] for feature acceptance and delivery requirements 
 [work-plan]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md
 [requirements]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#required-behavior
 [compatibility-expectations]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#5-compatibility-status-and-events
-[collaboration-limit]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#63-keep-the-new-document-collaboration-limit-visible
+[collaboration-policy]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#63-keep-the-new-document-upgrade-requirement-visible
 [testing-requirements]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#7-required-tests
 [delivery]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-work-plan.md#8-documentation-and-delivery
 [overview]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-overview.md
