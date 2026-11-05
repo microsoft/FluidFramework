@@ -97,10 +97,7 @@ describe("reactSharedTreeView", () => {
 						name: builder.string,
 						extra: builder.optional(builder.string),
 					}) {}
-					class ViewItem extends builder.object(
-						"RolloutItem",
-						{ name: builder.string },
-					) {}
+					class ViewItem extends builder.object("RolloutItem", { name: builder.string }) {}
 					const tree = createIndependentTreeBeta();
 					const storedView = tree.viewWith(new TreeViewConfiguration({ schema: StoredItem }));
 					storedView.initialize(new StoredItem({ name: "Visible", extra: "Preserved" }));
