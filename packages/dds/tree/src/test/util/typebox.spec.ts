@@ -20,9 +20,9 @@ import {
 } from "../../util/index.js";
 
 describe("TypeBox builders", () => {
-	for (const [name, modifier, key] of [
-		["optional", Type.Optional, "~optional"],
-		["readonly", Type.Readonly, "~readonly"],
+	for (const { name, modifier, key } of [
+		{ name: "optional", modifier: Type.Optional, key: "~optional" },
+		{ name: "readonly", modifier: Type.Readonly, key: "~readonly" },
 	] as const) {
 		describe(name, () => {
 			it("copies only the outer schema and preserves its metadata", () => {

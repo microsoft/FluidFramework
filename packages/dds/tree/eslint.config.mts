@@ -34,6 +34,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
+			// TODO: Remove this override once Tree consumes eslint-config-fluid 15,
+			// which includes these TypeBox subpaths in its shared allowlist.
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -62,7 +64,9 @@ const config: Linter.Config[] = [
 						"Exporting * is not permitted. You should export only named items you intend to export.",
 				},
 				"ForInStatement",
-				// This mirrors eslint-config-fluid 15 until Tree consumes the published package:
+				// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared restrictions
+				// instead of duplicating them here, but retain the Tree-specific builder restriction below.
+				// These import restrictions mirror eslint-config-fluid 15:
 				// named type imports come from `typebox`, while runtime schema builders use
 				// `import * as Type from "typebox/type"`.
 				{
@@ -105,6 +109,8 @@ const config: Linter.Config[] = [
 		files: ["src/**/*.ts"],
 		ignores: ["src/test/**"],
 		rules: {
+			// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared allowlist
+			// for TypeBox subpaths while retaining the Noble allowance below.
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -148,6 +154,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 			// Import namespace validation is also expensive and low-value for test-only imports.
 			"import-x/namespace": "warn",
+			// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared allowlist
+			// for TypeBox subpaths while retaining the broader Fluid test imports.
 			"import-x/no-internal-modules": [
 				"error",
 				{

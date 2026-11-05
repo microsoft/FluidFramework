@@ -36,8 +36,10 @@ describe("detachedFieldIndexCodec", () => {
 			assert.equal(detach.check(value), true);
 			assert.equal(root.check(value), true);
 		}
+		// Detach IDs have no lower bound; forest root IDs must be at least -1.
 		assert.equal(detach.check(-2), true);
 		assert.equal(root.check(-2), false);
+		// Values close to integers must still be rejected, without a floating-point tolerance.
 		for (const value of [1e-11, 1 - 1e-11, 1 + 1e-11, -1 - 1e-11, 0.5]) {
 			assert.equal(detach.check(value), false);
 			assert.equal(root.check(value), false);
@@ -45,6 +47,7 @@ describe("detachedFieldIndexCodec", () => {
 	});
 
 	it("preserves revision and version types in format aliases", () => {
+		// Both tuple encodings must retain the supplied revision type and the forest root ID brand.
 		type _StringRoots = requireTrue<
 			areSafelyAssignable<
 				EncodedRootsForRevision<TString>,
@@ -57,6 +60,7 @@ describe("detachedFieldIndexCodec", () => {
 				[number, [number, ForestRootId][]] | [number, number, ForestRootId]
 			>
 		>;
+		// The enclosing format must also retain the literal version rather than widening it.
 		type _StringFormat = requireTrue<
 			areSafelyAssignable<
 				Format<typeof DetachedFieldIndexFormatVersion.v1, TString>,

@@ -307,6 +307,7 @@ function isSandboxCodecPayloadValue(value: unknown): boolean {
 
 /**
  * The value vocabulary of normalized, codec-encoded sandbox payloads, not their codec-specific structure.
+ * @remarks
  * See {@link isSandboxCodecPayloadValue} for the supported values and normalization preconditions.
  * A refinement explicitly short-circuits on handles: TypeBox's interpreted unions and intersections
  * evaluate every branch and can otherwise traverse handle internals.
@@ -344,6 +345,7 @@ export function isEscapedObject(value: unknown): value is Static<typeof EscapedO
 
 /**
  * Checks the {@link SandboxCodecPayload} value vocabulary before existing tree codecs decode the payload.
+ * @remarks
  * Requires transport-normalized input as described by {@link isSandboxCodecPayloadValue}.
  */
 export function validateTreePayloadVocabulary(value: unknown): void {

@@ -18,8 +18,10 @@ describe("schema snapshots", () => {
 
 	it("restricts snapshot inputs to JSON data and object schemas", () => {
 		type Input = Parameters<typeof takeJsonSnapshot>[0];
+		// Snapshot inputs include JSON data and TypeBox object schemas, which serialize to JSON.
 		type _Json = requireTrue<isAssignableTo<{ value: string }, Input>>;
 		type _Schema = requireTrue<isAssignableTo<TObject<{ value: TString }>, Input>>;
+		// TypeBox 1's empty TSchema type would also admit these non-JSON values.
 		type _Function = requireFalse<isAssignableTo<() => void, Input>>;
 		type _BigInt = requireFalse<isAssignableTo<bigint, Input>>;
 		type _Map = requireFalse<isAssignableTo<Map<string, string>, Input>>;
