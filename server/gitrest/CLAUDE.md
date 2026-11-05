@@ -84,7 +84,7 @@ Endpoints follow the GitHub API pattern:
 
 ## Conventions
 
--   Follow the parent repo's CLAUDE.md: use string literal assert messages (not hex codes) for new asserts.
+-   Follow the repository-wide instructions in `../../.github/copilot-instructions.md`: use string literal assert messages (not hex codes) for new asserts.
 -   API report files (`*.api.md`) are generated — never hand-edit them.
 -   TypeScript strict mode. ESLint config extends `@fluidframework/eslint-config-fluid`.
 -   Prettier config is at the release group root (`prettier.config.cjs`).

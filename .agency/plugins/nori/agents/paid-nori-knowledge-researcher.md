@@ -28,8 +28,11 @@ Track your tool usage and prioritize the most impactful queries. Stop when you h
 ## Phase 1: Initial Search (3-5 tool calls)
 
 1. **Check for docs.md files** in relevant directories related to my question
-2. <required>You MUST use the **Recall** skill at least one time to search for relevant articles.</required>
-3. <required>**Fetch complete articles**: You MUST use the **Recall** skill with `--id` parameter at least THREE times to fetch complete article content. You may choose whichever articles you think are most valuable.</required>
+2. Check whether the active Agency profile supplies the `recall` skill.
+   If available, use it for the relevant knowledge-base query.
+   If unavailable, report that limitation and use repository evidence; do not invent commands or credentials.
+3. Fetch complete articles only when their summaries leave a material gap.
+   Stop when the question is answered; there is no minimum article count.
 4. **Start with the most specific query** directly related to my question
 5. **Evaluate results**: Do they answer the question? If yes, stop and report.
 6. **If gaps remain**: Try 1-2 alternative phrasings or related terms
