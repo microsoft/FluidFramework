@@ -21,6 +21,7 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type TreeChunk,
+	makeAnonChange,
 } from "../../core/index.js";
 import {
 	brand,
@@ -64,7 +65,7 @@ import {
 } from "./modularChangeTypes.js";
 import { NodeMoveType } from "./crossFieldQueries.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import { cloneRootTable } from "./modularChangeFamily.js";
+import { cloneRootTable, intoDelta } from "./modularChangeFamily.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export function hasConflicts(change: ModularChangeset): boolean {
@@ -1302,9 +1303,52 @@ export function areEquivalent(
 	return true;
 }
 
+export function areDeltaEquivalent(
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): boolean {
+	const normalized1 = normalizeChangeset(change1, fieldKinds, false, false, (chunk) => chunk);
+	const normalized2 = normalizeChangeset(change2, fieldKinds, false, false, (chunk) => chunk);
+
+	const delta1 = intoDelta(makeAnonChange(normalized1), fieldKinds);
+	if (delta1.build !== undefined) {
+		for (const build of delta1.build) {
+			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
+		}
+	}
+
+	if (delta1.refreshers !== undefined) {
+		for (const build of delta1.refreshers) {
+			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
+		}
+	}
+
+	const delta2 = intoDelta(makeAnonChange(normalized2), fieldKinds);
+	if (delta2.build !== undefined) {
+		for (const build of delta2.build) {
+			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
+		}
+	}
+
+	if (delta2.refreshers !== undefined) {
+		for (const build of delta2.refreshers) {
+			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
+		}
+	}
+
+	const diff = merge(delta1, delta2);
+	if (hasConflict(diff)) {
+		// Breakpoint here to inspect the diff
+		return false;
+	}
+	return true;
+}
+
 const throws = (): never => {
 	throw new Error("Unexpected call inside dummy chunk");
 };
+
 function makeDummyChunk(chunk: TreeChunk): TreeChunk {
 	return {
 		topLevelLength: chunk.topLevelLength,

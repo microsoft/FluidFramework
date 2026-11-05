@@ -29,7 +29,7 @@ import {
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 import {
-	areEquivalent,
+	areDeltaEquivalent,
 	fieldKindsFromConfiguration,
 	isChangesetValid,
 } from "./modularChangeUtils.js";
@@ -77,7 +77,7 @@ export function makeModularChangeCodecV2(
 			cheapRebaseValidation("V2 encode output", (): true | string => {
 				const decoded = modularChangeCodec.decode(encoded, context);
 				return (
-					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds), true) ||
+					areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
 					"does not match decode output"
 				);
 			});

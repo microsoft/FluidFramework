@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
@@ -92,7 +92,12 @@ export function invertModularChange(
 	);
 
 	const revInfos: readonly RevisionInfo[] = isRollback
-		? getRevInfosForRollback(change.change.revisions ?? [], revisionForInvert)
+		? getRevInfosForRollback(
+				change.change.revisions ?? [
+					{ revision: change.revision ?? fail("Expected change to have a revision") },
+				],
+				revisionForInvert,
+			)
 		: [{ revision: revisionForInvert }];
 
 	const [noChangeConstraint, noChangeConstraintOnRevert] = isRollback

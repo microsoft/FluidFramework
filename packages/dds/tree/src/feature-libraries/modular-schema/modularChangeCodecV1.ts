@@ -96,9 +96,9 @@ import {
 	newRootTable,
 	normalizeFieldId,
 	type FieldIdKey,
-	areEquivalent,
 	fieldKindsFromConfiguration,
 	isChangesetValid,
+	areDeltaEquivalent,
 } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
@@ -422,7 +422,7 @@ export function makeModularChangeCodecV1(
 			cheapRebaseValidation("V1 encode output", (): true | string => {
 				const decoded = modularChangeCodec.decode(encoded, context);
 				return (
-					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
 					"does not match decode output"
 				);
 			});
