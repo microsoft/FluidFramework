@@ -5,12 +5,11 @@
 
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { delimiter, join, resolve } from "node:path";
 import { Config } from "@oclif/core";
 import { expect } from "chai";
 import execa from "execa";
 import { describe, it } from "mocha";
-
 import AiCommand, {
 	assertSafeAliasSelection,
 	buildLauncherPrompt,
@@ -19,8 +18,23 @@ import AiCommand, {
 	readAssetFile,
 	SUPPORTED_ALIASES,
 } from "../../commands/ai.js";
+import { launcherToolPolicy } from "../../library/ai/copilotSession.js";
 
 describe("ai command", () => {
+	it("exposes only the recommendation and question tools to the launcher", () => {
+		expect(launcherToolPolicy.availableTools).to.deep.equal(["ask_user", "select_alias"]);
+	});
+
+	it("denies permission requests outside the launcher's confirmation flow", async () => {
+		for (const kind of ["shell", "write", "mcp", "read", "url", "custom-tool"] as const) {
+			const result = await launcherToolPolicy.onPermissionRequest(
+				{ kind },
+				{ sessionId: "launcher-test" },
+			);
+			expect(result.kind).to.equal("denied-by-rules");
+		}
+	});
+
 	it("resolves a runnable Copilot CLI from the SDK dependency", async () => {
 		const aiSessionModule = await import("../../library/ai/copilotSession.js");
 		const resolver = Reflect.get(aiSessionModule, "resolveCopilotCliPath");
@@ -173,12 +187,12 @@ describe("ai command", () => {
 			await chmod(fakeFlubPath, 0o755);
 
 			const result = await execa(
-				"/usr/bin/bash",
-				["-c", 'source "$1"; flub-ai', "flub-ai-test", aliasScriptPath],
+				"bash",
+				["-c", 'source "$1"; flub-ai', "flub-ai-test", aliasScriptPath.replaceAll("\\", "/")],
 				{
 					env: {
 						...process.env,
-						PATH: `${tempDirectory}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
+						PATH: `${tempDirectory}${delimiter}${process.env.PATH ?? ""}`,
 					},
 				},
 			);

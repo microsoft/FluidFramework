@@ -41,9 +41,15 @@ These shell functions are available in all terminal sessions. `dev` is the recom
 
 | Launcher | Command | Purpose |
 |---|---|---|
-| `dev` | `agency copilot --profile nori ... -- -i "/yolo auto"` | Copilot CLI configured for Fluid Framework feature work, testing, and debugging |
+| `dev` | `agency copilot --profile nori ...` | Copilot CLI configured for Fluid Framework feature work, testing, and debugging |
 | `copilot` | `agency copilot` | Copilot CLI without an FF-specific profile or default MCP servers |
-| `oce` | `agency copilot --profile ff-oce ... -- --agent ff-oce:ff-oce -i "/yolo auto"` | Copilot CLI configured for on-call engineer workflows |
+| `oce` | `agency copilot --profile ff-oce ... -- --agent ff-oce:ff-oce` | Copilot CLI configured for on-call engineer workflows |
+
+Launchers do not enable automatic tool approval.
+Keep the runtime's permission prompts and the OCE agent's confirmation before writes.
+Arguments before `--` configure Agency; arguments after it configure Copilot CLI.
+For example, `dev -- --model <available-model>` or `oce -- --model <available-model>` preserves your model choice.
+`start --model <available-model>` selects the recommendation assistant's model, not the launched agent's model.
 
 ### Custom MCP Servers
 

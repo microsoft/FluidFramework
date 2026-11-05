@@ -19,7 +19,7 @@ The AI-enabled profile includes everything in the Standard profile, plus:
 | Addition                | Purpose                                                   |
 | ----------------------- | --------------------------------------------------------- |
 | Agency CLI              | Run GitHub Copilot agents from the terminal               |
-| Repoverlay              | Overlay system for context files (agents, skills)         |
+| Agency profiles         | Load Nori and FF OCE plugins from `.agency/plugins/`      |
 | GitHub CLI (`gh`)       | Pre-installed for PR workflows and SSH access             |
 | SSH daemon              | Enables remote terminal connection via `gh codespace ssh` |
 | Agent aliases           | Shell shortcuts for common AI commands                    |
@@ -38,3 +38,8 @@ This enables running AI agents from your local terminal while the Codespace prov
 ## Getting Started
 
 Once your Codespace is running, see [GETTING_STARTED.md](../../../.devcontainer/GETTING_STARTED.md) for setup instructions, available aliases, custom MCP server usage, and more.
+
+The `flub ai` recommendation assistant can ask questions and select an alias.
+It cannot run shell commands, read or write repository files, or invoke MCP services.
+The user must confirm the recommendation before the launcher executes it.
+See [Copilot CLI commands and customization](Copilot-CLI-Slash-Commands.md) for skill discovery, runtime support, model selection, and permissions.
