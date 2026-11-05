@@ -38,6 +38,7 @@ import {
 	setInChangeAtomIdMap,
 	type TreeChunk,
 	fieldBatchCodecBuilder,
+	NodeMoveType,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -2440,8 +2441,9 @@ describe("ModularChangeFamily integration", () => {
 				tag1,
 			);
 
+			const detachId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const nestedChange = Change.field(fieldB, sequenceIdentifier, [
-				MarkMaker.detach(1, { revision: tag1, localId: brand(1) }),
+				MarkMaker.detach(1, detachId),
 			]);
 
 			const change2 = tagChange(
@@ -2483,6 +2485,13 @@ describe("ModularChangeFamily integration", () => {
 					Change.nodeWithId(0, nodeId2, nestedChange),
 				),
 			);
+
+			// The compose implementation happens to use the alias `nodeId1` in the cross-field key entry,
+			// so we manually replace the default entry created by the change builder (which would use the canonical ID).
+			expected.crossFieldKeys.set({ ...detachId, target: NodeMoveType.Detach }, 1, {
+				nodeId: nodeId1,
+				field: fieldB,
+			});
 
 			assertEqual(composed, expected);
 		});
