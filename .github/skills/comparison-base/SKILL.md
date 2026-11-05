@@ -1,6 +1,7 @@
 ---
 name: comparison-base
 description: Internal reusable workflow for resolving the correct Git comparison base for branch reviews and change analysis. Finds the PR target or canonical Fluid Framework upstream, selects the newest shared target-history commit, and detects substantial divergence.
+license: MIT
 argument-hint: "[review-ref]"
 ---
 
