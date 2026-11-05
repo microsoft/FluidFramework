@@ -256,8 +256,10 @@ test.describe("text editor", () => {
 		await peer.locator("textarea").press("End");
 		await peer.locator("textarea").pressSequentially(" remote");
 		await expect(writer.getByRole("status")).toContainText("disconnected");
+		await expect(writer.getByRole("alert")).toHaveCount(0);
 		await writer.getByRole("button", { name: "Reconnect", exact: true }).click();
 		await expect(writer.getByRole("status")).toContainText("connected · 0 pending edits");
+		await expect(writer.getByRole("alert")).toHaveCount(0);
 		await expect
 			.poll(
 				async () =>

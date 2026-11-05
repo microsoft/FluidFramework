@@ -340,12 +340,14 @@ export class DirectSharedTreeClient {
 	}
 
 	private stopTransport(): void {
+		const generation = this.generation;
 		clearTimeout(this.summaryTimer);
 		this.summaryTimer = undefined;
 		const subscription = this.subscription;
 		this.subscription = undefined;
 		if (subscription !== undefined) {
 			void Promise.resolve(subscription.cancel()).catch((error: unknown) => {
+				if (generation !== this.generation || this.connectionState === "disposed") return;
 				this.lastError = error;
 				this.notify();
 			});
@@ -417,10 +419,7 @@ export class DirectSharedTreeClient {
 					throw new Error("Direct SharedTree subscription returned an empty batch");
 				this.applyOperations(operations);
 			} catch (error) {
-				this.lastError = error;
-				this.state = "error";
-				this.stopTransport();
-				this.notify();
+				this.fail(error);
 				return;
 			}
 		}
@@ -595,6 +594,7 @@ export class DirectSharedTreeClient {
 
 	/** Stops on invalid canonical history or a failed kernel transformation. */
 	private fail(error: unknown): void {
+		this.generation++;
 		this.lastError = error;
 		this.state = "error";
 		this.stopTransport();
@@ -603,17 +603,21 @@ export class DirectSharedTreeClient {
 
 	private scheduleSummary(retry = false): void {
 		if (this.connectionState !== "connected") return;
+		const generation = this.generation;
 		clearTimeout(this.summaryTimer);
 		this.summaryTimer = setTimeout(
 			() => {
+				if (generation !== this.generation) return;
 				this.summaryTimer = undefined;
 				void this.summarize()
 					.catch((error: unknown) => {
+						if (generation !== this.generation) return;
 						this.lastError = error;
 						this.notify();
 					})
 					.finally(() => {
-						if (this.dirtyOperations > 0) this.scheduleSummary(true);
+						if (generation === this.generation && this.dirtyOperations > 0)
+							this.scheduleSummary(true);
 					});
 			},
 			!retry &&

@@ -33,6 +33,8 @@ An absent reference uses -1, which precedes every Sea position.
 Subscription and submission failures trigger automatic reconnect with bounded retry frequency.
 `connectionState`, `pendingOperationCount`, and `lastError` expose progress and failures.
 Use `onStatusChange()` to observe changes without polling.
+Background failures from an earlier connection do not overwrite the current status after disconnect, reconnect, or disposal.
+Failures in the current connection are still reported.
 
 This is not a Fluid driver or container implementation.
 The host retains the existing tree and application views during reconnect.

@@ -31,6 +31,7 @@ const configuration = new TreeViewConfiguration({ schema: State });
 class FaultClient extends SeaSessionDriverClient {
 	/** Failure point for the next submission. */
 	public failNext: "before" | "after" | undefined;
+	public cancellation: Promise<void> | undefined;
 	/** Releases held subscription delivery after transport is cancelled. */
 	private release: (() => void) | undefined;
 	/** Blocks delivery independently of service acceptance. */
@@ -59,7 +60,10 @@ class FaultClient extends SeaSessionDriverClient {
 				await this.delivery;
 				return operation;
 			},
-			cancel: () => subscription.cancel(),
+			cancel: () => {
+				const result = subscription.cancel();
+				return this.cancellation ?? result;
+			},
 		};
 	}
 
@@ -441,6 +445,104 @@ describe("DirectSharedTreeClient recovery", () => {
 		assert.equal(writer.host.connectionState, "connected");
 		const peer = await open(writer.host.documentId);
 		assert.deepEqual([...peer.view.root.items], ["survives failed cleanup"]);
+	});
+
+	for (const outcome of ["disconnect", "dispose", "connected", "error"] as const) {
+		it(`handles an in-flight summary failure after ${outcome} without hiding current failures`, async () => {
+			let blockUploads = false;
+			let started = false;
+			let rejectUpload: (error: Error) => void = () =>
+				assert.fail("upload gate not initialized");
+			const blocked = new Promise<void>((_resolve, reject) => {
+				rejectUpload = reject;
+			});
+			const failure = new Error("Injected summary transport cancellation");
+			const writer = await open(
+				undefined,
+				{ summaryIdleMs: 20 },
+				async (document, options) => {
+					const session = await service.open(document, options);
+					return {
+						...session,
+						putBlob: async (payload) => {
+							if (blockUploads) {
+								started = true;
+								await blocked;
+							}
+							return session.putBlob(payload);
+						},
+					};
+				},
+			);
+			blockUploads = true;
+			await until(() => started, "scheduled summary did not start");
+			const rejected = assert.rejects(writer.host.summarize(), (error) => error === failure);
+			let disposed: Promise<void> | undefined;
+			let terminalError: unknown;
+			if (outcome === "disconnect") writer.host.disconnect();
+			if (outcome === "dispose") disposed = writer.host.dispose();
+			if (outcome === "error") {
+				const history = await writer.driver.readProjected();
+				await writer.driver.submitEvent(new TextEncoder().encode("{}"), history.cursor);
+				await until(
+					() => writer.host.connectionState === "error",
+					"invalid acknowledgment did not stop the host",
+				);
+				terminalError = writer.host.lastError;
+				assert.ok(terminalError instanceof Error);
+			}
+			blockUploads = false;
+			rejectUpload(failure);
+			await rejected;
+			await disposed;
+			assert.equal(writer.host.lastError, outcome === "connected" ? failure : terminalError);
+			assert.equal(
+				writer.host.connectionState,
+				outcome === "dispose"
+					? "disposed"
+					: outcome === "disconnect"
+						? "disconnected"
+						: outcome === "error"
+							? "error"
+							: "connected",
+			);
+			if (outcome === "disconnect" || outcome === "connected") {
+				if (outcome === "disconnect") await writer.host.reconnect();
+				await until(
+					() => writer.host.summaryCount > 0,
+					"summary did not retry on the live connection",
+				);
+				assert.equal(writer.host.lastError, undefined);
+			}
+		});
+	}
+
+	it("does not let delayed subscription cleanup overwrite a recovered connection", async () => {
+		const writer = await open();
+		let rejectCancellation: (error: Error) => void = () =>
+			assert.fail("cancellation gate not initialized");
+		writer.driver.cancellation = new Promise<void>((_resolve, reject) => {
+			rejectCancellation = reject;
+		});
+		writer.host.disconnect();
+		writer.driver.cancellation = undefined;
+		await writer.host.reconnect();
+		rejectCancellation(new Error("Late cleanup failure"));
+		await delay(0);
+		assert.equal(writer.host.connectionState, "connected");
+		assert.equal(writer.host.lastError, undefined);
+	});
+
+	it("still reports a cleanup failure in the current lifecycle", async () => {
+		const writer = await open();
+		const failure = new Error("Current cleanup failure");
+		writer.driver.cancellation = Promise.reject(failure);
+		writer.host.disconnect();
+		await delay(0);
+		assert.equal(writer.host.lastError, failure);
+		writer.driver.cancellation = undefined;
+		await writer.host.reconnect();
+		assert.equal(writer.host.lastError, undefined);
 	});
 
 	it("closes a replacement session that finishes opening after host disposal", async () => {
