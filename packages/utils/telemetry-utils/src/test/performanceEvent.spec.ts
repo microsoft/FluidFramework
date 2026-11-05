@@ -132,6 +132,9 @@ describe("PerformanceEvent", () => {
 			}
 		});
 
+		/**
+		 * Makes the selected browser timing getter or method throw, leaving the global performance API used for duration calculation unchanged.
+		 */
 		const makeUnavailable = (api: "getter" | "mark" | "measure"): void => {
 			if (api === "getter") {
 				Object.defineProperty(browserWindow, "performance", {
@@ -156,6 +159,10 @@ describe("PerformanceEvent", () => {
 			mark.resetBehavior();
 		};
 
+		/**
+		 * Verifies the callback ran once, emitted only end telemetry, and cleared its pending start mark.
+		 * Calls end and cancel after completion to verify that no additional browser timing calls or telemetry events occur.
+		 */
 		const assertEndedAndIgnoresLaterLifecycleCalls = (
 			event: PerformanceEvent | undefined,
 		): void => {
@@ -181,6 +188,10 @@ describe("PerformanceEvent", () => {
 			assert.equal(logger.eventsLogged, 1);
 		};
 
+		/**
+		 * Verifies the callback ran once and emitted only cancellation telemetry.
+		 * Called after the test verifies that the wrapper propagates the same error object thrown by the callback.
+		 */
 		const assertCancelled = (): void => {
 			assert.equal(callbackCalls, 1);
 			assert.deepEqual(
