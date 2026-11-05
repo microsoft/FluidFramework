@@ -15,8 +15,9 @@ import type { TreeStoredSchema } from "../../core/index.js";
 import { rootFieldKey } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import type { ModularChangeset, SchemaChange } from "../../feature-libraries/index.js";
+import type { ModularChangeset } from "../../feature-libraries/index.js";
 import {
+	CompareAndSwapSchemaChangeset,
 	DefaultEditBuilder,
 	ModularChangeFamily,
 	fieldKinds,
@@ -71,10 +72,7 @@ describe("isAuditableFromOutcome", () => {
 				persistedMetadata: undefined,
 			},
 		} as const satisfies TreeStoredSchema;
-		const innerSchemaChange = {
-			schema: { new: emptySchema, old: emptySchema },
-			isInverse: false,
-		} as const satisfies SchemaChange;
+		const innerSchemaChange = new CompareAndSwapSchemaChangeset(emptySchema, emptySchema);
 
 		const dataInner = (change: ModularChangeset): SharedTreeInnerChange => ({
 			type: "data",

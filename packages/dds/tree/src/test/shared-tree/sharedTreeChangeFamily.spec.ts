@@ -24,11 +24,12 @@ import {
 	type ModularChangeset,
 	type TreeChunk,
 	fieldKinds,
-	type SchemaChange,
 	intoDelta,
 	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	FieldBatchFormatVersion,
+	CompareAndSwapSchemaChangeset,
+	type SchemaChangeset,
 } from "../../feature-libraries/index.js";
 import {
 	ConstraintStatus,
@@ -110,7 +111,7 @@ const emptySchema: TreeStoredSchema = {
 		persistedMetadata: undefined,
 	},
 };
-const innerSchemaChange = { schema: { new: emptySchema, old: emptySchema }, isInverse: false };
+const innerSchemaChange = new CompareAndSwapSchemaChangeset(emptySchema, emptySchema);
 const treeSchemaChange: SharedTreeChange = {
 	changes: [{ type: "schema", innerChange: innerSchemaChange }],
 };
@@ -301,7 +302,7 @@ describe("SharedTreeChangeFamily", () => {
 		const refresher2: TreeChunk = "refresher2" as unknown as TreeChunk;
 		const schemaChange: SharedTreeInnerChange = {
 			type: "schema",
-			innerChange: "MockSchemaChange" as unknown as SchemaChange,
+			innerChange: "MockSchemaChange" as unknown as SchemaChangeset,
 		};
 
 		function updateDataChangeRefreshers(
