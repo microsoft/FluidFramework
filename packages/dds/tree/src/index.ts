@@ -64,6 +64,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	type TreeBranchHandleAlpha,
 	minimize,
 } from "./shared-tree/index.js";
 
@@ -85,13 +86,12 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	type SchemaFactoryOptions,
 	SchemaFactoryBeta,
 	type SchemaFactoryBetaOptions,
-	composeSchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryAlphaOptions,
-	composeSchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,

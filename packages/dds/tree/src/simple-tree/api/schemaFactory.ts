@@ -60,15 +60,15 @@ import type {
 import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import { schemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 import { schemaStaticsBeta } from "./schemaFactoryBeta.js";
-import {
-	defaultSchemaFactoryObjectOptions,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type ObjectSchemaOptions,
-	type ObjectSchemaOptionsBeta,
-	type ObjectSchemaOptionsAlpha,
-	type SchemaFactoryAlphaOptions,
-	type SchemaFactoryBetaOptions,
+import type {
+	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
+	ObjectSchemaOptions,
+	ObjectSchemaOptionsAlpha,
+	ObjectSchemaOptionsBeta,
+	SchemaFactoryAlphaOptions,
+	SchemaFactoryBetaOptions,
+	SchemaFactoryOptions,
 } from "./schemaFactoryOptions.js";
 import { scoped, structuralName, type ScopedSchemaName } from "./schemaFactoryUtils.js";
 import { SchemaFactory_base, schemaStatics } from "./schemaStatics.js";
@@ -82,13 +82,13 @@ import type {
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 
-export {
-	defaultSchemaFactoryObjectOptions,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type ObjectSchemaOptions,
-	type ObjectSchemaOptionsBeta,
-	type ObjectSchemaOptionsAlpha,
+export type {
+	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
+	ObjectSchemaOptions,
+	ObjectSchemaOptionsAlpha,
+	ObjectSchemaOptionsBeta,
+	SchemaFactoryOptions,
 } from "./schemaFactoryOptions.js";
 export {
 	schemaFromValue,
@@ -97,6 +97,36 @@ export {
 	type ScopedSchemaName,
 } from "./schemaFactoryUtils.js";
 export { SchemaFactory_base } from "./schemaStatics.js";
+
+/**
+ * Merges factory settings for all API tiers.
+ *
+ * @param base - Settings inherited from the parent factory.
+ * @param overrides - Settings whose provided object-option properties take precedence.
+ * @returns Settings with shallowly merged object options.
+ */
+function mergeSchemaFactoryOptions(
+	base: SchemaFactoryAlphaOptions,
+	overrides: SchemaFactoryAlphaOptions,
+): SchemaFactoryAlphaOptions {
+	return {
+		objectOptions: {
+			...base.objectOptions,
+			...overrides.objectOptions,
+		},
+	};
+}
+
+function resolveObjectSchemaOptions(
+	factoryOptions: ObjectSchemaOptions | undefined,
+	schemaOptions: ObjectSchemaOptions | undefined,
+): ObjectSchemaOptions {
+	return {
+		allowUnknownOptionalFields: true,
+		...factoryOptions,
+		...schemaOptions,
+	};
+}
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -225,46 +255,91 @@ export class SchemaFactory<
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
-	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
+	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this factory.
+	 */
+	public readonly scope: TScope;
+
+	/**
+	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
+	 */
+	public readonly settings: SchemaFactoryOptions;
+
+	/**
+	 * Creates a schema factory with optional defaults for object schemas.
+	 *
+	 * @param scopeOrOptions - The scope, or an options object that includes the scope.
+	 *
 	 * @remarks
 	 * There are no restrictions on mixing schemas from different schema factories.
 	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
+	 *
+	 * The scope is a prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this factory.
+	 * Generally each independently developed library
+	 * (possibly a package, but could also be part of a package or multiple packages developed together)
+	 * should get its own unique scope.
+	 * Then each schema in the library gets a name that is unique within the library.
+	 * The scope and name are joined with a period to form the {@link TreeNodeSchemaCore.identifier|schema identifier}.
+	 * Following this pattern allows a single application to depend on multiple libraries that define their own schema
+	 * and use them together in a single tree without risk of collisions.
+	 * If a library logically contains sub-libraries with their own schema,
+	 * they can use a scope nested inside the parent scope, such as `"ParentScope.ChildScope"`.
+	 *
+	 * To avoid collisions between the scopes of libraries,
+	 * use {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | reverse domain name notation}
+	 * or a UUIDv4 for the scope.
+	 * Applications can then safely use third-party libraries without risk of schema collisions.
+	 *
+	 * You can opt out of using a scope by passing `undefined`, but this increases the risk of collisions.
+	 *
+	 * @example
+	 * Fluid Framework follows this pattern by placing the schema for the built-in leaf types in the
+	 * `com.fluidframework.leaf` scope.
+	 * Other Fluid Framework schemas use other scopes under `com.fluidframework`.
+	 *
+	 * @example
+	 * A library can generate a random UUIDv4, such as `242c4397-49ed-47e6-8dd0-d5c3bc31778b`, and use it as the scope.
+	 * Do not use this example UUID.
+	 * Generate a new one when needed to ensure collision resistance.
+	 * ```typescript
+	 * const factory = new SchemaFactory("242c4397-49ed-47e6-8dd0-d5c3bc31778b");
+	 * ```
 	 */
 	public constructor(
-		/**
-		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-		 *
-		 * @remarks
-		 * Generally each independently developed library
-		 * (possibly a package, but could also be part of a package or multiple packages developed together)
-		 * should get its own unique `scope`.
-		 * Then each schema in the library get a name which is unique within the library.
-		 * The scope and name are joined (with a period) to form the {@link TreeNodeSchemaCore.identifier|schema identifier}.
-		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
-		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
-		 *
-		 * To avoid collisions between the scopes of libraries
-		 * it is recommended that the libraries use {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 for their scope.
-		 * If this pattern is followed, application can safely use third party libraries without risk of the schema in them colliding.
-		 *
-		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
-		 *
-		 * @example
-		 * Fluid Framework follows this pattern, placing the schema for the built in leaf types in the `com.fluidframework.leaf` scope.
-		 * If Fluid Framework publishes more schema in the future, they would be under some other `com.fluidframework` scope.
-		 * This ensures that any schema defined by any other library will not conflict with Fluid Framework's schema
-		 * as long as the library uses the recommended patterns for how to scope its schema..
-		 *
-		 * @example
-		 * A library could generate a random UUIDv4, like `242c4397-49ed-47e6-8dd0-d5c3bc31778b` and use that as the scope.
-		 * Note: do not use this UUID: a new one must be randomly generated when needed to ensure collision resistance.
-		 * ```typescript
-		 * const factory = new SchemaFactory("242c4397-49ed-47e6-8dd0-d5c3bc31778b");
-		 * ```
-		 */
-		public readonly scope: TScope,
+		scopeOrOptions: TScope | (SchemaFactoryOptions & { readonly scope: TScope }),
 	) {
 		super();
+		this.scope = typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions;
+		this.settings =
+			typeof scopeOrOptions === "object"
+				? { objectOptions: scopeOrOptions.objectOptions }
+				: {};
+	}
+
+	/**
+	 * Creates a factory with a child scope and settings merged with this factory's settings.
+	 *
+	 * @param name - The name to append to this factory's scope.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
+	 *
+	 * @typeParam T - The name appended to this factory's scope.
+	 * @returns A new factory with the child scope and merged settings.
+	 *
+	 * @remarks
+	 * Object-option properties are shallowly merged.
+	 * Nested option objects are replaced as whole values, not recursively merged.
+	 * Omitting `settings`, passing `{}`, or passing `{ objectOptions: {} }` preserves inherited settings.
+	 *
+	 * To create a factory without inherited settings, construct a new {@link SchemaFactory} with the desired scope.
+	 */
+	public scopedFactory<const T extends TName>(
+		name: T,
+		settings: SchemaFactoryOptions = {},
+	): SchemaFactory<ScopedSchemaName<TScope, T>> {
+		return new SchemaFactory({
+			...mergeSchemaFactoryOptions(this.settings, settings),
+			scope: scoped<TScope, TName, T>(this, name),
+		});
 	}
 
 	/**
@@ -272,7 +347,11 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
-	 * @param options - Additional options for the schema.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryOptions.objectOptions}.
+	 * These options override the factory's defaults.
+	 *
+	 * @remarks
+	 * {@link SchemaFactoryOptions.objectOptions} can provide factory-wide defaults.
 	 */
 	public object<
 		const Name extends TName,
@@ -289,10 +368,12 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(scoped(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
-			...options,
-		}) as TreeNodeSchemaClass<
+		return objectSchema(
+			scoped(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
@@ -674,7 +755,8 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 *
-	 * @param options - Additional options for the schema.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 */
 	public objectRecursive<
 		const Name extends TName,
@@ -822,12 +904,8 @@ export class SchemaFactoryBeta<
 > extends SchemaFactory<TScope, TName> {
 	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
-	 *
-	 * @remarks
-	 * Use {@link composeSchemaFactoryBetaOptions} with
-	 * {@link SchemaFactoryBeta.(createDerivedFactory:1)} to extend these options.
 	 */
-	public readonly settings: SchemaFactoryBetaOptions;
+	public override readonly settings: SchemaFactoryBetaOptions;
 
 	/**
 	 * Creates a schema factory with optional defaults for object schemas.
@@ -885,76 +963,26 @@ export class SchemaFactoryBeta<
 	public typesRecursive = schemaStaticsBeta.typesRecursive;
 
 	/**
-	 * Creates a {@link SchemaFactoryBeta} with a {@link SchemaFactory.scope|scope} which is a
-	 * combination of this factory's scope and the provided name.
+	 * Creates a beta factory with a child scope and merged settings.
 	 *
 	 * @param name - The name to append to this factory's scope.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
 	 *
 	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A factory with the child scope and this factory's settings.
+	 * @returns A new beta factory with the child scope and merged settings.
 	 *
 	 * @remarks
-	 * The main use-case for this is when creating a collection of related schemas (for example
-	 * using a function that creates multiple schemas).
-	 * Creating such related schema using a sub-scope helps ensure they won't collide with other
-	 * schema in the parent scope.
-	 *
-	 * The returned factory inherits this factory's {@link SchemaFactoryBeta.settings}.
+	 * See {@link SchemaFactory.scopedFactory} for merging behavior.
+	 * Provided metadata replaces inherited metadata as a whole value.
 	 */
-	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
+	public override scopedFactory<const T extends TName>(
 		name: T,
-	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
-		return this.createDerivedFactory<T, TNameInner>(undefined, name);
-	}
-
-	/**
-	 * Creates a factory with the same scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 *
-	 * @returns A new factory with the same scope.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * The returned factory preserves the alpha or beta APIs of this factory.
-	 * Use {@link composeSchemaFactoryBetaOptions} with this factory's
-	 * {@link SchemaFactoryBeta.settings} to extend the existing settings.
-	 */
-	public createDerivedFactory(
-		settings?: SchemaFactoryBetaOptions,
-	): SchemaFactoryBeta<TScope, TName>;
-
-	/**
-	 * Creates a factory with a child scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A new factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * The returned factory preserves the alpha or beta APIs of this factory.
-	 */
-	public createDerivedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(
-		settings: SchemaFactoryBetaOptions | undefined,
-		name: T,
-	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
-	public createDerivedFactory(
-		settings: SchemaFactoryBetaOptions = this.settings,
-		name?: TName,
-	): SchemaFactoryBeta<string | undefined, number | string> {
+		settings: SchemaFactoryBetaOptions = {},
+	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryBeta({
-			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
-			objectOptions: settings.objectOptions,
+			...mergeSchemaFactoryOptions(this.settings, settings),
+			scope: scoped<TScope, TName, T>(this, name),
 		});
 	}
 
@@ -963,8 +991,8 @@ export class SchemaFactoryBeta<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param fields - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryBetaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryBetaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * {@link SchemaFactoryBetaOptions.objectOptions} can provide factory-wide defaults.
@@ -987,11 +1015,12 @@ export class SchemaFactoryBeta<
 		never,
 		TCustomMetadata
 	> {
-		const resolvedOptions = this.settings.objectOptions?.(name, fields, options) ?? options;
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
-			...resolvedOptions,
-		}) as TreeNodeSchemaClass<
+		return objectSchema(
+			scoped<TScope, TName, Name>(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
@@ -1008,8 +1037,8 @@ export class SchemaFactoryBeta<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryBetaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryBetaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * See {@link SchemaFactory.objectRecursive} for recursive-schema requirements.
@@ -1299,10 +1328,6 @@ export class SchemaFactoryAlpha<
 > extends SchemaFactoryBeta<TScope, TName> {
 	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
-	 *
-	 * @remarks
-	 * Use {@link composeSchemaFactoryAlphaOptions} with
-	 * {@link SchemaFactoryAlpha.(createDerivedFactory:1)} to extend these options.
 	 */
 	public override readonly settings: SchemaFactoryAlphaOptions;
 
@@ -1314,7 +1339,7 @@ export class SchemaFactoryAlpha<
 	public constructor(
 		scopeOrOptions: TScope | (SchemaFactoryAlphaOptions & { readonly scope: TScope }),
 	) {
-		super(scopeOrOptions);
+		super(typeof scopeOrOptions === "object" ? scopeOrOptions.scope : scopeOrOptions);
 		this.settings =
 			typeof scopeOrOptions === "object"
 				? { objectOptions: scopeOrOptions.objectOptions }
@@ -1326,8 +1351,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param fields - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * {@link SchemaFactoryAlphaOptions.objectOptions} can provide factory-wide defaults.
@@ -1341,11 +1366,12 @@ export class SchemaFactoryAlpha<
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		const resolvedOptions = this.settings.objectOptions?.(name, fields, options) ?? options;
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
-			...resolvedOptions,
-		});
+		return objectSchema(
+			scoped<TScope, TName, Name>(this, name),
+			fields,
+			true,
+			resolveObjectSchemaOptions(this.settings.objectOptions, options),
+		);
 	}
 
 	/**
@@ -1353,8 +1379,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * See {@link SchemaFactory.objectRecursive} for recursive-schema requirements.
@@ -1418,8 +1444,8 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @param name - The schema identifier within this factory's scope.
 	 * @param t - The schemas for the object's fields.
-	 * @param options - The per-call options passed to {@link SchemaFactoryAlphaOptions.objectOptions}.
-	 * The callback combines these options with the factory's defaults and controls which values take precedence.
+	 * @param options - Options for this schema, shallowly merged over {@link SchemaFactoryAlphaOptions.objectOptions}.
+	 * These options override the factory's defaults.
 	 *
 	 * @remarks
 	 * Use this instead of {@link SchemaFactory.objectRecursive} when fields use {@link SchemaStaticsAlpha.withDefaultRecursive}.
@@ -1748,82 +1774,26 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Creates a {@link SchemaFactoryAlpha} in a child scope.
+	 * Creates an alpha factory with a child scope and merged settings.
 	 *
 	 * @param name - The name to append to this factory's scope.
+	 * @param settings - Object-option overrides to merge with this factory's settings.
+	 * Provided properties take precedence, and omitted properties are inherited.
 	 *
 	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A factory with the child scope and this factory's settings.
+	 * @returns A new alpha factory with the child scope and merged settings.
 	 *
 	 * @remarks
-	 * A child scope keeps related schemas separate from schemas in the parent scope.
-	 * The returned factory inherits this factory's {@link SchemaFactoryAlpha.settings}.
+	 * See {@link SchemaFactory.scopedFactory} for merging behavior.
+	 * Provided metadata and persisted metadata replace their inherited values as whole objects.
 	 */
-	public scopedFactoryAlpha<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
-		return this.createDerivedFactory<T, TNameInner>(undefined, name);
-	}
-
-	/**
-	 * Creates an alpha factory with the same scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 *
-	 * @returns A new alpha factory with the same scope.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 * Use {@link composeSchemaFactoryAlphaOptions} with this factory's
-	 * {@link SchemaFactoryAlpha.settings} to extend the existing settings.
-	 *
-	 * @example
-	 * ```typescript
-	 * const extended = sf.createDerivedFactory(
-	 *     composeSchemaFactoryAlphaOptions(sf.settings, {
-	 *         objectOptions: (_name, _fields, options) => ({
-	 *             allowUnknownOptionalFields: true,
-	 *             ...options,
-	 *         }),
-	 *     }),
-	 * );
-	 * ```
-	 */
-	public override createDerivedFactory(
-		settings?: SchemaFactoryAlphaOptions,
-	): SchemaFactoryAlpha<TScope, TName>;
-
-	/**
-	 * Creates an alpha factory with a child scope and optional replacement settings.
-	 *
-	 * @param settings - The replacement settings, or `undefined` to inherit this factory's settings.
-	 * @param name - The name to append to this factory's scope.
-	 *
-	 * @typeParam T - The name appended to this factory's scope.
-	 * @typeParam TNameInner - The names allowed in the child factory.
-	 *
-	 * @returns A new alpha factory with the child scope and the provided or inherited settings.
-	 *
-	 * @remarks
-	 * This does not change the original factory.
-	 */
-	public override createDerivedFactory<
-		const T extends TName,
-		TNameInner extends number | string = string,
-	>(
-		settings: SchemaFactoryAlphaOptions | undefined,
+	public override scopedFactory<const T extends TName>(
 		name: T,
-	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
-	public override createDerivedFactory(
-		settings: SchemaFactoryAlphaOptions = this.settings,
-		name?: TName,
-	): SchemaFactoryAlpha<string | undefined, number | string> {
+		settings: SchemaFactoryAlphaOptions = {},
+	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>> {
 		return new SchemaFactoryAlpha({
-			scope: name === undefined ? this.scope : scoped<TScope, TName, TName>(this, name),
-			objectOptions: settings.objectOptions,
+			...mergeSchemaFactoryOptions(this.settings, settings),
+			scope: scoped<TScope, TName, T>(this, name),
 		});
 	}
 }
