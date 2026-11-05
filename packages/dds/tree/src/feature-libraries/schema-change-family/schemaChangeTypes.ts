@@ -16,6 +16,19 @@ export abstract class SchemaChangeset {
 		public readonly proposed: TreeStoredSchema,
 	) {}
 
+	/** Produce a changeset that reverses this change's effects, or a no-op if it is conflicted */
+	public invert(): SchemaChangeset {
+		return this.hasConflicts() ? new NoopSchemaChangeset(this.input) : this.getInverse();
+	}
+
+	/**
+	 * Produce a version of this changeset rebased over another changeset
+	 * @remarks Conflicted base changesets have no effect
+	 */
+	public rebase(over: SchemaChangeset): SchemaChangeset {
+		return over.hasConflicts() ? this : this.withInput(over.output);
+	}
+
 	/**
 	 * The resulting schema after applying this changeset
 	 * @remarks Check that the changeset is not {@link SchemaChangeset.hasConflicts | conflicted} before using the output, otherwise it may be invalid or nonsensical
@@ -24,7 +37,9 @@ export abstract class SchemaChangeset {
 	/** True if this changeset cannot be applied cleanly due to the original {@link SchemaChangeset.proposed | intent} and/or context being incompatible with the {@link SchemaChangeset.input | current context} */
 	public abstract hasConflicts(): boolean;
 	/** Create a version of this changeset with the same {@link SchemaChangeset.proposed | intentions} but a different {@link SchemaChangeset.input | input schema} */
-	public abstract withInput(input: TreeStoredSchema): SchemaChangeset;
+	protected abstract withInput(input: TreeStoredSchema): SchemaChangeset;
+	/** Create a version of this changeset that reverses its intentions and effects */
+	protected abstract getInverse(): SchemaChangeset;
 }
 
 /**
@@ -45,8 +60,12 @@ export class WideningSchemaChangeset extends SchemaChangeset {
 		return areSchemasDivergent(this.proposed, this.input);
 	}
 
-	public override withInput(input: TreeStoredSchema): WideningSchemaChangeset {
+	protected override withInput(input: TreeStoredSchema): WideningSchemaChangeset {
 		return new WideningSchemaChangeset(input, this.proposed);
+	}
+
+	protected override getInverse(): NarrowingSchemaChangeset {
+		return new NarrowingSchemaChangeset(this.output, this.input);
 	}
 }
 
@@ -68,8 +87,12 @@ export class NarrowingSchemaChangeset extends SchemaChangeset {
 		return areSchemasDivergent(this.proposed, this.input);
 	}
 
-	public override withInput(input: TreeStoredSchema): NarrowingSchemaChangeset {
+	protected override withInput(input: TreeStoredSchema): NarrowingSchemaChangeset {
 		return new NarrowingSchemaChangeset(input, this.proposed);
+	}
+
+	protected override getInverse(): WideningSchemaChangeset {
+		return new WideningSchemaChangeset(this.output, this.input);
 	}
 }
 
@@ -95,8 +118,37 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 		return !areSchemasEquivalent(this.original, this.input);
 	}
 
-	public override withInput(input: TreeStoredSchema): CompareAndSwapSchemaChangeset {
+	protected override withInput(input: TreeStoredSchema): CompareAndSwapSchemaChangeset {
 		return new CompareAndSwapSchemaChangeset(input, this.proposed, this.original);
+	}
+
+	protected override getInverse(): CompareAndSwapSchemaChangeset {
+		return new CompareAndSwapSchemaChangeset(this.output, this.input);
+	}
+}
+
+/**
+ * A {@link SchemaChangeset} that represents a no-op change, which does not modify the schema and never has conflicts
+ */
+class NoopSchemaChangeset extends SchemaChangeset {
+	public constructor(input: TreeStoredSchema) {
+		super(input, input);
+	}
+
+	public override get output(): TreeStoredSchema {
+		return this.input;
+	}
+
+	public override hasConflicts(): boolean {
+		return false;
+	}
+
+	protected override withInput(input: TreeStoredSchema): NoopSchemaChangeset {
+		return new NoopSchemaChangeset(input);
+	}
+
+	protected override getInverse(): NoopSchemaChangeset {
+		return new NoopSchemaChangeset(this.output);
 	}
 }
 

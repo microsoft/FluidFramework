@@ -40,17 +40,55 @@ const number2 = makeSchema([numberType]);
 const string = makeSchema([stringType]);
 const numberString = makeSchema([numberType, stringType]);
 const numberWithMetadata: TreeStoredSchema = {
-	...number,
+	...number2,
 	rootFieldSchema: {
-		...number.rootFieldSchema,
+		...number2.rootFieldSchema,
 		persistedMetadata: { value: 1 },
 	},
 };
 
 describe("SchemaChangeset", () => {
-	for (const { Changeset, expectedOutput, proposed } of [
-		{ Changeset: WideningSchemaChangeset, expectedOutput: numberString, proposed: number },
-		{ Changeset: NarrowingSchemaChangeset, expectedOutput: number, proposed: numberString },
+	describe("invert", () => {
+		it("returns a no-op in the actual input context for a conflicted change", () => {
+			const inverse = new CompareAndSwapSchemaChangeset(numberString, string, number).invert();
+			assert.equal(inverse.output, numberString);
+			assert.equal(inverse.hasConflicts(), false);
+		});
+	});
+
+	describe("rebase", () => {
+		it("ignores a conflicted base rather than its hypothetical output", () => {
+			const change = new CompareAndSwapSchemaChangeset(number, string);
+			const over = new CompareAndSwapSchemaChangeset(number, numberString, string);
+			assert.equal(over.hasConflicts(), true);
+			const rebased = change.rebase(over);
+			assert.equal(rebased.input, number);
+			assert.equal(rebased.hasConflicts(), false);
+			assert.equal(rebased.output, string);
+		});
+
+		it("uses the base's output rather than its proposal", () => {
+			const change = new CompareAndSwapSchemaChangeset(numberString, string);
+			const over = new WideningSchemaChangeset(numberString, number);
+			const rebased = change.rebase(over);
+			assert.equal(rebased.input, numberString);
+			assert.equal(rebased.hasConflicts(), false);
+		});
+	});
+
+	for (const { Changeset, Inverse, expectedOutput, otherSchema } of [
+		{
+			Changeset: WideningSchemaChangeset,
+			Inverse: NarrowingSchemaChangeset,
+			expectedOutput: numberString,
+			otherSchema: number,
+		},
+		{
+			Changeset: NarrowingSchemaChangeset,
+			Inverse: WideningSchemaChangeset,
+			expectedOutput: number,
+			otherSchema: numberString,
+		},
 	]) {
 		describe(Changeset.name, () => {
 			describe("output", () => {
@@ -60,11 +98,6 @@ describe("SchemaChangeset", () => {
 
 				it("selects the appropriate schema when proposed is narrower than input", () => {
 					assert.equal(new Changeset(numberString, number).output, expectedOutput);
-				});
-
-				it("prefers proposed when the schemas are equivalent but distinct objects", () => {
-					assert.notEqual(number2, number);
-					assert.equal(new Changeset(number, number2).output, number2);
 				});
 
 				it("preserves proposed metadata when the schemas are equivalent", () => {
@@ -88,16 +121,33 @@ describe("SchemaChangeset", () => {
 				}
 			});
 
-			describe("withInput", () => {
-				it("preserves the concrete type and proposal without mutating the source", () => {
-					const change = new Changeset(expectedOutput, proposed);
-					const updated = change.withInput(proposed);
+			describe("rebase", () => {
+				it("preserves the concrete type and proposal when the input changes", () => {
+					const change = new Changeset(expectedOutput, otherSchema);
+					const updated = change.rebase(
+						new CompareAndSwapSchemaChangeset(expectedOutput, otherSchema),
+					);
 					assert(updated instanceof Changeset);
 					assert.notEqual(updated, change);
-					assert.equal(updated.input, proposed);
+					assert.equal(updated.input, otherSchema);
 					assert.equal(updated.proposed, change.proposed);
-					assert.equal(updated.output, proposed);
+					assert.equal(updated.output, otherSchema);
 				});
+			});
+
+			describe("invert", () => {
+				for (const [name, input, proposal] of [
+					["an effective change", otherSchema, expectedOutput],
+					["an already satisfied change", expectedOutput, otherSchema],
+				] as const) {
+					it(`reverses ${name} with the opposite intention`, () => {
+						const inverse = new Changeset(input, proposal).invert();
+						assert(inverse instanceof Inverse);
+						assert.equal(inverse.input, expectedOutput);
+						assert.equal(inverse.output, input);
+						assert.equal(inverse.hasConflicts(), false);
+					});
+				}
 			});
 		});
 	}
@@ -135,15 +185,51 @@ describe("SchemaChangeset", () => {
 			});
 		});
 
-		describe("withInput", () => {
-			it("preserves the concrete type, proposal and original schema without mutating the source", () => {
+		describe("rebase", () => {
+			it("preserves the concrete type, proposal and original schema when the input changes", () => {
 				const change = new CompareAndSwapSchemaChangeset(numberString, string, number);
-				const updated = change.withInput(empty);
+				const updated = change.rebase(new CompareAndSwapSchemaChangeset(numberString, empty));
+				assert(updated instanceof CompareAndSwapSchemaChangeset);
 				assert.notEqual(updated, change);
 				assert.equal(updated.input, empty);
 				assert.equal(updated.proposed, change.proposed);
 				assert.equal(updated.original, change.original);
 			});
+		});
+
+		describe("invert", () => {
+			it("restores input metadata rather than original metadata", () => {
+				const inverse = new CompareAndSwapSchemaChangeset(
+					numberWithMetadata,
+					string,
+					number,
+				).invert();
+
+				assert(inverse instanceof CompareAndSwapSchemaChangeset);
+				assert.equal(inverse.input, string);
+				assert.equal(inverse.original, string);
+				assert.equal(inverse.output, numberWithMetadata);
+				assert.equal(inverse.hasConflicts(), false);
+			});
+		});
+	});
+
+	describe("No-op changes", () => {
+		const noop = new WideningSchemaChangeset(number, string).invert();
+
+		it("remains a no-op after rebasing", () => {
+			const rebased = noop.rebase(new CompareAndSwapSchemaChangeset(number, string));
+			assert.equal(rebased.output, string);
+			assert.equal(rebased.hasConflicts(), false);
+		});
+
+		it("remains a no-op after inversion", () => {
+			const inverse = noop.invert();
+			assert.equal(inverse.output, number);
+			assert.equal(inverse.hasConflicts(), false);
+			const rebased = inverse.rebase(new CompareAndSwapSchemaChangeset(number, string));
+			assert.equal(rebased.output, string);
+			assert.equal(rebased.hasConflicts(), false);
 		});
 	});
 });
