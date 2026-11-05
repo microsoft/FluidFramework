@@ -51,6 +51,7 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import type { SchemaSummarizer } from "../schema-index/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import { forestCodecBuilder, type ForestCodec } from "./codec.js";
@@ -87,22 +88,25 @@ export class ForestSummarizer
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 	private readonly forestRootSummaryContentKey: string;
 
-	/**
-	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
-	 * @param loadDependencies - Components that SharedTreeCore must load before this forest.
-	 * Include the summarizer that populates the forest's stored schema: loading it mutates the repository used by the forest's chunking policy.
-	 * Rechunking decoded content consults that policy, so the schema must be available before forest loading starts.
-	 * Callers that invoke {@link ForestSummarizer.load} directly must load these dependencies themselves.
-	 */
+	public readonly loadDependencies: readonly Summarizable[];
+
 	public constructor(
 		private readonly forest: IEditableForest,
+		/**
+		 * The summarizer for the same stored schema repository used by the forest's chunking policy.
+		 * This is registered as a load dependency because rechunking decoded content requires that schema.
+		 * Callers that invoke {@link ForestSummarizer.load} directly must ensure the schema is already populated.
+		 */
+		schemaSummarizer: SchemaSummarizer,
+		/**
+		 * The schema if provided here must be mutated by the caller to keep it up to date.
+		 */
 		private readonly encoderContext: FieldBatchEncodingContext,
 		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
-		public readonly loadDependencies: readonly Summarizable[] = [],
 	) {
 		super(
 			forestSummaryKey,
@@ -110,6 +114,10 @@ export class ForestSummarizer
 			supportedForestSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
+
+		// The schema must finish loading before this forest can rechunk decoded content.
+		// SharedTreeCore uses this dependency to schedule loading.
+		this.loadDependencies = [schemaSummarizer];
 
 		this.codec = forestCodecBuilder.build(options);
 

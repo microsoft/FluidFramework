@@ -39,6 +39,8 @@ import {
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
+	SchemaSummarizer,
+	schemaCodecBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	type IncrementalEncodingPolicy,
@@ -113,6 +115,12 @@ function createForestSummarizer(args: {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
+			new SchemaSummarizer(
+				checkout.storedSchema,
+				{ getCurrentSeq: () => 0 },
+				schemaCodecBuilder.build(options),
+				minVersionForCollab,
+			),
 			encoderContext,
 			decoderContext,
 			options,

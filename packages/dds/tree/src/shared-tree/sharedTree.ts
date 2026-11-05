@@ -269,13 +269,13 @@ export class SharedTreeKernel
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
+			schemaSummarizer,
 			encoderContext,
 			decoderContext,
 			options,
 			idCompressor,
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
-			[schemaSummarizer],
 		);
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
