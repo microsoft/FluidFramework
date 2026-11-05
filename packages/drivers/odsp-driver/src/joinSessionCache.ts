@@ -17,18 +17,17 @@ interface JoinSessionResult {
 	joinSessionResponse: ISocketStorageDiscovery;
 }
 
-interface JoinInfo {
-	promise?: Promise<JoinSessionResult>;
+interface JoinSessionThrottle {
 	/**
 	 * Earliest request time, in milliseconds since the Unix epoch.
 	 * Expiration is checked on access, not maintained by cleanup timers.
 	 */
-	throttleDeadline?: number;
+	deadline: number;
 	/**
 	 * Links throttle and wait telemetry for one active window without logging the document key.
 	 * It does not participate in request coordination.
 	 */
-	throttleGateId?: string;
+	gateId: string;
 }
 
 interface JoinSessionTelemetry {
@@ -40,56 +39,21 @@ interface JoinSessionTelemetry {
 const maximumTimerDelayMs = 2 ** 31 - 1;
 
 /**
- * Clears expired throttle metadata and removes entries with no promise or active deadline.
- */
-export function pruneJoinSessionCache(entries: Map<string, JoinInfo>, key: string): void {
-	const info = entries.get(key);
-	if (info === undefined) {
-		return;
-	}
-	if (info.throttleDeadline !== undefined && info.throttleDeadline <= Date.now()) {
-		delete info.throttleDeadline;
-		delete info.throttleGateId;
-	}
-	if (info.promise === undefined && info.throttleDeadline === undefined) {
-		entries.delete(key);
-	}
-}
-
-/**
- * Owns shared join-session promises and server deadlines in one entry per document.
- * The PromiseCache methods preserve the exported cache contract.
+ * Adds server-directed waits to the work shared by PromiseCache.
+ * Server deadlines survive promise rejection, invalidation, and expiration.
  */
 export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
-	/**
-	 * Authoritative entries used instead of the superclass's private promise map.
-	 */
-	private readonly joinInfo = new Map<string, JoinInfo>();
-
-	public override has(key: string): boolean {
-		return this.get(key) !== undefined;
-	}
-
-	public override get(key: string): Promise<JoinSessionResult> | undefined {
-		pruneJoinSessionCache(this.joinInfo, key);
-		return this.joinInfo.get(key)?.promise;
-	}
+	private readonly throttles = new Map<string, JoinSessionThrottle>();
 
 	/**
 	 * Invalidates a promise without discarding an active server deadline.
 	 * Outstanding work can still settle for its existing callers.
-	 * Expired throttle-only entries are removed even when there is no promise.
+	 * Expired deadlines are removed even when there is no promise.
 	 * @returns Whether a promise was removed.
 	 */
 	public override remove(key: string): boolean {
-		const info = this.joinInfo.get(key);
-		if (info === undefined) {
-			return false;
-		}
-		const hadPromise = info.promise !== undefined;
-		delete info.promise;
-		pruneJoinSessionCache(this.joinInfo, key);
-		return hadPromise;
+		this.pruneThrottle(key);
+		return super.remove(key);
 	}
 
 	/**
@@ -104,29 +68,25 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		asyncFn: () => Promise<JoinSessionResult>,
 		telemetry?: JoinSessionTelemetry,
 	): Promise<JoinSessionResult> {
-		pruneJoinSessionCache(this.joinInfo, key);
-		const info = this.joinInfo.get(key) ?? {};
-		if (info.promise !== undefined) {
-			return info.promise;
-		}
-
-		// Defer the callback so even reentrant callers find the installed promise.
-		const promise = Promise.resolve()
-			.then(async () => {
-				await this.waitForThrottle(key, telemetry);
-				return asyncFn();
-			})
-			.catch((error: unknown) => {
+		this.pruneThrottle(key);
+		return super.addOrGet(key, async () => {
+			// Install the shared promise before waiting or fetching can invoke reentrant callbacks.
+			await Promise.resolve();
+			await this.waitForThrottle(key, telemetry);
+			try {
+				return await asyncFn();
+			} catch (error: unknown) {
 				this.recordThrottle(key, error, telemetry);
-				// A removed request must not evict work installed by a later caller.
-				if (this.joinInfo.get(key)?.promise === promise) {
-					this.remove(key);
-				}
 				throw error;
-			});
-		info.promise = promise;
-		this.joinInfo.set(key, info);
-		return promise;
+			}
+		});
+	}
+
+	private pruneThrottle(key: string): void {
+		const throttle = this.throttles.get(key);
+		if (throttle !== undefined && throttle.deadline <= Date.now()) {
+			this.throttles.delete(key);
+		}
 	}
 
 	private recordThrottle(
@@ -157,18 +117,17 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 			);
 			return;
 		}
-		pruneJoinSessionCache(this.joinInfo, key);
-		const info = this.joinInfo.get(key) ?? {};
-		if (info.throttleDeadline !== undefined && info.throttleDeadline >= deadline) {
+		this.pruneThrottle(key);
+		const existing = this.throttles.get(key);
+		if (existing !== undefined && existing.deadline >= deadline) {
 			return;
 		}
-		info.throttleDeadline = deadline;
-		info.throttleGateId ??= uuid();
-		this.joinInfo.set(key, info);
+		const throttle = { deadline, gateId: existing?.gateId ?? uuid() };
+		this.throttles.set(key, throttle);
 		telemetry?.logger.sendTelemetryEvent(
 			{
 				eventName: "JoinSessionThrottle",
-				throttleGateId: info.throttleGateId,
+				throttleGateId: throttle.gateId,
 				throttleScope: "clientDocument",
 				serverRetryAfterMs: retryAfterMs,
 				throttleDeadline: deadline,
@@ -181,20 +140,20 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		key: string,
 		telemetry: JoinSessionTelemetry | undefined,
 	): Promise<void> {
-		pruneJoinSessionCache(this.joinInfo, key);
-		let info = this.joinInfo.get(key);
-		while (info?.throttleDeadline !== undefined) {
+		this.pruneThrottle(key);
+		let throttle = this.throttles.get(key);
+		while (throttle !== undefined) {
 			const start = Date.now();
-			const scheduledDelayMs = Math.min(info.throttleDeadline - start, maximumTimerDelayMs);
+			const scheduledDelayMs = Math.min(throttle.deadline - start, maximumTimerDelayMs);
 			if (scheduledDelayMs <= 0) {
 				// Prune metadata if the deadline expired between clock reads.
-				pruneJoinSessionCache(this.joinInfo, key);
+				this.pruneThrottle(key);
 				return;
 			}
 			const props = {
-				throttleGateId: info.throttleGateId,
+				throttleGateId: throttle.gateId,
 				throttleScope: "clientDocument",
-				throttleDeadline: info.throttleDeadline,
+				throttleDeadline: throttle.deadline,
 				scheduledDelayMs,
 				joinSessionCaller: telemetry?.caller,
 			};
@@ -205,8 +164,8 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 				...props,
 				observedDelayMs: Date.now() - start,
 			});
-			pruneJoinSessionCache(this.joinInfo, key);
-			info = this.joinInfo.get(key);
+			this.pruneThrottle(key);
+			throttle = this.throttles.get(key);
 		}
 	}
 }

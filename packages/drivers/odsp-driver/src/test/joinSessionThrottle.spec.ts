@@ -16,7 +16,7 @@ import { restore, stub, useFakeTimers, type SinonFakeTimers, type SinonStub } fr
 
 import { createOdspUrl } from "../createOdspUrl.js";
 import { createOdspCacheAndTracker } from "../epochTracker.js";
-import { pruneJoinSessionCache } from "../joinSessionCache.js";
+import { JoinSessionCache } from "../joinSessionCache.js";
 import {
 	type INonPersistentCache,
 	LocalPersistentCache,
@@ -353,39 +353,73 @@ describe("join-session throttle coordination", () => {
 		assert.equal(clock.countTimers(), 0);
 	});
 
-	for (const hasPromise of [false, true]) {
-		it(`prunes expired throttle metadata ${hasPromise ? "with" : "without"} a cached promise`, () => {
-			const promise = hasPromise
-				? Promise.resolve({ entryTime: Date.now(), joinSessionResponse: response })
-				: undefined;
-			const info = {
-				...(promise === undefined ? {} : { promise }),
-				throttleDeadline: 120000,
-				throttleGateId: "gate",
-			};
-			const entries = new Map([["document", info]]);
-			clock.setSystemTime(119999);
-			pruneJoinSessionCache(entries, "document");
-			assert.equal(entries.get("document"), info, "an active entry is retained");
-			assert.equal(info.throttleDeadline, 120000);
-			assert.equal(info.throttleGateId, "gate");
-			clock.setSystemTime(120000);
-			pruneJoinSessionCache(entries, "document");
-			assert.equal(info.throttleDeadline, undefined);
-			assert.equal(info.throttleGateId, undefined);
-			assert.equal(info.promise, promise);
-			assert.equal(
-				entries.has("document"),
-				hasPromise,
-				"only a cached promise keeps the entry",
-			);
+	it("honors inherited promise expiry without discarding an active server deadline", async () => {
+		const sessionCache = new JoinSessionCache({
+			expiry: { policy: "absolute", durationMs: 1000 },
 		});
-	}
+		await assert.rejects(
+			sessionCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, 3);
+			}),
+		);
+		let requests = 0;
+		const execute = async (): Promise<{
+			entryTime: number;
+			joinSessionResponse: typeof response;
+		}> => {
+			requests++;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		};
+		const original = sessionCache.addOrGet("document", execute);
+		await clock.tickAsync(999);
+		assert.equal(sessionCache.has("document"), true);
+		await clock.tickAsync(1);
+		assert.equal(sessionCache.has("document"), false, "the waiting promise has expired");
+		const replacement = sessionCache.addOrGet("document", execute);
+		await clock.tickAsync(1999);
+		assert.equal(requests, 0, "expiring promises must not clear the server deadline");
+		await clock.tickAsync(1);
+		await Promise.all([original, replacement]);
+		assert.equal(requests, 2, "expiry does not cancel outstanding work");
+	});
 
-	it("prunes an entry with neither a promise nor a deadline", () => {
-		const entries = new Map([["document", {}]]);
-		pruneJoinSessionCache(entries, "document");
-		assert.equal(entries.has("document"), false);
+	it("waits only for the time remaining after a caller's retry delay", async () => {
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, 120);
+			}),
+		);
+		await clock.tickAsync(30000);
+		let requests = 0;
+		const next = cache.sessionJoinCache.addOrGet("document", async () => {
+			requests++;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		});
+		await clock.tickAsync(89999);
+		assert.equal(requests, 0);
+		await clock.tickAsync(1);
+		await next;
+		assert.equal(requests, 1, "elapsed retry time counts toward the server deadline");
+	});
+
+	it("starts a new diagnostic window after a throttle expires", async () => {
+		const logger = new MockLogger();
+		const telemetry = { logger: logger.toTelemetryLogger(), caller: "reconnect" };
+		const execute = async (): Promise<never> => {
+			throw createOdspNetworkError("throttle", 429, 120);
+		};
+		await assert.rejects(cache.sessionJoinCache.addOrGet("document", execute, telemetry));
+		clock.setSystemTime(120000);
+		await assert.rejects(cache.sessionJoinCache.addOrGet("document", execute, telemetry));
+		const throttles = logger.events.filter(
+			(event) => event.eventName === "JoinSessionThrottle",
+		);
+		assert.equal(throttles.length, 2);
+		assert.equal(typeof throttles[0].throttleGateId, "string");
+		assert.equal(typeof throttles[1].throttleGateId, "string");
+		assert.notEqual(throttles[0].throttleGateId, throttles[1].throttleGateId);
+		assert.equal(throttles[1].throttleDeadline, 240000);
+		assert.equal(clock.countTimers(), 0);
 	});
 
 	it("rechecks an extended deadline when the shared waiting timer wakes", async () => {
@@ -554,6 +588,36 @@ describe("join-session throttle coordination", () => {
 		assert.equal(await first, result);
 		assert.equal(await second, result);
 		assert.equal(calls, 1);
+	});
+
+	it("shares the waiting promise with a caller reentering through telemetry", async () => {
+		const key = getJoinSessionCacheKey(resolvedUrl);
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet(key, async () => {
+				throw createOdspNetworkError("throttle", 429, 120);
+			}),
+		);
+		const logger = new MockLogger().toTelemetryLogger();
+		const result = { entryTime: Date.now(), joinSessionResponse: response };
+		let calls = 0;
+		const execute = async (): Promise<typeof result> => {
+			calls++;
+			return result;
+		};
+		let second: ReturnType<typeof cache.sessionJoinCache.addOrGet> | undefined;
+		stub(logger, "sendTelemetryEvent").callsFake((event) => {
+			if (event.eventName === "JoinSessionThrottleWait") {
+				second = cache.sessionJoinCache.addOrGet(key, execute);
+			}
+		});
+		const first = cache.sessionJoinCache.addOrGet(key, execute, {
+			logger,
+			caller: "reconnect",
+		});
+		await clock.tickAsync(120000);
+		assert.notEqual(second, undefined, "the telemetry callback attempts another join");
+		assert.deepEqual(await Promise.all([first, second]), [result, result]);
+		assert.equal(calls, 1, "telemetry must not allow duplicate work");
 	});
 
 	it("keeps legacy behavior for a plain PromiseCache supplied through the exported interface", async () => {
