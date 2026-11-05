@@ -655,7 +655,9 @@ export function chunkRange(
 		}
 	}
 
-	// TODO: maybe make a pass over output to coalesce UniformChunks.
+	// TODO: Consider coalescing adjacent small, same-shape UniformChunks reused by the fast path
+	// when their combined size fits within the applicable chunk size limit.
+	// Newly converted runs are already packed by uniformChunkFromCursor.
 
 	// If output is large, group it into a tree of sequence chunks.
 	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
