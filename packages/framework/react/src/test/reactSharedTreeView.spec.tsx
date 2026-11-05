@@ -16,6 +16,7 @@ import type { JSX } from "react";
 
 import type { PropTreeNode } from "../propNode.js";
 import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
+import { usePropTreeNode } from "../useTree.js";
 
 describe("reactSharedTreeView", () => {
 	it("treeDataObject", async () => {
@@ -86,6 +87,37 @@ describe("reactSharedTreeView", () => {
 					view.initialize(new Item({}));
 					rendered.rerender(content);
 					assert.equal(rendered.baseElement.textContent, "View");
+
+					rendered.unmount();
+					view.dispose();
+				});
+
+				it("renders viewable content when schemas are not equivalent", () => {
+					class StoredItem extends builder.object("RolloutItem", {
+						name: builder.string,
+						extra: builder.optional(builder.string),
+					}) {}
+					class ViewItem extends builder.object(
+						"RolloutItem",
+						{ name: builder.string },
+					) {}
+					const tree = createIndependentTreeBeta();
+					const storedView = tree.viewWith(new TreeViewConfiguration({ schema: StoredItem }));
+					storedView.initialize(new StoredItem({ name: "Visible", extra: "Preserved" }));
+					storedView.dispose();
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: ViewItem }));
+					const RolloutView = ({ root }: { root: PropTreeNode<ViewItem> }): JSX.Element => (
+						<span>{usePropTreeNode(root, (node) => node.name)}</span>
+					);
+
+					// The unknown optional field permits viewing without schema equivalence.
+					assert.equal(view.compatibility.canView, true);
+
+					const rendered = render(
+						<TreeViewComponent viewComponent={RolloutView} tree={{ treeView: view }} />,
+						{ reactStrictMode },
+					);
+					assert.equal(rendered.baseElement.textContent, "Visible");
 
 					rendered.unmount();
 					view.dispose();
