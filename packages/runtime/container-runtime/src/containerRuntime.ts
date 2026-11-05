@@ -284,9 +284,11 @@ import {
 	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
 	electedSummarizerBlobName,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
@@ -296,9 +298,13 @@ import {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGeneratedSummaryStats,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGenerateSummaryTreeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
@@ -306,21 +312,23 @@ import {
 	isSummariesDisabled,
 	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
 	summarizerClientType,
 	summarizerRequestUrl,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryCollection,
 	SummaryManager,
 	validateSummaryHeuristicConfiguration,
@@ -1008,9 +1016,7 @@ export class ContainerRuntime
 				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
 			);
 		}
-		// Internally this value is still threaded through as `minVersionForCollab`. Renaming the
-		// Runtime/DataStore/DDS propagation path crosses API layers and requires a staged migration
-		// where both names coexist for old and new consumers. See #27851.
+		// Both internal names remain available while older Runtime, DataStore, and DDS packages migrate.
 		const minVersionForCollab =
 			oldestSupportedClientParam ??
 			deprecatedMinVersionForCollab ??
@@ -1371,6 +1377,10 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, unknown>;
 
 	private readonly _getClientId: () => string | undefined;
+	public get oldestSupportedClient(): OldestSupportedClientVersion {
+		return this.minVersionForCollab;
+	}
+
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
@@ -2510,6 +2520,7 @@ export class ContainerRuntime
 						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryCollection: SummaryCollection = new SummaryCollection(
 			this.deltaManager,
 			this.baseLogger,
@@ -2551,28 +2562,14 @@ export class ContainerRuntime
 			!onRequestMode &&
 			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
 		) {
-			// Only create a SummaryManager and SummarizerClientElection
-			// if summaries are enabled and we are not the summarizer client.
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
+			// Interactive clients coordinate automatic summarizer creation.
+			this.summarizerClientElection = new SummarizerClientElection(
+				this.baseLogger,
 				this.innerDeltaManager,
 				this._quorum,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
 				summaryCollection,
-				orderedClientElectionForSummarizer,
 				maxOpsSinceLastSummary,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 			);
 
 			const defaultAction = (): void => {
@@ -4687,6 +4684,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4951,6 +4949,7 @@ export class ContainerRuntime
 					? undefined
 					: calculateStats(summaryTree.tree[gcTreeKey]);
 
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.channelCollection.size,
 				summarizedDataStoreCount: this.channelCollection.size - handleCount,
@@ -4960,6 +4959,7 @@ export class ContainerRuntime
 				summaryNumber,
 				...partialStats,
 			};
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
 				referenceSequenceNumber: summaryRefSeqNum,
 				minimumSequenceNumber,
@@ -5077,6 +5077,7 @@ export class ContainerRuntime
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<IBaseSummarizeResult | undefined> {
 		if (!this.isOpDirty) {
 			return;
@@ -5863,6 +5864,7 @@ export class ContainerRuntime
 			.catch(this.closeFn);
 	};
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.summarizeOnDemand(options);
@@ -5876,6 +5878,7 @@ export class ContainerRuntime
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.enqueueSummarize(options);

@@ -82,7 +82,8 @@ import {
 	contentSchemaSymbol,
 	type TreeContextAlpha,
 	type TreeNodeSchema,
-	getUnhydratedContext,
+	toStoredSchema,
+	toUnhydratedSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -899,7 +900,7 @@ export const TreeAlpha: TreeAlpha = {
 		return createFromCursor(
 			schema,
 			cursor,
-			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
+			toStoredSchema(schema, toUnhydratedSchema).rootFieldSchema,
 		);
 	},
 

@@ -73,7 +73,7 @@ import {
 	toStoredSchema,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/toStoredSchema.js";
+} from "../../../../simple-tree/treeSchema.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
