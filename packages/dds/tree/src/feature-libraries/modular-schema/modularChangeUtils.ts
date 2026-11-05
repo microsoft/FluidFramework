@@ -173,7 +173,7 @@ function getFieldKind(
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
-	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
+	assert(fieldKind !== undefined, "Unknown field kind");
 	return fieldKind;
 }
 
@@ -980,7 +980,7 @@ export function getOldRootIdFromNewRootId(
 export function getNodeParent(changeset: ModularChangeset, nodeId: NodeId): NodeLocation {
 	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
 	const location = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
-	assert(location !== undefined, 0x9cb /* Parent field should be defined */);
+	assert(location !== undefined, "Parent field should be defined");
 
 	if (location.field !== undefined) {
 		return { field: normalizeFieldId(location.field, changeset.nodeAliases) };

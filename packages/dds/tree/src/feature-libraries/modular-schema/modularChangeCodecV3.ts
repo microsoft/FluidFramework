@@ -137,7 +137,7 @@ export function makeModularChangeCodecV3(
 			);
 
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
-				fail(0xb1f /* Encoded change didn't pass schema validation. */);
+				fail("Encoded change didn't pass schema validation.");
 			}
 
 			const fieldKey: FieldKey = field;
@@ -217,7 +217,7 @@ export function makeModularChangeCodecV3(
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
-				fail(0xb20 /* Encoded change didn't pass schema validation. */);
+				fail("Encoded change didn't pass schema validation.");
 			}
 
 			const fieldId: FieldId = {
@@ -343,14 +343,14 @@ export function makeModularChangeCodecV3(
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-				assert(node !== undefined, 0x92e /* Unknown node ID */);
+				assert(node !== undefined, "Unknown node ID");
 				return encodeNodeChangesForJson(node, nodeId, contextFactory);
 			};
 
 			const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
 
 			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
+			assert(change.destroys === undefined, "Unexpected changeset with destroys");
 			const encoded: EncodedModularChangesetV3 = {
 				maxId: change.maxId,
 				revisions:
@@ -502,6 +502,6 @@ function getChangeHandler(
 	}
 
 	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
-	assert(handler !== undefined, 0x9c1 /* Unknown field kind */);
+	assert(handler !== undefined, "Unknown field kind");
 	return handler;
 }
