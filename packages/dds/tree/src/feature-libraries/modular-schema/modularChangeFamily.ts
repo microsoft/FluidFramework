@@ -2507,6 +2507,17 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 
 			if (newDetachId !== undefined) {
+				const getBaseOutputLocation = (id: ChangeAtomId, length: number) => {
+					const locationEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
+						id,
+						length,
+					);
+
+					return locationEntry.value === undefined
+						? { value: this.fieldId, length: locationEntry.length }
+						: locationEntry;
+				};
+
 				insertRootRename(
 					this.table.rebasedRootNodes,
 					baseAttachId,
@@ -2517,7 +2528,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					countToProcess,
 					undefined,
 					this.table.newChange.rootNodes,
-					(_id, length) => ({ value: this.fieldId, length }),
+					getBaseOutputLocation,
 					() => fail("Unexpected rename collision"),
 				);
 			}
