@@ -154,9 +154,9 @@ export class PromiseCache<TKey, TResult> {
 			promise = safeAsyncFn();
 			this.cache.set(key, promise);
 
-			// If asyncFn throws, we may remove the Promise from the cache
+			// A rejected promise must not remove a replacement stored under the same key.
 			promise.catch((error) => {
-				if (this.removeOnError(error)) {
+				if (this.removeOnError(error) && this.cache.get(key) === promise) {
 					this.remove(key);
 				}
 			});
