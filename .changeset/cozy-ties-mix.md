@@ -3,7 +3,6 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-
 Manage branch state independently of views
 
 You can now create and retain an independent branch without keeping a typed view alive.
@@ -12,7 +11,7 @@ This lets you separate the lifetime of branch state and history from the schema-
 This change is a step toward separating branch management from views and reducing the current one-view-per-branch restriction.
 It does not enable multiple active views of the same branch: each branch still supports one active view at a time.
 
-Use the new `@alpha` method `tree.forkBranch()` to create a `TreeBranchHandleAlpha` without a source view or schema configuration.
+Use the new alpha method `tree.forkBranch()` to create a `TreeBranchHandleAlpha` without a source view or schema configuration.
 Use `branch.viewWith(config)` when you need to read or edit the branch.
 Disposing that view preserves the branch so you can create another view later.
 Edits remain isolated until you merge them into another view.

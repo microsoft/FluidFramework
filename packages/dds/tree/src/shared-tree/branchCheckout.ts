@@ -85,12 +85,9 @@ export function forkAsBranchCheckout(parent: CheckoutBase): BranchCheckout {
 }
 
 /**
- * An independent branch of a tree that you own.
+ * An independent branch that has a separate lifetime from the tree from which it was forked.
  *
  * @remarks
- * Use {@link ViewableTreeAlpha.forkBranch} to create a branch from a tree.
- * Use {@link TreeBranchHandleAlpha.fork | fork} to fork this branch.
- * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the branch.
  * The branch retains its state and history independently of its views.
  * Call {@link TreeBranchHandleAlpha.dispose | dispose} when you no longer need it.
  *
@@ -121,7 +118,6 @@ export interface TreeBranchHandleAlpha extends IDisposable {
 	 * If the view schema is incompatible with the branch's stored schema, check {@link TreeView.compatibility | compatibility} for details.
 	 * Access to {@link TreeView.root | root} throws an error until the schemas are compatible.
 	 *
-	 * Edits through the view affect this branch.
 	 * Disposing the view preserves this branch so you can create another view.
 	 * However, disposing this branch also disposes its active view.
 	 * Only one view of this branch can be active at a time.
