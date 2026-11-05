@@ -260,8 +260,12 @@ jobs:
           # Git-derived review context is precomputed before this token is in scope.
           copilot \
             -p "$PROMPT" \
+            --no-custom-instructions \
+            --disable-builtin-mcps \
             --allow-tool=read \
             --allow-tool=write \
+            --deny-tool=shell \
+            --deny-tool=url \
             --no-ask-user
 
       # ── Upload results as artifact ──
