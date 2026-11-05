@@ -91,17 +91,16 @@ export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "leng
  */
 export interface CursorAdapter<TNode> {
 	/**
-	 * Optional field cursor that avoids materializing the field's node objects.
+	 * Optional specialized field cursor.
+	 *
+	 * The returned cursor must start in field mode at its root field and expose the same logical content as {@link CursorAdapter.getFieldFromNode}.
+	 * Paths returned without a prefix (e.g. the return of {@link CursorWithNode.getPath} given no arguments) should be relative to the specialized field.
+	 * @returns A specialized cursor, or undefined to use ordinary node-based traversal.
 	 * @remarks
 	 * This is a performance path for specialized storage.
 	 * For example, a packed string can expose its atoms through a cursor without creating a node object for each atom.
 	 * The composed cursor delegates traversal of that field and resumes ordinary stack navigation when it leaves the field.
 	 * Node objects need only be materialized if a caller requests them through {@link CursorWithNode.getNode}.
-	 *
-	 * The returned cursor must start in field mode at its root field and expose the same logical content as {@link CursorAdapter.getFieldFromNode}.
-	 * Its paths are relative to that field; the composed cursor supplies the enclosing tree location.
-	 * @returns A specialized cursor, or undefined to use ordinary node-based traversal.
-	 * Omitting this method also uses ordinary traversal.
 	 */
 	getFieldCursor?(node: TNode, key: FieldKey): CursorWithNode<TNode> | undefined;
 	/**
