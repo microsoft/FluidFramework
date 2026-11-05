@@ -53,6 +53,7 @@ describe("SchemaChangeset", () => {
 			const inverse = new CompareAndSwapSchemaChangeset(numberString, string, number).invert();
 			assert.equal(inverse.output, numberString);
 			assert.equal(inverse.hasConflicts(), false);
+			assert.equal(inverse.isInverse, true);
 		});
 	});
 
@@ -65,6 +66,7 @@ describe("SchemaChangeset", () => {
 			assert.equal(rebased.input, number);
 			assert.equal(rebased.hasConflicts(), false);
 			assert.equal(rebased.output, string);
+			assert.equal(rebased.isInverse, false);
 		});
 
 		it("uses the base's output rather than its proposal", () => {
@@ -73,6 +75,7 @@ describe("SchemaChangeset", () => {
 			const rebased = change.rebase(over);
 			assert.equal(rebased.input, numberString);
 			assert.equal(rebased.hasConflicts(), false);
+			assert.equal(rebased.isInverse, false);
 		});
 	});
 
@@ -123,7 +126,7 @@ describe("SchemaChangeset", () => {
 
 			describe("rebase", () => {
 				it("preserves the concrete type and proposal when the input changes", () => {
-					const change = new Changeset(expectedOutput, otherSchema);
+					const change = new Changeset(expectedOutput, otherSchema, true);
 					const updated = change.rebase(
 						new CompareAndSwapSchemaChangeset(expectedOutput, otherSchema),
 					);
@@ -132,6 +135,7 @@ describe("SchemaChangeset", () => {
 					assert.equal(updated.input, otherSchema);
 					assert.equal(updated.proposed, change.proposed);
 					assert.equal(updated.output, otherSchema);
+					assert.equal(updated.isInverse, true);
 				});
 			});
 
@@ -146,6 +150,7 @@ describe("SchemaChangeset", () => {
 						assert.equal(inverse.input, expectedOutput);
 						assert.equal(inverse.output, input);
 						assert.equal(inverse.hasConflicts(), false);
+						assert.equal(inverse.isInverse, true);
 					});
 				}
 			});
@@ -187,13 +192,14 @@ describe("SchemaChangeset", () => {
 
 		describe("rebase", () => {
 			it("preserves the concrete type, proposal and original schema when the input changes", () => {
-				const change = new CompareAndSwapSchemaChangeset(numberString, string, number);
+				const change = new CompareAndSwapSchemaChangeset(numberString, string, number, true);
 				const updated = change.rebase(new CompareAndSwapSchemaChangeset(numberString, empty));
 				assert(updated instanceof CompareAndSwapSchemaChangeset);
 				assert.notEqual(updated, change);
 				assert.equal(updated.input, empty);
 				assert.equal(updated.proposed, change.proposed);
 				assert.equal(updated.original, change.original);
+				assert.equal(updated.isInverse, true);
 			});
 		});
 
@@ -210,6 +216,7 @@ describe("SchemaChangeset", () => {
 				assert.equal(inverse.original, string);
 				assert.equal(inverse.output, numberWithMetadata);
 				assert.equal(inverse.hasConflicts(), false);
+				assert.equal(inverse.isInverse, true);
 			});
 		});
 	});
@@ -221,12 +228,14 @@ describe("SchemaChangeset", () => {
 			const rebased = noop.rebase(new CompareAndSwapSchemaChangeset(number, string));
 			assert.equal(rebased.output, string);
 			assert.equal(rebased.hasConflicts(), false);
+			assert.equal(rebased.isInverse, true);
 		});
 
 		it("remains a no-op after inversion", () => {
 			const inverse = noop.invert();
 			assert.equal(inverse.output, number);
 			assert.equal(inverse.hasConflicts(), false);
+			assert.equal(inverse.isInverse, true);
 			const rebased = inverse.rebase(new CompareAndSwapSchemaChangeset(number, string));
 			assert.equal(rebased.output, string);
 			assert.equal(rebased.hasConflicts(), false);

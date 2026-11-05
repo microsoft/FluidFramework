@@ -14,11 +14,16 @@ export abstract class SchemaChangeset {
 		public readonly input: TreeStoredSchema,
 		/** The new schema requested by the original version of this change in its initial authoring context (i.e. before any rebasing over other changes) */
 		public readonly proposed: TreeStoredSchema,
+		/**
+		 * Whether this changeset was produced by {@link SchemaChangeset.invert | inversion}.
+		 * @remarks Also true for inverses of inverses and {@link SchemaChangeset.rebase | rebases} of inverses.
+		 */
+		public readonly isInverse = false,
 	) {}
 
 	/** Produce a changeset that reverses this change's effects, or a no-op if it is conflicted */
 	public invert(): SchemaChangeset {
-		return this.hasConflicts() ? new NoopSchemaChangeset(this.input) : this.getInverse();
+		return this.hasConflicts() ? new NoopSchemaChangeset(this.input, true) : this.getInverse();
 	}
 
 	/**
@@ -61,11 +66,11 @@ export class WideningSchemaChangeset extends SchemaChangeset {
 	}
 
 	protected override withInput(input: TreeStoredSchema): WideningSchemaChangeset {
-		return new WideningSchemaChangeset(input, this.proposed);
+		return new WideningSchemaChangeset(input, this.proposed, this.isInverse);
 	}
 
 	protected override getInverse(): NarrowingSchemaChangeset {
-		return new NarrowingSchemaChangeset(this.output, this.input);
+		return new NarrowingSchemaChangeset(this.output, this.input, true);
 	}
 }
 
@@ -88,11 +93,11 @@ export class NarrowingSchemaChangeset extends SchemaChangeset {
 	}
 
 	protected override withInput(input: TreeStoredSchema): NarrowingSchemaChangeset {
-		return new NarrowingSchemaChangeset(input, this.proposed);
+		return new NarrowingSchemaChangeset(input, this.proposed, this.isInverse);
 	}
 
 	protected override getInverse(): WideningSchemaChangeset {
-		return new WideningSchemaChangeset(this.output, this.input);
+		return new WideningSchemaChangeset(this.output, this.input, true);
 	}
 }
 
@@ -106,8 +111,9 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 		proposed: TreeStoredSchema,
 		/** The schema in the original authoring context, unchanged by rebasing */
 		public readonly original: TreeStoredSchema = input,
+		isInverse: boolean = false,
 	) {
-		super(input, proposed);
+		super(input, proposed, isInverse);
 	}
 
 	public override get output(): TreeStoredSchema {
@@ -119,11 +125,16 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 	}
 
 	protected override withInput(input: TreeStoredSchema): CompareAndSwapSchemaChangeset {
-		return new CompareAndSwapSchemaChangeset(input, this.proposed, this.original);
+		return new CompareAndSwapSchemaChangeset(
+			input,
+			this.proposed,
+			this.original,
+			this.isInverse,
+		);
 	}
 
 	protected override getInverse(): CompareAndSwapSchemaChangeset {
-		return new CompareAndSwapSchemaChangeset(this.output, this.input);
+		return new CompareAndSwapSchemaChangeset(this.output, this.input, this.output, true);
 	}
 }
 
@@ -131,8 +142,8 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
  * A {@link SchemaChangeset} that represents a no-op change, which does not modify the schema and never has conflicts
  */
 class NoopSchemaChangeset extends SchemaChangeset {
-	public constructor(input: TreeStoredSchema) {
-		super(input, input);
+	public constructor(input: TreeStoredSchema, isInverse: boolean) {
+		super(input, input, isInverse);
 	}
 
 	public override get output(): TreeStoredSchema {
@@ -144,11 +155,11 @@ class NoopSchemaChangeset extends SchemaChangeset {
 	}
 
 	protected override withInput(input: TreeStoredSchema): NoopSchemaChangeset {
-		return new NoopSchemaChangeset(input);
+		return new NoopSchemaChangeset(input, this.isInverse);
 	}
 
 	protected override getInverse(): NoopSchemaChangeset {
-		return new NoopSchemaChangeset(this.output);
+		return new NoopSchemaChangeset(this.output, true);
 	}
 }
 
