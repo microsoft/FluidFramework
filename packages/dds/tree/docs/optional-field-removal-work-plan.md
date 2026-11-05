@@ -142,14 +142,14 @@ Thus, these cases are different:
 - Existing document: the stored field schema is retained.
 - New document: the removed field schema is absent.
 
-The snapshot tool currently reports a forward-collaboration failure when a supported historical client cannot immediately view a new document.
-As a planned follow-up, permit that client to require a safe upgrade before viewing, just as the current client can require an upgrade before viewing historical documents.
-Within the configured collaboration window, accept an older view if it can either view or upgrade the new document.
-Preserve acceptance for clients that can already view but cannot upgrade, and continue to reject clients that can do neither.
+The snapshot tool accepts direct viewing or a safe upgrade in both directions.
+The current client must be able to view or upgrade documents from every historical snapshot.
+Within the configured collaboration window, each historical client must also be able to view or upgrade documents created with the current schema.
+Clients that can already view but cannot upgrade remain accepted; clients that can do neither are rejected.
 
 This changes snapshot validation policy, not the meaning of `canView` or the runtime upgrade rules.
 Applications must still perform the required upgrade before accessing the document through an incompatible view.
-Keep the current-to-historical upgrade requirement and the existing collaboration version window unchanged.
+Keep the existing collaboration version window unchanged; excluding older clients does not remove the requirement for the current client to support their documents.
 
 See [snapshot collaboration checks](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts#L728).
 
@@ -186,7 +186,7 @@ Update the following application programming interface (API) documentation:
 - [Object schema options](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14): explain field removal, retained data, and rollback.
 - [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the effective staged-upgrade policy determine the target.
 - [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify `isEquivalent` and the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Keep the existing property name; renaming and deprecation are out of scope.
-- [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and permit supported historical clients to require a safe upgrade before viewing newer documents.
+- [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and accept direct viewing or a safe upgrade in both directions.
 
 Document the new alpha informational report according to the [diagnostic contract][implementation-diagnostics].
 Include an example that distinguishes retained fields from blocking discrepancies.

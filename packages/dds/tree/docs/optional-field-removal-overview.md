@@ -88,9 +88,10 @@ The field being optional does not remove this requirement.
 
 Thus, field removal does not guarantee that all deployed application versions can immediately collaborate on all documents.
 Keep schema compatibility tests for the versions you support.
-As a planned follow-up, the snapshot tool will accept supported older clients that can either view or safely upgrade newer documents.
-It currently requires those older clients to be able to view without an upgrade.
-The relaxed policy will still reject clients that can do neither.
+The snapshot tool accepts direct viewing or a safe upgrade in both directions.
+The current client must support documents from every historical snapshot.
+Historical clients within the configured collaboration window must also support documents created with the current schema.
+For each required direction, clients that can already view remain supported even when they cannot upgrade; clients that can do neither are rejected.
 Applications must perform any required upgrade before viewing; a successful snapshot check does not make that upgrade unnecessary.
 
 ## Limits and data safety

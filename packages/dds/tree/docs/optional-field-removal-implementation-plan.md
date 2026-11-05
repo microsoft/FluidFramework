@@ -6,7 +6,8 @@ Implementation is proceeding in reviewed slices.
 The first slice is complete: the internal `getSchemaUpgradeCandidate` target builder and focused unit tests are implemented.
 The live integration slice is also complete: compatibility checks and schema upgrades now use the candidate builder and share effective staged-policy resolution.
 The directly coupled snapshot and offline compatibility checks are updated, and all existing user-story scenarios pass.
-The snapshot collaboration-policy change, alpha diagnostic API, and remaining documentation and API delivery work described below are still planned.
+The snapshot collaboration-policy follow-up accepts direct viewing or a safe upgrade in both directions.
+The alpha diagnostic API and remaining documentation and API delivery work described below are still planned.
 Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
@@ -312,26 +313,27 @@ Keep `identicalCompatibility` as the separate comparison of view-schema snapshot
 Do not redefine it as the conjunction of the directional flags.
 Do not regenerate historical snapshots to erase a real schema difference.
 
-### 5.2 Permit historical clients to upgrade newer documents
+### 5.2 Accept direct viewing or a safe upgrade in both directions
 
-The snapshot tool currently requires supported historical clients to view documents created by the current version without first upgrading them.
-Loosen this policy so an older schema can require a safe upgrade before viewing a newer document, just as a newer schema can require an upgrade before viewing an older document.
-This follow-up is planned; the live integration slice still enforces the original forward-viewability requirement.
+The snapshot tool applies the same compatibility rule in both directions: the viewing schema must be able to view or safely upgrade documents created with the other schema.
+Direct viewing is sufficient even if the viewing client's staged policy prevents an upgrade.
 
-For historical versions within `minVersionForCollaboration`, accept `snapshotViewOfCurrentDocument.canView || snapshotViewOfCurrentDocument.canUpgrade`.
-Do not replace the check with `canUpgrade` alone: a historical view may already be able to read and edit the document even when its staged policy prevents an upgrade.
-Keep the current version's existing `currentViewOfSnapshotDocument.canUpgrade` requirement for historical documents and the existing version-window rules.
-Reject forward compatibility only when the supported historical client can neither view nor upgrade the current document.
+For every historical snapshot, the checker accepts `currentViewOfSnapshotDocument.canView || currentViewOfSnapshotDocument.canUpgrade`.
+For historical versions within `minVersionForCollaboration`, it also requires `snapshotViewOfCurrentDocument.canView || snapshotViewOfCurrentDocument.canUpgrade`.
+The version-window rules remain unchanged: historical versions outside that window need not support current documents, but the current version must still support their documents.
+Each required direction is rejected only when the viewing client can neither view nor upgrade.
 
-Update the snapshot validation errors and the `minVersionForCollaboration` documentation to describe collaboration after a permitted upgrade.
+The snapshot validation errors and `minVersionForCollaboration` documentation describe collaboration after a permitted upgrade.
 Passing a snapshot check does not apply the upgrade or change the directional compatibility flags.
 When `canView` is false and `canUpgrade` is true, the application must still call `upgradeSchema()` before accessing the document through that view.
 Keep the runtime superset checks unchanged.
 The work plan describes this [new-document upgrade requirement][collaboration-policy].
 
-Update the rollback regression in [snapshotCompatibilityChecker.spec.ts][snapshot-tests] to expect snapshot validation to succeed after this support is implemented.
-Keep its directional assertions: the historical view cannot immediately view the fresh document, can upgrade it, and does not have an equivalent no-op target.
-Also retain coverage for directly viewable historical schemas whose upgrades are forbidden, and for schemas that cannot view or upgrade.
+The rollback regression in [snapshotCompatibilityChecker.spec.ts][snapshot-tests] now succeeds in both update and assert modes.
+Its directional assertions are unchanged: the historical view cannot immediately view the fresh document, can upgrade it, and does not have an equivalent no-op target.
+Additional regressions cover directly viewable schemas whose upgrades are forbidden, and schemas that cannot view or upgrade, in both directions.
+A current client that can neither view nor upgrade historical documents is rejected regardless of the collaboration window.
+A historical client that can neither view nor upgrade current documents is rejected only within that window.
 
 ### 5.3 Preserve offline results and unrelated staging behavior
 
@@ -418,7 +420,7 @@ Update [snapshotCompatibilityChecker.spec.ts][snapshot-tests] and [storedSchema.
 
 - Verify historical documents can be upgraded after eligible field removal.
 - Verify directional equivalence does not trigger an assertion.
-- Once the policy change in section 5.2 is implemented, accept fresh-document collaboration when a supported older view can safely upgrade the document.
+- Accept fresh-document collaboration when a supported older view can safely upgrade the document, as specified in section 5.2.
 - Preserve rejection when the older view can neither view nor upgrade, and preserve acceptance when it can already view but cannot upgrade.
 - Verify offline flag results agree with live-view results.
 
@@ -452,12 +454,12 @@ Update this list after each implementation slice.
   - [x] Remove the equivalence-symmetry assumption while preserving `identicalCompatibility`.
   - [x] Verify agreement with live compatibility results and cover the current fresh-document upgrade requirement.
   - [x] Update directly affected expectations without repairing unrelated skipped cases.
-- [ ] **Allow historical clients to upgrade newer documents before collaboration.**
-  - [ ] Accept `canView || canUpgrade` for historical versions within the collaboration window, preserving existing directly viewable cases.
-  - [ ] Keep the current-to-historical upgrade requirement, version-window rules, and runtime superset checks unchanged.
-  - [ ] Change the rollback snapshot test to expect success, while preserving its directional compatibility assertions.
-  - [ ] Cover directly viewable but non-upgradeable historical schemas and reject schemas that can neither view nor upgrade.
-  - [ ] Update snapshot validation errors, collaboration-policy documentation, and the changeset.
+- [x] **Accept direct viewing or a safe upgrade in both compatibility directions.**
+  - [x] Accept `canView || canUpgrade` for current clients viewing every historical snapshot and for historical clients within the collaboration window viewing current documents.
+  - [x] Keep the version-window rules and runtime superset checks unchanged.
+  - [x] Change the rollback snapshot test to expect success, while preserving its directional compatibility assertions.
+  - [x] Verify directly viewable but non-upgradeable schemas and rejection when neither flag is true in both directions.
+  - [x] Update snapshot validation errors, collaboration-policy documentation, and the changeset.
 - [ ] **Complete documentation and API delivery.**
   - [x] Clarify the compatibility flags' API documentation and add the behavior changeset for `@fluidframework/tree` and `fluid-framework`.
   - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including alpha entrypoints and API reports.
@@ -466,14 +468,16 @@ Update this list after each implementation slice.
   - [x] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
   - [ ] Pass the affected TypeScript, formatting, lint, and API checks.
 
-Current validation: 1,233 tests pass across the integration and regression suites listed below, with seven pre-existing skipped snapshot tests unchanged.
-This includes all 16 builder tests and all 36 user-story tests; the seven previously failing preservation scenarios now pass.
+Live integration validation, before the snapshot-policy follow-up: 1,233 tests passed across the integration and regression suites listed below, with seven pre-existing skipped snapshot tests unchanged.
+This included all 16 builder tests and all 36 user-story tests; the seven previously failing preservation scenarios pass.
 The no-op user-story helper also checks `isEquivalent`, in addition to its existing event, operation, and root-identity checks.
 New tests cover retaining removed fields alongside already-enabled staged changes, retaining a node definition without enabling its staged use elsewhere, and directional snapshot and persisted-schema compatibility.
-The snapshot regression currently records the stricter policy: it rejects a historical client that needs a safe upgrade before viewing a fresh document.
-A TODO marks that assertion for replacement when section 5.2 is implemented.
+Snapshot-policy follow-up validation: 228 tests pass across the snapshot, compatibility, persisted-schema, staged-upgrade, and user-story suites, with the same seven skipped tests unchanged.
+The rollback snapshot test now succeeds without changing its directional flags.
+The new tests accept directly viewable clients whose upgrades are forbidden in both directions.
+They reject incompatible historical clients only within the configured collaboration window, but require the current client to view or upgrade historical documents regardless of that window.
 `pnpm run build:esm`, `pnpm run build:test:esm`, and the focused Biome, ESLint, and whitespace checks pass.
-These results describe the completed integration slice; the snapshot collaboration-policy change, alpha diagnostic tests, and final API delivery validation remain outstanding.
+These results describe the completed integration and snapshot-policy slices; alpha diagnostic tests and final API delivery validation remain outstanding.
 
 ### Validation commands
 
@@ -505,6 +509,17 @@ pnpm run test:mocha:esm --reporter dot \
 ```
 
 Include the affected diagnostic and schema-option suites when adding the alpha diagnostic API.
+
+The snapshot-policy follow-up was validated with:
+
+```bash
+MOCHA_SPEC='lib/test/simple-tree/api/snapshotCompatibilityChecker.spec.js' \
+pnpm run test:mocha:esm --reporter dot \
+  lib/test/simple-tree/api/schemaCompatibilityTester.spec.js \
+  lib/test/simple-tree/api/storedSchema.spec.js \
+  lib/test/simple-tree/api/stagedSchemaUpgrade.spec.js \
+  lib/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.js
+```
 
 Use the package's existing Biome and ESLint commands on changed source files.
 Run broader tests only when the focused results or changed code paths require them.
