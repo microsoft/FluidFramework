@@ -162,7 +162,7 @@ export function* operationDescriptorsFromNodField(
 	for (const [id, node] of allNods.entries()) {
 		if (!ancestors.has(node)) {
 			const src = nodeLocation(node);
-			if (node === parent && src.field === fieldKey) {
+			if (src.parent === parent.id && src.field === fieldKey) {
 				// Do not move nodes within the same field of the same parent
 				continue;
 			}

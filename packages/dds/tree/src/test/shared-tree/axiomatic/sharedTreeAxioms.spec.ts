@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { currentVersion } from "../../../codec/index.js";
 import {
 	makeAnonChange,
+	RebaseValidation,
 	type ChangeEncodingContext,
 	type TaggedChange,
 } from "../../../core/index.js";
@@ -186,19 +187,21 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 		for (const [local] of historiesOfDepth(1)) {
 			for (const [base] of bases) {
 				const metadata = defaultRevisionMetadataFromChanges([base.change, local.change]);
-				const rebased = adapter.rebase(local.change, base.change, metadata);
-				for (const codec of codecs) {
-					const context: ChangeEncodingContext = {
-						originatorId: sessionId,
-						isSummary: false,
-						revision: local.change.revision,
-						idCompressor: testIdCompressor,
-					};
-					const encoded = codec.encode(rebased.change, context);
-					const decoded = codec.decode(encoded, context);
-					assertSharedTreeChangesEqual(decoded, rebased.change);
-				}
-				count++;
+				RebaseValidation.runWithLevel(RebaseValidation.Level.Strict, () => {
+					const rebased = adapter.rebase(local.change, base.change, metadata);
+					for (const codec of codecs) {
+						const context: ChangeEncodingContext = {
+							originatorId: sessionId,
+							isSummary: false,
+							revision: local.change.revision,
+							idCompressor: testIdCompressor,
+						};
+						const encoded = codec.encode(rebased.change, context);
+						const decoded = codec.decode(encoded, context);
+						assertSharedTreeChangesEqual(decoded, rebased.change);
+						count++;
+					}
+				});
 			}
 		}
 	});
