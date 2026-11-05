@@ -11,7 +11,10 @@ import {
 	type ChangeEncodingContext,
 	type TaggedChange,
 } from "../../../core/index.js";
-import { fieldBatchCodecBuilder } from "../../../feature-libraries/index.js";
+import {
+	fieldBatchCodecBuilder,
+	ModularChangeFormatVersion,
+} from "../../../feature-libraries/index.js";
 import {
 	ForestTypeOptimized,
 	type SharedTreeChange,
@@ -149,7 +152,9 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 	});
 
 	it("roundtrips depth-1 changes through codec", () => {
-		const formats = [...adapter.family.codecs.getSupportedFormats()];
+		const formats = [...adapter.family.codecs.getSupportedFormats()].filter(
+			(format) => format !== ModularChangeFormatVersion.vDetachedRoots,
+		);
 		const codecs = formats.map((format) => adapter.family.codecs.resolve(format));
 		const sessionId = "session1" as SessionId;
 		let count = 0;
@@ -167,6 +172,34 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 				assertSharedTreeChangesEqual(decoded, change);
 			}
 			count++;
+		}
+	});
+
+	it("roundtrips rebased depth-1 changes through codec", () => {
+		const formats = [...adapter.family.codecs.getSupportedFormats()].filter(
+			(format) => format !== ModularChangeFormatVersion.vDetachedRoots,
+		);
+		const codecs = formats.map((format) => adapter.family.codecs.resolve(format));
+		const sessionId = "session1" as SessionId;
+		const bases = [...historiesOfDepth(1)];
+		let count = 0;
+		for (const [local] of historiesOfDepth(1)) {
+			for (const [base] of bases) {
+				const metadata = defaultRevisionMetadataFromChanges([base.change, local.change]);
+				const rebased = adapter.rebase(local.change, base.change, metadata);
+				for (const codec of codecs) {
+					const context: ChangeEncodingContext = {
+						originatorId: sessionId,
+						isSummary: false,
+						revision: local.change.revision,
+						idCompressor: testIdCompressor,
+					};
+					const encoded = codec.encode(rebased.change, context);
+					const decoded = codec.decode(encoded, context);
+					assertSharedTreeChangesEqual(decoded, rebased.change);
+				}
+				count++;
+			}
 		}
 	});
 
