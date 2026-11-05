@@ -1142,9 +1142,7 @@ export interface TreeViewAlpha<
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view schema would generate an equivalent stored schema to the existing one.
-	 * That is, whether both the existing stored schema and the stored schema derived
-	 * from the view allow the same subset of documents.
+	 * Whether the view can already access the document and its proposed schema upgrade would leave the stored schema unchanged.
 	 *
 	 * @remarks
 	 *
@@ -1154,14 +1152,16 @@ export interface SchemaCompatibilityStatus {
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
+	 * This check compares the existing stored schema with the proposed upgrade target built from both the view and the existing stored schema.
+	 * The target retains stored optional fields omitted by view objects that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
 	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
 	 * This policy determines which staged changes are included, including whether to
 	 * retain upgrades already enabled in the document.
 	 *
-	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
-	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
+	 * Equivalence does not mean that initializing a new document with this view would produce the same stored schema.
+	 * It also does not mean that two application versions can view each other's documents.
+	 * For example, removing an optional field can permit a no-op upgrade of an older document,
+	 * while the older view needs to upgrade a fresh document created without that field before it can write to it.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
@@ -1177,14 +1177,17 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
 	 *
-	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
-	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
+	 * A view can tolerate some differences between its declarations and the stored schema.
+	 * For example:
 	 *
-	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} set to true can have additional optional fields in the stored schema.
 	 *
 	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
 	 *
-	 * In these cases `canUpgrade` and `isEquivalent` will be false.
+	 * - An optional field in the stored schema where the corresponding view field is {@link SchemaStaticsAlpha.stagedOptional | staged optional}.
+	 *
+	 * These differences do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 * Those flags compare the stored schema with the proposed upgrade target, including retained unknown optional fields and the configured staged upgrade policy.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1214,17 +1217,18 @@ export interface SchemaCompatibilityStatus {
 	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
 	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
+	 * This check compares the existing stored schema with the proposed upgrade target built from both the view and the existing stored schema.
 	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
 	 * This policy determines which staged upgrades are enabled, including whether to
 	 * retain upgrades already enabled in the document.
 	 *
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
 	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
-	 * Even this case must still must be done with caution however as only clients with the newly added field will be able to do future upgrades.
-	 * Thus if a version of an application is shipped that adds an unknown optional field, all future versions should include it, even if its no longer used,
-	 * to ensure that documents containing it can still be upgraded.
+	 *
+	 * Object schemas in the view that allow unknown optional fields can omit stored optional fields and still perform further upgrades.
+	 * The upgrade retains those fields and the node definitions they require, preserving existing content.
+	 * New documents initialized with the view do not include the omitted fields.
+	 * This does not permit removing required fields, narrowing allowed types, or otherwise violating the schema upgrade rules.
 	 */
 	readonly canUpgrade: boolean;
 
