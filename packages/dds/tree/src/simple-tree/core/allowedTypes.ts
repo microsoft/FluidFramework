@@ -188,6 +188,13 @@ export class AnnotatedAllowedTypesInternal<
 	public readonly unannotatedTypes: UnannotateAllowedTypesList<T>;
 
 	/**
+	 * Whether any allowed-type entry has a staged schema upgrade.
+	 * @remarks
+	 * Does not evaluate lazy references or inspect staging within the referenced schemas.
+	 */
+	public readonly hasStagedTypes: boolean;
+
+	/**
 	 * True if and only if there is at least one lazy schema reference in the types arrays.
 	 */
 	private readonly isLazy: boolean;
@@ -204,6 +211,9 @@ export class AnnotatedAllowedTypesInternal<
 	) {
 		super();
 		this.unannotatedTypes = types.map((type) => type.type) as typeof this.unannotatedTypes;
+		this.hasStagedTypes = types.some(
+			(type) => type.metadata.stagedSchemaUpgrade !== undefined,
+		);
 
 		// Since the array has been copied, mutations to it will not be handled correctly so freeze it.
 		// Support for such mutations could be added at a later date by making more things lazy.

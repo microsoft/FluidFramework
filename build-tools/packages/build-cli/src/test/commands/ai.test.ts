@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Config } from "@oclif/core";
@@ -14,6 +14,7 @@ import { describe, it } from "mocha";
 import AiCommand, {
 	assertSafeAliasSelection,
 	buildLauncherPrompt,
+	FALLBACK_MODEL,
 	normalizePromptAnswer,
 	readAssetFile,
 	SUPPORTED_ALIASES,
@@ -185,6 +186,17 @@ describe("ai command", () => {
 			expect(result.stdout).to.equal("launched");
 		} finally {
 			await rm(tempDirectory, { recursive: true, force: true });
+		}
+	});
+
+	it("keeps launcher prompt models aligned with the fallback model", async () => {
+		const repositoryRoot = resolve(process.cwd(), "../../..");
+		for (const relativePath of [
+			".devcontainer/launcher-prompt.md",
+			".devcontainer/ai-agent/launcher-prompt.md",
+		]) {
+			const prompt = await readFile(resolve(repositoryRoot, relativePath), "utf8");
+			expect(prompt).to.match(new RegExp(`^model: ${FALLBACK_MODEL}$`, "mu"));
 		}
 	});
 

@@ -427,6 +427,7 @@ export function createTreeCheckout(
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
+			{ trimmedCommitCount: 0 },
 		);
 
 	return new TreeCheckout({
@@ -1334,6 +1335,11 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		return false;
 	}
 
+	public get unknownFieldSchemas(): undefined {
+		// A checkout has no view schema.
+		return undefined;
+	}
+
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
@@ -1792,7 +1798,6 @@ export abstract class CheckoutBase implements ITreeCheckout {
 
 		this.#transaction = this.createTransactionStack(branch);
 		this.branch = branch;
-		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
 		this.disposeLocations();
 		this.locationRevisionSource = undefined;
@@ -2037,7 +2042,6 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			view.dispose();
 		}
 		this.#events.emit("dispose");
-		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
 		this.disposeLocations();
 	}
