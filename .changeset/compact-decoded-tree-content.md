@@ -15,11 +15,11 @@ In a local benchmark with 10,000-character documents, the median results before 
 | --- | --- | --- |
 | Retained tree heap after loading | 39.9 MiB to 30.6 MiB (23% less) | 5.12 MiB to 2.79 MiB (46% less) |
 | Retained attached-content heap after loading | 19.8 MiB to 10.5 MiB (47% less) | 2.44 MiB to 0.113 MiB (95% less) |
-| Summary load time | 142 ms to 214 ms | 28.6 ms to 41.2 ms |
-| Receive insertion time | 272 ms to 448 ms | 239 ms to 65.8 ms |
-| Local insertion time | 1,151 ms to 1,259 ms | 135 ms to 133 ms |
+| Summary load time | 140 ms to 212 ms (51% slower) | 28.5 ms to 40.2 ms (41% slower) |
+| Receive insertion time | 271 ms to 428 ms (58% slower) | 242 ms to 63.0 ms (74% faster) |
+| Local insertion time | 1,109 ms to 1,224 ms (10% slower) | 137 ms to 130 ms (5% faster) |
 
 These measurements use Node.js 22, in-memory storage, and a mocked runtime, with 18 timed samples per case across two process orders.
-Heap measurements use repeated batches of loaded documents after garbage collection and do not measure peak memory.
+Heap measurements use six batches of loaded documents after garbage collection and do not measure peak memory.
 The memory savings can come with additional processing time, particularly when loading summaries or receiving formatted text.
 Results depend on the document schema, workload, and environment.
