@@ -47,6 +47,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
+	getOrCreate,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -295,19 +296,14 @@ export class SharedTreeCore<
 		// Share a pending load by component identity so dependencies are loaded only once,
 		// even when also reached from the top-level list or another dependent.
 		const loads = new Map<Summarizable, Promise<void>>();
-		const load = async (summarizable: Summarizable): Promise<void> => {
-			const existing = loads.get(summarizable);
-			if (existing !== undefined) {
-				return existing;
-			}
-			// Dependencies are acyclic by contract. Independent loads can run concurrently,
-			// but this component starts only after all of its dependencies have loaded successfully.
-			const pending = Promise.all((summarizable.loadDependencies ?? []).map(load)).then(
-				async () => this.loadSummarizable(summarizable, services, parse),
-			);
-			loads.set(summarizable, pending);
-			return pending;
-		};
+		const load = async (summarizable: Summarizable): Promise<void> =>
+			getOrCreate(loads, summarizable, async () => {
+				// Dependencies are acyclic by contract. Independent loads can run concurrently,
+				// but this component starts only after all of its dependencies have loaded successfully.
+				await Promise.all((summarizable.loadDependencies ?? []).map(load));
+				await this.loadSummarizable(summarizable, services, parse);
+			});
+		// Any component failure rejects loading promptly, while the other load promises remain observed.
 		await Promise.all(this.summarizables.map(load));
 
 		if (this.detachedRevision !== undefined) {
@@ -340,6 +336,11 @@ export class SharedTreeCore<
 		});
 	}
 
+	/**
+	 * Restores the summary components and detached sequencing state.
+	 * Callers must await successful completion before editing or processing messages.
+	 * If loading fails, this instance must not be used.
+	 */
 	public async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.getLocalBranch().getHead() === this.editManager.getTrunkHead("main"),

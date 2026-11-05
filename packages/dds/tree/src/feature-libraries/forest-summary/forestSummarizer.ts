@@ -94,7 +94,8 @@ export class ForestSummarizer
 		private readonly forest: IEditableForest,
 		/**
 		 * The summarizer for the same stored schema repository used by the forest's chunking policy.
-		 * This is registered as a load dependency because rechunking decoded content requires that schema.
+		 * This establishes the schema-before-forest loading contract, so forest loading can rely on a populated schema.
+		 * Rechunking decoded content uses this schema through the forest's chunking policy.
 		 * Callers that invoke {@link ForestSummarizer.load} directly must ensure the schema is already populated.
 		 */
 		schemaSummarizer: SchemaSummarizer,
@@ -115,8 +116,7 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		// The schema must finish loading before this forest can rechunk decoded content.
-		// SharedTreeCore uses this dependency to schedule loading.
+		// SharedTreeCore uses this dependency to load the schema before the forest.
 		this.loadDependencies = [schemaSummarizer];
 
 		this.codec = forestCodecBuilder.build(options);
