@@ -2,6 +2,7 @@
 
 Use this package to host a SharedTree kernel directly on the Sea service without a Fluid container runtime.
 It depends on SharedTree, the ID compressor, and the transport-neutral client contracts in [sea-driver](../sea-driver/README.md).
+The supplied client must support `openDirectSession`, as `SeaSessionDriverClient` does.
 
 ## Entry Point
 
@@ -25,7 +26,10 @@ Dispose views when finished, then call `dispose()` to stop subscription processi
 ## Guarantees and Limits
 
 The host submits SharedTree messages with their ID creation ranges and applies sequenced operations in bounded batches.
-It retains the mapping between Sea positions and SharedTree sequence numbers for the lifetime of the host.
+It uses Sea positions directly as SharedTree sequence numbers, without a Fluid projection or position-mapping tables.
+Positions can be sparse and can start at zero.
+Each position and reference must convert losslessly to a JavaScript safe integer (at most `Number.MAX_SAFE_INTEGER`, or 2^53 - 1); larger values cause an assertion failure rather than rounding.
+An absent reference uses -1, which precedes every Sea position.
 Subscription and submission failures trigger automatic reconnect with bounded retry frequency.
 `connectionState`, `pendingOperationCount`, and `lastError` expose progress and failures.
 Use `onStatusChange()` to observe changes without polling.
@@ -45,12 +49,13 @@ The nominated client publishes a full SharedTree summary after 100 applied appli
 The optional sixth argument to `create()` configures `summaryMaxOperations` and `summaryIdleMs`.
 Only acknowledged state is summarized; local pending edits defer publication.
 Unchanged state is not repeatedly summarized, and failed publication is reported and retried after the idle interval.
-Snapshots include finalized ID-compressor state and reference-position mappings, and publication uses the current nomination fence and expected parent.
+Snapshots include finalized ID-compressor state and the last applied Sea position, and publication uses the current nomination fence and expected parent.
 `summaryCount`, `lastSummarySequenceNumber`, and `loadedFromSummary` expose snapshot activity.
 `summarize()` requests publication immediately when eligible.
 These are full summaries, not incremental uploads.
-The underlying driver still scans retained history to rebuild its sequence projection, even when SharedTree itself loads from a summary.
-The current host and driver retain history mappings without garbage collection.
+Loading reads only the snapshot's suffix; reconnect reads only after the last applied position.
+Direct snapshot metadata uses version 2.
+Older snapshots containing dense Fluid sequence numbers are rejected, not migrated; create a fresh document when using the new format.
 
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
 The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.
@@ -65,6 +70,6 @@ pnpm --dir rust-service/packages/sea-tree test
 ```
 
 The build checks TypeScript, API reports, formatting, lint, and exports.
-Mocha tests collaboration, summary scheduling and loading, offline edits, lost acknowledgments, and failed transport cleanup through the package entrypoint.
+Mocha tests collaboration, summary scheduling and suffix-only loading, sparse positions, numeric limits, incompatible formats, offline edits, lost acknowledgments, and failed transport cleanup through the package entrypoint.
 To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-tree --task test:mocha:esm` from the repository root.
 The harness retains the direct SharedTree benchmarks and includes this package test in its aggregate command.

@@ -25,6 +25,9 @@ Each user panel shows connection state, pending edits, and the number of summari
 The SEA-nominated client summarizes acknowledged state after 100 application operations or five seconds of inactivity.
 Reopening a document loads the latest summary and applies newer operations.
 The panel indicates when it loaded a summary.
+Loading does not download operations before that summary.
+The current direct snapshot format is version 2; old experimental snapshots are rejected.
+Remove the URL hash and reload to create a fresh document when switching from an older format.
 
 Use **Disconnect** to pause one simulated user, edit both that user and a connected peer, then use **Reconnect**.
 The existing view is retained while pending edits are reconciled and rebased.

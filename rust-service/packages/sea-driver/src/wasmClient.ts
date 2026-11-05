@@ -12,11 +12,11 @@ export interface ProjectedOperation {
 	readonly eventType?: "application" | "joined" | "left" | "summaryAck";
 	/** Membership mode retained from the announcement for departure projection. */
 	readonly membershipMode?: "read" | "write";
-	/** Minimum reference mapped into the same dense sequence space. */
+	/** Minimum reference in the selected sequence space; native delivery uses -1 when absent. */
 	readonly minimumSequenceNumber?: bigint;
 	/** Opaque service position that can resume projected reads and subscriptions. */
 	readonly position: Uint8Array;
-	/** Document-wide sequence number assigned by the service. */
+	/** Fluid projection sequence, or the native SEA position for direct sessions. */
 	readonly sequenceNumber: bigint;
 	/** Minimum service position still referenced by this operation, when present. */
 	readonly minimumReference?: Uint8Array;
@@ -132,6 +132,15 @@ export interface SeaDriverClient {
 	create(): Promise<Uint8Array>;
 	/** Opens one archive-bound author session. */
 	openSession(
+		document: Uint8Array,
+		session: Uint8Array,
+		resumeAfter?: Uint8Array,
+	): Promise<void>;
+	/**
+	 * Opens without Fluid projection or eager history reads.
+	 * Reads return native SEA positions as sequence numbers; the caller owns snapshot loading.
+	 */
+	openDirectSession?(
 		document: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,

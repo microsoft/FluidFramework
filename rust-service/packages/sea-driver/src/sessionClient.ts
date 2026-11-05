@@ -86,6 +86,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private projectionCursor: bigint | undefined;
 	private projectionBase: ProjectionCheckpoint | undefined;
 	private projectionDocument: string | undefined;
+	private direct = false;
 	/** Mapping from opaque SEA positions to Fluid sequence numbers. */
 	private readonly positionSequences = new Map<bigint, bigint>();
 	/** Reverse mapping used by Fluid reference sequence numbers. */
@@ -210,11 +211,21 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return this.replace(() => this.replaceSession(document, session, resumeAfter));
 	}
 
-	/** Rebuilds the projection inside an exclusive membership transition. */
+	/** Opens native-position delivery without reading or projecting the archive. */
+	public openDirectSession(
+		document: Uint8Array,
+		session: Uint8Array,
+		resumeAfter?: Uint8Array,
+	): Promise<void> {
+		return this.replace(() => this.replaceSession(document, session, resumeAfter, true));
+	}
+
+	/** Establishes delivery and snapshot coordination inside an exclusive membership transition. */
 	private async replaceSession(
 		document: Uint8Array,
 		_session: Uint8Array,
 		resumeAfter?: Uint8Array,
+		direct = false,
 	): Promise<void> {
 		this.disconnect();
 		await this.closing;
@@ -224,10 +235,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		});
 		this.sessionIdentity = this.session.sessionId.slice();
 		try {
-			if (this.projectionDocument !== bytesKey(document)) {
+			if (this.projectionDocument !== bytesKey(document) || this.direct !== direct) {
 				this.projectionBase = undefined;
 				this.projectionDocument = bytesKey(document);
 			}
+			this.direct = direct;
 			this.positionSequences.clear();
 			this.sequencePositions.clear();
 			this.membershipModes.clear();
@@ -235,35 +247,37 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			this.minimumReferences.clear();
 			this.projectionCursor = undefined;
 			this.nextSequence = 1n;
-			if (this.projectionBase === undefined) {
-				const snapshot = await this.current().getSnapshot(reference);
-				if (snapshot !== undefined) {
-					const entries = await this.current().getDirectory(snapshot.root);
-					const metadata = entries.find((entry) => entry.name === projectionBlobName);
-					if (metadata?.child.kind !== "blob")
-						throw new Error("SEA snapshot is missing Fluid projection metadata");
-					this.projectionBase = parseCheckpoint(
-						await this.current().getBlob(metadata.child),
-						snapshot.atEvent,
-					);
+			if (!direct) {
+				if (this.projectionBase === undefined) {
+					const snapshot = await this.current().getSnapshot(reference);
+					if (snapshot !== undefined) {
+						const entries = await this.current().getDirectory(snapshot.root);
+						const metadata = entries.find((entry) => entry.name === projectionBlobName);
+						if (metadata?.child.kind !== "blob")
+							throw new Error("SEA snapshot is missing Fluid projection metadata");
+						this.projectionBase = parseCheckpoint(
+							await this.current().getBlob(metadata.child),
+							snapshot.atEvent,
+						);
+					}
 				}
+				if (this.projectionBase !== undefined) {
+					for (const [position, sequence] of this.projectionBase.positions) {
+						this.positionSequences.set(BigInt(position), BigInt(sequence));
+						this.sequencePositions.set(BigInt(sequence), BigInt(position));
+						this.nextSequence = BigInt(sequence) + 1n;
+					}
+					for (const [id, joined, mode] of this.projectionBase.members) {
+						this.membershipModes.set(id, mode);
+						this.membershipPositions.set(id, { joined: BigInt(joined) });
+					}
+					this.projectionCursor = BigInt(this.projectionBase.atEvent);
+				}
+				await this.readProjectedFrom(this.current());
+				const start = this.readStart(reference);
+				this.eventStream = this.current().read(start);
+				this.eventResumeAfter = start;
 			}
-			if (this.projectionBase !== undefined) {
-				for (const [position, sequence] of this.projectionBase.positions) {
-					this.positionSequences.set(BigInt(position), BigInt(sequence));
-					this.sequencePositions.set(BigInt(sequence), BigInt(position));
-					this.nextSequence = BigInt(sequence) + 1n;
-				}
-				for (const [id, joined, mode] of this.projectionBase.members) {
-					this.membershipModes.set(id, mode);
-					this.membershipPositions.set(id, { joined: BigInt(joined) });
-				}
-				this.projectionCursor = BigInt(this.projectionBase.atEvent);
-			}
-			await this.readProjectedFrom(this.current());
-			const start = this.readStart(reference);
-			this.eventStream = this.current().read(start);
-			this.eventResumeAfter = start;
 			const stream = await this.current().coordinateSnapshots(this.participation);
 			this.snapshotStream = stream;
 			const state = await stream.next();
@@ -318,6 +332,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	): Promise<Uint8Array> {
 		const session = this.current();
 		try {
+			if (this.direct)
+				return encodePosition(
+					await session.submit(decodePosition(referencePosition), payload),
+				);
 			const message = JSON.parse(decoder.decode(payload)) as {
 				type?: string;
 				contents?: string | { handle?: string };
@@ -438,6 +456,17 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		if (this.snapshotFailure !== undefined) {
 			throw this.snapshotFailure;
 		}
+		if (this.direct) {
+			const position = decodePosition(atEvent);
+			if (position === undefined) throw new Error("direct snapshot requires a SEA position");
+			const snapshot = await this.current().publishSnapshot(
+				decodePosition(expectedParent),
+				this.snapshotFence,
+				position,
+				{ kind: "directory", bytes: root },
+			);
+			return encodePosition(snapshot.atEvent);
+		}
 		let position = decodePosition(atEvent) ?? this.sequencePositions.get(0n);
 		if (position === undefined) {
 			if (expectedParent !== undefined || this.nextSequence !== 1n) {
@@ -527,6 +556,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** A snapshot replaces its prefix; explicit older cursors cannot be served by this projection. */
 	private readStart(after: bigint | undefined): bigint | undefined {
+		if (this.direct) return after;
 		const base =
 			this.projectionBase === undefined ? undefined : BigInt(this.projectionBase.atEvent);
 		if (base !== undefined && after !== undefined && after < base)
@@ -635,6 +665,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Resolves a Fluid reference sequence without converting a SEA position through number. */
 	public positionForSequence(sequenceNumber: number): Uint8Array | undefined {
+		if (this.direct) throw new Error("direct sessions do not use Fluid sequence mappings");
 		if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0)
 			throw new RangeError(`invalid Fluid sequence number ${sequenceNumber}`);
 		const position = this.sequencePositions.get(BigInt(sequenceNumber));
@@ -654,6 +685,21 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Projects initialization and the durable SEA floor into the same dense sequence space. */
 	private project(item: SeaEvent): ProjectedOperation | undefined {
+		if (this.direct) {
+			return {
+				eventType: item.eventType,
+				position: encodePosition(item.position),
+				sequenceNumber: item.position,
+				minimumSequenceNumber: item.minimumReference ?? -1n,
+				...(item.minimumReference === undefined
+					? {}
+					: { minimumReference: encodePosition(item.minimumReference) }),
+				session: item.session,
+				localSequenceNumber: 0n,
+				...(item.reference === undefined ? {} : { reference: encodePosition(item.reference) }),
+				payload: item.payload,
+			};
+		}
 		if (this.projectionCursor === undefined || item.position > this.projectionCursor)
 			this.projectionCursor = item.position;
 		this.minimumReferences.set(item.position, item.minimumReference);

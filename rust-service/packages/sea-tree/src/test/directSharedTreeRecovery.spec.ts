@@ -11,7 +11,11 @@ import {
 	type ProjectedOperationSubscription,
 	type SeaSessionFactory,
 } from "@fluidframework/sea-driver/internal";
-import { createMemoryService } from "@fluidframework/sea-typescript/internal";
+import {
+	createMemoryService,
+	type SeaLoadResult,
+	type SeaStream,
+} from "@fluidframework/sea-typescript/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 
 import { DirectSharedTreeClient, type DirectSharedTreeClientOptions } from "../index.js";
@@ -89,6 +93,75 @@ async function until(condition: () => boolean, message: string): Promise<void> {
 	}
 }
 
+/** Exposes the same archive with sparse positions, including zero and large exact integers. */
+function remapPositions(
+	open: SeaSessionFactory,
+	offset: bigint,
+	stride = 1n,
+): SeaSessionFactory {
+	const toPosition = (value: bigint): bigint => offset + (value - 1n) * stride;
+	const fromPosition = (value: bigint): bigint => (value - offset) / stride + 1n;
+	const fromOptionalPosition = (value: bigint | undefined): bigint | undefined =>
+		value === undefined ? undefined : fromPosition(value);
+	const mapStream = (stream: SeaStream<SeaLoadResult>): SeaStream<SeaLoadResult> => ({
+		cancel: () => stream.cancel(),
+		next: async () => {
+			const item = await stream.next();
+			if (item === undefined) return undefined;
+			if (item.kind === "snapshot") return { ...item, atEvent: toPosition(item.atEvent) };
+			if (item.kind === "progress")
+				return {
+					...item,
+					...(item.previous === undefined ? {} : { previous: toPosition(item.previous) }),
+					...(item.latestKnown === undefined
+						? {}
+						: { latestKnown: toPosition(item.latestKnown) }),
+				};
+			return {
+				...item,
+				position: toPosition(item.position),
+				...(item.reference === undefined ? {} : { reference: toPosition(item.reference) }),
+				...(item.minimumReference === undefined
+					? {}
+					: { minimumReference: toPosition(item.minimumReference) }),
+			};
+		},
+	});
+	return async (document, options) => {
+		const session = await open(document, {
+			...options,
+			...(options.reference === undefined
+				? {}
+				: { reference: fromPosition(options.reference) }),
+		});
+		return {
+			...session,
+			read: (after, stopAfter) =>
+				mapStream(session.read(fromOptionalPosition(after), fromOptionalPosition(stopAfter))),
+			load: async (required) => mapStream(await session.load(fromOptionalPosition(required))),
+			submit: async (reference, payload, tree) =>
+				toPosition(await session.submit(fromOptionalPosition(reference), payload, tree)),
+			announceMembership: async (metadata) =>
+				toPosition(await session.announceMembership(metadata)),
+			getSnapshot: async (required) => {
+				const snapshot = await session.getSnapshot(fromOptionalPosition(required));
+				return snapshot === undefined
+					? undefined
+					: { ...snapshot, atEvent: toPosition(snapshot.atEvent) };
+			},
+			publishSnapshot: async (parent, fence, position, root) => {
+				const snapshot = await session.publishSnapshot(
+					fromOptionalPosition(parent),
+					fence,
+					fromPosition(position),
+					root,
+				);
+				return { ...snapshot, atEvent: toPosition(snapshot.atEvent) };
+			},
+		};
+	};
+}
+
 describe("DirectSharedTreeClient recovery", () => {
 	let service: Awaited<ReturnType<typeof createMemoryService>>;
 	const clients: DirectSharedTreeClient[] = [];
@@ -137,7 +210,24 @@ describe("DirectSharedTreeClient recovery", () => {
 		assert.equal(writer.host.summaryCount, 1);
 		writer.view.root.items.insertAtEnd("after snapshot");
 		await writer.host.waitForIdle();
-		const reader = await open(writer.host.documentId);
+		let reads = 0;
+		const reader = await open(writer.host.documentId, {}, async (document, options) => {
+			const session = await service.open(document, options);
+			const snapshot = await session.getSnapshot();
+			assert.ok(snapshot);
+			return {
+				...session,
+				read: (after, stopAfter) => {
+					assert.ok(
+						after !== undefined && after >= snapshot.atEvent,
+						"direct loading must not download pre-snapshot history",
+					);
+					reads++;
+					return session.read(after, stopAfter);
+				},
+			};
+		});
+		assert.ok(reads > 0);
 		assert.equal(reader.host.loadedFromSummary, true);
 		assert.deepEqual([...reader.view.root.items], ["before snapshot", "after snapshot"]);
 		reader.view.root.items.insertAtEnd("reader edit");
@@ -147,6 +237,124 @@ describe("DirectSharedTreeClient recovery", () => {
 			"writer did not receive loaded peer edit",
 		);
 		assert.deepEqual([...writer.view.root.items], [...reader.view.root.items]);
+		reader.host.disconnect();
+		reader.view.root.items.insertAtEnd("offline after summary");
+		await reader.host.reconnect();
+		await reader.host.waitForIdle();
+		await until(() => writer.view.root.items.length === 4, "loaded peer did not recover");
+	});
+
+	for (const offset of [0n, 2n ** 52n]) {
+		it(`uses sparse native positions starting at ${offset} through summary and recovery`, async () => {
+			const factory = remapPositions(service.open, offset, 17n);
+			const writer = await open(undefined, {}, factory);
+			assert.equal((BigInt(writer.host.lastAppliedSequenceNumber) - offset) % 17n, 0n);
+			writer.view.root.items.insertAtEnd("before");
+			await writer.host.waitForIdle();
+			await writer.host.summarize();
+			const snapshot = await writer.driver.latestSnapshot();
+			assert.ok(snapshot);
+			const entries = await writer.driver.fetchSummary(snapshot.root);
+			assert.ok(
+				!entries.some(
+					(entry) => new TextDecoder().decode(entry.path) === ".sea-fluid-projection",
+				),
+			);
+			const metadataEntry = entries.find(
+				(entry) => new TextDecoder().decode(entry.path) === ".sea-direct",
+			);
+			assert.ok(metadataEntry);
+			const metadata = JSON.parse(
+				new TextDecoder().decode(await writer.driver.fetchBlob(metadataEntry.blob)),
+			);
+			assert.equal(metadata.version, 2);
+			assert.equal(metadata.positions, undefined);
+			const peer = await open(writer.host.documentId, {}, factory);
+			assert.deepEqual([...peer.view.root.items], ["before"]);
+			writer.host.disconnect();
+			writer.view.root.items.insertAtEnd("offline");
+			peer.view.root.items.insertAtEnd("remote");
+			await peer.host.waitForIdle();
+			await writer.host.reconnect();
+			await writer.host.waitForIdle();
+			await until(() => peer.view.root.items.length === 3, "sparse-position recovery failed");
+			assert.deepEqual([...writer.view.root.items], [...peer.view.root.items]);
+		});
+	}
+
+	it("summarizes at the maximum safe integer and rejects an out-of-range position", async () => {
+		const writer = await open(
+			undefined,
+			{},
+			remapPositions(service.open, BigInt(Number.MAX_SAFE_INTEGER) - 2n),
+		);
+		writer.view.root.items.insertAtEnd("boundary");
+		await writer.host.waitForIdle();
+		assert.equal(writer.host.lastAppliedSequenceNumber, Number.MAX_SAFE_INTEGER);
+		await writer.host.summarize();
+		assert.equal(writer.host.summaryCount, 1);
+		await assert.rejects(
+			open(
+				writer.host.documentId,
+				{},
+				remapPositions(service.open, BigInt(Number.MAX_SAFE_INTEGER) - 2n),
+			),
+			/lossless JavaScript integer range/u,
+		);
+	});
+
+	for (const field of ["reference", "minimumReference"] as const) {
+		it(`rejects an unsafe ${field} without rounding it`, async () => {
+			await assert.rejects(
+				open(undefined, {}, async (document, options) => {
+					const session = await service.open(document, options);
+					return {
+						...session,
+						read: (after, stopAfter) => {
+							const stream = session.read(after, stopAfter);
+							return {
+								cancel: () => stream.cancel(),
+								next: async () => {
+									const item = await stream.next();
+									return item?.kind === "event" ? { ...item, [field]: 2n ** 53n } : item;
+								},
+							};
+						},
+					};
+				}),
+				/lossless JavaScript integer range/u,
+			);
+		});
+	}
+
+	it("rejects old direct snapshot versions", async () => {
+		const writer = await open();
+		await writer.host.summarize();
+		const snapshot = await writer.driver.latestSnapshot();
+		assert.ok(snapshot);
+		const entries = await writer.driver.fetchSummary(snapshot.root);
+		const entry = entries.find(
+			(item) => new TextDecoder().decode(item.path) === ".sea-direct",
+		);
+		assert.ok(entry);
+		const metadata = JSON.parse(
+			new TextDecoder().decode(await writer.driver.fetchBlob(entry.blob)),
+		);
+		const replacement = await writer.driver.uploadBlob(
+			new TextEncoder().encode(JSON.stringify({ ...metadata, version: 1 })),
+		);
+		const root = await writer.driver.publishSummary(
+			entries.map((item) => (item === entry ? { ...item, blob: replacement.digest } : item)),
+		);
+		// A later event supplies a new publication position without changing the old format.
+		writer.view.root.items.insertAtEnd("later");
+		await writer.host.waitForIdle();
+		const history = await writer.driver.readProjected(snapshot.atEvent);
+		await writer.driver.publishSnapshotRoot(snapshot.id, history.cursor, root.digest);
+		await assert.rejects(
+			open(writer.host.documentId),
+			/Unsupported or invalid direct SharedTree summary metadata/u,
+		);
 	});
 
 	it("summarizes after idle, does not repeatedly summarize unchanged state, and respects nomination", async () => {

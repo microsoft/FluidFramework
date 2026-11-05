@@ -42,6 +42,7 @@
 		"test:mocha:esm": "mocha"
 	},
 	"dependencies": {
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/sea-driver": "workspace:~",
 		"@fluidframework/tree": "workspace:~"

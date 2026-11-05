@@ -25,6 +25,7 @@ import {
 	type ProjectedReadPage,
 	type SeaDriverClient,
 } from "@fluidframework/sea-driver/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -71,11 +72,9 @@ interface PendingMessage {
 /** Snapshot state needed in addition to SharedTree's own summary. */
 interface SnapshotMetadata {
 	/** Format discriminator; incompatible versions are rejected. */
-	readonly version: 1;
-	/** Last canonical projection sequence represented by the summary. */
+	readonly version: 2;
+	/** Last SEA position represented by the summary, encoded losslessly as a number. */
 	readonly sequenceNumber: number;
-	/** Position-to-sequence mapping for references retained by the tree. */
-	readonly positions: readonly (readonly [string, number])[];
 	/** Finalized compressor state; never includes unacknowledged allocations. */
 	readonly compressor: SerializedIdCompressorWithNoSession;
 }
@@ -92,9 +91,9 @@ export class DirectSharedTreeClient {
 	/** Largest application batch delivered to the kernel. */
 	public peakDeliveredBatchOperations = 0;
 	/** Highest canonical sequence applied, including membership records. */
-	public lastAppliedSequenceNumber = 0;
+	public lastAppliedSequenceNumber = -1;
 	/** Highest sequence represented by a known published summary. */
-	public lastSummarySequenceNumber = 0;
+	public lastSummarySequenceNumber = -1;
 	/** Number of snapshots successfully published by this host. */
 	public summaryCount = 0;
 	/** Whether initial tree state was loaded from a summary. */
@@ -119,7 +118,6 @@ export class DirectSharedTreeClient {
 	private session: Uint8Array;
 	private readonly localSessions = new Set<string>();
 	private readonly terminalSessions = new Set<string>();
-	private readonly positions = new Map<string, number>();
 	private readonly pending: PendingMessage[] = [];
 	private readonly listeners = new Set<() => void>();
 	private subscription: ProjectedOperationSubscription | undefined;
@@ -154,8 +152,6 @@ export class DirectSharedTreeClient {
 		if (metadata !== undefined) {
 			this.lastAppliedSequenceNumber = metadata.sequenceNumber;
 			this.lastSummarySequenceNumber = metadata.sequenceNumber;
-			for (const [position, sequence] of metadata.positions)
-				this.positions.set(position, sequence);
 		}
 		this.tree = createDirectSharedTree({
 			forest: ForestTypeOptimized,
@@ -199,7 +195,7 @@ export class DirectSharedTreeClient {
 		let host: DirectSharedTreeClient | undefined;
 		try {
 			const documentId = createDocument ? await client.create() : document;
-			await client.openSession(documentId, encoder.encode(createSessionId()));
+			await openDirectSession(client, documentId, encoder.encode(createSessionId()));
 			await client.announceMembership?.(encoder.encode(JSON.stringify({ mode: "write" })));
 			const snapshot = await client.latestSnapshot();
 			const entries = snapshot === undefined ? [] : await client.fetchSummary(snapshot.root);
@@ -214,12 +210,12 @@ export class DirectSharedTreeClient {
 					decoder.decode(await client.fetchBlob(metadataBlob)),
 				) as SnapshotMetadata;
 				if (
-					metadata.version !== 1 ||
+					metadata.version !== 2 ||
 					!Number.isSafeInteger(metadata.sequenceNumber) ||
 					metadata.sequenceNumber < 0 ||
-					!Array.isArray(metadata.positions)
+					metadata.sequenceNumber !== positionAsNumber(snapshot.atEvent)
 				) {
-					throw new Error("Invalid direct SharedTree summary metadata");
+					throw new Error("Unsupported or invalid direct SharedTree summary metadata");
 				}
 			}
 			const compressor =
@@ -433,9 +429,10 @@ export class DirectSharedTreeClient {
 	private applyOperations(operations: readonly ProjectedOperation[]): void {
 		let applied = 0;
 		for (const operation of operations) {
-			const sequenceNumber = Number(operation.sequenceNumber);
+			const sequenceNumber = positionAsNumber(operation.position);
+			const referenceSequenceNumber = positionAsNumber(operation.reference);
+			const minimumSequenceNumber = positionAsNumber(operation.minimumReference);
 			if (sequenceNumber <= this.lastAppliedSequenceNumber) continue;
-			this.positions.set(byteKey(operation.position), sequenceNumber);
 			// Edits made by change listeners must reference the operation they are observing.
 			this.lastAppliedSequenceNumber = sequenceNumber;
 			this.cursor = operation.position;
@@ -461,8 +458,8 @@ export class DirectSharedTreeClient {
 						contents: payload.contents,
 						idCreationRange: payload.idCreationRange,
 						sequenceNumber,
-						referenceSequenceNumber: this.sequenceForReference(operation.reference),
-						minimumSequenceNumber: this.sequenceForReference(operation.minimumReference),
+						referenceSequenceNumber,
+						minimumSequenceNumber,
 						local,
 					},
 				]);
@@ -519,7 +516,8 @@ export class DirectSharedTreeClient {
 			let history: ProjectedReadPage;
 			try {
 				await this.client.reconnect();
-				await this.client.openSession(
+				await openDirectSession(
+					this.client,
 					this.documentId,
 					encoder.encode(this.compressor.localSessionId),
 					this.cursor,
@@ -639,8 +637,7 @@ export class DirectSharedTreeClient {
 		const parent = await this.client.latestSnapshot();
 		if (generation !== this.generation || this.pending.length > 0 || this.cursor === undefined)
 			return;
-		const parentSequence =
-			parent?.atEvent === undefined ? 0 : this.sequenceForReference(parent.atEvent);
+		const parentSequence = positionAsNumber(parent?.atEvent);
 		if (parentSequence >= this.lastAppliedSequenceNumber) {
 			this.lastSummarySequenceNumber = parentSequence;
 			this.dirtyOperations = 0;
@@ -652,9 +649,8 @@ export class DirectSharedTreeClient {
 		const dirtyOperations = this.dirtyOperations;
 		const summary = this.tree.kernel.getSummary();
 		const metadata: SnapshotMetadata = {
-			version: 1,
+			version: 2,
 			sequenceNumber,
-			positions: [...this.positions],
 			compressor: serializeIdCompressor(this.compressor, false),
 		};
 		summary.tree[metadataPath] = { type: 2, content: JSON.stringify(metadata) };
@@ -672,14 +668,37 @@ export class DirectSharedTreeClient {
 	private canSummarize(): boolean {
 		return this.client.canPublishSnapshot !== false;
 	}
+}
 
-	private sequenceForReference(reference: Uint8Array | undefined): number {
-		if (reference === undefined) return 0;
-		const sequenceNumber = this.positions.get(byteKey(reference));
-		if (sequenceNumber === undefined)
-			throw new Error("Direct SharedTree references an unknown service position");
-		return sequenceNumber;
-	}
+/** Opens native delivery explicitly so legacy clients cannot silently rebuild Fluid projections. */
+async function openDirectSession(
+	client: SeaDriverClient,
+	document: Uint8Array,
+	session: Uint8Array,
+	resumeAfter?: Uint8Array,
+): Promise<void> {
+	assert(
+		client.openDirectSession !== undefined,
+		"Direct SharedTree requires native SEA position delivery",
+	);
+	await client.openDirectSession(document, session, resumeAfter);
+}
+
+/** The negative sentinel precedes every SEA position, including zero. */
+function positionAsNumber(position: Uint8Array | undefined): number {
+	if (position === undefined) return -1;
+	assert(position.byteLength === 8, "SEA positions must contain exactly eight bytes");
+	const integer = new DataView(
+		position.buffer,
+		position.byteOffset,
+		position.byteLength,
+	).getBigUint64(0);
+	const number = Number(integer);
+	assert(
+		Number.isSafeInteger(number) && BigInt(number) === integer,
+		"SEA position exceeds the lossless JavaScript integer range",
+	);
+	return number;
 }
 
 /** Stable key for opaque service identities. */

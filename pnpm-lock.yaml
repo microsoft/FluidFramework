@@ -16859,6 +16859,9 @@ importers:
 
   rust-service/packages/sea-tree:
     dependencies:
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../../packages/runtime/id-compressor
