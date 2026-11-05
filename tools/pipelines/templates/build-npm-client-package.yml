@@ -279,6 +279,7 @@ extends:
                   probe "Machine architecture" uname -m
                   probe "Installed packages (including installation status)" \
                     dpkg-query -W '-f=${binary:Package}\t${Version}\t${Architecture}\t${db:Status-Status}\n'
+                  probe "Package installation audit" dpkg --audit
                   probe "Kernel packages" dpkg-query -W 'linux-image*' 'linux-headers*' 'linux-azure*'
                   for marker in /var/run/reboot-required /var/run/reboot-required.pkgs; do
                     if [ -f "$marker" ]; then
@@ -290,6 +291,11 @@ extends:
 
                   echo "APT results below use existing cached metadata; no repository refresh or upgrade is performed."
                   probe "Available updates (cached metadata)" apt list --upgradable
+                  probe "Targeted security upgrade package candidates (cached metadata)" \
+                    apt-cache policy apt apt-utils apt-transport-https libapt-pkg6.0t64 \
+                      bind9-dnsutils bind9-host bind9-libs dnsutils libmspack0t64 \
+                      libpcre2-16-0 libpcre2-32-0 libpcre2-8-0 libpcre2-dev libpcre2-posix3 \
+                      libsnmp-base libsnmp40t64 snmp python3-twisted
                   probe "pip and Azure kernel package candidates (cached metadata)" \
                     apt-cache policy python3-pip python3-pip-whl linux-azure linux-image-azure
                   probe "Held packages" apt-mark showhold
