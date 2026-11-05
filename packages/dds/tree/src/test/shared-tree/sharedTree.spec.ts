@@ -451,8 +451,8 @@ describe("SharedTree", () => {
 			forest: ForestTypeOptimized,
 		}).getFactory();
 
-		function assertReasonableChunkCount(tree: ISharedTree, description: string): void {
-			const forest = tree.kernel.checkout.forest;
+		function assertReasonableChunkCount(tree: ITree, description: string): void {
+			const forest = (tree as ITreePrivate).kernel.checkout.forest;
 			assert(forest instanceof ChunkedForest);
 			const roots = forest.roots.fields.get(rootFieldKey);
 			assert(roots !== undefined);
@@ -492,6 +492,41 @@ describe("SharedTree", () => {
 			const loadedView = loadedTree.viewWith(configuration);
 			assert.equal(loadedView.root.fullString(), text);
 			assertReasonableChunkCount(loadedTree, "Summary load");
+		});
+
+		it("loads formatted text when schema storage is delayed", async () => {
+			const provider = new TestTreeProviderLite(1, factory);
+			const tree = provider.trees[0];
+			const view = tree.viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			provider.synchronizeMessages();
+			const { summary } = await tree.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			let delayedSchema = false;
+			storage.readBlob = async (path) => {
+				if (path.endsWith("/SchemaString")) {
+					delayedSchema = true;
+					await new Promise<void>((resolve) => setImmediate(resolve));
+				}
+				return readBlob(path);
+			};
+			const runtime = new MockFluidDataStoreRuntime({
+				idCompressor: provider.getCompressor(tree),
+			});
+			const loadedTree = await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: storage,
+				},
+				factory.attributes,
+			);
+			assert(delayedSchema);
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Delayed schema load");
 		});
 
 		it("inserts formatted text into compact local and remote chunked forests", () => {

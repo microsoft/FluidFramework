@@ -257,6 +257,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk[],
 		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 		private readonly initialSequenceNumber: number,
+		private readonly rechunk: (chunk: TreeChunk) => TreeChunk = (chunk) => chunk,
 	) {}
 
 	/**
@@ -572,7 +573,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	): TreeChunk {
 		const chunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
 		assert(chunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
-		const chunk = chunkDecoder(chunkLoadProperties.encodedContents);
+		const chunk = this.rechunk(chunkDecoder(chunkLoadProperties.encodedContents));
 
 		// Account for the reference about to be added in `chunkTrackingPropertiesMap`
 		// to ensure that no other users of this chunk think they have unique ownership.

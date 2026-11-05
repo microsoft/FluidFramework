@@ -86,8 +86,8 @@ export class ComparisonForest implements IEditableForest {
 		);
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
-		return this.main.chunkField(cursor);
+	public chunkField(cursor: ITreeCursorSynchronous, deepRechunk?: true): TreeChunk[] {
+		return this.main.chunkField(cursor, deepRechunk);
 	}
 
 	public allocateCursor(source?: string): ITreeSubscriptionCursor {

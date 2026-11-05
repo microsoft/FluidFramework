@@ -275,6 +275,7 @@ export class SharedTreeKernel
 			idCompressor,
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
+			[schemaSummarizer],
 		);
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(

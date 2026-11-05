@@ -31,6 +31,7 @@ import {
 	type ShapeFromSchemaParameters,
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	basicChunkTree,
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
@@ -39,6 +40,7 @@ import {
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
+	makePolicy,
 	makeTreeChunker,
 	polymorphic,
 	splitFieldAtIndex,
@@ -567,6 +569,162 @@ describe("chunkTree", () => {
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0], basicChunk);
 			assert(basicChunk.isShared());
+		});
+
+		it("deep rechunking converts basic chunks in a sequence using the initial size limit", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const children = makeArray(5, (index) => new BasicChunk(type, new Map(), index));
+			const input = new SequenceChunk(children);
+			const policy = makePolicy({
+				shapeFromSchema: () => shape,
+				uniformChunkNodeCount: 2,
+				uniformChunkNodeCountDynamicTargetMax: 1,
+			});
+			const chunks = chunkField(input.cursor(), {
+				policy,
+				idCompressor: undefined,
+				deepRechunk: true,
+			});
+			assert.deepEqual(
+				chunks.map((chunk) => chunk.topLevelLength),
+				[2, 2, 1],
+			);
+			const values = chunks.flatMap((chunk) => {
+				assert(chunk instanceof UniformChunk);
+				return chunk.values;
+			});
+			assert.deepEqual(values, [0, 1, 2, 3, 4]);
+			assert(!input.isShared());
+			for (const child of children) {
+				assert(!child.isShared());
+			}
+			for (const chunk of chunks) {
+				chunk.referenceRemoved();
+			}
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking reaches uniform descendants of polymorphic parents", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const key = brand<FieldKey>("children");
+			const input = new BasicChunk(
+				brand(JsonAsTree.JsonObject.identifier),
+				new Map([[key, [new BasicChunk(type, new Map(), 42)]]]),
+				undefined,
+			);
+			const policy = makePolicy({
+				shapeFromSchema: (nodeType) => (nodeType === type ? shape : polymorphic),
+			});
+			const reused = chunkField(input.cursor(), { policy, idCompressor: undefined });
+			assert.equal(reused[0], input);
+			input.referenceRemoved();
+			const chunks = chunkField(input.cursor(), {
+				policy,
+				idCompressor: undefined,
+				deepRechunk: true,
+			});
+			const output = chunks[0];
+			assert(output instanceof BasicChunk);
+			assert.notEqual(output, input);
+			const child = output.fields.get(key)?.[0];
+			assert(child instanceof UniformChunk);
+			assert.deepEqual(child.values, [42]);
+			assert(input.fields.get(key)?.[0] instanceof BasicChunk);
+			assert(!input.isShared());
+			output.referenceRemoved();
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking reuses existing uniform chunks without traversing them", () => {
+			const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const input = new UniformChunk(shape.withTopLevelLength(2), [1, 2]);
+			const chunks = chunkField(input.cursor(), {
+				policy: makePolicy({
+					shapeFromSchema: () => assert.fail("Existing uniform chunks must be reused"),
+				}),
+				idCompressor: undefined,
+				deepRechunk: true,
+			});
+			assert.equal(chunks[0], input);
+			assert(input.isShared());
+			chunks[0].referenceRemoved();
+			assert(!input.isShared());
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking respects a zero uniform chunk size limit", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const input = new BasicChunk(type, new Map(), 42);
+			const chunks = chunkField(input.cursor(), {
+				policy: makePolicy({
+					uniformChunkNodeCount: 0,
+					shapeFromSchema: () => new TreeShape(type, true, []),
+				}),
+				idCompressor: undefined,
+				deepRechunk: true,
+			});
+			assert(chunks[0] instanceof BasicChunk);
+			assertChunkCursorEquals(chunks[0], [{ type, value: 42 }]);
+			chunks[0].referenceRemoved();
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking splits oversized shapes into smaller uniform descendants", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const parentType = brand<TreeNodeSchemaIdentifier>(structValue.identifier);
+			const key = brand<FieldKey>("x");
+			const shape = new TreeShape(type, true, []);
+			const parentShape = new TreeShape(parentType, false, [[key, shape, 1]]);
+			const input = new BasicChunk(
+				parentType,
+				new Map([[key, [new BasicChunk(type, new Map(), 42)]]]),
+				undefined,
+			);
+			const policy = makePolicy({
+				uniformChunkNodeCount: 1,
+				shapeFromSchema: (nodeType) => (nodeType === type ? shape : parentShape),
+			});
+			const cursor = input.cursor();
+			cursor.firstNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy, idCompressor: undefined, deepRechunk: true },
+				1,
+				true,
+			);
+			assert.equal(cursor.mode, CursorLocationType.Nodes);
+			assert.equal(cursor.fieldIndex, 0);
+			const output = chunks[0];
+			assert(output instanceof BasicChunk);
+			const child = output.fields.get(key)?.[0];
+			assert(child instanceof UniformChunk);
+			assert.deepEqual(child.values, [42]);
+			output.referenceRemoved();
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking preserves a basic root when explicitly requested", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const key = brand<FieldKey>("children");
+			const input = new BasicChunk(
+				brand(JsonAsTree.JsonObject.identifier),
+				new Map([[key, [new BasicChunk(type, new Map(), 42)]]]),
+				undefined,
+			);
+			const cursor = input.cursor();
+			cursor.firstNode();
+			const output = basicChunkTree(cursor, {
+				policy: makePolicy({ shapeFromSchema: () => shape }),
+				idCompressor: undefined,
+				deepRechunk: true,
+			});
+			assert.notEqual(output, input);
+			assert(output.fields.get(key)?.[0] instanceof UniformChunk);
+			output.referenceRemoved();
+			input.referenceRemoved();
 		});
 
 		it("chunks 10 points into UniformChunks of topLevelLength 4 and reads values via the cursor", () => {

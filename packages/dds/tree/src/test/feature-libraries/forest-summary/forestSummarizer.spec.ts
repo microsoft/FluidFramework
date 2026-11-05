@@ -266,6 +266,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 	// Validate that the forest can successfully load from the above summary.
 	const mockStorage = MockStorage.createFromSummary(summary.summary);
 	const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+		initialContent: { schema: initialContent.schema, initialTree: fieldJsonCursor([]) },
 		encodeType: TreeCompressionStrategy.CompressedIncremental,
 		forestType: ForestTypeOptimized,
 		shouldEncodeIncrementally,

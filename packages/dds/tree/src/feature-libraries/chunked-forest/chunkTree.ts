@@ -295,7 +295,7 @@ export function basicChunkTree(
 	// symbol based fast path to check for BasicChunk:
 	// return existing chunk with a increased ref count if possible.
 	const chunk = tryGetChunk(cursor);
-	if (chunk instanceof BasicChunk) {
+	if (chunk instanceof BasicChunk && policy.deepRechunk !== true) {
 		chunk.referenceAdded();
 		return chunk;
 	}
@@ -514,6 +514,12 @@ export interface ChunkPolicy {
 export interface ChunkCompressor {
 	readonly policy: ChunkPolicy;
 	/**
+	 * Traverse existing basic and sequence chunks to convert eligible content to uniform chunks.
+	 * When omitted, permits reuse of entire subtrees without traversal.
+	 * When true, traversal costs are proportional to the content outside reused uniform chunks.
+	 */
+	readonly deepRechunk?: true;
+	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
 	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
@@ -526,11 +532,31 @@ function newBasicChunkTree(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
 ): BasicChunk {
-	return new BasicChunk(
-		cursor.type,
-		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
-		cursor.value,
+	const existing = tryGetChunk(cursor);
+	const fields = new Map(
+		mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)]),
 	);
+	if (
+		policy.deepRechunk === true &&
+		existing instanceof BasicChunk &&
+		existing.fields.size === fields.size &&
+		[...fields].every(([key, children]) => {
+			const previous = existing.fields.get(key);
+			return (
+				previous?.length === children.length &&
+				children.every((child, index) => child === previous[index])
+			);
+		})
+	) {
+		for (const children of fields.values()) {
+			for (const child of children) {
+				child.referenceRemoved();
+			}
+		}
+		existing.referenceAdded();
+		return existing;
+	}
+	return new BasicChunk(cursor.type, fields, cursor.value);
 }
 
 /**
@@ -567,7 +593,10 @@ export function chunkRange(
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
-				if (chunk !== undefined) {
+				if (
+					chunk !== undefined &&
+					(chunkCompressor.deepRechunk !== true || chunk instanceof UniformChunk)
+				) {
 					if (
 						chunk instanceof SequenceChunk &&
 						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
@@ -594,10 +623,12 @@ export function chunkRange(
 
 		if (!reusedChunk) {
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
-			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
-			if (shape instanceof TreeShape) {
+			if (
+				shape instanceof TreeShape &&
+				shape.positions.length <= chunkCompressor.policy.uniformChunkNodeCount
+			) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
 					1,
@@ -624,7 +655,7 @@ export function chunkRange(
 		}
 	}
 
-	// TODO: maybe make a pass over output to coalesce UniformChunks and/or convert other formats to UniformChunks where possible.
+	// TODO: maybe make a pass over output to coalesce UniformChunks.
 
 	// If output is large, group it into a tree of sequence chunks.
 	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {

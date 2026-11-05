@@ -296,10 +296,20 @@ export class SharedTreeCore<
 		parse: SummaryElementParser,
 	): Promise<void> {
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
-		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services, parse);
-		const loadSummarizables = summarizables.map(async (s) =>
-			this.loadSummarizable(s, services, parse),
-		);
+		const loads = new Map<Summarizable, Promise<void>>();
+		const load = async (summarizable: Summarizable): Promise<void> => {
+			const existing = loads.get(summarizable);
+			if (existing !== undefined) {
+				return existing;
+			}
+			const pending = Promise.all((summarizable.loadDependencies ?? []).map(load)).then(
+				async () => this.loadSummarizable(summarizable, services, parse),
+			);
+			loads.set(summarizable, pending);
+			return pending;
+		};
+		const loadEditManager = load(editManagerSummarizer);
+		const loadSummarizables = summarizables.map(load);
 
 		if (this.detachedRevision === undefined) {
 			await Promise.all([loadEditManager, ...loadSummarizables]);

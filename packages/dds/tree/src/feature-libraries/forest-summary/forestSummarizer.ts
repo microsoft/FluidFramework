@@ -39,8 +39,12 @@ import {
 	type Breakable,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import {
+	chunkFieldSingle,
+	combineChunks,
+	defaultChunkPolicy,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
 	type FieldBatchDecodingContext,
@@ -94,6 +98,7 @@ export class ForestSummarizer
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
+		public readonly loadDependencies: readonly Summarizable[] = [],
 	) {
 		super(
 			forestSummaryKey,
@@ -122,6 +127,11 @@ export class ForestSummarizer
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
+			(chunk) => {
+				const rechunked = combineChunks(this.forest.chunkField(chunk.cursor(), true));
+				chunk.referenceRemoved();
+				return rechunked;
+			},
 		);
 	}
 

@@ -32,6 +32,12 @@ export interface Summarizable {
 	readonly key: string;
 
 	/**
+	 * Components that must finish loading before this component starts loading.
+	 * Dependencies must not form cycles.
+	 */
+	readonly loadDependencies?: readonly Summarizable[];
+
+	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
 	 * @param fullTree - A flag indicating whether the attempt should generate a full

@@ -93,8 +93,9 @@ export interface IForestSubscription extends WithBreakable {
 	 * @remarks
 	 * Similar to {@link chunkField} but it creates chunks optimized for this specific forest by using its compression policy.
 	 * The provided data must be compatible with the forest's current schema.
+	 * @param deepRechunk - Traverse existing chunks to optimize decoded content before caching it.
 	 */
-	chunkField(cursor: ITreeCursorSynchronous): TreeChunk[];
+	chunkField(cursor: ITreeCursorSynchronous, deepRechunk?: true): TreeChunk[];
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
