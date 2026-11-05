@@ -1,5 +1,13 @@
 # @fluid-example/app-integration-live-schema-upgrade
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
 ## 3.7.0
 
 Dependency updates only.

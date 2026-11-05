@@ -13,6 +13,9 @@ export enum Constants {
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
 	SimplifiedCustomDataHeader = "Simplified-Custom-Data",
+	DocumentContainerNameHeader = "Fluid-Document-Container-Name",
+	DocumentStorageLayoutHeader = "Fluid-Document-Storage-Layout",
+	DocumentLifecycleVersionHeader = "Fluid-Document-Lifecycle-Version",
 }
 
 export interface IStorageDirectoryConfig {
@@ -94,6 +97,9 @@ export interface IFileSystemManagerParams {
 	storageName?: string;
 	rootDir?: string;
 	simplifiedCustomData?: string;
+	physicalContainerName?: string;
+	storageLayoutVersion?: "v1" | "v2";
+	storageLifecycleVersion?: string;
 }
 
 export interface IFileSystemManagerFactory {
@@ -131,6 +137,7 @@ export interface IRepoManagerParams {
 	repoName: string;
 	storageRoutingId?: IStorageRoutingId;
 	fileSystemManagerParams?: IFileSystemManagerParams;
+	documentStorageProofError?: string;
 	optimizeForInitialSummary?: boolean;
 	isEphemeralContainer?: boolean;
 }

@@ -18,7 +18,7 @@ The AI-enabled profile includes everything in the Standard profile, plus:
 
 | Addition                | Purpose                                                   |
 | ----------------------- | --------------------------------------------------------- |
-| Agency CLI              | Run AI agents (Claude, GitHub Copilot) from terminal      |
+| Agency CLI              | Run GitHub Copilot agents from the terminal               |
 | Repoverlay              | Overlay system for context files (agents, skills)         |
 | GitHub CLI (`gh`)       | Pre-installed for PR workflows and SSH access             |
 | SSH daemon              | Enables remote terminal connection via `gh codespace ssh` |

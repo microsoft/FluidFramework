@@ -203,9 +203,6 @@ importers:
       typescript:
         specifier: ~5.5.4
         version: 5.5.4
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.19.17)(vite@8.2.1(@types/node@22.19.17)(jiti@2.7.0)(sass@1.81.0)(terser@5.36.0)(yaml@2.6.1))

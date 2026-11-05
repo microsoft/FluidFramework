@@ -179,6 +179,33 @@ export const mochaHooks = {
 		console.error = error;
 		console.warn = warn;
 
+		const testError = this.currentTest?.err;
+		// Targeted diagnostics for the recurring ODSP benchmark lookup failure; the benchmark reporter only prints the error message.
+		// Remove this handler and its focused tests once the root cause is fixed and stability is verified.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/72105
+		if (testError?.message === "Unable to get drive/item id from path") {
+			const diagnostics: Record<string, string | number> = {};
+			// Only copy diagnostic fields, never request URLs, tokens, or arbitrary error properties.
+			for (const property of [
+				"statusCode",
+				"retryAfterSeconds",
+				"sprequestguid",
+				"requestId",
+				"clientRequestId",
+			] as const) {
+				if (property in testError) {
+					const value: unknown = testError[property];
+					if (typeof value === "number" || typeof value === "string") {
+						diagnostics[property] = value;
+					}
+				}
+			}
+			console.error(
+				`${testError.message}; ODSP lookup failure diagnostics:`,
+				JSON.stringify(diagnostics),
+			);
+		}
+
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();

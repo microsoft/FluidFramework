@@ -74,9 +74,10 @@ function createWorkloadIdentityCredential({ clientId, tenantId, tokenFile, autho
 async function getVaultAccessToken(
 	identity,
 	credentialFactory = createWorkloadIdentityCredential,
+	scope = VAULT_SCOPE,
 ) {
 	try {
-		const token = await credentialFactory(identity).getToken(VAULT_SCOPE);
+		const token = await credentialFactory(identity).getToken(scope);
 		if (!token?.token) {
 			throw new Error("Azure Identity returned no access token.");
 		}
@@ -101,10 +102,27 @@ async function getSecret(
 	{ env, fetchImpl = fetch, credentialFactory } = {},
 ) {
 	const identity = readWorkloadIdentityEnv(env);
-	const accessToken = await getVaultAccessToken(identity, credentialFactory);
+	const suffix =
+		(env ?? process.env).AZURE_KEYVAULT_DNS_SUFFIX ??
+		{
+			"login.microsoftonline.com": "vault.azure.net",
+			"login.microsoftonline.us": "vault.usgovcloudapi.net",
+			"login.chinacloudapi.cn": "vault.azure.cn",
+			"login.partner.microsoftonline.cn": "vault.azure.cn",
+		}[new URL(identity.authorityHost).hostname];
+	if (!suffix || !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/i.test(suffix)) {
+		throw new KeyVaultAccessError(
+			"AZURE_KEYVAULT_DNS_SUFFIX is required for this Azure cloud and must be a DNS suffix.",
+		);
+	}
+	const accessToken = await getVaultAccessToken(
+		identity,
+		credentialFactory,
+		`https://${suffix}/.default`,
+	);
 
 	const url =
-		`https://${vaultName}.vault.azure.net/secrets/${encodeURIComponent(secretName)}` +
+		`https://${vaultName}.${suffix}/secrets/${encodeURIComponent(secretName)}` +
 		`?api-version=${SECRETS_API_VERSION}`;
 	const response = await fetchImpl(url, {
 		headers: { Authorization: `Bearer ${accessToken}` },
