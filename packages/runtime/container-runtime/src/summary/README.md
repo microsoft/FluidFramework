@@ -87,8 +87,14 @@ The format of summaries (and snapshots) is described in [summary and snapshot fo
 
 This section describes the current implementation, rather than all versions covered by the conceptual overview above.
 
-The parent is the oldest eligible interactive quorum member, including when loading a snapshot. An incumbent summarizer remains elected until it leaves quorum, even when its parent leaves and a new parent is elected.
+The parent is the oldest eligible interactive quorum member, including when loading a snapshot. It may create a summarizer only when no summarizer-type clients remain in quorum. Once it requests a child, it owns that child's cleanup; another child's join does not stop work already owned. A replacement waits for every child's sequenced quorum departure, not just local completion. This includes manual and idle children: their creators must close them when finished, or they will block automatic replacement. Requests already in flight can still overlap.
 
-When election state is written to a snapshot, it retains the client and parent identity fields for older readers. Current readers derive the parent from quorum and restore the summary-progress baseline. They retain a recorded summarizer still in quorum; a recorded interactive or ineligible client selects the derived parent. If the recorded client is absent, they recover to an existing summarizer, or the parent if none exists.
+Normally, only one summarizer is connected. If children overlap, the parent waits for all of them to leave before creating another.
+
+Child cleanup during loading remains an existing limitation: the manager cannot close a partially loaded child until creation returns a usable summarizer. A connected child whose creation never completes can therefore block replacement; loading-boundary cancellation and cleanup need separate work.
+
+## Snapshot compatibility and historical election state
+
+When election state is written to a snapshot, it retains the client and parent identity fields for older readers. This implementation ignores both identities on load, restoring only the summary-progress baseline and deriving parent and summarizer presence from quorum. The serialized client identity is the oldest summarizer, or the parent when none exists; it does not control election decisions. Keep writing this field while supported older readers still need it to decide when to create a summarizer.
 
 The timeout-driven succession mechanism that could elect a younger parent was removed in [PR #12942](https://github.com/microsoft/FluidFramework/pull/12942) in November 2022. An old snapshot can still record such a parent, but catch-up is expected to process those historical sessions' departures and converge on the oldest remaining eligible client. Deriving the parent directly from quorum removes the need to reconstruct that obsolete succession state. Overlapping summary attempts are already handled by summary acceptance checks and the existing nack/retry flow.

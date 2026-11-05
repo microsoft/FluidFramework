@@ -1576,13 +1576,6 @@ export class ContainerRuntime
 		return this.canSendOps;
 	}
 
-	/**
-	 * clientId of parent (non-summarizing) container that owns summarizer container
-	 */
-	public get summarizerClientId(): string | undefined {
-		return this.summarizerClientElection?.electedClientId;
-	}
-
 	private _disposed = false;
 	public get disposed(): boolean {
 		return this._disposed;

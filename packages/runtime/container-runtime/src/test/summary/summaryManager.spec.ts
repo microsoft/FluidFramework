@@ -216,13 +216,16 @@ describe("Summary Manager", () => {
 		extends TypedEventEmitter<ISummarizerClientElectionEvents>
 		implements ISummarizerClientElection
 	{
-		public electedClientId: string | undefined;
-		public get electedParentId() {
-			return this.electedClientId;
-		}
+		public electedParentId: string | undefined;
+		public summarizerExistsInQuorum = false;
 
 		public electClient(clientId: string | undefined) {
-			this.electedClientId = clientId;
+			this.electedParentId = clientId;
+			this.emit("electedSummarizerChanged");
+		}
+
+		public setSummarizerExistsInQuorum(present: boolean) {
+			this.summarizerExistsInQuorum = present;
 			this.emit("electedSummarizerChanged");
 		}
 	}
@@ -299,6 +302,38 @@ describe("Summary Manager", () => {
 
 		// Make sure we don't accidentally reuse the same summary manager across tests
 		summaryManager = undefined as unknown as SummaryManager;
+	});
+
+	it("Should wait for all children to leave without stopping an owned child on join", async () => {
+		createSummaryManager({ connected: true, opsToBypassInitialDelay: 0 });
+		clientElection.setSummarizerExistsInQuorum(true);
+		clientElection.electClient(thisClientId);
+		await flushPromises();
+		assertRequests(0);
+		clientElection.setSummarizerExistsInQuorum(false);
+		await flushPromises();
+		assertRequests(1);
+		clientElection.setSummarizerExistsInQuorum(true);
+		completeSummarizerRequest();
+		await flushPromises();
+		assertState(SummaryManagerState.Running, "own child's join does not revoke ownership");
+		summarizer.stop("summarizerClientDisconnected");
+		summarizer.runDeferred.resolve();
+		await flushPromises();
+		assertRequests(1, "remaining quorum child blocks replacement");
+		clientElection.setSummarizerExistsInQuorum(false);
+		await flushPromises();
+		assertRequests(2);
+	});
+
+	it("Should recheck child presence after throttling even when initial delay is bypassed", async () => {
+		throttler.delayMs = 100;
+		createSummaryManager({ connected: true, opsToBypassInitialDelay: 0 });
+		clientElection.electClient(thisClientId);
+		clientElection.setSummarizerExistsInQuorum(true);
+		await clock.tickAsync(100);
+		assertRequests(0);
+		assertState(SummaryManagerState.Off, "another child joined during delay");
 	});
 
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {

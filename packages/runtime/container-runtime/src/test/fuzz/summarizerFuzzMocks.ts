@@ -80,7 +80,6 @@ export class MockContainerRuntimeForSummarizer
 	implements ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public readonly baseLogger = createChildLogger();
-	public readonly summarizerClientId: string | undefined;
 	public readonly summarizer: Summarizer;
 
 	private readonly summaryManager: SummaryManager;
@@ -265,7 +264,7 @@ class MockSummarizerClientElection
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
 	implements ISummarizerClientElection
 {
-	public electedClientId: string | undefined;
+	public summarizerExistsInQuorum = false;
 	public electedParentId: string | undefined;
 
 	constructor(clientId: string) {
@@ -274,7 +273,6 @@ class MockSummarizerClientElection
 	}
 
 	public setClientId(clientId: string) {
-		this.electedClientId = clientId;
 		this.electedParentId = clientId;
 	}
 }
