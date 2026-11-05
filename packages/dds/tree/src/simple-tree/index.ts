@@ -173,6 +173,8 @@ export {
 	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type HistoryUpdate,
+	type HistoryChange,
 	type TreeLocation,
 	type TextLocationNode,
 	type CapturedTreeLocation,

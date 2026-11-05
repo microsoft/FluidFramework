@@ -452,6 +452,10 @@ export class SharedTreeCore<
 	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
 	 */
 	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.editManager.historyUpdates.run(() => this.processHistoryMessages(messagesCollection));
+	}
+
+	private processHistoryMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		const commits: GraphCommit<TChange>[] = [];
 		let messagesSessionId: SessionId | undefined;

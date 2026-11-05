@@ -326,6 +326,24 @@ export class SquashingTransactionStack<
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>;
 
 	/**
+	 * Commits the innermost transaction, squashing its edits into a single edit.
+	 * @remarks
+	 * Defers history notifications until transaction cleanup and any resulting trimming have completed.
+	 */
+	public override commit(): void {
+		this.branch.historyUpdates.run(() => super.commit());
+	}
+
+	/**
+	 * Aborts the innermost transaction, restoring the state from before it began.
+	 * @remarks
+	 * Defers history notifications until transaction cleanup and any resulting trimming have completed.
+	 */
+	public override abort(): void {
+		this.branch.historyUpdates.run(() => super.abort());
+	}
+
+	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
 	 * @remarks This editor can safely be held on to across transaction boundaries, as it will properly delegate to the correct branch.
 	 * In contrast, it is not safe to hold onto e.g. `activeBranch.editor` across transaction boundaries, since the active branch may change.

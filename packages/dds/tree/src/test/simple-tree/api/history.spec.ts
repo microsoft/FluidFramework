@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion, FormatValidatorNoOp } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { fieldBatchCodecBuilder } from "../../../feature-libraries/index.js";
@@ -20,10 +21,15 @@ import {
 	EditManager,
 	type BranchTrimmingEvents,
 } from "../../../shared-tree-core/index.js";
+import { TreeViewConfiguration, type HistoryUpdate } from "../../../simple-tree/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import {
 	chunkFromJsonableTrees,
+	getView,
 	mintRevisionTag,
+	StringArray,
+	TestTreeProviderLite,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
@@ -258,6 +264,165 @@ describe("TreeBranchHistoryImpl", () => {
 		assert.equal(childHistory.length, 1);
 		assert.throws(() => history.length, validateAssertionError("Branch is disposed"));
 		child.dispose();
+	});
+
+	describe("historyChanged", () => {
+		const config = new TreeViewConfiguration({ schema: StringArray });
+
+		function createConnectedViews(retainHistory: boolean | number = true) {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({ retainHistory }).getFactory(),
+			);
+			const views = provider.trees.map((tree) => asAlpha(tree.viewWith(config)));
+			views[0].initialize([]);
+			provider.synchronizeMessages();
+			return { provider, views };
+		}
+
+		it("reports added counts after a local edit and supports unsubscribing", () => {
+			// Setup: subscribe after initialization so only the next edit is observed.
+			const view = asAlpha(getView(config));
+			view.initialize([]);
+			const lengthBefore = view.branchHistory.length;
+			const updates: HistoryUpdate[] = [];
+			const unsubscribe = view.events.on("historyChanged", (update) => {
+				// Verify: callbacks observe the completed document and history update.
+				assert.equal(update.lengthAfter, view.branchHistory.length);
+				assert.deepEqual([...view.root], ["a"]);
+				updates.push(update);
+			});
+
+			// Action: append one local edit.
+			view.root.insertAtEnd("a");
+
+			// Verify: one notification reports one added entry and no removals.
+			assert.deepEqual(updates, [
+				{
+					lengthBefore,
+					lengthAfter: lengthBefore + 1,
+					changes: [{ reason: "append", removedCount: 0, addedCount: 1 }],
+				},
+			]);
+			// Action: stop listening before another edit.
+			unsubscribe();
+			view.root.insertAtEnd("b");
+
+			// Verify: unsubscribing prevents further notifications.
+			assert.equal(updates.length, 1);
+		});
+
+		it("reports received counts without counting local acknowledgements twice", () => {
+			// Setup: subscribe on two synchronized clients with history retention enabled.
+			const { provider, views } = createConnectedViews();
+			const [sender, receiver] = views;
+			const lengthBefore = receiver.branchHistory.length;
+			const sent: HistoryUpdate[] = [];
+			const received: HistoryUpdate[] = [];
+			sender.events.on("historyChanged", (update) => sent.push(update));
+			receiver.events.on("historyChanged", (update) => received.push(update));
+
+			// Action: edit locally without delivering the op to the other client yet.
+			sender.root.insertAtEnd("remote");
+
+			// Verify: only the sender has observed the new history entry.
+			assert.equal(sent.length, 1);
+			assert.equal(received.length, 0);
+
+			// Action: deliver the remote op and the sender's acknowledgement.
+			provider.synchronizeMessages();
+
+			// Verify: the receiver adds one entry through rebase; acknowledgement does not add it again.
+			assert.equal(sent.length, 1);
+			assert.deepEqual(received, [
+				{
+					lengthBefore,
+					lengthAfter: lengthBefore + 1,
+					changes: [{ reason: "rebase", removedCount: 0, addedCount: 1 }],
+				},
+			]);
+		});
+
+		it("reports removed counts when rewinding a fork", () => {
+			// Setup: save the fork's initial revision, then add two commits before subscribing.
+			const view = asAlpha(getView(config));
+			view.initialize([]);
+			const fork = view.fork();
+			const revision = fork.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			fork.root.insertAtEnd("a");
+			fork.root.insertAtEnd("b");
+			const lengthBefore = fork.branchHistory.length;
+			const updates: HistoryUpdate[] = [];
+			fork.events.on("historyChanged", (update) => {
+				// Verify: the callback sees the length of the replacement branch.
+				assert.equal(update.lengthAfter, fork.branchHistory.length);
+				updates.push(update);
+			});
+
+			// Action: return the fork to its saved revision.
+			fork.rewindTo(revision);
+
+			// Verify: rewind removes two entries, adds none, and restores the original content.
+			assert.deepEqual(updates, [
+				{
+					lengthBefore,
+					lengthAfter: lengthBefore - 2,
+					changes: [{ reason: "rollback", removedCount: 2, addedCount: 0 }],
+				},
+			]);
+			assert.deepEqual([...fork.root], []);
+			fork.dispose();
+		});
+
+		for (const append of [false, true]) {
+			it(`reports trim counts in one completed update (append: ${append})`, () => {
+				// Setup: a fork pins older history despite the retention limit of one.
+				const { provider, views } = createConnectedViews(1);
+				const [view, peer] = views;
+				const fork = view.fork();
+				for (const value of ["a", "b", "c"]) {
+					view.root.insertAtEnd(value);
+					provider.synchronizeMessages();
+				}
+				// Edits from both clients advance collaboration bounds while the fork still prevents trimming.
+				peer.root.insertAtEnd("peer");
+				provider.synchronizeMessages();
+				view.root.insertAtEnd("latest");
+				provider.synchronizeMessages();
+				const lengthBefore = view.branchHistory.length;
+				const updates: HistoryUpdate[] = [];
+				view.events.on("historyChanged", (update) => {
+					// Verify: notification waits until any nested trimming has completed.
+					assert.equal(update.lengthAfter, view.branchHistory.length);
+					updates.push(update);
+				});
+
+				// Action: release the fork either on its own or inside a new edit's changed callback.
+				if (append) {
+					const unsubscribe = view.events.on("changed", () => fork.dispose());
+					view.root.insertAtEnd("appended");
+					unsubscribe();
+				} else {
+					fork.dispose();
+				}
+
+				// Verify: one notification includes every change in order, even when append triggers trimming.
+				assert.equal(updates.length, 1);
+				const [emittedUpdate] = updates;
+				// Collaboration may retain extra entries, so compare counts with the actual final history length.
+				const removedCount = lengthBefore + Number(append) - view.branchHistory.length;
+				assert(removedCount > 0);
+				assert.deepEqual(emittedUpdate, {
+					lengthBefore,
+					lengthAfter: view.branchHistory.length,
+					changes: [
+						...(append ? [{ reason: "append", removedCount: 0, addedCount: 1 }] : []),
+						{ reason: "trim", removedCount, addedCount: 0 },
+					],
+				});
+			});
+		}
 	});
 
 	describe("getHeadCommit", () => {
