@@ -81,6 +81,7 @@ variables:
 extends:
   template: /tools/pipelines/templates/build-docker-service.yml@self
   parameters:
+    pool: Large-tests-eastus2
     testBuild: ${{ variables.testBuild }}
     shouldPushDockerImage: ${{ variables.pushImage }}
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
