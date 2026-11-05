@@ -12,8 +12,6 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 	UntypedTreeView,
 	UntypedTreeViewAlpha,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
-	ViewableTreeAlpha,
 } from "../simple-tree/index.js";
 
 import { CheckoutBase, type TreeCheckoutOptions } from "./treeCheckout.js";
@@ -104,7 +102,7 @@ export interface TreeBranchHandleAlpha extends IDisposable {
 	 * Changes to the new branch do not affect this branch until you {@link UntypedTreeView.merge | merge} them through views of the branches.
 	 * If you dispose one branch, the other branch remains available.
 	 *
-	 * @returns A new, independent branch handle that you own from this branch, with no active view.
+	 * @returns A new, independent branch that you own, with no active view.
 	 *
 	 * @throws A `UsageError` if this branch has a pending transaction or is disposed.
 	 */

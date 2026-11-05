@@ -17,10 +17,21 @@ Disposing that view preserves the branch so you can create another view later.
 Edits remain isolated until you merge them into another view.
 
 ```typescript
-import { asAlpha } from "@fluidframework/tree/alpha";
+import {
+	asAlpha,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree/alpha";
 
-// tree is an initialized ITree with root.count === 0 and no active view.
-// config contains its schema configuration.
+const sf = new SchemaFactory("counter");
+class Counter extends sf.object("Counter", {
+	count: sf.number,
+}) {}
+
+const config = new TreeViewConfiguration({ schema: Counter });
+
+// `tree` is an `ITree` initialized with this schema and { count: 0 }.
+// It has no active view.
 const branch = asAlpha(tree).forkBranch();
 const branchView = branch.viewWith(config);
 const view = asAlpha(tree.viewWith(config));
@@ -38,4 +49,4 @@ Disposing a branch also disposes its active view.
 Use `branch.fork()` to create an independent child branch.
 Existing `view.fork()` behavior is unchanged: the returned view owns its branch, and disposing that view also disposes its branch.
 
-See [Indexes and Branches](../packages/dds/tree/docs/main/indexes-and-branches.md) for more details.
+See [Indexes and Branches](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/indexes-and-branches.md) for more details.
