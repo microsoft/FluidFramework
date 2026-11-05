@@ -34,11 +34,15 @@ export class StringSequenceCursor<TNode>
 	implements CursorWithNode<TNode>, ChunkedCursor
 {
 	public mode = CursorLocationType.Fields;
-	private index = 0;
-	private field: FieldKey = dummyRoot;
-	private inEmptyField = false;
-	private iterator: Iterator<string> | undefined;
-	private current: string | undefined;
+	#index = 0;
+	#field: FieldKey = dummyRoot;
+	#inEmptyField = false;
+	#iterator: Iterator<string> | undefined;
+	#current: string | undefined;
+	readonly #nodeType: TreeNodeSchemaIdentifier;
+	readonly #sequence: StringSequence;
+	readonly #nodeAt: (index: number) => TNode;
+	readonly #chunk: TreeChunk | undefined;
 
 	/**
 	 * @param nodeType - Schema identifier shared by all string leaves.
@@ -49,78 +53,82 @@ export class StringSequenceCursor<TNode>
 	 * The caller must retain its owning reference while using this cursor.
 	 */
 	public constructor(
-		private readonly nodeType: TreeNodeSchemaIdentifier,
-		private readonly sequence: StringSequence,
-		private readonly nodeAt: (index: number) => TNode,
-		private readonly chunk?: TreeChunk,
+		nodeType: TreeNodeSchemaIdentifier,
+		sequence: StringSequence,
+		nodeAt: (index: number) => TNode,
+		chunk?: TreeChunk,
 	) {
 		super();
+		this.#nodeType = nodeType;
+		this.#sequence = sequence;
+		this.#nodeAt = nodeAt;
+		this.#chunk = chunk;
 	}
 
 	public get [cursorStringSequence](): StringSequence | undefined {
-		return this.inEmptyField ? undefined : this.sequence;
+		return this.#inEmptyField ? undefined : this.#sequence;
 	}
 
 	public get [cursorChunk](): TreeChunk | undefined {
-		return this.inEmptyField ? undefined : this.chunk;
+		return this.#inEmptyField ? undefined : this.#chunk;
 	}
 
 	public atChunkRoot(): boolean {
-		return !this.inEmptyField;
+		return !this.#inEmptyField;
 	}
 
 	public fork(): StringSequenceCursor<TNode> {
 		const fork = new StringSequenceCursor(
-			this.nodeType,
-			this.sequence,
-			this.nodeAt,
-			this.chunk,
+			this.#nodeType,
+			this.#sequence,
+			this.#nodeAt,
+			this.#chunk,
 		);
-		if (this.mode === CursorLocationType.Nodes || this.inEmptyField) {
-			fork.enterNode(this.index);
-			if (this.inEmptyField) {
-				fork.enterField(this.field);
+		if (this.mode === CursorLocationType.Nodes || this.#inEmptyField) {
+			fork.enterNode(this.#index);
+			if (this.#inEmptyField) {
+				fork.enterField(this.#field);
 			}
 		}
 		return fork;
 	}
 
 	public getNode(): TNode {
-		this.assertNode();
-		return this.nodeAt(this.index);
+		this.#assertNode();
+		return this.#nodeAt(this.#index);
 	}
 
 	public get fieldIndex(): number {
-		this.assertNode();
-		return this.index;
+		this.#assertNode();
+		return this.#index;
 	}
 
 	public readonly chunkStart = 0;
 
 	public get chunkLength(): number {
-		this.assertNode();
-		return this.sequence.length;
+		this.#assertNode();
+		return this.#sequence.length;
 	}
 
 	public get type(): TreeNodeSchemaIdentifier {
-		this.assertNode();
-		return this.nodeType;
+		this.#assertNode();
+		return this.#nodeType;
 	}
 
 	public get value(): string {
-		this.assertNode();
-		this.current ??= this.sequence.at(this.index);
-		return this.current;
+		this.#assertNode();
+		this.#current ??= this.#sequence.at(this.#index);
+		return this.#current;
 	}
 
 	public getFieldKey(): FieldKey {
 		assert(this.mode === CursorLocationType.Fields, "Expected field cursor");
-		return this.field;
+		return this.#field;
 	}
 
 	public getFieldLength(): number {
 		assert(this.mode === CursorLocationType.Fields, "Expected field cursor");
-		return this.inEmptyField ? 0 : this.sequence.length;
+		return this.#inEmptyField ? 0 : this.#sequence.length;
 	}
 
 	public firstNode(): boolean {
@@ -136,28 +144,28 @@ export class StringSequenceCursor<TNode>
 			Number.isInteger(index) && index >= 0 && index < this.getFieldLength(),
 			"Node index out of bounds",
 		);
-		this.index = index;
-		this.iterator = undefined;
-		this.current = undefined;
+		this.#index = index;
+		this.#iterator = undefined;
+		this.#current = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}
 
 	public seekNodes(offset: number): boolean {
-		this.assertNode();
-		const index = this.index + offset;
-		if (index < 0 || index >= this.sequence.length) {
+		this.#assertNode();
+		const index = this.#index + offset;
+		if (index < 0 || index >= this.#sequence.length) {
 			this.exitNode();
 			return false;
 		}
 		assert(Number.isInteger(offset), "Expected integer cursor offset");
 		if (offset === 1) {
-			this.iterator ??= this.sequence.values(index);
-			this.advance();
+			this.#iterator ??= this.#sequence.values(index);
+			this.#advance();
 		} else if (offset !== 0) {
-			this.iterator = undefined;
-			this.current = undefined;
+			this.#iterator = undefined;
+			this.#current = undefined;
 		}
-		this.index = index;
+		this.#index = index;
 		return true;
 	}
 
@@ -166,23 +174,23 @@ export class StringSequenceCursor<TNode>
 	}
 
 	public exitNode(): void {
-		this.assertNode();
+		this.#assertNode();
 		this.mode = CursorLocationType.Fields;
-		this.field = dummyRoot;
-		this.iterator = undefined;
-		this.current = undefined;
+		this.#field = dummyRoot;
+		this.#iterator = undefined;
+		this.#current = undefined;
 	}
 
 	public firstField(): boolean {
-		this.assertNode();
+		this.#assertNode();
 		return false;
 	}
 
 	public enterField(key: FieldKey): void {
-		this.assertNode();
+		this.#assertNode();
 		this.mode = CursorLocationType.Fields;
-		this.inEmptyField = true;
-		this.field = key;
+		this.#inEmptyField = true;
+		this.#field = key;
 	}
 
 	public nextField(): boolean {
@@ -192,38 +200,38 @@ export class StringSequenceCursor<TNode>
 
 	public exitField(): void {
 		assert(
-			this.mode === CursorLocationType.Fields && this.inEmptyField,
+			this.mode === CursorLocationType.Fields && this.#inEmptyField,
 			"Cannot exit the root field",
 		);
-		this.inEmptyField = false;
+		this.#inEmptyField = false;
 		this.mode = CursorLocationType.Nodes;
 	}
 
 	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
-		this.assertNode();
-		return prefixPath(prefix, this.path());
+		this.#assertNode();
+		return prefixPath(prefix, this.#path());
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		return prefixFieldPath(prefix, {
-			parent: this.inEmptyField ? this.path() : undefined,
+			parent: this.#inEmptyField ? this.#path() : undefined,
 			field: this.getFieldKey(),
 		});
 	}
 
-	private path(): UpPath {
-		return { parent: undefined, parentField: dummyRoot, parentIndex: this.index };
+	#path(): UpPath {
+		return { parent: undefined, parentField: dummyRoot, parentIndex: this.#index };
 	}
 
-	private assertNode(): void {
+	#assertNode(): void {
 		assert(this.mode === CursorLocationType.Nodes, "Expected node cursor");
 	}
 
-	private advance(): void {
-		assert(this.iterator !== undefined, "Expected string iterator");
-		const next = this.iterator.next();
+	#advance(): void {
+		assert(this.#iterator !== undefined, "Expected string iterator");
+		const next = this.#iterator.next();
 		assert(next.done !== true, "String iterator must match the sequence length");
-		this.current = next.value;
+		this.#current = next.value;
 	}
 }
 

@@ -459,80 +459,89 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
  * Leaving that root field returns control to the outer cursor.
  */
 class FieldDelegatingCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
+	readonly #outer: StackCursor<TNode>;
+	readonly #adapter: CursorAdapter<TNode>;
+	#inner: CursorWithNode<TNode> | undefined;
+	#innerDepth: number;
+
 	public constructor(
-		private readonly outer: StackCursor<TNode>,
-		private readonly adapter: CursorAdapter<TNode>,
-		private inner?: CursorWithNode<TNode>,
+		outer: StackCursor<TNode>,
+		adapter: CursorAdapter<TNode>,
+		inner?: CursorWithNode<TNode>,
 		/** Depth within the delegate, starting at zero for its root field. */
-		private innerDepth = 0,
+		innerDepth = 0,
 	) {
 		super();
+		this.#outer = outer;
+		this.#adapter = adapter;
+		this.#inner = inner;
+		this.#innerDepth = innerDepth;
 	}
 
-	private get current(): CursorWithNode<TNode> {
-		return this.inner ?? this.outer;
+	get #current(): CursorWithNode<TNode> {
+		return this.#inner ?? this.#outer;
 	}
 
 	public get [cursorChunk](): TreeChunk | undefined {
-		return this.inner === undefined ? undefined : tryGetChunk(this.inner);
+		return this.#inner === undefined ? undefined : tryGetChunk(this.#inner);
 	}
 
 	public get [cursorStringSequence](): StringSequence | undefined {
-		return this.inner === undefined ? undefined : tryGetStringSequence(this.inner);
+		return this.#inner === undefined ? undefined : tryGetStringSequence(this.#inner);
 	}
 
 	public get mode(): CursorLocationType {
-		return this.current.mode;
+		return this.#current.mode;
 	}
 
 	public get type(): TreeType {
-		return this.current.type;
+		return this.#current.type;
 	}
 
 	public get value(): Value {
-		return this.current.value;
+		return this.#current.value;
 	}
 
 	public get fieldIndex(): number {
-		return this.current.fieldIndex;
+		return this.#current.fieldIndex;
 	}
 
 	public get chunkStart(): number {
-		return this.current.chunkStart;
+		return this.#current.chunkStart;
 	}
 
 	public get chunkLength(): number {
-		return this.current.chunkLength;
+		return this.#current.chunkLength;
 	}
 
 	public getNode(): TNode {
-		return this.current.getNode();
+		return this.#current.getNode();
 	}
 
 	public getFieldLength(): number {
-		return this.current.getFieldLength();
+		return this.#current.getFieldLength();
 	}
 
 	public getFieldKey(): FieldKey {
-		return this.inner !== undefined && this.innerDepth > 0
-			? this.inner.getFieldKey()
-			: this.outer.getFieldKey();
+		return this.#inner !== undefined && this.#innerDepth > 0
+			? this.#inner.getFieldKey()
+			: this.#outer.getFieldKey();
 	}
 
 	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
-		return this.inner === undefined
-			? this.outer.getPath(prefix)
-			: this.inner.getPath(this.innerPrefix(prefix));
+		return this.#inner === undefined
+			? this.#outer.getPath(prefix)
+			: this.#inner.getPath(this.#innerPrefix(prefix));
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-		return this.inner !== undefined && this.innerDepth > 0
-			? this.inner.getFieldPath(this.innerPrefix(prefix))
-			: this.outer.getFieldPath(prefix);
+		return this.#inner !== undefined && this.#innerDepth > 0
+			? this.#inner.getFieldPath(this.#innerPrefix(prefix))
+			: this.#outer.getFieldPath(prefix);
 	}
 
-	private innerPrefix(prefix?: PathRootPrefix): PathRootPrefix {
-		const localField = this.outer.getFieldPath();
+	#innerPrefix(prefix?: PathRootPrefix): PathRootPrefix {
+		const localField = this.#outer.getFieldPath();
 		const field = prefixFieldPath(prefix, localField);
 		return {
 			parent: field.parent,
@@ -541,113 +550,113 @@ class FieldDelegatingCursor<TNode> extends SynchronousCursor implements CursorWi
 		};
 	}
 
-	private delegateField(): void {
-		this.inner = this.adapter.getFieldCursor?.(
-			this.outer.getFieldParent(),
-			this.outer.getFieldKey(),
+	#delegateField(): void {
+		this.#inner = this.#adapter.getFieldCursor?.(
+			this.#outer.getFieldParent(),
+			this.#outer.getFieldKey(),
 		);
-		this.innerDepth = 0;
+		this.#innerDepth = 0;
 		assert(
-			this.inner === undefined || this.inner.mode === CursorLocationType.Fields,
+			this.#inner === undefined || this.#inner.mode === CursorLocationType.Fields,
 			"A delegated cursor must start at its root field",
 		);
 	}
 
 	public fork(): FieldDelegatingCursor<TNode> {
 		return new FieldDelegatingCursor(
-			this.outer.fork(),
-			this.adapter,
-			this.inner?.fork(),
-			this.innerDepth,
+			this.#outer.fork(),
+			this.#adapter,
+			this.#inner?.fork(),
+			this.#innerDepth,
 		);
 	}
 
 	public enterField(key: FieldKey): void {
-		if (this.inner === undefined) {
-			this.outer.enterField(key);
-			this.delegateField();
+		if (this.#inner === undefined) {
+			this.#outer.enterField(key);
+			this.#delegateField();
 		} else {
-			this.inner.enterField(key);
-			this.innerDepth++;
+			this.#inner.enterField(key);
+			this.#innerDepth++;
 		}
 	}
 
 	public firstField(): boolean {
-		if (this.inner !== undefined) {
-			const entered = this.inner.firstField();
+		if (this.#inner !== undefined) {
+			const entered = this.#inner.firstField();
 			if (entered) {
-				this.innerDepth++;
+				this.#innerDepth++;
 			}
 			return entered;
 		}
-		const found = this.outer.firstField();
+		const found = this.#outer.firstField();
 		if (found) {
-			this.delegateField();
+			this.#delegateField();
 		}
 		return found;
 	}
 
 	public nextField(): boolean {
-		if (this.inner !== undefined && this.innerDepth > 0) {
-			const advanced = this.inner.nextField();
+		if (this.#inner !== undefined && this.#innerDepth > 0) {
+			const advanced = this.#inner.nextField();
 			if (!advanced) {
-				this.innerDepth--;
+				this.#innerDepth--;
 			}
 			return advanced;
 		}
-		this.inner = undefined;
-		const found = this.outer.nextField();
+		this.#inner = undefined;
+		const found = this.#outer.nextField();
 		if (found) {
-			this.delegateField();
+			this.#delegateField();
 		}
 		return found;
 	}
 
 	public exitField(): void {
-		if (this.inner !== undefined && this.innerDepth > 0) {
-			this.inner.exitField();
-			this.innerDepth--;
+		if (this.#inner !== undefined && this.#innerDepth > 0) {
+			this.#inner.exitField();
+			this.#innerDepth--;
 		} else {
-			this.inner = undefined;
-			this.outer.exitField();
+			this.#inner = undefined;
+			this.#outer.exitField();
 		}
 	}
 
 	public enterNode(index: number): void {
-		this.current.enterNode(index);
-		if (this.inner !== undefined) {
-			this.innerDepth++;
+		this.#current.enterNode(index);
+		if (this.#inner !== undefined) {
+			this.#innerDepth++;
 		}
 	}
 
 	public firstNode(): boolean {
-		const found = this.current.firstNode();
-		if (found && this.inner !== undefined) {
-			this.innerDepth++;
+		const found = this.#current.firstNode();
+		if (found && this.#inner !== undefined) {
+			this.#innerDepth++;
 		}
 		return found;
 	}
 
 	public nextNode(): boolean {
-		const found = this.current.nextNode();
-		if (!found && this.inner !== undefined) {
-			this.innerDepth--;
+		const found = this.#current.nextNode();
+		if (!found && this.#inner !== undefined) {
+			this.#innerDepth--;
 		}
 		return found;
 	}
 
 	public seekNodes(offset: number): boolean {
-		const found = this.current.seekNodes(offset);
-		if (!found && this.inner !== undefined) {
-			this.innerDepth--;
+		const found = this.#current.seekNodes(offset);
+		if (!found && this.#inner !== undefined) {
+			this.#innerDepth--;
 		}
 		return found;
 	}
 
 	public exitNode(): void {
-		this.current.exitNode();
-		if (this.inner !== undefined) {
-			this.innerDepth--;
+		this.#current.exitNode();
+		if (this.#inner !== undefined) {
+			this.#innerDepth--;
 		}
 	}
 }

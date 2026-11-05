@@ -38,7 +38,9 @@ function withDelegatedFields(tree: MapTree): MinimalMapTreeNodeView {
 						length: nodes.length,
 						tryGetCursor: () => cursorForMapTreeField(nodes),
 						[Symbol.iterator](): Iterator<MinimalMapTreeNodeView> {
-							throw new Error("Delegated fields should construct a cursor rather than enumerate field contents directly.");
+							throw new Error(
+								"Delegated fields should construct a cursor rather than enumerate field contents directly.",
+							);
 						},
 					},
 				];
