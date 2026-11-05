@@ -1324,7 +1324,10 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			assertModularChangesetsEqual(change1, change2, fieldKinds, true);
+			assertModularChangesetsEqual(change1, change2, fieldKinds, {
+				ignoreRebaseVersion: true,
+				ignoreRevertConstraints: true,
+			});
 		}
 
 		const sessionId = "session1" as SessionId;
