@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": deprecation
 ---
-Use schema compatibility capabilities instead of equivalence
+Deprecate isEquivalent compatibility flag
 
 `SchemaCompatibilityStatus.isEquivalent` is deprecated.
 Use `canView` to determine whether you can read and edit a document with your view schema.
