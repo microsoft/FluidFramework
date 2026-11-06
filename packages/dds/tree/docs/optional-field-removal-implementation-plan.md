@@ -415,6 +415,22 @@ There are already skipped tests for staged-policy handling in the snapshot helpe
 Do not expand this work into a general repair of those unrelated cases.
 Fix only assumptions directly affected by retaining fields from the existing stored schema.
 
+The seven original skips predate this feature: they were introduced in [commit `3afb390`](https://github.com/microsoft/FluidFramework/commit/3afb390d940b) on September 9, 2026.
+An isolated run after composition identified one test that now passes: staged root types have directional equivalence, with a no-op preserving upgrade for the older view.
+That test is enabled with a title that describes the directional results rather than implying symmetric equivalence.
+
+Six tests remain skipped and still fail when run:
+
+- Three staged-optional round-trip cases lose their staged-optional annotation during encoding and reconstruction.
+  The reconstructed field is ordinary optional, so restrictive initialization and compatibility differ from the original view.
+- Three configured-policy cases require behavior the helpers do not currently implement.
+  `checkCompatibility` uses restrictive conversion rather than the supplied document/client policies, and compatibility snapshots contain the view schema rather than its configured policy.
+
+The skipped client-policy test previously expected a restrictive upgrade to discard an already-enabled type.
+That expectation is obsolete after composition.
+It now requests explicit enablement of a new staged type on a numeric-only document and expects a non-no-op candidate; it remains skipped because the configured policy is ignored.
+No runtime or snapshot-format changes were made to resolve these remaining cases.
+
 ## 6. Unaffected code paths
 
 These behaviors must remain unchanged, apart from removing obsolete references to the alpha flag:
@@ -512,6 +528,12 @@ Update [snapshotCompatibilityChecker.spec.ts][snapshot-tests] and [storedSchema.
 - Accept fresh-document collaboration when a supported older view can safely upgrade the document, as specified in section 5.2.
 - Preserve rejection when the older view can neither view nor upgrade, and preserve acceptance when it can already view but cannot upgrade.
 - Verify offline flag results agree with live-view results.
+- Verify snapshot validation succeeds when both views require composition to add their own optional node-valued field, retaining the other view's unknown field and referenced type.
+- Round-trip a historical schema with a shared staged token and verify its view of a newer, partially enabled document has a no-op candidate without enabling the other field.
+- Verify snapshot updates leave historical files unchanged and save the current view schema without fields retained only in document-specific upgrade candidates.
+
+The snapshot coverage additions and enabled staged-root test pass with the related compatibility, persisted-schema, staged-upgrade, and user-story suites: 242 tests pass and six known snapshot tests remain skipped.
+The test TypeScript build, focused formatting and lint checks, and whitespace checks pass.
 
 Update the existing [staged-upgrade tests][staged-tests] for the intentional policy change:
 
