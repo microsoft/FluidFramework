@@ -12,6 +12,7 @@ import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IDeltaHandler,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
@@ -26,13 +27,19 @@ import type {
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import type {
+	ChannelConfiguration,
+	ChannelConfigurationFacet,
+} from "./channelConfiguration.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
+	getSharedObjectMessageRouting,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
+	type SharedObjectTransport,
 } from "./sharedObject.js";
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
@@ -87,7 +94,7 @@ export interface SharedKernel {
 	/**
 	 * {@inheritDoc SharedObjectCore.processMessagesCore}
 	 */
-	processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
+	processMessagesCore(messagesCollection: SharedKernelMessageCollection): void;
 
 	/**
 	 * {@inheritDoc SharedObjectCore.rollback}
@@ -98,6 +105,49 @@ export interface SharedKernel {
 	 * {@inheritDoc SharedObjectCore.didAttach}
 	 */
 	didAttach?(): void;
+}
+
+/**
+ * Ordinary kernel messages, delivered without configuration ops or changes to DDS payloads.
+ * @internal
+ */
+export type SharedKernelMessageCollection = IRuntimeMessageCollection;
+
+/**
+ * Inputs available when constructing optional persisted-configuration support for a kernel.
+ * @internal
+ */
+export interface SharedKernelConfigurationFactoryArgs {
+	readonly initializationKind: "create" | "load";
+	readonly attributes: IChannelAttributes;
+	readonly ordinary: Required<IDeltaHandler>;
+	readonly transport: SharedObjectTransport;
+	readonly logger: TelemetryLoggerExt;
+	readonly isDisposed: () => boolean;
+	readonly isReadOnly: () => boolean;
+	readonly onDispose: (listener: () => void) => void;
+}
+
+/**
+ * Per-instance persisted-configuration support installed before a kernel is constructed.
+ * @internal
+ */
+export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration> {
+	readonly configuration: ChannelConfigurationFacet<TConfig>;
+	readonly deltaHandler: Required<IDeltaHandler>;
+	readonly attributes: IChannelAttributes;
+	submitOrdinaryMessage(content: unknown, metadata: unknown): void;
+	completeInitialization(): void;
+	close(error: unknown): void;
+}
+
+/**
+ * Creates persisted-configuration support for each kernel-backed shared object.
+ * @internal
+ */
+export interface SharedKernelConfigurationFactory<TConfig extends ChannelConfiguration> {
+	readonly channelConfigurationProtocolVersion: 1;
+	create(args: SharedKernelConfigurationFactoryArgs): SharedKernelConfiguration<TConfig>;
 }
 
 /**
@@ -115,6 +165,7 @@ export interface SharedKernel {
 class SharedObjectFromKernel<
 	TOut extends object,
 	TEvent extends ISharedObjectEvents,
+	TConfig extends ChannelConfiguration,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 > extends SharedObject<TEvent> {
 	/**
@@ -125,16 +176,50 @@ class SharedObjectFromKernel<
 	 */
 	#lazyData: FactoryOut<TOut> | undefined = undefined;
 
-	readonly #kernelArgs: KernelArgs;
+	readonly #kernelArgs: KernelArgs<TConfig>;
+	readonly #configuration: SharedKernelConfiguration<TConfig> | undefined;
 
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		public readonly factory: SharedKernelFactory<TOut>,
+		public readonly factory: SharedKernelFactory<TOut, TConfig>,
 		telemetryContextPrefix: string,
+		initializationKind: "create" | "load",
+		configurationFactory: SharedKernelConfigurationFactory<TConfig> | undefined,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
+
+		assert(
+			!("configuration" in attributes) ||
+				configurationFactory?.channelConfigurationProtocolVersion === 1,
+			"Factory does not support channel configuration",
+		);
+		if (configurationFactory === undefined) {
+			this.#configuration = undefined;
+		} else {
+			const messageRouting = getSharedObjectMessageRouting(this);
+			const configuration = configurationFactory.create({
+				initializationKind,
+				attributes,
+				ordinary: messageRouting.ordinary,
+				transport: messageRouting.transport,
+				logger: extractTelemetryLoggerExt(this.logger),
+				isDisposed: () => runtime.disposed,
+				isReadOnly: () => runtime.isReadOnly(),
+				onDispose: (listener) => runtime.once("dispose", listener),
+			});
+			messageRouting.install(configuration.deltaHandler, (error) =>
+				configuration.close(error),
+			);
+			Object.defineProperty(this, "attributes", {
+				value: configuration.attributes,
+			});
+			Object.defineProperty(this, "channelConfigurationProtocolVersion", {
+				value: configurationFactory.channelConfigurationProtocolVersion,
+			});
+			this.#configuration = configuration;
+		}
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
@@ -158,8 +243,22 @@ class SharedObjectFromKernel<
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
+			...(this.#configuration === undefined
+				? {}
+				: { configuration: this.#configuration.configuration }),
 			oldestSupportedClient: minVersionForCollab,
 		};
+	}
+
+	protected override submitLocalMessage(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
+		if (this.#configuration === undefined) {
+			super.submitLocalMessage(content, localOpMetadata);
+		} else {
+			this.#configuration.submitOrdinaryMessage(content, localOpMetadata);
+		}
 	}
 
 	protected override summarizeCore(
@@ -178,6 +277,7 @@ class SharedObjectFromKernel<
 
 	protected override initializeLocalCore(): void {
 		this.#initializeData(this.factory.create(this.#kernelArgs));
+		this.#configuration?.completeInitialization();
 	}
 
 	#initializeData(data: FactoryOut<TOut>): void {
@@ -197,6 +297,7 @@ class SharedObjectFromKernel<
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
 		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
+		this.#configuration?.completeInitialization();
 	}
 
 	protected override onDisconnect(): void {
@@ -259,20 +360,31 @@ export interface FactoryOut<T extends object> {
  * Use with {@link makeSharedObjectKind} to create a {@link SharedObjectKind}.
  * @internal
  */
-export interface SharedKernelFactory<T extends object> {
-	create(args: KernelArgs): FactoryOut<T>;
+export interface SharedKernelFactory<
+	T extends object,
+	TConfig extends ChannelConfiguration = ChannelConfiguration,
+> {
+	create(args: KernelArgs<TConfig>): FactoryOut<T>;
 
 	/**
 	 * Create combined with {@link SharedObjectCore.loadCore}.
 	 */
-	loadCore(args: KernelArgs, storage: IChannelStorageService): Promise<FactoryOut<T>>;
+	loadCore(args: KernelArgs<TConfig>, storage: IChannelStorageService): Promise<FactoryOut<T>>;
 }
 
 /**
  * Inputs for building a {@link SharedKernel} via {@link SharedKernelFactory}.
  * @internal
  */
-export interface KernelArgs {
+export interface KernelArgs<TConfig extends ChannelConfiguration = ChannelConfiguration> {
+	/**
+	 * Per-instance configuration, available before the kernel is constructed or loaded when
+	 * persisted-configuration support is injected.
+	 * Read its current snapshot to initialize configuration-dependent state, then subscribe to changes.
+	 * Unmarked instances use the factory's default configuration at revision zero.
+	 * Undefined when configuration support is not injected.
+	 */
+	readonly configuration?: ChannelConfigurationFacet<TConfig>;
 	/**
 	 * The shared object whose behavior is being implemented.
 	 */
@@ -402,7 +514,10 @@ function forwardMethod<TArgs extends [], TReturn>(
  * This can optionally include members from {@link ISharedObject} which will be provided automatically.
  * @internal
  */
-export interface SharedObjectOptions<T extends object> {
+export interface SharedObjectOptions<
+	T extends object,
+	TConfig extends ChannelConfiguration = ChannelConfiguration,
+> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -419,7 +534,13 @@ export interface SharedObjectOptions<T extends object> {
 	 * The view produced by this factory will be grafted onto the {@link SharedObject} using {@link mergeAPIs}.
 	 * See {@link mergeAPIs} for more information on limitations that apply.
 	 */
-	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>>;
+	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>, TConfig>;
+
+	/**
+	 * Optional persisted-configuration support installed before the kernel is created or loaded.
+	 * Omit this option for a kernel that does not participate in the configuration protocol.
+	 */
+	readonly configuration?: SharedKernelConfigurationFactory<TConfig>;
 
 	/**
 	 * {@inheritDoc SharedObject.telemetryContextPrefix}
@@ -434,8 +555,14 @@ export interface SharedObjectOptions<T extends object> {
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
+function makeChannelFactory<T extends object, TConfig extends ChannelConfiguration>(
+	options: SharedObjectOptions<T, TConfig>,
+) {
 	class ChannelFactory implements IChannelFactory<T> {
+		public get channelConfigurationProtocolVersion(): 1 | undefined {
+			return options.configuration?.channelConfigurationProtocolVersion;
+		}
+
 		/**
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 		 */
@@ -466,6 +593,8 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 				attributes,
 				options.factory,
 				options.telemetryContextPrefix,
+				"load",
+				options.configuration,
 			);
 			await shared.load(services);
 			return shared as unknown as T & IChannel;
@@ -478,6 +607,8 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 				ChannelFactory.Attributes,
 				options.factory,
 				options.telemetryContextPrefix,
+				"create",
+				options.configuration,
 			);
 
 			shared.initializeLocal();
@@ -496,8 +627,9 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
  * reducing the coupling between the framework and the SharedObject implementation.
  * @internal
  */
-export function makeSharedObjectKind<T extends object>(
-	options: SharedObjectOptions<T>,
-): ISharedObjectKind<T> & SharedObjectKindAlpha<T> {
+export function makeSharedObjectKind<
+	T extends object,
+	TConfig extends ChannelConfiguration = ChannelConfiguration,
+>(options: SharedObjectOptions<T, TConfig>): ISharedObjectKind<T> & SharedObjectKindAlpha<T> {
 	return createSharedObjectKindAlpha<T>(makeChannelFactory(options));
 }
