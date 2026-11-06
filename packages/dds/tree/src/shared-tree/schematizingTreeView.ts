@@ -740,10 +740,11 @@ export class SchematizingSimpleTreeView<
 
 	@throwIfBroken
 	public rewindTo(revision: string): void {
-		assert(
-			this.checkout instanceof TreeCheckout,
-			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
-		);
+		if (!(this.checkout instanceof TreeCheckout)) {
+			throw new UsageError(
+				"Rewinding is not supported on a branch created by `tree.forkBranch()` or `branch.fork()`, or on its views. Consider `revertTo` instead.",
+			);
+		}
 		this.checkout.rewindTo(revision);
 	}
 

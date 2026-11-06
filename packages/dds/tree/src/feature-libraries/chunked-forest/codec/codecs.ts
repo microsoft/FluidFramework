@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 
 import {
 	VersionDispatchingCodecBuilder,
