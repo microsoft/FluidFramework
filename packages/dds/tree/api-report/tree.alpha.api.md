@@ -965,6 +965,7 @@ export type JsonTreeSchema = JsonFieldSchema & {
 export enum KeyEncodingOptions {
     allStoredKeys = "allStoredKeys",
     knownStoredKeys = "knownStoredKeys",
+    unknownStoredKeys = "unknownStoredKeys",
     usePropertyKeys = "usePropertyKeys"
 }
 
