@@ -10,6 +10,7 @@ import type {
 	TreeStoredSchema,
 } from "../core/index.js";
 import {
+	CompareAndSwapSchemaChangeset,
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
 	type ModularChangeFamily,
@@ -74,10 +75,7 @@ export class SharedTreeEditBuilder
 						changes: [
 							{
 								type: "schema",
-								innerChange: {
-									schema: { new: newSchema, old: oldSchema },
-									isInverse: false,
-								},
+								innerChange: new CompareAndSwapSchemaChangeset(oldSchema, newSchema),
 							},
 						],
 					},

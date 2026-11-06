@@ -171,13 +171,7 @@ export class SharedTreeChangeFamily
 				case "schema": {
 					return {
 						type: "schema",
-						innerChange: {
-							schema: {
-								new: innerChange.innerChange.schema.old,
-								old: innerChange.innerChange.schema.new,
-							},
-							isInverse: true,
-						},
+						innerChange: innerChange.innerChange.invert(),
 					};
 				}
 				default: {
