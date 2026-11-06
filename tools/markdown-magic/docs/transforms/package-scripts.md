@@ -15,7 +15,9 @@ It leaves the description cell empty when the marker does not specify a descript
 | `headingLevel`    | integer | Inferred         | Set the context heading level from 1 through 6.         | This value overrides the depth inferred from the marker position.                                                                        |
 | `scriptDescriptions` | record  | `{}`             | Map script names to descriptions.                       | Each value is inline Markdown. Each key must match a script in `package.json`.                                                            |
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates only the script table and describes the `test` script:
 
@@ -28,4 +30,19 @@ The following marker generates only the script table and describes the `test` sc
 	}
 } -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {
+	"transform": "package-scripts",
+	"includeHeading": false,
+	"scriptDescriptions": {
+		"test": "Run all tests."
+	}
+} */}
+{/* markdown-magic:end */}
 ```
