@@ -10,7 +10,8 @@ The snapshot collaboration-policy follow-up accepts direct viewing or a safe upg
 The composition slice now preserves allowed types and supported staged optionality at each schema location.
 The alpha `includeAlreadyEnabledUpgrades` flag and token-wide preservation helpers are removed.
 The alpha diagnostic API is implemented: alpha views report retained unknown optional fields through their compatibility status.
-Remaining feature documentation and release review work is tracked below.
+The object-option documentation and current schema-evolution guides now cover rollback, composed upgrades, staged preservation, diagnostics, and compatibility checks.
+Remaining release review work is tracked below.
 Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
@@ -605,7 +606,7 @@ Update this list after each implementation slice.
   - [x] Extend the API documentation and changeset for composed permissions and the alpha flag removal, including migration from token-wide preservation.
   - [ ] Confirm the changeset draft and check downstream alpha consumers before merging the flag removal.
   - [x] Generate alpha entrypoints and API reports for the status interface in both packages.
-  - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including application-facing guides.
+  - [x] Complete the application-facing documentation in the work plan's [delivery checklist][delivery], leaving versioned documentation unchanged.
 - [x] **Validate the integrated implementation.**
   - [x] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
   - [x] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
@@ -634,7 +635,12 @@ The older view remains compatible after a remote optional-field addition; the ex
 Type tests verify alpha access, public/beta exclusion, and availability of the status type only through the alpha entrypoint.
 The tree and aggregator API reports contain the intended alpha interface and alpha view property, with public/beta reports unchanged by this slice.
 Builds, test type checking, focused formatting/lint, and release-tier export checks pass.
-Final feature documentation and release review remain outstanding.
+The application-facing documentation pass updates object schema options and the current overview, types-of-changes, allowed-type rollout, feature-flag, and testing guides.
+It preserves the warnings about reconstructing nodes from visible fields and explains that new documents do not inherit permissions retained for other documents.
+Validation: website MDX lint and API-comment formatting/lint pass; 27 API-link component tests and 65 relative guide links/anchors pass.
+The new rollback and alpha-diagnostic examples type-check against the package exports.
+No full website build or browser tests were run for this documentation-only slice, and no versioned documentation was changed.
+Release review remains outstanding.
 API review requires confirmation of the changeset and downstream alpha-consumer impact before merging; no API Council approval is required for this alpha-only signature removal.
 
 ### Validation commands

@@ -5,7 +5,7 @@
 This document tracks work for the `@fluidframework/tree` package.
 Optional-field preservation, live upgrade integration, and the snapshot compatibility-policy changes are implemented on the feature branch.
 Per-location allowed-type and staged-optionality composition and removal of the alpha policy flag are also implemented.
-Alpha retention diagnostics are implemented; final documentation delivery and release review remain.
+Alpha retention diagnostics and the current application-facing documentation are complete; release review remains.
 
 The code investigation used [Fluid Framework commit `7a49a6e`](https://github.com/microsoft/FluidFramework/commit/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7).
 

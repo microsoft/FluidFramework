@@ -35,7 +35,8 @@ const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
 ]));
 ```
 
-No schema upgrade is performed at this step: <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged`</ApiLink> types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
+For documents that still permit only numbers, no new permission is introduced at this step: the default restrictive policy excludes <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged`</ApiLink> types from initialization and does not add them during upgrades.
+On those documents, `upgradeSchema()` is a no-op and strings cannot yet be written:
 
 ```typescript
 // Assuming `view` is a TreeView configured with `mySchema`:

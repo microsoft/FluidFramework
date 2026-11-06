@@ -28,7 +28,8 @@ During the rollout, there are three schema states:
 Your Phase 1 code (the "staged" state) needs to handle documents created in the "upgraded" state.
 But how do you create such a document in a test?
 
-Normally, staged types are excluded from stored schema, so `initialize()` and `upgradeSchema()` won't include them.
+By default, initialization excludes staged types, and upgrades do not introduce them where they are not yet enabled.
+Upgrades preserve a type that the stored schema already permits.
 **Runtime schema upgrades** solve this by letting you explicitly enable staged upgrades at view construction time.
 
 ## Creating Test Documents with Future Schema
@@ -93,13 +94,13 @@ it("rejects staged content when upgrades are not enabled", () => {
     const view = independentView(
         new TreeViewConfigurationAlpha({
             schema: Note,
-            // No stagedUpgradePolicy — staged types stay excluded
+            // No stagedUpgradePolicy: this new document excludes staged types.
         }),
     );
 
     view.initialize(new Note({ text: "Hello", color: "red" }));
 
-    // Writing an RgbColor should fail because it's staged
+    // This document does not yet permit RgbColor values.
     assert.throws(() => {
         view.root.color = new RgbColor({ r: 255, g: 0, b: 0 });
     });
@@ -165,6 +166,29 @@ assert.equal(result.canView, true);
 ```
 
 This is useful for verifying that each phase of your rollout maintains the expected compatibility relationships.
+
+### Testing Composition Across Versions
+
+Use an earlier schema that stages a type and a later schema that fully enables it.
+Create the document with the later schema, then open it with the earlier client.
+Check that the earlier client can read and edit the stored values and that a restrictive upgrade preserves them.
+If no other permissions are added, verify `isEquivalent: true` and that the upgrade is a no-op.
+
+Also test these combinations:
+
+- The earlier view adds its own optional field to a newer document while retaining fields that it does not declare.
+- A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
+- A shared token is enabled at only one of two fields; preservation leaves the other field unchanged until the policy explicitly enables it.
+- A remote schema change refreshes the other client's compatibility and staged-upgrade status.
+- A summary and reload preserve the composed stored schema and any data unknown to the reduced view.
+
+Check newly created documents separately.
+Permissions preserved from another document must not appear in a new document initialized with a restrictive policy.
+
+The <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink> accepts `canView || canUpgrade` in both required compatibility directions.
+It does not apply upgrades or guarantee immediate viewing, so test the application code that calls `upgradeSchema()` when needed.
+Current snapshot helpers assume restrictive staging rather than honoring the configurations' staged-upgrade policies, and staged-optional round-tripping has known limitations.
+Use live-document tests for configured or partially enabled staged states; a view-schema snapshot alone does not represent every stored history.
 
 ## Tips
 

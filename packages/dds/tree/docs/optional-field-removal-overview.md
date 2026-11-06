@@ -1,7 +1,7 @@
 # Proposal: Compose SharedTree schema upgrades without removing stored permissions
 
 **Status:** Optional-field preservation, per-location permission composition, and the snapshot compatibility-policy changes are implemented on the feature branch.
-Alpha retention diagnostics are also implemented; final feature documentation and release review remain.
+Alpha retention diagnostics and the current application-facing guides are also complete; release review remains.
 
 ## Background
 
