@@ -958,6 +958,49 @@ describe("Matrix1", () => {
 						[undefined, 0],
 					]);
 				});
+
+				// Regression test: when multiple local setCells are pending for the same cell
+				// and the first is acked, the consensus value must be updated to the acked value.
+				// Without this update, reconnection rolls back remaining pending ops to the wrong
+				// (stale) server state, which can cause divergence in complex multi-client
+				// scenarios (e.g., stress test seed 92).
+				it("updates consensus when acking first of multiple pending setCells in LWW mode", async () => {
+					if (isSetCellPolicyFWW) {
+						// This test is specific to LWW mode; FWW has separate handling.
+						return;
+					}
+
+					matrix1.insertRows(0, 1);
+					matrix1.insertCols(0, 1);
+					containerRuntimeFactory.processAllMessages();
+
+					// Client 1 sets cell (0,0) twice (both pending).
+					matrix1.setCell(0, 0, "A");
+					matrix1.setCell(0, 0, "B");
+
+					// Ack client 1's first op ("A").
+					containerRuntimeFactory.processOneMessage();
+
+					// Access internal pending state to verify consensus was updated.
+					// After acking "A" with "B" still pending, consensus should be "A".
+					const matrixInternal = matrix1 as unknown as {
+						pending: { getCell(r: number, c: number): { consensus: unknown } };
+						rows: { getAllocatedHandle(r: number): number };
+						cols: { getAllocatedHandle(c: number): number };
+					};
+					const rowHandle = matrixInternal.rows.getAllocatedHandle(0);
+					const colHandle = matrixInternal.cols.getAllocatedHandle(0);
+					const pendingCell = matrixInternal.pending.getCell(rowHandle, colHandle);
+					assert.strictEqual(
+						pendingCell.consensus,
+						"A",
+						"after acking first of two pending setCells, consensus should be the acked value ('A'), not the stale pre-first-op value (undefined)",
+					);
+
+					containerRuntime1.connected = false;
+					containerRuntime1.connected = true;
+					await expect();
+				});
 			});
 
 			describe("Doesn't leave dangling row/col reference positions", () => {
