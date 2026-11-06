@@ -83,6 +83,7 @@ export {
 	type ITreeViewConfigurationAlpha,
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
+	type SchemaCompatibilityStatusAlpha,
 	type SchemaDiscrepancy,
 	type ITreeConfigurationOptions,
 	SchemaFactory,

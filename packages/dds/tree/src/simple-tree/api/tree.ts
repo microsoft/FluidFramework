@@ -1054,6 +1054,57 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 }
 
 /**
+ * {@link SchemaCompatibilityStatusBeta} with informational diagnostics for the proposed schema upgrade.
+ *
+ * @sealed @alpha
+ */
+export interface SchemaCompatibilityStatusAlpha extends SchemaCompatibilityStatusBeta {
+	/**
+	 * Stored optional fields omitted by the view but retained in its proposed upgrade target.
+	 *
+	 * @remarks
+	 * Each entry identifies a field on an object type declared by the view that allows unknown optional fields.
+	 * Entries use stored node identifiers and field keys, not application property names.
+	 * Each field appears once, sorted by node identifier and then field key, regardless of how many nodes use it.
+	 * This property is omitted when no fields are retained.
+	 *
+	 * These entries are informational, not viewing blockers or proof that an upgrade is permitted.
+	 * They can be present alongside {@link SchemaCompatibilityStatusBeta.discrepancies} when another difference prevents viewing or upgrading.
+	 * Entries remain after an upgrade while the view continues to omit those fields.
+	 * A retained field is reported even when it has no content or permits no values.
+	 *
+	 * This does not report retained allowed types or staged optionality on fields declared by the view,
+	 * nor fields within node types wholly unknown to the view.
+	 * Unlike {@link TreeContextAlpha.unknownFieldSchemas}, this report describes the proposed upgrade target rather than providing current stored field definitions.
+	 *
+	 * This data may include application-defined schema identifiers and field keys, but not document values.
+	 *
+	 * @example Inspecting fields preserved for other application versions
+	 *
+	 * ```typescript
+	 * const compatibility = asAlpha(view).compatibility;
+	 * for (const { nodeType, fieldKey } of compatibility.retainedUnknownOptionalFields ?? []) {
+	 * 	console.log(`Preserving ${nodeType}.${fieldKey}`);
+	 * }
+	 * if (!compatibility.canView) {
+	 * 	console.error(compatibility.discrepancies);
+	 * }
+	 * ```
+	 */
+	readonly retainedUnknownOptionalFields?: readonly {
+		/**
+		 * The stored identifier of the object type containing the field.
+		 */
+		readonly nodeType: string;
+
+		/**
+		 * The stored field key, which can differ from its application property name.
+		 */
+		readonly fieldKey: string;
+	}[];
+}
+
+/**
  * {@link TreeView} with additional beta APIs.
  *
  * @see {@link TreeViewAlpha} for additional alpha APIs
@@ -1092,6 +1143,11 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Compatibility status, including informational diagnostics for the proposed schema upgrade.
+	 */
+	readonly compatibility: SchemaCompatibilityStatusAlpha;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);

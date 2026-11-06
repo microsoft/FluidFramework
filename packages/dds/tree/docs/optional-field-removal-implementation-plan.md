@@ -9,7 +9,8 @@ The directly coupled snapshot and offline compatibility checks are updated, and 
 The snapshot collaboration-policy follow-up accepts direct viewing or a safe upgrade in both directions.
 The composition slice now preserves allowed types and supported staged optionality at each schema location.
 The alpha `includeAlreadyEnabledUpgrades` flag and token-wide preservation helpers are removed.
-The alpha diagnostic API and remaining documentation and API delivery work are still planned.
+The alpha diagnostic API is implemented: alpha views report retained unknown optional fields through their compatibility status.
+Remaining feature documentation and release review work is tracked below.
 Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
@@ -277,7 +278,7 @@ This satisfies the work plan's no-op event and identity requirements without add
 
 ### 4.1 Alpha API shape
 
-Introduce `SchemaCompatibilityStatusAlpha` as an alpha extension of the existing beta [SchemaCompatibilityStatusBeta][status-api] interface:
+`SchemaCompatibilityStatusAlpha` extends the existing beta [SchemaCompatibilityStatusBeta][status-api] interface:
 
 ```typescript
 /**
@@ -293,13 +294,13 @@ export interface SchemaCompatibilityStatusAlpha extends SchemaCompatibilityStatu
 }
 ```
 
-Declare `TreeViewAlpha.compatibility` with this extended type.
+`TreeViewAlpha.compatibility` uses this extended type.
 Leave the public and beta compatibility interfaces unchanged.
 Applications access the new information through an alpha-capable view, such as `asAlpha(view).compatibility`.
 Keeping the report alpha allows its design to change independently of the beta discrepancy contract.
 
-Export the new status type through the [API barrel][api-index], [simple-tree barrel][simple-tree-index], and [package index][tree-index].
-Generate the entrypoint sources so the type is available at the alpha tier, but not the beta or public tiers.
+The new status type is exported through the [API barrel][api-index], [simple-tree barrel][simple-tree-index], and [package index][tree-index].
+Generated entrypoints expose it at the alpha tier, but not the beta or public tiers.
 No separate exported location type is required for this shape.
 
 Contract:
@@ -356,7 +357,7 @@ Main now provides [TreeContextAlpha.unknownFieldSchemas][unknown-field-schemas].
 It maps view object schemas to the stored definitions of their unknown optional fields.
 The view computes it lazily and invalidates its cache when the stored schema changes.
 
-The proposed `retainedUnknownOptionalFields` report instead identifies locations retained in the candidate upgrade target.
+The `retainedUnknownOptionalFields` report instead identifies locations retained in the candidate upgrade target.
 Keep the approved report alpha and do not replace either surface as part of this merge.
 Document the distinction so applications do not mistake current-schema inspection for upgrade permission.
 
@@ -584,11 +585,11 @@ Update this list after each implementation slice.
   - [x] Update affected snapshot and offline expectations without changing version windows or symmetric acceptance.
   - [x] Verify realistic combined changes, no-op behavior, initialization isolation, cache safety, and multi-client composition.
   - [x] Update policy documentation, alpha type tests, generated API reports, and the changeset for both packages.
-- [ ] **Expose alpha upgrade diagnostics. Next slice.**
-  - [ ] Add `SchemaCompatibilityStatusAlpha` and `retainedUnknownOptionalFields` to the alpha view surface.
-  - [ ] Forward the report through compatibility updates and add the required exports.
-  - [ ] Test diagnostic contents, omission, ordering, coexistence with blockers, and remote updates.
-  - [ ] Verify alpha access and public/beta exclusion with type checks.
+- [x] **Expose alpha upgrade diagnostics.**
+  - [x] Add `SchemaCompatibilityStatusAlpha` and `retainedUnknownOptionalFields` to the alpha view surface.
+  - [x] Forward the report through compatibility updates and add the required exports.
+  - [x] Test diagnostic contents, omission, ordering, coexistence with blockers, and remote updates.
+  - [x] Verify alpha access and public/beta exclusion with type checks.
 - [x] **Update snapshot and offline compatibility.**
   - [x] Remove the equivalence-symmetry assumption while preserving `identicalCompatibility`.
   - [x] Verify agreement with live compatibility results and cover the current fresh-document upgrade requirement.
@@ -603,11 +604,12 @@ Update this list after each implementation slice.
   - [x] Clarify the compatibility flags' API documentation and add the behavior changeset for `@fluidframework/tree` and `fluid-framework`.
   - [x] Extend the API documentation and changeset for composed permissions and the alpha flag removal, including migration from token-wide preservation.
   - [ ] Confirm the changeset draft and check downstream alpha consumers before merging the flag removal.
-  - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including alpha entrypoints and API reports.
-- [ ] **Validate the integrated implementation.**
-  - [ ] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
+  - [x] Generate alpha entrypoints and API reports for the status interface in both packages.
+  - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including application-facing guides.
+- [x] **Validate the integrated implementation.**
+  - [x] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
   - [x] Verify that all seven previously failing preservation scenarios pass without weakening their assertions.
-  - [ ] Pass the affected TypeScript, formatting, lint, and API checks.
+  - [x] Pass the affected TypeScript, formatting, lint, and API checks.
 
 Live integration validation, before the snapshot-policy follow-up: 1,233 tests passed across the integration and regression suites listed below, with seven pre-existing skipped snapshot tests unchanged.
 This included all 16 builder tests and all 36 user-story tests; the seven previously failing preservation scenarios pass.
@@ -625,7 +627,14 @@ The tree and `fluid-framework` ESM builds and type-test builds pass, and generat
 Tree public, beta, and alpha ESM export checks and the aggregator alpha ESM export check pass.
 The aggregator's stale generated entrypoints were regenerated before its API reports.
 The entrypoint tool reports an existing untagged `InternalTypes` export, and API Extractor warns that the project TypeScript version is newer than its bundled version; report generation and export checks complete successfully.
-Alpha diagnostic tests and final feature documentation remain outstanding.
+Alpha-diagnostics validation: 1,391 tests pass across the combined suites below, with nine existing skips (six snapshot cases and three SharedTree cases).
+Checker tests cover omission, stored keys, sorted unique locations, fields with no allowed values, unknown node definitions, and coexistence with both resolvable and unresolvable blockers.
+Live tests verify persistence of the report after an upgrade, its removal when the view declares the field again, and refreshed diagnostics during remote schema-change events.
+The older view remains compatible after a remote optional-field addition; the existing schema-update lifecycle can replace its root node, while a no-op upgrade preserves root identity and emits no schema operation or event.
+Type tests verify alpha access, public/beta exclusion, and availability of the status type only through the alpha entrypoint.
+The tree and aggregator API reports contain the intended alpha interface and alpha view property, with public/beta reports unchanged by this slice.
+Builds, test type checking, focused formatting/lint, and release-tier export checks pass.
+Final feature documentation and release review remain outstanding.
 API review requires confirmation of the changeset and downstream alpha-consumer impact before merging; no API Council approval is required for this alpha-only signature removal.
 
 ### Validation commands
@@ -636,14 +645,17 @@ When regeneration is needed, rebuild immediately afterward, before compiling the
 
 ```bash
 pnpm run generate:entrypoint-sources
-pnpm run build:esm
+pnpm exec tsc --build tsconfig.json --force
 pnpm run build:test:esm
 ```
 
-The live integration slice was validated with these suites together:
+The forced rebuild re-emits every generated entrypoint declaration, including those whose source did not change.
+Verify that their imports point to `../index.js`, not the generator's temporary `./index.js` paths.
+
+The alpha diagnostics slice was validated with these suites together:
 
 ```bash
-MOCHA_SPEC='lib/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.js' \
+MOCHA_SPEC='lib/test/mochaHooks.js' \
 pnpm run test:mocha:esm --reporter dot \
   lib/test/simple-tree/api/schemaCompatibilityTester.spec.js \
   lib/test/shared-tree/schematizingTreeView.spec.js \
@@ -655,11 +667,14 @@ pnpm run test:mocha:esm --reporter dot \
   lib/test/simple-tree/api/storedSchema.spec.js \
   lib/test/shared-tree/independentView.spec.js \
   lib/test/simple-tree/api/schemaHash.spec.js \
-  lib/test/feature-libraries/modular-schema/comparison.spec.js
+  lib/test/feature-libraries/modular-schema/comparison.spec.js \
+  lib/test/api.spec.js \
+  lib/test/shared-tree/sharedTree.spec.js \
+  lib/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.js
 ```
 
 For permission composition, run the affected suites above, including the builder, staged-upgrade, compatibility, live-upgrade, snapshot, persisted-schema, and schema-hashing tests.
-Include the affected diagnostic and schema-option suites when adding the alpha diagnostic API.
+The compatibility, live-view, and API conversion suites above include the alpha diagnostic runtime and type tests.
 
 The snapshot-policy follow-up was validated with:
 

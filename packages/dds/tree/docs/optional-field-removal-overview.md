@@ -1,7 +1,7 @@
 # Proposal: Compose SharedTree schema upgrades without removing stored permissions
 
 **Status:** Optional-field preservation, per-location permission composition, and the snapshot compatibility-policy changes are implemented on the feature branch.
-Alpha retention diagnostics and final feature documentation remain planned.
+Alpha retention diagnostics are also implemented; final feature documentation and release review remain.
 
 ## Background
 
@@ -125,6 +125,17 @@ The current client must support documents from every historical snapshot.
 Historical clients within the configured collaboration window must also support documents created with the current schema.
 For each required direction, clients that can already view remain supported even when they cannot upgrade; clients that can do neither are rejected.
 Applications must perform any required upgrade before viewing; a successful snapshot check does not make that upgrade unnecessary.
+
+## Inspecting retained optional fields
+
+Alpha views expose `asAlpha(view).compatibility.retainedUnknownOptionalFields`.
+Each entry identifies an omitted optional field retained in the proposed upgrade target, using its stored node identifier and stored field key.
+Entries are sorted by identifier and key, and the property is omitted when no fields are retained.
+
+This report is informational: another schema difference can still prevent viewing or upgrading.
+Use `canView` and `canUpgrade` for those decisions and the existing beta `discrepancies` for viewing blockers.
+The report remains after an upgrade while the view continues to omit the fields.
+It does not list retained allowed types or staged optionality on declared fields.
 
 ## Limits and data safety
 

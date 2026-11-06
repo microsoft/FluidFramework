@@ -80,3 +80,21 @@ Setting the old flag to `false` no longer opts out of preservation.
 `canUpgrade` checks whether the composed candidate preserves existing content and supports the requesting view.
 It does not check whether the stored schema can be replaced with a copy of the view schema.
 Retaining a type does not make it readable by a view that neither declares nor stages it; incompatible views and definitions remain rejected.
+
+#### Alpha diagnostics identify retained unknown optional fields
+
+`SchemaCompatibilityStatusAlpha` adds `retainedUnknownOptionalFields` to the compatibility status of an alpha view.
+Each entry identifies an omitted optional field preserved in the proposed upgrade target, using its stored node identifier and stored field key.
+The list is sorted by node identifier and field key, and the property is omitted when no fields are retained.
+
+```typescript
+const compatibility = asAlpha(view).compatibility;
+for (const { nodeType, fieldKey } of compatibility.retainedUnknownOptionalFields ?? []) {
+	console.log(`Preserving ${nodeType}.${fieldKey}`);
+}
+```
+
+These entries are informational and can be present even when another schema difference prevents viewing or upgrading.
+They remain after an upgrade while the view continues to omit the fields.
+They do not report retained allowed types or staged optionality on declared fields.
+The existing beta `discrepancies` property continues to report only viewing blockers.

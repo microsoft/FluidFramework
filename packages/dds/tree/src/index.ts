@@ -117,6 +117,7 @@ export {
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
+	type SchemaCompatibilityStatusAlpha,
 	type SchemaDiscrepancy,
 	type FieldProps,
 	type FieldPropsAlpha,

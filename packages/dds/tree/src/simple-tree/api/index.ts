@@ -23,6 +23,7 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
+	SchemaCompatibilityStatusAlpha,
 	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
