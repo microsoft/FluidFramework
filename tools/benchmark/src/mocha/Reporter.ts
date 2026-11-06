@@ -48,6 +48,35 @@ module.exports = class {
 		this.reportFile = options?.reporterOptions?.reportFile;
 		runner
 			.on(Runner.constants.EVENT_TEST_FAIL, (test: Test, err: unknown) => {
+				// Temporary diagnostics for the ODSP lookup failure; this reporter does not populate test.err.
+				// Remove this handler and its focused tests once the root cause is fixed and stability is verified.
+				// https://dev.azure.com/fluidframework/internal/_workitems/edit/72105
+				if (
+					err instanceof Error &&
+					err.message === "Unable to get drive/item id from path"
+				) {
+					const diagnostics: Record<string, string | number> = {};
+					// Only copy diagnostic fields, never request URLs, tokens, or arbitrary error properties.
+					for (const property of [
+						"statusCode",
+						"retryAfterSeconds",
+						"sprequestguid",
+						"requestId",
+						"clientRequestId",
+					] as const) {
+						if (property in err) {
+							const value: unknown = err[property];
+							if (typeof value === "number" || typeof value === "string") {
+								diagnostics[property] = value;
+							}
+						}
+					}
+					console.error(
+						`${err.message}; ODSP lookup failure diagnostics:`,
+						JSON.stringify(diagnostics),
+					);
+				}
+
 				const existing = this.testData.get(test.id);
 				if (existing !== undefined && isResultError(existing.data)) {
 					// If benchmark already reported an error, don't overwrite it.
