@@ -15,11 +15,22 @@ Use `readme-footer` to generate standard sections at the end of a package README
 
 A public package is a non-private package in the `FRAMEWORK` or `EXPERIMENTAL` package kind. The `clientRequirements` default is `true` for public packages and `false` for other packages.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker adds the standard footer:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"readme-footer","headingLevel":2} */}
+{/* markdown-magic:end */}
 ```
