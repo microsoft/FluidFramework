@@ -101,8 +101,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 	indexes: TIndexes;
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>;
 	codecOptions?: CodecWriteOptions;
+	bufferCommitsUntil?: (change: DefaultChangeset) => boolean;
 }): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext> {
-	const { indexes, enrichmentConfig, codecOptions } = options;
+	const { indexes, enrichmentConfig, codecOptions, bufferCommitsUntil } = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
 	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
@@ -131,6 +132,8 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
 		enrichmentConfig,
+		undefined,
+		bufferCommitsUntil,
 	)[0];
 }
 
@@ -213,6 +216,7 @@ function createTreeInner(
 	codecOptions: CodecWriteOptions = testCodecOptions,
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
+	bufferCommitsUntil?: (change: DefaultChangeset) => boolean,
 ): [
 	SharedTreeCore<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>,
 	DefaultChangeFamily,
@@ -234,6 +238,7 @@ function createTreeInner(
 			defaultSchemaPolicy,
 			enrichmentConfig ?? { enricher: new NoOpChangeEnricher<DefaultChangeset>() },
 			editor,
+			bufferCommitsUntil,
 		),
 		changeFamily,
 	];
