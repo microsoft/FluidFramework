@@ -174,10 +174,17 @@ export function readStreamStream(stream: StreamCursor): StreamCursor {
  */
 export interface ChunkDecoder {
 	/**
+	 * Link this decoder to its peers for one batch before decoding starts.
+	 * Peers have been constructed but might not have been initialized yet.
+	 * Implementations can retain peer references, but must not decode during initialization.
+	 */
+	initialize(decoders: readonly ChunkDecoder[]): void;
+
+	/**
 	 * Read from stream, updating the offset.
 	 *
 	 * @returns a TreeChunk made from the data from `stream`.
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
 	 */
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk;
+	decode(stream: StreamCursor): TreeChunk;
 }
