@@ -12,7 +12,7 @@ import type {
 } from '@fluidframework/datastore-definitions/internal';
 import type { ITree } from '@fluidframework/tree';
 
-import type { SharedTree as LegacySharedTree, SharedTreeFactory as LegacySharedTreeFactory } from '../SharedTree.js';
+import type { ISharedTree as LegacySharedTree } from '../ISharedTree.js';
 
 import { MigrationShim } from './migrationShim.js';
 import { attributesMatch } from './utils.js';
@@ -31,7 +31,7 @@ import { attributesMatch } from './utils.js';
  */
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
-		private readonly oldFactory: LegacySharedTreeFactory,
+		private readonly oldFactory: IChannelFactory<LegacySharedTree>,
 		private readonly newFactory: IChannelFactory<ITree>,
 		private readonly populateNewChannelFn: (oldChannel: LegacySharedTree, newChannel: ITree) => void
 	) {}
