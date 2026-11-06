@@ -1177,7 +1177,8 @@ export interface SchemaCompatibilityStatus {
 	 * When diagnosing schema incompatibility issues, use {@link SchemaCompatibilityStatusBeta.discrepancies} to get detailed information about the incompatibilities.
 	 *
 	 * No direct replacement APIs are intended for this property.
-	 * It will be removed in a future version.
+	 * It will be removed in a version 4.0.0.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/28660} for more details.
 	 */
 	readonly isEquivalent: boolean;
 
