@@ -11,7 +11,6 @@ import {
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
@@ -196,31 +195,6 @@ describe("createTreeContainerRuntimeFactory", () => {
 				schema,
 				oldestSupportedClient: "2.0.0",
 			}),
-		);
-	});
-
-	it("continues to accept minVersionForCollaboration", () => {
-		assert.doesNotThrow(
-			// eslint-disable-next-line import-x/no-deprecated -- verifies the compatibility overload
-			() => createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration: "2.0.0" }),
-		);
-	});
-
-	it("rejects multiple version options", () => {
-		const createWithVersionOptions = createTreeContainerRuntimeFactory as unknown as (props: {
-			readonly schema: TreeContainerSchema;
-			readonly oldestSupportedClient?: OldestSupportedClientVersion;
-			readonly minVersionForCollaboration?: OldestSupportedClientVersion;
-		}) => unknown;
-
-		assert.throws(
-			() =>
-				createWithVersionOptions({
-					schema,
-					oldestSupportedClient: "2.0.0",
-					minVersionForCollaboration: "2.0.0",
-				}),
-			/Specify exactly one/,
 		);
 	});
 });
