@@ -82,7 +82,7 @@ function replaceDetachRevisions<TDetach extends Detach>(
 	count: number,
 	replacer: RevisionReplacer,
 ): TDetach {
-	const updated = updateRevisionAndId(detach, count, replacer) as Mutable<TDetach>;
+	const updated: Mutable<TDetach> = { ...updateRevisionAndId(detach, count, replacer) };
 	if (updated.cellRename !== undefined) {
 		updated.cellRename = replacer.getUpdatedAtomId(updated.cellRename, count);
 	}
