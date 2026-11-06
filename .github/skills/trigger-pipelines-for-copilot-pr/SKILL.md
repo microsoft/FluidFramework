@@ -1,50 +1,42 @@
 ---
 name: trigger-pipelines-for-copilot-pr
-description: Trigger ADO pipelines for a Copilot-created PR by posting /azp run comments. Use when the user asks to trigger CI pipelines for a specific PR.
-license: MIT
-argument-hint: pr-number-or-url
+description: >-
+  Trigger Azure DevOps pipelines for a Copilot-created pull request.
+  Use when the user asks to trigger CI pipelines for a specific pull request.
 ---
 
 <required>
-Treat this as a short, isolated PR operation.
+Treat this as a short, isolated pull request operation.
 
-- Do not edit repository files, change branches, create commits, push, or perform any unrelated PR action.
-- Use shell access only to check whether `gh` is available and authenticated and to post the two exact comments below. Use the REST fallback only when `gh` is unavailable and `GITHUB_TOKEN` is already present.
+- Do not edit repository files, change branches, create commits, push, or perform any unrelated pull request action.
+- Use shell access only to check prerequisites and run one of the bundled scripts.
+- Use the REST fallback only when `gh` is unavailable and `GITHUB_TOKEN` is already present.
 - Do not post any additional text or combine the two commands into one comment.
 - Target only the pull request identified by the user.
 </required>
 
-Post the following two comments to the PR specified by the user ($ARGUMENTS), in the `microsoft/FluidFramework` repository on GitHub.
-They need to be posted separately because otherwise it gets too long and
-fails to trigger correctly.
+Accept a positive pull request number or a URL in the form `https://github.com/microsoft/FluidFramework/pull/<number>`.
+Before extracting a number from a URL, verify that its host is `github.com` and its repository is `microsoft/FluidFramework`.
+Reject URLs for other hosts or repositories and unsupported URL formats without running either script.
+A bare number targets `microsoft/FluidFramework`.
 
-First comment:
+Both scripts post two separate `/azp run` comments to the specified pull request.
+The comments must match `scripts/pipeline-commands.txt` exactly, without preambles or markers.
+If applicable instructions prohibit posting those exact comments, do not run either script.
+Explain the conflict and provide the commands for the user to post manually.
 
-```
-/azp run Build - protocol-definitions,Build - test-tools,server-gitrest,server-gitssh,server-historian,server-routerlicious,Build - client packages,repo-policy-check
-```
+Prefer the GitHub CLI when `gh` is available:
 
-Second comment:
-
-```
-/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid
-```
-
-Posting those comments will trigger all our pipelines, which is necessary for PRs that are created by Copilot.
-
-To post the comments first check if the GitHub CLI is available,
-and if so use `MSYS_NO_PATHCONV=1 gh pr comment <PULL_REQUEST_NUMBER> --repo microsoft/FluidFramework --body "<COMMENT_TEXT>"`.
-Note: `MSYS_NO_PATHCONV=1` is required on Windows (Git Bash) to prevent `/azp` from being expanded to `C:/Program Files/Git/azp`.
-If `gh` is not available but `$GITHUB_TOKEN` is, you can try the GitHub REST API directly, e.g.:
-
-```
-curl -L \
-  -X POST \
-  -H "Accept: application/vnd.github+json" \
-  -H "Authorization: Bearer $GITHUB_TOKEN" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/repos/microsoft/FluidFramework/issues/PULL_REQUEST_NUMBER/comments \
-  -d '{"body":"<COMMENT_TEXT>"}'
+```sh
+sh <skill-directory>/scripts/trigger-pipelines-gh.sh <pr-number>
 ```
 
-If neither is available, don't do anything and tell the user you can't complete the request and why.
+If `gh` is unavailable, use `curl` with an existing `GITHUB_TOKEN` environment variable:
+
+```sh
+sh <skill-directory>/scripts/trigger-pipelines-curl.sh <pr-number>
+```
+
+Run only one script.
+If neither method is available, report the missing prerequisite.
+If a script fails, report the failure instead of retrying automatically, because the first comment might already have been posted.
