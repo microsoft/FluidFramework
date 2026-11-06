@@ -1170,7 +1170,7 @@ export interface SchemaCompatibilityStatus {
 	 * and {@link SchemaCompatibilityStatus.canUpgrade} before calling {@link TreeView.upgradeSchema}.
 	 *
 	 * @deprecated
-	 * This property isn't necessary for viewing a tree.
+	 * This property isn't needed as a part of application flows for loading a document.
 	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
 	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
 	 *
