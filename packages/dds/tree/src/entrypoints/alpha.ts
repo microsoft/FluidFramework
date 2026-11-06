@@ -252,6 +252,7 @@ export {
 	MapNodeCustomizableSchemaUnsafe, 
 	MapNodePojoEmulationSchema, 
 	MapNodeSchema, 
+	MaskedProperties, 
 	NodeProvider, 
 	NodeSchemaOptionsAlpha, 
 	ObjectNodeSchema, 
