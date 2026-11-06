@@ -78,6 +78,7 @@ declare type old_as_current_for_Enum_ContainerMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_ContainerMessageType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_ContainerMessageType = requireAssignableTo<TypeOnly<current.ContainerMessageType>, TypeOnly<old.ContainerMessageType>>
 
 /*

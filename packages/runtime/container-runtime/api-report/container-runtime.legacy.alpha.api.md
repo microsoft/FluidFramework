@@ -24,6 +24,7 @@ export enum ContainerMessageType {
     // (undocumented)
     ChunkedOp = "chunkedOp",
     DocumentSchemaChange = "schema",
+    ExtensionOp = "extensionOp",
     // (undocumented)
     FluidDataStoreOp = "component",
     GC = "GC",

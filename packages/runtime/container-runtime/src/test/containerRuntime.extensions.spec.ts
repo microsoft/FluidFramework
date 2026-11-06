@@ -23,6 +23,8 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -32,6 +34,7 @@ import {
 
 import { ContainerRuntime } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
+import { ContainerMessageType } from "../messageTypes.js";
 
 const testExtensionId: ContainerExtensionId = "test:extension";
 
@@ -126,6 +129,208 @@ class TestExtensionFactoryClass
 }
 const TestExtensionFactory = new TestExtensionFactoryClass();
 
+const testOpExtensionId: ContainerExtensionId = "test:opExtension";
+
+interface TestOpExtensionRuntimeProperties extends ExtensionRuntimeProperties {
+	SignalMessages: { type: string; content: unknown };
+	OpMessages: { type: string; content: { value: string } };
+}
+
+interface TestOpExtensionInterface {
+	submit: (addressChain: string[], value: string) => void;
+	readonly received: {
+		addressChain: string[];
+		value: string;
+		local: boolean;
+	}[];
+}
+
+class TestOpExtension implements ContainerExtension<TestOpExtensionRuntimeProperties> {
+	public readonly compatibility = extensionCompatibilityDetails;
+	public readonly interface: TestOpExtensionInterface;
+	public readonly extension = this;
+	public readonly received: {
+		addressChain: string[];
+		value: string;
+		local: boolean;
+	}[] = [];
+
+	constructor(host: ExtensionHost<TestOpExtensionRuntimeProperties>) {
+		this.interface = {
+			submit: (addressChain: string[], value: string) => {
+				host.submitAddressedOpMessage(addressChain, { value });
+			},
+			received: this.received,
+		};
+	}
+
+	public handleVersionOrCapabilitiesMismatch<_TRequestedInterface>(
+		_thisExistingInstantiation: Readonly<
+			ExtensionInstantiationResult<TestOpExtension, TestOpExtensionRuntimeProperties, []>
+		>,
+		_newCompatibilityRequest: ExtensionCompatibilityDetails,
+	): never {
+		throw new Error("compat mismatch with TestOpExtension is not expected");
+	}
+
+	public onNewUse(): void {
+		// No-op
+	}
+
+	public processOpMessage = (
+		addressChain: string[],
+		opMessage: { value: string },
+		local: boolean,
+	): void => {
+		this.received.push({ addressChain, value: opMessage.value, local });
+	};
+}
+
+class TestOpExtensionFactoryClass
+	implements ContainerExtensionFactory<TestOpExtensionInterface, TestOpExtensionRuntimeProperties>
+{
+	public readonly hostRequirements = {
+		minSupportedGeneration: 1,
+		requiredFeatures: [],
+	};
+	public readonly instanceExpectations = extensionCompatibilityDetails;
+
+	public resolvePriorInstantiation(
+		existingEntry: ExtensionInstantiationResult<unknown, ExtensionRuntimeProperties, unknown[]>,
+	): ExtensionInstantiationResult<TestOpExtensionInterface, TestOpExtensionRuntimeProperties, []> {
+		throw new Error("compat mismatch with TestOpExtension is not expected");
+	}
+
+	public instantiateExtension(
+		host: ExtensionHost<TestOpExtensionRuntimeProperties>,
+	): ExtensionInstantiationResult<TestOpExtensionInterface, TestOpExtensionRuntimeProperties, []> {
+		return new TestOpExtension(host);
+	}
+
+	[Symbol.hasInstance](
+		instance: unknown,
+	): instance is ExtensionInstantiationResult<
+		TestOpExtensionInterface,
+		TestOpExtensionRuntimeProperties,
+		[]
+	> {
+		return instance instanceof TestOpExtension;
+	}
+}
+const TestOpExtensionFactory = new TestOpExtensionFactoryClass();
+
+interface TestPendingOpExtensionInterface {
+	setPending: (value: string | undefined) => void;
+	readonly received: {
+		addressChain: string[];
+		value: string;
+		local: boolean;
+	}[];
+}
+
+const testPendingOpExtensionId = "test:pendingOpExtension" as ContainerExtensionId;
+
+/**
+ * An op-capable extension exercising `getPendingOpMessage`: reports its own pending state until
+ * that state is acknowledged (observed via `processOpMessage` with `local === true`), mirroring
+ * how the ID compressor's `generateIdAllocationOp` works.
+ */
+class TestPendingOpExtension implements ContainerExtension<TestOpExtensionRuntimeProperties> {
+	public readonly compatibility = extensionCompatibilityDetails;
+	public readonly interface: TestPendingOpExtensionInterface;
+	public readonly extension = this;
+	public readonly received: {
+		addressChain: string[];
+		value: string;
+		local: boolean;
+	}[] = [];
+	private pending: string | undefined;
+
+	constructor(_host: ExtensionHost<TestOpExtensionRuntimeProperties>) {
+		this.interface = {
+			setPending: (value: string | undefined) => {
+				this.pending = value;
+			},
+			received: this.received,
+		};
+	}
+
+	public handleVersionOrCapabilitiesMismatch<_TRequestedInterface>(
+		_thisExistingInstantiation: Readonly<
+			ExtensionInstantiationResult<
+				TestPendingOpExtension,
+				TestOpExtensionRuntimeProperties,
+				[]
+			>
+		>,
+		_newCompatibilityRequest: ExtensionCompatibilityDetails,
+	): never {
+		throw new Error("compat mismatch with TestPendingOpExtension is not expected");
+	}
+
+	public onNewUse(): void {
+		// No-op
+	}
+
+	public getPendingOpMessage = (): { value: string } | undefined => {
+		return this.pending === undefined ? undefined : { value: this.pending };
+	};
+
+	public processOpMessage = (
+		addressChain: string[],
+		opMessage: { value: string },
+		local: boolean,
+	): void => {
+		this.received.push({ addressChain, value: opMessage.value, local });
+		if (local) {
+			// Acknowledged: stop reporting this value as pending.
+			this.pending = undefined;
+		}
+	};
+}
+
+class TestPendingOpExtensionFactoryClass
+	implements
+		ContainerExtensionFactory<TestPendingOpExtensionInterface, TestOpExtensionRuntimeProperties>
+{
+	public readonly hostRequirements = {
+		minSupportedGeneration: 1,
+		requiredFeatures: [],
+	};
+	public readonly instanceExpectations = extensionCompatibilityDetails;
+
+	public resolvePriorInstantiation(
+		existingEntry: ExtensionInstantiationResult<unknown, ExtensionRuntimeProperties, unknown[]>,
+	): ExtensionInstantiationResult<
+		TestPendingOpExtensionInterface,
+		TestOpExtensionRuntimeProperties,
+		[]
+	> {
+		throw new Error("compat mismatch with TestPendingOpExtension is not expected");
+	}
+
+	public instantiateExtension(
+		host: ExtensionHost<TestOpExtensionRuntimeProperties>,
+	): ExtensionInstantiationResult<
+		TestPendingOpExtensionInterface,
+		TestOpExtensionRuntimeProperties,
+		[]
+	> {
+		return new TestPendingOpExtension(host);
+	}
+
+	[Symbol.hasInstance](
+		instance: unknown,
+	): instance is ExtensionInstantiationResult<
+		TestPendingOpExtensionInterface,
+		TestOpExtensionRuntimeProperties,
+		[]
+	> {
+		return instance instanceof TestPendingOpExtension;
+	}
+}
+const TestPendingOpExtensionFactory = new TestPendingOpExtensionFactoryClass();
+
 class MockContext implements IContainerContext {
 	public readonly deltaManager = new MockDeltaManager();
 	public readonly quorum = new MockQuorumClients();
@@ -140,7 +345,11 @@ class MockContext implements IContainerContext {
 
 	public readonly updateDirtyContainerState = (): void => {};
 	public readonly getLoadedFromVersion = (): undefined => undefined;
-	public readonly submitBatchFn = (): number => 1;
+	public readonly submittedBatches: { contents?: string }[][] = [];
+	public readonly submitBatchFn = (batch: { contents?: string }[]): number => {
+		this.submittedBatches.push(batch);
+		return 1;
+	};
 	public readonly submitSummaryFn = (): number => 1;
 	public readonly submitSignalFn = (): void => {};
 	public readonly submitFn = (): number => 1;
@@ -683,6 +892,173 @@ describe("Runtime", () => {
 						"Second event should be disconnected",
 					);
 				});
+			});
+		});
+
+		describe("Container Extension op messages", () => {
+			it("submits an ExtensionOp-typed op via context.submitBatchFn, addressed to the extension", async () => {
+				const setup = await createRuntimeWithMockContext();
+				updateConnectionState(
+					setup.runtime,
+					setup.context,
+					ConnectionState.Connected,
+					"mockClientId",
+				);
+				const opExtension = setup.runtime.acquireExtension(
+					testOpExtensionId,
+					TestOpExtensionFactory,
+				);
+
+				opExtension.submit(["foo", "bar"], "hello");
+
+				// Batches are flushed via a scheduled microtask; a resolved-promise tick is
+				// sufficient to let the outbox flush the batch submitted above.
+				await Promise.resolve();
+
+				assert.strictEqual(setup.context.submittedBatches.length, 1, "one batch submitted");
+				const [batch] = setup.context.submittedBatches;
+				assert.strictEqual(batch.length, 1, "one message in batch");
+				const parsed = JSON.parse(batch[0].contents ?? "") as {
+					type: string;
+					contents: { extensionId: string; addressChain: string[]; contents: unknown };
+				};
+				assert.strictEqual(parsed.type, ContainerMessageType.ExtensionOp);
+				assert.strictEqual(parsed.contents.extensionId, testOpExtensionId);
+				assert.deepStrictEqual(parsed.contents.addressChain, ["foo", "bar"]);
+				assert.deepStrictEqual(parsed.contents.contents, { value: "hello" });
+			});
+
+			it("routes a processed ExtensionOp to the matching extension's processOpMessage", async () => {
+				const setup = await createRuntimeWithMockContext();
+				const opExtension = setup.runtime.acquireExtension(
+					testOpExtensionId,
+					TestOpExtensionFactory,
+				);
+
+				const message = {
+					clientId: "otherClientId",
+					clientSequenceNumber: 1,
+					sequenceNumber: 10,
+					minimumSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					timestamp: Date.now(),
+					type: MessageType.Operation,
+					contents: {
+						type: ContainerMessageType.ExtensionOp,
+						contents: {
+							extensionId: testOpExtensionId,
+							addressChain: ["foo"],
+							contents: { value: "world" },
+						},
+					},
+				} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+
+				setup.runtime.process(message, /* local */ false);
+
+				assert.strictEqual(opExtension.received.length, 1);
+				assert.deepStrictEqual(opExtension.received[0], {
+					addressChain: ["foo"],
+					value: "world",
+					local: false,
+				});
+			});
+
+			it("ignores an ExtensionOp addressed to an extension that has not been acquired", async () => {
+				const setup = await createRuntimeWithMockContext();
+
+				const message = {
+					clientId: "otherClientId",
+					clientSequenceNumber: 1,
+					sequenceNumber: 10,
+					minimumSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					timestamp: Date.now(),
+					type: MessageType.Operation,
+					contents: {
+						type: ContainerMessageType.ExtensionOp,
+						contents: {
+							extensionId: "test:notAcquired" as ContainerExtensionId,
+							addressChain: ["foo"],
+							contents: { value: "world" },
+						},
+					},
+				} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+
+				assert.doesNotThrow(() => setup.runtime.process(message, /* local */ false));
+			});
+
+			it("prepends a pending extension op (via getPendingOpMessage) ahead of the triggering batch, and stops once acknowledged", async () => {
+				const setup = await createRuntimeWithMockContext();
+				updateConnectionState(
+					setup.runtime,
+					setup.context,
+					ConnectionState.Connected,
+					"mockClientId",
+				);
+				const pendingOpExtension = setup.runtime.acquireExtension(
+					testPendingOpExtensionId,
+					TestPendingOpExtensionFactory,
+				);
+				const opExtension = setup.runtime.acquireExtension(
+					testOpExtensionId,
+					TestOpExtensionFactory,
+				);
+
+				pendingOpExtension.setPending("pendingValue");
+				// Trigger a flush via an unrelated op; the pending extension op should be
+				// prepended ahead of it in the same batch, mirroring generateIdAllocationOp.
+				opExtension.submit(["foo"], "trigger");
+				await Promise.resolve();
+
+				assert.strictEqual(setup.context.submittedBatches.length, 1, "one batch submitted");
+				const [batch] = setup.context.submittedBatches;
+				assert.strictEqual(batch.length, 1, "grouped into one wire message");
+				const grouped = JSON.parse(batch[0].contents ?? "") as {
+					type: string;
+					contents: {
+						contents: {
+							type: string;
+							contents: { extensionId: string; addressChain: string[]; contents: unknown };
+						};
+					}[];
+				};
+				assert.strictEqual(grouped.type, "groupedBatch");
+				assert.strictEqual(grouped.contents.length, 2, "pending op message + triggering message");
+				const parsedPending = grouped.contents[0].contents;
+				assert.strictEqual(parsedPending.type, ContainerMessageType.ExtensionOp);
+				assert.strictEqual(parsedPending.contents.extensionId, testPendingOpExtensionId);
+				assert.deepStrictEqual(parsedPending.contents.contents, { value: "pendingValue" });
+
+				// Simulate the pending op being sequenced and processed locally: this should
+				// clear pending state so no further op is generated.
+				const sequencedMessage = {
+					clientId: "mockClientId",
+					clientSequenceNumber: 1,
+					sequenceNumber: 10,
+					minimumSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					timestamp: Date.now(),
+					type: MessageType.Operation,
+					contents: parsedPending,
+				} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+				setup.runtime.process(sequencedMessage, /* local */ true);
+				assert.strictEqual(pendingOpExtension.received.length, 1);
+				assert.strictEqual(pendingOpExtension.received[0].local, true);
+
+				opExtension.submit(["foo"], "trigger2");
+				await Promise.resolve();
+
+				assert.strictEqual(setup.context.submittedBatches.length, 2, "second batch submitted");
+				const [, secondBatch] = setup.context.submittedBatches;
+				const secondParsed = JSON.parse(secondBatch[0].contents ?? "") as {
+					type: string;
+					contents: unknown;
+				};
+				assert.strictEqual(
+					secondParsed.type,
+					ContainerMessageType.ExtensionOp,
+					"no pending op message once acknowledged; only the triggering message is sent",
+				);
 			});
 		});
 	});
