@@ -776,8 +776,8 @@ export const downloadSnapshot = mockify(
 		}
 
 		const queryString = getQueryString(queryParams);
-		const url = `${snapshotUrl}/trees/latest${queryString}`;
-		const method = "POST";
+		let url = `${snapshotUrl}/trees/latest${queryString}`;
+		let method: "GET" | "POST" = "POST";
 		const isRedemptionNonDurable: boolean =
 			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
@@ -799,14 +799,27 @@ export const downloadSnapshot = mockify(
 			"downloadSnapshot",
 		);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
+		const useMultipart = /^bearer /i.test(authHeader);
+		let body: string | undefined;
+		let headers: { [key: string]: string };
+		if (useMultipart) {
+			({ body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header));
+		} else {
+			// The multipart wrapper changes POST to GET before authentication.
+			// Use a direct GET and obtain authorization for its exact URL and method.
+			delete queryParams.ump;
+			url = `${snapshotUrl}/trees/latest${getQueryString(queryParams)}`;
+			method = "GET";
+			const authHeaderNoUmp = await getAuthHeader(
+				{ ...tokenFetchOptions, request: { url, method } },
+				"downloadSnapshot",
+			);
+			headers = { ...header, ...getHeadersWithAuth(authHeaderNoUmp) };
+			if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+				headers.sl = odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem;
+			}
+		}
 		logger?.sendTelemetryEvent({ eventName: "SnapshotAuthHeaderObtained" });
-		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
-		const fetchOptions = {
-			body,
-			headers: mergeRequestHeaders(requestHeaders, headers),
-			signal: controller?.signal,
-			method,
-		};
 		// Decide what snapshot format to fetch as per the feature gate.
 		switch (snapshotFormatFetchType) {
 			case SnapshotFormatSupportType.Binary: {
@@ -818,13 +831,18 @@ export const downloadSnapshot = mockify(
 				headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 			}
 		}
-		fetchOptions.headers = mergeRequestHeaders(requestHeaders, headers);
+		const fetchOptions = {
+			body,
+			headers: mergeRequestHeaders(requestHeaders, headers),
+			signal: controller?.signal,
+			method,
+		};
 
 		const odspResponse = await (epochTracker?.fetch(
 			url,
 			fetchOptions,
 			"treesLatest",
-			true,
+			useMultipart,
 			scenarioName,
 		) ?? fetchHelper(url, fetchOptions));
 		logger?.sendTelemetryEvent({ eventName: "SnapshotFetchResponseReceived" });
