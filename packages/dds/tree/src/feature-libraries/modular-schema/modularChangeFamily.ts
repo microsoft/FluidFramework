@@ -2494,6 +2494,26 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (attachFieldEntry.value === undefined) {
+			const getBaseOutputLocation = (id: ChangeAtomId, length: number) => {
+				let countProcessed = length;
+				const renamedIdEntry = firstAttachIdFromDetachId(
+					this.table.baseChange.rootNodes,
+					id,
+					countProcessed,
+				);
+				countProcessed = renamedIdEntry.length;
+
+				const locationEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
+					renamedIdEntry.value,
+					countProcessed,
+				);
+				countProcessed = locationEntry.length;
+
+				return locationEntry.value === undefined
+					? { value: this.fieldId, length: countProcessed }
+					: locationEntry;
+			};
+
 			// These nodes are detached in the output context of the base changeset.
 			if (nodeChange !== undefined) {
 				assignRootChange(
@@ -2501,23 +2521,12 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					this.table.rebasedNodeToParent,
 					baseAttachId,
 					nodeChange,
-					this.fieldId,
+					getBaseOutputLocation(baseDetachId, 1).value,
 					this.table.rebaseVersion,
 				);
 			}
 
 			if (newDetachId !== undefined) {
-				const getBaseOutputLocation = (id: ChangeAtomId, length: number) => {
-					const locationEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
-						id,
-						length,
-					);
-
-					return locationEntry.value === undefined
-						? { value: this.fieldId, length: locationEntry.length }
-						: locationEntry;
-				};
-
 				insertRootRename(
 					this.table.rebasedRootNodes,
 					baseAttachId,

@@ -443,28 +443,6 @@ export function isChangesetValid(
 
 		const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
 		unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
-
-		const fieldChanges = nodeChangeFromId(
-			change.nodeChanges,
-			change.nodeAliases,
-			nodeId,
-		).fieldChanges;
-
-		if (fieldChanges !== undefined) {
-			const fieldResult = validateFieldChanges(
-				fieldKinds,
-				change,
-				fieldChanges,
-				normalizedNodeId,
-				unreachableNodes,
-				unreachableCFKs,
-				options,
-			);
-
-			if (fieldResult !== true) {
-				return fieldResult;
-			}
-		}
 	}
 
 	if (!containsRollbacks(change)) {
