@@ -83,7 +83,8 @@ When changing a requirement, record the decision here rather than silently relax
 | R06 | **Application rollout remains separate.** Applications must control use of features their older application code does not understand. Framework-version validation must not be presented as an application-readiness check. Tests must distinguish these two conditions. |
 | R07 | **Prefer native generalization.** Generalize the underlying implementation rather than introducing artificial hosting data stores, pointer DDSs, or document-wide wrapper roots solely to make the API work. Recommend an adapter only if native generalization is intractable, with explicit review of interoperability, persistence, migration, and maintenance costs. |
 | R08 | **Preserve identity and lifecycle.** Preserve existing object identities, handle paths, factory lookup, attachment, operation ordering, connection behavior, signals, and disposal semantics. Cover reconnect, resubmission, stashed operations, staging, and rollback where supported by the participating kinds. |
-| R09 | **Defined containment and GC behavior.** New physically nested data stores initially share the containing data store's aggregate garbage-collection lifetime. A descendant reference must retain the required ancestors. Do not change existing documents' retention semantics merely to unify the API. Independent collection of every nested object is outside this project's initial scope. |
+| R09 | **Defined containment and GC behavior.** Container-level items remain the collection units. Data stores contained within other data stores share their container-level ancestor's aggregate garbage-collection lifetime. A reachable descendant retains its ancestors and their attached children. Do not change existing documents' retention semantics merely to unify the API. Independent collection of nested objects is outside this project's initial scope. |
+ **Defined containment and GC behavior.** New physically nested data stores initially share the containing data store's aggregate garbage-collection lifetime. A descendant reference must retain the required ancestors. Do not change existing documents' retention semantics merely to unify the API. Independent collection of every nested object is outside this project's initial scope. |
 | R10 | **Separate identity from application values.** A data store's output may be an arbitrary application-facing value. Root designation, persistence, and attachment must not depend on that value exposing `.handle`, implementing `IFluidLoadable`, or accepting infrastructure properties. |
 | R11 | **Consistent factories and registries.** Unify keys, registry use, and creation behavior without losing lazy loading or factory identity validation. Preserve existing factory identifiers, package paths, and supported synchronous legacy paths through the compatibility surface where necessary, even if the main API is asynchronous and does not expose every legacy option. |
 | R12 | **Explicit failure.** Unsupported capabilities, conflicting factories, and invalid input must produce appropriate repository-standard errors. Do not disguise an unsupported configuration with a successful-looking fallback. |
@@ -92,6 +93,15 @@ When changing a requirement, record the decision here rather than silently relax
 R03 does not require byte-identical summaries.
 Normal compatible changes to summary metadata or encoding are permitted.
 Validation must compare the application-visible topology, identity paths, format compatibility, and behavior, not incidental serialization details.
+
+R09 preserves the container-level collection boundary.
+The logical GC root remains `/`, which references designated root items; those items may be data stores or directly hosted shared objects.
+A container-level shared object is its own collection unit.
+A container-level data store and its attached descendants form one aggregate collection unit.
+Retaining that store retains its attached children, and a reachable reference to a descendant retains the required ancestor chain.
+Nested stores are not independently collected.
+Collection depends on unreachability from `/`, not the absence of incoming references: cycles within an unreachable aggregate do not keep it alive.
+Existing GC timing, tombstone, and sweep safeguards still apply.
 
 R07 does not forbid every in-memory compatibility bridge.
 Document and justify such bridges as part of the design.

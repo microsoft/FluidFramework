@@ -86,6 +86,7 @@ export type {
 export type { Audience } from "./serviceClientBase.js";
 export {
 	DataStoreKindImplementation,
+	dataStoreKindFromFactory,
 	ServiceContainerBase,
 	getContainerAudience,
 } from "./serviceClientBase.js";

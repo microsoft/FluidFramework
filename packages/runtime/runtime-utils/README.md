@@ -38,6 +38,23 @@ Read the **@fluidframework/runtime-utils** API documentation at <https://fluidfr
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Using legacy data-store factories with ServiceClient
+
+Import `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha` to use an existing data-store factory as an alpha `DataStoreKind`.
+Pass the resulting kind to ServiceClient creation/loading APIs or register it in a data-store registry.
+The bridge preserves the original factory identity, its child registry, entry point, and document format.
+It does not add a persisted hosting object or change named channels.
+
+The generic type argument describes the factory's entry point.
+Legacy factories erase this type, so you must supply the correct type; the bridge does not validate it.
+Repeated calls for the same factory return the same kind.
+Different factories with the same type identifier remain different kinds.
+
+The bridge does not change container root discovery.
+ServiceClient currently expects the `root` data-store alias.
+TODO: Provide a legacy+alpha container integration path for applications with other root-discovery conventions.
+Specialized helpers for named-channel access can be added if customer needs justify them; the factory bridge lets existing implementations continue to use legacy APIs directly.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

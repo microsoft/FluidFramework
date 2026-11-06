@@ -21,6 +21,7 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -68,7 +69,10 @@ export class DataStoreKindImplementation<T>
 		private readonly factory: Pick<
 			DataStoreKindImplementation<T>,
 			"type" | "instantiateDataStore" | "createDataStore"
-		>,
+		> &
+			Partial<Pick<IFluidDataStoreFactory, "IFluidDataStoreFactory">> & {
+				readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
+			},
 	) {
 		super();
 		this.type = factory.type;
@@ -85,7 +89,11 @@ export class DataStoreKindImplementation<T>
 	}
 
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
-		return this;
+		return this.factory.IFluidDataStoreFactory ?? this;
+	}
+
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+		return this.factory.IFluidDataStoreRegistry;
 	}
 
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
@@ -100,6 +108,39 @@ export class DataStoreKindImplementation<T>
 			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${input.type}`,
 		);
 	}
+}
+
+const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
+
+/**
+ * Uses a legacy data-store factory as a kind in the alpha ServiceClient APIs.
+ * @remarks
+ * This preserves the factory, its entry point, child registry, and persisted representation.
+ * It does not create an additional data store or adapt the entry-point value.
+ * Repeated calls with the same factory return the same kind.
+ *
+ * The caller must ensure that the factory's entry point is a `T`.
+ * Legacy factories do not encode that type, so this function cannot check it.
+ * Register the returned kind wherever the new APIs need the factory.
+ * Existing legacy registries can continue to register the original factory.
+ *
+ * This does not change the container's root-discovery convention.
+ * @typeParam T - The entry-point type produced by the legacy factory.
+ * @param factory - The existing data-store factory.
+ * @returns The kind for the factory, with the caller-specified entry-point type.
+ * @legacy
+ * @alpha
+ */
+export function dataStoreKindFromFactory<T = unknown>(
+	factory: IFluidDataStoreFactory,
+): DataStoreKind<T> {
+	let kind = legacyKinds.get(factory);
+	if (kind === undefined) {
+		kind = new DataStoreKindImplementation(factory);
+		legacyKinds.set(factory, kind);
+	}
+	// Legacy factories erase their entry-point type; the caller supplies it at this boundary.
+	return kind as DataStoreKind<T>;
 }
 
 /**
