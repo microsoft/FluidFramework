@@ -1,0 +1,41 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: Validate package contents without publishing tarballs
+  env:
+    PACK_VALIDATION_DIRECTORY: $(Agent.TempDirectory)/client-pack-validation
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      pnpm exec flub exec --no-private --releaseGroup client --concurrency=4 -- "pnpm pack --dry-run"
+      node --input-type=module <<'JS'
+      import { execFileSync } from "node:child_process";
+      import fs from "node:fs";
+      import path from "node:path";
+      const packages = JSON.parse(execFileSync("pnpm", ["list", "-r", "--depth", "-1", "--json"], { encoding: "utf8" }));
+      for (const pkg of packages) {
+        const manifest = JSON.parse(fs.readFileSync(path.join(pkg.path, "package.json"), "utf8"));
+        if (manifest.private) continue;
+        if (manifest.scripts?.["pack:tests"]) {
+          execFileSync("pnpm", ["run", "pack:tests"], { cwd: pkg.path, stdio: "inherit" });
+          const archives = fs.readdirSync(pkg.path).filter((file) => file.endsWith("test-files.tar"));
+          if (archives.length === 0) throw new Error(`${pkg.name}: pack:tests produced no test archive`);
+          const destination = path.join(process.env.PACK_VALIDATION_DIRECTORY, pkg.name);
+          fs.mkdirSync(destination, { recursive: true });
+          for (const file of archives) {
+            fs.renameSync(path.join(pkg.path, file), path.join(destination, file));
+          }
+        }
+        if (manifest.scripts?.["clean:manifest"]) {
+          execFileSync("pnpm", ["run", "clean:manifest"], { cwd: pkg.path, stdio: "inherit" });
+        }
+      }
+      JS

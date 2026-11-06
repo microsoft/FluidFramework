@@ -203,6 +203,46 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 
 describe("FluidXunitReporter", () => {
 	describeFixtureSuiteBehavior(FluidXunitReporter);
+
+	it("preserves suite-level skips in parallel reports", async () => {
+		const fixtureDir = mkdtempSync(path.join(tmpdir(), "fluid-xunit-parallel-skip-"));
+		try {
+			const fixture = path.join(fixtureDir, "skip.fixture.cjs");
+			const output = path.join(fixtureDir, "junit-report.xml");
+			writeFileSync(
+				fixture,
+				`describe("skipped suite", function () {
+					before(function () { this.skip(); });
+					describe("nested suite", function () {
+						it("never executes", function () { throw new Error("must stay skipped"); });
+					});
+				});
+				it("executes normally", function () {});
+				`,
+			);
+			const mocha = new Mocha({
+				parallel: true,
+				jobs: 2,
+				reporter: FluidXunitReporter as unknown as string,
+				reporterOptions: { output },
+			});
+			mocha.addFile(fixture);
+			const failures = await new Promise<number>((resolve) => mocha.run(resolve));
+			assert.equal(failures, 0);
+			const report = await parseJUnitReport(readFileSync(output, "utf8"));
+			assert.equal(report.testcase?.length, 2);
+			const skipped = report.testcase?.find(
+				(testCase) => testCase.$.name === "skipped suite nested suite never executes",
+			);
+			assert.ok(skipped?.skipped, "A suite-level skip must not be reported as a pass");
+			assert.equal(
+				report.testcase?.find((testCase) => testCase.$.name === "executes normally")?.skipped,
+				undefined,
+			);
+		} finally {
+			rmSync(fixtureDir, { recursive: true, force: true });
+		}
+	});
 });
 
 describe("FluidXunitReporter, loaded via the CommonJS wrapper (as mocha-multi-reporters does)", () => {

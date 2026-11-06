@@ -12,6 +12,27 @@ import {
 	resolveRange,
 	resolveRanges,
 } from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
+
+describe("TestClientLogger", () => {
+	it("preserves segment order and pending edits across nested blocks", () => {
+		const client = new TestClient();
+		for (let i = 0; i < 80; i++) {
+			client.insertTextLocal(client.getLength(), String.fromCodePoint(65 + (i % 26)), {
+				index: i,
+			});
+		}
+		client.startOrUpdateCollaboration("A");
+		client.insertTextLocal(5, "pending");
+		const [acked, local] = TestClientLogger.toString([client]).split("\n");
+		assert.equal(
+			acked,
+			"|ABCD E_______FGH IJKL MNOP QRST UVWX YZAB CDEF GHIJ KLMN OPQR STUV WXYZ ABCD EFGH IJKL MNOP QRST UVWX YZAB",
+		);
+		assert.equal(local.trimEnd(), "|      pending");
+	});
+});
 
 describe("MergeTreeOperationRunner combinatorial utils", () => {
 	const constant = (i: number): number => i;

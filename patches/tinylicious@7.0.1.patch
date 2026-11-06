@@ -1,0 +1,54 @@
+diff --git a/dist/services/inMemorycollection.js b/dist/services/inMemorycollection.js
+index b73c5d0e693c791679e7400fc3014bd69508b2df..685104ba7cda8bfdc7d04775b1855da480a9a9b5 100644
+--- a/dist/services/inMemorycollection.js
++++ b/dist/services/inMemorycollection.js
+@@ -129,12 +129,11 @@ class Collection {
+         return returnValue === undefined ? null : returnValue;
+     }
+     findInternal(query, sort) {
+-        function getValueByKey(propertyBag, key) {
+-            const keys = key.split(".");
++        function getValueByPath(propertyBag, keys) {
+             let value = propertyBag;
+-            keys.forEach((splitKey) => {
++            for (const splitKey of keys) {
+                 value = value[splitKey];
+-            });
++            }
+             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+             return value;
+         }
+@@ -144,25 +143,27 @@ class Collection {
+             if (!query[key]) {
+                 return;
+             }
++            const keys = key.split(".");
+             if (query[key].$gt > 0 || query[key].$lt > 0) {
+                 if (query[key].$gt > 0) {
+-                    filteredCollection = filteredCollection.filter((value) => getValueByKey(value, key) > query[key].$gt);
++                    filteredCollection = filteredCollection.filter((value) => getValueByPath(value, keys) > query[key].$gt);
+                 }
+                 if (query[key].$lt > 0) {
+-                    filteredCollection = filteredCollection.filter((value) => getValueByKey(value, key) < query[key].$lt);
++                    filteredCollection = filteredCollection.filter((value) => getValueByPath(value, keys) < query[key].$lt);
+                 }
+             }
+             else {
+-                filteredCollection = filteredCollection.filter((value) => getValueByKey(value, key) === query[key]);
++                filteredCollection = filteredCollection.filter((value) => getValueByPath(value, keys) === query[key]);
+             }
+         });
+         if (sort && Object.keys(sort).length === 1) {
++            const sortKey = Object.keys(sort)[0];
++            const keys = sortKey.split(".");
+             // eslint-disable-next-line no-inner-declarations
+             function compare(a, b) {
+-                const sortKey = Object.keys(sort)[0];
+                 return sort[sortKey] === 1
+-                    ? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)
+-                    : getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
++                    ? getValueByPath(a, keys) - getValueByPath(b, keys)
++                    : getValueByPath(b, keys) - getValueByPath(a, keys);
+             }
+             filteredCollection = filteredCollection.sort(compare);
+         }

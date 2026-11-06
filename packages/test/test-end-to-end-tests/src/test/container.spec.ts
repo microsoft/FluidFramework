@@ -888,6 +888,13 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let clock;
 
+	before(function () {
+		provider = getTestObjectProvider();
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+	});
+
 	async function loadContainer(
 		documentServiceFactory?: IDocumentServiceFactory,
 		deltaConnection?: "delayed" | "none",
@@ -910,9 +917,6 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	beforeEach("", async function () {
 		provider = getTestObjectProvider();
 		clock = useFakeTimers();
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
 	});
 	afterEach(() => {
 		clock.restore();
