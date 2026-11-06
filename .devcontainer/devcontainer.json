@@ -12,12 +12,7 @@
 			// "INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
-	"runArgs": [
-		"--init",
-		"--security-opt=seccomp=unconfined",
-		"--security-opt=apparmor=unconfined",
-		"--cap-add=SYS_ADMIN"
-	],
+	"runArgs": ["--init"],
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -45,10 +40,7 @@
 	},
 	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh && bash scripts/codespace-setup/install-build-cli.sh",
 	"postCreateCommand": "bash scripts/codespace-setup/ai-setup.sh",
-	"postStartCommand": {
-		"bwrap-setup": "sudo mount --make-rshared /",
-		"sandbox-tmpdir": "mkdir -p /tmp/claude"
-	},
+	"postStartCommand": {},
 	"postAttachCommand": {},
 	// Forward port for Tinylicious
 	"forwardPorts": [7070],

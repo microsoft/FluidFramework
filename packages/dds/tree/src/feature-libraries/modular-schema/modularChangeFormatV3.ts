@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions } from "typebox";
+
+import { typeboxInterface } from "../../util/index.js";
 
 import { EncodedChangeAtomId } from "../../core/index.js";
 
 import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 
-const noAdditionalProps: Type.ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 const EncodedRenames = Type.Optional(
 	Type.Array(
@@ -36,7 +39,7 @@ const EncodedRootNodes = Type.Optional(
 
 export type EncodedRootNodes = Type.Static<typeof EncodedRootNodes>;
 
-export const EncodedModularChangesetV3 = Type.Composite(
+export const EncodedModularChangesetV3 = typeboxInterface(
 	[
 		EncodedModularChangesetV2,
 		Type.Object(
@@ -48,6 +51,7 @@ export const EncodedModularChangesetV3 = Type.Composite(
 			noAdditionalProps,
 		),
 	],
+	{},
 	noAdditionalProps,
 );
 

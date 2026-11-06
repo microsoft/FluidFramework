@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
 
 import {
 	DiscriminatedUnionDispatcher,
@@ -23,7 +22,7 @@ import {
 	type RevisionTag,
 	type RevisionTagSchema,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
+import { type Mutable, brand } from "../../util/index.js";
 import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
@@ -370,11 +369,7 @@ function decodeDetach(
 	return mark;
 }
 
-/**
- * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
- * to be in terms of the schema rather than the concrete type of the node change.
- */
-type NodeChangeSchema = TAnySchema;
+type NodeChangeSchema = typeof EncodedNodeChangeset;
 
 export function makeV2Codec(
 	revisionTagCodec: JsonCodecPart<
@@ -384,8 +379,8 @@ export function makeV2Codec(
 	>,
 ): IJsonCodec<
 	Changeset,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
+	Encoded.Changeset<typeof EncodedNodeChangeset>,
+	Encoded.Changeset<typeof EncodedNodeChangeset>,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
@@ -395,7 +390,7 @@ export function makeV2Codec(
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> =>
+		): Encoded.Changeset<NodeChangeSchema> =>
 			encodeSequenceChangeset(
 				changeset,
 				context,
@@ -424,7 +419,7 @@ export function encodeSequenceChangeset(
 		ChangeEncodingContext
 	>,
 	encodeMarkEffect: EncodeMarkEffect,
-): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> {
+): Encoded.Changeset<NodeChangeSchema> {
 	const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 	for (const mark of changeset) {
 		jsonMarks.push(
@@ -445,7 +440,7 @@ function encodeMark(
 		ChangeEncodingContext
 	>,
 	encodeMarkEffect: EncodeMarkEffect,
-): Encoded.Mark<TAnySchema>[] {
+): Encoded.Mark<NodeChangeSchema>[] {
 	const splitLength = getLengthToSplitMark(mark, context);
 	if (splitLength < mark.count) {
 		const [mark1, mark2] = splitMark(mark, splitLength);
@@ -634,8 +629,8 @@ function encodeSplitMark(
 		ChangeEncodingContext
 	>,
 	encodeMarkEffect: EncodeMarkEffect,
-): Encoded.Mark<TAnySchema> {
-	const encodedMark: Encoded.Mark<TAnySchema> = {
+): Encoded.Mark<NodeChangeSchema> {
+	const encodedMark: Encoded.Mark<NodeChangeSchema> = {
 		count: mark.count,
 	};
 	if (!isNoopMark(mark)) {

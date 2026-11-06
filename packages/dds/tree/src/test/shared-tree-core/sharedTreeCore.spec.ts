@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ISummaryBlob,
@@ -108,6 +109,60 @@ describe("SharedTreeCore", () => {
 				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
 			);
 			assert(loaded, "Expected summarizable to load");
+		});
+
+		it("load shared dependencies once without blocking independent components", async () => {
+			const releaseDependency = new Deferred<void>();
+			const independentLoaded = new Deferred<void>();
+			const dependency = new MockSummarizable("dependency");
+			let dependencyLoads = 0;
+			let dependencyFinished = false;
+			dependency.load = async () => {
+				dependencyLoads++;
+				await releaseDependency.promise;
+				dependencyFinished = true;
+			};
+			const first = new MockSummarizable("first", [dependency]);
+			const second = new MockSummarizable("second", [dependency]);
+			const loaded = new Set<string>();
+			for (const dependent of [first, second]) {
+				dependent.on("loaded", () => {
+					assert(dependencyFinished);
+					loaded.add(dependent.key);
+				});
+			}
+			const independent = new MockSummarizable("independent");
+			independent.on("loaded", () => independentLoaded.resolve());
+			const tree = createTree({ indexes: [first, second, dependency, independent] });
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const loading = tree.loadCore(
+				MockSharedObjectServices.createFromSummary(summary).objectStorage,
+			);
+			await independentLoaded.promise;
+			assert.equal(loaded.size, 0);
+			assert.equal(dependencyLoads, 1);
+			releaseDependency.resolve();
+			await loading;
+			assert.deepEqual(loaded, new Set([first.key, second.key]));
+			assert.equal(dependencyLoads, 1);
+		});
+
+		it("do not load when a dependency fails", async () => {
+			const failure = new Error("Dependency failed to load");
+			const dependency = new MockSummarizable("dependency");
+			dependency.load = async () => {
+				throw failure;
+			};
+			const dependent = new MockSummarizable("dependent", [dependency]);
+			let loaded = false;
+			dependent.on("loaded", () => (loaded = true));
+			const tree = createTree({ indexes: [dependent, dependency] });
+			const { summary } = tree.summarizeCore(mockSerializer);
+			await assert.rejects(
+				tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				/Dependency failed to load/,
+			);
+			assert(!loaded);
 		});
 
 		it("load blobs", async () => {
@@ -763,7 +818,10 @@ describe("SharedTreeCore", () => {
 		public static readonly blobKey = "MockIndexBlobKey";
 		public static readonly blobContents = "MockIndexBlobContent";
 
-		public constructor(public readonly key = "MockIndexsummarizable") {
+		public constructor(
+			public readonly key = "MockIndexsummarizable",
+			public readonly loadDependencies: readonly Summarizable[] = [],
+		) {
 			super();
 		}
 

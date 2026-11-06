@@ -4,7 +4,7 @@
  */
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 import { EmptyBTree } from "@tylerbu/sorted-btree-es6";
 
 import {
@@ -127,7 +127,7 @@ type FieldRootMap = TupleBTree<FieldIdKey, FieldRootChanges>;
 type FieldChangesetCodecs = Map<
 	FieldKindIdentifier,
 	{
-		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+		compiledSchema?: SchemaValidationFunction<TSchema>;
 		codec: FieldCodec;
 	}
 >;
@@ -136,7 +136,7 @@ export function getFieldChangesetCodec(
 	fieldKind: FieldKindIdentifier,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): {
-	compiledSchema?: SchemaValidationFunction<TAnySchema>;
+	compiledSchema?: SchemaValidationFunction<TSchema>;
 	codec: FieldCodec;
 } {
 	const entry = fieldChangesetCodecs.get(fieldKind);
@@ -349,7 +349,7 @@ export function getFieldChangesetCodecs(
 	codecOptions: ICodecOptions,
 ): Map<
 	FieldKindIdentifier,
-	{ compiledSchema?: SchemaValidationFunction<TAnySchema>; codec: FieldCodec }
+	{ compiledSchema?: SchemaValidationFunction<TSchema>; codec: FieldCodec }
 > {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
@@ -369,7 +369,7 @@ export function getFieldChangesetCodecs(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	> = new Map([
@@ -836,7 +836,7 @@ export function decodeChange(
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	>,
