@@ -24,7 +24,8 @@ import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
 	type Unhydrated,
-	UnhydratedFlexTreeNode,
+	type UnhydratedFlexTreeNode,
+	createUnhydratedFlexTreeNode,
 	createField,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
@@ -111,9 +112,10 @@ export function unhydratedFlexTreeFromCursor(
 			];
 		}),
 	);
-	return new UnhydratedFlexTreeNode(
+	return createUnhydratedFlexTreeNode(
 		{ type: cursor.type, value: cursor.value },
 		fields,
 		context,
+		storedSchema,
 	);
 }

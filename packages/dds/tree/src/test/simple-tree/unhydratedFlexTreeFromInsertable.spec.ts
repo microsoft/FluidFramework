@@ -17,7 +17,8 @@ import {
 	CompatibilityLevel,
 	contentSchemaSymbol,
 	privateDataSymbol,
-	UnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
+	type UnhydratedFlexTreeNode,
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -1591,7 +1592,7 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 				api: createFieldSchema(FieldKind.Required, [f.string], {
 					key: "stored",
 					defaultProvider: getDefaultProvider(() => [
-						new UnhydratedFlexTreeNode(
+						new UnhydratedGeneralNode(
 							{
 								type: brand(stringSchema.identifier),
 								value: "x",
@@ -1615,7 +1616,7 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 				api: createFieldSchema(FieldKind.Required, [f.string], {
 					key: "stored",
 					defaultProvider: getDefaultProvider((context) => [
-						new UnhydratedFlexTreeNode(
+						new UnhydratedGeneralNode(
 							{
 								type: brand(stringSchema.identifier),
 								value: context === "UseGlobalContext" ? "global" : "contextual",

@@ -6,7 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type DeltaMark,
@@ -14,6 +17,8 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type Value,
 } from "../../../core/index.js";
 import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
@@ -21,10 +26,17 @@ import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/ind
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {
 	buildUnhydratedMoveMarks,
+	createUnhydratedFlexTreeNode,
+	createField,
+	UnhydratedContext,
 	UnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
+	UnhydratedObjectNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { Context } from "../../../simple-tree/core/context.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
@@ -216,6 +228,104 @@ describe("unhydratedFlexTree", () => {
 
 	assert(map instanceof UnhydratedFlexTreeNode);
 	assert(arrayNode instanceof UnhydratedFlexTreeNode);
+
+	describe("leaf construction", () => {
+		class NoSchemaLookup extends Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+			public override get(_key: TreeNodeSchemaIdentifier): TreeNodeStoredSchema | undefined {
+				return assert.fail("Leaf construction must not look up its stored schema");
+			}
+		}
+
+		for (const [schema, value] of [
+			[schemaFactory.string, ""],
+			[schemaFactory.number, 0],
+			[schemaFactory.boolean, false],
+			[schemaFactory.null, null],
+			[schemaFactory.handle, new MockHandle("leaf")],
+		] as const) {
+			it(`skips schema lookup for ${schema.identifier}`, () => {
+				const original = getUnhydratedContext(schema);
+				const contextWithoutLookup = new Context(
+					new UnhydratedContext(original.flexContext.schemaPolicy, new NoSchemaLookup()),
+					original.schema,
+				);
+				const leaf = createUnhydratedFlexTreeNode(
+					{ type: brand(schema.identifier), value },
+					new Map(),
+					contextWithoutLookup,
+				);
+				assert(leaf instanceof UnhydratedGeneralNode);
+				assert.equal(leaf.value, value);
+			});
+		}
+	});
+
+	it("selects node implementations using their stored schema", () => {
+		assert(map instanceof UnhydratedGeneralNode);
+		assert(arrayNode instanceof UnhydratedObjectNode);
+		assert(object instanceof UnhydratedObjectNode);
+	});
+
+	for (const Node of [UnhydratedGeneralNode, UnhydratedObjectNode]) {
+		for (const kind of [FieldKinds.required, FieldKinds.optional]) {
+			it(`preserves field values and parentage with ${Node.name} ${kind.identifier}`, () => {
+				const sf = new SchemaFactory(`${Node.name}-${kind.identifier}`);
+				class Child extends sf.object("Child", {}) {}
+				const allowed = [sf.number, sf.boolean, sf.string, sf.null, Child];
+				class Parent extends sf.object("Parent", {
+					value: kind === FieldKinds.optional ? sf.optional(allowed) : allowed,
+				}) {}
+				const localContext = getUnhydratedContext(Parent);
+				const fieldKey: FieldKey = brand("value");
+				const makeChild = (type: string, value: Value): UnhydratedFlexTreeNode =>
+					unhydratedFlexTreeFromCursor(
+						localContext,
+						cursorForMapTreeNode({ type: brand(type), value, fields: new Map() }),
+					);
+				let previous = makeChild(sf.number.identifier, 1);
+				const field = createField(localContext.flexContext, kind.identifier, fieldKey, [
+					previous,
+				]);
+				const node = new Node(
+					{ type: brand(Parent.identifier) },
+					new Map([[fieldKey, field]]),
+					localContext,
+				);
+				assert(field.is(FieldKinds.required) || field.is(FieldKinds.optional));
+				let notifications = 0;
+				const off = node.events.on("childrenChangedAfterBatch", () => {
+					assert.equal(node.getStoredField(fieldKey), field);
+					assert.equal(field.boxedAt(0)?.parentField.parent, field);
+					notifications++;
+				});
+				for (const [type, value] of [
+					[sf.number.identifier, 0],
+					[sf.boolean.identifier, false],
+					[sf.string.identifier, ""],
+					[sf.null.identifier, null],
+					[Child.identifier, undefined],
+				] as const) {
+					const child = makeChild(type, value);
+					field.editor.set(child, false);
+					assert.equal(field.content, value === undefined ? child : value);
+					assert.equal(field.boxedAt(0), child);
+					assert.equal(child.parentField.parent, field);
+					assert.equal(previous.parentField.parent.parent, undefined);
+					previous = child;
+				}
+				assert.equal(notifications, 5);
+				off();
+				if (kind === FieldKinds.optional) {
+					const optional = node.getBoxed(fieldKey);
+					assert(optional.is(FieldKinds.optional));
+					optional.editor.set(undefined, false);
+					assert.equal(optional.content, undefined);
+					assert.equal(previous.parentField.parent.parent, undefined);
+					assert.equal(node.allFieldsLazy.size, Node === UnhydratedObjectNode ? 1 : 0);
+				}
+			});
+		}
+	}
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");

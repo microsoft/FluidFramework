@@ -12,33 +12,44 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	ObjectNodeStoredSchema,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type Value,
 	inCursorField,
+	inCursorNode,
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol } from "../../util/index.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeUnknownUnboxed,
 	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { AnchoredEntity } from "./lazyEntity.js";
+import {
+	getCachedField,
+	makeField,
+	makeNodeBackedField,
+	UncachedForbiddenField,
+	unboxedFlexNode,
+} from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
- * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
+ * Gets the existing hydrated FlexTree node at the cursor's location, or creates one using its stored schema.
+ * @param context - The context whose forest and schema describe the node.
+ * @param cursor - A current cursor from that forest, positioned in nodes mode. Ownership stays with the caller.
  * @remarks
- * This does not take ownership of this cursor: Node will fork it as needed.
+ * Leaves the cursor at its original position. New instances fork it and are retained until destruction or context invalidation.
  */
 export function getOrCreateHydratedFlexTreeNode(
 	context: Context,
@@ -55,7 +66,10 @@ export function getOrCreateHydratedFlexTreeNode(
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached;
 	}
-	return new LazyTreeNode(context, cursor.type, cursor, anchorNode, anchor);
+	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("Missing node schema");
+	const NodeClass =
+		schema instanceof ObjectNodeStoredSchema ? LazyObjectNode : LazyGeneralNode;
+	return new NodeClass(context, cursor.type, cursor, anchorNode, anchor, schema);
 }
 
 function cleanupTree(anchor: AnchorNode): void {
@@ -66,28 +80,71 @@ function cleanupTree(anchor: AnchorNode): void {
 }
 
 /**
- * Lazy implementation of {@link FlexTreeNode}.
+ * Shared implementation of hydrated {@link FlexTreeNode}s.
+ * @remarks
+ * Node implementations capture schema-dependent behavior.
+ * See {@link Context} for the schema changes that can preserve node instances and those that require invalidation.
  */
-export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
+export abstract class LazyTreeNode
+	extends AnchoredEntity<Anchor>
+	implements HydratedFlexTreeNode
+{
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
+	/**
+	 * The node schema captured at construction for field-kind lookup.
+	 * It is not refreshed after schema changes; see {@link Context} for invalidation requirements.
+	 */
+	protected readonly storedSchema: TreeNodeStoredSchema;
 
-	private readonly storedSchema: TreeNodeStoredSchema;
+	/**
+	 * Node-owned cache of field instances, read directly during field lookup.
+	 * @remarks
+	 * {@link LazyObjectNode} retains fields that own cursors and anchors until disposal.
+	 * This optimization caches only keys declared by the stored object schema.
+	 * Undeclared object fields borrow the node's resources and are not cached.
+	 * {@link LazyGeneralNode} works for every stored schema and caches only populated fields,
+	 * evicting them when they become empty.
+	 * The Map is allocated on demand, so leaves and unboxed field reads do not allocate one.
+	 */
+	public fieldCache: Map<FieldKey, FlexTreeField> | undefined;
 
+	/**
+	 * Creates a FlexTree node instance at the supplied cursor's location in the context's forest.
+	 * @param context - Owns the FlexTree node's lifetime and supplies the forest, stored schema, and editing services.
+	 * @param type - The node's stored type identifier. Must equal `cursor.type`.
+	 * @param cursor - A cursor from the context's forest, positioned on the node in nodes mode.
+	 * The new instance forks this cursor; the caller retains ownership of the supplied cursor.
+	 * @param anchorNode - The anchor-set node for the same node as `cursor` and `anchor`.
+	 * Its {@link flexTreeSlot} must not already contain a FlexTree node instance.
+	 * @param anchor - An owned anchor for the node in the context's forest.
+	 * Ownership transfers to the new instance, which forgets the anchor when disposed.
+	 * @param storedSchema - The current stored schema for `type`, as obtained from `context.schema.nodeSchema`.
+	 * Supply it when the caller has already resolved it, such as when selecting the node implementation,
+	 * to avoid a second lookup. Omit it to have the constructor perform that lookup.
+	 * This is not a schema override: it must describe the same type under the context's current schema
+	 * and be supported by the selected node implementation.
+	 * The new instance retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
+	 * @remarks
+	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing node instances and selects the schema-dependent implementation.
+	 */
 	public constructor(
 		context: Context,
 		public readonly type: TreeNodeSchemaIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
+		storedSchema?: TreeNodeStoredSchema,
 	) {
 		super(context, cursor, anchor);
 		this.storedSchema =
-			context.schema.nodeSchema.get(this.type) ?? fail(0xb14 /* missing schema */);
+			storedSchema ??
+			context.schema.nodeSchema.get(this.type) ??
+			fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
@@ -103,10 +160,14 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return this.context.checkout.forest.tryMoveCursorToNode(this.anchor, cursor);
 	}
 
+	/**
+	 * Releases this node's anchor, cached fields, and destruction subscription.
+	 */
 	protected override forgetAnchor(): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
+		this.fieldCache = undefined;
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
 		this.context.checkout.forest.anchors.forget(this.anchor);
@@ -115,6 +176,20 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public get value(): Value {
 		return this.cursor.value;
 	}
+
+	/**
+	 * Gets or creates a field at the supplied cursor's location.
+	 * The cursor must be in a field of this node, and the caller must validate this node's lifetime.
+	 * @param cursor - A cursor in this node's forest, positioned on the requested field.
+	 * @param createField - Creates a field which owns its navigation resources.
+	 * Called only on a cache miss for a field that needs its own resources; the result must match the cursor's field and stored schema.
+	 * Implementations whose fields borrow this node's resources do not call this factory.
+	 * @returns A cached or newly created field. The cursor remains at its original position.
+	 */
+	public abstract getOrCreateField(
+		cursor: ITreeSubscriptionCursor,
+		createField: () => FlexTreeField,
+	): FlexTreeField;
 
 	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
 		{
@@ -158,6 +233,28 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return inCursorField(this.cursor, key, (cursor) => {
 			return makeField(this.context, fieldSchema.kind, cursor);
 		});
+	}
+
+	public getFirstFieldChild(key: FieldKey): FlexTreeUnknownUnboxed | undefined {
+		currentObserver?.observeNodeField(this, key);
+		return inCursorField(this.cursor, key, (cursor) =>
+			cursor.getFieldLength() === 0
+				? undefined
+				: inCursorNode(cursor, 0, (child) =>
+						unboxedFlexNode(this.context, child, { parent: this.anchor, fieldKey: key }),
+					),
+		);
+	}
+
+	/**
+	 * Gets an anchor-derived field path without recovering this node's cursor.
+	 * @param key - The field key on this node, whether or not the field is populated.
+	 * @remarks
+	 * Validates this node's lifetime. The returned path must not be retained across edits.
+	 */
+	public getFieldPath(key: FieldKey): { parent: AnchorNode; field: FieldKey } {
+		this.ensureValidForAccess();
+		return { parent: this.anchorNode, field: key };
 	}
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeField> {
@@ -235,5 +332,95 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this.cursor, (cursor) => cursor.getFieldKey()).values();
+	}
+}
+
+/**
+ * A hydrated node for stored object schemas that caches declared field instances, including empty fields and array content.
+ * Each cached field owns its cursor and anchor.
+ * Undeclared object fields are forbidden and are not retained.
+ * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
+ */
+export class LazyObjectNode extends LazyTreeNode {
+	public override getOrCreateField(
+		cursor: ITreeSubscriptionCursor,
+		createField: () => FlexTreeField,
+	): FlexTreeField {
+		const key = cursor.getFieldKey();
+		assert(
+			this.storedSchema instanceof ObjectNodeStoredSchema,
+			"Caching declared fields requires a stored object schema",
+		);
+		if (!this.storedSchema.objectNodeFields.has(key)) {
+			return new UncachedForbiddenField(this, key);
+		}
+		return getOrCreate(
+			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()),
+			key,
+			createField,
+		);
+	}
+}
+
+/**
+ * A node for any stored schema with a bounded cache of field instances that borrow its navigation resources.
+ * Empty fields are not cached, and batch cleanup examines only changed cached keys.
+ * Retained fields remain usable after eviction because they navigate through this node.
+ */
+export class LazyGeneralNode extends LazyTreeNode {
+	readonly #removeFieldChangeCallback: () => void;
+
+	/**
+	 * Creates a node that evicts cached fields when they become empty.
+	 * @param args - The construction arguments and ownership requirements described by {@link LazyTreeNode}.
+	 */
+	public constructor(...args: ConstructorParameters<typeof LazyTreeNode>) {
+		super(...args);
+		this.#removeFieldChangeCallback = this.anchorNode.events.on(
+			"childrenChangedAfterBatch",
+			({ changedFields }) => {
+				const cache = this.fieldCache;
+				if (cache === undefined) {
+					return;
+				}
+				for (const key of changedFields) {
+					if (
+						cache.has(key) &&
+						inCursorField(this.cursor, key, (cursor) => cursor.getFieldLength() === 0)
+					) {
+						cache.delete(key);
+					}
+				}
+				if (cache.size === 0) {
+					this.fieldCache = undefined;
+				}
+			},
+		);
+	}
+
+	/**
+	 * Gets or creates a field that borrows this node's resources, caching only populated fields.
+	 * @param cursor - A current cursor on a field of this node, left at the same position.
+	 * The caller must validate this node's lifetime before calling.
+	 */
+	public override getOrCreateField(cursor: ITreeSubscriptionCursor): FlexTreeField {
+		const key = cursor.getFieldKey();
+		const cached = this.fieldCache?.get(key);
+		if (cached !== undefined) {
+			return cached;
+		}
+		const field = makeNodeBackedField(this, key, this.storedSchema.getFieldSchema(key).kind);
+		if (cursor.getFieldLength() !== 0) {
+			(this.fieldCache ??= new Map<FieldKey, FlexTreeField>()).set(key, field);
+		}
+		return field;
+	}
+
+	/**
+	 * Unsubscribes field-cache cleanup before releasing this node's anchor and cached fields.
+	 */
+	protected override forgetAnchor(): void {
+		this.#removeFieldChangeCallback();
+		super.forgetAnchor();
 	}
 }
