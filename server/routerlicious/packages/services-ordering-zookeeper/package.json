@@ -28,7 +28,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/server-services-core": "workspace:~",
-		"zookeeper": "^7.2.0"
+		"zookeeper": "^7.3.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.65.0",
