@@ -44,9 +44,9 @@ For configurations that must coexist in a view, the consumer supplies distinct s
 Choose these scopes once for the model and reuse them across clients and when reopening documents.
 Two patterns are useful:
 
-| Pattern             | Identifier construction                                               | Examples                                                                                                                                                                                                                                     |
-| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Caller-owned scope  | The library supplies names within a scope reserved by the caller.     | <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" /> use enum values as names.                                                                                              |
+| Pattern             | Identifier construction                                               | Examples                                                                                                                                                                                                                                           |
+| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Caller-owned scope  | The library supplies names within a scope reserved by the caller.     | <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" /> use enum values as names.                                                                                                    |
 | Library-owned scope | The library incorporates the supplied scope into its own identifiers. | <ApiLink package="fluid-framework" api="TableSchema" /> uses `com.fluidframework.tableV2<user-scope>.TableRoot`; <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> uses `com.fluidframework.text.formatted<user-scope>.Text`. |
 
 Give separate enums distinct scopes when values overlap.
@@ -61,6 +61,50 @@ Start with <ApiLink package="fluid-framework" api="SchemaFactory" /> itself: its
 For smaller schema-creation utilities, see <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" />, which derive schemas from focused inputs without a component system.
 
 Then see the executable [configurable library walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts): an explicitly typed factory and two scoped configurations embedded in one root.
+The following excerpt shows its schema factory.
+The walkthrough provides the imports, the `Box`, `BoxStatics`, and `BoxSchema` public contracts, and the application tests.
+The return type preserves the caller's scope and allowed child types while hiding the stored `content` field:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":68,"end":98} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const boxFactory = new SchemaFactory("com.example.box");
+
+/**
+ * Creates one configured box schema with identifier `com.example.box.<scope>.Box`.
+ * The caller must reuse the result and keep its scope stable when reopening documents.
+ * Distinct configurations that coexist in one schema need distinct scopes.
+ * See schemaErasure.integration.ts for a fixed library's explicit export boundary.
+ */
+export function createBoxSchema<Scope extends string, Allowed extends ImplicitAllowedTypes>(
+	scope: Scope,
+	allowed: Allowed,
+): BoxSchema<Scope, Allowed> {
+	class BoxImplementation extends boxFactory.object(`${scope}.Box`, {
+		content: boxFactory.required(allowed),
+	}) {
+		public get value(): TreeNodeFromImplicitAllowedTypes<Allowed> {
+			return this.content;
+		}
+
+		public static create(
+			value: InsertableTreeNodeFromImplicitAllowedTypes<Allowed>,
+		): BoxImplementation {
+			return new BoxImplementation({ content: value });
+		}
+	}
+
+	return eraseSchemaDetails<Box<Scope, Allowed>, BoxStatics<Scope, Allowed>>()(
+		BoxImplementation,
+	);
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
 For larger examples, see <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> for formatting and extra atom schemas, or <ApiLink package="fluid-framework" api="TableSchema" /> for separately configurable cells, rows, and columns.
 Use their public contracts and release tags, not internal helpers, as extension points.
 
@@ -141,6 +185,29 @@ Construct the root schema and <ApiLink package="fluid-framework" api="TreeViewCo
 If multiple paths expose a schema, such as a contribution and a component-specific export, they must return the same class.
 Create a <ApiLink package="fluid-framework" api="Component.memoize" /> callback inside the component factory so its cache belongs to that composition.
 For other cached, configuration-dependent results, see <ApiLink package="fluid-framework" api="Component.Configurable" /> and <ApiLink package="fluid-framework" api="Component.Composed.getConfigured" />.
+
+For example, consider this excerpt from the [component walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts).
+Its `createTextSchema` function defines a text node whose attachment can hold any of the composed item schemas.
+Both the `items` contribution and the `textSchema` export use the same memoized callback:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":82,"end":91} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const textComponent = ((lazyComposition) => {
+	// Defer schema creation until composition is complete, then reuse the same class for both exports.
+	// Creating it on every access would produce distinct classes with the same schema identifier.
+	const textSchema = Component.memoize(() => createTextSchema(lazyComposition()));
+	return {
+		items: () => [textSchema],
+		textSchema,
+	};
+}) satisfies Component.Factory<ItemComponent>;
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
 
 ## Types at composition boundaries
 

@@ -55,25 +55,47 @@ Erasure returns the same runtime schema; it is not a wrapper or access-control m
 
 Start with the executable [schema-erasure walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts): top-level exports followed by consumer tests for construction, embedding, edits, and events.
 It imports erasure APIs from `@fluidframework/tree/alpha` and keeps the implementation class local.
-This excerpt shows its public contract and erased export; the walkthrough provides the imports and `SquareImplementation` class:
+The following excerpts show its public contract and erased export.
+First, define the public contract; the walkthrough provides the imports and `SquareImplementation` class:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":17,"end":30} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
 
 ```typescript
+/** Domain operations and observable state, without the stored sideLength field. */
 export interface SquareMembers {
 	readonly area: number;
 	resize(sideLength: number): void;
 }
 
+/** Retain node identity and the exact persisted identifier at the public boundary. */
 export type Square = ErasedNode<SquareMembers, "com.example.geometry.Square">;
 
+/** Construction uses domain terms rather than exposing the stored object shape. */
 export interface SquareStatics {
 	create(sideLength: number): Square;
 }
+```
 
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+Then export the implementation with only that contract and the runtime schema exposed:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":60,"end":64} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
 export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
 	Square,
 	SquareStatics
 >()(SquareImplementation);
 ```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
 
 Consumers embed the `Square` schema, construct nodes with `Square.create`, and use `area` and `resize` without depending on the stored `sideLength` field.
 The [API tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/eraseSchemaDetails.spec.ts) cover recursion, subclassing, and compile-time restrictions.
