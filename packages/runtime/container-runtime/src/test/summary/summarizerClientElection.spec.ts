@@ -168,7 +168,7 @@ describe("Summarizer Client Election", () => {
 			testQuorum,
 			summaryCollectionEmitter,
 			maxOps,
-			initialState ?? currentSequenceNumber,
+			initialState?.electionSequenceNumber ?? currentSequenceNumber,
 		);
 		elections.push(election);
 		return election;
@@ -220,10 +220,11 @@ describe("Summarizer Client Election", () => {
 		message: string,
 	) {
 		const { electedClientId, electedParentId, electionSequenceNumber } = election.serialize();
+		// The serialized client ID is retained for compatibility, not child election.
 		assert.strictEqual(
-			electedClientId,
-			election.electedClientId,
-			`Inconsistent clientId; ${message}`,
+			election.summarizerExistsInQuorum,
+			expectedId !== undefined && expectedId !== expectedParentId,
+			`Invalid summarizer presence; ${message}`,
 		);
 		assert.strictEqual(
 			electedParentId,
@@ -249,6 +250,17 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Oldest eligible client election", () => {
+		it("Should elect by join sequence regardless of quorum insertion order", () => {
+			const election = createElection([
+				["b", 5, true],
+				["bot", 1, false],
+				["a", 2, true],
+			]);
+			assertState(election, "a", "a", 5, "oldest eligible parent");
+			removeClient("a");
+			assertState(election, "b", "b", 6, "oldest remaining parent");
+		});
+
 		it("Should initialize with empty quorum", () => {
 			const election = createElection();
 			assertState(election, undefined, undefined, 0, "no clients");
@@ -314,7 +326,7 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Summarizer client in quorum", () => {
-		it("Should derive the oldest parent before a summarizer supersedes a restored interactive client", () => {
+		it("Should derive the oldest parent and observe a summarizer despite recorded interactive identities", () => {
 			const election = createElection(
 				[
 					["a", 1, true],
@@ -330,28 +342,22 @@ describe("Summarizer Client Election", () => {
 				"parent comes from quorum rather than recorded identities",
 			);
 			addClient("s", 101, false, summarizerClientType);
-			assertState(
-				election,
-				"s",
-				"a",
-				101,
-				"client type determines whether an incumbent summarizer exists",
-			);
+			assertState(election, "s", "a", 101, "summarizer presence comes from quorum");
 		});
 
-		it("Should return summarizer as electedClientId when summarizer joins", () => {
+		it("Should report a summarizer in quorum when summarizer joins", () => {
 			const election = createElection([["a", 2, true]]);
 			assertState(election, "a", "a", 2, "parent is elected");
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			assertState(election, "a-summarizer", "a", 10, "summarizer is elected client");
+			assertState(election, "a-summarizer", "a", 10, "summarizer is present");
 		});
 
-		it("Should revert to parent when summarizer leaves", () => {
+		it("Should report no summarizer in quorum when the last summarizer leaves", () => {
 			const election = createElection([["a", 2, true]]);
 			addClient("a-summarizer", 10, false, summarizerClientType);
-			assertState(election, "a-summarizer", "a", 10, "summarizer is elected");
+			assertState(election, "a-summarizer", "a", 10, "summarizer is present");
 			removeClient("a-summarizer", 5);
-			assertState(election, "a", "a", 15, "parent is elected again");
+			assertState(election, "a", "a", 15, "parent may create a replacement");
 		});
 
 		it("Should handle graceful handoff: A elected, A' joins, A leaves, B becomes parent, A' leaves", () => {
@@ -363,68 +369,62 @@ describe("Summarizer Client Election", () => {
 
 			// A spawns summarizer A'
 			addClient("a-summarizer", 20, false, summarizerClientType);
-			assertState(election, "a-summarizer", "a", 20, "A' is elected client");
+			assertState(election, "a-summarizer", "a", 20, "A' is present in quorum");
 
 			// A leaves
 			removeClient("a", 5);
-			assertState(
-				election,
-				"a-summarizer",
-				"b",
-				20,
-				"B becomes parent, A' still elected client",
-			);
+			assertState(election, "a-summarizer", "b", 20, "B becomes parent, A' remains in quorum");
 
 			// A' leaves
 			removeClient("a-summarizer", 5);
-			assertState(election, "b", "b", 30, "B becomes elected client");
+			assertState(election, "b", "b", 30, "B may create a replacement");
 		});
 	});
 
 	describe("electedSummarizerChanged event", () => {
-		it("Should log identity transitions including parent-only handoff, but not ignored joins or resets", () => {
-			const election = createElection([
+		it("Should log parent and summarizer-presence transitions, but not irrelevant joins or leaves", () => {
+			createElection([
 				["a", 1, true],
 				["b", 2, true],
 			]);
 			addClient("s", 3, false, summarizerClientType);
 			addClient("other", 4, false, summarizerClientType); // Ignored join.
-			election.resetElectedClient(4); // Ignored reset.
 			removeClient("a");
 			removeClient("s");
+			removeClient("other");
 			const transitions = mockLogger.events.filter(
 				(event) => event.eventName === "SummarizerClientElection:ElectionChanged",
 			);
 			assert.equal(transitions.length, 3);
 			assert.deepEqual(
 				transitions.map((event) => ({
-					previousElectedClientId: event.previousElectedClientId,
 					previousElectedParentId: event.previousElectedParentId,
-					electedClientId: event.electedClientId,
 					electedParentId: event.electedParentId,
+					previousSummarizerExistsInQuorum: event.previousSummarizerExistsInQuorum,
+					summarizerExistsInQuorum: event.summarizerExistsInQuorum,
 					sequenceNumber: event.sequenceNumber,
 				})),
 				[
 					{
-						previousElectedClientId: "a",
 						previousElectedParentId: "a",
-						electedClientId: "s",
 						electedParentId: "a",
+						previousSummarizerExistsInQuorum: false,
+						summarizerExistsInQuorum: true,
 						sequenceNumber: 3,
 					},
 					{
-						previousElectedClientId: "s",
 						previousElectedParentId: "a",
-						electedClientId: "s",
 						electedParentId: "b",
+						previousSummarizerExistsInQuorum: true,
+						summarizerExistsInQuorum: true,
 						sequenceNumber: 5,
 					},
 					{
-						previousElectedClientId: "s",
 						previousElectedParentId: "b",
-						electedClientId: "b",
 						electedParentId: "b",
-						sequenceNumber: 6,
+						previousSummarizerExistsInQuorum: true,
+						summarizerExistsInQuorum: false,
+						sequenceNumber: 7,
 					},
 				],
 			);
@@ -472,7 +472,78 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Op-counting telemetry", () => {
-		it("Should preserve the quorum-derived election across excess-op windows", () => {
+		it("Should report a stalled child through repeated parent departures", () => {
+			const election = createElection([
+				["a", 1, true],
+				["b", 2, true],
+				["c", 3, true],
+			]);
+			addClient("s", 4, false, summarizerClientType);
+			summaryAck();
+			const baseline = currentSequenceNumber;
+			defaultOp(900);
+			removeClient("a");
+			defaultOp(900);
+			removeClient("b");
+			defaultOp(900);
+			assertState(
+				election,
+				"s",
+				"c",
+				baseline,
+				"parent departures do not hide stalled progress",
+			);
+			assert.equal(
+				mockLogger.events.filter(
+					(event) =>
+						event.eventName === "SummarizerClientElection:ElectedClientNotSummarizing",
+				).length,
+				1,
+			);
+		});
+
+		it("Should reset the progress baseline when summarizer presence changes or a parent changes without children", () => {
+			const election = createElection([
+				["a", 1, true],
+				["b", 2, true],
+				["c", 3, true],
+			]);
+			summaryAck();
+			addClient("s1", 10, false, summarizerClientType);
+			assertState(election, "s1", "a", 10, "first child resets the baseline");
+			summaryAck();
+			const ackSequenceNumber = currentSequenceNumber;
+			addClient("s2", 20, false, summarizerClientType);
+			removeClient("s1");
+			assertState(
+				election,
+				"s2",
+				"a",
+				ackSequenceNumber,
+				"remaining child keeps the baseline",
+			);
+			removeClient("a");
+			assertState(election, "s2", "b", ackSequenceNumber, "parent handoff keeps the baseline");
+			removeClient("s2");
+			assertState(
+				election,
+				"b",
+				"b",
+				currentSequenceNumber,
+				"last departure resets the baseline",
+			);
+			summaryAck();
+			removeClient("b");
+			assertState(
+				election,
+				"c",
+				"c",
+				currentSequenceNumber,
+				"new parent without a child resets the baseline",
+			);
+		});
+
+		it("Should preserve the quorum-derived election across repeated excess-op warnings", () => {
 			const election = createElection(
 				[
 					["a", 2, true],
@@ -486,13 +557,19 @@ describe("Summarizer Client Election", () => {
 			defaultOp(maxOps);
 			assertState(election, "a", "a", 100, "election unchanged at threshold");
 			defaultOp();
-			assertState(election, "a", "a", 100, "election unchanged after first excess-op window");
+			assertState(election, "a", "a", 100, "election unchanged after first excess-op warning");
 			defaultOp(maxOps + 1);
-			assertState(election, "a", "a", 100, "election unchanged after second excess-op window");
+			assertState(
+				election,
+				"a",
+				"a",
+				100,
+				"election unchanged after second excess-op warning",
+			);
 			assert.equal(eventCount, 0, "excess ops should not emit election changes");
 		});
 
-		it("Should preserve the quorum-derived election across excess-op windows after an ack", () => {
+		it("Should preserve the quorum-derived election across repeated excess-op warnings after an ack", () => {
 			const election = createElection(
 				[
 					["a", 2, true],
@@ -527,7 +604,7 @@ describe("Summarizer Client Election", () => {
 				"a",
 				"a",
 				ackSequenceNumber,
-				"election unchanged after first excess-op window",
+				"election unchanged after first excess-op warning",
 			);
 			defaultOp(maxOps + 1);
 			assertState(
@@ -535,7 +612,7 @@ describe("Summarizer Client Election", () => {
 				"a",
 				"a",
 				ackSequenceNumber,
-				"election unchanged after second excess-op window",
+				"election unchanged after second excess-op warning",
 			);
 			assert.equal(
 				eventCount,
@@ -588,56 +665,53 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Serialization", () => {
-		it("Should recover an ineligible recorded client to the parent without promoting another child", () => {
-			addClient("a", 1);
-			addClient("ineligible", 2, false);
-			addClient("s", 3, false, summarizerClientType);
-			const election = createElection([], {
-				electedClientId: "ineligible",
+		it("Should preserve the compatibility snapshot shape with a parent only", () => {
+			const election = createElection([["a", 1, true]], {
+				electedClientId: undefined,
+				electedParentId: undefined,
+				electionSequenceNumber: 50,
+			});
+			assertState(election, "a", "a", 50, "parent supplies both compatibility identities");
+			assert.deepEqual(JSON.parse(JSON.stringify(election.serialize())), {
+				electionSequenceNumber: 50,
+				electedClientId: "a",
 				electedParentId: "a",
+			});
+		});
+
+		it("Should preserve the compatibility snapshot shape with a child only", () => {
+			addClient("s", 1, false, summarizerClientType);
+			const election = createElection([], {
+				electedClientId: undefined,
+				electedParentId: undefined,
 				electionSequenceNumber: 50,
 			});
 			assertState(
 				election,
-				"a",
-				"a",
+				"s",
+				undefined,
 				50,
-				"ineligible identity does not promote an unrelated child",
+				"child supplies the compatibility client identity",
 			);
-			mockLogger.assertMatch([
-				{
-					eventName: "SummarizerClientElection:InitialElectedClientIneligible",
-					expectedClientId: "ineligible",
-					electedClientId: "a",
-				},
-			]);
-			removeClient("s");
-			assertState(election, "a", "a", 50, "untracked child's departure preserves state");
+			assert.deepEqual(JSON.parse(JSON.stringify(election.serialize())), {
+				electionSequenceNumber: 50,
+				electedClientId: "s",
+			});
 		});
 
-		it("Should not promote an ignored summarizer when restoring after the incumbent leaves", () => {
-			const election = createElection([
-				["a", 1, true],
-				["b", 2, true],
-			]);
-			addClient("s1", 3, false, summarizerClientType);
-			addClient("s2", 4, false, summarizerClientType);
-			removeClient("s1");
-			assertState(election, "a", "a", 5, "incumbent departure returns election to parent");
-			const restored = createElection([], election.serialize());
-			assert.deepEqual(restored.serialize(), election.serialize());
-			removeClient("a");
-			assertState(election, "b", "b", 6, "next parent may create a replacement");
-			assert.deepEqual(restored.serialize(), election.serialize());
-			addClient("s3", 7, false, summarizerClientType);
-			assertState(election, "s3", "b", 7, "replacement becomes incumbent");
-			assert.deepEqual(restored.serialize(), election.serialize());
-			removeClient("s2");
-			assert.deepEqual(restored.serialize(), election.serialize());
-			assertState(restored, "s3", "b", 7, "ignored child's departure has no effect");
+		it("Should preserve the compatibility snapshot shape with an empty quorum", () => {
+			const election = createElection([], {
+				electedClientId: undefined,
+				electedParentId: undefined,
+				electionSequenceNumber: 50,
+			});
+			assertState(election, undefined, undefined, 50, "no compatibility identities");
+			assert.deepEqual(JSON.parse(JSON.stringify(election.serialize())), {
+				electionSequenceNumber: 50,
+			});
 		});
 
-		it("Should derive the oldest parent from a legacy younger-parent snapshot while retaining its child", () => {
+		it("Should derive the oldest parent and observe the child from a legacy younger-parent snapshot", () => {
 			const election = createElection([
 				["a", 1, true],
 				["b", 2, true],
@@ -654,7 +728,7 @@ describe("Summarizer Client Election", () => {
 				"s",
 				"a",
 				50,
-				"new observer derives A while retaining the legacy child",
+				"new observer derives A and observes the child in quorum",
 			);
 			assert.deepEqual(restored.serialize(), {
 				electedClientId: "s",
@@ -669,24 +743,33 @@ describe("Summarizer Client Election", () => {
 				"a",
 				"a",
 				51,
-				"oldest parent takes over after the incumbent leaves",
+				"oldest parent may create a child after the last departure",
 			);
 			assert.deepEqual(roundTripped.serialize(), restored.serialize());
-			assert.equal(election.electedClientId, "a");
+			assert.equal(election.summarizerExistsInQuorum, false);
 		});
 
-		for (const recordedClientId of [undefined, "missing"]) {
-			it(`Should retain an existing summarizer when the recorded client is ${recordedClientId}`, () => {
-				addClient("a", 1);
-				addClient("s", 2, false, summarizerClientType);
-				const election = createElection([], {
-					electedClientId: recordedClientId,
-					electedParentId: "missing",
-					electionSequenceNumber: 50,
-				});
-				assertState(election, "s", "a", 50, "existing child still gates replacement creation");
+		it("Should observe an existing summarizer when no client was recorded", () => {
+			addClient("a", 1);
+			addClient("s", 2, false, summarizerClientType);
+			const election = createElection([], {
+				electedClientId: undefined,
+				electedParentId: "missing",
+				electionSequenceNumber: 50,
 			});
-		}
+			assertState(election, "s", "a", 50, "existing child prevents replacement creation");
+		});
+
+		it("Should observe an existing summarizer when the recorded client is missing", () => {
+			addClient("a", 1);
+			addClient("s", 2, false, summarizerClientType);
+			const election = createElection([], {
+				electedClientId: "missing",
+				electedParentId: "missing",
+				electionSequenceNumber: 50,
+			});
+			assertState(election, "s", "a", 50, "existing child prevents replacement creation");
+		});
 
 		it("Should preserve matching live and restored progress baselines through parent-only handoff after an ack", () => {
 			const election = createElection([
@@ -709,15 +792,29 @@ describe("Summarizer Client Election", () => {
 			assert.equal(warnings(mockLogger).length, 0);
 			assert.equal(warnings(restoredLogger).length, 0);
 			defaultOp();
-			for (const logger of [mockLogger, restoredLogger]) {
+			function assertProgressWarning(logger: MockLogger, observer: string): void {
 				assert.deepEqual(
 					warnings(logger).map((event) => ({
 						opsWithoutSummary: event.opsWithoutSummary,
 						electedClientId: event.electedClientId,
+						electedParentId: event.electedParentId,
+						summarizerExistsInQuorum: event.summarizerExistsInQuorum,
+						electionSequenceNumber: event.electionSequenceNumber,
 					})),
-					[{ opsWithoutSummary: maxOps + 1, electedClientId: "s" }],
+					[
+						{
+							opsWithoutSummary: maxOps + 1,
+							electedClientId: "s",
+							electedParentId: "b",
+							summarizerExistsInQuorum: true,
+							electionSequenceNumber: 50,
+						},
+					],
+					`${observer} reports the retained ack baseline`,
 				);
 			}
+			assertProgressWarning(mockLogger, "live observer");
+			assertProgressWarning(restoredLogger, "restored observer");
 			assert.deepEqual(restored.serialize(), election.serialize());
 			removeClient("s");
 			assert.deepEqual(restored.serialize(), election.serialize());
@@ -740,18 +837,19 @@ describe("Summarizer Client Election", () => {
 				addClient("summarizer-2", 4, false, summarizerClientType);
 				const restored = createElection([], election.serialize(), mockLogger);
 				assert.deepEqual(restored.serialize(), election.serialize());
-				assert.equal(election.electedClientId, "summarizer-1");
+				assert.equal(election.summarizerExistsInQuorum, true);
 				removeClient("a");
 				assert.deepEqual(restored.serialize(), election.serialize());
 				removeClient(firstToLeave);
+				assert.equal(election.summarizerExistsInQuorum, true);
 				assert.deepEqual(restored.serialize(), election.serialize());
 				removeClient(firstToLeave === "summarizer-1" ? "summarizer-2" : "summarizer-1");
 				assert.deepEqual(restored.serialize(), election.serialize());
-				assert.equal(election.electedClientId, "b");
+				assert.equal(election.summarizerExistsInQuorum, false);
 			});
 		}
 
-		it("Should restore the recorded summarizer even when an older summarizer is in quorum", () => {
+		it("Should serialize the oldest summarizer for compatibility regardless of recorded identity", () => {
 			addClient("a", 1);
 			addClient("older", 2, false, summarizerClientType);
 			addClient("recorded", 3, false, summarizerClientType);
@@ -760,10 +858,21 @@ describe("Summarizer Client Election", () => {
 				electedParentId: "a",
 				electionSequenceNumber: 3,
 			});
-			assertState(election, "recorded", "a", 3, "serialized election identity retained");
+			assertState(
+				election,
+				"older",
+				"a",
+				3,
+				"oldest child represents quorum for older readers",
+			);
+			let eventCount = 0;
+			election.on("electedSummarizerChanged", () => eventCount++);
+			removeClient("older");
+			assertState(election, "recorded", "a", 3, "remaining child preserves progress baseline");
+			assert.equal(eventCount, 0);
 		});
 
-		it("Should preserve the ack baseline on ignored joins and no-op resets", () => {
+		it("Should preserve the ack baseline on irrelevant membership changes", () => {
 			const election = createElection([["a", 1, true]]);
 			addClient("s", 2, false, summarizerClientType);
 			summaryAck(10);
@@ -771,11 +880,12 @@ describe("Summarizer Client Election", () => {
 			let eventCount = 0;
 			election.on("electedSummarizerChanged", () => eventCount++);
 			addClient("other", 13, false, summarizerClientType);
-			election.resetElectedClient(14);
 			assert.deepEqual(election.serialize(), state);
 			assert.equal(eventCount, 0);
 			defaultOp(maxOps + 1);
-			assert.equal(election.electedClientId, "s");
+			removeClient("s");
+			assert.equal(election.summarizerExistsInQuorum, true);
+			assert.equal(election.serialize().electionSequenceNumber, state.electionSequenceNumber);
 			assert.equal(eventCount, 0);
 		});
 
@@ -903,10 +1013,10 @@ describe("Summarizer Client Election", () => {
 			assertState(election, "a-summarizer", "a", 10, "summarizer detected at construction");
 		});
 
-		it("Should retain the elected summarizer when a second summarizer joins", () => {
+		it("Should keep reporting summarizer presence when a second summarizer joins", () => {
 			const election = createElection([["a", 2, true]]);
 			addClient("summarizer-1", 10, false, summarizerClientType);
-			assertState(election, "summarizer-1", "a", 10, "first summarizer is elected client");
+			assertState(election, "summarizer-1", "a", 10, "first summarizer resets the baseline");
 
 			addClient("summarizer-2", 20, false, summarizerClientType);
 			assertState(
@@ -914,7 +1024,7 @@ describe("Summarizer Client Election", () => {
 				"summarizer-1",
 				"a",
 				10,
-				"second summarizer does not replace incumbent",
+				"second summarizer preserves the progress baseline",
 			);
 
 			removeClient("summarizer-2", 5);
@@ -923,23 +1033,17 @@ describe("Summarizer Client Election", () => {
 				"summarizer-1",
 				"a",
 				10,
-				"removing unelected summarizer has no effect",
+				"remaining summarizer preserves the progress baseline",
 			);
 
-			// Removing the tracked summarizer reverts to parent
+			// The last child's departure allows the parent to create a replacement.
 			removeClient("summarizer-1", 5);
-			assertState(
-				election,
-				"a",
-				"a",
-				30,
-				"parent is elected again after tracked summarizer leaves",
-			);
+			assertState(election, "a", "a", 30, "last summarizer leaves and resets the baseline");
 		});
 	});
 
 	describe("Initialization from serialized state", () => {
-		it("Should advance past an ineligible serialized client and parent", () => {
+		it("Should ignore an ineligible serialized client and parent", () => {
 			// "s1" is non-interactive and non-summarizer, so ineligible
 			const election = createElection(
 				[
@@ -979,22 +1083,7 @@ describe("Summarizer Client Election", () => {
 			assertState(election, "a-summarizer", "a", 100, "parent derived independently of child");
 		});
 
-		it("Should select the next eligible client when electedClientId is ineligible", () => {
-			// "s1" is in quorum, matches electedClientId, but is ineligible
-			const election = createElection(
-				[
-					["s1", 1, false],
-					["a", 5, true],
-				],
-				{ electedClientId: "s1", electedParentId: "s1", electionSequenceNumber: 100 },
-			);
-			assertState(election, "a", "a", 100, "next eligible client elected");
-			mockLogger.assertMatchNone([
-				{ eventName: "SummarizerClientElection:InitialElectedClientNotFound" },
-			]);
-		});
-
-		it("Should log error when electedClientId is not found in quorum", () => {
+		it("Should ignore a recorded client that is not found in quorum", () => {
 			const election = createElection(
 				[
 					["a", 2, true],
@@ -1003,7 +1092,7 @@ describe("Summarizer Client Election", () => {
 				{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 100 },
 			);
 			assertState(election, "a", "a", 100, "oldest parent replaces missing recorded client");
-			mockLogger.assertMatch([
+			mockLogger.assertMatchNone([
 				{
 					eventName: "SummarizerClientElection:InitialElectedClientNotFound",
 					expectedClientId: "x",
@@ -1076,7 +1165,7 @@ describe("Summarizer Client Election", () => {
 	});
 
 	describe("Op telemetry deduplication", () => {
-		it("Should not log duplicate telemetry within the same window", () => {
+		it("Should not log another warning until more than maxOps ops pass since the previous warning", () => {
 			createElection([["a", 2, true]]);
 			// Exceed threshold to trigger first log
 			defaultOp(maxOps + 1);
@@ -1085,19 +1174,31 @@ describe("Summarizer Client Election", () => {
 			).length;
 			assert.strictEqual(firstCount, 1, "should log once after exceeding threshold");
 
-			// Send more ops within the same maxOps window — should NOT log again
+			// No more than maxOps ops have passed since the previous warning.
 			defaultOp(maxOps - 1);
 			const secondCount = mockLogger.events.filter(
 				(e) => e.eventName === "SummarizerClientElection:ElectedClientNotSummarizing",
 			).length;
-			assert.strictEqual(secondCount, 1, "should not log again within same window");
+			assert.strictEqual(
+				secondCount,
+				1,
+				"should not log again before more than maxOps ops pass",
+			);
 
-			// Exceed the next window — should log again
+			// More than maxOps ops have now passed since the previous warning.
 			defaultOp(2);
 			const thirdCount = mockLogger.events.filter(
 				(e) => e.eventName === "SummarizerClientElection:ElectedClientNotSummarizing",
 			).length;
-			assert.strictEqual(thirdCount, 2, "should log again after next window");
+			assert.strictEqual(thirdCount, 2, "should log again after more than maxOps ops pass");
+		});
+
+		it("Should not log progress warnings for an empty election", () => {
+			createElection();
+			defaultOp(5000);
+			mockLogger.assertMatchNone([
+				{ eventName: "SummarizerClientElection:ElectedClientNotSummarizing" },
+			]);
 		});
 	});
 
@@ -1124,7 +1225,7 @@ describe("Summarizer Client Election", () => {
 			a.connectedState.disconnect();
 			assertState(election, "a-summarizer", "b", 7, "summarizer still doing work");
 			assert.equal(await summarizer.stopDeferred.promise, "notElectedParent");
-			assert.equal(b.summarizers.length, 0, "B waits for the incumbent's quorum departure");
+			assert.equal(b.summarizers.length, 0, "B waits for the child's quorum departure");
 
 			// A' finishes
 			summarizer.runDeferred.resolve();

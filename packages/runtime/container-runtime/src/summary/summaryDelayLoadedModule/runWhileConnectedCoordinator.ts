@@ -40,18 +40,6 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	public get cancelled(): boolean {
 		if (!this._cancelled) {
 			assert(this.active(), 0x25d /* "We should never connect as 'read'" */);
-
-			// This check can't be enabled in current design due to lastSummary flow, where
-			// summarizer for closed container stays around and can produce one more summary.
-			// Currently we solve the problem of overlapping summarizer by doing wait in
-			// SummaryManager.createSummarizer()
-			// Better solution would involve these steps:
-			// 1. Summarizer selection logic should chose summarizing client (with clientType === "summarizer")
-			// if such client exists.
-			// 2. Summarizer should be updated about such changes (to update onBehalfOfClientId)
-			//
-			// assert(this.runtime.summarizerClientId === this.onBehalfOfClientId ||
-			//    this.runtime.summarizerClientId === this.runtime.clientId, "onBehalfOfClientId");
 		}
 
 		return this._cancelled;

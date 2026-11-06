@@ -216,13 +216,16 @@ describe("Summary Manager", () => {
 		extends TypedEventEmitter<ISummarizerClientElectionEvents>
 		implements ISummarizerClientElection
 	{
-		public electedClientId: string | undefined;
-		public get electedParentId() {
-			return this.electedClientId;
+		public electedParentId: string | undefined;
+		public summarizerExistsInQuorum = false;
+
+		public electParent(parentId: string | undefined) {
+			this.electedParentId = parentId;
+			this.emit("electedSummarizerChanged");
 		}
 
-		public electClient(clientId: string | undefined) {
-			this.electedClientId = clientId;
+		public setSummarizerExistsInQuorum(present: boolean) {
+			this.summarizerExistsInQuorum = present;
 			this.emit("electedSummarizerChanged");
 		}
 	}
@@ -301,16 +304,48 @@ describe("Summary Manager", () => {
 		summaryManager = undefined as unknown as SummaryManager;
 	});
 
+	it("Should wait for all children to leave without stopping an owned child on join", async () => {
+		createSummaryManager({ connected: true, opsToBypassInitialDelay: 0 });
+		clientElection.setSummarizerExistsInQuorum(true);
+		clientElection.electParent(thisClientId);
+		await flushPromises();
+		assertRequests(0);
+		clientElection.setSummarizerExistsInQuorum(false);
+		await flushPromises();
+		assertRequests(1);
+		clientElection.setSummarizerExistsInQuorum(true);
+		completeSummarizerRequest();
+		await flushPromises();
+		assertState(SummaryManagerState.Running, "own child's join does not revoke ownership");
+		summarizer.stop("summarizerClientDisconnected");
+		summarizer.runDeferred.resolve();
+		await flushPromises();
+		assertRequests(1, "remaining quorum child blocks replacement");
+		clientElection.setSummarizerExistsInQuorum(false);
+		await flushPromises();
+		assertRequests(2);
+	});
+
+	it("Should recheck child presence after throttling even when initial delay is bypassed", async () => {
+		throttler.delayMs = 100;
+		createSummaryManager({ connected: true, opsToBypassInitialDelay: 0 });
+		clientElection.electParent(thisClientId);
+		clientElection.setSummarizerExistsInQuorum(true);
+		await clock.tickAsync(100);
+		assertRequests(0);
+		assertState(SummaryManagerState.Off, "another child joined during delay");
+	});
+
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {
 		createSummaryManager({ opsToBypassInitialDelay: 0 });
 		assertState(SummaryManagerState.Off, "should start off");
 		connectedState.connect();
 		await flushPromises();
 		assertState(SummaryManagerState.Off, "connected but not yet elected");
-		clientElection.electClient("other");
+		clientElection.electParent("other");
 		await flushPromises();
 		assertState(SummaryManagerState.Off, "connected but other client elected");
-		clientElection.electClient(thisClientId);
+		clientElection.electParent(thisClientId);
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should request summarizer");
 		assertRequests(1, "should have requested summarizer");
@@ -329,7 +364,7 @@ describe("Summary Manager", () => {
 	it("Should become summarizer if elected, then connected; stop summarizer after unelected", async () => {
 		createSummaryManager({ opsToBypassInitialDelay: 0, initialDelayMs: 0 });
 		assertState(SummaryManagerState.Off, "should start off");
-		clientElection.electClient(thisClientId);
+		clientElection.electParent(thisClientId);
 		await flushPromises();
 		assertState(SummaryManagerState.Off, "elected but not yet connected");
 		connectedState.connect();
@@ -339,7 +374,7 @@ describe("Summary Manager", () => {
 		completeSummarizerRequest();
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "summarizer should be running");
-		clientElection.electClient("other");
+		clientElection.electParent("other");
 		await flushPromises();
 		assertState(SummaryManagerState.Stopping, "should be stopping after other client elected");
 		summarizer.runDeferred.resolve();
@@ -354,7 +389,7 @@ describe("Summary Manager", () => {
 		connectedState.connect();
 		await flushPromises();
 		assertState(SummaryManagerState.Off, "connected but not yet elected");
-		clientElection.electClient(thisClientId);
+		clientElection.electParent(thisClientId);
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should request summarizer");
 		assertRequests(1, "should have requested summarizer");
@@ -379,7 +414,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
 			clock.tick(1999);
@@ -400,7 +435,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "should enter starting state immediately");
 			assertRequests(1, "should request summarizer immediately, bypassing initial delay");
@@ -431,7 +466,7 @@ describe("Summary Manager", () => {
 				return result;
 			};
 
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises(); // To get to the main continuation in startSummarization
 			await flushPromises(); // To get to the finally continuation in startSummarization
 			assertState(
@@ -459,7 +494,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
 			clock.tick(1999);
@@ -467,14 +502,14 @@ describe("Summary Manager", () => {
 			assertRequests(0, "should not have requested summarizer yet");
 			mockDeltaManager.lastSequenceNumber = 999; // seq < opsToBypass. No bypass.
 			mockDeltaManager.emit("op", summaryOp);
-			clientElection.electClient(thisClientId); // force trigger refresh
+			clientElection.electParent(thisClientId); // force trigger refresh
 			await flushPromises();
 			assertRequests(0, "still should not have requested summarizer yet");
 			// TODO: Fix this violation and remove the disable
 			// eslint-disable-next-line require-atomic-updates
 			mockDeltaManager.lastSequenceNumber = 1000; // Bypass now
 			mockDeltaManager.emit("op", summaryOp);
-			clientElection.electClient(thisClientId); // force trigger refresh
+			clientElection.electParent(thisClientId); // force trigger refresh
 			await flushPromises();
 			assertRequests(1, "should request summarizer, bypassing initial delay");
 			completeSummarizerRequest();
@@ -489,7 +524,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			connectedState.disconnect(); // To enforce stopReasonCanRunLastSummary == true.
 			await flushPromises();
 			mockDeltaManager.emit("op", summaryOp);
@@ -506,7 +541,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 0,
 				connected: false,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Off, "not connected");
 			mockDeltaManager.lastSequenceNumber = 10001;
@@ -534,7 +569,7 @@ describe("Summary Manager", () => {
 			summaryManager.on("summarize", (event) => {
 				summarizeEvents.push(event as { isLastSummary?: boolean });
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "Summarizer should be starting");
 			assertRequests(1, "Should request summarizer");
@@ -567,7 +602,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 0,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
 			clock.tick(99);
@@ -588,7 +623,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
 			clock.tick(1999);
@@ -609,7 +644,7 @@ describe("Summary Manager", () => {
 				opsToBypassInitialDelay: 1000,
 				connected: true,
 			});
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
 			clock.tick(99);
@@ -630,7 +665,7 @@ describe("Summary Manager", () => {
 		it("Should not assert when stop timeout fires before promise chain completes", async () => {
 			createSummaryManager({ opsToBypassInitialDelay: 0 });
 			connectedState.connect();
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "should request summarizer");
 			completeSummarizerRequest();
@@ -657,7 +692,7 @@ describe("Summary Manager", () => {
 		it("Should not corrupt new cycle when stop timeout fires and shouldSummarize is true", async () => {
 			createSummaryManager({ opsToBypassInitialDelay: 0 });
 			connectedState.connect();
-			clientElection.electClient(thisClientId);
+			clientElection.electParent(thisClientId);
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "should request summarizer");
 			assertRequests(1, "first summarizer request");

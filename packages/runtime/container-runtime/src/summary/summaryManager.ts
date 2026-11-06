@@ -56,13 +56,10 @@ export enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = Extract<
-	SummarizerStopReason,
-	"parentNotConnected" | "notElectedParent" | "notElectedClient"
->;
-type ShouldSummarizeState =
-	| { shouldSummarize: true }
-	| { shouldSummarize: false; stopReason: StopReason };
+type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "notElectedParent">;
+type ParentResponsibilityState =
+	| { isResponsibleParent: true }
+	| { isResponsibleParent: false; stopReason: StopReason };
 
 export interface IConnectedEvents extends IEvent {
 	(event: "connected", listener: (clientId: string) => void);
@@ -194,43 +191,32 @@ export class SummaryManager
 	): state is SummaryManagerState.Starting | SummaryManagerState.Running =>
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
-	private getShouldSummarizeState(): ShouldSummarizeState {
+	// Determines whether this client is still responsible for automatic summarization,
+	// based on parent election, connection state, and disposal. Callers separately
+	// check that no summarizer exists in quorum before creating a new child.
+	private getParentResponsibilityState(): ParentResponsibilityState {
 		if (this.disposed) {
-			return { shouldSummarize: false, stopReason: "parentNotConnected" };
+			return { isResponsibleParent: false, stopReason: "parentNotConnected" };
 		}
-
-		// Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
-		// enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
-		// only transition to Stopping when the electedParentId changes. Stopping the summarizer without
-		// changing the electedParent will just cause us to transition to Starting again.
 
 		// New Parent has been elected and it is not the current client, or
 		if (this.connectedState.clientId !== this.clientElection.electedParentId) {
-			return { shouldSummarize: false, stopReason: "notElectedParent" };
-		}
-
-		// We are not already running the summarizer and we are not the current elected client id.
-		if (
-			this.state !== SummaryManagerState.Running &&
-			this.connectedState.clientId !== this.clientElection.electedClientId
-		) {
-			return { shouldSummarize: false, stopReason: "notElectedClient" };
+			return { isResponsibleParent: false, stopReason: "notElectedParent" };
 		}
 
 		if (!this.connectedState.connected) {
-			return { shouldSummarize: false, stopReason: "parentNotConnected" };
+			return { isResponsibleParent: false, stopReason: "parentNotConnected" };
 		}
 
-		return { shouldSummarize: true };
+		return { isResponsibleParent: true };
 	}
 
 	private readonly refreshSummarizer = (): void => {
-		// Transition states depending on shouldSummarize, which is a calculated property
-		// that is only true if this client is connected and is the elected summarizer.
-		const shouldSummarizeState = this.getShouldSummarizeState();
+		// Update the child lifecycle based on this client's responsibility as parent.
+		const parentState = this.getParentResponsibilityState();
 		switch (this.state) {
 			case SummaryManagerState.Off: {
-				if (shouldSummarizeState.shouldSummarize) {
+				if (parentState.isResponsibleParent && !this.clientElection.summarizerExistsInQuorum) {
 					this.startSummarization();
 				}
 				return;
@@ -241,8 +227,8 @@ export class SummaryManager
 				return;
 			}
 			case SummaryManagerState.Running: {
-				if (shouldSummarizeState.shouldSummarize === false) {
-					this.stop(shouldSummarizeState.stopReason);
+				if (parentState.isResponsibleParent === false) {
+					this.stop(parentState.stopReason);
 				}
 				return;
 			}
@@ -271,25 +257,25 @@ export class SummaryManager
 					return "early exit (disposed)";
 				}
 
-				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
-				// but only if creation was delayed. If it was not, then we want to ensure we always create
-				// a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
-				// document out of broken state if it has too many ops and ordering service keeps nacking main
-				// container (and thus it goes into cycle of reconnects)
-				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
-				// the summarizer at all.
-				const shouldSummarizeStateEarlyStage = this.getShouldSummarizeState();
-				if (
-					startWithInitialDelay &&
-					shouldSummarizeStateEarlyStage.shouldSummarize === false
-				) {
-					return `early exit ${shouldSummarizeStateEarlyStage.stopReason}`;
+				// Recheck creation permission. A disconnected parent may still request a last
+				// summary when many ops remain; a parent that lost election may not.
+				// This lets summaries make progress despite repeated parent disconnects under high op load.
+				const parentStateBeforeCreation = this.getParentResponsibilityState();
+				if (!parentStateBeforeCreation.isResponsibleParent) {
+					const canAttemptLastSummary =
+						!startWithInitialDelay &&
+						stopReasonCanRunLastSummary(parentStateBeforeCreation.stopReason);
+
+					if (!canAttemptLastSummary) {
+						return "early exit before summarizer creation";
+					}
 				}
 
-				// We transition to Running before requesting the summarizer, because after requesting we can't predict
-				// when the electedClient will be replaced with the new summarizer client.
-				// The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
-				// state === Starting || state === Running.
+				if (this.clientElection.summarizerExistsInQuorum) {
+					return "early exit before summarizer creation";
+				}
+
+				// Enter Running before requesting the child so its quorum join does not cancel startup.
 				assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
 				this.state = SummaryManagerState.Running;
 
@@ -307,18 +293,15 @@ export class SummaryManager
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
 				// the summarizer at all.
-				const shouldSummarizeState = this.getShouldSummarizeState();
-				if (shouldSummarizeState.shouldSummarize === false) {
+				const parentState = this.getParentResponsibilityState();
+				if (parentState.isResponsibleParent === false) {
 					// In order to allow the last summary to run, we not only need a stop reason that would
 					// allow it but also, startWithInitialDelay to be false (start the summarization immediately),
 					// which would happen when we have a high enough number of unsummarized ops.
-					if (
-						startWithInitialDelay ||
-						!stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
-					) {
+					if (startWithInitialDelay || !stopReasonCanRunLastSummary(parentState.stopReason)) {
 						this.state = SummaryManagerState.Starting;
-						summarizer.stop(shouldSummarizeState.stopReason);
-						return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
+						summarizer.stop(parentState.stopReason);
+						return `early exit after starting summarizer ${parentState.stopReason}`;
 					}
 					this.logger.sendTelemetryEvent({
 						eventName: "LastAttemptToSummarize",
@@ -357,7 +340,10 @@ export class SummaryManager
 				// means it also lost connection), and error happened on load (we do not have summarizer).
 				// We could annotate the error raised in Container.load where the container closed during load with no error
 				// and check for that case here, but that does not seem to be necessary.
-				if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
+				if (
+					this.getParentResponsibilityState().isResponsibleParent ||
+					this.summarizer !== undefined
+				) {
 					// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
@@ -404,7 +390,10 @@ export class SummaryManager
 		this.summarizer?.close();
 		this.summarizer = undefined;
 
-		if (this.getShouldSummarizeState().shouldSummarize) {
+		if (
+			this.getParentResponsibilityState().isResponsibleParent &&
+			!this.clientElection.summarizerExistsInQuorum
+		) {
 			this.startSummarization();
 		}
 	}
@@ -457,18 +446,11 @@ export class SummaryManager
 			opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
 			opsToBypassInitialDelay: this.opsToBypassInitialDelay,
 			electedParentId: this.clientElection.electedParentId,
-			electedClientId: this.clientElection.electedClientId,
+			summarizerExistsInQuorum: this.clientElection.summarizerExistsInQuorum,
 		});
 
-		// This delay helps ensure that last summarizer that might be left from previous client
-		// has enough time to complete its last summary and thus new summarizer not conflict with previous one.
-		// If, however, there are too many unsummarized ops, try to resolve it as quickly as possible, with
-		// understanding that we may see nacks because of such quick action.
-		// A better design would be for summarizer election logic to always select current summarizer as
-		// summarizing client (i.e. clientType === "summarizer" can be elected) to ensure that nobody else can
-		// summarizer while it finishes its work and moves to exit.
-		// It also helps with pure boot scenario (single client) to offset expensive work a bit out from
-		// critical boot sequence.
+		// Delay loading the separate summarizer container to reduce work during initial boot.
+		// Bypass this initial delay when many unsummarized ops remain so recovery starts promptly.
 		let startWithInitialDelay = false;
 		if (this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay) {
 			startWithInitialDelay = true;
