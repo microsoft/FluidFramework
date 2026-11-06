@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static } from "typebox";
 
 import { SchemaFormatVersion, schemaFormatV2 } from "../../core/index.js";
+import { stringKeyRecord } from "../../util/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 /**
  * Defines an experimental stored schema format with application-defined versions.
@@ -16,7 +17,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const Format = Type.Object(
 	{
 		version: Type.Literal(SchemaFormatVersion.v3Experimental),
-		nodes: Type.Record(Type.String(), schemaFormatV2.TreeNodeSchemaDataFormat),
+		nodes: stringKeyRecord(schemaFormatV2.TreeNodeSchemaDataFormat),
 		root: schemaFormatV2.FieldSchemaFormat,
 		schemaVersion: Type.Optional(
 			Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),

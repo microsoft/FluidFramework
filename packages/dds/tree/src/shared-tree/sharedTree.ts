@@ -269,6 +269,7 @@ export class SharedTreeKernel
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
+			schemaSummarizer,
 			encoderContext,
 			decoderContext,
 			options,

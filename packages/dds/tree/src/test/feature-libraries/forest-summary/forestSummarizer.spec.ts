@@ -37,6 +37,8 @@ import {
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
+	SchemaSummarizer,
+	schemaCodecBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	type IncrementalEncodingPolicy,
@@ -111,6 +113,12 @@ function createForestSummarizer(args: {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
+			new SchemaSummarizer(
+				checkout.storedSchema,
+				{ getCurrentSeq: () => 0 },
+				schemaCodecBuilder.build(options),
+				minVersionForCollab,
+			),
 			encoderContext,
 			decoderContext,
 			options,
@@ -266,6 +274,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 	// Validate that the forest can successfully load from the above summary.
 	const mockStorage = MockStorage.createFromSummary(summary.summary);
 	const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+		initialContent: { schema: initialContent.schema, initialTree: fieldJsonCursor([]) },
 		encodeType: TreeCompressionStrategy.CompressedIncremental,
 		forestType: ForestTypeOptimized,
 		shouldEncodeIncrementally,

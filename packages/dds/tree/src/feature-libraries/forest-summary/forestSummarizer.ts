@@ -47,6 +47,7 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import type { SchemaSummarizer } from "../schema-index/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import { forestCodecBuilder, type ForestCodec } from "./codec.js";
@@ -83,11 +84,19 @@ export class ForestSummarizer
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 	private readonly forestRootSummaryContentKey: string;
 
-	/**
-	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
-	 */
+	public readonly loadDependencies: readonly Summarizable[];
+
 	public constructor(
 		private readonly forest: IEditableForest,
+		/**
+		 * The summarizer for the same stored schema repository used by the forest's chunking policy.
+		 * This establishes the schema-before-forest loading contract, so forest loading can rely on a populated schema.
+		 * Callers that invoke {@link ForestSummarizer.load} directly must ensure the schema is already populated.
+		 */
+		schemaSummarizer: SchemaSummarizer,
+		/**
+		 * The schema if provided here must be mutated by the caller to keep it up to date.
+		 */
 		private readonly encoderContext: FieldBatchEncodingContext,
 		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
@@ -101,6 +110,9 @@ export class ForestSummarizer
 			supportedForestSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
+
+		// SharedTreeCore uses this dependency to load the schema before the forest.
+		this.loadDependencies = [schemaSummarizer];
 
 		this.codec = forestCodecBuilder.build(options);
 
