@@ -191,6 +191,19 @@ mod tests {
         .unwrap();
     }
 
+    async fn peer_open_content(
+        connection: &wtransport::Connection,
+    ) -> (wtransport::SendStream, wtransport::RecvStream) {
+        use crate::protocol::{self, Response, StreamRole};
+        let (mut send, mut receive) = connection.accept_bi().await.unwrap();
+        assert_eq!(
+            peer_request(&mut receive).await.kind,
+            protocol::MessageKind::OpenContentStream
+        );
+        peer_response(&mut send, StreamRole::Content, &Response::Acknowledged).await;
+        (send, receive)
+    }
+
     #[tokio::test]
     async fn configured_native_client_times_out_and_resets_a_stalled_content_request() {
         use crate::protocol::{self, Response, StreamRole};
@@ -235,17 +248,7 @@ mod tests {
                     &Response::Acknowledged,
                 )
                 .await;
-                let (mut content_send, mut content_receive) = connection.accept_bi().await.unwrap();
-                assert_eq!(
-                    peer_request(&mut content_receive).await.kind,
-                    protocol::MessageKind::OpenContentStream
-                );
-                peer_response(
-                    &mut content_send,
-                    StreamRole::Content,
-                    &Response::Acknowledged,
-                )
-                .await;
+                let (_content_send, mut content_receive) = peer_open_content(&connection).await;
                 assert_eq!(
                     peer_request(&mut content_receive).await.kind,
                     protocol::MessageKind::GetBlob
@@ -258,6 +261,15 @@ mod tests {
                     matches!(error, wtransport::error::StreamReadError::Reset(_)),
                     "{error:?}"
                 );
+                let (mut send, mut receive) = peer_open_content(&connection).await;
+                assert_eq!(
+                    peer_request(&mut receive).await.kind,
+                    protocol::MessageKind::GetBlob
+                );
+                peer_response(&mut send, StreamRole::Content, &Response::Blob(vec![1])).await;
+                peer_response(&mut send, StreamRole::Content, &Response::ResponseComplete).await;
+                // Keep the connection alive until the replacement request has been consumed.
+                let _ = receive.read(&mut [0; 1]).await;
             };
             let caller = async {
                 let client = crate::NativeSeaClient::connect(
@@ -280,12 +292,11 @@ mod tests {
                     client.get_blob(id).await.unwrap_err().reason(),
                     crate::SeaClientErrorReason::Transport(WebTransportError::Timeout)
                 ));
-                assert!(matches!(
-                    client.get_blob(id).await.unwrap_err().reason(),
-                    crate::SeaClientErrorReason::Closed
-                ));
-                // Retain the connection until the peer observes the stream reset.
-                client
+                assert_eq!(
+                    client.get_blob(id).await.unwrap(),
+                    bytes::Bytes::from_static(&[1])
+                );
+                drop(client);
             };
             let (_client, ()) = tokio::join!(caller, peer);
         })

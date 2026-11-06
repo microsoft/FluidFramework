@@ -1,7 +1,7 @@
 //! Typed Sea sessions over platform transport primitives.
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     error::Error,
     fmt,
     sync::{Arc, Weak},
@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{
     StreamExt as _, TryStreamExt as _,
-    future::{AbortHandle, Abortable},
+    future::{AbortHandle, AbortRegistration, Abortable},
     stream,
 };
 use sea_core::{
@@ -28,7 +28,7 @@ use sea_core::{
     },
     storage::{DocumentId, LoadStart, Snapshot, StorageHandle},
 };
-use tokio::sync::{Mutex, mpsc, oneshot, watch};
+use tokio::sync::{Mutex, Notify, Semaphore, mpsc, oneshot, watch};
 #[cfg(not(target_arch = "wasm32"))]
 use wtransport::tls::Sha256Digest;
 
@@ -292,6 +292,9 @@ impl<TransportError: Into<SeaClientError>> From<ClientError<TransportError>> for
 #[cfg(not(target_arch = "wasm32"))]
 pub type NativeSeaClient = SessionClient<NativeTransport>;
 
+/// Independent finite content exchanges; monitored reads own separate streams.
+const CONTENT_CONCURRENCY: usize = 4;
+
 /// Typed archive session reusable across native and browser transports and session decorators.
 ///
 /// Opening starts a snapshot/replay/live event stream. The first [`SeaArchive::load`] whose
@@ -307,12 +310,87 @@ pub struct SessionClient<Transport: ClientTransport> {
     author_stream: Mutex<Option<AuthorStream<Transport::Stream>>>,
     /// Weak registration ownership; the returned coordination stream owns its lifetime.
     snapshot_stream: Mutex<Option<Weak<SnapshotPump>>>,
-    content_stream: Mutex<Option<ContentStream<Transport::Stream>>>,
+    content_pool: Arc<ContentPool<Transport::Stream>>,
+    content_permits: Semaphore,
     resume_after: Option<EventPosition>,
     /// Backend document identity, distinct from logical session authority.
     document: DocumentId,
     /// Private provenance shared by handles resolved through this client.
     scope: Arc<()>,
+}
+
+enum ContentSlot<Stream> {
+    Empty,
+    Opening(AbortHandle),
+    Idle(ContentStream<Stream>),
+    Borrowed,
+}
+
+/// Fixed slots share one budget across idle, borrowed, and opening streams.
+struct ContentPoolState<Stream> {
+    slots: [ContentSlot<Stream>; CONTENT_CONCURRENCY],
+    errors: VecDeque<SeaClientError>,
+    closed: bool,
+}
+
+struct ContentPool<Stream> {
+    state: std::sync::Mutex<ContentPoolState<Stream>>,
+    changed: Notify,
+}
+
+impl<Stream> ContentPool<Stream> {
+    fn new() -> Self {
+        Self {
+            state: std::sync::Mutex::new(ContentPoolState {
+                slots: std::array::from_fn(|_| ContentSlot::Empty),
+                errors: VecDeque::new(),
+                closed: false,
+            }),
+            changed: Notify::new(),
+        }
+    }
+
+    fn close(&self) {
+        let mut state = self.state.lock().expect("content pool");
+        state.closed = true;
+        for slot in &mut state.slots {
+            if let ContentSlot::Opening(task) = slot {
+                task.abort();
+            }
+            *slot = ContentSlot::Empty;
+        }
+        state.errors.clear();
+        drop(state);
+        self.changed.notify_waiters();
+    }
+}
+
+impl<Stream> Drop for ContentPool<Stream> {
+    fn drop(&mut self) {
+        self.close();
+    }
+}
+
+/// Keeps a slot reserved until an exchange completes or its future is dropped.
+struct ContentLease<Stream> {
+    stream: Option<ContentStream<Stream>>,
+    pool: Arc<ContentPool<Stream>>,
+    index: usize,
+    reusable: bool,
+}
+
+impl<Stream> Drop for ContentLease<Stream> {
+    fn drop(&mut self) {
+        let mut state = self.pool.state.lock().expect("content pool");
+        state.slots[self.index] = if self.reusable && !state.closed {
+            ContentSlot::Idle(self.stream.take().expect("borrowed content stream"))
+        } else {
+            drop(self.stream.take());
+            ContentSlot::Empty
+        };
+        drop(state);
+        self.pool.changed.notify_waiters();
+    }
 }
 
 /// Remotely confirmed availability scoped to the client that obtained it.
@@ -508,7 +586,8 @@ where
             event_stream: Arc::new(Mutex::new(Some(event_stream))),
             author_stream: Mutex::new(Some(author_stream)),
             snapshot_stream: Mutex::new(None),
-            content_stream: Mutex::new(None),
+            content_pool: Arc::new(ContentPool::new()),
+            content_permits: Semaphore::new(CONTENT_CONCURRENCY),
             resume_after: open.reference,
         })
     }
@@ -564,20 +643,100 @@ where
         }
     }
 
+    async fn acquire_content_stream(
+        &self,
+    ) -> Result<ContentLease<Transport::Stream>, SeaClientError> {
+        loop {
+            let changed = self.content_pool.changed.notified();
+            {
+                let mut state = self.content_pool.state.lock().expect("content pool");
+                if state.closed {
+                    return Err(SeaClientError::new(SeaClientErrorReason::Closed));
+                }
+                // An opening can fail after its original caller has already reused a stream.
+                if let Some(error) = state.errors.pop_front() {
+                    return Err(error);
+                }
+                if let Some(index) = state
+                    .slots
+                    .iter()
+                    .position(|slot| matches!(slot, ContentSlot::Idle(_)))
+                {
+                    let ContentSlot::Idle(stream) =
+                        std::mem::replace(&mut state.slots[index], ContentSlot::Borrowed)
+                    else {
+                        unreachable!("selected idle content stream");
+                    };
+                    return Ok(ContentLease {
+                        stream: Some(stream),
+                        pool: Arc::clone(&self.content_pool),
+                        index,
+                        reusable: false,
+                    });
+                }
+                if let Some(index) = state
+                    .slots
+                    .iter()
+                    .position(|slot| matches!(slot, ContentSlot::Empty))
+                {
+                    let (task, registration) = AbortHandle::new_pair();
+                    state.slots[index] = ContentSlot::Opening(task);
+                    self.start_content_opening(index, registration);
+                }
+            }
+            changed.await;
+        }
+    }
+
+    fn start_content_opening(&self, index: usize, registration: AbortRegistration) {
+        let pool = Arc::downgrade(&self.content_pool);
+        let client = Arc::clone(&self.client);
+        let future = async move {
+            let Ok(result) = Abortable::new(client.open_content_stream(), registration).await
+            else {
+                return;
+            };
+            if let Some(pool) = pool.upgrade() {
+                let mut state = pool.state.lock().expect("content pool");
+                if !state.closed {
+                    state.slots[index] = match result {
+                        Ok(stream) => ContentSlot::Idle(stream),
+                        Err(error) => {
+                            state.errors.push_back(error.into());
+                            ContentSlot::Empty
+                        }
+                    };
+                }
+                drop(state);
+                pool.changed.notify_waiters();
+            }
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        tokio::spawn(future);
+        #[cfg(target_arch = "wasm32")]
+        wasm_bindgen_futures::spawn_local(future);
+    }
+
     async fn content_request(
         &self,
         request: protocol::Request,
     ) -> Result<Vec<protocol::Response>, SeaClientError> {
-        let mut content_stream = self.content_stream.lock().await;
-        if content_stream.is_none() {
-            *content_stream = Some(self.client.open_content_stream().await?);
-        }
-        content_stream
-            .as_mut()
-            .expect("content stream was initialized")
-            .request(request)
+        let _permit = self
+            .content_permits
+            .acquire()
             .await
-            .map_err(Into::into)
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::Closed))?;
+        let mut lease = self.acquire_content_stream().await?;
+        // The exchange owns its stream until completion. Cancellation drops it instead
+        // of returning an unread response to another request.
+        let result = lease
+            .stream
+            .as_mut()
+            .expect("borrowed content stream")
+            .request(request)
+            .await;
+        lease.reusable = result.is_ok();
+        result.map_err(Into::into)
     }
 
     async fn one_content_response(
@@ -898,6 +1057,8 @@ where
             pump.task.abort();
         }
         self.event_stream.lock().await.take();
+        self.content_permits.close();
+        self.content_pool.close();
         self.client.disconnect()?;
         Ok(())
     }
@@ -1334,6 +1495,441 @@ mod tests {
         .await
         .unwrap();
         (client, events)
+    }
+
+    /// Counts idle, opening, and borrowed slots.
+    fn content_counts(client: &SessionClient<OpeningTransport>) -> (usize, usize, usize) {
+        let state = client.content_pool.state.lock().unwrap();
+        let mut counts = (0, 0, 0);
+        for slot in &state.slots {
+            match slot {
+                ContentSlot::Idle(_) => counts.0 += 1,
+                ContentSlot::Opening(_) => counts.1 += 1,
+                ContentSlot::Borrowed => counts.2 += 1,
+                ContentSlot::Empty => {}
+            }
+        }
+        counts
+    }
+
+    #[tokio::test]
+    async fn content_requests_overlap_with_a_bound_and_reuse_completed_streams() {
+        use futures_util::FutureExt as _;
+
+        let mut senders = Vec::new();
+        let mut streams = Vec::new();
+        for _ in 0..CONTENT_CONCURRENCY {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            reply(&sender, StreamRole::Content, &Response::Acknowledged);
+            senders.push(sender);
+            streams.push(OpeningStream {
+                incoming,
+                cancelled: None,
+            });
+        }
+        let (client, _events) = opening_client_with_streams(None, streams).await;
+        let mut requests: Vec<_> = (0..CONTENT_CONCURRENCY)
+            .map(|_| Box::pin(client.content_request(protocol::Request::LatestSnapshot)))
+            .collect();
+        for request in &mut requests {
+            assert!(request.as_mut().now_or_never().is_none());
+        }
+        tokio::task::yield_now().await;
+        for request in &mut requests {
+            assert!(request.as_mut().now_or_never().is_none());
+        }
+        assert_eq!(content_counts(&client), (0, 0, CONTENT_CONCURRENCY));
+        assert_eq!(client.content_permits.available_permits(), 0);
+        let mut waiting = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        assert!(waiting.as_mut().now_or_never().is_none());
+
+        // A later request can complete before the first one; its response stays on its stream.
+        for index in (0..CONTENT_CONCURRENCY).rev() {
+            let value = u8::try_from(index).unwrap();
+            reply(
+                &senders[index],
+                StreamRole::Content,
+                &Response::Blob(vec![value]),
+            );
+            reply(
+                &senders[index],
+                StreamRole::Content,
+                &Response::ResponseComplete,
+            );
+            let result = requests[index].as_mut().now_or_never().unwrap().unwrap();
+            assert_eq!(result, vec![Response::Blob(vec![value])]);
+        }
+        assert!(waiting.as_mut().now_or_never().is_none());
+        reply(&senders[0], StreamRole::Content, &Response::Snapshot(None));
+        reply(
+            &senders[0],
+            StreamRole::Content,
+            &Response::ResponseComplete,
+        );
+        assert_eq!(waiting.await.unwrap(), vec![Response::Snapshot(None)]);
+        assert_eq!(content_counts(&client), (CONTENT_CONCURRENCY, 0, 0));
+    }
+
+    #[tokio::test]
+    async fn returned_content_stream_is_used_while_opening_finishes_for_future_reuse() {
+        use futures_util::FutureExt as _;
+
+        for opening_ready in [false, true] {
+            let (active, incoming) = mpsc::unbounded_channel();
+            let (opening, opening_incoming) = mpsc::unbounded_channel();
+            reply(&active, StreamRole::Content, &Response::Acknowledged);
+            let (client, _events) = opening_client_with_streams(
+                None,
+                vec![
+                    OpeningStream {
+                        incoming,
+                        cancelled: None,
+                    },
+                    OpeningStream {
+                        incoming: opening_incoming,
+                        cancelled: None,
+                    },
+                ],
+            )
+            .await;
+            let mut first = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            let mut second = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            assert!(first.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+            assert!(first.as_mut().now_or_never().is_none());
+            assert!(second.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+            if opening_ready {
+                reply(&opening, StreamRole::Content, &Response::Acknowledged);
+            }
+            reply(&active, StreamRole::Content, &Response::Blob(vec![1]));
+            reply(&active, StreamRole::Content, &Response::ResponseComplete);
+            assert_eq!(first.await.unwrap(), vec![Response::Blob(vec![1])]);
+            assert!(second.as_mut().now_or_never().is_none());
+            assert!(
+                !opening.is_closed(),
+                "the pool must retain the unused opening"
+            );
+            reply(&active, StreamRole::Content, &Response::Blob(vec![2]));
+            reply(&active, StreamRole::Content, &Response::ResponseComplete);
+            assert_eq!(second.await.unwrap(), vec![Response::Blob(vec![2])]);
+            if !opening_ready {
+                reply(&opening, StreamRole::Content, &Response::Acknowledged);
+            }
+            tokio::task::yield_now().await;
+            assert_eq!(content_counts(&client), (2, 0, 0));
+            let _held = client.acquire_content_stream().await.unwrap();
+            let mut next = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            assert!(next.as_mut().now_or_never().is_none());
+            reply(&opening, StreamRole::Content, &Response::Blob(vec![3]));
+            reply(&opening, StreamRole::Content, &Response::ResponseComplete);
+            assert_eq!(next.await.unwrap(), vec![Response::Blob(vec![3])]);
+            assert_eq!(
+                client.content_permits.available_permits(),
+                CONTENT_CONCURRENCY
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn returned_content_stream_wakes_waiters_despite_cancellation() {
+        use futures_util::FutureExt as _;
+        use std::{
+            sync::atomic::{AtomicBool, Ordering},
+            task::{Context, Wake, Waker},
+        };
+
+        struct WakeFlag(AtomicBool);
+        impl Wake for WakeFlag {
+            fn wake(self: Arc<Self>) {
+                self.0.store(true, Ordering::SeqCst);
+            }
+        }
+
+        let mut senders = Vec::new();
+        let mut streams = Vec::new();
+        for _ in 0..3 {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            senders.push(sender);
+            streams.push(OpeningStream {
+                incoming,
+                cancelled: None,
+            });
+        }
+        reply(&senders[0], StreamRole::Content, &Response::Acknowledged);
+        let (client, _events) = opening_client_with_streams(None, streams).await;
+        let mut first = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        let mut cancelled = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        let mut remaining = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        assert!(first.as_mut().now_or_never().is_none());
+        tokio::task::yield_now().await;
+        assert!(first.as_mut().now_or_never().is_none());
+        assert!(cancelled.as_mut().now_or_never().is_none());
+        let wake = Arc::new(WakeFlag(AtomicBool::new(false)));
+        let waker = Waker::from(Arc::clone(&wake));
+        assert!(
+            std::future::Future::poll(remaining.as_mut(), &mut Context::from_waker(&waker))
+                .is_pending()
+        );
+        tokio::task::yield_now().await;
+        reply(&senders[0], StreamRole::Content, &Response::Snapshot(None));
+        reply(
+            &senders[0],
+            StreamRole::Content,
+            &Response::ResponseComplete,
+        );
+        first.await.unwrap();
+        assert!(
+            wake.0.load(Ordering::SeqCst),
+            "returning a stream must wake every eligible waiter"
+        );
+        drop(cancelled);
+        assert!(!senders[1].is_closed());
+        assert!(remaining.as_mut().now_or_never().is_none());
+        assert!(!senders[2].is_closed());
+        reply(&senders[0], StreamRole::Content, &Response::Snapshot(None));
+        reply(
+            &senders[0],
+            StreamRole::Content,
+            &Response::ResponseComplete,
+        );
+        assert_eq!(remaining.await.unwrap(), vec![Response::Snapshot(None)]);
+        assert_eq!(content_counts(&client), (1, 2, 0));
+        client.content_pool.close();
+        tokio::task::yield_now().await;
+        assert!(senders.iter().all(mpsc::UnboundedSender::is_closed));
+    }
+
+    #[tokio::test]
+    async fn content_open_failure_and_pool_closure_interrupt_acquisition() {
+        use futures_util::FutureExt as _;
+
+        for close_pool in [false, true] {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            let (client, _events) = opening_client_with_streams(
+                None,
+                vec![OpeningStream {
+                    incoming,
+                    cancelled: None,
+                }],
+            )
+            .await;
+            let mut request = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            assert!(request.as_mut().now_or_never().is_none());
+            if close_pool {
+                client.content_permits.close();
+                client.content_pool.close();
+            } else {
+                drop(sender);
+            }
+            tokio::task::yield_now().await;
+            let error = request
+                .as_mut()
+                .now_or_never()
+                .expect("acquisition must finish")
+                .unwrap_err();
+            if close_pool {
+                assert!(matches!(error.reason(), SeaClientErrorReason::Closed));
+            }
+            assert_eq!(
+                client.content_permits.available_permits(),
+                CONTENT_CONCURRENCY
+            );
+            assert_eq!(content_counts(&client), (0, 0, 0));
+        }
+    }
+
+    #[tokio::test]
+    async fn cancelled_callers_cannot_exceed_the_total_content_stream_budget() {
+        use futures_util::FutureExt as _;
+
+        let mut senders = Vec::new();
+        let mut streams = Vec::new();
+        for _ in 0..CONTENT_CONCURRENCY {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            senders.push(sender);
+            streams.push(OpeningStream {
+                incoming,
+                cancelled: None,
+            });
+        }
+        let (client, _events) = opening_client_with_streams(None, streams).await;
+        let mut requests: Vec<_> = (0..CONTENT_CONCURRENCY)
+            .map(|_| Box::pin(client.content_request(protocol::Request::LatestSnapshot)))
+            .collect();
+        for request in &mut requests {
+            assert!(request.as_mut().now_or_never().is_none());
+        }
+        tokio::task::yield_now().await;
+        drop(requests);
+        assert_eq!(content_counts(&client), (0, CONTENT_CONCURRENCY, 0));
+        assert_eq!(
+            client.content_permits.available_permits(),
+            CONTENT_CONCURRENCY
+        );
+        let mut replacements: Vec<_> = (0..CONTENT_CONCURRENCY)
+            .map(|_| Box::pin(client.content_request(protocol::Request::LatestSnapshot)))
+            .collect();
+        for request in &mut replacements {
+            assert!(request.as_mut().now_or_never().is_none());
+        }
+        tokio::task::yield_now().await;
+        assert_eq!(content_counts(&client), (0, CONTENT_CONCURRENCY, 0));
+        for sender in &senders {
+            reply(sender, StreamRole::Content, &Response::Acknowledged);
+        }
+        tokio::task::yield_now().await;
+        for request in &mut replacements {
+            assert!(request.as_mut().now_or_never().is_none());
+        }
+        assert_eq!(content_counts(&client), (0, 0, CONTENT_CONCURRENCY));
+        for sender in &senders {
+            reply(sender, StreamRole::Content, &Response::Snapshot(None));
+            reply(sender, StreamRole::Content, &Response::ResponseComplete);
+        }
+        for request in replacements {
+            assert_eq!(request.await.unwrap(), vec![Response::Snapshot(None)]);
+        }
+        assert_eq!(content_counts(&client), (CONTENT_CONCURRENCY, 0, 0));
+    }
+
+    #[tokio::test]
+    async fn unused_opening_failure_is_reported_by_the_next_acquisition() {
+        use futures_util::FutureExt as _;
+
+        let (active, incoming) = mpsc::unbounded_channel();
+        let (opening, pending) = mpsc::unbounded_channel();
+        reply(&active, StreamRole::Content, &Response::Acknowledged);
+        let (client, _events) = opening_client_with_streams(
+            None,
+            vec![
+                OpeningStream {
+                    incoming,
+                    cancelled: None,
+                },
+                OpeningStream {
+                    incoming: pending,
+                    cancelled: None,
+                },
+            ],
+        )
+        .await;
+        let mut first = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        assert!(first.as_mut().now_or_never().is_none());
+        tokio::task::yield_now().await;
+        assert!(first.as_mut().now_or_never().is_none());
+        let mut second = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+        assert!(second.as_mut().now_or_never().is_none());
+        tokio::task::yield_now().await;
+        for _ in 0..2 {
+            reply(&active, StreamRole::Content, &Response::Snapshot(None));
+            reply(&active, StreamRole::Content, &Response::ResponseComplete);
+        }
+        first.await.unwrap();
+        second.await.unwrap();
+        drop(opening);
+        tokio::task::yield_now().await;
+        assert_eq!(content_counts(&client), (1, 0, 0));
+        assert!(
+            client
+                .content_request(protocol::Request::LatestSnapshot)
+                .await
+                .is_err()
+        );
+        reply(&active, StreamRole::Content, &Response::Snapshot(None));
+        reply(&active, StreamRole::Content, &Response::ResponseComplete);
+        assert_eq!(
+            client
+                .content_request(protocol::Request::LatestSnapshot)
+                .await
+                .unwrap(),
+            vec![Response::Snapshot(None)],
+        );
+    }
+
+    #[tokio::test]
+    async fn closing_or_dropping_the_content_pool_cancels_owned_openings() {
+        use futures_util::FutureExt as _;
+
+        for explicit_close in [false, true] {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            let (client, _events) = opening_client_with_streams(
+                None,
+                vec![OpeningStream {
+                    incoming,
+                    cancelled: None,
+                }],
+            )
+            .await;
+            let pool = Arc::downgrade(&client.content_pool);
+            let mut request = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            assert!(request.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+            drop(request);
+            assert!(!sender.is_closed());
+            if explicit_close {
+                client.content_pool.close();
+                tokio::task::yield_now().await;
+                assert!(sender.is_closed());
+            }
+            drop(client);
+            tokio::task::yield_now().await;
+            assert!(
+                pool.upgrade().is_none(),
+                "opening tasks must not keep the pool alive"
+            );
+            assert!(sender.is_closed());
+        }
+    }
+
+    #[tokio::test]
+    async fn cancelled_and_failed_content_requests_release_capacity_without_reusing_the_stream() {
+        use futures_util::FutureExt as _;
+
+        for cancelled in [true, false] {
+            let mut senders = Vec::new();
+            let mut streams = Vec::new();
+            for _ in 0..2 {
+                let (sender, incoming) = mpsc::unbounded_channel();
+                reply(&sender, StreamRole::Content, &Response::Acknowledged);
+                senders.push(sender);
+                streams.push(OpeningStream {
+                    incoming,
+                    cancelled: None,
+                });
+            }
+            let (client, _events) = opening_client_with_streams(None, streams).await;
+            let mut request = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
+            assert!(request.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+            assert!(request.as_mut().now_or_never().is_none());
+            let first = senders.remove(0);
+            if cancelled {
+                drop(request);
+                assert!(first.is_closed());
+            } else {
+                drop(first);
+                assert!(request.await.is_err());
+            }
+            assert_eq!(
+                client.content_permits.available_permits(),
+                CONTENT_CONCURRENCY
+            );
+            assert_eq!(content_counts(&client), (0, 0, 0));
+            reply(&senders[0], StreamRole::Content, &Response::Snapshot(None));
+            reply(
+                &senders[0],
+                StreamRole::Content,
+                &Response::ResponseComplete,
+            );
+            assert_eq!(
+                client
+                    .content_request(protocol::Request::LatestSnapshot)
+                    .await
+                    .unwrap(),
+                vec![Response::Snapshot(None)]
+            );
+        }
     }
 
     #[tokio::test]

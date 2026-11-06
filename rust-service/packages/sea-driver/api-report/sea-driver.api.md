@@ -177,6 +177,7 @@ export interface SeaDriverClient {
         readonly root: Uint8Array;
         readonly atEvent?: Uint8Array;
     } | undefined>;
+    loadDirectSnapshot?(): ReturnType<SeaDriverClient["latestSnapshot"]>;
     openDirectSession?(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals?(member: SeaSignalMember): Promise<SeaSignals>;
@@ -219,6 +220,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
+    loadDirectSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
     openDirectSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals(member: SeaSignalMember): Promise<SeaSignals>;

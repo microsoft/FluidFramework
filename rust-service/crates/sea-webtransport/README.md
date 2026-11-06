@@ -13,7 +13,7 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Event | Open the session; return document ID/authority, selected snapshot, catch-up, progress, and live events. |
 | Author | Ordered submissions, receipts, and close under session authority. |
 | Snapshot | Coalesced notifications and policy-bound publication. |
-| Content | Ordered history/content/snapshot lookup; unary calls reuse a stream, each monitored read owns its stream. |
+| Content | Ordered history/content/snapshot lookup; finite calls share a pool of at most four concurrent reusable streams, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
 In protocol version 12, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
@@ -28,6 +28,16 @@ Each reusable stream completes one request before starting the next; bounded con
 Content-stream EOF without that marker is a failed response, not a successful truncated read.
 Snapshot coordination and signal notifications are identified by kind and do not complete requests.
 Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
+The finite-content pool returns a stream only after explicit response completion.
+If the pool is empty and has capacity, acquisition starts a pool-owned opening while waiting for any available stream.
+A returned stream can satisfy the request without waiting for the new opening.
+The opening continues independently and adds its completed stream to the pool for future use.
+Idle, borrowed, and opening streams together cannot exceed four.
+An opening failure releases its slot and is reported by the next acquisition, even if its original caller has already reused another stream.
+Closing or dropping the pool cancels pending openings and discards idle streams.
+The request is sent only on the selected stream.
+Failure or cancellation drops that stream and releases its admission slot; a subsequent explicit request may open a replacement.
+Requests are not automatically retried, and author submissions remain ordered independently of the content pool.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
 Session identities are the sequencer-allocated nonzero `u64` values introduced in protocol version 11.
@@ -47,6 +57,7 @@ An exact retry at the same position and root succeeds, but a different root at t
 Snapshot lookup selects the newest snapshot at or before its inclusive bound; latest lookup needs no publisher subscription.
 There is no empty initial snapshot: applications with initial state must first commit an event.
 Loads select the latest or bounded snapshot and then replay the retained suffix without promising an atomic captured head.
+The first matching session `load` consumes the snapshot/replay/live stream established at open, avoiding separate snapshot lookup and history-stream handshakes.
 
 ## Signal Delivery
 

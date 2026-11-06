@@ -214,24 +214,42 @@ describe("DirectSharedTreeClient recovery", () => {
 		assert.equal(writer.host.summaryCount, 1);
 		writer.view.root.items.insertAtEnd("after snapshot");
 		await writer.host.waitForIdle();
-		let reads = 0;
+		let loads = 0;
+		const fetchedBlobs = new Set<string>();
 		const reader = await open(writer.host.documentId, {}, async (document, options) => {
 			const session = await service.open(document, options);
-			const snapshot = await session.getSnapshot();
-			assert.ok(snapshot);
 			return {
 				...session,
-				read: (after, stopAfter) => {
+				getBlob: async (id) => {
+					const key = Buffer.from(id.bytes).toString("hex");
 					assert.ok(
-						after !== undefined && after >= snapshot.atEvent,
-						"direct loading must not download pre-snapshot history",
+						!fetchedBlobs.has(key),
+						"identical snapshot blobs must be fetched only once",
 					);
-					reads++;
-					return session.read(after, stopAfter);
+					fetchedBlobs.add(key);
+					return session.getBlob(id);
+				},
+				getSnapshot: async () => assert.fail("opening must use the selected snapshot"),
+				read: () => assert.fail("opening and live delivery must reuse the load stream"),
+				load: async (required) => {
+					loads++;
+					const stream = await session.load(required);
+					let floor = -1n;
+					return {
+						cancel: () => stream.cancel(),
+						next: async () => {
+							const item = await stream.next();
+							if (item?.kind === "snapshot") floor = item.atEvent;
+							if (item?.kind === "event")
+								assert.ok(item.position > floor, "must not download pre-snapshot events");
+							return item;
+						},
+					};
 				},
 			};
 		});
-		assert.ok(reads > 0);
+		assert.equal(loads, 1);
+		assert.ok(fetchedBlobs.size > 0);
 		assert.equal(reader.host.loadedFromSummary, true);
 		assert.deepEqual([...reader.view.root.items], ["before snapshot", "after snapshot"]);
 		reader.view.root.items.insertAtEnd("reader edit");
@@ -246,6 +264,7 @@ describe("DirectSharedTreeClient recovery", () => {
 		await reader.host.reconnect();
 		await reader.host.waitForIdle();
 		await until(() => writer.view.root.items.length === 4, "loaded peer did not recover");
+		assert.equal(loads, 2, "recovery must reuse its opening stream too");
 	});
 
 	for (const offset of [0n, 2n ** 52n]) {
@@ -314,8 +333,8 @@ describe("DirectSharedTreeClient recovery", () => {
 					const session = await service.open(document, options);
 					return {
 						...session,
-						read: (after, stopAfter) => {
-							const stream = session.read(after, stopAfter);
+						load: async (required) => {
+							const stream = await session.load(required);
 							return {
 								cancel: () => stream.cancel(),
 								next: async () => {

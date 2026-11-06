@@ -2,7 +2,7 @@
 
 Use this package to host a SharedTree kernel directly on the Sea service without a Fluid container runtime.
 It depends on SharedTree, the ID compressor, and the transport-neutral client contracts in [sea-driver](../sea-driver/README.md).
-The supplied client must support `openDirectSession`, as `SeaSessionDriverClient` does.
+The supplied client must support `openDirectSession` and `loadDirectSnapshot`, as `SeaSessionDriverClient` does.
 
 ## Entry Point
 
@@ -56,6 +56,9 @@ Snapshots include finalized ID-compressor state and the last applied Sea positio
 `summarize()` requests publication immediately when eligible.
 These are full summaries, not incremental uploads.
 Loading reads only the snapshot's suffix; reconnect reads only after the last applied position.
+Both reuse the opening snapshot/replay/live stream instead of making separate snapshot and history requests.
+Snapshot content is fetched on demand; this path does not require recursive prefetch hints.
+Repeated references to the same immutable blob share one fetch during summary loading.
 Direct snapshot metadata uses version 2.
 Older snapshots containing dense Fluid sequence numbers are rejected, not migrated; create a fresh document when using the new format.
 

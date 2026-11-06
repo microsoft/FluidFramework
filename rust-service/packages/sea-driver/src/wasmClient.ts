@@ -145,6 +145,8 @@ export interface SeaDriverClient {
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void>;
+	/** Returns the opening snapshot and retains its gap-free suffix for reads and live delivery. */
+	loadDirectSnapshot?(): ReturnType<SeaDriverClient["latestSnapshot"]>;
 	/** Submits one opaque event and returns its canonical position. */
 	submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
 	/** Returns the latest snapshot publication and root. */

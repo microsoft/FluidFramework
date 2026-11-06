@@ -197,9 +197,23 @@ export class DirectSharedTreeClient {
 			const documentId = createDocument ? await client.create() : document;
 			await openDirectSession(client, documentId, encoder.encode(createSessionId()));
 			await client.announceMembership?.(encoder.encode(JSON.stringify({ mode: "write" })));
-			const snapshot = await client.latestSnapshot();
+			assert(
+				client.loadDirectSnapshot !== undefined,
+				"Direct SharedTree requires snapshot-plus-live loading",
+			);
+			const snapshot = await client.loadDirectSnapshot();
 			const entries = snapshot === undefined ? [] : await client.fetchSummary(snapshot.root);
 			const blobs = new Map(entries.map((entry) => [decoder.decode(entry.path), entry.blob]));
+			const fetchedBlobs = new Map<string, Promise<Uint8Array>>();
+			const fetchBlob = (digest: Uint8Array): Promise<Uint8Array> => {
+				const key = byteKey(digest);
+				let pending = fetchedBlobs.get(key);
+				if (pending === undefined) {
+					pending = client.fetchBlob(digest);
+					fetchedBlobs.set(key, pending);
+				}
+				return pending;
+			};
 			let metadata: SnapshotMetadata | undefined;
 			if (snapshot !== undefined) {
 				const metadataBlob = blobs.get(metadataPath);
@@ -207,7 +221,7 @@ export class DirectSharedTreeClient {
 					throw new Error("Snapshot is not a direct SharedTree summary");
 				}
 				metadata = JSON.parse(
-					decoder.decode(await client.fetchBlob(metadataBlob)),
+					decoder.decode(await fetchBlob(metadataBlob)),
 				) as SnapshotMetadata;
 				if (
 					metadata.version !== 2 ||
@@ -237,7 +251,7 @@ export class DirectSharedTreeClient {
 					readBlob: async (path) => {
 						const digest = blobs.get(path);
 						if (digest === undefined) throw new Error(`Missing summary blob: ${path}`);
-						return (await client.fetchBlob(digest)).slice().buffer;
+						return (await fetchBlob(digest)).slice().buffer;
 					},
 					contains: async (path) => blobs.has(path),
 					list: async (path) => {

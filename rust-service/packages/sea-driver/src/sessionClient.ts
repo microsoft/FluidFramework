@@ -57,6 +57,7 @@ interface ProjectionCheckpoint {
 }
 
 const projectionBlobName = ".sea-fluid-projection";
+const directoryReadConcurrency = 4;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -111,6 +112,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private eventStream: SeaStream<SeaLoadResult> | undefined;
 	/** Resume position captured when the event stream is opened. */
 	private eventResumeAfter: bigint | undefined;
+	private openingReference: bigint | undefined;
+	private openingLoad: ReturnType<SeaDriverClient["latestSnapshot"]> | undefined;
+	private pendingEventItem: SeaLoadResult | undefined;
+	private announcedPosition: bigint | undefined;
 	/** Snapshot registration owning this session's publication authority. */
 	private snapshotStream: SeaStream<SeaSnapshotCoordination> | undefined;
 	/** Latest observed SEA-selected nomination fence. */
@@ -240,6 +245,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				this.projectionDocument = bytesKey(document);
 			}
 			this.direct = direct;
+			this.openingReference = reference;
 			this.positionSequences.clear();
 			this.sequencePositions.clear();
 			this.membershipModes.clear();
@@ -314,7 +320,37 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Announces Fluid metadata while keeping its interpretation above the neutral session API. */
 	public async announceMembership(metadata: Uint8Array): Promise<void> {
-		await this.current().announceMembership(metadata);
+		this.announcedPosition = await this.current().announceMembership(metadata);
+	}
+
+	/** Uses the snapshot and event stream already selected by the opening handshake. */
+	public loadDirectSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]> {
+		return this.withArchiveSession((session) => this.prepareOpeningLoad(session));
+	}
+
+	private prepareOpeningLoad(
+		session: SeaSession,
+	): ReturnType<SeaDriverClient["latestSnapshot"]> {
+		if (!this.direct || session !== this.session)
+			throw new Error("opening snapshot requires a live direct session");
+		this.openingLoad ??= (async () => {
+			const stream = await session.load(this.openingReference);
+			this.eventStream = stream;
+			const first = await stream.next();
+			if (first === undefined)
+				throw new Error("SEA opening load ended before its initial state");
+			const snapshot = first.kind === "snapshot" ? first : undefined;
+			this.pendingEventItem = snapshot === undefined ? first : undefined;
+			this.eventResumeAfter = this.openingReference ?? snapshot?.atEvent;
+			return snapshot === undefined
+				? undefined
+				: {
+						id: encodePosition(snapshot.atEvent),
+						root: snapshot.root.bytes,
+						atEvent: encodePosition(snapshot.atEvent),
+					};
+		})();
+		return this.openingLoad;
 	}
 
 	/** Opens the neutral relay without adding signal traffic to event history. */
@@ -530,27 +566,48 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		session: SeaSession,
 		after?: Uint8Array,
 	): Promise<ProjectedReadPage> {
+		if (this.direct && session === this.session) await this.prepareOpeningLoad(session);
 		const start = this.readStart(decodePosition(after));
-		const stream = session.read(start);
+		const openingStream =
+			this.direct && session === this.session && start === this.eventResumeAfter
+				? this.eventStream
+				: undefined;
+		const opening = openingStream !== undefined;
+		const stream = openingStream ?? session.read(start);
 		const operations: ProjectedOperation[] = [];
 		let cursor = start === undefined ? undefined : encodePosition(start);
+		let caughtUpThrough: bigint | undefined;
 		try {
 			for (;;) {
-				const item = await stream.next();
-				if (
-					item === undefined ||
-					(item.kind === "progress" && item.status === "AwaitingNewItems")
-				) {
-					return cursor === undefined ? { operations } : { operations, cursor };
+				const item =
+					opening && this.pendingEventItem !== undefined
+						? this.pendingEventItem
+						: await stream.next();
+				if (opening) this.pendingEventItem = undefined;
+				if (item?.kind === "progress" && item.status === "AwaitingNewItems") {
+					const announced = opening ? (this.announcedPosition ?? -1n) : -1n;
+					caughtUpThrough = item.latestKnown ?? -1n;
+					if (announced > caughtUpThrough) caughtUpThrough = announced;
 				}
-				if (item.kind === "event") {
+				if (
+					item?.kind === "event" &&
+					!(opening && start !== undefined && item.position <= start)
+				) {
 					const operation = this.project(item);
 					if (operation !== undefined) operations.push(operation);
 					cursor = encodePosition(item.position);
 				}
+				// Progress can precede buffered events. Drain through its advertised cursor.
+				if (
+					item === undefined ||
+					(caughtUpThrough !== undefined && (decodePosition(cursor) ?? -1n) >= caughtUpThrough)
+				) {
+					if (opening) this.eventResumeAfter = decodePosition(cursor);
+					return cursor === undefined ? { operations } : { operations, cursor };
+				}
 			}
 		} finally {
-			stream.cancel();
+			if (!opening) stream.cancel();
 		}
 	}
 
@@ -571,16 +628,20 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const start = this.readStart(decodePosition(after));
 		if (this.eventStream === undefined || start !== this.eventResumeAfter) {
 			this.eventStream?.cancel();
+			this.pendingEventItem = undefined;
 			this.eventStream = this.current().read(start);
 			this.eventResumeAfter = start;
 		}
 		const stream = this.eventStream;
 		if (stream === undefined) throw new Error("SEA event stream is not open");
 		this.eventStream = undefined;
+		let pending = this.pendingEventItem;
+		this.pendingEventItem = undefined;
 		return {
 			next: async () => {
 				for (;;) {
-					const item = await stream.next();
+					const item = pending ?? (await stream.next());
+					pending = undefined;
 					if (item === undefined) throw new Error("SEA subscription ended");
 					if (item.kind === "event") {
 						const operation = this.project(item);
@@ -645,6 +706,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		this.eventStream?.cancel();
 		this.eventStream = undefined;
 		this.eventResumeAfter = undefined;
+		this.openingLoad = undefined;
+		this.pendingEventItem = undefined;
+		this.announcedPosition = undefined;
 		const snapshots = this.snapshotStream;
 		this.snapshotStream = undefined;
 		snapshots?.cancel();
@@ -791,12 +855,31 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		prefix: string,
 		entries: SummaryEntry[],
 	): Promise<void> {
-		for (const entry of await session.getDirectory(directory)) {
-			const path = prefix.length === 0 ? entry.name : `${prefix}/${entry.name}`;
-			if (entry.child.kind === "directory")
-				await this.flattenDirectory(session, entry.child, path, entries);
-			else entries.push({ path: encoder.encode(path), blob: entry.child.bytes });
+		const pending = [{ directory, prefix }];
+		while (pending.length > 0) {
+			const batch = pending.splice(0, directoryReadConcurrency);
+			const results = await Promise.allSettled(
+				batch.map(async (item) => ({
+					prefix: item.prefix,
+					children: await session.getDirectory(item.directory),
+				})),
+			);
+			for (const result of results) {
+				if (result.status === "rejected") throw result.reason;
+				for (const entry of result.value.children) {
+					const path =
+						result.value.prefix.length === 0
+							? entry.name
+							: `${result.value.prefix}/${entry.name}`;
+					if (entry.child.kind === "directory")
+						pending.push({ directory: entry.child, prefix: path });
+					else entries.push({ path: encoder.encode(path), blob: entry.child.bytes });
+				}
+			}
 		}
+		entries.sort((left, right) =>
+			decoder.decode(left.path).localeCompare(decoder.decode(right.path)),
+		);
 	}
 }
 

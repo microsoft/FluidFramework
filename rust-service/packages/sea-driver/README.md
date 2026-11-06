@@ -22,7 +22,9 @@ The injected factory initializes transport and returns a fresh client for each l
 `SeaSessionDriverClient` adapts a neutral `sea-typescript` session supplied by a `SeaSessionFactory`; keep service and compression settings consistent across memberships.
 This package has no SharedTree dependency and delegates WebAssembly (WASM) loading to `sea-typescript`.
 For hosts that do not use Fluid sequencing, `openDirectSession` bypasses projection and performs no eager history reads.
-Its read results use native Sea positions; the host selects and loads its own snapshot before reading the suffix.
+Its read results use native Sea positions.
+`loadDirectSnapshot` consumes the opening snapshot selection and retains the same stream for finite catch-up and live delivery.
+Directory traversal issues at most four independent requests at a time and drains each admitted batch before reporting failure.
 The [integration harness](../../tests/sea-integration-tests/README.md) provides local and WebTransport examples through the neutral package entrypoints.
 
 ```typescript

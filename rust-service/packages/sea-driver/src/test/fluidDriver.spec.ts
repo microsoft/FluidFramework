@@ -34,6 +34,78 @@ describe("SeaDriver", () => {
 	const encoder = new TextEncoder();
 	const decoder = new TextDecoder();
 
+	for (const fail of [false, true]) {
+		it(`bounds parallel directory reads and drains them on ${fail ? "failure" : "success"}`, async () => {
+			const service = await createMemoryService({ environment: "node" });
+			let reading = false;
+			let active = 0;
+			let peak = 0;
+			let calls = 0;
+			let release: () => void = () => assert.fail("gate not initialized");
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			const failure = new Error("Injected directory failure");
+			const client = new SeaSessionDriverClient(async (document, options) => {
+				const session = await service.open(document, options);
+				return {
+					...session,
+					getDirectory: async (id) => {
+						if (!reading) return session.getDirectory(id);
+						const ordinal = ++calls;
+						active++;
+						peak = Math.max(peak, active);
+						try {
+							if (ordinal > 1) {
+								if (fail && ordinal === 2) throw failure;
+								await gate;
+							}
+							return await session.getDirectory(id);
+						} finally {
+							active--;
+						}
+					},
+				};
+			}, "readOnly");
+			try {
+				await client.create();
+				const blob = await client.uploadBlob(encoder.encode("value"));
+				const entries = Array.from({ length: 9 }, (_, i) => ({
+					path: encoder.encode(`directory-${i}/value`),
+					blob: blob.digest,
+				}));
+				const root = await client.publishSummary(entries);
+				reading = true;
+				let settled = false;
+				const loading = client.fetchSummary(root.digest);
+				void loading.then(
+					() => {
+						settled = true;
+					},
+					() => {
+						settled = true;
+					},
+				);
+				const checked = fail
+					? assert.rejects(loading, (error) => error === failure)
+					: loading.then((actual) => assert.deepEqual(actual, entries));
+				for (let attempt = 0; calls < 5 && attempt < 100; attempt++) await setImmediate();
+				assert.equal(calls, 5, "one root and four children must be admitted");
+				assert.equal(settled, false, "an error must not strand admitted sibling reads");
+				release();
+				await checked;
+				assert.ok(peak >= 3 && peak <= 4);
+				assert.equal(active, 0);
+				if (fail) assert.equal(calls, 5, "failure must stop later batches");
+			} finally {
+				release();
+				client.disconnect();
+				await client.reconnect();
+				service.close();
+			}
+		});
+	}
+
 	it("published summary proposals produce ordered replayable acknowledgments", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const writer = new SeaSessionDriverClient(service.open, "clientSelected");
