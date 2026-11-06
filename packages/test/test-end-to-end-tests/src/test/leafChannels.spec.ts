@@ -16,8 +16,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	createSummarizerFromFactory,
-	defaultTestOldestSupportedClient,
+	createSummarizerCore,
 	getRequiredPendingLocalState,
 	summarizeNow,
 	type ITestObjectProvider,
@@ -46,7 +45,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: factory,
 		registryEntries: [[factory.type, factory]],
-		oldestSupportedClient: defaultTestOldestSupportedClient,
+		oldestSupportedClient: "3.12.0",
 		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: {
@@ -116,7 +115,8 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		const root = await getMap(container);
 		root.set("value", 42);
 		await provider.ensureSynchronized();
-		const { summarizer } = await createSummarizerFromFactory(provider, container, factory);
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const { summarizer } = await createSummarizerCore(container, loader);
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 		const channels: SummaryObject | undefined = summaryTree.tree[".channels"];
 		assert(channels?.type === SummaryType.Tree);
@@ -205,7 +205,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		const treeRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: storeFactory,
 			registryEntries: [[storeFactory.type, storeFactory]],
-			oldestSupportedClient: defaultTestOldestSupportedClient,
+			oldestSupportedClient: "3.12.0",
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
 		});
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.number });

@@ -28,6 +28,7 @@ import type {
 import {
 	convertRegistry,
 	dataStoreKindFromFactory,
+	fluidContainerFromLegacy,
 	makeCodeLoader,
 	ServiceClientImplementation,
 	ServiceContainerBase,
@@ -105,12 +106,12 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		},
 	});
 	class LegacyCreatingFactory extends BaseContainerRuntimeFactory {
-		public constructor() {
+		public constructor(private readonly rootAlias = "root") {
 			super({
 				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[factory.type, factory]],
 				provideEntryPoint: async (runtime) => {
-					const root = await runtime.getAliasedDataStoreEntryPoint("root");
+					const root = await runtime.getAliasedDataStoreEntryPoint(rootAlias);
 					assert(root !== undefined);
 					return root.get();
 				},
@@ -118,7 +119,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		}
 		protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 			const root = await runtime.createDataStore(factory.type);
-			assert.equal(await root.trySetAlias("root"), "Success");
+			assert.equal(await root.trySetAlias(this.rootAlias), "Success");
 		}
 	}
 
@@ -213,6 +214,25 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const entry = await convertRegistry(kinds).get(factory.type);
 		assert.equal(entry?.IFluidDataStoreFactory, factory);
 		assert.equal(entry?.IFluidDataStoreRegistry, registry);
+	});
+
+	it("adopts an attached legacy container with an application-selected root alias", async () => {
+		const containerFactory = new LegacyCreatingFactory("application-root");
+		const container = await provider.createContainer(containerFactory);
+		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const alpha = fluidContainerFromLegacy(container, legacy, kinds);
+		assert.equal(alpha.data, legacy);
+		const child = await alpha.createDataStore(kind);
+		child.set("value", 42);
+		alpha.data.set("child", child.handle);
+		await provider.ensureSynchronized();
+		const remote = await provider.loadContainer(containerFactory);
+		const remoteMap = (await remote.getEntryPoint()) as ISharedMap;
+		const handle = remoteMap.get<IFluidHandle<ISharedMap>>("child");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 42);
+		alpha.close();
+		assert(container.closed);
 	});
 
 	it("opens a legacy document, collaborates, and consumes newly created named channels", async () => {

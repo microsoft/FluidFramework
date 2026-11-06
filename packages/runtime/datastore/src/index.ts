@@ -9,6 +9,7 @@ export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
+	type ISharedObjectRegistryInternal,
 	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,
 	mixinSummaryHandler,

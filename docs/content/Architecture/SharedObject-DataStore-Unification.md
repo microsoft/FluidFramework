@@ -2,10 +2,11 @@
 
 ## Status and purpose
 
-**Draft for review.**
+**Implementation contract.**
 The requirements below record the agreed compatibility goals for unifying shared objects and data stores in the alpha ServiceClient API.
 The validation plan and implementation sequence are proposals for satisfying those requirements, not claims of completed support.
-Review this contract before further implementation or switching the alpha factories.
+The main/compatibility API separation and container-level GC boundary have been clarified during review.
+Keep the remaining validation gaps visible while implementation proceeds.
 
 The goal is to let you use framework-provided shared object kinds and application-defined data store kinds through the same creation, registry, and root-selection abstractions.
 The goal is not merely to hide different runtime restrictions behind TypeScript types.
@@ -190,6 +191,25 @@ Type casts or proxy objects in tests must not conceal extra persisted nodes or m
 
 ### Evidence currently available
 
+#### Subsequent implementation milestones
+
+Commit `a1626552522` adds the legacy factory bridge and its initial mixed-API tests.
+The subsequent unified implementation adds `fluidContainerFromLegacy` for application-selected container roots, uses unified kinds/registries/creators, and exercises the placements through tree's alpha APIs.
+The following are focused results, not completion of the full validation matrix:
+
+- The [legacy bridge suite](../../../packages/test/test-end-to-end-tests/src/test/legacyDataStoreKinds.spec.ts) passes 7 same-version tests covering identity, nested registries, custom root aliases, live named-channel creation, alpha creation of legacy-shaped content, and summaries written/read in both directions.
+- The [tree data-store suite](../../../packages/dds/tree/src/test/treeDataStore.spec.ts) and [tree kind suite](../../../packages/dds/tree/src/test/treeFactory.spec.ts) pass 13 tests, including direct container-level trees, composite roots and contents, handle-free values, and old-target DDS-only creation.
+- Registry and existing kind tests pass 10 tests; legacy channel/runtime regression tests pass 40 tests.
+- API reports are generated rather than hand-edited.
+  The signature changes are confined to the intended alpha surfaces and additive legacy-alpha bridges.
+
+Still outstanding: pinned older-framework mixed-API coverage, complete GC sweep/tombstone tests, broader signal and failure-path validation, and external consumer compatibility checks.
+Existing DDS-layout stores retain their loader and do not yet gain mixed DDS/composite child creation merely by increasing the version target.
+The legacy bridge preserves those layouts for incremental migration; generalizing an existing DDS-layout parent to accept native composite children remains a separate implementation gap.
+Do not treat the placement tests on new native collections as evidence that this gap is resolved.
+
+#### Initial runtime evidence
+
 The following results were obtained during implementation before this documentation change.
 They have not been rerun for this documentation-only commit.
 Both new end-to-end suites use `NoCompat`; they do not prove mixed-framework-version compatibility.
@@ -224,8 +244,9 @@ Two commits provide internal building blocks:
 - `463284e3eae`: direct shared-object hosting at a channel identity.
 - `d2d84154338`: native nested channel collections with aggregate lifetime.
 
-The alpha factories have not been switched to these implementations.
-The building blocks are not an approved final architecture and may need revision to meet this contract.
+The following assessment records the gaps found before the alpha factories were switched.
+The subsequent implementation uses native collections for new stores at supporting targets, retains the existing DDS loader for older layouts/targets, and provides legacy bridges.
+The building blocks may still need revision to satisfy the outstanding validation and mixed-layout requirements.
 
 In particular:
 
@@ -238,7 +259,8 @@ In particular:
 - The current tests do not establish preservation of legacy signal behavior, live creation of legacy children, or complete GC behavior across mixed implementations.
 - Existing alpha named-root conventions do not establish that application-defined legacy root layouts can be used without rewriting them.
   The required legacy+alpha bridge may supply this capability; the main API does not have to expose all of those layout options.
-- The runtime tests do not establish the required application-facing legacy+alpha bridge or the separation of legacy-only options from the main alpha surface.
+- The initial runtime tests did not establish the application-facing legacy+alpha bridge.
+  The subsequent bridge tests now exercise it without moving legacy-only options into the main alpha surface.
 
 Do not resolve these gaps by silently substituting container-level peers for nested children, preserving only a read-only legacy loader, or marking same-implementation tests as interoperability evidence.
 An existing-content-only compatibility helper can still satisfy editing and collaboration requirements; it is not the read-only loader excluded here.

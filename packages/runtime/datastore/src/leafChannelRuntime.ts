@@ -29,6 +29,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	create404Response,
+	getConfigForMinVersionForCollab,
 	toDeltaManagerErased,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
@@ -129,6 +130,16 @@ export class LeafChannelRuntime
 		existing: boolean,
 		factory: IChannelFactory,
 	): Promise<LeafChannelRuntime> {
+		if (
+			!getConfigForMinVersionForCollab(context.oldestSupportedClient, {
+				"2.0.0": false,
+				"3.12.0": true,
+			})
+		) {
+			throw new UsageError(
+				"Direct shared-object hosting requires oldestSupportedClient >= 3.12.0",
+			);
+		}
 		const runtime = new LeafChannelRuntime(context, existing);
 		if (existing) {
 			const { attributes } = await loadChannelFactoryAndAttributes(

@@ -217,10 +217,11 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<
 
 /**
  * A context which has a registry and can create data stores using it.
+ * @typeParam TConstraint - The allowed output types, used to constrain root creation.
  * @sealed
  * @alpha
  */
-export interface DataStoreCreator {
+export interface DataStoreCreator<TConstraint = unknown> {
 	/**
 	 * Create a new detached data store `T` which can be attached to the {@link FluidContainer}.
 	 * by adding a handle to a data store or shared object which is already attached to the {@link FluidContainer}.
@@ -229,7 +230,7 @@ export interface DataStoreCreator {
 	 * It is up to that registry to decide how it handles unknown types, for example by throwing an exception or returning a placeholder.
 	 * @typeParam T - type implemented by the data store to expose in the result, as defined by `kind`.
 	 */
-	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+	createDataStore<T extends TConstraint>(kind: DataStoreKey<T>): Promise<T>;
 }
 
 /**
@@ -325,18 +326,14 @@ export interface FluidContainerAttached<TData = unknown> extends FluidContainer<
  * to create new instances, and to {@link ServiceClient.loadContainer} to load existing ones.
  *
  * A `DataStoreKind` is not constructed directly.
- * Instead, obtain one from a framework-provided factory:
- * use {@link @fluidframework/shared-object-base#defineDataStore} to define a data store which wraps a root shared object,
- * or use a more specific wrapper around that,
+ * Use a framework-provided shared object kind, such as {@link @fluidframework/tree#SharedTreeAlpha},
+ * or use {@link @fluidframework/shared-object-base#defineDataStore} to define a composite data store whose root is another kind.
+ * More specific helpers are also available,
  * such as {@link @fluidframework/tree#defineTreeDataStore} for a {@link @fluidframework/tree#TreeView}-backed data store.
  *
  * Since it implements {@link DataStoreKey}, a `DataStoreKind` can also be used directly as the key to look
  * itself up in a {@link Registry}.
  * @typeParam T - The API surface that instances of this data store kind expose.
- * @privateRemarks
- * TODO:
- * SharedObjects should be usable as these (though putting shared objects directly in the container might need special logic).
- * Type erased {@link IFluidDataStoreFactory}.
  * @sealed
  * @alpha
  */
@@ -346,9 +343,6 @@ export interface DataStoreKind<out T = unknown>
 
 /**
  * A registry of {@link DataStoreKind}s.
- * @privateRemarks
- * TODO: unify this with SharedObjectRegistry.
- *
  * @typeParam T - The type covering all {@link DataStoreKind}s in the registry.
  * @input
  * @alpha

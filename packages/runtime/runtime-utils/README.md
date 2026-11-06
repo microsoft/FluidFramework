@@ -50,9 +50,12 @@ Legacy factories erase this type, so you must supply the correct type; the bridg
 Repeated calls for the same factory return the same kind.
 Different factories with the same type identifier remain different kinds.
 
-The bridge does not change container root discovery.
+The factory bridge does not change container root discovery.
 ServiceClient currently expects the `root` data-store alias.
-TODO: Provide a legacy+alpha container integration path for applications with other root-discovery conventions.
+For other conventions, use the existing legacy loader and root-discovery code, then call `fluidContainerFromLegacy(container, data, registry)` from the same legacy-alpha entrypoint.
+This exposes an attached legacy container through the alpha container API without changing its root or persisted structure.
+The registry must identify factories already registered in the legacy runtime; it does not install new factories in that runtime.
+Closing this alpha view also closes the original container.
 Specialized helpers for named-channel access can be added if customer needs justify them; the factory bridge lets existing implementations continue to use legacy APIs directly.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->

@@ -161,6 +161,17 @@ export interface ISharedObjectRegistry {
 }
 
 /**
+ * Registry loading capabilities used by the unified kind implementation.
+ * @internal
+ */
+export interface ISharedObjectRegistryInternal extends ISharedObjectRegistry {
+	/**
+	 * Loads a factory asynchronously without changing synchronous legacy creation.
+	 */
+	getAsync?(name: string): Promise<IChannelFactory | undefined>;
+}
+
+/**
  * The common URL prefix used by legacy DDS type strings.
  * Factories originally used full URLs (e.g. `"https://graph.microsoft.com/types/map"`);
  * new factories use only the trailing path segment (e.g. `"map"`).
@@ -186,6 +197,11 @@ const legacyTypeUrlPrefix = atob("aHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3R5cGVzLw
  */
 export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
 	public constructor(private readonly base: ISharedObjectRegistry) {}
+
+	public async getAsync(name: string): Promise<IChannelFactory | undefined> {
+		const registry: ISharedObjectRegistryInternal = this.base;
+		return registry.getAsync === undefined ? this.get(name) : registry.getAsync(name);
+	}
 
 	public get(name: string): IChannelFactory | undefined {
 		let factory = this.base.get(name);
