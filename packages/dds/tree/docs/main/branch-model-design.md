@@ -36,9 +36,9 @@ Likewise, future public capability interfaces need not correspond to separate im
 This proposal covers the document-owned main branch and independently owned branches.
 Extending the same API to additional document-backed shared branches is outside its scope.
 
-## 1. What the implemented milestone provides
+## 1. Current API
 
-The milestone exposes the following API.
+The current API was introduced in [microsoft/FluidFramework#28520](https://github.com/microsoft/FluidFramework/pull/28520).
 The branch handle inherits its read-only `disposed` property from `IDisposable`:
 
 ```typescript
@@ -60,19 +60,20 @@ export interface ViewableTreeAlpha extends ViewableTree {
 
 `ViewableTreeAlpha` defines `forkBranch()`, and `ITreeAlpha` inherits it.
 For a SharedTree, `forkBranch()` forks the main branch; for a tree created with `createIndependentTreeAlpha()`, it forks that tree's current state.
-Neither case requires a source view or a schema configuration:
+Neither case requires a source view or a schema configuration.
+In the examples below, `schema` is the application's root schema and `config` is a `TreeViewConfiguration<typeof schema>` used to create typed views:
 
 ```typescript
-const branch = asAlpha(tree).forkBranch();
-const branchView = branch.viewWith(config);
-const child = branch.fork();
+const branch: TreeBranchHandleAlpha = asAlpha(tree).forkBranch();
+const branchView: TreeViewAlpha<typeof schema> = branch.viewWith(config);
+const child: TreeBranchHandleAlpha = branch.fork();
 
 // Edit through branchView.
 
 branchView.dispose();
 
 // The branch is still available.
-const replacementView = branch.viewWith(config);
+const replacementView: TreeViewAlpha<typeof schema> = branch.viewWith(config);
 
 child.dispose();
 replacementView.dispose();
@@ -85,11 +86,14 @@ Merge and rebase remain available through existing view APIs, but public branch 
 ## 2. Provide access to existing branches
 
 Applications need a way to access an existing branch without creating a fork.
+An application might display an editable preview while a background component observes the main branch.
+That component needs access to the existing main branch without creating another fork or a typed view.
+
 An explicit adapter could distinguish access to the main branch from creation of an independent branch:
 
 ```typescript
-const mainBranch = asAlphaBranchModel(tree); // Access the existing branch.
-const alternative = mainBranch.fork();       // Create an independent branch.
+const mainBranch: TreeBranchAlpha = asAlphaBranchModel(tree); // Access the existing branch.
+const alternative: TreeBranchHandleAlpha = mainBranch.fork(); // Create an independent branch.
 ```
 
 The adapter would not create a view and would signal use of an experimental API.
@@ -97,7 +101,7 @@ The adapter would not create a view and would signal use of an experimental API.
 Views should also provide access to their associated branch:
 
 ```typescript
-const branch = view.branch;
+const branch: TreeBranchAlpha = view.branch;
 ```
 
 These names are illustrative; see the [entry-point questions](#branch-access-and-operations) and the [ownership rules](#4-keep-ownership-rules-clear).
@@ -107,6 +111,9 @@ These names are illustrative; see the [entry-point questions](#branch-access-and
 Applications should be able to fork, merge, rebase, inspect history, and observe branch changes without creating a typed view.
 The following illustrative sketch separates common branch operations from capabilities available only on independently owned branches.
 The view interface shows only branch association; existing typed-access, schema, observation, and transaction APIs are omitted.
+
+Main-branch access and `view.branch` would return `TreeBranchAlpha`, which exposes neither `dispose()` nor `rebaseOnto()`.
+Forking would return an independently owned `TreeBranchHandleAlpha`, which adds those operations.
 
 ```typescript
 interface TreeBranchAlpha {
@@ -151,7 +158,7 @@ The document owns its main branch; applications must not dispose or rebase it.
 Callers own the independent branches returned by `tree.forkBranch()` or `branch.fork()`.
 The proposed accessors—an adapter, a tree property, or `view.branch`—would not transfer ownership.
 
-The implemented milestone supports two view-ownership models:
+The current API supports two view-ownership models:
 
 | View creation | Ownership and disposal |
 | --- | --- |
@@ -169,9 +176,32 @@ The proposed branch-level merge should initially retain this default.
 Applications must dispose independently owned branches when finished; disposing a borrowed view alone does not end the branch's lifetime or its history-retention requirements.
 All view-creation APIs should document their ownership model.
 These ownership rules describe views that remain associated with their original branch.
-Switching a branch-owning view requires the additional ownership decision in [Section 11](#11-additional-considerations).
 
 The implemented milestone permits one active view per branch.
+
+### Long-term proposal
+
+Once views expose their associated branch through `view.branch`, prefer `view.branch.fork()` followed by `branch.viewWith(config)` for new code.
+The application owns the returned branch, and the view borrows it:
+
+```typescript
+const branch: TreeBranchHandleAlpha = view.branch.fork();
+const branchView: TreeViewAlpha<typeof schema> = branch.viewWith(config);
+
+// Release typed access without discarding the branch.
+branchView.dispose();
+
+// Explicitly end the independently owned branch's lifetime.
+branch.dispose();
+```
+
+Disposal follows the borrowed-view rules above.
+This workflow also avoids transferring responsibility for either branch's disposal when a borrowed view switches branches.
+The tradeoff is explicit branch cleanup and a separate call to create typed access.
+
+The existing `view.fork()` API would retain its current branch-owning behavior; changing it silently could leak branches in applications that rely on view disposal.
+Whether to deprecate that convenience API is a separate decision, not part of this proposal.
+Supporting switching for existing branch-owning views would still require the [ownership contract](#view-switching).
 
 ## 5. Allow merge and rebase without creating views
 
@@ -200,12 +230,14 @@ The proposed operations retain the [ownership and disposal rules](#4-keep-owners
 ## 6. Move views between branches
 
 The following example illustrates proposed view switching.
-A branch-bound checkout keeps the same underlying branch, so switching should move the view rather than replace the checkout's branch:
+A branch-bound checkout keeps the same underlying branch, so switching should move the view rather than replace the checkout's branch.
+
+For this example, the proposed `TreeViewAlpha<TSchema>` additionally exposes `switchTo(branch: TreeBranchAlpha): void`; this method is not part of the current API.
 
 ```typescript
-const main = asAlphaBranchModel(tree);
-const alternative = main.fork();
-const view = main.viewWith(config);
+const main: TreeBranchAlpha = asAlphaBranchModel(tree);
+const alternative: TreeBranchHandleAlpha = main.fork();
+const view: TreeViewAlpha<typeof schema> = main.viewWith(config);
 
 view.switchTo(alternative);
 // Edits now affect alternative.
@@ -214,9 +246,9 @@ view.switchTo(main);
 // Edits now affect main.
 ```
 
-This example uses a borrowed view.
+This example uses a borrowed view, consistent with the [long-term ownership proposal](#long-term-proposal).
 Switching should neither merge changes nor dispose either branch.
-The [view-switching questions](#view-switching) cover the remaining contracts, including ownership for branch-owning views.
+The [view-switching questions](#view-switching) cover the remaining contracts, including whether and how existing branch-owning views could switch.
 
 ## 7. Show unsupported operations in the types
 
@@ -249,8 +281,8 @@ The branch-event contracts must be defined before those events are exposed; see 
 
 The proposed delivery order allows branch-level operations and capability refinements to ship without waiting for view switching.
 
-1. [Implemented milestone](#1-what-the-implemented-milestone-provides) ([`9ea98a1`](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd) on `main`): Independently owned branch handles, typed-view creation, and child forks.
-2. [Existing-branch access](#2-provide-access-to-existing-branches) and [branch-level operations](#3-put-branch-operations-on-public-branch-interfaces): Add access, merge, rebase, history, and events as their [contracts](#branch-access-and-operations) are settled. These additions can ship separately.
+1. [Current API](#1-current-api) ([`9ea98a1`](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd) on `main`): Independently owned branch handles, typed-view creation, and child forks.
+2. [Existing-branch access](#2-provide-access-to-existing-branches) and [branch-level operations](#3-put-branch-operations-on-public-branch-interfaces): Enable the [explicit-ownership workflow](#long-term-proposal) through `view.branch.fork()`, and add merge, rebase, history, and events as their [contracts](#branch-access-and-operations) are settled. These additions can ship separately.
 3. [Capability refinements](#7-show-unsupported-operations-in-the-types): Express unsupported view operations in the types.
 4. [View switching](#6-move-views-between-branches): Add `switchTo()` after resolving the [view-switching questions](#view-switching).
 
@@ -275,7 +307,7 @@ Each capability needs its own contracts, but not every question blocks the initi
   Any change must preserve the [ownership rules](#4-keep-ownership-rules-clear); changing the existing disposal default would be a separate decision.
 - **History and event contracts:** What history-inspection contract should branches expose without a typed view?
   What are the branch-event contracts for merge, rebase, and transaction completion?
-- **Existing view APIs:** Should view-based branch operations remain as convenience methods or enter a future deprecation process?
+- **Existing view APIs:** Should view-based branch operations, including the branch-owning `view.fork()`, remain as convenience methods or enter a future deprecation process?
   Any deprecation decision is outside this additive proposal.
 
 #### Capability types
@@ -284,7 +316,8 @@ Each capability needs its own contracts, but not every question blocks the initi
 
 #### View switching
 
-- **Ownership:** For a branch-owning view, who owns the original branch after switching, and which branch, if any, is disposed when the view is disposed?
+- **Existing branch-owning views:** Should views created through the current `view.fork()` API support switching?
+  If so, who owns the original branch after switching, and which branch, if any, is disposed when the view is disposed?
   Possible policies include rejecting switching for branch-owning views or requiring an explicit ownership handoff.
   No policy is selected here.
   Switching must not leave the original branch without an owner or implicitly transfer ownership of the destination.
@@ -297,7 +330,7 @@ Each capability needs its own contracts, but not every question blocks the initi
 - **Failure guarantees:** What happens on failure, including whether association and ownership remain unchanged?
 - **Transactions:** Is switching allowed during a transaction?
 
-The ownership question applies to sequences such as:
+The ownership question for existing branch-owning views applies to sequences such as:
 
 ```typescript
 const ownedView = view.fork();
