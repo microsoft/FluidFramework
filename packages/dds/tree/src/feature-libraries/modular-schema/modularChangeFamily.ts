@@ -2494,7 +2494,10 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (attachFieldEntry.value === undefined) {
-			const getBaseOutputLocation = (id: ChangeAtomId, length: number) => {
+			const getBaseOutputLocation = (
+				id: ChangeAtomId,
+				length: number,
+			): RangeQueryResult<FieldId | undefined> => {
 				let countProcessed = length;
 				const renamedIdEntry = firstAttachIdFromDetachId(
 					this.table.baseChange.rootNodes,
