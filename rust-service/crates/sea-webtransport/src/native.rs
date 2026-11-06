@@ -2239,7 +2239,9 @@ mod tests {
                 );
                 drop(loaded.events);
             } else {
-                for position in 0..protocol::LOAD_EVENT_CREDITS {
+                for position in
+                    0..protocol::LOAD_EVENT_WINDOW_BYTES / protocol::LOAD_MESSAGE_OVERHEAD
+                {
                     reply(
                         &sender,
                         StreamRole::Event,
@@ -2290,7 +2292,8 @@ mod tests {
             .await
             .unwrap();
         let mut content = load.content;
-        for value in 0..protocol::LOAD_CONTENT_CREDITS {
+        let count = protocol::LOAD_CONTENT_WINDOW_BYTES / (protocol::LOAD_MESSAGE_OVERHEAD + 4);
+        for value in 0..count {
             let payload = value.to_le_bytes().to_vec();
             reply(
                 &sender,
@@ -2303,10 +2306,47 @@ mod tests {
         }
         reply(&sender, StreamRole::Event, &Response::LoadContentComplete);
         drop(load.events);
-        for _ in 0..protocol::LOAD_CONTENT_CREDITS {
+        for _ in 0..count {
             assert!(content.next().await.unwrap().is_ok());
         }
         assert!(content.next().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn opening_rejects_content_above_its_byte_window() {
+        let (client, sender) = opening_client(None).await;
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::StreamProgress {
+                previous: None,
+                latest_known: None,
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
+        );
+        let mut load = client
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap();
+        let response = Response::BlobTree {
+            id: protocol::TreeId::Blob([0; 32]),
+            payload: vec![0; protocol::LOAD_CONTENT_MAX_ITEM_BYTES - 1024],
+        };
+        let count = protocol::LOAD_CONTENT_WINDOW_BYTES / protocol::load_response_bytes(&response);
+        for _ in 0..=count {
+            reply(&sender, StreamRole::Event, &response);
+        }
+        // Do not consume content: the pump must reject byte overdelivery even with free queue slots.
+        let error = tokio::time::timeout(std::time::Duration::from_secs(1), async {
+            loop {
+                if let Err(error) = load.events.next().await.unwrap() {
+                    break error;
+                }
+            }
+        })
+        .await
+        .unwrap();
+        assert!(matches!(error.kind(), sea_core::ErrorKind::Unavailable));
     }
 
     #[tokio::test]

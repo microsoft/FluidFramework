@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { Deferred } from "@fluidframework/core-utils/internal";
 
 import {
 	createMemoryService,
@@ -217,6 +218,132 @@ describe("SEA opening content", () => {
 		}
 	});
 
+	for (const contentCacheObjects of [0, 1, 1024]) {
+		it(`fetches an explicit blob batch with a ${contentCacheObjects}-object cache`, async () => {
+			const test = await fixture(
+				{ loadingHint: {}, contentCacheObjects },
+				undefined,
+				undefined,
+				{ width: 600 },
+			);
+			try {
+				await test.client.loadDirectSnapshot();
+				const entries = await test.client.fetchSummary(test.root.bytes);
+				const before = test.requests();
+				const blobs = await test.client.fetchBlobs([
+					...entries.map((entry) => entry.blob),
+					test.blob.bytes,
+				]);
+				assert.deepEqual(
+					test.requestedRoots.slice(before).map((roots) => roots.length),
+					[600],
+				);
+				for (const [index, entry] of entries.entries()) {
+					const number = new TextDecoder()
+						.decode(entry.path)
+						.match(/^nested(\d*)\/value$/u)?.[1];
+					assert.notEqual(number, undefined);
+					assert.deepEqual(
+						blobs[index],
+						encode(number === "" ? "prefetched value" : `value ${number}`),
+					);
+				}
+				blobs[0]?.fill(0);
+				assert.deepEqual(blobs[600], encode("prefetched value"));
+				const after = test.requests();
+				if (contentCacheObjects === 1024) {
+					assert.deepEqual(await test.client.fetchBlobs([test.blob.bytes]), [
+						encode("prefetched value"),
+					]);
+					assert.equal(test.requests(), after);
+				}
+				assert.deepEqual(await test.client.fetchBlobs([]), []);
+				assert.equal(test.requests(), after);
+			} finally {
+				await test.close();
+			}
+		});
+	}
+
+	it("splits explicit blob batches only at the service root limit", async () => {
+		const test = await fixture(
+			{ loadingHint: {}, contentCacheObjects: 0 },
+			undefined,
+			undefined,
+			{ width: 4100 },
+		);
+		try {
+			const entries = await test.client.fetchSummary(test.root.bytes);
+			const before = test.requests();
+			assert.equal(
+				(await test.client.fetchBlobs(entries.map((entry) => entry.blob))).length,
+				4100,
+			);
+			assert.deepEqual(
+				test.requestedRoots.slice(before).map((roots) => roots.length),
+				[4096, 4],
+			);
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("drains an admitted bulk read before disconnect closes its session", async () => {
+		const started = new Deferred<void>();
+		const release = new Deferred<void>();
+		const test = await fixture(
+			{ loadingHint: {}, contentCacheObjects: 0 },
+			undefined,
+			undefined,
+			{
+				demand: (stream) => ({
+					next: async () => {
+						started.resolve();
+						await release.promise;
+						return stream.next();
+					},
+					cancel: () => stream.cancel(),
+				}),
+			},
+		);
+		try {
+			const read = test.client.fetchBlobs([test.blob.bytes]);
+			await started.promise;
+			test.client.disconnect();
+			release.resolve();
+			assert.deepEqual(await read, [encode("prefetched value")]);
+		} finally {
+			release.resolve();
+			await test.close();
+		}
+	});
+
+	it("rejects a failed bulk response and cancels its stream", async () => {
+		const failure = new Error("bulk read failed");
+		let cancelled = false;
+		const test = await fixture({ loadingHint: {} }, undefined, undefined, {
+			demand: (stream) => ({
+				next: async () => {
+					throw failure;
+				},
+				cancel: () => {
+					cancelled = true;
+					stream.cancel();
+				},
+			}),
+		});
+		try {
+			await assert.rejects(
+				test.client.fetchBlobs([test.blob.bytes]),
+				(error) => error === failure,
+			);
+			assert.equal(cancelled, true);
+			assert.equal(test.requests(), 1);
+		} finally {
+			await test.close();
+		}
+	});
+
 	it("recovers a wide summary in bounded multi-root requests", async () => {
 		const test = await fixture({ loadingHint: {} }, undefined, undefined, { width: 600 });
 		try {
@@ -224,7 +351,7 @@ describe("SEA opening content", () => {
 			assert.equal((await test.client.fetchSummary(test.root.bytes)).length, 600);
 			assert.deepEqual(
 				test.requestedRoots.map((roots) => roots.length),
-				[256, 256, 88],
+				[600],
 			);
 		} finally {
 			await test.close();
@@ -332,6 +459,14 @@ describe("SEA opening content", () => {
 				[1, 5, 4, 3, 2, 1],
 			);
 			assert.equal(cancelled, 6);
+			const before = test.requests();
+			const entries = await test.client.fetchSummary(test.root.bytes);
+			const blobs = await test.client.fetchBlobs(entries.map((entry) => entry.blob));
+			assert.equal(blobs.length, 5);
+			assert.deepEqual(
+				test.requestedRoots.slice(before + 6).map((roots) => roots.length),
+				[5, 4, 3, 2, 1],
+			);
 		} finally {
 			await test.close();
 		}
@@ -366,7 +501,7 @@ describe("SEA opening content", () => {
 		let requests = 0;
 		let cancelled = 0;
 		const test = await fixture({ loadingHint: {} }, undefined, undefined, {
-			width: 600,
+			width: 9000,
 			demand: (stream) => {
 				const fail = ++requests === 2;
 				let first = true;

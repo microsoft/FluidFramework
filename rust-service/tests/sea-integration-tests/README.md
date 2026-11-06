@@ -213,8 +213,10 @@ These baseline results are provisional because they predate the default read-to-
 
 The snapshot workload seeds populated SharedTrees before measuring fresh-client loads.
 It compares direct Sea with the editor's prefetch hint (`direct`), direct Sea without that hint (`direct-demand`), Fluid over Sea (`sea-fluid`), and Fluid over Tinylicious (`tinylicious`).
-The demand-only case is a current-code configuration control, not a historical revision.
-The default `prefetchItems` is 256 and the explicit Sea `maxConnections` is 16.
+The `direct-demand` case disables opening prefetch, but both direct cases bulk-fetch snapshot blobs before kernel loading.
+It is a current-code configuration control, not a historical revision.
+The default `prefetchItems` is 4096, selecting directories only, and the explicit Sea `maxConnections` is 16.
+Earlier collections used a 256-item directory-and-blob hint and demand-driven kernel reads; retain that distinction when comparing results.
 Override these separately for diagnostic runs, retaining the changed configuration in the report.
 All cases use the optimized forest and the same deterministic, 1,024-byte pseudorandom hexadecimal strings.
 Direct snapshots use the schema's incremental chunk boundaries.

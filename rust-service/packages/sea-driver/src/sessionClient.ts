@@ -83,7 +83,7 @@ interface ProjectionCheckpoint {
 }
 
 const projectionBlobName = ".sea-fluid-projection";
-const directoryReadBatchSize = 256;
+const directoryReadBatchSize = 4096;
 const contentReadBatchSize = 16;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -569,6 +569,8 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		let missing = [...requested].filter(([key]) => !found.has(key));
 		while (missing.length > 0) {
 			const roots = missing.slice(0, directoryReadBatchSize).map(([, id]) => id);
+			const pendingRoots = new Set(roots.map(contentKey));
+			const onlyBlobs = roots.every((root) => root.kind === "blob");
 			const firstRoot = roots[0];
 			if (firstRoot === undefined) throw new Error("SEA content request has no roots");
 			const stream = session.getBlobTrees(roots, this.loadingHint);
@@ -585,7 +587,8 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					const key = contentKey(item.id);
 					if (requested.has(key)) found.set(key, copyContent(item));
 					if (generation === this.contentGeneration) this.cacheContent(item);
-					if (roots.every((root) => root.kind === "blob" && found.has(contentKey(root)))) {
+					pendingRoots.delete(key);
+					if (onlyBlobs && pendingRoots.size === 0) {
 						break;
 					}
 				}
@@ -920,6 +923,20 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			const item = await this.readContent(session, { kind: "blob", bytes: digest });
 			if (item.kind !== "blob") throw new Error("SEA content is not a blob");
 			return item.bytes;
+		});
+	}
+
+	/** Fetches all requested blobs, retaining results independently of cache eviction. */
+	public fetchBlobs(digests: readonly Uint8Array[]): Promise<readonly Uint8Array[]> {
+		return this.withArchiveSession(async (session) => {
+			const items = await this.readContents(
+				session,
+				digests.map((bytes) => ({ kind: "blob", bytes })),
+			);
+			return items.map((item) => {
+				if (item.kind !== "blob") throw new Error("SEA content is not a blob");
+				return item.bytes.slice();
+			});
 		});
 	}
 

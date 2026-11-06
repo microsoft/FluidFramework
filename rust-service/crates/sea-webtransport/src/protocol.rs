@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 13;
+pub const PROTOCOL_VERSION: u16 = 14;
 
-/// Initial unsolicited event delivery window, replenished only after consumption.
-pub const LOAD_EVENT_CREDITS: u32 = 16;
-/// Initial unsolicited content delivery window, replenished only after consumption.
-pub const LOAD_CONTENT_CREDITS: u32 = 8;
+/// Charged bytes allowed in unconsumed event delivery.
+pub const LOAD_EVENT_WINDOW_BYTES: u32 = 8 * 1024 * 1024;
+/// Charged bytes allowed in unconsumed content delivery.
+pub const LOAD_CONTENT_WINDOW_BYTES: u32 = 2 * 1024 * 1024;
+/// Conservative allowance for framing, fixed fields, allocations, and queue bookkeeping.
+pub const LOAD_MESSAGE_OVERHEAD: u32 = 512;
 /// Maximum complete frame size for one unsolicited content item.
 pub const LOAD_CONTENT_MAX_ITEM_BYTES: usize = 256 * 1024;
 
@@ -738,8 +740,8 @@ pub mod payload {
     pub struct LoadCredit {
         /// Selects the content window rather than the event window.
         pub content: bool,
-        /// Number of consumed items to replenish, bounded by the selected window.
-        pub items: u32,
+        /// Charged bytes consumed, bounded by the selected window.
+        pub bytes: u32,
     }
 
     /// One immutable content item with its typed identity.
@@ -982,8 +984,8 @@ pub enum Request {
     LoadCredit {
         /// Selects the content window rather than the event window.
         content: bool,
-        /// Number of consumed items, bounded by the selected window.
-        items: u32,
+        /// Charged bytes consumed, bounded by the selected window.
+        bytes: u32,
     },
     /// Cancels optional recovery content while preserving event delivery.
     CancelLoadContent,
@@ -1229,13 +1231,29 @@ fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, 
     Ok(value)
 }
 
-fn validate_load_credit(content: bool, items: u32) -> Result<(), ProtocolError> {
-    let maximum = if content {
-        LOAD_CONTENT_CREDITS
-    } else {
-        LOAD_EVENT_CREDITS
+/// Estimates retained opening-channel memory without decoding directory or application payloads.
+/// Terminal markers and the opening authority are outside the windows.
+/// Values too large to represent saturate and therefore cannot fit either window.
+#[must_use]
+pub fn load_response_bytes(response: &Response) -> u32 {
+    let payload = match response {
+        Response::BlobTree { payload, .. } => payload.len(),
+        Response::LoadEvent(event) => event.event.payload.len(),
+        Response::LoadSnapshot(_) | Response::StreamProgress { .. } => 0,
+        _ => return 0,
     };
-    if items > maximum {
+    u32::try_from(payload)
+        .unwrap_or(u32::MAX)
+        .saturating_add(LOAD_MESSAGE_OVERHEAD)
+}
+
+fn validate_load_credit(content: bool, bytes: u32) -> Result<(), ProtocolError> {
+    let maximum = if content {
+        LOAD_CONTENT_WINDOW_BYTES
+    } else {
+        LOAD_EVENT_WINDOW_BYTES
+    };
+    if bytes > maximum {
         return Err(ProtocolError::InvalidPayload(
             postcard::Error::DeserializeBadEncoding,
         ));
@@ -1260,7 +1278,7 @@ pub fn encode_request_frame(
         Request::OpenEventStream { hint, .. } | Request::GetBlobTrees { hint, .. } => {
             hint.decode()?;
         }
-        Request::LoadCredit { content, items } => validate_load_credit(*content, *items)?,
+        Request::LoadCredit { content, bytes } => validate_load_credit(*content, *bytes)?,
         _ => {}
     }
     match request {
@@ -1380,12 +1398,12 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::LoadCredit { content, items } => encode_typed_payload(
+        Request::LoadCredit { content, bytes } => encode_typed_payload(
             role,
             request.kind(),
             &wire::LoadCredit {
                 content: *content,
-                items: *items,
+                bytes: *bytes,
             },
             limits,
         ),
@@ -1511,10 +1529,10 @@ pub fn decode_request_frame(
         }
         MessageKind::LoadCredit => {
             let value: wire::LoadCredit = decode_typed_payload(frame)?;
-            validate_load_credit(value.content, value.items)?;
+            validate_load_credit(value.content, value.bytes)?;
             Request::LoadCredit {
                 content: value.content,
-                items: value.items,
+                bytes: value.bytes,
             }
         }
         MessageKind::CancelLoadContent => {
@@ -2072,14 +2090,14 @@ mod tests {
                 StreamRole::Event,
                 Request::LoadCredit {
                     content: false,
-                    items: super::LOAD_EVENT_CREDITS,
+                    bytes: super::LOAD_EVENT_WINDOW_BYTES,
                 },
             ),
             (
                 StreamRole::Event,
                 Request::LoadCredit {
                     content: true,
-                    items: super::LOAD_CONTENT_CREDITS,
+                    bytes: super::LOAD_CONTENT_WINDOW_BYTES,
                 },
             ),
             (StreamRole::Event, Request::CancelLoadContent),
@@ -2620,7 +2638,7 @@ mod tests {
         }
         let request = Request::LoadCredit {
             content: true,
-            items: 1,
+            bytes: 1,
         };
         assert_eq!(request.kind().request_role(), Some(request.stream_role()));
         let encoded = encode_request_frame(StreamRole::Event, &request, Limits::default()).unwrap();
@@ -2687,8 +2705,8 @@ mod tests {
     }
 
     #[test]
-    fn event_open_requires_the_version_13_hint_field() {
-        assert_eq!(PROTOCOL_VERSION, 13);
+    fn event_open_requires_the_loading_hint_field() {
+        assert_eq!(PROTOCOL_VERSION, 14);
         let frame = NetworkFrame {
             kind: MessageKind::OpenEventStream,
             payload: postcard::to_allocvec(&(12_u16, vec![1_u8], ArchiveIntent::Open, None::<u64>))
@@ -2701,26 +2719,100 @@ mod tests {
     }
 
     #[test]
-    fn load_credit_counts_are_bounded_by_the_selected_window() {
+    fn load_credit_bytes_are_bounded_by_the_selected_window() {
         for (content, maximum) in [
-            (false, super::LOAD_EVENT_CREDITS),
-            (true, super::LOAD_CONTENT_CREDITS),
+            (false, super::LOAD_EVENT_WINDOW_BYTES),
+            (true, super::LOAD_CONTENT_WINDOW_BYTES),
         ] {
-            for items in [0, maximum, maximum + 1, u32::MAX] {
-                let request = Request::LoadCredit { content, items };
+            for bytes in [0, maximum, maximum + 1, u32::MAX] {
+                let request = Request::LoadCredit { content, bytes };
                 let encoded = encode_request_frame(StreamRole::Event, &request, Limits::default());
-                assert_eq!(encoded.is_ok(), items <= maximum);
+                assert_eq!(encoded.is_ok(), bytes <= maximum);
                 let frame = NetworkFrame {
                     kind: MessageKind::LoadCredit,
-                    payload: postcard::to_allocvec(&super::payload::LoadCredit { content, items })
+                    payload: postcard::to_allocvec(&super::payload::LoadCredit { content, bytes })
                         .unwrap(),
                 };
                 assert_eq!(
                     decode_request_frame(StreamRole::Event, &frame).is_ok(),
-                    items <= maximum
+                    bytes <= maximum
                 );
             }
         }
+    }
+
+    #[test]
+    fn load_charge_covers_wire_and_retained_message_storage() {
+        let mut responses = vec![
+            Response::LoadSnapshot(super::Snapshot {
+                at_event: u64::MAX,
+                root: super::TreeId::Directory([255; 32]),
+            }),
+            Response::StreamProgress {
+                previous: Some(u64::MAX),
+                latest_known: Some(u64::MAX),
+                status: super::StreamStatus::AwaitingNewItems,
+            },
+        ];
+        for size in [0, 1, 4096, super::LOAD_CONTENT_MAX_ITEM_BYTES - 512] {
+            for id in [
+                super::TreeId::Blob([255; 32]),
+                super::TreeId::Directory([255; 32]),
+            ] {
+                responses.push(Response::BlobTree {
+                    id,
+                    payload: vec![7; size],
+                });
+            }
+            responses.push(Response::LoadEvent(Box::new(super::StreamEvent {
+                kind: super::SessionEventKind::Application,
+                position: u64::MAX,
+                session: u64::MAX,
+                reference: Some(u64::MAX),
+                minimum_reference: Some(u64::MAX),
+                event: super::Event {
+                    payload: vec![7; size],
+                    blob_tree: Some(super::TreeId::Directory([255; 32])),
+                },
+            })));
+        }
+        for response in responses {
+            let encoded =
+                encode_response_frame(StreamRole::Event, &response, Limits::default()).unwrap();
+            let decoded = decode_response_network_frame(
+                StreamRole::Event,
+                &decode_one_network_frame(&encoded),
+            )
+            .unwrap();
+            let charge = super::load_response_bytes(&response) as usize;
+            assert_eq!(super::load_response_bytes(&decoded) as usize, charge);
+            let allocation = match &decoded {
+                Response::BlobTree { payload, .. } => payload.capacity(),
+                Response::LoadEvent(event) => {
+                    std::mem::size_of::<super::StreamEvent>() + event.event.payload.capacity()
+                }
+                _ => 0,
+            };
+            // Leave room beyond the value and payload for queue slots and allocator metadata.
+            let retained = std::mem::size_of::<Response>() + allocation + 64;
+            assert!(charge >= retained, "{charge} < {retained}");
+            assert!(charge >= encoded.len());
+            assert!(charge <= retained + 512);
+        }
+        assert!(
+            super::LOAD_CONTENT_WINDOW_BYTES
+                > u32::try_from(super::LOAD_CONTENT_MAX_ITEM_BYTES).unwrap()
+                    + super::LOAD_MESSAGE_OVERHEAD
+        );
+        assert!(
+            super::LOAD_EVENT_WINDOW_BYTES
+                > u32::try_from(Limits::default().max_frame_bytes).unwrap()
+                    + super::LOAD_MESSAGE_OVERHEAD
+        );
+        assert_eq!(
+            super::load_response_bytes(&Response::LoadContentComplete),
+            0
+        );
     }
 
     fn decode_one_network_frame(encoded: &[u8]) -> NetworkFrame {

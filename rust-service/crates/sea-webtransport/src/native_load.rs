@@ -21,9 +21,9 @@ impl Drop for LoadPump {
     }
 }
 
-/// One bounded logical receiver; consuming an item returns one unit of wire credit.
+/// One byte-bounded logical receiver; consumption returns the message's charged bytes.
 pub(super) struct LoadReceiver {
-    /// One slot per granted item plus a terminal outcome.
+    /// Slot capacity derives from the byte window and minimum message charge.
     received: mpsc::Receiver<Response>,
     /// Bounded indirectly by outstanding receive credits on the two channels.
     control: mpsc::UnboundedSender<Request>,
@@ -46,7 +46,7 @@ impl LoadReceiver {
             // A closed control receiver means the terminal outcome is already queued.
             let _ = self.control.send(Request::LoadCredit {
                 content: self.content,
-                items: 1,
+                bytes: protocol::load_response_bytes(&response),
             });
         }
         Some(response)
@@ -69,17 +69,27 @@ where
     Stream: BidirectionalStream + SessionStreamBounds + 'static,
     Stream::Error: Into<SeaClientError> + SessionStreamBounds,
 {
-    let (events, event_receiver) = mpsc::channel(protocol::LOAD_EVENT_CREDITS as usize + 1);
-    let (content, content_receiver) = mpsc::channel(protocol::LOAD_CONTENT_CREDITS as usize + 1);
+    let (events, event_receiver) = mpsc::channel(
+        (protocol::LOAD_EVENT_WINDOW_BYTES / protocol::LOAD_MESSAGE_OVERHEAD) as usize + 1,
+    );
+    let (content, content_receiver) = mpsc::channel(
+        (protocol::LOAD_CONTENT_WINDOW_BYTES / protocol::LOAD_MESSAGE_OVERHEAD) as usize + 1,
+    );
     let (control, mut commands) = mpsc::unbounded_channel();
     let (abort, registration) = AbortHandle::new_pair();
     let pump = Arc::new(LoadPump(abort));
     let future = async move {
         let result = Abortable::new(async {
+            let mut event_bytes = protocol::LOAD_EVENT_WINDOW_BYTES;
+            let mut content_bytes = protocol::LOAD_CONTENT_WINDOW_BYTES;
             loop {
                 let response = tokio::select! {
                     command = commands.recv() => {
                         let Some(command) = command else { return Ok(()); };
+                        if let Request::LoadCredit { content, bytes } = &command {
+                            let remaining = if *content { &mut content_bytes } else { &mut event_bytes };
+                            *remaining += bytes;
+                        }
                         stream.control(&command).await.map_err(SeaClientError::from)?;
                         continue;
                     }
@@ -98,6 +108,9 @@ where
                 if target.is_closed() {
                     continue;
                 }
+                let remaining = if is_content { &mut content_bytes } else { &mut event_bytes };
+                *remaining = remaining.checked_sub(protocol::load_response_bytes(&response))
+                    .ok_or_else(|| SeaClientError::new(super::SeaClientErrorReason::UnexpectedResponse))?;
                 if !terminal && target.capacity() <= 1 {
                     return Err(SeaClientError::new(super::SeaClientErrorReason::UnexpectedResponse));
                 }

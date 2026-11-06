@@ -140,12 +140,14 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 		{
 			loadingHint:
 				backend === "direct"
-					? { includeDescendantBlobs: true, maxExtraItems: integer("prefetchItems", 256) }
+					? { includeDescendantBlobs: false, maxExtraItems: integer("prefetchItems", 4096) }
 					: {},
 		},
 	);
 	const fetchBlob = client.fetchBlob.bind(client);
 	client.fetchBlob = async (id) => timed("blob", async () => fetchBlob(id));
+	const fetchBlobs = client.fetchBlobs.bind(client);
+	client.fetchBlobs = async (ids) => timed("blobs", async () => fetchBlobs(ids));
 	const fetchSummary = client.fetchSummary.bind(client);
 	client.fetchSummary = async (id) => timed("manifest", async () => fetchSummary(id));
 	const load = client.loadDirectSnapshot.bind(client);

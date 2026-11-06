@@ -85,11 +85,12 @@ describe("DirectSharedTreeClient incremental summaries", () => {
 	});
 
 	/** Opens an instrumented client and registers its resources for cleanup. */
-	async function open(document?: Uint8Array, clientSelected = false) {
+	async function open(document?: Uint8Array, clientSelected = false, bulkReads = true) {
 		const driver = new SeaSessionDriverClient(
 			service.open,
 			clientSelected ? "clientSelected" : "seaSelected",
 		);
+		if (!bulkReads) Object.defineProperty(driver, "fetchBlobs", { value: undefined });
 		const host = await DirectSharedTreeClient.create(
 			driver,
 			document ?? new Uint8Array(),
@@ -138,6 +139,67 @@ describe("DirectSharedTreeClient incremental summaries", () => {
 		};
 		return { driver, host, view, summaries, blobs, directories };
 	}
+
+	it("loads all snapshot blobs in one deduplicated bulk read without relying on the cache", async () => {
+		const writer = await open();
+		await writer.host.summarize();
+		const driver = new SeaSessionDriverClient(service.open, "readOnly", {
+			loadingHint: { includeDescendantBlobs: false, maxExtraItems: 4096 },
+			contentCacheObjects: 0,
+		});
+		let batches = 0;
+		const fetchBlobs = driver.fetchBlobs.bind(driver);
+		driver.fetchBlobs = async (ids) => {
+			batches++;
+			assert.equal(new Set(ids.map((id) => Buffer.from(id).toString("hex"))).size, ids.length);
+			return fetchBlobs(ids);
+		};
+		driver.fetchBlob = async () =>
+			assert.fail("SharedTree must use the retained bulk results");
+		const host = await DirectSharedTreeClient.create(
+			driver,
+			writer.host.documentId,
+			4,
+			1024 * 1024,
+			false,
+		);
+		clients.push(host);
+		const view = host.tree.viewWith(configuration);
+		views.push(view);
+		assert.deepEqual([...view.root.left], [...writer.view.root.left]);
+		assert.deepEqual([...view.root.right], [...writer.view.root.right]);
+		assert.equal(batches, 1);
+	});
+
+	it("reports bulk loading failures and closes the failed client", async () => {
+		const writer = await open();
+		await writer.host.summarize();
+		const driver = new SeaSessionDriverClient(service.open, "readOnly");
+		const failure = new Error("bulk snapshot unavailable");
+		driver.fetchBlobs = async () => {
+			throw failure;
+		};
+		try {
+			await assert.rejects(
+				DirectSharedTreeClient.create(driver, writer.host.documentId, 4, 1024 * 1024, false),
+				(error) => error === failure,
+			);
+			await driver.reconnect();
+			assert.equal(driver.sessionId, undefined);
+		} finally {
+			driver.disconnect();
+			await driver.reconnect();
+		}
+	});
+
+	it("loads through individual reads when the supplied client has no bulk API", async () => {
+		const writer = await open();
+		await writer.host.summarize();
+		const reader = await open(writer.host.documentId, false, false);
+		assert.equal(reader.host.loadedFromSummary, true);
+		assert.deepEqual([...reader.view.root.left], [...writer.view.root.left]);
+		assert.deepEqual([...reader.view.root.right], [...writer.view.root.right]);
+	});
 
 	it("uploads less, preserves untouched directory IDs, and reuses chunks immediately after reload", async () => {
 		const writer = await open();

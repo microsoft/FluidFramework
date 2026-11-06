@@ -22,7 +22,7 @@ import {
 
 function createDirectClient(openSession: SeaSessionFactory): SeaSessionDriverClient {
 	return new SeaSessionDriverClient(openSession, "seaSelected", {
-		loadingHint: { includeDescendantBlobs: true, maxExtraItems: 256 },
+		loadingHint: { includeDescendantBlobs: false, maxExtraItems: 4096 },
 		contentCacheBytes: 16 * 1024 * 1024,
 		contentCacheObjects: 1024,
 	});
@@ -53,6 +53,12 @@ Summary traversal batches known directory misses into multi-root requests.
 Concurrent content cache misses in the same session are coalesced into batches of at most 16 unique identities.
 Duplicate readers share a request but receive independent copies.
 The queue admits one content-recovery stream at a time and remains pinned to its original session while admitted reads drain.
+For known bulk demand, `fetchBlobs(digests)` bypasses this small coalescing queue and requests up to 4,096 missing identities per service request.
+It returns all results in input order, including independently owned buffers for duplicate identities.
+Received roots remain available until the entire call completes, independently of cache eviction.
+Partial responses retry only missing roots; errors reject the call and cancel the active response stream.
+The operation stays pinned to its admitted session and drains before membership replacement or close.
+The larger request limit requires an updated Sea service; older services can reject requests above 256 roots.
 
 ### Startup coordination and measurement
 
@@ -65,7 +71,7 @@ A cache hit returns immediately after checking for a recorded content failure.
 A cache miss waits for the initial content stream to finish, then checks the cache again.
 It does not wake early when that particular item arrives.
 If the item is still missing, including after normal prefetch truncation or eviction, it issues a `getBlobTrees` request with the configured loading hint.
-Directory traversal batches up to 256 identities into one request and consumes its bounded descendant prefetch before continuing.
+Directory traversal batches up to 4,096 identities into one request and consumes its bounded descendant prefetch before continuing.
 Only one directory-recovery stream is active per traversal.
 Directory traversal and content-recovery queues can run independently.
 Requested roots are retained independently of the cache until the batch completes, including when the cache is disabled or too small.

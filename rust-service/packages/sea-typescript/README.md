@@ -38,7 +38,7 @@ Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 13.
+Remote consumers must rebuild client and server together for protocol version 14, which uses byte-based opening-stream credits instead of item counts.
 The sequencer allocates each session identity; opening options no longer accept one.
 `session.sessionId` and delivered event `session` values encode the document-scoped nonzero `u64` as eight big-endian bytes, preserving its full precision.
 Applications own author attribution.

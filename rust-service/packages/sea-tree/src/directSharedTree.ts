@@ -227,6 +227,19 @@ export class DirectSharedTreeClient {
 			const entries = snapshot === undefined ? [] : await client.fetchSummary(snapshot.root);
 			const blobs = new Map(entries.map((entry) => [decoder.decode(entry.path), entry.blob]));
 			const fetchedBlobs = new Map<string, Promise<Uint8Array>>();
+			if (snapshot !== undefined && client.fetchBlobs !== undefined) {
+				const unique = [...new Map(entries.map((entry) => [byteKey(entry.blob), entry.blob]))];
+				const contents = await client.fetchBlobs(unique.map(([, digest]) => digest));
+				assert(
+					contents.length === unique.length,
+					"Bulk read must return every requested blob",
+				);
+				for (const [index, [key]] of unique.entries()) {
+					const content = contents[index];
+					assert(content !== undefined, "Bulk read must preserve blob order");
+					fetchedBlobs.set(key, Promise.resolve(content));
+				}
+			}
 			const fetchBlob = (digest: Uint8Array): Promise<Uint8Array> => {
 				const key = byteKey(digest);
 				let pending = fetchedBlobs.get(key);

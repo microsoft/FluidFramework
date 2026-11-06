@@ -79,7 +79,7 @@ pub(super) fn read<S: SeaStorage + 'static>(
             for child in directory.entries().values() {
                 if state.work >= MAX_BLOB_TREE_WORK
                     || state.extras >= state.hint.max_extra_items
-                    || state.seen.len() >= MAX_BLOB_TREE_ITEMS
+                    || state.extras as usize >= MAX_BLOB_TREE_ITEMS
                 {
                     break;
                 }
@@ -279,6 +279,65 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(items[0].id(), small);
+    }
+
+    #[tokio::test]
+    async fn accepts_the_full_root_budget_and_bounds_descendant_responses() {
+        let session = session().await;
+        let mut roots = Vec::new();
+        let mut entries = Vec::new();
+        for index in 0..MAX_BLOB_TREE_ROOTS {
+            let id = session
+                .put_blob(Bytes::from(index.to_le_bytes().to_vec()))
+                .await
+                .unwrap()
+                .id();
+            roots.push(id);
+            entries.push((index.to_string(), id));
+        }
+        let items: Vec<_> = session
+            .get_blob_trees(roots.clone(), BlobTreeHint::default())
+            .try_collect()
+            .await
+            .unwrap();
+        assert_eq!(
+            items.iter().map(BlobTreeItem::id).collect::<Vec<_>>(),
+            roots
+        );
+
+        let root = session
+            .put_directory(BlobDirectory::new(entries.into_iter().collect()).unwrap())
+            .await
+            .unwrap()
+            .id();
+        let items: Vec<_> = session
+            .get_blob_trees(
+                vec![root],
+                BlobTreeHint {
+                    include_descendant_blobs: true,
+                    max_extra_items: u32::MAX,
+                },
+            )
+            .try_collect()
+            .await
+            .unwrap();
+        assert_eq!(items.len(), MAX_BLOB_TREE_ITEMS);
+        assert_eq!(items[0].id(), root);
+        let received: BTreeSet<_> = items.iter().map(BlobTreeItem::id).collect();
+        let missing: Vec<_> = roots
+            .into_iter()
+            .filter(|id| !received.contains(id))
+            .collect();
+        assert_eq!(missing.len(), 1);
+        let recovered: Vec<_> = session
+            .get_blob_trees(missing.clone(), BlobTreeHint::default())
+            .try_collect()
+            .await
+            .unwrap();
+        assert_eq!(
+            recovered.iter().map(BlobTreeItem::id).collect::<Vec<_>>(),
+            missing
+        );
     }
 
     #[tokio::test]

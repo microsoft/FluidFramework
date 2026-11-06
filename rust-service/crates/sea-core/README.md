@@ -59,6 +59,10 @@ Explicit blob roots remain eligible regardless of that flag.
 Empty requests produce no items.
 A nonempty successful response includes its first root, but normal completion can truncate later roots or descendants at implementation limits.
 Track missing identities and request them explicitly; stream completion does not prove complete subtree coverage.
+Requests accept up to 4,096 explicit roots, including duplicates.
+Responses remain limited to 4,096 unique items and a soft 16 MiB byte budget, with an oversized first root allowed to ensure progress.
+Traversal inspects at most 65,536 directory entries and queues at most 4,096 additional identities, independently of explicit roots.
+These are fixed execution budgets, not adaptive resource-pressure detection.
 `SeaArchiveExt` provides single-root `get_blob` and `get_directory` convenience methods, separate from the session primitives.
 Payload decorators retain stored identities while transforming leaf bytes, so verify encoded content before decoding rather than hashing decoded bytes against stored IDs.
 

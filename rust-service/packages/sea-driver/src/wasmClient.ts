@@ -197,6 +197,12 @@ export interface SeaDriverClient {
 	uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 	/** Fetches an immutable blob by content digest. */
 	fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+	/**
+	 * Fetches all requested blobs in input order, including duplicates, with independently owned buffers.
+	 * Completes partial service responses and retains results independently of cache budgets.
+	 * Optional for clients that only support individual reads.
+	 */
+	fetchBlobs?(digests: readonly Uint8Array[]): Promise<readonly Uint8Array[]>;
 	/** Publishes a flattened summary manifest. */
 	publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
 	/** Fetches a flattened summary manifest by digest. */

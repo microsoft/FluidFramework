@@ -53,7 +53,7 @@ const config = {
 	capacityCount: 40,
 	workers: 4,
 	workload: "load",
-	prefetchItems: 256,
+	prefetchItems: 4096,
 	maxConnections: 16,
 	rates: [],
 	rateSeconds: 10,

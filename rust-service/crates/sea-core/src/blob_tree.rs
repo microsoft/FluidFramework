@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// Maximum explicit roots accepted by one content request.
-pub const MAX_BLOB_TREE_ROOTS: usize = 256;
+pub const MAX_BLOB_TREE_ROOTS: usize = 4096;
 /// Maximum unique items returned by one content request.
 pub const MAX_BLOB_TREE_ITEMS: usize = 4096;
 /// Soft response-byte limit; the first root is returned even when it exceeds this limit.

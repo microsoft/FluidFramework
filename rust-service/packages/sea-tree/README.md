@@ -65,9 +65,13 @@ Failed or ambiguous publication does not advance this baseline, and observing an
 The publication parent and nomination fence remain independent of the handle-resolution baseline.
 Loading reads only the snapshot's suffix; reconnect reads only after the last applied position.
 Both reuse the opening snapshot/replay/live stream instead of making separate snapshot and history requests.
-Snapshot content is fetched on demand; this path does not require recursive prefetch hints.
-Repeated references to the same immutable blob share one fetch during summary loading.
-SharedTree loads incremental chunk blobs in batches of at most 16 concurrent reads, including across nested chunk trees.
+After discovering the snapshot directories, the host uses `fetchBlobs`, when available, to load all unique snapshot blobs before invoking SharedTree's loader.
+The load retains these results independently of the driver's bounded cache, so cache eviction cannot cause another read during kernel loading.
+This covers this kernel's snapshot; it does not resolve or fetch external Fluid-handle targets.
+Clients without bulk-read support retain on-demand loading with deduplicated reads.
+SharedTree's bounded chunk-reading schedule then consumes local results rather than imposing network request waves.
+For direct applications, use a directory-only opening hint such as `{ includeDescendantBlobs: false, maxExtraItems: 4096 }`.
+The editor uses this hint; recursive prefetch is not required for correctness.
 The host's storage adapter batches missing directories and uses the configured descendant-prefetch hint during recovery.
 Direct snapshot metadata uses version 3.
 Version 2 full snapshots remain readable; their next summary establishes a new full incremental baseline.

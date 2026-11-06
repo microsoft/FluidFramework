@@ -80,11 +80,16 @@ Session setup without a decorator remains direct.
 
 ### Independent recovery delivery
 
-Protocol version 13 carries recovery events and advisory snapshot content on the opening stream.
+Protocol version 14 carries recovery events and advisory snapshot content on the opening stream.
 The host selects one load and uses that selection for both channels.
-Event delivery starts with 16 credits and content delivery with 8; only consumption replenishes each independent window.
+Event delivery starts with an 8 MiB byte window and content delivery with 2 MiB; only consumption replenishes each independent window.
+Each message costs its opaque payload length plus a conservative 512-byte allowance for framing, fixed fields, allocations, and queue bookkeeping.
+The shared protocol calculation is identical on sender and receiver.
 The authority opening and content completion/error markers do not consume credits.
-The server stops polling a channel when its credits run out.
+The server retains at most one lookahead message per channel and waits until its full byte charge fits before sending it.
+An event larger than the entire event window fails explicitly.
+Receiver slot capacity derives from the byte budget and minimum charge, not a separate item-count policy.
+The budgets do not bound total process memory or transport and decoder buffering.
 Either channel can be cancelled independently, dropping its source while retaining the other channel.
 Control frames and both ready channels are scheduled fairly.
 

@@ -2137,7 +2137,10 @@ mod tests {
             if let Some(content) = content {
                 send_raw_request(
                     &mut self.send,
-                    protocol::Request::LoadCredit { content, items: 1 },
+                    protocol::Request::LoadCredit {
+                        content,
+                        bytes: protocol::load_response_bytes(&response),
+                    },
                 )
                 .await;
             }

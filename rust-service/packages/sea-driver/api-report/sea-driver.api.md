@@ -172,6 +172,7 @@ export interface SeaDriverClient {
     create(): Promise<Uint8Array>;
     disconnect(session?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+    fetchBlobs?(digests: readonly Uint8Array[]): Promise<readonly Uint8Array[]>;
     fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): Promise<{
@@ -221,6 +222,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     create(): Promise<Uint8Array>;
     disconnect(owner?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+    fetchBlobs(digests: readonly Uint8Array[]): Promise<readonly Uint8Array[]>;
     fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;

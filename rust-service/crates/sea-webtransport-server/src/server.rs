@@ -776,8 +776,8 @@ async fn serve_load_streams(
         max_frame_bytes: config.max_frame_bytes,
     };
     let role = protocol::StreamRole::Event;
-    let mut event_credits = protocol::LOAD_EVENT_CREDITS;
-    let mut content_credits = protocol::LOAD_CONTENT_CREDITS;
+    let mut event_credits = protocol::LOAD_EVENT_WINDOW_BYTES;
+    let mut content_credits = protocol::LOAD_CONTENT_WINDOW_BYTES;
     // The opening authority precedes both channels and is outside their delivery windows.
     let first = tokio::select! {
         () = send.stopped() => return Ok(()),
@@ -785,7 +785,9 @@ async fn serve_load_streams(
     };
     if let Some(response) = first {
         if !matches!(response, protocol::Response::EventStreamOpened { .. }) {
-            event_credits -= 1;
+            event_credits = event_credits
+                .checked_sub(protocol::load_response_bytes(&response))
+                .ok_or_else(|| transport_error("opening event exceeds its byte window"))?;
         }
         write_network_response(
             &mut send,
@@ -813,8 +815,11 @@ async fn serve_load_streams(
     let mut delivered_content_root = false;
     let mut events_done = false;
     let mut controls_done = false;
+    let mut pending_event = None;
+    let mut pending_content = None;
     loop {
-        if events_done && content.is_none() {
+        if events_done && content.is_none() && pending_event.is_none() && pending_content.is_none()
+        {
             return send.finish().await;
         }
         let response = tokio::select! {
@@ -827,30 +832,32 @@ async fn serve_load_streams(
                 let frame = frame?;
                 metrics.add_wire_bytes(frame.encoded_len()?);
                 match protocol::decode_request_frame(role, &frame)? {
-                    protocol::Request::LoadCredit { content: is_content, items } => {
+                    protocol::Request::LoadCredit { content: is_content, bytes } => {
                         let (credits, window) = if is_content {
-                            (&mut content_credits, protocol::LOAD_CONTENT_CREDITS)
+                            (&mut content_credits, protocol::LOAD_CONTENT_WINDOW_BYTES)
                         } else {
-                            (&mut event_credits, protocol::LOAD_EVENT_CREDITS)
+                            (&mut event_credits, protocol::LOAD_EVENT_WINDOW_BYTES)
                         };
-                        if items > window - *credits {
+                        if bytes > window - *credits {
                             let response = protocol::Response::Error {
                                 kind: protocol::ErrorKind::Invalid,
                                 message: "load credit exceeds its delivery window".to_owned(),
                             };
                             return write_network_response(&mut send, role, &response, limits, config.operation_timeout, metrics, true).await;
                         }
-                        *credits += items;
+                        *credits += bytes;
                         continue;
                     }
                     protocol::Request::CancelLoadContent => {
-                        if content.take().is_none() {
+                        if content.take().is_none() && pending_content.is_none() {
                             continue;
                         }
+                        pending_content = None;
                         protocol::Response::LoadContentComplete
                     }
                     protocol::Request::CancelLoadEvents => {
                         responses.events = Box::pin(stream::empty());
+                        pending_event = None;
                         events_done = true;
                         continue;
                     }
@@ -863,16 +870,29 @@ async fn serve_load_streams(
                     }
                 }
             }
-            response = responses.events.next(), if !events_done && event_credits > 0 => {
+            () = std::future::ready(()), if pending_event.as_ref().is_some_and(|response| protocol::load_response_bytes(response) <= event_credits) => {
+                let response = pending_event.take().expect("ready event");
+                event_credits -= protocol::load_response_bytes(&response);
+                response
+            }
+            () = std::future::ready(()), if pending_content.as_ref().is_some_and(|response| protocol::load_response_bytes(response) <= content_credits) => {
+                let response = pending_content.take().expect("ready content");
+                content_credits -= protocol::load_response_bytes(&response);
+                response
+            }
+            response = responses.events.next(), if !events_done && pending_event.is_none() => {
                 let Some(response) = response else {
                     events_done = true;
                     continue;
                 };
-                event_credits -= 1;
-                response
+                if protocol::load_response_bytes(&response) > protocol::LOAD_EVENT_WINDOW_BYTES {
+                    return Err(transport_error("load event exceeds its byte window"));
+                }
+                pending_event = Some(response);
+                continue;
             }
-            response = async { content.as_mut().expect("active content").next().await }, if content.is_some() && content_credits > 0 => {
-                match response {
+            response = async { content.as_mut().expect("active content").next().await }, if content.is_some() && pending_content.is_none() => {
+                pending_content = Some(match response {
                     Some(protocol::Response::BlobTree { id, payload }) => {
                         let response = protocol::Response::BlobTree { id, payload };
                         let bounded = protocol::Limits {
@@ -890,7 +910,6 @@ async fn serve_load_streams(
                                 }
                             }
                         } else {
-                            content_credits -= 1;
                             delivered_content_root = true;
                             response
                         }
@@ -910,7 +929,8 @@ async fn serve_load_streams(
                             message: "unexpected load content response".to_owned(),
                         }
                     }
-                }
+                });
+                continue;
             }
         };
         write_network_response(
@@ -1593,7 +1613,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn load_windows_are_independent_and_do_not_poll_stalled_content() {
+    async fn load_byte_windows_are_independent_with_one_item_lookahead() {
         let polls = Arc::new(AtomicUsize::new(0));
         let content_polls = polls.clone();
         let mut harness = LoadHarness::start(
@@ -1605,38 +1625,33 @@ mod tests {
         .await;
         let mut events = 0;
         let mut content = 0;
-        for _ in 0..protocol::LOAD_EVENT_CREDITS + protocol::LOAD_CONTENT_CREDITS {
+        let event_charge = protocol::load_response_bytes(&load_progress());
+        let content_charge = protocol::load_response_bytes(&load_blob(1));
+        let event_count = protocol::LOAD_EVENT_WINDOW_BYTES / event_charge;
+        let content_count = protocol::LOAD_CONTENT_WINDOW_BYTES / content_charge;
+        for _ in 0..event_count + content_count {
             match harness.response().await {
                 protocol::Response::BlobTree { .. } => content += 1,
                 protocol::Response::StreamProgress { .. } => events += 1,
                 response => panic!("unexpected response: {response:?}"),
             }
         }
-        assert_eq!(
-            (events, content),
-            (protocol::LOAD_EVENT_CREDITS, protocol::LOAD_CONTENT_CREDITS)
-        );
+        assert_eq!((events, content), (event_count, content_count));
         tokio::task::yield_now().await;
-        assert_eq!(
-            polls.load(Ordering::Relaxed),
-            protocol::LOAD_CONTENT_CREDITS as usize
-        );
+        assert_eq!(polls.load(Ordering::Relaxed), content_count as usize + 1);
         assert!(harness.responses.try_recv().is_err());
         harness.request(&protocol::Request::LoadCredit {
             content: false,
-            items: 1,
+            bytes: event_charge,
         });
         assert!(matches!(
             harness.response().await,
             protocol::Response::StreamProgress { .. }
         ));
-        assert_eq!(
-            polls.load(Ordering::Relaxed),
-            protocol::LOAD_CONTENT_CREDITS as usize
-        );
+        assert_eq!(polls.load(Ordering::Relaxed), content_count as usize + 1);
         harness.request(&protocol::Request::LoadCredit {
             content: true,
-            items: 1,
+            bytes: content_charge,
         });
         assert!(matches!(
             harness.response().await,
@@ -1649,7 +1664,7 @@ mod tests {
         );
         harness.request(&protocol::Request::LoadCredit {
             content: false,
-            items: 1,
+            bytes: event_charge,
         });
         assert!(matches!(
             harness.response().await,
@@ -1665,7 +1680,8 @@ mod tests {
             Box::pin(stream::repeat(load_blob(1))),
         )
         .await;
-        for _ in 0..protocol::LOAD_CONTENT_CREDITS {
+        let charge = protocol::load_response_bytes(&load_blob(1));
+        for _ in 0..protocol::LOAD_CONTENT_WINDOW_BYTES / charge {
             assert!(matches!(
                 harness.response().await,
                 protocol::Response::BlobTree { .. }
@@ -1674,7 +1690,7 @@ mod tests {
         harness.request(&protocol::Request::CancelLoadEvents);
         harness.request(&protocol::Request::LoadCredit {
             content: true,
-            items: 1,
+            bytes: charge,
         });
         assert!(matches!(
             harness.response().await,
@@ -1693,7 +1709,7 @@ mod tests {
         for content in [false, true] {
             let mut harness =
                 LoadHarness::start(Box::pin(stream::pending()), Box::pin(stream::pending())).await;
-            harness.request(&protocol::Request::LoadCredit { content, items: 1 });
+            harness.request(&protocol::Request::LoadCredit { content, bytes: 1 });
             assert!(matches!(
                 harness.response().await,
                 protocol::Response::Error {
@@ -1706,6 +1722,74 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn small_directories_complete_without_any_credit_roundtrip() {
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::pending()),
+            Box::pin(stream::iter((0..326).map(|_| {
+                protocol::Response::BlobTree {
+                    id: protocol::TreeId::Directory([0; 32]),
+                    payload: vec![0; 64],
+                }
+            }))),
+        )
+        .await;
+        for _ in 0..326 {
+            assert!(matches!(
+                harness.response().await,
+                protocol::Response::BlobTree { .. }
+            ));
+        }
+        assert_eq!(
+            harness.response().await,
+            protocol::Response::LoadContentComplete
+        );
+        harness.finish().await;
+    }
+
+    #[tokio::test]
+    async fn large_content_waits_for_enough_bytes_not_just_any_credit() {
+        let size = protocol::LOAD_CONTENT_MAX_ITEM_BYTES - 1024;
+        let charge = protocol::load_response_bytes(&load_blob(size));
+        let count = protocol::LOAD_CONTENT_WINDOW_BYTES / charge;
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::pending()),
+            Box::pin(stream::repeat(load_blob(size))),
+        )
+        .await;
+        for _ in 0..count {
+            assert!(matches!(
+                harness.response().await,
+                protocol::Response::BlobTree { .. }
+            ));
+        }
+        let remaining = protocol::LOAD_CONTENT_WINDOW_BYTES - count * charge;
+        let needed = charge - remaining;
+        harness.request(&protocol::Request::LoadCredit {
+            content: true,
+            bytes: needed - 1,
+        });
+        assert!(
+            timeout(Duration::from_millis(20), harness.responses.recv())
+                .await
+                .is_err()
+        );
+        harness.request(&protocol::Request::LoadCredit {
+            content: true,
+            bytes: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::BlobTree { .. }
+        ));
+        assert!(
+            timeout(Duration::from_millis(20), harness.responses.recv())
+                .await
+                .is_err()
+        );
+        harness.finish().await;
+    }
+
+    #[tokio::test]
     async fn oversized_load_content_fails_once_without_ending_events() {
         let mut harness = LoadHarness::start(
             Box::pin(stream::repeat(load_progress())),
@@ -1715,7 +1799,8 @@ mod tests {
         )
         .await;
         let mut errors = 0;
-        for _ in 0..=protocol::LOAD_EVENT_CREDITS {
+        let charge = protocol::load_response_bytes(&load_progress());
+        for _ in 0..=protocol::LOAD_EVENT_WINDOW_BYTES / charge {
             match harness.response().await {
                 protocol::Response::LoadContentError { .. } => errors += 1,
                 protocol::Response::StreamProgress { .. } => {}
@@ -1726,7 +1811,7 @@ mod tests {
         harness.request(&protocol::Request::CancelLoadContent);
         harness.request(&protocol::Request::LoadCredit {
             content: false,
-            items: 1,
+            bytes: charge,
         });
         assert!(matches!(
             harness.response().await,
@@ -1748,7 +1833,8 @@ mod tests {
         .await;
         let mut root = false;
         let mut complete = false;
-        for _ in 0..protocol::LOAD_EVENT_CREDITS + 2 {
+        let charge = protocol::load_response_bytes(&load_progress());
+        for _ in 0..protocol::LOAD_EVENT_WINDOW_BYTES / charge + 2 {
             match harness.response().await {
                 protocol::Response::BlobTree { payload, .. } => {
                     assert!(!root);
@@ -1767,7 +1853,7 @@ mod tests {
         assert!(root && complete);
         harness.request(&protocol::Request::LoadCredit {
             content: false,
-            items: 1,
+            bytes: charge,
         });
         assert!(matches!(
             harness.response().await,

@@ -16,7 +16,7 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Content | Ordered history/content/snapshot lookup; finite calls share a pool of at most four concurrent reusable streams, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
-In protocol version 13, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
+In protocol version 14, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
 The payload must contain exactly one value of that kind, with no trailing bytes.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
@@ -73,12 +73,19 @@ A transport above those decorators preserves stored identities while carrying de
 Opening requests carry the same versioned hint and deliver the selected snapshot's content on the existing event stream.
 Unknown hint versions use roots-only behavior.
 The request direction stays open for independent event/content credits and cancellation.
-Initial windows permit 16 event items and 8 content items; each unsolicited content payload is at most 256 KiB.
-Separate bounded receivers return credits on consumption, so an unread content channel cannot fill the event receiver or prevent live events.
+Initial windows permit 8 MiB of charged event bytes and 2 MiB of charged content bytes; each unsolicited content frame is at most 256 KiB.
+Both peers charge opaque payload bytes plus a fixed 512-byte allowance for framing, fixed fields, allocations, and queue bookkeeping.
+Snapshot and progress messages have only the fixed charge.
+Directories remain encoded while queued, so accounting does not expand their child entries.
+Separate bounded receivers return the same byte charge on consumption, so an unread content channel cannot fill the event receiver or prevent live events.
+Queue slot counts derive from the byte window divided by the minimum charge, plus a terminal slot; they impose no separate item window.
+The sender retains at most one lookahead message per channel while waiting for enough bytes.
+An event whose charge exceeds the entire event window fails explicitly rather than waiting forever.
+These budgets bound queued delivery, not all transport, decoder, or application memory.
 Dropping one channel stops its production without cancelling the other; dropping both releases the physical stream.
 Content completion and errors are separate from event catch-up.
 Traversal also applies independent object, byte, and work limits; truncation leaves ordinary explicit fetches available.
-Rebuild both client and server for protocol version 13; the previous individual-fetch wire messages are no longer supported.
+Rebuild both client and server for protocol version 14; version 13 used incompatible item-credit semantics.
 
 ## Signal Delivery
 
