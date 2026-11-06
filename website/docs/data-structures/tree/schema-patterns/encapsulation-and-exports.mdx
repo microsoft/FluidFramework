@@ -6,7 +6,12 @@ sidebar_position: 2
 import { ApiLink } from "@site/src/components/shortLinks";
 
 Encapsulation lets callers use a model without depending on how its data is stored.
+
+:::note
+
 Here, _component_ means an application part with its own model and behavior, not necessarily a user of the <ApiLink package="fluid-framework" api="Component" /> utilities.
+
+:::
 
 ## Choose what to expose
 
@@ -19,7 +24,14 @@ These boundaries can describe what a component does without reproducing its stor
 Consumers can then use the same contract across supported representations.
 
 Export concrete schema classes when consumers need their fields, constructors, and schema information.
-Keep inferred types and `as const` allowed-type tuples: broad <ApiLink package="fluid-framework" api="TreeNodeSchema" /> annotations lose construction and insertion information.
+Let TypeScript infer the types of those exported classes rather than annotating them as the general <ApiLink package="fluid-framework" api="TreeNodeSchema" /> interface.
+For example, the inferred type of a `Note` class retains its constructor and the types of its fields.
+A variable annotated only as `TreeNodeSchema` no longer tells consumers which fields they can provide when constructing a note.
+
+When exporting an allowed-type list, use a readonly tuple such as `const itemTypes = [Note, Group] as const`.
+This preserves the specific schema type at each position so SharedTree can derive the corresponding node and insertable-content types.
+An annotation such as `readonly TreeNodeSchema[]` discards that information.
+Use an [explicit erased contract](#explicit-public-types) instead when you intentionally hide construction details and provide domain factories.
 
 Code that embeds or configures a model needs runtime schemas; code that only uses it may need just a domain interface.
 Do not erase details that are intentionally part of a data-modeling library's contract.

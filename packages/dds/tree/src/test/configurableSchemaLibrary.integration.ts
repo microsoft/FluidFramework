@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/*
+ * An application needs reusable boxes for different kinds of content: notes in one box and a quantity in another.
+ * The box library does not know the application's note schema, so its factory accepts the allowed child schemas.
+ * The application creates two configurations with distinct scopes and embeds them in one document.
+ * This walkthrough shows how to preserve each configuration's child types while hiding the box's stored fields.
+ */
+
 import { strict as assert } from "node:assert";
 
 import {
@@ -27,14 +34,24 @@ export interface BoxMembers<Allowed extends ImplicitAllowedTypes> {
 	readonly value: TreeNodeFromImplicitAllowedTypes<Allowed>;
 }
 
-/** The scope is part of the node's persisted identity. */
+/**
+ * A box node containing a value whose type is selected by the caller's allowed child schemas.
+ * Type erasure exposes the value accessor without making the stored `content` field part of the public contract.
+ * The scope is part of the node's persisted identity and distinguishes configurations used in the same document.
+ */
 export type Box<Scope extends string, Allowed extends ImplicitAllowedTypes> = ErasedNode<
 	BoxMembers<Allowed>,
 	`com.example.box.${Scope}.Box`
 >;
 
-/** Construction accepts insertable content, which differs from an existing node's readable type. */
+/**
+ * The static API of a configured box schema, used to create boxes without exposing the implementation constructor.
+ */
 export interface BoxStatics<Scope extends string, Allowed extends ImplicitAllowedTypes> {
+	/**
+	 * Creates a box from insertable content, including plain objects for child schemas that support them.
+	 * Unlike the readable value type, this input type does not require an already-constructed child node.
+	 */
 	create(value: InsertableTreeNodeFromImplicitAllowedTypes<Allowed>): Box<Scope, Allowed>;
 }
 

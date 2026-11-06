@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/*
+ * A document editor supports text items with attachments and groups containing other items.
+ * The text and group models live in independently authored libraries: neither should import the other,
+ * but text attachments must be able to contain groups, and groups must be able to contain text or more groups.
+ * Shared contracts describe item behavior, while the application selects the libraries and composes their schemas.
+ * This walkthrough demonstrates that composition and a creation menu populated from the selected libraries.
+ *
+ * Consumers of the published package import from `@fluidframework/tree` and `@fluidframework/tree/alpha`.
+ * See openPolymorphism.integration.ts for alternative patterns and additional edge cases.
+ */
+
 import { strict as assert } from "node:assert";
 
 import {
@@ -18,24 +29,24 @@ import {
 	independentView,
 } from "@fluidframework/tree/alpha";
 
-/**
- * Executable walkthrough of independently authored, mutually recursive components.
- * Consumers of the published package import from `@fluidframework/tree` and `@fluidframework/tree/alpha`.
- * See openPolymorphism.integration.ts for alternative patterns and additional edge cases.
- */
-
 // #region Shared contracts: a module that does not import either implementation
 
 /** Operations available on every contributed item, regardless of its stored representation. */
 export type Item = TreeNode & { describe(): string };
 
-/** Static operations let application code offer a menu of items without knowing their constructors. */
+/**
+ * The schema contract for an item contributed by a library.
+ * It includes a menu description and a factory so consumers can create items without knowing their constructors.
+ */
 export type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item> & {
 	readonly description: string;
 	create(): Item;
 };
 
-/** Each library contributes lazy references to the item schemas it implements. */
+/**
+ * The contributions each item library supplies to the application composition.
+ * Lazy schema references allow the contributed types to refer to one another before all schemas are created.
+ */
 export interface ItemComponent {
 	readonly items: Component.LazyArray<ItemSchema>;
 }
@@ -70,6 +81,8 @@ function createTextSchema(composition: Component.Composed<ItemComponent>) {
 
 /** Attachments may include groups without this library importing the group implementation. */
 const textComponent = ((lazyComposition) => {
+	// Defer schema creation until composition is complete, then reuse the same class for both exports.
+	// Creating it on every access would produce distinct classes with the same schema identifier.
 	const textSchema = Component.memoize(() => createTextSchema(lazyComposition()));
 	return {
 		items: () => [textSchema],
@@ -141,6 +154,8 @@ describe("Component library walkthrough", () => {
 		nestedGroup.add(text);
 		view.root.group.add(nestedGroup);
 
+		// An editor can populate its creation menu from the selected libraries rather than hard-coding item types.
+		// Each menu entry supplies its own factory, so selecting it can create an item to add to the group.
 		const menu = composition.getComposed("items").map((getSchema) => getSchema());
 		assert.deepEqual(
 			menu.map((schema) => schema.description),
@@ -155,6 +170,9 @@ describe("Component library walkthrough", () => {
 	});
 
 	it("reuses schemas within a composition, but not across independent compositions", () => {
+		// All references within one composition must share schema classes to avoid duplicate identifiers.
+		// Separate compositions can select different item types, so reusing a class across them would
+		// retain the wrong allowed children. Here only the first composition permits text in groups.
 		const first = Component.compose([groupComponent, textComponent]);
 		const second = Component.compose([groupComponent]);
 		const Group = first.getComponent(groupComponent).groupSchema();

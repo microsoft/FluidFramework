@@ -18,22 +18,53 @@ Define their compatibility contracts separately; [Schema Evolution](./index.mdx)
 
 Package versions do not migrate documents: a major API change can leave schema unchanged, while a minor release can support a new representation without enabling new writes.
 
+For example:
+
+-   A geometry library removes the public `resize` method in favor of `setSize`.
+    This is a breaking package API change, but if the schema identifiers and stored fields stay the same, existing documents need no schema upgrade.
+-   A drawing library adds support for an `RgbColor` node alongside existing string colors.
+    It can add that support in a minor release while keeping the new allowed type [staged](./allowed-types-rollout.mdx).
+    Applications can update the package and handle RGB data without yet upgrading their documents to allow it.
+-   An application later enables the RGB schema upgrade after deploying support to the required clients.
+    This changes a document's stored schema without requiring another library release.
+    A client that predates RGB support can no longer open that upgraded document, even if it uses an earlier minor version of the same library.
+
 Keep identifiers stable for the same persisted type, rather than encoding package versions.
-Follow the [schema-change rules](./types-of-changes.mdx) when adding types or changing stored keys; a public property rename and a stored-key change have different implications.
+Follow the [schema-change rules](./types-of-changes.mdx) when adding types or changing stored keys.
 
 ## Encapsulate representation changes
 
 Keep representation-specific operations behind the [component-root boundary](../schema-patterns/encapsulation-and-exports.mdx#encapsulate-a-component-root).
-That boundary can hide supported representation variants, but erasure does not migrate stored data or teach old clients to read new representations.
+For example, a color component can expose a `toCssColor()` method while keeping its stored color in a required child field.
+If that field evolves from allowing only strings to also allowing `RgbColor` nodes, the method can handle both representations.
+Consumers can continue to call the same method without inspecting the stored child.
+
+Type erasure hides those implementation details from the public TypeScript type; it does not change the stored schema or convert existing values.
+The component implementation must still support every representation it promises to read and edit.
+Clients deployed before RGB support do not gain that support merely because newer clients expose the same method.
+Use a [staged rollout](./allowed-types-rollout.mdx) before enabling the new representation in stored documents.
 
 ## Responsibilities of library authors
 
 Publish a policy covering:
 
--   Schema states each release can read and edit, and options enabling new writes.
--   Supported child schemas and configurations, including settings that affect persisted schema.
--   Required application rollout work, even for source-compatible package updates.
--   Deprecated write-mode lifetimes and what consumers must deploy before removing those modes.
+-   **Supported schema states and write options.**
+    State which stored representations each release can read and edit, and which options enable schema upgrades or new-format writes.
+    For the color example, identify the first release that handles both string and RGB colors, and keep RGB upgrades disabled by default.
+    Explain how callers opt in and what happens when they open an already-upgraded document.
+-   **Supported child schemas and configurations.**
+    Describe the child types and behaviors a configurable model accepts, as well as which options affect its stored schema or identifiers.
+    For example, a box factory may accept caller-selected child schemas and a scope.
+    Document how that scope determines the box identifier and require distinct scopes for configurations that coexist.
+    See [configuration boundaries](../schema-patterns/configuration-and-composition.mdx#schema-factory-functions).
+-   **Application rollout requirements.**
+    List the steps consumers must take before enabling a new representation, even when updating the package needs no source-code changes.
+    For RGB colors, applications must deploy code that handles RGB values before any client upgrades a document to allow them.
+    Link to the [rollout steps](./allowed-types-rollout.mdx) and identify the minimum library release that includes the required support.
+-   **Deprecated write-mode lifetimes.**
+    State how long callers can keep creating documents with the old schema and which release or option removes that choice.
+    For example, before retiring a string-only creation mode, tell consumers which RGB-capable build they must deploy, including as their rollback build.
+    Distinguish retiring an old write mode from dropping support for reading or editing existing documents.
 
 Separate format support from write enablement so a dependency update does not silently exclude older deployed clients.
 Changing default writes or removing a supported write mode is a breaking behavior change requiring versioning communication and rollout instructions.
@@ -48,12 +79,21 @@ The application owns final composition and deployment policy, including older, o
 
 1. Update to a library that supports the new schema while retaining previous writes.
 2. Test existing and future schema states with the actual child schemas and components.
+   Follow [Testing Schema Libraries](./testing-schema-upgrades.mdx#testing-schema-libraries) for composition checks and [Creating Test Documents with Future Schema](./testing-schema-upgrades.mdx#creating-test-documents-with-future-schema) to exercise staged changes before enabling them.
 3. Deploy support to all required client versions and decide how to handle unsupported clients.
 4. Enable new writes or upgrades when rollout and rollback requirements permit.
 5. Retire old write modes after consumers transition, retaining required support for stored data.
 
 Use [staged allowed types](./allowed-types-rollout.mdx) and [feature-controlled schema upgrades](./feature-flag-schema-upgrades.mdx) where they apply.
-Disabling a flag does not undo persisted upgrades: rollback builds must understand documents already written.
+Disabling a flag does not undo schema upgrades already persisted in documents or remove data written using the new types.
+For example, after a client upgrades a document to allow RGB colors, turning off the RGB feature flag does not restore its previous string-only schema.
+Even a document with no RGB values retains the upgraded schema.
+
+Choose a rollback build that already supports both representations, rather than the older string-only build.
+Test that it can open and edit upgraded documents as well as documents that have not been upgraded.
+With [feature-controlled schema upgrades](./feature-flag-schema-upgrades.mdx), the upgrade policy is fixed when a view is created, so changing a flag also does not reconfigure existing views.
+Treat the flag as a control over enabling upgrades, not as a way to reverse their effects.
+
 Check <ApiLink package="fluid-framework" api="TreeView.compatibility" /> through the [initialization flow](../recommended-init-flow.mdx), rather than inferring compatibility from package versions.
 
 ## Verify the final composition
