@@ -20,6 +20,8 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	ForestSummaryFormatVersion,
@@ -345,6 +347,67 @@ type _checkDirectRecursiveNode = ValidateRecursiveSchema<typeof DirectRecursiveN
 const LeafNodeSchema = sf.required(sf.string, { summarizeIncrementally: true });
 
 describe("ForestSummarizer", () => {
+	it("loads nested incremental chunks with linear rechunking work", async () => {
+		const depth = 32;
+		let content = new RecursiveNodeSchema({ child: "end" });
+		for (let index = 1; index < depth; index++) {
+			content = new RecursiveNodeSchema({ child: content });
+		}
+		const schema = toStoredSchema(RecursiveNodeSchema, StagedSchemaUpgradePolicy.permissive);
+		const options = {
+			encodeType: TreeCompressionStrategy.CompressedIncremental,
+			forestType: ForestTypeOptimized,
+			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+				new TreeViewConfigurationAlpha({ schema: RecursiveNodeSchema }),
+			),
+		};
+		const original = createForestSummarizer({
+			...options,
+			initialContent: {
+				schema,
+				initialTree: fieldCursorFromInsertable(RecursiveNodeSchema, content),
+			},
+		});
+		const summary = original.forestSummarizer.summarize({
+			stringify: JSON.stringify,
+			incrementalSummaryContext: {
+				summarySequenceNumber: 0,
+				latestSummarySequenceNumber: -1,
+				summaryPath: "",
+			},
+		});
+		const loaded = createForestSummarizer({
+			...options,
+			initialContent: { schema, initialTree: fieldJsonCursor([]) },
+		});
+		const forest = loaded.checkout.forest;
+		assert(forest instanceof ChunkedForest);
+		const shapeFromSchema = forest.chunker.shapeFromSchema.bind(forest.chunker);
+		let shapeLookups = 0;
+		forest.chunker.shapeFromSchema = (type) => {
+			shapeLookups++;
+			return shapeFromSchema(type);
+		};
+		await loaded.forestSummarizer.load(
+			MockStorage.createFromSummary(summary.summary),
+			JSON.parse,
+		);
+		assert(shapeLookups <= depth * 2, `Expected linear work, found ${shapeLookups} lookups`);
+		const nextSummary = loaded.forestSummarizer.summarize({
+			stringify: JSON.stringify,
+			incrementalSummaryContext: {
+				summarySequenceNumber: 1,
+				latestSummarySequenceNumber: 0,
+				summaryPath: "",
+			},
+		});
+		validateHandlesInForestSummary(nextSummary.summary, {
+			shouldContainHandle: true,
+			handleCount: 1,
+			lastSummary: summary.summary,
+		});
+	});
+
 	describe("Summarize and Load", () => {
 		const testCases: {
 			encodeType: TreeCompressionStrategy;
