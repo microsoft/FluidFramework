@@ -237,5 +237,157 @@
       },
       "additionalProperties": false
     }
+  },
+  {
+    "version": "schemaVersion",
+    "schema": {
+      "type": "object",
+      "required": [
+        "version",
+        "nodes",
+        "root"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "schemaVersion"
+        },
+        "nodes": {
+          "type": "object",
+          "patternProperties": {
+            "^.*$": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^.*$": {
+                          "type": "object",
+                          "required": [
+                            "kind",
+                            "types"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "type": "string"
+                            },
+                            "types": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "metadata": {
+                              "type": "object",
+                              "patternProperties": {
+                                "^.*$": {}
+                              }
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "map": {
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "types"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "type": "string"
+                        },
+                        "types": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "patternProperties": {
+                            "^.*$": {}
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "leaf": {
+                      "enum": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "minProperties": 1,
+                  "maxProperties": 1
+                },
+                "metadata": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^.*$": {}
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "root": {
+          "type": "object",
+          "required": [
+            "kind",
+            "types"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metadata": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {}
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "schemaVersion": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "additionalItems": false,
+            "items": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              }
+            ],
+            "minItems": 2
+          }
+        }
+      },
+      "additionalProperties": false
+    }
   }
 ]

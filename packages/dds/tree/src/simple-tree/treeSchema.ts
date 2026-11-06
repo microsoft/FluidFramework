@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeStoredSchema } from "../core/index.js";
+import type { SchemaVersionMap, TreeStoredSchema } from "../core/index.js";
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate, oneFromIterable } from "../util/index.js";
 
@@ -393,8 +393,13 @@ export function getRootSchemaDerivedData(
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersionMap,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -403,8 +408,13 @@ export function toUpgradeSchema(
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersionMap,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -565,6 +575,11 @@ function addDefinition(
  * @sealed @alpha
  */
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
+	/**
+	 * Contains the application-defined versions for this schema.
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
+
 	readonly root: FieldSchemaAlpha;
 
 	readonly definitions: ReadonlyMap<

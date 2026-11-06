@@ -10,6 +10,8 @@ export {
 	type TreeTypeSet,
 	type FieldKindData,
 	type TreeStoredSchema,
+	type LibraryId,
+	type SchemaVersionMap,
 	forbiddenFieldKindIdentifier,
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,

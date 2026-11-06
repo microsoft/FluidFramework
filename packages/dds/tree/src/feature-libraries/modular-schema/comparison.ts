@@ -28,12 +28,15 @@ import { isNeverField, isNeverTree } from "./isNeverTree.js";
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
+ *
+ * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
+	enforceAdditiveOnlySchemaUpgrades: boolean = true,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
@@ -65,7 +68,13 @@ export function allowsTreeSuperset(
 
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
+			return allowsFieldSuperset(
+				policy,
+				originalData,
+				original.mapFields,
+				superset.mapFields,
+				enforceAdditiveOnlySchemaUpgrades,
+			);
 		}
 		return false;
 	}
@@ -73,7 +82,15 @@ export function allowsTreeSuperset(
 	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
-			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
+			if (
+				!allowsFieldSuperset(
+					policy,
+					originalData,
+					field,
+					superset.mapFields,
+					enforceAdditiveOnlySchemaUpgrades,
+				)
+			) {
 				return false;
 			}
 		}
@@ -91,6 +108,7 @@ export function allowsTreeSuperset(
 				original.objectNodeFields.get(originalField) ??
 					fail(0xb17 /* missing expected field */),
 				storedEmptyFieldSchema,
+				enforceAdditiveOnlySchemaUpgrades,
 			),
 		bExtra: (supersetField) =>
 			allowsFieldSuperset(
@@ -99,6 +117,7 @@ export function allowsTreeSuperset(
 				storedEmptyFieldSchema,
 				superset.objectNodeFields.get(supersetField) ??
 					fail(0xb18 /* missing expected field */),
+				enforceAdditiveOnlySchemaUpgrades,
 			),
 		same: (sameField) =>
 			allowsFieldSuperset(
@@ -106,6 +125,7 @@ export function allowsTreeSuperset(
 				originalData,
 				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
 				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
+				enforceAdditiveOnlySchemaUpgrades,
 			),
 	});
 }
@@ -127,7 +147,7 @@ export function allowsValueSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
- * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+ * @param enforceAdditiveOnlySchemaUpgrades - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
  * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
  * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
  *
@@ -142,9 +162,9 @@ export function allowsFieldSuperset(
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
-	monotonicOnly: boolean = true,
+	enforceAdditiveOnlySchemaUpgrades: boolean = true,
 ): boolean {
-	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
+	if (!enforceAdditiveOnlySchemaUpgrades && isNeverField(policy, originalData, original)) {
 		return true;
 	}
 
@@ -158,7 +178,7 @@ export function allowsFieldSuperset(
 
 	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
-	if (monotonicOnly) {
+	if (enforceAdditiveOnlySchemaUpgrades) {
 		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
 	} else {
 		const originalKind =
@@ -192,11 +212,14 @@ export function allowsTreeSchemaIdentifierSuperset(
  * A version of this that assumes a specific root field could be slightly more permissive in some simple cases,
  * however if any extra fields and fields with unconstrained types are reachable,
  * it would have to compare everything anyway.
+ *
+ * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
+	enforceAdditiveOnlySchemaUpgrades: boolean = true,
 ): boolean {
 	{
 		if (
@@ -205,6 +228,7 @@ export function allowsRepoSuperset(
 				original,
 				original.rootFieldSchema,
 				superset.rootFieldSchema,
+				enforceAdditiveOnlySchemaUpgrades,
 			)
 		) {
 			return false;
@@ -214,13 +238,96 @@ export function allowsRepoSuperset(
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
 	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
+		if (
+			!allowsTreeSuperset(
+				policy,
+				original,
+				schema,
+				superset.nodeSchema.get(key),
+				enforceAdditiveOnlySchemaUpgrades,
+			)
+		) {
 			return false;
 		}
 	}
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
 	return true;
+}
+
+/**
+ * Returns whether `original` can be upgraded to `updated`.
+ */
+export function allowsSchemaUpgrade(
+	policy: FullSchemaPolicy,
+	original: TreeStoredSchema,
+	updated: TreeStoredSchema,
+): boolean {
+	const versionsDecrease = ifSchemaVersionsDecrease(
+		original.schemaVersion,
+		updated.schemaVersion,
+	);
+	if (!versionsDecrease && allowsRepoSuperset(policy, original, updated)) {
+		return true;
+	}
+
+	return (
+		!versionsDecrease &&
+		original.schemaVersion !== undefined &&
+		updated.schemaVersion !== undefined &&
+		!areSchemaVersionsEqual(original.schemaVersion, updated.schemaVersion) &&
+		allowsRepoSuperset(policy, original, updated, false)
+	);
+}
+
+/**
+ * Returns whether both maps have the same library identifiers and version values.
+ *
+ * @remarks
+ * An absent map differs from an empty map.
+ */
+export function areSchemaVersionsEqual(
+	a: TreeStoredSchema["schemaVersion"],
+	b: TreeStoredSchema["schemaVersion"],
+): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+	const aEntries = Object.entries(a);
+	const bRecord = b as Readonly<Record<string, number>>;
+	return (
+		aEntries.length === Object.keys(b).length &&
+		aEntries.every(([libraryId, version]) => bRecord[libraryId] === version)
+	);
+}
+
+/**
+ * Returns whether `updated` removes a library identifier or decreases a version in `original`.
+ *
+ * @remarks
+ * The result is `false` if `original` is `undefined`.
+ * The result is `true` if only `updated` is `undefined`.
+ * Adding library identifiers does not count as a decrease.
+ */
+function ifSchemaVersionsDecrease(
+	original: TreeStoredSchema["schemaVersion"],
+	updated: TreeStoredSchema["schemaVersion"],
+): boolean {
+	if (original === undefined) {
+		return false;
+	}
+	if (updated === undefined) {
+		return true;
+	}
+	const updatedRecord = updated as Readonly<Record<string, number>>;
+	return Object.entries(original).some(([libraryId, version]) => {
+		const updatedVersion = updatedRecord[libraryId];
+		return (
+			!Object.hasOwn(updatedRecord, libraryId) ||
+			updatedVersion === undefined ||
+			updatedVersion < version
+		);
+	});
 }
 
 /**

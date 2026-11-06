@@ -8,6 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
@@ -183,9 +184,12 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * Provides hashing for schema telemetry and optional checks when constructing a view.
+	 * Specifies the schema identity for runtime hashing and application-defined versions.
+	 *
 	 * @remarks
-	 * Create with {@link identifySchemaAlpha}.
+	 * Create with {@link identifySchemaAlpha} for application-defined versions only.
+	 * Use {@link identifySchemaWithHashAlpha} to also enable hash checks and hash telemetry.
+	 * See {@link SchemaIdentity.schemaVersion} for application version requirements.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;
 }
@@ -301,7 +305,15 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
 
-	// TODO: Consider an async creator so identifySchemaAlpha can use native Web Crypto hashing APIs,
+	/**
+	 * Returns the versions from {@link TreeViewConfigurationAlpha.schemaIdentity}.
+	 */
+	public get schemaVersion(): SchemaVersionMap | undefined {
+		return this.schemaIdentity?.schemaVersion;
+	}
+
+	// TODO: Consider an async creator so identifySchemaWithHashAlpha can use native Web Crypto
+	// hashing APIs,
 	// saving approximately 2 KB of compressed bundle size.
 	// This is worth pursuing if there is another reason to make configuration creation async,
 	// rather than introducing async creation solely for the bundle size savings.
@@ -318,7 +330,7 @@ export class TreeViewConfigurationAlpha<
 		}
 
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root, this.stagedUpgradePolicy);
+		toInitialSchema(this.root, this.stagedUpgradePolicy, this.schemaVersion);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }

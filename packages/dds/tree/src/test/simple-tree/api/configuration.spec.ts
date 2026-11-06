@@ -22,6 +22,8 @@ import {
 } from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
+	type LibraryId,
+	identifySchemaAlpha,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
@@ -32,6 +34,7 @@ import {
 } from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
+const testLibraryId = "test" as LibraryId;
 
 // Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {
@@ -419,5 +422,73 @@ describe("simple-tree configuration", () => {
 	it("creates TreeViewConfigurationAlpha", () => {
 		const config = new TreeViewConfiguration({ schema: [] });
 		assert(config instanceof TreeViewConfigurationAlpha);
+	});
+
+	it("validates schema versions", () => {
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: -1 } }),
+				}),
+			/non-negative safe integer/,
+		);
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1.5 } }),
+				}),
+			/non-negative safe integer/,
+		);
+	});
+
+	it("accepts zero as a schema version", () => {
+		const config = new TreeViewConfigurationAlpha({
+			schema: [],
+			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 0 } }),
+		});
+
+		assert.equal(config.schemaVersion?.[testLibraryId], 0);
+		assert.equal(config.schemaIdentity?.schemaVersion?.[testLibraryId], 0);
+	});
+
+	it("normalizes a single version using the schemaVersion identifier", () => {
+		const identity = identifySchemaAlpha({ schemaVersion: 1 });
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.deepEqual(identity.schemaVersion, { schemaVersion: 1 });
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+		assert(Object.isFrozen(identity.schemaVersion));
+	});
+
+	it("copies and freezes application versions on the schema identity", () => {
+		const versions = { [testLibraryId]: 1 };
+		const identity = identifySchemaAlpha({ schemaVersion: versions });
+		versions[testLibraryId] = 2;
+
+		assert.deepEqual(identity.schemaVersion, { test: 1 });
+		assert(Object.isFrozen(identity));
+		assert(Object.isFrozen(identity.schemaVersion));
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+	});
+
+	it("preserves identities without application versions", () => {
+		const identity = identifySchemaAlpha();
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(identity.schemaVersion, undefined);
+		assert.equal(config.schemaVersion, undefined);
+	});
+
+	it("rejects positive integers larger than Number.MAX_SAFE_INTEGER", () => {
+		const version = Number.MAX_SAFE_INTEGER + 1;
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: version } }),
+				}),
+			/non-negative safe integer/,
+		);
 	});
 });

@@ -24,6 +24,9 @@ export function createViewableTreeAlpha(
 	exportSimpleSchema: () => SimpleTreeSchema,
 ): ViewableTreeAlpha {
 	return {
+		get storedSchemaVersion() {
+			return checkout.storedSchema.schemaVersion;
+		},
 		forkBranch(): TreeBranchHandleAlpha {
 			return forkAsBranchCheckout(checkout);
 		},

@@ -15,6 +15,7 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
+	SchemaVersionMap,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -129,6 +130,15 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
+	/**
+	 * Contains the application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * The value is `undefined` if the stored schema has no application-defined versions.
+	 * The value can change when a {@link TreeViewAlpha} updates the stored schema.
+	 */
+	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+
 	/**
 	 * Creates an independent branch from this tree's current state.
 	 *
@@ -1132,6 +1142,21 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Contains the versions from this view's {@link TreeViewConfigurationAlpha}.
+	 */
+	readonly schemaVersion: SchemaVersionMap | undefined;
+
+	/**
+	 * Contains the application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * The value is `undefined` if the stored schema has no application-defined versions.
+	 * The value can change when the stored schema changes.
+	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
+	 */
+	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);

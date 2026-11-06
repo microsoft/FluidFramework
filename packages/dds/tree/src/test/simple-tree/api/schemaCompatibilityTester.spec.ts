@@ -18,11 +18,13 @@ import {
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
 	type ImplicitFieldSchema,
+	type LibraryId,
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
 	type ValidateRecursiveSchema,
 	schemaStatics,
+	identifySchemaAlpha,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
@@ -36,6 +38,7 @@ const emptySchema: TreeStoredSchema = {
 };
 
 const factory = new SchemaFactoryAlpha("");
+const testLibraryId = "test" as LibraryId;
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
@@ -374,6 +377,48 @@ describe("checkSchemaCompatibility", () => {
 							isEquivalent: false,
 						},
 					);
+				});
+
+				it("required string to identifier succeeds with an increased schema version", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 1,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.identifier,
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
+					});
+					const { discrepancies, enabledUpgrades, ...compatibility } =
+						checkSchemaCompatibility(view, stored);
+					assert.deepEqual(compatibility, {
+						canView: false,
+						canUpgrade: true,
+						isEquivalent: false,
+					});
+					assert(discrepancies !== undefined);
+					assert.equal(enabledUpgrades.size, 0);
+				});
+
+				it("required string to identifier fails with a decreased schema version", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 2,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.identifier,
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
+					});
+					assert.equal(checkSchemaCompatibility(view, stored).canUpgrade, false);
+				});
+
+				it("reports differing schema versions as non-equivalent", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 1,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.string,
+						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
+					});
+
+					assert.equal(checkSchemaCompatibility(view, stored).isEquivalent, false);
 				});
 
 				it("to sequence", () => {

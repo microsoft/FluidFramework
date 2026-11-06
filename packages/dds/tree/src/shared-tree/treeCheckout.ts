@@ -61,6 +61,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
+	storedEmptyFieldSchema,
 	diffHistories,
 	type ChangeMetadata,
 	type LabelTree,
@@ -2404,7 +2405,7 @@ function getSchemaChangeTelemetryMetrics(
 	return {
 		changeKind: isInverse
 			? "rollback"
-			: oldSchema.nodeSchema.size === 0
+			: isInitialStoredSchema(oldSchema)
 				? "initialize"
 				: allowsRepoSuperset(defaultSchemaPolicy, oldSchema, newSchema)
 					? "upgrade"
@@ -2418,6 +2419,25 @@ function getSchemaChangeTelemetryMetrics(
 		oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 		newRootAllowedTypeCount: newSchema.rootFieldSchema.types.size,
 	};
+}
+
+/**
+ * Returns whether the stored schema is still in its initial state.
+ *
+ * @remarks
+ * Schema-change telemetry treats this state as initialization.
+ * An empty node collection is not enough.
+ * Root-field changes, metadata, or application versions mean the schema has changed.
+ */
+function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
+	const root = schema.rootFieldSchema;
+	return (
+		schema.schemaVersion === undefined &&
+		schema.nodeSchema.size === 0 &&
+		root.kind === storedEmptyFieldSchema.kind &&
+		root.types.size === 0 &&
+		root.persistedMetadata === undefined
+	);
 }
 
 /**

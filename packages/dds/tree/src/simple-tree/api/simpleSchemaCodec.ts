@@ -5,6 +5,7 @@
 
 import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import * as Type from "typebox/type";
 
 import {
 	DiscriminatedUnionDispatcher,
@@ -13,6 +14,7 @@ import {
 	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
+import type { LibraryId, SchemaVersionMap } from "../../core/index.js";
 import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
@@ -29,6 +31,7 @@ import type {
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
 import * as Format from "../simpleSchemaFormatV1.js";
+import * as FormatV2 from "../simpleSchemaFormatV2.js";
 
 /**
  * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
@@ -37,12 +40,15 @@ import * as Format from "../simpleSchemaFormatV1.js";
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * Definition order is independent of the input map's iteration order.
  * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
- * @param treeSchema - The tree schema to convert.
+ * Schemas without an application version map use snapshot v1.
+ * Schemas with an application version map use snapshot v2.
+ *
+ * @param simpleSchema - The tree schema to convert.
+ *
  * @returns A serializable representation of the schema.
  *
  * @privateRemarks
- * Encodes to {@link Format.SimpleTreeSchemaFormat}.
- *
+ * Encodes to {@link Format.SimpleTreeSchemaFormat} or {@link FormatV2.SimpleTreeSchemaFormat}.
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
@@ -60,20 +66,35 @@ export function encodeSchemaCompatibilitySnapshot(
 		encodedDefinitions[identifier] = encodedDefinition;
 	}
 
-	const encodedSchema: Format.SimpleTreeSchemaFormat = {
-		version: Format.SimpleSchemaFormatVersion.v1,
+	const encodedSchema = {
 		root: encodeField(simpleSchema.root),
 		definitions: encodedDefinitions,
 	};
 
-	return encodedSchema;
+	if (simpleSchema.schemaVersion === undefined) {
+		return {
+			version: Format.SimpleSchemaFormatVersion.v1,
+			...encodedSchema,
+		} satisfies Format.SimpleTreeSchemaFormat;
+	}
+
+	return {
+		version: FormatV2.SimpleSchemaFormatVersion.v2,
+		schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
+			compareStrings(a, b),
+		),
+		...encodedSchema,
+	} satisfies FormatV2.SimpleTreeSchemaFormat;
 }
 
 /**
  * Decodes a JSON-compatible schema into a simple schema.
+ *
  * @param encodedSchema - The encoded schema to decode.
  * @param validator - The format validator to use to validate the encoded schema.
+ *
  * @returns A decoded simple schema.
+ *
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @privateRemarks
@@ -90,7 +111,7 @@ export function decodeSchemaCompatibilitySnapshot(
 ): SimpleTreeSchema {
 	const effectiveValidator = validator ?? FormatValidatorNoOp;
 	const compiledValidator = extractJsonValidator(effectiveValidator).compile(
-		Format.SimpleTreeSchemaFormat,
+		Type.Union([Format.SimpleTreeSchemaFormat, FormatV2.SimpleTreeSchemaFormat]),
 	);
 	if (!compiledValidator.check(encodedSchema)) {
 		throw new UsageError(
@@ -98,7 +119,12 @@ export function decodeSchemaCompatibilitySnapshot(
 		);
 	}
 
+	const schemaVersion =
+		encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2
+			? decodeSchemaVersion(encodedSchema.schemaVersion)
+			: undefined;
 	return {
+		...(schemaVersion === undefined ? {} : { schemaVersion }),
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
 			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {
@@ -106,6 +132,29 @@ export function decodeSchemaCompatibilitySnapshot(
 			}),
 		),
 	};
+}
+
+function decodeSchemaVersion(
+	encoded: readonly [string, number][] | undefined,
+): SchemaVersionMap | undefined {
+	if (encoded === undefined) {
+		return undefined;
+	}
+	const entries: [LibraryId, number][] = [];
+	let previous: string | undefined;
+	for (const [libraryId, version] of encoded) {
+		if (!Number.isSafeInteger(version) || version < 0) {
+			throw new UsageError("Schema versions must be non-negative safe integers.");
+		}
+		if (previous !== undefined && previous >= libraryId) {
+			throw new UsageError(
+				"Schema versions must be sorted by library identifier and contain no duplicates.",
+			);
+		}
+		entries.push([libraryId as LibraryId, version]);
+		previous = libraryId;
+	}
+	return Object.freeze(Object.fromEntries(entries)) as SchemaVersionMap;
 }
 
 /**

@@ -14,6 +14,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
+	type SchemaVersionMap,
 } from "../../core/index.js";
 import {
 	compareStrings,
@@ -31,11 +32,19 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
  * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
+ * Initialization and schema upgrades log the runtime hash in telemetry.
+ * Application versions do not affect the runtime hash.
+ * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
+ *
  * @param options - Options for checking the schema hash.
+ *
  * @returns An immutable schema identity that uses SHA-256 hashing.
+ *
+ * @see {@link identifySchemaAlpha} to use application versions without hashing.
+ *
  * @alpha
  */
-export function identifySchemaAlpha(
+export function identifySchemaWithHashAlpha(
 	options: {
 		/**
 		 * An optional hash used to detect unintended schema changes.
@@ -43,12 +52,21 @@ export function identifySchemaAlpha(
 		 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
 		 * View construction throws a UsageError containing the expected and actual hashes if they differ.
 		 * If the schema change is intentional, update this value with the actual hash from the error.
+		 * When versions are configured, the error also suggests increasing the relevant version.
 		 * Omit this value to enable telemetry without a construction check.
 		 */
 		readonly expectedHash?: string;
+		/**
+		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
+		 */
+		readonly schemaVersion?: SchemaVersionMap | number;
 	} = {},
 ): SchemaIdentity {
-	return new SchemaIdentityInternal(options.expectedHash, computeSchemaHash);
+	return new SchemaIdentityInternal(
+		options.expectedHash,
+		computeSchemaHash,
+		options.schemaVersion,
+	);
 }
 
 /**
@@ -57,6 +75,7 @@ export function identifySchemaAlpha(
  * @remarks
  * The hash includes the schema structure and persisted metadata, with the provided
  * enabled staged upgrades.
+ * Application versions are not included.
  * Object key order and allowed-type order do not affect the hash, but metadata array order does.
  *
  * @param schema - the view schema to hash
