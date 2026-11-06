@@ -53,6 +53,8 @@ import type {
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelInternal,
+	IFluidDataStoreChannelCollection,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -78,6 +80,7 @@ import {
 	dataStoreLoadTelemetryProps,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
@@ -153,6 +156,7 @@ export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInte
  * Properties necessary for creating a FluidDataStoreContext
  */
 export interface IFluidDataStoreContextProps {
+	readonly isSharedObjectChannel?: boolean;
 	readonly id: string;
 	readonly parentContext: IFluidParentContextPrivate;
 	readonly storage: IRuntimeStorageService;
@@ -435,6 +439,7 @@ export abstract class FluidDataStoreContext
 	private localChangesTelemetryCount: number;
 
 	public readonly id: string;
+	public isSharedObjectChannel: boolean;
 	private readonly _containerRuntime: IContainerRuntimeBase;
 	/**
 	 * Information for this data store from its parent.
@@ -475,6 +480,7 @@ export abstract class FluidDataStoreContext
 			props.parentContext.oldestSupportedClient ?? props.parentContext.minVersionForCollab;
 		this.minVersionForCollab = this.oldestSupportedClient;
 		this.id = props.id;
+		this.isSharedObjectChannel = props.isSharedObjectChannel ?? false;
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
@@ -688,6 +694,18 @@ export abstract class FluidDataStoreContext
 		return created;
 	}
 
+	public async createChannelCollection(
+		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
+	): Promise<IFluidDataStoreChannelCollection> {
+		// Collections instantiate contexts, so load their implementation after context initialization.
+		const { NativeChannelCollection } = await import("./nativeChannelCollection.js");
+		return NativeChannelCollection.load(
+			this,
+			this.parentContext.IFluidDataStoreRegistry,
+			provideEntryPoint,
+		);
+	}
+
 	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -755,6 +773,8 @@ export abstract class FluidDataStoreContext
 		if (this.isReadOnly() !== oldReadOnlyState) {
 			this.notifyReadOnlyState();
 		}
+		const channel: IFluidDataStoreChannelInternal | undefined = this.channel;
+		channel?.notifyStagingMode?.(staging);
 	}
 
 	/**
@@ -839,14 +859,22 @@ export abstract class FluidDataStoreContext
 		);
 
 		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(summarizeResult);
-		const pathPartsForChildren = [channelsTreeName];
+		if (!this.isSharedObjectChannel) {
+			wrapSummaryInChannelsTree(summarizeResult);
+		}
+		const pathPartsForChildren = this.isSharedObjectChannel ? [] : [channelsTreeName];
 
 		// Add data store's attributes to the summary.
 		const { pkg } = await this.getInitialSnapshotDetails();
 		const isRoot = await this.isRoot();
 		const attributes = createAttributes(pkg, isRoot);
-		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		if (!this.isSharedObjectChannel) {
+			addBlobToSummary(
+				summarizeResult,
+				dataStoreAttributesBlobName,
+				JSON.stringify(attributes),
+			);
+		}
 
 		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
 		// size in the summary stats with the blobs size of this data store.
@@ -969,11 +997,16 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
+	public submitSignal(
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+		relativeAddress?: string,
+	): void {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this.parentContext.submitSignal(type, content, targetClientId);
+		return this.parentContext.submitSignal(type, content, targetClientId, relativeAddress);
 	}
 
 	/**
@@ -1061,6 +1094,27 @@ export abstract class FluidDataStoreContext
 			return undefined;
 		}
 		return this.parentContext.getAbsoluteUrl(relativeUrl);
+	}
+
+	protected async readSharedObjectPackagePath(
+		snapshot: ISnapshotTree,
+	): Promise<readonly string[] | undefined> {
+		const parentPath = this.parentContext.leafChannelPackagePath;
+		const attributesBlob: string | undefined = snapshot.blobs[".attributes"];
+		if (parentPath === undefined || attributesBlob === undefined) {
+			return undefined;
+		}
+		const attributes: unknown = await readAndParse(this.storage, attributesBlob);
+		if (
+			typeof attributes !== "object" ||
+			attributes === null ||
+			!("type" in attributes) ||
+			typeof attributes.type !== "string"
+		) {
+			throw new DataCorruptionError("Invalid shared-object attributes", {});
+		}
+		this.isSharedObjectChannel = true;
+		return [...parentPath, attributes.type];
 	}
 
 	/**
@@ -1318,8 +1372,18 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		}
 		let tree = this.baseSnapshot;
 		let isRootDataStore = true;
+		if (tree !== undefined) {
+			const leafPath = await this.readSharedObjectPackagePath(tree);
+			if (leafPath !== undefined) {
+				this.pkg = leafPath;
+			}
+		}
 
-		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
+		if (
+			!!tree &&
+			!this.isSharedObjectChannel &&
+			tree.blobs[dataStoreAttributesBlobName] !== undefined
+		) {
 			// Need to get through snapshot and use that to populate extraBlobs
 			// eslint-disable-next-line import-x/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
@@ -1463,11 +1527,15 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		const attachSummary = this.channel.getAttachSummary(telemetryContext);
 
 		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(attachSummary);
+		if (!this.isSharedObjectChannel) {
+			wrapSummaryInChannelsTree(attachSummary);
+		}
 
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
-		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		if (!this.isSharedObjectChannel) {
+			addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		}
 
 		// Add loadingGroupId to the summary
 		if (this.loadingGroupId !== undefined) {
@@ -1492,6 +1560,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {
+			const leafPath = await this.readSharedObjectPackagePath(snapshot);
+			if (leafPath !== undefined) {
+				this.pkg = leafPath;
+				return { pkg: leafPath, isRootDataStore: false, snapshot };
+			}
 			// Get the dataStore attributes.
 			// Note: storage can be undefined in special case while detached.
 			attributes = await getFluidDataStoreAttributes(this.storage, snapshot);

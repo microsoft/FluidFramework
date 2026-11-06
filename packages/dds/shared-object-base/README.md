@@ -38,6 +38,41 @@ Read the **@fluidframework/shared-object-base** API documentation at <https://fl
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Unified alpha data-store kinds
+
+The alpha ServiceClient APIs use `DataStoreKind` for both framework-provided shared objects and application-defined data stores.
+Use `DataStoreCreator.createDataStore` at container scope or within a `defineDataStore` initialization callback.
+Use `dataStoreRegistryFromIterable` to register eager kinds or lazy getters.
+These APIs are available through `fluid-framework/alpha`.
+
+In `defineDataStore`, `rootCreator` creates exactly one root and `context` creates additional contents.
+Return the value created by `rootCreator` from `instantiateFirstTime`.
+The `view` callback receives that value after creation or loading and returns the application-facing value.
+Neither value needs to implement `IFluidLoadable` or expose a handle.
+
+Direct container-level shared objects and native nested data stores require `oldestSupportedClient >= 3.12.0`.
+The generalized collection preserves the established DDS child representation and operation format at both old and new targets.
+Existing DDS-based stores keep those children in place when loaded.
+After the framework-version target and application rollout permit nesting, those stores can acquire composite children alongside their existing DDSs.
+Unsupported requests are rejected rather than silently adding wrappers or relocating content.
+
+For application-defined legacy layouts, use `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha`.
+For other container root-discovery conventions, use the existing legacy loader and `fluidContainerFromLegacy` from that entrypoint.
+The compatibility bridges retain existing factories, named channels, and document layouts without adding those legacy options to the main API.
+
+The alpha migration replaces:
+
+| Previous API | Unified API |
+| --- | --- |
+| `SharedObjectCreator.createSharedObject` | `DataStoreCreator.createDataStore` |
+| `SharedObjectKey` | `DataStoreKey` |
+| `SharedObjectRegistry` | `DataStoreRegistry` |
+| `sharedObjectRegistryFromIterable` | `dataStoreRegistryFromIterable` |
+| Alpha shared-object kind descriptors | `DataStoreKind` |
+
+Registry lookup now returns a promise for an individual kind, rather than a promise for a synchronous registry.
+The stable `SharedObjectKind` API is unchanged.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

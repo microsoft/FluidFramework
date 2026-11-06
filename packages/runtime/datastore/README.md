@@ -36,6 +36,21 @@ Read the **@fluidframework/datastore** API documentation at <https://fluidframew
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Internal channel hosting
+
+`FluidDataStoreRuntime` hosts a collection of named shared objects.
+`LeafChannelRuntime` hosts a shared object directly at a data-store context's identity, without allocating a separate child channel.
+Both implement the container runtime's channel lifecycle contract.
+
+For a leaf, the context's `.channels` summary contains the shared object's payload and `.attributes` blob directly.
+Its handle and garbage-collection node use the context's path.
+Operations use an empty channel address to identify the leaf itself.
+Existing data-store layouts and their named channels are unchanged.
+
+A leaf runtime cannot create additional child channels.
+Use a collection runtime when the application requires children.
+These hosting implementations are internal APIs.
+
 # Fluid Handle
 
 A Fluid handle is a handle to a Fluid object like a `DataStore` or a `SharedObject` (DDS). It can be used to represent the object in the system and has the capability to get the underlying object by calling `get()` on it.

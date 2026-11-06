@@ -276,7 +276,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): DataStoreKind<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -790,7 +790,7 @@ TSchema
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
 // @alpha
-export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: DataStoreCreator, creator: DataStoreCreator, treeKind: DataStoreKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
 
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
@@ -1620,7 +1620,7 @@ export class SchemaUpgrade {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha
-export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
+export const SharedTreeAlpha: DataStoreKind<ITree>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
@@ -2216,10 +2216,9 @@ export interface TreeContextBeta {
 // @alpha @input
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
     readonly config: TreeViewConfiguration<TSchema>;
-    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly key?: SharedObjectKey<ITree>;
-    readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
+    readonly initializer?: (creator: DataStoreCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly key?: DataStoreKey<ITree>;
+    readonly registry?: Iterable<DataStoreKind> | DataStoreRegistry;
 }
 
 // @beta @input

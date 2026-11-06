@@ -36,6 +36,27 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Internal native channel collections
+
+The internal data-store context can create a collection of native leaf or composite channels through `createChannelCollection`.
+DDS children retain their established summary and operation formats.
+Composite children and nested aliases require `oldestSupportedClient` to be at least `3.12.0`.
+An unsupported request produces a usage error before the new feature is published; merely using the collection with DDS children does not require that target.
+
+Children have paths beneath their containing data store.
+Factory package paths remain container-relative so that legacy child-factory lookup continues to work.
+Storing a descendant's handle attaches the required ancestors.
+Nested aliases are persisted in the collection's `.aliases` blob.
+That blob is omitted when there are no aliases.
+Existing DDS slots have their original `.attributes` and payload, not a synthetic data-store envelope.
+Collections can load those slots and later add native composites after the application's rollout and framework-version target permit them.
+Legacy DDS signals retain their broadcast behavior; nested composite signals use framework address paths without interpreting application payloads as routing data.
+
+These collections use aggregate garbage-collection lifetime.
+Every attached child is retained while its containing data store is retained, and a reference to any descendant retains its ancestors.
+Children are not independently swept.
+The existing data-store runtime and existing document layouts are unchanged.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot

@@ -161,6 +161,17 @@ export interface ISharedObjectRegistry {
 }
 
 /**
+ * Registry loading capabilities used by the unified kind implementation.
+ * @internal
+ */
+export interface ISharedObjectRegistryInternal extends ISharedObjectRegistry {
+	/**
+	 * Loads a factory asynchronously without changing synchronous legacy creation.
+	 */
+	getAsync?(name: string): Promise<IChannelFactory | undefined>;
+}
+
+/**
  * The common URL prefix used by legacy DDS type strings.
  * Factories originally used full URLs (e.g. `"https://graph.microsoft.com/types/map"`);
  * new factories use only the trailing path segment (e.g. `"map"`).
@@ -183,44 +194,54 @@ const legacyTypeUrlPrefix = atob("aHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3R5cGVzLw
  *
  * @remarks
  * See {@link legacyTypeUrlPrefix} for details on old vs. new formats
+ * @internal
  */
 export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
 	public constructor(private readonly base: ISharedObjectRegistry) {}
 
-	public get(name: string): IChannelFactory | undefined {
-		let factory = this.base.get(name);
-		if (factory !== undefined) {
-			return factory;
+	public async getAsync(name: string): Promise<IChannelFactory | undefined> {
+		const registry: ISharedObjectRegistryInternal = this.base;
+		if (registry.getAsync === undefined) {
+			return this.get(name);
 		}
-
-		// eslint-disable-next-line unicorn/prefer-ternary -- This is more readable as an if statement to clearly delineate which logic can be later removed vs. which needs to stay.
-		if (name.startsWith(legacyTypeUrlPrefix)) {
-			// Back-compat: if the name is a legacy URL-based type string, retry with just the trailing path segment.
-			factory = this.base.get(name.slice(legacyTypeUrlPrefix.length));
-		} else {
-			// Temporary compat: if the name is *not* a legacy URL-based type string and we haven't found a match yet, check if we have a match with the
-			// corresponding legacy scheme. This ensures that if a client containing an older code version with the legacy attribute types loads a document
-			// written by a newer code version, they are still able to find the correct factories. This block can be removed once collaboration between clients
-			// with legacy vs. new attribute types in their code is no longer supported.
-			factory = this.base.get(`${legacyTypeUrlPrefix}${name}`);
-		}
-
-		if (factory !== undefined) {
-			return factory;
-		}
-
-		if (isURL(name) && name.includes("graph.microsoft")) {
-			// Reasonably strong signal that this the document refers to a DDS type string that is using the legacy URL format, but
-			// the base URL was likely changed by a reverse proxy or similar. Assume that its final segment is still the short (modern) name of
-			// a valid DDS type and look it up as such.
-			const finalSegment = name.split("/").slice(-1)[0];
-			if (finalSegment !== undefined) {
-				return (
-					this.base.get(finalSegment) ?? this.base.get(`${legacyTypeUrlPrefix}${finalSegment}`)
-				);
+		for (const candidate of legacySharedObjectTypeAliases(name)) {
+			const factory = await registry.getAsync(candidate);
+			if (factory !== undefined) {
+				return factory;
 			}
 		}
+		return undefined;
 	}
+
+	public get(name: string): IChannelFactory | undefined {
+		for (const candidate of legacySharedObjectTypeAliases(name)) {
+			const factory = this.base.get(candidate);
+			if (factory !== undefined) {
+				return factory;
+			}
+		}
+		return undefined;
+	}
+}
+
+/**
+ * Factory lookup candidates for current and historical DDS type identifiers.
+ * @internal
+ */
+export function legacySharedObjectTypeAliases(name: string): string[] {
+	const candidates = [
+		name,
+		name.startsWith(legacyTypeUrlPrefix)
+			? name.slice(legacyTypeUrlPrefix.length)
+			: `${legacyTypeUrlPrefix}${name}`,
+	];
+	if (isURL(name) && name.includes("graph.microsoft")) {
+		const finalSegment = name.split("/").at(-1);
+		if (finalSegment !== undefined) {
+			candidates.push(finalSegment, `${legacyTypeUrlPrefix}${finalSegment}`);
+		}
+	}
+	return candidates;
 }
 
 function isURL(str: string): boolean {

@@ -573,6 +573,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 }
 
 /**
+ * Lifecycle notifications used by native composite channels.
+ * @internal
+ */
+export interface IFluidDataStoreChannelInternal extends IFluidDataStoreChannel {
+	notifyStagingMode?(staging: boolean): void;
+}
+
+/**
  * Describes a staging mode transition on the container runtime.
  * - `{ inStagingMode: true }` — the runtime has entered staging mode.
  *
@@ -861,7 +869,30 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  */
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
-		ContainerExtensionProvider {}
+		ContainerExtensionProvider {
+	/**
+	 * This context occupies an existing DDS child slot, without a data-store envelope.
+	 */
+	readonly isSharedObjectChannel?: boolean;
+	/**
+	 * Creates a collection whose children share this data store's garbage-collection lifetime.
+	 * Composite children require an oldest supported client version of at least 3.12.0.
+	 */
+	createChannelCollection?(
+		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
+	): Promise<IFluidDataStoreChannelCollection>;
+}
+
+/**
+ * A native collection of leaf or composite channels.
+ * Child factory paths are relative to the owning data store's registry.
+ * @internal
+ */
+export interface IFluidDataStoreChannelCollection extends IFluidDataStoreChannel {
+	createDataStore(factory: IFluidDataStoreFactory, id?: string): Promise<IDataStore>;
+	getDataStoreEntryPoint(id: string): Promise<IFluidHandleInternal<FluidObject>>;
+	bind(handle: IFluidHandle): void;
+}
 
 /**
  * @legacy @beta

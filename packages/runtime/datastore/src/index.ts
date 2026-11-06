@@ -4,10 +4,14 @@
  */
 
 export { FluidObjectHandle } from "./fluidHandle.js";
+export { LeafChannelRuntime } from "./leafChannelRuntime.js";
 export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
+	type ISharedObjectRegistryInternal,
+	legacySharedObjectTypeAliases,
+	LegacyTypeAwareRegistry,
 	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,
 	mixinSummaryHandler,
