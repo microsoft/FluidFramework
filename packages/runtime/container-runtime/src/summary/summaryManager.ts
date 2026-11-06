@@ -191,7 +191,9 @@ export class SummaryManager
 	): state is SummaryManagerState.Starting | SummaryManagerState.Running =>
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
-	// Occupancy gates new creation separately; it must not stop a child we already own.
+	// Determines whether this client is still responsible for automatic summarization,
+	// based on parent election, connection state, and disposal. Permission to create
+	// a new child also requires that no summarizer exists in quorum.
 	private getShouldSummarizeState(): ShouldSummarizeState {
 		if (this.disposed) {
 			return { shouldSummarize: false, stopReason: "parentNotConnected" };
