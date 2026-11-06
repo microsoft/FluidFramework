@@ -35,7 +35,7 @@ describe("SeaDriver", () => {
 	const decoder = new TextDecoder();
 
 	for (const fail of [false, true]) {
-		it(`bounds parallel directory reads and drains them on ${fail ? "failure" : "success"}`, async () => {
+		it(`bounds outstanding directory streams and closes them on ${fail ? "failure" : "success"}`, async () => {
 			const service = await createMemoryService({ environment: "node" });
 			let reading = false;
 			let active = 0;
@@ -52,22 +52,24 @@ describe("SeaDriver", () => {
 					...session,
 					getBlobTrees: (roots, hint) => {
 						const stream = session.getBlobTrees(roots, hint);
+						const ordinal = reading ? ++calls : 0;
+						let cancelled = false;
+						if (ordinal > 0) {
+							active++;
+							peak = Math.max(peak, active);
+						}
 						return {
-							cancel: () => stream.cancel(),
+							cancel: () => {
+								if (!cancelled && ordinal > 0) active--;
+								cancelled = true;
+								stream.cancel();
+							},
 							next: async () => {
-								if (!reading) return stream.next();
-								const ordinal = ++calls;
-								active++;
-								peak = Math.max(peak, active);
-								try {
-									if (ordinal > 1) {
-										if (fail && ordinal === 2) throw failure;
-										await gate;
-									}
-									return await stream.next();
-								} finally {
-									active--;
+								if (ordinal > 1) {
+									await gate;
+									if (fail) throw failure;
 								}
+								return stream.next();
 							},
 						};
 					},
@@ -95,14 +97,14 @@ describe("SeaDriver", () => {
 				const checked = fail
 					? assert.rejects(loading, (error) => error === failure)
 					: loading.then((actual) => assert.deepEqual(actual, entries));
-				for (let attempt = 0; calls < 5 && attempt < 100; attempt++) await setImmediate();
-				assert.equal(calls, 5, "one root and four children must be admitted");
-				assert.equal(settled, false, "an error must not strand admitted sibling reads");
+				for (let attempt = 0; calls < 2 && attempt < 100; attempt++) await setImmediate();
+				assert.equal(calls, 2, "one root request and one child batch must be admitted");
+				assert.equal(settled, false, "loading must wait for the pending response");
 				release();
 				await checked;
-				assert.ok(peak >= 3 && peak <= 4);
+				assert.equal(peak, 1);
 				assert.equal(active, 0);
-				if (fail) assert.equal(calls, 5, "failure must stop later batches");
+				if (fail) assert.equal(calls, 2, "failure must stop later batches");
 			} finally {
 				release();
 				client.disconnect();

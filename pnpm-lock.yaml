@@ -16974,6 +16974,9 @@ importers:
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -16995,6 +16998,9 @@ importers:
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree

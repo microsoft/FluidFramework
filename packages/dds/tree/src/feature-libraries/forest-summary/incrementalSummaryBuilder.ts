@@ -31,6 +31,8 @@ import type {
 
 import { summaryContentBlobKey } from "./summaryFormatV3.js";
 
+const chunkReadConcurrency = 16;
+
 /**
  * The properties of a chunk tracked during the loading process.
  * These are used to identify a chunk when it is decoded and recreate the tracking state
@@ -274,47 +276,53 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			return;
 		}
 
-		// Downloads the contents of incremental chunks in the given snapshot tree. Also, recursively downloads
-		// the contents of incremental chunks in any sub-trees.
-		const downloadChunkContentsInTree = async (
-			snapshotTree: ISnapshotTree,
-			parentPathSegments: string[],
-			parentReferenceId: ChunkReferenceId | undefined,
-		): Promise<void> => {
-			// All trees in the snapshot tree are for incremental chunks. The key is the chunk's reference ID
-			// and the value is the snapshot tree for the chunk.
-			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
-				const chunkSubTreeSegments = [...parentPathSegments, chunkReferenceId];
-				const chunkSubTreePath = chunkSubTreeSegments.join("/");
-				const chunkContentsPath = `${chunkSubTreePath}/${summaryContentBlobKey}`;
-				if (!(await args.services.contains(chunkContentsPath))) {
-					throw new LoggingError(
-						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
-					);
-				}
-				const chunkContents = (await args.readAndParseChunk(
-					chunkContentsPath,
-				)) as EncodedFieldBatchV2; // TODO: this should use a codec to validate the data instead of just type casting.
-				this.loadedChunksMap.set(chunkReferenceId, {
-					encodedContents: chunkContents,
-					parentReferenceId,
+		const pending: {
+			referenceId: string;
+			tree: ISnapshotTree;
+			path: string;
+			parentReferenceId: ChunkReferenceId | undefined;
+		}[] = Object.entries(forestTree.trees).map(([referenceId, tree]) => ({
+			referenceId,
+			tree,
+			path: referenceId,
+			parentReferenceId: undefined,
+		}));
+		while (pending.length > 0) {
+			const batch = pending.splice(0, chunkReadConcurrency);
+			// Drain admitted reads before reporting a failure; nested trees share the same limit.
+			const results = await Promise.allSettled(
+				batch.map(async (chunk) => {
+					const path = `${chunk.path}/${summaryContentBlobKey}`;
+					if (!(await args.services.contains(path))) {
+						throw new LoggingError(
+							`SharedTree: Cannot find contents for incremental chunk ${path}`,
+						);
+					}
+					return args.readAndParseChunk(path);
+				}),
+			);
+			for (const [index, chunk] of batch.entries()) {
+				const result = results[index];
+				assert(result !== undefined, "Each chunk read must have a result");
+				if (result.status === "rejected") throw result.reason;
+				this.loadedChunksMap.set(chunk.referenceId, {
+					encodedContents: result.value as EncodedFieldBatchV2,
+					parentReferenceId: chunk.parentReferenceId,
 				});
-
-				const chunkReferenceIdNumber = Number(chunkReferenceId);
+				const chunkReferenceIdNumber = Number(chunk.referenceId);
 				this.nextReferenceId = brand(
 					Math.max(this.nextReferenceId, chunkReferenceIdNumber + 1),
 				);
-
-				// Recursively download the contents of chunks in this chunk's sub tree.
-				await downloadChunkContentsInTree(
-					chunkSnapshotTree,
-					chunkSubTreeSegments,
-					brand(chunkReferenceIdNumber),
-				);
+				for (const [referenceId, tree] of Object.entries(chunk.tree.trees)) {
+					pending.push({
+						referenceId,
+						tree,
+						path: `${chunk.path}/${referenceId}`,
+						parentReferenceId: brand(chunkReferenceIdNumber),
+					});
+				}
 			}
-		};
-		// parentReferenceId is undefined for the root of the forest tree.
-		await downloadChunkContentsInTree(forestTree, [], undefined /* parentReferenceId */);
+		}
 	}
 
 	/**

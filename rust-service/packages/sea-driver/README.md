@@ -49,7 +49,10 @@ An item larger than the byte budget is returned to its caller but is not retaine
 Insertion evicts the oldest inserted items until both budgets fit.
 Cache reads do not refresh insertion order; a repeated content delivery replaces its existing entry and refreshes that entry's insertion order.
 The cache uses typed identities, copies retained and returned data, and does not treat duplicate deliveries as stream completion.
-Concurrent cache misses are not coalesced into one request.
+Summary traversal batches known directory misses into multi-root requests.
+Concurrent content cache misses in the same session are coalesced into batches of at most 16 unique identities.
+Duplicate readers share a request but receive independent copies.
+The queue admits one content-recovery stream at a time and remains pinned to its original session while admitted reads drain.
 
 ### Startup coordination and measurement
 
@@ -61,8 +64,13 @@ The same event stream continues through catch-up and live delivery while content
 A cache hit returns immediately after checking for a recorded content failure.
 A cache miss waits for the initial content stream to finish, then checks the cache again.
 It does not wake early when that particular item arrives.
-If the item is still missing, including after normal prefetch truncation or eviction, it issues a single-root `getBlobTrees` request with the default lazy hint.
-Directory traversal admits at most four independent reads per batch.
+If the item is still missing, including after normal prefetch truncation or eviction, it issues a `getBlobTrees` request with the configured loading hint.
+Directory traversal batches up to 256 identities into one request and consumes its bounded descendant prefetch before continuing.
+Only one directory-recovery stream is active per traversal.
+Directory traversal and content-recovery queues can run independently.
+Requested roots are retained independently of the cache until the batch completes, including when the cache is disabled or too small.
+If response limits omit later roots, traversal requests only those still missing.
+An empty response or an incorrect first root is an error, not a reason to retry indefinitely.
 Measure snapshot availability, content-drain completion, fallback request count, wire bytes, and decoded retained-content bytes separately.
 To observe content-drain completion, wrap the neutral factory's returned `load().content.next()` and record its `undefined` result.
 Neither `loadDirectSnapshot` completion nor zero extra fetches alone proves that all snapshot descendants are retained.
@@ -106,7 +114,7 @@ This package has no SharedTree dependency and delegates WebAssembly (WASM) loadi
 For hosts that do not use Fluid sequencing, `openDirectSession` bypasses projection and performs no eager history reads.
 Its read results use native Sea positions.
 `loadDirectSnapshot` consumes the opening snapshot selection and retains the same stream for finite catch-up and live delivery.
-Directory traversal issues at most four independent requests at a time and drains each admitted batch before reporting failure.
+Directory traversal uses bounded multi-root requests and cancels each response stream on completion or failure.
 The [integration harness](../../tests/sea-integration-tests/README.md) provides local and WebTransport examples through the neutral package entrypoints.
 
 ```typescript

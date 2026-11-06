@@ -67,6 +67,8 @@ Loading reads only the snapshot's suffix; reconnect reads only after the last ap
 Both reuse the opening snapshot/replay/live stream instead of making separate snapshot and history requests.
 Snapshot content is fetched on demand; this path does not require recursive prefetch hints.
 Repeated references to the same immutable blob share one fetch during summary loading.
+SharedTree loads incremental chunk blobs in batches of at most 16 concurrent reads, including across nested chunk trees.
+The host's storage adapter batches missing directories and uses the configured descendant-prefetch hint during recovery.
 Direct snapshot metadata uses version 3.
 Version 2 full snapshots remain readable; their next summary establishes a new full incremental baseline.
 Version 3 loads restore chunk tracking and can reuse chunks immediately.

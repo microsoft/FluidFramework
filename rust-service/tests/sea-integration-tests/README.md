@@ -208,3 +208,89 @@ For retained evidence, agents and humans should:
 The first clean provisional run is recorded in the [SharedTree comparison evidence](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/13401fe0de3/README.md).
 
 These baseline results are provisional because they predate the default read-to-write lifecycle and projected-operation subscription. The retained iteration 0008 evidence compares the same workload after both changes. Only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.
+
+## Snapshot Download and Load Benchmark
+
+The snapshot workload seeds populated SharedTrees before measuring fresh-client loads.
+It compares direct Sea with the editor's prefetch hint (`direct`), direct Sea without that hint (`direct-demand`), Fluid over Sea (`sea-fluid`), and Fluid over Tinylicious (`tinylicious`).
+The demand-only case is a current-code configuration control, not a historical revision.
+The default `prefetchItems` is 256 and the explicit Sea `maxConnections` is 16.
+Override these separately for diagnostic runs, retaining the changed configuration in the report.
+All cases use the optimized forest and the same deterministic, 1,024-byte pseudorandom hexadecimal strings.
+Direct snapshots use the schema's incremental chunk boundaries.
+Fluid cases use their normal initial attachment summaries.
+No application edits follow snapshot preparation; Tinylicious can subsequently publish a service summary containing membership history.
+
+Build the browser package with `pnpm --dir rust-service/tests/sea-integration-tests run bench:build`.
+Build the native service with:
+
+```bash
+cargo build --locked --manifest-path rust-service/Cargo.toml \
+	-p sea-webtransport-server --release --features websocket-stream \
+	--target-dir rust-service/target
+sh rust-service/tests/webtransport-browser/generate-cert.sh \
+	rust-service/tests/webtransport-browser/.certs
+```
+
+Tinylicious must have its separate workspace dependencies installed and its `dist/index.js` built, as described above.
+The runner requires Linux, Chromium, `unshare`, `ip`, `tc`, `taskset`, `findmnt`, and at least four allowed logical CPUs.
+It creates a private user/network namespace and refuses to change the caller's network namespace.
+Only packets to or from the benchmark service address, `127.0.0.2`, receive delay.
+Browser assets, DevTools traffic, and Tinylicious's internal localhost HTTP remain unshaped.
+The 100 ms round-trip time (RTT) setting adds 50 ms per direction to both TCP and UDP, without a bandwidth limit or intentional packet loss.
+UDP echo probes verify the measured RTT and the unshaped control path.
+The runner checks for unintended netem packet drops during latency measurements.
+The first four allowed logical CPUs (or half on smaller hosts) run the services; the remaining CPUs run clients.
+These are logical CPU sets, not guarantees of separate physical cores or an otherwise idle machine.
+
+From the repository root, collect latency samples at both RTTs:
+
+```bash
+node rust-service/tests/sea-integration-tests/scripts/run-snapshot-benchmark.mjs \
+	'{"bytes":[102400,1048576],"repetitions":20,"concurrency":[]}' \
+	/tmp/snapshot-latency
+```
+
+Each latency sample uses a fresh browser process and profile.
+The timed interval includes client construction, lazy WASM initialization, connection establishment, snapshot loading, view creation, and a representative application read.
+It excludes page assets, JavaScript module evaluation, fixture generation, full-tree verification, and disposal.
+The host/service and OS caches remain warm.
+Every sample verifies every tree value after the timed interval.
+The Sea call spans are API-level observations, not wire request counts or additive phase totals.
+Netem counters measure bidirectional network bytes including protocol overhead, not just snapshot payload.
+
+For throughput, choose complete tree loads (`workload: "load"`) or storage-only reads (`workload: "download"`):
+
+```bash
+node rust-service/tests/sea-integration-tests/scripts/run-snapshot-benchmark.mjs \
+	'{"bytes":[1048576],"repetitions":0,"concurrency":[1,8,32],"capacityCount":160,"workers":4,"rates":[20,60],"rateSeconds":10,"workload":"download"}' \
+	/tmp/snapshot-capacity
+```
+
+Capacity runs use zero added delay and independent Chromium processes with a shared start barrier.
+Each load level starts from a newly seeded document, so earlier levels do not contribute membership history.
+Each worker warms its modules and WASM, then creates a fresh client/driver for each measured open.
+Closed-loop concurrency sweeps and open-loop scheduled arrivals are distinct workloads.
+Open-loop samples include scheduler lag and latency measured from the intended arrival, so generator delay is visible.
+The measurement window includes at least the full offered-load interval and drains all admitted requests.
+Capacity includes validation and client disposal, unlike individual load latency.
+Storage-only reads pin the worker's selected snapshot, fetch its manifest and all unique blobs with eight readers, and check content fingerprints.
+This standardized downloader is not the SharedTree loader's fetch schedule.
+Both workloads use a hot document; neither establishes cold-storage capacity or a production service limit.
+Increase duration, repetitions, and independent generators before making saturation or tail-latency claims.
+
+Each output directory contains `samples.json` with raw samples, configuration, source/build hashes, network probes, CPU placement, and service CPU/RSS observations.
+It also retains service logs.
+Capacity workers include sampled process-tree CPU counters to help distinguish generator limits from service limits.
+Those counters are sampled, can miss short-lived processes, and include warmup; use their timestamps to select the measured interval.
+Failed loads and capacity workers remain explicit failures, not successful timing samples.
+The runner stops owned services and removes their temporary data; the network namespace disappears when its processes exit.
+
+Validate the network helper and run the small browser correctness matrix with:
+
+```bash
+node --test rust-service/tests/sea-integration-tests/scripts/snapshot-network.test.mjs
+pnpm --dir rust-service/tests/sea-integration-tests run typecheck:shared-tree
+node rust-service/tests/sea-integration-tests/scripts/run-snapshot-benchmark.mjs \
+	'{"bytes":[102400],"repetitions":1,"concurrency":[]}' /tmp/snapshot-smoke
+```

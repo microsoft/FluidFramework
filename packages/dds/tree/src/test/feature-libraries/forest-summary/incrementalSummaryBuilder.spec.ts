@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { setImmediate } from "node:timers/promises";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -260,6 +261,88 @@ describe("ForestIncrementalSummaryBuilder", () => {
 	});
 
 	describe("load", () => {
+		it("bounds parallel reads across wide and nested chunk trees", async () => {
+			const tree: ISnapshotTree = { trees: {}, blobs: {} };
+			const blobs = new Map<string, string>();
+			for (let parent = 0; parent < 32; parent++) {
+				const childTree: ISnapshotTree = { trees: {}, blobs: { contents: "unused" } };
+				tree.trees[parent] = childTree;
+				blobs.set(`${parent}/contents`, `${parent}`);
+				for (let child = 0; child < 2; child++) {
+					const reference = 100 + parent * 2 + child;
+					childTree.trees[reference] = { trees: {}, blobs: { contents: "unused" } };
+					blobs.set(`${parent}/${reference}/contents`, `${reference}`);
+				}
+			}
+			const builder = createIncrementalSummaryBuilder();
+			let active = 0;
+			let peak = 0;
+			let completed = 0;
+			await builder.load({
+				services: createMockStorageService(tree, blobs),
+				readAndParseChunk: async (path) => {
+					active++;
+					peak = Math.max(peak, active);
+					await setImmediate();
+					active--;
+					completed++;
+					const value = blobs.get(path);
+					assert(value !== undefined);
+					return value;
+				},
+			});
+			assert.equal(peak, 16);
+			assert.equal(completed, 96);
+			assert.equal(active, 0);
+			for (const value of blobs.values()) {
+				builder.decodeIncrementalChunk(brand(Number(value)), (encoded) => {
+					assert.equal(encoded, value);
+					return getMockChunk();
+				});
+			}
+		});
+
+		it("drains admitted reads on failure without starting another batch", async () => {
+			const tree: ISnapshotTree = { trees: {}, blobs: {} };
+			const blobs = new Map<string, string>();
+			for (let index = 0; index < 32; index++) {
+				tree.trees[index] = { trees: {}, blobs: { contents: "unused" } };
+				blobs.set(`${index}/contents`, `${index}`);
+			}
+			let release = (): void => {};
+			const blocked = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			let reads = 0;
+			let completed = 0;
+			let settled = false;
+			const failure = new Error("chunk read failed");
+			const loading = createIncrementalSummaryBuilder().load({
+				services: createMockStorageService(tree, blobs),
+				readAndParseChunk: async (path) => {
+					reads++;
+					if (path === "0/contents") throw failure;
+					await blocked;
+					completed++;
+					return path;
+				},
+			});
+			const rejected = assert.rejects(loading, (error: unknown) => {
+				settled = true;
+				return error === failure;
+			});
+			try {
+				await setImmediate();
+				assert.equal(reads, 16);
+				assert.equal(settled, false);
+			} finally {
+				release();
+			}
+			await rejected;
+			assert.equal(reads, 16);
+			assert.equal(completed, 15);
+		});
+
 		it("returns early when snapshot tree is not available", async () => {
 			const builder = createIncrementalSummaryBuilder();
 			const storageService = createMockStorageService(); // No snapshot tree

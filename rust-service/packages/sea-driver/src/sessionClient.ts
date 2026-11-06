@@ -19,6 +19,7 @@ import type {
 } from "@fluidframework/sea-typescript/internal";
 
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 
 import { hexToBytes } from "./lifecycleHelpers.js";
 import type {
@@ -62,6 +63,17 @@ interface DirectoryNode {
 	readonly children: Map<string, DirectoryNode | SeaTreeId>;
 }
 
+interface PendingContentRead {
+	readonly id: SeaTreeId;
+	readonly result: Deferred<SeaBlobTreeItem>;
+}
+
+interface ContentReadQueue {
+	readonly generation: number;
+	readonly reads: Map<string, PendingContentRead>;
+	readonly pending: PendingContentRead[];
+}
+
 /** Projection state at one published snapshot, independent of later stream delivery. */
 interface ProjectionCheckpoint {
 	readonly version: 1;
@@ -71,7 +83,8 @@ interface ProjectionCheckpoint {
 }
 
 const projectionBlobName = ".sea-fluid-projection";
-const directoryReadConcurrency = 4;
+const directoryReadBatchSize = 256;
+const contentReadBatchSize = 16;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -133,6 +146,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private contentFailure: { readonly error: unknown } | undefined;
 	private readonly contentObservers = new Set<(error: unknown) => void>();
 	private readonly contentCache = new Map<string, { item: SeaBlobTreeItem; size: number }>();
+	private readonly contentReadQueues = new Map<SeaSession, ContentReadQueue>();
 	private contentBytes = 0;
 	private contentGeneration = 0;
 	private readonly cacheBytes: number;
@@ -477,40 +491,115 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		this.contentBytes += size;
 	}
 
-	/** Missing or evicted descendants always fall back to an explicit root request. */
+	/** Coalesces concurrent readers while returning independently owned content to each caller. */
 	private async readContent(session: SeaSession, id: SeaTreeId): Promise<SeaBlobTreeItem> {
-		const generation = this.contentGeneration;
 		this.checkContentFailure();
-		let cached = this.contentCache.get(contentKey(id));
-		if (cached === undefined && this.contentTask !== undefined) {
-			await this.contentTask;
-			cached = this.contentCache.get(contentKey(id));
-		}
-		this.checkContentFailure();
+		const key = contentKey(id);
+		const cached = this.contentCache.get(key);
 		if (cached !== undefined) return copyContent(cached.item);
-		const stream = session.getBlobTrees([id]);
-		try {
-			const item = await this.observeContent(stream.next());
-			if (
-				item === undefined ||
-				item.kind !== id.kind ||
-				contentKey(item.id) !== contentKey(id)
-			)
-				throw new Error("SEA content response omitted its requested root");
-			if (generation === this.contentGeneration) this.cacheContent(item);
-			return copyContent(item);
-		} finally {
-			stream.cancel();
+		let queue = this.contentReadQueues.get(session);
+		if (queue === undefined) {
+			queue = {
+				generation: this.contentGeneration,
+				reads: new Map(),
+				pending: [],
+			};
+			this.contentReadQueues.set(session, queue);
+			const scheduled = queue;
+			queueMicrotask(() => {
+				void this.drainContentReads(session, scheduled);
+			});
 		}
+		let read = queue.reads.get(key);
+		if (read === undefined) {
+			read = { id, result: new Deferred<SeaBlobTreeItem>() };
+			queue.reads.set(key, read);
+			queue.pending.push(read);
+		}
+		return copyContent(await read.result.promise);
 	}
 
-	private async readDirectory(
+	private async drainContentReads(
 		session: SeaSession,
-		id: SeaTreeId,
-	): Promise<readonly SeaDirectoryEntry[]> {
-		const item = await this.readContent(session, id);
-		if (item.kind !== "directory") throw new Error("SEA content is not a directory");
-		return item.entries;
+		queue: ContentReadQueue,
+	): Promise<void> {
+		while (queue.pending.length > 0) {
+			const batch = queue.pending.splice(0, contentReadBatchSize);
+			try {
+				const items = await this.readContents(
+					session,
+					batch.map((read) => read.id),
+					queue.generation,
+				);
+				for (const [index, read] of batch.entries()) {
+					const item = items[index];
+					if (item === undefined)
+						throw new Error("SEA content response omitted its requested root");
+					read.result.resolve(item);
+				}
+			} catch (error) {
+				for (const read of batch) read.result.reject(error);
+			} finally {
+				for (const read of batch) queue.reads.delete(contentKey(read.id));
+			}
+		}
+		this.contentReadQueues.delete(session);
+	}
+
+	/** Retains requested roots independently of the cache and retries roots omitted by response limits. */
+	private async readContents(
+		session: SeaSession,
+		ids: readonly SeaTreeId[],
+		generation = this.contentGeneration,
+	): Promise<SeaBlobTreeItem[]> {
+		this.checkContentFailure();
+		if (
+			ids.some((id) => !this.contentCache.has(contentKey(id))) &&
+			this.contentTask !== undefined
+		) {
+			await this.contentTask;
+		}
+		this.checkContentFailure();
+		const requested = new Map(ids.map((id) => [contentKey(id), id]));
+		const found = new Map<string, SeaBlobTreeItem>();
+		for (const key of requested.keys()) {
+			const cached = this.contentCache.get(key);
+			if (cached !== undefined) found.set(key, copyContent(cached.item));
+		}
+		let missing = [...requested].filter(([key]) => !found.has(key));
+		while (missing.length > 0) {
+			const roots = missing.slice(0, directoryReadBatchSize).map(([, id]) => id);
+			const firstRoot = roots[0];
+			if (firstRoot === undefined) throw new Error("SEA content request has no roots");
+			const stream = session.getBlobTrees(roots, this.loadingHint);
+			try {
+				let first = true;
+				for (;;) {
+					const item = await this.observeContent(stream.next());
+					if (first && (item === undefined || contentKey(item.id) !== contentKey(firstRoot))) {
+						throw new Error("SEA content response omitted its requested root");
+					}
+					if (item === undefined) break;
+					if (item.kind !== item.id.kind) throw new Error("SEA content has an incorrect kind");
+					first = false;
+					const key = contentKey(item.id);
+					if (requested.has(key)) found.set(key, copyContent(item));
+					if (generation === this.contentGeneration) this.cacheContent(item);
+					if (roots.every((root) => root.kind === "blob" && found.has(contentKey(root)))) {
+						break;
+					}
+				}
+			} finally {
+				stream.cancel();
+			}
+			missing = missing.filter(([key]) => !found.has(key));
+		}
+		return ids.map((id) => {
+			const item = found.get(contentKey(id));
+			if (item === undefined)
+				throw new Error("SEA content response omitted its requested root");
+			return item;
+		});
 	}
 
 	/** Opens the neutral relay without adding signal traffic to event history. */
@@ -855,9 +944,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Reads one directory using prefetched content when available. */
 	public fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]> {
-		return this.withArchiveSession(async (session) =>
-			this.readDirectory(session, { kind: "directory", bytes: digest }),
-		);
+		return this.withArchiveSession(async (session) => {
+			const item = await this.readContent(session, { kind: "directory", bytes: digest });
+			if (item.kind !== "directory") throw new Error("SEA content is not a directory");
+			return item.entries;
+		});
 	}
 
 	/** Converts immutable SEA directories back to the driver's flattened summary representation. */
@@ -1047,20 +1138,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	): Promise<void> {
 		const pending = [{ directory, prefix }];
 		while (pending.length > 0) {
-			const batch = pending.splice(0, directoryReadConcurrency);
-			const results = await Promise.allSettled(
-				batch.map(async (item) => ({
-					prefix: item.prefix,
-					children: await this.readDirectory(session, item.directory),
-				})),
+			const batch = pending.splice(0, directoryReadBatchSize);
+			const contents = await this.readContents(
+				session,
+				batch.map((item) => item.directory),
 			);
-			for (const result of results) {
-				if (result.status === "rejected") throw result.reason;
-				for (const entry of result.value.children) {
-					const path =
-						result.value.prefix.length === 0
-							? entry.name
-							: `${result.value.prefix}/${entry.name}`;
+			for (const [index, item] of batch.entries()) {
+				const content = contents[index];
+				if (content?.kind !== "directory") throw new Error("SEA content is not a directory");
+				for (const entry of content.entries) {
+					const path = item.prefix.length === 0 ? entry.name : `${item.prefix}/${entry.name}`;
 					if (entry.child.kind === "directory")
 						pending.push({ directory: entry.child, prefix: path });
 					else entries.push({ path: encoder.encode(path), blob: entry.child.bytes });

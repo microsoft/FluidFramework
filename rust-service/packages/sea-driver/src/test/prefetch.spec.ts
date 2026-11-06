@@ -10,6 +10,7 @@ import {
 	type SeaBlobTreeHint,
 	type SeaBlobTreeItem,
 	type SeaStream,
+	type SeaTreeId,
 } from "@fluidframework/sea-typescript/internal";
 
 import { SeaSessionDriverClient, type SeaSessionDriverOptions } from "../index.js";
@@ -22,6 +23,11 @@ describe("SEA opening content", () => {
 		options: SeaSessionDriverOptions = { loadingHint: hint },
 		content?: (stream: SeaStream<SeaBlobTreeItem>) => SeaStream<SeaBlobTreeItem>,
 		compressedPayload?: Uint8Array,
+		extra: {
+			width?: number;
+			depth?: number;
+			demand?: (stream: SeaStream<SeaBlobTreeItem>) => SeaStream<SeaBlobTreeItem>;
+		} = {},
 	) {
 		const compression = compressedPayload !== undefined;
 		const service = await createMemoryService({
@@ -31,12 +37,25 @@ describe("SEA opening content", () => {
 		const writer = await service.open(undefined, { compression });
 		const blob = await writer.putBlob(compressedPayload ?? encode("prefetched value"));
 		const nested = await writer.putDirectory([{ name: "value", child: blob }]);
-		const root = await writer.putDirectory([{ name: "nested", child: nested }]);
+		const children = [{ name: "nested", child: nested }];
+		for (let index = 1; index < (extra.width ?? 1); index++) {
+			const child = await writer.putBlob(encode(`value ${index}`));
+			children.push({
+				name: `nested${index}`,
+				child: await writer.putDirectory([{ name: "value", child }]),
+			});
+		}
+		let root = await writer.putDirectory(children);
+		for (let depth = 0; depth < (extra.depth ?? 0); depth++) {
+			root = await writer.putDirectory([{ name: "child", child: root }]);
+		}
 		const position = await writer.submit(undefined, encode("initial"));
 		const coordination = await writer.coordinateSnapshots("clientSelected");
 		await coordination.next();
 		await writer.publishSnapshot(undefined, undefined, position, root);
 		let requests = 0;
+		const requestedRoots: (readonly SeaTreeId[])[] = [];
+		const requestedHints: (SeaBlobTreeHint | undefined)[] = [];
 		let loads = 0;
 		let openingHint: SeaBlobTreeHint | undefined;
 		const client = new SeaSessionDriverClient(
@@ -48,7 +67,10 @@ describe("SEA opening content", () => {
 					getSnapshot: async () => assert.fail("startup must not select another snapshot"),
 					getBlobTrees: (roots, requestedHint) => {
 						requests++;
-						return session.getBlobTrees(roots, requestedHint);
+						requestedRoots.push(roots);
+						requestedHints.push(requestedHint);
+						const stream = session.getBlobTrees(roots, requestedHint);
+						return extra.demand?.(stream) ?? stream;
 					},
 					load: async (required, loadingHint) => {
 						loads++;
@@ -68,6 +90,8 @@ describe("SEA opening content", () => {
 			root,
 			requests: () => requests,
 			loads: () => loads,
+			requestedRoots,
+			requestedHints,
 			reopen: () => client.openDirectSession(writer.document, new Uint8Array()),
 			close: async () => {
 				client.disconnect();
@@ -115,6 +139,7 @@ describe("SEA opening content", () => {
 				},
 			};
 		});
+
 		try {
 			await test.client.loadDirectSnapshot();
 			assert.equal((await test.client.fetchSummary(test.root.bytes)).length, 1);
@@ -128,6 +153,248 @@ describe("SEA opening content", () => {
 		}
 	});
 
+	it("coalesces concurrent blob misses in bounded batches without sharing returned buffers", async () => {
+		const test = await fixture(
+			{ loadingHint: {}, contentCacheObjects: 0 },
+			undefined,
+			undefined,
+			{ width: 40 },
+		);
+		try {
+			await test.client.loadDirectSnapshot();
+			const entries = await test.client.fetchSummary(test.root.bytes);
+			const before = test.requests();
+			const blobs = await Promise.all([
+				...entries.map(async (entry) => test.client.fetchBlob(entry.blob)),
+				test.client.fetchBlob(test.blob.bytes),
+			]);
+			assert.deepEqual(
+				test.requestedRoots.slice(before).map((roots) => roots.length),
+				[16, 16, 8],
+			);
+			for (const [index, entry] of entries.entries()) {
+				const path = new TextDecoder().decode(entry.path);
+				const number = path.match(/^nested(\d*)\/value$/u)?.[1];
+				assert.notEqual(number, undefined);
+				assert.deepEqual(
+					blobs[index],
+					encode(number === "" ? "prefetched value" : `value ${number}`),
+				);
+			}
+			blobs[0]?.fill(0);
+			assert.deepEqual(blobs[40], encode("prefetched value"));
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("reports a coalesced content failure to every waiting reader", async () => {
+		const failure = new Error("batched blob failed");
+		let cancelled = 0;
+		const test = await fixture({ loadingHint: {} }, undefined, undefined, {
+			demand: (stream) => ({
+				next: async () => {
+					throw failure;
+				},
+				cancel: () => {
+					cancelled++;
+					stream.cancel();
+				},
+			}),
+		});
+		try {
+			const readers = [
+				test.client.fetchBlob(test.blob.bytes),
+				test.client.fetchBlob(test.blob.bytes),
+			];
+			await Promise.all(
+				readers.map(async (read) => assert.rejects(read, (error) => error === failure)),
+			);
+			assert.equal(test.requests(), 1);
+			assert.equal(cancelled, 1);
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("recovers a wide summary in bounded multi-root requests", async () => {
+		const test = await fixture({ loadingHint: {} }, undefined, undefined, { width: 600 });
+		try {
+			await test.client.loadDirectSnapshot();
+			assert.equal((await test.client.fetchSummary(test.root.bytes)).length, 600);
+			assert.deepEqual(
+				test.requestedRoots.map((roots) => roots.length),
+				[256, 256, 88],
+			);
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("prefetches descendant blobs when recovering missing directories", async () => {
+		const loadingHint = { includeDescendantBlobs: true, maxExtraItems: 2 };
+		const test = await fixture({ loadingHint }, undefined, undefined, { width: 4 });
+		try {
+			await test.client.loadDirectSnapshot();
+			const entries = await test.client.fetchSummary(test.root.bytes);
+			assert.equal(entries.length, 4);
+			assert.deepEqual(
+				test.requestedRoots.map((roots) => roots.length),
+				[2],
+			);
+			assert.deepEqual(test.requestedHints, [loadingHint]);
+			const before = test.requests();
+			for (const entry of entries) {
+				if (new TextDecoder().decode(entry.path).match(/^nested[23]\//u)) {
+					await test.client.fetchBlob(entry.blob);
+				}
+			}
+			assert.equal(test.requests(), before, "recovery must retain descendant payloads");
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("loads a deep directory chain without relying on cache retention", async () => {
+		const test = await fixture(
+			{ loadingHint: {}, contentCacheObjects: 0 },
+			undefined,
+			undefined,
+			{ depth: 40 },
+		);
+		try {
+			await test.client.loadDirectSnapshot();
+			const entries = await test.client.fetchSummary(test.root.bytes);
+			assert.equal(entries.length, 1);
+			assert.equal(
+				new TextDecoder().decode(entries[0]?.path),
+				`${"child/".repeat(40)}nested/value`,
+			);
+			assert.equal(test.requests(), 42);
+		} finally {
+			await test.close();
+		}
+	});
+
+	for (const contentCacheObjects of [0, 1]) {
+		it(`retains requested batch roots with a ${contentCacheObjects}-object cache`, async () => {
+			const test = await fixture(
+				{ loadingHint: {}, contentCacheObjects },
+				undefined,
+				undefined,
+				{ width: 10 },
+			);
+			try {
+				await test.client.loadDirectSnapshot();
+				assert.equal((await test.client.fetchSummary(test.root.bytes)).length, 10);
+				assert.deepEqual(
+					test.requestedRoots.map((roots) => roots.length),
+					contentCacheObjects === 0 ? [1, 10] : [10],
+				);
+			} finally {
+				await test.close();
+			}
+		});
+	}
+
+	it("continues after truncated, duplicated responses without retrying received roots", async () => {
+		let cancelled = 0;
+		const test = await fixture(
+			{ loadingHint: {}, contentCacheObjects: 0 },
+			undefined,
+			undefined,
+			{
+				width: 5,
+				demand: (stream) => {
+					let reads = 0;
+					let item: SeaBlobTreeItem | undefined;
+					return {
+						next: async () => {
+							if (reads++ === 0) {
+								item = await stream.next();
+								return item;
+							}
+							return reads === 2 ? item : undefined;
+						},
+						cancel: () => {
+							cancelled++;
+							stream.cancel();
+						},
+					};
+				},
+			},
+		);
+		try {
+			await test.client.loadDirectSnapshot();
+			assert.equal((await test.client.fetchSummary(test.root.bytes)).length, 5);
+			assert.deepEqual(
+				test.requestedRoots.map((roots) => roots.length),
+				[1, 5, 4, 3, 2, 1],
+			);
+			assert.equal(cancelled, 6);
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("rejects an empty demand response instead of retrying forever", async () => {
+		let cancelled = 0;
+		const test = await fixture({ loadingHint: {} }, undefined, undefined, {
+			demand: (stream) => ({
+				next: async () => undefined,
+				cancel: () => {
+					cancelled++;
+					stream.cancel();
+				},
+			}),
+		});
+		try {
+			await test.client.loadDirectSnapshot();
+			await assert.rejects(
+				test.client.fetchSummary(test.root.bytes),
+				/omitted its requested root/,
+			);
+			assert.equal(test.requests(), 1);
+			assert.equal(cancelled, 1);
+		} finally {
+			await test.close();
+		}
+	});
+
+	it("cancels a failed batch and does not issue further requests", async () => {
+		const failure = new Error("demand failed");
+		let requests = 0;
+		let cancelled = 0;
+		const test = await fixture({ loadingHint: {} }, undefined, undefined, {
+			width: 600,
+			demand: (stream) => {
+				const fail = ++requests === 2;
+				let first = true;
+				return {
+					next: async () => {
+						if (fail && !first) throw failure;
+						first = false;
+						return stream.next();
+					},
+					cancel: () => {
+						cancelled++;
+						stream.cancel();
+					},
+				};
+			},
+		});
+		try {
+			await test.client.loadDirectSnapshot();
+			await assert.rejects(
+				test.client.fetchSummary(test.root.bytes),
+				(error) => error === failure,
+			);
+			assert.equal(requests, 2);
+			assert.equal(cancelled, 2);
+		} finally {
+			await test.close();
+		}
+	});
 	for (const contentCacheObjects of [0, 1]) {
 		it(`falls back for evicted content with a ${contentCacheObjects}-object budget`, async () => {
 			const test = await fixture({ loadingHint: hint, contentCacheObjects });
