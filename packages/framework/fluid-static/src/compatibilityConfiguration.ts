@@ -11,7 +11,7 @@ import type { OldestSupportedClientVersion } from "@fluidframework/runtime-defin
  *
  * @remarks
  * These are layered on top of the runtime defaults that container-runtime selects from
- * `minVersionForCollab` (via `getMinVersionForCollabDefaults`). Only options that
+ * `oldestSupportedClient` (via `getOldestSupportedClientDefaults`). Only options that
  * fluid-static needs to set differently from those defaults belong here
  * (e.g. enableRuntimeIdCompressor to support SharedTree).
  */
@@ -23,15 +23,15 @@ const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
 };
 
 /**
- * Returns the fluid-static-specific runtime option overrides for the given `minVersionForCollab`.
+ * Returns the fluid-static-specific runtime option overrides for the given `oldestSupportedClient`.
  *
  * @remarks
- * The bulk of runtime defaults for a given `minVersionForCollab` are selected by container-runtime
- * (via `getMinVersionForCollabDefaults`). This function only contributes the additional overrides
+ * The bulk of runtime defaults for a given `oldestSupportedClient` are selected by container-runtime
+ * (via `getOldestSupportedClientDefaults`). This function only contributes the additional overrides
  * that fluid-static needs to layer on top of those defaults.
  * @internal
  */
-export function defaultRuntimeOptionsForMinVersion(
+export function defaultRuntimeOptionsForOldestSupportedClient(
 	_minVersionForCollab: OldestSupportedClientVersion,
 ): IContainerRuntimeOptionsInternal {
 	return defaultRuntimeOptions;

@@ -133,9 +133,9 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	/**
-	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab}
+	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.oldestSupportedClient}
 	 */
-	private readonly minVersionForCollab: OldestSupportedClientVersion;
+	private readonly oldestSupportedClient: OldestSupportedClientVersion;
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 		super();
@@ -162,7 +162,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		this.provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 		this.requestHandlers = [getDefaultObject];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.minVersionForCollab =
+		this.oldestSupportedClient =
 			props.oldestSupportedClient ??
 			props.minVersionForCollab ??
 			defaultTestOldestSupportedClient;
@@ -190,7 +190,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			// eslint-disable-next-line import-x/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
-			oldestSupportedClient: this.minVersionForCollab,
+			oldestSupportedClient: this.oldestSupportedClient,
 		});
 	}
 

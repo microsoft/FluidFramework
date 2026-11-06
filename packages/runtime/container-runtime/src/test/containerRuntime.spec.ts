@@ -67,7 +67,7 @@ import type {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	cleanedPackageVersion,
-	defaultMinVersionForCollab,
+	defaultOldestSupportedClient,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
@@ -5434,7 +5434,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
+						minVersionForCollab: defaultOldestSupportedClient,
 					},
 				]);
 			});
@@ -5621,7 +5621,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
+						minVersionForCollab: defaultOldestSupportedClient,
 					},
 				]);
 			});
@@ -5683,7 +5683,7 @@ describe("Runtime", () => {
 							eventName: "ContainerRuntime:ContainerLoadStats",
 							category: "generic",
 							options: JSON.stringify(expectedRuntimeOptions),
-							minVersionForCollab: defaultMinVersionForCollab,
+							minVersionForCollab: defaultOldestSupportedClient,
 						},
 					]);
 				});
@@ -5747,7 +5747,7 @@ describe("Runtime", () => {
 					(error: IErrorBase) =>
 						error.errorType === ContainerErrorTypes.usageError &&
 						error.message ===
-							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update oldestSupportedClient (currently 2.0.0) to 2.40.0 or later to proceed.",
 				);
 			});
 
@@ -5764,7 +5764,7 @@ describe("Runtime", () => {
 					(error: IErrorBase) =>
 						error.errorType === ContainerErrorTypes.usageError &&
 						error.message ===
-							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update oldestSupportedClient (currently 2.0.0) to 2.40.0 or later to proceed.",
 				);
 			});
 		});

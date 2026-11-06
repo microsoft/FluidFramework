@@ -7,28 +7,31 @@ import { strict as assert } from "assert";
 
 import { featureVersion } from "@fluidframework/driver-definitions/internal";
 
-import { getMinVersionForCollab } from "../compatUtils.js";
+import { getOldestSupportedClient } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("compatUtils", () => {
-	describe("getMinVersionForCollab", () => {
+	describe("getOldestSupportedClient", () => {
 		it("normalizes the current package version for feature selection", () => {
-			assert.equal(getMinVersionForCollab(pkgVersion, pkgVersion), featureVersion(pkgVersion));
+			assert.equal(
+				getOldestSupportedClient(pkgVersion, pkgVersion),
+				featureVersion(pkgVersion),
+			);
 		});
 
 		it("preserves explicitly requested patch versions", () => {
-			assert.equal(getMinVersionForCollab("2.42.1", "2.43.2"), "2.42.1");
+			assert.equal(getOldestSupportedClient("2.42.1", "2.43.2"), "2.42.1");
 		});
 
 		it("normalizes explicit 3.x patch versions for feature selection", () => {
-			assert.equal(getMinVersionForCollab("3.0.1", "3.1.2"), "3.0.0");
-			assert.equal(getMinVersionForCollab("2.80.1", "3.1.2"), "2.80.1");
+			assert.equal(getOldestSupportedClient("3.0.1", "3.1.2"), "3.0.0");
+			assert.equal(getOldestSupportedClient("2.80.1", "3.1.2"), "2.80.1");
 		});
 
 		it("rejects explicitly requested prerelease versions", () => {
 			for (const prerelease of ["2.0.0-defaults", "2.41.0-beta.1"]) {
 				assert.throws(
-					() => getMinVersionForCollab("2.42.1", prerelease),
+					() => getOldestSupportedClient("2.42.1", prerelease),
 					/Runtime version must be stable, valid semver/,
 				);
 			}

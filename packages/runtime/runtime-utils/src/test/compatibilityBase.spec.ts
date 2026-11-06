@@ -10,52 +10,59 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { compare } from "semver-ts";
 
 import {
-	getConfigsForMinVersionForCollab,
+	getConfigsForOldestSupportedClient,
 	validateConfigMapOverrides,
 	type ConfigMap,
 	type SemanticVersion,
 	type ConfigValidationMap,
-	configValueToMinVersionForCollab,
-	lowestMinVersionForCollab,
-	checkValidMinVersionForCollabVerbose,
+	configValueToOldestSupportedClient,
+	oldestSupportedClientVersionFloor,
+	checkValidOldestSupportedClientVerbose,
 	cleanedPackageVersion,
-	validateMinimumVersionForCollab,
-	isValidMinVersionForCollab,
-	getConfigForMinVersionForCollab,
+	validateOldestSupportedClient,
+	isValidOldestSupportedClient,
+	getConfigForOldestSupportedClient,
 	selectVersionRoundedDown,
+	defaultOldestSupportedClient,
+	defaultMinVersionForCollab,
+	getConfigForMinVersionForCollab,
 } from "../compatibilityBase.js";
 
 describe("compatibilityBase", () => {
+	it("retains the old helper exports as aliases", () => {
+		assert.strictEqual(defaultMinVersionForCollab, defaultOldestSupportedClient);
+		assert.strictEqual(getConfigForMinVersionForCollab, getConfigForOldestSupportedClient);
+	});
 	it("cleanedPackageVersion", () => {
-		validateMinimumVersionForCollab(cleanedPackageVersion);
+		validateOldestSupportedClient(cleanedPackageVersion);
 	});
 
-	// The getConfigsForMinVersionForCollab tests provide a lot of coverage for this function as well.
-	describe("getConfigForMinVersionForCollab", () => {
+	// The getConfigsForOldestSupportedClient tests provide a lot of coverage for this function as well.
+	describe("getConfigForOldestSupportedClient", () => {
 		it("minimal", () => {
-			const config = getConfigForMinVersionForCollab("2.2.0", {
-				[lowestMinVersionForCollab]: "X",
+			const config = getConfigForOldestSupportedClient("2.2.0", {
+				[oldestSupportedClientVersionFloor]: "X",
 			});
 			assert.equal(config, "X");
 		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
 			const config = {
-				[lowestMinVersionForCollab]: "A",
+				[oldestSupportedClientVersionFloor]: "A",
 				"2.100.0": "D",
 				"2.58.0": "B",
 				"2.60.0": "C",
 			};
-			assert.equal(getConfigForMinVersionForCollab("2.50.0", config), "A");
-			assert.equal(getConfigForMinVersionForCollab("2.58.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("2.59.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("2.60.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("2.99.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("2.100.0", config), "D");
+			assert.equal(getConfigForOldestSupportedClient("2.50.0", config), "A");
+			assert.equal(getConfigForOldestSupportedClient("2.58.0", config), "B");
+			assert.equal(getConfigForOldestSupportedClient("2.59.0", config), "B");
+			assert.equal(getConfigForOldestSupportedClient("2.60.0", config), "C");
+			assert.equal(getConfigForOldestSupportedClient("2.99.0", config), "C");
+			assert.equal(getConfigForOldestSupportedClient("2.100.0", config), "D");
 		});
 	});
 
-	describe("getConfigsForMinVersionForCollab", () => {
+	describe("getConfigsForOldestSupportedClient", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
 			featureA: string;
@@ -104,11 +111,11 @@ describe("compatibilityBase", () => {
 		};
 
 		const testCases: {
-			minVersionForCollab: OldestSupportedClientVersion;
+			oldestSupportedClient: OldestSupportedClientVersion;
 			expectedConfig: ITestConfigMap;
 		}[] = [
 			{
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -119,7 +126,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.1.5",
+				oldestSupportedClient: "2.1.5",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -130,7 +137,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.5.0",
+				oldestSupportedClient: "2.5.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -141,7 +148,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.30.0",
+				oldestSupportedClient: "2.30.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -152,7 +159,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.37.2",
+				oldestSupportedClient: "2.37.2",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -163,7 +170,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.45.1",
+				oldestSupportedClient: "2.45.1",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b2",
@@ -174,7 +181,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.49.9",
+				oldestSupportedClient: "2.49.9",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b3",
@@ -185,7 +192,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.50.0",
+				oldestSupportedClient: "2.50.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
@@ -196,7 +203,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.52.3",
+				oldestSupportedClient: "2.52.3",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
@@ -207,7 +214,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.63.0",
+				oldestSupportedClient: "2.63.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -218,7 +225,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: cleanedPackageVersion,
+				oldestSupportedClient: cleanedPackageVersion,
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -231,21 +238,21 @@ describe("compatibilityBase", () => {
 		];
 
 		for (const testCase of testCases) {
-			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
-				const config = getConfigsForMinVersionForCollab(
-					testCase.minVersionForCollab,
+			it(`returns correct configs for oldestSupportedClient = "${testCase.oldestSupportedClient}"`, () => {
+				const config = getConfigsForOldestSupportedClient(
+					testCase.oldestSupportedClient,
 					testConfigMap,
 				);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
-					`Failed for minVersionForCollab: ${testCase.minVersionForCollab}`,
+					`Failed for oldestSupportedClient: ${testCase.oldestSupportedClient}`,
 				);
 			});
 		}
 	});
 
-	// The getConfigForMinVersionForCollab and getConfigsForMinVersionForCollab also provide good coverage for this.
+	// The getConfigForOldestSupportedClient and getConfigsForOldestSupportedClient also provide good coverage for this.
 	it("selectVersionRoundedDown", () => {
 		const versions: [string, string][] = [
 			["2.0.0", "x"],
@@ -281,17 +288,17 @@ describe("compatibilityBase", () => {
 			featureC: FeatureCType;
 		};
 		const testConfigValidationMap = {
-			featureA: configValueToMinVersionForCollab([
+			featureA: configValueToOldestSupportedClient([
 				["a1", "0.5.0"],
 				["a2", "2.0.0"],
 				["a3", "5.0.0"],
 				["a4", "8.0.0"],
 			]),
-			featureB: configValueToMinVersionForCollab([
+			featureB: configValueToOldestSupportedClient([
 				[false, "0.0.0"],
 				[true, "3.0.0"],
 			]),
-			featureC: configValueToMinVersionForCollab([
+			featureC: configValueToOldestSupportedClient([
 				[{ foo: 1 }, "4.0.0"],
 				[{ foo: 2 }, "7.0.0"],
 				[{ bar: "baz" }, "3.0.0"],
@@ -301,74 +308,74 @@ describe("compatibilityBase", () => {
 		} as const satisfies ConfigValidationMap<TestConfigFeatures>;
 
 		const compatibleCases: {
-			minVersionForCollab: SemanticVersion;
+			oldestSupportedClient: SemanticVersion;
 			runtimeOptions: Partial<TestConfigFeatures>;
 		}[] = [
 			{
-				minVersionForCollab: "0.5.0",
+				oldestSupportedClient: "0.5.0",
 				runtimeOptions: { featureA: "a1", featureB: false },
 			},
 			{
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				runtimeOptions: { featureB: false, featureA: "a2" },
 			},
 			{
-				minVersionForCollab: "5.0.0",
+				oldestSupportedClient: "5.0.0",
 				runtimeOptions: { featureA: "a3", featureB: true, featureC: { foo: 1, bax: 10 } },
 			},
 			{
-				minVersionForCollab: "8.0.0",
+				oldestSupportedClient: "8.0.0",
 				runtimeOptions: { featureA: "a1", featureC: { foo: 1, qaz: 10 } },
 			},
 			{
-				minVersionForCollab: "9.0.0",
+				oldestSupportedClient: "9.0.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
 			},
 			{
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
 			},
 		];
 
 		const incompatibleCases: {
-			minVersionForCollab: SemanticVersion;
+			oldestSupportedClient: SemanticVersion;
 			runtimeOptions: Partial<TestConfigFeatures>;
 			expectedErrorMessage: string;
 		}[] = [
 			{
-				minVersionForCollab: "0.5.0",
+				oldestSupportedClient: "0.5.0",
 				runtimeOptions: { featureA: "a2" },
-				expectedErrorMessage: `Runtime option featureA:"a2" requires runtime version 2.0.0. Please update minVersionForCollab (currently 0.5.0) to 2.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureA:"a2" requires runtime version 2.0.0. Please update oldestSupportedClient (currently 0.5.0) to 2.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				runtimeOptions: { featureB: true },
-				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update oldestSupportedClient (currently 2.0.0) to 3.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: "2.0.0",
 				runtimeOptions: { featureA: "a1", featureB: true },
-				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update oldestSupportedClient (currently 2.0.0) to 3.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "6.0.0",
+				oldestSupportedClient: "6.0.0",
 				runtimeOptions: { featureC: { foo: 2 } },
-				expectedErrorMessage: `Runtime option featureC:{"foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 6.0.0) to 7.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2} requires runtime version 7.0.0. Please update oldestSupportedClient (currently 6.0.0) to 7.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "3.0.0",
+				oldestSupportedClient: "3.0.0",
 				runtimeOptions: { featureA: "a1", featureC: { bar: "baz", foo: 2 } },
-				expectedErrorMessage: `Runtime option featureC:{"bar":"baz","foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 3.0.0) to 7.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureC:{"bar":"baz","foo":2} requires runtime version 7.0.0. Please update oldestSupportedClient (currently 3.0.0) to 7.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "7.0.0",
+				oldestSupportedClient: "7.0.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax" } },
-				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax"} requires runtime version 8.0.0. Please update minVersionForCollab (currently 7.0.0) to 8.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax"} requires runtime version 8.0.0. Please update oldestSupportedClient (currently 7.0.0) to 8.0.0 or later to proceed.`,
 			},
 			{
-				minVersionForCollab: "8.5.0",
+				oldestSupportedClient: "8.5.0",
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true } },
-				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax","qaz":true} requires runtime version 9.0.0. Please update minVersionForCollab (currently 8.5.0) to 9.0.0 or later to proceed.`,
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax","qaz":true} requires runtime version 9.0.0. Please update oldestSupportedClient (currently 8.5.0) to 9.0.0 or later to proceed.`,
 			},
 		];
 
@@ -376,7 +383,7 @@ describe("compatibilityBase", () => {
 			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
 				assert.doesNotThrow(() => {
 					validateConfigMapOverrides(
-						test.minVersionForCollab,
+						test.oldestSupportedClient,
 						test.runtimeOptions,
 						testConfigValidationMap,
 					);
@@ -384,11 +391,11 @@ describe("compatibilityBase", () => {
 			});
 		}
 		for (const test of incompatibleCases) {
-			it(`throws for incompatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
+			it(`throws for incompatible options: ${JSON.stringify({ oldestSupportedClient: test.oldestSupportedClient, runtimeOptions: test.runtimeOptions })}`, () => {
 				assert.throws(
 					() => {
 						validateConfigMapOverrides(
-							test.minVersionForCollab,
+							test.oldestSupportedClient,
 							test.runtimeOptions,
 							testConfigValidationMap,
 						);
@@ -402,14 +409,14 @@ describe("compatibilityBase", () => {
 		}
 	});
 
-	describe("minVersionForCollab validation", () => {
+	describe("oldestSupportedClient validation", () => {
 		it("rejects patch versions for major version 3", () => {
 			// Note that these tests can't be covered by the test suite below since some of the details will change as the package version changes.
 			// Thus we test they error here, but not exactly which error message is thrown.
 			const version = "3.0.1";
-			assert.equal(isValidMinVersionForCollab(version), false);
+			assert.equal(isValidOldestSupportedClient(version), false);
 			assert.throws(
-				() => validateMinimumVersionForCollab(version),
+				() => validateOldestSupportedClient(version),
 				(error: Error) => {
 					assert(isFluidError(error));
 					return error.message.startsWith(
@@ -421,9 +428,9 @@ describe("compatibilityBase", () => {
 
 		it("rejects prerelease versions", () => {
 			for (const version of ["2.116.1-beta.1", "3.0.0-test"] as const) {
-				assert.equal(isValidMinVersionForCollab(version), false);
+				assert.equal(isValidOldestSupportedClient(version), false);
 				assert.throws(
-					() => validateMinimumVersionForCollab(version),
+					() => validateOldestSupportedClient(version),
 					(error: Error) => {
 						assert(isFluidError(error));
 						return error.message.startsWith(
@@ -453,7 +460,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				version: lowestMinVersionForCollab,
+				version: oldestSupportedClientVersionFloor,
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: true,
@@ -537,13 +544,13 @@ describe("compatibilityBase", () => {
 		];
 
 		for (const testCase of testCases) {
-			it(`checkValidMinVersionForCollabVerbose return value for ${testCase.version} matches expected result.`, () => {
+			it(`checkValidOldestSupportedClientVerbose return value for ${testCase.version} matches expected result.`, () => {
 				const {
 					isValidSemver,
 					isGteLowestMinVersion,
 					isLtePkgVersion,
 					isValidOldestSupportedClientVersion,
-				} = checkValidMinVersionForCollabVerbose(testCase.version);
+				} = checkValidOldestSupportedClientVerbose(testCase.version);
 				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
 				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
 				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
