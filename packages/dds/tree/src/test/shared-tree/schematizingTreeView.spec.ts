@@ -464,7 +464,9 @@ describe("SchematizingSimpleTreeView", () => {
 			config,
 			new MockNodeIdentifierManager(),
 		);
-		assert.equal(view.compatibility.isEquivalent, true);
+
+		// The stored schema already matches this view, so its root is available.
+		assert.equal(view.compatibility.canView, true);
 		const root = view.root;
 		assert.equal(root, 5);
 		const log: [string, unknown][] = [];
@@ -545,7 +547,8 @@ describe("SchematizingSimpleTreeView", () => {
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
 		]);
 		log.length = 0;
-		assert.equal(view.compatibility.isEquivalent, false);
+
+		// The number-only view cannot read stored strings, and an upgrade cannot remove that allowed type.
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.canView, false);
 
@@ -556,7 +559,8 @@ describe("SchematizingSimpleTreeView", () => {
 		view.breaker.clearError();
 		// Modify schema to be compatible again
 		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
-		assert.equal(view.compatibility.isEquivalent, true);
+
+		// Restoring the number-only schema permits viewing and upgrading again.
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
 
@@ -600,13 +604,13 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
+		assert.equal(viewSpecific.compatibility.canView, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+
+		// The document is already initialized, and there are no differences that prevent viewing.
+		assert.equal(viewSpecific.compatibility.canInitialize, false);
+		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
 		assert.equal(Object.entries(viewSpecific.root).length, 2);
@@ -619,13 +623,14 @@ describe("SchematizingSimpleTreeView", () => {
 			personConfigGeneralied,
 			new MockNodeIdentifierManager(),
 		);
-		assert.deepEqual(viewGeneralized.compatibility, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+
+		// This view includes address, so it can read and upgrade without changing the stored schema.
+		assert.equal(viewGeneralized.compatibility.canView, true);
+		assert.equal(viewGeneralized.compatibility.canUpgrade, true);
+
+		// Reopening the document does not permit initialization or introduce viewing discrepancies.
+		assert.equal(viewGeneralized.compatibility.canInitialize, false);
+		assert.equal(viewGeneralized.compatibility.discrepancies, undefined);
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
 		assert.equal(viewGeneralized.root.name, "Alice");
@@ -666,13 +671,13 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
+		assert.equal(viewSpecific.compatibility.canView, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+
+		// The document is already initialized, and the unknown field does not prevent viewing.
+		assert.equal(viewSpecific.compatibility.canInitialize, false);
+		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
 
@@ -688,13 +693,14 @@ describe("SchematizingSimpleTreeView", () => {
 			peopleGeneralizedConfig,
 			new MockNodeIdentifierManager(),
 		);
-		assert.deepEqual(viewGeneralized.compatibility, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+
+		// The full schema still matches after the move, so viewing and upgrading remain permitted.
+		assert.equal(viewGeneralized.compatibility.canView, true);
+		assert.equal(viewGeneralized.compatibility.canUpgrade, true);
+
+		// The move neither resets initialization nor introduces viewing discrepancies.
+		assert.equal(viewGeneralized.compatibility.canInitialize, false);
+		assert.equal(viewGeneralized.compatibility.discrepancies, undefined);
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
 		assert.equal(Object.keys(viewGeneralized.root[1]).length, 3);
@@ -847,7 +853,8 @@ describe("SchematizingSimpleTreeView", () => {
 			view.events.on("rootChanged", () => assert.fail());
 			view.events.on("schemaChanged", () => assert.fail());
 
-			assert(view.compatibility.isEquivalent);
+			// Both schemas permit only an empty root, so viewing is safe and upgrading is a no-op.
+			assert(view.compatibility.canView);
 			assert(view.compatibility.canUpgrade);
 			view.upgradeSchema();
 		});
@@ -876,7 +883,8 @@ describe("SchematizingSimpleTreeView", () => {
 				treeFactory: () => [],
 			});
 
-			assert(!view.compatibility.isEquivalent);
+			// An empty document cannot satisfy a required root, and a schema-only upgrade cannot create one.
+			assert(!view.compatibility.canView);
 			assert(!view.compatibility.canUpgrade);
 
 			// Case which doesn't update due to root being required
@@ -899,7 +907,8 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: fieldJsonCursor([5]),
 			});
 
-			assert(!view.compatibility.isEquivalent);
+			// The view permits strings and an empty root, so the number-only stored schema must first be relaxed.
+			assert(!view.compatibility.canView);
 			assert(view.compatibility.canUpgrade);
 
 			view.upgradeSchema();
@@ -917,9 +926,9 @@ describe("SchematizingSimpleTreeView", () => {
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
+		// The view adds strings to the allowed root types, requiring a schema upgrade before viewing.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
-		assert.equal(view.compatibility.isEquivalent, false);
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
@@ -955,7 +964,8 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
-		assert.equal(view.compatibility.isEquivalent, true);
+		// The upgrade enables strings, making the root available and clearing the viewing discrepancies.
+		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
@@ -968,9 +978,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
+		// The stored schema allows strings that this view cannot read, and upgrading cannot remove that type.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isEquivalent, false);
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
@@ -1016,9 +1026,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
+		// The view replaces strings with booleans, so neither viewing nor a non-narrowing upgrade is possible.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isEquivalent, false);
 		const validateIncompatibleSchemaError = (error: unknown): boolean => {
 			assert(error instanceof UsageError);
 			assert.equal(

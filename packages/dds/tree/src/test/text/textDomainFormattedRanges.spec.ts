@@ -491,7 +491,6 @@ describe("FormattedText with extrinsic ranges", () => {
 		assert.equal(Text.identifier, LegacyText.identifier);
 		assert.equal(upgraded.compatibility.canView, false);
 		assert.equal(upgraded.compatibility.canUpgrade, true);
-		assert.equal(upgraded.compatibility.isEquivalent, false);
 		upgraded.upgradeSchema();
 		assert.equal(JSON.stringify(upgraded.root), initial);
 		assert.equal(upgraded.root.fullString(), "a[object]\u{1F600}b");

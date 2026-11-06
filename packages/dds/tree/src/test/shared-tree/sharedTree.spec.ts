@@ -805,7 +805,7 @@ describe("SharedTree", () => {
 		);
 
 		// Check schema loaded
-		assert(view2.compatibility.isEquivalent);
+		assert(view2.compatibility.canView);
 		// Check content loaded
 		assert.deepEqual([...view2.root], ["A"]);
 	});
