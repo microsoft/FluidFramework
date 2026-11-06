@@ -2,7 +2,23 @@
 
 This document covers TypeScript's `isolatedDeclarations` option, its use in optimizing large TypeScript builds, and the complications that arise in such setups when using SharedTree schema.
 
+Start with [Encapsulation and Exports](https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports#package-export-boundaries) for recommendations on your public schema boundary.
+This document provides the detailed build strategies referenced by that guide.
+
 The approaches described in this document can be applied to other TypeScript types that are problematic for use with `isolatedDeclarations`: only some minor details are actually specific to SharedTree schema.
+
+## Related compiler options
+
+- [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) checks restrictions relevant to single-file JavaScript transpilation.
+  It does not itself require explicit types for all exported schema values.
+- [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations) requires enough explicit information to emit declarations without cross-file type inference.
+  Inferred exported schema values and expression-based exported base classes can require a different boundary.
+- [`stripInternal`](https://www.typescriptlang.org/tsconfig/#stripInternal) omits declarations marked `@internal` from emitted declaration files.
+  It does not validate that the remaining declarations are self-contained or remove runtime exports.
+
+`satisfies` and `as const` help preserve and check inferred types, but do not replace explicit annotations required by `isolatedDeclarations`.
+Test emitted declarations with your actual compiler or third-party emitter; do not assume they handle internal tags identically.
+See [Testing Schema Libraries](https://fluidframework.com/docs/data-structures/tree/schema-evolution/testing-schema-upgrades#package-and-type-contracts) for consumer-package validation.
 
 ## TypeScript background
 
@@ -48,7 +64,7 @@ One way to do the first pass (which generates `.d.ts` files) is with the TypeScr
 }
 ```
 
-The second pass can then run full type checking (with `noEmit` if using a separate operation to emit the JavaScript files).
+The second pass must run full type checking when the emit pass uses `noCheck` (with `noEmit` if using a separate operation to emit the JavaScript files).
 
 Such builds can further be sped up by using a faster third-party tool for the first pass like [oxc's isolatedDeclaration API](https://oxc.rs/docs/guide/usage/transformer/isolated-declarations.html).
 
