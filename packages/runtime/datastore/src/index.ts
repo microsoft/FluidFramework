@@ -4,6 +4,7 @@
  */
 
 export { FluidObjectHandle } from "./fluidHandle.js";
+export { LeafChannelRuntime } from "./leafChannelRuntime.js";
 export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
