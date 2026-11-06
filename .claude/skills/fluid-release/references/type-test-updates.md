@@ -2,7 +2,6 @@
 
 Update type test baselines on both `main` and the release branch after publication is verified.
 Do not wait until the next day: prepare the changes and obtain approvals while downstream feeds propagate.
-Use the public npm registry directly when preparing updates if the configured feed has not picked up the published packages.
 
 ## Autonomous Mode Notes
 
@@ -12,9 +11,9 @@ The user should provide the release branch name (e.g., `release/client/2.90`) up
 
 ## CI Resilience
 
-The `flub typetests --reset --previous` command fetches the previously released packages from npm.
+The `flub typetests --reset --previous` command updates the baseline dependencies and type-test configuration in `package.json`.
+The subsequent `pnpm install --no-frozen-lockfile` command fetches the packages from the configured registry.
 Even after the exact version is verified on public npm, pipeline feeds can take up to six hours to accept it.
-See the [authoritative release process](../SKILL.md#authoritative-references) for current timing guidance.
 
 - Inspect the error before attributing a failure to feed propagation.
   Confirm that the exact version exists on public npm and that the failing job cannot resolve it from its configured feed.

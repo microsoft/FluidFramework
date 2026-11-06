@@ -23,7 +23,7 @@ CI should auto-detect which step is needed (see SKILL.md auto-detection logic).
 **CI note:** This step requires a human to queue only the ADO build.
 Inspect ADO run state to determine whether to request a build or monitor its downstream publish run.
 If ADO state cannot be queried, report that a human must identify the current checkpoint; do not infer it from tag absence alone.
-Check the [authoritative references](../SKILL.md#authoritative-references) if the live pipeline differs from these instructions.
+If the live pipeline differs from these instructions, report the discrepancy and investigate before proceeding.
 
 ### Switch to the release branch
 
@@ -75,10 +75,8 @@ Do not queue a second publish run.
 4. Wait for the publish run to succeed before verifying the release or starting the patch bump.
 
 The publish pipeline reads its destinations from the candidate's recorded metadata.
-There is no need to select the release kind again or set a `publishToPublicNpm` parameter.
-A successful build alone does not prove publication succeeded.
 
-If the publish run is missing or fails, investigate it using the current publishing instructions before taking further action.
+If the publish run is missing or fails, investigate the trigger or failed stage before taking further action.
 For a failed public npm stage, retry that stage when appropriate rather than starting a duplicate publish run.
 Manual queueing is only a recovery action when retrying the existing run is not possible.
 It requires human confirmation of the candidate and destinations at the **Approve publication** gate; never bypass that gate.

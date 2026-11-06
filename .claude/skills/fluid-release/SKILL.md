@@ -7,13 +7,9 @@ description: Fluid Framework client release group — minor releases, patch rele
 
 Release workflow for the client release group. Supports two modes: **interactive** (default) and **autonomous**.
 
-## Authoritative References
-
-Use the internal [release process](https://dev.azure.com/fluidframework/internal/_git/ff_internal?path=/docs/on-call/release/release.md&version=GBmain) and [publishing instructions](https://dev.azure.com/fluidframework/internal/_git/ff_internal?path=/docs/on-call/release/publishing.md&version=GBmain) as the source of truth.
-Read these files through the configured ADO tools if the rendered documentation requires authentication.
-Pipeline behavior can change: verify the current instructions and the actual run's candidate, metadata, and stages before recommending a publishing action.
-If they disagree with this skill, report the discrepancy and follow the current documented process after verifying the pipeline behavior.
-If you cannot access the documentation or run state, report that limitation rather than guessing or queueing a duplicate run.
+Pipeline behavior can change: verify the actual run's candidate, metadata, and stages before recommending a publishing action.
+If the run differs from these instructions, report the discrepancy and investigate before proceeding.
+If you cannot access the run state, report that limitation rather than guessing or queueing a duplicate run.
 
 ## Environment Detection
 
@@ -100,7 +96,7 @@ For a release branch with no completed release, also inspect ADO pipeline state:
 1. Find the **Build - client packages** (definition 12) run for the release branch tip with `releaseBuildOverride: release`.
 2. If that run succeeded, find the automatically triggered **Publish - client packages** (definition 219) run whose `candidate` resource matches that build.
    Verify the candidate's release branch and commit, and confirm the **Publish to public npmjs.org through ESRP Release API** stage succeeds, rather than being skipped.
-   Publication destinations come from the candidate's recorded metadata, not a `publishToPublicNpm` parameter.
+   Publication destinations come from the candidate's recorded metadata.
 3. If ADO pipeline state cannot be queried, do not infer which action is next. Report that a human must identify whether the release build or publish pipeline has completed.
 
 **Step 4: Determine the phase and act.**
