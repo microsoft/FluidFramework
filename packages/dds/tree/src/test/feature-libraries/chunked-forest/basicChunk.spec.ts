@@ -12,6 +12,8 @@ import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 	type ChunkedCursor,
+	type TreeNodeSchemaIdentifier,
+	tryGetStringSequence,
 } from "../../../core/index.js";
 import {
 	BasicChunk,
@@ -38,11 +40,12 @@ import {
 	type TreeChunk,
 	chunkTree,
 	cursorForJsonableTreeNode,
+	cursorForStringSequence,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema } from "../../../simple-tree/index.js";
-import { ReferenceCountedBase, brand } from "../../../util/index.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
+import { ReferenceCountedBase, StringSequence, brand } from "../../../util/index.js";
 import {
 	type TestField,
 	testGeneralPurposeTreeCursor,
@@ -162,6 +165,36 @@ describe("basic chunk", () => {
 		assert(cursor.atChunkRoot());
 		cursor.enterField(EmptyKey);
 		assert(!cursor.atChunkRoot());
+	});
+
+	it("forwards string storage through nested cursors with the enclosing chunk offset", () => {
+		const type: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
+		const sequence = StringSequence.fromString("ab");
+		const shape = new TreeShape(type, true, []).withTopLevelLength(2);
+		const inner = new UniformChunk(shape, ["a", "b"]);
+		const wrapped = new (class extends WrapperChunk {
+			public override cursor(): ChunkedCursor {
+				return cursorForStringSequence(type, sequence, this);
+			}
+		})(inner);
+		const chunk = new SequenceChunk([numericBasicChunk(), wrapped, numericBasicChunk()]);
+		const cursor = chunk.cursor();
+		cursor.enterNode(0);
+		assert.equal(tryGetStringSequence(cursor), undefined);
+		assert(cursor.nextNode());
+		assert.equal(tryGetStringSequence(cursor), sequence);
+		assert.equal(cursor.chunkStart, 1);
+		assert.equal(cursor.chunkLength, 2);
+		const fork = cursor.fork();
+		assert(cursor.nextNode());
+		assert.equal(cursor.value, "b");
+		assert.equal(tryGetStringSequence(cursor), sequence);
+		assert(cursor.nextNode());
+		assert.equal(tryGetStringSequence(cursor), undefined);
+		assert.equal(tryGetStringSequence(fork), sequence);
+		assert.equal(fork.value, "a");
+		chunk.referenceRemoved();
+		inner.referenceRemoved();
 	});
 
 	it("getField resolves parent via chunk array index when preceded by a multi-node chunk", () => {
