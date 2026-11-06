@@ -19,26 +19,29 @@ import { summarizerClientType } from "./summarizerTypes.js";
 import type { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 /**
- * Persisted summary-progress baseline.
+ * Snapshot state for summary-progress tracking and compatibility with older election readers.
  * @internal
  */
 export interface ISerializedElection {
 	/**
-	 * Counts ops since the last summary ack or a new opportunity to summarize.
+	 * Sequence number used to count ops since the last summary ack or a new opportunity to summarize.
 	 * Starting a child, returning responsibility to the parent, or choosing a new parent
-	 * without a child starts a fresh window.
+	 * without a child resets this baseline.
+	 *
+	 * @remarks A more accurate name is `summaryProgressBaselineSequenceNumber`.
 	 * The historical field name is retained for snapshot compatibility.
 	 */
 	readonly electionSequenceNumber: number;
 	/**
-	 * Compatibility only: this implementation ignores this field on load.
-	 * Keep writing it for supported readers that elect a child. Records the oldest summarizer,
-	 * or the parent if none exists.
+	 * Compatibility only: readers starting with 3.12 ignore this field on load.
+	 * Keep writing it while 3.11-or-earlier readers remain supported.
+	 * Records the oldest summarizer, or the parent if none exists.
 	 */
 	readonly electedClientId: string | undefined;
 	/**
-	 * Compatibility only: readers starting with 3.12 derive the parent from quorum and ignore this field.
-	 * Keep writing the oldest eligible parent while 3.11-or-earlier readers remain supported.
+	 * Compatibility only: readers starting with 3.12 ignore this field on load.
+	 * Keep writing it while 3.11-or-earlier readers remain supported.
+	 * Records the oldest eligible interactive parent.
 	 */
 	readonly electedParentId: string | undefined;
 }
@@ -50,20 +53,24 @@ export interface ISummarizerClientElectionEvents extends IEvent {
 export interface ISummarizerClientElection
 	extends IEventProvider<ISummarizerClientElectionEvents> {
 	readonly electedParentId: string | undefined;
-	/** Whether any summarizer-type client is in quorum, including manual or idle children. */
+	/** Whether any summarizer-type client is in quorum, regardless of who created it or whether it is summarizing. */
 	readonly summarizerExistsInQuorum: boolean;
 }
 
 /**
- * Elects the oldest eligible interactive quorum member to own automatic summarization.
- * The parent may create a child only when no summarizer clients are present in quorum.
- * An existing child continues under its owner's management until stopped or disconnected.
+ * Elects the oldest eligible interactive quorum member as the parent responsible
+ * for creating an automatic summarizer.
  *
- * When the parent leaves, the oldest remaining eligible interactive client becomes parent.
- * It waits for all existing summarizers to leave quorum before creating a replacement.
- * Each child's creator owns its cleanup, including manual/on-demand children. Any connected
- * summarizer, even an idle one, blocks replacement until its sequenced quorum departure.
- * Summary-progress telemetry uses an op baseline retained across snapshot loads.
+ * The elected parent may create a child only when no summarizer exists in quorum.
+ * Each child's parent manages and cleans up that child. A change of elected parent
+ * does not transfer an existing child to the newly elected parent.
+ *
+ * When the elected parent leaves quorum, the oldest remaining eligible interactive
+ * client becomes the elected parent. It waits for all summarizers to leave quorum
+ * before creating a replacement, regardless of who created them or whether they
+ * are currently summarizing.
+ *
+ * Summary-progress telemetry uses a baseline retained across snapshot loads.
  */
 export class SummarizerClientElection
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
@@ -73,7 +80,10 @@ export class SummarizerClientElection
 	private _summarizerExistsInQuorum = false;
 	/** Advanced by acks; reset when summarizer presence changes or the parent changes without a child. */
 	private progressSequenceNumber: number;
-	/** Sequence number of the last warning, limiting reports to one per op window. */
+	/**
+	 * Sequence number of the last stalled-summary telemetry warning.
+	 * Another warning requires more than maxOpsSinceLastSummary ops since the previous warning.
+	 */
 	private lastReportedSequenceNumber = 0;
 
 	public get electedParentId(): string | undefined {
@@ -91,28 +101,32 @@ export class SummarizerClientElection
 		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		maxOpsSinceLastSummary: number,
-		initialState: Pick<ISerializedElection, "electionSequenceNumber"> | number,
+		initialProgressSequenceNumber: number,
 	) {
 		super();
 		const childLogger = createChildLogger({ logger, namespace: "SummarizerClientElection" });
-		this.progressSequenceNumber =
-			typeof initialState === "number" ? initialState : initialState.electionSequenceNumber;
+		this.progressSequenceNumber = initialProgressSequenceNumber;
 		this.updateStateFromQuorum();
+
 		const handleQuorumChange = (): void => {
 			const previousElectedParentId = this.electedParentId;
 			const previousSummarizerExistsInQuorum = this.summarizerExistsInQuorum;
+
 			this.updateStateFromQuorum();
 			const electedParentChanged = previousElectedParentId !== this.electedParentId;
 			const summarizerExistenceChanged =
 				previousSummarizerExistsInQuorum !== this.summarizerExistsInQuorum;
+
 			if (electedParentChanged || summarizerExistenceChanged) {
-				// Start a fresh window for a child starting/leaving or a new parent without a child.
+				// Give a newly started child or a parent creating a replacement time to make progress.
+				// Keep counting through parent changes while summarizers remain in quorum.
 				if (
 					summarizerExistenceChanged ||
 					(electedParentChanged && !this.summarizerExistsInQuorum)
 				) {
 					this.progressSequenceNumber = deltaManager.lastSequenceNumber;
 				}
+
 				childLogger.sendTelemetryEvent({
 					eventName: "ElectionChanged",
 					previousElectedParentId,
@@ -126,10 +140,13 @@ export class SummarizerClientElection
 		};
 		quorum.on("addMember", handleQuorumChange);
 		quorum.on("removeMember", handleQuorumChange);
+
+		// "default" is raised for sequenced messages other than summary proposals, acks, and nacks.
 		summaryCollection.on("default", ({ sequenceNumber }) => {
 			if (this.electedParentId === undefined && !this.summarizerExistsInQuorum) {
 				return;
 			}
+
 			const opsWithoutSummary = sequenceNumber - this.progressSequenceNumber;
 			if (
 				opsWithoutSummary > maxOpsSinceLastSummary &&
@@ -146,6 +163,7 @@ export class SummarizerClientElection
 				this.lastReportedSequenceNumber = sequenceNumber;
 			}
 		});
+
 		summaryCollection.on(MessageType.SummaryAck, (op) => {
 			this.progressSequenceNumber = op.sequenceNumber;
 		});

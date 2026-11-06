@@ -44,7 +44,9 @@ describe("Quorum summarizer creation integration", () => {
 			this.emit("disconnected");
 		}
 	}
+
 	class Child extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+		// Stop/close requests, run completion, and quorum departure are controlled independently.
 		public readonly finished = new Deferred<void>();
 		public readonly stop = sinon.stub();
 		public readonly close = sinon.stub();
@@ -55,6 +57,7 @@ describe("Quorum summarizer creation integration", () => {
 			return "summarizerClientDisconnected" as const;
 		});
 	}
+
 	function setup() {
 		const quorum = new TestQuorumClients();
 		const summaries = new TypedEventEmitter<ISummaryCollectionOpEvents>();
@@ -65,6 +68,7 @@ describe("Quorum summarizer creation integration", () => {
 				return sequenceNumber;
 			},
 		};
+
 		function add(id: string, summarizer = false): void {
 			const client: ISequencedClient = {
 				sequenceNumber: ++sequenceNumber,
@@ -81,10 +85,12 @@ describe("Quorum summarizer creation integration", () => {
 			};
 			quorum.addClient(id, client);
 		}
+
 		function remove(id: string): void {
 			sequenceNumber++;
 			quorum.removeClient(id);
 		}
+
 		function election() {
 			return new SummarizerClientElection(
 				logger,
@@ -95,6 +101,7 @@ describe("Quorum summarizer creation integration", () => {
 				sequenceNumber,
 			);
 		}
+
 		function parent(id: string, delay = 0, initialDelay = 0) {
 			const connection = new Connection(id);
 			const observer = election();
@@ -105,6 +112,7 @@ describe("Quorum summarizer creation integration", () => {
 				{ opsSinceLastAck: 5000, addOpListener: () => {}, removeOpListener: () => {} },
 				logger,
 				async () => {
+					// Record the request now; the test decides when loading returns the child.
 					const request = { child: new Child(), loaded: new Deferred<ISummarizer>() };
 					requests.push(request);
 					return request.loaded.promise;
@@ -118,6 +126,7 @@ describe("Quorum summarizer creation integration", () => {
 				},
 				{
 					initialDelayMs: initialDelay,
+					// The fixture has 5000 ops: a positive initial delay keeps the low-op path active.
 					opsToBypassInitialDelay: initialDelay > 0 ? 10000 : 0,
 				},
 			);
@@ -125,6 +134,7 @@ describe("Quorum summarizer creation integration", () => {
 			manager.start();
 			return { manager, connection, observer, requests };
 		}
+
 		return { add, remove, parent, election };
 	}
 
@@ -142,17 +152,22 @@ describe("Quorum summarizer creation integration", () => {
 			request.loaded.resolve(request.child);
 			await clock.tickAsync(0);
 			assert.equal(request.child.run.callCount, 1);
+
 			test.add("s2", true);
 			const restored = test.election();
+
+			// B becomes elected, but both children remain connected after A's local work ends.
 			test.remove("a");
 			assert.equal(request.child.stop.callCount, 1);
 			request.child.finished.resolve();
 			await clock.tickAsync(0);
 			assert.equal(b.requests.length, 0, "local completion does not authorize creation");
+
 			test.remove(first);
 			await clock.tickAsync(0);
 			assert.equal(b.requests.length, 0, "idle remaining child blocks replacement");
 			assert.equal(restored.summarizerExistsInQuorum, b.observer.summarizerExistsInQuorum);
+
 			test.remove(first === "s1" ? "s2" : "s1");
 			await clock.tickAsync(0);
 			assert.equal(b.requests.length, 1);
@@ -167,13 +182,16 @@ describe("Quorum summarizer creation integration", () => {
 		await clock.tickAsync(0);
 		const request = a.requests[0];
 		assert(request !== undefined);
+
 		test.add("s", true);
+		// The child joins before loading returns; parent disconnect still allows the final-summary path.
 		a.connection.disconnect();
 		request.loaded.resolve(request.child);
 		await clock.tickAsync(0);
 		assert.equal(request.child.run.callCount, 1);
 		assert.equal(request.child.stop.firstCall.args[0], "parentNotConnected");
 		assert.equal(a.manager.currentState, SummaryManagerState.Stopping);
+
 		request.child.finished.resolve();
 		await clock.tickAsync(0);
 		assert.equal(a.requests.length, 1);
@@ -190,11 +208,13 @@ describe("Quorum summarizer creation integration", () => {
 		assert(request !== undefined);
 		test.add("s", true);
 		test.remove("a");
+		// Loading finishes after A loses election, so A must close the child rather than run it.
 		request.loaded.resolve(request.child);
 		await clock.tickAsync(0);
 		assert.equal(request.child.run.callCount, 0);
 		assert.equal(request.child.close.callCount, 1);
 		assert.equal(b.requests.length, 0);
+
 		test.remove("s");
 		await clock.tickAsync(0);
 		assert.equal(b.requests.length, 1);
@@ -211,13 +231,16 @@ describe("Quorum summarizer creation integration", () => {
 		a.connection.disconnect();
 		a.connection.connected = true;
 		a.connection.emit("connected", "a");
+		// Reconnecting does not erase the stop requested while the child was loading.
 		request.loaded.resolve(request.child);
 		await clock.tickAsync(0);
 		assert.equal(request.child.stop.firstCall.args[0], "parentNotConnected");
 		assert.equal(request.child.run.callCount, 1);
+
 		request.child.finished.resolve();
 		await clock.tickAsync(0);
 		assert.equal(a.requests.length, 1, "own child still in quorum blocks another request");
+
 		test.remove("s");
 		await clock.tickAsync(0);
 		assert.equal(a.requests.length, 2);
@@ -264,12 +287,16 @@ describe("Quorum summarizer creation integration", () => {
 		request.loaded.resolve(request.child);
 		await clock.tickAsync(0);
 		test.remove("a");
+		// Leave run() unresolved so the manager's stop timeout forces local cleanup.
 		await clock.tickAsync(120000);
 		assert.equal(request.child.close.callCount, 1);
 		assert.equal(b.requests.length, 0);
+
+		// Closing locally is not enough: B starts only after the child's leave is sequenced.
 		test.remove("s");
 		await clock.tickAsync(0);
 		assert.equal(b.requests.length, 1);
+
 		request.child.finished.resolve();
 		await clock.tickAsync(0);
 	});

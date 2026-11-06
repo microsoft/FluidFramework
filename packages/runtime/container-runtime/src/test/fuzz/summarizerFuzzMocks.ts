@@ -243,7 +243,7 @@ export class MockContainerRuntimeForSummarizer
 		super.setConnectedState(value);
 
 		this.connectedState.setConnectedState(value, this.clientId);
-		this.summarizerClientElection.setClientId(this.clientId);
+		this.summarizerClientElection.setElectedParentId(this.clientId);
 	}
 
 	public closeFn(): void {
@@ -267,13 +267,13 @@ class MockSummarizerClientElection
 	public summarizerExistsInQuorum = false;
 	public electedParentId: string | undefined;
 
-	constructor(clientId: string) {
+	constructor(parentId: string) {
 		super();
-		this.setClientId(clientId);
+		this.setElectedParentId(parentId);
 	}
 
-	public setClientId(clientId: string) {
-		this.electedParentId = clientId;
+	public setElectedParentId(parentId: string) {
+		this.electedParentId = parentId;
 	}
 }
 

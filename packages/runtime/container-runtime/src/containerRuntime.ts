@@ -2562,7 +2562,8 @@ export class ContainerRuntime
 				this._quorum,
 				summaryCollection,
 				maxOpsSinceLastSummary,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
+				this.electedSummarizerData?.electionSequenceNumber ??
+					this.innerDeltaManager.lastSequenceNumber,
 			);
 
 			const defaultAction = (): void => {
