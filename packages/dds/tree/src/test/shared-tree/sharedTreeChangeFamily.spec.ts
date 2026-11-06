@@ -408,6 +408,37 @@ describe("SharedTreeChangeFamily", () => {
 	});
 
 	describe("changeRevision", () => {
+		it("updates maxId when normalization allocates larger local IDs", () => {
+			// These edits reuse local IDs under different revisions. The schema change keeps them
+			// in separate data groups, so normalization must resolve collisions across both groups.
+			const input: SharedTreeChange = {
+				changes: [
+					{ type: "data", innerChange: modularDataChange1 },
+					{ type: "schema", innerChange: innerSchemaChange },
+					{ type: "data", innerChange: modularDataChange2 },
+				],
+			};
+			const revision = mintRevisionTag();
+			const updated = sharedTreeFamily.changeRevision(
+				input,
+				new DefaultRevisionReplacer(revision, sharedTreeFamily.getRevisions(input)),
+			);
+
+			for (const change of updated.changes) {
+				if (change.type === "data") {
+					const build = intoDelta(tagChange(change.innerChange, revision)).build?.[0];
+					assert(build !== undefined, "Each test data change must build content.");
+					// Check the whole allocated range, not just its first ID: later rebase allocations
+					// rely on maxId being an upper bound for every identifier in this data group.
+					assert(
+						(change.innerChange.maxId ?? -1) >=
+							build.id.minor + build.trees.topLevelLength - 1,
+						"The normalized maxId is smaller than an allocated change identifier.",
+					);
+				}
+			}
+		});
+
 		it("handles local ID collisions across separate changes", () => {
 			function getIds(change: SharedTreeChange): [DeltaDetachedNodeId, DeltaDetachedNodeId] {
 				const change1 = change.changes[0];
