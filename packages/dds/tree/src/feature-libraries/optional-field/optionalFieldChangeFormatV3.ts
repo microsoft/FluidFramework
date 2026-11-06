@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions } from "typebox";
 
 import { EncodedChangeAtomId } from "../../core/index.js";
 
-const noAdditionalProps: Type.ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 // Type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

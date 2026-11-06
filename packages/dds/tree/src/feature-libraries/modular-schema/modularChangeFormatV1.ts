@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static } from "typebox";
 
 import {
 	ChangesetLocalIdSchema,
@@ -16,7 +16,7 @@ import {
 	JsonCompatibleReadOnlySchema,
 } from "../../util/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 export const EncodedFieldChange = Type.Object(
 	{
@@ -72,7 +72,7 @@ export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 export const EncodedRevisionInfo = Type.Object(
 	{
 		revision: Type.Readonly(RevisionTagSchema),
-		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+		rollbackOf: Type.Readonly(Type.Optional(RevisionTagSchema)),
 	},
 	noAdditionalProps,
 );
@@ -121,7 +121,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
-		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		revisions: Type.Readonly(Type.Optional(Type.Array(EncodedRevisionInfo))),
 		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),

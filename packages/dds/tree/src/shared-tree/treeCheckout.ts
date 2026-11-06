@@ -1667,7 +1667,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
 	 * Defaults to this checkout's {@link CheckoutBase.disposesWithView} policy.
 	 * @remarks
-	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
+	 * Extends {@link ViewableTree.viewWith} to include the `disposeCheckoutOnViewDispose` parameter.
 	 */
 	@throwIfBroken
 	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(

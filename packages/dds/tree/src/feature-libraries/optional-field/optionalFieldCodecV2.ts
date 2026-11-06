@@ -4,8 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
-
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import {
 	areEqualChangeAtomIdOpts,
@@ -60,8 +58,8 @@ export function makeOptionalFieldCodec(
 	>,
 ): IJsonCodec<
 	OptionalChangeset,
-	EncodedOptionalChangeset<TAnySchema>,
-	EncodedOptionalChangeset<TAnySchema>,
+	EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
+	EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
@@ -70,7 +68,7 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
+			const encoded: EncodedOptionalChangeset<typeof EncodedNodeChangeset> = {};
 
 			assert(
 				change.nodeDetach === undefined ||
@@ -146,7 +144,7 @@ export function makeOptionalFieldCodec(
 		},
 
 		decode: (
-			encoded: EncodedOptionalChangeset<TAnySchema>,
+			encoded: EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
 			context: FieldChangeDecodingContext,
 		) => {
 			const decoded: Mutable<OptionalChangeset> = {};

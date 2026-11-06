@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 
 import {
 	withSchemaValidation,
@@ -112,7 +112,7 @@ export function makeModularChangeCodecV3(
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
 	): {
-		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+		compiledSchema?: SchemaValidationFunction<TSchema>;
 		codec: FieldCodec;
 	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
