@@ -187,7 +187,9 @@ async function createDirectClient(
 	createDocument: boolean,
 ): Promise<DirectSharedTreeClient> {
 	return DirectSharedTreeClient.create(
-		new SeaSessionDriverClient(openSession, "seaSelected"),
+		new SeaSessionDriverClient(openSession, "seaSelected", {
+			loadingHint: { includeDescendantBlobs: true, maxExtraItems: 256 },
+		}),
 		documentId,
 		subscriptionBatchMaxOperations,
 		subscriptionBatchMaxPayloadBytes,

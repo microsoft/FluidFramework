@@ -58,6 +58,8 @@ struct Responses {
     receive: RecvStream,
     decoder: protocol::NetworkFrameDecoder,
     role: protocol::StreamRole,
+    /// Event receive credits use the still-open request direction.
+    control: Option<wtransport::SendStream>,
 }
 
 impl Responses {
@@ -66,6 +68,7 @@ impl Responses {
             receive,
             decoder: protocol::NetworkFrameDecoder::new(protocol::Limits::default()),
             role,
+            control: None,
         }
     }
 
@@ -76,8 +79,37 @@ impl Responses {
                 .next_frame()
                 .map_err(|error| error.to_string())?
             {
-                return protocol::decode_response_network_frame(self.role, &frame)
-                    .map_err(|error| error.to_string());
+                let response = protocol::decode_response_network_frame(self.role, &frame)
+                    .map_err(|error| error.to_string())?;
+                if let Some(control) = &mut self.control {
+                    if let protocol::Response::LoadContentError { message, .. } = &response {
+                        return Err(message.clone());
+                    }
+                    if matches!(
+                        response,
+                        protocol::Response::BlobTree { .. }
+                            | protocol::Response::LoadContentComplete
+                    ) {
+                        continue;
+                    }
+                    if !matches!(
+                        response,
+                        protocol::Response::EventStreamOpened { .. }
+                            | protocol::Response::Error { .. }
+                    ) {
+                        control
+                            .write_all(&encode(
+                                protocol::StreamRole::Event,
+                                &protocol::Request::LoadCredit {
+                                    content: false,
+                                    items: 1,
+                                },
+                            )?)
+                            .await
+                            .map_err(|error| error.to_string())?;
+                    }
+                }
+                return Ok(response);
             }
             let mut buffer = [0; 8192];
             let count = self
@@ -132,13 +164,14 @@ async fn open(
             },
             archive: document,
             resume_after: None,
+            hint: protocol::LoadingHint::default(),
         },
     )?;
     send.write_all(&bytes)
         .await
         .map_err(|error| error.to_string())?;
-    send.finish().await.map_err(|error| error.to_string())?;
     let mut responses = Responses::new(receive, protocol::StreamRole::Event);
+    responses.control = Some(send);
     let protocol::Response::EventStreamOpened {
         document,
         authority,
@@ -147,6 +180,16 @@ async fn open(
     else {
         return Err("missing event-stream authority".to_owned());
     };
+    responses
+        .control
+        .as_mut()
+        .expect("event control")
+        .write_all(&encode(
+            protocol::StreamRole::Event,
+            &protocol::Request::CancelLoadContent,
+        )?)
+        .await
+        .map_err(|error| error.to_string())?;
     loop {
         match responses.next().await? {
             protocol::Response::StreamProgress {

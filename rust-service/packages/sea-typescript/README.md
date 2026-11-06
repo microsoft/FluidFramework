@@ -12,6 +12,19 @@ Sessions expose opaque event submission with optional content references, monito
 `getSnapshot()` selects the latest snapshot; an event bound selects the newest snapshot at or before that bound, or returns `undefined` when none exists.
 Automatic reconnect, implicit retries, authentication, and arbitrary runtime decorator composition are not provided.
 
+`getBlobTrees(roots, hint)` returns a finite stream of typed `blob` and `directory` items.
+`load(required, hint)` returns separate `events` and `content` streams from the same selected snapshot.
+Consume content concurrently with events, observe errors, and cancel both streams on disposal.
+Content is verified below the binding and decoded by the selected decorators; its identity remains the stored identity.
+Storage validates encoded bytes before decorators transform them.
+Do not hash decoded blob bytes against the stored identity: compression and encryption can change those bytes.
+Prefetch is advisory: repeated items are permitted, and completion does not prove complete descendant coverage.
+Request missing roots explicitly rather than treating omitted content as unavailable.
+The default hint requests no extra descendants.
+To prefetch leaves, use `{ includeDescendantBlobs: true, maxExtraItems: 256 }`.
+Pass the same hint as `loadingHint` in session-opening options and to `load` to reuse the remote opening stream without another request.
+`getBlob` and `getDirectory` remain single-root convenience adapters over the content-stream primitive.
+
 `announceMembership(metadata)` opts a session into ordered membership records.
 History reports `eventType: "joined"`, `"application"`, or `"left"`; joined payloads contain immutable public metadata, and left payloads are empty.
 Close, replacement, and service recovery append departures in the same order as application events.
@@ -25,10 +38,84 @@ Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 11.
+Remote consumers must rebuild client and server together for protocol version 13.
 The sequencer allocates each session identity; opening options no longer accept one.
 `session.sessionId` and delivered event `session` values encode the document-scoped nonzero `u64` as eight big-endian bytes, preserving its full precision.
 Applications own author attribution.
+
+## Loading and fetching content
+
+Opening and loading must use the same event bound and hint to reuse the remote opening stream.
+The following example assumes application-owned `endpoint`, `document`, and abort `signal` values.
+`handleEvent` processes snapshot, event, and progress items; `retainContent` stores content within application-defined limits.
+The event stream can stay live after the finite content stream completes.
+
+```typescript
+import {
+	openWebTransport,
+	type SeaStream,
+} from "@fluidframework/sea-typescript/internal";
+
+const loadingHint = { includeDescendantBlobs: true, maxExtraItems: 256 };
+const session = await openWebTransport(endpoint, document, { loadingHint });
+try {
+	const loaded = await session.load(undefined, loadingHint);
+	const cancel = (): void => {
+		loaded.events.cancel();
+		loaded.content.cancel();
+	};
+	const drain = async <Item>(
+		stream: SeaStream<Item>,
+		accept: (item: Item) => void,
+	): Promise<void> => {
+		for (;;) {
+			const item = await stream.next();
+			if (item === undefined) return;
+			accept(item);
+		}
+	};
+	signal.addEventListener("abort", cancel, { once: true });
+	if (signal.aborted) cancel();
+	try {
+		await Promise.all([
+			drain(loaded.events, handleEvent),
+			drain(loaded.content, retainContent),
+		]);
+	} finally {
+		cancel();
+		signal.removeEventListener("abort", cancel);
+	}
+} finally {
+	await session.close();
+}
+```
+
+`maxExtraItems` excludes explicit roots and does not guarantee that many descendants.
+Response byte, item, or traversal limits can truncate later roots as well as descendants.
+Normal completion is not an error and does not prove complete coverage.
+Track requested identities against delivered identities; retry missing identities as explicit roots in subsequent requests.
+Each successful nonempty request returns at least its first root, so a single-root fallback makes progress without assuming complete batch coverage.
+Do not retry stream errors as though they were normal truncation.
+
+For example, while a session is open, fetch a missing or evicted identity without requesting additional descendants:
+
+```typescript
+const content = session.getBlobTrees([missingId]);
+try {
+	const item = await content.next();
+	if (item === undefined) throw new Error("Content response omitted its first root");
+	if (item.kind === "blob") {
+		useBlob(item.id, item.bytes);
+	} else {
+		useDirectory(item.id, item.entries);
+	}
+} finally {
+	content.cancel();
+}
+```
+
+The neutral bindings do not cache content.
+`SeaSessionDriverClient` supplies the bounded cache described in the [driver documentation](../sea-driver/README.md#direct-load-content-prefetch).
 
 ## Live Signals
 

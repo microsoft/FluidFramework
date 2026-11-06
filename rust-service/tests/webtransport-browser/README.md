@@ -31,6 +31,7 @@ Each final scenario prints `TRANSPORT_MODE`, browser results, shutdown results, 
 | Artifact loading | Factory construction loads nothing; split loads only selected capabilities; combined shares one artifact pair. An undecorated observer verifies encoded bytes. |
 | ServiceClient: each preset/compression pair | Detached creation, attachment, load by ID, bidirectional edits, reopen, independent creation. |
 | Final transport flow | Allocated IDs, ordered submissions, gap-free loads, content round trips, snapshots, close/reopen, closed-call rejection without retry. |
+| Blob-tree prefetch | Typed recursive fetch, duplicate-root elimination, empty initial content, snapshot root/leaf delivery before consuming events, and independent content cancellation over every transport. |
 | Snapshot ownership | Old cancellation cannot revoke replacement; publication works with a pending notification; cancelled reads reject; cancelling the selected participant grants a waiting peer a new fence while both archive connections remain usable. |
 | Shutdown | Existing sessions work during drain and fail after its deadline; new sessions fail after acceptance stops. |
 

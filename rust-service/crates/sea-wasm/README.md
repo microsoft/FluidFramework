@@ -12,6 +12,12 @@ The [core session contracts](../sea-core/src/session.rs) define archive, author,
 The transport-independent session adapter preserves concrete availability handles while hiding their implementation types.
 Storage, transport, and decorator construction remain separate from session operations.
 Errors retain their core service classification, and snapshot publication delegates to the original session with its original handles.
+
+The neutral bindings expose `getBlobTrees` and independent `events` and `content` streams from `load`.
+Both streams are cancellation-owned; consumers must observe content errors independently of event progress.
+Session options carry the initial loading hint through remote opening.
+Repeat that hint in `load` to consume the opening selection without a second request.
+Single-blob and single-directory methods are convenience adapters over the core content stream, not separate wire operations.
 Handles from incompatible implementations are rejected rather than converted into availability claims.
 
 Opening options contain reference and compression settings, not a caller-selected session identity.

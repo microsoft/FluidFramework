@@ -67,6 +67,7 @@ mod tests {
         factory::{PassThroughFactory, PassThroughSession},
         storage::{LoadStart, Snapshot, StorageHandle},
     };
+    use sea_core::{BlobTreeHint, SeaArchiveExt};
     use sea_memory::MemoryStorage;
 
     use super::*;
@@ -190,7 +191,10 @@ mod tests {
         assert_eq!(selected.root.id(), publication.root.id());
         assert_eq!(selected.at_event.id(), position);
 
-        let mut loaded = author.load(LoadStart::LatestSnapshot).await.unwrap();
+        let mut loaded = author
+            .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+            .await
+            .unwrap();
         assert_eq!(loaded.snapshot.as_ref().unwrap().at_event.id(), position);
         let next = author.submit(submission(Some(position))).await.unwrap();
         loop {

@@ -9,13 +9,13 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, MonitoredStreamItem,
     MonitoredStreamStatus,
     archive::{EventSubmission, SnapshotParticipation as ArchiveSnapshotParticipation},
-    session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
+    session::{BlobTreeItem, SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, Snapshot, StorageHandle},
 };
 
 use sea_webtransport::protocol;
 
-use super::{SeaConnectionService, SeaResponseStream, error_response};
+use super::{SeaConnectionService, SeaLoadStreams, SeaResponseStream, error_response};
 
 /// Dispatches requests to one already-open session, never a connection's replacement session.
 /// The connection host validates authority before handing this dispatcher to a logical stream.
@@ -52,27 +52,32 @@ where
     async fn open_event_stream(
         &self,
         _request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<SeaLoadStreams, protocol::Response> {
         Err(invalid("event stream must be opened by the service host"))
     }
 
     async fn event_stream(
         &self,
         resume_after: Option<u64>,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+        hint: protocol::LoadingHint,
+    ) -> Result<SeaLoadStreams, protocol::Response> {
+        let hint = hint.decode().map_err(|error| invalid(&error.to_string()))?;
         let load = self
             .session
-            .load(resume_after.map_or(LoadStart::LatestSnapshot, |position| {
-                LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
-            }))
+            .load(
+                resume_after.map_or(LoadStart::LatestSnapshot, |position| {
+                    LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
+                }),
+                hint,
+            )
             .await
             .map_err(error_response)?;
         let snapshot = stream::iter(
             load.snapshot
                 .map(|snapshot| protocol::Response::LoadSnapshot(snapshot_to_wire(&snapshot))),
         );
-        Ok(Box::pin(snapshot.chain(load.events.map(
-            |item| match item {
+        Ok(SeaLoadStreams {
+            events: Box::pin(snapshot.chain(load.events.map(|item| match item {
                 Ok(MonitoredStreamItem::Item(event)) => session_event_to_wire(&event),
                 Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
                     previous: progress.previous.map(EventPosition::get),
@@ -80,8 +85,31 @@ where
                     status: stream_status_to_wire(progress.status),
                 },
                 Err(error) => error_response(error),
-            },
-        ))))
+            }))),
+            content: Box::pin(stream::unfold(
+                (Some(load.content), false),
+                |(items, delivered_root)| async move {
+                    let mut items = items?;
+                    let response = match items.next().await? {
+                        Ok(item)
+                            if delivered_root
+                                && blob_tree_encoded_len(&item).is_none_or(|length| {
+                                    length > protocol::LOAD_CONTENT_MAX_ITEM_BYTES
+                                }) =>
+                        {
+                            protocol::Response::LoadContentComplete
+                        }
+                        Ok(item) => {
+                            blob_tree_to_wire(item, Some(protocol::LOAD_CONTENT_MAX_ITEM_BYTES))
+                        }
+                        Err(error) => error_response(error),
+                    };
+                    let remaining =
+                        matches!(response, protocol::Response::BlobTree { .. }).then_some(items);
+                    Some((response, (remaining, true)))
+                },
+            )),
+        })
     }
 
     /// Every author-request error ends append authority, including input conversion failures.
@@ -162,6 +190,40 @@ where
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
+        if let protocol::Request::GetBlobTrees { roots, hint } = request {
+            let hint = hint.decode().map_err(|error| invalid(&error.to_string()))?;
+            let first = roots.first().copied().map(tree_from_wire);
+            let items = self
+                .session
+                .get_blob_trees(roots.into_iter().map(tree_from_wire).collect(), hint);
+            return Ok(Box::pin(stream::unfold(
+                (items, first, false),
+                |(mut items, first, done)| async move {
+                    if done {
+                        return None;
+                    }
+                    match items.next().await {
+                        Some(Ok(item)) if first.is_none_or(|id| id == item.id()) => Some((
+                            blob_tree_to_wire(
+                                item,
+                                Some(protocol::Limits::default().max_frame_bytes),
+                            ),
+                            (items, None, false),
+                        )),
+                        Some(Ok(_)) => Some((
+                            invalid("content traversal omitted its first root"),
+                            (items, None, true),
+                        )),
+                        Some(Err(error)) => Some((error_response(error), (items, None, true))),
+                        None if first.is_some() => Some((
+                            invalid("content traversal omitted its first root"),
+                            (items, None, true),
+                        )),
+                        None => None,
+                    }
+                },
+            )));
+        }
         if let protocol::Request::Read { after, stop_after } = request {
             let stream = self.session.read(
                 after.map(EventPosition::new),
@@ -285,6 +347,10 @@ where
             | protocol::Request::OpenSnapshotStream { .. }
             | protocol::Request::PublishSnapshot { .. }
             | protocol::Request::OpenContentStream { .. }
+            | protocol::Request::GetBlobTrees { .. }
+            | protocol::Request::LoadCredit { .. }
+            | protocol::Request::CancelLoadContent
+            | protocol::Request::CancelLoadEvents
             | protocol::Request::Read { .. } => {
                 Err(invalid("request is not valid for this logical stream"))
             }
@@ -298,14 +364,6 @@ where
                     return Err(invalid("blob store returned a directory"));
                 };
                 Ok(protocol::Response::BlobStored { id: *id.as_bytes() })
-            }
-            protocol::Request::GetBlob { id } => {
-                let payload = self
-                    .session
-                    .get_blob(BlobId::from_bytes(&id).expect("fixed blob identity"))
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::Blob(payload.to_vec()))
             }
             protocol::Request::PutDirectory { entries } => {
                 let mut directory = BTreeMap::new();
@@ -329,27 +387,42 @@ where
                 };
                 Ok(protocol::Response::DirectoryStored { id: *id.as_bytes() })
             }
-            protocol::Request::GetDirectory { id } => {
-                let directory = self
-                    .session
-                    .get_directory(
-                        BlobDirectoryId::from_bytes(&id).expect("fixed directory identity"),
-                    )
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::Directory(
-                    directory
-                        .entries()
-                        .iter()
-                        .map(|(name, child)| protocol::DirectoryEntry {
-                            name: name.clone(),
-                            child: tree_to_wire(*child),
-                        })
-                        .collect(),
-                ))
-            }
         }
     }
+}
+
+fn blob_tree_encoded_len(item: &BlobTreeItem) -> Option<usize> {
+    let length = match item {
+        BlobTreeItem::Blob { bytes, .. } => Some(bytes.len()),
+        BlobTreeItem::Directory { directory, .. } => directory
+            .entries()
+            .iter()
+            .try_fold(4usize, |length, (name, _)| {
+                length.checked_add(37)?.checked_add(name.len())
+            }),
+    };
+    length.and_then(|length| {
+        let length_bytes = (usize::BITS - length.leading_zeros()).max(1).div_ceil(7) as usize;
+        length.checked_add(38)?.checked_add(length_bytes)
+    })
+}
+
+fn blob_tree_to_wire(item: BlobTreeItem, ceiling: Option<usize>) -> protocol::Response {
+    let id = tree_to_wire(item.id());
+    let encoded_length = blob_tree_encoded_len(&item);
+    if encoded_length.is_none()
+        || ceiling.is_some_and(|limit| encoded_length.unwrap_or(usize::MAX) > limit)
+    {
+        return invalid("load content item exceeds the bounded frame ceiling");
+    }
+    let payload = match item {
+        BlobTreeItem::Blob { bytes, .. } => bytes.to_vec(),
+        BlobTreeItem::Directory { directory, .. } => match directory.encode() {
+            Ok(bytes) => bytes.to_vec(),
+            Err(error) => return invalid(&error.to_string()),
+        },
+    };
+    protocol::Response::BlobTree { id, payload }
 }
 
 fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> protocol::Response {
@@ -482,7 +555,10 @@ mod tests {
                 protocol::Response::Error { .. }
             ));
         }
-        let mut events = observer.event_stream(None).await.unwrap();
+        let mut events = observer
+            .event_stream(None, protocol::LoadingHint::default())
+            .await
+            .unwrap();
         let mut kinds = Vec::new();
         while let Some(response) = events.next().await {
             match response {
@@ -586,14 +662,22 @@ mod tests {
             Some(protocol::Response::BlobStored { .. })
         ));
         let mut fetched = dispatcher
-            .content_request(protocol::Request::GetBlob { id })
+            .content_request(protocol::Request::GetBlobTrees {
+                roots: vec![protocol::TreeId::Blob(id)],
+                hint: protocol::LoadingHint::default(),
+            })
             .await
             .expect("blob fetch response");
-        let protocol::Response::Blob(payload) = fetched.next().await.expect("blob fetch payload")
+        let protocol::Response::BlobTree {
+            id: fetched_id,
+            payload,
+        } = fetched.next().await.expect("blob fetch payload")
         else {
             panic!("blob fetch should return bytes");
         };
+        assert_eq!(fetched_id, protocol::TreeId::Blob(id));
         assert_eq!(payload, b"content-2");
+        assert!(fetched.next().await.is_none());
 
         let protocol::Response::EventCommitted { position } = dispatcher
             .author_request(protocol::Request::Submit {
@@ -609,7 +693,10 @@ mod tests {
         };
         assert!(position > 0);
 
-        let mut load = dispatcher.event_stream(None).await.expect("load stream");
+        let mut load = dispatcher
+            .event_stream(None, protocol::LoadingHint::default())
+            .await
+            .expect("load stream");
         assert!(matches!(
             load.next().await,
             Some(protocol::Response::StreamProgress {
@@ -649,7 +736,10 @@ mod tests {
             actor.author_request(protocol::Request::Close).await,
             protocol::Response::Acknowledged
         );
-        let mut events = observer.event_stream(None).await.unwrap();
+        let mut events = observer
+            .event_stream(None, protocol::LoadingHint::default())
+            .await
+            .unwrap();
         let mut positions = Vec::new();
         while let Some(response) = events.next().await {
             match response {
@@ -791,5 +881,305 @@ mod tests {
                 })
             ));
         }
+    }
+
+    #[tokio::test]
+    async fn blob_tree_fetch_preserves_identity_and_can_truncate_descendants() {
+        let sequencer = sequencer().await;
+        let dispatcher =
+            SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
+        let Some(protocol::Response::BlobStored { id }) = dispatcher
+            .content_request(protocol::Request::PutBlob {
+                payload: b"leaf".to_vec(),
+            })
+            .await
+            .unwrap()
+            .next()
+            .await
+        else {
+            panic!("missing leaf")
+        };
+        let leaf = protocol::TreeId::Blob(id);
+        let Some(protocol::Response::DirectoryStored { id }) = dispatcher
+            .content_request(protocol::Request::PutDirectory {
+                entries: vec![protocol::DirectoryEntry {
+                    name: "child".to_owned(),
+                    child: leaf,
+                }],
+            })
+            .await
+            .unwrap()
+            .next()
+            .await
+        else {
+            panic!("missing directory")
+        };
+        let root = protocol::TreeId::Directory(id);
+        for (max_extra_items, expected) in [(0, 1), (1, 2)] {
+            let responses: Vec<_> = dispatcher
+                .content_request(protocol::Request::GetBlobTrees {
+                    roots: vec![root],
+                    hint: protocol::LoadingHint::encode(sea_core::BlobTreeHint {
+                        include_descendant_blobs: true,
+                        max_extra_items,
+                    })
+                    .unwrap(),
+                })
+                .await
+                .unwrap()
+                .collect()
+                .await;
+            assert_eq!(responses.len(), expected);
+            let protocol::Response::BlobTree { id, payload } = &responses[0] else {
+                panic!("missing root")
+            };
+            assert_eq!(*id, root);
+            let directory = sea_core::BlobDirectory::decode(payload).unwrap();
+            assert_eq!(
+                super::tree_to_wire(*directory.entries().get("child").unwrap()),
+                leaf
+            );
+            if expected == 2 {
+                assert_eq!(
+                    responses[1],
+                    protocol::Response::BlobTree {
+                        id: leaf,
+                        payload: b"leaf".to_vec()
+                    }
+                );
+            }
+        }
+        let mut missing = dispatcher
+            .content_request(protocol::Request::GetBlobTrees {
+                roots: vec![protocol::TreeId::Blob([0; 32])],
+                hint: protocol::LoadingHint::default(),
+            })
+            .await
+            .unwrap();
+        assert!(matches!(
+            missing.next().await,
+            Some(protocol::Response::Error { .. })
+        ));
+        assert!(missing.next().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn load_content_uses_the_initially_selected_snapshot() {
+        let sequencer = sequencer().await;
+        let dispatcher =
+            SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
+        let mut coordination = dispatcher
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: Vec::new(),
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::SnapshotCoordination { fence, .. }) =
+            coordination.next().await
+        else {
+            panic!("missing publisher");
+        };
+        let mut previous = None;
+        let mut selected = None;
+        for bytes in [b"first".to_vec(), b"second".to_vec()] {
+            let Some(protocol::Response::BlobStored { id }) = dispatcher
+                .content_request(protocol::Request::PutBlob {
+                    payload: bytes.clone(),
+                })
+                .await
+                .unwrap()
+                .next()
+                .await
+            else {
+                panic!("missing root")
+            };
+            let root = protocol::TreeId::Blob(id);
+            let protocol::Response::EventCommitted { position } = dispatcher
+                .author_request(protocol::Request::Submit {
+                    reference: None,
+                    event: protocol::Event {
+                        payload: Vec::new(),
+                        blob_tree: Some(root),
+                    },
+                })
+                .await
+            else {
+                panic!("missing event")
+            };
+            assert!(matches!(
+                dispatcher
+                    .snapshot_request(protocol::Request::PublishSnapshot {
+                        fence,
+                        expected_parent: previous,
+                        at_event: position,
+                        root,
+                    })
+                    .await,
+                protocol::Response::Snapshot(Some(_))
+            ));
+            if selected.is_none() {
+                selected = Some((
+                    dispatcher
+                        .event_stream(None, protocol::LoadingHint::default())
+                        .await
+                        .unwrap(),
+                    root,
+                    position,
+                    bytes,
+                ));
+            }
+            previous = Some(position);
+        }
+        let (mut load, root, position, bytes) = selected.unwrap();
+        assert_eq!(
+            load.events.next().await,
+            Some(protocol::Response::LoadSnapshot(protocol::Snapshot {
+                at_event: position,
+                root
+            }))
+        );
+        assert_eq!(
+            load.content.next().await,
+            Some(protocol::Response::BlobTree {
+                id: root,
+                payload: bytes
+            })
+        );
+        assert!(load.content.next().await.is_none());
+    }
+
+    #[test]
+    fn oversized_prefetch_is_rejected_before_encoding_and_boundary_is_exact() {
+        let limit = protocol::LOAD_CONTENT_MAX_ITEM_BYTES;
+        let payload = vec![0; limit - 41];
+        let item = sea_core::BlobTreeItem::Blob {
+            id: sea_core::BlobId::for_bytes(&payload),
+            bytes: payload.into(),
+        };
+        let response = super::blob_tree_to_wire(item, Some(limit));
+        assert_eq!(
+            protocol::encode_response_frame(
+                protocol::StreamRole::Event,
+                &response,
+                protocol::Limits::default(),
+            )
+            .unwrap()
+            .len(),
+            limit
+        );
+        let payload = vec![0; limit - 40];
+        let item = sea_core::BlobTreeItem::Blob {
+            id: sea_core::BlobId::for_bytes(&payload),
+            bytes: payload.into(),
+        };
+        assert!(matches!(
+            super::blob_tree_to_wire(item, Some(limit)),
+            protocol::Response::Error { .. }
+        ));
+    }
+
+    #[tokio::test]
+    #[allow(clippy::too_many_lines)]
+    async fn snapshot_prefetch_truncates_large_descendants_but_demand_fetch_succeeds() {
+        let sequencer = sequencer().await;
+        let dispatcher =
+            SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
+        let Some(protocol::Response::BlobStored { id }) = dispatcher
+            .content_request(protocol::Request::PutBlob {
+                payload: vec![0; protocol::LOAD_CONTENT_MAX_ITEM_BYTES],
+            })
+            .await
+            .unwrap()
+            .next()
+            .await
+        else {
+            panic!("missing leaf")
+        };
+        let leaf = protocol::TreeId::Blob(id);
+        let Some(protocol::Response::DirectoryStored { id }) = dispatcher
+            .content_request(protocol::Request::PutDirectory {
+                entries: vec![protocol::DirectoryEntry {
+                    name: "large".to_owned(),
+                    child: leaf,
+                }],
+            })
+            .await
+            .unwrap()
+            .next()
+            .await
+        else {
+            panic!("missing directory")
+        };
+        let root = protocol::TreeId::Directory(id);
+        let mut coordination = dispatcher
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: Vec::new(),
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::SnapshotCoordination { fence, .. }) =
+            coordination.next().await
+        else {
+            panic!("missing publisher");
+        };
+        let protocol::Response::EventCommitted { position } = dispatcher
+            .author_request(protocol::Request::Submit {
+                reference: None,
+                event: protocol::Event {
+                    payload: Vec::new(),
+                    blob_tree: Some(root),
+                },
+            })
+            .await
+        else {
+            panic!("missing event")
+        };
+        assert!(matches!(
+            dispatcher
+                .snapshot_request(protocol::Request::PublishSnapshot {
+                    fence,
+                    expected_parent: None,
+                    at_event: position,
+                    root,
+                })
+                .await,
+            protocol::Response::Snapshot(Some(_))
+        ));
+        let mut load = dispatcher
+            .event_stream(
+                None,
+                protocol::LoadingHint::encode(sea_core::BlobTreeHint {
+                    include_descendant_blobs: true,
+                    max_extra_items: 1,
+                })
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert!(
+            matches!(load.content.next().await, Some(protocol::Response::BlobTree { id, .. }) if id == root)
+        );
+        assert_eq!(
+            load.content.next().await,
+            Some(protocol::Response::LoadContentComplete)
+        );
+        assert!(load.content.next().await.is_none());
+        assert!(matches!(
+            load.events.next().await,
+            Some(protocol::Response::LoadSnapshot(_))
+        ));
+        let mut demand = dispatcher
+            .content_request(protocol::Request::GetBlobTrees {
+                roots: vec![leaf],
+                hint: protocol::LoadingHint::default(),
+            })
+            .await
+            .unwrap();
+        assert!(
+            matches!(demand.next().await, Some(protocol::Response::BlobTree { id, payload }) if id == leaf && payload.len() == protocol::LOAD_CONTENT_MAX_ITEM_BYTES)
+        );
+        assert!(demand.next().await.is_none());
     }
 }

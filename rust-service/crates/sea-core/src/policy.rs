@@ -18,8 +18,8 @@ use futures_core::Stream;
 use futures_util::{StreamExt, future::poll_fn, task::AtomicWaker};
 
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, EventPosition,
-    EventSubmission, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeStream, ClassifiedError, ErrorKind,
+    EventPosition, EventSubmission, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus, SeaArchive, SeaAuthorSession, SeaService, SeaSession,
     SeaSnapshotCoordinator, SessionBounds, SessionCommittedEvent, SessionLoad, SessionStream,
     SnapshotCoordination, SnapshotParticipation,
@@ -500,14 +500,20 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let reader_permit = self
             .policy
             .admit_live_reader()
             .map_err(PolicyError::Policy)?;
-        let loaded = self.source.load(start).await.map_err(PolicyError::Source)?;
+        let loaded = self
+            .source
+            .load(start, hint)
+            .await
+            .map_err(PolicyError::Source)?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot,
+            content: Box::pin(loaded.content.map(|item| item.map_err(PolicyError::Source))),
             events: map_stream(loaded.events, Some(reader_permit)),
         })
     }
@@ -531,8 +537,16 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
             .map_err(PolicyError::Source)
     }
 
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.source.get_blob(id).await.map_err(PolicyError::Source)
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        Box::pin(
+            self.source
+                .get_blob_trees(roots, hint)
+                .map(|item| item.map_err(PolicyError::Source)),
+        )
     }
 
     async fn put_directory(
@@ -545,13 +559,6 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
         drop(admission);
         self.source
             .put_directory(directory)
-            .await
-            .map_err(PolicyError::Source)
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.source
-            .get_directory(id)
             .await
             .map_err(PolicyError::Source)
     }

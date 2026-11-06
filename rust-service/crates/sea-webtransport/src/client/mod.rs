@@ -295,7 +295,6 @@ where
         let outgoing = protocol::encode_request_frame(StreamRole::Event, &request, self.limits)?;
         let mut stream = FramedStream::open(&self.transport, self.limits).await?;
         stream.send(&outgoing).await?;
-        stream.finish().await?;
         let mut responses = ResponseStream {
             ended: false,
             subscription: true,
@@ -323,6 +322,7 @@ where
             document,
             authority,
             responses,
+            limits: self.limits,
         })
     }
 
@@ -462,6 +462,8 @@ pub struct EventStream<Stream> {
     document: Vec<u8>,
     authority: Vec<u8>,
     responses: ResponseStream<Stream>,
+    /// Bounds control frames sent on the opening stream.
+    limits: protocol::Limits,
 }
 
 /// Ordered author requests and receipts on one persistent transport stream.
@@ -584,6 +586,42 @@ impl<Stream> ContentStream<Stream>
 where
     Stream: BidirectionalStream,
 {
+    /// Starts a finite exchange; only consuming its completion permits reuse.
+    pub(crate) async fn begin_response(
+        &mut self,
+        request: Request,
+    ) -> Result<(), ClientError<Stream::Error>> {
+        if std::mem::replace(&mut self.terminal, true) {
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
+        }
+        self.state.check_connected()?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await
+    }
+
+    /// Receives one finite response, retaining exclusive ownership until explicit completion.
+    pub(crate) async fn next_response(
+        &mut self,
+    ) -> Result<Option<Response>, ClientError<Stream::Error>> {
+        let frame = self
+            .stream
+            .receive()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
+        let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
+        if response == Response::ResponseComplete {
+            self.stream.end_request();
+            self.terminal = false;
+            Ok(None)
+        } else {
+            Ok(Some(response))
+        }
+    }
+
     /// Sends one content operation and returns its owned response stream.
     /// Native monitored reads bound their first response, then permit idle waits.
     /// Other requests retain their budget through `ResponseComplete`, including consumer pauses.
@@ -910,6 +948,15 @@ where
     /// Receives the next recovery or live event-stream response.
     pub async fn next(&mut self) -> Result<Option<Response>, ClientError<Stream::Error>> {
         self.responses.next().await
+    }
+
+    /// Grants receive capacity or cancels only the finite prefetch channel.
+    pub(crate) async fn control(
+        &mut self,
+        request: &Request,
+    ) -> Result<(), ClientError<Stream::Error>> {
+        let frame = protocol::encode_request_frame(StreamRole::Event, request, self.limits)?;
+        self.responses.stream.send(&frame).await
     }
 
     /// Cancels this event stream.
@@ -1294,6 +1341,7 @@ mod tests {
             archive: b"document".to_vec(),
             intent: protocol::ArchiveIntent::Open,
             resume_after: None,
+            hint: protocol::LoadingHint::default(),
         };
         assert!(matches!(
             (client.open_event_stream(opening.clone()).await)
@@ -1425,6 +1473,7 @@ mod tests {
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: Some(1),
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("event stream");
@@ -1467,6 +1516,7 @@ mod tests {
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("event stream");
@@ -1588,14 +1638,13 @@ mod tests {
             state: Arc::new(ClientState::default()),
             limits,
         };
-        assert!(
-            content
-                .request(Request::GetBlob { id: [0; 32] })
-                .now_or_never()
-                .is_none()
-        );
+        let request = Request::GetBlobTrees {
+            roots: vec![protocol::TreeId::Blob([0; 32])],
+            hint: protocol::LoadingHint::default(),
+        };
+        assert!(content.request(request.clone()).now_or_never().is_none());
         assert!(matches!(
-            (content.request(Request::GetBlob { id: [0; 32] }).await)
+            (content.request(request).await)
                 .as_ref()
                 .map_err(super::ClientError::reason),
             Err(super::ClientErrorReason::State(ClientStateError::Closed))
@@ -1841,6 +1890,7 @@ mod tests {
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("event stream");

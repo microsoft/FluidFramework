@@ -49,7 +49,8 @@ window.__seaPackageResult = (async () => {
         let observerCoordination;
         try {
             const initial = await reader.load();
-            initial.cancel();
+            initial.events.cancel();
+            initial.content.cancel();
             live = reader.read();
             await nextMatching(live, (item) => item.kind === "progress" && item.status === "AwaitingNewItems");
             const payload = encode("browser application payload ".repeat(100));
@@ -98,13 +99,24 @@ window.__seaPackageResult = (async () => {
             while (observedSnapshot.latest !== position) observedSnapshot = await coordination.next();
             assert((await writer.getSnapshot()).atEvent === position, "latest snapshot mismatch");
             assert((await writer.getSnapshot(position)).atEvent === position, "bounded snapshot mismatch");
-            const reloaded = await openWebTransport(service, writer.document, options("reload"));
+            const loadingHint = { includeDescendantBlobs: true, maxExtraItems: 256 };
+            const reloaded = await openWebTransport(service, writer.document, { ...options("reload"), loadingHint });
             try {
-                const loaded = await reloaded.load();
+                const loaded = await reloaded.load(undefined, loadingHint);
                 try {
-                    const snapshot = await loaded.next();
+                    const snapshot = await loaded.events.next();
                     assert(snapshot.kind === "snapshot" && snapshot.atEvent === position, "snapshot did not reopen");
-                } finally { loaded.cancel(); }
+                    let prefetchedBlob = false;
+                    while (true) {
+                        const item = await loaded.content.next();
+                        if (item === undefined) break;
+                        if (item.kind === "blob") {
+                            assert(new TextDecoder().decode(item.bytes) === new TextDecoder().decode(payload), "prefetched blob did not decode");
+                            prefetchedBlob = true;
+                        }
+                    }
+                    assert(prefetchedBlob, "snapshot descendants were not prefetched");
+                } finally { loaded.events.cancel(); loaded.content.cancel(); }
             } finally { await reloaded.close(); }
             const remoteConfiguration = `${preset === "combined" ? "combined" : "webtransport"}${compression ? "-compression" : ""}`;
             const remoteArtifacts = artifacts().filter((name) => !before.includes(name));

@@ -10,6 +10,7 @@ const decoder = new TextDecoder();
 const parameters = new URLSearchParams(location.search);
 const transportUrl = parameters.get("transport");
 const certificateHex = parameters.get("hash");
+const loadingHint = { includeDescendantBlobs: true, maxExtraItems: 16 };
 const snapshotParticipation =
 	parameters.get("snapshotPolicy") === "sea" ? "seaSelected" : "clientSelected";
 
@@ -454,6 +455,7 @@ async function run() {
 			document,
 			{
 				...(reference === undefined ? {} : { reference }),
+				loadingHint,
 			},
 		);
 		transportSessionCount++;
@@ -479,7 +481,8 @@ async function run() {
 	const snapshotCoordination = await first.coordinateSnapshots(snapshotParticipation);
 	const publisher = await snapshotCoordination.next();
 	previousCoordination.cancel();
-	const load = await first.load();
+	const { events: load, content: initialContent } = await first.load(undefined, loadingHint);
+	assert((await initialContent.next()) === undefined, "empty archive supplied content");
 	const initialCaughtUp = await nextAwaiting(load);
 	const firstReceipt = await first.submit(undefined, encoder.encode("first-payload"));
 	const firstStreamedReceipt = await first.submit(
@@ -583,7 +586,11 @@ async function run() {
 		assert(publisher.fence !== undefined, "first publisher was not nominated");
 		assert(secondSnapshotState.fence === undefined, "two Sea-selected clients were nominated");
 	}
-	const secondLoad = await second.load(secondStreamedReceipt);
+	const { events: secondLoad, content: secondContent } = await second.load(
+		secondStreamedReceipt,
+		loadingHint,
+	);
+	secondContent.cancel();
 	const secondCaughtUp = await nextAwaiting(secondLoad);
 	const thirdStreamedReceipt = await first.submit(
 		secondStreamedReceipt,
@@ -643,6 +650,13 @@ async function run() {
 	assert(entries.length === 1, "directory entry count mismatch");
 	assert(entries[0].name === "leaf", "directory entry name mismatch");
 	assert(equalBytes(entries[0].child.bytes, blob.bytes), "directory child mismatch");
+	const trees = first.getBlobTrees([directory, directory], loadingHint);
+	const directoryItem = await trees.next();
+	const blobItem = await trees.next();
+	assert(directoryItem?.kind === "directory", "recursive fetch omitted its directory root");
+	assert(blobItem?.kind === "blob", "recursive fetch omitted the hinted leaf");
+	assert(equalBytes(blobItem.bytes, blobPayload), "recursive fetch changed leaf bytes");
+	assert((await trees.next()) === undefined, "recursive fetch did not deduplicate roots");
 
 	const notification = snapshotCoordination.next();
 	const snapshot = await first.publishSnapshot(
@@ -674,7 +688,21 @@ async function run() {
 	first = await open(archive, "browser-session-resumed", secondReceipt);
 	const resumedSnapshots = await first.coordinateSnapshots(snapshotParticipation);
 	await resumedSnapshots.next();
-	const resumedLoad = await first.load(secondReceipt);
+	const { events: resumedLoad, content: resumedContent } = await first.load(
+		secondReceipt,
+		loadingHint,
+	);
+	assert(
+		(await resumedContent.next())?.kind === "directory",
+		"opening prefetch omitted snapshot root",
+	);
+	const prefetchedBlob = await resumedContent.next();
+	assert(prefetchedBlob?.kind === "blob", "opening prefetch omitted snapshot leaf");
+	assert(
+		equalBytes(prefetchedBlob.bytes, blobPayload),
+		"opening prefetch changed snapshot bytes",
+	);
+	assert((await resumedContent.next()) === undefined, "opening prefetch did not complete");
 	await nextAwaiting(resumedLoad);
 	const resumedReceipt = await first.submit(secondReceipt, encoder.encode("resumed-payload"));
 	const resumedLive = await nextEvent(resumedLoad);
@@ -700,7 +728,11 @@ async function run() {
 	first = await open(archive, "browser-session-reconnected", secondReceipt);
 	const recoveredSnapshots = await first.coordinateSnapshots(snapshotParticipation);
 	await recoveredSnapshots.next();
-	const recovered = await first.load(secondReceipt);
+	const { events: recovered, content: recoveredContent } = await first.load(
+		secondReceipt,
+		loadingHint,
+	);
+	recoveredContent.cancel();
 	assert(
 		(await nextSnapshot(recovered)).atEvent === secondReceipt,
 		"recovered snapshot mismatch",

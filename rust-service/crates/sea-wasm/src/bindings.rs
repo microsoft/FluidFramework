@@ -15,9 +15,10 @@ use futures_util::{
 };
 use js_sys::{Array, Object, Reflect, Uint8Array};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Event, EventPosition,
-    EventSubmission, MonitoredStreamItem, SeaSession as SessionContract, SessionId, SessionStream,
-    SnapshotCoordination, SnapshotParticipation,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeHint, BlobTreeId, BlobTreeItem,
+    ClassifiedError, Event, EventPosition, EventSubmission, MonitoredStreamItem, SeaArchiveExt,
+    SeaSession as SessionContract, SessionId, SessionStream, SnapshotCoordination,
+    SnapshotParticipation,
     storage::{LoadStart, Snapshot, StorageHandle},
 };
 use wasm_bindgen::prelude::*;
@@ -127,16 +128,28 @@ pub struct SeaSessionOptions {
     reference: Option<EventPosition>,
     /// Whether this session explicitly uses the compression decorator.
     compression: bool,
+    /// Advisory content selection reused by the opening load.
+    #[cfg_attr(not(feature = "webtransport"), allow(dead_code))]
+    loading_hint: BlobTreeHint,
 }
 
 #[wasm_bindgen]
 impl SeaSessionOptions {
     /// Records explicit session semantics; identity is allocated when opening succeeds.
     #[wasm_bindgen(constructor)]
-    pub fn new(reference: Option<u64>, compression: bool) -> SeaSessionOptions {
+    pub fn new(
+        reference: Option<u64>,
+        compression: bool,
+        include_descendant_blobs: bool,
+        max_extra_items: u32,
+    ) -> SeaSessionOptions {
         Self {
             reference: reference.map(EventPosition::new),
             compression,
+            loading_hint: BlobTreeHint {
+                include_descendant_blobs,
+                max_extra_items,
+            },
         }
     }
 }
@@ -203,6 +216,23 @@ fn check_options(options: &SeaSessionOptions) -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 impl SeaSession {
+    /// Requests typed immutable content, with advisory bounded descendants.
+    #[wasm_bindgen(js_name = getBlobTrees)]
+    pub fn get_blob_trees(
+        &self,
+        roots: Vec<SeaTreeId>,
+        include_descendant_blobs: bool,
+        max_extra_items: u32,
+    ) -> SeaEventStream {
+        content_stream(self.inner.get_blob_trees(
+            roots.into_iter().map(|root| root.inner).collect(),
+            BlobTreeHint {
+                include_descendant_blobs,
+                max_extra_items,
+            },
+        ))
+    }
+
     /// Returns the allocated session identity in canonical eight-byte big-endian form.
     #[wasm_bindgen(getter, js_name = sessionId)]
     pub fn session_id(&self) -> Vec<u8> {
@@ -358,13 +388,25 @@ impl SeaSession {
     ///
     /// `required` bounds snapshot selection inclusively, not the live event suffix.
     /// Without a bound, selects the latest snapshot; without a compatible snapshot, replays from the beginning.
-    /// The stream emits the selected snapshot first, if any, then monitored events without a captured event head.
-    pub async fn load(&self, required: Option<u64>) -> Result<SeaEventStream, JsValue> {
+    /// The event stream emits the selected snapshot first, if any, then monitored events without a captured event head.
+    /// The separate content stream yields advisory content from that same snapshot selection.
+    pub async fn load(
+        &self,
+        required: Option<u64>,
+        include_descendant_blobs: bool,
+        max_extra_items: u32,
+    ) -> Result<JsValue, JsValue> {
         let loaded = self
             .inner
-            .load(required.map_or(LoadStart::LatestSnapshot, |position| {
-                LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
-            }))
+            .load(
+                required.map_or(LoadStart::LatestSnapshot, |position| {
+                    LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
+                }),
+                BlobTreeHint {
+                    include_descendant_blobs,
+                    max_extra_items,
+                },
+            )
             .await
             .map_err(|error| service_error(&error))?;
         let snapshot = futures_util::stream::iter(
@@ -376,10 +418,17 @@ impl SeaSession {
             item.map_err(|error| service_error(&error))
                 .and_then(event_result)
         });
-        Ok(SeaEventStream {
-            stream: RefCell::new(Some(Box::pin(snapshot.chain(events)))),
-            pending: RefCell::new(None),
-        })
+        let result = Object::new();
+        set(
+            &result,
+            "events",
+            SeaEventStream {
+                stream: RefCell::new(Some(Box::pin(snapshot.chain(events)))),
+                pending: RefCell::new(None),
+            },
+        )?;
+        set(&result, "content", content_stream(loaded.content))?;
+        Ok(result.into())
     }
 
     /// Returns the newest snapshot at or before an inclusive event bound, or the latest if absent.
@@ -492,6 +541,36 @@ impl SeaSession {
             .map_err(|error| service_error(&error))?;
         self.signals.borrow_mut().push(Rc::downgrade(&inner));
         Ok(crate::signals::SeaSignals { inner })
+    }
+}
+
+/// Converts verified, decorator-decoded content without exposing wire frames.
+fn content_stream(stream: sea_core::BlobTreeStream<BindingError>) -> SeaEventStream {
+    SeaEventStream {
+        stream: RefCell::new(Some(Box::pin(stream.map(|item| {
+            let item = item.map_err(|error| service_error(&error))?;
+            let result = Object::new();
+            set(&result, "id", SeaTreeId { inner: item.id() })?;
+            match item {
+                BlobTreeItem::Blob { bytes, .. } => {
+                    set(&result, "kind", "blob")?;
+                    set(&result, "bytes", Uint8Array::from(bytes.as_ref()))?;
+                }
+                BlobTreeItem::Directory { directory, .. } => {
+                    set(&result, "kind", "directory")?;
+                    let entries = Array::new();
+                    for (name, child) in directory.entries() {
+                        let entry = Object::new();
+                        set(&entry, "name", name.as_str())?;
+                        set(&entry, "child", SeaTreeId { inner: *child })?;
+                        entries.push(&entry);
+                    }
+                    set(&result, "entries", entries)?;
+                }
+            }
+            Ok(result.into())
+        })))),
+        pending: RefCell::new(None),
     }
 }
 
@@ -798,6 +877,7 @@ pub async fn open_remote(
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
             reference: options.reference,
+            hint: options.loading_hint,
         },
     )
     .await
@@ -840,6 +920,7 @@ pub async fn open_webtransport(
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
             reference: options.reference,
+            hint: options.loading_hint,
         },
     )
     .await

@@ -59,6 +59,13 @@ For storage-backed reads, progress observations after initialization delegate to
 Closing a membership terminates its initialized storage-backed reads, including finite reads.
 Cached unbounded reads register at creation, so closure also terminates subscriptions that have not been polled.
 Loads use `LoadStart`, returning a selected handle-based snapshot and the live suffix without an atomic captured head.
+`load(start, hint)` also returns a lazy content stream rooted at that snapshot.
+Content traversal uses storage's unchanged single-item reads, verifies stored identities, and visits unique typed IDs breadth-first after all explicit roots.
+Each request accepts at most 256 explicit roots and returns at most 4,096 unique items.
+Traversal inspects at most 65,536 directory entries and stops at a soft 16 MiB response limit.
+The first root is returned even if it exceeds that byte limit, ensuring progress; subsequent omitted identities can be requested explicitly.
+The hint can further limit additional unique items or exclude descendant leaves without suppressing explicit roots.
+Dropping a content stream cancels its pending traversal without affecting the event stream.
 Backend monitored streams provide gap-free catch-up and live delivery.
 Publisher observations use coalescing watch streams because intermediate publisher states need not all be delivered.
 

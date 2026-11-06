@@ -30,6 +30,8 @@ mod pipeline;
 #[path = "checkpoint.rs"]
 mod checkpoint;
 
+#[path = "blob_tree.rs"]
+mod blob_tree;
 #[path = "live_cache.rs"]
 mod live_cache;
 #[path = "live_read.rs"]
@@ -48,8 +50,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
-    Event, EventPosition, MonitoredStreamItem,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeStream, ClassifiedError, CommittedEvent,
+    ErrorKind, Event, EventPosition, MonitoredStreamItem,
     archive::{
         EventSubmission, SessionCommittedEvent, SessionEventKind, SessionId, SessionStream,
         SnapshotParticipation,
@@ -1024,11 +1026,18 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let snapshot = self.get_snapshot(start).await?;
         let after = snapshot.as_ref().map(|snapshot| snapshot.at_event.id());
+        let roots = snapshot
+            .as_ref()
+            .map(|snapshot| snapshot.root.id())
+            .into_iter()
+            .collect();
         Ok(SessionLoad {
             snapshot,
+            content: self.get_blob_trees(roots, hint),
             events: self.read(after, None),
         })
     }
@@ -1051,13 +1060,12 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
             .await
             .map_err(SessionError::Storage)
     }
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.view()
-            .await?
-            .blobs()
-            .get_blob(id)
-            .await
-            .map_err(SessionError::Storage)
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        blob_tree::read(self.clone(), roots, hint)
     }
     async fn put_directory(
         &self,
@@ -1067,14 +1075,6 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
             .await?
             .blobs()
             .put_directory(directory)
-            .await
-            .map_err(SessionError::Storage)
-    }
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.view()
-            .await?
-            .blobs()
-            .get_directory(id)
             .await
             .map_err(SessionError::Storage)
     }
@@ -1301,6 +1301,7 @@ async fn append_once<Storage: SeaStorage>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sea_core::{BlobId, SeaArchiveExt};
     use sea_core::{MonitoredStreamStatus, storage::DocumentId};
     use sea_memory::MemoryStorage;
 
@@ -1456,7 +1457,10 @@ mod tests {
         .await
         .unwrap();
         let reader = member(&recovered).await;
-        let loaded = reader.load(LoadStart::LatestSnapshot).await.unwrap();
+        let loaded = reader
+            .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+            .await
+            .unwrap();
         let boundary = loaded.snapshot.unwrap().at_event.id();
         assert_eq!(boundary, advanced);
         let mut event = reader.read(Some(initial), Some(boundary));
@@ -2188,7 +2192,11 @@ mod tests {
         let (_, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime).await;
         let second = member(&runtime).await;
-        let mut live = first.load(LoadStart::Beginning).await.unwrap().events;
+        let mut live = first
+            .load(LoadStart::Beginning, BlobTreeHint::default())
+            .await
+            .unwrap()
+            .events;
         assert!(matches!(
             live.next().await,
             Some(Ok(MonitoredStreamItem::Progress(_)))
@@ -2216,11 +2224,14 @@ mod tests {
             LoadStart::LatestSnapshot,
             LoadStart::ReplayAtLeastAllAfter(position),
         ] {
-            let loaded = first.load(policy).await.unwrap();
+            let loaded = first.load(policy, BlobTreeHint::default()).await.unwrap();
             assert_eq!(loaded.snapshot.unwrap().at_event.id(), position);
             assert_eq!(loaded.events.progress().previous, Some(position));
         }
-        let mut beginning = first.load(LoadStart::Beginning).await.unwrap();
+        let mut beginning = first
+            .load(LoadStart::Beginning, BlobTreeHint::default())
+            .await
+            .unwrap();
         assert!(beginning.snapshot.is_none());
         assert_eq!(
             data(&mut beginning.events)
@@ -2351,7 +2362,7 @@ mod tests {
         session.close().await.unwrap();
         assert!(matches!(
             session.get_blob(id).await,
-            Err(SessionError::Closed)
+            Err(sea_core::BlobTreeReadError::Source(SessionError::Closed))
         ));
         assert!(matches!(
             session.put_directory(directory).await,

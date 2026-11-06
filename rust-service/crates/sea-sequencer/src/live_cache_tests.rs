@@ -358,7 +358,11 @@ async fn historical_finite_load_and_missed_handoff_preserve_exact_delivered_curs
     assert!(settles(data(&mut finite)).await.is_none());
     assert!(storage.events.reads.load(Ordering::SeqCst) > reads);
     assert_eq!(runtime.live_cache_stats().unwrap().claims, 1);
-    let mut loaded = author.load(LoadStart::Beginning).await.unwrap().events;
+    let mut loaded = author
+        .load(LoadStart::Beginning, sea_core::BlobTreeHint::default())
+        .await
+        .unwrap()
+        .events;
     for expected in [first, second, third] {
         assert_eq!(
             settles(data(&mut loaded)).await.unwrap().committed.position,
@@ -627,7 +631,10 @@ async fn snapshot_load_handoff_and_subscription_revocation_leave_publisher_and_a
         .publish_snapshot(None, None, Snapshot { root, at_event })
         .await
         .unwrap();
-    let load = author.load(LoadStart::LatestSnapshot).await.unwrap();
+    let load = author
+        .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+        .await
+        .unwrap();
     assert_eq!(load.snapshot.unwrap().at_event.id(), first);
     let mut stream = load.events;
     assert_eq!(runtime.live_cache_stats().unwrap().claims, 0);

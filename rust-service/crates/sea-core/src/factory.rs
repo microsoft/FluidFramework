@@ -8,9 +8,10 @@ use bytes::Bytes;
 
 use crate::storage::{ArchiveStream, LoadStart, Snapshot};
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition, EventSubmission, SeaArchive,
-    SeaAuthorSession, SeaService, SeaSession, SeaSnapshotCoordinator, SessionCommittedEvent,
-    SessionId, SessionLoad, SessionStream, SnapshotCoordination, SnapshotParticipation,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeStream, EventPosition, EventSubmission,
+    SeaArchive, SeaAuthorSession, SeaService, SeaSession, SeaSnapshotCoordinator,
+    SessionCommittedEvent, SessionId, SessionLoad, SessionStream, SnapshotCoordination,
+    SnapshotParticipation,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -129,6 +130,7 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
     fn load<'life0, 'async_trait>(
         &'life0 self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> SessionFuture<
         'async_trait,
         Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>,
@@ -137,7 +139,7 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
         'life0: 'async_trait,
         Self: 'async_trait,
     {
-        self.source.load(start)
+        self.source.load(start, hint)
     }
 
     fn get_snapshot<'life0, 'async_trait>(
@@ -165,15 +167,12 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
         self.source.put_blob(payload)
     }
 
-    fn get_blob<'life0, 'async_trait>(
-        &'life0 self,
-        id: BlobId,
-    ) -> SessionFuture<'async_trait, Result<Bytes, Self::Error>>
-    where
-        'life0: 'async_trait,
-        Self: 'async_trait,
-    {
-        self.source.get_blob(id)
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        self.source.get_blob_trees(roots, hint)
     }
 
     fn put_directory<'life0, 'async_trait>(
@@ -185,17 +184,6 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
         Self: 'async_trait,
     {
         self.source.put_directory(directory)
-    }
-
-    fn get_directory<'life0, 'async_trait>(
-        &'life0 self,
-        id: BlobDirectoryId,
-    ) -> SessionFuture<'async_trait, Result<BlobDirectory, Self::Error>>
-    where
-        'life0: 'async_trait,
-        Self: 'async_trait,
-    {
-        self.source.get_directory(id)
     }
 
     fn resolve_tree<'life0, 'async_trait>(
@@ -312,9 +300,10 @@ mod tests {
     };
 
     use futures_core::Stream;
-    use futures_util::task::noop_waker;
+    use futures_util::{StreamExt, task::noop_waker};
 
     use super::*;
+    use crate::{BlobDirectoryId, BlobId, BlobTreeItem};
     use crate::{
         ClassifiedError, ErrorKind, Event, MonitoredStream, MonitoredStreamItem,
         MonitoredStreamProgress, MonitoredStreamStatus, storage::StorageHandle,
@@ -448,6 +437,8 @@ mod tests {
         failed_load: Arc<std::sync::atomic::AtomicBool>,
         /// Makes a nonpending submit succeed rather than return the sentinel error.
         successful_submit: Arc<std::sync::atomic::AtomicBool>,
+        /// Records the load hint without consuming the independently polled content stream.
+        load_hint: Arc<Mutex<BlobTreeHint>>,
         #[cfg(target_arch = "wasm32")]
         /// Demonstrates that neither the factory nor decorator adds native bounds in browsers.
         local: std::rc::Rc<()>,
@@ -466,6 +457,7 @@ mod tests {
                 pending_load: Arc::default(),
                 failed_load: Arc::default(),
                 successful_submit: Arc::default(),
+                load_hint: Arc::default(),
                 #[cfg(target_arch = "wasm32")]
                 local: std::rc::Rc::default(),
             }
@@ -524,9 +516,11 @@ mod tests {
         async fn load(
             &self,
             start: LoadStart,
+            hint: BlobTreeHint,
         ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>
         {
             self.calls.lock().unwrap().push("load");
+            *self.load_hint.lock().unwrap() = hint;
             assert!(matches!(start, LoadStart::LatestSnapshot));
             if self.pending_load.load(Ordering::SeqCst) {
                 self.pending_operation().await?;
@@ -536,6 +530,10 @@ mod tests {
             }
             Ok(SessionLoad {
                 snapshot: Some(self.snapshot()),
+                content: Box::pin(futures_util::stream::iter([Ok(BlobTreeItem::Blob {
+                    id: BlobId::for_bytes(b"state"),
+                    bytes: Bytes::from_static(b"state"),
+                })])),
                 events: self.read(Some(EventPosition::new(7)), None),
             })
         }
@@ -554,9 +552,15 @@ mod tests {
             Err(self.error.clone())
         }
 
-        async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-            assert_eq!(id, BlobId::for_bytes(b"payload"));
-            Err(self.error.clone())
+        fn get_blob_trees(
+            &self,
+            roots: Vec<BlobTreeId>,
+            hint: BlobTreeHint,
+        ) -> BlobTreeStream<Self::Error> {
+            assert_eq!(hint, BlobTreeHint::default());
+            assert_eq!(roots.len(), 1);
+            let error = self.error.clone();
+            Box::pin(futures_util::stream::once(async { Err(error) }))
         }
 
         async fn put_directory(
@@ -565,11 +569,6 @@ mod tests {
         ) -> Result<Self::BlobHandle, Self::Error> {
             self.calls.lock().unwrap().push("put_directory");
             assert_eq!(directory, BlobDirectory::default());
-            Err(self.error.clone())
-        }
-
-        async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-            assert_eq!(id, BlobDirectoryId::for_encoded_bytes(b"directory"));
             Err(self.error.clone())
         }
 
@@ -742,7 +741,15 @@ mod tests {
             &source.error,
         );
         assert_error(
-            ready(session.get_blob(BlobId::for_bytes(b"payload"))),
+            ready(Box::pin(
+                session
+                    .get_blob_trees(
+                        vec![BlobTreeId::Blob(BlobId::for_bytes(b"payload"))],
+                        BlobTreeHint::default(),
+                    )
+                    .next(),
+            ))
+            .unwrap(),
             &source.error,
         );
         assert_error(
@@ -750,7 +757,17 @@ mod tests {
             &source.error,
         );
         assert_error(
-            ready(session.get_directory(BlobDirectoryId::for_encoded_bytes(b"directory"))),
+            ready(Box::pin(
+                session
+                    .get_blob_trees(
+                        vec![BlobTreeId::Directory(BlobDirectoryId::for_encoded_bytes(
+                            b"directory",
+                        ))],
+                        BlobTreeHint::default(),
+                    )
+                    .next(),
+            ))
+            .unwrap(),
             &source.error,
         );
         assert_error(
@@ -844,8 +861,16 @@ mod tests {
             let address = std::ptr::from_ref(&*stream).cast::<()>();
             *source.stream.lock().unwrap() = Some(stream);
             let events = if load {
-                let loaded = ready(session.load(LoadStart::LatestSnapshot)).unwrap();
+                let hint = BlobTreeHint {
+                    include_descendant_blobs: true,
+                    max_extra_items: 17,
+                };
+                let mut loaded = ready(session.load(LoadStart::LatestSnapshot, hint)).unwrap();
+                assert_eq!(*source.load_hint.lock().unwrap(), hint);
                 let snapshot = loaded.snapshot.unwrap();
+                let content = ready(Box::pin(loaded.content.next())).unwrap().unwrap();
+                assert_eq!(content.id(), snapshot.root.id());
+                assert!(ready(Box::pin(loaded.content.next())).is_none());
                 assert!(Arc::ptr_eq(&snapshot.root.evidence, &source.evidence));
                 assert!(Arc::ptr_eq(&snapshot.at_event.evidence, &source.evidence));
                 loaded.events

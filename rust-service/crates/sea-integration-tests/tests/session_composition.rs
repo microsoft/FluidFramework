@@ -30,9 +30,10 @@ use bytes::Bytes;
 use futures_util::{FutureExt, StreamExt, future::BoxFuture, stream};
 use sea_compression::CompressionSession;
 use sea_core::{
-    BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission,
-    MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession, SeaSession,
-    SeaSnapshotCoordinator, SessionCommittedEvent, SnapshotParticipation,
+    BlobDirectory, BlobTreeHint, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
+    EventSubmission, MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaArchiveExt,
+    SeaAuthorSession, SeaSession, SeaSnapshotCoordinator, SessionCommittedEvent,
+    SnapshotParticipation,
     factory::{OpenedSession, PassThroughFactory, PassThroughSession, SessionFactory},
     storage::{DocumentId, LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
@@ -207,6 +208,7 @@ impl Fixture {
                 archive: self.document.clone(),
                 intent: protocol::ArchiveIntent::Open,
                 reference: None,
+                hint: sea_core::BlobTreeHint::default(),
             },
         )
         .await
@@ -288,11 +290,12 @@ impl SeaConnectionService for TestHost {
     async fn open_event_stream(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<sea_webtransport_server::SeaLoadStreams, protocol::Response> {
         let protocol::Request::OpenEventStream {
             archive,
             version,
             resume_after,
+            hint,
             ..
         } = request
         else {
@@ -305,15 +308,19 @@ impl SeaConnectionService for TestHost {
             document: self.document.to_vec(),
             authority: b"composition-test".to_vec(),
         };
-        let events = self.dispatcher.event_stream(resume_after).await?;
-        Ok(Box::pin(stream::once(async move { opened }).chain(events)))
+        let load = self.dispatcher.event_stream(resume_after, hint).await?;
+        Ok(sea_webtransport_server::SeaLoadStreams {
+            events: Box::pin(stream::once(async move { opened }).chain(load.events)),
+            content: load.content,
+        })
     }
 
     async fn event_stream(
         &self,
         resume_after: Option<u64>,
-    ) -> Result<SeaResponseStream, protocol::Response> {
-        self.dispatcher.event_stream(resume_after).await
+        hint: protocol::LoadingHint,
+    ) -> Result<sea_webtransport_server::SeaLoadStreams, protocol::Response> {
+        self.dispatcher.event_stream(resume_after, hint).await
     }
 
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
@@ -461,7 +468,10 @@ async fn verify_network_factory_facets(
 ) {
     let mut loaded = second
         .session
-        .load(LoadStart::ReplayAtLeastAllAfter(trace.first))
+        .load(
+            LoadStart::ReplayAtLeastAllAfter(trace.first),
+            BlobTreeHint::default(),
+        )
         .await
         .unwrap();
     assert_eq!(
@@ -662,7 +672,10 @@ async fn publish<Session: SeaSession>(
 
 /// Establishes plaintext, snapshot, bounded-history, and live-stream observations.
 async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
-    let mut initial = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    let mut initial = session
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .unwrap();
     assert!(initial.snapshot.is_none());
     let leaf = session
         .put_blob(Bytes::from_static(b"snapshot content"))
@@ -687,7 +700,10 @@ async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
     assert_eq!(delivered.committed.event, submission.event);
     drop(initial.events);
     publish(session, root, first, None).await;
-    let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    let mut loaded = session
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .unwrap();
     let snapshot = loaded.snapshot.unwrap();
     assert_eq!(snapshot.at_event.id(), first);
     assert_eq!(snapshot.root.id(), root);
@@ -740,7 +756,10 @@ async fn check_history<Session: SeaArchive>(session: &Session, trace: &Trace) {
 async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) {
     check_content(session, trace).await;
     check_history(session, trace).await;
-    let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    let mut loaded = session
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .unwrap();
     assert_eq!(loaded.snapshot.unwrap().at_event.id(), trace.first);
     assert_eq!(
         next_event(&mut loaded.events).await.committed.position,
@@ -1109,7 +1128,10 @@ async fn load_peer<Session: SeaArchive>(
     history: &[ExpectedEvent],
     snapshot: Option<&(EventPosition, ContentTree)>,
 ) -> sea_core::ArchiveEventStream<Session::Error> {
-    let mut loaded = peer.load(LoadStart::LatestSnapshot).await.unwrap();
+    let mut loaded = peer
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .unwrap();
     assert_eq!(
         loaded.snapshot.as_ref().map(|value| value.at_event.id()),
         snapshot.map(|(position, _)| *position)
@@ -1144,7 +1166,11 @@ async fn collaborate<Session, Build>(
     Build: for<'fixture> Fn(&'fixture mut Fixture) -> BoxFuture<'fixture, Session>,
 {
     let first = build(fixture).await;
-    let mut first_events = first.load(LoadStart::LatestSnapshot).await.unwrap().events;
+    let mut first_events = first
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .unwrap()
+        .events;
     let mut history: Vec<ExpectedEvent> = Vec::new();
     let mut snapshots: Vec<(EventPosition, ContentTree)> = Vec::new();
     for round in 0..rounds {

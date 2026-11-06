@@ -16,6 +16,8 @@ import type {
 	SeaMemoryService,
 	SeaSignals,
 	SeaSignalEvent,
+	SeaBlobTreeItem,
+	SeaBlobTreeHint,
 } from "./index.js";
 
 /** Values needed from one initialized bundle; never exposed to callers. */
@@ -46,7 +48,37 @@ export function makeOptions(
 	bindings: BindingModule,
 	options: SeaSessionOptions,
 ): Generated.SeaSessionOptions {
-	return new bindings.SeaSessionOptions(options.reference, options.compression ?? false);
+	const hint = normalizedHint(options.loadingHint);
+	return new bindings.SeaSessionOptions(
+		options.reference,
+		options.compression ?? false,
+		hint.includeDescendantBlobs,
+		hint.maxExtraItems,
+	);
+}
+
+/** Rejects invalid budgets before generated bindings can truncate them to u32. */
+function normalizedHint(hint?: SeaBlobTreeHint): Required<SeaBlobTreeHint> {
+	const maxExtraItems = hint?.maxExtraItems ?? 0;
+	if (!Number.isInteger(maxExtraItems) || maxExtraItems < 0 || maxExtraItems > 0xffff_ffff)
+		throw new Error("maxExtraItems must be an unsigned 32-bit integer");
+	return { includeDescendantBlobs: hint?.includeDescendantBlobs ?? false, maxExtraItems };
+}
+
+/** Releases all generated identities in one content value. */
+function copyContent(value: unknown): SeaBlobTreeItem {
+	const item = value as SeaBlobTreeItem;
+	const id = copyIdentity(item.id as Generated.SeaTreeId);
+	return item.kind === "blob"
+		? { ...item, id }
+		: {
+				...item,
+				id,
+				entries: item.entries.map((entry) => ({
+					name: entry.name,
+					child: copyIdentity(entry.child as Generated.SeaTreeId),
+				})),
+			};
 }
 
 /** Creates an independent service while retaining admitted asynchronous opens until settled. */
@@ -309,6 +341,18 @@ export function wrapSession(
 			}),
 		announceMembership: (metadata) => invokeAuthor(() => session.announceMembership(metadata)),
 		putBlob: (payload) => invoke(async () => copyIdentity(await session.putBlob(payload))),
+		getBlobTrees(roots, options) {
+			requireOpen();
+			const hint = normalizedHint(options);
+			return wrapStream(
+				session.getBlobTrees(
+					roots.map((root) => generatedIdentity(bindings, root)),
+					hint.includeDescendantBlobs,
+					hint.maxExtraItems,
+				),
+				copyContent,
+			);
+		},
 		getBlob: (id) =>
 			invoke(async () => {
 				const tree = generatedIdentity(bindings, id);
@@ -357,8 +401,22 @@ export function wrapSession(
 			requireOpen();
 			return wrapStream(session.read(after, stopAfter), copyResult);
 		},
-		load: (required) =>
-			invoke(async () => wrapStream(await session.load(required), copyResult)),
+		load: (required, options) =>
+			invoke(async () => {
+				const hint = normalizedHint(options);
+				const loaded = (await session.load(
+					required,
+					hint.includeDescendantBlobs,
+					hint.maxExtraItems,
+				)) as {
+					events: Generated.SeaEventStream;
+					content: Generated.SeaEventStream;
+				};
+				return {
+					events: wrapStream(loaded.events, copyResult),
+					content: wrapStream(loaded.content, copyContent),
+				};
+			}),
 		getSnapshot: (required) =>
 			invoke(async () => {
 				const result: unknown = await session.getSnapshot(required);

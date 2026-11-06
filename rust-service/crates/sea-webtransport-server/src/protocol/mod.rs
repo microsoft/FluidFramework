@@ -10,7 +10,11 @@
 //! Extraction would also define a public boundary for the typed document-host bridge and relocate
 //! the shared liveness configuration and lifecycle error boundary.
 
-use std::{pin::Pin, sync::Arc};
+use std::{
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll},
+};
 
 use async_trait::async_trait;
 use futures_core::Stream;
@@ -46,6 +50,22 @@ pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response 
 /// Response stream returned by a connection-scoped Sea service.
 pub type SeaResponseStream = Pin<Box<dyn Stream<Item = protocol::Response> + Send + 'static>>;
 
+/// Independently consumed event recovery and optional content from the same selected load.
+pub struct SeaLoadStreams {
+    /// Snapshot, recovery progress, and live events.
+    pub events: SeaResponseStream,
+    /// Best-effort snapshot content, ending naturally or with a truncation completion marker.
+    pub content: SeaResponseStream,
+}
+
+impl Stream for SeaLoadStreams {
+    type Item = protocol::Response;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.events.as_mut().poll_next(cx)
+    }
+}
+
 /// Sea protocol dispatch for a connection or an immutable session binding.
 /// Transport loops bind author, content, and snapshot streams before invoking session operations.
 #[async_trait]
@@ -79,13 +99,14 @@ pub trait SeaConnectionService: Send + Sync {
     async fn open_event_stream(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response>;
+    ) -> Result<SeaLoadStreams, protocol::Response>;
 
     /// Opens the gap-free recovery and live event stream for an established session.
     async fn event_stream(
         &self,
         resume_after: Option<u64>,
-    ) -> Result<SeaResponseStream, protocol::Response>;
+        hint: protocol::LoadingHint,
+    ) -> Result<SeaLoadStreams, protocol::Response>;
 
     /// Acknowledges a bound author-stream opening or handles one ordered author operation.
     ///

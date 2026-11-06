@@ -1605,7 +1605,11 @@ async fn shutdown_and_session_close_work_when_backend_streams_retain_writer_owne
     let first = member(&runtime).await;
     let second = member(&runtime).await;
     let mut first_read = first.read(None, None);
-    let mut second_read = second.load(LoadStart::Beginning).await.unwrap().events;
+    let mut second_read = second
+        .load(LoadStart::Beginning, sea_core::BlobTreeHint::default())
+        .await
+        .unwrap()
+        .events;
     first_read.next().await.unwrap().unwrap();
     second_read.next().await.unwrap().unwrap();
     first.close().await.unwrap();

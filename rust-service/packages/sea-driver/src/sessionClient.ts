@@ -14,6 +14,8 @@ import type {
 	SeaSnapshotCoordination,
 	SeaStream,
 	SeaTreeId,
+	SeaBlobTreeHint,
+	SeaBlobTreeItem,
 } from "@fluidframework/sea-typescript/internal";
 
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -41,6 +43,18 @@ export type SeaSessionFactory = (
  * @internal
  */
 export type SeaSnapshotParticipation = "readOnly" | "seaSelected" | "clientSelected";
+
+/** Bounded decoded-content retention and opt-in direct-load prefetch.
+ * @internal
+ */
+export interface SeaSessionDriverOptions {
+	/** Sent identically to the opening handshake and its direct load. Defaults to lazy loading. */
+	readonly loadingHint?: SeaBlobTreeHint;
+	/** Maximum retained decoded bytes, including directory names and identities. Defaults to 16 MiB. */
+	readonly contentCacheBytes?: number;
+	/** Maximum retained content objects. Defaults to 1024. */
+	readonly contentCacheObjects?: number;
+}
 
 /** One directory being assembled from a flattened Fluid summary. */
 interface DirectoryNode {
@@ -114,6 +128,17 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private eventResumeAfter: bigint | undefined;
 	private openingReference: bigint | undefined;
 	private openingLoad: ReturnType<SeaDriverClient["latestSnapshot"]> | undefined;
+	private contentStream: SeaStream<SeaBlobTreeItem> | undefined;
+	private contentTask: Promise<void> | undefined;
+	private contentFailure: { readonly error: unknown } | undefined;
+	private readonly contentObservers = new Set<(error: unknown) => void>();
+	private readonly contentCache = new Map<string, { item: SeaBlobTreeItem; size: number }>();
+	private contentBytes = 0;
+	private contentGeneration = 0;
+	private readonly cacheBytes: number;
+	private readonly cacheObjects: number;
+	private readonly loadingHint: SeaBlobTreeHint;
+	private readonly subscriptions = new Set<SeaStream<SeaLoadResult>>();
 	private pendingEventItem: SeaLoadResult | undefined;
 	private announcedPosition: bigint | undefined;
 	/** Snapshot registration owning this session's publication authority. */
@@ -132,7 +157,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	public constructor(
 		private readonly factory: SeaSessionFactory,
 		private readonly participation: SeaSnapshotParticipation,
-	) {}
+		options: SeaSessionDriverOptions = {},
+	) {
+		this.loadingHint = { ...options.loadingHint };
+		this.cacheBytes = options.contentCacheBytes ?? 16 * 1024 * 1024;
+		this.cacheObjects = options.contentCacheObjects ?? 1024;
+		for (const limit of [this.cacheBytes, this.cacheObjects]) {
+			if (!Number.isSafeInteger(limit) || limit < 0)
+				throw new Error("content cache limits must be nonnegative safe integers");
+		}
+	}
 
 	/** Requires live membership for all archive and author operations. */
 	private current(): SeaSession {
@@ -237,6 +271,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const reference = decodePosition(resumeAfter);
 		this.session = await this.factory(document, {
 			...(reference === undefined ? {} : { reference }),
+			...(direct ? { loadingHint: this.loadingHint } : {}),
 		});
 		this.sessionIdentity = this.session.sessionId.slice();
 		try {
@@ -334,9 +369,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		if (!this.direct || session !== this.session)
 			throw new Error("opening snapshot requires a live direct session");
 		this.openingLoad ??= (async () => {
-			const stream = await session.load(this.openingReference);
+			const loaded = await session.load(this.openingReference, this.loadingHint);
+			if (session !== this.session) {
+				loaded.events.cancel();
+				loaded.content.cancel();
+				throw new Error("SEA opening load was cancelled");
+			}
+			const stream = loaded.events;
+			this.startContent(loaded.content);
 			this.eventStream = stream;
-			const first = await stream.next();
+			const first = await this.observeContent(stream.next());
 			if (first === undefined)
 				throw new Error("SEA opening load ended before its initial state");
 			const snapshot = first.kind === "snapshot" ? first : undefined;
@@ -351,6 +393,124 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					};
 		})();
 		return this.openingLoad;
+	}
+
+	/** Drains prefetch independently of event delivery; errors remain observable after startup. */
+	private startContent(stream: SeaStream<SeaBlobTreeItem>): void {
+		this.contentStream = stream;
+		this.contentTask = (async () => {
+			try {
+				for (;;) {
+					const item = await stream.next();
+					if (this.contentStream !== stream || item === undefined) return;
+					this.cacheContent(item);
+				}
+			} catch (error) {
+				if (this.contentStream === stream) {
+					this.contentFailure = { error };
+					for (const observer of this.contentObservers) observer(error);
+					this.contentObservers.clear();
+					throw error;
+				}
+			} finally {
+				stream.cancel();
+				if (this.contentStream === stream) {
+					this.contentStream = undefined;
+					this.contentObservers.clear();
+				}
+			}
+		})();
+		void this.contentTask.catch(() => {});
+	}
+
+	private observeContent<Result>(result: Promise<Result>): Promise<Result> {
+		if (this.contentFailure !== undefined) {
+			void result.catch(() => {});
+			return Promise.reject(this.contentFailure.error);
+		}
+		if (this.contentStream === undefined) return result;
+		return new Promise<Result>((resolve, reject) => {
+			const failed = (error: unknown): void => {
+				this.contentObservers.delete(failed);
+				reject(error);
+			};
+			this.contentObservers.add(failed);
+			void result.then((value) => {
+				this.contentObservers.delete(failed);
+				resolve(value);
+			}, failed);
+		});
+	}
+
+	private checkContentFailure(): void {
+		if (this.contentFailure !== undefined) throw this.contentFailure.error;
+	}
+
+	/** Bounds both retained bytes and objects without assuming unique stream items or coverage. */
+	private cacheContent(item: SeaBlobTreeItem): void {
+		const key = contentKey(item.id);
+		const previous = this.contentCache.get(key);
+		if (previous !== undefined) {
+			this.contentBytes -= previous.size;
+			this.contentCache.delete(key);
+		}
+		const size =
+			item.id.bytes.length +
+			(item.kind === "blob"
+				? item.bytes.length
+				: item.entries.reduce(
+						(total, entry) =>
+							total + encoder.encode(entry.name).length + entry.child.bytes.length,
+						0,
+					));
+		if (size > this.cacheBytes || this.cacheObjects === 0) return;
+		while (
+			this.contentBytes + size > this.cacheBytes ||
+			this.contentCache.size >= this.cacheObjects
+		) {
+			const oldest = this.contentCache.entries().next().value;
+			if (oldest === undefined) break;
+			this.contentCache.delete(oldest[0]);
+			this.contentBytes -= oldest[1].size;
+		}
+		this.contentCache.set(key, { item: copyContent(item), size });
+		this.contentBytes += size;
+	}
+
+	/** Missing or evicted descendants always fall back to an explicit root request. */
+	private async readContent(session: SeaSession, id: SeaTreeId): Promise<SeaBlobTreeItem> {
+		const generation = this.contentGeneration;
+		this.checkContentFailure();
+		let cached = this.contentCache.get(contentKey(id));
+		if (cached === undefined && this.contentTask !== undefined) {
+			await this.contentTask;
+			cached = this.contentCache.get(contentKey(id));
+		}
+		this.checkContentFailure();
+		if (cached !== undefined) return copyContent(cached.item);
+		const stream = session.getBlobTrees([id]);
+		try {
+			const item = await this.observeContent(stream.next());
+			if (
+				item === undefined ||
+				item.kind !== id.kind ||
+				contentKey(item.id) !== contentKey(id)
+			)
+				throw new Error("SEA content response omitted its requested root");
+			if (generation === this.contentGeneration) this.cacheContent(item);
+			return copyContent(item);
+		} finally {
+			stream.cancel();
+		}
+	}
+
+	private async readDirectory(
+		session: SeaSession,
+		id: SeaTreeId,
+	): Promise<readonly SeaDirectoryEntry[]> {
+		const item = await this.readContent(session, id);
+		if (item.kind !== "directory") throw new Error("SEA content is not a directory");
+		return item.entries;
 	}
 
 	/** Opens the neutral relay without adding signal traffic to event history. */
@@ -582,7 +742,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				const item =
 					opening && this.pendingEventItem !== undefined
 						? this.pendingEventItem
-						: await stream.next();
+						: await this.observeContent(stream.next());
 				if (opening) this.pendingEventItem = undefined;
 				if (item?.kind === "progress" && item.status === "AwaitingNewItems") {
 					const announced = opening ? (this.announcedPosition ?? -1n) : -1n;
@@ -633,14 +793,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			this.eventResumeAfter = start;
 		}
 		const stream = this.eventStream;
+		const content = this.contentStream;
 		if (stream === undefined) throw new Error("SEA event stream is not open");
 		this.eventStream = undefined;
+		this.subscriptions.add(stream);
 		let pending = this.pendingEventItem;
 		this.pendingEventItem = undefined;
 		return {
 			next: async () => {
 				for (;;) {
-					const item = pending ?? (await stream.next());
+					const item = pending ?? (await this.observeContent(stream.next()));
 					pending = undefined;
 					if (item === undefined) throw new Error("SEA subscription ended");
 					if (item.kind === "event") {
@@ -649,7 +811,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					}
 				}
 			},
-			cancel: () => stream.cancel(),
+			cancel: () => {
+				this.subscriptions.delete(stream);
+				stream.cancel();
+				content?.cancel();
+			},
 		};
 	}
 
@@ -661,9 +827,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Fetches a blob through the configured session stack. */
 	public fetchBlob(digest: Uint8Array): Promise<Uint8Array> {
-		return this.withArchiveSession((session) =>
-			session.getBlob({ kind: "blob", bytes: digest }),
-		);
+		return this.withArchiveSession(async (session) => {
+			const item = await this.readContent(session, { kind: "blob", bytes: digest });
+			if (item.kind !== "blob") throw new Error("SEA content is not a blob");
+			return item.bytes;
+		});
 	}
 
 	/** Converts a flattened Fluid summary into immutable SEA directories. */
@@ -703,6 +871,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const archiveSession = this.archiveSession;
 		this.archiveSession = undefined;
 		this.sessionIdentity = undefined;
+		this.contentStream?.cancel();
+		this.contentStream = undefined;
+		this.contentTask = undefined;
+		this.contentFailure = undefined;
+		this.contentObservers.clear();
+		this.contentCache.clear();
+		this.contentBytes = 0;
+		this.contentGeneration++;
+		for (const stream of this.subscriptions) stream.cancel();
+		this.subscriptions.clear();
 		this.eventStream?.cancel();
 		this.eventStream = undefined;
 		this.eventResumeAfter = undefined;
@@ -861,7 +1039,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			const results = await Promise.allSettled(
 				batch.map(async (item) => ({
 					prefix: item.prefix,
-					children: await session.getDirectory(item.directory),
+					children: await this.readDirectory(session, item.directory),
 				})),
 			);
 			for (const result of results) {
@@ -986,4 +1164,22 @@ function decodePosition(position?: Uint8Array): bigint | undefined {
 	return new DataView(position.buffer, position.byteOffset, position.byteLength).getBigUint64(
 		0,
 	);
+}
+
+function contentKey(id: SeaTreeId): string {
+	return `${id.kind}:${bytesKey(id.bytes)}`;
+}
+
+function copyContent(item: SeaBlobTreeItem): SeaBlobTreeItem {
+	const id = { kind: item.id.kind, bytes: item.id.bytes.slice() };
+	return item.kind === "blob"
+		? { kind: "blob", id, bytes: item.bytes.slice() }
+		: {
+				kind: "directory",
+				id,
+				entries: item.entries.map((entry) => ({
+					name: entry.name,
+					child: { kind: entry.child.kind, bytes: entry.child.bytes.slice() },
+				})),
+			};
 }

@@ -211,7 +211,7 @@ export interface SeaServiceOptions extends ServiceOptions {
 
 // @internal
 export class SeaSessionDriverClient implements SeaDriverClient {
-    constructor(factory: SeaSessionFactory, participation: SeaSnapshotParticipation);
+    constructor(factory: SeaSessionFactory, participation: SeaSnapshotParticipation, options?: SeaSessionDriverOptions);
     announceMembership(metadata: Uint8Array): Promise<void>;
     readonly applicationSequenceOffset = 0;
     get canPublishSnapshot(): boolean;
@@ -235,6 +235,13 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
+}
+
+// @internal
+export interface SeaSessionDriverOptions {
+    readonly contentCacheBytes?: number;
+    readonly contentCacheObjects?: number;
+    readonly loadingHint?: SeaBlobTreeHint;
 }
 
 // @internal

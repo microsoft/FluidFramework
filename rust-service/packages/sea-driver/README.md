@@ -3,6 +3,77 @@
 Use this package to connect a Fluid loader to the Sea service through an injected `SeaDriverClient`.
 It implements document services, summary and blob storage, bounded delta storage, and delta connections with explicit disconnect, reconnect, and submission recovery.
 
+## Direct-load content prefetch
+
+`SeaSessionDriverClient` accepts an optional third argument with `loadingHint`, `contentCacheBytes`, and `contentCacheObjects`.
+Direct loads send the same hint during remote opening and loading, and consume the selected snapshot's content concurrently with events.
+The verified, decoded-content cache serves both summary directories and blob reads.
+It retains at most 16 MiB and 1024 objects by default; either limit can be set to zero to disable retention.
+Missing or evicted items use explicit `getBlobTrees` requests.
+Content-stream errors are surfaced through content reads and event delivery, not hidden by fallback requests.
+Disconnect and recovery cancel both streams and clear the cache.
+Prefetch is opt-in; the Fluid projection remains separate and unchanged.
+
+```typescript
+import {
+	SeaSessionDriverClient,
+	type SeaSessionFactory,
+} from "@fluidframework/sea-driver/internal";
+
+function createDirectClient(openSession: SeaSessionFactory): SeaSessionDriverClient {
+	return new SeaSessionDriverClient(openSession, "seaSelected", {
+		loadingHint: { includeDescendantBlobs: true, maxExtraItems: 256 },
+		contentCacheBytes: 16 * 1024 * 1024,
+		contentCacheObjects: 1024,
+	});
+}
+```
+
+Without `loadingHint`, `includeDescendantBlobs` defaults to `false` and `maxExtraItems` defaults to `0`.
+The direct editor opts into the example hint; this is not a global driver default.
+The factory must preserve opening options, including the hint and event reference.
+See the neutral [`load` and `getBlobTrees` examples](../sea-typescript/README.md#loading-and-fetching-content) for the underlying stream API.
+
+### Cache accounting
+
+Both limits apply per driver client and must be nonnegative safe integers.
+The byte default is exactly 16,777,216 bytes.
+An object is one retained typed blob or directory identity, not an individual directory entry.
+Blob accounting includes the identity digest and the decoded payload length.
+Directory accounting includes its identity digest, each child identity digest, and the UTF-8 byte length of each child name.
+These are retained-content budgets, not total JavaScript heap limits: map keys, object overhead, in-flight responses, and copies returned to callers are not included.
+In particular, the byte limit applies after decompression, not to the smaller stored or wire representation.
+Decoded blobs are not rehashed against their stored identities.
+
+An item larger than the byte budget is returned to its caller but is not retained.
+Insertion evicts the oldest inserted items until both budgets fit.
+Cache reads do not refresh insertion order; a repeated content delivery replaces its existing entry and refreshes that entry's insertion order.
+The cache uses typed identities, copies retained and returned data, and does not treat duplicate deliveries as stream completion.
+Concurrent cache misses are not coalesced into one request.
+
+### Startup coordination and measurement
+
+`loadDirectSnapshot` calls `load` with the opening event reference and hint, starts the content drain, then reads the first event-stream item.
+It returns when the selected snapshot or initial event/progress item is available, not when content prefetch is complete.
+It does not issue another snapshot-selection request.
+The same event stream continues through catch-up and live delivery while content drains independently.
+
+A cache hit returns immediately after checking for a recorded content failure.
+A cache miss waits for the initial content stream to finish, then checks the cache again.
+It does not wake early when that particular item arrives.
+If the item is still missing, including after normal prefetch truncation or eviction, it issues a single-root `getBlobTrees` request with the default lazy hint.
+Directory traversal admits at most four independent reads per batch.
+Measure snapshot availability, content-drain completion, fallback request count, wire bytes, and decoded retained-content bytes separately.
+To observe content-drain completion, wrap the neutral factory's returned `load().content.next()` and record its `undefined` result.
+Neither `loadDirectSnapshot` completion nor zero extra fetches alone proves that all snapshot descendants are retained.
+
+Content errors reject pending observed reads and remain visible to later content and event reads.
+They are not converted into cache misses or hidden by a fallback request.
+Disconnect and membership replacement cancel owned event and content streams and clear both cached data and recorded content failures.
+Cancelling an old subscription cannot cancel a replacement session's content stream.
+Delta disconnection invalidates both delivery pumps before closing either stream.
+Reconnect waits for the same outstanding signal and event cleanup, so expected cancellation is not reported as a live synchronization failure.
+
 ## Entry Point
 
 All exports are `@internal`; there is no supported public API yet.

@@ -173,6 +173,7 @@ fn event_opening() -> Request {
         archive: b"archive".to_vec(),
         intent: protocol::ArchiveIntent::Open,
         resume_after: None,
+        hint: protocol::LoadingHint::default(),
     }
 }
 
@@ -252,14 +253,11 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
 }
 
 #[tokio::test(start_paused = true)]
-async fn opening_send_and_finish_are_bounded_and_cancelled() {
-    for stage in ["open", "send", "finish"] {
+async fn event_opening_admission_send_and_receive_are_bounded_and_cancelled() {
+    for stage in ["open", "send", "receive"] {
         let (mut client, _peer, calls) = probe();
         client.transport.stall_open = stage == "open";
         calls.stall_send.store(stage == "send", Ordering::Relaxed);
-        calls
-            .stall_finish
-            .store(stage == "finish", Ordering::Relaxed);
         let start = Instant::now();
         assert!(matches!(
             (client.open_event_stream(event_opening()).await)
@@ -270,6 +268,26 @@ async fn opening_send_and_finish_are_bounded_and_cancelled() {
         assert_eq!(Instant::now() - start, BUDGET);
         assert_eq!(calls.cancelled.load(Ordering::Relaxed), stage != "open");
     }
+}
+
+#[tokio::test(start_paused = true)]
+async fn event_opening_keeps_the_control_direction_open() {
+    let (client, peer, calls) = probe();
+    calls.stall_finish.store(true, Ordering::Relaxed);
+    peer.send(frame(
+        StreamRole::Event,
+        &Response::EventStreamOpened {
+            session: 1,
+            document: vec![2],
+            authority: vec![3; 32],
+        },
+    ))
+    .unwrap();
+    let start = Instant::now();
+    let _events = client.open_event_stream(event_opening()).await.unwrap();
+    assert_eq!(Instant::now(), start);
+    assert!(!calls.cancelled.load(Ordering::Relaxed));
+    assert_eq!(calls.writes.lock().unwrap().len(), 1);
 }
 
 #[tokio::test(start_paused = true)]
@@ -470,7 +488,10 @@ async fn content_cleanup_failure_preserves_nonmutating_timeout() {
     let mut content = client.open_content_stream().await.unwrap();
     calls.fail_cancel.store(true, Ordering::Relaxed);
     let error = content
-        .request(Request::GetBlob { id: [0; 32] })
+        .request(Request::GetBlobTrees {
+            roots: vec![protocol::TreeId::Blob([0; 32])],
+            hint: protocol::LoadingHint::default(),
+        })
         .await
         .unwrap_err();
     assert!(matches!(error.reason(), ClientErrorReason::Timeout));
@@ -575,12 +596,11 @@ async fn cancelled_cleanup_is_attempted_again_on_terminal_reuse() {
 }
 
 #[tokio::test(start_paused = true)]
-async fn opening_finish_timeout_retains_cleanup_failure_without_mutation_ambiguity() {
+async fn event_opening_receive_timeout_retains_cleanup_failure_without_mutation_ambiguity() {
     let (client, _peer, calls) = probe();
-    calls.stall_finish.store(true, Ordering::Relaxed);
     calls.fail_cancel.store(true, Ordering::Relaxed);
     let Err(error) = client.open_event_stream(event_opening()).await else {
-        panic!("opening finish must time out");
+        panic!("opening receive must time out");
     };
     assert!(matches!(error.reason(), ClientErrorReason::Timeout));
     assert_cleanup_failure(error, sea_core::ErrorKind::Unavailable);
@@ -608,11 +628,21 @@ async fn content_requires_completion_within_one_budget() {
     peer.send(frame(StreamRole::Content, &Response::Acknowledged))
         .unwrap();
     let mut content = client.open_content_stream().await.unwrap();
-    peer.send(frame(StreamRole::Content, &Response::Blob(vec![7])))
-        .unwrap();
+    peer.send(frame(
+        StreamRole::Content,
+        &Response::BlobTree {
+            id: protocol::TreeId::Blob([0; 32]),
+            payload: vec![7],
+        },
+    ))
+    .unwrap();
+    let request = Request::GetBlobTrees {
+        roots: vec![protocol::TreeId::Blob([0; 32])],
+        hint: protocol::LoadingHint::default(),
+    };
     let start = Instant::now();
     assert!(matches!(
-        (content.request(Request::GetBlob { id: [0; 32] }).await)
+        (content.request(request.clone()).await)
             .as_ref()
             .map_err(super::ClientError::reason),
         Err(ClientErrorReason::Timeout)
@@ -620,7 +650,7 @@ async fn content_requires_completion_within_one_budget() {
     assert_eq!(Instant::now() - start, BUDGET);
     assert!(calls.cancelled.load(Ordering::Relaxed));
     assert!(matches!(
-        (content.request(Request::GetBlob { id: [0; 32] }).await)
+        (content.request(request).await)
             .as_ref()
             .map_err(super::ClientError::reason),
         Err(ClientErrorReason::State(ClientStateError::Closed))
@@ -633,16 +663,22 @@ async fn finite_requests_reset_between_exchanges_but_not_between_write_and_read(
     peer.send(frame(StreamRole::Content, &Response::Acknowledged))
         .unwrap();
     let mut content = client.open_content_stream().await.unwrap();
-    let request = Request::GetBlob { id: [0; 32] };
+    let request = Request::GetBlobTrees {
+        roots: vec![protocol::TreeId::Blob([0; 32])],
+        hint: protocol::LoadingHint::default(),
+    };
+    let response = Response::BlobTree {
+        id: protocol::TreeId::Blob([0; 32]),
+        payload: vec![7],
+    };
     for _ in 0..2 {
         advance(BUDGET * 2).await;
-        peer.send(frame(StreamRole::Content, &Response::Blob(vec![7])))
-            .unwrap();
+        peer.send(frame(StreamRole::Content, &response)).unwrap();
         peer.send(frame(StreamRole::Content, &Response::ResponseComplete))
             .unwrap();
         assert_eq!(
             content.request(request.clone()).await.unwrap(),
-            vec![Response::Blob(vec![7])]
+            vec![response.clone()]
         );
     }
     calls.stall_send.store(true, Ordering::Relaxed);

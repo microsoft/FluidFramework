@@ -103,6 +103,7 @@ impl SessionFactory for WebTransportSessionFactory {
             archive: self.document.as_bytes().clone(),
             intent: protocol::ArchiveIntent::Open,
             reference,
+            hint: sea_core::BlobTreeHint::default(),
         };
         #[cfg(not(target_arch = "wasm32"))]
         let session = NativeSeaClient::connect(
@@ -130,7 +131,7 @@ impl SessionFactory for WebTransportSessionFactory {
 mod tests {
     use super::*;
     use bytes::Bytes;
-    use sea_core::SeaAuthorSession as _;
+    use sea_core::{BlobTreeHint, SeaAuthorSession as _};
     use std::time::Duration;
     use wtransport::{Endpoint, Identity, ServerConfig};
 
@@ -196,6 +197,7 @@ mod tests {
                         .unwrap();
                     tasks.spawn(async move {
                         let (mut events, mut opening) = connection.accept_bi().await.unwrap();
+                        let hint = protocol::LoadingHint::encode(BlobTreeHint::default()).unwrap();
                         assert_eq!(
                             request(&mut opening, protocol::StreamRole::Event).await,
                             protocol::Request::OpenEventStream {
@@ -203,6 +205,7 @@ mod tests {
                                 archive: b"factory-document".to_vec(),
                                 intent: protocol::ArchiveIntent::Open,
                                 resume_after: reference,
+                                hint,
                             }
                         );
                         respond(

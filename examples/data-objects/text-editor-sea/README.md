@@ -4,6 +4,8 @@ Minimal sample demonstrating direct SharedTree integration with the SEA Rust ser
 Unlike `@fluid-example/text-editor`, this app does not use a Fluid container or select between service clients.
 It connects each simulated user directly through `@fluidframework/sea-tree` to the SEA WebSocket server on port 8081.
 The app uses `ws://localhost:8081/sea/websocket` locally and derives the corresponding secure forwarded URL when it runs in GitHub Codespaces.
+Direct clients explicitly request up to 256 additional snapshot content items, including descendant blobs.
+The driver consumes this content alongside event delivery and retains it in a bounded cache; missing or evicted items load on demand.
 
 ## Getting Started
 

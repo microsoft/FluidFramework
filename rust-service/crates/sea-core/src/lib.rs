@@ -4,6 +4,7 @@ use std::error::Error;
 
 pub mod archive;
 pub mod blob;
+pub mod blob_tree;
 pub mod factory;
 pub mod monitored_stream;
 pub mod policy;
@@ -18,6 +19,10 @@ pub use archive::{
     SessionStream, ValueError,
 };
 pub use blob::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
+pub use blob_tree::{
+    BlobTreeHint, BlobTreeItem, BlobTreeReadError, BlobTreeStream, MAX_BLOB_TREE_BYTES,
+    MAX_BLOB_TREE_ITEMS, MAX_BLOB_TREE_ROOTS, MAX_BLOB_TREE_WORK, SeaArchiveExt,
+};
 pub use monitored_stream::{
     BoxMonitoredStream, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus, boxed_monitored_stream, map_monitored_stream,

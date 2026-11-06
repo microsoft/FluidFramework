@@ -205,9 +205,10 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::too_many_lines)]
     async fn configured_native_client_times_out_and_resets_a_stalled_content_request() {
         use crate::protocol::{self, Response, StreamRole};
-        use sea_core::session::SeaArchive as _;
+        use sea_core::SeaArchiveExt as _;
 
         timeout(Duration::from_secs(10), async {
             let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
@@ -251,7 +252,7 @@ mod tests {
                 let (_content_send, mut content_receive) = peer_open_content(&connection).await;
                 assert_eq!(
                     peer_request(&mut content_receive).await.kind,
-                    protocol::MessageKind::GetBlob
+                    protocol::MessageKind::GetBlobTrees
                 );
                 let error = content_receive
                     .read(&mut [0; 1])
@@ -264,9 +265,17 @@ mod tests {
                 let (mut send, mut receive) = peer_open_content(&connection).await;
                 assert_eq!(
                     peer_request(&mut receive).await.kind,
-                    protocol::MessageKind::GetBlob
+                    protocol::MessageKind::GetBlobTrees
                 );
-                peer_response(&mut send, StreamRole::Content, &Response::Blob(vec![1])).await;
+                peer_response(
+                    &mut send,
+                    StreamRole::Content,
+                    &Response::BlobTree {
+                        id: protocol::TreeId::Blob(*sea_core::BlobId::for_bytes(&[1]).as_bytes()),
+                        payload: vec![1],
+                    },
+                )
+                .await;
                 peer_response(&mut send, StreamRole::Content, &Response::ResponseComplete).await;
                 // Keep the connection alive until the replacement request has been consumed.
                 let _ = receive.read(&mut [0; 1]).await;
@@ -283,13 +292,19 @@ mod tests {
                         archive: bytes::Bytes::from_static(b"archive"),
                         intent: protocol::ArchiveIntent::Open,
                         reference: None,
+                        hint: sea_core::BlobTreeHint::default(),
                     },
                 )
                 .await
                 .unwrap();
-                let id = sea_core::BlobId::from_bytes(&[0; 32]).unwrap();
+                let id = sea_core::BlobId::for_bytes(&[1]);
+                let error = client.get_blob(id).await.unwrap_err();
+                let source = std::error::Error::source(&error)
+                    .unwrap()
+                    .downcast_ref::<crate::SeaClientError>()
+                    .unwrap();
                 assert!(matches!(
-                    client.get_blob(id).await.unwrap_err().reason(),
+                    source.reason(),
                     crate::SeaClientErrorReason::Transport(WebTransportError::Timeout)
                 ));
                 assert_eq!(

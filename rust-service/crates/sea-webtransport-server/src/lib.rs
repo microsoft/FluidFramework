@@ -15,7 +15,8 @@ pub use websocket::WebSocketServer;
 
 pub use host::{DocumentHost, DocumentHostError, HostError};
 pub use protocol::{
-    SeaConnectionService, SeaProtocolHost, SeaResponseStream, SeaServiceHost, SessionDispatcher,
+    SeaConnectionService, SeaLoadStreams, SeaProtocolHost, SeaResponseStream, SeaServiceHost,
+    SessionDispatcher,
 };
 pub use resource_policy::ReaderShedding;
 pub use server::{

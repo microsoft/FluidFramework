@@ -17,8 +17,8 @@ use tokio::{sync::Mutex, time::sleep};
 
 use super::error_response;
 use crate::{
-    DocumentHost, LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
-    SessionDecorator, SessionDispatcher,
+    DocumentHost, LivenessPolicy, SeaConnectionService, SeaLoadStreams, SeaResponseStream,
+    SeaServiceHost, SessionDecorator, SessionDispatcher,
 };
 
 /// Backend-independent document/session operations needed by the transport host.
@@ -285,7 +285,7 @@ impl SeaConnectionService for HostedConnection {
     async fn open_event_stream(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<SeaLoadStreams, protocol::Response> {
         #[cfg(test)]
         self.host
             .inner
@@ -297,6 +297,7 @@ impl SeaConnectionService for HostedConnection {
             intent,
 
             resume_after,
+            hint,
         } = request
         {
             if version != protocol::PROTOCOL_VERSION {
@@ -330,8 +331,11 @@ impl SeaConnectionService for HostedConnection {
             });
             #[cfg(test)]
             self.host.inner.trace.record("event stream: response ready");
-            let recovery = stream::once(open_recovery_stream(service, resume_after)).flatten();
-            return Ok(Box::pin(opened.chain(recovery)));
+            let recovery = service.event_stream(resume_after, hint).await?;
+            return Ok(SeaLoadStreams {
+                events: Box::pin(opened.chain(recovery.events)),
+                content: recovery.content,
+            });
         }
         Err(invalid("event stream requires OpenEventStream"))
     }
@@ -339,7 +343,8 @@ impl SeaConnectionService for HostedConnection {
     async fn event_stream(
         &self,
         _resume_after: Option<u64>,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+        _hint: protocol::LoadingHint,
+    ) -> Result<SeaLoadStreams, protocol::Response> {
         Err(invalid("event stream must be opened with OpenEventStream"))
     }
 
@@ -440,15 +445,16 @@ impl SeaConnectionService for HostedSession {
     async fn open_event_stream(
         &self,
         _request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<SeaLoadStreams, protocol::Response> {
         Err(invalid("event stream must be opened by the service host"))
     }
 
     async fn event_stream(
         &self,
         resume_after: Option<u64>,
-    ) -> Result<SeaResponseStream, protocol::Response> {
-        self.service.event_stream(resume_after).await
+        hint: protocol::LoadingHint,
+    ) -> Result<SeaLoadStreams, protocol::Response> {
+        self.service.event_stream(resume_after, hint).await
     }
 
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
@@ -511,16 +517,6 @@ fn new_authority() -> Vec<u8> {
     authority
 }
 
-async fn open_recovery_stream(
-    service: Arc<dyn SeaConnectionService>,
-    resume_after: Option<u64>,
-) -> SeaResponseStream {
-    match service.event_stream(resume_after).await {
-        Ok(stream) => stream,
-        Err(response) => Box::pin(stream::once(async move { response })),
-    }
-}
-
 fn invalid(message: &str) -> protocol::Response {
     protocol::Response::Error {
         kind: protocol::ErrorKind::Invalid,
@@ -561,9 +557,8 @@ mod tests {
 
     use super::SeaProtocolHost;
     use crate::{
-        DocumentHost, LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
-        SessionSetup, ShutdownDisposition, ShutdownMode, StorageSetup, TransportConfig,
-        WebTransportServer,
+        DocumentHost, LivenessPolicy, SeaConnectionService, SeaServiceHost, SessionSetup,
+        ShutdownDisposition, ShutdownMode, StorageSetup, TransportConfig, WebTransportServer,
     };
 
     /// Builds a direct cached host for the network backend matrix.
@@ -671,6 +666,7 @@ mod tests {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     reference: None,
+                    hint: sea_core::BlobTreeHint::default(),
                 },
             )
             .await
@@ -683,6 +679,7 @@ mod tests {
                     archive: first.document().as_bytes().clone(),
                     intent: protocol::ArchiveIntent::Open,
                     reference: None,
+                    hint: sea_core::BlobTreeHint::default(),
                 },
             )
             .await
@@ -748,7 +745,11 @@ mod tests {
                     matches!(receiver.next_signal().await.unwrap(), Some(SignalEvent::Message(message)) if message.submission.payload == payload && message.submission.delivery == SignalDelivery::BestEffort)
                 );
             }
-            let mut history = first.load(LoadStart::LatestSnapshot).await.unwrap().events;
+            let mut history = first
+                .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+                .await
+                .unwrap()
+                .events;
             assert!(
                 matches!(history.next().await.unwrap().unwrap(), sea_core::MonitoredStreamItem::Progress(progress) if progress.previous.is_none() && progress.latest_known.is_none())
             );
@@ -789,6 +790,7 @@ mod tests {
                         archive: Vec::new(),
                         intent: protocol::ArchiveIntent::Create,
                         resume_after: None,
+                        hint: protocol::LoadingHint::default(),
                     })
                     .await,
                 Err(protocol::Response::Error {
@@ -853,6 +855,7 @@ mod tests {
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("first event stream");
@@ -900,6 +903,7 @@ mod tests {
                 archive: document.clone(),
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("second event stream");
@@ -993,6 +997,7 @@ mod tests {
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .expect("client-selected event stream");
@@ -1078,6 +1083,7 @@ mod tests {
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .unwrap();
@@ -1110,6 +1116,7 @@ mod tests {
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .unwrap();
@@ -1326,7 +1333,7 @@ mod tests {
     async fn open_test_session(
         connection: &Arc<dyn SeaConnectionService>,
         archive: Vec<u8>,
-    ) -> (Vec<u8>, Vec<u8>, SeaResponseStream) {
+    ) -> (Vec<u8>, Vec<u8>, crate::SeaLoadStreams) {
         let intent = if archive.is_empty() {
             protocol::ArchiveIntent::Create
         } else {
@@ -1338,6 +1345,7 @@ mod tests {
                 archive,
                 intent,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             })
             .await
             .unwrap();
@@ -1478,6 +1486,7 @@ mod tests {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     reference: None,
+                    hint: sea_core::BlobTreeHint::default(),
                 },
             )
             .await
@@ -1528,6 +1537,7 @@ mod tests {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     reference: None,
+                    hint: sea_core::BlobTreeHint::default(),
                 },
             )
             .await
@@ -1562,7 +1572,11 @@ mod tests {
                     "missing opening diagnostic {stage}: {stages:?}"
                 );
             }
-            let mut events = client.load(LoadStart::LatestSnapshot).await.unwrap().events;
+            let mut events = client
+                .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+                .await
+                .unwrap()
+                .events;
             loop {
                 let sea_core::MonitoredStreamItem::Progress(progress) =
                     events.next().await.unwrap().unwrap()
@@ -1670,6 +1684,7 @@ mod tests {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     reference: None,
+                    hint: sea_core::BlobTreeHint::default(),
                 },
             )
             .await
@@ -1965,6 +1980,7 @@ mod tests {
                 archive: client.document().as_bytes().clone(),
                 intent: protocol::ArchiveIntent::Open,
                 reference: None,
+                hint: sea_core::BlobTreeHint::default(),
             },
         )
         .await
@@ -2052,7 +2068,7 @@ mod tests {
     async fn open_raw_event_stream(
         connection: &Connection,
         archive: &[u8],
-    ) -> (Vec<u8>, u64, wtransport::RecvStream) {
+    ) -> (Vec<u8>, u64, RawLoadStream) {
         let (authority, _, allocated, events) =
             open_raw_event_stream_with_intent(connection, archive, protocol::ArchiveIntent::Open)
                 .await;
@@ -2063,7 +2079,7 @@ mod tests {
         connection: &Connection,
         archive: &[u8],
         intent: protocol::ArchiveIntent,
-    ) -> (Vec<u8>, Vec<u8>, u64, wtransport::RecvStream) {
+    ) -> (Vec<u8>, Vec<u8>, u64, RawLoadStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(
             &mut send,
@@ -2072,10 +2088,10 @@ mod tests {
                 archive: archive.to_vec(),
                 intent,
                 resume_after: None,
+                hint: protocol::LoadingHint::default(),
             },
         )
         .await;
-        send.finish().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         let protocol::Response::EventStreamOpened {
             session,
@@ -2085,7 +2101,123 @@ mod tests {
         else {
             panic!("raw event stream should return authority");
         };
-        (authority, document, session, receive)
+        (
+            authority,
+            document,
+            session,
+            RawLoadStream {
+                send,
+                receive,
+                decoder,
+            },
+        )
+    }
+
+    struct RawLoadStream {
+        send: wtransport::SendStream,
+        receive: wtransport::RecvStream,
+        decoder: protocol::NetworkFrameDecoder,
+    }
+
+    impl RawLoadStream {
+        async fn response(&mut self) -> protocol::Response {
+            let response = read_raw_response(
+                &mut self.receive,
+                &mut self.decoder,
+                protocol::StreamRole::Event,
+            )
+            .await;
+            let content = match &response {
+                protocol::Response::BlobTree { .. } => Some(true),
+                protocol::Response::LoadSnapshot(_)
+                | protocol::Response::LoadEvent(_)
+                | protocol::Response::StreamProgress { .. } => Some(false),
+                _ => None,
+            };
+            if let Some(content) = content {
+                send_raw_request(
+                    &mut self.send,
+                    protocol::Request::LoadCredit { content, items: 1 },
+                )
+                .await;
+            }
+            response
+        }
+    }
+
+    #[tokio::test]
+    async fn raw_load_replenishes_event_window_and_completes_empty_content() {
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            Arc::new(memory_host()),
+            TransportConfig::default(),
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let serving = tokio::spawn(server.serve_until_shutdown());
+        let (_endpoint, connection) = raw_connection(address, hash).await;
+        timeout(Duration::from_secs(5), async {
+            let (authority, _, _, mut load) = open_raw_event_stream_with_intent(
+                &connection,
+                b"",
+                protocol::ArchiveIntent::Create,
+            )
+            .await;
+            let (mut author, mut receipts) = connection.open_bi().await.unwrap().await.unwrap();
+            let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+            send_raw_request(
+                &mut author,
+                protocol::Request::OpenAuthorStream { authority },
+            )
+            .await;
+            assert_eq!(
+                read_raw_response(&mut receipts, &mut decoder, protocol::StreamRole::Author).await,
+                protocol::Response::Acknowledged
+            );
+            for value in 0..40 {
+                send_raw_request(
+                    &mut author,
+                    protocol::Request::Submit {
+                        reference: None,
+                        event: protocol::Event {
+                            payload: vec![value],
+                            blob_tree: None,
+                        },
+                    },
+                )
+                .await;
+                assert!(matches!(
+                    read_raw_response(&mut receipts, &mut decoder, protocol::StreamRole::Author)
+                        .await,
+                    protocol::Response::EventCommitted { .. }
+                ));
+            }
+            let mut events = 0;
+            let mut content_complete = false;
+            while events < 40 || !content_complete {
+                match load.response().await {
+                    protocol::Response::LoadEvent(event) => {
+                        assert_eq!(event.event.payload, vec![events]);
+                        events += 1;
+                    }
+                    protocol::Response::LoadContentComplete => {
+                        assert!(!content_complete);
+                        content_complete = true;
+                    }
+                    protocol::Response::StreamProgress { .. } => {}
+                    response => panic!("unexpected load response: {response:?}"),
+                }
+            }
+        })
+        .await
+        .expect("event credits must permit delivery beyond the initial window");
+        connection.close(0_u32.into(), b"test complete");
+        shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+        serving.await.unwrap().unwrap();
     }
 
     async fn send_raw_request(send: &mut wtransport::SendStream, request: protocol::Request) {

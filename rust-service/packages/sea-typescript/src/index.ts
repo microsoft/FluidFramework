@@ -48,10 +48,45 @@ export interface SeaTreeId {
  * @internal
  */
 export interface SeaSessionOptions {
+	/** Advisory content selection for the initial load; repeat it when calling load. */
+	readonly loadingHint?: SeaBlobTreeHint;
 	/** Latest incorporated event. */
 	readonly reference?: bigint;
 	/** Enables compression only when the loaded bundle supports it. */
 	readonly compression?: boolean;
+}
+
+/** Advisory bounded prefetch; completion does not guarantee descendant coverage.
+ * @internal
+ */
+export interface SeaBlobTreeHint {
+	/** Includes descendant leaves. Defaults to false. */
+	readonly includeDescendantBlobs?: boolean;
+	/** Maximum additional items beyond explicit roots. Defaults to zero. */
+	readonly maxExtraItems?: number;
+}
+
+/** Verified immutable content, decoded by the selected decorators.
+ * Stored identities remain unchanged by decoding.
+ * @internal
+ */
+export type SeaBlobTreeItem =
+	| { readonly kind: "blob"; readonly id: SeaTreeId; readonly bytes: Uint8Array }
+	| {
+			readonly kind: "directory";
+			readonly id: SeaTreeId;
+			readonly entries: readonly SeaDirectoryEntry[];
+	  };
+
+/** Independent streams from one snapshot selection.
+ * Consumers must cancel both streams and must observe content failures.
+ * @internal
+ */
+export interface SeaSessionLoad {
+	/** Selected snapshot followed by its gap-free event suffix. */
+	readonly events: SeaStream<SeaLoadResult>;
+	/** Finite advisory content for that same selected snapshot. */
+	readonly content: SeaStream<SeaBlobTreeItem>;
 }
 
 /** One named child of an immutable directory.
@@ -207,6 +242,11 @@ export interface SeaSession {
 	putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
 	/** Reads named children of a directory. */
 	getDirectory(id: SeaTreeId): Promise<readonly SeaDirectoryEntry[]>;
+	/** Reads roots and bounded advisory descendants; repeated items are permitted. */
+	getBlobTrees(
+		roots: readonly SeaTreeId[],
+		hint?: SeaBlobTreeHint,
+	): SeaStream<SeaBlobTreeItem>;
 	/** Submits a new opaque event; equal inputs are distinct submissions. */
 	submit(
 		reference: bigint | undefined,
@@ -216,7 +256,7 @@ export interface SeaSession {
 	/** Reads bounded or live monitored history. */
 	read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
 	/** Loads a snapshot and its gap-free suffix. */
-	load(required?: bigint): Promise<SeaStream<SeaLoadResult>>;
+	load(required?: bigint, hint?: SeaBlobTreeHint): Promise<SeaSessionLoad>;
 	/** Returns the newest snapshot at or before an inclusive bound, or the latest if absent. */
 	getSnapshot(required?: bigint): Promise<SeaSnapshot | undefined>;
 	/** Registers explicit snapshot participation. */

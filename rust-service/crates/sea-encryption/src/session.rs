@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream, EventPosition,
     archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     session::{
@@ -22,6 +22,23 @@ use sea_core::{
 impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
     EncryptionSession<Session, Keys, Nonces>
 {
+    /// Decrypts verified stored leaves while retaining encoded identities and directories.
+    fn decrypt_content(
+        &self,
+        source: BlobTreeStream<Session::Error>,
+    ) -> BlobTreeStream<EncryptionError<Session::Error>> {
+        let keys = self.keys.clone();
+        Box::pin(
+            source.map(move |item| match item.map_err(EncryptionError::Store)? {
+                BlobTreeItem::Blob { id, bytes } => Ok(BlobTreeItem::Blob {
+                    id,
+                    bytes: decrypt_payload(&keys, &bytes, PayloadContext::Blob)?,
+                }),
+                directory @ BlobTreeItem::Directory { .. } => Ok(directory),
+            }),
+        )
+    }
+
     /// Decrypts application events on poll and leaves membership records unchanged.
     ///
     /// Each stream retains a key-provider clone and forwards delivery progress without reinterpretation,
@@ -88,14 +105,16 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let loaded = self
             .inner
-            .load(start)
+            .load(start, hint)
             .await
             .map_err(EncryptionError::Store)?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot,
+            content: self.decrypt_content(loaded.content),
             events: self.decrypt_events(loaded.events),
         })
     }
@@ -119,16 +138,12 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
             .await
             .map_err(EncryptionError::Store)
     }
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        decrypt_payload(
-            &self.keys,
-            &self
-                .inner
-                .get_blob(id)
-                .await
-                .map_err(EncryptionError::Store)?,
-            PayloadContext::Blob,
-        )
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        self.decrypt_content(self.inner.get_blob_trees(roots, hint))
     }
     async fn put_directory(
         &self,
@@ -136,12 +151,6 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
     ) -> Result<Self::BlobHandle, Self::Error> {
         self.inner
             .put_directory(directory)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.inner
-            .get_directory(id)
             .await
             .map_err(EncryptionError::Store)
     }
@@ -251,6 +260,7 @@ mod tests {
     use super::*;
     use crate::{NONCE_LENGTH, NonceUnavailable, tests::TestKeys};
     use futures_util::FutureExt;
+    use sea_core::{BlobId, SeaArchiveExt};
     use sea_core::{
         ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
         archive::SessionEventKind,
@@ -451,6 +461,26 @@ mod tests {
             wrapped.get_directory(directory_id).await.unwrap(),
             directory
         );
+        let mut content = wrapped.get_blob_trees(
+            vec![root.id()],
+            BlobTreeHint {
+                include_descendant_blobs: true,
+                max_extra_items: 1,
+            },
+        );
+        assert!(matches!(
+            content.next().await.unwrap().unwrap(),
+            BlobTreeItem::Directory { id, directory: value }
+                if id == directory_id && value == directory
+        ));
+        assert_eq!(
+            content.next().await.unwrap().unwrap(),
+            BlobTreeItem::Blob {
+                id,
+                bytes: payload.clone(),
+            }
+        );
+        assert!(content.next().await.is_none());
         let joined = wrapped
             .announce_membership(Bytes::from_static(b"public"))
             .await
@@ -536,8 +566,15 @@ mod tests {
                 .id(),
             root.id()
         );
-        let mut loaded = wrapped.load(LoadStart::LatestSnapshot).await.unwrap();
+        let mut loaded = wrapped
+            .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+            .await
+            .unwrap();
         assert_eq!(loaded.snapshot.unwrap().at_event.id(), first);
+        let content = loaded.content.next().await.unwrap().unwrap();
+        assert_eq!(content.id(), root.id());
+        assert!(matches!(content, BlobTreeItem::Blob { bytes, .. } if bytes.is_empty()));
+        assert!(loaded.content.next().await.is_none());
         let second = wrapped.submit(submission.clone()).await.unwrap();
         let suffix = next_event(&mut loaded.events).await;
         assert_eq!(suffix.committed.position, second);

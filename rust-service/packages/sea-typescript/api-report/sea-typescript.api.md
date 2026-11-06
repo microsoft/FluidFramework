@@ -17,6 +17,23 @@ export function openRemote(service: SeaRemoteOptions, document: Uint8Array | und
 export function openWebTransport(service: SeaWebTransportOptions, document: Uint8Array | undefined, options: SeaSessionOptions): Promise<SeaSession>;
 
 // @internal
+export interface SeaBlobTreeHint {
+    readonly includeDescendantBlobs?: boolean;
+    readonly maxExtraItems?: number;
+}
+
+// @internal
+export type SeaBlobTreeItem = {
+    readonly kind: "blob";
+    readonly id: SeaTreeId;
+    readonly bytes: Uint8Array;
+} | {
+    readonly kind: "directory";
+    readonly id: SeaTreeId;
+    readonly entries: readonly SeaDirectoryEntry[];
+};
+
+// @internal
 export interface SeaDirectoryEntry {
     readonly child: SeaTreeId;
     readonly name: string;
@@ -98,9 +115,10 @@ export interface SeaSession {
     coordinateSnapshots(participation: "readOnly" | "seaSelected" | "clientSelected"): Promise<SeaStream<SeaSnapshotCoordination>>;
     readonly document: Uint8Array;
     getBlob(id: SeaTreeId): Promise<Uint8Array>;
+    getBlobTrees(roots: readonly SeaTreeId[], hint?: SeaBlobTreeHint): SeaStream<SeaBlobTreeItem>;
     getDirectory(id: SeaTreeId): Promise<readonly SeaDirectoryEntry[]>;
     getSnapshot(required?: bigint): Promise<SeaSnapshot | undefined>;
-    load(required?: bigint): Promise<SeaStream<SeaLoadResult>>;
+    load(required?: bigint, hint?: SeaBlobTreeHint): Promise<SeaSessionLoad>;
     openSignals(member: SeaSignalMember): Promise<SeaSignals>;
     publishSnapshot(parent: bigint | undefined, fence: bigint | undefined, position: bigint, root: SeaTreeId): Promise<SeaSnapshot>;
     putBlob(payload: Uint8Array): Promise<SeaTreeId>;
@@ -111,8 +129,15 @@ export interface SeaSession {
 }
 
 // @internal
+export interface SeaSessionLoad {
+    readonly content: SeaStream<SeaBlobTreeItem>;
+    readonly events: SeaStream<SeaLoadResult>;
+}
+
+// @internal
 export interface SeaSessionOptions {
     readonly compression?: boolean;
+    readonly loadingHint?: SeaBlobTreeHint;
     readonly reference?: bigint;
 }
 

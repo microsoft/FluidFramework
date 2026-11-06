@@ -315,6 +315,7 @@ fn session_open(archive: Bytes, create: bool) -> SessionOpen {
             protocol::ArchiveIntent::Open
         },
         reference: None,
+        hint: sea_core::BlobTreeHint::default(),
     }
 }
 
@@ -392,7 +393,10 @@ where
             let mut ready = Some(reader_ready.clone());
             tasks.push(tokio::spawn(async move {
                 // Consume the connection's opening recovery/live stream instead of abandoning it.
-                let mut events = match session.load(LoadStart::LatestSnapshot).await {
+                let mut events = match session
+                    .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+                    .await
+                {
                     Ok(load) => load.events,
                     Err(error) => {
                         state.lock().expect("state lock").error = Some(error.to_string());

@@ -78,6 +78,22 @@ Close bypasses pressure waiting and does not cancel already-entered source work.
 The shedding task is not a background close owner, and no total-memory guarantee is added.
 Session setup without a decorator remains direct.
 
+### Independent recovery delivery
+
+Protocol version 13 carries recovery events and advisory snapshot content on the opening stream.
+The host selects one load and uses that selection for both channels.
+Event delivery starts with 16 credits and content delivery with 8; only consumption replenishes each independent window.
+The authority opening and content completion/error markers do not consume credits.
+The server stops polling a channel when its credits run out.
+Either channel can be cancelled independently, dropping its source while retaining the other channel.
+Control frames and both ready channels are scheduled fairly.
+
+Unsolicited content frames are limited to 256 KiB.
+An oversized required snapshot root fails content delivery explicitly without ending events.
+After the root is delivered, an oversized speculative descendant instead ends prefetch successfully; demand fetching remains available.
+Explicit `GetBlobTrees` requests use ordinary content streams and may return a bounded, incomplete descendant traversal.
+A nonempty root request must return its first root or an explicit error.
+
 ### Bounded author admission
 
 Both listeners admit ordered application submissions while earlier submissions wait for storage.

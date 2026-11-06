@@ -1,7 +1,8 @@
 use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
-    BlobTreeId, Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
+    BlobTreeHint, BlobTreeId, BlobTreeItem, Event, EventPosition, MonitoredStreamItem,
+    MonitoredStreamStatus,
     archive::{EventSubmission, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
@@ -72,13 +73,25 @@ fn decode_counter_value(
 
 /// Recovers from the newest snapshot and its tail, stopping when the stream awaits new events.
 async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
-    let load = session.load(LoadStart::LatestSnapshot).await.expect("load");
+    let mut load = session
+        .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+        .await
+        .expect("load");
     let mut value = 0_i64;
     if let Some(snapshot) = load.snapshot {
         let BlobTreeId::Blob(root) = snapshot.root.id() else {
             panic!("counter snapshot root must be a blob");
         };
-        let bytes = session.get_blob(root).await.expect("get snapshot blob");
+        let BlobTreeItem::Blob { id, bytes } = load
+            .content
+            .next()
+            .await
+            .expect("snapshot content")
+            .expect("get snapshot blob")
+        else {
+            panic!("counter snapshot content must be a blob");
+        };
+        assert_eq!(id, root);
         value = decode_counter_value(
             bytes.as_ref(),
             "counter snapshot must contain exactly 8 bytes",

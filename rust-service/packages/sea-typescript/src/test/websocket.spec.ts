@@ -92,7 +92,7 @@ describe("WebSocket compatibility", () => {
 				100,
 			);
 			const attempts = sockets.length;
-			const options = new websocketBindings.SeaSessionOptions(undefined, false);
+			const options = new websocketBindings.SeaSessionOptions(undefined, false, false, 0);
 			try {
 				await assert.rejects(
 					websocketBindings.openRemote(
@@ -238,7 +238,9 @@ describe("WebSocket compatibility", () => {
 		let second: SeaSession | undefined;
 		try {
 			second = await open(first.document, "second");
-			const stream = await second.load();
+			const loaded = await second.load();
+			const stream = loaded.events;
+			loaded.content.cancel();
 			const position = await first.submit(undefined, encoder.encode("payload"));
 			for (;;) {
 				const item = await stream.next();

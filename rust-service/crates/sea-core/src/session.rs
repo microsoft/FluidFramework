@@ -19,9 +19,10 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 
+pub use crate::blob_tree::{BlobTreeHint, BlobTreeItem, BlobTreeStream};
 use crate::storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle};
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
+    BlobDirectory, BlobTreeId, EventPosition,
     archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
 };
 
@@ -30,6 +31,8 @@ pub struct SessionLoad<BlobHandle, EventHandle, Error> {
     /// Selected publication; its event position is its document-scoped version identity.
     /// The position may identify an application event or a committed membership transition.
     pub snapshot: Option<Snapshot<BlobHandle, EventHandle>>,
+    /// Content rooted at the selected snapshot, or an empty stream when no snapshot is selected.
+    pub content: BlobTreeStream<Error>,
     /// Ordered events after the selected snapshot, or from the beginning.
     pub events: ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
 }
@@ -66,6 +69,7 @@ pub trait SeaArchive: crate::SeaService {
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>;
     /// Selects a publication; exact lookup compares the returned event identity with the bound.
     async fn get_snapshot(
@@ -74,15 +78,24 @@ pub trait SeaArchive: crate::SeaService {
     ) -> Result<Option<Snapshot<Self::BlobHandle, Self::EventHandle>>, Self::Error>;
     /// Publishes immutable content and returns its availability evidence.
     async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error>;
-    /// Fetches one immutable blob.
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
+    /// Fetches explicit roots first, then eligible descendants in breadth-first order.
+    ///
+    /// Typed identities are deduplicated across the request. The hint excludes explicit roots
+    /// from its extra-item budget and never suppresses explicit blob roots.
+    /// Empty roots return an empty stream. Nonempty successful responses include at least the
+    /// first root; failures are explicit stream errors. Normal completion may truncate later
+    /// roots or descendants at implementation limits, so consumers must track missing identities.
+    /// Encoded content must be verified before payload decorators transform it.
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error>;
     /// Publishes a complete directory tree.
     async fn put_directory(
         &self,
         directory: BlobDirectory,
     ) -> Result<Self::BlobHandle, Self::Error>;
-    /// Fetches one immutable directory.
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error>;
     /// Resolves an available tree identity at the receiving boundary.
     async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<Self::BlobHandle>, Self::Error>;
     /// Resolves any committed session-event position for snapshot publication.

@@ -142,7 +142,10 @@ function remapPositions(
 			...session,
 			read: (after, stopAfter) =>
 				mapStream(session.read(fromOptionalPosition(after), fromOptionalPosition(stopAfter))),
-			load: async (required) => mapStream(await session.load(fromOptionalPosition(required))),
+			load: async (required, hint) => {
+				const loaded = await session.load(fromOptionalPosition(required), hint);
+				return { ...loaded, events: mapStream(loaded.events) };
+			},
 			submit: async (reference, payload, tree) =>
 				toPosition(await session.submit(fromOptionalPosition(reference), payload, tree)),
 			announceMembership: async (metadata) =>
@@ -220,29 +223,36 @@ describe("DirectSharedTreeClient recovery", () => {
 			const session = await service.open(document, options);
 			return {
 				...session,
-				getBlob: async (id) => {
-					const key = Buffer.from(id.bytes).toString("hex");
-					assert.ok(
-						!fetchedBlobs.has(key),
-						"identical snapshot blobs must be fetched only once",
-					);
-					fetchedBlobs.add(key);
-					return session.getBlob(id);
+				getBlobTrees: (roots, hint) => {
+					for (const id of roots) {
+						if (id.kind !== "blob") continue;
+						const key = Buffer.from(id.bytes).toString("hex");
+						assert.ok(
+							!fetchedBlobs.has(key),
+							"identical snapshot blobs must be fetched only once",
+						);
+						fetchedBlobs.add(key);
+					}
+					return session.getBlobTrees(roots, hint);
 				},
 				getSnapshot: async () => assert.fail("opening must use the selected snapshot"),
 				read: () => assert.fail("opening and live delivery must reuse the load stream"),
-				load: async (required) => {
+				load: async (required, hint) => {
 					loads++;
-					const stream = await session.load(required);
+					const loaded = await session.load(required, hint);
+					const stream = loaded.events;
 					let floor = -1n;
 					return {
-						cancel: () => stream.cancel(),
-						next: async () => {
-							const item = await stream.next();
-							if (item?.kind === "snapshot") floor = item.atEvent;
-							if (item?.kind === "event")
-								assert.ok(item.position > floor, "must not download pre-snapshot events");
-							return item;
+						content: loaded.content,
+						events: {
+							cancel: () => stream.cancel(),
+							next: async () => {
+								const item = await stream.next();
+								if (item?.kind === "snapshot") floor = item.atEvent;
+								if (item?.kind === "event")
+									assert.ok(item.position > floor, "must not download pre-snapshot events");
+								return item;
+							},
 						},
 					};
 				},
@@ -333,13 +343,17 @@ describe("DirectSharedTreeClient recovery", () => {
 					const session = await service.open(document, options);
 					return {
 						...session,
-						load: async (required) => {
-							const stream = await session.load(required);
+						load: async (required, hint) => {
+							const loaded = await session.load(required, hint);
+							const stream = loaded.events;
 							return {
-								cancel: () => stream.cancel(),
-								next: async () => {
-									const item = await stream.next();
-									return item?.kind === "event" ? { ...item, [field]: 2n ** 53n } : item;
+								content: loaded.content,
+								events: {
+									cancel: () => stream.cancel(),
+									next: async () => {
+										const item = await stream.next();
+										return item?.kind === "event" ? { ...item, [field]: 2n ** 53n } : item;
+									},
 								},
 							};
 						},

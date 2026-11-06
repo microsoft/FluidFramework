@@ -51,6 +51,17 @@ Selection returns `None` when no snapshot qualifies.
 `load` combines selection with a gap-free live suffix, including for an empty archive, without capturing an event head.
 Use a selected snapshot plus bounded `read` to reconstruct a fixed event position; drop streams to cancel.
 
+Session `load(start, hint)` also returns a separate finite `content` stream rooted at the selected snapshot.
+No selected snapshot means an empty content stream; content polling does not control event polling.
+`SeaArchive::get_blob_trees(roots, hint)` returns explicit roots first, followed by breadth-first descendants, deduplicated by typed identity.
+`BlobTreeHint::default()` requests no extras; `max_extra_items` counts unique additional directories and, when `include_descendant_blobs` is true, leaves.
+Explicit blob roots remain eligible regardless of that flag.
+Empty requests produce no items.
+A nonempty successful response includes its first root, but normal completion can truncate later roots or descendants at implementation limits.
+Track missing identities and request them explicitly; stream completion does not prove complete subtree coverage.
+`SeaArchiveExt` provides single-root `get_blob` and `get_directory` convenience methods, separate from the session primitives.
+Payload decorators retain stored identities while transforming leaf bytes, so verify encoded content before decoding rather than hashing decoded bytes against stored IDs.
+
 ### Append Outcomes
 
 `Archive::append_batch` returns results for an input prefix; omitted inputs were not attempted.

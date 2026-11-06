@@ -11,6 +11,7 @@ import {
 	createMemoryService as rootCreateMemoryService,
 	openWebTransport as rootOpenWebTransport,
 	type SeaEvent,
+	type SeaBlobTreeItem,
 	type SeaSession,
 	type SeaStream,
 } from "../index.js";
@@ -179,7 +180,9 @@ describe("Neutral sessions", () => {
 		const writer = await open(undefined, "writer-session");
 		const position = await writer.submit(undefined, encode("first"));
 		assert.equal(typeof position, "bigint");
-		const load = ownStream(await writer.load());
+		const opening = await writer.load();
+		ownStream(opening.content);
+		const load = ownStream(opening.events);
 		assert.deepEqual(
 			(await nextMatching(load, (item) => item.kind === "event")).payload,
 			encode("first"),
@@ -440,15 +443,33 @@ describe("Neutral sessions", () => {
 					const coordination = await writer.coordinateSnapshots("clientSelected");
 					await coordination.next();
 					await writer.publishSnapshot(undefined, undefined, position, root);
-					const loaded = await reader.load();
-					const snapshot = await loaded.next();
+					const loaded = await reader.load(undefined, {
+						includeDescendantBlobs: true,
+						maxExtraItems: 256,
+					});
+					const snapshot = await loaded.events.next();
 					assert.ok(snapshot?.kind === "snapshot");
 					assert.equal(snapshot.atEvent, position);
 					assert.deepEqual(snapshot.root, root);
+					const content: SeaBlobTreeItem[] = [];
+					for (;;) {
+						const item = await loaded.content.next();
+						if (item === undefined) break;
+						content.push(item);
+					}
+					assert.deepEqual(content, [
+						{ kind: "directory", id: root, entries: [{ name: "state", child: blob }] },
+						{ kind: "blob", id: blob, bytes: payload },
+					]);
+					const direct = reader.getBlobTrees([blob]);
+					assert.deepEqual(await direct.next(), { kind: "blob", id: blob, bytes: payload });
+					assert.equal(await direct.next(), undefined);
+					direct.cancel();
 					assert.deepEqual(await reader.getSnapshot(), snapshot);
 					assert.deepEqual(await reader.getSnapshot(position), snapshot);
 					assert.equal(await reader.getSnapshot(position - 1n), undefined);
-					loaded.cancel();
+					loaded.events.cancel();
+					loaded.content.cancel();
 					coordination.cancel();
 					const pendingStream = reader.read(position);
 					await nextMatching(pendingStream, (item) => item.kind === "progress");

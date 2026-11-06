@@ -186,6 +186,8 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	private subscription: ProjectedOperationSubscription | undefined;
 	/** Pump consuming the current projected-operation subscription. */
 	private subscriptionPump: Promise<void> | undefined;
+	/** Retains disposal started by disconnect so reconnect waits for the same cleanup. */
+	private subscriptionStop: Promise<void> | undefined;
 	/** Live relay registration, separate from ordered writer membership. */
 	private signals: SeaSignals | undefined;
 	/** Completion of the current signal receive loop. */
@@ -712,7 +714,8 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	}
 
 	/** Stops latency tracking and drains the signal registration and projected subscription. */
-	private async stopSubscription(): Promise<void> {
+	private stopSubscription(): Promise<void> {
+		if (this.subscriptionStop !== undefined) return this.subscriptionStop;
 		this.latencyTracking = undefined;
 		clearTimeout(this.latencyTimer);
 		this.latencyTimer = undefined;
@@ -720,19 +723,35 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		const signalPump = this.signalPump;
 		this.signals = undefined;
 		this.signalPump = undefined;
-		if (signals !== undefined) await signals.close();
-		await signalPump;
-		await this.stopProjectedSubscription();
+		// Invalidate both pumps before closing either transport can wake the other.
+		const projected = this.stopProjectedSubscription();
+		const stopped = Promise.allSettled([
+			projected,
+			Promise.resolve().then(() => signals?.close()),
+			signalPump,
+		]).then((results) => {
+			for (const result of results) {
+				if (result.status === "rejected") throw result.reason;
+			}
+		});
+		this.subscriptionStop = stopped;
+		const settled = (): void => {
+			if (this.subscriptionStop === stopped) this.subscriptionStop = undefined;
+		};
+		void stopped.then(settled, settled);
+		return stopped;
 	}
 
 	/** Cancels and drains only the event reader, preserving session and relay ownership. */
 	private async stopProjectedSubscription(): Promise<void> {
 		const subscription = this.subscription;
+		const pump = this.subscriptionPump;
 		this.subscription = undefined;
-		if (subscription !== undefined) {
-			await subscription.cancel();
-		}
-		await this.subscriptionPump;
 		this.subscriptionPump = undefined;
+		try {
+			await subscription?.cancel();
+		} finally {
+			await pump;
+		}
 	}
 }

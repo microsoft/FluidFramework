@@ -28,6 +28,7 @@ export {
 	SeaSessionDriverClient,
 	type SeaSessionFactory,
 	type SeaSnapshotParticipation,
+	type SeaSessionDriverOptions,
 } from "./sessionClient.js";
 export { Events, type DeltaConnectionLifecycle, type Listener } from "./lifecycleHelpers.js";
 export type {

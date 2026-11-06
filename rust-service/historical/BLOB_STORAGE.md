@@ -199,6 +199,13 @@ Do not assume that per-socket queue limits bound connection-wide, runtime, or pr
 
 ### Recursive fetch and initial load
 
+The initial implementation now provides `get_blob_trees(roots, hint)` and a separate `SessionLoad.content` receiver.
+It sends explicit roots first, then deduplicated breadth-first descendants within the hint and hard traversal limits.
+The hint controls descendant blobs and extra item count; it does not yet express cache knowledge or path filters.
+Protocol version 13 multiplexes initial content with events using independent receive credits and cancellation, with a 256 KiB initial-content item ceiling.
+The direct editor opts into prefetch and retains decoded objects in a bounded cache; missing or evicted objects remain fetchable.
+The following design discussion retains possible extensions beyond that implementation.
+
 For a linked chain of tiny directories, independent-request concurrency cannot avoid the discovery dependency: each reply reveals the next digest.
 Server-side traversal can instead send several descendants before another client round trip.
 This requires the client to accept, verify, and retain eagerly supplied objects so later reads can use them without fetching them again.

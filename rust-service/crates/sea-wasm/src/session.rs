@@ -10,9 +10,9 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, EventPosition,
-    SeaArchive, SeaAuthorSession, SeaService, SeaSession, SeaSnapshotCoordinator, SessionLoad,
-    SnapshotCoordination,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeStream, ClassifiedError, ErrorKind,
+    EventPosition, SeaArchive, SeaAuthorSession, SeaService, SeaSession, SeaSnapshotCoordinator,
+    SessionLoad, SnapshotCoordination,
     archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle},
@@ -142,14 +142,20 @@ impl<Session: SeaSession> SeaArchive for SessionAdapter<Session> {
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let loaded = self
             .inner
-            .load(start)
+            .load(start, hint)
             .await
             .map_err(|error| BindingError::from_error(&error))?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot.map(erase_snapshot),
+            content: Box::pin(
+                loaded
+                    .content
+                    .map(|item| item.map_err(|error| BindingError::from_error(&error))),
+            ),
             events: map_monitored_stream(loaded.events, Ok, |error| {
                 BindingError::from_error(&error)
             }),
@@ -175,11 +181,16 @@ impl<Session: SeaSession> SeaArchive for SessionAdapter<Session> {
             .map_err(|error| BindingError::from_error(&error))
     }
 
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.inner
-            .get_blob(id)
-            .await
-            .map_err(|error| BindingError::from_error(&error))
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        Box::pin(
+            self.inner
+                .get_blob_trees(roots, hint)
+                .map(|item| item.map_err(|error| BindingError::from_error(&error))),
+        )
     }
 
     async fn put_directory(
@@ -190,13 +201,6 @@ impl<Session: SeaSession> SeaArchive for SessionAdapter<Session> {
             .put_directory(directory)
             .await
             .map(BindingHandle::new)
-            .map_err(|error| BindingError::from_error(&error))
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.inner
-            .get_directory(id)
-            .await
             .map_err(|error| BindingError::from_error(&error))
     }
 
@@ -289,7 +293,7 @@ impl<Session: SeaSession> SeaSnapshotCoordinator for SessionAdapter<Session> {
 #[cfg(all(test, feature = "memory", feature = "compression"))]
 mod tests {
     use super::*;
-    use sea_core::{Event, storage::SeaStorage};
+    use sea_core::{Event, SeaArchiveExt, storage::SeaStorage};
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::{LocalSequencer, LocalSession};
 
@@ -346,7 +350,10 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(published.at_event.id(), position);
-        let loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
+        let loaded = session
+            .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+            .await
+            .unwrap();
         assert_eq!(loaded.snapshot.unwrap().root.id(), published.root.id());
         session.close().await.unwrap();
     }

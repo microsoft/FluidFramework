@@ -10,13 +10,13 @@ One document-bound connection supports five bidirectional logical stream roles:
 
 | Role | Purpose |
 | --- | --- |
-| Event | Open the session; return document ID/authority, selected snapshot, catch-up, progress, and live events. |
+| Event | Open the session; return document ID/authority, selected snapshot, catch-up, progress, live events, and independently consumed prefetched content. |
 | Author | Ordered submissions, receipts, and close under session authority. |
 | Snapshot | Coalesced notifications and policy-bound publication. |
 | Content | Ordered history/content/snapshot lookup; finite calls share a pool of at most four concurrent reusable streams, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
-In protocol version 12, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
+In protocol version 13, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
 The payload must contain exactly one value of that kind, with no trailing bytes.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
@@ -58,6 +58,27 @@ Snapshot lookup selects the newest snapshot at or before its inclusive bound; la
 There is no empty initial snapshot: applications with initial state must first commit an event.
 Loads select the latest or bounded snapshot and then replay the retained suffix without promising an atomic captured head.
 The first matching session `load` consumes the snapshot/replay/live stream established at open, avoiding separate snapshot lookup and history-stream handshakes.
+
+## Blob-tree Prefetch
+
+`get_blob_trees(roots, hint)` replaces separate blob and directory wire reads with a finite stream of typed objects.
+Explicit roots precede breadth-first descendants; typed identities are deduplicated within the request.
+The hint controls descendant blob inclusion and the number of extra objects, not whether explicit blob roots are returned.
+A nonempty successful request supplies at least one requested root; callers can request remaining roots after truncation.
+Empty roots complete without content.
+Completion does not guarantee that the entire reachable tree was transferred.
+Storage verifies encoded content before compression or encryption decorators decode it.
+A transport above those decorators preserves stored identities while carrying decoded leaves, which need not hash to those identities.
+
+Opening requests carry the same versioned hint and deliver the selected snapshot's content on the existing event stream.
+Unknown hint versions use roots-only behavior.
+The request direction stays open for independent event/content credits and cancellation.
+Initial windows permit 16 event items and 8 content items; each unsolicited content payload is at most 256 KiB.
+Separate bounded receivers return credits on consumption, so an unread content channel cannot fill the event receiver or prevent live events.
+Dropping one channel stops its production without cancelling the other; dropping both releases the physical stream.
+Content completion and errors are separate from event catch-up.
+Traversal also applies independent object, byte, and work limits; truncation leaves ordinary explicit fetches available.
+Rebuild both client and server for protocol version 13; the previous individual-fetch wire messages are no longer supported.
 
 ## Signal Delivery
 

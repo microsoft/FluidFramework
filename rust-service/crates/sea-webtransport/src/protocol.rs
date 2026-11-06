@@ -4,11 +4,20 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 12;
+pub const PROTOCOL_VERSION: u16 = 13;
+
+/// Initial unsolicited event delivery window, replenished only after consumption.
+pub const LOAD_EVENT_CREDITS: u32 = 16;
+/// Initial unsolicited content delivery window, replenished only after consumption.
+pub const LOAD_CONTENT_CREDITS: u32 = 8;
+/// Maximum complete frame size for one unsolicited content item.
+pub const LOAD_CONTENT_MAX_ITEM_BYTES: usize = 256 * 1024;
 
 pub mod signals;
 
 /// Explicit wire identity of every Sea network message.
+///
+/// Retired lookup kinds 7, 9, 132, and 134 remain reserved.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u8)]
 pub enum MessageKind {
@@ -18,12 +27,8 @@ pub enum MessageKind {
     Read = 5,
     /// Blob-publication request.
     PutBlob = 6,
-    /// Blob-lookup request.
-    GetBlob = 7,
     /// Directory-publication request.
     PutDirectory = 8,
-    /// Directory-lookup request.
-    GetDirectory = 9,
     /// Snapshot-lookup request.
     GetSnapshot = 10,
     /// Latest-snapshot request.
@@ -48,18 +53,22 @@ pub enum MessageKind {
     SendSignal = 24,
     /// Event submission without a blob-tree reference.
     SubmitWithoutBlob = 25,
+    /// Fetches authorized content roots with optional descendants.
+    GetBlobTrees = 26,
+    /// Replenishes a consumed load delivery window.
+    LoadCredit = 27,
+    /// Cancels optional load content without cancelling event delivery.
+    CancelLoadContent = 28,
+    /// Cancels load event production without cancelling content delivery.
+    CancelLoadEvents = 29,
     /// Request acknowledgement response.
     Acknowledged = 128,
     /// Event-commit response.
     EventCommitted = 129,
     /// Blob-publication response.
     BlobStored = 131,
-    /// Blob-lookup response.
-    Blob = 132,
     /// Directory-publication response.
     DirectoryStored = 133,
-    /// Directory-lookup response.
-    Directory = 134,
     /// Snapshot lookup or publication response.
     Snapshot = 135,
     /// Recovery snapshot item.
@@ -78,6 +87,12 @@ pub enum MessageKind {
     SignalEvent = 142,
     /// Delivered event without a blob-tree reference.
     LoadEventWithoutBlob = 143,
+    /// Identified blob or canonical directory bytes.
+    BlobTree = 144,
+    /// Optional load content has completed.
+    LoadContentComplete = 145,
+    /// Optional load content failed independently of event delivery.
+    LoadContentError = 146,
     /// Classified service-error response.
     Error = 255,
 }
@@ -90,9 +105,7 @@ impl TryFrom<u8> for MessageKind {
             3 => Ok(Self::Submit),
             5 => Ok(Self::Read),
             6 => Ok(Self::PutBlob),
-            7 => Ok(Self::GetBlob),
             8 => Ok(Self::PutDirectory),
-            9 => Ok(Self::GetDirectory),
             10 => Ok(Self::GetSnapshot),
             11 => Ok(Self::LatestSnapshot),
             16 => Ok(Self::Close),
@@ -105,12 +118,14 @@ impl TryFrom<u8> for MessageKind {
             23 => Ok(Self::OpenSignalStream),
             24 => Ok(Self::SendSignal),
             25 => Ok(Self::SubmitWithoutBlob),
+            26 => Ok(Self::GetBlobTrees),
+            27 => Ok(Self::LoadCredit),
+            28 => Ok(Self::CancelLoadContent),
+            29 => Ok(Self::CancelLoadEvents),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             131 => Ok(Self::BlobStored),
-            132 => Ok(Self::Blob),
             133 => Ok(Self::DirectoryStored),
-            134 => Ok(Self::Directory),
             135 => Ok(Self::Snapshot),
             136 => Ok(Self::LoadSnapshot),
             137 => Ok(Self::LoadEvent),
@@ -120,6 +135,9 @@ impl TryFrom<u8> for MessageKind {
             141 => Ok(Self::ResponseComplete),
             142 => Ok(Self::SignalEvent),
             143 => Ok(Self::LoadEventWithoutBlob),
+            144 => Ok(Self::BlobTree),
+            145 => Ok(Self::LoadContentComplete),
+            146 => Ok(Self::LoadContentError),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -149,13 +167,11 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 34] = [
+    pub const ALL: [Self; 37] = [
         Self::Submit,
         Self::Read,
         Self::PutBlob,
-        Self::GetBlob,
         Self::PutDirectory,
-        Self::GetDirectory,
         Self::GetSnapshot,
         Self::LatestSnapshot,
         Self::Close,
@@ -168,12 +184,14 @@ impl MessageKind {
         Self::OpenSignalStream,
         Self::SendSignal,
         Self::SubmitWithoutBlob,
+        Self::GetBlobTrees,
+        Self::LoadCredit,
+        Self::CancelLoadContent,
+        Self::CancelLoadEvents,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::BlobStored,
-        Self::Blob,
         Self::DirectoryStored,
-        Self::Directory,
         Self::Snapshot,
         Self::LoadSnapshot,
         Self::LoadEvent,
@@ -183,6 +201,9 @@ impl MessageKind {
         Self::ResponseComplete,
         Self::SignalEvent,
         Self::LoadEventWithoutBlob,
+        Self::BlobTree,
+        Self::LoadContentComplete,
+        Self::LoadContentError,
         Self::Error,
     ];
 
@@ -203,6 +224,12 @@ impl MessageKind {
             StreamRole::Event => matches!(
                 self,
                 Kind::OpenEventStream
+                    | Kind::LoadCredit
+                    | Kind::CancelLoadContent
+                    | Kind::CancelLoadEvents
+                    | Kind::BlobTree
+                    | Kind::LoadContentComplete
+                    | Kind::LoadContentError
                     | Kind::LoadSnapshot
                     | Kind::LoadEvent
                     | Kind::LoadEventWithoutBlob
@@ -238,15 +265,13 @@ impl MessageKind {
                 Kind::Read
                     | Kind::OpenContentStream
                     | Kind::PutBlob
-                    | Kind::GetBlob
                     | Kind::PutDirectory
-                    | Kind::GetDirectory
+                    | Kind::GetBlobTrees
+                    | Kind::BlobTree
                     | Kind::GetSnapshot
                     | Kind::LatestSnapshot
                     | Kind::BlobStored
-                    | Kind::Blob
                     | Kind::DirectoryStored
-                    | Kind::Directory
                     | Kind::Snapshot
                     | Kind::LoadEvent
                     | Kind::LoadEventWithoutBlob
@@ -263,7 +288,10 @@ impl MessageKind {
     pub const fn request_role(self) -> Option<StreamRole> {
         match self {
             Self::OpenSignalStream | Self::SendSignal => Some(StreamRole::Signal),
-            Self::OpenEventStream => Some(StreamRole::Event),
+            Self::OpenEventStream
+            | Self::LoadCredit
+            | Self::CancelLoadContent
+            | Self::CancelLoadEvents => Some(StreamRole::Event),
             Self::OpenAuthorStream
             | Self::AnnounceMembership
             | Self::Submit
@@ -272,9 +300,8 @@ impl MessageKind {
             Self::Read
             | Self::OpenContentStream
             | Self::PutBlob
-            | Self::GetBlob
             | Self::PutDirectory
-            | Self::GetDirectory
+            | Self::GetBlobTrees
             | Self::GetSnapshot => Some(StreamRole::Content),
             Self::LatestSnapshot | Self::OpenSnapshotStream | Self::PublishSnapshot => {
                 Some(StreamRole::Snapshot)
@@ -471,6 +498,65 @@ pub enum TreeId {
     Directory([u8; 32]),
 }
 
+/// Extensible optional content loading preferences.
+///
+/// Unknown versions preserve their opaque payload and request no speculative content.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct LoadingHint {
+    /// Version of the opaque payload encoding.
+    pub version: u16,
+    /// Version-specific loading preferences.
+    pub payload: Vec<u8>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct LoadingHintV1 {
+    include_descendant_blobs: bool,
+    max_extra_items: u32,
+}
+
+impl LoadingHint {
+    /// Encodes the current version of core loading preferences.
+    ///
+    /// # Errors
+    /// Returns an error when the preferences cannot be encoded.
+    pub fn encode(hint: sea_core::session::BlobTreeHint) -> Result<Self, ProtocolError> {
+        let payload = postcard::to_allocvec(&LoadingHintV1 {
+            include_descendant_blobs: hint.include_descendant_blobs,
+            max_extra_items: hint.max_extra_items,
+        })
+        .map_err(ProtocolError::InvalidPayload)?;
+        Ok(Self {
+            version: 1,
+            payload,
+        })
+    }
+
+    /// Decodes known preferences, or returns disabled preferences for an unknown version.
+    ///
+    /// # Errors
+    /// Rejects malformed known-version payloads, including trailing bytes.
+    pub fn decode(&self) -> Result<sea_core::session::BlobTreeHint, ProtocolError> {
+        if self.version != 1 {
+            return Ok(sea_core::session::BlobTreeHint {
+                include_descendant_blobs: false,
+                max_extra_items: 0,
+            });
+        }
+        let (hint, trailing): (LoadingHintV1, _) =
+            postcard::take_from_bytes(&self.payload).map_err(ProtocolError::InvalidPayload)?;
+        if !trailing.is_empty() {
+            return Err(ProtocolError::InvalidPayload(
+                postcard::Error::DeserializeBadEncoding,
+            ));
+        }
+        Ok(sea_core::session::BlobTreeHint {
+            include_descendant_blobs: hint.include_descendant_blobs,
+            max_extra_items: hint.max_extra_items,
+        })
+    }
+}
+
 /// One deterministic directory entry.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DirectoryEntry {
@@ -607,8 +693,8 @@ pub mod payload {
     use serde::{Deserialize, Serialize};
 
     use super::{
-        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotParticipation,
-        StreamStatus, TreeId,
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, LoadingHint, Snapshot,
+        SnapshotParticipation, StreamStatus, TreeId,
     };
 
     /// Payload for a message with no fields.
@@ -634,6 +720,35 @@ pub mod payload {
 
         /// Latest event already incorporated by the client.
         pub resume_after: Option<u64>,
+        /// Optional recovery content preferences.
+        pub hint: LoadingHint,
+    }
+
+    /// Batched authorized content lookup payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct GetBlobTrees {
+        /// Explicitly requested content roots.
+        pub roots: Vec<TreeId>,
+        /// Optional descendant loading preferences.
+        pub hint: LoadingHint,
+    }
+
+    /// Replenishment of a consumed unsolicited delivery window.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct LoadCredit {
+        /// Selects the content window rather than the event window.
+        pub content: bool,
+        /// Number of consumed items to replenish, bounded by the selected window.
+        pub items: u32,
+    }
+
+    /// One immutable content item with its typed identity.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct BlobTree {
+        /// Typed immutable content identity.
+        pub id: TreeId,
+        /// Raw stored blob bytes or canonical `BlobDirectory::encode` bytes.
+        pub payload: Vec<u8>,
     }
 
     /// Opaque authority returned when an event stream opens.
@@ -778,20 +893,6 @@ pub mod payload {
         pub position: u64,
     }
 
-    /// Fetched blob bytes payload.
-    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct Blob {
-        /// Stored blob bytes.
-        pub payload: Vec<u8>,
-    }
-
-    /// Fetched directory entries payload.
-    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct Directory {
-        /// Stored directory entries.
-        pub entries: Vec<DirectoryEntry>,
-    }
-
     /// Optional snapshot response or notification payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OptionalSnapshot {
@@ -865,21 +966,29 @@ pub enum Request {
         /// Exact stored bytes.
         payload: Vec<u8>,
     },
-    /// Fetches one authorized blob.
-    GetBlob {
-        /// Domain-separated blob identity.
-        id: [u8; 32],
-    },
     /// Publishes or deduplicates one directory.
     PutDirectory {
         /// Canonically ordered directory entries.
         entries: Vec<DirectoryEntry>,
     },
-    /// Fetches one authorized directory.
-    GetDirectory {
-        /// Domain-separated directory identity.
-        id: [u8; 32],
+    /// Fetches authorized roots and optionally their descendants.
+    GetBlobTrees {
+        /// Explicitly requested content roots.
+        roots: Vec<TreeId>,
+        /// Optional descendant loading preferences.
+        hint: LoadingHint,
     },
+    /// Replenishes delivery credits after consuming unsolicited items.
+    LoadCredit {
+        /// Selects the content window rather than the event window.
+        content: bool,
+        /// Number of consumed items, bounded by the selected window.
+        items: u32,
+    },
+    /// Cancels optional recovery content while preserving event delivery.
+    CancelLoadContent,
+    /// Cancels recovery and live event production while preserving content delivery.
+    CancelLoadEvents,
     /// Fetches one retained snapshot.
     GetSnapshot {
         /// Inclusive upper bound for the selected snapshot's event position.
@@ -900,6 +1009,8 @@ pub enum Request {
 
         /// Latest event already incorporated by this client.
         resume_after: Option<u64>,
+        /// Optional recovery content preferences.
+        hint: LoadingHint,
     },
     /// Opens the ordered author stream for an established logical session.
     OpenAuthorStream {
@@ -948,15 +1059,27 @@ pub enum Response {
         /// Domain-separated identity.
         id: [u8; 32],
     },
-    /// Fetched blob bytes.
-    Blob(Vec<u8>),
     /// Published directory identity.
     DirectoryStored {
         /// Domain-separated identity.
         id: [u8; 32],
     },
-    /// Fetched directory entries.
-    Directory(Vec<DirectoryEntry>),
+    /// One fetched or prefetched immutable content item.
+    BlobTree {
+        /// Typed immutable content identity.
+        id: TreeId,
+        /// Raw stored blob bytes or canonical `BlobDirectory::encode` bytes.
+        payload: Vec<u8>,
+    },
+    /// Optional recovery content delivery has completed.
+    LoadContentComplete,
+    /// Optional recovery content failed without terminating event delivery.
+    LoadContentError {
+        /// Machine-readable error category.
+        kind: ErrorKind,
+        /// Human-readable diagnostic.
+        message: String,
+    },
     /// Snapshot lookup or publication result.
     Snapshot(Option<Snapshot>),
     /// One snapshot selected for a load.
@@ -1018,9 +1141,11 @@ impl Request {
             Self::Submit { .. } => MessageKind::Submit,
             Self::Read { .. } => MessageKind::Read,
             Self::PutBlob { .. } => MessageKind::PutBlob,
-            Self::GetBlob { .. } => MessageKind::GetBlob,
             Self::PutDirectory { .. } => MessageKind::PutDirectory,
-            Self::GetDirectory { .. } => MessageKind::GetDirectory,
+            Self::GetBlobTrees { .. } => MessageKind::GetBlobTrees,
+            Self::LoadCredit { .. } => MessageKind::LoadCredit,
+            Self::CancelLoadContent => MessageKind::CancelLoadContent,
+            Self::CancelLoadEvents => MessageKind::CancelLoadEvents,
             Self::GetSnapshot { .. } => MessageKind::GetSnapshot,
             Self::LatestSnapshot => MessageKind::LatestSnapshot,
             Self::Close => MessageKind::Close,
@@ -1032,7 +1157,10 @@ impl Request {
     pub const fn stream_role(&self) -> StreamRole {
         match self {
             Self::OpenSignalStream(_) | Self::SendSignal(_) => StreamRole::Signal,
-            Self::OpenEventStream { .. } => StreamRole::Event,
+            Self::OpenEventStream { .. }
+            | Self::LoadCredit { .. }
+            | Self::CancelLoadContent
+            | Self::CancelLoadEvents => StreamRole::Event,
             Self::OpenAuthorStream { .. }
             | Self::AnnounceMembership { .. }
             | Self::Submit { .. }
@@ -1040,9 +1168,8 @@ impl Request {
             Self::Read { .. }
             | Self::OpenContentStream { .. }
             | Self::PutBlob { .. }
-            | Self::GetBlob { .. }
             | Self::PutDirectory { .. }
-            | Self::GetDirectory { .. }
+            | Self::GetBlobTrees { .. }
             | Self::GetSnapshot { .. } => StreamRole::Content,
             Self::LatestSnapshot
             | Self::OpenSnapshotStream { .. }
@@ -1063,9 +1190,10 @@ impl Response {
             Self::ResponseComplete => MessageKind::ResponseComplete,
             Self::EventCommitted { .. } => MessageKind::EventCommitted,
             Self::BlobStored { .. } => MessageKind::BlobStored,
-            Self::Blob(_) => MessageKind::Blob,
             Self::DirectoryStored { .. } => MessageKind::DirectoryStored,
-            Self::Directory(_) => MessageKind::Directory,
+            Self::BlobTree { .. } => MessageKind::BlobTree,
+            Self::LoadContentComplete => MessageKind::LoadContentComplete,
+            Self::LoadContentError { .. } => MessageKind::LoadContentError,
             Self::Snapshot(_) => MessageKind::Snapshot,
             Self::LoadSnapshot(_) => MessageKind::LoadSnapshot,
             Self::LoadEvent(event) if event.event.blob_tree.is_none() => {
@@ -1101,6 +1229,20 @@ fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, 
     Ok(value)
 }
 
+fn validate_load_credit(content: bool, items: u32) -> Result<(), ProtocolError> {
+    let maximum = if content {
+        LOAD_CONTENT_CREDITS
+    } else {
+        LOAD_EVENT_CREDITS
+    };
+    if items > maximum {
+        return Err(ProtocolError::InvalidPayload(
+            postcard::Error::DeserializeBadEncoding,
+        ));
+    }
+    Ok(())
+}
+
 /// Encodes a request without serializing the outer [`Request`] enum.
 ///
 /// # Errors
@@ -1115,6 +1257,13 @@ pub fn encode_request_frame(
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match request {
+        Request::OpenEventStream { hint, .. } | Request::GetBlobTrees { hint, .. } => {
+            hint.decode()?;
+        }
+        Request::LoadCredit { content, items } => validate_load_credit(*content, *items)?,
+        _ => {}
+    }
+    match request {
         Request::OpenSignalStream(value) => {
             encode_typed_payload(role, request.kind(), value, limits)
         }
@@ -1125,6 +1274,7 @@ pub fn encode_request_frame(
             intent,
 
             resume_after,
+            hint,
         } => encode_typed_payload(
             role,
             request.kind(),
@@ -1134,6 +1284,7 @@ pub fn encode_request_frame(
                 intent: *intent,
 
                 resume_after: *resume_after,
+                hint: hint.clone(),
             },
             limits,
         ),
@@ -1220,9 +1371,24 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::GetBlob { id } => {
-            encode_typed_payload(role, request.kind(), &wire::BlobId { id: *id }, limits)
-        }
+        Request::GetBlobTrees { roots, hint } => encode_typed_payload(
+            role,
+            request.kind(),
+            &wire::GetBlobTrees {
+                roots: roots.clone(),
+                hint: hint.clone(),
+            },
+            limits,
+        ),
+        Request::LoadCredit { content, items } => encode_typed_payload(
+            role,
+            request.kind(),
+            &wire::LoadCredit {
+                content: *content,
+                items: *items,
+            },
+            limits,
+        ),
         Request::PutDirectory { entries } => encode_typed_payload(
             role,
             request.kind(),
@@ -1231,13 +1397,13 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::GetDirectory { id } => {
-            encode_typed_payload(role, request.kind(), &wire::DirectoryId { id: *id }, limits)
-        }
         Request::GetSnapshot { id } => {
             encode_typed_payload(role, request.kind(), &wire::SnapshotId { id: *id }, limits)
         }
-        Request::LatestSnapshot | Request::Close => {
+        Request::LatestSnapshot
+        | Request::Close
+        | Request::CancelLoadContent
+        | Request::CancelLoadEvents => {
             encode_typed_payload(role, request.kind(), &wire::Empty, limits)
         }
     }
@@ -1261,12 +1427,14 @@ pub fn decode_request_frame(
         MessageKind::SendSignal => Request::SendSignal(decode_typed_payload(frame)?),
         MessageKind::OpenEventStream => {
             let value: wire::OpenEventStream = decode_typed_payload(frame)?;
+            value.hint.decode()?;
             Request::OpenEventStream {
                 version: value.version,
                 archive: value.archive,
                 intent: value.intent,
 
                 resume_after: value.resume_after,
+                hint: value.hint,
             }
         }
         MessageKind::OpenAuthorStream => {
@@ -1333,19 +1501,35 @@ pub fn decode_request_frame(
                 payload: value.payload,
             }
         }
-        MessageKind::GetBlob => {
-            let value: wire::BlobId = decode_typed_payload(frame)?;
-            Request::GetBlob { id: value.id }
+        MessageKind::GetBlobTrees => {
+            let value: wire::GetBlobTrees = decode_typed_payload(frame)?;
+            value.hint.decode()?;
+            Request::GetBlobTrees {
+                roots: value.roots,
+                hint: value.hint,
+            }
+        }
+        MessageKind::LoadCredit => {
+            let value: wire::LoadCredit = decode_typed_payload(frame)?;
+            validate_load_credit(value.content, value.items)?;
+            Request::LoadCredit {
+                content: value.content,
+                items: value.items,
+            }
+        }
+        MessageKind::CancelLoadContent => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Request::CancelLoadContent
+        }
+        MessageKind::CancelLoadEvents => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Request::CancelLoadEvents
         }
         MessageKind::PutDirectory => {
             let value: wire::PutDirectory = decode_typed_payload(frame)?;
             Request::PutDirectory {
                 entries: value.entries,
             }
-        }
-        MessageKind::GetDirectory => {
-            let value: wire::DirectoryId = decode_typed_payload(frame)?;
-            Request::GetDirectory { id: value.id }
         }
         MessageKind::GetSnapshot => {
             let value: wire::SnapshotId = decode_typed_payload(frame)?;
@@ -1377,7 +1561,7 @@ pub fn encode_response_frame(
     use payload as wire;
     match response {
         Response::SignalEvent(value) => encode_typed_payload(role, response.kind(), value, limits),
-        Response::Acknowledged | Response::ResponseComplete => {
+        Response::Acknowledged | Response::ResponseComplete | Response::LoadContentComplete => {
             encode_typed_payload(role, response.kind(), &wire::Empty, limits)
         }
         Response::EventStreamOpened {
@@ -1414,10 +1598,11 @@ pub fn encode_response_frame(
         Response::BlobStored { id } => {
             encode_typed_payload(role, response.kind(), &wire::BlobId { id: *id }, limits)
         }
-        Response::Blob(payload) => encode_typed_payload(
+        Response::BlobTree { id, payload } => encode_typed_payload(
             role,
             response.kind(),
-            &wire::Blob {
+            &wire::BlobTree {
+                id: *id,
                 payload: payload.clone(),
             },
             limits,
@@ -1426,14 +1611,6 @@ pub fn encode_response_frame(
             role,
             response.kind(),
             &wire::DirectoryId { id: *id },
-            limits,
-        ),
-        Response::Directory(entries) => encode_typed_payload(
-            role,
-            response.kind(),
-            &wire::Directory {
-                entries: entries.clone(),
-            },
             limits,
         ),
         Response::Snapshot(snapshot) => encode_typed_payload(
@@ -1487,15 +1664,17 @@ pub fn encode_response_frame(
             },
             limits,
         ),
-        Response::Error { kind, message } => encode_typed_payload(
-            role,
-            response.kind(),
-            &wire::Error {
-                kind: *kind,
-                message: message.clone(),
-            },
-            limits,
-        ),
+        Response::Error { kind, message } | Response::LoadContentError { kind, message } => {
+            encode_typed_payload(
+                role,
+                response.kind(),
+                &wire::Error {
+                    kind: *kind,
+                    message: message.clone(),
+                },
+                limits,
+            )
+        }
     }
 }
 
@@ -1522,6 +1701,17 @@ pub fn decode_response_network_frame(
             let _: wire::Empty = decode_typed_payload(frame)?;
             Response::ResponseComplete
         }
+        MessageKind::LoadContentComplete => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Response::LoadContentComplete
+        }
+        MessageKind::LoadContentError => {
+            let value: wire::Error = decode_typed_payload(frame)?;
+            Response::LoadContentError {
+                kind: value.kind,
+                message: value.message,
+            }
+        }
         MessageKind::EventStreamOpened => {
             let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
             Response::EventStreamOpened {
@@ -1547,17 +1737,16 @@ pub fn decode_response_network_frame(
             let value: wire::BlobId = decode_typed_payload(frame)?;
             Response::BlobStored { id: value.id }
         }
-        MessageKind::Blob => {
-            let value: wire::Blob = decode_typed_payload(frame)?;
-            Response::Blob(value.payload)
+        MessageKind::BlobTree => {
+            let value: wire::BlobTree = decode_typed_payload(frame)?;
+            Response::BlobTree {
+                id: value.id,
+                payload: value.payload,
+            }
         }
         MessageKind::DirectoryStored => {
             let value: wire::DirectoryId = decode_typed_payload(frame)?;
             Response::DirectoryStored { id: value.id }
-        }
-        MessageKind::Directory => {
-            let value: wire::Directory = decode_typed_payload(frame)?;
-            Response::Directory(value.entries)
         }
         MessageKind::Snapshot => {
             let value: wire::OptionalSnapshot = decode_typed_payload(frame)?;
@@ -1661,10 +1850,10 @@ pub enum ProtocolError {
 mod tests {
     use super::signals;
     use super::{
-        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Limits, MessageKind, NETWORK_LENGTH_BYTES,
-        NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
-        Snapshot, SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId,
-        decode_request_frame, decode_response_network_frame, encode_network_frame,
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Limits, LoadingHint, MessageKind,
+        NETWORK_LENGTH_BYTES, NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError,
+        Request, Response, Snapshot, SnapshotParticipation, StreamEvent, StreamRole, StreamStatus,
+        TreeId, decode_request_frame, decode_response_network_frame, encode_network_frame,
         encode_request_frame, encode_response_frame,
     };
 
@@ -1688,6 +1877,16 @@ mod tests {
     }
 
     #[test]
+    fn retired_single_item_lookup_kinds_remain_unassigned() {
+        for byte in [7, 9, 132, 134] {
+            assert!(matches!(
+                MessageKind::try_from(byte),
+                Err(ProtocolError::UnknownMessageKind(value)) if value == byte
+            ));
+        }
+    }
+
+    #[test]
     fn snapshot_participation_rejects_unknown_values() {
         assert!(matches!(
             SnapshotParticipation::try_from(0),
@@ -1707,7 +1906,7 @@ mod tests {
         };
         for payload in [Vec::new(), b"payload".to_vec()] {
             let frame = NetworkFrame {
-                kind: MessageKind::Blob,
+                kind: MessageKind::BlobTree,
                 payload,
             };
             let encoded = encode_network_frame(&frame, limits).unwrap();
@@ -1775,7 +1974,7 @@ mod tests {
     #[test]
     fn network_frames_reject_limits_and_wrong_streams() {
         let oversized = NetworkFrame {
-            kind: MessageKind::Blob,
+            kind: MessageKind::BlobTree,
 
             payload: vec![0; 16],
         };
@@ -1866,8 +2065,25 @@ mod tests {
                     archive: b"archive".to_vec(),
                     intent: ArchiveIntent::Open,
                     resume_after: Some(1),
+                    hint: LoadingHint::default(),
                 },
             ),
+            (
+                StreamRole::Event,
+                Request::LoadCredit {
+                    content: false,
+                    items: super::LOAD_EVENT_CREDITS,
+                },
+            ),
+            (
+                StreamRole::Event,
+                Request::LoadCredit {
+                    content: true,
+                    items: super::LOAD_CONTENT_CREDITS,
+                },
+            ),
+            (StreamRole::Event, Request::CancelLoadContent),
+            (StreamRole::Event, Request::CancelLoadEvents),
             (
                 StreamRole::Author,
                 Request::OpenAuthorStream {
@@ -1922,9 +2138,18 @@ mod tests {
                     payload: b"blob".to_vec(),
                 },
             ),
-            (StreamRole::Content, Request::GetBlob { id: [5; 32] }),
             (StreamRole::Content, Request::PutDirectory { entries }),
-            (StreamRole::Content, Request::GetDirectory { id: [6; 32] }),
+            (
+                StreamRole::Content,
+                Request::GetBlobTrees {
+                    roots: vec![TreeId::Blob([5; 32]), TreeId::Directory([6; 32])],
+                    hint: LoadingHint::encode(sea_core::session::BlobTreeHint {
+                        include_descendant_blobs: true,
+                        max_extra_items: 17,
+                    })
+                    .unwrap(),
+                },
+            ),
             (StreamRole::Content, Request::GetSnapshot { id: 7 }),
             (StreamRole::Snapshot, Request::LatestSnapshot),
             (StreamRole::Author, Request::Close),
@@ -2122,17 +2347,31 @@ mod tests {
             ),
             (StreamRole::Author, Response::EventCommitted { position: 2 }),
             (StreamRole::Content, Response::BlobStored { id: [3; 32] }),
-            (StreamRole::Content, Response::Blob(b"blob".to_vec())),
             (
                 StreamRole::Content,
-                Response::DirectoryStored { id: [4; 32] },
+                Response::BlobTree {
+                    id: TreeId::Blob([3; 32]),
+                    payload: b"blob".to_vec(),
+                },
+            ),
+            (
+                StreamRole::Event,
+                Response::BlobTree {
+                    id: TreeId::Directory([4; 32]),
+                    payload: vec![0],
+                },
+            ),
+            (StreamRole::Event, Response::LoadContentComplete),
+            (
+                StreamRole::Event,
+                Response::LoadContentError {
+                    kind: ErrorKind::Unavailable,
+                    message: "content unavailable".to_owned(),
+                },
             ),
             (
                 StreamRole::Content,
-                Response::Directory(vec![DirectoryEntry {
-                    name: "leaf".to_owned(),
-                    child: TreeId::Blob([5; 32]),
-                }]),
+                Response::DirectoryStored { id: [4; 32] },
             ),
             (
                 StreamRole::Snapshot,
@@ -2238,6 +2477,249 @@ mod tests {
                 decode_response_network_frame(StreamRole::Author, &frame),
                 Err(ProtocolError::InvalidPayload(_))
             ));
+        }
+    }
+
+    #[test]
+    fn loading_hint_versions_round_trip_and_unknown_payloads_are_preserved() {
+        for include_descendant_blobs in [false, true] {
+            for max_extra_items in [0, 1, 128, u32::MAX] {
+                let hint = LoadingHint::encode(sea_core::session::BlobTreeHint {
+                    include_descendant_blobs,
+                    max_extra_items,
+                })
+                .unwrap();
+                assert_eq!(hint.version, 1);
+                let decoded = hint.decode().unwrap();
+                assert_eq!(decoded.include_descendant_blobs, include_descendant_blobs);
+                assert_eq!(decoded.max_extra_items, max_extra_items);
+            }
+        }
+        for hint in [
+            LoadingHint::default(),
+            LoadingHint {
+                version: u16::MAX,
+                payload: vec![0xff, 0x80, 0],
+            },
+        ] {
+            let decoded = hint.decode().unwrap();
+            assert!(!decoded.include_descendant_blobs);
+            assert_eq!(decoded.max_extra_items, 0);
+            for request in [
+                Request::GetBlobTrees {
+                    roots: Vec::new(),
+                    hint: hint.clone(),
+                },
+                Request::OpenEventStream {
+                    version: PROTOCOL_VERSION,
+                    archive: vec![1],
+                    intent: ArchiveIntent::Open,
+                    resume_after: None,
+                    hint: hint.clone(),
+                },
+            ] {
+                let role = request.stream_role();
+                let encoded = encode_request_frame(role, &request, Limits::default()).unwrap();
+                assert_eq!(
+                    decode_request_frame(role, &decode_one_network_frame(&encoded)).unwrap(),
+                    request
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn known_loading_hint_payloads_reject_malformed_and_trailing_bytes() {
+        for payload in [vec![], vec![2, 0], vec![1, 0x80], vec![0, 0, 0]] {
+            let hint = LoadingHint {
+                version: 1,
+                payload,
+            };
+            assert!(matches!(
+                hint.decode(),
+                Err(ProtocolError::InvalidPayload(_))
+            ));
+            for request in [
+                Request::GetBlobTrees {
+                    roots: Vec::new(),
+                    hint: hint.clone(),
+                },
+                Request::OpenEventStream {
+                    version: PROTOCOL_VERSION,
+                    archive: vec![1],
+                    intent: ArchiveIntent::Open,
+                    resume_after: None,
+                    hint: hint.clone(),
+                },
+            ] {
+                let role = request.stream_role();
+                assert!(matches!(
+                    encode_request_frame(role, &request, Limits::default()),
+                    Err(ProtocolError::InvalidPayload(_))
+                ));
+            }
+            let frames = [
+                (
+                    StreamRole::Content,
+                    NetworkFrame {
+                        kind: MessageKind::GetBlobTrees,
+                        payload: postcard::to_allocvec(&super::payload::GetBlobTrees {
+                            roots: Vec::new(),
+                            hint: hint.clone(),
+                        })
+                        .unwrap(),
+                    },
+                ),
+                (
+                    StreamRole::Event,
+                    NetworkFrame {
+                        kind: MessageKind::OpenEventStream,
+                        payload: postcard::to_allocvec(&super::payload::OpenEventStream {
+                            version: PROTOCOL_VERSION,
+                            archive: vec![1],
+                            intent: ArchiveIntent::Open,
+                            resume_after: None,
+                            hint,
+                        })
+                        .unwrap(),
+                    },
+                ),
+            ];
+            for (role, frame) in frames {
+                assert!(matches!(
+                    decode_request_frame(role, &frame),
+                    Err(ProtocolError::InvalidPayload(_))
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn prefetch_kinds_have_explicit_payloads_and_stream_roles() {
+        for (kind, allowed) in [
+            (MessageKind::GetBlobTrees, vec![StreamRole::Content]),
+            (MessageKind::LoadCredit, vec![StreamRole::Event]),
+            (MessageKind::CancelLoadContent, vec![StreamRole::Event]),
+            (MessageKind::CancelLoadEvents, vec![StreamRole::Event]),
+            (
+                MessageKind::BlobTree,
+                vec![StreamRole::Event, StreamRole::Content],
+            ),
+            (MessageKind::LoadContentComplete, vec![StreamRole::Event]),
+            (MessageKind::LoadContentError, vec![StreamRole::Event]),
+        ] {
+            for role in [
+                StreamRole::Signal,
+                StreamRole::Event,
+                StreamRole::Author,
+                StreamRole::Snapshot,
+                StreamRole::Content,
+            ] {
+                assert_eq!(kind.is_valid_on(role), allowed.contains(&role));
+            }
+        }
+        let request = Request::LoadCredit {
+            content: true,
+            items: 1,
+        };
+        assert_eq!(request.kind().request_role(), Some(request.stream_role()));
+        let encoded = encode_request_frame(StreamRole::Event, &request, Limits::default()).unwrap();
+        assert_eq!(decode_one_network_frame(&encoded).payload, vec![1, 1]);
+        let encoded = encode_response_frame(
+            StreamRole::Event,
+            &Response::LoadContentComplete,
+            Limits::default(),
+        )
+        .unwrap();
+        assert!(decode_one_network_frame(&encoded).payload.is_empty());
+        for request in [Request::CancelLoadContent, Request::CancelLoadEvents] {
+            let encoded =
+                encode_request_frame(StreamRole::Event, &request, Limits::default()).unwrap();
+            assert!(decode_one_network_frame(&encoded).payload.is_empty());
+            assert_eq!(request.kind().request_role(), Some(StreamRole::Event));
+            assert_eq!(request.stream_role(), StreamRole::Event);
+        }
+        let hint = LoadingHint::default();
+        let roots = vec![TreeId::Blob([3; 32])];
+        let encoded = encode_request_frame(
+            StreamRole::Content,
+            &Request::GetBlobTrees {
+                roots: roots.clone(),
+                hint: hint.clone(),
+            },
+            Limits::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            decode_one_network_frame(&encoded).payload,
+            postcard::to_allocvec(&super::payload::GetBlobTrees { roots, hint }).unwrap()
+        );
+        let id = TreeId::Blob([3; 32]);
+        let payload = vec![1, 2];
+        let encoded = encode_response_frame(
+            StreamRole::Content,
+            &Response::BlobTree {
+                id,
+                payload: payload.clone(),
+            },
+            Limits::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            decode_one_network_frame(&encoded).payload,
+            postcard::to_allocvec(&super::payload::BlobTree { id, payload }).unwrap()
+        );
+        let kind = ErrorKind::Unavailable;
+        let message = "content unavailable".to_owned();
+        let encoded = encode_response_frame(
+            StreamRole::Event,
+            &Response::LoadContentError {
+                kind,
+                message: message.clone(),
+            },
+            Limits::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            decode_one_network_frame(&encoded).payload,
+            postcard::to_allocvec(&super::payload::Error { kind, message }).unwrap()
+        );
+    }
+
+    #[test]
+    fn event_open_requires_the_version_13_hint_field() {
+        assert_eq!(PROTOCOL_VERSION, 13);
+        let frame = NetworkFrame {
+            kind: MessageKind::OpenEventStream,
+            payload: postcard::to_allocvec(&(12_u16, vec![1_u8], ArchiveIntent::Open, None::<u64>))
+                .unwrap(),
+        };
+        assert!(matches!(
+            decode_request_frame(StreamRole::Event, &frame),
+            Err(ProtocolError::InvalidPayload(_))
+        ));
+    }
+
+    #[test]
+    fn load_credit_counts_are_bounded_by_the_selected_window() {
+        for (content, maximum) in [
+            (false, super::LOAD_EVENT_CREDITS),
+            (true, super::LOAD_CONTENT_CREDITS),
+        ] {
+            for items in [0, maximum, maximum + 1, u32::MAX] {
+                let request = Request::LoadCredit { content, items };
+                let encoded = encode_request_frame(StreamRole::Event, &request, Limits::default());
+                assert_eq!(encoded.is_ok(), items <= maximum);
+                let frame = NetworkFrame {
+                    kind: MessageKind::LoadCredit,
+                    payload: postcard::to_allocvec(&super::payload::LoadCredit { content, items })
+                        .unwrap(),
+                };
+                assert_eq!(
+                    decode_request_frame(StreamRole::Event, &frame).is_ok(),
+                    items <= maximum
+                );
+            }
         }
     }
 

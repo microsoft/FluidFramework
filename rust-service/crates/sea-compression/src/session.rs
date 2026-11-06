@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
+    BlobDirectory, BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream, EventPosition,
     archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     session::{
@@ -34,6 +34,21 @@ fn decode<Error: sea_core::ClassifiedError>(
     )
 }
 
+/// Transforms verified stored leaves without reinterpreting their encoded identities.
+fn decode_content<E: sea_core::ClassifiedError>(
+    source: BlobTreeStream<E>,
+) -> BlobTreeStream<CompressionError<E>> {
+    Box::pin(
+        source.map(|item| match item.map_err(CompressionError::Store)? {
+            BlobTreeItem::Blob { id, bytes } => Ok(BlobTreeItem::Blob {
+                id,
+                bytes: decompress_payload(&bytes).map_err(CompressionError::Corrupt)?,
+            }),
+            directory @ BlobTreeItem::Directory { .. } => Ok(directory),
+        }),
+    )
+}
+
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Session: SeaArchive> SeaArchive for CompressionSession<Session> {
@@ -49,14 +64,16 @@ impl<Session: SeaArchive> SeaArchive for CompressionSession<Session> {
     async fn load(
         &self,
         start: LoadStart,
+        hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let loaded = self
             .inner
-            .load(start)
+            .load(start, hint)
             .await
             .map_err(CompressionError::Store)?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot,
+            content: decode_content(loaded.content),
             events: decode(loaded.events),
         })
     }
@@ -75,15 +92,12 @@ impl<Session: SeaArchive> SeaArchive for CompressionSession<Session> {
             .await
             .map_err(CompressionError::Store)
     }
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        decompress_payload(
-            &self
-                .inner
-                .get_blob(id)
-                .await
-                .map_err(CompressionError::Store)?,
-        )
-        .map_err(CompressionError::Corrupt)
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> BlobTreeStream<Self::Error> {
+        decode_content(self.inner.get_blob_trees(roots, hint))
     }
     async fn put_directory(
         &self,
@@ -91,12 +105,6 @@ impl<Session: SeaArchive> SeaArchive for CompressionSession<Session> {
     ) -> Result<Self::BlobHandle, Self::Error> {
         self.inner
             .put_directory(directory)
-            .await
-            .map_err(CompressionError::Store)
-    }
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.inner
-            .get_directory(id)
             .await
             .map_err(CompressionError::Store)
     }
@@ -182,6 +190,7 @@ impl<Session: SeaSnapshotCoordinator> SeaSnapshotCoordinator for CompressionSess
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sea_core::{BlobId, SeaArchiveExt};
     use sea_core::{ClassifiedError, ErrorKind, Event, MonitoredStreamItem, storage::SeaStorage};
     use sea_core::{archive::SessionEventKind, storage::StorageHandle};
     use sea_memory::MemoryStorage;
@@ -240,6 +249,28 @@ mod tests {
             wrapped.get_directory(directory_id).await.unwrap(),
             directory
         );
+        let mut content = wrapped.get_blob_trees(
+            vec![root.id()],
+            BlobTreeHint {
+                include_descendant_blobs: true,
+                max_extra_items: 1,
+            },
+        );
+        assert_eq!(
+            content.next().await.unwrap().unwrap(),
+            BlobTreeItem::Directory {
+                id: directory_id,
+                directory: directory.clone(),
+            }
+        );
+        assert_eq!(
+            content.next().await.unwrap().unwrap(),
+            BlobTreeItem::Blob {
+                id,
+                bytes: payload.clone(),
+            }
+        );
+        assert!(content.next().await.is_none());
         let joined = wrapped
             .announce_membership(Bytes::from_static(b"public"))
             .await
@@ -321,8 +352,15 @@ mod tests {
                 .id(),
             root.id()
         );
-        let mut loaded = wrapped.load(LoadStart::LatestSnapshot).await.unwrap();
+        let mut loaded = wrapped
+            .load(LoadStart::LatestSnapshot, BlobTreeHint::default())
+            .await
+            .unwrap();
         assert_eq!(loaded.snapshot.unwrap().at_event.id(), first);
+        let content = loaded.content.next().await.unwrap().unwrap();
+        assert_eq!(content.id(), root.id());
+        assert!(matches!(content, BlobTreeItem::Blob { bytes, .. } if bytes == b"snapshot"[..]));
+        assert!(loaded.content.next().await.is_none());
         let second = wrapped.submit(submission.clone()).await.unwrap();
         let suffix = next_event(&mut loaded.events).await;
         assert_eq!(suffix.committed.position, second);

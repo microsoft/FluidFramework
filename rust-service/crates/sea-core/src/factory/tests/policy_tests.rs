@@ -277,7 +277,7 @@ fn reader_refusal_covers_load_but_not_bounded_history_or_snapshot_lookup() {
     ));
     assert!(ready(Box::pin(refused.next())).is_none());
     assert!(matches!(
-        ready(session.load(LoadStart::LatestSnapshot)),
+        ready(session.load(LoadStart::LatestSnapshot, BlobTreeHint::default())),
         Err(PolicyError::Policy(Refused))
     ));
     assert!(source.calls.lock().unwrap().is_empty());
@@ -300,8 +300,21 @@ fn reader_refusal_covers_load_but_not_bounded_history_or_snapshot_lookup() {
     assert_eq!(drops.load(Ordering::SeqCst), 1);
     policy.refuse_reader.store(false, Ordering::SeqCst);
     let drops = install_stream(&source);
-    let loaded = ready(session.load(LoadStart::LatestSnapshot)).unwrap();
+    let hint = BlobTreeHint {
+        include_descendant_blobs: true,
+        max_extra_items: 19,
+    };
+    let mut loaded = ready(session.load(LoadStart::LatestSnapshot, hint)).unwrap();
+    assert_eq!(*source.load_hint.lock().unwrap(), hint);
     let snapshot = loaded.snapshot.unwrap();
+    assert_eq!(
+        ready(Box::pin(loaded.content.next()))
+            .unwrap()
+            .unwrap()
+            .id(),
+        snapshot.root.id()
+    );
+    assert!(ready(Box::pin(loaded.content.next())).is_none());
     assert!(Arc::ptr_eq(&snapshot.root.evidence, &source.evidence));
     assert!(Arc::ptr_eq(&snapshot.at_event.evidence, &source.evidence));
     assert_eq!(
@@ -318,11 +331,11 @@ fn reader_permits_cover_pending_loads_owned_streams_and_cancellation() {
     source.pending_load.store(true, Ordering::SeqCst);
     let policy = TestPolicy::new(1, 7);
     let session = PolicySession::new(source.clone(), policy.clone());
-    let mut loading = session.load(LoadStart::LatestSnapshot);
+    let mut loading = session.load(LoadStart::LatestSnapshot, BlobTreeHint::default());
     pending(&mut loading, &Arc::default());
     assert_eq!(policy.readers.load(Ordering::SeqCst), 1);
     assert!(matches!(
-        ready(session.load(LoadStart::LatestSnapshot)),
+        ready(session.load(LoadStart::LatestSnapshot, BlobTreeHint::default())),
         Err(PolicyError::Policy(Refused))
     ));
     let mut refused = session.read(Some(EventPosition::new(7)), None);
@@ -338,13 +351,13 @@ fn reader_permits_cover_pending_loads_owned_streams_and_cancellation() {
     source.pending_load.store(false, Ordering::SeqCst);
     source.failed_load.store(true, Ordering::SeqCst);
     source_error(
-        ready(session.load(LoadStart::LatestSnapshot)),
+        ready(session.load(LoadStart::LatestSnapshot, BlobTreeHint::default())),
         &source.error,
     );
     assert_eq!(policy.readers.load(Ordering::SeqCst), 0);
     source.failed_load.store(false, Ordering::SeqCst);
     let drops = install_stream(&source);
-    let loaded = ready(session.load(LoadStart::LatestSnapshot)).unwrap();
+    let loaded = ready(session.load(LoadStart::LatestSnapshot, BlobTreeHint::default())).unwrap();
     assert_eq!(policy.readers.load(Ordering::SeqCst), 1);
     let bounded_drops = install_stream(&source);
     let bounded = session.read(Some(EventPosition::new(7)), Some(EventPosition::new(11)));
@@ -583,11 +596,29 @@ fn all_facets_preserve_source_errors_and_control_bypasses_pressure() {
     assert_eq!(policy.capacity.lock().unwrap().requests, 0);
     policy.blocked.store(true, Ordering::SeqCst);
     source_error(
-        ready(session.get_blob(BlobId::for_bytes(b"payload"))),
+        ready(Box::pin(
+            session
+                .get_blob_trees(
+                    vec![BlobTreeId::Blob(BlobId::for_bytes(b"payload"))],
+                    BlobTreeHint::default(),
+                )
+                .next(),
+        ))
+        .unwrap(),
         &source.error,
     );
     source_error(
-        ready(session.get_directory(BlobDirectoryId::for_encoded_bytes(b"directory"))),
+        ready(Box::pin(
+            session
+                .get_blob_trees(
+                    vec![BlobTreeId::Directory(BlobDirectoryId::for_encoded_bytes(
+                        b"directory",
+                    ))],
+                    BlobTreeHint::default(),
+                )
+                .next(),
+        ))
+        .unwrap(),
         &source.error,
     );
     source_error(

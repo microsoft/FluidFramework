@@ -50,20 +50,26 @@ describe("SeaDriver", () => {
 				const session = await service.open(document, options);
 				return {
 					...session,
-					getDirectory: async (id) => {
-						if (!reading) return session.getDirectory(id);
-						const ordinal = ++calls;
-						active++;
-						peak = Math.max(peak, active);
-						try {
-							if (ordinal > 1) {
-								if (fail && ordinal === 2) throw failure;
-								await gate;
-							}
-							return await session.getDirectory(id);
-						} finally {
-							active--;
-						}
+					getBlobTrees: (roots, hint) => {
+						const stream = session.getBlobTrees(roots, hint);
+						return {
+							cancel: () => stream.cancel(),
+							next: async () => {
+								if (!reading) return stream.next();
+								const ordinal = ++calls;
+								active++;
+								peak = Math.max(peak, active);
+								try {
+									if (ordinal > 1) {
+										if (fail && ordinal === 2) throw failure;
+										await gate;
+									}
+									return await stream.next();
+								} finally {
+									active--;
+								}
+							},
+						};
 					},
 				};
 			}, "readOnly");
@@ -619,6 +625,123 @@ describe("SeaDriver", () => {
 		}
 	});
 
+	it("detaches event delivery before delayed signal close during post-commit reconnect", async () => {
+		const service = await createMemoryService({ environment: "node" });
+		let holdSignalClose = false;
+		let releaseSignalClose = (): void => {};
+		const signalClose = new Promise<void>((resolve) => {
+			releaseSignalClose = resolve;
+		});
+		const adapter = new SeaSessionDriverClient(async (...args) => {
+			const session = await service.open(...args);
+			return {
+				...session,
+				openSignals: async (member) => {
+					const signals = await session.openSignals(member);
+					return {
+						...signals,
+						close: async () => {
+							if (holdSignalClose) await signalClose;
+							await signals.close();
+						},
+					};
+				},
+			};
+		}, "readOnly");
+		const document = await adapter.create();
+		const errors: unknown[] = [];
+		const connection = new SeaDeltaConnection(
+			"writer",
+			{
+				clientId: "writer",
+				remoteClientId: "remote",
+				cursor: undefined,
+				lastPosition: undefined,
+				remoteClientSequenceNumber: 0,
+				remoteSequenceNumbers: new Map(),
+			},
+			encoder.encode("writer"),
+			document,
+			adapter,
+			{
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				scopes: [],
+				user: { id: "writer" },
+				mode: "write",
+			},
+			"write",
+			[],
+			(error) => {
+				errors.push(error);
+			},
+		);
+		const received: number[] = [];
+		connection.on("op", (_document, messages) => {
+			for (const message of messages)
+				if (message.type === "op") received.push(message.clientSequenceNumber);
+		});
+		let reopening: Promise<void> | undefined;
+		try {
+			await connection.open();
+			connection.submit([
+				{
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: connection.checkpointSequenceNumber,
+					type: "op",
+					contents: "before disconnect",
+				},
+			]);
+			await connection.waitForIdle();
+			await setImmediate();
+			assert.deepEqual(received, [1]);
+			holdSignalClose = true;
+			connection.disconnect();
+			await setImmediate();
+			assert.deepEqual(
+				errors,
+				[],
+				"intentional stream cancellation must not report synchronization failure",
+			);
+			let reopened = false;
+			reopening = connection.reconnect().then(() => {
+				reopened = true;
+			});
+			await setImmediate();
+			assert.deepEqual(
+				errors,
+				[],
+				"intentional stream cancellation must not report synchronization failure",
+			);
+			assert.equal(reopened, false, "reconnect must drain the previous signal close");
+			releaseSignalClose();
+			await reopening;
+			assert.equal(
+				(await connection.synchronize()).filter((message) => message.type === "op").length,
+				0,
+			);
+			connection.submit([
+				{
+					clientSequenceNumber: 2,
+					referenceSequenceNumber: connection.checkpointSequenceNumber,
+					type: "op",
+					contents: "after reconnect",
+				},
+			]);
+			await connection.waitForIdle();
+			await setImmediate();
+			assert.deepEqual(received, [1, 2]);
+			assert.deepEqual(errors, []);
+		} finally {
+			releaseSignalClose();
+			await reopening;
+			connection.dispose();
+			adapter.disconnect();
+			await adapter.reconnect();
+			service.close();
+		}
+	});
+
 	it("pong waits for a service response and ignores failed or disposed measurements", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");
@@ -1000,7 +1123,7 @@ describe("SeaDriver", () => {
 			const session = await service.open(document, options);
 			opens += 1;
 			if (opens === 1) {
-				const getBlob = session.getBlob.bind(session);
+				const getBlobTrees = session.getBlobTrees.bind(session);
 				const putBlob = session.putBlob.bind(session);
 				const close = session.close.bind(session);
 				session.putBlob = async (payload) => {
@@ -1010,10 +1133,16 @@ describe("SeaDriver", () => {
 					}
 					return putBlob(payload);
 				};
-				session.getBlob = async (id) => {
-					enteredRead();
-					await blocked;
-					return getBlob(id);
+				session.getBlobTrees = (roots, hint) => {
+					const stream = getBlobTrees(roots, hint);
+					return {
+						cancel: () => stream.cancel(),
+						next: async () => {
+							enteredRead();
+							await blocked;
+							return stream.next();
+						},
+					};
 				};
 				session.close = () => {
 					firstClosed = true;

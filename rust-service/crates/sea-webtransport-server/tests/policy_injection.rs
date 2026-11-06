@@ -306,6 +306,7 @@ async fn open(
             intent: protocol::ArchiveIntent::Open,
             archive: document.as_bytes().to_vec(),
             resume_after: None,
+            hint: protocol::LoadingHint::default(),
         })
         .await
         .unwrap();
@@ -314,7 +315,7 @@ async fn open(
         panic!("missing opening authority");
     };
     let bound = connection.bind_session(&authority).await.unwrap();
-    (bound, events)
+    (bound, Box::pin(events))
 }
 
 /// Drains to the live boundary, rejecting errors rather than silently treating shedding as success.
@@ -401,11 +402,15 @@ async fn assert_policy<S: SeaStorage + 'static>(
     let exercise = async {
         let id = host.create_document().await.unwrap();
         let author = host.open_session(&id, None).await.unwrap().session;
-        let mut echo = author.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        let mut echo = author
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap()
+            .events;
         catch_up_typed(&mut echo).await;
         let observer = host.clone().open_session(&id, None).await.unwrap().session;
         let mut events = observer
-            .load(LoadStart::LatestSnapshot)
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
             .await
             .unwrap()
             .events;
@@ -422,7 +427,11 @@ async fn assert_policy<S: SeaStorage + 'static>(
 
         let other_id = host.create_document().await.unwrap();
         let other = host.open_session(&other_id, None).await.unwrap().session;
-        let mut other_events = other.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        let mut other_events = other
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap()
+            .events;
         catch_up_typed(&mut other_events).await;
         other.submit(submission(9)).await.unwrap();
         assert_eq!(probe.documents.lock().unwrap().len(), 2);
@@ -461,7 +470,11 @@ async fn assert_policy<S: SeaStorage + 'static>(
     if let Some(storage) = reopen {
         let reopened = configure(storage);
         let reader = reopened.open_session(&id, None).await.unwrap().session;
-        let mut events = reader.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        let mut events = reader
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap()
+            .events;
         assert_eq!(
             catch_up_typed(&mut events).await,
             vec![vec![1], vec![2], vec![3]]

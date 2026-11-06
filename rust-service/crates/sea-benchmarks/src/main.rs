@@ -17,6 +17,7 @@ use sea_benchmarks::{
     Measurements, SCHEMA_VERSION, Workload, summarize,
 };
 use sea_compression::CompressionSession;
+use sea_core::SeaArchiveExt as _;
 use sea_core::{
     ArchiveEventStream, BlobTreeId, Event, MonitoredStreamItem,
     archive::{EventSubmission, SnapshotParticipation},

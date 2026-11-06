@@ -1,7 +1,7 @@
 //! Typed Sea sessions over platform transport primitives.
 
 use std::{
-    collections::{BTreeMap, VecDeque},
+    collections::VecDeque,
     error::Error,
     fmt,
     sync::{Arc, Weak},
@@ -40,11 +40,15 @@ use crate::{
 use crate::{
     client::{
         AuthorStream, Client, ClientError, ClientErrorReason, ClientStateError, ContentStream,
-        EventStream, SnapshotStream,
+        SnapshotStream,
     },
     protocol,
     transport::{BidirectionalStream, ClientTransport},
 };
+
+#[path = "native_load.rs"]
+mod loading;
+use loading::{LoadReceiver, split_load};
 
 /// Thread transfer required by native session streams and transport errors.
 #[cfg(not(target_arch = "wasm32"))]
@@ -306,12 +310,14 @@ pub struct SessionClient<Transport: ClientTransport> {
     /// Sequencer-allocated document-scoped identity.
     session: SessionId,
     client: Arc<Client<Transport>>,
-    event_stream: Arc<Mutex<Option<EventStream<Transport::Stream>>>>,
+    event_stream: Arc<Mutex<Option<(LoadReceiver, LoadReceiver)>>>,
     author_stream: Mutex<Option<AuthorStream<Transport::Stream>>>,
     /// Weak registration ownership; the returned coordination stream owns its lifetime.
     snapshot_stream: Mutex<Option<Weak<SnapshotPump>>>,
     content_pool: Arc<ContentPool<Transport::Stream>>,
-    content_permits: Semaphore,
+    content_permits: Arc<Semaphore>,
+    /// Hint used by the already-open snapshot delivery.
+    opening_hint: sea_core::session::BlobTreeHint,
     resume_after: Option<EventPosition>,
     /// Backend document identity, distinct from logical session authority.
     document: DocumentId,
@@ -520,6 +526,8 @@ pub struct SessionOpen {
 
     /// Latest event incorporated by the author.
     pub reference: Option<EventPosition>,
+    /// Optional descendants requested with the selected opening snapshot.
+    pub hint: sea_core::session::BlobTreeHint,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -574,20 +582,25 @@ where
                 intent: open.intent,
 
                 resume_after: open.reference.map(EventPosition::get),
+                hint: protocol::LoadingHint::encode(open.hint)?,
             })
             .await?;
+        let session = SessionId::new(event_stream.session)
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))?;
+        let document = DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document()));
+        let streams = split_load(event_stream);
         let author_stream = client.open_author_stream().await?;
         Ok(Self {
-            session: SessionId::new(event_stream.session)
-                .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))?,
-            document: DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document())),
+            session,
+            document,
             scope: Arc::new(()),
             client: Arc::new(client),
-            event_stream: Arc::new(Mutex::new(Some(event_stream))),
+            event_stream: Arc::new(Mutex::new(Some(streams))),
             author_stream: Mutex::new(Some(author_stream)),
             snapshot_stream: Mutex::new(None),
             content_pool: Arc::new(ContentPool::new()),
-            content_permits: Semaphore::new(CONTENT_CONCURRENCY),
+            content_permits: Arc::new(Semaphore::new(CONTENT_CONCURRENCY)),
+            opening_hint: open.hint,
             resume_after: open.reference,
         })
     }
@@ -646,10 +659,18 @@ where
     async fn acquire_content_stream(
         &self,
     ) -> Result<ContentLease<Transport::Stream>, SeaClientError> {
+        Self::acquire_pool_stream(&self.client, &self.content_pool).await
+    }
+
+    /// Acquires through shared ownership so a returned content stream can outlive the call.
+    async fn acquire_pool_stream(
+        client: &Arc<Client<Transport>>,
+        pool: &Arc<ContentPool<Transport::Stream>>,
+    ) -> Result<ContentLease<Transport::Stream>, SeaClientError> {
         loop {
-            let changed = self.content_pool.changed.notified();
+            let changed = pool.changed.notified();
             {
-                let mut state = self.content_pool.state.lock().expect("content pool");
+                let mut state = pool.state.lock().expect("content pool");
                 if state.closed {
                     return Err(SeaClientError::new(SeaClientErrorReason::Closed));
                 }
@@ -669,7 +690,7 @@ where
                     };
                     return Ok(ContentLease {
                         stream: Some(stream),
-                        pool: Arc::clone(&self.content_pool),
+                        pool: Arc::clone(pool),
                         index,
                         reusable: false,
                     });
@@ -681,16 +702,21 @@ where
                 {
                     let (task, registration) = AbortHandle::new_pair();
                     state.slots[index] = ContentSlot::Opening(task);
-                    self.start_content_opening(index, registration);
+                    Self::start_content_opening(client, pool, index, registration);
                 }
             }
             changed.await;
         }
     }
 
-    fn start_content_opening(&self, index: usize, registration: AbortRegistration) {
-        let pool = Arc::downgrade(&self.content_pool);
-        let client = Arc::clone(&self.client);
+    fn start_content_opening(
+        client: &Arc<Client<Transport>>,
+        pool: &Arc<ContentPool<Transport::Stream>>,
+        index: usize,
+        registration: AbortRegistration,
+    ) {
+        let pool = Arc::downgrade(pool);
+        let client = Arc::clone(client);
         let future = async move {
             let Ok(result) = Abortable::new(client.open_content_stream(), registration).await
             else {
@@ -776,14 +802,15 @@ where
     async fn load(
         &self,
         start: LoadStart,
+        hint: sea_core::session::BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
         let opened_start = self
             .resume_after
             .map_or(LoadStart::LatestSnapshot, LoadStart::ReplayAtLeastAllAfter);
-        if start == opened_start {
+        if start == opened_start && hint == self.opening_hint {
             let mut opened = self.event_stream.lock().await;
-            if let Some(mut events) = opened.take() {
-                let first = events.next().await?.ok_or(SeaClientError::new(
+            if let Some((mut events, content)) = opened.take() {
+                let first = events.next().await.ok_or(SeaClientError::new(
                     SeaClientErrorReason::UnexpectedResponse,
                 ))?;
                 let (snapshot, pending) = match first {
@@ -793,17 +820,33 @@ where
                     response => (None, Some(response)),
                 };
                 let cursor = snapshot.as_ref().map(|value| value.at_event.id());
-                let responses = stream::iter(pending.into_iter().map(Ok)).chain(
-                    stream::try_unfold(events, |mut events| async move {
-                        Ok(events
-                            .next()
-                            .await
-                            .map_err(SeaClientError::from)?
-                            .map(|response| (response, events)))
-                    }),
-                );
+                let root = snapshot.as_ref().map(|value| value.root.id());
+                let responses = stream::iter(pending.into_iter().map(Ok)).chain(stream::unfold(
+                    events,
+                    |mut events| async move {
+                        events.next().await.map(|response| (Ok(response), events))
+                    },
+                ));
                 return Ok(SessionLoad {
                     snapshot,
+                    content: Box::pin(stream::try_unfold(
+                        (content, root.is_none()),
+                        move |(mut content, progressed)| async move {
+                            match content.next().await {
+                                Some(protocol::Response::LoadContentComplete) if progressed => {
+                                    Ok(None)
+                                }
+                                Some(protocol::Response::LoadContentComplete) | None => Err(
+                                    SeaClientError::new(SeaClientErrorReason::UnexpectedResponse),
+                                ),
+                                Some(response) => {
+                                    let item = blob_tree_from_response(response)?;
+                                    let progressed = progressed || Some(item.id()) == root;
+                                    Ok(Some((item, (content, progressed))))
+                                }
+                            }
+                        },
+                    )),
                     events: boxed_monitored_stream(
                         responses.map(|result| result.and_then(event_from_stream_response)),
                         MonitoredStreamProgress {
@@ -818,7 +861,73 @@ where
         }
         let snapshot = self.get_snapshot(start).await?;
         let events = self.read(snapshot.as_ref().map(|value| value.at_event.id()), None);
-        Ok(SessionLoad { snapshot, events })
+        let content =
+            self.get_blob_trees(snapshot.iter().map(|value| value.root.id()).collect(), hint);
+        Ok(SessionLoad {
+            snapshot,
+            events,
+            content,
+        })
+    }
+
+    fn get_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: sea_core::session::BlobTreeHint,
+    ) -> sea_core::session::BlobTreeStream<Self::Error> {
+        if roots.is_empty() {
+            return Box::pin(stream::empty());
+        }
+        let client = Arc::clone(&self.client);
+        let pool = Arc::clone(&self.content_pool);
+        let permits = Arc::clone(&self.content_permits);
+        let initialized = stream::once(async move {
+            let permit = permits
+                .acquire_owned()
+                .await
+                .map_err(|_| SeaClientError::new(SeaClientErrorReason::Closed))?;
+            let mut lease = Self::acquire_pool_stream(&client, &pool).await?;
+            lease
+                .stream
+                .as_mut()
+                .expect("borrowed content stream")
+                .begin_response(protocol::Request::GetBlobTrees {
+                    roots: roots.iter().copied().map(tree_to_wire).collect(),
+                    hint: protocol::LoadingHint::encode(hint)?,
+                })
+                .await?;
+            Ok::<_, SeaClientError>((lease, permit, roots, false))
+        });
+        Box::pin(
+            initialized
+                .map_ok(|state| {
+                    stream::try_unfold(
+                        state,
+                        |(mut lease, permit, roots, mut progressed)| async move {
+                            let response = lease
+                                .stream
+                                .as_mut()
+                                .expect("borrowed content stream")
+                                .next_response()
+                                .await?;
+                            if let Some(response) = response {
+                                let item = blob_tree_from_response(response)?;
+                                progressed |= roots.contains(&item.id());
+                                Ok(Some((item, (lease, permit, roots, progressed))))
+                            } else if progressed {
+                                lease.reusable = true;
+                                drop(lease);
+                                Ok(None)
+                            } else {
+                                Err(SeaClientError::new(
+                                    SeaClientErrorReason::UnexpectedResponse,
+                                ))
+                            }
+                        },
+                    )
+                })
+                .try_flatten(),
+        )
     }
 
     fn read(
@@ -876,16 +985,6 @@ where
         }
     }
 
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        match self
-            .one_content_response(protocol::Request::GetBlob { id: *id.as_bytes() })
-            .await?
-        {
-            protocol::Response::Blob(payload) => Ok(Bytes::from(payload)),
-            response => Err(response_error(response)),
-        }
-    }
-
     async fn put_directory(
         &self,
         directory: BlobDirectory,
@@ -905,30 +1004,6 @@ where
             protocol::Response::DirectoryStored { id } => Ok(self.handle(BlobTreeId::Directory(
                 BlobDirectoryId::from_bytes(&id).expect("fixed directory identity"),
             ))),
-            response => Err(response_error(response)),
-        }
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        match self
-            .one_content_response(protocol::Request::GetDirectory { id: *id.as_bytes() })
-            .await?
-        {
-            protocol::Response::Directory(entries) => {
-                let mut directory = BTreeMap::new();
-                for entry in entries {
-                    if directory
-                        .insert(entry.name, tree_from_wire(entry.child))
-                        .is_some()
-                    {
-                        return Err(SeaClientError::new(
-                            SeaClientErrorReason::UnexpectedResponse,
-                        ));
-                    }
-                }
-                BlobDirectory::new(directory)
-                    .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))
-            }
             response => Err(response_error(response)),
         }
     }
@@ -957,10 +1032,11 @@ where
     }
 
     async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<Self::BlobHandle>, Self::Error> {
-        let result = match id {
-            BlobTreeId::Blob(blob) => self.get_blob(blob).await.map(|_| ()),
-            BlobTreeId::Directory(directory) => self.get_directory(directory).await.map(|_| ()),
-        };
+        let result = self
+            .get_blob_trees(vec![id], sea_core::session::BlobTreeHint::default())
+            .try_collect::<Vec<_>>()
+            .await
+            .map(|_| ());
         match result {
             Ok(()) => Ok(Some(self.handle(id))),
             Err(error) if error.kind() == ErrorKind::Rejected => Ok(None),
@@ -1234,6 +1310,42 @@ fn event_to_wire(event: &Event) -> protocol::Event {
     }
 }
 
+/// Decodes typed content from the authenticated session.
+///
+/// Storage verifies leaf bytes before decorators transform them. A transport hop may sit
+/// above those decorators, so its leaf payload need not hash to its stable stored identity.
+/// Directories remain canonical and can also be verified here.
+fn blob_tree_from_response(
+    response: protocol::Response,
+) -> Result<sea_core::session::BlobTreeItem, SeaClientError> {
+    use sea_core::session::BlobTreeItem;
+    match response {
+        protocol::Response::BlobTree { id, payload } => match tree_from_wire(id) {
+            BlobTreeId::Blob(id) => Ok(BlobTreeItem::Blob {
+                id,
+                bytes: Bytes::from(payload),
+            }),
+            BlobTreeId::Directory(id) if BlobDirectoryId::for_encoded_bytes(&payload) == id => {
+                let directory = BlobDirectory::decode(&payload).map_err(|error| {
+                    SeaClientError::new(SeaClientErrorReason::Service(
+                        protocol::ErrorKind::Corrupt,
+                        error.to_string(),
+                    ))
+                })?;
+                Ok(BlobTreeItem::Directory { id, directory })
+            }
+            BlobTreeId::Directory(_) => Err(SeaClientError::new(SeaClientErrorReason::Service(
+                protocol::ErrorKind::Corrupt,
+                "blob-tree digest mismatch".to_owned(),
+            ))),
+        },
+        protocol::Response::LoadContentError { kind, message } => Err(SeaClientError::new(
+            SeaClientErrorReason::Service(kind, message),
+        )),
+        response => Err(response_error(response)),
+    }
+}
+
 fn tree_from_wire(id: protocol::TreeId) -> BlobTreeId {
     match id {
         protocol::TreeId::Blob(bytes) => {
@@ -1266,6 +1378,13 @@ mod tests {
     use super::*;
     use crate::protocol::{Response, StreamRole};
     use std::collections::VecDeque;
+
+    fn blob_response(value: u8) -> Response {
+        Response::BlobTree {
+            id: protocol::TreeId::Blob(*BlobId::for_bytes(&[value]).as_bytes()),
+            payload: vec![value],
+        }
+    }
 
     #[test]
     fn converting_error_context_preserves_nested_payloads_and_primary_classification() {
@@ -1490,6 +1609,7 @@ mod tests {
                 archive: Bytes::from_static(b"document"),
                 intent: protocol::ArchiveIntent::Open,
                 reference,
+                hint: sea_core::session::BlobTreeHint::default(),
             },
         )
         .await
@@ -1546,18 +1666,14 @@ mod tests {
         // A later request can complete before the first one; its response stays on its stream.
         for index in (0..CONTENT_CONCURRENCY).rev() {
             let value = u8::try_from(index).unwrap();
-            reply(
-                &senders[index],
-                StreamRole::Content,
-                &Response::Blob(vec![value]),
-            );
+            reply(&senders[index], StreamRole::Content, &blob_response(value));
             reply(
                 &senders[index],
                 StreamRole::Content,
                 &Response::ResponseComplete,
             );
             let result = requests[index].as_mut().now_or_never().unwrap().unwrap();
-            assert_eq!(result, vec![Response::Blob(vec![value])]);
+            assert_eq!(result, vec![blob_response(value)]);
         }
         assert!(waiting.as_mut().now_or_never().is_none());
         reply(&senders[0], StreamRole::Content, &Response::Snapshot(None));
@@ -1602,17 +1718,17 @@ mod tests {
             if opening_ready {
                 reply(&opening, StreamRole::Content, &Response::Acknowledged);
             }
-            reply(&active, StreamRole::Content, &Response::Blob(vec![1]));
+            reply(&active, StreamRole::Content, &blob_response(1));
             reply(&active, StreamRole::Content, &Response::ResponseComplete);
-            assert_eq!(first.await.unwrap(), vec![Response::Blob(vec![1])]);
+            assert_eq!(first.await.unwrap(), vec![blob_response(1)]);
             assert!(second.as_mut().now_or_never().is_none());
             assert!(
                 !opening.is_closed(),
                 "the pool must retain the unused opening"
             );
-            reply(&active, StreamRole::Content, &Response::Blob(vec![2]));
+            reply(&active, StreamRole::Content, &blob_response(2));
             reply(&active, StreamRole::Content, &Response::ResponseComplete);
-            assert_eq!(second.await.unwrap(), vec![Response::Blob(vec![2])]);
+            assert_eq!(second.await.unwrap(), vec![blob_response(2)]);
             if !opening_ready {
                 reply(&opening, StreamRole::Content, &Response::Acknowledged);
             }
@@ -1621,9 +1737,9 @@ mod tests {
             let _held = client.acquire_content_stream().await.unwrap();
             let mut next = Box::pin(client.content_request(protocol::Request::LatestSnapshot));
             assert!(next.as_mut().now_or_never().is_none());
-            reply(&opening, StreamRole::Content, &Response::Blob(vec![3]));
+            reply(&opening, StreamRole::Content, &blob_response(3));
             reply(&opening, StreamRole::Content, &Response::ResponseComplete);
-            assert_eq!(next.await.unwrap(), vec![Response::Blob(vec![3])]);
+            assert_eq!(next.await.unwrap(), vec![blob_response(3)]);
             assert_eq!(
                 client.content_permits.available_permits(),
                 CONTENT_CONCURRENCY
@@ -1989,9 +2105,8 @@ mod tests {
                 let start =
                     reference.map_or(LoadStart::LatestSnapshot, LoadStart::ReplayAtLeastAllAfter);
                 let mut load = client
-                    .load(start)
-                    .now_or_never()
-                    .expect("queued opening prefix must make load ready")
+                    .load(start, sea_core::session::BlobTreeHint::default())
+                    .await
                     .unwrap();
                 assert!(client.event_stream.lock().await.is_none());
                 assert_eq!(
@@ -2026,6 +2141,7 @@ mod tests {
                         },
                     })),
                 );
+                tokio::task::yield_now().await;
                 let MonitoredStreamItem::Item(event) = next
                     .now_or_never()
                     .expect("opening stream must continue live delivery")
@@ -2044,7 +2160,261 @@ mod tests {
                     Some(EventPosition::new(11))
                 );
                 drop(load);
+                tokio::task::yield_now().await;
                 assert!(events.is_closed(), "returned load owns opening delivery");
+            }
+        }
+    }
+
+    #[test]
+    fn prefetched_content_preserves_decoded_blob_identity_and_verifies_directories() {
+        let payload = vec![1, 2, 3];
+        let id = BlobId::for_bytes(&payload);
+        assert!(
+            blob_tree_from_response(Response::BlobTree {
+                id: protocol::TreeId::Blob(*id.as_bytes()),
+                payload: payload.clone(),
+            })
+            .is_ok()
+        );
+        assert!(
+            blob_tree_from_response(Response::BlobTree {
+                id: protocol::TreeId::Blob(*id.as_bytes()),
+                payload: vec![4],
+            })
+            .is_ok()
+        );
+        let directory = BlobDirectory::new(std::collections::BTreeMap::new()).unwrap();
+        let (encoded, id) = directory.encode_with_id().unwrap();
+        assert!(
+            blob_tree_from_response(Response::BlobTree {
+                id: protocol::TreeId::Directory(*id.as_bytes()),
+                payload: encoded.to_vec(),
+            })
+            .is_ok()
+        );
+        assert!(
+            blob_tree_from_response(Response::BlobTree {
+                id: protocol::TreeId::Directory(*id.as_bytes()),
+                payload,
+            })
+            .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn opening_content_and_events_can_be_consumed_and_cancelled_independently() {
+        for cancel_content in [false, true] {
+            let (client, sender) = opening_client(None).await;
+            reply(
+                &sender,
+                StreamRole::Event,
+                &Response::StreamProgress {
+                    previous: None,
+                    latest_known: None,
+                    status: protocol::StreamStatus::AwaitingNewItems,
+                },
+            );
+            let mut loaded = client
+                .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+                .await
+                .unwrap();
+            let bytes = vec![42];
+            let id = BlobId::for_bytes(&bytes);
+            if cancel_content {
+                drop(loaded.content);
+                reply(
+                    &sender,
+                    StreamRole::Event,
+                    &Response::StreamProgress {
+                        previous: Some(5),
+                        latest_known: Some(5),
+                        status: protocol::StreamStatus::AwaitingNewItems,
+                    },
+                );
+                loaded.events.next().await.unwrap().unwrap();
+                let progress = loaded.events.next().await.unwrap().unwrap();
+                assert!(
+                    matches!(progress, MonitoredStreamItem::Progress(value) if value.previous == Some(EventPosition::new(5)))
+                );
+                drop(loaded.events);
+            } else {
+                for position in 0..protocol::LOAD_EVENT_CREDITS {
+                    reply(
+                        &sender,
+                        StreamRole::Event,
+                        &Response::StreamProgress {
+                            previous: Some(u64::from(position)),
+                            latest_known: Some(u64::from(position)),
+                            status: protocol::StreamStatus::AwaitingNewItems,
+                        },
+                    );
+                }
+                // Fill the unread event window while the content channel completes.
+                reply(
+                    &sender,
+                    StreamRole::Event,
+                    &Response::BlobTree {
+                        id: protocol::TreeId::Blob(*id.as_bytes()),
+                        payload: bytes,
+                    },
+                );
+                reply(&sender, StreamRole::Event, &Response::LoadContentComplete);
+                assert_eq!(
+                    loaded.content.next().await.unwrap().unwrap().id(),
+                    BlobTreeId::Blob(id)
+                );
+                assert!(loaded.content.next().await.is_none());
+                assert!(loaded.events.next().await.unwrap().is_ok());
+                drop(loaded);
+            }
+            tokio::task::yield_now().await;
+            assert!(sender.is_closed());
+        }
+    }
+
+    #[tokio::test]
+    async fn cancelling_events_keeps_a_full_content_window_usable() {
+        let (client, sender) = opening_client(None).await;
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::StreamProgress {
+                previous: None,
+                latest_known: None,
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
+        );
+        let load = client
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap();
+        let mut content = load.content;
+        for value in 0..protocol::LOAD_CONTENT_CREDITS {
+            let payload = value.to_le_bytes().to_vec();
+            reply(
+                &sender,
+                StreamRole::Event,
+                &Response::BlobTree {
+                    id: protocol::TreeId::Blob(*BlobId::for_bytes(&payload).as_bytes()),
+                    payload,
+                },
+            );
+        }
+        reply(&sender, StreamRole::Event, &Response::LoadContentComplete);
+        drop(load.events);
+        for _ in 0..protocol::LOAD_CONTENT_CREDITS {
+            assert!(content.next().await.unwrap().is_ok());
+        }
+        assert!(content.next().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn initial_content_requires_snapshot_root_progress() {
+        let (client, sender) = opening_client(None).await;
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::LoadSnapshot(protocol::Snapshot {
+                root: protocol::TreeId::Blob([3; 32]),
+                at_event: 5,
+            }),
+        );
+        reply(&sender, StreamRole::Event, &Response::LoadContentComplete);
+        let mut load = client
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap();
+        assert!(load.content.next().await.unwrap().is_err());
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::StreamProgress {
+                previous: Some(5),
+                latest_known: Some(5),
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
+        );
+        assert!(load.events.next().await.unwrap().is_ok());
+    }
+
+    #[tokio::test]
+    async fn opening_failure_preserves_classification_on_both_channels() {
+        let (client, sender) = opening_client(None).await;
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::StreamProgress {
+                previous: None,
+                latest_known: None,
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
+        );
+        let mut load = client
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap();
+        load.events.next().await.unwrap().unwrap();
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::Error {
+                kind: protocol::ErrorKind::Corrupt,
+                message: "corrupt source".to_owned(),
+            },
+        );
+        assert_eq!(
+            load.events.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
+        assert_eq!(
+            load.content.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
+    }
+
+    #[tokio::test]
+    async fn finite_blob_tree_reads_reuse_only_completed_streams_and_require_progress() {
+        use futures_util::FutureExt as _;
+        for successful in [false, true] {
+            let (sender, incoming) = mpsc::unbounded_channel();
+            reply(&sender, StreamRole::Content, &Response::Acknowledged);
+            let (client, _events) = opening_client_with_streams(
+                None,
+                vec![OpeningStream {
+                    incoming,
+                    cancelled: None,
+                }],
+            )
+            .await;
+            let id = BlobId::for_bytes(&[3]);
+            let mut items = client.get_blob_trees(
+                vec![BlobTreeId::Blob(id)],
+                sea_core::BlobTreeHint::default(),
+            );
+            assert!(items.next().now_or_never().is_none());
+            tokio::task::yield_now().await;
+            if successful {
+                reply(
+                    &sender,
+                    StreamRole::Content,
+                    &Response::BlobTree {
+                        id: protocol::TreeId::Blob(*id.as_bytes()),
+                        payload: vec![3],
+                    },
+                );
+            }
+            reply(&sender, StreamRole::Content, &Response::ResponseComplete);
+            if successful {
+                assert_eq!(
+                    items.next().await.unwrap().unwrap().id(),
+                    BlobTreeId::Blob(id)
+                );
+                assert!(items.next().await.is_none());
+                assert_eq!(content_counts(&client), (1, 0, 0));
+            } else {
+                assert!(items.next().await.unwrap().is_err());
+                assert_eq!(content_counts(&client), (0, 0, 0));
             }
         }
     }
@@ -2162,6 +2532,7 @@ mod tests {
                     archive: b"document".to_vec(),
                     intent: protocol::ArchiveIntent::Open,
                     resume_after: None,
+                    hint: protocol::LoadingHint::default(),
                 })
                 .await
                 .unwrap();

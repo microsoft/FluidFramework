@@ -40,7 +40,10 @@ pub async fn run_session_conformance<Session: SeaSession>(first: &Session, secon
         .publish_snapshot(None, None, initial.clone())
         .await
         .expect("initial application snapshot");
-    let mut loaded = second.load(LoadStart::LatestSnapshot).await.expect("load");
+    let mut loaded = second
+        .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+        .await
+        .expect("load");
     assert_eq!(
         loaded.snapshot.as_ref().expect("snapshot").at_event.id(),
         initialization

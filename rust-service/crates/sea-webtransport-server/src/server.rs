@@ -730,7 +730,7 @@ async fn serve_network_stream(
         return serve_content_stream(send, receive, service, config, metrics, role, request).await;
     }
     if matches!(request, protocol::Request::OpenEventStream { .. }) {
-        let mut responses = match service.open_event_stream(request).await {
+        let responses = match service.open_event_stream(request).await {
             Ok(responses) => responses,
             Err(response) => {
                 return write_network_response(
@@ -745,29 +745,7 @@ async fn serve_network_stream(
                 .await;
             }
         };
-        loop {
-            let response = tokio::select! {
-                biased;
-                () = send.stopped() => return Ok(()),
-                response = responses.next() => response,
-            };
-            let Some(response) = response else {
-                return timeout(config.operation_timeout, send.finish())
-                    .await
-                    .map_err(|_| WebTransportError::Timeout)?
-                    .map_err(transport_error);
-            };
-            write_network_response(
-                &mut send,
-                role,
-                &response,
-                limits,
-                config.operation_timeout,
-                metrics,
-                false,
-            )
-            .await?;
-        }
+        return serve_load_streams(send, receive, responses, config, metrics).await;
     }
     let response = protocol::Response::Error {
         kind: protocol::ErrorKind::Rejected,
@@ -783,6 +761,169 @@ async fn serve_network_stream(
         true,
     )
     .await
+}
+
+/// Services independent bounded delivery windows without polling a stalled traversal.
+#[allow(clippy::too_many_lines)]
+async fn serve_load_streams(
+    mut send: impl SendStream,
+    receive: impl ReceiveStream,
+    mut responses: crate::SeaLoadStreams,
+    config: &TransportConfig,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    let limits = protocol::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    let role = protocol::StreamRole::Event;
+    let mut event_credits = protocol::LOAD_EVENT_CREDITS;
+    let mut content_credits = protocol::LOAD_CONTENT_CREDITS;
+    // The opening authority precedes both channels and is outside their delivery windows.
+    let first = tokio::select! {
+        () = send.stopped() => return Ok(()),
+        response = responses.events.next() => response,
+    };
+    if let Some(response) = first {
+        if !matches!(response, protocol::Response::EventStreamOpened { .. }) {
+            event_credits -= 1;
+        }
+        write_network_response(
+            &mut send,
+            role,
+            &response,
+            limits,
+            config.operation_timeout,
+            metrics,
+            false,
+        )
+        .await?;
+    } else {
+        return send.finish().await;
+    }
+    let mut incoming = Box::pin(stream::try_unfold(
+        (receive, protocol::NetworkFrameDecoder::new(limits)),
+        |(mut receive, mut decoder)| async move {
+            let frame =
+                read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
+                    .await?;
+            Ok::<_, WebTransportError>(frame.map(|frame| (frame, (receive, decoder))))
+        },
+    ));
+    let mut content = Some(responses.content);
+    let mut delivered_content_root = false;
+    let mut events_done = false;
+    let mut controls_done = false;
+    loop {
+        if events_done && content.is_none() {
+            return send.finish().await;
+        }
+        let response = tokio::select! {
+            () = send.stopped() => return Ok(()),
+            frame = incoming.next(), if !controls_done => {
+                let Some(frame) = frame else {
+                    controls_done = true;
+                    continue;
+                };
+                let frame = frame?;
+                metrics.add_wire_bytes(frame.encoded_len()?);
+                match protocol::decode_request_frame(role, &frame)? {
+                    protocol::Request::LoadCredit { content: is_content, items } => {
+                        let (credits, window) = if is_content {
+                            (&mut content_credits, protocol::LOAD_CONTENT_CREDITS)
+                        } else {
+                            (&mut event_credits, protocol::LOAD_EVENT_CREDITS)
+                        };
+                        if items > window - *credits {
+                            let response = protocol::Response::Error {
+                                kind: protocol::ErrorKind::Invalid,
+                                message: "load credit exceeds its delivery window".to_owned(),
+                            };
+                            return write_network_response(&mut send, role, &response, limits, config.operation_timeout, metrics, true).await;
+                        }
+                        *credits += items;
+                        continue;
+                    }
+                    protocol::Request::CancelLoadContent => {
+                        if content.take().is_none() {
+                            continue;
+                        }
+                        protocol::Response::LoadContentComplete
+                    }
+                    protocol::Request::CancelLoadEvents => {
+                        responses.events = Box::pin(stream::empty());
+                        events_done = true;
+                        continue;
+                    }
+                    _ => {
+                        let response = protocol::Response::Error {
+                            kind: protocol::ErrorKind::Invalid,
+                            message: "event stream requires load credit or channel cancellation".to_owned(),
+                        };
+                        return write_network_response(&mut send, role, &response, limits, config.operation_timeout, metrics, true).await;
+                    }
+                }
+            }
+            response = responses.events.next(), if !events_done && event_credits > 0 => {
+                let Some(response) = response else {
+                    events_done = true;
+                    continue;
+                };
+                event_credits -= 1;
+                response
+            }
+            response = async { content.as_mut().expect("active content").next().await }, if content.is_some() && content_credits > 0 => {
+                match response {
+                    Some(protocol::Response::BlobTree { id, payload }) => {
+                        let response = protocol::Response::BlobTree { id, payload };
+                        let bounded = protocol::Limits {
+                            max_frame_bytes: limits.max_frame_bytes.min(protocol::LOAD_CONTENT_MAX_ITEM_BYTES),
+                        };
+                        if matches!(&response, protocol::Response::BlobTree { payload, .. } if payload.len() > bounded.max_frame_bytes)
+                            || protocol::encode_response_frame(role, &response, bounded).is_err() {
+                            content = None;
+                            if delivered_content_root {
+                                protocol::Response::LoadContentComplete
+                            } else {
+                                protocol::Response::LoadContentError {
+                                    kind: protocol::ErrorKind::Invalid,
+                                    message: "load content item exceeds the bounded frame ceiling".to_owned(),
+                                }
+                            }
+                        } else {
+                            content_credits -= 1;
+                            delivered_content_root = true;
+                            response
+                        }
+                    }
+                    Some(protocol::Response::Error { kind, message } | protocol::Response::LoadContentError { kind, message }) => {
+                        content = None;
+                        protocol::Response::LoadContentError { kind, message }
+                    }
+                    None | Some(protocol::Response::LoadContentComplete) => {
+                        content = None;
+                        protocol::Response::LoadContentComplete
+                    }
+                    Some(_) => {
+                        content = None;
+                        protocol::Response::LoadContentError {
+                            kind: protocol::ErrorKind::Invalid,
+                            message: "unexpected load content response".to_owned(),
+                        }
+                    }
+                }
+            }
+        };
+        write_network_response(
+            &mut send,
+            role,
+            &response,
+            limits,
+            config.operation_timeout,
+            metrics,
+            false,
+        )
+        .await?;
+    }
 }
 
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
@@ -1104,6 +1245,24 @@ async fn serve_content_stream(
             let Some(response) = response else {
                 break;
             };
+            if matches!(response, protocol::Response::BlobTree { .. })
+                && protocol::encode_response_frame(role, &response, limits).is_err()
+            {
+                write_network_response(
+                    &mut send,
+                    role,
+                    &protocol::Response::Error {
+                        kind: protocol::ErrorKind::Invalid,
+                        message: "content item exceeds the configured frame limit".to_owned(),
+                    },
+                    limits,
+                    config.operation_timeout,
+                    metrics,
+                    false,
+                )
+                .await?;
+                break;
+            }
             write_network_response(
                 &mut send,
                 role,
@@ -1246,14 +1405,15 @@ mod tests {
         async fn open_event_stream(
             &self,
             _request: protocol::Request,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+        ) -> Result<crate::SeaLoadStreams, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
         async fn event_stream(
             &self,
             _resume_after: Option<u64>,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+            _hint: protocol::LoadingHint,
+        ) -> Result<crate::SeaLoadStreams, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
@@ -1332,6 +1492,288 @@ mod tests {
         async fn stopped(&mut self) {
             let _ = self.stopped.wait_for(|stopped| *stopped).await;
         }
+    }
+
+    struct LoadHarness {
+        requests: tokio::sync::mpsc::UnboundedSender<Vec<u8>>,
+        responses: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
+        stop: watch::Sender<bool>,
+        serving: tokio::task::JoinHandle<Result<(), WebTransportError>>,
+    }
+
+    impl LoadHarness {
+        async fn start(events: SeaResponseStream, content: SeaResponseStream) -> Self {
+            let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
+            let (output, responses) = tokio::sync::mpsc::unbounded_channel();
+            let (stop, stopped) = watch::channel(false);
+            let send = TestSend {
+                writes: Arc::new(AtomicUsize::new(0)),
+                responses: Some(output),
+                stopped,
+                fail: Arc::new(AtomicBool::new(false)),
+                finished: Arc::new(AtomicBool::new(false)),
+            };
+            let opening = protocol::Response::EventStreamOpened {
+                session: 1,
+                document: Vec::new(),
+                authority: Vec::new(),
+            };
+            let serving = tokio::spawn(async move {
+                serve_load_streams(
+                    send,
+                    TestReceive(receive),
+                    crate::SeaLoadStreams {
+                        events: Box::pin(stream::iter([opening]).chain(events)),
+                        content,
+                    },
+                    &TransportConfig::default(),
+                    &Metrics::default(),
+                )
+                .await
+            });
+            let mut harness = Self {
+                requests,
+                responses,
+                stop,
+                serving,
+            };
+            assert!(matches!(
+                harness.response().await,
+                protocol::Response::EventStreamOpened { .. }
+            ));
+            harness
+        }
+
+        fn request(&self, request: &protocol::Request) {
+            self.requests
+                .send(
+                    protocol::encode_request_frame(
+                        protocol::StreamRole::Event,
+                        request,
+                        protocol::Limits::default(),
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+        }
+
+        async fn response(&mut self) -> protocol::Response {
+            let bytes = timeout(Duration::from_secs(1), self.responses.recv())
+                .await
+                .unwrap()
+                .unwrap();
+            let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+            decoder.push(&bytes);
+            protocol::decode_response_network_frame(
+                protocol::StreamRole::Event,
+                &decoder.next_frame().unwrap().unwrap(),
+            )
+            .unwrap()
+        }
+
+        async fn finish(self) {
+            self.stop.send(true).unwrap();
+            self.serving.await.unwrap().unwrap();
+        }
+    }
+
+    fn load_progress() -> protocol::Response {
+        protocol::Response::StreamProgress {
+            previous: None,
+            latest_known: None,
+            status: protocol::StreamStatus::AwaitingNewItems,
+        }
+    }
+
+    fn load_blob(bytes: usize) -> protocol::Response {
+        protocol::Response::BlobTree {
+            id: protocol::TreeId::Blob([0; 32]),
+            payload: vec![0; bytes],
+        }
+    }
+
+    #[tokio::test]
+    async fn load_windows_are_independent_and_do_not_poll_stalled_content() {
+        let polls = Arc::new(AtomicUsize::new(0));
+        let content_polls = polls.clone();
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::repeat(load_progress())),
+            Box::pin(stream::repeat(load_blob(1)).inspect(move |_| {
+                content_polls.fetch_add(1, Ordering::Relaxed);
+            })),
+        )
+        .await;
+        let mut events = 0;
+        let mut content = 0;
+        for _ in 0..protocol::LOAD_EVENT_CREDITS + protocol::LOAD_CONTENT_CREDITS {
+            match harness.response().await {
+                protocol::Response::BlobTree { .. } => content += 1,
+                protocol::Response::StreamProgress { .. } => events += 1,
+                response => panic!("unexpected response: {response:?}"),
+            }
+        }
+        assert_eq!(
+            (events, content),
+            (protocol::LOAD_EVENT_CREDITS, protocol::LOAD_CONTENT_CREDITS)
+        );
+        tokio::task::yield_now().await;
+        assert_eq!(
+            polls.load(Ordering::Relaxed),
+            protocol::LOAD_CONTENT_CREDITS as usize
+        );
+        assert!(harness.responses.try_recv().is_err());
+        harness.request(&protocol::Request::LoadCredit {
+            content: false,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::StreamProgress { .. }
+        ));
+        assert_eq!(
+            polls.load(Ordering::Relaxed),
+            protocol::LOAD_CONTENT_CREDITS as usize
+        );
+        harness.request(&protocol::Request::LoadCredit {
+            content: true,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::BlobTree { .. }
+        ));
+        harness.request(&protocol::Request::CancelLoadContent);
+        assert_eq!(
+            harness.response().await,
+            protocol::Response::LoadContentComplete
+        );
+        harness.request(&protocol::Request::LoadCredit {
+            content: false,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::StreamProgress { .. }
+        ));
+        harness.finish().await;
+    }
+
+    #[tokio::test]
+    async fn cancelling_load_events_preserves_content() {
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::pending()),
+            Box::pin(stream::repeat(load_blob(1))),
+        )
+        .await;
+        for _ in 0..protocol::LOAD_CONTENT_CREDITS {
+            assert!(matches!(
+                harness.response().await,
+                protocol::Response::BlobTree { .. }
+            ));
+        }
+        harness.request(&protocol::Request::CancelLoadEvents);
+        harness.request(&protocol::Request::LoadCredit {
+            content: true,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::BlobTree { .. }
+        ));
+        harness.request(&protocol::Request::CancelLoadContent);
+        assert_eq!(
+            harness.response().await,
+            protocol::Response::LoadContentComplete
+        );
+        harness.serving.await.unwrap().unwrap();
+    }
+
+    #[tokio::test]
+    async fn load_rejects_credit_not_previously_consumed() {
+        for content in [false, true] {
+            let mut harness =
+                LoadHarness::start(Box::pin(stream::pending()), Box::pin(stream::pending())).await;
+            harness.request(&protocol::Request::LoadCredit { content, items: 1 });
+            assert!(matches!(
+                harness.response().await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Invalid,
+                    ..
+                }
+            ));
+            harness.serving.await.unwrap().unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn oversized_load_content_fails_once_without_ending_events() {
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::repeat(load_progress())),
+            Box::pin(stream::iter([load_blob(
+                protocol::LOAD_CONTENT_MAX_ITEM_BYTES,
+            )])),
+        )
+        .await;
+        let mut errors = 0;
+        for _ in 0..=protocol::LOAD_EVENT_CREDITS {
+            match harness.response().await {
+                protocol::Response::LoadContentError { .. } => errors += 1,
+                protocol::Response::StreamProgress { .. } => {}
+                response => panic!("unexpected response: {response:?}"),
+            }
+        }
+        assert_eq!(errors, 1);
+        harness.request(&protocol::Request::CancelLoadContent);
+        harness.request(&protocol::Request::LoadCredit {
+            content: false,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::StreamProgress { .. }
+        ));
+        harness.finish().await;
+    }
+
+    #[tokio::test]
+    async fn oversized_load_descendant_truncates_without_ending_events() {
+        let mut harness = LoadHarness::start(
+            Box::pin(stream::repeat(load_progress())),
+            Box::pin(stream::iter([
+                load_blob(1),
+                load_blob(protocol::LOAD_CONTENT_MAX_ITEM_BYTES),
+                load_blob(2),
+            ])),
+        )
+        .await;
+        let mut root = false;
+        let mut complete = false;
+        for _ in 0..protocol::LOAD_EVENT_CREDITS + 2 {
+            match harness.response().await {
+                protocol::Response::BlobTree { payload, .. } => {
+                    assert!(!root);
+                    assert_eq!(payload.len(), 1);
+                    root = true;
+                }
+                protocol::Response::LoadContentComplete => {
+                    assert!(root);
+                    assert!(!complete);
+                    complete = true;
+                }
+                protocol::Response::StreamProgress { .. } => {}
+                response => panic!("unexpected response: {response:?}"),
+            }
+        }
+        assert!(root && complete);
+        harness.request(&protocol::Request::LoadCredit {
+            content: false,
+            items: 1,
+        });
+        assert!(matches!(
+            harness.response().await,
+            protocol::Response::StreamProgress { .. }
+        ));
+        harness.finish().await;
     }
 
     #[tokio::test]
@@ -1426,14 +1868,15 @@ mod tests {
         async fn open_event_stream(
             &self,
             _request: protocol::Request,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+        ) -> Result<crate::SeaLoadStreams, protocol::Response> {
             unreachable!("the probe supplies session identity without an event stream")
         }
 
         async fn event_stream(
             &self,
             _resume_after: Option<u64>,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+            _hint: protocol::LoadingHint,
+        ) -> Result<crate::SeaLoadStreams, protocol::Response> {
             unreachable!("the probe supplies session identity without an event stream")
         }
 

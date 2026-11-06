@@ -22,7 +22,7 @@ describe("Generated Rust binding ownership", () => {
 	/** Opens raw generated sessions so TypeScript wrapper guards cannot satisfy these assertions. */
 	async function fixture() {
 		const service = new bindings.SeaMemoryService();
-		const options = new bindings.SeaSessionOptions(undefined, false);
+		const options = new bindings.SeaSessionOptions(undefined, false, false, 0);
 		const sessions: Generated.SeaSession[] = [];
 		cleanups.push(async () => {
 			for (const session of sessions) {

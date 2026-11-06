@@ -124,7 +124,10 @@ async fn policy_reader_permits_are_document_wide_and_refusal_does_not_register()
     );
     assert!(
         second
-            .load(sea_core::storage::LoadStart::LatestSnapshot)
+            .load(
+                sea_core::storage::LoadStart::LatestSnapshot,
+                sea_core::BlobTreeHint::default()
+            )
             .await
             .is_err()
     );
