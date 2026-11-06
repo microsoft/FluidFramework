@@ -47,20 +47,31 @@ Invalid canonical history or a failed kernel transformation stops the host in th
 Pending edits are held only in memory.
 Closing or reloading a tab before its edits synchronize loses those edits; this is not offline stashing or crash recovery.
 
-The nominated client publishes a full SharedTree summary after 100 applied application operations or five seconds without new application operations.
-The optional sixth argument to `create()` configures `summaryMaxOperations` and `summaryIdleMs`.
+The nominated client publishes a SharedTree summary after 100 applied application operations or five seconds without new application operations.
+The optional sixth argument to `create()` configures `summaryMaxOperations`, `summaryIdleMs`, and `shouldEncodeIncrementally`.
 Only acknowledged state is summarized; local pending edits defer publication.
 Unchanged state is not repeatedly summarized, and failed publication is reported and retried after the idle interval.
 Snapshots include finalized ID-compressor state and the last applied Sea position, and publication uses the current nomination fence and expected parent.
 `summaryCount`, `lastSummarySequenceNumber`, and `loadedFromSummary` expose snapshot activity.
 `summarize()` requests publication immediately when eligible.
-These are full summaries, not incremental uploads.
+Set `shouldEncodeIncrementally` to `incrementalEncodingPolicyForAllowedTypes(configuration)` from `@fluidframework/tree/alpha` to use your schema's `incrementalSummaryHint` annotations.
+The host uses the optimized forest and compressed incremental encoding with minimum collaboration version 2.74.
+Without a supplied policy, forest fields are not split into reusable chunks.
+The first summary establishes a full baseline; subsequent summaries reuse unchanged schema blobs and selected forest chunks.
+The storage adapter resolves handles against the last summary this kernel loaded or successfully published.
+It preserves existing directory identities without reading or uploading the referenced subtree.
+Each published root still describes a complete snapshot, not a delta chain.
+Failed or ambiguous publication does not advance this baseline, and observing another client's snapshot does not establish one.
+The publication parent and nomination fence remain independent of the handle-resolution baseline.
 Loading reads only the snapshot's suffix; reconnect reads only after the last applied position.
 Both reuse the opening snapshot/replay/live stream instead of making separate snapshot and history requests.
 Snapshot content is fetched on demand; this path does not require recursive prefetch hints.
 Repeated references to the same immutable blob share one fetch during summary loading.
-Direct snapshot metadata uses version 2.
-Older snapshots containing dense Fluid sequence numbers are rejected, not migrated; create a fresh document when using the new format.
+Direct snapshot metadata uses version 3.
+Version 2 full snapshots remain readable; their next summary establishes a new full incremental baseline.
+Version 3 loads restore chunk tracking and can reuse chunks immediately.
+Version 1 snapshots containing dense Fluid sequence numbers are rejected, not migrated; create a fresh document when using that older format.
+Old direct hosts cannot load version 3 snapshots; update all clients before collaborating with the new host.
 
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
 The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.

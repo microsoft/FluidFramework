@@ -300,7 +300,7 @@ describe("DirectSharedTreeClient recovery", () => {
 			const metadata = JSON.parse(
 				new TextDecoder().decode(await writer.driver.fetchBlob(metadataEntry.blob)),
 			);
-			assert.equal(metadata.version, 2);
+			assert.equal(metadata.version, 3);
 			assert.equal(metadata.positions, undefined);
 			const peer = await open(writer.host.documentId, {}, factory);
 			assert.deepEqual([...peer.view.root.items], ["before"]);

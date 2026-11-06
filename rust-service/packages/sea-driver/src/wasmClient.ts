@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { SeaDirectoryEntry } from "@fluidframework/sea-typescript/internal";
+
 /**
  * A service operation projected into the Fluid driver's sequenced-message model.
  * @internal
@@ -116,6 +118,10 @@ export interface SummaryPublication {
  * @internal
  */
 export interface SeaDriverClient {
+	/** Publishes a directory of existing typed identities without traversing its descendants. */
+	uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array>;
+	/** Reads one directory without flattening its descendants. */
+	fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]>;
 	/** Whether current snapshot coordination permits publication; absent for legacy clients. */
 	readonly canPublishSnapshot?: boolean;
 	/** Allocated identity when supplied by the neutral session implementation. */

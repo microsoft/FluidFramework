@@ -8,7 +8,10 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
@@ -173,8 +176,16 @@ export interface ITreePrivate extends ITreeInternal {
 export interface DirectSharedTreeKernel {
 	/** Applies canonical messages, including acknowledgments of local commits. */
 	processSequencedMessages(messages: readonly SequencedSharedTreeMessage[]): void;
-	/** Captures a full summary; the host must first acknowledge all local edits. */
-	getSummary(): ISummaryTree;
+	/**
+	 * Captures acknowledged state, optionally reusing content from a confirmed summary.
+	 * @param incrementalSummaryContext - Positions and root-relative path of the current and acknowledged summaries.
+	 * @param fullTree - Disables handles while retaining incremental tracking. Defaults to true without a context.
+	 * @returns The summary to upload; generating it does not acknowledge publication.
+	 */
+	getSummary(
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
+	): ISummaryTree;
 	/** Loads a summary into a fresh kernel before creating application views. */
 	loadCore(services: IChannelStorageService): Promise<void>;
 	/** Re-encodes a proven-unaccepted local message after applying intervening history. */
@@ -444,9 +455,13 @@ export class SharedTreeKernel
 		this.checkout.load();
 	}
 
-	/** Captures a full summary for a runtime-free host. */
-	public getSummary(): ISummaryTree {
-		return this.summarizeCore(this.serializer, undefined, undefined, true).summary;
+	/** {@inheritDoc DirectSharedTreeKernel.getSummary} */
+	public getSummary(
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree = incrementalSummaryContext === undefined,
+	): ISummaryTree {
+		return this.summarizeCore(this.serializer, undefined, incrementalSummaryContext, fullTree)
+			.summary;
 	}
 
 	public override didAttach(): void {

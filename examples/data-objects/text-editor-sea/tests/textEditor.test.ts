@@ -214,7 +214,9 @@ test.describe("text editor", () => {
 		}
 	});
 
-	test("takes an idle summary and loads it before applying newer edits", async ({ page }) => {
+	test("loads incremental summaries and reuses loaded chunks before applying newer edits", async ({
+		page,
+	}) => {
 		await openNewDocument(page);
 		const writer = userPanel(page, 1);
 		await writer.locator("textarea").fill("Included in the summary");
@@ -228,6 +230,13 @@ test.describe("text editor", () => {
 				timeout: 15_000,
 			})
 			.toBeGreaterThan(0);
+		const fullSummaryCount = Number(await writer.getByTestId("summary-count").textContent());
+		await writer.locator("textarea").fill("Included in the incremental summary");
+		await expect
+			.poll(async () => Number(await writer.getByTestId("summary-count").textContent()), {
+				timeout: 15_000,
+			})
+			.toBeGreaterThan(fullSummaryCount);
 		await writer.locator("textarea").fill("Edit after the summary");
 		await expect(userPanel(page, 2).locator("textarea")).toHaveValue("Edit after the summary");
 		await page.reload();
@@ -236,6 +245,22 @@ test.describe("text editor", () => {
 		await expect(userPanel(page, 1).locator("textarea")).toHaveValue("Edit after the summary");
 		await expect(quillEditor(userPanel(page, 1), "Formatted Quill Editor")).toHaveText(
 			"Summarized formatting",
+		);
+		await expect(
+			quillEditor(userPanel(page, 1), "Formatted Quill Editor").locator("strong"),
+		).toHaveText("Summarized formatting");
+		const loadedWriter = userPanel(page, 1);
+		await loadedWriter.locator("textarea").fill("Incremental after reload");
+		await expect
+			.poll(
+				async () => Number(await loadedWriter.getByTestId("summary-count").textContent()),
+				{ timeout: 15_000 },
+			)
+			.toBeGreaterThan(0);
+		await page.reload();
+		await expect(page.getByText("Loaded from summary", { exact: false })).toHaveCount(2);
+		await expect(userPanel(page, 1).locator("textarea")).toHaveValue(
+			"Incremental after reload",
 		);
 		await expect(
 			quillEditor(userPanel(page, 1), "Formatted Quill Editor").locator("strong"),

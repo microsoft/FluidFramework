@@ -848,6 +848,18 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		};
 	}
 
+	/** Publishes only this directory; existing subtree identities remain shared. */
+	public async uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array> {
+		return (await this.current().putDirectory(entries)).bytes;
+	}
+
+	/** Reads one directory using prefetched content when available. */
+	public fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]> {
+		return this.withArchiveSession(async (session) =>
+			this.readDirectory(session, { kind: "directory", bytes: digest }),
+		);
+	}
+
 	/** Converts immutable SEA directories back to the driver's flattened summary representation. */
 	public async fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]> {
 		return this.withArchiveSession(async (session) => {

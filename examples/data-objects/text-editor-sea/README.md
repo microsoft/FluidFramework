@@ -28,8 +28,12 @@ The SEA-nominated client summarizes acknowledged state after 100 application ope
 Reopening a document loads the latest summary and applies newer operations.
 The panel indicates when it loaded a summary.
 Loading does not download operations before that summary.
-The current direct snapshot format is version 2; old experimental snapshots are rejected.
-Remove the URL hash and reload to create a fresh document when switching from an older format.
+The editor uses its schema annotations to reuse unchanged plain-text and formatted-text regions in incremental summaries.
+Only new blobs and explicitly represented directories are uploaded; each snapshot root still describes the complete document.
+The current direct snapshot format is version 3.
+Version 2 full snapshots load normally and establish a new incremental baseline on the next summary.
+Version 1 experimental snapshots are rejected; remove the URL hash and reload to create a fresh document for those snapshots.
+Update all clients before editing a document with version 3 summaries.
 
 Use **Disconnect** to pause one simulated user, edit both that user and a connected peer, then use **Reconnect**.
 The existing view is retained while pending edits are reconciled and rebased.
@@ -56,4 +60,4 @@ pnpm test:playwright
 
 Playwright starts the webpack development server on port 8082.
 The tests require the SEA WebSocket server to be running on port 8081 and to allow the `http://localhost:8082` origin.
-They cover two-page collaboration, rich-text summary reload, explicit disconnect/reconnect, and real WebSocket loss with edits made during the outage.
+They cover two-page collaboration, full and incremental rich-text summary reload, explicit disconnect/reconnect, and real WebSocket loss with edits made during the outage.

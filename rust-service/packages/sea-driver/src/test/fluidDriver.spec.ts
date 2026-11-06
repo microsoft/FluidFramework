@@ -1442,6 +1442,14 @@ describe("SeaDriver", () => {
 	}
 
 	class SummaryFixtureClient implements SeaDriverClient {
+		public async uploadDirectory(): Promise<Uint8Array> {
+			throw new Error("directory operations are covered by the neutral-session fixture");
+		}
+
+		public async fetchDirectory(): Promise<never> {
+			throw new Error("directory operations are covered by the neutral-session fixture");
+		}
+
 		private readonly blobs = new Map<string, Uint8Array>();
 		private readonly summaries = new Map<string, readonly SummaryEntry[]>();
 		private readonly snapshots = new Map<string, FixtureSnapshot>();

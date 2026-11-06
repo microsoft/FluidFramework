@@ -26,6 +26,11 @@ import {
 	type SeaDriverClient,
 } from "@fluidframework/sea-driver/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	FluidClientVersion,
+	TreeCompressionStrategy,
+	type IncrementalEncodingPolicy,
+} from "@fluidframework/tree/alpha";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -33,6 +38,8 @@ const metadataPath = ".sea-direct";
 
 /** Scheduling policy for the runtime-free host. @internal */
 export interface DirectSharedTreeClientOptions {
+	/** Selects schema fields whose unchanged content may be reused across summaries. */
+	readonly shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	/** Maximum applied application operations between summaries. Defaults to 100. */
 	readonly summaryMaxOperations?: number;
 	/** Idle delay before summarizing dirty state, in milliseconds. Defaults to 5,000. */
@@ -72,11 +79,19 @@ interface PendingMessage {
 /** Snapshot state needed in addition to SharedTree's own summary. */
 interface SnapshotMetadata {
 	/** Format discriminator; incompatible versions are rejected. */
-	readonly version: 2;
+	readonly version: 2 | 3;
 	/** Last SEA position represented by the summary, encoded losslessly as a number. */
 	readonly sequenceNumber: number;
 	/** Finalized compressor state; never includes unacknowledged allocations. */
 	readonly compressor: SerializedIdCompressorWithNoSession;
+}
+
+/** A loaded or successfully published summary whose chunk identities belong to this kernel. */
+interface SummaryBaseline {
+	/** Immutable root used to resolve handles, not necessarily the latest publication parent. */
+	readonly root: Uint8Array;
+	/** Canonical position used by SharedTree's acknowledged-summary tracking. */
+	readonly sequenceNumber: number;
 }
 
 /**
@@ -127,6 +142,8 @@ export class DirectSharedTreeClient {
 	/** Coalesces a new transport failure while the previous recovery is finishing. */
 	private recoveryRequested = false;
 	private summarizing: Promise<void> | undefined;
+	/** Never advanced by a failed upload or merely observing another publisher's snapshot. */
+	private summaryBaseline: SummaryBaseline | undefined;
 	private summaryTimer: ReturnType<typeof setTimeout> | undefined;
 	private cursor: Uint8Array | undefined;
 	private localSequenceNumber = 0;
@@ -155,6 +172,11 @@ export class DirectSharedTreeClient {
 		}
 		this.tree = createDirectSharedTree({
 			forest: ForestTypeOptimized,
+			treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+			minVersionForCollab: FluidClientVersion.v2_74,
+			...(options.shouldEncodeIncrementally === undefined
+				? {}
+				: { shouldEncodeIncrementally: options.shouldEncodeIncrementally }),
 			idCompressor: compressor,
 			lastSequenceNumber: () => this.lastAppliedSequenceNumber,
 			submitLocalMessage: (contents, localOpMetadata) => {
@@ -224,7 +246,7 @@ export class DirectSharedTreeClient {
 					decoder.decode(await fetchBlob(metadataBlob)),
 				) as SnapshotMetadata;
 				if (
-					metadata.version !== 2 ||
+					(metadata.version !== 2 && metadata.version !== 3) ||
 					!Number.isSafeInteger(metadata.sequenceNumber) ||
 					metadata.sequenceNumber < 0 ||
 					metadata.sequenceNumber !== positionAsNumber(snapshot.atEvent)
@@ -246,8 +268,9 @@ export class DirectSharedTreeClient {
 				metadata,
 			);
 			if (snapshot !== undefined) {
+				const snapshotTree = SeaDocumentStorage.snapshotTree(byteKey(snapshot.id), entries);
 				await host.tree.kernel.loadCore({
-					getSnapshotTree: () => undefined,
+					getSnapshotTree: () => snapshotTree,
 					readBlob: async (path) => {
 						const digest = blobs.get(path);
 						if (digest === undefined) throw new Error(`Missing summary blob: ${path}`);
@@ -261,6 +284,12 @@ export class DirectSharedTreeClient {
 							.map((key) => key.slice(prefix.length));
 					},
 				});
+				if (metadata?.version === 3) {
+					host.summaryBaseline = {
+						root: snapshot.root.slice(),
+						sequenceNumber: metadata.sequenceNumber,
+					};
+				}
 				host.cursor = snapshot.atEvent;
 				host.loadedFromSummary = true;
 			}
@@ -321,7 +350,7 @@ export class DirectSharedTreeClient {
 		await this.recovery;
 	}
 
-	/** Publishes a full summary if this host has authority and no local edits are pending. */
+	/** Publishes acknowledged state, reusing unchanged content when a confirmed baseline exists. */
 	public async summarize(): Promise<void> {
 		if (this.summarizing !== undefined) return this.summarizing;
 		const work = this.summarizeCore();
@@ -665,17 +694,29 @@ export class DirectSharedTreeClient {
 		const sequenceNumber = this.lastAppliedSequenceNumber;
 		const position = this.cursor.slice();
 		const dirtyOperations = this.dirtyOperations;
-		const summary = this.tree.kernel.getSummary();
+		const baseline = this.summaryBaseline;
+		const summary = this.tree.kernel.getSummary(
+			{
+				summarySequenceNumber: sequenceNumber,
+				latestSummarySequenceNumber: baseline?.sequenceNumber ?? -1,
+				summaryPath: "",
+			},
+			baseline === undefined,
+		);
 		const metadata: SnapshotMetadata = {
-			version: 2,
+			version: 3,
 			sequenceNumber,
 			compressor: serializeIdCompressor(this.compressor, false),
 		};
 		summary.tree[metadataPath] = { type: 2, content: JSON.stringify(metadata) };
-		const root = await new SeaDocumentStorage(this.client).uploadSummaryTree(summary);
+		const root = await new SeaDocumentStorage(this.client).uploadSummaryTree(
+			summary,
+			baseline?.root,
+		);
 		if (generation !== this.generation || !this.canSummarize()) return;
 		await this.client.publishSnapshotRoot(parent?.id, position, root);
 		if (generation !== this.generation) return;
+		this.summaryBaseline = { root, sequenceNumber };
 		this.lastSummarySequenceNumber = sequenceNumber;
 		this.dirtyOperations -= dirtyOperations;
 		this.summaryCount++;

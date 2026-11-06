@@ -149,8 +149,9 @@ export class SeaDocumentStorage implements IDocumentStorageService {
         maximumCacheDurationMs: 432000000;
     };
     readBlob(id: string): Promise<ArrayBufferLike>;
+    static snapshotTree(id: string, entries: readonly SummaryEntry[]): ISnapshotTree;
     uploadInitialSummary(summary: ISummaryTree): Promise<void>;
-    uploadSummaryTree(summary: ISummaryTree): Promise<Uint8Array>;
+    uploadSummaryTree(summary: ISummaryTree, baseRoot?: Uint8Array): Promise<Uint8Array>;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
@@ -171,6 +172,7 @@ export interface SeaDriverClient {
     create(): Promise<Uint8Array>;
     disconnect(session?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+    fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): Promise<{
         readonly id: Uint8Array;
@@ -196,6 +198,7 @@ export interface SeaDriverClient {
     submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
+    uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array>;
 }
 
 // @internal
@@ -218,6 +221,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     create(): Promise<Uint8Array>;
     disconnect(owner?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+    fetchDirectory(digest: Uint8Array): Promise<readonly SeaDirectoryEntry[]>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
     loadDirectSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
@@ -235,6 +239,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
+    uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array>;
 }
 
 // @internal

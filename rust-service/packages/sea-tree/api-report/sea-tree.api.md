@@ -28,6 +28,7 @@ export class DirectSharedTreeClient {
 
 // @internal
 export interface DirectSharedTreeClientOptions {
+    readonly shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly summaryIdleMs?: number;
     readonly summaryMaxOperations?: number;
 }

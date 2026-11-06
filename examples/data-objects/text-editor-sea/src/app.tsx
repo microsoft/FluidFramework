@@ -38,6 +38,8 @@ import { TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	asAlpha,
 	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
+	TreeViewConfigurationAlpha,
 	SchemaFactoryAlpha,
 	PlainText,
 	type TreeViewAlpha,
@@ -194,6 +196,11 @@ async function createDirectClient(
 		subscriptionBatchMaxOperations,
 		subscriptionBatchMaxPayloadBytes,
 		createDocument,
+		{
+			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+				new TreeViewConfigurationAlpha({ schema: TextEditorRoot }),
+			),
+		},
 	);
 }
 

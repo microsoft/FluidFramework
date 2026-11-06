@@ -4,6 +4,7 @@
  */
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { SeaDirectoryEntry, SeaTreeId } from "@fluidframework/sea-typescript/internal";
 import type {
 	ICreateBlobResponse,
 	IDocumentStorageService,
@@ -80,7 +81,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 			return null;
 		}
 		const entries = await this.client.fetchSummary(hexToBytes(selected.treeId ?? selected.id));
-		return this.snapshotTree(selected.id, entries);
+		return SeaDocumentStorage.snapshotTree(selected.id, entries);
 	}
 
 	/** Uploads an immutable blob and returns its hexadecimal content digest. */
@@ -160,9 +161,103 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 		await this.client.publishSnapshotRoot(undefined, undefined, uploaded.digest);
 	}
 
-	/** Uploads a full summary without publishing it, for hosts that own snapshot coordination. */
-	public async uploadSummaryTree(summary: ISummaryTree): Promise<Uint8Array> {
-		return (await this.uploadSummary(summary)).digest;
+	/**
+	 * Uploads a direct summary without publishing it, preserving referenced directory subtrees.
+	 * Handles resolve against baseRoot, independently of the expected parent used for publication.
+	 */
+	public async uploadSummaryTree(
+		summary: ISummaryTree,
+		baseRoot?: Uint8Array,
+	): Promise<Uint8Array> {
+		const handles = new Map<ISummaryHandle, SeaTreeId>();
+		const directories = new Map<string, Promise<readonly SeaDirectoryEntry[]>>();
+		const blobs: PendingBlob[] = [];
+		const uploaded: SummaryEntry[] = [];
+		const readDirectory = (id: Uint8Array): Promise<readonly SeaDirectoryEntry[]> => {
+			const key = bytesToHex(id);
+			let read = directories.get(key);
+			if (read === undefined) {
+				read = this.client.fetchDirectory(id);
+				directories.set(key, read);
+			}
+			return read;
+		};
+		const resolve = async (handle: ISummaryHandle): Promise<SeaTreeId> => {
+			if (baseRoot === undefined)
+				throw new Error("summary handle requires an acknowledged base snapshot");
+			const path = handle.handle.replace(/^\//u, "");
+			let id: SeaTreeId = { kind: "directory", bytes: baseRoot };
+			for (const segment of path === "" ? [] : path.split("/")) {
+				if (segment === "" || segment === "." || segment === ".." || id.kind !== "directory")
+					throw new Error(`invalid summary handle path: ${handle.handle}`);
+				const entry = (await readDirectory(id.bytes)).find((child) => child.name === segment);
+				if (entry === undefined)
+					throw new Error(`summary handle does not resolve: ${handle.handle}`);
+				id = entry.child;
+			}
+			const expected =
+				handle.handleType === summaryType.tree
+					? "directory"
+					: handle.handleType === summaryType.blob || handle.handleType === 4
+						? "blob"
+						: undefined;
+			if (id.kind !== expected)
+				throw new Error(`summary handle kind does not match: ${handle.handle}`);
+			return id;
+		};
+		// Resolve every reference before admitting uploads, without visiting reused subtrees.
+		const prepare = async (tree: ISummaryTree, prefix: string): Promise<void> => {
+			for (const [name, object] of Object.entries(tree.tree)) {
+				if (name === "" || name === "." || name === ".." || name.includes("/"))
+					throw new Error(`invalid summary entry name: ${name}`);
+				const path = prefix === "" ? name : `${prefix}/${name}`;
+				switch (object.type) {
+					case summaryType.tree:
+						await prepare(object, path);
+						break;
+					case summaryType.blob:
+						blobs.push({ path: encoder.encode(path), content: object.content });
+						break;
+					case 3:
+						handles.set(object, await resolve(object));
+						break;
+					case 4:
+						hexToBytes(object.id);
+						break;
+					default:
+						throw new Error("unsupported summary object");
+				}
+			}
+		};
+		await prepare(summary, "");
+		await this.uploadBlobs(blobs, uploaded);
+		const blobIds = new Map(uploaded.map((entry) => [decoder.decode(entry.path), entry.blob]));
+		const publish = async (tree: ISummaryTree, prefix: string): Promise<Uint8Array> => {
+			const entries: SeaDirectoryEntry[] = [];
+			for (const [name, object] of Object.entries(tree.tree)) {
+				const path = prefix === "" ? name : `${prefix}/${name}`;
+				let child: SeaTreeId;
+				if (object.type === summaryType.tree) {
+					child = { kind: "directory", bytes: await publish(object, path) };
+				} else if (object.type === summaryType.blob) {
+					const bytes = blobIds.get(path);
+					if (bytes === undefined) throw new Error(`summary blob was not uploaded: ${path}`);
+					child = { kind: "blob", bytes };
+				} else if (object.type === 3) {
+					const resolved = handles.get(object);
+					if (resolved === undefined)
+						throw new Error(`summary handle was not resolved: ${path}`);
+					child = resolved;
+				} else if (object.type === 4) {
+					child = { kind: "blob", bytes: hexToBytes(object.id) };
+				} else {
+					throw new Error("unsupported summary object");
+				}
+				entries.push({ name, child });
+			}
+			return this.client.uploadDirectory(entries);
+		};
+		return publish(summary, "");
 	}
 
 	/** Flattens, uploads, and publishes a full summary in canonical path order. */
@@ -268,7 +363,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 	}
 
 	/** Reconstructs Fluid's snapshot-tree shape from a flat summary manifest. */
-	private snapshotTree(id: string, entries: readonly SummaryEntry[]): ISnapshotTree {
+	public static snapshotTree(id: string, entries: readonly SummaryEntry[]): ISnapshotTree {
 		const root: ISnapshotTree = { id, blobs: {}, trees: {} };
 		for (const entry of entries) {
 			const parts = decoder.decode(entry.path).split("/");

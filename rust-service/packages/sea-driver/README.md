@@ -74,6 +74,17 @@ Cancelling an old subscription cannot cancel a replacement session's content str
 Delta disconnection invalidates both delivery pumps before closing either stream.
 Reconnect waits for the same outstanding signal and event cleanup, so expected cancellation is not reported as a live synchronization failure.
 
+## Direct incremental summary storage
+
+`SeaDocumentStorage.uploadSummaryTree(summary, baseRoot)` uploads a direct-host summary without publishing it.
+Tree and blob handles resolve against the immutable `baseRoot`; this need not be the latest snapshot used as the publication parent.
+Handles and paths are validated before uploads start.
+The adapter reads only handle ancestors and shares those reads within an upload.
+A tree handle reuses its directory ID without traversing or rebuilding its descendants.
+New blobs retain the bounded upload worker pool, and explicitly represented directories are composed bottom-up.
+`SeaDriverClient.fetchDirectory` and `uploadDirectory` preserve typed child IDs, including empty directories.
+The flattened Fluid summary upload path is unchanged.
+
 ## Entry Point
 
 All exports are `@internal`; there is no supported public API yet.
