@@ -13,6 +13,7 @@ parameters:
   values:
     - Large-tests-eastus2
     - Large-eastus2
+    - Small-eastus2
 
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
@@ -106,9 +107,7 @@ extends:
     # Root deps are still needed for the version-setting step.
     installWorkspaceRootOnly: true
     # The --build-context is needed because the Dockerfile copies files from the repo root.
-    additionalBuildArguments: >-
-      --no-cache
-      --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     test: test
     tagName: historian
     lint: true

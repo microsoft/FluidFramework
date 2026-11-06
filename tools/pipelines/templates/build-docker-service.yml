@@ -453,7 +453,7 @@ extends:
                 buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
-              enableCache: true
+              enableCache: false
               enablePull: ${{ parameters.enableDockerImagePull }}
 
           # Pack
@@ -603,7 +603,7 @@ extends:
               buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
-            enableCache: true
+            enableCache: false
             enablePull: ${{ parameters.enableDockerImagePull }}
 
         # TODO: move the image pushes to templateContext.outputs?
