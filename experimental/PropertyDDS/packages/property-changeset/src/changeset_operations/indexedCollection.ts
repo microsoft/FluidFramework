@@ -315,6 +315,16 @@ export namespace ChangeSetIndexedCollectionFunctions {
 					) {
 						baseInserted[typeid] = baseInserted[typeid] || {};
 						baseInserted[typeid][key] = cloneDeep(insertedEntries[key]);
+					} else if (isPrimitiveTypeid && isEqual(baseInserted[key], insertedEntries[key])) {
+						// The same insert is being merged into this ChangeSet a second time (e.g. a
+						// duplicated/replayed op). Re-applying identical insert data is a safe no-op;
+						// only a genuine value mismatch below is a real conflict.
+					} else if (
+						!isPrimitiveTypeid &&
+						baseInserted[typeid] &&
+						isEqual(baseInserted[typeid][key], insertedEntries[key])
+					) {
+						// Same as above, for typed/polymorphic collections.
 					} else {
 						throw new Error(MSG.ALREADY_EXISTING_ENTRY + key);
 					}
