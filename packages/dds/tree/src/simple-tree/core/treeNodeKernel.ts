@@ -134,7 +134,8 @@ export class TreeNodeKernel {
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
-	 * @param initialContext - context from when this node was originally created. Only used when unhydrated.
+	 * @param initialContext - context from when this node was originally created.
+	 * Only used when unhydrated, so a node created hydrated has none.
 	 * @param innerNode - When unhydrated the MapTreeNode. Otherwise HydratedFlexTreeNode.
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.
@@ -143,7 +144,7 @@ export class TreeNodeKernel {
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
 		innerNode: InnerNode,
-		private readonly initialContext: Context,
+		private readonly initialContext: Context | undefined,
 	) {
 		splitInnerNodeType(innerNode);
 
@@ -173,7 +174,7 @@ export class TreeNodeKernel {
 				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
-		return this.initialContext;
+		return this.initialContext ?? fail("An unhydrated node must have its initial context");
 	}
 
 	/**

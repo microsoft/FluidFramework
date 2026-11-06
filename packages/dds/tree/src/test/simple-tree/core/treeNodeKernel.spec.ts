@@ -19,6 +19,7 @@ import {
 } from "../../../simple-tree/core/treeNodeKernel.js";
 import {
 	type ArrayNodeDeltaOp,
+	SchemaComponent,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -130,6 +131,40 @@ describe("simple-tree proxies", () => {
 			() => TreeBeta.on(node, "nodeChanged", () => {}),
 			validateAssertionError(/Cannot register events on a disposed node/),
 		);
+	});
+
+	it("a node created hydrated takes its context from its tree, without creating a context for its schema", () => {
+		const factory = new SchemaFactory("hydratedContext");
+		class Leaf extends factory.object("leaf", { n: factory.number }) {}
+		class Root extends factory.object("root", { leaf: Leaf }) {}
+
+		const descriptor =
+			Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "context") ??
+			assert.fail("SchemaComponent has a context getter");
+		const leafContexts: SchemaComponent[] = [];
+		Object.defineProperty(SchemaComponent.prototype, "context", {
+			...descriptor,
+			get(this: SchemaComponent) {
+				if (this.members.includes(Leaf)) {
+					leafContexts.push(this);
+				}
+				return descriptor.get?.call(this);
+			},
+		});
+		try {
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({ leaf: { n: 1 } });
+			// A fork's nodes are created when first read, from its tree: hydrated from the start.
+			const branch = view.fork();
+			leafContexts.length = 0;
+			const leaf = branch.root.leaf;
+			assert.equal(leaf.n, 1);
+			assert(getKernel(leaf).isHydrated());
+			assert.equal(getKernel(leaf).context, getKernel(branch.root).context);
+			assert.deepEqual(leafContexts, []);
+		} finally {
+			Object.defineProperty(SchemaComponent.prototype, "context", descriptor);
+		}
 	});
 });
 
