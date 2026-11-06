@@ -22,7 +22,6 @@ import {
 	type ViewContent,
 } from "../../../shared-tree/index.js";
 import {
-	allowUnused,
 	checkSchemaCompatibility,
 	extractPersistedSchema,
 	type ImplicitFieldSchema,
@@ -635,6 +634,111 @@ describe("staged optional upgrade", () => {
 	});
 });
 
+describe("retaining allowed types while enabling new staged types", () => {
+	it("preserves array entry types while enabling unassigned priorities", () => {
+		const factory = new SchemaFactoryAlpha("arrayPriorityRollout");
+		class Before extends factory.array("Priorities", [factory.number, factory.string]) {}
+
+		// Leave historical strings staged and introduce `null` under a different token.
+		const stagedUnassigned = factory.staged(factory.null);
+		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+		class After extends factory.array(
+			"Priorities",
+			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
+		) {}
+
+		// Selecting only the `null` token must add that type without losing the stored string permission.
+		class Expected extends factory.array("Priorities", [
+			factory.number,
+			factory.string,
+			factory.null,
+		]) {}
+		const provider = new TestTreeProviderLite(2);
+		const [documentTree, upgradingTree] = provider.trees;
+		const before = documentTree.viewWith(new TreeViewConfiguration({ schema: Before }));
+		before.initialize(["high", 1]);
+		provider.synchronizeMessages();
+		before.dispose();
+		const observer = documentTree.viewWith(new TreeViewConfiguration({ schema: After }));
+		const after = upgradingTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: After,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			}),
+		);
+
+		assert.equal(after.compatibility.canView, true);
+		assert.equal(after.compatibility.canUpgrade, true);
+		assert.equal(after.compatibility.isEquivalent, false);
+		after.upgradeSchema();
+		provider.synchronizeMessages();
+
+		// Verify the actual applied union on both clients, not just the upgrader's compatibility result.
+		for (const tree of provider.trees) {
+			expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		}
+		assert.deepEqual([...after.root], ["high", 1]);
+		after.root.insertAtEnd("low", null);
+		provider.synchronizeMessages();
+		assert.deepEqual([...observer.root], ["high", 1, "low", null]);
+		assert.equal(observer.compatibility.isEquivalent, true);
+	});
+
+	it("preserves map entry types while enabling unassigned priorities", () => {
+		const factory = new SchemaFactoryAlpha("mapPriorityRollout");
+		class Before extends factory.map("Priorities", [factory.number, factory.string]) {}
+
+		// Leave historical strings staged and introduce `null` under a different token.
+		const stagedUnassigned = factory.staged(factory.null);
+		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+		class After extends factory.map(
+			"Priorities",
+			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
+		) {}
+
+		// Selecting only the `null` token must add that type without losing the stored string permission.
+		class Expected extends factory.map("Priorities", [
+			factory.number,
+			factory.string,
+			factory.null,
+		]) {}
+		const provider = new TestTreeProviderLite(2);
+		const [documentTree, upgradingTree] = provider.trees;
+		const before = documentTree.viewWith(new TreeViewConfiguration({ schema: Before }));
+		before.initialize({ primary: "high", fallback: 1 });
+		provider.synchronizeMessages();
+		before.dispose();
+		const observer = documentTree.viewWith(new TreeViewConfiguration({ schema: After }));
+		const after = upgradingTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: After,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			}),
+		);
+
+		assert.equal(after.compatibility.canView, true);
+		assert.equal(after.compatibility.canUpgrade, true);
+		assert.equal(after.compatibility.isEquivalent, false);
+		after.upgradeSchema();
+		provider.synchronizeMessages();
+
+		// Verify the actual applied union on both clients and exercise writes using both retained and newly enabled types.
+		for (const tree of provider.trees) {
+			expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		}
+		assert.equal(after.root.get("primary"), "high");
+		after.root.set("primary", "low");
+		after.root.set("unassigned", null);
+		provider.synchronizeMessages();
+		assert.equal(observer.root.get("primary"), "low");
+		assert.equal(observer.root.get("fallback"), 1);
+		assert.equal(observer.root.get("unassigned"), null);
+		assert.equal(observer.compatibility.isEquivalent, true);
+	});
+});
+
 describe("optional field removal during staged upgrades", () => {
 	it("preserves removed fields and already-enabled staged changes while adding an optional field", () => {
 		const factory = new SchemaFactoryAlpha("taskRollout");
@@ -728,8 +832,8 @@ describe("optional field removal during staged upgrades", () => {
 			fallbackHours: factory.number,
 			isApproved: factory.optional(factory.boolean),
 		}) {}
-		const provider = new TestTreeProviderLite(2);
-		const [treeBefore, treeAfter] = provider.trees;
+		const provider = new TestTreeProviderLite(3);
+		const [treeBefore, treeAfter, treeObserver] = provider.trees;
 		const before = treeBefore.viewWith(new TreeViewConfiguration({ schema: Before }));
 		before.initialize({ primaryPriority: "high", fallbackPriority: 1, fallbackHours: 2 });
 		provider.synchronizeMessages();
@@ -777,6 +881,13 @@ describe("optional field removal during staged upgrades", () => {
 			unsubscribe();
 		}
 
+		// Keep a restrictive staged view open while a remote client enables the remaining locations.
+		const observer = asAlpha(
+			treeObserver.viewWith(new TreeViewConfigurationAlpha({ schema: After })),
+		);
+		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "partial");
+		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "partial");
+
 		// Enabling the tokens explicitly may introduce the remaining permissions at the fallback fields.
 		after.dispose();
 		const enabled = asAlpha(
@@ -797,6 +908,39 @@ describe("optional field removal during staged upgrades", () => {
 		enabled.root.fallbackHours = undefined;
 		assert.equal(enabled.root.fallbackPriority, "low");
 		assert.equal(enabled.root.fallbackHours, undefined);
+		provider.synchronizeMessages();
+
+		// The existing observer must recompute both statuses and accept the newly enabled values after the remote schema update.
+		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "enabled");
+		assert.equal(observer.root.fallbackPriority, "low");
+		assert.equal(observer.root.fallbackHours, undefined);
+		observer.root.fallbackPriority = "urgent";
+		observer.root.fallbackHours = 3;
+		observer.root.fallbackHours = undefined;
+		provider.synchronizeMessages();
+		assert.equal(enabled.root.fallbackPriority, "urgent");
+		assert.equal(enabled.root.fallbackHours, undefined);
+
+		// Despite its restrictive policy, the observer's candidate now preserves the remotely enabled permissions as a no-op.
+		assert.equal(observer.compatibility.canUpgrade, true);
+		assert.equal(observer.compatibility.isEquivalent, true);
+		const observerRoot = observer.root;
+		const sequenceAfterEnablement = provider.sequenceNumber;
+		let observerSchemaChanges = 0;
+		const unsubscribeObserver = observer.events.on(
+			"schemaChanged",
+			() => observerSchemaChanges++,
+		);
+		try {
+			observer.upgradeSchema();
+			provider.synchronizeMessages();
+			assert.equal(provider.sequenceNumber, sequenceAfterEnablement);
+			assert.equal(observerSchemaChanges, 0);
+			assert.equal(observer.root, observerRoot);
+		} finally {
+			unsubscribeObserver();
+		}
 	});
 
 	it("retains a node definition without enabling its staged use by another field", () => {

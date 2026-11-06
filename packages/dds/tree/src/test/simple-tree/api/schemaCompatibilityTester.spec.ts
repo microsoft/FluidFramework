@@ -709,6 +709,37 @@ describe("checkSchemaCompatibility", () => {
 	});
 
 	describe("with staged allowed types", () => {
+		it("can retain an already-enabled type while enabling a different staged type", () => {
+			class Before extends factory.object("Task", {
+				priority: [factory.number, factory.string],
+			}) {}
+
+			const stagedString = factory.staged(factory.string);
+			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(stringUpgrade !== undefined);
+			const stagedUnassigned = factory.staged(factory.null);
+			const unassignedUpgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+			assert(unassignedUpgrade !== undefined);
+
+			// Keep string priorities staged and add a separately staged `null` value for unassigned priorities.
+			class After extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedString, stagedUnassigned]),
+			}) {}
+
+			// Existing priorities can already be viewed. Enabling only `null` must retain strings and produce a real upgrade.
+			// Enablement status describes the current document, so only the historical string permission is reported.
+			expectCompatibility(
+				{ view: After, stored: toInitialSchema(Before) },
+				{
+					canView: true,
+					canUpgrade: true,
+					isEquivalent: false,
+					enabledUpgrades: new Map([[stringUpgrade, "enabled"]]),
+				},
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(unassignedUpgrade),
+			);
+		});
+
 		for (const location of ["root", "array", "map"] as const) {
 			it(`preserves already-enabled staged types without enabling them in new documents (${location})`, () => {
 				const priorities = [factory.number, factory.string] as const;

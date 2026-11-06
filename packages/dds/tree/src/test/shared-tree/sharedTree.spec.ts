@@ -77,6 +77,8 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	type ValidateRecursiveSchema,
 	SchemaFactoryAlpha,
 	type ITree,
@@ -652,6 +654,128 @@ describe("SharedTree", () => {
 		assert(view2.compatibility.isEquivalent);
 		// Check content loaded
 		assert.deepEqual([...view2.root], ["A"]);
+	});
+
+	it("preserves composed schema and retained content through summary, reload, and a later upgrade", async () => {
+		const factory = new SchemaFactoryAlpha("persistedTaskRollout");
+		class Reminder extends factory.object("Reminder", {
+			message: factory.string,
+		}) {}
+		class Before extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+		}) {}
+
+		// Retire `reminder`, leave existing priority and optionality changes staged, and add approval.
+		const stagedPriority = factory.types([factory.number, factory.staged(factory.string)]);
+		const stagedHours = factory.stagedOptional(factory.number);
+		class After extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		// The persisted candidate must retain the reminder definition, string priorities, and optional effort estimates.
+		class Expected extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree] = provider.trees;
+		const before = tree.viewWith(
+			new TreeViewConfiguration({ schema: Before, enableSchemaValidation }),
+		);
+		before.initialize({
+			title: "Prepare release",
+			reminder: { message: "Ask the reviewer" },
+			priority: "high",
+		});
+		await provider.ensureSynchronized();
+		before.dispose();
+
+		const config = new TreeViewConfigurationAlpha({
+			schema: After,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+			enableSchemaValidation,
+		});
+		const after = tree.viewWith(config);
+		assert.equal(after.compatibility.canView, false);
+		assert.equal(after.compatibility.canUpgrade, true);
+		after.upgradeSchema();
+		after.root.isApproved = true;
+		await provider.ensureSynchronized();
+		await provider.summarize();
+		await provider.ensureSynchronized();
+
+		// Load new clients from the summary, not merely new views on an existing checkout.
+		const loadedTree = await provider.createTree();
+		const loaded = loadedTree.viewWith(config);
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(Expected));
+		assert.equal(loaded.compatibility.isEquivalent, true);
+		assert.equal(loaded.root.priority, "high");
+		assert.equal(loaded.root.estimatedHours, undefined);
+		assert.equal(loaded.root.isApproved, true);
+		assert.equal("reminder" in loaded.root, false);
+		loaded.dispose();
+
+		// A view that still declares the retired field must recover its node and content from the same persisted state.
+		const inspectingTree = await provider.createTree();
+		const inspecting = inspectingTree.viewWith(
+			new TreeViewConfiguration({ schema: Expected, enableSchemaValidation }),
+		);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
+
+		// Add an optional `label` in a later application version; reloading must not prevent another preserving upgrade.
+		class Later extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+
+		// Only `label` is new; all fields and types retained in the previous summary must survive again.
+		class ExpectedLater extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+		const later = loadedTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: Later,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+				enableSchemaValidation,
+			}),
+		);
+		assert.equal(later.compatibility.canView, false);
+		assert.equal(later.compatibility.canUpgrade, true);
+		later.upgradeSchema();
+		later.root.label = "Ready";
+		later.root.priority = "urgent";
+		later.root.estimatedHours = 4;
+		later.root.estimatedHours = undefined;
+		await provider.ensureSynchronized();
+
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(ExpectedLater));
+		expectSchemaEqual(
+			inspectingTree.kernel.checkout.storedSchema,
+			toInitialSchema(ExpectedLater),
+		);
+		assert.equal(later.compatibility.isEquivalent, true);
+		assert.equal(later.root.label, "Ready");
+		assert.equal(inspecting.root.priority, "urgent");
+		assert.equal(inspecting.root.estimatedHours, undefined);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
 	});
 
 	it("can process ops after loading from summary", async () => {

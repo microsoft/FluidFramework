@@ -516,6 +516,14 @@ Update the existing [staged-upgrade tests][staged-tests] for the intentional pol
 - Verify a token remains `partial` after preservation-only upgrades and becomes enabled only when the policy requests its remaining permissions.
 - Combine retained optional fields with preserved staged permissions and a new field so compatibility calculation and live application must agree on a non-no-op target.
 - Exercise repeated upgrades from multiple compatible clients, verify accumulated permissions and readable content, and preserve the existing no-op event and identity checks.
+- Verify a restrictive observer refreshes partial token statuses after a remote upgrade, can write the newly enabled values, and has a no-op upgrade afterward.
+- Exercise actual array and map upgrades that retain a stored type while explicitly enabling a different staged type; verify both clients' stored schema and synchronized content.
+
+The SharedTree summary/load suite also covers an omitted node-valued field and already-enabled staged permissions surviving a composed upgrade, summary, and load into new clients.
+It verifies that another upgrade after loading retains the historical schema and content again.
+Include `lib/test/mochaHooks.js` when selecting test files explicitly so the package's service cleanup runs between tests.
+The added integration coverage passes in a combined run of the compatibility, staged-upgrade, SharedTree, and user-story suites: 219 tests passed and three existing tests were skipped.
+The test TypeScript build, focused Biome and ESLint checks, and whitespace checks also pass.
 
 Add negative compile-time coverage showing that a policy literal with the removed alpha flag is rejected.
 Regenerate API reports rather than editing them, and verify the corresponding aggregator surface.
