@@ -484,12 +484,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
-	 * Propagates staging-mode changes to nested channel contexts.
-	 * @internal
-	 */
-	notifyStagingMode?(staging: boolean): void;
-
-	/**
 	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
 	 *
 	 * - We reconnected and discovered the original message was never acked.
@@ -531,6 +525,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	request(request: IRequest): Promise<IResponse>;
 
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+}
+
+/**
+ * Lifecycle notifications used by native composite channels.
+ * @internal
+ */
+export interface IFluidDataStoreChannelInternal extends IFluidDataStoreChannel {
+	notifyStagingMode?(staging: boolean): void;
 }
 
 /**
@@ -824,8 +826,12 @@ export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
 		ContainerExtensionProvider {
 	/**
+	 * This context occupies an existing DDS child slot, without a data-store envelope.
+	 */
+	readonly isSharedObjectChannel?: boolean;
+	/**
 	 * Creates a collection whose children share this data store's garbage-collection lifetime.
-	 * Requires an oldest supported client version of at least 3.12.0.
+	 * Composite children require an oldest supported client version of at least 3.12.0.
 	 */
 	createChannelCollection?(
 		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,

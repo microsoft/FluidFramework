@@ -10,6 +10,8 @@ export {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	type ISharedObjectRegistryInternal,
+	legacySharedObjectTypeAliases,
+	LegacyTypeAwareRegistry,
 	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,
 	mixinSummaryHandler,

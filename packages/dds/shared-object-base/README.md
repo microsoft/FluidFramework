@@ -51,9 +51,10 @@ The `view` callback receives that value after creation or loading and returns th
 Neither value needs to implement `IFluidLoadable` or expose a handle.
 
 Direct container-level shared objects and native nested data stores require `oldestSupportedClient >= 3.12.0`.
-New data stores at that target use native collections; older targets can create DDS-only stores using the established shared-object layout.
-Existing DDS-based stores keep their representation when loaded, even if the client's version target increases.
-Such stores reject attempts to create a nested composite rather than silently adding a wrapper or relocating content.
+The generalized collection preserves the established DDS child representation and operation format at both old and new targets.
+Existing DDS-based stores keep those children in place when loaded.
+After the framework-version target and application rollout permit nesting, those stores can acquire composite children alongside their existing DDSs.
+Unsupported requests are rejected rather than silently adding wrappers or relocating content.
 
 For application-defined legacy layouts, use `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha`.
 For other container root-discovery conventions, use the existing legacy loader and `fluidContainerFromLegacy` from that entrypoint.

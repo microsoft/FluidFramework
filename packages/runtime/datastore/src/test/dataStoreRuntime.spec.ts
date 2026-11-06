@@ -37,6 +37,7 @@ import {
 	FluidDataStoreRuntime,
 	LegacyTypeAwareRegistry,
 	type ISharedObjectRegistry,
+	type ISharedObjectRegistryInternal,
 } from "../dataStoreRuntime.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
@@ -578,6 +579,16 @@ describe("LegacyTypeAwareRegistry", () => {
 	});
 
 	describe("temporary compat: new short name in document, old URL in registry", () => {
+		it("applies the same aliases to asynchronous factory loading", async () => {
+			const base = makeBaseRegistry({ map: "map" });
+			const asyncRegistry: ISharedObjectRegistryInternal = {
+				get: () => undefined,
+				getAsync: async (name) => base.get(name),
+			};
+			const registry = new LegacyTypeAwareRegistry(asyncRegistry);
+			const factory = await registry.getAsync(`${prefix}map`);
+			assert.equal(factory?.type, "map");
+		});
 		it("prepends the URL prefix and finds the factory", () => {
 			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
 			assert.strictEqual(r.get("map")?.type, "map-url");

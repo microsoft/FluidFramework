@@ -13,6 +13,7 @@ import type {
 	FluidDataStoreContextInternal,
 	IFluidDataStoreChannelCollection,
 	IFluidDataStoreFactory,
+	IFluidDataStoreFactoryInternal,
 	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -31,8 +32,9 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 	const { TestFluidObjectFactory } = apis.dataRuntime;
 	const legacyFactory = new TestFluidObjectFactory([], "legacy-child");
 	const channelFactory = SharedMap.getFactory();
-	const leafFactory: IFluidDataStoreFactory = {
+	const leafFactory: IFluidDataStoreFactoryInternal = {
 		type: channelFactory.type,
+		isLeafChannel: true,
 		get IFluidDataStoreFactory() {
 			return this;
 		},
@@ -179,18 +181,16 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 	});
 
 	it("rejects a client compatibility target older than native nesting", async () => {
-		provider.tracker.registerExpectedEvent(
-			{ eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose" },
-		);
 		const incompatibleFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: factory,
 			registryEntries: [[factory.type, factory]],
 			oldestSupportedClient: "3.11.0",
 		});
+		const container = await provider.createContainer(incompatibleFactory);
+		const parent = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
 		await assert.rejects(
-			provider.createContainer(incompatibleFactory),
-			/Native channel collections require oldestSupportedClient >= 3.12.0/,
+			parent.createDataStore(factory),
+			/Nested data stores require oldestSupportedClient >= 3.12.0/,
 		);
 	});
 
@@ -285,5 +285,30 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		);
 		assert.equal(reloadedRoot.get("value"), 42);
 		await provider.ensureSynchronized();
+	});
+
+	it("routes signals to a nested data store without changing its application payload", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const collection = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const root = await getRoot(collection);
+		const childStore = await collection.createDataStore(legacyFactory);
+		const child = (await childStore.entryPoint.get()) as ITestFluidObject;
+		root.set("child", childStore.entryPoint);
+		await provider.ensureSynchronized();
+		const remote = await provider.loadContainer(runtimeFactory);
+		const remoteRoot = await getRoot(
+			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
+		);
+		const handle = remoteRoot.get<IFluidHandle<ITestFluidObject>>("child");
+		assert(handle !== undefined);
+		const remoteChild = await handle.get();
+		const received = new Promise<unknown>((resolve) => {
+			remoteChild.runtime.on("signal", (message, local) => {
+				if (!local && message.type === "nested") resolve(message.content);
+			});
+		});
+		const payload = { address: "application-payload", contents: 42 };
+		child.runtime.submitSignal("nested", payload);
+		assert.deepEqual(await received, payload);
 	});
 });

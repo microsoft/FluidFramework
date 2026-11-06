@@ -6,6 +6,7 @@
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
+	legacySharedObjectTypeAliases,
 	type ISharedObjectRegistryInternal,
 } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -24,7 +25,6 @@ import type {
 import {
 	convertRegistry,
 	DataStoreKindImplementation,
-	getConfigForMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ISharedObject } from "./types.js";
@@ -54,12 +54,27 @@ export function dataStoreRegistryFromIterable(
 		);
 	}
 	return async (type) => {
-		const load = map.get(type);
+		let resolvedType = type;
+		let load = map.get(type);
+		if (load === undefined) {
+			for (const candidate of legacySharedObjectTypeAliases(type)) {
+				const aliasLoad = map.get(candidate);
+				if (aliasLoad !== undefined) {
+					const aliasKind = await aliasLoad();
+					DataStoreKindImplementation.narrowGeneric(aliasKind);
+					if (aliasKind.channelFactory !== undefined) {
+						resolvedType = candidate;
+						load = aliasLoad;
+						break;
+					}
+				}
+			}
+		}
 		if (load === undefined) {
 			throw new UsageError(`Unknown data store type: ${type}`);
 		}
 		const kind = await load();
-		if (kind.type !== type) {
+		if (kind.type !== resolvedType) {
 			throw new UsageError(`Mismatched data store type. Expected: ${type}, got: ${kind.type}`);
 		}
 		return kind;
@@ -109,7 +124,7 @@ export interface DataStoreOptions<in out TRoot, out TOutput> {
  * @remarks
  * Nested data stores require an oldest supported client version of at least 3.12.0.
  * Older targets support shared-object children using the existing DDS representation.
- * Loading an existing DDS-based data store preserves that representation.
+ * Loading an existing DDS-based data store preserves its DDS children and operation format.
  * Use the legacy factory bridge for application-defined legacy layouts.
  * @param options - Initialization, registry, and view definition.
  * @returns The data store kind.
@@ -122,12 +137,8 @@ export function defineDataStore<T, TRoot>(
 		type: options.type,
 		IFluidDataStoreRegistry: convertRegistry(options.registry),
 		async instantiateDataStore(context, existing) {
-			const native = existing
-				? context.baseSnapshot?.blobs[".aliases"] !== undefined
-				: getConfigForMinVersionForCollab(context.oldestSupportedClient, {
-						"2.0.0": false,
-						"3.12.0": true,
-					});
+			const native =
+				(context as FluidDataStoreContextInternal).createChannelCollection !== undefined;
 			return native
 				? createNativeDataStore(context, existing, options)
 				: createLegacyLayoutDataStore(context, existing, options);

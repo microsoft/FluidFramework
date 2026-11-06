@@ -102,6 +102,10 @@ export class DataStoreKindImplementation<T>
 		return this.factory.channelFactory;
 	}
 
+	public get isLeafChannel(): boolean {
+		return this.channelFactory !== undefined;
+	}
+
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
 		const input = await value;
 		if (input === this) {

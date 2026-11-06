@@ -18,10 +18,14 @@ import type {
 	IDataStore,
 	IFluidDataStoreChannelCollection,
 	IFluidDataStoreFactory,
+	IFluidDataStoreFactoryInternal,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
+	IInboundSignalMessage,
+	IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -41,6 +45,7 @@ import {
 	LocalDetachedFluidDataStoreContext,
 	type FluidDataStoreContext,
 } from "./dataStoreContext.js";
+import { ContainerMessageType } from "./messageTypes.js";
 
 const aliasesBlob = ".aliases";
 
@@ -76,10 +81,22 @@ export class NativeChannelCollection
 		const parent = formParentContext<IFluidParentContextPrivate>(
 			context,
 			{
-				submitMessage: context.submitMessage.bind(context),
-				submitSignal: context.submitSignal.bind(context),
+				submitMessage: (type, content, metadata) => {
+					const message = this.toLegacyMessage(type, content);
+					context.submitMessage(message.type, message.content, metadata);
+				},
+				submitSignal: (type, content, target, relativeAddress) => {
+					if (
+						relativeAddress !== undefined &&
+						this.contexts.get(relativeAddress)?.isSharedObjectChannel === true
+					) {
+						context.submitSignal(type, content, target);
+					} else {
+						context.submitSignal(type, content, target, relativeAddress);
+					}
+				},
 			},
-			{ handleContext: routing, registry },
+			{ handleContext: routing, registry, leafChannelPackagePath: context.packagePath },
 		);
 		super(
 			context.baseSnapshot,
@@ -99,9 +116,16 @@ export class NativeChannelCollection
 		registry: IFluidDataStoreRegistry | undefined,
 		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
 	): Promise<NativeChannelCollection> {
-		if (!gte(context.oldestSupportedClient, "3.12.0")) {
+		const hasCompositeChildren = Object.values(context.baseSnapshot?.trees ?? {}).some(
+			(tree) =>
+				tree.blobs[".component"] !== undefined && tree.blobs[".attributes"] === undefined,
+		);
+		if (
+			(hasCompositeChildren || context.baseSnapshot?.blobs[aliasesBlob] !== undefined) &&
+			!gte(context.oldestSupportedClient, "3.12.0")
+		) {
 			throw new UsageError(
-				"Native channel collections require oldestSupportedClient >= 3.12.0",
+				"This collection contains features requiring oldestSupportedClient >= 3.12.0",
 			);
 		}
 		const aliases = new Map<string, string>();
@@ -134,7 +158,14 @@ export class NativeChannelCollection
 		if (this.disposed) {
 			throw new UsageError("Cannot create a child in a disposed collection");
 		}
-		const childId = id ?? this.createDataStoreId();
+		const nativeFactory: IFluidDataStoreFactoryInternal = factory;
+		if (
+			nativeFactory.isLeafChannel !== true &&
+			!gte(this.context.oldestSupportedClient, "3.12.0")
+		) {
+			throw new UsageError("Nested data stores require oldestSupportedClient >= 3.12.0");
+		}
+		const childId = id ?? `_${this.createDataStoreId()}`;
 		if (
 			childId.length === 0 ||
 			childId.includes("/") ||
@@ -148,9 +179,21 @@ export class NativeChannelCollection
 			[...this.context.packagePath, factory.type],
 			LocalDetachedFluidDataStoreContext,
 			undefined,
+			nativeFactory.isLeafChannel === true,
 		);
 		const channel = await factory.instantiateDataStore(context, false);
-		return context.attachRuntime(factory, channel);
+		const store = await context.attachRuntime(factory, channel);
+		return {
+			entryPoint: store.entryPoint,
+			trySetAlias: async (alias) => {
+				if (!gte(this.context.oldestSupportedClient, "3.12.0")) {
+					throw new UsageError(
+						"Nested channel aliases require oldestSupportedClient >= 3.12.0",
+					);
+				}
+				return store.trySetAlias(alias);
+			},
+		};
 	}
 
 	public async getDataStoreEntryPoint(id: string): Promise<IFluidHandleInternal<FluidObject>> {
@@ -199,6 +242,80 @@ export class NativeChannelCollection
 		return super.request(request);
 	}
 
+	private toLegacyMessage(type: string, content: unknown): { type: string; content: unknown } {
+		if (type === ContainerMessageType.FluidDataStoreOp) {
+			const envelope = readEnvelope(content);
+			if (this.contexts.get(envelope.address)?.isSharedObjectChannel === true) {
+				const message = readOperation(envelope.contents);
+				const leaf = readEnvelope(message.content);
+				return { type: "op", content: { address: envelope.address, contents: leaf.contents } };
+			}
+		}
+		return { type, content };
+	}
+
+	private toNativeMessage(type: string, content: unknown): { type: string; content: unknown } {
+		if (type === "op") {
+			const envelope = readEnvelope(content);
+			return {
+				type: ContainerMessageType.FluidDataStoreOp,
+				content: {
+					address: envelope.address,
+					contents: { type: "op", content: { address: "", contents: envelope.contents } },
+				},
+			};
+		}
+		return { type, content };
+	}
+
+	public override processMessages(collection: IRuntimeMessageCollection): void {
+		const type =
+			collection.envelope.type === "op"
+				? ContainerMessageType.FluidDataStoreOp
+				: collection.envelope.type;
+		super.processMessages({
+			...collection,
+			envelope: { ...collection.envelope, type },
+			messagesContent: collection.messagesContent.map((message) => ({
+				...message,
+				contents: this.toNativeMessage(collection.envelope.type, message.contents).content,
+			})),
+		});
+	}
+
+	public override reSubmit(
+		type: string,
+		content: unknown,
+		metadata: unknown,
+		squash: boolean,
+	): void {
+		const message = this.toNativeMessage(type, content);
+		super.reSubmit(message.type, message.content, metadata, squash);
+	}
+
+	public override rollback(type: string, content: unknown, metadata: unknown): void {
+		const message = this.toNativeMessage(type, content);
+		super.rollback(message.type, message.content, metadata);
+	}
+
+	public override processSignal(message: IInboundSignalMessage, local: boolean): void {
+		const routed: IInboundSignalMessage & { relativeAddress?: string | undefined } = message;
+		if (routed.relativeAddress === undefined) {
+			for (const [, context] of this.contexts) {
+				if (context.isSharedObjectChannel) {
+					context.processSignal(message, local);
+				}
+			}
+		} else {
+			super.processSignal(
+				{
+					...message,
+					content: { address: routed.relativeAddress, contents: message.content },
+				},
+				local,
+			);
+		}
+	}
 	public override async applyStashedOp(message: unknown): Promise<unknown> {
 		if (
 			typeof message !== "object" ||
@@ -208,7 +325,11 @@ export class NativeChannelCollection
 		) {
 			throw new DataCorruptionError("Invalid stashed collection operation", {});
 		}
-		return super.applyStashedOp({ type: message.type, contents: message.content });
+		if (typeof message.type !== "string") {
+			throw new DataCorruptionError("Invalid stashed collection operation type", {});
+		}
+		const native = this.toNativeMessage(message.type, message.content);
+		return super.applyStashedOp({ type: native.type, contents: native.content });
 	}
 
 	public override async summarize(
@@ -217,7 +338,9 @@ export class NativeChannelCollection
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const summary = await super.summarize(fullTree, trackState, telemetryContext);
-		addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
+		if (this.aliases.size > 0) {
+			addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
+		}
 		return summary;
 	}
 
@@ -225,7 +348,9 @@ export class NativeChannelCollection
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const summary = super.getAttachSummary(telemetryContext);
-		addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
+		if (this.aliases.size > 0) {
+			addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
+		}
 		return summary;
 	}
 
@@ -253,4 +378,30 @@ export class NativeChannelCollection
 		builder.addNode("/", children);
 		return builder.getGCData();
 	}
+}
+
+function readEnvelope(value: unknown): IEnvelope<unknown> {
+	if (
+		typeof value !== "object" ||
+		value === null ||
+		!("address" in value) ||
+		typeof value.address !== "string" ||
+		!("contents" in value)
+	) {
+		throw new DataCorruptionError("Invalid channel envelope", {});
+	}
+	return { address: value.address, contents: value.contents };
+}
+
+function readOperation(value: unknown): { content: unknown } {
+	if (
+		typeof value !== "object" ||
+		value === null ||
+		!("type" in value) ||
+		value.type !== "op" ||
+		!("content" in value)
+	) {
+		throw new DataCorruptionError("Invalid leaf operation", {});
+	}
+	return { content: value.content };
 }

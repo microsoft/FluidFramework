@@ -25,6 +25,7 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelInternal,
 	IFluidDataStoreChannelCollection,
 	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
@@ -38,6 +39,7 @@ export type {
 export { FlushMode, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+export type { IFluidDataStoreFactoryInternal } from "./dataStoreFactory.js";
 export type {
 	FluidDataStoreRegistryEntry,
 	IProvideFluidDataStoreRegistry,

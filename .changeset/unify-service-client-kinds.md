@@ -16,7 +16,8 @@ They can be container roots or additional container-level items.
 Composite data stores can also be roots and additional contents of other data stores.
 Direct container-level shared objects and native nested data stores require `oldestSupportedClient` of at least `3.12.0`.
 DDS-only stores remain available at older targets using their existing representation.
-Existing DDS-based stores retain their loader rather than being rewritten into native nested collections.
+Existing DDS children retain their identities, summary layout, and operation format when loaded by the generalized collection.
+Composite children can be added alongside them after framework-version and application rollout requirements are satisfied.
 
 Application-facing data-store values do not need to expose handles.
 Nested data stores share the garbage-collection lifetime of their container-level ancestor.

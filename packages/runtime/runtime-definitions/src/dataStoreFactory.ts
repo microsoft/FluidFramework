@@ -80,3 +80,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 		readonly runtime: IFluidDataStoreChannel;
 	};
 }
+
+/**
+ * Native factory capabilities used to preserve existing DDS child representations.
+ * @internal
+ */
+export interface IFluidDataStoreFactoryInternal extends IFluidDataStoreFactory {
+	readonly isLeafChannel?: boolean;
+}

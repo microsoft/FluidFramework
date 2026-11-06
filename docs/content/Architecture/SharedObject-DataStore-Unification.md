@@ -204,9 +204,20 @@ The following are focused results, not completion of the full validation matrix:
   The signature changes are confined to the intended alpha surfaces and additive legacy-alpha bridges.
 
 Still outstanding: pinned older-framework mixed-API coverage, complete GC sweep/tombstone tests, broader signal and failure-path validation, and external consumer compatibility checks.
-Existing DDS-layout stores retain their loader and do not yet gain mixed DDS/composite child creation merely by increasing the version target.
-The legacy bridge preserves those layouts for incremental migration; generalizing an existing DDS-layout parent to accept native composite children remains a separate implementation gap.
-Do not treat the placement tests on new native collections as evidence that this gap is resolved.
+The subsequent mixed-layout implementation preserves DDS child snapshots, identities, attachment messages, and operation envelopes while allowing native composites alongside them after rollout.
+Migration tests now replace the parent runtime, consume channels created later by a legacy peer, exchange legacy broadcast signals, and reload generalized summaries through the legacy runtime.
+A separate test closes the legacy client before adding a composite and verifies mixed-layout summary reload without moving the existing root.
+These same-version tests do not replace pinned older-framework or full GC sweep/tombstone coverage.
+
+The latest mixed-layout validation passes 31 end-to-end tests, 13 tree/alpha tests, 11 shared-object/registry tests, 41 datastore regressions, and 39 container-runtime regressions.
+The end-to-end command, from `packages/test/test-end-to-end-tests`, is:
+
+```sh
+MOCHA_SPEC=lib/test/legacyDataStoreKinds.spec.js npm run test:realsvc:local -- --compatVersion=0 lib/test/nativeChannelCollections.spec.js lib/test/leafChannels.spec.js lib/test/dataStoresNested.spec.js lib/test/aliasWithProps.spec.js
+```
+
+The 11 legacy-bridge/migration tests in that run include structural assertions that the existing DDS root retains `.attributes` and its payload without an added `.component` or `.channels` envelope.
+The native collection tests also cover nested signal routing without changing the application's signal payload.
 
 #### Initial runtime evidence
 
@@ -245,8 +256,8 @@ Two commits provide internal building blocks:
 - `d2d84154338`: native nested channel collections with aggregate lifetime.
 
 The following assessment records the gaps found before the alpha factories were switched.
-The subsequent implementation uses native collections for new stores at supporting targets, retains the existing DDS loader for older layouts/targets, and provides legacy bridges.
-The building blocks may still need revision to satisfy the outstanding validation and mixed-layout requirements.
+The subsequent implementation generalizes collections to preserve existing DDS representations, gates composite creation and nested aliases rather than the collection itself, and provides legacy bridges.
+The building blocks may still need revision to satisfy the outstanding validation requirements.
 
 In particular:
 

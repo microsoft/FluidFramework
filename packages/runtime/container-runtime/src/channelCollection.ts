@@ -154,6 +154,13 @@ export interface IFluidParentContextPrivate
 	readonly isReadOnly: () => boolean;
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+	readonly leafChannelPackagePath?: readonly string[] | undefined;
+	readonly submitSignal: (
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+		relativeAddress?: string,
+	) => void;
 }
 
 /**
@@ -209,10 +216,12 @@ export function formParentContext<
 	routing?: {
 		handleContext: IFluidHandleContext;
 		registry: IFluidDataStoreRegistry | undefined;
+		leafChannelPackagePath?: readonly string[];
 	},
 ): Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys> &
 	Pick<T, SubmitKeys> {
 	return {
+		leafChannelPackagePath: routing?.leafChannelPackagePath ?? context.leafChannelPackagePath,
 		get IFluidDataStoreRegistry() {
 			return routing === undefined ? context.IFluidDataStoreRegistry : routing.registry;
 		},
@@ -304,8 +313,19 @@ function wrapContextForInnerChannel(
 				localOpMetadata,
 			);
 		},
-		submitSignal: (type: string, content: unknown, targetClientId?: string) => {
-			parentContext.submitSignal({ address: id, contents: { type, content } }, targetClientId);
+		submitSignal: (
+			type: string,
+			content: unknown,
+			targetClientId?: string,
+			relativeAddress?: string,
+		) => {
+			parentContext.submitSignal(
+				{
+					address: relativeAddress === undefined ? id : `${id}/${relativeAddress}`,
+					contents: { type, content },
+				},
+				targetClientId,
+			);
 		},
 	});
 
@@ -765,9 +785,11 @@ export class ChannelCollection
 		pkg: readonly string[],
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
 		loadingGroupId?: string,
+		isSharedObjectChannel = false,
 	): T {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
+			isSharedObjectChannel,
 			id,
 			pkg,
 			parentContext: this.wrapContextForInnerChannel(id),
@@ -1188,10 +1210,20 @@ export class ChannelCollection
 	}
 
 	public processSignal(messageArg: IInboundSignalMessage, local: boolean): void {
-		const envelope = messageArg.content as IEnvelope;
-		const fluidDataStoreId = envelope.address;
+		const envelope = messageArg.content as IEnvelope<unknown>;
+		const separator = envelope.address.indexOf("/");
+		const fluidDataStoreId =
+			separator === -1 ? envelope.address : envelope.address.slice(0, separator);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const message = { ...messageArg, content: envelope.contents };
+		const message: IInboundSignalMessage & { relativeAddress?: string } = {
+			...messageArg,
+			content: envelope.contents,
+		};
+		if (separator === -1) {
+			delete message.relativeAddress;
+		} else {
+			message.relativeAddress = envelope.address.slice(separator + 1);
+		}
 		const context = this.contexts.get(fluidDataStoreId);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case a deleted data store accidentally submitted a signal.
@@ -1811,11 +1843,9 @@ export class ComposableChannelCollection
 				): void => {
 					parentContext.submitSignal(
 						envelope.contents.type,
-						{
-							address: envelope.address,
-							contents: envelope.contents.content,
-						} satisfies IEnvelope<unknown>,
+						envelope.contents.content,
 						targetClientId,
+						envelope.address,
 					);
 				},
 			}),

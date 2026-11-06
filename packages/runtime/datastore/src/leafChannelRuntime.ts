@@ -20,6 +20,7 @@ import type {
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	FluidDataStoreContextInternal,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	IRuntimeMessageCollection,
@@ -54,6 +55,7 @@ import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
 } from "./dataStoreLayerCompatState.js";
+import { LegacyTypeAwareRegistry } from "./dataStoreRuntime.js";
 
 /**
  * Hosts a shared object at a data-store channel's own identity.
@@ -131,6 +133,7 @@ export class LeafChannelRuntime
 		factory: IChannelFactory,
 	): Promise<LeafChannelRuntime> {
 		if (
+			(context as FluidDataStoreContextInternal).isSharedObjectChannel !== true &&
 			!getConfigForMinVersionForCollab(context.oldestSupportedClient, {
 				"2.0.0": false,
 				"3.12.0": true,
@@ -146,7 +149,9 @@ export class LeafChannelRuntime
 				context,
 				runtime.services,
 				context.id,
-				{ get: (type) => (type === factory.type ? factory : undefined) },
+				new LegacyTypeAwareRegistry({
+					get: (type) => (type === factory.type ? factory : undefined),
+				}),
 			);
 			runtime.channel = await loadChannel(
 				runtime,
