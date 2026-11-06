@@ -47,3 +47,36 @@ Clients that can already view a document remain supported even when they cannot 
 
 A successful snapshot check does not apply the upgrade or change the compatibility flags.
 When `canView` is false and `canUpgrade` is true, the application must still call `upgradeSchema()` before accessing the document through that view.
+
+#### Staged permissions are preserved at each stored location
+
+Schema upgrades now compose existing stored permissions with the additions requested by the view.
+An already-allowed type remains allowed even if it is staged in the view and the configured policy does not enable new staged permissions.
+An already-optional field remains optional when the view supports missing content, including through staged optionality.
+For example, stored `number | string` composed with a view that declares `number | staged(string)` remains `number | string`; with no other changes, the upgrade is a no-op.
+
+Preservation applies separately at each location.
+If a shared staged token is enabled at `primaryPriority` but not at `fallbackPriority`, a restrictive upgrade preserves that partial state.
+The policy must explicitly enable the token to introduce string values at the second location.
+New documents still use only the view and configured policy; they do not inherit permissions from other documents.
+
+The alpha `StagedSchemaUpgradePolicy.includeAlreadyEnabledUpgrades` flag has been removed.
+Remove that property from policy literals:
+
+```typescript
+// Before:
+const policy = {
+	...StagedSchemaUpgradePolicy.restrictive,
+	includeAlreadyEnabledUpgrades: true,
+};
+
+// After: preservation is automatic at each stored location.
+const policy = StagedSchemaUpgradePolicy.restrictive;
+```
+
+Applications that relied on the old flag to enable every location of a partially enabled token must now explicitly enable it with `StagedSchemaUpgradePolicy.enabledStagedUpgrades(token)` or the policy callbacks.
+Setting the old flag to `false` no longer opts out of preservation.
+
+`canUpgrade` checks whether the composed candidate preserves existing content and supports the requesting view.
+It does not check whether the stored schema can be replaced with a copy of the view schema.
+Retaining a type does not make it readable by a view that neither declares nor stages it; incompatible views and definitions remain rejected.

@@ -152,8 +152,8 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
-	getEffectiveStagedUpgradePolicy,
-	getSchemaIncompatibilityDetails,
+	getViewBlockers,
+	isSchemaUpgradeAllowed,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -348,6 +348,7 @@ export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
 export {
 	type TreeSchema,
+	type RetainedUnknownOptionalField,
 	type SchemaUpgradeCandidate,
 	type TransitiveSchemaInfo,
 	createTreeSchema,

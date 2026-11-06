@@ -25,19 +25,47 @@ import {
 import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
 
 /**
- * Describes the discrepancies that prevent a view schema from viewing a stored schema as a
- * readonly array.
+ * Returns discrepancies that prevent the view from providing read/write access to documents using the stored schema.
+ * @remarks The returned discrepancies do not indicate whether the stored schema may be made compatible via upgrade.
+ *
+ * @param viewSchema - The view schema requesting access to the document.
+ * @param storedSchema - The stored schema to check against the view.
+ * @returns The viewing blockers, or `undefined` if `viewSchema` can view `storedSchema` as-is.
  */
-export function getSchemaIncompatibilityDetails(
+export function getViewBlockers(
 	viewSchema: TreeSchema,
-	stored: TreeStoredSchema,
+	storedSchema: TreeStoredSchema,
 ): readonly SchemaDiscrepancy[] | undefined {
-	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
+	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, storedSchema)];
 	if (discrepancies.length === 0) {
 		return undefined;
 	}
 
 	return discrepancies.map(formatSchemaDiscrepancy);
+}
+
+/**
+ * Checks whether a candidate preserves existing stored permissions and supports read/write access through the view.
+ *
+ * @param viewSchema - The view schema that must be able to use the document after the upgrade.
+ * @param storedSchema - The document's stored schema before the upgrade.
+ * @param candidate - The proposed stored schema after the upgrade.
+ * @returns Whether the candidate passes the default schema upgrade rules and has no viewing blockers.
+ *
+ * @remarks
+ * The view does not need to be compatible with `storedSchema` before the upgrade.
+ * A candidate can preserve all stored permissions but still contain types that the view cannot read, so both checks are required.
+ * This function validates the candidate without constructing or applying it.
+ */
+export function isSchemaUpgradeAllowed(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+	candidate: TreeStoredSchema,
+): boolean {
+	return (
+		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
+		getViewBlockers(viewSchema, candidate) === undefined
+	);
 }
 
 function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
@@ -177,10 +205,14 @@ export function checkSchemaCompatibility(
 	const canView = discrepancies.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-	const upgradePolicy = getEffectiveStagedUpgradePolicy(configuredPolicy, enabledUpgrades);
-	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, upgradePolicy).schema;
+	const wouldUpgradeTo = getSchemaUpgradeCandidate(
+		viewSchema,
+		stored,
+		configuredPolicy,
+	).schema;
 
-	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
+	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
+	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
 	// If true, then upgrading has no effect on what can be stored in the document.
 	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
@@ -193,31 +225,6 @@ export function checkSchemaCompatibility(
 		isEquivalent,
 		discrepancies: canView ? undefined : discrepancies,
 		enabledUpgrades,
-	};
-}
-
-/**
- * Resolves the staged policy used to construct an upgrade candidate.
- *
- * @param configuredPolicy - The policy configured by the application.
- * @param enabledUpgrades - Staged changes already enabled, in whole or in part, in the current stored schema.
- * @returns The configured policy, extended to include already-enabled changes if requested.
- *
- * @remarks
- * Compatibility checks and upgrade execution must use the same policy so they agree on the candidate.
- */
-export function getEffectiveStagedUpgradePolicy(
-	configuredPolicy: StagedSchemaUpgradePolicy,
-	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>,
-): StagedSchemaUpgradePolicy {
-	if (configuredPolicy.includeAlreadyEnabledUpgrades !== true || enabledUpgrades.size === 0) {
-		return configuredPolicy;
-	}
-	return {
-		includeStaged: (upgrade) =>
-			configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-		includeStagedOptional: (upgrade) =>
-			configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
 	};
 }
 

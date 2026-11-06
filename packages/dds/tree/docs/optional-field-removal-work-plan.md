@@ -1,9 +1,11 @@
-# Work plan: Remove optional fields from SharedTree object schemas
+# Work plan: Compose SharedTree schema upgrades while preserving stored permissions
 
 ## Status and source
 
-This document describes proposed work for the `@fluidframework/tree` package.
-The work is not implemented.
+This document tracks work for the `@fluidframework/tree` package.
+Optional-field preservation, live upgrade integration, and the snapshot compatibility-policy changes are implemented on the feature branch.
+Per-location allowed-type and staged-optionality composition and removal of the alpha policy flag are also implemented.
+Alpha retention diagnostics and final documentation delivery remain planned.
 
 The code investigation used [Fluid Framework commit `7a49a6e`](https://github.com/microsoft/FluidFramework/commit/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7).
 
@@ -12,7 +14,7 @@ The [implementation plan][implementation-plan] owns the algorithms, diagnostic c
 The [overview][overview] explains the proposal for application authors.
 
 Document links follow the feature branch so they refer to the current plans after publication.
-Source-code links remain pinned to the investigation revision.
+Source-code links remain pinned to the investigation revision and can describe behavior before the completed slices.
 
 ## 1. Goal
 
@@ -20,6 +22,10 @@ Let an application remove an optional field from an object schema that enables `
 
 When the application opens an existing document, it must treat the removed field as an unknown optional field.
 It must also be able to make other compatible schema upgrades.
+
+Extend that behavior so upgrades compose the stored schema with the view's requested additions instead of replacing existing permissions.
+Preserve allowed types and already-enabled staged optionality at their existing locations.
+The result must permit existing stored content and support safe read/write access through the requesting view.
 
 This behavior supports two primary use cases:
 
@@ -35,6 +41,13 @@ This behavior supports two primary use cases:
 - Require the affected view object's resolved `allowUnknownOptionalFields` setting to be `true`.
 - Keep the existing strict rules for objects configured with `allowUnknownOptionalFields: false`.
 - Continue to reject other incompatible schema changes.
+- Preserve existing allowed types at each schema location, including types that are staged in the view but already allowed by the stored schema.
+- Preserve an already-optional field when the view declares it optional or staged optional.
+- Use staging policy only to introduce permissions that are not already stored at that location.
+- Do not enable a staged change at one location merely because the same upgrade token is enabled elsewhere.
+- Remove the alpha `includeAlreadyEnabledUpgrades` flag; preservation must not require an opt-in.
+- Keep newly initialized documents and schema extraction dependent only on the view and its configured policy.
+- Reject a composed target that the requesting view cannot safely read and edit, even when it passes the stored-schema superset check.
 
 Object schemas now allow unknown optional fields by default on `main`.
 The same preservation rule applies whether that setting comes from the default, factory settings, or an explicit object option.
@@ -51,6 +64,8 @@ It does not provide a general schema downgrade operation.
 | View schema | The schema declared by the application. It determines the properties and types available to application code. |
 | Stored schema | The schema saved in a document. It controls the data that the document can contain. |
 | Upgrade target | The stored schema that a schema upgrade would write to a particular document. |
+| Composition | Constructing a candidate that preserves stored permissions and adds view-requested permissions, then checking that the candidate is safe and usable by the requesting view. |
+| Schema location | A root field, an object field identified by stored node identifier and stored key, an array element field, or a map value field. |
 | Stored key | The field identifier saved in a document. It can differ from the property name used in application code. |
 | Superset check | A check that the new stored schema permits everything that the previous stored schema permits, under the schema upgrade rules. |
 
@@ -63,9 +78,13 @@ It does not matter whether another application version added the field or the cu
 
 See [unknown optional field checks](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/discrepancies.ts#L509).
 
-The restriction affects later upgrades.
-Their target is derived from the view schema alone, so it omits fields the application no longer declares.
-The stored-schema safety check rejects that target.
+The original restriction affected later upgrades because a view-only target omitted fields the application no longer declared.
+The implemented builder now retains eligible unknown optional fields.
+
+Allowed types and supported optionality already stored at each location are retained independently of the configured policy.
+The policy selects new permissions; it does not remove existing ones.
+The alpha `includeAlreadyEnabledUpgrades` flag is removed.
+Unlike its previous token-wide behavior, preservation does not enable a shared token at other locations where it is still disabled.
 
 See the implementation plan's [code findings][implementation-findings] for the affected functions and call paths.
 
@@ -75,8 +94,9 @@ Use the implementation plan as the source for technical decisions:
 
 | Area | Implementation plan section |
 | --- | --- |
-| Construct a target from the stored and view schemas and the effective staged-upgrade policy | [Shared upgrade-target construction][implementation-target] |
+| Construct a target from the stored and view schemas and the configured staged-upgrade policy | [Shared upgrade-target construction][implementation-target] |
 | Preserve referenced types, handle staging, and isolate cached results | [Shared upgrade-target construction][implementation-target] |
+| Compose allowed types and staged optionality at each location; remove the alpha preservation flag | [Staged declarations and preservation][implementation-staging] |
 | Compute compatibility flags and execute safe upgrades | [Compatibility and upgrade execution][implementation-runtime] |
 | Explain retained fields separately from viewing blockers | [Informational diagnostics][implementation-diagnostics] |
 | Update offline comparisons and snapshot assumptions | [Snapshot and offline checks][implementation-snapshots] |
@@ -98,8 +118,14 @@ For a field removal with no other schema change, the proposed result is:
 | `isEquivalent` | `true` |
 | `upgradeSchema()` | No stored-schema change |
 
-Here, equivalence compares the existing stored schema with the target derived from both schemas and the effective staged-upgrade policy.
+Here, equivalence compares the existing stored schema with the target derived from both schemas and the configured staged-upgrade policy.
 It does not mean that a new document would receive the same schema.
+
+`canUpgrade` means that the stored and view schemas can be composed into a target that preserves existing permissions and supports the requesting view.
+It does not ask whether the stored schema can be changed to match the view-only conversion.
+With stored `priority: number | string` and view `priority: number | staged(string)`, preservation alone must produce `canView: true`, `canUpgrade: true`, and `isEquivalent: true`.
+A no-op upgrade retains both types even when the policy does not enable new staged permissions.
+This remains true if the view also omits a stored optional field that is eligible for retention.
 
 For a removal combined with a new optional field:
 
@@ -176,6 +202,25 @@ Do not weaken those assertions to accommodate the implementation.
 The implementation plan specifies the [focused regression tests and affected test helpers][implementation-tests].
 Use that list for target construction, caching, metadata, staged definitions, diagnostics, and offline checks.
 
+### Composition scenarios
+
+Keep the existing optional-field scenarios and add these focused, documented application scenarios:
+
+| Scenario | Expected result |
+| --- | --- |
+| An existing task allows numeric and string priorities; a view leaves strings staged with a restrictive policy. | Retain both allowed types. Viewing and upgrading are permitted; the upgrade is a no-op unless another change is requested. |
+| The same view also removes optional `notes` and adds optional `isApproved`. | Retain `notes` and both priority types, add `isApproved`, then support reads and writes through the view. |
+| A fresh task is initialized with numeric priority and a disabled staged string type. | Strings remain disallowed until the policy explicitly enables them. Preservation must not affect initialization. |
+| A shared staged token covers `primaryPriority` and `fallbackPriority`, but strings are stored only at the first location. | Preserve strings only at `primaryPriority`; report the token as partial. Explicitly enabling the token can add strings to `fallbackPriority`. |
+| Stored `estimatedHours` is optional, while the view declares it staged optional and the policy disables new optionality. | Retain its optional kind and support existing missing values. A fresh document under the restrictive policy still requires the field. |
+| One field is already optional and another required field shares its staged-optional token. | Preserve the first field's optionality without making the second optional until explicitly enabled. |
+| A retained allowed type is a recursive object type also declared by the view. | Include its required definitions and compose compatible changes without concealing an incompatible definition under the same stored identifier. |
+| Multiple views add distinct permissions that every participating view supports through ordinary or staged declarations. | Alternate permitted upgrades and edits without removing prior permissions. Once the selected additions are present, repeated upgrades are no-ops. |
+| A view drops stored string priorities entirely, rather than leaving strings staged, or requires a stored optional field without staged tolerance. | Reject viewing and upgrading where the composed target cannot support that view. No rejected attempt changes schema or content. |
+
+Use focused cases for root, object, array, and map locations in the relevant suites rather than multiplying the full user-story matrix.
+Each new test must describe the application change, the stored history, the policy, and why the expected composition is safe or rejected.
+
 Also verify that retained schema and content survive synchronization, summary creation, and reload through the existing integration tests.
 The implementation plan contains the [validation commands and code-work order][implementation-validation].
 
@@ -184,8 +229,9 @@ The implementation plan contains the [validation commands and code-work order][i
 Update the following application programming interface (API) documentation:
 
 - [Object schema options](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14): explain field removal, retained data, and rollback.
-- [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the effective staged-upgrade policy determine the target.
+- [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the configured staged-upgrade policy determine the composed target.
 - [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify `isEquivalent` and the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Keep the existing property name; renaming and deprecation are out of scope.
+- [Staged upgrade policy](https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/core/toStored.ts): remove `includeAlreadyEnabledUpgrades` and describe the remaining callbacks as controlling newly introduced permissions, not removal of stored permissions.
 - [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and accept direct viewing or a safe upgrade in both directions.
 
 Document the new alpha informational report according to the [diagnostic contract][implementation-diagnostics].
@@ -208,6 +254,7 @@ Update the website [schema evolution guide](https://github.com/microsoft/FluidFr
 - Include an application rollback example.
 - Explain the difference between existing documents and new documents, including upgrades required before collaboration.
 - Keep the distinction clear: view schemas can remove eligible fields, but stored schemas remain additive.
+- Explain per-location preservation of staged types and optionality, including partially enabled tokens and unchanged restrictive initialization.
 
 Update the [types-of-schema-changes guide](https://github.com/Josmithr/FluidFramework/blob/95965373ea4b80c823892482f4cabe7402ab9e71/website/docs/data-structures/tree/schema-evolution/types-of-changes.mdx) as well.
 Distinguish removing an eligible optional field from removing a required field.
@@ -218,6 +265,8 @@ Retain the warnings about data loss when applications reconstruct nodes from vis
 This feature does not change those operations.
 
 No new public option is proposed.
+Remove the alpha `includeAlreadyEnabledUpgrades` option and document that both previous flag values migrate to automatic per-location preservation.
+Callers must remove the flag from policy literals; applications that relied on token-wide enablement must explicitly enable new locations through the remaining callbacks.
 No persisted format change is expected.
 Keep the low-level schema comparison rules, codecs, and general schema-change concurrency behavior unchanged.
 
@@ -225,10 +274,10 @@ Delivery checklist:
 
 - Complete the [implementation steps and focused validation][implementation-validation].
 - Complete the documentation updates in this section.
-- Follow the repository API-change review guidance for the new alpha status type and property.
+- Follow the repository API-change review guidance for removal of the alpha policy flag and addition of the alpha status type and property.
 - Regenerate the affected API reports for both `@fluidframework/tree` and its `fluid-framework` aggregator. Do not edit reports by hand.
 - Regenerate entrypoint sources for the new alpha status type, then rebuild before generating reports.
-- Add a changeset for both packages covering field-preserving upgrades and the informational diagnostic.
+- Update the changeset for both packages to cover field and permission preservation, removal of the alpha policy flag, the partial-token behavior change, and the informational diagnostic when delivered.
 
 Use the [package scripts](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/package.json) and [changeset guidelines](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/.changeset/README.md).
 
@@ -236,9 +285,9 @@ Use the [package scripts](https://github.com/microsoft/FluidFramework/blob/7a49a
 
 The investigation included source inspection and two read-only, in-memory probes against existing compiled package modules.
 
-The probes confirmed:
+Before implementation, the probes confirmed:
 
-- The current reduced view can read an old document but cannot upgrade it.
+- The reduced view could read an old document but could not upgrade it with the original view-only target.
 - A target that retains the removed field and its recursive definitions can pass the existing superset check.
 - Both the reduced view and the original view can read that example target.
 - A new document without the field has different compatibility with the original view.
@@ -246,11 +295,13 @@ The probes confirmed:
 
 The probes checked representative schema behavior.
 They did not implement the general helper or test persistence.
-Full implementation and integration validation remain required.
+Validation for completed slices is recorded in the implementation plan.
+The broader permission-composition work still requires implementation and validation.
 
 [implementation-plan]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md
-[implementation-findings]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#1-findings-from-the-code
+[implementation-findings]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#1-findings-before-implementation
 [implementation-target]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#2-shared-upgrade-target-construction
+[implementation-staging]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#24-staged-declarations-and-per-location-preservation
 [implementation-runtime]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#3-compatibility-and-upgrade-execution
 [implementation-diagnostics]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#4-informational-diagnostics
 [implementation-snapshots]: https://github.com/Josmithr/FluidFramework/blob/tree/support-removing-optional-fields-from-object-schema/packages/dds/tree/docs/optional-field-removal-implementation-plan.md#5-snapshot-and-offline-checks

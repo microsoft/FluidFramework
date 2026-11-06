@@ -1,13 +1,15 @@
-# Implementation plan: Preserve unknown optional fields during schema upgrades
+# Implementation plan: Compose schema upgrades while preserving stored permissions
 
 ## Status and scope
 
 Implementation is proceeding in reviewed slices.
 The first slice is complete: the internal `getSchemaUpgradeCandidate` target builder and focused unit tests are implemented.
-The live integration slice is also complete: compatibility checks and schema upgrades now use the candidate builder and share effective staged-policy resolution.
+The live integration slice is also complete: compatibility checks and schema upgrades use the same candidate builder and configured staged policy.
 The directly coupled snapshot and offline compatibility checks are updated, and all existing user-story scenarios pass.
 The snapshot collaboration-policy follow-up accepts direct viewing or a safe upgrade in both directions.
-The alpha diagnostic API and remaining documentation and API delivery work described below are still planned.
+The composition slice now preserves allowed types and supported staged optionality at each schema location.
+The alpha `includeAlreadyEnabledUpgrades` flag and token-wide preservation helpers are removed.
+The alpha diagnostic API and remaining documentation and API delivery work are still planned.
 Track completion in the task list in section 8.
 
 The initial exploration used [commit `9596537`][baseline] on the optional-field-removal branch.
@@ -26,7 +28,7 @@ The new alpha informational diagnostic, `compatibility.retainedUnknownOptionalFi
 
 | Area | Behavior before this feature | Required change |
 | --- | --- | --- |
-| [Stored-schema conversion][conversion] | `toUpgradeSchema` derives its result from the view schema and staged policy only. It does not consider the existing stored schema. | Add a shared builder that derives the target from both schemas and the effective staged-upgrade policy. |
+| [Stored-schema conversion][conversion] | `toUpgradeSchema` derives its result from the view schema and staged policy only. It does not consider the existing stored schema. | Use a shared builder that composes both schemas with the additions selected by the configured staged-upgrade policy. |
 | [Compatibility calculation][compatibility] | `canUpgrade` compares the existing stored schema against that view-only target. | Compare against the target that retains eligible unknown fields. Return the new information separately from blocking discrepancies. |
 | [Upgrade execution][runtime-upgrade] | `upgradeSchema` independently derives the view-only target and rejects field removal. | Use the same target builder as the compatibility checker. |
 | [Viewing discrepancies][discrepancies] | Unknown optional fields are already tolerated when the view object enables the option. | Keep that rule. Do not turn retained fields into viewing errors. |
@@ -41,11 +43,16 @@ The root cause is target construction, not the general definition of a safe stor
 The previous view-only target omitted fields that the application no longer declared.
 The superset check correctly rejected that target.
 
+The original optional-field slice did not solve the same issue for declared fields with staged permissions.
+A restrictive policy could generate a candidate that excluded already-enabled types or optionality; the upgrade was rejected rather than removing those permissions.
+Setting `includeAlreadyEnabledUpgrades` expanded any enabled or partially enabled token across all its locations.
+The composition slice replaces that mechanism with per-location preservation without enabling new locations merely because they share a token.
+
 ## 2. Shared upgrade-target construction
 
 ### 2.1 Internal interface
 
-Add one internal helper, `getSchemaUpgradeCandidate`, alongside the root conversion functions in [treeSchema.ts][conversion].
+Extend the implemented internal helper, `getSchemaUpgradeCandidate`, alongside the root conversion functions in [treeSchema.ts][conversion].
 The functions `toStoredSchema`, `toInitialSchema`, and `toUpgradeSchema` moved there on main.
 Reuse the lower-level transformations that remain in [toStoredSchema.ts][conversion-transforms].
 Expose it through the package-internal [simple-tree barrel][simple-tree-index] for the live upgrade path.
@@ -55,7 +62,7 @@ Inputs:
 
 - The complete `TreeSchema` for the view.
 - The existing `TreeStoredSchema`.
-- The effective `StagedSchemaUpgradePolicy`.
+- The configured `StagedSchemaUpgradePolicy`, which selects new permissions rather than deciding whether to preserve existing ones.
 
 Use the complete `TreeSchema`, which includes the root field and all reachable view definitions.
 A single node schema does not describe root optionality or root-level unions.
@@ -63,6 +70,7 @@ A single node schema does not describe root optionality or root-level unions.
 These inputs are sufficient to determine the target.
 The helper is a pure schema operation: it does not inspect document content or require a tree instance, checkout, or runtime.
 Retaining a field must not depend on whether any node currently contains a value for it.
+Preserving allowed types and optionality must likewise depend on stored permissions, not on whether current content uses them.
 
 Outputs:
 
@@ -72,6 +80,7 @@ Outputs:
 The proposed schema is a complete candidate stored schema, not a patch or an executable upgrade object.
 The helper does not apply the upgrade or guarantee that the candidate passes the upgrade checks.
 Its callers validate the candidate before applying it.
+Both the stored-schema superset check and compatibility of the view with the candidate are required.
 
 Both compatibility calculation and upgrade execution must use this helper.
 Return the diagnostic locations from the same construction pass so the report describes what the target actually retains.
@@ -85,18 +94,24 @@ They must not receive retained historical fields.
 Convert the view schema to its stored representation before combining or comparing schema structures.
 Keep the original view schema available to determine which objects permit unknown optional fields and to resolve view-known types excluded by staging.
 
-Perform field retention and the final stored-schema upgrade checks on stored-schema representations.
+Perform field and allowed-type composition and the final stored-schema upgrade checks on stored-schema representations.
 The original view supplies the policy and declaration information that conversion does not preserve.
 Section 2.4 describes how this applies to staged declarations.
 
-1. Generate the normal stored-schema target from the view and effective staged policy.
-2. Copy its node-definition map before retaining definitions from the existing stored schema.
-3. Process its definitions with a work queue and a visited set.
-4. For a view object that enables `allowUnknownOptionalFields`, inspect the matching stored object definition.
-5. Retain stored fields whose stored keys are absent from the view object and whose stored kind is optional.
-6. Preserve each retained field's allowed types and persisted metadata.
-7. Process all node-type references required by the resulting definitions.
-8. Return the completed target and retained-field locations.
+1. Generate the view-only stored-schema candidate using the configured policy.
+2. Copy maps that need modification; never alter the cached conversion or the supplied stored schema.
+3. Compose the root field and matching fields of each node with their existing stored counterparts.
+4. At each matching field location, retain its stored allowed types and add allowed types selected by the view's policy.
+5. Retain an existing optional kind when the view field supports optional content, including through staged optionality, even if the configured policy does not enable new optionality.
+6. For a view object that enables `allowUnknownOptionalFields`, retain stored optional fields whose stored keys are absent from the view.
+7. Preserve each retained unknown field's allowed types and persisted metadata.
+8. Process all type references required by the composed root and node fields, including definitions excluded by the initial staged conversion.
+9. Process each node identifier once, following recursive references without repeatedly expanding the same definition.
+10. Return the complete candidate and retained-field locations; leave final upgrade and view-compatibility validation to callers.
+
+Use the same field-composition rules for root fields, object fields, map values, and array elements.
+A type's existence elsewhere in the schema does not mean that it is already allowed at the field being processed.
+Identify object fields by node identifier and stored key; root, map, and array locations must keep their existing field semantics.
 
 Use the resolved `allowUnknownOptionalFields` value from the view object, not the presence of an explicitly supplied option.
 The factory now defaults this value to `true`, and applications can override it at factory or object scope.
@@ -108,14 +123,17 @@ Match fields by stored key.
 A different application property name with the same stored key identifies the same field.
 It must not produce an extra retained-field entry.
 
-Do not modify a field that the view still declares to hide a conflict.
-Changes to that field must continue to satisfy the existing allowed-type and field-kind rules.
+Adding a stored type to a declared field's candidate does not grant the view support for that type.
+For example, composing stored `number | string` with a strict `number` view must not make `canUpgrade` true: the candidate still permits strings that the view cannot read.
+Composing the same stored field with `number | staged(string)` can be accepted because the view supports both types.
+Similarly, a strictly required view field must not be made compatible with a stored optional field unless the view supports optional content.
+Keep rejecting required-field removal, incompatible node kinds, and conflicting definitions under the same stored identifier.
 
 ### 2.3 Referenced node definitions
 
 When a required type is not already in the generated target:
 
-- If the complete view schema knows the identifier, derive the definition from that view declaration and the effective policy.
+- If the complete view schema knows the identifier, derive its current definition and compose its field permissions with the matching stored definition.
 - Otherwise, retain its existing stored definition.
 - Continue through its field references, including references in arrays and maps.
 - Process each identifier once so recursive definitions terminate.
@@ -124,27 +142,57 @@ A missing stored definition represents a type that permits no nodes in the curre
 Preserve such a reference without inventing a stored definition or treating it as proof of corruption.
 If the view supplies a definition for that identifier, normal conversion and upgrade checks still apply.
 
-Do not copy every old definition or union every allowed-type set without checking its role.
-That could conceal an incompatible declared field or change staged-upgrade behavior.
+Union allowed types only at corresponding field locations, not across unrelated fields.
+Do not use the historical definition of a view-known type to hide conflicts in the view's current declaration.
+Changes inside that type must undergo the same composition and validation as other view-known definitions.
 
 The final repository-wide superset check remains mandatory.
 It includes node definitions that can be used by detached content, even if they are not reachable from the document root.
 Do not add a root-reachability pruning rule.
 If a definition outside the retained reference set would be lost, keep the existing upgrade rejection rather than silently deleting it.
 
-### 2.4 Staged declarations
+### 2.4 Staged declarations and per-location preservation
 
 The complete [TreeSchema definitions][tree-schema] and the generated stored definitions are not interchangeable.
 The generated target excludes types reachable only through disabled staged declarations.
 
-A retained field can refer to one of those excluded types.
+A retained field or retained allowed type can refer to one of those excluded definitions.
 If the view knows that type, use its current declaration.
 Do not copy the historical definition solely because the type was absent from the initial generated target.
 Otherwise, an incompatible staged declaration could be hidden from the upgrade check.
 
+Preserve permissions at each stored location regardless of whether the view stages them or the policy currently enables them.
+For a compatible field, its candidate allowed types are the union of the stored types at that location and the view types selected by the configured policy.
+For staged optionality, preserve the permission to omit a field only where that permission already exists, or introduce it where the configured policy enables it.
+Preservation must not make a new location optional simply because another field sharing the token is optional.
+
+For example, the same staged string token is declared on `Task.primaryPriority` and `Task.fallbackPriority`.
+Stored schema permits strings only at `primaryPriority`.
+With the restrictive policy, the candidate preserves strings there but does not add them at `fallbackPriority`.
+The token remains `partial`.
+If the policy explicitly enables that token, both locations can allow strings, subject to the normal validation checks.
+Apply the same distinction to partially enabled staged-optional tokens.
+
 Preserving a definition must not enable a staged allowed type at another location.
-Keep the policy's existing rules for staged types, staged optional fields, and `includeAlreadyEnabledUpgrades`.
-Both callers use `getEffectiveStagedUpgradePolicy` to resolve the effective policy so compatibility checks and upgrade execution agree.
+Likewise, restoring an omitted optional field must not advance any unrelated staged rollout.
+The enabled-upgrade status is a report of the stored schema, not a token-wide instruction to enable changes elsewhere.
+
+#### Remove the alpha preservation flag
+
+The composition slice removes `includeAlreadyEnabledUpgrades` from `StagedSchemaUpgradePolicy`.
+Do not replace it with a new flag or merely hardcode its previous behavior to `true`.
+Its previous implementation treated both `partial` and `enabled` statuses as permission to include the token everywhere; that differs from the implemented location-specific behavior.
+
+Remove `getEffectiveStagedUpgradePolicy` and its package-internal exports once both callers obtain preservation through candidate construction.
+Remove or simplify the view's corresponding `effectiveUpgradePolicy` wrapper rather than retaining a misleading token-wide policy path.
+Audit all flag references in configuration, tests, documentation, and generated API surfaces.
+Include the view-only conversion tests, compatibility tests, and live staged-upgrade tests; remove obsolete policy properties without changing initialization semantics.
+Keep `includeStaged` and `includeStagedOptional` for explicitly enabling new permissions.
+Update restrictive, permissive, and selected-token policy documentation to distinguish initialization from upgrades of existing documents.
+
+Compatibility and live execution must pass the same configured policy and stored schema into the shared builder.
+Continue computing staged-upgrade statuses for the existing query APIs, including `partial`; do not use that aggregate map to drive preservation.
+Keep schema identity hashing based on the configured view and policy, not on per-document retained permissions.
 
 See [staged-upgrade policies][staged-policy].
 
@@ -164,7 +212,7 @@ Reuse immutable stored field and node definitions where possible.
 Preserve stored-only node metadata.
 Keep the existing conversion behavior for metadata on view-known definitions.
 
-Initially, build the result from both schemas and the effective policy on demand.
+Initially, build the result from both schemas and the configured policy on demand.
 Do not cache it only by mutable repository identity.
 The same repository can change, and one view configuration can be used with different stored schemas.
 
@@ -177,12 +225,12 @@ Continue to collect staged-upgrade status even when viewing is blocked.
 
 Use the shared target for:
 
-- `canUpgrade`: the existing stored schema can be upgraded to that target under the superset rules.
+- `canUpgrade`: the composed target passes the existing stored-schema superset rules and supports read/write access through the requesting view.
 - `isEquivalent`: the view can already access the document, and the proposed upgrade target is equivalent to the document's current stored schema under the schema upgrade rules.
 
 Keep the `isEquivalent` name and update its public documentation to make these semantics explicit:
 
-- The comparison is between the document's current stored schema and the proposed stored-schema target, including retained fields and the effective staged-upgrade policy.
+- The comparison is between the document's current stored schema and the composed target, including retained fields, allowed types, optionality, and the additions selected by the configured staged-upgrade policy.
 - Both must permit an upgrade to the other under the existing rules. The reverse check establishes equivalence; it does not perform a downgrade.
 - A `true` result also requires `canView` to be true. It implies `canUpgrade` is true and `upgradeSchema()` will make no stored-schema change.
 - It does not require identical serialized schemas. Metadata differences ignored by the upgrade checks do not affect the result.
@@ -193,14 +241,30 @@ These calculations implement the work plan's [compatibility expectations][compat
 After a successful upgrade, the resulting stored schema must support viewing.
 Test that postcondition as well as the superset condition.
 
+`canUpgrade` is not a request to make the stored schema match the view-only conversion.
+It answers whether the composed candidate preserves existing permissions and can be used by this view.
+Use the existing superset and viewing-compatibility helpers to validate both conditions rather than duplicating their rules in the builder.
+The internal `isSchemaUpgradeAllowed` helper combines those checks for both compatibility reporting and live upgrade execution.
+It checks viewing compatibility with the candidate, not with the document's schema before the upgrade.
+Do not union allowed types and then rely on the superset check alone: that would accept targets containing types the requesting view cannot handle.
+
+For stored `priority: number | string` and view `priority: number | staged(string)`, the restrictive policy must now produce a preserving no-op candidate.
+With no other differences, all three flags are true.
+If the view also omits a stored optional field and adds another optional field, `canUpgrade` is true but `canView` remains false until the new field is added.
+Removing the staged string declaration entirely still fails if the resulting view cannot handle stored string priorities.
+
+These are schema-based guarantees, independent of which values happen to be present in the document.
+For multiple participating views, apply the same composition and compatibility requirements to each view.
+Do not claim compatibility for arbitrary clients that cannot tolerate the accumulated permissions.
+
 ### 3.2 Runtime behavior
 
 In [SchematizingSimpleTreeView.upgradeSchema][runtime-upgrade]:
 
 1. Capture the current stored schema.
-2. Obtain the target from the captured stored schema, the view schema, and the effective staged policy.
-3. Run the existing superset check.
-4. Keep the existing no-op return when the reverse check also succeeds.
+2. Obtain the composed target from the captured stored schema, the view schema, and the configured staged policy.
+3. Validate both the stored-schema superset condition and the requesting view's compatibility with the target, matching `canUpgrade`.
+4. After those checks, keep the existing no-op return when the reverse superset check also succeeds.
 5. Otherwise, write the target through the existing schema-edit path.
 
 Keep the enforcement in [TreeCheckout.updateSchema][checkout].
@@ -252,6 +316,8 @@ Contract:
 These entries explain preservation, not a change to the stored document.
 They remain present after an upgrade while the view continues to omit those fields.
 They disappear when the view declares the fields again.
+This report remains limited to omitted optional object fields.
+Do not add retained allowed types or staged optionality to its entries; those are not unknown-field locations.
 
 The report contains schema identifiers and keys, not document field values.
 Do not add these entries to telemetry without a separate need and the existing schema-artifact handling.
@@ -331,9 +397,14 @@ The work plan describes this [new-document upgrade requirement][collaboration-po
 
 The rollback regression in [snapshotCompatibilityChecker.spec.ts][snapshot-tests] now succeeds in both update and assert modes.
 Its directional assertions are unchanged: the historical view cannot immediately view the fresh document, can upgrade it, and does not have an equivalent no-op target.
-Additional regressions cover directly viewable schemas whose upgrades are forbidden, and schemas that cannot view or upgrade, in both directions.
+The completed snapshot-policy slice includes regressions for directly viewable schemas whose upgrades are forbidden, and schemas that cannot view or upgrade, in both directions.
 A current client that can neither view nor upgrade historical documents is rejected regardless of the collaboration window.
 A historical client that can neither view nor upgrade current documents is rejected only within that window.
+
+Composition changes some of those flag results without changing this snapshot policy.
+In particular, the existing staged-priority rollback scenario must change from `canUpgrade: false` to a permitted no-op upgrade.
+Do not keep that scenario as evidence of a viewable but non-upgradeable schema after preservation becomes unconditional.
+Retain the `canView || canUpgrade` policy in both directions and continue rejecting incompatible views.
 
 ### 5.3 Preserve offline results and unrelated staging behavior
 
@@ -346,7 +417,7 @@ Fix only assumptions directly affected by retaining fields from the existing sto
 
 ## 6. Unaffected code paths
 
-These paths do not need implementation changes:
+These behaviors must remain unchanged, apart from removing obsolete references to the alpha flag:
 
 - Initial stored-schema generation and initialization.
 - Persisted-schema extraction from an application schema.
@@ -359,7 +430,8 @@ Renaming, replacing, or deprecating `isEquivalent` is outside this work.
 Only clarify its documentation and update its calculation to use the shared upgrade target.
 
 The feature boundaries and prerequisite safety rules remain in the [work plan][work-plan].
-Do not expand the user-story matrix as part of this implementation.
+Keep the existing optional-field user-story matrix.
+Add only the approved composition scenarios from the work plan and the focused cases below.
 
 ## 7. Test work
 
@@ -372,24 +444,32 @@ The sections below specify additional checks tied to the implementation, not a s
 ### 7.2 Target construction
 
 Keep the `getSchemaUpgradeCandidate` tests in [treeSchema.spec.ts][root-schema-tests], alongside the tests for its implementation module.
+Keep this suite focused on returned candidate schemas, retained-field locations, and input/cache isolation.
+Use application schema declarations as fixtures, but do not validate upgrade permission or viewing compatibility in this suite.
 Cover:
 
 - Preserving eligible stored fields, their allowed types, and metadata.
 - Retaining field definitions based on the stored schema without inspecting document content.
 - Preserving the definitions referenced through those fields, including recursive references.
 - Using a view-known definition even when it was filtered out of the initial target by staging.
-- Rejecting an incompatible view-known definition through the normal upgrade checks.
+- Constructing candidates even when the view omits stored allowed types, without treating candidate construction as approval to upgrade.
+- Keeping the view-derived representation when stored node kinds differ rather than asserting that their kinds match.
 - Respecting stored-key aliases without creating duplicate fields.
-- Not copying required fields or overriding known conflicting fields.
+- Not retaining omitted required fields, and keeping a strictly required view root required.
 - Not mutating inputs or cached conversions.
 - Isolating results for two documents with different histories under the same view.
-- Keeping initialization independent of retained document fields.
+- Leaving cached view-only conversions unchanged when retaining document fields and permissions.
+- Composing allowed types at root, object, array, and map locations without removing stored types.
+- Preserving already-enabled staged types and optionality while leaving disabled additions disabled.
+- Not adding permissions to other fields that share a token when preserving a permission at its existing location.
+- Retaining referenced definitions without enabling those types at unrelated locations.
 
 Run the existing root-derived-schema tests in the same file and the view-only conversion tests in [toStoredSchema.spec.ts][conversion-tests] as well.
 They protect the shared graph and conversion caches that the target builder must not mutate.
 
-Assert exact target schemas, not only success flags.
-For accepted targets, verify both the superset condition and view compatibility.
+Assert exact candidate schemas and retained-field reports.
+Use independent expected schemas or data snapshots for mutation checks so shared references cannot hide changes.
+The compatibility and live-upgrade suites own superset checks, viewing blockers, compatibility flags, and upgrade execution.
 
 ### 7.3 Compatibility and diagnostics
 
@@ -397,11 +477,14 @@ Update [schemaCompatibilityTester.spec.ts][compatibility-tests]:
 
 - Change the existing "viewable but not upgradeable" expectation for eligible unknown optional fields.
 - Update the test helper that currently validates upgrade safety using a view-only conversion.
-- Check the actual target derived from both schemas and the effective staged policy.
+- Check the composed target derived from both schemas and the configured staged policy.
+- Require both superset safety and view compatibility when `canUpgrade` is true.
+- Keep policy and no-op permission scenarios here, including staged types at root, array, and map locations and retention alongside staged field changes.
+- Reject strict views that cannot tolerate a stored type or optional field even when a union-based candidate passes the superset check.
 - Test the new diagnostic property when compatible, upgradeable but not viewable, and incompatible for another reason.
 - Verify omission when no fields are retained, stable ordering, and one entry per schema field.
 - Verify stored keys in diagnostics when application property names differ.
-- Keep `getSchemaIncompatibilityDetails` and blocking-discrepancy expectations unchanged for permitted omissions.
+- Keep `getViewBlockers` and blocking-discrepancy expectations unchanged for permitted omissions.
 - Add type checks that alpha views expose `retainedUnknownOptionalFields`, while public and beta views do not.
 
 Keep [discrepancy tests][discrepancy-tests] focused on viewing blockers.
@@ -424,8 +507,18 @@ Update [snapshotCompatibilityChecker.spec.ts][snapshot-tests] and [storedSchema.
 - Preserve rejection when the older view can neither view nor upgrade, and preserve acceptance when it can already view but cannot upgrade.
 - Verify offline flag results agree with live-view results.
 
-Run the existing [staged-upgrade tests][staged-tests] to preserve their policy behavior.
-Add only focused coverage for interactions introduced by the target builder.
+Update the existing [staged-upgrade tests][staged-tests] for the intentional policy change:
+
+- Replace expectations that default upgrades reject already-enabled types or optionality with preserving upgrades and no-op checks where appropriate.
+- Remove all `includeAlreadyEnabledUpgrades` setup and test dependencies on its old opt-in behavior.
+- Verify restrictive initialization still omits staged types and retains required kinds for disabled staged-optional fields.
+- Use realistic application versions to test `primaryPriority` and `fallbackPriority` sharing a staged token, and a corresponding staged-optional case.
+- Verify a token remains `partial` after preservation-only upgrades and becomes enabled only when the policy requests its remaining permissions.
+- Combine retained optional fields with preserved staged permissions and a new field so compatibility calculation and live application must agree on a non-no-op target.
+- Exercise repeated upgrades from multiple compatible clients, verify accumulated permissions and readable content, and preserve the existing no-op event and identity checks.
+
+Add negative compile-time coverage showing that a policy literal with the removed alpha flag is rejected.
+Regenerate API reports rather than editing them, and verify the corresponding aggregator surface.
 
 ## 8. Implementation order and validation
 
@@ -445,6 +538,16 @@ Update this list after each implementation slice.
   - [x] Use the shared target to calculate `canUpgrade` and `isEquivalent`, keeping viewing-blocker checks unchanged.
   - [x] Use the same target in `upgradeSchema`, preserving existing safety checks and the no-op path.
   - [x] Update affected test helpers and expectations; verify live upgrades and the existing user-story scenarios.
+- [x] **Compose allowed types and staged optionality at each location.**
+  - [x] Document and test candidate composition for root, object, map, and array fields.
+  - [x] Preserve stored allowed types and supported optionality independently of the policy's decisions about new permissions.
+  - [x] Preserve referenced node definitions without concealing view-known conflicts or enabling unrelated locations.
+  - [x] Keep shared-token upgrades partial unless explicitly enabled, including staged optionality.
+  - [x] Remove `includeAlreadyEnabledUpgrades`, token-wide preservation helpers, and obsolete internal exports.
+  - [x] Use the same composed candidate and both validation conditions for `canUpgrade` and live upgrades.
+  - [x] Update affected snapshot and offline expectations without changing version windows or symmetric acceptance.
+  - [x] Verify realistic combined changes, no-op behavior, initialization isolation, cache safety, and multi-client composition.
+  - [x] Update policy documentation, alpha type tests, generated API reports, and the changeset for both packages.
 - [ ] **Expose alpha upgrade diagnostics. Next slice.**
   - [ ] Add `SchemaCompatibilityStatusAlpha` and `retainedUnknownOptionalFields` to the alpha view surface.
   - [ ] Forward the report through compatibility updates and add the required exports.
@@ -462,6 +565,8 @@ Update this list after each implementation slice.
   - [x] Update snapshot validation errors, collaboration-policy documentation, and the changeset.
 - [ ] **Complete documentation and API delivery.**
   - [x] Clarify the compatibility flags' API documentation and add the behavior changeset for `@fluidframework/tree` and `fluid-framework`.
+  - [x] Extend the API documentation and changeset for composed permissions and the alpha flag removal, including migration from token-wide preservation.
+  - [ ] Confirm the changeset draft and check downstream alpha consumers before merging the flag removal.
   - [ ] Complete the remaining work plan [documentation and delivery checklist][delivery] items, including alpha entrypoints and API reports.
 - [ ] **Validate the integrated implementation.**
   - [ ] Run all directly affected suites together, including the user-story, snapshot, diagnostic, and staged-upgrade tests.
@@ -474,15 +579,24 @@ The no-op user-story helper also checks `isEquivalent`, in addition to its exist
 New tests cover retaining removed fields alongside already-enabled staged changes, retaining a node definition without enabling its staged use elsewhere, and directional snapshot and persisted-schema compatibility.
 Snapshot-policy follow-up validation: 228 tests pass across the snapshot, compatibility, persisted-schema, staged-upgrade, and user-story suites, with the same seven skipped tests unchanged.
 The rollback snapshot test now succeeds without changing its directional flags.
-The new tests accept directly viewable clients whose upgrades are forbidden in both directions.
+Those tests describe the pre-composition behavior: they accept directly viewable clients whose restrictive staged candidates are rejected.
 They reject incompatible historical clients only within the configured collaboration window, but require the current client to view or upgrade historical documents regardless of that window.
 `pnpm run build:esm`, `pnpm run build:test:esm`, and the focused Biome, ESLint, and whitespace checks pass.
-These results describe the completed integration and snapshot-policy slices; alpha diagnostic tests and final API delivery validation remain outstanding.
+Composition-slice validation: 1,244 tests pass across the integration suites below, with the same seven skipped snapshot tests unchanged.
+The tests cover all stored field locations, root optionality, recursive retained types, shared-token partial states, explicit enablement, composed conflicts, and repeated multi-client no-op upgrades.
+The negative type test rejects policy literals using the removed alpha flag.
+The tree and `fluid-framework` ESM builds and type-test builds pass, and generated API reports contain only the alpha member removal.
+Tree public, beta, and alpha ESM export checks and the aggregator alpha ESM export check pass.
+The aggregator's stale generated entrypoints were regenerated before its API reports.
+The entrypoint tool reports an existing untagged `InternalTypes` export, and API Extractor warns that the project TypeScript version is newer than its bundled version; report generation and export checks complete successfully.
+Alpha diagnostic tests and final feature documentation remain outstanding.
+API review requires confirmation of the changeset and downstream alpha-consumer impact before merging; no API Council approval is required for this alpha-only signature removal.
 
 ### Validation commands
 
-From `packages/dds/tree`, regenerate entrypoint sources after adding the alpha type to the package index.
-Rebuild immediately afterward, before compiling the tests:
+From `packages/dds/tree`, regenerate entrypoint sources when top-level exports or their release tiers change, such as when adding the alpha diagnostic type.
+Removing a member from an existing interface does not require regenerating tree entrypoints.
+When regeneration is needed, rebuild immediately afterward, before compiling the tests:
 
 ```bash
 pnpm run generate:entrypoint-sources
@@ -508,6 +622,7 @@ pnpm run test:mocha:esm --reporter dot \
   lib/test/feature-libraries/modular-schema/comparison.spec.js
 ```
 
+For permission composition, run the affected suites above, including the builder, staged-upgrade, compatibility, live-upgrade, snapshot, persisted-schema, and schema-hashing tests.
 Include the affected diagnostic and schema-option suites when adding the alpha diagnostic API.
 
 The snapshot-policy follow-up was validated with:
@@ -533,7 +648,7 @@ pnpm run build:api-reports
 Then compile and regenerate reports for `packages/framework/fluid-framework`.
 Follow the [tree API report guidance][api-report-guidance] if unrelated report changes appear.
 
-Implementation validation is complete when the shared target and diagnostic tests pass, the acceptance suite passes, and the affected type, lint, and API checks pass.
+Implementation validation is complete when the composed-target, per-location staging, and diagnostic tests pass, the acceptance suite passes, and the affected type, lint, and API checks pass.
 Use the [work plan][work-plan] for feature acceptance and delivery requirements rather than maintaining a second checklist here.
 
 [baseline]: https://github.com/Josmithr/FluidFramework/commit/95965373ea4b80c823892482f4cabe7402ab9e71

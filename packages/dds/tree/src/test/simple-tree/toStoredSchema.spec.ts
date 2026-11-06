@@ -480,7 +480,6 @@ describe("toStoredSchema", () => {
 							assert.strictEqual(
 								toStoredSchema(root, {
 									...restrictivePolicy,
-									includeAlreadyEnabledUpgrades: true,
 								}),
 								permissive,
 							);

@@ -1,42 +1,51 @@
-# Proposal: Remove optional fields from SharedTree application schemas
+# Proposal: Compose SharedTree schema upgrades without removing stored permissions
 
-**Status:** Proposed behavior. This capability is not implemented.
+**Status:** Optional-field preservation, per-location permission composition, and the snapshot compatibility-policy changes are implemented on the feature branch.
+Alpha retention diagnostics and final feature documentation remain planned.
 
 ## Background
 
-It is not currently possible with SharedTree to remove fields or types from schema.
-We refer to this concept as "narrowing" the schema.
-This means that in-development applications will, over time, accrue unused fields and types in their schema that are not referenced by modern versions of the application.
-Additionally, regarding for fields of object schema in particular, it is currently impossible to "roll back" unwanted additions to schema that have ever been shipped to customers.
+Removing permissions from a stored schema is unsafe when existing content may use them.
+Applications can therefore accumulate unused fields and types that modern versions no longer need.
+Rolling back application code must not remove the stored permissions or data introduced by a deployed version.
 
-The following proposal is aimed at addressing these concerns for *optional fields* specifically.
+The first implementation addresses omitted optional object fields.
+The composition extension applies the same preservation principle to allowed types and staged optionality.
 
 ## Summary
 
-Let applications remove optional fields from object schemas that enable `allowUnknownOptionalFields`.
-Existing documents would keep the removed fields and their data.
-Future versions of the application would treat them as unknown optional fields and could still make later compatible schema upgrades.
+Construct an upgrade by composing the document's existing stored schema with the additions requested by the view.
+Preserve existing permissions, then add the permissions selected by the view and its staging policy.
+Apply the result only when it passes the existing upgrade rules and allows the requesting view to read and edit the document.
 
-This would make it easier to roll back application changes or remove experimental features without deleting document data.
+For optional object fields, this lets applications omit fields when the view enables `allowUnknownOptionalFields`.
+Existing documents keep those fields and their data, while the view treats them as unknown optional fields.
+The composition extension also preserves already-allowed types and already-enabled staged optionality without requiring a policy opt-in.
 
-## The problem today
+This supports application rollbacks and later compatible upgrades without deleting document data.
+
+## The original problem
 
 SharedTree uses two schemas:
 
 - The **view schema** is declared in application code. It determines the fields that the application can access.
 - The **stored schema** is saved with each document. It describes the data that the document can contain.
 
-Today, `allowUnknownOptionalFields` lets a view read and edit a document that has additional optional fields.
-However, those unknown fields prevent the application from upgrading the document's schema.
+Originally, `allowUnknownOptionalFields` let a view read and edit documents with additional optional fields, but a view-only upgrade target omitted those fields.
+The upgrade safety check correctly rejected that target.
+The implemented field-preservation work resolves this case.
 
-For example, you can stop declaring an experimental field and still open existing documents.
-But the removed field prevents you from making a later schema upgrade, even if the new change is otherwise compatible.
+A similar gap existed for staged permissions.
+For example, a stored field permits `number | string`, while the view declares `number | staged(string)`.
+The default restrictive policy previously produced a candidate that allowed only `number`, so upgrading was rejected even though retaining `string` would make it a safe no-op.
+The document was not narrowed: the unsafe candidate was rejected before it was applied.
+Composition changes candidate construction, not the underlying safety rules.
 
-## Proposed behavior
+## Optional-field behavior
 
 The current view must allow unknown optional fields on the object from which you remove a field.
 This is now the default for object schemas on `main`; applications can disable it with `allowUnknownOptionalFields: false`.
-The default change does not itself implement the field-preserving upgrades proposed here.
+The field-preserving upgrade implementation uses this resolved setting.
 
 | Action | Expected result |
 | --- | --- |
@@ -68,9 +77,32 @@ You decide to remove the notes feature:
 The same approach supports a rollback to application code that does not declare the experimental field.
 That code must still enable the object option and use a `tree` version that supports this capability.
 
+## Composition of allowed types and staged changes
+
+Staging controls whether new permissions are introduced, not whether existing permissions survive.
+At each field location, preserve the stored allowed types and add types selected by the view's policy.
+Likewise, an already-optional stored field remains optional when the view supports that through an optional or staged-optional declaration.
+The view must still support the composed result; retaining a type does not make an otherwise unsupported type readable.
+
+For example, an existing `Task.priority` allows `number | string`.
+A view declares `number | staged(string)` and does not enable new string permissions.
+An upgrade keeps `number | string` and is a no-op if there are no other changes.
+A fresh document created with that same view and restrictive policy still allows only `number`.
+
+Preservation applies separately at each location, not to an upgrade token as a whole.
+If `Task.primaryPriority` already allows strings but `Task.fallbackPriority` does not, sharing a staged token must not enable strings in `fallbackPriority` merely to preserve them in `primaryPriority`.
+Only an explicit policy decision may introduce that additional permission.
+
+The alpha `includeAlreadyEnabledUpgrades` flag is removed.
+Preserving already-enabled permissions is unconditional, but this is not equivalent to enabling a partially enabled token everywhere.
+
+`canUpgrade` means that composition produces a safe stored-schema target that the requesting view can read and edit.
+It does not mean that the stored schema can be replaced with a copy of the view schema.
+All participating views must tolerate the permissions accumulated through composition; preservation alone does not grant support for unknown types.
+
 ## Compatibility in both directions
 
-The option would support both:
+The object option supports both:
 
 - **Forwards compatibility:** An older view tolerates optional fields added by a newer application version.
 - **Backwards compatibility:** A view that removes optional fields tolerates older documents that still contain them and can make later compatible upgrades.
@@ -96,9 +128,11 @@ Applications must perform any required upgrade before viewing; a successful snap
 
 ## Limits and data safety
 
-- The feature applies only to optional fields on view objects that enable `allowUnknownOptionalFields`.
+- Omitted object-field preservation applies only to optional fields on view objects that enable `allowUnknownOptionalFields`.
+- Allowed-type preservation must leave the composed target compatible with the requesting view, including its declared staged types.
 - Removing required fields remains unsupported.
-- Narrowing allowed types or reusing a stored field key with an incompatible definition remains unsupported.
+- Removing stored allowed types, dropping a type from the view without a supported way to tolerate it, or reusing a stored identifier with an incompatible definition remains unsupported.
+- Staged optionality does not let a strictly required view field tolerate missing content.
 - The feature does not delete historical data, reduce document storage, or provide a general schema downgrade.
 - Preservation during schema upgrades does not make every application edit lossless.
   Reconstructing a node from only its visible properties can still omit unknown fields.
