@@ -36,6 +36,22 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Internal native channel collections
+
+The internal data-store context can create a collection of native leaf or composite channels through `createChannelCollection`.
+This requires `oldestSupportedClient` to be at least `3.12.0`.
+An unsupported compatibility target produces a usage error; it does not select a wrapper-based representation.
+
+Children have paths beneath their containing data store.
+Factory package paths remain container-relative so that legacy child-factory lookup continues to work.
+Storing a descendant's handle attaches the required ancestors.
+Nested aliases are persisted in the collection's `.aliases` blob.
+
+These collections use aggregate garbage-collection lifetime.
+Every attached child is retained while its containing data store is retained, and a reference to any descendant retains its ancestors.
+Children are not independently swept.
+The existing data-store runtime and existing document layouts are unchanged.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot

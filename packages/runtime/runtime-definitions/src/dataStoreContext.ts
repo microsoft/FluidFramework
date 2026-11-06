@@ -484,6 +484,12 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	notifyReadOnlyState?(readonly: boolean): void;
 
 	/**
+	 * Propagates staging-mode changes to nested channel contexts.
+	 * @internal
+	 */
+	notifyStagingMode?(staging: boolean): void;
+
+	/**
 	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
 	 *
 	 * - We reconnected and discovered the original message was never acked.
@@ -816,7 +822,26 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  */
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
-		ContainerExtensionProvider {}
+		ContainerExtensionProvider {
+	/**
+	 * Creates a collection whose children share this data store's garbage-collection lifetime.
+	 * Requires an oldest supported client version of at least 3.12.0.
+	 */
+	createChannelCollection?(
+		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
+	): Promise<IFluidDataStoreChannelCollection>;
+}
+
+/**
+ * A native collection of leaf or composite channels.
+ * Child factory paths are relative to the owning data store's registry.
+ * @internal
+ */
+export interface IFluidDataStoreChannelCollection extends IFluidDataStoreChannel {
+	createDataStore(factory: IFluidDataStoreFactory, id?: string): Promise<IDataStore>;
+	getDataStoreEntryPoint(id: string): Promise<IFluidHandleInternal<FluidObject>>;
+	bind(handle: IFluidHandle): void;
+}
 
 /**
  * @legacy @beta

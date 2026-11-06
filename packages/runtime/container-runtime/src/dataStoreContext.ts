@@ -53,6 +53,7 @@ import type {
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelCollection,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -688,6 +689,18 @@ export abstract class FluidDataStoreContext
 		return created;
 	}
 
+	public async createChannelCollection(
+		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
+	): Promise<IFluidDataStoreChannelCollection> {
+		// Collections instantiate contexts, so load their implementation after context initialization.
+		const { NativeChannelCollection } = await import("./nativeChannelCollection.js");
+		return NativeChannelCollection.load(
+			this,
+			this.parentContext.IFluidDataStoreRegistry,
+			provideEntryPoint,
+		);
+	}
+
 	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -755,6 +768,7 @@ export abstract class FluidDataStoreContext
 		if (this.isReadOnly() !== oldReadOnlyState) {
 			this.notifyReadOnlyState();
 		}
+		this.channel?.notifyStagingMode?.(staging);
 	}
 
 	/**

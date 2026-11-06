@@ -12,6 +12,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
+	IFluidHandleContext,
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
@@ -205,13 +206,17 @@ export function formParentContext<
 >(
 	context: Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys>,
 	overrides: Pick<T, SubmitKeys>,
+	routing?: {
+		handleContext: IFluidHandleContext;
+		registry: IFluidDataStoreRegistry | undefined;
+	},
 ): Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys> &
 	Pick<T, SubmitKeys> {
 	return {
 		get IFluidDataStoreRegistry() {
-			return context.IFluidDataStoreRegistry;
+			return routing === undefined ? context.IFluidDataStoreRegistry : routing.registry;
 		},
-		IFluidHandleContext: context.IFluidHandleContext,
+		IFluidHandleContext: routing?.handleContext ?? context.IFluidHandleContext,
 		options: context.options,
 		get clientId() {
 			return context.clientId;
@@ -463,7 +468,7 @@ export class ChannelCollection
 				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
-					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+					const fromPath = `${this.parentContext.IFluidHandleContext.absolutePath}/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
 					this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 				},
 			);
@@ -621,7 +626,11 @@ export class ChannelCollection
 		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
 		// because it doesn't run in detached container and doesn't need to know about this route.
 		if (messageTimestampMs !== undefined) {
-			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+			this.parentContext.addedGCOutboundRoute(
+				this.parentContext.IFluidHandleContext.absolutePath || "/",
+				`${this.parentContext.IFluidHandleContext.absolutePath}/${internalId}`,
+				messageTimestampMs,
+			);
 		}
 
 		this.aliasMap.set(alias, context.id);
@@ -660,7 +669,7 @@ export class ChannelCollection
 	 * bound list and submitting the attach message. This data store can now be reached from the root.
 	 * @param id - The id of the data store context to make visible.
 	 */
-	private makeDataStoreLocallyVisible(id: string): void {
+	protected makeDataStoreLocallyVisible(id: string): void {
 		const localContext = this.contexts.getUnbound(id);
 		assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
@@ -1035,7 +1044,11 @@ export class ChannelCollection
 			});
 
 			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
-				this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp),
+				this.parentContext.addedGCOutboundRoute(
+					`${this.parentContext.IFluidHandleContext.absolutePath}${fromPath}`,
+					toPath,
+					envelope.timestamp,
+				),
 			);
 		}
 
@@ -1753,11 +1766,8 @@ export function detectOutboundReferences(
 	}
 }
 
-// #region Experimentation
-// The code below here is for experimentation (and one test) only.
-
 /**
- * @privateRemarks This class is only used for experimentation/testing.
+ * Forwards operations and signals for a collection hosted inside another channel.
  */
 export class ComposableChannelCollection
 	extends ChannelCollection
@@ -1845,6 +1855,8 @@ export class ComposableChannelCollection
 		this.rollbackDataStoreOp(content as IEnvelope<FluidDataStoreMessage>, localOpMetadata);
 	}
 }
+
+// #region Experimentation
 
 /**
  * @privateRemarks This factory is only used for experimentation/testing.
