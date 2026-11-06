@@ -6,13 +6,13 @@ sidebar_position: 6
 import { ApiLink } from "@site/src/components/shortLinks";
 
 A library release, an application deployment, and a document's stored schema can change independently.
-Define their compatibility contracts separately; [Schema Evolution](./index.mdx) provides the rollout mechanisms.
+Define their compatibility contracts separately; [Schema Evolution](./index.mdx) provides an overview of rollout mechanisms.
 
 ## Keep the contracts separate
 
 | Contract                             | Compatibility commitment                                                  |
 | ------------------------------------ | ------------------------------------------------------------------------- |
-| Package semantic versioning (semver) | Imports, types, behavior, construction, and configuration.                |
+| Package semantic versioning (SemVer) | Imports, types, behavior, construction, and configuration.                |
 | Persisted schema and data            | Reading existing documents, preserving data, and supported edits.         |
 | Application deployment               | Collaborating client versions, new-write enablement, and rollback builds. |
 

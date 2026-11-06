@@ -176,9 +176,9 @@ describe("Component library walkthrough", () => {
 	});
 
 	it("can work when component types are erased", () => {
-		// If an application only has access to fully type erased components,
+		// If an application only has access to fully type-erased components,
 		// or most of the application code isn't aware of the specific components types being used, this pattern is still possible.
-		// Here we manually type erase them, so our example has some type erased components to work with.
+		// Here we manually type-erase them, so our example has some type-erased components to work with.
 		const groupComponentErased: Component.Factory<ItemComponent> = groupComponent;
 		const textComponentErased: Component.Factory<ItemComponent> = textComponent;
 
