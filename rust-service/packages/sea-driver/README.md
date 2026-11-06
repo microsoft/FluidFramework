@@ -98,6 +98,10 @@ A tree handle reuses its directory ID without traversing or rebuilding its desce
 New blobs retain the bounded upload worker pool, and explicitly represented directories are composed bottom-up.
 `SeaDriverClient.fetchDirectory` and `uploadDirectory` preserve typed child IDs, including empty directories.
 The flattened Fluid summary upload path is unchanged.
+Direct `submitEvent` calls can supply a directory root as the third argument to retain application blob references with the event.
+The non-direct Fluid path rejects that argument.
+`openDirectSession` can override descendant-blob prefetch with its fourth argument while preserving an explicitly configured item budget.
+The direct SharedTree host uses this override to keep its lazy or eager blob policy consistent across opening, loading, and reconnect.
 
 ## Entry Point
 

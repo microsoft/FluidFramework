@@ -145,16 +145,22 @@ export interface SeaDriverClient {
 	/**
 	 * Opens without Fluid projection or eager history reads.
 	 * Reads return native SEA positions as sequence numbers; the caller owns snapshot loading.
+	 * The optional prefetchBlobs flag overrides descendant-blob loading while retaining the driver's item budget.
 	 */
 	openDirectSession?(
 		document: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
+		prefetchBlobs?: boolean,
 	): Promise<void>;
 	/** Returns the opening snapshot and retains its gap-free suffix for reads and live delivery. */
 	loadDirectSnapshot?(): ReturnType<SeaDriverClient["latestSnapshot"]>;
-	/** Submits one opaque event and returns its canonical position. */
-	submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+	/** Submits one opaque event, optionally retaining a directory root in direct mode, and returns its canonical position. */
+	submitEvent(
+		payload: Uint8Array,
+		referencePosition?: Uint8Array,
+		blobTree?: Uint8Array,
+	): Promise<Uint8Array>;
 	/** Returns the latest snapshot publication and root. */
 	latestSnapshot(): Promise<
 		| {

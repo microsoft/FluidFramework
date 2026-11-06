@@ -181,7 +181,7 @@ export interface SeaDriverClient {
         readonly atEvent?: Uint8Array;
     } | undefined>;
     loadDirectSnapshot?(): ReturnType<SeaDriverClient["latestSnapshot"]>;
-    openDirectSession?(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openDirectSession?(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array, prefetchBlobs?: boolean): Promise<void>;
     openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals?(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
@@ -196,7 +196,7 @@ export interface SeaDriverClient {
         readonly atEvent?: Uint8Array;
     } | undefined>;
     stageSnapshotRoot?(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
-    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array, blobTree?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
     uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array>;
@@ -227,7 +227,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
     loadDirectSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
-    openDirectSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openDirectSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array, prefetchBlobs?: boolean): Promise<void>;
     openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
@@ -238,7 +238,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     get sessionId(): Uint8Array | undefined;
     snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]>;
     stageSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
-    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array, blobTree?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
     uploadDirectory(entries: readonly SeaDirectoryEntry[]): Promise<Uint8Array>;

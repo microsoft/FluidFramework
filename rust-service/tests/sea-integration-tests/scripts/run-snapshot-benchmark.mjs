@@ -54,6 +54,9 @@ const config = {
 	workers: 4,
 	workload: "load",
 	prefetchItems: 4096,
+	prefetchBlobs: false,
+	compression: false,
+	blobBytes: 0,
 	maxConnections: 16,
 	rates: [],
 	rateSeconds: 10,
@@ -67,6 +70,14 @@ for (const name of ["bytes", "concurrency", "rates", "rtts"]) {
 	);
 }
 assert.ok(Number.isSafeInteger(config.repetitions) && config.repetitions >= 0);
+assert.equal(typeof config.prefetchBlobs, "boolean");
+assert.equal(typeof config.compression, "boolean");
+assert.ok(Number.isSafeInteger(config.blobBytes) && config.blobBytes >= 0);
+assert.ok(
+	config.blobBytes === 0 ||
+		config.cases.every((name) => name === "direct" || name === "direct-demand"),
+	"Blob-handle workloads require direct backends",
+);
 for (const name of [
 	"capacityCount",
 	"rateSeconds",
@@ -124,7 +135,7 @@ const manifest = {
 		wasmSha256: hash(
 			resolve(
 				root,
-				"rust-service/packages/sea-typescript/generated/webtransport/web/sea_wasm_bg.wasm",
+				`rust-service/packages/sea-typescript/generated/${config.compression ? "webtransport-compression" : "webtransport"}/web/sea_wasm_bg.wasm`,
 			),
 		),
 	},
@@ -288,6 +299,9 @@ async function browser(service, query) {
 			new URLSearchParams({
 				...query,
 				prefetchItems: String(config.prefetchItems),
+				prefetchBlobs: String(config.prefetchBlobs),
+				compression: String(config.compression),
+				blobBytes: String(config.blobBytes),
 				...(service.port ? { port: String(service.port) } : {}),
 			}).toString(),
 		],

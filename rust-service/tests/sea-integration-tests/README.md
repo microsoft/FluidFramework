@@ -218,8 +218,20 @@ It is a current-code configuration control, not a historical revision.
 The default `prefetchItems` is 4096, selecting directories only, and the explicit Sea `maxConnections` is 16.
 Earlier collections used a 256-item directory-and-blob hint and demand-driven kernel reads; retain that distinction when comparing results.
 Override these separately for diagnostic runs, retaining the changed configuration in the report.
+Set `prefetchBlobs: true` to select the host's eager blob policy, including blobs in the direct opening hint as well as directories.
+Set `compression: true` to use Sea's compression-enabled WASM artifact and archive compression for all Sea cases, including fixture creation.
+Both options default to `false`; Tinylicious is unchanged.
+Set `blobBytes` to a positive byte count to add a real application blob handle to direct-backend fixtures.
+This option defaults to zero and currently requires direct-only `cases`.
+The load records ready latency separately from the later handle read, verifies every payload byte, and checks that the first handle read makes one driver read in lazy mode and none in eager mode.
+Handle-read timing and read counts are retained in each sample.
+`direct-demand` disables speculative descendants even when the host uses the eager policy; eager mode still bulk-loads all payloads before returning.
+The manifest records both settings and hashes the selected WASM artifact.
+Compressed results measure a different storage representation, not a transport-only optimization.
 All cases use the optimized forest and the same deterministic, 1,024-byte pseudorandom hexadecimal strings.
 Direct snapshots use the schema's incremental chunk boundaries.
+Version 4 direct snapshots wrap each summary blob in a directory so native application-blob edges survive incremental reuse.
+Earlier version 3 collections did not have these directories.
 Fluid cases use their normal initial attachment summaries.
 No application edits follow snapshot preparation; Tinylicious can subsequently publish a service summary containing membership history.
 

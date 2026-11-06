@@ -4,8 +4,9 @@ Minimal sample demonstrating direct SharedTree integration with the SEA Rust ser
 Unlike `@fluid-example/text-editor`, this app does not use a Fluid container or select between service clients.
 It connects each simulated user directly through `@fluidframework/sea-tree` to the SEA WebSocket server on port 8081.
 The app uses `ws://localhost:8081/sea/websocket` locally and derives the corresponding secure forwarded URL when it runs in GitHub Codespaces.
-Direct clients explicitly request up to 256 additional snapshot content items, including descendant blobs.
-The driver consumes this content alongside event delivery and retains it in a bounded cache; missing or evicted items load on demand.
+Direct clients select `blobLoading: "eager"` and request up to 4,096 additional snapshot content items, including descendant blobs.
+The host retains summary and application blob payloads before opening completes, independently of the driver's bounded cache.
+Other applications can use the default lazy policy to leave application blob handles unloaded.
 
 ## Getting Started
 
@@ -30,10 +31,10 @@ The panel indicates when it loaded a summary.
 Loading does not download operations before that summary.
 The editor uses its schema annotations to reuse unchanged plain-text and formatted-text regions in incremental summaries.
 Only new blobs and explicitly represented directories are uploaded; each snapshot root still describes the complete document.
-The current direct snapshot format is version 3.
-Version 2 full snapshots load normally and establish a new incremental baseline on the next summary.
+The current direct snapshot format is version 4, with native blob-reference edges alongside each serialized summary blob.
+Version 2 and 3 snapshots load normally and establish a new incremental baseline on the next summary.
 Version 1 experimental snapshots are rejected; remove the URL hash and reload to create a fresh document for those snapshots.
-Update all clients before editing a document with version 3 summaries.
+Update all clients before editing a document with version 4 summaries.
 
 Use **Disconnect** to pause one simulated user, edit both that user and a connected peer, then use **Reconnect**.
 The existing view is retained while pending edits are reconciled and rebased.

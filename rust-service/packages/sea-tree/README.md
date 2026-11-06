@@ -65,19 +65,48 @@ Failed or ambiguous publication does not advance this baseline, and observing an
 The publication parent and nomination fence remain independent of the handle-resolution baseline.
 Loading reads only the snapshot's suffix; reconnect reads only after the last applied position.
 Both reuse the opening snapshot/replay/live stream instead of making separate snapshot and history requests.
-After discovering the snapshot directories, the host uses `fetchBlobs`, when available, to load all unique snapshot blobs before invoking SharedTree's loader.
+After discovering the snapshot directories, the host uses `fetchBlobs`, when available, to load all unique summary blobs before invoking SharedTree's loader.
 The load retains these results independently of the driver's bounded cache, so cache eviction cannot cause another read during kernel loading.
-This covers this kernel's snapshot; it does not resolve or fetch external Fluid-handle targets.
+Application blob payloads remain lazy unless `blobLoading: "eager"` is selected.
 Clients without bulk-read support retain on-demand loading with deduplicated reads.
 SharedTree's bounded chunk-reading schedule then consumes local results rather than imposing network request waves.
-For direct applications, use a directory-only opening hint such as `{ includeDescendantBlobs: false, maxExtraItems: 4096 }`.
-The editor uses this hint; recursive prefetch is not required for correctness.
+The host sets the driver's opening hint to match `blobLoading`, with up to 4,096 extra objects by default.
+An explicit driver `maxExtraItems` overrides that budget; zero disables speculative descendants.
+The editor opts into eager loading; recursive prefetch is not required for correctness.
 The host's storage adapter batches missing directories and uses the configured descendant-prefetch hint during recovery.
-Direct snapshot metadata uses version 3.
-Version 2 full snapshots remain readable; their next summary establishes a new full incremental baseline.
-Version 3 loads restore chunk tracking and can reuse chunks immediately.
+Direct snapshot metadata uses version 4.
+Version 2 and 3 snapshots remain readable; their next summary establishes a new full baseline in the new storage layout.
+Version 4 loads restore chunk tracking and can reuse chunks immediately.
 Version 1 snapshots containing dense Fluid sequence numbers are rejected, not migrated; create a fresh document when using that older format.
-Old direct hosts cannot load version 3 snapshots; update all clients before collaborating with the new host.
+Old direct hosts cannot load version 4 snapshots or resolve application blob handles; update all clients before collaborating with the new host.
+
+## Blob Handles
+
+`host.createBlob(bytes)` copies the supplied bytes and immediately returns an `ILocalFluidHandle<ArrayBuffer>`.
+Store it in a SharedTree field that permits `SchemaFactory.handle`.
+Upload starts in a microtask, so callers can observe `payloadState: "pending"` and subscribe to `payloadShared` or `payloadShareFailed`.
+Upload failures set `payloadShareError` and the host's `lastError`.
+Call `sharePayload()` to retry after a failure.
+Operations that reference a pending handle wait for its upload before submission; reconnect retries referenced uploads through pending-edit recovery.
+`waitForIdle()` waits for referenced uploads through those operations, not for unused background uploads.
+
+Every read returns an independent buffer.
+Locally created bytes and successfully read payloads stay usable through that handle while offline or after host disposal.
+Uncached reads require a connected host.
+Pending uploads, local bytes, and unsynchronized edits are not persisted across tab closure.
+To copy a blob to another document, read it and pass the bytes to the other host's `createBlob()`.
+Foreign-document handles and non-blob Fluid-object handles are rejected.
+
+The default `blobLoading: "lazy"` first discovers directories, then bulk-loads summary data only.
+`blobLoading: "eager"` also prefetches and retains application blob payloads before opening completes.
+Both policies work independently of the driver's bounded content cache.
+
+Each summary blob is stored in a directory with `.content` and, when needed, a `.handles` directory of native Sea blob references.
+Fluid's serializer detects the references while producing the summary.
+Incremental reuse retains the whole directory, including edges required by unchanged chunks or retained edit history.
+Uploaded but unreferenced blobs do not become snapshot edges.
+Application events also carry native blob-tree edges and a handle-to-digest table.
+This describes reachability; it does not add a service garbage collector or promise immediate deletion of unreachable uploads.
 
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
 The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.

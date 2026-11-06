@@ -197,6 +197,7 @@ async function createDirectClient(
 		subscriptionBatchMaxPayloadBytes,
 		createDocument,
 		{
+			blobLoading: "eager",
 			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
 				new TreeViewConfigurationAlpha({ schema: TextEditorRoot }),
 			),

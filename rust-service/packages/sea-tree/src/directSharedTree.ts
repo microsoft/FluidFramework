@@ -31,6 +31,10 @@ import {
 	TreeCompressionStrategy,
 	type IncrementalEncodingPolicy,
 } from "@fluidframework/tree/alpha";
+import type { ILocalFluidHandle } from "@fluidframework/core-interfaces/internal";
+
+import { BlobHandles, byteKey, type BlobReferences } from "./blobHandles.js";
+import { decodeSnapshotBlobs, encodeSnapshotBlobs, isHandlePayload } from "./snapshotBlobs.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -38,6 +42,11 @@ const metadataPath = ".sea-direct";
 
 /** Scheduling policy for the runtime-free host. @internal */
 export interface DirectSharedTreeClientOptions {
+	/**
+	 * Loads only summary data by default, leaving application blob handles lazy.
+	 * Set to "eager" to prefetch and retain handle payloads as part of opening.
+	 */
+	readonly blobLoading?: "lazy" | "eager";
 	/** Selects schema fields whose unchanged content may be reused across summaries. */
 	readonly shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	/** Maximum applied application operations between summaries. Defaults to 100. */
@@ -56,6 +65,8 @@ export type DirectSharedTreeConnectionState =
 
 /** Encoded application message, independent of its SEA author incarnation. */
 interface DirectSharedTreePayload {
+	/** Uploaded blob identities needed to resolve handles in this message. */
+	readonly blobReferences?: BlobReferences;
 	/** SharedTree message, re-encoded by the kernel on resubmission. */
 	readonly contents: unknown;
 	/** Compressor ranges ordered with this message. */
@@ -66,6 +77,7 @@ interface DirectSharedTreePayload {
 
 /** Local edit retained until its canonical acknowledgment is applied. */
 interface PendingMessage {
+	readonly handles: ReturnType<BlobHandles["encodeMessage"]>["handles"];
 	/** Encoded message and compressor allocation. */
 	readonly payload: DirectSharedTreePayload;
 	/** Kernel-owned schema context required to re-encode a rebased edit. */
@@ -79,7 +91,7 @@ interface PendingMessage {
 /** Snapshot state needed in addition to SharedTree's own summary. */
 interface SnapshotMetadata {
 	/** Format discriminator; incompatible versions are rejected. */
-	readonly version: 2 | 3;
+	readonly version: 2 | 3 | 4;
 	/** Last SEA position represented by the summary, encoded losslessly as a number. */
 	readonly sequenceNumber: number;
 	/** Finalized compressor state; never includes unacknowledged allocations. */
@@ -151,6 +163,8 @@ export class DirectSharedTreeClient {
 	private generation = 0;
 	private readonly summaryMaxOperations: number;
 	private readonly summaryIdleMs: number;
+	private readonly blobs: BlobHandles;
+	private readonly eagerBlobs: boolean;
 
 	private constructor(
 		private readonly client: SeaDriverClient,
@@ -166,6 +180,21 @@ export class DirectSharedTreeClient {
 		this.localSessions.add(byteKey(this.session));
 		this.summaryMaxOperations = options.summaryMaxOperations ?? 100;
 		this.summaryIdleMs = options.summaryIdleMs ?? 5_000;
+		this.eagerBlobs = options.blobLoading === "eager";
+		this.blobs = new BlobHandles(
+			client,
+			document,
+			() => {
+				if (this.connectionState !== "connected")
+					throw new Error(`Blob transport is ${this.connectionState}`);
+			},
+			(error, generation) => {
+				if (generation !== this.generation || this.connectionState !== "connected") return;
+				this.lastError = error;
+				this.notify();
+			},
+			() => this.generation,
+		);
 		if (metadata !== undefined) {
 			this.lastAppliedSequenceNumber = metadata.sequenceNumber;
 			this.lastSummarySequenceNumber = metadata.sequenceNumber;
@@ -178,11 +207,14 @@ export class DirectSharedTreeClient {
 				? {}
 				: { shouldEncodeIncrementally: options.shouldEncodeIncrementally }),
 			idCompressor: compressor,
+			serializer: this.blobs,
 			lastSequenceNumber: () => this.lastAppliedSequenceNumber,
 			submitLocalMessage: (contents, localOpMetadata) => {
+				const encoded = this.blobs.encodeMessage(contents);
 				this.pending.push({
+					handles: encoded.handles,
 					payload: {
-						contents,
+						contents: encoded.contents,
 						idCreationRange: toIdCompressorWithCore(compressor).takeNextCreationRange(),
 						clientSequenceNumber: ++this.localSequenceNumber,
 					},
@@ -217,18 +249,30 @@ export class DirectSharedTreeClient {
 		let host: DirectSharedTreeClient | undefined;
 		try {
 			const documentId = createDocument ? await client.create() : document;
-			await openDirectSession(client, documentId, encoder.encode(createSessionId()));
+			await openDirectSession(
+				client,
+				documentId,
+				encoder.encode(createSessionId()),
+				undefined,
+				options.blobLoading === "eager",
+			);
 			await client.announceMembership?.(encoder.encode(JSON.stringify({ mode: "write" })));
 			assert(
 				client.loadDirectSnapshot !== undefined,
 				"Direct SharedTree requires snapshot-plus-live loading",
 			);
 			const snapshot = await client.loadDirectSnapshot();
-			const entries = snapshot === undefined ? [] : await client.fetchSummary(snapshot.root);
-			const blobs = new Map(entries.map((entry) => [decoder.decode(entry.path), entry.blob]));
+			let entries = snapshot === undefined ? [] : await client.fetchSummary(snapshot.root);
+			let blobs = new Map(entries.map((entry) => [decoder.decode(entry.path), entry.blob]));
 			const fetchedBlobs = new Map<string, Promise<Uint8Array>>();
 			if (snapshot !== undefined && client.fetchBlobs !== undefined) {
-				const unique = [...new Map(entries.map((entry) => [byteKey(entry.blob), entry.blob]))];
+				const selected =
+					options.blobLoading === "eager"
+						? entries
+						: entries.filter((entry) => !isHandlePayload(entry));
+				const unique = [
+					...new Map(selected.map((entry) => [byteKey(entry.blob), entry.blob])),
+				];
 				const contents = await client.fetchBlobs(unique.map(([, digest]) => digest));
 				assert(
 					contents.length === unique.length,
@@ -259,7 +303,7 @@ export class DirectSharedTreeClient {
 					decoder.decode(await fetchBlob(metadataBlob)),
 				) as SnapshotMetadata;
 				if (
-					(metadata.version !== 2 && metadata.version !== 3) ||
+					(metadata.version !== 2 && metadata.version !== 3 && metadata.version !== 4) ||
 					!Number.isSafeInteger(metadata.sequenceNumber) ||
 					metadata.sequenceNumber < 0 ||
 					metadata.sequenceNumber !== positionAsNumber(snapshot.atEvent)
@@ -281,6 +325,13 @@ export class DirectSharedTreeClient {
 				metadata,
 			);
 			if (snapshot !== undefined) {
+				if (options.blobLoading === "eager" && client.fetchBlobs === undefined) {
+					await Promise.all(entries.map(async (entry) => fetchBlob(entry.blob)));
+				}
+				if (metadata?.version === 4) {
+					entries = await decodeSnapshotBlobs(entries, host.blobs, fetchedBlobs, byteKey);
+					blobs = new Map(entries.map((entry) => [decoder.decode(entry.path), entry.blob]));
+				}
 				const snapshotTree = SeaDocumentStorage.snapshotTree(byteKey(snapshot.id), entries);
 				await host.tree.kernel.loadCore({
 					getSnapshotTree: () => snapshotTree,
@@ -297,7 +348,7 @@ export class DirectSharedTreeClient {
 							.map((key) => key.slice(prefix.length));
 					},
 				});
-				if (metadata?.version === 3) {
+				if (metadata?.version === 4) {
 					host.summaryBaseline = {
 						root: snapshot.root.slice(),
 						sequenceNumber: metadata.sequenceNumber,
@@ -315,6 +366,18 @@ export class DirectSharedTreeClient {
 			else client.disconnect();
 			throw error;
 		}
+	}
+
+	/**
+	 * Returns a blob handle immediately and starts uploading in the background.
+	 * Pending state and failures are observable on the returned handle.
+	 * Local bytes remain readable offline and after disposal; each read returns an independent buffer.
+	 * Call sharePayload() to retry a failed upload, or create a new handle from get() to copy to another document.
+	 */
+	public createBlob(payload: Uint8Array): ILocalFluidHandle<ArrayBuffer> {
+		if (this.connectionState === "disposed")
+			throw new Error("Cannot create a blob on a disposed direct SharedTree");
+		return this.blobs.create(payload);
 	}
 
 	/** Registers a listener for connection, pending-edit, and summary status changes. */
@@ -419,10 +482,28 @@ export class DirectSharedTreeClient {
 				if (generation !== this.generation || this.connectionState !== "connected") return;
 				const pending = this.pending.find((message) => message.session === undefined);
 				if (pending === undefined) return;
+				const blobReferences = await this.blobs.uploadReferences(pending.handles);
+				const attachments = Object.entries(blobReferences);
+				const blobTree =
+					attachments.length === 0
+						? undefined
+						: await new SeaDocumentStorage(this.client).uploadSummaryTree({
+								type: 1,
+								tree: Object.fromEntries(
+									attachments.map(([id, digest]) => [id, { type: 4, id: digest }]),
+								),
+							});
+				if (generation !== this.generation || this.connectionState !== "connected") return;
 				pending.session = this.session.slice();
 				await this.client.submitEvent(
-					encoder.encode(JSON.stringify(pending.payload)),
+					encoder.encode(
+						JSON.stringify({
+							...pending.payload,
+							...(attachments.length === 0 ? {} : { blobReferences }),
+						}),
+					),
 					pending.reference,
+					blobTree,
 				);
 			}
 		};
@@ -497,6 +578,7 @@ export class DirectSharedTreeClient {
 				const payload = JSON.parse(
 					decoder.decode(operation.payload),
 				) as DirectSharedTreePayload;
+				this.blobs.registerReferences(payload.blobReferences);
 				const local = this.localSessions.has(byteKey(operation.session));
 				if (local) {
 					const first = this.pending[0];
@@ -510,7 +592,7 @@ export class DirectSharedTreeClient {
 				}
 				this.tree.kernel.processSequencedMessages([
 					{
-						contents: payload.contents,
+						contents: this.blobs.decode(payload.contents),
 						idCreationRange: payload.idCreationRange,
 						sequenceNumber,
 						referenceSequenceNumber,
@@ -576,6 +658,7 @@ export class DirectSharedTreeClient {
 					this.documentId,
 					encoder.encode(this.compressor.localSessionId),
 					this.cursor,
+					this.eagerBlobs,
 				);
 				if (generation !== this.generation) {
 					this.client.disconnect();
@@ -708,19 +791,26 @@ export class DirectSharedTreeClient {
 		const position = this.cursor.slice();
 		const dirtyOperations = this.dirtyOperations;
 		const baseline = this.summaryBaseline;
-		const summary = this.tree.kernel.getSummary(
-			{
-				summarySequenceNumber: sequenceNumber,
-				latestSummarySequenceNumber: baseline?.sequenceNumber ?? -1,
-				summaryPath: "",
-			},
-			baseline === undefined,
+		const captured = this.blobs.captureSummary(() =>
+			this.tree.kernel.getSummary(
+				{
+					summarySequenceNumber: sequenceNumber,
+					latestSummarySequenceNumber: baseline?.sequenceNumber ?? -1,
+					summaryPath: "",
+				},
+				baseline === undefined,
+			),
 		);
 		const metadata: SnapshotMetadata = {
-			version: 3,
+			version: 4,
 			sequenceNumber,
 			compressor: serializeIdCompressor(this.compressor, false),
 		};
+		const summary = await encodeSnapshotBlobs(
+			captured.summary,
+			this.blobs,
+			captured.references,
+		);
 		summary.tree[metadataPath] = { type: 2, content: JSON.stringify(metadata) };
 		const root = await new SeaDocumentStorage(this.client).uploadSummaryTree(
 			summary,
@@ -748,12 +838,13 @@ async function openDirectSession(
 	document: Uint8Array,
 	session: Uint8Array,
 	resumeAfter?: Uint8Array,
+	prefetchBlobs?: boolean,
 ): Promise<void> {
 	assert(
 		client.openDirectSession !== undefined,
 		"Direct SharedTree requires native SEA position delivery",
 	);
-	await client.openDirectSession(document, session, resumeAfter);
+	await client.openDirectSession(document, session, resumeAfter, prefetchBlobs);
 }
 
 /** The negative sentinel precedes every SEA position, including zero. */
@@ -771,9 +862,4 @@ function positionAsNumber(position: Uint8Array | undefined): number {
 		"SEA position exceeds the lossless JavaScript integer range",
 	);
 	return number;
-}
-
-/** Stable key for opaque service identities. */
-function byteKey(value: Uint8Array): string {
-	return Array.from(value, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

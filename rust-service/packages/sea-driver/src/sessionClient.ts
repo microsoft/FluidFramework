@@ -49,7 +49,7 @@ export type SeaSnapshotParticipation = "readOnly" | "seaSelected" | "clientSelec
  * @internal
  */
 export interface SeaSessionDriverOptions {
-	/** Sent identically to the opening handshake and its direct load. Defaults to lazy loading. */
+	/** Sent identically to opening and direct load; the host can override descendant-blob prefetch. Defaults to lazy loading. */
 	readonly loadingHint?: SeaBlobTreeHint;
 	/** Maximum retained decoded bytes, including directory names and identities. Defaults to 16 MiB. */
 	readonly contentCacheBytes?: number;
@@ -151,7 +151,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private contentGeneration = 0;
 	private readonly cacheBytes: number;
 	private readonly cacheObjects: number;
-	private readonly loadingHint: SeaBlobTreeHint;
+	private loadingHint: SeaBlobTreeHint;
 	private readonly subscriptions = new Set<SeaStream<SeaLoadResult>>();
 	private pendingEventItem: SeaLoadResult | undefined;
 	private announcedPosition: bigint | undefined;
@@ -269,8 +269,18 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		document: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
+		prefetchBlobs?: boolean,
 	): Promise<void> {
-		return this.replace(() => this.replaceSession(document, session, resumeAfter, true));
+		return this.replace(() => {
+			if (prefetchBlobs !== undefined) {
+				this.loadingHint = {
+					maxExtraItems: 4096,
+					...this.loadingHint,
+					includeDescendantBlobs: prefetchBlobs,
+				};
+			}
+			return this.replaceSession(document, session, resumeAfter, true);
+		});
 	}
 
 	/** Establishes delivery and snapshot coordination inside an exclusive membership transition. */
@@ -617,13 +627,20 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	public async submitEvent(
 		payload: Uint8Array,
 		referencePosition?: Uint8Array,
+		blobTree?: Uint8Array,
 	): Promise<Uint8Array> {
 		const session = this.current();
 		try {
 			if (this.direct)
 				return encodePosition(
-					await session.submit(decodePosition(referencePosition), payload),
+					await session.submit(
+						decodePosition(referencePosition),
+						payload,
+						blobTree === undefined ? undefined : { kind: "directory", bytes: blobTree },
+					),
 				);
+			if (blobTree !== undefined)
+				throw new Error("Application blob references require direct delivery");
 			const message = JSON.parse(decoder.decode(payload)) as {
 				type?: string;
 				contents?: string | { handle?: string };

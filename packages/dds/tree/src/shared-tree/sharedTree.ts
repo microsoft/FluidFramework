@@ -534,6 +534,8 @@ export interface DirectSharedTreeOptions extends SharedTreeOptionsInternal {
 	readonly id?: string;
 	/** Last canonical sequence number already applied by the host. */
 	readonly lastSequenceNumber?: () => number | undefined;
+	/** Host-owned serialization and resolution of application handles. */
+	readonly serializer?: IFluidSerializer;
 }
 
 /**
@@ -554,6 +556,7 @@ export function createDirectSharedTree(
 		submitLocalMessage,
 		id = "direct-shared-tree",
 		lastSequenceNumber = () => undefined,
+		serializer: suppliedSerializer,
 		...treeOptions
 	} = options;
 	const sharedObject = {
@@ -569,7 +572,7 @@ export function createDirectSharedTree(
 			return this;
 		},
 	} satisfies IChannelView & IFluidLoadable;
-	const serializer: IFluidSerializer = {
+	const serializer: IFluidSerializer = suppliedSerializer ?? {
 		decode: (input) => input,
 		encode: (input) => input,
 		parse: (input) => JSON.parse(input) as unknown,

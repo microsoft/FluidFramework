@@ -42,9 +42,14 @@
 		"test:mocha:esm": "mocha"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sea-driver": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {

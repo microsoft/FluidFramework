@@ -17,6 +17,8 @@ import {
 import { createMemoryService } from "@fluidframework/sea-typescript/internal";
 import {
 	SchemaFactoryAlpha,
+	FluidClientVersion,
+	TreeCompressionStrategy,
 	TreeViewConfigurationAlpha,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -355,69 +357,80 @@ describe("DirectSharedTreeClient incremental summaries", () => {
 		assert.deepEqual([...reader.view.root.right], [...writer.view.root.right]);
 	});
 
-	it("loads legacy full summaries and establishes a new full baseline before reusing chunks", async () => {
-		const writer = await open();
-		const compressor = createIdCompressor();
-		let sequenceNumber = -1;
-		// Replay through the previous host's configuration, not just a relabeled new snapshot.
-		const legacy = createDirectSharedTree({
-			forest: ForestTypeOptimized,
-			idCompressor: compressor,
-			lastSequenceNumber: () => sequenceNumber,
-			submitLocalMessage: () => assert.fail("legacy fixture only replays canonical messages"),
-		});
-		const page = await writer.driver.readProjected();
-		for (const operation of page.operations) {
-			sequenceNumber = Number(operation.sequenceNumber);
-			if (operation.eventType !== "application") continue;
-			const payload = JSON.parse(new TextDecoder().decode(operation.payload)) as Pick<
-				Parameters<typeof legacy.kernel.processSequencedMessages>[0][number],
-				"contents" | "idCreationRange"
-			>;
-			legacy.kernel.processSequencedMessages([
-				{
-					...payload,
+	for (const version of [2, 3]) {
+		it(`loads version ${version} summaries and establishes a new full baseline before reusing chunks`, async () => {
+			const writer = await open();
+			const compressor = createIdCompressor();
+			let sequenceNumber = -1;
+			// Replay through the previous host's configuration, not just a relabeled new snapshot.
+			const legacy = createDirectSharedTree({
+				forest: ForestTypeOptimized,
+				...(version === 3
+					? {
+							treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+							minVersionForCollab: FluidClientVersion.v2_74,
+							shouldEncodeIncrementally:
+								incrementalEncodingPolicyForAllowedTypes(configuration),
+						}
+					: {}),
+				idCompressor: compressor,
+				lastSequenceNumber: () => sequenceNumber,
+				submitLocalMessage: () =>
+					assert.fail("legacy fixture only replays canonical messages"),
+			});
+			const page = await writer.driver.readProjected();
+			for (const operation of page.operations) {
+				sequenceNumber = Number(operation.sequenceNumber);
+				if (operation.eventType !== "application") continue;
+				const payload = JSON.parse(new TextDecoder().decode(operation.payload)) as Pick<
+					Parameters<typeof legacy.kernel.processSequencedMessages>[0][number],
+					"contents" | "idCreationRange"
+				>;
+				legacy.kernel.processSequencedMessages([
+					{
+						...payload,
+						sequenceNumber,
+						referenceSequenceNumber:
+							operation.reference === undefined
+								? -1
+								: Number(new DataView(operation.reference.slice().buffer).getBigUint64(0)),
+						minimumSequenceNumber: Number(operation.minimumSequenceNumber ?? -1n),
+						local: false,
+					},
+				]);
+			}
+			assert.equal(sequenceNumber, writer.host.lastAppliedSequenceNumber);
+			const summary = legacy.kernel.getSummary();
+			assert.deepEqual(handles(summary), []);
+			summary.tree[".sea-direct"] = {
+				type: 2,
+				content: JSON.stringify({
+					version,
 					sequenceNumber,
-					referenceSequenceNumber:
-						operation.reference === undefined
-							? -1
-							: Number(new DataView(operation.reference.slice().buffer).getBigUint64(0)),
-					minimumSequenceNumber: Number(operation.minimumSequenceNumber ?? -1n),
-					local: false,
-				},
-			]);
-		}
-		assert.equal(sequenceNumber, writer.host.lastAppliedSequenceNumber);
-		const summary = legacy.kernel.getSummary();
-		assert.deepEqual(handles(summary), []);
-		summary.tree[".sea-direct"] = {
-			type: 2,
-			content: JSON.stringify({
-				version: 2,
-				sequenceNumber,
-				compressor: serializeIdCompressor(compressor, false),
-			}),
-		};
-		const root = await new SeaDocumentStorage(writer.driver).uploadSummaryTree(summary);
-		await writer.driver.publishSnapshotRoot(undefined, page.cursor, root);
-		const reader = await open(writer.host.documentId);
-		assert.deepEqual([...reader.view.root.right], [...writer.view.root.right]);
-		writer.host.disconnect();
-		await until(() => reader.driver.canPublishSnapshot);
-		reader.view.root.left.insertAtEnd("migration");
-		await reader.host.waitForIdle();
-		await reader.host.summarize();
-		assert.equal(reader.summaries[0]?.full, true);
-		assert.ok(reader.summaries[0]);
-		assert.deepEqual(handles(reader.summaries[0].summary), []);
-		reader.view.root.left.insertAtEnd("incremental after migration");
-		await reader.host.waitForIdle();
-		await reader.host.summarize();
-		assert.ok(reader.summaries[1]);
-		assert.ok(handles(reader.summaries[1].summary).some((handle) => handle.tree));
-		const loaded = await open(writer.host.documentId);
-		assert.deepEqual([...loaded.view.root.left], [...reader.view.root.left]);
-	});
+					compressor: serializeIdCompressor(compressor, false),
+				}),
+			};
+			const root = await new SeaDocumentStorage(writer.driver).uploadSummaryTree(summary);
+			await writer.driver.publishSnapshotRoot(undefined, page.cursor, root);
+			const reader = await open(writer.host.documentId);
+			assert.deepEqual([...reader.view.root.right], [...writer.view.root.right]);
+			writer.host.disconnect();
+			await until(() => reader.driver.canPublishSnapshot);
+			reader.view.root.left.insertAtEnd("migration");
+			await reader.host.waitForIdle();
+			await reader.host.summarize();
+			assert.equal(reader.summaries[0]?.full, true);
+			assert.ok(reader.summaries[0]);
+			assert.deepEqual(handles(reader.summaries[0].summary), []);
+			reader.view.root.left.insertAtEnd("incremental after migration");
+			await reader.host.waitForIdle();
+			await reader.host.summarize();
+			assert.ok(reader.summaries[1]);
+			assert.ok(handles(reader.summaries[1].summary).some((handle) => handle.tree));
+			const loaded = await open(writer.host.documentId);
+			assert.deepEqual([...loaded.view.root.left], [...reader.view.root.left]);
+		});
+	}
 
 	it("starts a full baseline when a nominee has only observed another client's summary", async () => {
 		const writer = await open();

@@ -45,7 +45,7 @@ class Block extends sf.object("Block", {
 	values: sf.types([Values], { custom: { [incrementalSummaryHint]: true } }),
 }) {}
 class Blocks extends sf.array("Blocks", Block) {}
-class State extends sf.object("State", { blocks: Blocks }) {}
+class State extends sf.object("State", { blocks: Blocks, payload: sf.optional(sf.handle) }) {}
 const configuration = new TreeViewConfigurationAlpha({ schema: State });
 const schema = {
 	initialObjects: {
@@ -55,6 +55,7 @@ const schema = {
 const parameters = new URLSearchParams(location.search);
 const backend = parameters.get("backend");
 const bytes = integer("bytes", 1024 * 1024);
+const blobBytes = integer("blobBytes", 0, 0);
 const rows = Math.ceil(bytes / 1024);
 const rowsPerBlock = 32;
 const calls: { name: string; start: number; end: number; bytes?: number }[] = [];
@@ -66,10 +67,16 @@ declare global {
 	}
 }
 
-function integer(name: string, fallback: number): number {
+function integer(name: string, fallback: number, minimum = 1): number {
 	const result = Number(parameters.get(name) ?? fallback);
-	if (!Number.isSafeInteger(result) || result <= 0) throw new Error(`Invalid ${name}`);
+	if (!Number.isSafeInteger(result) || result < minimum) throw new Error(`Invalid ${name}`);
 	return result;
+}
+
+function boolean(name: string): boolean {
+	const value = parameters.get(name) ?? "false";
+	if (value !== "true" && value !== "false") throw new Error(`Invalid ${name}`);
+	return value === "true";
 }
 
 /** Reproducible, distinct ASCII values; the small alphabet is intentionally compressible. */
@@ -130,9 +137,18 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 	);
 	const url = parameters.get("transport");
 	if (url === null || hash.length !== 32) throw new Error("Missing Sea endpoint");
+	const compression = boolean("compression");
 	const factory: SeaSessionFactory = (document, options) =>
 		timed("session.open", async () =>
-			openWebTransport({ url, certificateHash: hash }, document, options),
+			openWebTransport(
+				{
+					url,
+					certificateHash: hash,
+					configuration: compression ? "webtransport-compression" : "webtransport",
+				},
+				document,
+				{ ...options, compression },
+			),
 		);
 	const client = new SeaSessionDriverClient(
 		factory,
@@ -140,8 +156,11 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 		{
 			loadingHint:
 				backend === "direct"
-					? { includeDescendantBlobs: false, maxExtraItems: integer("prefetchItems", 4096) }
-					: {},
+					? {
+							includeDescendantBlobs: boolean("prefetchBlobs"),
+							maxExtraItems: integer("prefetchItems", 4096),
+						}
+					: { maxExtraItems: 0 },
 		},
 	);
 	const fetchBlob = client.fetchBlob.bind(client);
@@ -152,6 +171,12 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 	client.fetchSummary = async (id) => timed("manifest", async () => fetchSummary(id));
 	const load = client.loadDirectSnapshot.bind(client);
 	client.loadDirectSnapshot = async () => timed("snapshot", load);
+	const openDirectSession = client.openDirectSession.bind(client);
+	client.openDirectSession = async (...args) =>
+		timed("direct.open", async () => openDirectSession(...args));
+	const announceMembership = client.announceMembership.bind(client);
+	client.announceMembership = async (metadata) =>
+		timed("membership", async () => announceMembership(metadata));
 	return client;
 }
 
@@ -166,6 +191,12 @@ function documentHex(id: Uint8Array): string {
 
 async function directDocument(seed: boolean, id: string) {
 	const client = seaClient(true);
+	let blobReads = 0;
+	const fetchBlob = client.fetchBlob.bind(client);
+	client.fetchBlob = async (digest) => {
+		blobReads++;
+		return fetchBlob(digest);
+	};
 	const host = await DirectSharedTreeClient.create(
 		client,
 		seed ? new Uint8Array() : documentBytes(id),
@@ -173,6 +204,7 @@ async function directDocument(seed: boolean, id: string) {
 		1024 * 1024,
 		seed,
 		{
+			blobLoading: boolean("prefetchBlobs") ? "eager" : "lazy",
 			summaryIdleMs: 3_600_000,
 			summaryMaxOperations: Number.MAX_SAFE_INTEGER,
 			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(configuration),
@@ -187,6 +219,10 @@ async function directDocument(seed: boolean, id: string) {
 				view.root.blocks.insertAtEnd(block);
 				await host.waitForIdle();
 			}
+			if (blobBytes > 0) {
+				view.root.payload = host.createBlob(new Uint8Array(blobBytes).fill(173));
+				await host.waitForIdle();
+			}
 			await until(() => client.canPublishSnapshot, "snapshot nomination");
 			await host.summarize();
 			if (host.summaryCount !== 1) throw new Error("Initial summary was not published");
@@ -196,6 +232,7 @@ async function directDocument(seed: boolean, id: string) {
 		return {
 			id: documentHex(host.documentId),
 			root: view.root,
+			blobReadCount: () => blobReads,
 			close: async () => {
 				view.dispose();
 				await host.dispose();
@@ -271,7 +308,7 @@ async function fluidDocument(seed: boolean, id: string) {
 			"Fluid connection",
 		);
 		if (container.resolvedUrl?.type !== "fluid") throw new Error("Missing document URL");
-		return { id: container.resolvedUrl.id, root: view.root, close };
+		return { id: container.resolvedUrl.id, root: view.root, blobReadCount: () => 0, close };
 	} catch (error) {
 		await close();
 		throw error;
@@ -294,6 +331,23 @@ async function load(id: string, scheduledAt = performance.now()) {
 		const ready = performance.now();
 		verify(opened.root);
 		const verified = performance.now();
+		const readsBefore = opened.blobReadCount();
+		const blobStarted = performance.now();
+		if (blobBytes > 0) {
+			const content = await opened.root.payload?.get();
+			if (
+				!(content instanceof ArrayBuffer) ||
+				content.byteLength !== blobBytes ||
+				new Uint8Array(content).some((byte) => byte !== 173)
+			) {
+				throw new Error("Blob-handle payload verification failed");
+			}
+		}
+		const blobReadMilliseconds = performance.now() - blobStarted;
+		const blobReadCalls = opened.blobReadCount() - readsBefore;
+		if (blobBytes > 0 && blobReadCalls !== (boolean("prefetchBlobs") ? 0 : 1)) {
+			throw new Error(`Unexpected post-load blob read count: ${blobReadCalls}`);
+		}
 		return {
 			status: "passed",
 			milliseconds: ready - started,
@@ -301,6 +355,9 @@ async function load(id: string, scheduledAt = performance.now()) {
 			schedulerLagMilliseconds: started - scheduledAt,
 			traversalMilliseconds: verified - ready,
 			verifiedRows: rows,
+			...(blobBytes === 0
+				? {}
+				: { verifiedBlobBytes: blobBytes, blobReadMilliseconds, blobReadCalls }),
 		};
 	} finally {
 		await opened.close();
@@ -405,6 +462,9 @@ async function download(id: string, scheduledAt = performance.now()) {
 async function run(): Promise<Record<string, unknown>> {
 	if (!["direct", "direct-demand", "sea-fluid", "tinylicious"].includes(backend ?? "")) {
 		throw new Error("Invalid snapshot backend");
+	}
+	if (blobBytes > 0 && backend !== "direct" && backend !== "direct-demand") {
+		throw new Error("The blob-handle workload currently requires a direct backend");
 	}
 	const action = parameters.get("action") ?? "load";
 	const id = parameters.get("document") ?? "";

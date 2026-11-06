@@ -8,6 +8,7 @@
 export class DirectSharedTreeClient {
     get connectionState(): DirectSharedTreeConnectionState;
     static create(client: SeaDriverClient, document: Uint8Array, batchMaxOperations: number, batchMaxPayloadBytes: number, createDocument: boolean, options?: DirectSharedTreeClientOptions): Promise<DirectSharedTreeClient>;
+    createBlob(payload: Uint8Array): ILocalFluidHandle<ArrayBuffer>;
     deliveredBatchCount: number;
     disconnect(): void;
     dispose(): Promise<void>;
@@ -28,6 +29,7 @@ export class DirectSharedTreeClient {
 
 // @internal
 export interface DirectSharedTreeClientOptions {
+    readonly blobLoading?: "lazy" | "eager";
     readonly shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly summaryIdleMs?: number;
     readonly summaryMaxOperations?: number;

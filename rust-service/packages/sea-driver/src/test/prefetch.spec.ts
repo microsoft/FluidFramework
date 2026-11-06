@@ -28,6 +28,7 @@ describe("SEA opening content", () => {
 			width?: number;
 			depth?: number;
 			demand?: (stream: SeaStream<SeaBlobTreeItem>) => SeaStream<SeaBlobTreeItem>;
+			prefetchBlobs?: boolean;
 		} = {},
 	) {
 		const compression = compressedPayload !== undefined;
@@ -84,7 +85,12 @@ describe("SEA opening content", () => {
 			"readOnly",
 			options,
 		);
-		await client.openDirectSession(writer.document, new Uint8Array());
+		await client.openDirectSession(
+			writer.document,
+			new Uint8Array(),
+			undefined,
+			extra.prefetchBlobs,
+		);
 		return {
 			client,
 			blob,
@@ -93,6 +99,7 @@ describe("SEA opening content", () => {
 			loads: () => loads,
 			requestedRoots,
 			requestedHints,
+			openingHint: () => openingHint,
 			reopen: () => client.openDirectSession(writer.document, new Uint8Array()),
 			close: async () => {
 				client.disconnect();
@@ -102,6 +109,36 @@ describe("SEA opening content", () => {
 				service.close();
 			},
 		};
+	}
+
+	for (const eager of [false, true]) {
+		it(`applies the direct host's ${eager ? "eager" : "lazy"} policy to opening and load`, async () => {
+			const test = await fixture(
+				{ loadingHint: { includeDescendantBlobs: !eager, maxExtraItems: 99 } },
+				undefined,
+				undefined,
+				{ prefetchBlobs: eager },
+			);
+			try {
+				await test.client.loadDirectSnapshot();
+				assert.deepEqual(test.openingHint(), {
+					includeDescendantBlobs: eager,
+					maxExtraItems: 99,
+				});
+				await test.client.fetchSummary(test.root.bytes);
+				const requests = test.requests();
+				await test.client.fetchBlob(test.blob.bytes);
+				assert.equal(test.requests() - requests, eager ? 0 : 1);
+				await test.reopen();
+				await test.client.loadDirectSnapshot();
+				assert.deepEqual(test.openingHint(), {
+					includeDescendantBlobs: eager,
+					maxExtraItems: 99,
+				});
+			} finally {
+				await test.close();
+			}
+		});
 	}
 
 	it("uses prefetched directories and decoded blobs without another request", async () => {
