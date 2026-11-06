@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
+import { getFluidTestMochaConfigWithCompat } from "@fluid-private/test-version-utils/mocharc-common";
 
-const packageDir = `${__dirname}/../..`;
-const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
-const config = getFluidTestMochaConfig(packageDir);
+const packageDir = `${import.meta.dirname}/../..`;
+const config = getFluidTestMochaConfigWithCompat(packageDir);
 
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves.
 // AB#7856
@@ -28,6 +27,7 @@ if (runningAgainstInternalRouterliciousCluster) {
 			"Windows because we need our self-signed certificates to be trusted by the machine running the tests, " +
 			"and Node has no way to interact with the Windows certificate store.";
 		console.error(error);
+		// eslint-disable-next-line unicorn/no-process-exit
 		process.exit(1);
 	}
 	const warning =
@@ -45,15 +45,18 @@ if (runningAgainstInternalRouterliciousCluster) {
 	// The flag used to be passed in the npm script in package.json, but adding node-option to the
 	// base mocharc-common.cjs caused it to be ignored, so we need to append it here.
 	const baseNodeOptions =
-		config["node-option"] !== undefined
-			? Array.isArray(config["node-option"])
+		config["node-option"] === undefined
+			? [] // If undefined, use an empty array
+			: Array.isArray(config["node-option"])
 				? config["node-option"]
-				: [config["node-option"]] // If string, wrap with array
-			: []; // If undefined, use an empty array
+				: [config["node-option"]]; // If string, wrap with array
 
 	config["node-option"] = [...baseNodeOptions, "use-openssl-ca"];
 }
 
 // TODO: ADO#34589: These tests leak memory and sometimes crash on CI. This is a workaround to increase the memory limit.
 config["node-option"] = [...config["node-option"], "max-old-space-size=8000"];
-module.exports = config;
+// mocha v12+ supports ESM config when default export is given via `export default config;`.
+// Prior to that synchronous ESM can be loaded with specifically configured
+// module.exports export containing the config.
+export { config as "module.exports" };

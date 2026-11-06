@@ -17,6 +17,6 @@
 		"node_modules/@fluid-internal/mocha-test-setup/lib/index.js",
 		"source-map-support/register",
 	],
-	"mochaExplorer.configFile": ".mocharc.cjs",
+	"mochaExplorer.configFile": ".mocharc.js",
 	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
 }
