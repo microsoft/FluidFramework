@@ -15,6 +15,7 @@ import {
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -32,7 +33,7 @@ import {
 	makeJsWideTreeWithEndValue,
 	WideRoot,
 } from "../scalableTestTrees.js";
-import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
+import { TestTreeProviderLite, configureBenchmarkHooks } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -87,7 +88,7 @@ describe("Summary benchmarks", () => {
 			benchmarkIt({
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async () => {
-					const summaryTree = getSummaryTree({
+					const { summary: summaryTree } = getSummaryTree({
 						initialTree: makeJsWideTreeWithEndValue(numberOfNodes, 1),
 						schema: WideRoot,
 					});
@@ -99,7 +100,7 @@ describe("Summary benchmarks", () => {
 			benchmarkIt({
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async () => {
-					const summaryTree = getSummaryTree({
+					const { summary: summaryTree } = getSummaryTree({
 						// Types do not allow implicitly constructing recursive types, so cast is required.
 						// TODO: Find a better alternative.
 						initialTree: makeJsDeepTree(numberOfNodes, 1) as LinkedList,
@@ -123,7 +124,8 @@ describe("Summary benchmarks", () => {
 				type,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
+						const { summary, idCompressor } = getSummaryTree(content);
+						const summaryTree = convertSummaryTreeToITree(summary);
 						await state.timeAllBatchesAsync(async () => {
 							const services: IChannelServices = {
 								deltaConnection: new MockDeltaConnection(
@@ -133,7 +135,7 @@ describe("Summary benchmarks", () => {
 								objectStorage: new MockStorage(summaryTree),
 							};
 							const datastoreRuntime = new MockFluidDataStoreRuntime({
-								idCompressor: testIdCompressor,
+								idCompressor,
 							});
 							await factory.load(datastoreRuntime, "test", services, factory.attributes);
 						});
@@ -176,17 +178,17 @@ describe("Summary benchmarks", () => {
 });
 
 /**
- * Returns the tree's summary.
+ * Returns the tree's summary and the matching ID compressor needed to load it.
  * @param content - The content to fill the tree with.
  */
 function getSummaryTree<T extends ImplicitFieldSchema>(
 	content: TreeSimpleContentTyped<T>,
-): ISummaryTree {
+): { summary: ISummaryTree; idCompressor: IIdCompressor } {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
 	const view = tree.kernel.viewWith(new TreeViewConfiguration({ schema: content.schema }));
 	view.initialize(content.initialTree);
 	provider.synchronizeMessages();
 	const { summary } = tree.getAttachSummary(true);
-	return summary;
+	return { summary, idCompressor: provider.getCompressor(tree) };
 }
