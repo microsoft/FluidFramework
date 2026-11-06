@@ -656,29 +656,29 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A"]);
 	});
 
-	it("preserves composed schema and retained content through summary, reload, and a later upgrade", async () => {
+	it("preserves newer document content through older-client upgrades, summary, and reload", async () => {
 		const factory = new SchemaFactoryAlpha("persistedTaskRollout");
 		class Reminder extends factory.object("Reminder", {
 			message: factory.string,
 		}) {}
-		class Before extends factory.object("Task", {
-			title: factory.string,
-			reminder: factory.optional(Reminder),
-			priority: [factory.number, factory.string],
-			estimatedHours: factory.optional(factory.number),
-		}) {}
-
-		// Retire `reminder`, leave existing priority and optionality changes staged, and add approval.
 		const stagedPriority = factory.types([factory.number, factory.staged(factory.string)]);
 		const stagedHours = factory.stagedOptional(factory.number);
-		class After extends factory.object("Task", {
+		class Before extends factory.object("Task", {
 			title: factory.string,
 			priority: stagedPriority,
 			estimatedHours: stagedHours,
 			isApproved: factory.optional(factory.boolean),
 		}) {}
 
-		// The persisted candidate must retain the reminder definition, string priorities, and optional effort estimates.
+		// Fully enable string priorities and optional effort estimates, retire approval, and add reminders in the later schema.
+		class After extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+		}) {}
+
+		// The older view restores approval while retaining the newer document's reminder definition and enabled permissions.
 		class Expected extends factory.object("Task", {
 			title: factory.string,
 			reminder: factory.optional(Reminder),
@@ -689,27 +689,28 @@ describe("SharedTree", () => {
 
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [tree] = provider.trees;
-		const before = tree.viewWith(
-			new TreeViewConfiguration({ schema: Before, enableSchemaValidation }),
+		const creator = tree.viewWith(
+			new TreeViewConfiguration({ schema: After, enableSchemaValidation }),
 		);
-		before.initialize({
+		creator.initialize({
 			title: "Prepare release",
 			reminder: { message: "Ask the reviewer" },
 			priority: "high",
 		});
 		await provider.ensureSynchronized();
-		before.dispose();
+		creator.dispose();
 
+		// Load the newer document with the older staged schema, then persist its composed upgrade.
 		const config = new TreeViewConfigurationAlpha({
-			schema: After,
+			schema: Before,
 			stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 			enableSchemaValidation,
 		});
-		const after = tree.viewWith(config);
-		assert.equal(after.compatibility.canView, false);
-		assert.equal(after.compatibility.canUpgrade, true);
-		after.upgradeSchema();
-		after.root.isApproved = true;
+		const older = tree.viewWith(config);
+		assert.equal(older.compatibility.canView, false);
+		assert.equal(older.compatibility.canUpgrade, true);
+		older.upgradeSchema();
+		older.root.isApproved = true;
 		await provider.ensureSynchronized();
 		await provider.summarize();
 		await provider.ensureSynchronized();
@@ -725,15 +726,16 @@ describe("SharedTree", () => {
 		assert.equal("reminder" in loaded.root, false);
 		loaded.dispose();
 
-		// A view that still declares the retired field must recover its node and content from the same persisted state.
+		// A view that declares reminders must recover the node and content that the older client's upgrade preserved.
 		const inspectingTree = await provider.createTree();
 		const inspecting = inspectingTree.viewWith(
 			new TreeViewConfiguration({ schema: Expected, enableSchemaValidation }),
 		);
 		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
 
-		// Add an optional `label` in a later application version; reloading must not prevent another preserving upgrade.
-		class Later extends factory.object("Task", {
+		// Backport an optional `label` to the older client without changing its staged declarations.
+		// Reloading the newer document must not prevent that client from composing another upgrade.
+		class BeforeWithLabel extends factory.object("Task", {
 			title: factory.string,
 			priority: stagedPriority,
 			estimatedHours: stagedHours,
@@ -750,20 +752,20 @@ describe("SharedTree", () => {
 			isApproved: factory.optional(factory.boolean),
 			label: factory.optional(factory.string),
 		}) {}
-		const later = loadedTree.viewWith(
+		const patchedOlder = loadedTree.viewWith(
 			new TreeViewConfigurationAlpha({
-				schema: Later,
+				schema: BeforeWithLabel,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 				enableSchemaValidation,
 			}),
 		);
-		assert.equal(later.compatibility.canView, false);
-		assert.equal(later.compatibility.canUpgrade, true);
-		later.upgradeSchema();
-		later.root.label = "Ready";
-		later.root.priority = "urgent";
-		later.root.estimatedHours = 4;
-		later.root.estimatedHours = undefined;
+		assert.equal(patchedOlder.compatibility.canView, false);
+		assert.equal(patchedOlder.compatibility.canUpgrade, true);
+		patchedOlder.upgradeSchema();
+		patchedOlder.root.label = "Ready";
+		patchedOlder.root.priority = "urgent";
+		patchedOlder.root.estimatedHours = 4;
+		patchedOlder.root.estimatedHours = undefined;
 		await provider.ensureSynchronized();
 
 		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(ExpectedLater));
@@ -771,8 +773,8 @@ describe("SharedTree", () => {
 			inspectingTree.kernel.checkout.storedSchema,
 			toInitialSchema(ExpectedLater),
 		);
-		assert.equal(later.compatibility.isEquivalent, true);
-		assert.equal(later.root.label, "Ready");
+		assert.equal(patchedOlder.compatibility.isEquivalent, true);
+		assert.equal(patchedOlder.root.label, "Ready");
 		assert.equal(inspecting.root.priority, "urgent");
 		assert.equal(inspecting.root.estimatedHours, undefined);
 		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");

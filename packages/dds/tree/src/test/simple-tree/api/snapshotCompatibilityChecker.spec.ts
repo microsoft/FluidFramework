@@ -379,49 +379,13 @@ describe("snapshotCompatibilityChecker", () => {
 			mode: "update",
 			snapshotDirectory: "taskPriorityRollout",
 		});
-		snapshotSchemaCompatibility({
-			schema: current,
-			fileSystem,
-			version: "2.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "taskPriorityRollout",
-		});
-	});
 
-	it("permits current clients to retain historical types that are now staged in a no-op upgrade", () => {
-		const factory = new SchemaFactoryBeta("taskPriorityRollback");
-
-		class Before extends factory.object("Task", {
-			title: factory.string,
-			priority: [factory.number, factory.string],
-		}) {}
-
-		// Pause the string-priority rollout for new documents while continuing to tolerate strings in existing documents.
-		class After extends factory.object("Task", {
-			title: factory.string,
-			priority: factory.types([factory.number, factory.staged(factory.string)]),
-		}) {}
-		const historical = new TreeViewConfiguration({ schema: Before });
-		const current = new TreeViewConfiguration({ schema: After });
-		const result = getCompatibility(current, historical);
-
-		// The current view supports historical string priorities, so composition retains them without enabling new staged locations.
-		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		// The later client must add string support to documents created before the rollout completed.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, false);
 
-		const [fileSystem] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "taskPriorityRollback",
-		});
-
-		// Reading historical documents must be sufficient both inside and outside the collaboration window.
+		// This forward rollout must pass in both snapshot modes, whether or not the older client is still required to collaborate.
 		for (const minVersionForCollaboration of ["1.0.0", "2.0.0"]) {
 			for (const mode of ["update", "assert"] as const) {
 				snapshotSchemaCompatibility({
@@ -430,7 +394,7 @@ describe("snapshotCompatibilityChecker", () => {
 					version: "2.0.0",
 					minVersionForCollaboration,
 					mode,
-					snapshotDirectory: "taskPriorityRollback",
+					snapshotDirectory: "taskPriorityRollout",
 				});
 			}
 		}

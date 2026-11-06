@@ -709,11 +709,7 @@ describe("checkSchemaCompatibility", () => {
 	});
 
 	describe("with staged allowed types", () => {
-		it("can retain an already-enabled type while enabling a different staged type", () => {
-			class Before extends factory.object("Task", {
-				priority: [factory.number, factory.string],
-			}) {}
-
+		it("lets an older client enable another staged type without removing types allowed by a newer document", () => {
 			const stagedString = factory.staged(factory.string);
 			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
 			assert(stringUpgrade !== undefined);
@@ -721,15 +717,19 @@ describe("checkSchemaCompatibility", () => {
 			const unassignedUpgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
 			assert(unassignedUpgrade !== undefined);
 
-			// Keep string priorities staged and add a separately staged `null` value for unassigned priorities.
-			class After extends factory.object("Task", {
+			class Before extends factory.object("Task", {
 				priority: factory.types([factory.number, stagedString, stagedUnassigned]),
 			}) {}
 
-			// Existing priorities can already be viewed. Enabling only `null` must retain strings and produce a real upgrade.
-			// Enablement status describes the current document, so only the historical string permission is reported.
+			// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
+			class After extends factory.object("Task", {
+				priority: [factory.number, factory.string],
+			}) {}
+
+			// The older view can read the newer document. Enabling only `null` must retain its strings and produce a real upgrade.
+			// Enablement status describes the document before the upgrade, so only its string permission is reported.
 			expectCompatibility(
-				{ view: After, stored: toInitialSchema(Before) },
+				{ view: Before, stored: toInitialSchema(After) },
 				{
 					canView: true,
 					canUpgrade: true,
@@ -741,7 +741,7 @@ describe("checkSchemaCompatibility", () => {
 		});
 
 		for (const location of ["root", "array", "map"] as const) {
-			it(`preserves already-enabled staged types without enabling them in new documents (${location})`, () => {
+			it(`preserves newer document types without enabling them in documents created by the older schema (${location})`, () => {
 				const priorities = [factory.number, factory.string] as const;
 				const stagedString = factory.staged(factory.string);
 				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
@@ -749,24 +749,24 @@ describe("checkSchemaCompatibility", () => {
 				const stagedPriorities = factory.types([factory.number, stagedString]);
 				const before: ImplicitFieldSchema =
 					location === "root"
-						? priorities
-						: location === "array"
-							? factory.array("Priorities", priorities)
-							: factory.map("Priorities", priorities);
-
-				// Leave string priorities staged in the view while historical documents already permit them.
-				const after: ImplicitFieldSchema =
-					location === "root"
 						? stagedPriorities
 						: location === "array"
 							? factory.array("Priorities", stagedPriorities)
 							: factory.map("Priorities", stagedPriorities);
-				const stored = toInitialSchema(before);
-				const fresh = toInitialSchema(after);
 
-				// The staged view can read historical priorities and request a no-op upgrade that retains strings.
+				// Fully enable string priorities in the later schema.
+				const after: ImplicitFieldSchema =
+					location === "root"
+						? priorities
+						: location === "array"
+							? factory.array("Priorities", priorities)
+							: factory.map("Priorities", priorities);
+				const stored = toInitialSchema(after);
+				const fresh = toInitialSchema(before);
+
+				// The older staged view can read the newer document and request a no-op upgrade that retains strings.
 				expectCompatibility(
-					{ view: after, stored },
+					{ view: before, stored },
 					{
 						canView: true,
 						canUpgrade: true,
@@ -776,22 +776,22 @@ describe("checkSchemaCompatibility", () => {
 					StagedSchemaUpgradePolicy.restrictive,
 				);
 
-				// The same view can use a fresh numeric-only document without enabling its staged string type.
+				// A document initialized by the older view is numeric-only; requesting an upgrade with that view keeps staging disabled.
 				expectCompatibility(
-					{ view: after, stored: fresh },
+					{ view: before, stored: fresh },
 					{ canView: true, canUpgrade: true, isEquivalent: true },
 					StagedSchemaUpgradePolicy.restrictive,
 				);
 
-				// A view that fully allows strings must upgrade the fresh document before it can write them.
+				// The later view must upgrade the older numeric-only document before it can write strings.
 				expectCompatibility(
-					{ view: before, stored: fresh },
+					{ view: after, stored: fresh },
 					{ canView: false, canUpgrade: true, isEquivalent: false },
 				);
 
 				// Explicitly enabling the staged token also permits adding strings; this is a real upgrade, not a no-op.
 				expectCompatibility(
-					{ view: after, stored: fresh },
+					{ view: before, stored: fresh },
 					{ canView: true, canUpgrade: true, isEquivalent: false },
 					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
 				);

@@ -208,11 +208,11 @@ Keep the existing optional-field scenarios and add these focused, documented app
 
 | Scenario | Expected result |
 | --- | --- |
-| An existing task allows numeric and string priorities; a view leaves strings staged with a restrictive policy. | Retain both allowed types. Viewing and upgrading are permitted; the upgrade is a no-op unless another change is requested. |
-| The same view also removes optional `notes` and adds optional `isApproved`. | Retain `notes` and both priority types, add `isApproved`, then support reads and writes through the view. |
+| An older schema stages string priorities; a later schema fully permits them. The older client opens a document created by the later schema with a restrictive policy. | Retain both allowed types. Viewing and upgrading are permitted; the upgrade is a no-op unless another change is requested. |
+| The later schema also retires optional `isApproved` and adds optional `notes`. The older client opens its document. | Retain `notes` and both priority types, restore `isApproved` for the older view, then support reads and writes through that view. |
 | A fresh task is initialized with numeric priority and a disabled staged string type. | Strings remain disallowed until the policy explicitly enables them. Preservation must not affect initialization. |
 | A shared staged token covers `primaryPriority` and `fallbackPriority`, but strings are stored only at the first location. | Preserve strings only at `primaryPriority`; report the token as partial. Explicitly enabling the token can add strings to `fallbackPriority`. |
-| Stored `estimatedHours` is optional, while the view declares it staged optional and the policy disables new optionality. | Retain its optional kind and support existing missing values. A fresh document under the restrictive policy still requires the field. |
+| An older schema stages optional `estimatedHours`; the later schema makes it fully optional. The older client opens a later document with a restrictive policy. | Retain its optional kind and support existing missing values. A fresh document created by the older schema under the restrictive policy still requires the field. |
 | One field is already optional and another required field shares its staged-optional token. | Preserve the first field's optionality without making the second optional until explicitly enabled. |
 | A retained allowed type is a recursive object type also declared by the view. | Include its required definitions and compose compatible changes without concealing an incompatible definition under the same stored identifier. |
 | Multiple views add distinct permissions that every participating view supports through ordinary or staged declarations. | Alternate permitted upgrades and edits without removing prior permissions. Once the selected additions are present, repeated upgrades are no-ops. |

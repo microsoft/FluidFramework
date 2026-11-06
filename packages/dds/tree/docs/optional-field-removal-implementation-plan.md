@@ -402,8 +402,8 @@ A current client that can neither view nor upgrade historical documents is rejec
 A historical client that can neither view nor upgrade current documents is rejected only within that window.
 
 Composition changes some of those flag results without changing this snapshot policy.
-In particular, the existing staged-priority rollback scenario must change from `canUpgrade: false` to a permitted no-op upgrade.
-Do not keep that scenario as evidence of a viewable but non-upgradeable schema after preservation becomes unconditional.
+In particular, an older client that stages string priorities can request a no-op upgrade of a newer document that fully permits them.
+This scenario is not evidence of a viewable but non-upgradeable schema after preservation becomes unconditional.
 Retain the `canView || canUpgrade` policy in both directions and continue rejecting incompatible views.
 
 ### 5.3 Preserve offline results and unrelated staging behavior
@@ -440,6 +440,12 @@ Add only the approved composition scenarios from the work plan and the focused c
 The work plan owns the [scenario coverage and read/write verification requirements][testing-requirements].
 Run the existing [user-story fixture][scenario-tests] as the acceptance suite.
 The sections below specify additional checks tied to the implementation, not a second user-story matrix.
+
+For staged-permission preservation tests, use `Before` for the earlier schema that stages a change and `After` for the later schema that fully enables it.
+Construct the stored schema or document with `After`, then open it or build its candidate with the older `Before` view.
+Describe the client roles explicitly; do not frame preservation as a new application version making previously enabled types staged.
+Combined scenarios may have the later version retire an optional field or add a new one; the older client then restores its own field while retaining fields and permissions from the newer document.
+Tests for genuinely new staged additions and intentional incompatible narrowing remain separate.
 
 ### 7.2 Target construction
 
