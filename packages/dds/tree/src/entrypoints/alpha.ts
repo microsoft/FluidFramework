@@ -307,6 +307,7 @@ export {
 	TreeArrayNodeAlpha, 
 	TreeBranchCommitMetadata, 
 	TreeBranchEvents, 
+	TreeBranchHandleAlpha, 
 	TreeBranchHistory, 
 	TreeCompressionStrategy, 
 	TreeContextAlpha, 

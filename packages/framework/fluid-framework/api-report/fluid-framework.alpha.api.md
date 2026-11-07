@@ -1969,6 +1969,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
+    // @deprecated
     readonly isEquivalent: boolean;
 }
 
@@ -2783,6 +2784,13 @@ export interface TreeBranchEventsBeta {
 }
 
 // @alpha @sealed
+export interface TreeBranchHandleAlpha extends IDisposable {
+    dispose(): void;
+    fork(): TreeBranchHandleAlpha;
+    viewWith<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
+}
+
+// @alpha @sealed
 export interface TreeBranchHistory {
     getHead(): TreeBranchCommitMetadata | undefined;
     readonly length: number;
@@ -3220,6 +3228,7 @@ export interface ViewableTree {
 export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
+    forkBranch(): TreeBranchHandleAlpha;
 }
 
 // @alpha

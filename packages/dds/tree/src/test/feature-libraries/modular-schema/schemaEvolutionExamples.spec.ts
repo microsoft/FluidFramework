@@ -103,26 +103,23 @@ describe("Schema Evolution Examples", () => {
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
 			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
-			assert.deepEqual(compat, {
-				canView: false,
-				canUpgrade: false,
-				isEquivalent: false,
-				discrepancies: [
-					{
-						mismatch: "allowedTypes",
-						location: "root",
-						view: ["test.Canvas"],
-						stored: [],
-					},
-					{
-						mismatch: "fieldKind",
-						location: "root",
-						view: "Value",
-						stored: "Forbidden",
-					},
-				],
-				enabledUpgrades: new Map(),
-			});
+			assert.equal(compat.canView, false);
+			assert.equal(compat.canUpgrade, false);
+			assert.deepEqual(compat.discrepancies, [
+				{
+					mismatch: "allowedTypes",
+					location: "root",
+					view: ["test.Canvas"],
+					stored: [],
+				},
+				{
+					mismatch: "fieldKind",
+					location: "root",
+					view: "Value",
+					stored: "Forbidden",
+				},
+			]);
+			assert.deepEqual(compat.enabledUpgrades, new Map());
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
@@ -183,14 +180,12 @@ describe("Schema Evolution Examples", () => {
 				),
 			];
 			assert.deepEqual(report, []);
+
 			// It is now possible to write our date into the document.
-			assert.deepEqual(compatNew, {
-				canView: true,
-				canUpgrade: true,
-				isEquivalent: true,
-				discrepancies: undefined,
-				enabledUpgrades: new Map(),
-			});
+			assert.equal(compatNew.canView, true);
+			assert.equal(compatNew.canUpgrade, true);
+			assert.equal(compatNew.discrepancies, undefined);
+			assert.deepEqual(compatNew.enabledUpgrades, new Map());
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
@@ -211,23 +206,20 @@ describe("Schema Evolution Examples", () => {
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat2, {
-				canView: false,
-				canUpgrade: true,
-				isEquivalent: false,
-				discrepancies: [
-					{
-						mismatch: "allowedTypes",
-						location: {
-							nodeType: "test.PositionedCanvasItem",
-							fieldKey: "content",
-						},
-						view: ["test.Counter"],
-						stored: [],
+			assert.equal(compat2.canView, false);
+			assert.equal(compat2.canUpgrade, true);
+			assert.deepEqual(compat2.discrepancies, [
+				{
+					mismatch: "allowedTypes",
+					location: {
+						nodeType: "test.PositionedCanvasItem",
+						fieldKey: "content",
 					},
-				],
-				enabledUpgrades: new Map(),
-			});
+					view: ["test.Counter"],
+					stored: [],
+				},
+			]);
+			assert.deepEqual(compat2.enabledUpgrades, new Map());
 
 			// This is the same case as above where we can choose to do a schema update if we want:
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem2));
@@ -235,13 +227,10 @@ describe("Schema Evolution Examples", () => {
 
 			// And recheck compat:
 			const compat3 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat3, {
-				canView: true,
-				canUpgrade: true,
-				isEquivalent: true,
-				discrepancies: undefined,
-				enabledUpgrades: new Map(),
-			});
+			assert.equal(compat3.canView, true);
+			assert.equal(compat3.canUpgrade, true);
+			assert.equal(compat3.discrepancies, undefined);
+			assert.deepEqual(compat3.enabledUpgrades, new Map());
 		}
 	});
 
@@ -922,7 +911,7 @@ describe("Schema Evolution Examples", () => {
 						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
 					);
 					assert.equal(reader.compatibility.canView, true);
-					assert.equal(reader.compatibility.isEquivalent, true);
+
 					assert.equal(provider.sequenceNumber, sequenceBefore);
 					expectSchemaEqual(readerTree.kernel.checkout.storedSchema, schemaBefore);
 
@@ -1078,7 +1067,7 @@ describe("Schema Evolution Examples", () => {
 					} else {
 						// Both rejected rows use a V1 reader against schema widened to V3.
 						// A V3 observer is therefore valid even if the document was created with V2.
-						assert.equal(reader.compatibility.isEquivalent, false);
+
 						const observer = documentTree.viewWith(
 							new TreeViewConfiguration({ schema: TaskV3 }),
 						);
@@ -1154,7 +1143,7 @@ describe("Schema Evolution Examples", () => {
 					);
 					assert.equal(reader.compatibility.canView, false);
 					assert.equal(reader.compatibility.canUpgrade, false);
-					assert.equal(reader.compatibility.isEquivalent, false);
+
 					reader.dispose();
 					// #endregion Step 2
 

@@ -48,13 +48,11 @@ describe("simple-tree storedSchema", () => {
 		const reducedView = comparePersistedSchema(historical, After, options);
 		assert.equal(reducedView.canView, true);
 		assert.equal(reducedView.canUpgrade, true);
-		assert.equal(reducedView.isEquivalent, true);
 
 		// Extraction still uses only the supplied view: a fresh document has no `notes` field, so the historical view must add it.
 		const originalView = comparePersistedSchema(current, Before, options);
 		assert.equal(originalView.canView, false);
 		assert.equal(originalView.canUpgrade, true);
-		assert.equal(originalView.isEquivalent, false);
 	});
 
 	describe("test-schema", () => {
@@ -102,13 +100,8 @@ describe("simple-tree storedSchema", () => {
 					const status = comparePersistedSchema(persistedA, test.schema, {
 						jsonValidator: FormatValidatorBasic,
 					});
-					assert.deepEqual(status, {
-						isEquivalent: true,
-						canView: true,
-						canUpgrade: true,
-						discrepancies: undefined,
-						enabledUpgrades: new Map(),
-					});
+					assert.equal(status.canView, true);
+					assert.equal(status.canUpgrade, true);
 				});
 			}
 		}

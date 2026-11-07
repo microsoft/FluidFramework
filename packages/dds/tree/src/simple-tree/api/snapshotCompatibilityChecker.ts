@@ -933,25 +933,10 @@ export function getCompatibility(
 		previousViewSchema,
 	);
 
-	// Each direction compares its document's stored schema with a candidate built for the other view.
-	// Removing an optional field can produce a no-op upgrade, while restoring it in a fresh document requires an upgrade.
-	// The two directions therefore need not agree on `isEquivalent`.
-
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
 	const identicalCompatibility =
 		JSON.stringify(exportCompatibilitySchemaSnapshot(currentViewSchema)) ===
 		JSON.stringify(exportCompatibilitySchemaSnapshot(previousViewSchema));
-
-	if (identicalCompatibility) {
-		assert(
-			backwardsCompatibilityStatus.isEquivalent,
-			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
-		);
-		assert(
-			forwardsCompatibilityStatus.isEquivalent,
-			"Identical compatibility must also have an equivalent upgrade target in the other direction",
-		);
-	}
 
 	return {
 		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,

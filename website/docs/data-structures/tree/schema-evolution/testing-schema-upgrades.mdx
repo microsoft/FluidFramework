@@ -152,7 +152,6 @@ it("staged schema is compatible with the original stored schema", () => {
     );
 
     assert.equal(view.compatibility.canView, true);
-    assert.equal(view.compatibility.isEquivalent, true);
 });
 ```
 
@@ -172,7 +171,7 @@ This is useful for verifying that each phase of your rollout maintains the expec
 Use an earlier schema that stages a type and a later schema that fully enables it.
 Create the document with the later schema, then open it with the earlier client.
 Check that the earlier client can read and edit the stored values and that a restrictive upgrade preserves them.
-If no other permissions are added, verify `isEquivalent: true` and that the upgrade is a no-op.
+If no other permissions are added, verify that the upgrade leaves the stored schema unchanged and emits no schema-change event or operation.
 
 Also test these combinations:
 

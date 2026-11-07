@@ -230,7 +230,9 @@ Use the shared target for:
 - `canUpgrade`: the composed target passes the existing stored-schema superset rules and supports read/write access through the requesting view.
 - `isEquivalent`: the view can already access the document, and the proposed upgrade target is equivalent to the document's current stored schema under the schema upgrade rules.
 
-Keep the `isEquivalent` name and update its public documentation to make these semantics explicit:
+The `isEquivalent` flag is deprecated upstream and retained for compatibility until removal.
+Keep its existing behavior covered by the dedicated deprecated-API tests, but do not use it in the new application scenarios.
+Its documented semantics remain:
 
 - The comparison is between the document's current stored schema and the composed target, including retained fields, allowed types, optionality, and the additions selected by the configured staged-upgrade policy.
 - Both must permit an upgrade to the other under the existing rules. The reverse check establishes equivalence; it does not perform a downgrade.
@@ -430,7 +432,9 @@ Six tests remain skipped and still fail when run:
 
 The skipped client-policy test previously expected a restrictive upgrade to discard an already-enabled type.
 That expectation is obsolete after composition.
-It now requests explicit enablement of a new staged type on a numeric-only document and expects a non-no-op candidate; it remains skipped because the configured policy is ignored.
+It now requests explicit enablement of optionality for a newly added field.
+Adding the field as required is unsafe, while adding it as optional permits an upgrade.
+This tests the configured policy through `canUpgrade` without relying on the deprecated `isEquivalent` flag; it remains skipped because the configured policy is ignored.
 No runtime or snapshot-format changes were made to resolve these remaining cases.
 
 ## 6. Unaffected code paths
@@ -444,8 +448,8 @@ These behaviors must remain unchanged, apart from removing obsolete references t
 - Unknown-field access, export, and clone semantics.
 - Schema-change concurrency, conflict resolution, and retry behavior.
 
-Renaming, replacing, or deprecating `isEquivalent` is outside this work.
-Only clarify its documentation and update its calculation to use the shared upgrade target.
+Preserve upstream's deprecation of `isEquivalent` while retaining its composed-target calculation for existing callers.
+New tests and document-loading guidance use `canView` and `canUpgrade`; no-op tests inspect stored schema, events, operations, and root identity directly.
 
 The feature boundaries and prerequisite safety rules remain in the [work plan][work-plan].
 Keep the existing optional-field user-story matrix.
@@ -614,7 +618,7 @@ Update this list after each implementation slice.
 
 Live integration validation, before the snapshot-policy follow-up: 1,233 tests passed across the integration and regression suites listed below, with seven pre-existing skipped snapshot tests unchanged.
 This included all 16 builder tests and all 36 user-story tests; the seven previously failing preservation scenarios pass.
-The no-op user-story helper also checks `isEquivalent`, in addition to its existing event, operation, and root-identity checks.
+The no-op user-story helper checks stored schema, events, operations, and root identity without relying on the deprecated `isEquivalent` flag.
 New tests cover retaining removed fields alongside already-enabled staged changes, retaining a node definition without enabling its staged use elsewhere, and directional snapshot and persisted-schema compatibility.
 Snapshot-policy follow-up validation: 228 tests pass across the snapshot, compatibility, persisted-schema, staged-upgrade, and user-story suites, with the same seven skipped tests unchanged.
 The rollback snapshot test now succeeds without changing its directional flags.

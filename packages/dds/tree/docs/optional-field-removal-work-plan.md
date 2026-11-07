@@ -115,15 +115,14 @@ For a field removal with no other schema change, the proposed result is:
 | --- | --- |
 | `canView` | `true` |
 | `canUpgrade` | `true` |
-| `isEquivalent` | `true` |
 | `upgradeSchema()` | No stored-schema change |
 
-Here, equivalence compares the existing stored schema with the target derived from both schemas and the configured staged-upgrade policy.
-It does not mean that a new document would receive the same schema.
+Verify no-op behavior through unchanged stored schema, events, and operations rather than the deprecated `isEquivalent` flag.
+A no-op upgrade does not mean that a new document would receive the same schema.
 
 `canUpgrade` means that the stored and view schemas can be composed into a target that preserves existing permissions and supports the requesting view.
 It does not ask whether the stored schema can be changed to match the view-only conversion.
-With stored `priority: number | string` and view `priority: number | staged(string)`, preservation alone must produce `canView: true`, `canUpgrade: true`, and `isEquivalent: true`.
+With stored `priority: number | string` and view `priority: number | staged(string)`, preservation alone must produce `canView: true` and `canUpgrade: true`.
 A no-op upgrade retains both types even when the policy does not enable new staged permissions.
 This remains true if the view also omits a stored optional field that is eligible for retention.
 
@@ -230,7 +229,7 @@ Update the following application programming interface (API) documentation:
 
 - [Object schema options](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/schemaFactoryOptions.ts#L14): explain field removal, retained data, and rollback.
 - [Upgrade operation](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L772): describe how the stored and view schemas and the configured staged-upgrade policy determine the composed target.
-- [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify `isEquivalent` and the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Keep the existing property name; renaming and deprecation are out of scope.
+- [Compatibility status](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/tree.ts#L1115): clarify the upgrade rules according to the implementation plan's [flag definitions][implementation-runtime]. Preserve upstream's `isEquivalent` deprecation and use `canView` and `canUpgrade` for document-loading guidance.
 - [Staged upgrade policy](https://github.com/microsoft/FluidFramework/blob/75902eb593f79625ac003c03dcb7e9d2f8f69497/packages/dds/tree/src/simple-tree/core/toStored.ts): remove `includeAlreadyEnabledUpgrades` and describe the remaining callbacks as controlling newly introduced permissions, not removal of stored permissions.
 - [Snapshot compatibility](https://github.com/microsoft/FluidFramework/blob/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7/packages/dds/tree/src/simple-tree/api/snapshotCompatibilityChecker.ts): explain directional results and accept direct viewing or a safe upgrade in both directions.
 

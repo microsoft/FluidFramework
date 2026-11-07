@@ -233,7 +233,7 @@ describe("staged allowed type upgrade", () => {
 		const viewMigrated = treeMigrated.viewWith(
 			new TreeViewConfiguration({ schema: fullyMigratedSchema }),
 		);
-		assert.equal(viewMigrated.compatibility.isEquivalent, true);
+		assert.equal(viewMigrated.compatibility.canView, true);
 		viewMigrated.upgradeSchema();
 		assert.equal(viewMigrated.root, "test");
 	});
@@ -260,7 +260,7 @@ describe("staged allowed type upgrade", () => {
 			new TreeViewConfigurationAlpha({ schema: schemaWithStagedType }),
 		);
 		assert.equal(viewDefault.compatibility.canUpgrade, true);
-		assert.equal(viewDefault.compatibility.isEquivalent, true);
+		assert.equal(viewDefault.compatibility.canView, true);
 
 		const sequenceNumber = provider.sequenceNumber;
 		viewDefault.upgradeSchema();
@@ -342,12 +342,9 @@ describe("staged allowed type upgrade", () => {
 			new TreeViewConfigurationAlpha({ schema: baseSchema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-			enabledUpgrades: new Map(),
-		});
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, true);
+		assert.deepEqual(compatibility.enabledUpgrades, new Map());
 
 		checkStagedRolloutCompatibility({
 			baseSchema,
@@ -497,7 +494,7 @@ describe("staged optional upgrade", () => {
 		const viewOptional = treeOptional.viewWith(
 			new TreeViewConfiguration({ schema: optionalSchema }),
 		);
-		assert.equal(viewOptional.compatibility.isEquivalent, true);
+		assert.equal(viewOptional.compatibility.canView, true);
 		viewOptional.upgradeSchema();
 		assert.equal(viewOptional.root, undefined);
 	});
@@ -528,7 +525,7 @@ describe("staged optional upgrade", () => {
 			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
 		);
 		assert.equal(viewStagedDefault.compatibility.canUpgrade, true);
-		assert.equal(viewStagedDefault.compatibility.isEquivalent, true);
+		assert.equal(viewStagedDefault.compatibility.canView, true);
 		const sequenceNumber = provider.sequenceNumber;
 		viewStagedDefault.upgradeSchema();
 		provider.synchronizeMessages();
@@ -672,7 +669,7 @@ describe("older clients retaining newer document types while enabling staged add
 
 		assert.equal(older.compatibility.canView, true);
 		assert.equal(older.compatibility.canUpgrade, true);
-		assert.equal(older.compatibility.isEquivalent, false);
+
 		older.upgradeSchema();
 		provider.synchronizeMessages();
 
@@ -684,7 +681,7 @@ describe("older clients retaining newer document types while enabling staged add
 		older.root.insertAtEnd("low", null);
 		provider.synchronizeMessages();
 		assert.deepEqual([...observer.root], ["high", 1, "low", null]);
-		assert.equal(observer.compatibility.isEquivalent, true);
+		assert.equal(observer.compatibility.canView, true);
 	});
 
 	it("preserves map entry types while enabling unassigned priorities", () => {
@@ -724,7 +721,7 @@ describe("older clients retaining newer document types while enabling staged add
 
 		assert.equal(older.compatibility.canView, true);
 		assert.equal(older.compatibility.canUpgrade, true);
-		assert.equal(older.compatibility.isEquivalent, false);
+
 		older.upgradeSchema();
 		provider.synchronizeMessages();
 
@@ -739,7 +736,7 @@ describe("older clients retaining newer document types while enabling staged add
 		assert.equal(observer.root.get("primary"), "low");
 		assert.equal(observer.root.get("fallback"), 1);
 		assert.equal(observer.root.get("unassigned"), null);
-		assert.equal(observer.compatibility.isEquivalent, true);
+		assert.equal(observer.compatibility.canView, true);
 	});
 });
 
@@ -786,7 +783,7 @@ describe("optional field removal during staged upgrades", () => {
 		older.upgradeSchema();
 		provider.synchronizeMessages();
 		expectSchemaEqual(treeBefore.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
-		assert.equal(older.compatibility.isEquivalent, true);
+		assert.equal(older.compatibility.canView, true);
 
 		// The older client uses the stored permissions and restored approval field; the newer client still sees its notes.
 		older.root.priority = "urgent";
@@ -929,7 +926,7 @@ describe("optional field removal during staged upgrades", () => {
 
 		// Despite its restrictive policy, the observer's candidate now preserves the remotely enabled permissions as a no-op.
 		assert.equal(observer.compatibility.canUpgrade, true);
-		assert.equal(observer.compatibility.isEquivalent, true);
+		assert.equal(observer.compatibility.canView, true);
 		const observerRoot = observer.root;
 		const sequenceAfterEnablement = provider.sequenceNumber;
 		let observerSchemaChanges = 0;
@@ -999,7 +996,7 @@ describe("optional field removal during staged upgrades", () => {
 		// Applying the candidate must preserve the old estimate while adding the new definition's approval field.
 		expectSchemaEqual(treeAfter.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
 		assert.equal(before.root.detailedEstimate?.hours, 4);
-		assert.equal(after.compatibility.isEquivalent, true);
+		assert.equal(after.compatibility.canView, true);
 
 		// Retaining a definition is not permission to use it at the staged location.
 		assert.equal(after.isStagedUpgradeEnabled(upgrade), "disabled");
@@ -1026,25 +1023,24 @@ function checkStagedRolloutCompatibility({
 	const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(baseSchema));
 	const expectCompatibility = (
 		schema: ImplicitFieldSchema,
-		expected: Omit<
-			ReturnType<typeof checkSchemaCompatibility>,
-			"enabledUpgrades" | "discrepancies"
-		> & {
+		expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
 			enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 		},
 	): void => {
-		const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+		const { canView, canUpgrade, enabledUpgrades } = checkSchemaCompatibility(
 			new TreeViewConfigurationAlpha({ schema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
+		assert.deepEqual(
+			{ canView, canUpgrade, enabledUpgrades },
+			{ enabledUpgrades: new Map(), ...expected },
+		);
 	};
 
-	// baseSchema is equivalent to the initial stored schema.
+	// baseSchema can view the initial stored schema.
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// stagedSchema can view baseSchema and its default upgrade remains a no-op because the
@@ -1052,24 +1048,20 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedSchema).rootFieldSchema));
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// fullyMigratedSchema represents the code-cleanup state where the staged marker has been removed.
@@ -1077,7 +1069,6 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(
@@ -1093,19 +1084,16 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(baseSchema, {
 		canView: false,
 		canUpgrade: false,
-		isEquivalent: false,
 	});
 
 	// The staged view preserves the already-enabled permissions, so its upgrade is now a no-op.
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 		enabledUpgrades: new Map([[upgrade, "enabled"]]),
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 }
