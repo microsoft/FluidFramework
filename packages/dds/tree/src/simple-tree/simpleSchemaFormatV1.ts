@@ -11,12 +11,10 @@
  * It may not include some details which impact maintenance of application enforced invariants (like persisted metadata or logic in view schema).
  */
 
-import * as Type from "typebox/type";
-import type { TObjectOptions, Static } from "typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
-import { stringKeyRecord } from "../util/index.js";
-
-const noAdditionalProps: TObjectOptions = { additionalProperties: false };
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 /**
  * The format version for the schema.
@@ -44,7 +42,10 @@ export type SimpleAllowedTypeAttributesFormat = Static<
  * A set of allowed types in the simple schema format.
  * The keys are the type identifiers, and the values are their attributes.
  */
-export const SimpleAllowedTypesFormat = stringKeyRecord(SimpleAllowedTypeAttributesFormat);
+export const SimpleAllowedTypesFormat = Type.Record(
+	Type.String(),
+	SimpleAllowedTypeAttributesFormat,
+);
 export type SimpleAllowedTypesFormat = Static<typeof SimpleAllowedTypesFormat>;
 
 /**
@@ -129,7 +130,10 @@ export type SimpleLeafNodeSchemaFormat = Static<typeof SimpleLeafNodeSchemaForma
 /**
  * Persisted format for the field schemas of an object node in the simple schema format.
  */
-export const SimpleObjectFieldSchemasFormat = stringKeyRecord(SimpleObjectFieldSchemaFormat);
+export const SimpleObjectFieldSchemasFormat = Type.Record(
+	Type.String(),
+	SimpleObjectFieldSchemaFormat,
+);
 export type SimpleObjectFieldSchemasFormat = Static<typeof SimpleObjectFieldSchemasFormat>;
 
 /**
@@ -163,7 +167,10 @@ export type SimpleNodeSchemaUnionFormat = Static<typeof SimpleNodeSchemaUnionFor
 /**
  * Helper type for the schema definitions map in the persisted format.
  */
-export const SimpleSchemaDefinitionsFormat = stringKeyRecord(SimpleNodeSchemaUnionFormat);
+export const SimpleSchemaDefinitionsFormat = Type.Record(
+	Type.String(),
+	SimpleNodeSchemaUnionFormat,
+);
 export type SimpleSchemaDefinitionsFormat = Static<typeof SimpleSchemaDefinitionsFormat>;
 
 /**

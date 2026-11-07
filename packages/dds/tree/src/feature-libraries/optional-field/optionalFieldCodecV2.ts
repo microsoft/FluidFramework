@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TAnySchema } from "@sinclair/typebox";
+
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
 	RevisionTagSchema,
@@ -54,8 +56,8 @@ export function makeOptionalFieldCodec(
 	>,
 ): IJsonCodec<
 	OptionalChangeset,
-	EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
-	EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
+	EncodedOptionalChangeset<TAnySchema>,
+	EncodedOptionalChangeset<TAnySchema>,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
@@ -64,7 +66,7 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			const encoded: EncodedOptionalChangeset<typeof EncodedNodeChangeset> = {};
+			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.moves.length > 0) {
 				encoded.m = change.moves.map(([src, dst]) => [
@@ -97,7 +99,7 @@ export function makeOptionalFieldCodec(
 		},
 
 		decode: (
-			encoded: EncodedOptionalChangeset<typeof EncodedNodeChangeset>,
+			encoded: EncodedOptionalChangeset<TAnySchema>,
 			context: FieldChangeDecodingContext,
 		) => {
 			const decoded: Mutable<OptionalChangeset> = {

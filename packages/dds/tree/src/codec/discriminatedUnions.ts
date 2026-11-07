@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { TObjectOptions } from "typebox";
+import type { ObjectOptions } from "@sinclair/typebox";
 
 import { type _InlineTrick, objectToMap } from "../util/index.js";
 
@@ -19,7 +19,7 @@ import { type _InlineTrick, objectToMap } from "../util/index.js";
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
-export const unionOptions: TObjectOptions = {
+export const unionOptions: ObjectOptions = {
 	additionalProperties: false,
 	minProperties: 1,
 	maxProperties: 1,

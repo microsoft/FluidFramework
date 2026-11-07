@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox/type";
-import type { Static, TSchema } from "typebox";
-
-import { typeboxInterface } from "../../../../util/index.js";
+import * as Type from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 
 import type { FieldBatchFormatVersion } from "./versions.js";
 
@@ -52,7 +50,7 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
-	typeboxInterface(
+	Type.Composite(
 		[
 			EncodedFieldBatchBase,
 			Type.Object({
@@ -60,7 +58,6 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 				shapes: Type.Array(shape),
 			}),
 		],
-		{},
 		{ additionalProperties: false },
 	);
 

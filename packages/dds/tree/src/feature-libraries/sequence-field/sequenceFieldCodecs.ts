@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	eraseEncodedType,
-	type JsonCodecPart,
-	makeCodecFamily,
-	type ICodecFamily,
-} from "../../codec/index.js";
+import { type JsonCodecPart, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	RevisionTag,
@@ -31,6 +26,6 @@ export const sequenceFieldChangeCodecFactory = (
 	>,
 ): ICodecFamily<MarkList, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
 	makeCodecFamily<Changeset, FieldChangeEncodingContext, FieldChangeDecodingContext>([
-		[2, eraseEncodedType(makeV2Codec(revisionTagCodec))],
-		[3, eraseEncodedType(makeV3Codec(revisionTagCodec))],
+		[2, makeV2Codec(revisionTagCodec)],
+		[3, makeV3Codec(revisionTagCodec)],
 	]);

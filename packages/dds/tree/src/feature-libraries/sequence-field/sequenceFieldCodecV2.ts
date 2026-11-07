@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import {
 	DiscriminatedUnionDispatcher,
@@ -18,7 +19,7 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import { type Mutable, brand } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
@@ -269,19 +270,23 @@ export function makeV2Codec(
 	>,
 ): IJsonCodec<
 	Changeset,
-	Encoded.Changeset<typeof EncodedNodeChangeset>,
-	Encoded.Changeset<typeof EncodedNodeChangeset>,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
 	const { markEffectCodec, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
-	type NodeChangeSchema = typeof EncodedNodeChangeset;
+	/**
+	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
+	 * to be in terms of the schema rather than the concrete type of the node change.
+	 */
+	type NodeChangeSchema = TAnySchema;
 
 	return {
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): Encoded.Changeset<NodeChangeSchema> => {
+		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
 				const encodedMark: Encoded.Mark<NodeChangeSchema> = {

@@ -3,16 +3,12 @@
     "version": 1,
     "minVersionForCollab": "2.0.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "version",
-        "data",
-        "maxId"
-      ],
       "properties": {
         "version": {
-          "type": "number",
-          "const": 1
+          "const": 1,
+          "type": "number"
         },
         "data": {
           "type": "array",
@@ -20,13 +16,12 @@
             "anyOf": [
               {
                 "type": "array",
-                "additionalItems": false,
                 "items": [
                   {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "const": "root"
+                        "const": "root",
+                        "type": "string"
                       },
                       {
                         "type": "number"
@@ -37,31 +32,33 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "type": "integer"
                         },
                         {
-                          "type": "integer",
-                          "minimum": -1
+                          "minimum": -1,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   }
                 ],
-                "minItems": 2
+                "additionalItems": false,
+                "minItems": 2,
+                "maxItems": 2
               },
               {
                 "type": "array",
-                "additionalItems": false,
                 "items": [
                   {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "const": "root"
+                        "const": "root",
+                        "type": "string"
                       },
                       {
                         "type": "number"
@@ -72,37 +69,39 @@
                     "type": "integer"
                   },
                   {
-                    "type": "integer",
-                    "minimum": -1
+                    "minimum": -1,
+                    "type": "integer"
                   }
                 ],
-                "minItems": 3
+                "additionalItems": false,
+                "minItems": 3,
+                "maxItems": 3
               }
             ]
           }
         },
         "maxId": {
-          "type": "integer",
-          "minimum": -1
+          "minimum": -1,
+          "type": "integer"
         }
       },
-      "additionalProperties": false
+      "required": [
+        "version",
+        "data",
+        "maxId"
+      ]
     }
   },
   {
     "version": 2,
     "minVersionForCollab": "2.52.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "version",
-        "data",
-        "maxId"
-      ],
       "properties": {
         "version": {
-          "type": "number",
-          "const": 2
+          "const": 2,
+          "type": "number"
         },
         "data": {
           "type": "array",
@@ -110,15 +109,14 @@
             "anyOf": [
               {
                 "type": "array",
-                "additionalItems": false,
                 "items": [
                   {
                     "anyOf": [
                       {
                         "anyOf": [
                           {
-                            "type": "string",
-                            "const": "root"
+                            "const": "root",
+                            "type": "string"
                           },
                           {
                             "type": "number"
@@ -134,33 +132,35 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "type": "integer"
                         },
                         {
-                          "type": "integer",
-                          "minimum": -1
+                          "minimum": -1,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   }
                 ],
-                "minItems": 2
+                "additionalItems": false,
+                "minItems": 2,
+                "maxItems": 2
               },
               {
                 "type": "array",
-                "additionalItems": false,
                 "items": [
                   {
                     "anyOf": [
                       {
                         "anyOf": [
                           {
-                            "type": "string",
-                            "const": "root"
+                            "const": "root",
+                            "type": "string"
                           },
                           {
                             "type": "number"
@@ -176,21 +176,27 @@
                     "type": "integer"
                   },
                   {
-                    "type": "integer",
-                    "minimum": -1
+                    "minimum": -1,
+                    "type": "integer"
                   }
                 ],
-                "minItems": 3
+                "additionalItems": false,
+                "minItems": 3,
+                "maxItems": 3
               }
             ]
           }
         },
         "maxId": {
-          "type": "integer",
-          "minimum": -1
+          "minimum": -1,
+          "type": "integer"
         }
       },
-      "additionalProperties": false
+      "required": [
+        "version",
+        "data",
+        "maxId"
+      ]
     }
   }
 ]
