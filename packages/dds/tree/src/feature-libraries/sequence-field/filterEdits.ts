@@ -10,14 +10,9 @@ import {
 } from "../modular-schema/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { NoopMarkType, type Changeset, type Mark } from "./types.js";
-import {
-	getDetachedNodeId,
-	getDetachOutputCellId,
-	getOutputCellId,
-	omitMarkEffect,
-} from "./utils.js";
+import { getAttachedRootId, getDetachedRootId, omitMarkEffect } from "./utils.js";
 import { MarkQueueBase } from "./markQueue.js";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 export function filterEdits(
 	change: Changeset,
@@ -51,47 +46,15 @@ function filterMark(
 ): Mark {
 	const type = mark.type;
 	switch (type) {
-		case "Insert":
-		case "MoveIn": {
-			if (mark.cellId === undefined) {
-				return preserveOtherEdits ? mark : omitMarkEffect(mark);
-			}
-
-			const attachId =
-				mark.type === "MoveIn" ? { revision: mark.revision, localId: mark.id } : mark.cellId;
-
-			const endpoint = mark.type === "MoveIn" ? mark.finalEndpoint : undefined;
-			const result = filterAttach(attachId, mark.count, undefined, endpoint);
+		case "Attach": {
+			const attachId = getAttachedRootId(mark);
+			const result = filterAttach(attachId, mark.count);
 
 			let filtered: Mark;
 			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
-					filtered = mark;
-					break;
-				}
-				case EditFilterStatus.PreserveWithoutMove: {
-					// KLUDGE: PreserveWithoutMove requires us to return a mark which attaches the node
-					// using the detach ID of the move (the endpoint ID).
-					// Insert marks use the cell ID as the attach ID, so we must change the cell ID here.
-					// This could be a problem if there were references to the old cell ID outside this changeset,
-					// but PreserveWithoutMove is only used for transaction minimization, where that is not a problem.
-					const newCellId = result.value.newAttachId ??
-						endpoint ?? {
-							revision: mark.revision,
-							localId: mark.id,
-						};
-					filtered = {
-						type: "Insert",
-						count: result.length,
-						cellId: newCellId,
-						revision: mark.revision,
-						id: mark.id,
-					};
-
-					if (result.value.nodeId !== undefined) {
-						filtered.changes = result.value.nodeId;
-					}
-
+					filtered =
+						result.value.convertFromMove === true ? { ...mark, cellId: attachId } : mark;
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -105,31 +68,14 @@ function filterMark(
 
 			return { ...filtered, count: result.length };
 		}
-		case "Remove":
-		case "MoveOut": {
-			const detachId = getDetachedNodeId(mark);
-			const endpoint = mark.type === "MoveOut" ? mark.finalEndpoint : undefined;
-			const result = filterDetach(detachId, mark.count, mark.cellId, endpoint);
+		case "Detach": {
+			const detachId = getDetachedRootId(mark);
+			const result = filterDetach(detachId, mark.count);
 
 			let filtered: Mark;
 			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
-					break;
-				}
-				case EditFilterStatus.PreserveWithoutMove: {
-					const outputCellId = getDetachOutputCellId(mark);
-					filtered = {
-						type: "Remove",
-						count: mark.count,
-						revision: outputCellId.revision,
-						id: outputCellId.localId,
-					};
-
-					if (mark.changes !== undefined) {
-						filtered.changes = mark.changes;
-					}
-
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -137,7 +83,6 @@ function filterMark(
 					if (result.value.shouldRemoveChild === true) {
 						delete filtered.changes;
 					}
-
 					break;
 				}
 				default: {
@@ -146,28 +91,7 @@ function filterMark(
 			}
 			return { ...filtered, count: result.length };
 		}
-		case "AttachAndDetach": {
-			assert(
-				mark.attach.type === "MoveIn",
-				0xd3c /* AttachAndDetach marks in changesets should always represent MoveIn + Remove */,
-			);
 
-			if (mark.cellId === undefined) {
-				return preserveOtherEdits ? mark : omitMarkEffect(mark);
-			}
-
-			const result = filterAttach(
-				{ revision: mark.attach.revision, localId: mark.attach.id },
-				mark.count,
-				getOutputCellId(mark),
-				mark.attach.finalEndpoint,
-			);
-
-			const filtered =
-				result.value.action === EditFilterStatus.Preserve ? mark : omitMarkEffect(mark);
-
-			return { ...filtered, count: result.length };
-		}
 		case NoopMarkType:
 		case "Rename": {
 			return preserveOtherEdits ? mark : omitMarkEffect(mark);
