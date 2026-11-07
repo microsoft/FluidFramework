@@ -3,32 +3,28 @@
     "version": 1,
     "minVersionForCollab": "2.0.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "version",
-        "nodes",
-        "root"
-      ],
       "properties": {
         "version": {
-          "type": "number",
-          "const": 1
+          "const": 1,
+          "type": "number"
         },
         "nodes": {
           "type": "object",
           "patternProperties": {
-            "^.*$": {
+            "^(.*)$": {
+              "additionalProperties": false,
+              "minProperties": 1,
+              "maxProperties": 1,
               "type": "object",
               "properties": {
                 "object": {
                   "type": "object",
                   "patternProperties": {
-                    "^.*$": {
+                    "^(.*)$": {
+                      "additionalProperties": false,
                       "type": "object",
-                      "required": [
-                        "kind",
-                        "types"
-                      ],
                       "properties": {
                         "kind": {
                           "type": "string"
@@ -40,16 +36,16 @@
                           }
                         }
                       },
-                      "additionalProperties": false
+                      "required": [
+                        "kind",
+                        "types"
+                      ]
                     }
                   }
                 },
                 "map": {
+                  "additionalProperties": false,
                   "type": "object",
-                  "required": [
-                    "kind",
-                    "types"
-                  ],
                   "properties": {
                     "kind": {
                       "type": "string"
@@ -61,30 +57,42 @@
                       }
                     }
                   },
-                  "additionalProperties": false
+                  "required": [
+                    "kind",
+                    "types"
+                  ]
                 },
                 "leaf": {
-                  "enum": [
-                    0,
-                    1,
-                    2,
-                    3,
-                    4
+                  "anyOf": [
+                    {
+                      "const": 0,
+                      "type": "number"
+                    },
+                    {
+                      "const": 1,
+                      "type": "number"
+                    },
+                    {
+                      "const": 2,
+                      "type": "number"
+                    },
+                    {
+                      "const": 3,
+                      "type": "number"
+                    },
+                    {
+                      "const": 4,
+                      "type": "number"
+                    }
                   ]
                 }
-              },
-              "additionalProperties": false,
-              "minProperties": 1,
-              "maxProperties": 1
+              }
             }
           }
         },
         "root": {
+          "additionalProperties": false,
           "type": "object",
-          "required": [
-            "kind",
-            "types"
-          ],
           "properties": {
             "kind": {
               "type": "string"
@@ -96,48 +104,49 @@
               }
             }
           },
-          "additionalProperties": false
+          "required": [
+            "kind",
+            "types"
+          ]
         }
       },
-      "additionalProperties": false
+      "required": [
+        "version",
+        "nodes",
+        "root"
+      ]
     }
   },
   {
     "version": 2,
     "minVersionForCollab": "2.43.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "version",
-        "nodes",
-        "root"
-      ],
       "properties": {
         "version": {
-          "type": "number",
-          "const": 2
+          "const": 2,
+          "type": "number"
         },
         "nodes": {
           "type": "object",
           "patternProperties": {
-            "^.*$": {
+            "^(.*)$": {
+              "additionalProperties": false,
               "type": "object",
-              "required": [
-                "kind"
-              ],
               "properties": {
                 "kind": {
+                  "additionalProperties": false,
+                  "minProperties": 1,
+                  "maxProperties": 1,
                   "type": "object",
                   "properties": {
                     "object": {
                       "type": "object",
                       "patternProperties": {
-                        "^.*$": {
+                        "^(.*)$": {
+                          "additionalProperties": false,
                           "type": "object",
-                          "required": [
-                            "kind",
-                            "types"
-                          ],
                           "properties": {
                             "kind": {
                               "type": "string"
@@ -151,20 +160,20 @@
                             "metadata": {
                               "type": "object",
                               "patternProperties": {
-                                "^.*$": {}
+                                "^(.*)$": {}
                               }
                             }
                           },
-                          "additionalProperties": false
+                          "required": [
+                            "kind",
+                            "types"
+                          ]
                         }
                       }
                     },
                     "map": {
+                      "additionalProperties": false,
                       "type": "object",
-                      "required": [
-                        "kind",
-                        "types"
-                      ],
                       "properties": {
                         "kind": {
                           "type": "string"
@@ -178,43 +187,57 @@
                         "metadata": {
                           "type": "object",
                           "patternProperties": {
-                            "^.*$": {}
+                            "^(.*)$": {}
                           }
                         }
                       },
-                      "additionalProperties": false
+                      "required": [
+                        "kind",
+                        "types"
+                      ]
                     },
                     "leaf": {
-                      "enum": [
-                        0,
-                        1,
-                        2,
-                        3,
-                        4
+                      "anyOf": [
+                        {
+                          "const": 0,
+                          "type": "number"
+                        },
+                        {
+                          "const": 1,
+                          "type": "number"
+                        },
+                        {
+                          "const": 2,
+                          "type": "number"
+                        },
+                        {
+                          "const": 3,
+                          "type": "number"
+                        },
+                        {
+                          "const": 4,
+                          "type": "number"
+                        }
                       ]
                     }
-                  },
-                  "additionalProperties": false,
-                  "minProperties": 1,
-                  "maxProperties": 1
+                  }
                 },
                 "metadata": {
                   "type": "object",
                   "patternProperties": {
-                    "^.*$": {}
+                    "^(.*)$": {}
                   }
                 }
               },
-              "additionalProperties": false
+              "required": [
+                "kind"
+              ]
             }
           }
         },
         "root": {
+          "additionalProperties": false,
           "type": "object",
-          "required": [
-            "kind",
-            "types"
-          ],
           "properties": {
             "kind": {
               "type": "string"
@@ -228,14 +251,21 @@
             "metadata": {
               "type": "object",
               "patternProperties": {
-                "^.*$": {}
+                "^(.*)$": {}
               }
             }
           },
-          "additionalProperties": false
+          "required": [
+            "kind",
+            "types"
+          ]
         }
       },
-      "additionalProperties": false
+      "required": [
+        "version",
+        "nodes",
+        "root"
+      ]
     }
   }
 ]

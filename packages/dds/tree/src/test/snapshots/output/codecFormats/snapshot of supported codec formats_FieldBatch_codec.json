@@ -3,13 +3,8 @@
     "version": 1,
     "minVersionForCollab": "2.0.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "identifiers",
-        "data",
-        "version",
-        "shapes"
-      ],
       "properties": {
         "identifiers": {
           "type": "array",
@@ -25,37 +20,41 @@
           }
         },
         "version": {
-          "type": "number",
-          "const": 1
+          "const": 1,
+          "type": "number"
         },
         "shapes": {
           "type": "array",
           "items": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
             "type": "object",
             "properties": {
               "a": {
-                "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "type": "integer"
               },
               "b": {
+                "additionalProperties": false,
                 "type": "object",
+                "properties": {
+                  "length": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "shape": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
                 "required": [
                   "length",
                   "shape"
-                ],
-                "properties": {
-                  "length": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "shape": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "additionalProperties": false
+                ]
               },
               "c": {
+                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "type": {
@@ -64,8 +63,8 @@
                         "type": "string"
                       },
                       {
-                        "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "type": "integer"
                       }
                     ]
                   },
@@ -75,15 +74,14 @@
                         "type": "boolean"
                       },
                       {
-                        "type": "array",
-                        "items": {},
                         "minItems": 1,
-                        "maxItems": 1
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
                       },
                       {
-                        "enum": [
-                          0
-                        ]
+                        "const": 0,
+                        "type": "number"
                       }
                     ]
                   },
@@ -91,7 +89,6 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -99,54 +96,52 @@
                               "type": "string"
                             },
                             {
-                              "type": "integer",
-                              "minimum": 0
+                              "minimum": 0,
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "type": "integer",
-                          "minimum": 0
+                          "minimum": 0,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   },
                   "extraFields": {
-                    "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "type": "integer"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "d": {
-                "type": "number",
-                "const": 0
+                "const": 0,
+                "type": "number"
               },
               "e": {
                 "not": {}
               }
-            },
-            "additionalProperties": false,
-            "minProperties": 1,
-            "maxProperties": 1
+            }
           }
         }
       },
-      "additionalProperties": false
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ]
     }
   },
   {
     "version": 2,
     "minVersionForCollab": "2.73.0",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "identifiers",
-        "data",
-        "version",
-        "shapes"
-      ],
       "properties": {
         "identifiers": {
           "type": "array",
@@ -162,37 +157,41 @@
           }
         },
         "version": {
-          "type": "number",
-          "const": 2
+          "const": 2,
+          "type": "number"
         },
         "shapes": {
           "type": "array",
           "items": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
             "type": "object",
             "properties": {
               "a": {
-                "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "type": "integer"
               },
               "b": {
+                "additionalProperties": false,
                 "type": "object",
+                "properties": {
+                  "length": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "shape": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
                 "required": [
                   "length",
                   "shape"
-                ],
-                "properties": {
-                  "length": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "shape": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "additionalProperties": false
+                ]
               },
               "c": {
+                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "type": {
@@ -201,8 +200,8 @@
                         "type": "string"
                       },
                       {
-                        "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "type": "integer"
                       }
                     ]
                   },
@@ -212,15 +211,14 @@
                         "type": "boolean"
                       },
                       {
-                        "type": "array",
-                        "items": {},
                         "minItems": 1,
-                        "maxItems": 1
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
                       },
                       {
-                        "enum": [
-                          0
-                        ]
+                        "const": 0,
+                        "type": "number"
                       }
                     ]
                   },
@@ -228,7 +226,6 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -236,57 +233,55 @@
                               "type": "string"
                             },
                             {
-                              "type": "integer",
-                              "minimum": 0
+                              "minimum": 0,
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "type": "integer",
-                          "minimum": 0
+                          "minimum": 0,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   },
                   "extraFields": {
-                    "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "type": "integer"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "d": {
-                "type": "number",
-                "const": 0
+                "const": 0,
+                "type": "number"
               },
               "e": {
-                "type": "number",
-                "const": 0
+                "const": 0,
+                "type": "number"
               },
               "f": {
                 "not": {}
               }
-            },
-            "additionalProperties": false,
-            "minProperties": 1,
-            "maxProperties": 1
+            }
           }
         }
       },
-      "additionalProperties": false
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ]
     }
   },
   {
     "version": "text",
     "schema": {
+      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "identifiers",
-        "data",
-        "version",
-        "shapes"
-      ],
       "properties": {
         "identifiers": {
           "type": "array",
@@ -302,37 +297,41 @@
           }
         },
         "version": {
-          "type": "string",
-          "const": "text"
+          "const": "text",
+          "type": "string"
         },
         "shapes": {
           "type": "array",
           "items": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
             "type": "object",
             "properties": {
               "a": {
-                "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "type": "integer"
               },
               "b": {
+                "additionalProperties": false,
                 "type": "object",
+                "properties": {
+                  "length": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "shape": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
                 "required": [
                   "length",
                   "shape"
-                ],
-                "properties": {
-                  "length": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "shape": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "additionalProperties": false
+                ]
               },
               "c": {
+                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "type": {
@@ -341,8 +340,8 @@
                         "type": "string"
                       },
                       {
-                        "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "type": "integer"
                       }
                     ]
                   },
@@ -352,15 +351,14 @@
                         "type": "boolean"
                       },
                       {
-                        "type": "array",
-                        "items": {},
                         "minItems": 1,
-                        "maxItems": 1
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
                       },
                       {
-                        "enum": [
-                          0
-                        ]
+                        "const": 0,
+                        "type": "number"
                       }
                     ]
                   },
@@ -368,7 +366,6 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -376,49 +373,47 @@
                               "type": "string"
                             },
                             {
-                              "type": "integer",
-                              "minimum": 0
+                              "minimum": 0,
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "type": "integer",
-                          "minimum": 0
+                          "minimum": 0,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   },
                   "extraFields": {
-                    "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "type": "integer"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "d": {
-                "type": "number",
-                "const": 0
+                "const": 0,
+                "type": "number"
               },
               "e": {
-                "type": "number",
-                "const": 0
+                "const": 0,
+                "type": "number"
               },
               "f": {
+                "additionalProperties": false,
                 "type": "object",
-                "required": [
-                  "base"
-                ],
                 "properties": {
                   "base": {
-                    "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "type": "integer"
                   },
                   "fields": {
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -426,17 +421,19 @@
                               "type": "string"
                             },
                             {
-                              "type": "integer",
-                              "minimum": 0
+                              "minimum": 0,
+                              "type": "integer"
                             }
                           ]
                         },
                         {
-                          "type": "integer",
-                          "minimum": 0
+                          "minimum": 0,
+                          "type": "integer"
                         }
                       ],
-                      "minItems": 2
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
                   },
                   "value": {
@@ -447,15 +444,14 @@
                             "type": "boolean"
                           },
                           {
-                            "type": "array",
-                            "items": {},
                             "minItems": 1,
-                            "maxItems": 1
+                            "maxItems": 1,
+                            "type": "array",
+                            "items": {}
                           },
                           {
-                            "enum": [
-                              0
-                            ]
+                            "const": 0,
+                            "type": "number"
                           }
                         ]
                       },
@@ -467,8 +463,8 @@
                   "extraFields": {
                     "anyOf": [
                       {
-                        "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -476,16 +472,20 @@
                     ]
                   }
                 },
-                "additionalProperties": false
+                "required": [
+                  "base"
+                ]
               }
-            },
-            "additionalProperties": false,
-            "minProperties": 1,
-            "maxProperties": 1
+            }
           }
         }
       },
-      "additionalProperties": false
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ]
     }
   }
 ]

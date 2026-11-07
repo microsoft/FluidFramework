@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox/type";
-import type { TObjectOptions, Static, TSchema } from "typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { typeboxInterface } from "../../util/index.js";
 
 import {
 	CellId,
@@ -16,7 +15,7 @@ import {
 	MarkEffect as MarkEffectV2,
 } from "./formatV2.js";
 
-const noAdditionalProps: TObjectOptions = { additionalProperties: false };
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 const Rename = Type.Object(
 	{
@@ -25,9 +24,8 @@ const Rename = Type.Object(
 	noAdditionalProps,
 );
 
-const MarkEffect = typeboxInterface(
+const MarkEffect = Type.Composite(
 	[MarkEffectV2, Type.Object({ rename: Type.Optional(Rename) })],
-	{},
 	unionOptions,
 );
 

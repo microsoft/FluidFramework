@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox/type";
-import type { TObjectOptions, Static } from "typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
 import { SchemaFormatVersion, schemaFormatV1 } from "../../core/index.js";
-import { stringKeyRecord } from "../../util/index.js";
 
-const noAdditionalProps: TObjectOptions = { additionalProperties: false };
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 /**
  * Format for encoding as json.
@@ -24,7 +23,7 @@ const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 export const Format = Type.Object(
 	{
 		version: Type.Literal(SchemaFormatVersion.v1),
-		nodes: stringKeyRecord(schemaFormatV1.TreeNodeSchemaDataFormat),
+		nodes: Type.Record(Type.String(), schemaFormatV1.TreeNodeSchemaDataFormat),
 		root: schemaFormatV1.FieldSchemaFormat,
 	},
 	noAdditionalProps,

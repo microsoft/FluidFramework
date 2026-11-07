@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox/type";
-import type { TObjectOptions, Static, TSchema } from "typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
-import { typeboxInterface } from "../../util/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
 export enum DetachIdOverrideType {
@@ -32,7 +31,7 @@ export enum DetachIdOverrideType {
 	Redetach = 1,
 }
 
-const noAdditionalProps: TObjectOptions = { additionalProperties: false };
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 const CellCount = Type.Integer({ minimum: 1 });
 
@@ -52,7 +51,7 @@ const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)
 
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
-const CellId = typeboxInterface(
+const CellId = Type.Composite(
 	[
 		HasLineage,
 		Type.Object({
@@ -60,24 +59,20 @@ const CellId = typeboxInterface(
 			adjacentCells: Type.Optional(Type.Array(IdRange)),
 		}),
 	],
-	{},
 	noAdditionalProps,
 );
 
 const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-const Insert = typeboxInterface([HasMoveId, HasRevisionTag], {}, noAdditionalProps);
+const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
 
-const HasMoveFields = typeboxInterface(
-	[
-		HasMoveId,
-		HasRevisionTag,
-		Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
-	],
-	{},
-);
+const HasMoveFields = Type.Composite([
+	HasMoveId,
+	HasRevisionTag,
+	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+]);
 
-const MoveIn = typeboxInterface([HasMoveFields], {}, noAdditionalProps);
+const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
 
 const DetachIdOverride = Type.Object(
 	{
@@ -91,7 +86,7 @@ const DetachFields = Type.Object({
 	idOverride: Type.Optional(DetachIdOverride),
 });
 
-const Remove = typeboxInterface(
+const Remove = Type.Composite(
 	[
 		Type.Object({
 			id: ChangesetLocalIdSchema,
@@ -99,11 +94,10 @@ const Remove = typeboxInterface(
 		HasRevisionTag,
 		DetachFields,
 	],
-	{},
 	noAdditionalProps,
 );
 
-const MoveOut = typeboxInterface([HasMoveFields, DetachFields], {}, noAdditionalProps);
+const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
 const Attach = Type.Object(
 	{

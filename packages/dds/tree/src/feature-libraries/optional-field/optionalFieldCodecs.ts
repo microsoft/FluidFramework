@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	eraseEncodedType,
-	type ICodecFamily,
-	type JsonCodecPart,
-	makeCodecFamily,
-} from "../../codec/index.js";
+import { type ICodecFamily, type JsonCodecPart, makeCodecFamily } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	RevisionTag,
@@ -29,4 +24,4 @@ export const makeOptionalFieldCodecFamily = (
 		ChangeEncodingContext
 	>,
 ): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
-	makeCodecFamily([[2, eraseEncodedType(makeV2Codec(revisionTagCodec))]]);
+	makeCodecFamily([[2, makeV2Codec(revisionTagCodec)]]);

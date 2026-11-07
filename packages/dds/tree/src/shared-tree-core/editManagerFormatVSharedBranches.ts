@@ -4,14 +4,14 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "typebox/type";
-import type { TObjectOptions, TSchema } from "typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, TSchema } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
 
 import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
-const noAdditionalProps: TObjectOptions = { additionalProperties: false };
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
