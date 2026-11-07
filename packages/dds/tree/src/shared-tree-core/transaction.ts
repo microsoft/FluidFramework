@@ -508,8 +508,9 @@ export class SquashingTransactionStack<
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
+
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
-								const squash = rebaser.compose(transactionSteps);
+								const squash = rebaser.ensureCompatibility(rebaser.compose(transactionSteps));
 								cheapRebaseValidation("Malformed composed transaction", () =>
 									changeFamily.validator(squash),
 								);

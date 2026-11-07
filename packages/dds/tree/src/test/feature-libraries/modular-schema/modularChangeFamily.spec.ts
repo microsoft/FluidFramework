@@ -17,21 +17,20 @@ import {
 } from "../../../codec/index.js";
 import {
 	makeAnonChange,
-	makeDetachedNodeId,
 	type RevisionTag,
 	tagChange,
 	type TaggedChange,
 	type FieldKindIdentifier,
 	type FieldKey,
-	type UpPath,
 	revisionMetadataSourceFromInfo,
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
 	type ChangeEncodingContext,
 	Multiplicity,
-	type FieldUpPath,
 	type RevisionInfo,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	RebaseValidation,
 } from "../../../core/index.js";
 import {
@@ -39,7 +38,6 @@ import {
 	genericFieldKind,
 	type ModularChangeset,
 	FlexFieldKind,
-	type RelevantRemovedRootsFromChild,
 	type TreeChunk,
 	fieldBatchCodecBuilder,
 	type NodeId,
@@ -55,15 +53,10 @@ import {
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
-	chunkFieldSingle,
-	cursorForJsonableTreeField,
-	defaultChunkPolicy,
-	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
-	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -71,11 +64,8 @@ import type {
 import {
 	intoDelta,
 	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { normalizeChangeset } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import type {
 	NodeChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -99,9 +89,16 @@ import {
 	testRevisionTagCodec,
 	treeChunkFromCursor,
 } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { removeAliases } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
+import {
+	assertEqual,
+	assertModularChangesetsEqual,
+	assertModularChangesetsEqualIgnoreRebaseVersion,
+	Change,
+} from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -146,13 +143,9 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: {
-			marks: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
-		},
+	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
+		marks: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
 	}),
-	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change === undefined ? [] : relevantRemovedRootsFromChild(change),
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
@@ -163,6 +156,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 			: [{ nodeId: change, inputRootId: undefined, detachId: undefined }],
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
+	ensureCompatibility: (change) => change,
 };
 
 const singleNodeField = new FlexFieldKind(
@@ -213,13 +207,23 @@ const valueChange2: ValueChangeset = { old: 1, new: 2 };
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
-const pathA: FieldUpPath = { parent: undefined, field: fieldA };
-const pathA0: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-const pathB: FieldUpPath = { parent: undefined, field: fieldB };
-const pathB0: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
-const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
-const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
-const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
+const pathA: NormalizedFieldUpPath = { parent: undefined, field: fieldA };
+const pathA0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldA,
+	parentIndex: 0,
+};
+const pathB: NormalizedFieldUpPath = { parent: undefined, field: fieldB };
+const pathB0: NormalizedUpPath = {
+	detachedNodeId: undefined,
+	parent: undefined,
+	parentField: fieldB,
+	parentIndex: 0,
+};
+const pathA0A: NormalizedFieldUpPath = { parent: pathA0, field: fieldA };
+const pathA0B: NormalizedFieldUpPath = { parent: pathA0, field: fieldB };
+const pathB0A: NormalizedFieldUpPath = { parent: pathB0, field: fieldA };
 
 const mainEditor = family.buildEditor(mintRevisionTag, () => undefined);
 const rootChange1a = removeAliases(
@@ -1158,106 +1162,6 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("relevantRemovedRoots", () => {
-		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
-		interface HasRemovedRootsRefs {
-			shallow: DeltaDetachedNodeId[];
-			nested: NodeId[];
-		}
-
-		const handler: FieldChangeHandler<
-			HasRemovedRootsRefs,
-			FieldEditor<HasRemovedRootsRefs>
-		> = {
-			relevantRemovedRoots: (
-				change: HasRemovedRootsRefs,
-				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-			) => {
-				return [
-					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => [...relevantRemovedRootsFromChild(c)]),
-				];
-			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
-			changeHandler: handler,
-			allowMonotonicUpgradeFrom: new Set(),
-		});
-		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
-
-		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
-			deepFreeze(input);
-			return [...relevantDetachedTreesImplementation(input, mockFieldKinds)];
-		}
-
-		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
-			return {
-				fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
-			};
-		}
-
-		it("sibling fields", () => {
-			const aMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const a2 = { major: aMajor, minor: 2 };
-			const bMajor = mintRevisionTag();
-			const b1 = { major: bMajor, minor: 1 };
-
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1, a2],
-				nested: [],
-			};
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [b1],
-				nested: [],
-			};
-			const input: ModularChangeset = {
-				...Change.empty(),
-				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA) }],
-					[brand("fB"), { fieldKind, change: brand(changeB) }],
-				]),
-			};
-
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, a2, b1]);
-		});
-
-		it("nested fields", () => {
-			const aMajor = mintRevisionTag();
-			const cMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const c1 = { major: cMajor, minor: 1 };
-
-			const changeC: HasRemovedRootsRefs = {
-				shallow: [c1],
-				nested: [],
-			};
-
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [],
-				nested: [nodeId2],
-			};
-
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1],
-				nested: [nodeId1],
-			};
-
-			const input: ModularChangeset = {
-				...Change.empty(),
-				nodeChanges: newChangeAtomIdBTree([
-					[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
-					[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
-				]),
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-			};
-
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, c1]);
-		});
-	});
-
 	describe("update refreshers", () => {
 		const aMajor = mintRevisionTag();
 		const a1 = { major: aMajor, minor: 1 };
@@ -1420,21 +1324,10 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(
-				change1,
-				fieldKinds,
-				true,
-				false,
-				deepCloneChunkedTree,
-			);
-			const normalized2 = normalizeChangeset(
-				change2,
-				fieldKinds,
-				true,
-				false,
-				deepCloneChunkedTree,
-			);
-			assertEqual(normalized1, normalized2);
+			assertModularChangesetsEqual(change1, change2, fieldKinds, {
+				ignoreRebaseVersion: true,
+				ignoreRevertConstraints: true,
+			});
 		}
 
 		const sessionId = "session1" as SessionId;
@@ -1524,7 +1417,7 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		const encodingTestDataV5Only: EncodingTestData<
+		const encodingTestDataV5AndUp: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV2,
 			ChangeEncodingContext
@@ -1560,15 +1453,22 @@ describe("ModularChangeFamily", () => {
 			ModularChangeFormatVersion.v3,
 			ModularChangeFormatVersion.v4,
 		]);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [
 			ModularChangeFormatVersion.v5,
 		]);
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestDataV5AndUp,
+			(a, b) => assertModularChangesetsEqualIgnoreRebaseVersion(a, b, fieldKinds),
+			[ModularChangeFormatVersion.vDetachedRoots],
+		);
 	});
 
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
 		const editor = family.buildEditor(mintRevisionTag, changeReceiver);
-		const path: UpPath = {
+		const path: NormalizedUpPath = {
+			detachedNodeId: undefined,
 			parent: undefined,
 			parentField: fieldA,
 			parentIndex: 0,
@@ -1599,16 +1499,6 @@ describe("ModularChangeFamily", () => {
 	});
 });
 
-function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
-	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
-	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: testIdCompressor,
-	});
-	return clone;
-}
-
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
 	return family.changeRevision(
 		change,
@@ -1638,7 +1528,7 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 	return editor.buildChanges(edits);
 }
 
-function buildExistsConstraint(path: UpPath): ModularChangeset {
+function buildExistsConstraint(path: NormalizedUpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
 	const editor = family.buildEditor(mintRevisionTag, (taggedChange) =>
 		edits.push(taggedChange.change),
