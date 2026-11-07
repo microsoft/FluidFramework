@@ -139,7 +139,7 @@ function createRecordNodeProxy(
 		},
 		has: (target, key): boolean => {
 			if (typeof key === "symbol") {
-				return false;
+				return Object.prototype.hasOwnProperty.call(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);
@@ -149,11 +149,13 @@ function createRecordNodeProxy(
 		},
 		ownKeys: (target) => {
 			const innerNode = getInnerNode(proxy);
-			return [...innerNode.keys()];
+			// The target's own symbol properties are reported, as a proxy must report those which are not configurable:
+			// for example, private fields compiled to symbol properties.
+			return [...innerNode.keys(), ...Object.getOwnPropertySymbols(target)];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			if (typeof key === "symbol") {
-				return undefined;
+				return Reflect.getOwnPropertyDescriptor(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);

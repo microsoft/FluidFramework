@@ -164,6 +164,29 @@ describe("RecordNode", () => {
 			assert.notDeepEqual(dNode, aNode);
 		});
 
+		it("reports non-configurable own symbol properties of its target", () => {
+			// Simulates a private field of a base class compiled to a non-configurable symbol property of the instance,
+			// which is the proxy's target.
+			const compiledField = Symbol("compiled private field");
+			class Test extends schemaFactory.record("compiledPrivateField", schemaFactory.number) {}
+			const prepareInstance = Reflect.get(Test, "prepareInstance") as (
+				this: unknown,
+				...args: unknown[]
+			) => unknown;
+			Object.defineProperty(Test, "prepareInstance", {
+				value(this: unknown, instance: object, ...rest: unknown[]): unknown {
+					Object.defineProperty(instance, compiledField, { value: 1, writable: true });
+					return prepareInstance.call(this, instance, ...rest);
+				},
+			});
+			const node = init(Test, { a: 1, b: 2 });
+			assert.deepEqual(Object.keys(node), ["a", "b"]);
+			assert.deepEqual(Reflect.ownKeys(node), ["a", "b", compiledField]);
+			assert.equal(Reflect.getOwnPropertyDescriptor(node, compiledField)?.value, 1);
+			assert.equal(compiledField in node, true);
+			assert.deepEqual({ ...node }, { a: 1, b: 2 });
+		});
+
 		describe("doesn't allow extra properties", () => {
 			function assertConstructionFails<
 				TInsertable,
