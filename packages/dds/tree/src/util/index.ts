@@ -194,4 +194,4 @@ export {
 	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";
 
-export { merge, assertStructuralEquality, hasConflict } from "./objMerge.js";
+export { merge, hasConflict, type ObjectTransform } from "./objMerge.js";
