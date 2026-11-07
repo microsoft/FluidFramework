@@ -65,11 +65,10 @@ import {
 	type Mutable,
 	type RangeQueryResult,
 	areAdjacentIntegerRanges,
-	assertStructuralEquality,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
-import { testIdCompressor } from "../../utils.js";
+import { assertStructuralEquality, testIdCompressor } from "../../utils.js";
 
 export const Change = {
 	build,

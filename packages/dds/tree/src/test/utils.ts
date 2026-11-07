@@ -216,7 +216,9 @@ import {
 	tryGetFromNestedMap,
 	isReadonlyArray,
 	brand,
-	assertStructuralEquality,
+	merge,
+	hasConflict,
+	type ObjectTransform,
 } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -816,6 +818,18 @@ export function validateViewConsistency(
 		},
 		idDifferentiator,
 	);
+}
+
+export function assertStructuralEquality<T>(
+	actual: T,
+	expected: T,
+	options: {
+		readonly message?: string;
+		readonly transform?: ObjectTransform;
+	} = {},
+): void {
+	const diff = merge(actual, expected, options.transform);
+	assert(!hasConflict(diff), options.message ?? "Objects are not structurally equal");
 }
 
 export function validateSnapshotConsistency(
