@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import {
 	type IdAllocator,
 	type NestedMap,
@@ -62,6 +62,23 @@ export interface ReadOnlyDetachedFieldIndex {
 export type DetachedFieldIndexCheckpoint = () => void;
 
 /**
+ * A point a {@link DetachedFieldIndex} can be restored to, made by {@link DetachedFieldIndex.createRestorePoint}.
+ * @remarks
+ * Restore points form a stack: each must be released, and restored at most when it is the newest open one.
+ */
+export interface DetachedFieldIndexRestorePoint {
+	/**
+	 * Restores the index to the state it was in when this restore point was created.
+	 * This restore point stays open, and can be restored again.
+	 */
+	restore(): void;
+	/**
+	 * Closes this restore point. It can no longer be restored.
+	 */
+	release(): void;
+}
+
+/**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
 export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
@@ -91,6 +108,17 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	 * This helps ensure that `setRevisionsForLoadedData` is only called after `loadData` and only called once.
 	 */
 	private isFullyLoaded = true;
+
+	/**
+	 * Records which undo the changes made to the index since the oldest open restore point, oldest first,
+	 * or undefined if no restore point is open (see {@link DetachedFieldIndex.createRestorePoint}).
+	 */
+	#undoLog: (() => void)[] | undefined;
+
+	/**
+	 * The number of open restore points.
+	 */
+	#openRestorePoints = 0;
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -134,6 +162,122 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		};
 	}
 
+	/**
+	 * Creates a point which the index can be restored to, which must be released when no longer needed.
+	 * @remarks
+	 * Unlike {@link DetachedFieldIndex.createCheckpoint}, this does not copy the index:
+	 * while a restore point is open, each change to the index records how to undo it,
+	 * so the cost is proportional to the changes made, not to the size of the index.
+	 * Restore points form a stack (see {@link DetachedFieldIndexRestorePoint}).
+	 */
+	public createRestorePoint(): DetachedFieldIndexRestorePoint {
+		const log = (this.#undoLog ??= []);
+		const start = log.length;
+		const maxId = this.rootIdAllocator.getMaxId();
+		this.#openRestorePoints++;
+		let open = true;
+		return {
+			restore: () => {
+				assert(open, "A released restore point cannot be restored");
+				const current = this.#undoLog;
+				assert(
+					current !== undefined && current.length >= start,
+					"Restore points must be restored in the reverse order of their creation",
+				);
+				for (let index = current.length - 1; index >= start; index--) {
+					(current[index] ?? oob())();
+				}
+				current.length = start;
+				this.rootIdAllocator = idAllocatorFromMaxId(maxId) as IdAllocator<ForestRootId>;
+			},
+			release: () => {
+				assert(open, "A restore point can only be released once");
+				open = false;
+				this.#openRestorePoints--;
+				if (this.#openRestorePoints === 0) {
+					this.#undoLog = undefined;
+				}
+			},
+		};
+	}
+
+	/**
+	 * {@link setInNestedMap}, recording how to undo it while a restore point is open.
+	 */
+	#setInNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>, key1: K1, key2: K2, value: V): void {
+		const log = this.#undoLog;
+		if (log !== undefined) {
+			const inner = map.get(key1);
+			if (inner === undefined) {
+				log.push(() => map.delete(key1));
+			} else if (inner.has(key2)) {
+				const previous = inner.get(key2) as V;
+				log.push(() => inner.set(key2, previous));
+			} else {
+				log.push(() => inner.delete(key2));
+			}
+		}
+		setInNestedMap(map, key1, key2, value);
+	}
+
+	/**
+	 * {@link deleteFromNestedMap}, recording how to undo it while a restore point is open.
+	 * @remarks
+	 * Undoing restores the iteration order of both levels of the map, which summaries depend on.
+	 */
+	#deleteFromNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>, key1: K1, key2: K2): boolean {
+		const log = this.#undoLog;
+		const inner = map.get(key1);
+		if (log !== undefined && inner?.has(key2) === true) {
+			const entries = [...inner];
+			if (inner.size === 1) {
+				// The inner map is removed from `map`, so its position in `map` must be restored too.
+				log.push(restoreMapOrder(map, key1, inner));
+			}
+			log.push(() => {
+				inner.clear();
+				for (const [key, value] of entries) {
+					inner.set(key, value);
+				}
+			});
+		}
+		return deleteFromNestedMap(map, key1, key2);
+	}
+
+	/**
+	 * Records how to undo a change to the index which replaces or clears its maps, while a restore point is open.
+	 */
+	#recordWholeIndexChange(): void {
+		const log = this.#undoLog;
+		if (log === undefined) {
+			return;
+		}
+		const detachedNodeToField = this.detachedNodeToField;
+		const latestRelevantRevisionToFields = this.latestRelevantRevisionToFields;
+		const detachedNodeToFieldCopy: NestedMap<Major, Minor, DetachedField> = new Map();
+		populateNestedMap(detachedNodeToField, detachedNodeToFieldCopy, true);
+		const latestRelevantRevisionToFieldsCopy: typeof latestRelevantRevisionToFields =
+			new Map();
+		populateNestedMap(
+			latestRelevantRevisionToFields,
+			latestRelevantRevisionToFieldsCopy,
+			true,
+		);
+		const isFullyLoaded = this.isFullyLoaded;
+		log.push(() => {
+			detachedNodeToField.clear();
+			populateNestedMap(detachedNodeToFieldCopy, detachedNodeToField, true);
+			latestRelevantRevisionToFields.clear();
+			populateNestedMap(
+				latestRelevantRevisionToFieldsCopy,
+				latestRelevantRevisionToFields,
+				true,
+			);
+			this.detachedNodeToField = detachedNodeToField;
+			this.latestRelevantRevisionToFields = latestRelevantRevisionToFields;
+			this.isFullyLoaded = isFullyLoaded;
+		});
+	}
 	public *entries(): Generator<{
 		root: ForestRootId;
 		latestRelevantRevision?: RevisionTag;
@@ -160,6 +304,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	 * Removes all entries from the index.
 	 */
 	public purge(): void {
+		this.#recordWholeIndexChange();
 		this.detachedNodeToField.clear();
 		this.latestRelevantRevisionToFields.clear();
 	}
@@ -197,9 +342,12 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			return;
 		}
 
+		this.#undoLog?.push(
+			restoreMapOrder(this.latestRelevantRevisionToFields, revision, entries),
+		);
 		this.latestRelevantRevisionToFields.delete(revision);
 		for (const detachedNodeId of entries.values()) {
-			const found = deleteFromNestedMap(
+			const found = this.#deleteFromNestedMap(
 				this.detachedNodeToField,
 				detachedNodeId.major,
 				detachedNodeId.minor,
@@ -211,8 +359,8 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
 		const entry = tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(entry !== undefined, 0x9bb /* Unable to delete unknown entry */);
-		deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		deleteFromNestedMap(
+		this.#deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+		this.#deleteFromNestedMap(
 			this.latestRelevantRevisionToFields,
 			entry.latestRelevantRevision,
 			entry.root,
@@ -240,11 +388,11 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 						undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, {
+				this.#setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+				this.#setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
 					major: nodeId.major,
 					minor: nodeId.minor + i,
 				});
@@ -268,11 +416,11 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		const { root, latestRelevantRevision: previousRevision } = fieldEntry;
 
 		// remove this root from the set of roots for the previous latest revision
-		deleteFromNestedMap(this.latestRelevantRevisionToFields, previousRevision, root);
+		this.#deleteFromNestedMap(this.latestRelevantRevisionToFields, previousRevision, root);
 
 		// add this root to the set of roots for the new latest revision
-		setInNestedMap(this.latestRelevantRevisionToFields, revision, root, id);
-		setInNestedMap(this.detachedNodeToField, id.major, id.minor, {
+		this.#setInNestedMap(this.latestRelevantRevisionToFields, revision, root, id);
+		this.#setInNestedMap(this.detachedNodeToField, id.major, id.minor, {
 			root,
 			latestRelevantRevision: revision,
 		});
@@ -289,6 +437,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	 * Loads the tree index from summary data, this overrides any existing data.
 	 */
 	public loadData(detachedFieldIndex: DetachedFieldSummaryData): void {
+		this.#recordWholeIndexChange();
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
@@ -315,6 +464,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			!this.isFullyLoaded,
 			0x9bd /* revisions should only be set once using this function after loading data from a summary */,
 		);
+		this.#recordWholeIndexChange();
 
 		const newDetachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
 		const rootMap = new Map();
@@ -331,4 +481,19 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
 		this.isFullyLoaded = true;
 	}
+}
+
+/**
+ * Returns a function which puts `inner` back under `key` in `map`, at the position `key` has now,
+ * for undoing the removal of `key` from `map` after this is called.
+ */
+function restoreMapOrder<K, V>(map: Map<K, V>, key: K, inner: V): () => void {
+	const keys = [...map.keys()];
+	return () => {
+		const current = new Map(map);
+		map.clear();
+		for (const k of keys) {
+			map.set(k, k === key ? inner : (current.get(k) as V));
+		}
+	};
 }
