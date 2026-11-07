@@ -12,16 +12,12 @@ import type { SchemaUpgrade } from "./allowedTypes.js";
  */
 export interface StagedSchemaUpgradePolicy {
 	/**
-	 * Whether schema upgrades should include staged upgrades that are already enabled in the
-	 * document's stored schema.
+	 * Determines whether to introduce staged allowed types in the resulting stored schema.
 	 *
-	 * @defaultValue `false`
-	 */
-	readonly includeAlreadyEnabledUpgrades?: boolean;
-
-	/**
-	 * Determines whether to include staged allowed types in the resulting stored schema.
 	 * @remarks
+	 * Schema upgrades always preserve types already allowed at each stored location.
+	 * Preserving a type at one location does not enable other locations using the same upgrade token.
+	 *
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStaged(upgrade: SchemaUpgrade): boolean;
@@ -29,7 +25,10 @@ export interface StagedSchemaUpgradePolicy {
 	/**
 	 * Determines whether to treat a staged optional field as optional
 	 * (rather than required) in the resulting stored schema.
+	 *
 	 * @remarks
+	 * Schema upgrades preserve optionality already enabled at each stored location, regardless of this callback.
+	 *
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStagedOptional(upgrade: SchemaUpgrade): boolean;
@@ -42,7 +41,7 @@ export interface StagedSchemaUpgradePolicy {
  * Use the properties and methods on this object to obtain staged-schema generation options
  * for different scenarios:
  *
- * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no staged upgrades (default)
+ * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no new staged permissions (default)
  *
  * - {@link StagedSchemaUpgradePolicyFactory.permissive} — all staged upgrades enabled
  *
@@ -53,7 +52,7 @@ export interface StagedSchemaUpgradePolicy {
  * // Enable specific upgrades:
  * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
  *
- * // Use restrictive (default, no staged upgrades):
+ * // Use restrictive (default, no new staged permissions):
  * const options = StagedSchemaUpgradePolicy.restrictive;
  *
  * // Use permissive (all staged upgrades, useful for testing):
@@ -65,30 +64,48 @@ export interface StagedSchemaUpgradePolicy {
  */
 export interface StagedSchemaUpgradePolicyFactory {
 	/**
-	 * Restrictive policy — excludes all staged schema members.
+	 * Restrictive policy — introduces no new staged permissions to the stored schema.
 	 *
 	 * @remarks
 	 * Use this when you want the most conservative stored schema for compatibility-sensitive
-	 * scenarios, or when staged schema upgrades should remain disabled.
+	 * scenarios, or when new staged schema permissions should remain disabled.
+	 *
+	 * When initializing a new document, this policy excludes staged allowed types and treats staged-optional fields as required.
+	 *
+	 * When upgrading an existing document, this policy does not enable any new staged changes.
+	 * The upgrade keeps each field's existing allowed types and keeps already-optional fields optional.
 	 *
 	 * This is the default behavior when no staged upgrades are enabled.
 	 */
 	readonly restrictive: StagedSchemaUpgradePolicy;
+
 	/**
 	 * Permissive policy — includes all staged schema upgrades.
 	 *
 	 * @remarks
 	 * Use this for testing, validation, and rollout rehearsal scenarios where you want to exercise
 	 * future document shapes before enabling staged upgrades broadly.
+	 *
+	 * When initializing a new document, this policy includes all staged allowed types and treats all staged-optional fields as optional.
+	 *
+	 * When upgrading an existing document, this policy enables all staged changes declared by the view.
+	 * The upgrade also keeps each field's existing allowed types and keeps already-optional fields optional.
 	 */
 	readonly permissive: StagedSchemaUpgradePolicy;
+
 	/**
-	 * Creates options that include only the specified staged schema upgrades.
+	 * Creates options that introduce only the specified staged schema upgrades.
 	 *
 	 * @param upgrades - The staged schema upgrades to enable.
-	 * @returns Options that include only the specified upgrades.
+	 * @returns Options that introduce only the specified upgrades.
 	 *
 	 * @remarks
+	 * When initializing a new document, this policy includes staged allowed types and makes staged-optional fields optional only for the specified upgrades.
+	 * Other staged allowed types are excluded, and other staged-optional fields remain required.
+	 *
+	 * When upgrading an existing document, this policy enables the specified staged changes.
+	 * The upgrade also keeps each field's existing allowed types and keeps already-optional fields optional, even when their tokens are not specified.
+	 *
 	 * If an empty set of upgrades is passed, the result is equivalent to
 	 * `StagedSchemaUpgradePolicy.restrictive`.
 	 */
