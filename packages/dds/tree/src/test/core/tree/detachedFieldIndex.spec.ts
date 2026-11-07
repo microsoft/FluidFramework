@@ -706,6 +706,37 @@ describe("DetachedFieldIndex methods", () => {
 			outer.release();
 		});
 
+		it("restore many deletions from the same revision's entries, in order, at each level of nesting", () => {
+			const index = makeDetachedFieldIndex();
+			const [r1, r2] = [mintRevisionTag(), mintRevisionTag()];
+			index.createEntry(makeDetachedNodeId(r1, 0), r1, 8);
+			index.createEntry(makeDetachedNodeId(r2, 0), r2, 2);
+			const atOuter = snapshot(index, [r1, r2]);
+			const outer = index.createRestorePoint();
+			index.deleteEntry(makeDetachedNodeId(r1, 3));
+			index.deleteEntry(makeDetachedNodeId(r1, 0));
+			index.createEntry(makeDetachedNodeId(r1, 20), r1);
+			const atInner = snapshot(index, [r1, r2]);
+			const inner = index.createRestorePoint();
+			for (const minor of [7, 1, 5, 20]) {
+				index.deleteEntry(makeDetachedNodeId(r1, minor));
+			}
+			index.createEntry(makeDetachedNodeId(r1, 3), r1);
+			inner.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atInner);
+			// Deleting every entry of the revision also removes its inner map.
+			for (const minor of [1, 2, 4, 5, 6, 7, 20]) {
+				index.deleteEntry(makeDetachedNodeId(r1, minor));
+			}
+			inner.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atInner);
+			index.deleteEntry(makeDetachedNodeId(r1, 2));
+			inner.release();
+			outer.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atOuter);
+			outer.release();
+		});
+
 		it("restore changes which replace the whole index", () => {
 			const index = makeDetachedFieldIndex();
 			const r1 = mintRevisionTag();

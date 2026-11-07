@@ -116,9 +116,21 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	#undoLog: (() => void)[] | undefined;
 
 	/**
-	 * The number of open restore points.
+	 * The positions in {@link DetachedFieldIndex.#undoLog} at which the open restore points start.
 	 */
-	#openRestorePoints = 0;
+	readonly #restorePointStarts: number[] = [];
+
+	/**
+	 * For each inner map of the index which has had an entry deleted while a restore point is open,
+	 * the record in {@link DetachedFieldIndex.#undoLog} which restores all its entries, in order.
+	 * @remarks
+	 * One such record, made after the newest open restore point started, is enough to undo any number of deletions from the map:
+	 * the records of later changes are undone first.
+	 */
+	readonly #innerMapRestores = new WeakMap<
+		ReadonlyMap<unknown, unknown>,
+		{ readonly index: number; readonly undo: () => void }
+	>();
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -174,7 +186,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		const log = (this.#undoLog ??= []);
 		const start = log.length;
 		const maxId = this.rootIdAllocator.getMaxId();
-		this.#openRestorePoints++;
+		this.#restorePointStarts.push(start);
 		let open = true;
 		return {
 			restore: () => {
@@ -193,8 +205,9 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			release: () => {
 				assert(open, "A restore point can only be released once");
 				open = false;
-				this.#openRestorePoints--;
-				if (this.#openRestorePoints === 0) {
+				const starts = this.#restorePointStarts;
+				starts.splice(starts.lastIndexOf(start), 1);
+				if (starts.length === 0) {
 					this.#undoLog = undefined;
 				}
 			},
@@ -229,17 +242,28 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		const log = this.#undoLog;
 		const inner = map.get(key1);
 		if (log !== undefined && inner?.has(key2) === true) {
-			const entries = [...inner];
 			if (inner.size === 1) {
 				// The inner map is removed from `map`, so its position in `map` must be restored too.
 				log.push(restoreMapOrder(map, key1, inner));
 			}
-			log.push(() => {
-				inner.clear();
-				for (const [key, value] of entries) {
-					inner.set(key, value);
-				}
-			});
+			const restore = this.#innerMapRestores.get(inner);
+			const newestStart = Math.max(...this.#restorePointStarts);
+			// Copying the inner map for each deletion would make deleting many of its entries quadratic.
+			if (
+				restore === undefined ||
+				restore.index < newestStart ||
+				log[restore.index] !== restore.undo
+			) {
+				const entries = [...inner];
+				const undo = (): void => {
+					inner.clear();
+					for (const [key, value] of entries) {
+						inner.set(key, value);
+					}
+				};
+				this.#innerMapRestores.set(inner, { index: log.length, undo });
+				log.push(undo);
+			}
 		}
 		return deleteFromNestedMap(map, key1, key2);
 	}
