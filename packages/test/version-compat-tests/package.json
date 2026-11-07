@@ -46,6 +46,18 @@
 		"rimraf": "^6.1.3",
 		"typescript": "catalog:TypeScript"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test:esm": [
+				"...",
+				"@fluidframework/tree#build:test:esm"
+			],
+			"eslint": [
+				"...",
+				"@fluidframework/tree#build:test:esm"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true
 	}
