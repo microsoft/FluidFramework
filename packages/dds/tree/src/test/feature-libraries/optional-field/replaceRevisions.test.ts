@@ -10,6 +10,7 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	optionalChangeRebaser,
+	optionalFieldEditor as editor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
@@ -19,7 +20,7 @@ import type {
 import { type Mutable, brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
-import { Change, assertEqual } from "./optionalFieldUtils.js";
+import { assertEqual } from "./optionalFieldUtils.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -54,50 +55,36 @@ function runCases(outputRev: RevisionTag) {
 		return optionalChangeRebaser.replaceRevisions(changeset, replacer);
 	}
 
-	it("moves", () => {
-		const input = Change.atOnce(
-			Change.move(atom0, atom1),
-			Change.move(atom1, atom2),
-			Change.move(atom2, atom3),
-			Change.move(atom3, atom0),
-		);
-		const expected = Change.atOnce(
-			Change.move(atom0, atomOut1),
-			Change.move(atomOut1, atomOut2),
-			Change.move(atomOut2, atomOut3),
-			Change.move(atomOut3, atom0),
-		);
-		const actual = process(input);
-		assertEqual(actual, expected);
-	});
-
-	it("child changes", () => {
-		assertEqual(process(Change.child(atom0)), Change.child(atom0));
-		assertEqual(process(Change.child(atom1)), Change.child(atomOut1));
-		assertEqual(process(Change.child(atom2)), Change.child(atomOut2));
-		assertEqual(process(Change.child(atom3)), Change.child(atomOut3));
-		assertEqual(process(Change.childAt(atom0, atom0)), Change.childAt(atom0, atom0));
-		assertEqual(process(Change.childAt(atom1, atom1)), Change.childAt(atomOut1, atomOut1));
-		assertEqual(process(Change.childAt(atom2, atom2)), Change.childAt(atomOut2, atomOut2));
-		assertEqual(process(Change.childAt(atom3, atom3)), Change.childAt(atomOut3, atomOut3));
+	it("child change", () => {
+		assertEqual(process(editor.childChange(atom0)), editor.childChange(atom0));
+		assertEqual(process(editor.childChange(atom1)), editor.childChange(atomOut1));
+		assertEqual(process(editor.childChange(atom2)), editor.childChange(atomOut2));
+		assertEqual(process(editor.childChange(atom3)), editor.childChange(atomOut3));
 	});
 
 	it("replace", () => {
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom0), Change.move(atom1, "self"))),
-			Change.atOnce(Change.clear("self", atom0), Change.move(atomOut1, "self")),
+			process(editor.set(false, { detach: atom0, fill: atom1 })),
+			editor.set(false, { detach: atom0, fill: atomOut1 }),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom1), Change.move(atom2, "self"))),
-			Change.atOnce(Change.clear("self", atomOut1), Change.move(atomOut2, "self")),
+			process(editor.set(false, { detach: atom1, fill: atom2 })),
+			editor.set(false, { detach: atomOut1, fill: atomOut2 }),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom2), Change.move(atom3, "self"))),
-			Change.atOnce(Change.clear("self", atomOut3), Change.move(atomOut3, "self")),
+			process(editor.set(true, { detach: atom2, fill: atom3 })),
+			editor.set(true, { detach: atomOut2, fill: atomOut3 }),
 		);
 		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom3), Change.move(atom0, "self"))),
-			Change.atOnce(Change.clear("self", atomOut3), Change.move(atom0, "self")),
+			process(editor.set(true, { detach: atom3, fill: atom0 })),
+			editor.set(true, { detach: atomOut3, fill: atom0 }),
 		);
+	});
+
+	it("detach", () => {
+		assertEqual(process(editor.detach(atom0)), editor.detach(atom0));
+		assertEqual(process(editor.detach(atom1)), editor.detach(atomOut1));
+		assertEqual(process(editor.detach(atom2)), editor.detach(atomOut2));
+		assertEqual(process(editor.detach(atom3)), editor.detach(atomOut3));
 	});
 }

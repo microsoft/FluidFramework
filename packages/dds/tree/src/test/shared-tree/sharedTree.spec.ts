@@ -656,7 +656,7 @@ describe("SharedTree", () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const factory = new SharedTreeTestFactory(() => {});
+				const factory = SharedTreeTestFactory.build(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
@@ -1133,7 +1133,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1173,7 +1173,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1215,7 +1215,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1715,7 +1715,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const view = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -3228,7 +3228,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const [tree] = provider.trees;
 		assert.deepEqual(
@@ -3878,7 +3878,7 @@ describe("SharedTree", () => {
 					const provider = await TestTreeProvider.create(
 						1,
 						SummarizeType.onDemand,
-						new SharedTreeTestFactory(() => {}, undefined, internalOption),
+						SharedTreeTestFactory.build(() => {}, undefined, internalOption),
 					);
 					const tree1 = provider.trees[0];
 					const config = new TreeViewConfiguration({
