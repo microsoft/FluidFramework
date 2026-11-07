@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
-import { TreeBeta } from "../../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -165,6 +165,49 @@ describe("simple-tree proxies", () => {
 		} finally {
 			Object.defineProperty(SchemaComponent.prototype, "context", descriptor);
 		}
+	});
+	it("a node created hydrated does not build definitions for its schema's component", () => {
+		const factory = new SchemaFactory("hydratedDefinitions");
+		class Leaf extends factory.object("leaf", { n: factory.number }) {}
+		class Root extends factory.object("root", { leaf: factory.optional(Leaf) }) {}
+
+		const descriptor =
+			Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "definitions") ??
+			assert.fail("SchemaComponent has a definitions getter");
+		const leafDefinitions: SchemaComponent[] = [];
+		Object.defineProperty(SchemaComponent.prototype, "definitions", {
+			...descriptor,
+			get(this: SchemaComponent) {
+				if (this.members.includes(Leaf)) {
+					leafDefinitions.push(this);
+				}
+				return descriptor.get?.call(this);
+			},
+		});
+		try {
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({});
+			// Verbose content is built in the tree without constructing a leaf, so reading it is the leaf class's first use.
+			TreeAlpha.setVerbose(view.root, "leaf", { type: Leaf.identifier, fields: { n: 1 } });
+			leafDefinitions.length = 0;
+			// The view's schema, which includes the leaf's, was validated as a whole.
+			assert.equal(view.root.leaf?.n, 1);
+			assert.deepEqual(leafDefinitions, []);
+		} finally {
+			Object.defineProperty(SchemaComponent.prototype, "definitions", descriptor);
+		}
+	});
+
+	it("a node schema used alone still has its reachable identifiers validated", () => {
+		const factory = new SchemaFactory("collidingIdentifiers");
+		class A extends factory.object("same", { n: factory.number }) {}
+		const other = new SchemaFactory("collidingIdentifiers");
+		class B extends other.object("same", { s: other.string }) {}
+		class Holder extends factory.object("holder", { a: A, b: B }) {}
+		assert.throws(
+			() => new Holder({ a: new A({ n: 1 }), b: new B({ s: "x" }) }),
+			(error: Error) => /identifier/.test(error.message),
+		);
 	});
 });
 
