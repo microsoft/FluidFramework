@@ -669,8 +669,8 @@ export interface SharedTreeOptions
 	readonly enableSharedBranches?: boolean;
 	/**
 	 * Experimental feature flag to enable the ability to edit detached roots.
-	 * This feature is not yet complete and should not be used in production.
-	 * Defaults to false.
+	 * @remarks This feature is not yet complete and should not be used in production.
+	 * @defaultValue `false`
 	 */
 	readonly enableDetachedRootEditing?: boolean;
 	/**
