@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
-import {
-	areEqualChangeAtomIdOpts,
-	type ChangeAtomId,
-	type ChangeEncodingContext,
-	type EncodedChangeAtomId,
-	type RevisionTag,
-	type RevisionTagSchema,
+import type {
+	ChangeAtomId,
+	ChangeEncodingContext,
+	EncodedChangeAtomId,
+	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
+import { areEqualChangeAtomIdOpts } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type {

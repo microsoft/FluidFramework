@@ -26,6 +26,7 @@ import {
 import type { DetachOfRemovedNodes, EmptyInputCellMark } from "./helperTypes.js";
 import {
 	type Attach,
+	type CellCount,
 	type CellId,
 	type CellMark,
 	type Changeset,
@@ -35,9 +36,8 @@ import {
 	type MarkEffect,
 	type NoopMark,
 	NoopMarkType,
-	type CellCount,
-	type Rename,
 	type Pin,
+	type Rename,
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {

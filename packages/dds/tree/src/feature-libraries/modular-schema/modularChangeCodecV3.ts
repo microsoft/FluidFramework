@@ -7,11 +7,11 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { TSchema } from "typebox";
 
 import {
-	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
 	type JsonCodecPart,
 	type SchemaValidationFunction,
+	withSchemaValidation,
 } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
@@ -23,16 +23,16 @@ import type {
 	RevisionTagSchema,
 } from "../../core/index.js";
 import {
-	brand,
-	idAllocatorFromMaxId,
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import {
+	type ChangeAtomIdBTree,
 	newChangeAtomIdBTree,
 	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
@@ -60,12 +60,11 @@ import type {
 	EncodedNodeChangeset,
 } from "./modularChangeFormatV1.js";
 import {
-	EncodedModularChangesetV3,
 	type EncodedRenames,
 	type EncodedRootNodes,
+	EncodedModularChangesetV3,
 } from "./modularChangeFormatV3.js";
 import {
-	newCrossFieldRangeTable,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldChangeset,
@@ -75,6 +74,7 @@ import {
 	type NodeId,
 	type NodeLocation,
 	type RootNodeTable,
+	newCrossFieldRangeTable,
 } from "./modularChangeTypes.js";
 
 type ModularChangeCodec = IJsonCodec<

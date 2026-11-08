@@ -6,9 +6,8 @@
 import * as Type from "typebox/type";
 import type { TObjectOptions } from "typebox";
 
-import { typeboxInterface } from "../../util/index.js";
-
 import { EncodedChangeAtomId } from "../../core/index.js";
+import { typeboxInterface } from "../../util/index.js";
 
 import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";

@@ -104,7 +104,6 @@ import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
-	newCrossFieldRangeTable,
 	type CrossFieldKey,
 	type CrossFieldKeyRange,
 	type CrossFieldKeyTable,
@@ -114,6 +113,7 @@ import {
 	type FieldChangeset,
 	type FieldId,
 	type ModularChangeset,
+	newCrossFieldRangeTable,
 	type NodeChangeset,
 	type NodeId,
 	type NodeLocation,

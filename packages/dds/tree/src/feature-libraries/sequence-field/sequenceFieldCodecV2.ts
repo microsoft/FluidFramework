@@ -11,17 +11,17 @@ import {
 	type IJsonCodec,
 	type JsonCodecPart,
 } from "../../codec/index.js";
-import {
-	areEqualChangeAtomIds,
-	type ChangeAtomId,
-	type ChangeDecodingContext,
-	type ChangeEncodingContext,
-	type ChangesetLocalId,
-	type EncodedChangeAtomId,
-	type EncodedRevisionTag,
-	type RevisionTag,
-	type RevisionTagSchema,
+import type {
+	ChangeAtomId,
+	ChangeDecodingContext,
+	ChangeEncodingContext,
+	ChangesetLocalId,
+	EncodedChangeAtomId,
+	EncodedRevisionTag,
+	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
+import { areEqualChangeAtomIds } from "../../core/index.js";
 import { type Mutable, brand } from "../../util/index.js";
 import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";

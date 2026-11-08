@@ -12,13 +12,13 @@ export {
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
-	type InvertNodeManager,
-	type RebaseNodeManager,
 	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
 	type DetachedNodeEntry,
+	type InvertNodeManager,
 	NodeMoveType,
+	type RebaseNodeManager,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {
@@ -50,17 +50,17 @@ export {
 	type ToDelta,
 	NodeAttachState,
 } from "./fieldChangeHandler.js";
-export {
-	type CrossFieldKey,
-	type CrossFieldKeyRange,
-	type FieldChange,
-	type FieldChangeMap,
-	type FieldChangeset,
-	type HasFieldChanges,
-	type ModularChangeset,
-	type NodeExistsConstraint,
-	type NodeId,
-	type RebaseVersion,
+export type {
+	CrossFieldKey,
+	CrossFieldKeyRange,
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeExistsConstraint,
+	NodeId,
+	RebaseVersion,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,

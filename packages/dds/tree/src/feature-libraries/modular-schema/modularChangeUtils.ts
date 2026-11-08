@@ -4,9 +4,11 @@
  */
 
 import { assert, fail, skipInProduction } from "@fluidframework/core-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
+	makeAnonChange,
 	makeChangeAtomId,
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
@@ -21,7 +23,6 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type TreeChunk,
-	makeAnonChange,
 } from "../../core/index.js";
 import {
 	brand,
@@ -44,7 +45,9 @@ import {
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
+import { NodeMoveType } from "./crossFieldQueries.js";
 import type { FieldChangeHandler } from "./fieldChangeHandler.js";
+import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { NodeAttachState } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
@@ -63,10 +66,7 @@ import {
 	type RebaseVersion,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import { NodeMoveType } from "./crossFieldQueries.js";
-import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { cloneRootTable, intoDelta } from "./modularChangeFamily.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
