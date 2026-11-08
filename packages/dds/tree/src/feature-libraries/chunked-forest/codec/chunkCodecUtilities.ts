@@ -124,9 +124,12 @@ export interface StreamCursor {
 
 /**
  * Read one item from the stream, advancing the stream offset.
+ * @remarks
+ * A stream's offset starts at 0 and only this function advances it, so it is always a non-negative integer: the only
+ * bound a read can cross is the end of the data, where the lookup gives `undefined`. No other check is needed.
  */
 export function readStream(stream: StreamCursor): FluidSerializableReadOnly {
-	const content = getChecked(stream.data, stream.offset);
+	const content = stream.data[stream.offset] ?? oob();
 	stream.offset++;
 	return content;
 }

@@ -182,6 +182,18 @@ describe("chunkEncodingUtilities", () => {
 		}
 	});
 
+	it("stream reads each item in order and fails only past the end", () => {
+		const data = ["a", 1, true, [2]];
+		const stream = { data, offset: 0 };
+		assert.deepEqual(
+			data.map(() => readStream(stream)),
+			data,
+		);
+		assert.equal(stream.offset, data.length);
+		assert.throws(() => readStream(stream));
+		assert.equal(stream.offset, data.length);
+	});
+
 	describe("DiscriminatedUnionDispatcher", () => {
 		it("Usage", () => {
 			interface TestUnion {
