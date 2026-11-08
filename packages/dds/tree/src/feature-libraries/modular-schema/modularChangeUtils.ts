@@ -173,7 +173,7 @@ function getFieldKind(
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
-	assert(fieldKind !== undefined, "Unknown field kind");
+	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
 	return fieldKind;
 }
 
@@ -1037,7 +1037,7 @@ function normalizeNodeIds(
 		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
 
 		const parent = change.nodeToParent.get([normalizedId.revision, normalizedId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
+		assert(parent !== undefined, 0xd9a /* Every node should have a parent */);
 		const newParent = remapNodeLocation(parent);
 		nodeToParent.set([newId.revision, newId.localId], newParent);
 
