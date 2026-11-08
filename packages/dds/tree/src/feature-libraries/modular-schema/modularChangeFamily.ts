@@ -2252,18 +2252,6 @@ function removeUnnecessaryDetachLocations(
 	}
 }
 
-export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-	kind: FieldKindIdentifier,
-): FlexFieldKind {
-	if (kind === genericFieldKind.identifier) {
-		return genericFieldKind;
-	}
-	const fieldKind = fieldKinds.get(kind);
-	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return fieldKind;
-}
-
 interface RebaseTable {
 	readonly rebaseVersion: RebaseVersion;
 
