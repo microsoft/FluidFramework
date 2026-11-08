@@ -300,6 +300,53 @@ describe("SharedTree", () => {
 			assert.equal(view1.root, "x");
 		});
 
+		describe("op submission", () => {
+			/** Counts the ops `tree` submits with and without searching them for Fluid handles. */
+			function countSubmissions(tree: object): { searched: number; notSearched: number } {
+				const counts = { searched: 0, notSearched: 0 };
+				const methods = tree as unknown as Record<string, (...args: unknown[]) => void>;
+				for (const [method, key] of [
+					["submitLocalMessage", "searched"],
+					["submitLocalMessageWithoutHandles", "notSearched"],
+				] as const) {
+					const submit = methods[method].bind(tree);
+					methods[method] = (...args) => {
+						counts[key]++;
+						submit(...args);
+					};
+				}
+				return counts;
+			}
+
+			it("doesn't search ops for handles when the stored schema allows none", () => {
+				const provider = new TestTreeProviderLite(2);
+				const counts = countSubmissions(provider.trees[0]);
+				const config = new TreeViewConfiguration({ schema: numberSchema });
+				const view = provider.trees[0].viewWith(config);
+				view.initialize(1);
+				view.root = 2;
+				provider.synchronizeMessages();
+
+				assert.equal(counts.searched, 0);
+				assert(counts.notSearched > 0);
+				assert.equal(provider.trees[1].viewWith(config).root, 2);
+			});
+
+			it("searches ops for handles when the stored schema allows them", () => {
+				const provider = new TestTreeProviderLite(2);
+				const counts = countSubmissions(provider.trees[0]);
+				const config = new TreeViewConfiguration({ schema: [numberSchema, handleSchema] });
+				const view = provider.trees[0].viewWith(config);
+				view.initialize(1);
+				view.root = provider.trees[0].handle;
+				provider.synchronizeMessages();
+
+				assert.equal(counts.notSearched, 0);
+				assert(counts.searched > 0);
+				assert(Tree.is(provider.trees[1].viewWith(config).root, handleSchema));
+			});
+		});
+
 		it("noop upgrade", () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 

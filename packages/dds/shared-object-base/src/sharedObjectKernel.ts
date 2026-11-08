@@ -152,6 +152,8 @@ class SharedObjectFromKernel<
 			serializer: this.serializer,
 			submitLocalMessage: (op, localOpMetadata) =>
 				this.submitLocalMessage(op, localOpMetadata),
+			submitLocalMessageWithoutHandles: (op, localOpMetadata) =>
+				this.submitLocalMessageWithoutHandles(op, localOpMetadata),
 			eventEmitter: this,
 			logger: extractTelemetryLoggerExt(this.logger),
 			idCompressor: runtime.idCompressor,
@@ -285,6 +287,10 @@ export interface KernelArgs {
 	 * {@inheritdoc SharedObjectCore.submitLocalMessage}
 	 */
 	readonly submitLocalMessage: (op: unknown, localOpMetadata: unknown) => void;
+	/**
+	 * {@inheritdoc SharedObjectCore.submitLocalMessageWithoutHandles}
+	 */
+	readonly submitLocalMessageWithoutHandles?: (op: unknown, localOpMetadata: unknown) => void;
 	/**
 	 * Top level emitter for events for this object.
 	 * @remarks
