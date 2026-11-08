@@ -230,8 +230,10 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
 	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
 	 * @remarks
-	 * The metadata is replicated to all collaborating clients and persisted in the document, and is readable
-	 * via {@link TreeBranchCommitMetadata.custom} while walking the branch's
+	 * The metadata is replicated to all collaborating clients and persisted in the document.
+	 * It is available through {@link LocalChangeMetadata.commits | commits} on the
+	 * {@link TreeBranchEvents.changed | changed event} for both local and remote changes,
+	 * and via {@link TreeBranchCommitMetadata.custom} while walking the branch's
 	 * {@link UntypedTreeViewAlpha.branchHistory | history}. It shares the lifetime of the commit it is attached
 	 * to: once that commit is trimmed from the trunk, the metadata goes with it. If the transaction produces no
 	 * commit — because its body made no changes, or because it was rolled back — the metadata is discarded.
