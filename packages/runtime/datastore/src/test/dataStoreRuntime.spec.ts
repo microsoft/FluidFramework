@@ -19,6 +19,7 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISequencedRuntimeMessage,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -149,6 +150,43 @@ describe("FluidDataStoreRuntime Tests", () => {
 		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const gcData = await dataStoreRuntime.getGCData();
 		assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
+	});
+
+	it("emits the runtime batch index for processed ops", () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const emittedMessages: ISequencedRuntimeMessage[] = [];
+		dataStoreRuntime.on("op", (message) => emittedMessages.push(message));
+
+		dataStoreRuntime.processMessages({
+			envelope: {
+				type: "other",
+			} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+			local: false,
+			messagesContent: [
+				{
+					contents: { value: "new producer" },
+					localOpMetadata: undefined,
+					clientSequenceNumber: 42,
+					indexInBatch: 0,
+				},
+				{
+					contents: { value: "legacy producer" },
+					localOpMetadata: undefined,
+					clientSequenceNumber: 43,
+				},
+			],
+		});
+
+		assert.deepStrictEqual(
+			emittedMessages.map(({ clientSequenceNumber, indexInBatch }) => ({
+				clientSequenceNumber,
+				indexInBatch,
+			})),
+			[
+				{ clientSequenceNumber: 42, indexInBatch: 0 },
+				{ clientSequenceNumber: 43, indexInBatch: undefined },
+			],
+		);
 	});
 
 	it("createChannel rejects ids with slashes", async () => {
@@ -323,6 +361,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 	const content: IRuntimeMessagesContent = {
 		contents: {},
 		clientSequenceNumber: 1,
+		indexInBatch: 0,
 		localOpMetadata: {},
 	};
 

@@ -4514,7 +4514,12 @@ describe("Runtime", () => {
 					missingDataStoreContext.processMessages({
 						envelope,
 						messagesContent: [
-							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
+							{
+								contents: "message",
+								localOpMetadata: undefined,
+								clientSequenceNumber: 1,
+								indexInBatch: 0,
+							},
 						],
 						local: false,
 					});
