@@ -4,9 +4,9 @@
  */
 
 import {
-	subtractChangeAtomIds,
 	compareChangesetLocalIds,
 	comparePartialRevisions,
+	subtractChangeAtomIds,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type RevisionTag,

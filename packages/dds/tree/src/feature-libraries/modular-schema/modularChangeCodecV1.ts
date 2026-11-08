@@ -4,21 +4,18 @@
  */
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
-import type { TSchema } from "typebox";
 import { EmptyBTree } from "@tylerbu/sorted-btree-es6";
+import type { TSchema } from "typebox";
 
 import {
-	extractJsonValidator,
-	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
 	type JsonCodecPart,
 	type SchemaValidationFunction,
+	extractJsonValidator,
+	withSchemaValidation,
 } from "../../codec/index.js";
 import {
-	areEqualChangeAtomIds,
-	newChangeAtomIdTransform,
-	offsetChangeAtomId,
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangeDecodingContext,
@@ -31,29 +28,32 @@ import {
 	type RevisionInfo,
 	type RevisionTag,
 	type RevisionTagSchema,
+	areEqualChangeAtomIds,
 	cheapRebaseValidation,
+	newChangeAtomIdTransform,
+	offsetChangeAtomId,
 	strictRebaseValidation,
 } from "../../core/index.js";
 import {
-	brand,
-	idAllocatorFromMaxId,
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	type RangeQueryResult,
 	type TupleBTree,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import {
+	type ChangeAtomIdBTree,
 	newChangeAtomIdBTree,
 	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
 import {
+	type FieldBatchCodec,
+	type TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 	FieldBatchDecodingContext,
-	type FieldBatchCodec,
-	type TreeChunk,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
@@ -68,7 +68,6 @@ import type {
 } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import { newFieldIdKeyBTree } from "./modularChangeFamily.js";
-import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 import type {
 	EncodedBuilds,
 	EncodedBuildsArray,
@@ -77,8 +76,8 @@ import type {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
+import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 import {
-	newCrossFieldRangeTable,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldChangeset,
@@ -88,17 +87,18 @@ import {
 	type NodeId,
 	type NodeLocation,
 	type RootNodeTable,
+	newCrossFieldRangeTable,
 } from "./modularChangeTypes.js";
 import {
+	type FieldIdKey,
 	addNodeRename,
+	areDeltaEquivalent,
+	fieldKindsFromConfiguration,
 	getFirstAttachField,
 	getFirstDetachField,
+	isChangesetValid,
 	newRootTable,
 	normalizeFieldId,
-	type FieldIdKey,
-	fieldKindsFromConfiguration,
-	isChangesetValid,
-	areDeltaEquivalent,
 } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<

@@ -11,11 +11,11 @@ import type {
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import {
-	EncodedNodeChangeset,
-	type FieldChangeDecodingContext,
-	type FieldChangeEncodingContext,
+import type {
+	FieldChangeDecodingContext,
+	FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset } from "./optionalFieldChangeFormatV3.js";
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
