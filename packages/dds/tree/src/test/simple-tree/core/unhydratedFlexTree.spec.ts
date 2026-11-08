@@ -23,6 +23,7 @@ import {
 	buildUnhydratedMoveMarks,
 	UnhydratedFlexTreeNode,
 	type UnhydratedOptionalField,
+	UnhydratedSequenceField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -418,8 +419,7 @@ describe("unhydratedFlexTree", () => {
 				assert.deepEqual(values(), ["a", "b", "c", "d"]);
 			});
 
-			it("with a large sequence of new content", () => {
-				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
+			it("inserts and moves a large sequence of new content", () => {
 				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
 					cursorForMapTreeNode({
@@ -440,6 +440,11 @@ describe("unhydratedFlexTree", () => {
 					Array.from(field, (n) => n.value),
 					newContent.map((c) => c.value),
 				);
+				assert(field instanceof UnhydratedSequenceField);
+				field.editor.move(0, newContent.length - 1, newContent.length);
+				assert.deepEqual([...field], [...newContent.slice(-1), ...newContent.slice(0, -1)]);
+				field.editor.move(1, newContent.length - 1, 0);
+				assert.deepEqual([...field], newContent);
 			});
 		});
 	});
