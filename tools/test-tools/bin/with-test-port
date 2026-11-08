@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+const { withTestPort } = require("../dist/withTestPort.js");
+
+process.exit(withTestPort(process.argv.slice(2)));
