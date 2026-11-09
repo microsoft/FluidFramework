@@ -98,9 +98,7 @@ import {
 	getFirstDetachField,
 	isChangesetValid,
 	newRootTable,
-	nodeChangeFromId,
 	normalizeFieldId,
-	normalizeNodeId,
 } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
@@ -471,9 +469,10 @@ export function encodeChange(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): EncodedModularChangesetV1 {
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
-		const normalizedId = normalizeNodeId(nodeId, change.nodeAliases);
-		const node = nodeChangeFromId(change.nodeChanges, change.nodeAliases, normalizedId);
-		return encodeNodeChangesForJson(node, normalizedId, contextFactory, fieldChangesetCodecs);
+		// TODO: Document the contract regarding node IDs in field changes: they should always be normalized then remove this normalization step.
+		const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+		assert(node !== undefined, 0x92e /* Unknown node ID */);
+		return encodeNodeChangesForJson(node, nodeId, contextFactory, fieldChangesetCodecs);
 	};
 
 	const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
