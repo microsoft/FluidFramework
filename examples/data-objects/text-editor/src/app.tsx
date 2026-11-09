@@ -195,6 +195,7 @@ async function initializeFluid(): Promise<{
 		try {
 			view.initialize(createInitialRoot());
 		} finally {
+			// Release the initialization view before creating the user's view: a tree permits only one live view.
 			view.dispose();
 		}
 	});

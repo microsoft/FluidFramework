@@ -91,6 +91,7 @@ export class DataStoreKindImplementation<T>
 	}
 
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		// Legacy creation must see the original factory identity and receiver, not the kind wrapper.
 		return this.factory.IFluidDataStoreFactory ?? this;
 	}
 

@@ -231,6 +231,10 @@ export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
  * @internal
  */
 export function legacySharedObjectTypeAliases(name: string): string[] {
+	// Prefer an exact match before trying compatibility aliases.
+	// Removing the prefix lets current factories load old documents.
+	// Adding it lets code with legacy factory identifiers read documents written with short names.
+	// Only the latter is temporary: it can be removed when collaboration with that code is no longer supported.
 	const candidates = [
 		name,
 		name.startsWith(legacyTypeUrlPrefix)
@@ -238,6 +242,8 @@ export function legacySharedObjectTypeAliases(name: string): string[] {
 			: `${legacyTypeUrlPrefix}${name}`,
 	];
 	if (isURL(name) && name.includes("graph.microsoft")) {
+		// A reverse proxy may have rewritten the legacy URL's base.
+		// This is a heuristic: assume its final segment still identifies the DDS, and try both formats.
 		const finalSegment = name.split("/").at(-1);
 		if (finalSegment !== undefined) {
 			candidates.push(finalSegment, `${legacyTypeUrlPrefix}${finalSegment}`);

@@ -94,6 +94,7 @@ export class LeafChannelRuntime
 			createChildMonitoringContext({ logger: context.baseLogger }),
 		);
 		const parent = context.IFluidHandleContext;
+		// The shared object's handle appends context.id, so use the parent's path to avoid duplicating that ID.
 		this.handleContext = {
 			get IFluidHandleContext() {
 				return this;
@@ -110,6 +111,7 @@ export class LeafChannelRuntime
 			context.connected,
 			(contents, metadata) => {
 				this.verifyOpen();
+				// Keep the channel-op envelope, but address the leaf itself rather than a synthetic child.
 				context.submitMessage("op", { address: "", contents }, metadata);
 				this.pendingOpCount++;
 			},
@@ -132,6 +134,7 @@ export class LeafChannelRuntime
 		existing: boolean,
 		factory: IChannelFactory,
 	): Promise<LeafChannelRuntime> {
+		// A DDS in a legacy child slot keeps its existing format; direct hosting at a data-store identity is new.
 		if (
 			(context as FluidDataStoreContextInternal).isSharedObjectChannel !== true &&
 			!getConfigForMinVersionForCollab(context.oldestSupportedClient, {
@@ -262,6 +265,7 @@ export class LeafChannelRuntime
 		if (this.visible) {
 			return;
 		}
+		// Attaching the shared object's handle re-enters this runtime through its routing context.
 		this.visible = true;
 		toFluidHandleInternal(this.loadedChannel.handle).attachGraph();
 		this.context.makeLocallyVisible();
@@ -344,6 +348,8 @@ export class LeafChannelRuntime
 	}
 
 	public reSubmit(type: string, content: unknown, metadata: unknown, squash: boolean): void {
+		// Replace the original pending op with however many ops the DDS resubmits (possibly none).
+		// Each new submission increments the count through the service callback.
 		this.pendingOpCount--;
 		this.services.deltaConnection.reSubmit(
 			readLeafMessage({ type, content }),
@@ -356,6 +362,7 @@ export class LeafChannelRuntime
 		assert(this.localActivity === undefined, "Leaf operation activity is already set");
 		this.localActivity = "applyStashed";
 		try {
+			// The previous session's op may still be acknowledged; otherwise resubmission replaces this count.
 			this.pendingOpCount++;
 			return this.services.deltaConnection.applyStashedOp(readLeafMessage(content));
 		} finally {

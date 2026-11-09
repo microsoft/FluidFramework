@@ -43,6 +43,9 @@ export function dataStoreRegistryFromIterable(
 		if (map.has(entry.type)) {
 			throw new UsageError(`Duplicate data store type: ${entry.type}`);
 		}
+		/**
+		 * Shared in-flight promise, including rejection, so concurrent lookups cannot load different kinds.
+		 */
 		let loaded: Promise<DataStoreKind> | undefined;
 		map.set(
 			entry.type,
@@ -62,6 +65,7 @@ export function dataStoreRegistryFromIterable(
 				if (aliasLoad !== undefined) {
 					const aliasKind = await aliasLoad();
 					DataStoreKindImplementation.narrowGeneric(aliasKind);
+					// Historical URL aliases apply only to DDS factories, not application-defined composite types.
 					if (aliasKind.channelFactory !== undefined) {
 						resolvedType = candidate;
 						load = aliasLoad;
@@ -137,6 +141,8 @@ export function defineDataStore<T, TRoot>(
 		type: options.type,
 		IFluidDataStoreRegistry: convertRegistry(options.registry),
 		async instantiateDataStore(context, existing) {
+			// Select by runtime capability, not the document's version target.
+			// Native collections also preserve legacy DDS layouts and gate new capabilities separately.
 			const native =
 				(context as FluidDataStoreContextInternal).createChannelCollection !== undefined;
 			return native
@@ -155,6 +161,11 @@ async function lookupKind<T>(
 	return kind;
 }
 
+/**
+ * Persisted child name used by defineDataStore in both native and legacy layouts.
+ * The root is bound at creation; additional children attach when referenced.
+ * Application-selected root names belong to the legacy factory bridge, not this convention.
+ */
 const rootId = "root";
 
 async function createNativeDataStore<T, TRoot>(
@@ -171,21 +182,25 @@ async function createNativeDataStore<T, TRoot>(
 			async createDataStore<TChild>(key: DataStoreKey<TChild>): Promise<TChild> {
 				const kind = await lookupKind(options.registry, key);
 				const store = await collection.createDataStore(kind.IFluidDataStoreFactory);
+				// The key validates the kind's output type; the runtime entry point erases it.
 				return (await store.entryPoint.get()) as TChild;
 			},
 		};
 		let root: TRoot;
 		if (existing) {
 			const handle = await collection.getDataStoreEntryPoint(rootId);
+			// Loading erases the root type; the application's registered root kind must still produce TRoot.
 			root = (await handle.get()) as TRoot;
 		} else {
 			root = await initializeRoot(options, inner, async (key) => {
 				const kind = await lookupKind(options.registry, key);
 				const store = await collection.createDataStore(kind.IFluidDataStoreFactory, rootId);
+				// Bind the channel identity, not its application value, which need not expose a handle.
 				collection.bind(store.entryPoint);
 				return (await store.entryPoint.get()) as TRoot;
 			});
 		}
+		// The runtime treats the view as an opaque entry point; it need not implement FluidObject.
 		return (await options.view(root, inner)) as FluidObject;
 	});
 }
@@ -196,6 +211,9 @@ async function initializeRoot<T, TRoot>(
 	create: (key: DataStoreKey<TRoot>) => Promise<TRoot>,
 ): Promise<TRoot> {
 	let started = false;
+	/**
+	 * Records completion separately from the value, since a completed creation may expose undefined.
+	 */
 	let created: { value: TRoot } | undefined;
 	const root = await options.instantiateFirstTime(
 		{
@@ -203,6 +221,7 @@ async function initializeRoot<T, TRoot>(
 				if (started) {
 					throw new UsageError("Root already created");
 				}
+				// Reserve the root before awaiting factory loading to reject concurrent creation attempts.
 				started = true;
 				const value = await create(key);
 				created = { value };
@@ -211,6 +230,7 @@ async function initializeRoot<T, TRoot>(
 		},
 		context,
 	);
+	// Roots can be primitives: Object.is accepts NaN while distinguishing positive and negative zero.
 	if (created === undefined || !Object.is(root, created.value)) {
 		throw new UsageError(
 			"instantiateFirstTime did not return the root created with rootCreator",
@@ -251,6 +271,7 @@ async function createLegacyLayoutDataStore<T, TRoot>(
 	return new FluidDataStoreRuntime(context, registry, existing, async (runtime) => {
 		async function create<TChild>(key: DataStoreKey<TChild>, id?: string): Promise<TChild> {
 			const kind = await lookupKind(options.registry, key);
+			// Resolve lazy kinds before entering the legacy runtime's synchronous factory lookup.
 			registerFactory(kind);
 			const channel = runtime.createChannel(id, kind.type);
 			// Named roots must be bound through the shared object so its own state stays in sync.
@@ -264,9 +285,11 @@ async function createLegacyLayoutDataStore<T, TRoot>(
 			return channel as TChild;
 		}
 		const inner: DataStoreContext = { createDataStore: create };
+		// As in the native path, the registered root kind supplies the type erased by channel loading.
 		const root = existing
 			? ((await runtime.getChannel(rootId)) as TRoot)
 			: await initializeRoot(options, inner, async (key) => create(key, rootId));
+		// The runtime only needs the application view as an opaque entry point.
 		return (await options.view(root, inner)) as FluidObject;
 	});
 }

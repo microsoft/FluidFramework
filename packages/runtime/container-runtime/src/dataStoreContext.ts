@@ -439,6 +439,10 @@ export abstract class FluidDataStoreContext
 	private localChangesTelemetryCount: number;
 
 	public readonly id: string;
+	/**
+	 * Whether this context uses a legacy DDS child layout, not merely whether its runtime hosts a leaf.
+	 * Container-level leaves still use the data-store envelope.
+	 */
 	public isSharedObjectChannel: boolean;
 	private readonly _containerRuntime: IContainerRuntimeBase;
 	/**
@@ -858,7 +862,8 @@ export abstract class FluidDataStoreContext
 			telemetryContext,
 		);
 
-		// Wrap dds summaries in .channels subtree.
+		// Preserve DDS child slots without adding a .channels subtree or .component blob.
+		// Other contexts, including container-level leaves, keep the data-store envelope.
 		if (!this.isSharedObjectChannel) {
 			wrapSummaryInChannelsTree(summarizeResult);
 		}
@@ -1096,6 +1101,10 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.getAbsoluteUrl(relativeUrl);
 	}
 
+	/**
+	 * Recognizes DDS child snapshots and reconstructs their container-relative factory path.
+	 * Unlike data-store snapshots, these store only a type in .attributes, not a package path in .component.
+	 */
 	protected async readSharedObjectPackagePath(
 		snapshot: ISnapshotTree,
 	): Promise<readonly string[] | undefined> {
@@ -1526,7 +1535,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
 		const attachSummary = this.channel.getAttachSummary(telemetryContext);
 
-		// Wrap dds summaries in .channels subtree.
+		// Match summarizeInternal: DDS attach snapshots must retain the layout legacy peers expect.
 		if (!this.isSharedObjectChannel) {
 			wrapSummaryInChannelsTree(attachSummary);
 		}

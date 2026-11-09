@@ -154,6 +154,10 @@ export interface IFluidParentContextPrivate
 	readonly isReadOnly: () => boolean;
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+	/**
+	 * Parent factory path used to resolve DDS children whose snapshots store only a type in .attributes.
+	 * Omitted outside collections that support these legacy child slots.
+	 */
 	readonly leafChannelPackagePath?: readonly string[] | undefined;
 	readonly submitSignal: (
 		type: string,
@@ -1211,6 +1215,7 @@ export class ChannelCollection
 
 	public processSignal(messageArg: IInboundSignalMessage, local: boolean): void {
 		const envelope = messageArg.content as IEnvelope<unknown>;
+		// Consume one path segment per collection, keeping the remaining routing separate from application content.
 		const separator = envelope.address.indexOf("/");
 		const fluidDataStoreId =
 			separator === -1 ? envelope.address : envelope.address.slice(0, separator);
@@ -1790,8 +1795,9 @@ export function detectOutboundReferences(
 
 	recursivelyFindHandles(contents);
 
-	// GC node paths are all absolute paths, hence the "" prefix.
-	// e.g. this will yield "/dataStoreId/ddsId"
+	// Build a node path relative to this collection, e.g. "/dataStoreId/ddsId".
+	// The caller prefixes the collection's absolute path before notifying GC.
+	// An empty DDS address denotes the channel itself, not a child or a trailing-slash node.
 	const fromPath = ddsAddress === "" ? `/${address}` : ["", address, ddsAddress].join("/");
 	for (const toPath of outboundPaths) {
 		addedOutboundReference(fromPath, toPath);

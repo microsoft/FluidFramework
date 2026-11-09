@@ -117,6 +117,10 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			return runtime;
 		},
 	};
+	/**
+	 * Replaces the parent runtime while retaining its factory type and root name, unlike the bridge-only fixture.
+	 * This "NoCompat" suite exercises mixed APIs/layouts using current packages, not older framework versions.
+	 */
 	const modernFactory: IFluidDataStoreFactory & {
 		IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 	} = {

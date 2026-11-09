@@ -90,6 +90,7 @@ export class NativeChannelCollection
 						relativeAddress !== undefined &&
 						this.contexts.get(relativeAddress)?.isSharedObjectChannel === true
 					) {
+						// Legacy DDS signals target the containing store, not an individual DDS.
 						context.submitSignal(type, content, target);
 					} else {
 						context.submitSignal(type, content, target, relativeAddress);
@@ -116,6 +117,7 @@ export class NativeChannelCollection
 		registry: IFluidDataStoreRegistry | undefined,
 		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
 	): Promise<NativeChannelCollection> {
+		// Gate persisted features, not use of this runtime: DDS-only snapshots remain valid at older targets.
 		const hasCompositeChildren = Object.values(context.baseSnapshot?.trees ?? {}).some(
 			(tree) =>
 				tree.blobs[".component"] !== undefined && tree.blobs[".attributes"] === undefined,
@@ -222,6 +224,7 @@ export class NativeChannelCollection
 		if (this.visible) {
 			return;
 		}
+		// Child attachment can re-enter through this collection's routing context.
 		this.visible = true;
 		for (const handle of this.boundHandles) {
 			handle.attachGraph();
@@ -232,6 +235,7 @@ export class NativeChannelCollection
 
 	protected override makeDataStoreLocallyVisible(id: string): void {
 		super.makeDataStoreLocallyVisible(id);
+		// A descendant-only reference must also make its ancestors reachable and attachable.
 		this.makeVisibleAndAttachGraph();
 	}
 
@@ -242,6 +246,10 @@ export class NativeChannelCollection
 		return super.request(request);
 	}
 
+	/**
+	 * Removes the extra data-store operation envelope for a DDS child.
+	 * Legacy peers expect an "op" addressed directly to the DDS, so native routing must not change its wire format.
+	 */
 	private toLegacyMessage(type: string, content: unknown): { type: string; content: unknown } {
 		if (type === ContainerMessageType.FluidDataStoreOp) {
 			const envelope = readEnvelope(content);
@@ -254,6 +262,11 @@ export class NativeChannelCollection
 		return { type, content };
 	}
 
+	/**
+	 * Restores the in-memory data-store envelope around a legacy DDS operation.
+	 * The empty inner address identifies the leaf itself.
+	 * Processing, resubmission, rollback, and stashed-op replay must all use this same translation.
+	 */
 	private toNativeMessage(type: string, content: unknown): { type: string; content: unknown } {
 		if (type === "op") {
 			const envelope = readEnvelope(content);
@@ -301,6 +314,8 @@ export class NativeChannelCollection
 	public override processSignal(message: IInboundSignalMessage, local: boolean): void {
 		const routed: IInboundSignalMessage & { relativeAddress?: string | undefined } = message;
 		if (routed.relativeAddress === undefined) {
+			// Preserve store-wide broadcast delivery to DDS children, but not nested composite stores.
+			// Application content may itself contain "address" and "contents"; it is never routing metadata.
 			for (const [, context] of this.contexts) {
 				if (context.isSharedObjectChannel) {
 					context.processSignal(message, local);
@@ -368,6 +383,9 @@ export class NativeChannelCollection
 		const builder = new GCDataBuilder();
 		builder.addNodes(data.gcNodes);
 		const path = this.parentContext.IFluidHandleContext.absolutePath;
+		// Back-edges retain this ancestor when any descendant is referenced.
+		// Forward edges retain all bound children with their ancestor, giving the subtree one GC lifetime.
+		// These cycles do not retain the aggregate when it is unreachable from the container's GC root.
 		builder.addRouteToAllNodes(path);
 		const children: string[] = [];
 		for (const [id] of this.contexts) {
