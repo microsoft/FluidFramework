@@ -192,9 +192,12 @@ extends:
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
-    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
+      # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
       skipBuildTagsForGitHubPullRequests: true
+      # Preserve Historian's existing policy selection.
+      # Add LinuxDistroRepos to allow Linux package downloads during Docker builds.
+      networkIsolationPolicy: Good,AzureContainerRegistry,GitHub,CFSClean2,CFSClean,CFSClean3,LinuxDistroRepos
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
