@@ -524,7 +524,8 @@ export interface ICaptureFullContainerStateProps {
 	 * Controls whether blob payloads are included in the captured state.
 	 *
 	 * `"inline"` (the default) includes blob contents, producing self-contained
-	 * state that supports fully offline loading with {@link loadFrozenContainerFromPendingState}.
+	 * state that supports fully offline loading with {@link loadFrozenContainerFromPendingState},
+	 * unless `includeAttachmentBlobs` is `false`.
 	 *
 	 * `"reference"` preserves blob IDs in the snapshot tree but omits their
 	 * payloads. This reduces the captured state size, but loading requires live
@@ -532,6 +533,18 @@ export interface ICaptureFullContainerStateProps {
 	 * {@link loadFrozenContainerFromPendingState}.
 	 */
 	readonly blobCaptureMode?: "inline" | "reference" | undefined;
+	/**
+	 * Whether to include attachment blob payloads when `blobCaptureMode` is `"inline"`.
+	 * The default is `true`.
+	 *
+	 * Set to `false` to preserve structural snapshot contents and attachment references
+	 * without inlining attachment payloads from either the snapshot or saved ops.
+	 * Reading an omitted attachment requires live storage and depends on that attachment
+	 * remaining available there. This does not change garbage collection or retention.
+	 *
+	 * Ignored when `blobCaptureMode` is `"reference"`, which omits all blob payloads.
+	 */
+	readonly includeAttachmentBlobs?: boolean | undefined;
 }
 
 /**
@@ -554,6 +567,12 @@ export interface ICaptureFullContainerStateProps {
  * IDs needed to load the container, but structural and attachment payloads are
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
+ *
+ * When `blobCaptureMode` is `"inline"` and `includeAttachmentBlobs` is `false`,
+ * structural contents remain inlined, but attachment payloads are omitted.
+ * Attachment references and saved ops are preserved.
+ * Accessing an omitted attachment requires live storage; callers must ensure the
+ * attachment remains available for the lifetime of the captured state.
  *
  * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
  * are skipped (their contents are not inlined). Attachment blobs that GC has
@@ -596,6 +615,7 @@ export async function captureFullContainerState({
 	request,
 	logger,
 	blobCaptureMode = "inline",
+	includeAttachmentBlobs = true,
 }: ICaptureFullContainerStateProps): Promise<string> {
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
@@ -696,10 +716,14 @@ export async function captureFullContainerState({
 		// pending state so the load side can apply the matching decoder
 		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
 		if (blobCaptureMode === "inline") {
-			gcData = await parseGcSnapshotData(baseSnapshot, storage);
+			gcData = includeAttachmentBlobs
+				? await parseGcSnapshotData(baseSnapshot, storage)
+				: undefined;
 			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
 				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
+				includeAttachmentBlobs
+					? captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData) // base64 encoded
+					: Promise.resolve({}),
 			]);
 		}
 
@@ -718,7 +742,7 @@ export async function captureFullContainerState({
 		deltaManager.dispose();
 
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
-		if (blobCaptureMode === "inline") {
+		if (blobCaptureMode === "inline" && includeAttachmentBlobs) {
 			for (const op of savedOps) {
 				// Blobs uploaded after the base snapshot are not in its
 				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`

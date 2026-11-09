@@ -63,6 +63,7 @@ export interface IBaseProtocolHandler {
 export interface ICaptureFullContainerStateProps {
     readonly blobCaptureMode?: "inline" | "reference" | undefined;
     readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly includeAttachmentBlobs?: boolean | undefined;
     readonly logger?: ITelemetryBaseLogger | undefined;
     readonly request: IRequest;
     readonly urlResolver: IUrlResolver;

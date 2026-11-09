@@ -47,14 +47,11 @@ const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 	]);
 
 /**
- * Wraps a document service factory so that any `readBlob` call on the
- * resulting storage throws. Frozen-load delegates `readBlob` to the inner
- * storage when one is provided, which masks the case where the artifact
- * itself is not self-contained. Routing through this wrapper turns "blob
- * fell through to live storage" into a hard failure that the test can catch.
+ * Wraps explicit blob reads without intercepting the driver's own snapshot prefetch.
  */
-function makeFactoryWithFailingReadBlob(
+function makeFactoryWithReadBlob(
 	inner: IDocumentServiceFactory,
+	readBlob: (storage: IDocumentStorageService, id: string) => Promise<ArrayBufferLike>,
 ): IDocumentServiceFactory {
 	const wrapService = (svc: IDocumentService): IDocumentService =>
 		new Proxy(svc, {
@@ -65,13 +62,18 @@ function makeFactoryWithFailingReadBlob(
 						return new Proxy(innerStorage, {
 							get: (storageTarget, storageProp, storageReceiver) => {
 								if (storageProp === "readBlob") {
-									return async (_id: string): Promise<ArrayBufferLike> => {
-										throw new Error(
-											"readBlob hit live storage — captured artifact was not self-contained",
-										);
-									};
+									return async (id: string): Promise<ArrayBufferLike> =>
+										readBlob(storageTarget, id);
 								}
-								return Reflect.get(storageTarget, storageProp, storageReceiver) as unknown;
+								if (storageProp === "getSnapshot" && storageTarget.getSnapshot !== undefined) {
+									return storageTarget.getSnapshot.bind(storageTarget);
+								}
+								const value: unknown = Reflect.get(
+									storageTarget,
+									storageProp,
+									storageReceiver,
+								);
+								return value;
 							},
 						});
 					};
@@ -85,6 +87,17 @@ function makeFactoryWithFailingReadBlob(
 		createDocumentService: async (...args) =>
 			wrapService(await inner.createDocumentService(...args)),
 	};
+}
+
+/**
+ * Makes live blob-read fallbacks fail so storage cannot mask incomplete captured state.
+ */
+function makeFactoryWithFailingReadBlob(
+	inner: IDocumentServiceFactory,
+): IDocumentServiceFactory {
+	return makeFactoryWithReadBlob(inner, async () => {
+		throw new Error("readBlob hit live storage — captured artifact was not self-contained");
+	});
 }
 
 /**
@@ -643,6 +656,137 @@ describe("captureFullContainerState", () => {
 			.get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
+	});
+
+	it("omits snapshot and post-snapshot attachment payloads while preserving resumable structural state", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		const containers = [container];
+		try {
+			const snapshotPayload = "snapshot-attachment";
+			const snapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(snapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("snapshotBlob", snapshotHandle);
+			testFluidObject.root.set("snapshotValue", "before attach");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+
+			const postSnapshotPayload = "post-snapshot-attachment";
+			const postSnapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(postSnapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("postSnapshotBlob", postSnapshotHandle);
+			testFluidObject.root.set("postSnapshotValue", "after attach");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const captureReads: string[] = [];
+			const recordingFactory = makeFactoryWithReadBlob(
+				documentServiceFactory,
+				async (storage, id) => {
+					captureReads.push(id);
+					return storage.readBlob(id);
+				},
+			);
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory: recordingFactory,
+				request: { url },
+				includeAttachmentBlobs: false,
+			});
+			const capturedState: {
+				baseSnapshot: ISnapshotTree;
+				snapshotBlobs: Record<string, string>;
+				attachmentBlobContents?: Record<string, string>;
+				blobContentsMode?: "reference";
+				savedOps: ISequencedDocumentMessage[];
+			} = JSON.parse(pendingLocalState);
+			assert(Object.keys(capturedState.snapshotBlobs).length > 0);
+			assert.strictEqual(capturedState.attachmentBlobContents, undefined);
+			assert.strictEqual(capturedState.blobContentsMode, undefined);
+
+			const blobsTree: ISnapshotTree | undefined = capturedState.baseSnapshot.trees[".blobs"];
+			assert(blobsTree !== undefined, "Expected snapshot attachment references");
+			const snapshotAttachmentIds = Object.entries(blobsTree.blobs)
+				.filter(([name]) => name !== ".redirectTable")
+				.map(([, storageId]) => storageId);
+			assert(snapshotAttachmentIds.length > 0, "Snapshot must contain an attachment");
+			const postSnapshotReferences = capturedState.savedOps.flatMap((op) =>
+				extractBlobAttachReferences(op),
+			);
+			assert(postSnapshotReferences.length > 0, "Saved ops must contain a BlobAttach");
+			const attachmentIds = new Set([
+				...snapshotAttachmentIds,
+				...postSnapshotReferences.map((reference) => reference.storageId),
+			]);
+			assert(
+				captureReads.every((id) => !attachmentIds.has(id)),
+				"Capture must not explicitly fetch omitted attachment payloads",
+			);
+
+			const replayReads: string[] = [];
+			const attachmentOnlyFactory = makeFactoryWithReadBlob(
+				documentServiceFactory,
+				async (storage, id) => {
+					assert(attachmentIds.has(id), `Structural blob ${id} fell through to storage`);
+					replayReads.push(id);
+					return storage.readBlob(id);
+				},
+			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory: attachmentOnlyFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+			});
+			containers.push(frozenContainer);
+			const entryPoint: FluidObject<TestFluidObject> = await frozenContainer.getEntryPoint();
+			assert(entryPoint.ITestFluidObject !== undefined);
+			const root = entryPoint.ITestFluidObject.root;
+			assert.strictEqual(root.get("snapshotValue"), "before attach");
+			assert.strictEqual(root.get("postSnapshotValue"), "after attach");
+			assert.deepStrictEqual(replayReads, []);
+			for (const [key, payload] of [
+				["snapshotBlob", snapshotPayload],
+				["postSnapshotBlob", postSnapshotPayload],
+			]) {
+				const handle: unknown = root.get(key);
+				assert(isFluidHandle(handle));
+				assert.deepStrictEqual(await handle.get(), stringToBuffer(payload, "utf8"));
+			}
+			assert.deepStrictEqual(new Set(replayReads), attachmentIds);
+
+			const referenceState: {
+				snapshotBlobs: Record<string, string>;
+				attachmentBlobContents?: Record<string, string>;
+				blobContentsMode?: "reference";
+			} = JSON.parse(
+				await captureFullContainerState({
+					urlResolver,
+					documentServiceFactory,
+					request: { url },
+					blobCaptureMode: "reference",
+					includeAttachmentBlobs: false,
+				}),
+			);
+			assert.deepStrictEqual(referenceState.snapshotBlobs, {});
+			assert.strictEqual(referenceState.attachmentBlobContents, undefined);
+			assert.strictEqual(referenceState.blobContentsMode, "reference");
+		} finally {
+			for (const loadedContainer of containers) {
+				loadedContainer.close();
+			}
+			await deltaConnectionServer.close();
+		}
 	});
 
 	it("captures references that can seed multiple independent online containers", async () => {
