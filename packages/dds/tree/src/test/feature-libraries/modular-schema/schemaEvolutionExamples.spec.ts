@@ -230,12 +230,12 @@ describe("Schema Evolution Examples", () => {
 		}
 	});
 
-	/**
-	 * User stories for removing optional fields from view schemas.
-	 */
-	describe("optional field removal", () => {
+	// Tests validating user scenarios around removal of fields from object schema.
+	// Removal of optional fields is supported (when `allowUnknownOptionalFields` is enabled, which is the default).
+	// Removal of required fields is not supported.
+	describe("Field removal", () => {
 		/**
-		 * "V1" schema in most test cases below.
+		 * "V1" schema in many test cases below.
 		 * Task schema declares an optional `foo` field that stores a number.
 		 */
 		class TaskWithFoo extends factory.object(
@@ -245,8 +245,8 @@ describe("Schema Evolution Examples", () => {
 		) {}
 
 		/**
-		 * "V2" schema in most test cases below.
-		 * {@link TaskWithFoo} which omits the optional `foo` field.
+		 * "V2" schema in many test cases below.
+		 * {@link TaskWithFoo} which omits the optional `foo` field present in V1.
 		 */
 		class TaskWithoutFoo extends factory.object(
 			"Task",
@@ -1435,6 +1435,15 @@ describe("Schema Evolution Examples", () => {
 			}
 		});
 
+		/**
+		 * V1 declares `notes?: string`.
+		 * V2 removes `notes` and adds `label`.
+		 * V3 restores an optional `notes` field, but stores a string array rather than a string.
+		 *
+		 * Upgrade a V1 or V3 document through V2, then attempt to open it with the other notes declaration.
+		 * V2 must retain the original field's type and content, even when `notes` has never been populated.
+		 * The incompatible restoration must reject viewing and upgrading without changing either client's document.
+		 */
 		describe("restore a removed string field as an array", () => {
 			// V1 includes a `notes` field that stores a single string.
 			class TaskV1 extends factory.object("Task", {
@@ -1552,6 +1561,14 @@ describe("Schema Evolution Examples", () => {
 			}
 		});
 
+		/**
+		 * V1 declares `notes?: Notes` with string text.
+		 * V2 removes `notes` and adds `label`.
+		 * V3 restores `notes` using the same `Notes` node identifier, but its node definition uses a number for `text`, instead of a string.
+		 *
+		 * After V2 upgrades either version's document, the stored `Notes` definition must still describe the creating version.
+		 * The opposite version must reject that definition, whether `notes` contains a node or is empty, without altering schema or data.
+		 */
 		describe("restore a removed node-valued field with an incompatible definition", () => {
 			// The initial version of `Notes` uses a string for its `text`.
 			class NotesV1 extends factory.object("Notes", { text: factory.string }) {}
@@ -1669,6 +1686,14 @@ describe("Schema Evolution Examples", () => {
 			}
 		});
 
+		/**
+		 * V1 declares string `notes`.
+		 * V2 removes `notes` and adds `label`.
+		 * V3 introduces an optional array also named `notes`, but stores it under the new stored key "notesV3".
+		 *
+		 * Upgrade a V1 document through V2 and V3, preserving the original string and adding an initially empty array field.
+		 * V1 and V3 must edit their separate `notes` fields independently, and subsequent upgrades must be no-ops.
+		 */
 		it("reuses a property name with a different stored key without replacing historical data", () => {
 			// The initial version of the task has a `notes` field as a string.
 			class TaskV1 extends factory.object("Task", {
@@ -1757,7 +1782,14 @@ describe("Schema Evolution Examples", () => {
 			original.dispose();
 		});
 
-		// Restoration must work both for an existing Notes node and for a declaration that has never been populated.
+		/**
+		 * V1 declares `notes?: Notes`.
+		 * V2 removes `notes` and adds `label`.
+		 * V3 restores the original `notes` field and node identifiers while adding an optional `author` field to `Notes`.
+		 *
+		 * Upgrade a populated or empty V1 document through V2 and V3 without replacing existing text or creating missing notes.
+		 * Older clients must still edit the shared fields without losing the `author` added by V3.
+		 */
 		for (const populated of [false, true]) {
 			it(`restores a node-valued field with a compatible nested addition (${populated ? "populated" : "empty"})`, () => {
 				class NotesV1 extends factory.object("Notes", { text: factory.string }) {}
@@ -1856,6 +1888,13 @@ describe("Schema Evolution Examples", () => {
 			});
 		}
 
+		/**
+		 * V1 declares `Project.tasks` as an array of tasks, each with optional notes.
+		 * V2 removes `notes` from `Task` and adds an optional `isApproved` field, leaving `Project`'s own fields unchanged.
+		 *
+		 * The upgrade from V1 to V2must succeed only when `Task` allows unknown optional fields, independently of `Project`'s setting.
+		 * Verify that edits and newly inserted tasks preserve `notes` for older clients, and that rejected upgrades leave the document unchanged.
+		 */
 		describe("remove a field from objects below the root", () => {
 			for (const projectAllowsUnknown of [false, true]) {
 				for (const taskAllowsUnknown of [false, true]) {
@@ -1940,6 +1979,15 @@ describe("Schema Evolution Examples", () => {
 			}
 		});
 
+		/**
+		 * V1 declares optional `notes` and `estimate`.
+		 * V2 removes `notes` and adds `isApproved`.
+		 * V3 removes `estimate` and adds `label`.
+		 *
+		 * Upgrade the same V1 document through V2 and V3, keeping all three clients open.
+		 * Both upgrades must retain earlier fields and values while adding the new fields.
+		 * Clients must continue editing the fields they know, and repeated upgrades must preserve the combined schema without further operations.
+		 */
 		it("preserves fields removed by successive versions through multiple upgrades", () => {
 			class TaskV1 extends factory.object("Task", {
 				title: factory.string,
@@ -2036,6 +2084,14 @@ describe("Schema Evolution Examples", () => {
 			viewV1.dispose();
 		});
 
+		/**
+		 * V1 requires `estimatedHours` on every task.
+		 * V2 removes that field from its view.
+		 *
+		 * Open a V1 document with V2, which allows unknown optional fields but cannot supply the required `estimatedHours`.
+		 * Viewing and upgrading must be rejected without changing schema, content, or operation count.
+		 * The original client must remain able to read the task and its estimate.
+		 */
 		it("cannot remove a required field even when unknown optional fields are allowed", () => {
 			class TaskV1 extends factory.object("Task", {
 				title: factory.string,
