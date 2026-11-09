@@ -4,4 +4,3 @@ High-level architectural documentation for the Fluid Framework, covering topics 
 
 - [Design Goals](./Architecture/Design-Goals.md)
 - [SharedTree](./Architecture/SharedTree.md)
-- [Shared object and data store unification follow-up checklist](./Architecture/SharedObject-DataStore-Unification.md)
