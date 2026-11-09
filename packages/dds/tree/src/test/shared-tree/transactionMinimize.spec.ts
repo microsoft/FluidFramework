@@ -29,8 +29,9 @@ import {
 	SharedTreeChange,
 	Tree,
 } from "../../shared-tree/index.js";
+import { toInitialSchema } from "../../simple-tree/index.js";
 import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
-import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
+import { expectSchemaEqual, TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange, RebaseValidation } from "../../core/index.js";
 import {
 	compareStrings,
@@ -2258,10 +2259,22 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	// Restoring the original view hides the optional field without removing its stored schema or content.
-	// Minimization must preserve that content even though the final view does not expose it.
 	for (const minimize of [true, false]) {
-		it(`preserves unknown optional fields when restoring the original view schema (minimize: ${minimize})`, () => {
+		/**
+		 * Attempts to inject a hidden property using a temporary schema change, then restores the original view schema.
+		 * @remarks
+		 * Steps (root state shown after each):
+		 *
+		 * 0. initial                 -\> `[Box: { value: "A⌚" }]`
+		 * 1. upgrade stored schema   -\> `[Box: { value: "A⌚" }]`
+		 * 2. set Box secret to "B❤️" -\> `[Box: { value: "A⌚", secret: "B❤️" }]`
+		 * 3. restore original view   -\> stored: `[Box: { value: "A⌚", secret: "B❤️" }]`, visible: `[Box: { value: "A⌚" }]`
+		 *
+		 * This restores the view schema, not the stored schema: the stored secret field remains allowed.
+		 * Its value is surviving document content, even though the restored view does not expose it.
+		 * This invariant is independent of minimization, which only operates on data edits and must preserve the document's final content.
+		 */
+		it(`temporary schema change preserves content when restoring view schema (minimize: ${minimize})`, () => {
 			const {
 				tree: updatedTree,
 				view,
@@ -2277,7 +2290,9 @@ describe("transaction minimize post-processor", () => {
 						const view2 = tree.viewWith(
 							new TreeViewConfiguration(SketchyBoxArraySchemaConfig),
 						);
+						assert(view2 instanceof SchematizingSimpleTreeView);
 						view2.upgradeSchema();
+						const expandedSchema = view2.checkout.storedSchema.clone();
 						view2.root[0].secret = "B❤️";
 						view2.dispose();
 
@@ -2293,6 +2308,8 @@ describe("transaction minimize post-processor", () => {
 						assert(view3.compatibility.canUpgrade);
 						view3.upgradeSchema();
 
+						// Returning to the original view must not undo the stored-schema expansion.
+						expectSchemaEqual(view3.checkout.storedSchema, expandedSchema);
 						return view3;
 					},
 					expectSurvivingMarker: true,
@@ -2302,6 +2319,9 @@ describe("transaction minimize post-processor", () => {
 					validateConsistency: true,
 				},
 			);
+
+			// Committing the transaction keeps the expanded schema and the live data hidden by the restored view.
+			expectSchemaEqual(view.checkout.storedSchema, toInitialSchema(SketchyBoxArray));
 			assert.equal(view.root[0].value, "A⌚");
 			assert.equal("secret" in view.root[0], false);
 			assert.match(stringifiedChange, /B❤️/);
@@ -2314,6 +2334,88 @@ describe("transaction minimize post-processor", () => {
 			assert(restoredView.compatibility.canView);
 			assert.equal(restoredView.root[0].value, "A⌚");
 			assert.equal(restoredView.root[0].secret, "B❤️");
+			restoredView.dispose();
+		});
+
+		/**
+		 * Adds and clears a hidden property using a temporary schema change, then restores the original view schema.
+		 * @remarks
+		 * Steps (root state shown after each):
+		 *
+		 * 0. initial                 -\> `[Box: { value: "A⌚" }]`
+		 * 1. upgrade stored schema   -\> `[Box: { value: "A⌚" }]`
+		 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A⌚", secret: "B☠️" }]`
+		 * 3. clear Box secret        -\> `[Box: { value: "A⌚" }]`
+		 * 4. restore original view   -\> `[Box: { value: "A⌚" }]`
+		 *
+		 * The stored schema still permits secret, but its value no longer exists in the final document.
+		 * Minimization must remove that transient value from the serialized change; without minimization it remains in the edit history.
+		 * Clearing the field, not hiding it through a different view, is what makes the value transient.
+		 */
+		it(`temporary schema change clears content before restoring view schema (minimize: ${minimize})`, () => {
+			const {
+				tree: updatedTree,
+				view,
+				stringifiedChange,
+			} = runScenario(
+				{
+					schema: BoxArray,
+					initialContent: [new Box({ value: "A⌚" })],
+					apply: (_root, tree, view1) => {
+						view1.dispose();
+						const view2 = tree.viewWith(
+							new TreeViewConfiguration(SketchyBoxArraySchemaConfig),
+						);
+						assert(view2 instanceof SchematizingSimpleTreeView);
+						view2.upgradeSchema();
+						const expandedSchema = view2.checkout.storedSchema.clone();
+
+						// Unlike a view change, clearing the field actually removes its value from the document.
+						view2.root[0].secret = "B☠️";
+						view2.root[0].secret = undefined;
+						view2.dispose();
+
+						const view3 = tree.viewWith(
+							new TreeViewConfiguration({
+								schema: BoxArray,
+								enableSchemaValidation: true,
+							}),
+						);
+						assert(view3 instanceof SchematizingSimpleTreeView);
+						assert(view3.compatibility.canView);
+						assert(view3.compatibility.canUpgrade);
+						view3.upgradeSchema();
+
+						// Removing a value does not remove its field declaration or permit a stored-schema downgrade.
+						expectSchemaEqual(view3.checkout.storedSchema, expandedSchema);
+						return view3;
+					},
+					expectSurvivingMarker: false,
+				} as const satisfies BoxArrayScenario,
+				{
+					minimize,
+					validateConsistency: true,
+				},
+			);
+			expectSchemaEqual(view.checkout.storedSchema, toInitialSchema(SketchyBoxArray));
+			assert.equal(view.root[0].value, "A⌚");
+			assert.equal("secret" in view.root[0], false);
+
+			// Both runs end with the same document, but only minimization strips the cleared value from the operation.
+			if (minimize) {
+				assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			} else {
+				assert.match(stringifiedChange, /B☠️/);
+			}
+			view.dispose();
+
+			// A view that declares secret confirms it was cleared, rather than merely hidden.
+			const restoredView = updatedTree.viewWith(
+				new TreeViewConfiguration(SketchyBoxArraySchemaConfig),
+			);
+			assert(restoredView.compatibility.canView);
+			assert.equal(restoredView.root[0].value, "A⌚");
+			assert.equal(restoredView.root[0].secret, undefined);
 			restoredView.dispose();
 		});
 	}
