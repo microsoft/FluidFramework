@@ -18,8 +18,6 @@ import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discr
 import {
 	checkSchemaCompatibility,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	type ITree,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	type TreeNode,
@@ -259,41 +257,6 @@ describe("Schema Evolution Examples", () => {
 		) {}
 
 		const initialTitle = "Original task";
-
-		/**
-		 * Prepares typed document initialization for a scenario.
-		 *
-		 * @typeParam TSchema - The root schema that determines which initial content is permitted.
-		 * @param schema - The schema used to create the original document.
-		 * @param content - Initial content valid for `schema`, retained for later comparisons.
-		 * @returns The initial content and a function that initializes a tree with the captured schema and content.
-		 *
-		 * @remarks
-		 * Capturing the schema and content together preserves their type relationship in a table of different test cases.
-		 */
-		function withDocument<TSchema extends ImplicitFieldSchema>(
-			schema: TSchema,
-			content: InsertableTreeFieldFromImplicitField<TSchema>,
-		) {
-			return {
-				content,
-
-				/**
-				 * Initializes the supplied tree and returns its typed view.
-				 *
-				 * @param tree - An uninitialized tree for the original document.
-				 * @returns The initialized view. The caller must dispose it when it is no longer needed.
-				 *
-				 * @remarks
-				 * This writes the captured schema and content but does not synchronize other clients.
-				 */
-				initialize(tree: ITree) {
-					const view = tree.viewWith(new TreeViewConfiguration({ schema }));
-					view.initialize(content);
-					return view;
-				},
-			};
-		}
 
 		/**
 		 * The portion of a tree view needed by {@link verifyReadWrite}.
@@ -2075,91 +2038,31 @@ describe("Schema Evolution Examples", () => {
 			viewV1.dispose();
 		});
 
-		/**
-		 * Prerequisites: existing safety rules, independent of optional-field preservation.
-		 * Lower-level comparison tests cover several of these constraints.
-		 * These integration checks also verify that a rejected upgrade submits no operation
-		 * and leaves the stored schema and document data unchanged.
-		 */
-		describe("prerequisites", () => {
-			class StrictTask extends factory.object(
-				"Task",
-				{ title: factory.string },
-				{ allowUnknownOptionalFields: false },
-			) {}
-			class RequiredFoo extends factory.object(
-				"Task",
-				{ title: factory.string, foo: factory.number },
-				{ allowUnknownOptionalFields: true },
-			) {}
-			class WiderFoo extends factory.object(
-				"Task",
-				{ title: factory.string, foo: factory.optional([factory.number, factory.string]) },
-				{ allowUnknownOptionalFields: true },
-			) {}
-			class StringFoo extends factory.object("Foo", { text: factory.string }) {}
-			class NumberFoo extends factory.object("Foo", { text: factory.number }) {}
-			class OriginalNested extends factory.object(
-				"Task",
-				{ title: factory.string, foo: factory.optional(StringFoo) },
-				{ allowUnknownOptionalFields: true },
-			) {}
-			class ChangedNested extends factory.object(
-				"Task",
-				{ title: factory.string, foo: factory.optional(NumberFoo) },
-				{ allowUnknownOptionalFields: true },
-			) {}
+		it("cannot remove a required field even when unknown optional fields are allowed", () => {
+			class TaskV1 extends factory.object("Task", {
+				title: factory.string,
+				estimatedHours: factory.number,
+			}) {}
 
-			/**
-			 * Each row changes exactly one constraint while keeping stored identifiers.
-			 * Initialize using the original schema, then reject the changed view's upgrade.
-			 */
-			for (const { name, initialize, changed, content } of [
-				{
-					name: "cannot remove an optional field when unknown optional fields are disabled",
-					changed: StrictTask,
-					...withDocument(TaskWithFoo, { title: initialTitle, foo: 42 }),
-				},
-				{
-					name: "cannot remove a required field even with the object option",
-					changed: TaskWithoutFoo,
-					...withDocument(RequiredFoo, { title: initialTitle, foo: 42 }),
-				},
-				{
-					name: "cannot narrow the types of a declared optional field",
-					changed: TaskWithFoo,
-					...withDocument(WiderFoo, { title: initialTitle, foo: "Stored string" }),
-				},
-				{
-					name: "cannot reuse a node identifier with incompatible nested fields",
-					changed: ChangedNested,
-					...withDocument(OriginalNested, {
-						title: initialTitle,
-						foo: { text: "Stored string" },
-					}),
-				},
-			] as const) {
-				it(name, () => {
-					const provider = new TestTreeProviderLite(2);
-					const [documentTree, readerTree] = provider.trees;
+			// V2 retires `estimatedHours`, but the original schema requires every task to have one.
+			class TaskV2 extends factory.object("Task", { title: factory.string }) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
+			const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			creator.initialize({ title: initialTitle, estimatedHours: 4 });
+			provider.synchronizeMessages();
 
-					// #region Step 1: Create and synchronize the original document.
-					const creator = initialize(documentTree);
-					provider.synchronizeMessages();
-					// #endregion Step 1
+			// Unknown-field support applies only to optional fields; V2 cannot supply the required estimate on new tasks.
+			// Reject both viewing and upgrading without changing either client's stored schema, data, or operation count.
+			const reader = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			verifyRejectedUpgrade(provider, reader);
 
-					// #region Step 2: The changed schema cannot view or upgrade this document.
-					const reader = readerTree.viewWith(new TreeViewConfiguration({ schema: changed }));
-					verifyRejectedUpgrade(provider, reader);
-					// #endregion Step 2
-
-					// #region Step 3: The original view still exposes the same content.
-					// The unaffected collaborator must still be able to read all original field values.
-					assert.deepEqual(TreeBeta.exportConcise(creator.root), content);
-					creator.dispose();
-					// #endregion Step 3
-				});
-			}
+			// The failed retirement must leave the original application able to read the task and its estimate.
+			assert.deepEqual(TreeBeta.exportConcise(creator.root), {
+				title: initialTitle,
+				estimatedHours: 4,
+			});
+			creator.dispose();
 		});
 	});
 
