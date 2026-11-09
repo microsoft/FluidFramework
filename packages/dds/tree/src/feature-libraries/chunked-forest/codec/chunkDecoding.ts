@@ -27,7 +27,7 @@ import { BasicChunk } from "../basicChunk.js";
 import { defaultChunkPolicy } from "../chunkTree.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
-import { TreeShape, UniformChunk, type FieldShape } from "../uniformChunk.js";
+import { TreeShape, UniformChunk, type ChunkShape, type FieldShape } from "../uniformChunk.js";
 import { assertAllowedValue } from "../../valueUtilities.js";
 
 import {
@@ -203,6 +203,21 @@ interface UniformLayout {
 	readonly canReuseValues: boolean;
 	readValues(stream: StreamCursor, values: TreeValue[]): void;
 }
+
+/**
+ * Shared shapes for built-in leaves, independent of decoding context.
+ * @remarks
+ * Matches `SchemaFactory.leaves`, which cannot be imported here due to layering.
+ * Exported for testing.
+ * This exists to help optimize decoding of leaves.
+ */
+export const builtInLeafChunkShapes: ReadonlyMap<TreeNodeSchemaIdentifier, ChunkShape> =
+	new Map(
+		["number", "string", "boolean", "null", "handle"].map((name) => {
+			const type = brand<TreeNodeSchemaIdentifier>(`com.fluidframework.leaf.${name}`);
+			return [type, new TreeShape(type, true, []).withTopLevelLength(1)];
+		}),
+	);
 
 /**
  * Caches layout analysis independently of decoder initialization order.
@@ -635,6 +650,7 @@ function fieldDecoder(
  */
 export class NodeDecoder extends UniformShapeDecoder {
 	private readonly type?: TreeNodeSchemaIdentifier;
+	private readonly leafShape?: ChunkShape;
 	private fieldDecoders!: readonly BasicFieldDecoder[];
 	private extraFieldsDecoder?: ChunkDecoder;
 	public constructor(
@@ -645,6 +661,23 @@ export class NodeDecoder extends UniformShapeDecoder {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 		for (const [, fieldShape] of shape.fields ?? []) {
 			assertValidIndex(fieldShape, context.shapes);
+		}
+		if (
+			this.type !== undefined &&
+			shape.value === true &&
+			(shape.fields?.length ?? 0) === 0 &&
+			shape.extraFields === undefined
+		) {
+			const chunkShape =
+				builtInLeafChunkShapes.get(this.type) ??
+				new TreeShape(this.type, true, []).withTopLevelLength(1);
+			this.leafShape = chunkShape;
+			this.decode = (stream): TreeChunk => {
+				const value = stream.data[stream.offset];
+				assertAllowedValue(value);
+				stream.offset++;
+				return new UniformChunk(chunkShape, [value]);
+			};
 		}
 	}
 
@@ -694,7 +727,9 @@ export class NodeDecoder extends UniformShapeDecoder {
 		}
 		const context = this.context.idDecodingContext;
 		return {
-			treeShape: new TreeShape(this.type, hasValue, fields, compressedIdentifier),
+			treeShape:
+				this.leafShape?.treeShape ??
+				new TreeShape(this.type, hasValue, fields, compressedIdentifier),
 			idCompressor: context.idCompressor,
 			topLevelLength: 1,
 			encodedSize,
@@ -725,6 +760,9 @@ export class NodeDecoder extends UniformShapeDecoder {
 	}
 
 	public initialize(decoders: readonly ChunkDecoder[]): void {
+		if (this.leafShape !== undefined) {
+			return;
+		}
 		const fieldDecoders: BasicFieldDecoder[] = [];
 		for (const [fieldKey, fieldShape] of this.shape.fields ?? []) {
 			const key: FieldKey = this.context.identifier(fieldKey);

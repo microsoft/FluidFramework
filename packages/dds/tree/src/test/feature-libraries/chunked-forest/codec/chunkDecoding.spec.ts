@@ -32,6 +32,7 @@ import {
 	aggregateChunks,
 	AnyDecoder,
 	applySpecialization,
+	builtInLeafChunkShapes,
 	deaggregateChunks,
 	decode,
 	normalizeToNodeShape,
@@ -64,9 +65,13 @@ import {
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
-// eslint-disable-next-line import-x/no-internal-modules -- Tests inspect the decoded chunk representation.
-import { UniformChunk } from "../../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules -- Tests inspect the decoded chunk representation.
+} from "../../../../feature-libraries/chunked-forest/uniformChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
+import { SchemaFactory } from "../../../../simple-tree/index.js";
 import {
 	IdDecodingContext,
 	type ReferenceCountedBase,
@@ -190,10 +195,67 @@ describe("chunkDecoding", () => {
 			);
 		});
 
-		it("keeps standalone node decoding lightweight", () => {
+		it("decodes standalone leaves into uniform chunks", () => {
 			const result = decodeField([{ c: { type: "number", value: true } }], [0, 42]);
-			assert(result instanceof BasicChunk);
+			assert(result instanceof UniformChunk);
 			assertChunkCursorEquals(result, [{ type: brand("number"), value: 42 }]);
+		});
+
+		it("shares a cached chunk shape across individually decoded leaves", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const decoder = new NodeDecoder({ type: "number", value: true }, context);
+			decoder.initialize([]);
+			const stream = { data: [99, 1, 2, 100], offset: 1 };
+			const first = decoder.decode(stream);
+			const second = decoder.decode(stream);
+			assert(first instanceof UniformChunk);
+			assert(second instanceof UniformChunk);
+			assert.equal(first.shape, second.shape);
+			assert.notEqual(first.values, second.values);
+			assert.deepEqual(first.values, [1]);
+			assert.deepEqual(second.values, [2]);
+			assert.equal(stream.offset, 3);
+		});
+
+		it("validates leaf reads and supports null", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const decoder = new NodeDecoder({ type: "leaf", value: true }, context);
+			decoder.initialize([]);
+			// eslint-disable-next-line @rushstack/no-new-null -- Null is a supported tree value.
+			const stream = { data: [1, "text", true, null], offset: 0 };
+			for (const value of stream.data) {
+				const chunk = decoder.decode(stream);
+				assert(chunk instanceof UniformChunk);
+				assert.equal(chunk.values[0], value);
+			}
+			assert.equal(stream.offset, stream.data.length);
+			assert.throws(() => decoder.decode(stream));
+			const invalid = { data: [{}], offset: 0 };
+			assert.throws(() => decoder.decode(invalid));
+			assert.equal(invalid.offset, 0);
+		});
+
+		it("matches built-in leaf chunk shapes to SchemaFactory.leaves", () => {
+			const expected = new Map(
+				SchemaFactory.leaves.map((schema) => {
+					const type = brand<TreeNodeSchemaIdentifier>(schema.identifier);
+					return [type, new TreeShape(type, true, []).withTopLevelLength(1)];
+				}),
+			);
+			assert.deepEqual(builtInLeafChunkShapes, expected);
+		});
+
+		it("shares built-in leaf shapes across batches", () => {
+			const shapes: EncodedChunkShape[] = [
+				{ c: { type: "com.fluidframework.leaf.number", value: true } },
+			];
+			const first = decodeField(shapes, [0, 1]);
+			const second = decodeField(shapes, [0, 2]);
+			assert(first instanceof UniformChunk);
+			assert(second instanceof UniformChunk);
+			assert.equal(first.shape, second.shape);
+			assert.deepEqual(first.values, [1]);
+			assert.deepEqual(second.values, [2]);
 		});
 
 		it("decodes empty repetitions of a nonzero-width shape", () => {
