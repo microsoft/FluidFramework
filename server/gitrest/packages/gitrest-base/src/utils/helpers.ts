@@ -62,15 +62,20 @@ export function validateBlobContent(content: string): boolean {
 }
 
 /**
- * Returns the fsManagerFactory based on the isEphemeral flag
+ * Selects the requested filesystem without falling back from ephemeral to durable storage.
  */
 export function getFilesystemManagerFactory(
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	isEphemeralContainer: boolean,
 ) {
-	return isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		? fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		: fileSystemManagerFactories.defaultFileSystemManagerFactory;
+	if (!isEphemeralContainer) {
+		return fileSystemManagerFactories.defaultFileSystemManagerFactory;
+	}
+	const factory = fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+	if (factory === undefined) {
+		throw new NetworkError(503, "Ephemeral storage is unavailable.", false);
+	}
+	return factory;
 }
 
 /**
@@ -283,6 +288,18 @@ function getDocumentStorageProofError(
 }
 
 export function validateDocumentStorageProof(params: IRepoManagerParams): void {
+	if (
+		params.isEphemeralContainer === true &&
+		(params.fileSystemManagerParams?.physicalContainerName !== undefined ||
+			params.fileSystemManagerParams?.storageLayoutVersion !== undefined ||
+			params.fileSystemManagerParams?.storageLifecycleVersion !== undefined)
+	) {
+		throw new NetworkError(
+			400,
+			"Ephemeral requests cannot use durable storage routing.",
+			false,
+		);
+	}
 	const error =
 		params.documentStorageProofError ??
 		getDocumentStorageProofError(
