@@ -126,6 +126,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const remote = await provider.loadContainer(runtimeFactory);
 		const parent2 = (await remote.getEntryPoint()) as IFluidDataStoreChannelCollection;
 		const root2 = await getRoot(parent2);
+		await provider.ensureSynchronized();
 		const handle = root2.get<IFluidHandle<IFluidDataStoreChannelCollection>>("child");
 		assert(handle !== undefined);
 		const child2 = await handle.get();
@@ -156,6 +157,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const remoteRoot = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
 		);
+		await provider.ensureSynchronized();
 		const handle = remoteRoot.get<IFluidHandle<ISharedMap>>("descendant");
 		assert(handle !== undefined);
 		assert.equal((await handle.get()).get("value"), 42);
@@ -218,6 +220,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		assert.equal(child.tree[".component"], undefined);
 		assert.equal(child.tree[".channels"], undefined);
 		const remote = await provider.loadContainer(incompatibleFactory);
+		await provider.ensureSynchronized();
 		assert.equal(
 			(await getRoot((await remote.getEntryPoint()) as IFluidDataStoreChannelCollection)).get(
 				"still-usable",
@@ -280,6 +283,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		root.set("value", 42);
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(outerFactory);
+		await provider.ensureSynchronized();
 		const root2 = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
 		);
@@ -299,6 +303,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const remoteRoot = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
 		);
+		await provider.ensureSynchronized();
 		const handle = remoteRoot.get<IFluidHandle<ITestFluidObject>>("legacy");
 		assert(handle !== undefined);
 		const legacy2 = await handle.get();
@@ -352,6 +357,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const remoteRoot = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
 		);
+		await provider.ensureSynchronized();
 		const handle = remoteRoot.get<IFluidHandle<ITestFluidObject>>("child");
 		assert(handle !== undefined);
 		const remoteChild = await handle.get();
@@ -377,6 +383,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(runtimeFactory);
 		const other = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		const remoteRoot = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
 		);

@@ -19,6 +19,7 @@ import {
 	createSummarizerCore,
 	getRequiredPendingLocalState,
 	summarizeNow,
+	waitForContainerConnection,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree/alpha";
@@ -100,6 +101,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		assert.equal(child.handle.isAttached, true);
 
 		const container2 = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		const root2 = await getMap(container2);
 		const handle = root2.get<IFluidHandle<ISharedMap>>("child");
 		assert(handle !== undefined);
@@ -154,6 +156,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 	it("rehydrates stashed operations", async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		const root = await getMap(container);
+		await waitForContainerConnection(container);
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container);
 		root.set("stashed", 42);
@@ -169,6 +172,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		assert.equal((await getMap(reloaded)).get("stashed"), 42);
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		assert.equal((await getMap(remote)).get("stashed"), 42);
 	});
 
@@ -186,6 +190,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		root.set("value", 3);
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		assert.equal((await getMap(remote)).get("value"), 3);
 	});
 

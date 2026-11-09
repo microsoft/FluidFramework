@@ -291,6 +291,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		legacy.set("value", 1);
 		await provider.ensureSynchronized();
 		const alpha = await client.loadContainer(provider.documentId, modernKind);
+		await provider.ensureSynchronized();
 		assert.equal(alpha.data.get("value"), 1);
 		alpha.data.set("value", 2);
 		await provider.ensureSynchronized();
@@ -405,6 +406,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		alpha.data.set("child", child.handle);
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(containerFactory);
+		await provider.ensureSynchronized();
 		const remoteMap = (await remote.getEntryPoint()) as ISharedMap;
 		const handle = remoteMap.get<IFluidHandle<ISharedMap>>("child");
 		assert(handle !== undefined);
@@ -419,6 +421,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		legacy.set("value", 1);
 		await provider.ensureSynchronized();
 		const alpha = await client.loadContainer(provider.documentId, kind);
+		await provider.ensureSynchronized();
 		assert.equal(alpha.data.get("value"), 1);
 		assert.equal(
 			toFluidHandleInternal(alpha.data.handle).absolutePath,
