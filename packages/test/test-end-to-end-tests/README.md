@@ -47,6 +47,17 @@ _"`SharedMap` import from `@fluidframework/map/internal` is restricted from bein
 
 For a worked example of an entire test file written this way, see [`sharedStringEndToEndTests.spec.ts`](src/test/sharedStringEndToEndTests.spec.ts). That same [directory](src/test) contains more complex examples too.
 
+### Testing API and document-layout migrations
+
+Mixed-API tests using current packages do not establish compatibility with older framework versions.
+Record the writer and reader APIs, framework versions, factory identifiers, root-selection convention, and configured compatibility target in the fixture.
+Keep application feature rollout separate from framework-version checks.
+
+Exercise edits in both directions, summaries produced by both implementations, and legacy content created after the new implementation joins.
+Loading a historical snapshot alone does not establish live collaboration.
+Assert stable handle paths and meaningful summary structure, not byte-identical serialization.
+For garbage-collection changes, test tombstone and sweep behavior as well as the graph returned by the runtime.
+
 ### Writing Tests That Take Summaries
 
 Many e2e tests need to drive **summaries** on demand — configuring interactive containers so they don't summarize on their own, spinning up a dedicated summarizer, taking summaries at controlled points, and loading new containers or summarizers from a specific summary. Doing this incorrectly is a common source of flaky tests.

@@ -116,6 +116,7 @@ export interface DataStoreOptions<in out TRoot, out TOutput> {
 
 	/**
 	 * Constructs the application-facing value from the root.
+	 * Neither the root nor the returned value needs to expose a handle or implement IFluidLoadable.
 	 * @param root - The created or loaded root value.
 	 * @param context - Creates additional contents.
 	 * @returns The application-facing value.
@@ -129,6 +130,9 @@ export interface DataStoreOptions<in out TRoot, out TOutput> {
  * Nested data stores require an oldest supported client version of at least 3.12.0.
  * Older targets support shared-object children using the existing DDS representation.
  * Loading an existing DDS-based data store preserves its DDS children and operation format.
+ * The framework-version target does not check application readiness; applications must coordinate use of new capabilities.
+ * Nested data stores share the garbage-collection lifetime of their container-level ancestor.
+ * A reachable descendant retains its ancestors and their attached children.
  * Use the legacy factory bridge for application-defined legacy layouts.
  * @param options - Initialization, registry, and view definition.
  * @returns The data store kind.
@@ -296,6 +300,7 @@ async function createLegacyLayoutDataStore<T, TRoot>(
 
 /**
  * Context provided when creating or loading a data store.
+ * Creates physically nested contents, not container-level peers selected through a hierarchical factory registry.
  * @sealed
  * @alpha
  */

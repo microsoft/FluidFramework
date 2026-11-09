@@ -56,6 +56,14 @@ Existing DDS-based stores keep those children in place when loaded.
 After the framework-version target and application rollout permit nesting, those stores can acquire composite children alongside their existing DDSs.
 Unsupported requests are rejected rather than silently adding wrappers or relocating content.
 
+Adopting the alpha API and enabling a new document capability are separate actions.
+The framework-version target checks whether participating framework versions can support a capability; it does not check whether older application code understands it.
+Applications must coordinate feature rollout separately and continue to supply compatible factories, schemas, and initialization logic.
+
+Container-level items are garbage-collection units.
+A nested data store shares its container-level ancestor's lifetime: a reachable descendant retains its ancestors and their attached children.
+Nested stores are not independently collected.
+
 For application-defined legacy layouts, use `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha`.
 For other container root-discovery conventions, use the existing legacy loader and `fluidContainerFromLegacy` from that entrypoint.
 The compatibility bridges retain existing factories, named channels, and document layouts without adding those legacy options to the main API.

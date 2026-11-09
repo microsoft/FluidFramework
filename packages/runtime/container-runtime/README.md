@@ -45,6 +45,8 @@ An unsupported request produces a usage error before the new feature is publishe
 
 Children have paths beneath their containing data store.
 Factory package paths remain container-relative so that legacy child-factory lookup continues to work.
+Physical containment is distinct from factory lookup: the legacy child-factory path can select a factory for a container-level peer without nesting that peer.
+Native collections instead place children beneath their containing data store without adding synthetic hosting stores or pointer objects.
 Storing a descendant's handle attaches the required ancestors.
 Nested aliases are persisted in the collection's `.aliases` blob.
 That blob is omitted when there are no aliases.
@@ -55,6 +57,8 @@ Legacy DDS signals retain their broadcast behavior; nested composite signals use
 These collections use aggregate garbage-collection lifetime.
 Every attached child is retained while its containing data store is retained, and a reference to any descendant retains its ancestors.
 Children are not independently swept.
+Cycles within an aggregate do not keep it alive when it is unreachable from the container's GC root.
+Existing tombstone, sweep, and session-expiry safeguards still apply to the container-level collection unit.
 The existing data-store runtime and existing document layouts are unchanged.
 
 ## Data Virtualization For DataStores (Work in Progress)

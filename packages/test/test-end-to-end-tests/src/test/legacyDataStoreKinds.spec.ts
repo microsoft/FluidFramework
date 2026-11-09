@@ -47,7 +47,7 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-// R03, R04, R08, R11, R13: the legacy implementation owns its named channels and format.
+// The bridge must preserve the legacy implementation's named channels, factory identity, and document format.
 describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const { FluidDataStoreRuntime } = apis.dataRuntime;
