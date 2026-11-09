@@ -438,7 +438,7 @@ export function toUpgradeSchema(
  * @param storedSchema - The existing stored schema from which to construct the upgrade target.
  * @param policy - The policy that selects new staged permissions. Existing permissions are preserved independently at each location.
  *
- * @returns The complete candidate stored schema, not a patch or an approved upgrade.
+ * @returns The complete candidate stored schema.
  */
 export function getSchemaUpgradeCandidate(
 	viewSchema: TreeSchema,
