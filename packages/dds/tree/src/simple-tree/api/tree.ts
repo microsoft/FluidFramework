@@ -847,7 +847,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * Such an upgrade is always additive.
 	 * That is, it will only add new allowed types, staged permissions, or optional fields, without removing any existing ones from the stored schema.
 	 *
-	 * Upgrading the schema will cause an update to the {@link TreeView.compatibility}, allowing access to `root`.
+	 * Upgrading the schema will cause an update to the {@link TreeView.compatibility}, allowing access to {@link TreeView.root}.
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
