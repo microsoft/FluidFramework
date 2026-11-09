@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-services-utils";
 import type { Provider } from "nconf";
 
-import type { IGitrestResourcesCustomizations } from "./customizations";
+import type { IGitrestResourcesCustomizations, InitialSummaryLifecycle } from "./customizations";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
@@ -39,6 +39,7 @@ export class GitrestResources implements core.IResources {
 		public readonly startupCheck: core.IReadinessCheck,
 		public readonly enableOptimizedInitialSummary?: boolean,
 		public readonly readinessCheck?: core.IReadinessCheck,
+		public readonly initialSummaryLifecycle?: InitialSummaryLifecycle,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -83,6 +84,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			startupCheck,
 			undefined,
 			customizations?.readinessCheck,
+			customizations?.initialSummaryLifecycle,
 		);
 	}
 
@@ -198,6 +200,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.repositoryManagerFactory,
 			resources.startupCheck,
 			resources.readinessCheck,
+			resources.initialSummaryLifecycle,
 		);
 	}
 }

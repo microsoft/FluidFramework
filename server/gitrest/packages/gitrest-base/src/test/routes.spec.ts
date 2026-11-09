@@ -22,6 +22,7 @@ import sillyname from "sillyname";
 import * as sinon from "sinon";
 import request from "supertest";
 import * as app from "../app";
+import type { InitialSummaryLifecycle } from "../customizations";
 import { ExternalStorageManager } from "../externalStorageManager";
 import {
 	Constants,
@@ -134,6 +135,16 @@ function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
 	// For isomorphic-git, we keep the message as is.
 	return message;
 }
+
+describe("Initial summary lifecycle contract", () => {
+	it("accepts an initial summary lifecycle contract", () => {
+		const initialSummaryLifecycle: InitialSummaryLifecycle = {
+			onInitialSummaryWriteSuccess: sinon.stub().resolves(),
+		};
+
+		assert.strictEqual(typeof initialSummaryLifecycle.onInitialSummaryWriteSuccess, "function");
+	});
+});
 
 const testModes: testUtils.IRouteTestMode[] = [
 	{

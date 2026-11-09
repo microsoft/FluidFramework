@@ -15,6 +15,7 @@ import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-se
 import { Router } from "express";
 import type { Provider } from "nconf";
 
+import type { InitialSummaryLifecycle } from "../customizations";
 import {
 	BaseGitRestTelemetryProperties,
 	checkSoftDeleted,
@@ -265,6 +266,7 @@ export function create(
 	store: Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repoManagerFactory: IRepositoryManagerFactory,
+	initialSummaryLifecycle?: InitialSummaryLifecycle,
 ): Router {
 	const router: Router = Router();
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;

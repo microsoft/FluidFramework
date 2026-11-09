@@ -29,6 +29,7 @@ import cors from "cors";
 import express, { type Express } from "express";
 import type nconf from "nconf";
 
+import type { InitialSummaryLifecycle } from "./customizations";
 import * as routes from "./routes";
 import {
 	Constants,
@@ -48,6 +49,7 @@ export function create(
 	repositoryManagerFactory: IRepositoryManagerFactory,
 	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
+	initialSummaryLifecycle?: InitialSummaryLifecycle,
 ) {
 	// Express app configuration
 	const app: Express = express();
@@ -107,7 +109,12 @@ export function create(
 	const responseSizeMiddleware = new ResponseSizeMiddleware(responseSizeLimitInMegabytes);
 	app.use(responseSizeMiddleware.validateResponseSize());
 
-	const apiRoutes = routes.create(store, fileSystemManagerFactories, repositoryManagerFactory);
+	const apiRoutes = routes.create(
+		store,
+		fileSystemManagerFactories,
+		repositoryManagerFactory,
+		initialSummaryLifecycle,
+	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.repos);

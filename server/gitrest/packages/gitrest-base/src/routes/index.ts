@@ -6,6 +6,7 @@
 import type { Router } from "express";
 import type nconf from "nconf";
 
+import type { InitialSummaryLifecycle } from "../customizations";
 import type { IFileSystemManagerFactories, IRepositoryManagerFactory } from "../utils";
 
 /* eslint-disable import-x/no-internal-modules */
@@ -40,6 +41,7 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repoManagerFactory: IRepositoryManagerFactory,
+	initialSummaryLifecycle?: InitialSummaryLifecycle,
 ): IRoutes {
 	return {
 		git: {
@@ -58,6 +60,11 @@ export function create(
 			),
 			contents: contents.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
-		summaries: summaries.create(store, fileSystemManagerFactories, repoManagerFactory),
+		summaries: summaries.create(
+			store,
+			fileSystemManagerFactories,
+			repoManagerFactory,
+			initialSummaryLifecycle,
+		),
 	};
 }
