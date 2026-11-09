@@ -34,10 +34,9 @@ import {
 	type ImplicitFieldSchema,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
+	toStoredSchema,
 	type UnsafeUnknownSchema,
 } from "../../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { toStoredSchema } from "../../../../simple-tree/toStoredSchema.js";
 import { PlainText } from "../../../../text/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
