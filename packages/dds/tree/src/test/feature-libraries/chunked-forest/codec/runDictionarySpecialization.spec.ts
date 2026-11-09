@@ -226,6 +226,31 @@ describe("runDictionarySpecialization", () => {
 		assert.deepEqual(constantLeafValues(encoded), []);
 	});
 
+	it("does not use a dictionary if its shape indexes cost more than they save", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Strings extends sf.array("Strings", sf.string) {}
+		const schema = toStoredSchema(Strings, StagedSchemaUpgradePolicy.restrictive);
+		// 1000 short values. Most of them would get a shape index that is as long as the value.
+		const values = Array.from({ length: 1000 }, (_, index) => `${index}`.padStart(2, "x"));
+		const root = new Strings(
+			Array.from({ length: 14000 }, (_, index) => values[index % 1000]),
+		);
+		const encoded = encodeAndCheck(Strings, schema, root);
+		assert.deepEqual(constantLeafValues(encoded), []);
+	});
+
+	it("does not pin a leaf if its constant shapes cost more than they save", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Numbers extends sf.array("Numbers", sf.number) {}
+		const schema = toStoredSchema(Numbers, StagedSchemaUpgradePolicy.restrictive);
+		// Each value is in a run of 8 items, but each value needs its own shapes.
+		const root = new Numbers(
+			Array.from({ length: 8000 }, (_, index) => Math.floor(index / 8)),
+		);
+		const encoded = encodeAndCheck(Numbers, schema, root);
+		assert.deepEqual(constantLeafValues(encoded), []);
+	});
+
 	it("round-trips recursive items that are deeper than the read depth", () => {
 		const sf = new SchemaFactoryAlpha("test");
 		class Link extends sf.objectRecursive("Link", { next: [() => Link, sf.number] }) {}

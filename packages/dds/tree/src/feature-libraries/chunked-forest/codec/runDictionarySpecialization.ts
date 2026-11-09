@@ -631,16 +631,18 @@ class SharedEncoders {
 const minAverageRunLength = 8;
 
 /**
+ * The strategy pins a leaf only if each of its values is in at least this number of items, on average.
+ * @remarks
+ * Each value of a pinned leaf adds about 80 bytes of shapes, and each item saves only the bytes of the value.
+ */
+const minItemsPerPinnedValue = 20;
+
+/**
  * The number of bytes that one constant leaf shape adds to the shapes table, without the JSON of its value.
  * @remarks
  * For example, `{"c":{"type":0,"value":["a"]}},` is 28 bytes and the 3 bytes of `"a"`.
  */
 const constantLeafShapeBytes = 28;
-
-/**
- * The approximate average number of bytes of a shape index and its comma in the data.
- */
-const averageIndexBytes = 2.5;
 
 /**
  * The maximum number of different values of a leaf that the strategy counts.
@@ -662,10 +664,11 @@ const minDictionaryCoverage = 0.75;
  * The costs are for ASCII text. `jsonLength` counts characters, and a character that is not ASCII is more than one byte in UTF-8.
  * For these characters, the function calculates less savings than the real savings, so the dictionary can leave out some values that save bytes.
  * @param jsonLength - The length of the value as JSON.
+ * @param indexBytes - The length of a shape index and its comma.
  */
-function savesBytes(count: number, jsonLength: number): boolean {
+function savesBytes(count: number, jsonLength: number, indexBytes: number): boolean {
 	// Each item saves the value and its comma, and adds a shape index.
-	const savedInData = count * (jsonLength + 1 - averageIndexBytes);
+	const savedInData = count * (jsonLength + 1 - indexBytes);
 	// The constant leaf shape holds the value too.
 	const addedToShapes = constantLeafShapeBytes + jsonLength;
 	return savedInData > addedToShapes;
@@ -674,7 +677,8 @@ function savesBytes(count: number, jsonLength: number): boolean {
 /**
  * Chooses how a single-type sequence writes a leaf.
  * @remarks
- * Returns "pinToShape" if the value changes at most one time in {@link minAverageRunLength} items, on average.
+ * Returns "pinToShape" if the value changes at most one time in {@link minAverageRunLength} items,
+ * and each value is in at least {@link minItemsPerPinnedValue} items, on average.
  * If not, it admits each value that {@link savesBytes}, to a maximum of {@link maxCountedValues} different values.
  * It returns a dictionary of these values if they are at least {@link minDictionaryCoverage} of the values, and "raw" if not.
  * @param leaf - The values of the leaf in the items.
@@ -682,10 +686,6 @@ function savesBytes(count: number, jsonLength: number): boolean {
  */
 function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): LeafEncoding {
 	const valueTotal = leaf.values.length;
-	// The value has `changes + 1` runs in the values.
-	if ((leaf.changes + 1) * minAverageRunLength <= valueTotal) {
-		return "pinToShape";
-	}
 
 	// Count each value. After maxCountedValues different values, new values are not counted.
 	const valueCounts = new Map<Value, number>();
@@ -698,10 +698,21 @@ function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): Le
 		}
 	}
 
+	// The value has `changes + 1` runs in the values.
+	if (
+		(leaf.changes + 1) * minAverageRunLength <= valueTotal &&
+		valueCounts.size * minItemsPerPinnedValue <= valueTotal
+	) {
+		return "pinToShape";
+	}
+
+	// A dictionary with more values has longer shape indexes.
+	const indexBytes = String(valueCounts.size).length + 1;
 	const admitted: Value[] = [];
 	let admittedTotal = 0;
 	for (const [value, valueCount] of valueCounts) {
-		if (savesBytes(valueCount, JSON.stringify(value).length)) {
+		// A value in only one item cannot save the bytes of its shape, so it does not need JSON.stringify.
+		if (valueCount > 1 && savesBytes(valueCount, JSON.stringify(value).length, indexBytes)) {
 			admitted.push(value);
 			admittedTotal += valueCount;
 		}
@@ -872,7 +883,7 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 	 * Chooses the encoder of each node of a field of object nodes.
 	 * @remarks
 	 * If all leaves are raw, every node uses `itemEncoder`.
-	 * The cursor reads a node again only for the first node with each signature, to make its specialized encoder.
+	 * The cursor reads the fields of a node again only for the first node with each signature, to make its specialized encoder.
 	 */
 	private chooseNodeEncoders(
 		cursor: ITreeCursorSynchronous,
@@ -883,11 +894,10 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 		const leaves: LeafStats[] = [];
 		const root = new PathNode(this.itemType, 0, this.trackedFields, leaves);
 		const trace: Token[] = [];
-		// The position in `trace` of the first token of each item.
-		const starts: number[] = [];
+		let itemCount = 0;
 		forEachNode(cursor, () => {
-			starts.push(trace.length);
 			root.add(cursor, trace);
+			itemCount += 1;
 		});
 
 		// Choose: how to write each leaf. If all leaves are raw, no item is specialized.
@@ -895,21 +905,21 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 			leaf.encoding = chooseLeafEncoding(leaf, this.sharedEncoders);
 		}
 		if (leaves.every((leaf) => leaf.encoding === "raw")) {
-			return starts.map(() => itemEncoder);
+			return Array.from({ length: itemCount }, () => itemEncoder);
 		}
 
 		// Specialize: find the encoder of each signature in the trie, and make it for the first item with that signature.
+		// The cursor walks the items in order, because `enterNode(index)` is slow on some cursors.
+		// The items read their tokens in the same order, so `reader` moves from one item to the next.
 		const trie = newTrieNode();
 		const reader = { position: 0 };
-		return starts.map((start, index) => {
-			reader.position = start;
+		const itemEncoders: NodeEncoder[] = [];
+		forEachNode(cursor, () => {
 			const match = replaySignature(root, trie, trace, reader);
-			if (match.encoder === undefined) {
-				cursor.enterNode(index);
-				match.encoder = this.sharedEncoders.specialize(cursor, itemEncoder, root, context);
-				cursor.exitNode();
-			}
-			return match.encoder;
+			// The first item with this signature makes the encoder.
+			match.encoder ??= this.sharedEncoders.specialize(cursor, itemEncoder, root, context);
+			itemEncoders.push(match.encoder);
 		});
+		return itemEncoders;
 	}
 }
