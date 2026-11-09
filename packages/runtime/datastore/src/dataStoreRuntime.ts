@@ -194,6 +194,8 @@ const legacyTypeUrlPrefix = atob("aHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3R5cGVzLw
  *
  * @remarks
  * Support for reading both full URL and short-name type identifiers was added in 2.92.0.
+ * @privateRemarks
+ * See {@link legacyTypeUrlPrefix} for details on the historical type prefix.
  * @internal
  */
 export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
