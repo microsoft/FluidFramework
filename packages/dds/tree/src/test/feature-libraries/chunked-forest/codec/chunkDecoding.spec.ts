@@ -238,7 +238,7 @@ describe("chunkDecoding", () => {
 			assert.throws(() => decoder.decode(stream));
 			const invalid = { data: [{}], offset: 0 };
 			assert.throws(() => decoder.decode(invalid));
-			assert.equal(invalid.offset, 0);
+			assert.equal(invalid.offset, 1);
 		});
 
 		it("matches built-in leaf chunk shapes to SchemaFactory.leaves", () => {
@@ -354,6 +354,44 @@ describe("chunkDecoding", () => {
 			const clone = result.clone();
 			assert.notEqual(clone.values, result.values);
 			assertChunkCursorEquals(clone, expected);
+		});
+
+		it("decodes identifiers and null values into the same buffer", () => {
+			const sessionId = testIdCompressor.generateCompressedId();
+			const encodedId = testIdCompressor.normalizeToOpSpace(sessionId);
+			const nullValue = null;
+			const values = [encodedId, nullValue, "literal", nullValue];
+			const result = decodeField(
+				[
+					{ a: 1 },
+					{
+						c: {
+							type: "Pair",
+							value: false,
+							fields: [
+								["identifier", 2],
+								["null", 3],
+							],
+						},
+					},
+					{ c: { type: "com.fluidframework.leaf.string", value: SpecialField.Identifier } },
+					{ c: { type: "com.fluidframework.leaf.null", value: true } },
+				],
+				[0, values],
+			);
+			assert(result instanceof UniformChunk);
+			assert.notEqual(result.values, values);
+			assert.deepEqual(result.values, [sessionId, nullValue, "literal", nullValue]);
+			assertChunkCursorEquals(
+				result,
+				[testIdCompressor.decompress(sessionId), "literal"].map((identifier) => ({
+					type: brand("Pair"),
+					fields: {
+						identifier: [{ type: brand("com.fluidframework.leaf.string"), value: identifier }],
+						null: [{ type: brand("com.fluidframework.leaf.null"), value: nullValue }],
+					},
+				})),
+			);
 		});
 
 		it("handles null values in both reused and copied arrays", () => {
@@ -540,13 +578,24 @@ describe("chunkDecoding", () => {
 			);
 		});
 
+		for (const uniform of [false, true]) {
+			it(`validates nested-array framing with uniform decoding: ${uniform}`, () => {
+				const shapes: EncodedChunkShape[] = [
+					{ a: 1 },
+					{ c: { type: "Leaf", value: uniform ? true : [42] } },
+				];
+				for (const data of [-1, 0.5, Number.POSITIVE_INFINITY, "invalid", true, {}]) {
+					assert.throws(() => decodeField(shapes, [0, data]));
+				}
+				assert.equal(decodeField(shapes, [0, 0]), emptyChunk);
+				assert.equal(decodeField(shapes, [0, []]), emptyChunk);
+			});
+		}
+
 		it("rejects malformed uniform data", () => {
 			const shapes: EncodedChunkShape[] = [{ a: 1 }, { c: { type: "number", value: true } }];
 			assert.throws(() => decodeField(shapes, [0, [{}]]));
 			assert.throws(() => decodeField(shapes, [0, 2]), /expected data/);
-			for (const count of [-1, 0.5, Number.POSITIVE_INFINITY]) {
-				assert.throws(() => decodeField(shapes, [0, count]), /invalid nested array length/);
-			}
 			assert.throws(
 				() =>
 					decodeField(

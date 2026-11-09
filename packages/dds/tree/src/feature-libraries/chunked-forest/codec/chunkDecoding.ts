@@ -18,6 +18,7 @@ import type {
 	TreeValue,
 } from "../../../core/index.js";
 import {
+	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	brand,
 	decompressIdentifierIfNeeded,
@@ -340,16 +341,14 @@ function decodeUniform(
 	stream: StreamCursor,
 ): TreeChunk {
 	const length = plan.topLevelLength * repetitions;
-	assert(Number.isSafeInteger(length) && length >= 0, "invalid uniform chunk length");
+	assertNonNegativeSafeInteger(length);
 	if (length === 0) {
 		return emptyChunk;
 	}
 	let values: TreeValue[];
 	const encodedSize = plan.encodedSize * repetitions;
-	assert(
-		Number.isSafeInteger(encodedSize) && encodedSize <= stream.data.length - stream.offset,
-		"incomplete uniform chunk data",
-	);
+	assertNonNegativeSafeInteger(encodedSize);
+	assert(encodedSize <= stream.data.length - stream.offset, "incomplete uniform chunk data");
 	if (
 		plan.valuesAreVerbatim &&
 		stream.offset === 0 &&
@@ -366,10 +365,7 @@ function decodeUniform(
 		if (plan.valuesAreVerbatim) {
 			const endOffset = stream.offset + encodedSize;
 			while (stream.offset < endOffset) {
-				const value = stream.data[stream.offset];
-				assertAllowedValue(value);
-				values.push(value);
-				stream.offset++;
+				values.push(readStreamValue(stream));
 			}
 		} else {
 			for (let index = 0; index < repetitions; index++) {
@@ -461,31 +457,33 @@ export function readValue(
 			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
 			return shape[0] as Value;
 		} else if (shape === SpecialField.Identifier) {
-			// This case is a special case handling the decoding of identifier fields.
-			const streamValue = readStream(stream);
-			assert(
-				typeof streamValue === "number" || typeof streamValue === "string",
-				0x997 /* identifier must be string or number. */,
+			return decompressIdentifierIfNeeded(
+				readIdentifierValue(stream, idDecodingContext),
+				idDecodingContext.idCompressor,
 			);
-			// Strings (StableId UUIDs, heal-synthesized v5 UUIDs, or arbitrary user
-			// identifier strings) are already in the stored form and pass through.
-			// Op-space compressed ids are resolved by the caller-supplied
-			// `resolveEncodedId`, which encapsulates the originator lookup, finalized-id
-			// normalization, and (for the forest summarizer's heal path) UUIDv5 synthesis.
-			const sessionIdOrString: SessionSpaceCompressedId | string =
-				typeof streamValue === "string"
-					? streamValue
-					: idDecodingContext.resolveEncodedId(streamValue as OpSpaceCompressedId);
-			// Performance:
-			// Currently, we just fully expand the identifier here rather than keeping it in the SessionSpaceCompressedId format.
-			// Avoiding this expansion, and keeping the in memory format using SessionSpaceCompressedId would be a good optimization for the future.
-			// Keeping this optimization possible is why `resolveEncodedId` doesn't simply return a string.
-			return decompressIdentifierIfNeeded(sessionIdOrString, idDecodingContext.idCompressor);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
 		}
 	}
+}
+
+/**
+ * Reads an identifier value, preserving strings and resolving compressed identifiers to session space.
+ * Resolution and healing use {@link IdDecodingContext.resolveEncodedId}.
+ */
+function readIdentifierValue(
+	stream: StreamCursor,
+	idDecodingContext: IdDecodingContext,
+): SessionSpaceCompressedId | string {
+	const value = readStream(stream);
+	assert(
+		typeof value === "number" || typeof value === "string",
+		"identifier must be string or number",
+	);
+	return typeof value === "string"
+		? value
+		: idDecodingContext.resolveEncodedId(value as OpSpaceCompressedId);
 }
 
 /**
@@ -549,24 +547,30 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	 */
 	private decoder!: ChunkDecoder;
 	public constructor(private readonly shape: EncodedNestedArrayShape) {}
-	public decode!: (stream: StreamCursor) => TreeChunk;
+	private decodeArray!: (data: number | StreamCursor["data"]) => TreeChunk;
+	public decode(stream: StreamCursor): TreeChunk {
+		const data = readStream(stream);
+		if (typeof data === "number") {
+			assertNonNegativeSafeInteger(data);
+		} else {
+			assert(Array.isArray(data), "expected nested array data");
+		}
+		return this.decodeArray(data);
+	}
 	public initialize(decoders: readonly ChunkDecoder[]): void {
 		this.decoder = getChecked(decoders, this.shape);
 		const plan = getUniformDecodingPlan(this.decoder, decoders);
-		this.decode =
+		this.decodeArray =
 			plan === undefined
 				? this.decodeGeneral.bind(this)
-				: (stream) => {
-						const data = readStream(stream);
+				: (data) => {
 						if (typeof data === "number") {
-							assert(Number.isSafeInteger(data) && data >= 0, "invalid nested array length");
 							if (data === 0) {
 								return emptyChunk;
 							}
 							assert(plan.encodedSize === 0, "expected data for nonempty uniform encoding");
 							return decodeUniform(plan, data, { data: [], offset: 0 });
 						}
-						assert(Array.isArray(data), "expected nested array data");
 						if (data.length === 0) {
 							return emptyChunk;
 						}
@@ -583,24 +587,18 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	/**
 	 * Decodes elements individually when their shape has no uniform plan.
 	 */
-	private decodeGeneral(stream: StreamCursor): TreeChunk {
+	private decodeGeneral(data: number | StreamCursor["data"]): TreeChunk {
 		const decoder = this.decoder;
 
 		const chunks: TreeChunk[] = [];
 
-		const data = readStream(stream);
 		if (typeof data === "number") {
-			assert(Number.isSafeInteger(data) && data >= 0, "invalid nested array length");
 			// This case means that the array contained only 0-sized items, and was thus encoded as the length of the array.
 			const inner = { data: [], offset: 0 };
 			for (let index = 0; index < data; index++) {
 				chunks.push(decoder.decode(inner));
 			}
 		} else {
-			assert(
-				Array.isArray(data),
-				0x739 /* expected number of array for encoding of nested array */,
-			);
 			const inner = { data, offset: 0 };
 			while (inner.offset !== inner.data.length) {
 				const previousOffset = inner.offset;
@@ -635,11 +633,9 @@ export class InlineArrayDecoder extends UniformShapeDecoder {
 		const length = this.shape.length;
 		const topLevelLength = plan.topLevelLength * length;
 		const encodedSize = plan.encodedSize * length;
-		assert(Number.isSafeInteger(length) && length >= 0, "invalid inline array length");
-		assert(
-			Number.isSafeInteger(topLevelLength) && Number.isSafeInteger(encodedSize),
-			"uniform plan is too large",
-		);
+		assertNonNegativeSafeInteger(length);
+		assertNonNegativeSafeInteger(topLevelLength);
+		assertNonNegativeSafeInteger(encodedSize);
 		return {
 			treeShape: plan.treeShape,
 			idCompressor: plan.idCompressor,
@@ -784,9 +780,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 				new TreeShape(this.type, true, []).withTopLevelLength(1);
 			this.leafShape = chunkShape;
 			this.decode = (stream): TreeChunk => {
-				const value = stream.data[stream.offset];
-				assertAllowedValue(value);
-				stream.offset++;
+				const value = readStreamValue(stream);
 				return new UniformChunk(chunkShape, [value]);
 			};
 		}
@@ -849,21 +843,9 @@ export class NodeDecoder extends UniformShapeDecoder {
 			valuesAreVerbatim,
 			decodeValuesInto(stream, values): void {
 				if (compressedIdentifier) {
-					const value = readStream(stream);
-					assert(
-						typeof value === "string" || typeof value === "number",
-						"identifier must be string or number",
-					);
-					values.push(
-						typeof value === "string"
-							? value
-							: context.resolveEncodedId(value as OpSpaceCompressedId),
-					);
+					values.push(readIdentifierValue(stream, context));
 				} else if (hasValue) {
-					const value = stream.data[stream.offset];
-					assertAllowedValue(value);
-					values.push(value);
-					stream.offset++;
+					values.push(readStreamValue(stream));
 				}
 				for (const plan of plans) {
 					plan.decodeValuesInto(stream, values);
