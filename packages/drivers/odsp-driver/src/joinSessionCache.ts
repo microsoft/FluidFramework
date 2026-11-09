@@ -76,7 +76,7 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 			try {
 				return await asyncFn();
 			} catch (error: unknown) {
-				this.recordThrottle(key, error, telemetry);
+				this.recordThrottleIfApplicable(key, error, telemetry);
 				throw error;
 			}
 		});
@@ -89,7 +89,7 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		}
 	}
 
-	private recordThrottle(
+	private recordThrottleIfApplicable(
 		key: string,
 		error: unknown,
 		telemetry: JoinSessionTelemetry | undefined,
@@ -140,9 +140,12 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		key: string,
 		telemetry: JoinSessionTelemetry | undefined,
 	): Promise<void> {
-		this.pruneThrottle(key);
-		let throttle = this.throttles.get(key);
-		while (throttle !== undefined) {
+		while (true) {
+			this.pruneThrottle(key);
+			const throttle = this.throttles.get(key);
+			if (throttle === undefined) {
+				return;
+			}
 			const start = Date.now();
 			const scheduledDelayMs = Math.min(throttle.deadline - start, maximumTimerDelayMs);
 			if (scheduledDelayMs <= 0) {
@@ -164,8 +167,6 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 				...props,
 				observedDelayMs: Date.now() - start,
 			});
-			this.pruneThrottle(key);
-			throttle = this.throttles.get(key);
 		}
 	}
 }
