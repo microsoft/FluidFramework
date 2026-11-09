@@ -174,9 +174,13 @@ export function readStreamStream(stream: StreamCursor): StreamCursor {
  */
 export interface ChunkDecoder {
 	/**
-	 * Link this decoder to its peers for one batch before decoding starts.
-	 * Peers have been constructed but might not have been initialized yet.
-	 * Implementations can retain peer references, but must not decode during initialization.
+	 * Provides the decoders this one references.
+	 * @remarks
+	 * ChunkDecoders are allowed to reference (and be implemented in terms of) other ChunkDecoders in the batch.
+	 * To support cyclic references, decoders are linked after construction during this `initialize` call, forming a two-phase initialization pattern.
+	 * Due to the cyclic nature of these references, the passed-in decoders cannot be assumed to have been initialized yet.
+	 *
+	 * This method provides an opportunity to cache computations that may be needed during decoding.
 	 */
 	initialize(decoders: readonly ChunkDecoder[]): void;
 
@@ -184,7 +188,9 @@ export interface ChunkDecoder {
 	 * Read from stream, updating the offset.
 	 *
 	 * @returns a TreeChunk made from the data from `stream`.
+	 * @remarks
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
+	 * Only called after `initialize` has been called on all decoders in the batch.
 	 */
 	decode(stream: StreamCursor): TreeChunk;
 }
