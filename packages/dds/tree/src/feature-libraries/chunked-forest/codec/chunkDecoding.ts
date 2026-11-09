@@ -546,17 +546,29 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	 * Element decoder linked during initialization and used by general decoding.
 	 */
 	private decoder!: ChunkDecoder;
+
 	public constructor(private readonly shape: EncodedNestedArrayShape) {}
+
+	/**
+	 * Decoding strategy selected by {@link NestedArrayDecoder.initialize} and called after {@link NestedArrayDecoder.decode} validates the input framing.
+	 * @remarks
+	 * A number specifies a positive repetition count for elements that consume no encoded data (see {@link EncodedNestedArrayShape}); an array contains the encoded element data.
+	 */
 	private decodeArray!: (data: number | StreamCursor["data"]) => TreeChunk;
+
 	public decode(stream: StreamCursor): TreeChunk {
 		const data = readStream(stream);
 		if (typeof data === "number") {
 			assertNonNegativeSafeInteger(data);
+			if (data === 0) {
+				return emptyChunk;
+			}
 		} else {
 			assert(Array.isArray(data), "expected nested array data");
 		}
 		return this.decodeArray(data);
 	}
+
 	public initialize(decoders: readonly ChunkDecoder[]): void {
 		this.decoder = getChecked(decoders, this.shape);
 		const plan = getUniformDecodingPlan(this.decoder, decoders);
@@ -565,9 +577,6 @@ export class NestedArrayDecoder implements ChunkDecoder {
 				? this.decodeGeneral.bind(this)
 				: (data) => {
 						if (typeof data === "number") {
-							if (data === 0) {
-								return emptyChunk;
-							}
 							assert(plan.encodedSize === 0, "expected data for nonempty uniform encoding");
 							return decodeUniform(plan, data, { data: [], offset: 0 });
 						}
@@ -584,8 +593,11 @@ export class NestedArrayDecoder implements ChunkDecoder {
 						});
 					};
 	}
+
 	/**
 	 * Decodes elements individually when their shape has no uniform plan.
+	 * @remarks
+	 * This can handle all cases, and is used as a fallback when no faster option is available.
 	 */
 	private decodeGeneral(data: number | StreamCursor["data"]): TreeChunk {
 		const decoder = this.decoder;
