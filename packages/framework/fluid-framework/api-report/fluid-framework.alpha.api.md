@@ -1491,11 +1491,6 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
 }
 
-// @alpha
-export type LibraryId = string & {
-    readonly "tree.LibraryId": "tree.LibraryId";
-};
-
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
@@ -2190,7 +2185,7 @@ export class SchemaUpgrade {
 }
 
 // @alpha
-export type SchemaVersionMap = Readonly<Record<LibraryId, number>>;
+export type SchemaVersionMap = Readonly<Record<string, number>>;
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;

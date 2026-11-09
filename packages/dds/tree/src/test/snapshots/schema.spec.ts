@@ -6,7 +6,7 @@
 import type { TObject, TString } from "typebox";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { type LibraryId, SchemaFormatVersion } from "../../core/index.js";
+import { SchemaFormatVersion } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../feature-libraries/schema-index/codec.js";
 import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
@@ -35,7 +35,7 @@ describe("schema snapshots", () => {
 					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
 						? {
 								...schemaData,
-								schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+								schemaVersion: { ["com.fluidframework.test"]: 1 },
 							}
 						: schemaData;
 				const encoded = schemaFormat

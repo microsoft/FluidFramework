@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { LibraryId, SchemaVersionMap } from "../../core/index.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
@@ -60,11 +60,11 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 *
-	 * Pass versions to {@link identifySchemaAlpha} with a stable {@link LibraryId}.
+	 * Pass versions to {@link identifySchemaAlpha} with a stable string library identifier.
 	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
-	 * const libraryId = "com.example" as LibraryId;
+	 * const libraryId = "com.example";
 	 * const oldConfig = new TreeViewConfigurationAlpha({
 	 * 	schema: schemaFactory.string,
 	 * 	schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 0 } }),
@@ -157,10 +157,7 @@ function validateSchemaVersion(
 	if (schemaVersion === undefined) {
 		return undefined;
 	}
-	const versions =
-		typeof schemaVersion === "number"
-			? { ["schemaVersion" as LibraryId]: schemaVersion }
-			: schemaVersion;
+	const versions = typeof schemaVersion === "number" ? { schemaVersion } : schemaVersion;
 	for (const [libraryId, version] of Object.entries(versions)) {
 		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError(

@@ -12,8 +12,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
-	type LibraryId,
-	type SchemaVersionMap,
 	decodeFieldSchema,
 	encodeFieldSchemaV1,
 	encodeFieldSchemaV2,
@@ -118,7 +116,7 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 		return decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root });
 	}
 	let previous: string | undefined;
-	const entries: [LibraryId, number][] = [];
+	const entries: [string, number][] = [];
 	for (const [libraryId, version] of f.schemaVersion) {
 		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError("Stored schema versions must be non-negative safe integers.");
@@ -128,12 +126,12 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 				"Stored schema versions must be sorted by library identifier and contain no duplicates.",
 			);
 		}
-		entries.push([libraryId as LibraryId, version]);
+		entries.push([libraryId, version]);
 		previous = libraryId;
 	}
 	return {
 		...decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root }),
-		schemaVersion: Object.freeze(Object.fromEntries(entries)) as SchemaVersionMap,
+		schemaVersion: Object.freeze(Object.fromEntries(entries)),
 	};
 }
 

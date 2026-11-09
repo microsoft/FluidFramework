@@ -48,28 +48,19 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 /**
- * Identifies a library that defines a schema version.
+ * Maps string library identifiers to application-defined schema versions.
  *
  * @remarks
  * Library identifiers are stored in documents and must stay the same across releases.
  * Use a globally unique name, such as a package name or a domain-based name.
  * This prevents conflicts with identifiers from other libraries.
  * All clients that use the library must use the same identifier.
- *
- * @alpha
- */
-export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" };
-
-/**
- * Maps each {@link LibraryId} to an application-defined schema version.
- *
- * @remarks
  * Each version must be a non-negative safe integer.
  * The document stores the library identifiers and versions as part of its stored schema.
  *
  * @alpha
  */
-export type SchemaVersionMap = Readonly<Record<LibraryId, number>>;
+export type SchemaVersionMap = Readonly<Record<string, number>>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 

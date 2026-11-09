@@ -14,7 +14,7 @@ import {
 	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
-import type { LibraryId, SchemaVersionMap } from "../../core/index.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
@@ -140,7 +140,7 @@ function decodeSchemaVersion(
 	if (encoded === undefined) {
 		return undefined;
 	}
-	const entries: [LibraryId, number][] = [];
+	const entries: [string, number][] = [];
 	let previous: string | undefined;
 	for (const [libraryId, version] of encoded) {
 		if (!Number.isSafeInteger(version) || version < 0) {
@@ -151,10 +151,10 @@ function decodeSchemaVersion(
 				"Schema versions must be sorted by library identifier and contain no duplicates.",
 			);
 		}
-		entries.push([libraryId as LibraryId, version]);
+		entries.push([libraryId, version]);
 		previous = libraryId;
 	}
-	return Object.freeze(Object.fromEntries(entries)) as SchemaVersionMap;
+	return Object.freeze(Object.fromEntries(entries));
 }
 
 /**

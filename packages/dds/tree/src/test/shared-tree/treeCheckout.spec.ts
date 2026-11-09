@@ -24,7 +24,6 @@ import {
 	EmptyKey,
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
-	type LibraryId,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -2338,7 +2337,7 @@ describe("sharedTreeView", () => {
 			view.checkout.updateSchema({
 				rootFieldSchema: schema.rootFieldSchema,
 				nodeSchema: schema.nodeSchema,
-				schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+				schemaVersion: { ["com.fluidframework.test"]: 1 },
 			});
 
 			const schemaChangeEvents = provider.logger

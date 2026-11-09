@@ -22,7 +22,6 @@ import {
 } from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
-	type LibraryId,
 	identifySchemaAlpha,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -34,7 +33,7 @@ import {
 } from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
-const testLibraryId = "test" as LibraryId;
+const testLibraryId = "test";
 
 // Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {

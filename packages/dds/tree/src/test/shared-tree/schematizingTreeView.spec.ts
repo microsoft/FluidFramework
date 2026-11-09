@@ -52,7 +52,6 @@ import {
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
 	identifySchemaWithHashAlpha,
-	type LibraryId,
 	FieldKind,
 	isTreeNode,
 } from "../../simple-tree/index.js";
@@ -185,7 +184,7 @@ describe("SchematizingSimpleTreeView", () => {
 			});
 
 			it("suggests increasing a version on hash mismatch without hashing versions", () => {
-				const libraryId = "test" as LibraryId;
+				const libraryId = "test";
 				const previousHash = computeSchemaHash(schema.number);
 				const actualHash = computeSchemaHash(root);
 				const checkout = checkoutWithInitialTree(config, 5);

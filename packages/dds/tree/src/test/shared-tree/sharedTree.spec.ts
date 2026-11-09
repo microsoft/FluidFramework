@@ -78,7 +78,6 @@ import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
 	identifySchemaAlpha,
-	type LibraryId,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
@@ -414,7 +413,7 @@ describe("SharedTree", () => {
 	});
 
 	it("exposes stored schema versions", () => {
-		const libraryId = "test" as LibraryId;
+		const libraryId = "test";
 		const tree = treeTestFactory();
 		const view = tree.viewWith(
 			new TreeViewConfigurationAlpha({

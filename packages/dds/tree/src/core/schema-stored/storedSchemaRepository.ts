@@ -138,6 +138,11 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 	return data.nodeSchema.size === 0 && data.schemaVersion === undefined;
 }
 
+/**
+ * Copies and freezes versions to protect stored schema from changes to a caller-owned record.
+ * Does not freeze the caller's record.
+ * This is not an encoding step; the schema codec sorts entries when it encodes the version map.
+ */
 function cloneSchemaVersion(
 	schemaVersion: SchemaVersionMap | undefined,
 ): SchemaVersionMap | undefined {

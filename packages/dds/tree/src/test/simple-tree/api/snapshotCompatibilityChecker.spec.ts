@@ -36,7 +36,6 @@ import {
 	stringSchema,
 	numberSchema,
 	allowUnused,
-	type LibraryId,
 	decodeSchemaCompatibilitySnapshot,
 	createTreeSchema,
 	encodeSchemaCompatibilitySnapshot,
@@ -139,7 +138,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("parse and snapshot can roundtrip schema versions", () => {
-		const testLibraryId = "test" as LibraryId;
+		const testLibraryId = "test";
 		const view = new TreeViewConfigurationAlpha({
 			schema: SchemaFactory.number,
 			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
@@ -173,7 +172,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("does not include runtime identity checks in compatibility snapshots", () => {
-		const schemaVersion = { ["test" as LibraryId]: 1 };
+		const schemaVersion = { ["test"]: 1 };
 		const withoutCheck = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaIdentity: identifySchemaAlpha({ schemaVersion }),
@@ -225,7 +224,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("rejects negative schema versions", () => {
-		const testLibraryId = "test" as LibraryId;
+		const testLibraryId = "test";
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
@@ -241,7 +240,7 @@ describe("snapshotCompatibilityChecker", () => {
 	it("rejects unsafe schema versions", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: { ["test" as LibraryId]: 1 } }),
+			schemaIdentity: identifySchemaAlpha({ schemaVersion: { ["test"]: 1 } }),
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = Number.MAX_SAFE_INTEGER + 1;
 
@@ -257,7 +256,7 @@ describe("snapshotCompatibilityChecker", () => {
 				exportCompatibilitySchemaSnapshot({
 					schema: SchemaFactory.number,
 					schemaIdentity: identifySchemaAlpha({
-						schemaVersion: { ["test" as LibraryId]: -1 },
+						schemaVersion: { ["test"]: -1 },
 					}),
 				}),
 			/must be a non-negative safe integer/,

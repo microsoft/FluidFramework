@@ -15,7 +15,6 @@ import {
 import {
 	SchemaFormatVersion,
 	type FieldKindIdentifier,
-	type LibraryId,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -72,7 +71,7 @@ const versionedTestCases: EncodingTestData<TreeStoredSchema, FormatV3> = {
 		name,
 		{
 			...schema,
-			schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+			schemaVersion: { ["com.fluidframework.test"]: 1 },
 		},
 	]),
 };
@@ -99,8 +98,8 @@ describe("SchemaIndex", () => {
 		const schema: TreeStoredSchema = {
 			...schema2,
 			schemaVersion: {
-				["test.z" as LibraryId]: 2,
-				["test.a" as LibraryId]: 1,
+				["test.z"]: 2,
+				["test.a"]: 1,
 			},
 		};
 
@@ -167,7 +166,7 @@ describe("SchemaIndex", () => {
 	it("omits application schema versions in stable formats", () => {
 		const schema: TreeStoredSchema = {
 			...schema2,
-			schemaVersion: { ["test" as LibraryId]: 1 },
+			schemaVersion: { ["test"]: 1 },
 		};
 
 		for (const codec of [codecV1, codecV2]) {
@@ -181,7 +180,7 @@ describe("SchemaIndex", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
-			schemaVersion: { ["test" as LibraryId]: 1 },
+			schemaVersion: { ["test"]: 1 },
 		};
 
 		const encoded = codec.encode(schema);

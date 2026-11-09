@@ -247,7 +247,6 @@ export {
 	JsonStringKeyPatternProperties, 
 	JsonTreeSchema, 
 	LabelTree, 
-	LibraryId,
 	LocalChangeMetadata, 
 	MapNodeCustomizableSchema, 
 	MapNodeCustomizableSchemaUnsafe, 

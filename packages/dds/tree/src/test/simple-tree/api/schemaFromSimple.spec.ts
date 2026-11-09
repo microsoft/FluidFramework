@@ -17,7 +17,6 @@ import {
 	isObjectNodeSchema,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
-	type LibraryId,
 	type SchemaVersionMap,
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
@@ -56,7 +55,7 @@ describe("schemaFromSimple", () => {
 		for (const schemaVersion of [
 			undefined,
 			{},
-			{ ["com.example" as LibraryId]: 1 },
+			{ ["com.example"]: 1 },
 			Object.fromEntries([["__proto__", 2]]),
 		] satisfies (SchemaVersionMap | undefined)[]) {
 			it(`preserves schema versions ${JSON.stringify(schemaVersion)} through snapshots`, () => {

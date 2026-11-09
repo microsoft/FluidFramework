@@ -3,31 +3,36 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Add application-defined schema versions
+Add an experimental preview of application-defined schema versions
 
 As your application evolves, different parts of its schema may change at different times.
-Application-defined schema versions let you track those changes separately for each feature, component, or library.
-For example, notes and comments can each have their own version instead of sharing a single application-wide number.
+Application-defined schema versions let you use a single application-wide number, versions for schema libraries you compose together, or both.
+You choose which versions to use, but they must not decrease across schema upgrades.
 
-To define schema versions, choose a stable, globally unique [`LibraryId`](https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias) for each part of the schema and use those identifiers as the keys in a version map.
+**Experimental preview: Do not use the experimental stored-schema format in production applications.**
+Setting `allowPossiblyIncompatibleWriteVersionOverrides` to `true` allows the override to write a format that can break collaboration with client versions your application supports.
+The experimental format will not be supported long term.
+Documents written with this format are not guaranteed to remain readable by future Fluid Framework versions.
+
+To define schema versions, choose a stable, globally unique string identifier for each part of the schema and use those identifiers as the keys in a version map.
+Use a package name or a domain-based name to avoid conflicts with other libraries.
 Each version is a non-negative safe integer.
 Pass the map in the `schemaVersion` option of [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function), then pass the result to the [`schemaIdentity`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class#schemaidentity-property) property of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
 Because storing versions requires the experimental schema format, also enable it with [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function).
 To select the experimental stored-schema format, set `allowPossiblyIncompatibleWriteVersionOverrides` to `true` and add `["Schema", "schemaVersion"]` to `writeVersionOverrides`.
-The following example shows how to configure schema versions for two separate features, notes and comments:
+The following example configures separate schema versions for notes and comments stored as application data, not schema annotations or persisted metadata:
 
 ```typescript
 import {
 	configuredSharedTreeAlpha,
 	identifySchemaAlpha,
-	type LibraryId,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
 } from "fluid-framework/alpha";
 
 const schemaFactory = new SchemaFactory("com.example");
-const notes = "com.example.notes" as LibraryId;
-const comments = "com.example.comments" as LibraryId;
+const notes = "com.example.notes";
+const comments = "com.example.comments";
 class AppSchema extends schemaFactory.object("App", {
 	notes: schemaFactory.array("Notes", schemaFactory.string),
 	comments: schemaFactory.array("Comments", schemaFactory.string),
@@ -64,7 +69,7 @@ const identity = identifySchemaAlpha({
 ```
 
 The number is stored as the map `{ "schemaVersion": 1 }`.
-Here, `"schemaVersion"` is an ordinary identifier, not a reserved one, and follows the same upgrade rules as any other [`LibraryId`](https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias).
+Here, `"schemaVersion"` is an ordinary identifier, not a reserved one, and follows the same upgrade rules as any other library identifier.
 If you later need separate feature versions, switch to a map that keeps this entry and adds identifiers for those features.
 
 Separate identifiers are also useful for tracking experimental features.

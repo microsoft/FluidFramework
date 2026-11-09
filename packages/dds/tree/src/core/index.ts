@@ -149,7 +149,6 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
-	type LibraryId,
 	type SchemaVersionMap,
 	schemaFormatV1,
 	schemaFormatV2,

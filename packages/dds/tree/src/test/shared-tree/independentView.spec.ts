@@ -31,6 +31,7 @@ import {
 	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type SchemaVersionMap,
 	type TreeViewBeta,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -38,7 +39,6 @@ import {
 	identifySchemaAlpha,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
-	type LibraryId,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -110,7 +110,7 @@ describe("independentView", () => {
 		});
 
 		it("exposes view and stored schema versions", () => {
-			const testLibraryId = "test" as LibraryId;
+			const testLibraryId = "test";
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			const config = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
@@ -126,7 +126,7 @@ describe("independentView", () => {
 		});
 
 		it("upgrades stored application versions without hashing", () => {
-			const testLibraryId = "test" as LibraryId;
+			const testLibraryId = "test";
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			for (const version of [1, 2]) {
 				const identity = identifySchemaAlpha({
@@ -163,7 +163,7 @@ describe("independentView", () => {
 			const original = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
 				schemaIdentity: identifySchemaAlpha({
-					schemaVersion: { ["test" as LibraryId]: 1 },
+					schemaVersion: { ["test"]: 1 },
 				}),
 			});
 			const restored = importCompatibilitySchemaSnapshot(
@@ -179,7 +179,7 @@ describe("independentView", () => {
 		});
 
 		it("applies a versioned non-monotonic schema upgrade", () => {
-			const testLibraryId = "test" as LibraryId;
+			const testLibraryId = "test";
 			const factory = new SchemaFactory("versioned-upgrade");
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			const originalView = tree.viewWith(
@@ -205,7 +205,12 @@ describe("independentView", () => {
 			assert.deepEqual(upgradedView.storedSchemaVersion, { test: 2 });
 		});
 
-		for (const schemaVersion of [undefined, {}, { ["test" as LibraryId]: 1 }]) {
+		const schemaVersions: readonly (SchemaVersionMap | undefined)[] = [
+			undefined,
+			{},
+			{ test: 1 },
+		];
+		for (const schemaVersion of schemaVersions) {
 			it(`does not alternate metadata-only updates at equal versions (${JSON.stringify(schemaVersion)})`, () => {
 				const factory = new SchemaFactoryAlpha("metadata-upgrade");
 				const a = factory.required(factory.number, { persistedMetadata: { app: "A" } });
@@ -240,7 +245,7 @@ describe("independentView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: b,
 						schemaIdentity: identifySchemaAlpha({
-							schemaVersion: { ["test" as LibraryId]: 2 },
+							schemaVersion: { ["test"]: 2 },
 						}),
 					}),
 				);
@@ -269,7 +274,7 @@ describe("independentView", () => {
 			const b = factory.required([factory.number, factory.string], {
 				persistedMetadata: { app: "B" },
 			});
-			const schemaVersion = { ["test" as LibraryId]: 1 };
+			const schemaVersion = { ["test"]: 1 };
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			const initial = tree.viewWith(
 				new TreeViewConfigurationAlpha({

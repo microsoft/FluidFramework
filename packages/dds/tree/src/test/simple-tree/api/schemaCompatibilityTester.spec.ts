@@ -18,7 +18,6 @@ import {
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
 	type ImplicitFieldSchema,
-	type LibraryId,
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
@@ -38,7 +37,7 @@ const emptySchema: TreeStoredSchema = {
 };
 
 const factory = new SchemaFactoryAlpha("");
-const testLibraryId = "test" as LibraryId;
+const testLibraryId = "test";
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },

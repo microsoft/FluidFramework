@@ -294,10 +294,9 @@ export function areSchemaVersionsEqual(
 		return a === b;
 	}
 	const aEntries = Object.entries(a);
-	const bRecord = b as Readonly<Record<string, number>>;
 	return (
 		aEntries.length === Object.keys(b).length &&
-		aEntries.every(([libraryId, version]) => bRecord[libraryId] === version)
+		aEntries.every(([libraryId, version]) => b[libraryId] === version)
 	);
 }
 
@@ -319,11 +318,10 @@ function ifSchemaVersionsDecrease(
 	if (updated === undefined) {
 		return true;
 	}
-	const updatedRecord = updated as Readonly<Record<string, number>>;
 	return Object.entries(original).some(([libraryId, version]) => {
-		const updatedVersion = updatedRecord[libraryId];
+		const updatedVersion = updated[libraryId];
 		return (
-			!Object.hasOwn(updatedRecord, libraryId) ||
+			!Object.hasOwn(updated, libraryId) ||
 			updatedVersion === undefined ||
 			updatedVersion < version
 		);
