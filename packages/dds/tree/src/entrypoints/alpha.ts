@@ -274,7 +274,6 @@ export {
 	RevertibleAlphaFactory, 
 	RunTransactionParamsAlpha, 
 	Sandboxing, 
-	SchemaCompatibilityStatusAlpha,
 	SchemaFactoryAlpha, 
 	SchemaFactoryAlphaOptions, 
 	SchemaIdentity, 

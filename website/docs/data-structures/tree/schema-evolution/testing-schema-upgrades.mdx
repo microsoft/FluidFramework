@@ -184,8 +184,10 @@ Also test these combinations:
 Check newly created documents separately.
 Permissions preserved from another document must not appear in a new document initialized with a restrictive policy.
 
-The <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink> accepts `canView || canUpgrade` in both required compatibility directions.
-It does not apply upgrades or guarantee immediate viewing, so test the application code that calls `upgradeSchema()` when needed.
+The <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink> requires the current schema to be able to upgrade documents from every historical snapshot.
+Historical clients within the collaboration window must be able to view current documents without upgrading.
+A safe runtime upgrade by an older client does not satisfy this immediate-viewing requirement.
+Test the application code that calls `upgradeSchema()` when needed separately.
 Current snapshot helpers assume restrictive staging rather than honoring the configurations' staged-upgrade policies, and staged-optional round-tripping has known limitations.
 Use live-document tests for configured or partially enabled staged states; a view-schema snapshot alone does not represent every stored history.
 

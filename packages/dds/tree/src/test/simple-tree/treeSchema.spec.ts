@@ -24,7 +24,6 @@ import {
 	getSchemaUpgradeCandidate,
 	getRootSchemaDerivedData,
 	SchemaComponent,
-	type SchemaUpgradeCandidate,
 	toInitialSchema,
 	type TransitiveSchemaInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -415,29 +414,12 @@ describe("treeSchema", () => {
 	});
 
 	describe("getSchemaUpgradeCandidate", () => {
-		/**
-		 * Verifies the complete candidate schema and its retained-field report without checking upgrade permission.
-		 *
-		 * @param actual - The candidate returned by the builder.
-		 * @param expected - The expected stored schema and retained-field locations in report order.
-		 */
-		function expectUpgradeCandidate(
-			actual: SchemaUpgradeCandidate,
-			expected: SchemaUpgradeCandidate,
-		): void {
-			expectSchemaEqual(actual.schema, expected.schema);
-			assert.deepEqual(
-				actual.retainedUnknownOptionalFields,
-				expected.retainedUnknownOptionalFields,
-			);
-		}
-
 		const schemaFactory = new SchemaFactoryAlpha("upgradeTarget");
 
 		// Reuse stored identifiers to model different application versions.
 		// Each view contains only one declaration for each identifier.
 
-		it("returns an equivalent target and no retained fields when the schemas match", () => {
+		it("returns an equivalent target when the schemas match", () => {
 			class Task extends schemaFactory.object("Task", { title: schemaFactory.string }) {}
 			const viewSchema = createTreeSchema(Task);
 			const storedSchema = toInitialSchema(Task);
@@ -447,11 +429,7 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			expectUpgradeCandidate(result, {
-				schema: storedSchema,
-				// Every stored field is declared by the view, so there are no unknown optional fields to retain.
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, storedSchema);
 		});
 
 		for (const location of ["root", "array", "map"] as const) {
@@ -505,20 +483,14 @@ describe("treeSchema", () => {
 				const fresh = toInitialSchema(before, policy);
 				const result = getSchemaUpgradeCandidate(createTreeSchema(before), stored, policy);
 
-				expectUpgradeCandidate(result, {
-					schema: toInitialSchema(expectedCandidate),
-					retainedUnknownOptionalFields: [],
-				});
+				expectSchemaEqual(result, toInitialSchema(expectedCandidate));
 				assert.deepEqual(structuredClone(stored), storedSnapshot);
 
 				// Neither the cached conversion nor a candidate for another document may inherit these stored string permissions.
 				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
-				expectUpgradeCandidate(
+				expectSchemaEqual(
 					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),
-					{
-						schema: toInitialSchema(expectedFresh),
-						retainedUnknownOptionalFields: [],
-					},
+					toInitialSchema(expectedFresh),
 				);
 			});
 		}
@@ -567,10 +539,7 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Expected),
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, toInitialSchema(Expected));
 
 			// Compare independent data snapshots so mutations to shared field maps, type sets, or metadata cannot pass unnoticed.
 			assert.deepEqual(structuredClone(stored), storedSnapshot);
@@ -595,10 +564,7 @@ describe("treeSchema", () => {
 
 			// Candidate construction preserves strings even though the view does not declare them.
 			// Deciding whether that candidate is usable belongs to the compatibility layer.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, stored);
 		});
 
 		it("uses the view's candidate when its stored node kind differs", () => {
@@ -615,10 +581,7 @@ describe("treeSchema", () => {
 			);
 
 			// Object fields are not composed into a map definition; the candidate keeps the map representation selected by the view.
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(After),
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, toInitialSchema(After));
 		});
 
 		it("preserves an optional root when the view stages optionality", () => {
@@ -635,10 +598,7 @@ describe("treeSchema", () => {
 			);
 
 			// The older view's restrictive candidate retains the newer document's permission to omit the root.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, stored);
 			expectSchemaEqual(toInitialSchema(before), toInitialSchema(Task));
 		});
 
@@ -659,10 +619,7 @@ describe("treeSchema", () => {
 			);
 
 			// The older view must retain the newer document's `Task` definition and recursive references.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, stored);
 			assert(!toInitialSchema(before).nodeSchema.has(brand(Task.identifier)));
 		});
 
@@ -696,14 +653,9 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Expected),
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("estimatedHours") },
-				],
-			});
+			expectSchemaEqual(result, toInitialSchema(Expected));
 
-			const retained = getObjectNodeSchema(result.schema, After.identifier);
+			const retained = getObjectNodeSchema(result, After.identifier);
 			assert.deepEqual(retained.getFieldSchema(brand("estimatedHours")).persistedMetadata, {
 				unit: "hours",
 			});
@@ -750,12 +702,7 @@ describe("treeSchema", () => {
 						stored,
 						StagedSchemaUpgradePolicy.restrictive,
 					);
-					expectUpgradeCandidate(result, {
-						schema: toInitialSchema(TaskWithBothFeatures),
-						retainedUnknownOptionalFields: [
-							{ nodeType: brand(view.identifier), fieldKey: brand(retainedKey) },
-						],
-					});
+					expectSchemaEqual(result, toInitialSchema(TaskWithBothFeatures));
 				});
 			}
 		});
@@ -794,12 +741,7 @@ describe("treeSchema", () => {
 			// `After` declares none of `ChecklistsByCategory`, `Checklist`, or `ChecklistStep`.
 			// Following the retained `checklists` field must include the map, array, and item definitions.
 			// `ChecklistStep.next` refers back to `ChecklistStep`; that reference must not cause an endless loop.
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Expected),
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("checklists") },
-				],
-			});
+			expectSchemaEqual(result, toInitialSchema(Expected));
 		});
 
 		it("uses stored keys when deciding whether a field was removed", () => {
@@ -819,10 +761,7 @@ describe("treeSchema", () => {
 			);
 
 			// `comments` still declares the stored field `notes`; this is a property rename, not field removal.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, stored);
 		});
 
 		it("retains a stored key that matches the property name of another declared field", () => {
@@ -847,15 +786,10 @@ describe("treeSchema", () => {
 
 			// `After`'s property `completionPercent` uses stored key `progress`.
 			// Stored key `completionPercent` is therefore still unknown despite matching a current property name.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("completionPercent") },
-				],
-			});
+			expectSchemaEqual(result, stored);
 		});
 
-		it("reports each retained schema field once in a stable order", () => {
+		it("preserves omitted fields on node types referenced by multiple fields", () => {
 			class MemberBefore extends schemaFactory.object("Member", {
 				workdayStartHour: schemaFactory.optional(schemaFactory.number),
 				workdayEndHour: schemaFactory.optional(schemaFactory.number),
@@ -882,16 +816,8 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			// Both `assignee` and `reviewer` use `Member`, but each retained `Member` field must appear only once.
-			// Sort by node identifier and stored key, not by declaration or traversal order.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(MemberAfter.identifier), fieldKey: brand("workdayEndHour") },
-					{ nodeType: brand(MemberAfter.identifier), fieldKey: brand("workdayStartHour") },
-					{ nodeType: brand(After.identifier), fieldKey: brand("archiveReason") },
-				],
-			});
+			// Both `assignee` and `reviewer` must use the same complete retained `Member` definition.
+			expectSchemaEqual(result, stored);
 		});
 
 		it("does not retain an optional field when the view explicitly disables unknown fields", () => {
@@ -913,10 +839,7 @@ describe("treeSchema", () => {
 			);
 
 			// Because `Strict` rejects unknown optional fields, the candidate must omit `estimatedHours`.
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Strict),
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, toInitialSchema(Strict));
 		});
 
 		it("does not retain an omitted required field", () => {
@@ -932,10 +855,7 @@ describe("treeSchema", () => {
 			);
 
 			// Only optional fields can be retained as unknown fields, so the candidate omits the required `priority` field.
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(After),
-				retainedUnknownOptionalFields: [],
-			});
+			expectSchemaEqual(result, toInitialSchema(After));
 		});
 
 		it("uses a compatible current declaration of a staged-only referenced type", () => {
@@ -980,12 +900,7 @@ describe("treeSchema", () => {
 				stored,
 				StagedSchemaUpgradePolicy.restrictive,
 			);
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Expected),
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("detailedEstimate") },
-				],
-			});
+			expectSchemaEqual(result, toInitialSchema(Expected));
 		});
 
 		it("keeps the view's required root while retaining omitted optional fields", () => {
@@ -1009,12 +924,7 @@ describe("treeSchema", () => {
 
 			// The candidate retains `notes` but uses the required root from the view.
 			// Converting `Before` as a required root describes that complete expected candidate.
-			expectUpgradeCandidate(result, {
-				schema: toInitialSchema(Before),
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("notes") },
-				],
-			});
+			expectSchemaEqual(result, toInitialSchema(Before));
 		});
 
 		/**
@@ -1037,12 +947,7 @@ describe("treeSchema", () => {
 			);
 
 			// The expected target is the original stored schema: `assignment` remains declared even though no value can be stored in it.
-			expectUpgradeCandidate(result, {
-				schema: stored,
-				retainedUnknownOptionalFields: [
-					{ nodeType: brand(After.identifier), fieldKey: brand("assignment") },
-				],
-			});
+			expectSchemaEqual(result, stored);
 		});
 	});
 });

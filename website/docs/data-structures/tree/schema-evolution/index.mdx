@@ -127,8 +127,9 @@ Generally, the most important properties of the `compatibility` object to monito
 `canUpgrade` does not mean that an upgrade is required.
 It checks that the proposed target preserves existing permissions and supports the requesting view after the upgrade, even if the view cannot access the current document.
 
-Snapshot validation requires `canView || canUpgrade` in both directions for versions within `minVersionForCollaboration`.
-The current version must also be able to view or upgrade documents from historical snapshots outside that collaboration window.
+Snapshot validation requires the current schema to be able to upgrade documents from every historical snapshot.
+Historical schemas within `minVersionForCollaboration` must be able to view documents created with the current schema without an upgrade.
+An older client's ability to perform a safe upgrade does not satisfy this immediate-viewing requirement.
 A passing test does not perform upgrades for your application: call `upgradeSchema()` when viewing requires it.
 The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging rather than modeling every configured rollout policy.
 

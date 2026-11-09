@@ -33,7 +33,6 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatusBeta,
-	type SchemaCompatibilityStatusAlpha,
 	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
@@ -183,7 +182,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Undefined if and only if uninitialized or disposed.
 	 */
-	private currentCompatibility: SchemaCompatibilityStatusAlpha | undefined;
+	private currentCompatibility: SchemaCompatibilityStatusBeta | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -403,11 +402,7 @@ export class SchematizingSimpleTreeView<
 
 		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
-		const newSchema = getSchemaUpgradeCandidate(
-			this.viewSchema,
-			storedSchema,
-			upgradePolicy,
-		).schema;
+		const newSchema = getSchemaUpgradeCandidate(this.viewSchema, storedSchema, upgradePolicy);
 
 		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -600,7 +595,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
 	 */
-	private computeCompatibility(): SchemaCompatibilityStatusAlpha {
+	private computeCompatibility(): SchemaCompatibilityStatusBeta {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
@@ -654,7 +649,7 @@ export class SchematizingSimpleTreeView<
 		return this.currentUnknownFieldSchemas;
 	}
 
-	public get compatibility(): SchemaCompatibilityStatusAlpha {
+	public get compatibility(): SchemaCompatibilityStatusBeta {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}

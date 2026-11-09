@@ -42,10 +42,7 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: Pick<
-		ReturnType<typeof checkSchemaCompatibility>,
-		"canView" | "canUpgrade" | "retainedUnknownOptionalFields"
-	> & {
+	expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
 	stagedUpgradePolicy?: StagedSchemaUpgradePolicy,
@@ -56,21 +53,12 @@ function expectCompatibility(
 		stored,
 		viewSchema.stagedUpgradePolicy,
 	);
-	const {
-		discrepancies,
-		canView,
-		canUpgrade,
-		enabledUpgrades,
-		retainedUnknownOptionalFields,
-	} = compatibility;
+	const { discrepancies, canView, canUpgrade, enabledUpgrades } = compatibility;
 	assert.deepEqual(
 		{
 			canView,
 			canUpgrade,
 			enabledUpgrades,
-			...(retainedUnknownOptionalFields === undefined
-				? {}
-				: { retainedUnknownOptionalFields }),
 		},
 		{
 			enabledUpgrades: new Map(),
@@ -83,7 +71,7 @@ function expectCompatibility(
 		viewSchema,
 		stored,
 		viewSchema.stagedUpgradePolicy,
-	).schema;
+	);
 
 	// A permitted upgrade preserves existing content and produces a stored schema that the view can read and edit.
 	if (compatibility.canUpgrade) {
@@ -263,7 +251,7 @@ describe("isSchemaUpgradeAllowed", () => {
 			view,
 			stored,
 			StagedSchemaUpgradePolicy.restrictive,
-		).schema;
+		);
 
 		// Composition retains both priority types and adds notes, but cannot make the numeric-only view tolerate strings.
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, candidate), true);
@@ -575,7 +563,6 @@ describe("checkSchemaCompatibility", () => {
 				{
 					canView: true,
 					canUpgrade: true,
-					retainedUnknownOptionalFields: [{ nodeType: Point2D.identifier, fieldKey: "z" }],
 				},
 			);
 		});
@@ -595,7 +582,6 @@ describe("checkSchemaCompatibility", () => {
 				{
 					canView: true,
 					canUpgrade: true,
-					retainedUnknownOptionalFields: [{ nodeType: Point2D.identifier, fieldKey: "z" }],
 				},
 			);
 		});
@@ -751,9 +737,6 @@ describe("checkSchemaCompatibility", () => {
 					{
 						canView: true,
 						canUpgrade: true,
-						retainedUnknownOptionalFields: [
-							{ nodeType: After.identifier, fieldKey: "isArchived" },
-						],
 					},
 					policy,
 				);
@@ -958,184 +941,6 @@ describe("checkSchemaCompatibility", () => {
 			);
 		});
 	});
-});
-
-describe("checkSchemaCompatibility retained unknown optional fields", () => {
-	const schemaFactory = new SchemaFactoryAlpha("retentionDiagnostics");
-
-	it("reports stored keys once in sorted order, including fields that permit no values", () => {
-		class MemberBefore extends schemaFactory.object("Member", {
-			workdayStartHour: schemaFactory.optional(schemaFactory.number),
-			workdayEndHour: schemaFactory.optional(schemaFactory.number),
-		}) {}
-		class Before extends schemaFactory.object("Task", {
-			assignee: MemberBefore,
-			reviewer: MemberBefore,
-			archiveReason: schemaFactory.optional(schemaFactory.string, { key: "archiveNote" }),
-			assignment: schemaFactory.optional([]),
-		}) {}
-
-		// Retire work-hour tracking while keeping the stored `Member` identifier.
-		class MemberAfter extends schemaFactory.object("Member", {}) {}
-
-		// Remove archive and assignment fields and use the reduced member schema at both references.
-		class After extends schemaFactory.object("Task", {
-			assignee: MemberAfter,
-			reviewer: MemberAfter,
-		}) {}
-		const result = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({ schema: After }),
-			toInitialSchema(Before),
-		);
-
-		// Repeated references do not duplicate locations, and the empty assignment field is still retained schema.
-		// The archive entry uses its stored key rather than the old application property name.
-		assert.deepEqual(result.retainedUnknownOptionalFields, [
-			{ nodeType: MemberAfter.identifier, fieldKey: "workdayEndHour" },
-			{ nodeType: MemberAfter.identifier, fieldKey: "workdayStartHour" },
-			{ nodeType: After.identifier, fieldKey: "archiveNote" },
-			{ nodeType: After.identifier, fieldKey: "assignment" },
-		]);
-		assert.equal(result.canView, true);
-		assert.equal(result.canUpgrade, true);
-
-		assert.equal(result.discrepancies, undefined);
-	});
-
-	it("reports an omitted node-valued field but not fields inside its unknown node type", () => {
-		class Reminder extends schemaFactory.object("Reminder", {
-			message: schemaFactory.string,
-			snoozedUntil: schemaFactory.optional(schemaFactory.number),
-		}) {}
-		class Before extends schemaFactory.object("Task", {
-			title: schemaFactory.string,
-			reminder: schemaFactory.optional(Reminder),
-		}) {}
-
-		// Retire reminders, removing the only view reference to their node type.
-		class After extends schemaFactory.object("Task", {
-			title: schemaFactory.string,
-		}) {}
-		const result = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({ schema: After }),
-			toInitialSchema(Before),
-		);
-
-		// The report identifies the field omitted from the known Task type, not every field in the retained Reminder definition.
-		assert.deepEqual(result.retainedUnknownOptionalFields, [
-			{ nodeType: After.identifier, fieldKey: "reminder" },
-		]);
-	});
-
-	it("reports retained fields alongside blockers that an upgrade can resolve", () => {
-		class Before extends schemaFactory.object("Task", {
-			title: schemaFactory.string,
-			notes: schemaFactory.optional(schemaFactory.string),
-		}) {}
-
-		// Replace notes with approval; existing documents need approval added before the view can write it.
-		class After extends schemaFactory.object("Task", {
-			title: schemaFactory.string,
-			isApproved: schemaFactory.optional(schemaFactory.boolean),
-		}) {}
-		const result = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({ schema: After }),
-			toInitialSchema(Before),
-		);
-		assert.equal(result.canView, false);
-		assert.equal(result.canUpgrade, true);
-		assert.deepEqual(result.retainedUnknownOptionalFields, [
-			{ nodeType: After.identifier, fieldKey: "notes" },
-		]);
-		assert.deepEqual(result.discrepancies, [
-			{
-				mismatch: "fieldKind",
-				location: { nodeType: After.identifier, fieldKey: "isApproved" },
-				view: "Optional",
-				stored: "Forbidden",
-			},
-		]);
-	});
-
-	it("still reports retained fields when an incompatible declared field prevents upgrading", () => {
-		class Before extends schemaFactory.object("Task", {
-			title: schemaFactory.string,
-			notes: schemaFactory.optional(schemaFactory.string),
-		}) {}
-
-		// Omit notes but also make an incompatible change to the required title field.
-		class After extends schemaFactory.object("Task", {
-			title: schemaFactory.number,
-		}) {}
-		const result = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({ schema: After }),
-			toInitialSchema(Before),
-		);
-		assert.equal(result.canView, false);
-		assert.equal(result.canUpgrade, false);
-		assert.deepEqual(result.retainedUnknownOptionalFields, [
-			{ nodeType: After.identifier, fieldKey: "notes" },
-		]);
-		assert.deepEqual(result.discrepancies, [
-			{
-				mismatch: "allowedTypes",
-				location: { nodeType: After.identifier, fieldKey: "title" },
-				view: [schemaFactory.number.identifier],
-				stored: [schemaFactory.string.identifier],
-			},
-		]);
-	});
-
-	it("omits the property for declared fields, including renamed properties and preserved staged permissions", () => {
-		class Before extends schemaFactory.object("Task", {
-			comments: schemaFactory.optional(schemaFactory.string, { key: "notes" }),
-			priority: schemaFactory.types([
-				schemaFactory.number,
-				schemaFactory.staged(schemaFactory.string),
-			]),
-			estimatedHours: schemaFactory.stagedOptional(schemaFactory.number),
-		}) {}
-
-		// Rename comments to its stored key and fully enable the staged permissions in the later version.
-		class After extends schemaFactory.object("Task", {
-			notes: schemaFactory.optional(schemaFactory.string),
-			priority: [schemaFactory.number, schemaFactory.string],
-			estimatedHours: schemaFactory.optional(schemaFactory.number),
-		}) {}
-		const result = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({ schema: Before }),
-			toInitialSchema(After),
-		);
-
-		// The older view declares every stored field. Retaining types and optionality is not unknown-field retention.
-		assert.equal(result.canUpgrade, true);
-		assert.equal("retainedUnknownOptionalFields" in result, false);
-	});
-
-	for (const caseName of ["required field", "strict object"] as const) {
-		it(`omits the property when an omitted field is ineligible for retention (${caseName})`, () => {
-			class Before extends schemaFactory.object("Task", {
-				title: schemaFactory.string,
-				notes:
-					caseName === "required field"
-						? schemaFactory.required(schemaFactory.string)
-						: schemaFactory.optional(schemaFactory.string),
-			}) {}
-
-			// Remove notes; either its required kind or the view's opt-out prevents unknown-field retention.
-			class After extends schemaFactory.object(
-				"Task",
-				{ title: schemaFactory.string },
-				{ allowUnknownOptionalFields: caseName !== "strict object" },
-			) {}
-			const result = checkSchemaCompatibility(
-				new TreeViewConfigurationAlpha({ schema: After }),
-				toInitialSchema(Before),
-			);
-			assert.equal(result.canUpgrade, false);
-			assert.equal("retainedUnknownOptionalFields" in result, false);
-		});
-	}
 });
 
 describe("checkSchemaCompatibility enabledUpgrades", () => {

@@ -22,7 +22,7 @@ import {
 	type Discrepancy,
 	type UpgradeLocationCollector,
 } from "./discrepancies.js";
-import type { SchemaCompatibilityStatusAlpha, SchemaDiscrepancy } from "./tree.js";
+import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
 
 /**
  * Returns discrepancies that prevent the view from providing read/write access to documents using the stored schema.
@@ -163,7 +163,7 @@ export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatusAlpha, "canInitialize"> & {
+): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & {
 	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 } {
 	// The public API surface assumes defaultSchemaPolicy
@@ -205,11 +205,7 @@ export function checkSchemaCompatibility(
 	const canView = discrepancies.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-	const { schema: wouldUpgradeTo, retainedUnknownOptionalFields } = getSchemaUpgradeCandidate(
-		viewSchema,
-		stored,
-		configuredPolicy,
-	);
+	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
 
 	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
@@ -224,8 +220,6 @@ export function checkSchemaCompatibility(
 		canUpgrade,
 		isEquivalent,
 		discrepancies: canView ? undefined : discrepancies,
-		// Don't include `retainedUnknownOptionalFields` property if there are none to report.
-		...(retainedUnknownOptionalFields.length === 0 ? {} : { retainedUnknownOptionalFields }),
 		enabledUpgrades,
 	};
 }

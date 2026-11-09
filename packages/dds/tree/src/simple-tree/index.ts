@@ -83,7 +83,6 @@ export {
 	type ITreeViewConfigurationAlpha,
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
-	type SchemaCompatibilityStatusAlpha,
 	type SchemaDiscrepancy,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
@@ -349,8 +348,6 @@ export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
 export {
 	type TreeSchema,
-	type RetainedUnknownOptionalField,
-	type SchemaUpgradeCandidate,
 	type TransitiveSchemaInfo,
 	createTreeSchema,
 	getSchemaUpgradeCandidate,
