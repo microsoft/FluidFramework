@@ -74,8 +74,8 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
  * @remarks
  * This does not fully validate the node is in schema, but does throw UsageErrors for some cases of out-of-schema content.
  *
- * Does not support unknown optional fields: will throw a UsageError if the field is not in schema.
- * This cannot easily be fixed as this code requires a schema for each subtree to process, and none is available for unknown optional fields.
+ * Supports unknown optional fields only if the stored schema of `context` includes them: otherwise throws a UsageError.
+ * This is because this code requires a schema for each subtree to process.
  */
 export function unhydratedFlexTreeFromCursor(
 	context: Context,

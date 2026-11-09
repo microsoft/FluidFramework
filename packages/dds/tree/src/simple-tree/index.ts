@@ -231,6 +231,7 @@ export {
 	type NodeSchemaOptionsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeImportOptions,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
@@ -344,7 +345,10 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
-export { getUnhydratedContext } from "./createContext.js";
+export {
+	getUnhydratedContext,
+	getUnhydratedContextWithStoredSchema,
+} from "./createContext.js";
 export {
 	type TreeSchema,
 	type TransitiveSchemaInfo,
