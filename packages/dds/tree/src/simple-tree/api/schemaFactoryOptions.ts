@@ -22,7 +22,7 @@ export interface ObjectSchemaOptions {
 	 * This option supports both adding optional fields and removing them from application schema declarations.
 	 * An older view can tolerate optional fields added by a newer application version.
 	 * A view that omits an optional field can also read and edit older documents that still contain it.
-	 * This supports rolling back application code or retiring an optional feature without deleting its stored data.
+	 * This supports user scenarios like rolling back application code or retiring an optional feature without deleting its stored data.
 	 *
 	 * When upgrading an existing document, SharedTree retains omitted optional fields and the node definitions they require.
 	 * The view can make later compatible schema upgrades without restoring those fields to its declarations.
