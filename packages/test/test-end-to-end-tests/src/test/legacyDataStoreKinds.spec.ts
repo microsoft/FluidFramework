@@ -44,6 +44,7 @@ import {
 	createSummarizerCore,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
+	waitForContainerConnection,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
@@ -373,6 +374,11 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const container = await provider.createContainer(new LegacyCreatingFactory());
 		const legacy = (await container.getEntryPoint()) as ISharedMap;
 		const alpha = await client.loadContainer(provider.documentId, modernKind);
+		assert(alpha instanceof TestServiceContainer);
+		await Promise.all([
+			waitForContainerConnection(container),
+			waitForContainerConnection(alpha.container),
+		]);
 		const oldRuntime = runtimes.get(legacy);
 		const newRuntime = leafRuntimes.get(alpha.data);
 		assert(oldRuntime !== undefined && newRuntime !== undefined);

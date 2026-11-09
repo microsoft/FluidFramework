@@ -25,6 +25,7 @@ import {
 	getRequiredPendingLocalState,
 	summarizeNow,
 	timeoutPromise,
+	waitForContainerConnection,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
@@ -361,6 +362,10 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const handle = remoteRoot.get<IFluidHandle<ITestFluidObject>>("child");
 		assert(handle !== undefined);
 		const remoteChild = await handle.get();
+		await Promise.all([
+			waitForContainerConnection(container),
+			waitForContainerConnection(remote),
+		]);
 		const received = new Promise<unknown>((resolve) => {
 			remoteChild.runtime.on("signal", (message, local) => {
 				if (!local && message.type === "nested") resolve(message.content);
@@ -383,6 +388,11 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(runtimeFactory);
 		const other = await provider.loadContainer(runtimeFactory);
+		await Promise.all([
+			waitForContainerConnection(container),
+			waitForContainerConnection(remote),
+			waitForContainerConnection(other),
+		]);
 		await provider.ensureSynchronized();
 		const remoteRoot = await getRoot(
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
@@ -403,20 +413,25 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const received = timeoutPromise<unknown>((resolve) => {
 			target.runtime.once("signal", (message) => resolve(message.content));
 		});
-		const notReceived = [sibling, otherChild].map(async (object) =>
-			timeoutPromise(
-				(_, reject) => {
-					object.runtime.once("signal", () =>
-						reject(new Error("Signal delivered outside its target")),
-					);
-				},
-				{ durationMs: 100, reject: false, value: undefined },
-			),
-		);
-		const payload = { address: "application-payload", contents: 42 };
-		child.runtime.submitSignal("targeted", payload, remote.clientId);
-		assert.deepEqual(await received, payload);
-		await Promise.all(notReceived);
+		let unexpectedSignalCount = 0;
+		const onUnexpectedSignal = (): void => {
+			unexpectedSignalCount++;
+		};
+		const otherRuntimes = [sibling.runtime, otherChild.runtime];
+		for (const runtime of otherRuntimes) {
+			runtime.on("signal", onUnexpectedSignal);
+		}
+		try {
+			const payload = { address: "application-payload", contents: 42 };
+			child.runtime.submitSignal("targeted", payload, remote.clientId);
+			const [content] = await Promise.all([received, delay(100)]);
+			assert.deepEqual(content, payload);
+			assert.equal(unexpectedSignalCount, 0, "Signal delivered outside its target");
+		} finally {
+			for (const runtime of otherRuntimes) {
+				runtime.off("signal", onUnexpectedSignal);
+			}
+		}
 	});
 
 	describe("garbage-collection lifetime", () => {

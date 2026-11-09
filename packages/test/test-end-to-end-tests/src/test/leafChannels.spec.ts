@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ConnectionState,
+	LoaderHeader,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -146,9 +150,18 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		const root = await getMap(container);
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const root2 = await getMap(container2);
+		await Promise.all([
+			waitForContainerConnection(container),
+			waitForContainerConnection(container2),
+		]);
+		await provider.ensureSynchronized();
+		assert.equal(container.connectionState, ConnectionState.Connected);
 		container.disconnect();
+		assert.equal(container.connectionState, ConnectionState.Disconnected);
 		root.set("offline", true);
 		container.connect();
+		await waitForContainerConnection(container);
+		assert.equal(container.connectionState, ConnectionState.Connected);
 		await provider.ensureSynchronized();
 		assert.equal(root2.get("offline"), true);
 	});
