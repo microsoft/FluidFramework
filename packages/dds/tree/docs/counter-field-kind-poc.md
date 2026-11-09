@@ -1239,3 +1239,27 @@ These are generated synchronization changes, not a second implementation or an i
 The entrypoint generator exited successfully but printed an error-level diagnostic about the existing `InternalTypes` namespace lacking a recognized API-level tag.
 The namespace's source is unchanged by this work; this diagnostic remains a follow-up rather than a reason to hand-edit generated reports.
 API Extractor completed successfully with its TypeScript-version warning.
+
+### Upstream integration, 2026-11-09
+
+Merging upstream commit `8c51cdeac2dc2c238a8e97fd61e0a1206a7eb336` required adapting the counter experiment to three upstream changes:
+
+- Factory classes now live together in `schemaFactory.ts`, while alpha statics and factory options have separate modules.
+  Counter instance/static methods follow the relocated class, retaining upstream factory-option merging.
+  The clone-overload documentation selector follows the moved options documentation.
+- Cached root-schema analysis now bypasses the uncached `createTreeSchema` reference implementation.
+  Both paths use the same root-kind check, with a regression test ensuring counter roots are rejected without publishing a cached root.
+- Internal codecs now use `typebox` rather than `@sinclair/typebox`.
+  The counter codec uses the new imports without changing its encoded shape.
+
+Validation passed: tree ESM/CJS source builds, test compilation, API report generation, documentation generation, downstream React/tree-agent ESM builds, and focused formatting/lint checks (existing warnings remain).
+The following default-discovery command passed 421 tests:
+
+```sh
+cd packages/dds/tree
+NODE_OPTIONS=--conditions=allow-ff-test-exports pnpm run test:mocha:esm \
+  -- --grep '^(treeSchema|toStoredSchema|schemaFactory|native counter integration|Native counter change pipeline)' --reporter dot
+```
+
+Validation required restoring the merged lockfile's dependencies, rebuilding stale core-utils outputs, and removing the ignored emitted test artifacts for upstream's deleted `branchCommitCounter.spec.ts`.
+No dependency manifests, lockfiles, or generated API reports needed additional edits for these resolutions.

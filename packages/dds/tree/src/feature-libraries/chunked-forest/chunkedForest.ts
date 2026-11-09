@@ -215,9 +215,16 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 		);
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+	public chunkField(
+		cursor: ITreeCursorSynchronous,
+		shouldRechunk?: (chunk: TreeChunk) => boolean,
+	): TreeChunk[] {
 		this.breaker.use();
-		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
+		return chunkField(cursor, {
+			idCompressor: this.idCompressor,
+			policy: this.chunker,
+			...(shouldRechunk === undefined ? {} : { shouldRechunk }),
+		});
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -240,7 +247,9 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 		);
 
 		if (this.roots.isShared()) {
-			this.roots = this.roots.clone();
+			const oldRoots = this.roots;
+			this.roots = oldRoots.clone();
+			oldRoots.referenceRemoved();
 		}
 
 		// The `CombinableVisitor` which can apply deltas to this forest.
@@ -298,6 +307,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					chunkTree(c, {
 						policy: this.forest.chunker,
 						idCompressor: this.forest.idCompressor,
+						shouldRechunk: () => true,
 					}),
 				);
 				this.forest.roots.fields.set(destination, chunks);

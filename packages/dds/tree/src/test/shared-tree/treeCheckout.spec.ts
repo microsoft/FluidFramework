@@ -35,11 +35,14 @@ import {
 } from "../../shared-tree-core/index.js";
 import {
 	Tree,
+	CheckoutBase,
 	TreeCheckout,
+	BranchCheckout,
 	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
+	forkAsBranchCheckout,
 	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
@@ -108,13 +111,14 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 
 const checkoutForks: {
 	name: string;
-	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+	forkCheckout: (checkout: CheckoutBase) => CheckoutBase;
 }[] = [
 	{ name: "fork()", forkCheckout: (checkout) => checkout.fork() },
 	{
 		name: "forkWith()",
 		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
 	},
+	{ name: "BranchCheckout", forkCheckout: forkAsBranchCheckout },
 ];
 
 describe("sharedTreeView", () => {
@@ -1504,10 +1508,12 @@ describe("sharedTreeView", () => {
 				sibling.root.insertAtEnd("sibling");
 				const revision = sibling.branchHistory.getHead()?.revision;
 				assert(revision !== undefined);
-				const head = fork.checkout.mainBranch.getHead();
+				const checkout = fork.checkout;
+				assert(checkout instanceof TreeCheckout);
+				const head = checkout.mainBranch.getHead();
 
 				assert.throws(
-					() => (throughView ? fork : fork.checkout).rewindTo(revision),
+					() => (throughView ? fork : checkout).rewindTo(revision),
 					validateUsageError(`No commit found with revision: ${revision}`),
 				);
 				assert.equal(fork.checkout.mainBranch.getHead(), head);
@@ -1534,7 +1540,9 @@ describe("sharedTreeView", () => {
 					const head = fork.checkout.mainBranch.getHead();
 					const revision = fork.branchHistory.getHead()?.revision;
 					assert(revision !== undefined);
-					const target = throughView ? fork : fork.checkout;
+					const checkout = fork.checkout;
+					assert(checkout instanceof TreeCheckout);
+					const target = throughView ? fork : checkout;
 
 					switch (rejection) {
 						case "unrecognized revision": {
@@ -1609,7 +1617,9 @@ describe("sharedTreeView", () => {
 				throw error;
 			});
 
-			assert.throws(() => fork.checkout.rewindTo(revision), error);
+			const checkout = fork.checkout;
+			assert(checkout instanceof TreeCheckout);
+			assert.throws(() => checkout.rewindTo(revision), error);
 			assert.throws(() => fork.root, validateUsageError(/invalid state/));
 			assert.deepEqual([...view.root], ["parent"]);
 			view.dispose();
@@ -1638,6 +1648,7 @@ describe("sharedTreeView", () => {
 			assert.notEqual(commitAfterEdits, undefined);
 			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
 
+			assert(fork.checkout instanceof TreeCheckout);
 			fork.checkout.switchBranch(checkout.mainBranch);
 
 			const headCommitAfterSwitch = fork.branchHistory.getHead();
@@ -1673,6 +1684,14 @@ describe("sharedTreeView", () => {
 			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
+			// For checkouts that are 1:1 with their view (plain `TreeCheckout` forks), disposing the view
+			// also disposes the underlying branch. `BranchCheckout` opts out of this contract via
+			// `disposesWithView` so a single branch can back multiple views over its lifetime; in that
+			// case, the branch must be disposed explicitly.
+			if (treeBranch instanceof BranchCheckout) {
+				assert.equal(treeBranch.disposed, false);
+				treeBranch.dispose();
+			}
 			assert.equal(treeBranch.disposed, true);
 		});
 
@@ -1802,9 +1821,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });
@@ -2348,7 +2367,10 @@ describe("sharedTreeView", () => {
 
 		it("switch branches", () => {
 			expectErrorDuringEdit({
-				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				duringEdit: (view) => {
+					assert(view.checkout instanceof TreeCheckout);
+					view.checkout.switchBranch(view.checkout.mainBranch);
+				},
 				error: "Switching branches is forbidden during a change event callback",
 			});
 		});
@@ -2916,7 +2938,7 @@ describe("sharedTreeView", () => {
 			fork.root.insertAtEnd({ id: "A" });
 
 			// This hides the commit that inserted "A".
-			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead());
+			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead(), -1);
 
 			fork.root.removeAt(0);
 
@@ -3024,9 +3046,9 @@ const rootArray = defaultSf.array(defaultSf.string);
 
 interface CheckoutViewTestArgs<TRootSchema extends ImplicitFieldSchema> {
 	view: SchematizingSimpleTreeView<TRootSchema>;
-	tree: TreeCheckout;
+	tree: CheckoutBase;
 	logger: IMockLoggerExt;
-	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+	forkCheckout: (checkout: CheckoutBase) => CheckoutBase;
 }
 
 /**
@@ -3070,10 +3092,10 @@ function itView<
 	function callWithView(
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: TreeCheckout;
+			tree: CheckoutBase;
 			logger: IMockLoggerExt;
 		},
-		forkCheckout: (checkout: TreeCheckout) => TreeCheckout,
+		forkCheckout: (checkout: CheckoutBase) => CheckoutBase,
 	): void {
 		if (options.initialContent) {
 			const { logger } = new TestTreeProviderLite();
@@ -3089,7 +3111,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeCheckout;
+					tree: CheckoutBase;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -3111,10 +3133,10 @@ function itView<
 
 	function makeReferenceView(
 		config: TreeViewConfiguration<TRootSchema>,
-		forkCheckout?: (checkout: TreeCheckout) => TreeCheckout,
+		forkCheckout?: (checkout: CheckoutBase) => CheckoutBase,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeCheckout;
+		tree: CheckoutBase;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();

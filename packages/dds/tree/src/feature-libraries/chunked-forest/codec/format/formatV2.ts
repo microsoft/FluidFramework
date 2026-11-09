@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
 
@@ -31,6 +31,12 @@ export const shapesV2 = {
  * V2 extension of {@link EncodedChunkShapeV1}.
  * @remarks
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
+ * @privateRemarks
+ * Includes Never for `f` so that the VText format, which adds that entry, is not assignable to this one.
+ * See {@link EncodedChunkShapeV1}.
  */
 export type EncodedChunkShapeV2 = Static<typeof EncodedChunkShapeV2>;
-export const EncodedChunkShapeV2 = Type.Object(shapesV2, unionOptions);
+export const EncodedChunkShapeV2 = Type.Object(
+	{ ...shapesV2, f: Type.Optional(Type.Never()) },
+	unionOptions,
+);

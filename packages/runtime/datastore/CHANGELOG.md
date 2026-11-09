@@ -1,5 +1,33 @@
 # @fluidframework/datastore
 
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Add oldestSupportedClient across runtime layers ([#28537](https://github.com/microsoft/FluidFramework/pull/28537)) [9fc4c218519](https://github.com/microsoft/FluidFramework/commit/9fc4c218519eefdf4518d22517e122325f7a055d)
+
+  Runtime and data store contexts now expose the required `oldestSupportedClient` property beside `minVersionForCollab`.
+  Consumers can use `context.oldestSupportedClient` directly instead of `context.minVersionForCollab`.
+  The runtime retains its internal fallback for older contexts that expose only `minVersionForCollab`, so mixed-version packages remain supported.
+
+  `IFluidParentContext.minVersionForCollab` is deprecated in 3.10.0 and will be removed in a future release.
+  Use `IFluidParentContext.oldestSupportedClient` instead.
+
+  ```typescript
+  const oldestSupportedClient = context.oldestSupportedClient;
+  ```
+
+  The on-disk schema and telemetry property names do not change.
+  See [the migration issue](https://github.com/microsoft/FluidFramework/issues/27851) for more details.
+
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 Dependency updates only.

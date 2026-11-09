@@ -4,7 +4,8 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-import * as Type from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 import { makeCodecFamily, type IJsonCodec } from "../../codec/index.js";
 import { Multiplicity, type ChangeAtomId } from "../../core/index.js";
@@ -130,7 +131,7 @@ const EncodedCounterChange = Type.Union([
 		detachId: EncodedChangeAtomId,
 	}),
 ]);
-type EncodedCounterChange = Type.Static<typeof EncodedCounterChange>;
+type EncodedCounterChange = Static<typeof EncodedCounterChange>;
 
 /**
  * Lowers additive changes to single-leaf replacements using existing delta operations.

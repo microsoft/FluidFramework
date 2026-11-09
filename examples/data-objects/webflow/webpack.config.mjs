@@ -1,0 +1,28 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { commonExampleConfig } from "@fluid-example/webpack-fluid-loader";
+import webpack from "webpack";
+import { merge } from "webpack-merge";
+
+export default (env) =>
+	merge(commonExampleConfig(import.meta.dirname, env), {
+		module: {
+			rules: [
+				{
+					test: /\.css$/,
+					use: [
+						"style-loader", // creates style nodes from JS strings
+						"css-loader", // translates CSS into CommonJS
+					],
+				},
+			],
+		},
+		plugins: [
+			new webpack.ProvidePlugin({
+				process: "process/browser.js",
+			}),
+		],
+	});
