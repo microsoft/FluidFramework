@@ -53,7 +53,12 @@ import {
 	getFieldChangesetCodecs,
 	makeFieldEncodingContextFactory,
 } from "./modularChangeCodecV1.js";
-import { addNodeRename, newRootTable } from "./modularChangeUtils.js";
+import {
+	addNodeRename,
+	newRootTable,
+	nodeChangeFromId,
+	normalizeNodeId,
+} from "./modularChangeUtils.js";
 import type {
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
@@ -341,10 +346,9 @@ export function makeModularChangeCodecV3(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
-				// TODO: Handle node aliasing.
-				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-				assert(node !== undefined, "Unknown node ID");
-				return encodeNodeChangesForJson(node, nodeId, contextFactory);
+				const normalizedId = normalizeNodeId(nodeId, change.nodeAliases);
+				const node = nodeChangeFromId(change.nodeChanges, change.nodeAliases, normalizedId);
+				return encodeNodeChangesForJson(node, normalizedId, contextFactory);
 			};
 
 			const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
