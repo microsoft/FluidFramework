@@ -28,7 +28,9 @@ Other HTML nodes are unchanged and must be valid in the MDX destination.
 When the MDX source contains MDX comments, the transform converts them to HTML comments in a Markdown destination.
 Other MDX content can be included in a Markdown document only when the generated syntax tree contains no MDX-specific nodes.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker includes lines 3 through 8 from `overview.md`:
 
@@ -43,6 +45,8 @@ The following marker includes the third-to-last and second-to-last lines from a 
 <!-- markdown-magic:begin {"transform":"include","path":"./overview.md","start":-3,"end":-1} -->
 <!-- markdown-magic:end -->
 ```
+
+### MDX
 
 The following MDX marker includes all content from `overview.md`:
 

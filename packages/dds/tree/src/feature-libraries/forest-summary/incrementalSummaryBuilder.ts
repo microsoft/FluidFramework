@@ -257,6 +257,18 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk[],
 		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 		private readonly initialSequenceNumber: number,
+		/**
+		 * Optimizes a decoded chunk before its identity is recorded for incremental summary reuse.
+		 * Consumes one owned reference to the input and returns one owned reference to equivalent content, possibly the same chunk.
+		 * When replacing the input, acquire the output references before releasing the input reference.
+		 * The supplied predicate identifies subtrees not yet rechunked during this load.
+		 * Reuse subtrees for which it returns `false` without traversing them or changing their identities.
+		 * The predicate borrows its chunk argument and is only valid during this call.
+		 */
+		private readonly rechunk: (
+			chunk: TreeChunk,
+			shouldRechunk: (chunk: TreeChunk) => boolean,
+		) => TreeChunk = (chunk) => chunk,
 	) {}
 
 	/**
@@ -565,6 +577,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 	/**
 	 * {@link IncrementalEncoder.decodeIncrementalChunk}
+	 * The decoder transfers one owned reference, which is consumed by rechunking.
+	 * Returns one owned reference to the resulting chunk and retains a separate reference for summary tracking.
+	 * Tracking the result before rechunking its ancestors lets their callbacks reuse it without traversal.
 	 */
 	public decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
@@ -572,7 +587,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	): TreeChunk {
 		const chunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
 		assert(chunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
-		const chunk = chunkDecoder(chunkLoadProperties.encodedContents);
+		const decoded = chunkDecoder(chunkLoadProperties.encodedContents);
+		const trackedChunks = this.chunkTrackingPropertiesMap.get(this.initialSequenceNumber);
+		const chunk = this.rechunk(decoded, (candidate) => trackedChunks?.has(candidate) !== true);
 
 		// Account for the reference about to be added in `chunkTrackingPropertiesMap`
 		// to ensure that no other users of this chunk think they have unique ownership.

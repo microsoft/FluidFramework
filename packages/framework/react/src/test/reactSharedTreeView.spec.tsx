@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { createIndependentTreeBeta } from "@fluidframework/tree/beta";
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
@@ -15,6 +16,7 @@ import type { JSX } from "react";
 
 import type { PropTreeNode } from "../propNode.js";
 import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
+import { usePropTreeNode } from "../useTree.js";
 
 describe("reactSharedTreeView", () => {
 	it("treeDataObject", async () => {
@@ -79,11 +81,69 @@ describe("reactSharedTreeView", () => {
 
 					// Ensure that viewing an incompatible document displays an error.
 					assert.match(rendered.baseElement.textContent ?? "", /Document is incompatible/);
+
 					// Ensure that changes in compatibility are detected and invalidate the view,
 					// and that compatible documents show the content from `viewComponent`
 					view.initialize(new Item({}));
 					rendered.rerender(content);
 					assert.equal(rendered.baseElement.textContent, "View");
+
+					rendered.unmount();
+					view.dispose();
+				});
+
+				it("renders viewable content when schemas are not equivalent", () => {
+					class StoredItem extends builder.object("RolloutItem", {
+						name: builder.string,
+						extra: builder.optional(builder.string),
+					}) {}
+					class ViewItem extends builder.object("RolloutItem", { name: builder.string }) {}
+					const tree = createIndependentTreeBeta();
+					const storedView = tree.viewWith(new TreeViewConfiguration({ schema: StoredItem }));
+					storedView.initialize(new StoredItem({ name: "Visible", extra: "Preserved" }));
+					storedView.dispose();
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: ViewItem }));
+					const RolloutView = ({ root }: { root: PropTreeNode<ViewItem> }): JSX.Element => (
+						<span>{usePropTreeNode(root, (node) => node.name)}</span>
+					);
+
+					// The unknown optional field permits viewing without schema equivalence.
+					assert.equal(view.compatibility.canView, true);
+
+					const rendered = render(
+						<TreeViewComponent viewComponent={RolloutView} tree={{ treeView: view }} />,
+						{ reactStrictMode },
+					);
+					assert.equal(rendered.baseElement.textContent, "Visible");
+
+					rendered.unmount();
+					view.dispose();
+				});
+
+				it("displays an error when the schema cannot be viewed or upgraded", () => {
+					const tree = createIndependentTreeBeta();
+					const storedView = tree.viewWith(
+						new TreeViewConfiguration({ schema: builder.string }),
+					);
+					storedView.initialize("Incompatible");
+					storedView.dispose();
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: Item }));
+
+					assert.equal(view.compatibility.canView, false);
+					assert.equal(view.compatibility.canUpgrade, false);
+					const rendered = render(
+						<TreeViewComponent viewComponent={View} tree={{ treeView: view }} />,
+						{ reactStrictMode },
+					);
+					assert.match(
+						rendered.baseElement.textContent ?? "",
+						/Document is incompatible.*format cannot be updated/,
+					);
+					// eslint-disable-next-line unicorn/no-null -- `queryByRole` returns `null`
+					assert.equal(rendered.queryByRole("button", { name: "Upgrade" }), null);
+
+					rendered.unmount();
+					view.dispose();
 				});
 			});
 		}

@@ -106,8 +106,8 @@ describe("snapshotCompatibilityChecker", () => {
 
 		for (const parsed of [original, regenerated]) {
 			const result = getCompatibility(current, parsed);
-			assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
-			assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+			assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 			assert.equal(result.identicalCompatibility, true);
 		}
 		assert.deepEqual(Object.keys(snapshot.definitions), [
@@ -154,8 +154,8 @@ describe("snapshotCompatibilityChecker", () => {
 				const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 
 				const result = getCompatibility(originalView, parsedView);
-				assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
-				assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+				assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+				assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 				assert.equal(result.identicalCompatibility, true);
 			});
 		}
@@ -280,8 +280,17 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(forwardsCompatibilityStatus.canView, true);
 
 		const combinedCompatibility = getCompatibility(currentViewSchema, oldViewSchema);
-		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.isEquivalent, false);
-		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.isEquivalent, false);
+
+		// The current view needs the snapshot document upgraded to allow strings.
+		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// The old view supports strings via staging, but its upgrade policy would remove them from the stored schema.
+		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canView, true);
+		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canUpgrade, false);
+
+		// The snapshots differ because one stages strings and the other fully enables them.
+		assert.equal(combinedCompatibility.identicalCompatibility, false);
 	});
 
 	it("SnapshotFileSystem", () => {
@@ -1219,8 +1228,7 @@ Snapshots exist for versions: [
 		}
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("getCompatibility handles staged schema symmetrically", () => {
+	it("getCompatibility reports directional staged schema compatibility", () => {
 		const factory = new SchemaFactoryBeta("test");
 		const stagedString = factory.staged(factory.string);
 		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
@@ -1231,9 +1239,40 @@ Snapshots exist for versions: [
 			/* previous: */ new TreeViewConfiguration({ schema: stagedSchema }),
 		);
 
-		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, false);
-		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		// The current view needs the previous document upgraded to allow strings.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// The previous view supports strings via staging, but its upgrade policy would remove them from the stored schema.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+
+		// The snapshots differ because one stages strings and the other fully enables them.
 		assert.equal(result.identicalCompatibility, false);
+	});
+
+	it("getCompatibility reports directional compatibility even when snapshots are identical", () => {
+		const factory = new SchemaFactoryAlpha("test");
+		class Item extends factory.object("Item", {
+			value: factory.stagedOptional(factory.string),
+		}) {}
+		const config = new TreeViewConfigurationAlpha({ schema: Item });
+		const snapshot = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(config),
+		);
+
+		const result = getCompatibility(config, snapshot);
+
+		// The staged view can read the snapshot's optional field, but cannot upgrade it back to required.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, false);
+
+		// The imported view needs the current document's field upgraded from required to optional.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+
+		// Both views export the same snapshot despite their different staging behavior.
+		assert.equal(result.identicalCompatibility, true);
 	});
 
 	// TODO:AB#82814: Fix compatibility logic and enable this test.
@@ -1254,8 +1293,15 @@ Snapshots exist for versions: [
 			/* previous: */ restrictiveConfig,
 		);
 
-		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, false);
-		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		// With the policies applied, the current view must upgrade the previous document to enable strings.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// The previous view can read enabled strings, but its restrictive policy cannot remove them through an upgrade.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+
+		// The snapshots should distinguish the enabled and restrictive upgrade policies.
 		assert.equal(result.identicalCompatibility, false);
 	});
 
@@ -1277,7 +1323,11 @@ Snapshots exist for versions: [
 			new TreeViewConfiguration({ schema: enabledSchema }),
 		);
 
-		assert.equal(result.isEquivalent, true);
+		// The document's policy already enables strings, so the fully enabled view can read it.
+		assert.equal(result.canView, true);
+
+		// Upgrading is permitted because the view does not remove any allowed types.
+		assert.equal(result.canUpgrade, true);
 	});
 
 	// TODO:AB#82814: Fix compatibility logic and enable this test.
@@ -1300,8 +1350,10 @@ Snapshots exist for versions: [
 			view,
 		);
 
+		// Staging permits reading strings that the document already allows.
 		assert.equal(result.canView, true);
+
+		// The restrictive policy excludes strings from upgrades, which would narrow the stored schema.
 		assert.equal(result.canUpgrade, false);
-		assert.equal(result.isEquivalent, false);
 	});
 });
