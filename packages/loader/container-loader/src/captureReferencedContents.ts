@@ -145,11 +145,10 @@ export async function parseGcSnapshotData(
 }
 
 /**
- * Walks a snapshot and inlines the contents of every blob reachable without
- * crossing an `unreferenced` subtree boundary. Subtrees flagged
- * `unreferenced: true` are skipped entirely — the summarizer sets that flag
- * from GC state, so honouring it filters out dead subtrees without a
- * separate GC-path traversal.
+ * Walks a snapshot and inlines all structural blob contents, including those
+ * in unreferenced subtrees. An unreferenced data store can become referenced
+ * again through saved or future ops. Retaining its snapshot contents matches
+ * a live session and avoids depending on historical blobs remaining in storage.
  *
  * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
  * blob is read, because attachment blob contents are captured separately via
@@ -172,8 +171,8 @@ export async function readReferencedSnapshotBlobs(
 
 /**
  * Synchronously walks the snapshot tree and gathers the set of blob ids that
- * should be inlined. Subtrees flagged `unreferenced: true` are skipped
- * entirely. The root-level `.blobs` subtree is special-cased: only its
+ * should be inlined, including those in unreferenced subtrees.
+ * The root-level `.blobs` subtree is special-cased: only its
  * `.redirectTable` id is collected, because attachment blob contents are
  * captured separately via {@link captureReferencedAttachmentBlobs}.
  */
@@ -182,9 +181,6 @@ function collectReferencedBlobIds(
 	isRoot: boolean,
 	ids: Set<string>,
 ): void {
-	if (tree.unreferenced === true) {
-		return;
-	}
 	for (const blobId of Object.values(tree.blobs)) {
 		ids.add(blobId);
 	}
@@ -420,10 +416,10 @@ export async function inlineAttachmentBlobsByReference(
 }
 
 /**
- * Returns true if any referenced subtree of `baseSnapshot` declares a
+ * Returns true if any subtree of `baseSnapshot` declares a
  * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * loading-group identifier. Unreferenced subtrees must also be checked
+ * because a resumed session can reference them again.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
@@ -431,9 +427,6 @@ export async function inlineAttachmentBlobsByReference(
  * rather than silently producing a pending state that omits group data.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
-	if (baseSnapshot.unreferenced === true) {
-		return false;
-	}
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}

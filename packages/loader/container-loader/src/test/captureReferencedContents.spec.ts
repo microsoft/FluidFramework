@@ -72,21 +72,41 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { a: "A", b: "B", c: "C" });
 		});
 
-		it("skips subtrees flagged unreferenced", async () => {
+		it("inlines unreferenced data stores and their nested DDS contents", async () => {
 			const snapshot = tree({
 				trees: {
 					live: tree({ blobs: { live: "kept" } }),
-					dead: tree({
+					unreferencedStore: tree({
 						unreferenced: true,
-						blobs: { dead: "skipped" },
-						trees: { nested: tree({ blobs: { nested: "skipped-too" } }) },
+						blobs: { attributes: "store" },
+						trees: { nested: tree({ blobs: { content: "dds" } }) },
 					}),
 				},
 			});
-			const storage = mockStorage({ kept: "KEPT" });
-			// Missing entries would throw in the storage shim, asserting we never read them.
+			const storage = mockStorage({ kept: "KEPT", store: "STORE", dds: "DDS" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
-			assert.deepStrictEqual(result, { kept: "KEPT" });
+			assert.deepStrictEqual(result, { kept: "KEPT", store: "STORE", dds: "DDS" });
+			assert.strictEqual(snapshot.trees.unreferencedStore.unreferenced, true);
+		});
+
+		it("retains downloaded contents even when their parent is marked unreferenced", async () => {
+			const snapshot: ISnapshot = {
+				snapshotTree: tree({
+					unreferenced: true,
+					blobs: { attributes: "root" },
+					trees: { store: tree({ blobs: { content: "content" } }) },
+				}),
+				blobContents: new Map([
+					["root", stringToBuffer("ROOT", "utf8")],
+					["content", stringToBuffer("CONTENT", "utf8")],
+				]),
+				ops: [],
+				sequenceNumber: 10,
+				latestSequenceNumber: undefined,
+				snapshotFormatV: 1,
+			};
+			const result = await readReferencedSnapshotBlobs(snapshot, mockStorage({}));
+			assert.deepStrictEqual(result, { root: "ROOT", content: "CONTENT" });
 		});
 
 		it("special-cases root .blobs: reads only the redirect table", async () => {
@@ -444,22 +464,25 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 
-		it("ignores groupIds inside unreferenced subtrees", () => {
+		it("detects groupIds inside unreferenced subtrees", () => {
 			const snapshot = tree({
 				trees: {
-					dead: tree({ unreferenced: true, groupId: "dead-group" }),
+					unreferencedStore: tree({
+						unreferenced: true,
+						trees: { nested: tree({ groupId: "store-group" }) },
+					}),
 				},
 			});
 			assert.strictEqual(
 				snapshotHasLoadingGroups(snapshot),
-				false,
-				"unreferenced subtrees would not be loaded by the runtime, so their groupIds don't count",
+				true,
+				"unreferenced subtrees can be referenced again and must not bypass loading-group validation",
 			);
 		});
 
-		it("returns false when the entire snapshot is unreferenced", () => {
+		it("detects a groupId when the entire snapshot is unreferenced", () => {
 			const snapshot = tree({ unreferenced: true, groupId: "g1" });
-			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 	});
 
