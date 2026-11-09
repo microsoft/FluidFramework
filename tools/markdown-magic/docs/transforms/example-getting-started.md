@@ -14,11 +14,22 @@ The transform reads the package name from `package.json` and uses it in the buil
 | `usesTinylicious` | boolean | `true`           | Include the Tinylicious setup steps.                    | None.                                                                                                                                    |
 | `serviceClient`   | boolean | `false`          | Include the unified ServiceClient setup steps.          | The Tinylicious mode is included only when `usesTinylicious` is `true`.                                                                  |
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates setup instructions without Tinylicious steps:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"example-getting-started","usesTinylicious":false} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"example-getting-started","usesTinylicious":false} */}
+{/* markdown-magic:end */}
 ```

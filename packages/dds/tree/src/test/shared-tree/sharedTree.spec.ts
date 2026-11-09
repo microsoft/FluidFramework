@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
 	IChannel,
@@ -42,12 +43,19 @@ import {
 	storedEmptyFieldSchema,
 	EmptyKey,
 	RebaseValidation,
+	type TreeChunk,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { BasicChunk } from "../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { SequenceChunk } from "../../feature-libraries/chunked-forest/sequenceChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { UniformChunk } from "../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	ComparisonForest,
 	flexTreeSlot,
@@ -70,6 +78,8 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -97,6 +107,8 @@ import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { TestAnchor } from "../testAnchor.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Reuse the formatted-text test domain.
+import { FormattedTextTest } from "../text/formattedTextTest.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -434,6 +446,150 @@ describe("SharedTree", () => {
 		validateTreeConsistency(provider.trees[0], joinedLaterTree);
 	});
 
+	describe("formatted text chunk counts", () => {
+		const text = "ab".repeat(500);
+		const configuration = new TreeViewConfiguration({ schema: FormattedTextTest.Tree });
+		const factory = configuredSharedTree({
+			jsonValidator: FormatValidatorBasic,
+			forest: ForestTypeOptimized,
+		}).getFactory();
+
+		function assertReasonableChunkCount(tree: ITree, description: string): void {
+			const forest = (tree as ITreePrivate).kernel.checkout.forest;
+			assert(forest instanceof ChunkedForest);
+			const roots = forest.roots.fields.get(rootFieldKey);
+			assert(roots !== undefined);
+			const visited = new Set<TreeChunk>();
+			const pending = [...roots];
+			while (pending.length > 0) {
+				const chunk = pending.pop();
+				assert(chunk !== undefined);
+				if (visited.has(chunk)) {
+					continue;
+				}
+				visited.add(chunk);
+				if (chunk instanceof BasicChunk) {
+					for (const children of chunk.fields.values()) {
+						pending.push(...children);
+					}
+				} else if (chunk instanceof SequenceChunk) {
+					pending.push(...chunk.subChunks);
+				} else {
+					assert(chunk instanceof UniformChunk);
+				}
+			}
+			const maximumChunkCount = text.length * 4;
+			assert(
+				visited.size <= maximumChunkCount,
+				`${description}: expected at most ${maximumChunkCount} chunks for ${text.length} characters, found ${visited.size}`,
+			);
+		}
+
+		it("loads formatted text into a compact chunked forest", async () => {
+			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
+			const view = provider.trees[0].viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			await provider.ensureSynchronized();
+			await provider.summarize();
+			const loadedTree = await provider.createTree();
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Summary load");
+		});
+
+		it("loads formatted text when schema storage is delayed", async () => {
+			const provider = new TestTreeProviderLite(1, factory);
+			const tree = provider.trees[0];
+			const view = tree.viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			provider.synchronizeMessages();
+			const { summary } = await tree.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			let delayedSchema = false;
+			storage.readBlob = async (path) => {
+				if (path.endsWith("/SchemaString")) {
+					delayedSchema = true;
+					await new Promise<void>((resolve) => setImmediate(resolve));
+				}
+				return readBlob(path);
+			};
+			const runtime = new MockFluidDataStoreRuntime({
+				idCompressor: provider.getCompressor(tree),
+			});
+			const loadedTree = await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: storage,
+				},
+				factory.attributes,
+			);
+			assert(delayedSchema);
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Delayed schema load");
+		});
+
+		it("inserts formatted text into compact local and remote chunked forests", () => {
+			const provider = new TestTreeProviderLite(2, factory);
+			const [sender, receiver] = provider.trees;
+			const senderView = sender.viewWith(configuration);
+			senderView.initialize(FormattedTextTest.Tree.fromString(""));
+			provider.synchronizeMessages();
+			const receiverView = receiver.viewWith(configuration);
+			senderView.root.insertAt(0, text);
+			provider.synchronizeMessages();
+			assert.equal(senderView.root.fullString(), text);
+			assert.equal(receiverView.root.fullString(), text);
+			assertReasonableChunkCount(sender, "Local insertion");
+			assertReasonableChunkCount(receiver, "Remote insertion");
+		});
+	});
+
+	it("loads schema before reading forest storage", async () => {
+		const factory = configuredSharedTree({ forest: ForestTypeOptimized }).getFactory();
+		const provider = new TestTreeProviderLite(1, factory);
+		const tree = provider.trees[0];
+		const configuration = new TreeViewConfiguration({ schema: StringArray });
+		tree.viewWith(configuration).initialize(["loaded"]);
+		provider.synchronizeMessages();
+		const { summary } = await tree.summarize();
+		const storage = MockStorage.createFromSummary(summary);
+		const readBlob = storage.readBlob.bind(storage);
+		let schemaReadCompleted = false;
+		let forestRead = false;
+		storage.readBlob = async (path) => {
+			if (path.endsWith("/SchemaString")) {
+				await new Promise<void>((resolve) => setImmediate(resolve));
+				const contents = await readBlob(path);
+				schemaReadCompleted = true;
+				return contents;
+			}
+			if (path.includes("/Forest/")) {
+				assert(schemaReadCompleted, "Forest storage must not be read before schema loading");
+				forestRead = true;
+			}
+			return readBlob(path);
+		};
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: provider.getCompressor(tree),
+		});
+		const loadedTree = await factory.load(
+			runtime,
+			"loaded",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: storage,
+			},
+			factory.attributes,
+		);
+		assert(schemaReadCompleted);
+		assert(forestRead);
+		assert.deepEqual([...loadedTree.viewWith(configuration).root], ["loaded"]);
+	});
+
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
@@ -649,7 +805,7 @@ describe("SharedTree", () => {
 		);
 
 		// Check schema loaded
-		assert(view2.compatibility.isEquivalent);
+		assert(view2.compatibility.canView);
 		// Check content loaded
 		assert.deepEqual([...view2.root], ["A"]);
 	});
@@ -748,6 +904,124 @@ describe("SharedTree", () => {
 			initialTree: ["b", "c"],
 		});
 	});
+
+	for (const { attachState, lastToFinish } of [
+		AttachState.Detached,
+		AttachState.Attached,
+	].flatMap((runtimeAttachState) =>
+		["edit manager", "schema"].map((componentName) => ({
+			attachState: runtimeAttachState,
+			lastToFinish: componentName,
+		})),
+	)) {
+		it(`restores sequencing while ${attachState} when ${lastToFinish} finishes last`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			const configuration = new TreeViewConfiguration({ schema: StringArray });
+			const sourceView = source.viewWith(configuration);
+			sourceView.initialize(["a"]);
+			asAlpha(sourceView).fork();
+			sourceView.root.insertAtEnd("b");
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const editManagerStarted = new Deferred<void>();
+			const releaseEditManager = new Deferred<void>();
+			const schemaStarted = new Deferred<void>();
+			const releaseSchema = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${stringKey}`)) {
+					editManagerStarted.resolve();
+					await releaseEditManager.promise;
+				} else if (path.endsWith("/SchemaString")) {
+					schemaStarted.resolve();
+					await releaseSchema.promise;
+				}
+				return readBlob(path);
+			};
+			const targetRuntime = new MockFluidDataStoreRuntime({
+				attachState,
+				idCompressor: runtime.idCompressor,
+			});
+			new MockContainerRuntimeFactory().createContainerRuntime(targetRuntime);
+			let loadFinished = false;
+			const loading = factory
+				.load(
+					targetRuntime,
+					"target",
+					{
+						deltaConnection: targetRuntime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				)
+				.then((tree) => {
+					loadFinished = true;
+					return tree;
+				});
+			await Promise.all([editManagerStarted.promise, schemaStarted.promise]);
+			const [first, last] =
+				lastToFinish === "edit manager"
+					? [releaseSchema, releaseEditManager]
+					: [releaseEditManager, releaseSchema];
+			first.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			assert(!loadFinished, "Loading must wait for every component");
+			last.resolve();
+			const target = await loading;
+			const targetView = target.viewWith(configuration);
+			assert.deepEqual([...targetView.root], ["a", "b"]);
+			targetView.root.insertAtEnd("c");
+			assert.deepEqual([...targetView.root], ["a", "b", "c"]);
+		});
+	}
+
+	for (const failingBlob of [stringKey, "SchemaString"]) {
+		it(`rejects a failed ${failingBlob} read while another summary component is pending`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			source.viewWith(new TreeViewConfiguration({ schema: StringArray })).initialize(["a"]);
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const otherBlob = failingBlob === stringKey ? "SchemaString" : stringKey;
+			const failingReadStarted = new Deferred<void>();
+			const otherReadStarted = new Deferred<void>();
+			const failRead = new Deferred<void>();
+			const releaseOtherRead = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${failingBlob}`)) {
+					failingReadStarted.resolve();
+					await failRead.promise;
+					throw new Error("Intentional summary read failure");
+				}
+				if (path.endsWith(`/${otherBlob}`)) {
+					otherReadStarted.resolve();
+					await releaseOtherRead.promise;
+				}
+				return readBlob(path);
+			};
+			const rejected = assert.rejects(
+				factory.load(
+					runtime,
+					"target",
+					{
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				),
+				/Intentional summary read failure/,
+			);
+			await Promise.all([failingReadStarted.promise, otherReadStarted.promise]);
+			failRead.resolve();
+			await rejected;
+			releaseOtherRead.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+		});
+	}
 
 	it("can load a summary while detached", async () => {
 		// This test exercises the case where a detached tree loads a summary from another detached tree.
@@ -969,6 +1243,44 @@ describe("SharedTree", () => {
 	});
 
 	describe("Trunk Trimming", () => {
+		it("does not trim merged commits during detached change events", () => {
+			const tree = DefaultTestSharedTreeKind.getFactory().create(
+				new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+					idCompressor: createSnapshotCompressor(),
+				}),
+				"tree",
+			);
+			assert.equal(tree.isAttached(), false);
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- The edit manager is private.
+			tree.kernel["editManager"].setHistoryRetention(1);
+
+			const fork = view.fork();
+			fork.root.insertAtEnd("A");
+			fork.root.insertAtEnd("B");
+			fork.root.insertAtEnd("C");
+
+			const branch = tree.kernel.checkout.mainBranch;
+			let observedCommitCount = 0;
+			branch.events.on("afterChange", (event) => {
+				if (event.type === "append") {
+					for (const commit of event.newCommits) {
+						assert.equal(commit.wasTrimmed, undefined);
+						observedCommitCount++;
+					}
+				}
+			});
+
+			view.merge(fork);
+
+			assert.equal(observedCommitCount, 3);
+			assert.deepEqual([...view.root], ["A", "B", "C"]);
+		});
+
 		it("has bounded memory growth in EditManager", () => {
 			const provider = new TestTreeProviderLite(2);
 			const viewInit = provider.trees[0].viewWith(
@@ -1119,7 +1431,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["B", "A"]);
 		});
 
-		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// This covers in-memory retention only. See the "History retention configuration" suite below for the
 		// summary round-trip behavior.
 		it("does not evict trunk commits when retainHistory is enabled", () => {
 			const provider = new TestTreeProviderLite(
@@ -1169,7 +1481,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Persists retained history", () => {
+	describe("History retention configuration", () => {
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past most of them.
@@ -1235,6 +1547,91 @@ describe("SharedTree", () => {
 			return tree.kernel.checkout.branchHistory.length;
 		}
 
+		// Example: `retainHistory: 3` on a tree that has sequenced more than 3 commits outside the collaboration window.
+		// The client keeps commits in the collaboration window plus enough older commits to reach at least 3 commits in total,
+		// and a client loaded from that tree's summary holds the same commits.
+		// A limit smaller than the collaboration window (such as 0 or 1) does not trim below the window,
+		// and a very large limit (such as Number.MAX_SAFE_INTEGER) keeps every available commit.
+		describe("numeric limits", () => {
+			for (const retainHistory of [0, 1, 3, 5, Number.MAX_SAFE_INTEGER] as const) {
+				it(`retains and persists history for retainHistory: ${retainHistory}`, async () => {
+					const { retainedCommitCount: collaborationWindowCount } = generateHistory(
+						configuredSharedTree({ jsonValidator: FormatValidatorBasic }).getFactory(),
+					);
+					const { retainedCommitCount: availableCommitCount } = generateHistory(
+						configuredSharedTree({
+							jsonValidator: FormatValidatorBasic,
+							retainHistory: true,
+						}).getFactory(),
+					);
+					const expectedCount = Math.max(
+						collaborationWindowCount,
+						Math.min(retainHistory, availableCommitCount),
+					);
+
+					const factory = configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						retainHistory,
+					}).getFactory();
+					const { provider } = generateHistory(factory);
+					for (const peerTree of provider.trees) {
+						assert.equal(trunkCommitCount(peerTree), expectedCount);
+					}
+
+					const tree = provider.trees[0];
+					const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+					assert.equal(trunkCommitCount(loaded), expectedCount);
+					validateTreeConsistency(tree, loaded);
+				});
+			}
+		});
+
+		// Example: `configuredSharedTree({ retainHistory: -1 })` throws a UsageError when the tree is created,
+		// as do 0.5, NaN, Infinity and values above Number.MAX_SAFE_INTEGER.
+		// Values that TypeScript rejects but a JavaScript caller could pass, such as the string "3", null or {},
+		// are rejected at runtime in the same way.
+		describe("invalid limits", () => {
+			for (const retainHistory of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.NEGATIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				it(`rejects ${retainHistory}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({ retainHistory }).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+
+			for (const retainHistory of ["3", null, {}]) {
+				it(`rejects type-erased input ${JSON.stringify(retainHistory)}`, () => {
+					assert.throws(
+						() =>
+							new TestTreeProviderLite(
+								1,
+								configuredSharedTree({
+									// @ts-expect-error Exercise runtime validation of type-erased application input.
+									retainHistory,
+								}).getFactory(),
+							),
+						validateUsageError(
+							"retainHistory must be a boolean or a nonnegative safe integer",
+						),
+					);
+				});
+			}
+		});
+
 		it("persists the retained trunk when retainHistory is enabled", async () => {
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -1263,6 +1660,44 @@ describe("SharedTree", () => {
 				retainedCommitCount,
 				"The default path must persist exactly the collaboration window",
 			);
+		});
+
+		// Example: a summary written with `retainHistory: true` holds every commit, say 12.
+		// A client that loads it with `retainHistory: 3` starts with all of them, because it does not yet know the collaboration boundary.
+		// When it receives its first message, which reports the boundary, it trims down to 3 commits without needing new edits.
+		// The client that wrote the summary is unaffected and keeps all of its commits.
+		it("applies a numeric policy to loaded history when the collaboration boundary advances", async () => {
+			const { provider, retainedCommitCount } = generateHistory(
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const tree = provider.trees[0];
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: 3,
+			}).getFactory();
+			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			assert.equal(trunkCommitCount(loaded), retainedCommitCount);
+
+			// Loading does not supply the collaboration boundary. Receiving it permits trimming without new edits.
+			loaded.kernel.processMessagesCore({
+				envelope: {
+					type: "op",
+					clientId: "test-client",
+					timestamp: 0,
+					sequenceNumber: provider.sequenceNumber + 1,
+					referenceSequenceNumber: provider.sequenceNumber,
+					minimumSequenceNumber: provider.minimumSequenceNumber,
+				},
+				local: false,
+				messagesContent: [],
+			});
+
+			assert.equal(trunkCommitCount(loaded), 3);
+			assert.equal(trunkCommitCount(tree), retainedCommitCount);
+			validateTreeConsistency(tree, loaded);
 		});
 	});
 

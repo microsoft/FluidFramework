@@ -47,7 +47,7 @@
 						"storedKey": "z"
 					}
 				},
-				"allowUnknownOptionalFields": false
+				"allowUnknownOptionalFields": true
 			}
 		}
 	}

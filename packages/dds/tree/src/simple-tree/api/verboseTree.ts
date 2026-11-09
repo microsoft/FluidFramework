@@ -133,7 +133,7 @@ export function applySchemaToParserOptions(
 						encode: (type, key: FieldKey): string => {
 							// translate stored key into property key.
 							const simpleNodeSchema =
-								context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
+								context.schema.get(type) ?? fail(0xb39 /* missing schema */);
 							if (isObjectNodeSchema(simpleNodeSchema)) {
 								const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 								if (propertyKey !== undefined) {
@@ -154,8 +154,7 @@ export function applySchemaToParserOptions(
 							return key;
 						},
 						parse: (type, inputKey): FieldKey => {
-							const simpleNodeSchema =
-								context.schema.get(brand(type)) ?? unknownTypeError(type);
+							const simpleNodeSchema = context.schema.get(type) ?? unknownTypeError(type);
 							if (isObjectNodeSchema(simpleNodeSchema)) {
 								const info = simpleNodeSchema.flexKeyMap.get(inputKey);
 								if (info === undefined) {

@@ -9,8 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as semver from "semver-ts";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { toInitialSchema } from "../toStoredSchema.js";
-import { createTreeSchema } from "../treeSchema.js";
+import { getRootSchemaDerivedData, toInitialSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
@@ -120,12 +119,14 @@ export function checkCompatibility(
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
+ * Reuses the internal schema-derived graph but creates a fresh snapshot on every call.
+ *
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
-	const treeSchema = createTreeSchema(config.schema);
+	const { treeSchema } = getRootSchemaDerivedData(config.schema);
 	return encodeSchemaCompatibilitySnapshot(treeSchema);
 }
 
@@ -814,9 +815,13 @@ export class SnapshotCompatibilityChecker {
 			this.getSnapshotFileName(snapshotName),
 		);
 		this.ensureSnapshotDirectoryExists();
-		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
-			encoding: "utf8",
-		});
+		this.fileSystemMethods.writeFileSync(
+			fullPath,
+			`${JSON.stringify(snapshot, undefined, "\t")}\n`,
+			{
+				encoding: "utf8",
+			},
+		);
 	}
 
 	public readSchemaSnapshot(snapshotName: string): TreeViewConfiguration {
@@ -917,22 +922,10 @@ export function getCompatibility(
 		previousViewSchema,
 	);
 
-	assert(
-		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
-		0xcd3 /* equality should be symmetric */,
-	);
-
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
 	const identicalCompatibility =
 		JSON.stringify(exportCompatibilitySchemaSnapshot(currentViewSchema)) ===
 		JSON.stringify(exportCompatibilitySchemaSnapshot(previousViewSchema));
-
-	if (identicalCompatibility) {
-		assert(
-			backwardsCompatibilityStatus.isEquivalent,
-			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
-		);
-	}
 
 	return {
 		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,

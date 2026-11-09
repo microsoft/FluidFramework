@@ -35,7 +35,9 @@ import {
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import lodash from "lodash";
@@ -159,6 +161,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
  * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class SharedPropertyTree extends SharedObject {
 	tipView: SerializedChangeSet = {};
 	remoteTipView: SerializedChangeSet = {};
@@ -580,6 +583,7 @@ export class SharedPropertyTree extends SharedObject {
 			numChunks: 0,
 		};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		if (!this.useMH) {
 			// If the MH is not used, we have to include the tip view, the remote changes and the received
