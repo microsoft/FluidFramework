@@ -185,7 +185,11 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Enum_ContainerMessageType": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
