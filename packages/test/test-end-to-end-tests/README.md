@@ -58,6 +58,16 @@ Loading a historical snapshot alone does not establish live collaboration.
 Assert stable handle paths and meaningful summary structure, not byte-identical serialization.
 For garbage-collection changes, test tombstone and sweep behavior as well as the graph returned by the runtime.
 
+The [channel collection compatibility suite](src/test/channelCollectionCompat.spec.ts) exercises legacy DDS collections and native collections using the cross-client framework checkpoints.
+After building the tests, run it against the local driver from this package:
+
+```sh
+MOCHA_SPEC=lib/test/channelCollectionCompat.spec.js npm run test:realsvc:local -- --compatVersion=CROSS_CLIENT
+```
+
+The [native collection suite](src/test/nativeChannelCollections.spec.ts) covers native nesting, signal isolation, rejected operations, and aggregate tombstone/sweep lifetimes.
+Run it with `--compatVersion=0`; its GC lifecycle tests require the local driver.
+
 ### Writing Tests That Take Summaries
 
 Many e2e tests need to drive **summaries** on demand — configuring interactive containers so they don't summarize on their own, spinning up a dedicated summarizer, taking summaries at controlled points, and loading new containers or summarizers from a specific summary. Doing this incorrectly is a common source of flaky tests.

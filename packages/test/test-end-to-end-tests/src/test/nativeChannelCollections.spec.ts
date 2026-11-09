@@ -8,6 +8,8 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import type {
 	FluidDataStoreContextInternal,
@@ -19,11 +21,20 @@ import type {
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	createSummarizerCore,
+	createTestConfigProvider,
 	getRequiredPendingLocalState,
 	summarizeNow,
+	timeoutPromise,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+
+import {
+	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
+	getGCTombstoneStateFromSummary,
+	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the GC suite's summary readers.
+} from "./gc/gcTestSummaryUtils.js";
 
 describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -189,8 +200,50 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const container = await provider.createContainer(incompatibleFactory);
 		const parent = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
 		await assert.rejects(
-			parent.createDataStore(factory),
+			parent.createDataStore(factory, "rejected"),
 			/Nested data stores require oldestSupportedClient >= 3.12.0/,
+		);
+		const leaf = await parent.createDataStore(leafFactory, "accepted");
+		await assert.rejects(leaf.trySetAlias("unsupported"), /Nested channel aliases require/);
+		// Rejection must not reserve IDs, persist aliases, or prevent subsequent supported operations.
+		const reused = await parent.createDataStore(leafFactory, "rejected");
+		parent.bind(reused.entryPoint);
+		parent.bind(leaf.entryPoint);
+		(await getRoot(parent)).set("still-usable", true);
+		await provider.ensureSynchronized();
+		const summary = await parent.summarize(true, false);
+		assert.equal(summary.summary.tree[".aliases"], undefined);
+		const child = summary.summary.tree.rejected;
+		assert(child?.type === SummaryType.Tree);
+		assert.equal(child.tree[".component"], undefined);
+		assert.equal(child.tree[".channels"], undefined);
+		const remote = await provider.loadContainer(incompatibleFactory);
+		assert.equal(
+			(await getRoot((await remote.getEntryPoint()) as IFluidDataStoreChannelCollection)).get(
+				"still-usable",
+			),
+			true,
+		);
+	});
+
+	it("rejects invalid and duplicate child IDs without replacing existing contents", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const collection = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const root = await getRoot(collection);
+		root.set("value", 42);
+		for (const id of ["", "a/b", "root"]) {
+			await assert.rejects(
+				collection.createDataStore(leafFactory, id),
+				/Invalid or duplicate child channel ID/,
+			);
+		}
+		assert.equal(await getRoot(collection), root);
+		assert.equal(root.get("value"), 42);
+		const child = await collection.createDataStore(leafFactory, "valid");
+		assert.equal(await child.trySetAlias("reserved"), "Success");
+		await assert.rejects(
+			collection.createDataStore(leafFactory, "reserved"),
+			/Invalid or duplicate child channel ID/,
 		);
 	});
 
@@ -310,5 +363,193 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const payload = { address: "application-payload", contents: 42 };
 		child.runtime.submitSignal("nested", payload);
 		assert.deepEqual(await received, payload);
+	});
+
+	it("targets a nested store on one client without signaling sibling stores or other clients", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const collection = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const root = await getRoot(collection);
+		const childStore = await collection.createDataStore(legacyFactory);
+		const siblingStore = await collection.createDataStore(legacyFactory);
+		root.set("child", childStore.entryPoint);
+		root.set("sibling", siblingStore.entryPoint);
+		const child = (await childStore.entryPoint.get()) as ITestFluidObject;
+		await provider.ensureSynchronized();
+		const remote = await provider.loadContainer(runtimeFactory);
+		const other = await provider.loadContainer(runtimeFactory);
+		const remoteRoot = await getRoot(
+			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
+		);
+		const otherRoot = await getRoot(
+			(await other.getEntryPoint()) as IFluidDataStoreChannelCollection,
+		);
+		const getChild = async (map: ISharedMap, key: string): Promise<ITestFluidObject> => {
+			const handle = map.get<IFluidHandle<ITestFluidObject>>(key);
+			assert(handle !== undefined);
+			return handle.get();
+		};
+		const target = await getChild(remoteRoot, "child");
+		const sibling = await getChild(remoteRoot, "sibling");
+		const otherChild = await getChild(otherRoot, "child");
+		await provider.ensureSynchronized();
+		assert(remote.clientId !== undefined);
+		const received = timeoutPromise<unknown>((resolve) => {
+			target.runtime.once("signal", (message) => resolve(message.content));
+		});
+		const notReceived = [sibling, otherChild].map(async (object) =>
+			timeoutPromise(
+				(_, reject) => {
+					object.runtime.once("signal", () =>
+						reject(new Error("Signal delivered outside its target")),
+					);
+				},
+				{ durationMs: 100, reject: false, value: undefined },
+			),
+		);
+		const payload = { address: "application-payload", contents: 42 };
+		child.runtime.submitSignal("targeted", payload, remote.clientId);
+		assert.deepEqual(await received, payload);
+		await Promise.all(notReceived);
+	});
+
+	describe("garbage-collection lifetime", () => {
+		const tombstoneTimeoutMs = 100;
+		const sweepGracePeriodMs = 1000;
+		const configProvider = createTestConfigProvider();
+		beforeEach(function () {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			if (provider.driver.type !== "local") this.skip();
+			configProvider.set(
+				"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+				tombstoneTimeoutMs,
+			);
+		});
+		afterEach(() => configProvider.clear());
+
+		for (const shape of ["composite", "leaf"] as const) {
+			it(`retains and then tombstones and sweeps a container-level ${shape}`, async function () {
+				this.timeout(10000);
+				const makeGcFactory = (isSummarizer: boolean) =>
+					new ContainerRuntimeFactoryWithDefaultDataStore({
+						defaultFactory: factory,
+						registryEntries: [
+							[factory.type, factory],
+							[leafFactory.type, leafFactory],
+						],
+						oldestSupportedClient: "3.12.0",
+						runtimeOptions: {
+							gcOptions: { enableGCSweep: true, inactiveTimeoutMs: 0, sweepGracePeriodMs },
+							summaryOptions: {
+								summaryConfigOverrides: {
+									state: isSummarizer ? "disableHeuristics" : "disabled",
+									initialSummarizerDelayMs: 0,
+									maxAckWaitTime: 20000,
+									maxOpsSinceLastSummary: 7000,
+								},
+							},
+						},
+					});
+				const gcFactory = makeGcFactory(false);
+				const container = await provider.createContainer(gcFactory, { configProvider });
+				const rootCollection =
+					(await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+				const root = await getRoot(rootCollection);
+				const controlStore = await rootCollection.createDataStore(legacyFactory);
+				root.set("control", controlStore.entryPoint);
+				const control = (await controlStore.entryPoint.get()) as ITestFluidObject;
+				const runtime = control.context.containerRuntime;
+				const subject = await runtime.createDataStore(
+					shape === "composite" ? factory.type : leafFactory.type,
+				);
+				const subjectPath = toFluidHandleInternal(subject.entryPoint).absolutePath;
+				const retainedPaths = [subjectPath];
+				let reference: IFluidHandle;
+				if (shape === "composite") {
+					const aggregate =
+						(await subject.entryPoint.get()) as IFluidDataStoreChannelCollection;
+					const nestedStore = await aggregate.createDataStore(factory, "nested");
+					aggregate.bind(nestedStore.entryPoint);
+					const nested =
+						(await nestedStore.entryPoint.get()) as IFluidDataStoreChannelCollection;
+					const descendant = await getRoot(nested);
+					// No external handle references the aggregate, its root, or this sibling.
+					const sibling = await aggregate.createDataStore(leafFactory, "sibling");
+					aggregate.bind(sibling.entryPoint);
+					reference = descendant.handle;
+					retainedPaths.push(
+						`${subjectPath}/root`,
+						`${subjectPath}/nested`,
+						`${subjectPath}/nested/root`,
+						`${subjectPath}/sibling`,
+					);
+				} else {
+					reference = ((await subject.entryPoint.get()) as ISharedMap).handle;
+				}
+				root.set("subject", reference);
+				const survivor = await runtime.createDataStore(leafFactory.type);
+				const survivorMap = (await survivor.entryPoint.get()) as ISharedMap;
+				survivorMap.set("value", 42);
+				root.set("survivor", survivorMap.handle);
+				await provider.ensureSynchronized();
+				const loader = provider.createLoader(
+					[[provider.defaultCodeDetails, makeGcFactory(true)]],
+					{
+						configProvider,
+					},
+				);
+				const { summarizer } = await createSummarizerCore(container, loader);
+				let summary = await summarizeNow(summarizer);
+				const retained = getGCStateFromSummary(summary.summaryTree);
+				assert(retained !== undefined);
+				for (const path of retainedPaths) {
+					assert(retained.gcNodes[path] !== undefined, `Missing ${path}`);
+					assert.equal(retained.gcNodes[path].unreferencedTimestampMs, undefined, path);
+				}
+				root.delete("subject");
+				await provider.ensureSynchronized();
+				summary = await summarizeNow(summarizer);
+				const unreferenced = getGCStateFromSummary(summary.summaryTree);
+				assert(unreferenced !== undefined);
+				for (const path of retainedPaths) {
+					assert(unreferenced.gcNodes[path]?.unreferencedTimestampMs !== undefined, path);
+				}
+				await delay(tombstoneTimeoutMs + 10);
+				root.set("advance-timestamp", 1);
+				await provider.ensureSynchronized();
+				summary = await summarizeNow(summarizer);
+				assert(getGCTombstoneStateFromSummary(summary.summaryTree)?.includes(subjectPath));
+				assert(
+					!getGCTombstoneStateFromSummary(summary.summaryTree)?.includes(
+						toFluidHandleInternal(survivor.entryPoint).absolutePath,
+					),
+				);
+				await delay(sweepGracePeriodMs + 10);
+				root.set("advance-timestamp", 2);
+				await provider.ensureSynchronized();
+				// Production sweep happens after the creating session expires.
+				container.close();
+				await summarizeNow(summarizer);
+				await provider.ensureSynchronized();
+				summary = await summarizeNow(summarizer);
+				const deleted = getGCDeletedStateFromSummary(summary.summaryTree);
+				assert(deleted !== undefined);
+				for (const path of retainedPaths) assert(deleted.includes(path), path);
+				const channels = summary.summaryTree.tree[".channels"];
+				assert(channels?.type === SummaryType.Tree);
+				assert.equal(channels.tree[subjectPath.slice(1)], undefined);
+				const reloaded = await provider.loadContainer(
+					gcFactory,
+					{ configProvider },
+					{ [LoaderHeader.version]: summary.summaryVersion },
+				);
+				const reloadedRoot = await getRoot(
+					(await reloaded.getEntryPoint()) as IFluidDataStoreChannelCollection,
+				);
+				const survivingHandle = reloadedRoot.get<IFluidHandle<ISharedMap>>("survivor");
+				assert(survivingHandle !== undefined);
+				assert.equal((await survivingHandle.get()).get("value"), 42);
+				assert.equal(reloadedRoot.has("subject"), false);
+			});
+		}
 	});
 });
