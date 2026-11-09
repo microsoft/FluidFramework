@@ -689,17 +689,21 @@ function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): Le
 
 	// Count each value. After maxCountedValues different values, new values are not counted.
 	const valueCounts = new Map<Value, number>();
+	let valueCountsTruncated = false;
 	for (const value of leaf.values) {
 		const valueCount = valueCounts.get(value);
 		if (valueCount !== undefined) {
 			valueCounts.set(value, valueCount + 1);
 		} else if (valueCounts.size < maxCountedValues) {
 			valueCounts.set(value, 1);
+		} else {
+			valueCountsTruncated = true;
 		}
 	}
 
 	// The value has `changes + 1` runs in the values.
 	if (
+		!valueCountsTruncated &&
 		(leaf.changes + 1) * minAverageRunLength <= valueTotal &&
 		valueCounts.size * minItemsPerPinnedValue <= valueTotal
 	) {
