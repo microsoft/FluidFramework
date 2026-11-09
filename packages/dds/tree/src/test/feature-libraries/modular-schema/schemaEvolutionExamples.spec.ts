@@ -7,8 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { EmptyKey, moveToDetachedField, storedEmptyFieldSchema } from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	jsonableTreeFromFieldCursor,
+} from "../../../feature-libraries/index.js";
 import { TreeBeta } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
@@ -27,11 +30,6 @@ import {
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { expectSchemaEqual, TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
-
-// Test TODOs:
-// - We should include some invalid scenario tests, and verify the behavior of the schema compatibility checks. E.g.:
-//     - V1 includes `notes?: string`, V2 removes `notes`, V3 adds `notes?: string[]`.
-//     - V1 includes `notes?: Notes`, V2 removes `notes`, V3 adds `notes?: Notes` where the V1 and V3 versions of `Notes` are not compatible.
 
 /**
  * Asserts that two numeric enum values are equal.
@@ -263,6 +261,41 @@ describe("Schema Evolution Examples", () => {
 		const initialTitle = "Original task";
 
 		/**
+		 * Prepares typed document initialization for a scenario.
+		 *
+		 * @typeParam TSchema - The root schema that determines which initial content is permitted.
+		 * @param schema - The schema used to create the original document.
+		 * @param content - Initial content valid for `schema`, retained for later comparisons.
+		 * @returns The initial content and a function that initializes a tree with the captured schema and content.
+		 *
+		 * @remarks
+		 * Capturing the schema and content together preserves their type relationship in a table of different test cases.
+		 */
+		function withDocument<TSchema extends ImplicitFieldSchema>(
+			schema: TSchema,
+			content: InsertableTreeFieldFromImplicitField<TSchema>,
+		) {
+			return {
+				content,
+
+				/**
+				 * Initializes the supplied tree and returns its typed view.
+				 *
+				 * @param tree - An uninitialized tree for the original document.
+				 * @returns The initialized view. The caller must dispose it when it is no longer needed.
+				 *
+				 * @remarks
+				 * This writes the captured schema and content but does not synchronize other clients.
+				 */
+				initialize(tree: ITree) {
+					const view = tree.viewWith(new TreeViewConfiguration({ schema }));
+					view.initialize(content);
+					return view;
+				},
+			};
+		}
+
+		/**
 		 * The portion of a tree view needed by {@link verifyReadWrite}.
 		 *
 		 * @remarks
@@ -464,6 +497,54 @@ describe("Schema Evolution Examples", () => {
 				assert.equal(view.root, rootBeforeUpgrade);
 			} finally {
 				unsubscribe();
+			}
+		}
+
+		/**
+		 * Verifies that an incompatible view cannot upgrade any local or synchronized document state.
+		 *
+		 * @typeParam TSchema - The incompatible view's root schema.
+		 * @param provider - Synchronized clients with no pending operations.
+		 * @param view - The view whose upgrade must be rejected.
+		 *
+		 * @remarks
+		 * Captures stored data independently of the view so unknown fields are included.
+		 * The rejected call breaks the requesting view; do not use that view or its checkout's public APIs afterward.
+		 */
+		function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
+			provider: TestTreeProviderLite,
+			view: TreeView<TSchema>,
+		): void {
+			assert.equal(view.compatibility.canView, false);
+			assert.equal(view.compatibility.canUpgrade, false);
+			const sequenceNumber = provider.sequenceNumber;
+			const snapshots = provider.trees.map((tree) => {
+				const forest = tree.kernel.checkout.forest;
+
+				// Open cursors before rejection: the expected error prevents allocating new cursors afterward.
+				const cursor = forest.allocateCursor();
+				moveToDetachedField(forest, cursor);
+				return {
+					tree,
+					cursor,
+					schema: tree.kernel.checkout.storedSchema.clone(),
+					content: jsonableTreeFromFieldCursor(cursor),
+				};
+			});
+			try {
+				assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+				provider.synchronizeMessages();
+
+				// Rejecting an incompatible application version must not publish an operation or change either client's document.
+				assert.equal(provider.sequenceNumber, sequenceNumber);
+				for (const { tree, cursor, schema, content } of snapshots) {
+					expectSchemaEqual(tree.kernel.checkout.storedSchema, schema);
+					assert.deepEqual(jsonableTreeFromFieldCursor(cursor), content);
+				}
+			} finally {
+				for (const { cursor } of snapshots) {
+					cursor.free();
+				}
 			}
 		}
 
@@ -1064,6 +1145,7 @@ describe("Schema Evolution Examples", () => {
 							reader: { view: reader, expectedFields: fields },
 						});
 						observer.dispose();
+						reader.dispose();
 					} else {
 						// Both rejected rows use a V1 reader against schema widened to V3.
 						// A V3 observer is therefore valid even if the document was created with V2.
@@ -1074,11 +1156,9 @@ describe("Schema Evolution Examples", () => {
 						assert.equal(observer.root.foo, 42);
 						observer.root.foo = "Still allowed";
 						provider.synchronizeMessages();
-						assert.equal(reader.compatibility.canView, false);
-						assert.equal(reader.compatibility.canUpgrade, false);
+						verifyRejectedUpgrade(provider, reader);
 						observer.dispose();
 					}
-					reader.dispose();
 					// #endregion Step 2
 				});
 			}
@@ -1143,7 +1223,6 @@ describe("Schema Evolution Examples", () => {
 					);
 					assert.equal(reader.compatibility.canView, false);
 					assert.equal(reader.compatibility.canUpgrade, false);
-
 					reader.dispose();
 					// #endregion Step 2
 
@@ -1161,6 +1240,12 @@ describe("Schema Evolution Examples", () => {
 						reader: { view: observer, expectedFields: fields },
 					});
 					observer.dispose();
+
+					// Attempt rejection after the read/write checks because the error invalidates this client's checkout.
+					const rejected = readerTree.viewWith(
+						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
+					);
+					verifyRejectedUpgrade(provider, rejected);
 					owner.dispose();
 					// #endregion Step 3
 				});
@@ -1389,6 +1474,607 @@ describe("Schema Evolution Examples", () => {
 			}
 		});
 
+		describe("restore a removed string field as an array", () => {
+			// V1 includes a `notes` field that stores a single string.
+			class TaskV1 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+			}) {}
+
+			// V2 retires `notes` and introduces `label`.
+			class TaskV2 extends factory.object("Task", {
+				title: factory.string,
+				label: factory.optional(factory.string),
+			}) {}
+
+			// V3 retires `label` and adds a new `notes` field that stores an array of strings.
+			// Note that this is version of `notes` is not compatible with the V1 version of that field.
+			class NotesArray extends factory.array("NotesArray", factory.string) {}
+			class TaskV3 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(NotesArray),
+			}) {}
+
+			// An empty field still has a stored type; absence of notes must not make incompatible reuse safe.
+			for (const populated of [false, true]) {
+				it(`V1 document -> V2 upgrade -> V3 view (${populated ? "populated" : "empty"})`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const [documentTree, readerTree] = provider.trees;
+					const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+					creator.initialize({
+						title: initialTitle,
+						notes: populated ? "Original notes" : undefined,
+					});
+					provider.synchronizeMessages();
+					const contentBefore = TreeBeta.exportConcise(creator.root);
+
+					// V2 cannot write labels until their schema is added.
+					// This upgrade must retain the string notes that V2 no longer declares.
+					const reduced = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+					assert.equal(reduced.compatibility.canView, false);
+					assert.equal(reduced.compatibility.canUpgrade, true);
+					reduced.upgradeSchema();
+					reduced.root.label = "Upgraded by V2";
+					provider.synchronizeMessages();
+
+					// Hiding notes from V2 must not change the title or notes still visible to the V1 client.
+					assert.equal("notes" in reduced.root, false);
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+
+					// Check the stored declaration as well as the data, including the case where notes has never held a value.
+					class Expected extends factory.object("Task", {
+						title: factory.string,
+						notes: factory.optional(factory.string),
+						label: factory.optional(factory.string),
+					}) {}
+					for (const tree of provider.trees) {
+						expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+					}
+					reduced.dispose();
+
+					// V3 cannot reinterpret notes as an array, even if the historical string field is empty.
+					const incompatible = readerTree.viewWith(
+						new TreeViewConfiguration({ schema: TaskV3 }),
+					);
+					verifyRejectedUpgrade(provider, incompatible);
+
+					// The rejected V3 attempt must leave the original application able to read its unchanged document.
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+					creator.dispose();
+				});
+
+				it(`V3 document -> V2 upgrade -> V1 view (${populated ? "populated" : "empty"})`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const [documentTree, readerTree] = provider.trees;
+					const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+					creator.initialize({
+						title: initialTitle,
+						notes: populated ? new NotesArray(["Replacement notes"]) : undefined,
+					});
+					provider.synchronizeMessages();
+					const contentBefore = TreeBeta.exportConcise(creator.root);
+
+					// Rolling back application code does not roll back stored schema.
+					// V2 needs label added before viewing, while the array field and its definition must remain stored.
+					const reduced = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+					assert.equal(reduced.compatibility.canView, false);
+					assert.equal(reduced.compatibility.canUpgrade, true);
+					reduced.upgradeSchema();
+					reduced.root.label = "Upgraded by V2";
+					provider.synchronizeMessages();
+
+					// V2 cannot access notes, but the V3 client must still see its original array or empty field.
+					assert.equal("notes" in reduced.root, false);
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+
+					// Retain the array type even when this document contains no NotesArray node.
+					class Expected extends factory.object("Task", {
+						title: factory.string,
+						notes: factory.optional(NotesArray),
+						label: factory.optional(factory.string),
+					}) {}
+					for (const tree of provider.trees) {
+						expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+					}
+					reduced.dispose();
+
+					// Rolling back further to V1 cannot replace the retained array type with strings.
+					const incompatible = readerTree.viewWith(
+						new TreeViewConfiguration({ schema: TaskV1 }),
+					);
+					verifyRejectedUpgrade(provider, incompatible);
+
+					// A failed rollback to V1 must not convert or erase the newer client's data.
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+					creator.dispose();
+				});
+			}
+		});
+
+		describe("restore a removed node-valued field with an incompatible definition", () => {
+			// The initial version of `Notes` uses a string for its `text`.
+			class NotesV1 extends factory.object("Notes", { text: factory.string }) {}
+			class TaskV1 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(NotesV1),
+			}) {}
+
+			// V2 retires `notes` and adds a new `label` field.
+			class TaskV2 extends factory.object("Task", {
+				title: factory.string,
+				label: factory.optional(factory.string),
+			}) {}
+
+			// V3 retires `label` and adds a new `notes` field that uses a number for its `text`.
+			// Note that this version of `notes` is not compatible with the V1 version of that field.
+			class NotesV3 extends factory.object("Notes", { text: factory.number }) {}
+			class TaskV3 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(NotesV3),
+			}) {}
+
+			// Both versions reuse the Notes identifier, so its nested definition matters even when notes is absent.
+			for (const populated of [false, true]) {
+				it(`V1 document -> V2 upgrade -> V3 view (${populated ? "populated" : "empty"})`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const [documentTree, readerTree] = provider.trees;
+					const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+					creator.initialize({
+						title: initialTitle,
+						notes: populated ? new NotesV1({ text: "Original notes" }) : undefined,
+					});
+					provider.synchronizeMessages();
+					const contentBefore = TreeBeta.exportConcise(creator.root);
+
+					// V2 needs the new label field before it can view the document.
+					// Upgrading must also retain Notes, even though V2 no longer references that type.
+					const reduced = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+					assert.equal(reduced.compatibility.canView, false);
+					assert.equal(reduced.compatibility.canUpgrade, true);
+					reduced.upgradeSchema();
+					reduced.root.label = "Upgraded by V2";
+					provider.synchronizeMessages();
+
+					// V2 hides the entire Notes subtree; V1 must still see exactly its original content.
+					assert.equal("notes" in reduced.root, false);
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+
+					// The preserved definition must still require string text, not just retain the Notes identifier.
+					class Expected extends factory.object("Task", {
+						title: factory.string,
+						notes: factory.optional(NotesV1),
+						label: factory.optional(factory.string),
+					}) {}
+					for (const tree of provider.trees) {
+						expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+					}
+					reduced.dispose();
+
+					// Reusing the Notes identifier does not permit changing text from string to number.
+					const incompatible = readerTree.viewWith(
+						new TreeViewConfiguration({ schema: TaskV3 }),
+					);
+					verifyRejectedUpgrade(provider, incompatible);
+
+					// Rejecting the nested type conflict must not alter content still supported by V1.
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+					creator.dispose();
+				});
+
+				it(`V3 document -> V2 upgrade -> V1 view (${populated ? "populated" : "empty"})`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const [documentTree, readerTree] = provider.trees;
+					const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+					creator.initialize({
+						title: initialTitle,
+						notes: populated ? new NotesV3({ text: 42 }) : undefined,
+					});
+					provider.synchronizeMessages();
+					const contentBefore = TreeBeta.exportConcise(creator.root);
+
+					// V2 can add labels, but cannot undo the numeric text type introduced by V3.
+					const reduced = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+					assert.equal(reduced.compatibility.canView, false);
+					assert.equal(reduced.compatibility.canUpgrade, true);
+					reduced.upgradeSchema();
+					reduced.root.label = "Upgraded by V2";
+					provider.synchronizeMessages();
+
+					// The newer client's notes remain readable even though the intermediate view hides them.
+					assert.equal("notes" in reduced.root, false);
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+
+					// Numeric text remains part of the stored schema even in the empty-notes variant.
+					class Expected extends factory.object("Task", {
+						title: factory.string,
+						notes: factory.optional(NotesV3),
+						label: factory.optional(factory.string),
+					}) {}
+					for (const tree of provider.trees) {
+						expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+					}
+					reduced.dispose();
+
+					// V1 still expects string text and cannot read or upgrade this document.
+					const incompatible = readerTree.viewWith(
+						new TreeViewConfiguration({ schema: TaskV1 }),
+					);
+					verifyRejectedUpgrade(provider, incompatible);
+
+					// The failed older-client upgrade must leave the V3 document intact.
+					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+					creator.dispose();
+				});
+			}
+		});
+
+		it("reuses a property name with a different stored key without replacing historical data", () => {
+			// The initial version of the task has a `notes` field as a string.
+			class TaskV1 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+			}) {}
+
+			// V2 retires `notes` and adds a new `label` field.
+			class TaskV2 extends factory.object("Task", {
+				title: factory.string,
+				label: factory.optional(factory.string),
+			}) {}
+			class NotesArray extends factory.array("NotesArray", factory.string) {}
+
+			// V3 reintroduces `notes` as an array of strings with a new stored key.
+			// The stored key differs from the original `notes` field, ensuring it is treated as a separate property, and preserving compatibility between V1 and V3.
+			class TaskV3 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(NotesArray, { key: "notesV3" }),
+				label: factory.optional(factory.string),
+			}) {}
+			const provider = new TestTreeProviderLite(3);
+			const [originalTree, reducedTree, restoredTree] = provider.trees;
+			const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			original.initialize({ title: initialTitle, notes: "Original notes" });
+			provider.synchronizeMessages();
+
+			// Pass through the version that retires notes, making a real schema change rather than only changing views.
+			const reduced = reducedTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			assert.equal(reduced.compatibility.canUpgrade, true);
+			reduced.upgradeSchema();
+			reduced.root.label = "Keep this label";
+			provider.synchronizeMessages();
+
+			// The property is named notes in both views, but their different stored keys identify independent fields.
+			// V3 needs its new notesV3 field added; this does not conflict with the retained string field.
+			const restored = restoredTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+			assert.equal(restored.compatibility.canView, false);
+			assert.equal(restored.compatibility.canUpgrade, true);
+			restored.upgradeSchema();
+
+			// A new stored key starts empty; the historical string must not be interpreted as the new array.
+			assert.equal(restored.root.notes, undefined);
+			restored.root.notes = new NotesArray(["New notes"]);
+			provider.synchronizeMessages();
+
+			// Writes through either property must leave the other version's differently keyed notes unchanged.
+			assert.equal(original.root.notes, "Original notes");
+			original.root.notes = "Edited historical notes";
+			provider.synchronizeMessages();
+			assert.deepEqual([...restored.root.notes], ["New notes"]);
+			restored.root.notes.insertAtEnd("Another note");
+			provider.synchronizeMessages();
+			assert.equal(original.root.notes, "Edited historical notes");
+
+			// Both fields coexist in storage. legacyNotes is only a convenient property name for this expected schema.
+			class Expected extends factory.object("Task", {
+				title: factory.string,
+				legacyNotes: factory.optional(factory.string, { key: "notes" }),
+				notes: factory.optional(NotesArray, { key: "notesV3" }),
+				label: factory.optional(factory.string),
+			}) {}
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+			}
+
+			// No version should try to replace the other version's field on subsequent upgrades.
+			verifyNoOpUpgrade(provider, original);
+			verifyNoOpUpgrade(provider, reduced);
+			verifyNoOpUpgrade(provider, restored);
+
+			// Shared title edits must preserve the different notes values exposed by V1 and V3.
+			verifyReadWrite({
+				provider,
+				creator: { view: original, expectedFields: { notes: "Edited historical notes" } },
+				reader: {
+					view: restored,
+					expectedFields: { notes: ["New notes", "Another note"], label: "Keep this label" },
+				},
+			});
+
+			// V2 still exposes neither stored notes field, even after both have been edited.
+			assert.equal("notes" in reduced.root, false);
+			restored.dispose();
+			reduced.dispose();
+			original.dispose();
+		});
+
+		// Restoration must work both for an existing Notes node and for a declaration that has never been populated.
+		for (const populated of [false, true]) {
+			it(`restores a node-valued field with a compatible nested addition (${populated ? "populated" : "empty"})`, () => {
+				class NotesV1 extends factory.object("Notes", { text: factory.string }) {}
+				class TaskV1 extends factory.object("Task", {
+					title: factory.string,
+					notes: factory.optional(NotesV1),
+				}) {}
+				class TaskV2 extends factory.object("Task", {
+					title: factory.string,
+					label: factory.optional(factory.string),
+				}) {}
+
+				// Restore both stored identifiers while adding an optional field inside Notes.
+				class NotesV3 extends factory.object("Notes", {
+					text: factory.string,
+					author: factory.optional(factory.string),
+				}) {}
+				class TaskV3 extends factory.object("Task", {
+					title: factory.string,
+					notes: factory.optional(NotesV3),
+					label: factory.optional(factory.string),
+				}) {}
+				const provider = new TestTreeProviderLite(3);
+				const [originalTree, reducedTree, restoredTree] = provider.trees;
+				const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+				original.initialize({
+					title: initialTitle,
+					notes: populated ? new NotesV1({ text: "Original notes" }) : undefined,
+				});
+				provider.synchronizeMessages();
+
+				// V2 adds labels while retaining the hidden notes field and the original Notes definition.
+				const reduced = reducedTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+				assert.equal(reduced.compatibility.canUpgrade, true);
+				reduced.upgradeSchema();
+				reduced.root.label = "Keep this label";
+				provider.synchronizeMessages();
+				assert.equal("notes" in reduced.root, false);
+
+				// V3 knows the original text field, but must add author before its view can write that nested field.
+				// This requirement depends on the stored schema, not on whether a Notes node currently exists.
+				const restored = restoredTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+				assert.equal(restored.compatibility.canView, false);
+				assert.equal(restored.compatibility.canUpgrade, true);
+				restored.upgradeSchema();
+
+				// The upgrade preserves existing text and does not create notes when the field was empty.
+				assert.equal(restored.root.notes?.text, populated ? "Original notes" : undefined);
+				if (!populated) {
+					assert.equal(restored.root.notes, undefined);
+					restored.root.notes = new NotesV3({ text: "Created after restoration" });
+				}
+
+				// Adding author to the schema permits a write; it does not supply a default author value.
+				assert(restored.root.notes !== undefined);
+				assert.equal(restored.root.notes.author, undefined);
+				restored.root.notes.author = "Reviewer";
+				provider.synchronizeMessages();
+
+				// V1 can edit the shared text without exposing or deleting the author added by V3.
+				assert(original.root.notes !== undefined);
+				assert.equal("author" in original.root.notes, false);
+				original.root.notes.text = "Edited by the original client";
+				provider.synchronizeMessages();
+				assert.equal(restored.root.notes.text, "Edited by the original client");
+				assert.equal(restored.root.notes.author, "Reviewer");
+
+				// All clients must agree on the expanded Notes definition, even when their views omit author or notes.
+				for (const tree of provider.trees) {
+					expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV3));
+				}
+
+				// Revisiting any application version must leave the accumulated schema and content usable.
+				verifyNoOpUpgrade(provider, original);
+				verifyNoOpUpgrade(provider, reduced);
+				verifyNoOpUpgrade(provider, restored);
+
+				// Verify that shared title edits also preserve the differently shaped nested exports.
+				verifyReadWrite({
+					provider,
+					creator: {
+						view: original,
+						expectedFields: { notes: { text: "Edited by the original client" } },
+					},
+					reader: {
+						view: restored,
+						expectedFields: {
+							notes: { text: "Edited by the original client", author: "Reviewer" },
+							label: "Keep this label",
+						},
+					},
+				});
+				restored.dispose();
+				reduced.dispose();
+				original.dispose();
+			});
+		}
+
+		describe("remove a field from objects below the root", () => {
+			for (const projectAllowsUnknown of [false, true]) {
+				for (const taskAllowsUnknown of [false, true]) {
+					it(`uses the containing object's option (Project: ${projectAllowsUnknown}, Task: ${taskAllowsUnknown})`, () => {
+						class TaskV1 extends factory.object("NestedTask", {
+							title: factory.string,
+							notes: factory.optional(factory.string),
+						}) {}
+						class ProjectV1 extends factory.object("Project", {
+							tasks: factory.array("Tasks", TaskV1),
+						}) {}
+
+						// V2 retires `notes` and adds a new `isApproved` field.
+						// V2's `allowUnknownOptionalFields` setting determines whether it will allow reading documents that contain unknown optional fields, such as the retired `notes` field.
+						class TaskV2 extends factory.object(
+							"NestedTask",
+							{ title: factory.string, isApproved: factory.optional(factory.boolean) },
+							{ allowUnknownOptionalFields: taskAllowsUnknown },
+						) {}
+						class ProjectV2 extends factory.object(
+							"Project",
+							{ tasks: factory.array("Tasks", TaskV2) },
+							{ allowUnknownOptionalFields: projectAllowsUnknown },
+						) {}
+						const provider = new TestTreeProviderLite(2);
+						const [originalTree, reducedTree] = provider.trees;
+						const original = originalTree.viewWith(
+							new TreeViewConfiguration({ schema: ProjectV1 }),
+						);
+
+						// Both tasks share one schema, despite only the first task containing historical notes.
+						original.initialize({
+							tasks: [
+								{ title: "First task", notes: "Historical notes" },
+								{ title: "Second task" },
+							],
+						});
+						provider.synchronizeMessages();
+						const reduced = reducedTree.viewWith(
+							new TreeViewConfiguration({ schema: ProjectV2 }),
+						);
+
+						// Approval is not yet allowed, so the new view cannot be used immediately.
+						// Upgrading is safe only when Task tolerates the notes field it omits; Project's setting is irrelevant.
+						assert.equal(reduced.compatibility.canView, false);
+						assert.equal(reduced.compatibility.canUpgrade, taskAllowsUnknown);
+						if (taskAllowsUnknown) {
+							reduced.upgradeSchema();
+
+							// The upgraded view hides notes on every task, not just on tasks where a value was present.
+							assert.equal(reduced.compatibility.canView, true);
+							assert.equal("notes" in reduced.root.tasks[0], false);
+							assert.equal("notes" in reduced.root.tasks[1], false);
+							reduced.root.tasks[0].title = "Renamed task";
+							reduced.root.tasks[1].isApproved = true;
+							reduced.root.tasks.insertAtEnd(new TaskV2({ title: "New task" }));
+							provider.synchronizeMessages();
+
+							// Edits and insertion from V2 preserve historical notes, but do not populate notes on other tasks.
+							assert.equal(original.root.tasks[0].title, "Renamed task");
+							assert.equal(original.root.tasks[0].notes, "Historical notes");
+							assert.equal(original.root.tasks[1].notes, undefined);
+							assert.equal(original.root.tasks[2].notes, undefined);
+
+							// An older client can write the retained field on a node created by the reduced view.
+							original.root.tasks[2].notes = "Added by the original client";
+							provider.synchronizeMessages();
+							assert.equal("notes" in reduced.root.tasks[2], false);
+							assert.equal(reduced.root.tasks[1].isApproved, true);
+
+							// Either client can request another upgrade without losing the new task's hidden notes.
+							verifyNoOpUpgrade(provider, original);
+							verifyNoOpUpgrade(provider, reduced);
+							assert.equal(original.root.tasks[2].notes, "Added by the original client");
+							reduced.dispose();
+						} else {
+							verifyRejectedUpgrade(provider, reduced);
+						}
+						original.dispose();
+					});
+				}
+			}
+		});
+
+		it("preserves fields removed by successive versions through multiple upgrades", () => {
+			class TaskV1 extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+				estimate: factory.optional(factory.number),
+			}) {}
+
+			// V2 retires `notes` and adds a new `isApproved` field.
+			class TaskV2 extends factory.object("Task", {
+				title: factory.string,
+				estimate: factory.optional(factory.number),
+				isApproved: factory.optional(factory.boolean),
+			}) {}
+
+			// V3 retires `estimate` while adding a new `label` field.
+			class TaskV3 extends factory.object("Task", {
+				title: factory.string,
+				isApproved: factory.optional(factory.boolean),
+				label: factory.optional(factory.string),
+			}) {}
+
+			const provider = new TestTreeProviderLite(3);
+			const [treeV1, treeV2, treeV3] = provider.trees;
+			const viewV1 = treeV1.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			viewV1.initialize({ title: initialTitle, notes: "Original notes", estimate: 4 });
+			provider.synchronizeMessages();
+
+			// V2 requires a real upgrade to add `isApproved` while preserving the `notes` it no longer exposes.
+			const viewV2 = treeV2.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			assert.equal(viewV2.compatibility.canView, false);
+			assert.equal(viewV2.compatibility.canUpgrade, true);
+			viewV2.upgradeSchema();
+			viewV2.root.isApproved = true;
+			provider.synchronizeMessages();
+
+			// V3 requires another upgrade to add `label`.
+			// Both earlier unknown fields must survive this second composition.
+			const viewV3 = treeV3.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+			assert.equal(viewV3.compatibility.canView, false);
+			assert.equal(viewV3.compatibility.canUpgrade, true);
+			viewV3.upgradeSchema();
+			viewV3.root.label = "Ready";
+			provider.synchronizeMessages();
+
+			// V1 still reads both retired values, and V3 sees the approval written by V2.
+			assert.equal(viewV1.root.notes, "Original notes");
+			assert.equal(viewV1.root.estimate, 4);
+			assert.equal(viewV3.root.isApproved, true);
+			viewV1.root.notes = "Updated historical notes";
+			viewV2.root.estimate = 8;
+			provider.synchronizeMessages();
+
+			// Older clients can still edit retired fields without making them visible to versions that omit them.
+			assert.equal(viewV1.root.estimate, 8);
+			assert.equal("notes" in viewV2.root, false);
+			assert.equal("notes" in viewV3.root, false);
+			assert.equal("estimate" in viewV3.root, false);
+
+			// Storage accumulates all four optional fields rather than matching any single version's declarations.
+			class Expected extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+				estimate: factory.optional(factory.number),
+				isApproved: factory.optional(factory.boolean),
+				label: factory.optional(factory.string),
+			}) {}
+
+			// Alternating application versions must settle on this combined schema, not repeatedly replace one another's fields.
+			for (let round = 0; round < 2; round++) {
+				verifyNoOpUpgrade(provider, viewV1);
+				verifyNoOpUpgrade(provider, viewV2);
+				verifyNoOpUpgrade(provider, viewV3);
+			}
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+			}
+
+			// V1 and V3 can collaborate on titles while retaining each other's otherwise-unknown field values.
+			verifyReadWrite({
+				provider,
+				creator: {
+					view: viewV1,
+					expectedFields: { notes: "Updated historical notes", estimate: 8 },
+				},
+				reader: { view: viewV3, expectedFields: { isApproved: true, label: "Ready" } },
+			});
+
+			// The intermediate client receives those shared edits and keeps access to its estimate and approval.
+			assert.equal(viewV2.root.title, "Edited by creator");
+			assert.equal(viewV2.root.estimate, 8);
+			assert.equal(viewV2.root.isApproved, true);
+			viewV3.dispose();
+			viewV2.dispose();
+			viewV1.dispose();
+		});
+
 		/**
 		 * Prerequisites: existing safety rules, independent of optional-field preservation.
 		 * Lower-level comparison tests cover several of these constraints.
@@ -1396,42 +2082,6 @@ describe("Schema Evolution Examples", () => {
 		 * and leaves the stored schema and document data unchanged.
 		 */
 		describe("prerequisites", () => {
-			/**
-			 * Prepares typed document initialization for a prerequisite test case.
-			 *
-			 * @typeParam TSchema - The root schema that determines which initial content is permitted.
-			 * @param schema - The schema used to create the original document.
-			 * @param content - Initial content valid for `schema`, retained for later comparisons.
-			 * @returns The initial content and a function that initializes a tree with the captured schema and content.
-			 *
-			 * @remarks
-			 * Capturing the schema and content together preserves their type relationship in a table of different test cases.
-			 * This helper does not create or initialize a document until the returned `initialize` function is called.
-			 */
-			function withDocument<TSchema extends ImplicitFieldSchema>(
-				schema: TSchema,
-				content: InsertableTreeFieldFromImplicitField<TSchema>,
-			) {
-				return {
-					content,
-
-					/**
-					 * Initializes the supplied tree and returns its typed view.
-					 *
-					 * @param tree - An uninitialized tree for the original document.
-					 * @returns The initialized view. The caller must dispose it when it is no longer needed.
-					 *
-					 * @remarks
-					 * This writes the captured schema and content but does not synchronize other clients.
-					 */
-					initialize(tree: ITree) {
-						const view = tree.viewWith(new TreeViewConfiguration({ schema }));
-						view.initialize(content);
-						return view;
-					},
-				};
-			}
-
 			class StrictTask extends factory.object(
 				"Task",
 				{ title: factory.string },
@@ -1496,31 +2146,14 @@ describe("Schema Evolution Examples", () => {
 					// #region Step 1: Create and synchronize the original document.
 					const creator = initialize(documentTree);
 					provider.synchronizeMessages();
-					const schemaBefore = readerTree.kernel.checkout.storedSchema.clone();
-					const sequenceNumber = provider.sequenceNumber;
 					// #endregion Step 1
 
 					// #region Step 2: The changed schema cannot view or upgrade this document.
 					const reader = readerTree.viewWith(new TreeViewConfiguration({ schema: changed }));
-					assert.equal(reader.compatibility.canView, false);
-					assert.equal(reader.compatibility.canUpgrade, false);
-
-					// A rejected upgrade breaks this view, so do not call its APIs again.
-					assert.throws(
-						() => reader.upgradeSchema(),
-						validateUsageError(/cannot be upgraded/),
-					);
-					provider.synchronizeMessages();
+					verifyRejectedUpgrade(provider, reader);
 					// #endregion Step 2
 
-					// #region Step 3: Rejection must not change the stored schema or data.
-					// The rejected request must not publish a change to other clients.
-					assert.equal(provider.sequenceNumber, sequenceNumber);
-
-					// Neither the local stored schema nor the collaborator's schema may change.
-					expectSchemaEqual(readerTree.kernel.checkout.storedSchema, schemaBefore);
-					expectSchemaEqual(documentTree.kernel.checkout.storedSchema, schemaBefore);
-
+					// #region Step 3: The original view still exposes the same content.
 					// The unaffected collaborator must still be able to read all original field values.
 					assert.deepEqual(TreeBeta.exportConcise(creator.root), content);
 					creator.dispose();
