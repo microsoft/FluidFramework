@@ -395,7 +395,7 @@ export function create(
 						repoPerDocEnabled,
 					);
 				}
-				return createSummary(
+				const result = await createSummary(
 					repoManager,
 					fsManager,
 					wholeSummaryPayload,
@@ -407,6 +407,10 @@ export function create(
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);
+				if (isInitialSummary && initialSummaryLifecycle !== undefined) {
+					await initialSummaryLifecycle.onInitialSummaryWriteSuccess(repoManagerParams);
+				}
+				return result;
 			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 			handleResponse(resultP, response, undefined, undefined, 201);
 		});

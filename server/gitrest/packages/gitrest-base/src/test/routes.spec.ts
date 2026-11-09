@@ -13,6 +13,7 @@ import {
 import {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import { strict as assert } from "assert";
 import * as async from "async";
@@ -30,6 +31,7 @@ import {
 	IsomorphicGitRepositoryManager,
 	NodeFsManagerFactory,
 } from "../utils";
+import { sampleChannelSummaryUpload, sampleInitialSummaryUpload } from "./examples";
 import * as testUtils from "./utils";
 import { StartupCheck } from "@fluidframework/server-services-shared";
 
@@ -143,6 +145,126 @@ describe("Initial summary lifecycle contract", () => {
 		};
 
 		assert.strictEqual(typeof initialSummaryLifecycle.onInitialSummaryWriteSuccess, "function");
+	});
+});
+
+describe("Initial summary lifecycle", () => {
+	testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
+
+	const owner = "owner";
+	const tenantId = "tenant";
+	const documentId = "document";
+	const repo = tenantId;
+	const summaryPath = `/repos/${owner}/${repo}/git/summaries`;
+	const storageRoutingId = getStorageRoutingHeaderValue(tenantId, documentId);
+
+	function createTestApp(
+		initialSummaryLifecycle?: InitialSummaryLifecycle,
+	): request.SuperTest<request.Test> {
+		const fileSystemManagerFactory = new NodeFsManagerFactory();
+		const repositoryManagerFactory = new IsomorphicGitManagerFactory(
+			testUtils.defaultProvider.get("storageDir"),
+			{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
+			new ExternalStorageManager(testUtils.defaultProvider),
+			true,
+		);
+		testUtils.defaultProvider.set("git:repoPerDocEnabled", true);
+
+		return request(
+			app.create(
+				testUtils.defaultProvider,
+				{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
+				repositoryManagerFactory,
+				new StartupCheck(),
+				undefined,
+				initialSummaryLifecycle,
+			),
+		);
+	}
+
+	function postInitialSummary(testApp: request.SuperTest<request.Test>) {
+		return testApp
+			.post(`${summaryPath}?initial=true`)
+			.set("Accept", "application/json")
+			.set("Content-Type", "application/json")
+			.set(Constants.StorageRoutingIdHeader, storageRoutingId)
+			.send(sampleInitialSummaryUpload);
+	}
+
+	it("preserves initial summary behavior when no lifecycle is configured", async () => {
+		await postInitialSummary(createTestApp()).expect(201);
+	});
+
+	it("invokes the lifecycle after a successful initial summary write", async () => {
+		const onInitialSummaryWriteSuccess = sinon.stub().resolves();
+
+		await postInitialSummary(createTestApp({ onInitialSummaryWriteSuccess })).expect(201);
+
+		sinon.assert.calledOnce(onInitialSummaryWriteSuccess);
+		sinon.assert.calledWithMatch(onInitialSummaryWriteSuccess, {
+			repoOwner: owner,
+			repoName: repo,
+			storageRoutingId: {
+				tenantId,
+				documentId,
+			},
+		});
+	});
+
+	it("does not invoke the lifecycle for a non-initial summary", async () => {
+		const onInitialSummaryWriteSuccess = sinon.stub().resolves();
+		const testApp = createTestApp({ onInitialSummaryWriteSuccess });
+
+		await postInitialSummary(testApp).expect(201);
+		onInitialSummaryWriteSuccess.resetHistory();
+
+		await testApp
+			.post(summaryPath)
+			.set("Accept", "application/json")
+			.set("Content-Type", "application/json")
+			.set(Constants.StorageRoutingIdHeader, storageRoutingId)
+			.send(sampleChannelSummaryUpload)
+			.expect(201);
+
+		sinon.assert.notCalled(onInitialSummaryWriteSuccess);
+	});
+
+	it("does not invoke the lifecycle when the summary write fails", async () => {
+		const onInitialSummaryWriteSuccess = sinon.stub().resolves();
+
+		const response = await createTestApp({ onInitialSummaryWriteSuccess })
+			.post(`${summaryPath}?initial=true`)
+			.set("Accept", "application/json")
+			.set("Content-Type", "application/json")
+			.set(Constants.StorageRoutingIdHeader, storageRoutingId)
+			.send({});
+
+		assert.notStrictEqual(response.status, 201);
+		sinon.assert.notCalled(onInitialSummaryWriteSuccess);
+	});
+
+	it("fails the request when the lifecycle callback fails", async () => {
+		const onInitialSummaryWriteSuccess = sinon
+			.stub()
+			.rejects(new NetworkError(503, "lifecycle failed", true, false));
+
+		await postInitialSummary(createTestApp({ onInitialSummaryWriteSuccess })).expect(503);
+
+		sinon.assert.calledOnce(onInitialSummaryWriteSuccess);
+	});
+
+	it("retries the lifecycle when the same initial summary request is retried", async () => {
+		const onInitialSummaryWriteSuccess = sinon.stub();
+		onInitialSummaryWriteSuccess
+			.onFirstCall()
+			.rejects(new NetworkError(503, "lifecycle failed", true, false));
+		onInitialSummaryWriteSuccess.onSecondCall().resolves();
+		const testApp = createTestApp({ onInitialSummaryWriteSuccess });
+
+		await postInitialSummary(testApp).expect(503);
+		await postInitialSummary(testApp).expect(201);
+
+		sinon.assert.calledTwice(onInitialSummaryWriteSuccess);
 	});
 });
 
