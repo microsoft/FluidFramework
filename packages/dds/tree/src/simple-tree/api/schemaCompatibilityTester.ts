@@ -54,7 +54,7 @@ export function getViewBlockers(
  *
  * @remarks
  * The view does not need to be compatible with `storedSchema` before the upgrade.
- * A candidate can preserve all stored permissions but still contain types that the view cannot read, so both checks are required.
+ * A candidate can preserve all stored permissions but still contain types that the view cannot read.
  * This function validates the candidate without constructing or applying it.
  */
 export function isSchemaUpgradeAllowed(
