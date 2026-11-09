@@ -469,8 +469,8 @@ export function encodeChange(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): EncodedModularChangesetV1 {
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
-		// TODO: Handle node aliasing.
 		const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+		// Node IDs in field changes should always be normalized.
 		assert(node !== undefined, 0x92e /* Unknown node ID */);
 		return encodeNodeChangesForJson(node, nodeId, contextFactory, fieldChangesetCodecs);
 	};
