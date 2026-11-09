@@ -2860,10 +2860,9 @@ export interface TreeIdentifierUtils {
 // @alpha @input
 export type TreeImportOptions = (TreeParsingOptions & {
     readonly view?: never;
-}) | {
-    readonly keys: KeyEncodingOptions.allStoredKeys;
+}) | (Required<TreeEncodingOptions<KeyEncodingOptions.allStoredKeys>> & {
     readonly view: UntypedTreeViewAlpha;
-};
+});
 
 // @beta @sealed
 export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {

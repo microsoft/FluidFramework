@@ -82,13 +82,12 @@ export type TreeImportOptions =
 			 */
 			readonly view?: never;
 	  })
-	| {
-			readonly keys: KeyEncodingOptions.allStoredKeys;
+	| (Required<TreeEncodingOptions<KeyEncodingOptions.allStoredKeys>> & {
 			/**
 			 * A view of the document that the tree is for.
 			 */
 			readonly view: UntypedTreeViewAlpha;
-	  };
+	  });
 
 /**
  * Options for how to encode keys in a tree.
