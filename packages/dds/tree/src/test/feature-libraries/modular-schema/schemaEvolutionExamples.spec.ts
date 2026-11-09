@@ -19,7 +19,6 @@ import {
 	checkSchemaCompatibility,
 	type ImplicitFieldSchema,
 	SchemaFactoryAlpha,
-	SchemaFactoryBeta,
 	type TreeNode,
 	type TreeView,
 	TreeViewConfiguration,
@@ -48,6 +47,9 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 }
 
 describe("Schema Evolution Examples", () => {
+	// Shared schema factory used by the tests in this suite.
+	const factory = new SchemaFactoryAlpha("test");
+
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
 	 * "Design-pattern apps can use to handle schema migrations" proposed in `Stored and View Schema.md`.
@@ -57,30 +59,28 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		const builder = new SchemaFactoryAlpha("test");
-
-		const codePoint = builder.objectAlpha("Primitive.CodePoint", {
-			[EmptyKey]: builder.number,
+		const codePoint = factory.objectAlpha("Primitive.CodePoint", {
+			[EmptyKey]: factory.number,
 		});
 
 		// String made of unicode code points, allowing for sequence editing of a string.
-		const text = builder.arrayAlpha("Text", codePoint);
+		const text = factory.arrayAlpha("Text", codePoint);
 
-		const point = builder.objectAlpha("Point", {
-			x: builder.number,
-			y: builder.number,
+		const point = factory.objectAlpha("Point", {
+			x: factory.number,
+			y: factory.number,
 		});
 
 		// A type that can be used to position items without an inherent position within the canvas.
-		const positionedCanvasItem = builder.objectAlpha("PositionedCanvasItem", {
+		const positionedCanvasItem = factory.objectAlpha("PositionedCanvasItem", {
 			position: point,
 			content: text,
 		});
-		const canvas = builder.arrayAlpha("Canvas", positionedCanvasItem);
+		const canvas = factory.arrayAlpha("Canvas", positionedCanvasItem);
 
-		const root = builder.required(canvas);
+		const root = factory.required(canvas);
 
-		const tolerantRoot = builder.optional(canvas);
+		const tolerantRoot = factory.optional(canvas);
 
 		// Compose all the view information together.
 		const viewSchema = new TreeViewConfigurationAlpha({ schema: root });
@@ -185,19 +185,19 @@ describe("Schema Evolution Examples", () => {
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
-			const counter = builder.objectAlpha("Counter", {
-				count: builder.number,
+			const counter = factory.objectAlpha("Counter", {
+				count: factory.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builder.objectAlpha("PositionedCanvasItem", {
+			const positionedCanvasItem2 = factory.objectAlpha("PositionedCanvasItem", {
 				position: point,
 				content: [text, counter],
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
+			const canvas2 = factory.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewSchema3 = new TreeViewConfigurationAlpha({
-				schema: builder.optional(canvas2),
+				schema: factory.optional(canvas2),
 			});
 
 			// With this new schema, we can load the document just like before:
@@ -234,8 +234,6 @@ describe("Schema Evolution Examples", () => {
 	 * User stories for removing optional fields from view schemas.
 	 */
 	describe("optional field removal", () => {
-		const factory = new SchemaFactoryBeta("optional-field-removal");
-
 		/**
 		 * "V1" schema in most test cases below.
 		 * Task schema declares an optional `foo` field that stores a number.
