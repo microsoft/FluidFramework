@@ -114,7 +114,13 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 });
 
+/**
+ * Test decoder that dispatches using a shape index read from the stream.
+ */
 class RootDecoder implements ChunkDecoder {
+	/**
+	 * Batch-local decoder table supplied during initialization.
+	 */
 	private decoders!: readonly ChunkDecoder[];
 	public initialize(decoders: readonly ChunkDecoder[]): void {
 		this.decoders = decoders;

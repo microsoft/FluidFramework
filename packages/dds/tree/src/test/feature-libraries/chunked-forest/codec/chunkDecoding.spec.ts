@@ -121,6 +121,9 @@ function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): 
 	};
 }
 
+/**
+ * Initializes the peer decoders and the requested decoder, then decodes one chunk from the stream.
+ */
 function decodeWith(
 	decoder: ChunkDecoder,
 	decoders: readonly ChunkDecoder[],
@@ -163,6 +166,9 @@ const idDecodingContext: IdDecodingContext = makeTestIdDecodingContext({});
 
 describe("chunkDecoding", () => {
 	describe("uniform decoding", () => {
+		/**
+		 * Decodes a single field from a version-one batch using the supplied shape table and encoded data.
+		 */
 		function decodeField(
 			shapes: EncodedChunkShape[],
 			data: EncodedFieldBatchAnyVersion["data"][number],
@@ -382,13 +388,19 @@ describe("chunkDecoding", () => {
 		});
 
 		it("analyzes each fixed shape once before decoding", () => {
+			/**
+			 * Counts plan computations to verify that multiple consumers share cached analysis.
+			 */
 			class CountingNodeDecoder extends NodeDecoder {
+				/**
+				 * Number of plan computations performed by this decoder.
+				 */
 				public analyses = 0;
-				protected override buildUniformLayout(
+				protected override buildUniformDecodingPlan(
 					peers: readonly ChunkDecoder[],
-				): ReturnType<NodeDecoder["getUniformLayout"]> {
+				): ReturnType<NodeDecoder["getUniformDecodingPlan"]> {
 					this.analyses++;
-					return super.buildUniformLayout(peers);
+					return super.buildUniformDecodingPlan(peers);
 				}
 			}
 			const context = new DecoderContext([], [], idDecodingContext, undefined);
@@ -499,7 +511,7 @@ describe("chunkDecoding", () => {
 			]);
 		});
 
-		it("terminates layout analysis of fixed recursive shapes", () => {
+		it("terminates plan analysis of fixed recursive shapes", () => {
 			assert.equal(
 				decodeField(
 					[
