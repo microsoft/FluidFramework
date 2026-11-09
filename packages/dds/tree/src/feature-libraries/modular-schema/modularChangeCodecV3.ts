@@ -341,8 +341,8 @@ export function makeModularChangeCodecV3(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
-				// TODO: Document the contract regarding node IDs in field changes: they should always be normalized then remove this normalization step.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
+				// Node IDs in field changes should always be normalized.
 				assert(node !== undefined, "Unknown node ID");
 				return encodeNodeChangesForJson(node, nodeId, contextFactory);
 			};

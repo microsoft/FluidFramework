@@ -469,7 +469,7 @@ export function encodeChange(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): EncodedModularChangesetV1 {
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
-		// TODO: Document the contract regarding node IDs in field changes: they should always be normalized then remove this normalization step.
+		// Node IDs in field changes should always be normalized.
 		const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 		assert(node !== undefined, 0x92e /* Unknown node ID */);
 		return encodeNodeChangesForJson(node, nodeId, contextFactory, fieldChangesetCodecs);
