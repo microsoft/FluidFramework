@@ -235,6 +235,7 @@ function updateConstraintsForNode(
 	constraintState: ConstraintState,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
+	// Node IDs in field changes and in the root table should always be normalized.
 	const node = getFromChangeAtomIdMap(nodes, nodeId) ?? fail(0xb24 /* Unknown node ID */);
 
 	const updatedNode: Mutable<NodeChangeset> = { ...node };
