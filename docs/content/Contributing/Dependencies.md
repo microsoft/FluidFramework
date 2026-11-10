@@ -115,8 +115,11 @@ Maintainers saving new versions should verify installation without credentials u
 ### Save dependencies for all platforms
 
 Some packages have platform-specific dependencies.
-To make sure newly saved packages work on all environments,
-maintainers should temporarily configure pnpm to download optional packages for multiple platforms.
+You can queue the npm package build pipeline for the affected workspace on your branch with `installAllPlatforms` enabled (for example, **Build - client packages** or **Build - build-tools**).
+It defaults to `false`; ordinary PR and CI runs do not download all platform variants.
+The build job uses the pipeline's feed credentials to fetch that workspace's locked dependencies for Windows, Linux, and macOS, on x64 and arm64, including glibc and musl variants.
+
+Maintainers can also save the packages locally.
 Before running the install command that saves new packages to the `publicPackages` feed, run this command from the affected workspace root:
 
 ```shell

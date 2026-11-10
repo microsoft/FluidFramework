@@ -15,6 +15,12 @@ parameters:
   type: boolean
   default: true
 
+# Fetch dependencies for all supported platform variants before the ordinary host-platform install.
+# See docs/content/Contributing/Dependencies.md for more information.
+- name: installAllPlatforms
+  type: boolean
+  default: false
+
 - name: primaryRegistry
   type: string
   default: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
@@ -38,6 +44,29 @@ steps:
         ${{ if ne(parameters.additionalLockFilePaths, '') }}:
           additionalOptionalCacheKey: '$(Pipeline.Workspace)/${{ replace(parameters.additionalLockFilePaths, '' | '', '' | $(Pipeline.Workspace)/'') }}'
           requiredCacheKey: '"${{ replace(parameters.additionalLockFilePaths, '' | '', ''" | "'') }}"'
+
+  - ${{ if parameters.installAllPlatforms }}:
+    - task: Bash@3
+      displayName: Save dependencies for all platforms
+      retryCountOnTaskFailure: 4
+      inputs:
+        targetType: 'inline'
+        workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+        script: |
+          set -eu -o pipefail
+          temp_dir="$(mktemp -d)"
+          cp pnpm-workspace.yaml "$temp_dir/pnpm-workspace.yaml"
+          cleanup() {
+            cp "$temp_dir/pnpm-workspace.yaml" pnpm-workspace.yaml
+            rm -rf "$temp_dir"
+          }
+          trap cleanup EXIT
+
+          pnpm config set --location=project --json supportedArchitectures '{"os":["win32","linux","darwin"],"cpu":["x64","arm64"],"libc":["glibc","musl"]}'
+          # Reuse the configured store, but keep fetched modules separate from the normal host-platform installation.
+          pnpm fetch --ignore-scripts --modules-dir "$temp_dir/node_modules" --config.enable-global-virtual-store=false --reporter=ndjson |
+            node "$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/check-pnpm-fetch.cjs"
+          echo "Dependencies fetched for all supported platforms."
 
   - task: Bash@3
     displayName: ${{ parameters.installDependenciesDescription }}
