@@ -716,49 +716,65 @@ export enum LoaderHeader {
 }
 
 /**
+ * Controls how much of the op stream the Loader processes before it returns a container,
+ * and when the container connects to the delta stream.
  * @legacy @beta
  */
 export interface IContainerLoadMode {
-	opsBeforeReturn?: /*
-	 * No trailing ops are applied before container is returned.
-	 * Default value.
+	/**
+	 * Which trailing ops (ops sequenced after the loaded snapshot) the Loader fetches and processes
+	 * before it returns the container.
+	 *
+	 * @remarks
+	 * - `undefined`: The Loader does not wait for trailing ops.
+	 * It starts to fetch them in the background.
+	 *
+	 * - `"cached"`: The Loader fetches the trailing ops that the driver has cached locally, and processes them before it returns.
+	 * Caching is optional and is implemented by the driver.
+	 * If the driver does not cache ops, this is the same as `undefined`.
+	 * The driver can cache many ops, so this can make load slower.
+	 *
+	 * - `"all"`: The Loader fetches all trailing ops that are available in storage, and processes them before it returns.
+	 * This mode can have a significant effect on load time, which depends on storage performance and on the number of trailing ops.
+	 * Hosts that use this option should show progress UX and support cancellation in their load flow.
+	 * WARNING: This is the only option that can cause an unbounded wait.
+	 * If the client is offline, or storage returns errors such as throttling (429) responses,
+	 * the Loader can retry indefinitely, and the caller cannot observe or cancel the retries.
+	 *
+	 * If no load mode is specified, the Loader uses `"cached"`.
+	 * If the container is loaded with pending local state, the Loader ignores this value and uses `undefined`.
+	 *
+	 * For `"cached"` and `"all"`, the Loader gives no guarantee about ops that become known after the fetch completes,
+	 * for example ops that the delta stream connection delivers while the container loads.
+	 * The container can be at a sequence number lower than {@link IDeltaManager.lastKnownSeqNumber} when it is returned.
+	 *
+	 * Also, the Loader cannot process ops that a component deliberately holds in the inbound queue.
+	 * For example, the runtime holds ops while it waits for the rest of an incomplete batch.
+	 * Such held ops are processed after the container is returned, when they are released.
+	 *
+	 * Callers that require the container to have processed specific ops (for example, the latest ops known by the service)
+	 * must wait for this themselves.
+	 * For example, they can connect the container and wait until {@link IDeltaManager.lastSequenceNumber} reaches the
+	 * {@link IDeltaManager.lastKnownSeqNumber} that was observed when the container connected.
 	 */
-		| undefined
-		/*
-		 * Only cached trailing ops are applied before returning container.
-		 * Caching is optional and could be implemented by the driver.
-		 * If driver does not implement any kind of local caching strategy, this is same as above.
-		 * Driver may cache a lot of ops, so care needs to be exercised (see below).
-		 */
-		| "cached"
-		/*
-		 * All trailing ops in storage are fetched and applied before container is returned
-		 * This mode might have significant impact on boot speed (depends on storage perf characteristics)
-		 * Also there might be a lot of trailing ops and applying them might take time, so hosts are
-		 * recommended to have some progress UX / cancellation built into loading flow when using this option.
-		 * WARNING: This is the only option that may result in unbound wait. If machine is offline or hits some other
-		 * errors (like 429s), it may get into inifinite retry loop, with no ability to observe or cancel that process.
-		 */
-		| "all";
+	opsBeforeReturn?: undefined | "cached" | "all";
 
-	deltaConnection?: /*
-	 * Connection to delta stream is made only when Container.connect() call is made. Op processing
-	 * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
+	/**
+	 * When the container connects to the delta stream, and whether it processes ops before it connects.
+	 *
+	 * @remarks
+	 * - `"none"`: The container connects to the delta stream only when `IContainer.connect()` is called.
+	 * Op processing stays paused after the container is returned, until `IContainer.connect()` is called.
+	 *
+	 * - `"delayed"`: The container connects to the delta stream only when `IContainer.connect()` is called.
+	 * Ops are fetched from storage and processed as they arrive.
+	 * This is useful if a connection to the delta stream is expensive, and it is beneficial to remove it
+	 * from the critical boot sequence while catching up as fast as possible.
+	 *
+	 * - `undefined` (default): The container starts to connect to the delta stream immediately.
+	 * Op processing is enabled and ops flow through the system.
 	 */
-		| "none"
-		/*
-		 * Connection to delta stream is made only when Container.connect() call is made.
-		 * Op fetching from storage is performed and ops are applied as they come in.
-		 * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
-		 * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
-		 */
-		| "delayed"
-		/*
-		 * Connection to delta stream is made right away.
-		 * Ops processing is enabled and ops are flowing through the system.
-		 * Default value.
-		 */
-		| undefined;
+	deltaConnection?: "none" | "delayed" | undefined;
 }
 
 /**
