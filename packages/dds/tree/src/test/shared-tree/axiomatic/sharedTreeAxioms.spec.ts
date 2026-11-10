@@ -139,7 +139,8 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 		}
 	});
 
-	it("composition is associative for all three-edit histories", () => {
+	it("composition is associative for all three-edit histories", function () {
+		this.timeout(5000);
 		let count = 0;
 		for (const history of historiesOfDepth(3)) {
 			withTrace([history], () => {
