@@ -179,6 +179,12 @@ export class LeafChannelRuntime
 				runtime.telemetryLogger,
 				context.id,
 			);
+			if (runtime.attachState === AttachState.Detached) {
+				// The snapshot already binds the context, but the newly loaded handle must also
+				// be locally visible so references added before attachment attach their graphs.
+				// runtime.visible prevents the handle's callback from rebinding the context.
+				toFluidHandleInternal(runtime.channel.handle).attachGraph();
+			}
 		} else {
 			runtime.channel = factory.create(runtime, context.id);
 			runtime.channel.connect(runtime.services);

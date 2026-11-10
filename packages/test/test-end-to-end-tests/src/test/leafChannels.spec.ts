@@ -74,6 +74,34 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		return value;
 	}
 
+	it("attaches new references added to a rehydrated detached leaf", async () => {
+		const detached = await provider.createDetachedContainer(runtimeFactory);
+		const snapshot = detached.serialize();
+		detached.close();
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const rehydrated = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		const root = await getMap(rehydrated);
+		const context = contexts.get(root);
+		assert(context !== undefined);
+		const childStore = await context.containerRuntime.createDataStore(factory.type);
+		const child = (await childStore.entryPoint.get()) as ISharedMap;
+		child.set("value", 42);
+		root.set("child", child.handle);
+		await provider.attachDetachedContainer(rehydrated);
+		assert(child.handle.isAttached, "The referenced child must be included in attachment");
+		await provider.ensureSynchronized();
+
+		const remote = await provider.loadContainer(runtimeFactory);
+		const remoteRoot = await getMap(remote);
+		const childHandle = remoteRoot.get<IFluidHandle<ISharedMap>>("child");
+		assert(childHandle !== undefined);
+		const remoteChild = await childHandle.get();
+		assert.equal(remoteChild.get("value"), 42);
+		remoteChild.set("value", 43);
+		await provider.ensureSynchronized();
+		assert.equal(child.get("value"), 43);
+	});
+
 	it("collaborates with the root shared object's own identity", async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		const root = await getMap(container);

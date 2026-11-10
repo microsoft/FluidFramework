@@ -46,6 +46,8 @@ For a leaf, the context's `.channels` summary contains the shared object's paylo
 Its handle and garbage-collection node use the context's path.
 Operations use an empty channel address to identify the leaf itself.
 Existing data-store layouts and their named channels are unchanged.
+When a detached snapshot is rehydrated, the loaded leaf handle is made locally visible without rebinding its restored context.
+References added before attachment therefore attach their target graphs.
 
 A leaf runtime cannot create additional child channels.
 Use a collection runtime when the application requires children.
