@@ -59,12 +59,12 @@ import * as semver from "semver";
 // jiti (used to run this script) resolves .js imports to .ts files automatically.
 import {
 	getRequestedVersion,
-	versionHasMovedSparsedMatrix,
 	resolveRangeViaRegistry,
+	versionHasMovedSparsedMatrix,
 } from "../src/versionUtils.js";
 import { packageListToInstall } from "../src/compatPackageList.js";
 import {
-	numOfInternalMajorsBeforePublic2dot0,
+	getFullBackCompatVersionDeltas,
 	oldestCompatibleVersion,
 } from "../src/compatConfig.js";
 import {
@@ -260,11 +260,11 @@ async function main(): Promise<void> {
 	}
 	console.log(`  N-1: ${nMinus1}`);
 
-	// Resolve full back-compat versions (deltas -2 through -(NUM_INTERNAL_MAJORS_BEFORE_PUBLIC_2 - 1))
+	// Resolve stable back-compat release bands down to the OCV floor.
 	console.log("\nResolving full back-compat versions...");
 	const fullAdditional: string[] = [];
 
-	for (let delta = -2; delta > -numOfInternalMajorsBeforePublic2dot0; delta--) {
+	for (const delta of getFullBackCompatVersionDeltas(pkgVer)) {
 		const resolved = resolveVersionForMinorDelta(pkgVer, delta);
 		if (resolved === undefined) {
 			console.warn(`  Delta ${delta}: not found, skipping`);
@@ -279,17 +279,11 @@ async function main(): Promise<void> {
 		console.log(`  Delta ${delta}: ${resolved}`);
 	}
 
-	// Load human-maintained explicit versions from explicit-versions.mjs
+	// allVersions is the single set of versions installed in the workspace and recorded in the manifest.
 	const { explicitVersions } = (await import(
 		pathToFileURL(path.join(compatWorkspacesDir, "explicit-versions.mjs")).href
 	)) as { explicitVersions: string[] };
-	if (explicitVersions.length > 0) {
-		console.log(
-			`\nLoaded ${explicitVersions.length} explicit version(s): ${explicitVersions.join(", ")}`,
-		);
-	}
 
-	// allVersions is the single set of versions installed in the workspace and recorded in the manifest.
 	const allVersions = new Set([
 		nMinus1,
 		...checkpointVersions,
