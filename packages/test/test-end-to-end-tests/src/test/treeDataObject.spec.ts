@@ -15,7 +15,6 @@ import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree/internal";
 
@@ -90,7 +89,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		const provider = getTestObjectProvider();
 		const container = await provider.createContainer(runtimeFactory);
 
-		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
+		const dataObject = (await container.getEntryPoint()) as TestTreeDataObject;
 		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 
@@ -101,8 +100,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		// Load second container and check data.
 		const container2 = await provider.loadContainer(runtimeFactory);
 
-		const container2DataObject =
-			await getContainerEntryPointBackCompat<TestTreeDataObject>(container2);
+		const container2DataObject = (await container2.getEntryPoint()) as TestTreeDataObject;
 		assert.deepEqual(container2DataObject.treeView.root.foo, "Hello world");
 	});
 });

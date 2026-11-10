@@ -14,8 +14,6 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 /**
@@ -71,8 +69,7 @@ describeCompat(
 				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataObject =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
+				const innerDataObject = (await innerDataStore.entryPoint.get()) as ITestDataObject;
 
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
@@ -119,8 +116,7 @@ describeCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the outer dataStore from the detached container. This will create and load the inner data store
 			// during initialization.
-			const outerDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const outerDataStore = (await container.getEntryPoint()) as ITestDataObject;
 			assert(outerDataStore !== undefined, "Could not load outer data store");
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
@@ -145,8 +141,7 @@ describeCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			// Get the default dataStore from the detached container.
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			// This will create and load the inner data store during initialization.

@@ -13,10 +13,7 @@ window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { FlowDocument } from "../document/index.js";
 import { htmlFormatter } from "../index.js";
@@ -55,7 +52,7 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());
-		doc = await getContainerEntryPointBackCompat<FlowDocument>(container);
+		doc = (await container.getEntryPoint()) as FlowDocument;
 	});
 
 	beforeEach(() => {

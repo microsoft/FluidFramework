@@ -27,7 +27,6 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
@@ -178,7 +177,7 @@ describeCompat(
 			}
 
 			const container = await createContainer();
-			mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(container);
+			mainDataStore = (await container.getEntryPoint()) as TestDataObject;
 			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(container);
 		});

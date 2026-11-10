@@ -26,7 +26,6 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -122,7 +121,7 @@ describeCompat(
 			}
 
 			mainContainer = await createContainer(version1Apis);
-			dataStoreA = await getContainerEntryPointBackCompat<ITestFluidObject>(mainContainer);
+			dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 			await waitForContainerConnection(mainContainer);
 		});
 

@@ -35,8 +35,6 @@ import {
 	LocalCodeLoader,
 	TestFluidObject,
 	createDocumentId,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
@@ -214,8 +212,7 @@ describeCompat(
 		}> {
 			const container: IContainer = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<TestFluidObject>(container);
+			const defaultDataStore = (await container.getEntryPoint()) as TestFluidObject;
 			return {
 				container,
 				defaultDataStore,
@@ -268,8 +265,7 @@ describeCompat(
 			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
 		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
-			const peerDataStore =
-				await getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
+			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {
 				peerDataStore,
 				peerDataStoreRuntimeChannel: peerDataStore.channel,
@@ -280,7 +276,7 @@ describeCompat(
 			container: IContainer,
 			key: string,
 		): Promise<TestFluidObject> {
-			const entryPoint = await getContainerEntryPointBackCompat<TestFluidObject>(container);
+			const entryPoint = (await container.getEntryPoint()) as TestFluidObject;
 			const handle: IFluidHandle<TestFluidObject> | undefined = entryPoint.root.get(key);
 			assert(handle !== undefined, `handle for [${key}] must exist`);
 			return handle.get();
@@ -448,8 +444,7 @@ describeCompat(
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStore = (await container2.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -488,8 +483,7 @@ describeCompat(
 				await container2.attach(request);
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStore = (await container2.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -528,8 +522,7 @@ describeCompat(
 				}
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container1);
+				const defaultDataStore = (await container1.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -562,8 +555,7 @@ describeCompat(
 			it("Change contents of dds, then rehydrate and then check summary", async () => {
 				const { container } = await createDetachedContainerAndGetEntryPoint();
 
-				const defaultDataStoreBefore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultDataStoreBefore = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedStringBefore =
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
@@ -631,8 +623,7 @@ describeCompat(
 
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-				const defaultComponentAfter =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultComponentAfter = (await container2.getEntryPoint()) as TestFluidObject;
 				const sharedStringAfter =
 					await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 				const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
@@ -684,16 +675,14 @@ describeCompat(
 			it("Rehydrate container from summary, change contents of dds and then check summary", async () => {
 				const { container } = await createDetachedContainerAndGetEntryPoint();
 				let str = "AA";
-				const defaultComponent1 =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultComponent1 = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedString1 =
 					await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
 				sharedString1.insertText(0, str);
 				const snapshotTree = container.serialize();
 
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-				const defaultDataStoreBefore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStoreBefore = (await container2.getEntryPoint()) as TestFluidObject;
 				const sharedStringBefore =
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapBefore =
@@ -703,8 +692,7 @@ describeCompat(
 				sharedMapBefore.set("0", str);
 
 				await container2.attach(request);
-				const defaultComponentAfter =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultComponentAfter = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedStringAfter =
 					await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapAfter =
@@ -863,7 +851,7 @@ describeCompat(
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const rehydratedEntryPoint =
-					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rehydratedRootOfDataStore =
 					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
@@ -899,7 +887,7 @@ describeCompat(
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const rehydratedEntryPoint =
-					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
@@ -942,7 +930,7 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rootOfDds2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
@@ -1000,7 +988,7 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rehydratedRootOfDataStore2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =

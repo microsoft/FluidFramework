@@ -47,7 +47,6 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -335,7 +334,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		};
 		const container = await loader.createDetachedContainer(defaultCodeDetails);
 
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 		const sessionSpaceId = getIdCompressor(map).generateCompressedId();
 
@@ -349,8 +348,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const loader2 = provider.makeTestLoader(containerConfigWithCompressor);
 		const remoteContainer = await loader2.resolve({ url });
 
-		const dataObject2 =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
+		const dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataObject2.getSharedObject<ISharedMap>("mapId");
 		const sessionSpaceId2 = getIdCompressor(map2).normalizeToSessionSpace(
 			opSpaceId,

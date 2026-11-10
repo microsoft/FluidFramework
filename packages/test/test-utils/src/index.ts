@@ -72,8 +72,6 @@ export {
 export {
 	toIDeltaManagerFull,
 	waitForContainerConnection,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	getRequiredPendingLocalState,
 } from "./containerUtils.js";
 // #endregion

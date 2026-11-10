@@ -14,7 +14,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";
@@ -43,7 +42,7 @@ describeCompat(
 		}
 
 		async function getEntryPoint(container: IContainer): Promise<TestDataObject> {
-			return getContainerEntryPointBackCompat<TestDataObject>(container);
+			return container.getEntryPoint() as Promise<TestDataObject>;
 		}
 
 		beforeEach("getTestObjectProvider", async () => {
@@ -206,7 +205,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 	}
 
 	async function getEntryPoint(container: IContainer): Promise<ITestDataObject> {
-		return getContainerEntryPointBackCompat<ITestDataObject>(container);
+		return container.getEntryPoint() as Promise<ITestDataObject>;
 	}
 
 	beforeEach("getTestObjectProvider", async () => {
