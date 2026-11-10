@@ -172,7 +172,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ syncSummarizer: true });
 		summarizerCollection = undefined;
 	});
 

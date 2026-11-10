@@ -89,7 +89,7 @@ describeCompat("Native incremental summaries", "NoCompat", (getProvider, apis) =
 
 	for (const depth of [0, 1, 2]) {
 		it(`reuses forest chunks and reloads valid paths with ${depth} containing stores`, async () => {
-			const provider = getProvider();
+			const provider = getProvider({ syncSummarizer: true });
 			let factory: IFluidDataStoreFactory = leaf;
 			for (let i = 1; i <= depth; i++) factory = composite(factory, i);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
