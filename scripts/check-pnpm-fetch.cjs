@@ -13,7 +13,15 @@ const downloaded = new Set();
 readline
 	.createInterface({ input: process.stdin })
 	.on("line", (line) => {
-		const event = JSON.parse(line);
+		let event;
+		try {
+			event = JSON.parse(line);
+		} catch {
+			// pnpm hooks can write plain text to stdout, bypassing the NDJSON reporter.
+			// Surface any such lines are normal log output.
+			console.log(line);
+			return;
+		}
 		if (event.level === "warn" || event.level === "error") {
 			console.error(event.message ?? event.err?.message ?? line);
 		}
