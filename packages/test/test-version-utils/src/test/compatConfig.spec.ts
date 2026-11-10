@@ -32,7 +32,7 @@ import {
 
 // Update when the compatibility-test floor changes. Keep this independent of the implementation
 // constant so these tests catch accidental changes to OCV resolution.
-const expectedOldestCompatibleVersion = "2.0.0";
+const expectedOldestCompatibleVersion = "2.0.9";
 
 // Update only if this checkpoint leaves the cross-client test window or its resolution policy changes;
 // advancing OCV alone must not change which checkpoint release line this test verifies.
@@ -160,7 +160,9 @@ describe("compatibility selection", () => {
 			assert.equal(pkg.dependencies["@fluid-experimental/sequence-deprecated"], version);
 			assert.equal(pkg.dependencies["@fluidframework/container-loader"], version);
 		}
+		// From base 2.20, FULL includes the 2.0 band (N-2), even though it starts below OCV.
 		assert.deepEqual(getFullBackCompatVersionDeltas("2.20.0"), [-2]);
+		// From base 2.10, the 2.0 band is N-1 and therefore outside FULL coverage.
 		assert.deepEqual(getFullBackCompatVersionDeltas("2.10.0"), []);
 	});
 
@@ -176,7 +178,6 @@ describe("compatibility selection", () => {
 		assert.deepEqual(crossClient, genCrossClientCompatConfig());
 		// Checkpoints resolve patches independently of the exact OCV boundary.
 		const checkpointVersion = resolveRangeViaManifest(checkpointResolutionRangeToVerify);
-		assert.notEqual(checkpointVersion, expectedOldestCompatibleVersion);
 		assert(
 			crossClient.some(
 				({ createVersion, loadVersion }) =>

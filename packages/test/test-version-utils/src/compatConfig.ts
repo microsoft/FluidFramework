@@ -67,7 +67,7 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
-export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.0");
+export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.9");
 
 /**
  * The default versions to be used for generating configurations for layer compat testing.
@@ -217,19 +217,19 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 export function getFullBackCompatVersionDeltas(version: string): number[] {
 	const deltas: number[] = [];
 	let delta = -2;
-	let minimum = semver.minVersion(calculateRequestedRange(version, delta));
+	let range = calculateRequestedRange(version, delta);
+	let minimum = semver.minVersion(range);
 	// Stable release bands have a -0 lower bound in the generic version arithmetic.
+	// Include the band containing OCV even when the floor is above that band's lower bound.
 	while (
 		minimum !== null &&
-		semver.gte(
-			`${minimum.major}.${minimum.minor}.${minimum.patch}`,
-			oldestCompatibleVersion,
-		) &&
+		semver.intersects(range, `>=${oldestCompatibleVersion}`) &&
 		minimum.prerelease.every((part) => part === 0)
 	) {
 		deltas.push(delta);
 		delta--;
-		minimum = semver.minVersion(calculateRequestedRange(version, delta));
+		range = calculateRequestedRange(version, delta);
+		minimum = semver.minVersion(range);
 	}
 	return deltas;
 }
