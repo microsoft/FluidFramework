@@ -257,21 +257,22 @@ describe("chunkDecoding", () => {
 		});
 
 		it("matches built-in leaf chunk shapes to SchemaFactory.leaves", () => {
-			const expected = new Map(
-				SchemaFactory.leaves.map((schema) => {
-					const type = brand<TreeNodeSchemaIdentifier>(schema.identifier);
-					const chunker = makeTreeChunker(
-						new TreeStoredSchemaRepository(toInitialSchema(schema)),
-						defaultSchemaPolicy,
-						defaultIncrementalEncodingPolicy,
-					);
-					const shape = chunker.shapeFromSchema(type);
-					assert(shape instanceof TreeShape);
-					chunker.dispose();
-					return [type, shape.withTopLevelLength(1)];
-				}),
-			);
-			assert.deepEqual(builtInLeafChunkShapes, expected);
+			assert.equal(builtInLeafChunkShapes.size, SchemaFactory.leaves.length);
+			for (const schema of SchemaFactory.leaves) {
+				const type = brand<TreeNodeSchemaIdentifier>(schema.identifier);
+				const chunker = makeTreeChunker(
+					new TreeStoredSchemaRepository(toInitialSchema(schema)),
+					defaultSchemaPolicy,
+					defaultIncrementalEncodingPolicy,
+				);
+				const expectedShape = chunker.shapeFromSchema(type);
+				assert(expectedShape instanceof TreeShape);
+				chunker.dispose();
+				const actualShape = builtInLeafChunkShapes.get(type);
+				assert(actualShape !== undefined);
+				assert.equal(actualShape.topLevelLength, 1);
+				assert(actualShape.treeShape.equals(expectedShape), type);
+			}
 		});
 
 		it("shares built-in leaf shapes across batches", () => {
