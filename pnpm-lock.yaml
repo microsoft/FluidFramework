@@ -140,7 +140,7 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@napi-rs/nice':
-        specifier: 1.1.1
+        specifier: ^1.1.1
         version: 1.1.1
       auto-changelog:
         specifier: ^2.4.0
