@@ -263,6 +263,7 @@ interface UniformDecodingPlan {
  * Shared shapes for built-in leaves, independent of decoding context.
  * @remarks
  * Matches `SchemaFactory.leaves`, which cannot be imported here due to layering.
+ * String shapes support compressed identifiers to match the schema-derived shapes used for local content.
  * Exported for testing.
  * This exists to help optimize decoding of leaves.
  */
@@ -270,7 +271,7 @@ export const builtInLeafChunkShapes: ReadonlyMap<TreeNodeSchemaIdentifier, Chunk
 	new Map(
 		["number", "string", "boolean", "null", "handle"].map((name) => {
 			const type = brand<TreeNodeSchemaIdentifier>(`com.fluidframework.leaf.${name}`);
-			return [type, new TreeShape(type, true, []).withTopLevelLength(1)];
+			return [type, new TreeShape(type, true, [], name === "string").withTopLevelLength(1)];
 		}),
 	);
 
@@ -805,7 +806,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 			this.leafShape = chunkShape;
 			this.decode = (stream): TreeChunk => {
 				const value = readStreamValue(stream);
-				return new UniformChunk(chunkShape, [value]);
+				return new UniformChunk(chunkShape, [value], context.idDecodingContext.idCompressor);
 			};
 		}
 	}

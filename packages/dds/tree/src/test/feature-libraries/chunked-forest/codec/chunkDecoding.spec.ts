@@ -14,9 +14,19 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
+import {
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	TreeStoredSchemaRepository,
+} from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
+import {
+	chunkField,
+	makeTreeChunker,
+	tryCoalesceUniformChunks,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
@@ -70,8 +80,13 @@ import {
 	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules -- Tests inspect the decoded chunk representation.
 } from "../../../../feature-libraries/chunked-forest/uniformChunk.js";
-import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { SchemaFactory } from "../../../../simple-tree/index.js";
+import {
+	type TreeChunk,
+	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+} from "../../../../feature-libraries/index.js";
+import { SchemaFactory, toInitialSchema } from "../../../../simple-tree/index.js";
 import {
 	IdDecodingContext,
 	type ReferenceCountedBase,
@@ -245,7 +260,15 @@ describe("chunkDecoding", () => {
 			const expected = new Map(
 				SchemaFactory.leaves.map((schema) => {
 					const type = brand<TreeNodeSchemaIdentifier>(schema.identifier);
-					return [type, new TreeShape(type, true, []).withTopLevelLength(1)];
+					const chunker = makeTreeChunker(
+						new TreeStoredSchemaRepository(toInitialSchema(schema)),
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+					);
+					const shape = chunker.shapeFromSchema(type);
+					assert(shape instanceof TreeShape);
+					chunker.dispose();
+					return [type, shape.withTopLevelLength(1)];
 				}),
 			);
 			assert.deepEqual(builtInLeafChunkShapes, expected);
@@ -262,6 +285,140 @@ describe("chunkDecoding", () => {
 			assert.equal(first.shape, second.shape);
 			assert.deepEqual(first.values, [1]);
 			assert.deepEqual(second.values, [2]);
+		});
+
+		for (const encoding of ["leaf", "array", "identifier"] as const) {
+			for (const decodedFirst of [false, true]) {
+				for (const shared of [false, true]) {
+					it(`coalesces decoded strings with local strings (${encoding}, decoded first: ${decodedFirst}, shared: ${shared})`, () => {
+						const type = brand<TreeNodeSchemaIdentifier>(SchemaFactory.string.identifier);
+						const chunker = makeTreeChunker(
+							new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.string)),
+							defaultSchemaPolicy,
+							defaultIncrementalEncodingPolicy,
+						);
+						const localId = testIdCompressor.generateCompressedId();
+						const remoteId = testIdCompressor.generateCompressedId();
+						const remoteString = testIdCompressor.decompress(remoteId);
+						const localExpected = ["local", testIdCompressor.decompress(localId)].map(
+							(value) => ({ type, value }),
+						);
+						const localChunks = chunkField(cursorForJsonableTreeField(localExpected), {
+							policy: chunker,
+							idCompressor: testIdCompressor,
+						});
+						assert.equal(localChunks.length, 1);
+						const local = localChunks[0];
+						assert(local instanceof UniformChunk);
+						assert.deepEqual(local.values, ["local", localId]);
+						const encodedValues = [
+							"remote",
+							encoding === "identifier"
+								? testIdCompressor.normalizeToOpSpace(remoteId)
+								: remoteString,
+						];
+						const decoded =
+							encoding === "leaf"
+								? decodeField([{ c: { type, value: true } }], [0, "remote"])
+								: decodeField(
+										[
+											{ a: 1 },
+											{
+												c: {
+													type,
+													value: encoding === "identifier" ? SpecialField.Identifier : true,
+												},
+											},
+										],
+										[0, encodedValues],
+									);
+						assert(decoded instanceof UniformChunk);
+						assert.equal(decoded.idCompressor, testIdCompressor);
+						assert(decoded.shape.treeShape.equals(local.shape.treeShape));
+						if (encoding === "array") {
+							assert.equal(decoded.values, encodedValues);
+						} else if (encoding === "identifier") {
+							assert.deepEqual(decoded.values, ["remote", remoteId]);
+						}
+						const decodedExpected = (
+							encoding === "leaf" ? ["remote"] : ["remote", remoteString]
+						).map((value) => ({ type, value }));
+						if (shared) {
+							local.referenceAdded();
+							decoded.referenceAdded();
+						}
+						const [left, right] = decodedFirst ? [decoded, local] : [local, decoded];
+						const merged = tryCoalesceUniformChunks(left, right, chunker);
+						assert(merged instanceof UniformChunk);
+						assert.equal(merged.idCompressor, testIdCompressor);
+						assertChunkCursorEquals(
+							merged,
+							decodedFirst
+								? [...decodedExpected, ...localExpected]
+								: [...localExpected, ...decodedExpected],
+						);
+						assertRefCount(merged, 1);
+						if (shared) {
+							assert.notEqual(merged, left);
+							assertChunkCursorEquals(local, localExpected);
+							assertChunkCursorEquals(decoded, decodedExpected);
+							assertRefCount(local, 1);
+							assertRefCount(decoded, 1);
+							local.referenceRemoved();
+							decoded.referenceRemoved();
+						} else {
+							assert.equal(merged, left);
+							assertRefCount(right, 0);
+						}
+						merged.referenceRemoved();
+						chunker.dispose();
+					});
+				}
+			}
+		}
+
+		it("coalesces decoded fixed objects containing strings with local objects", () => {
+			const factory = new SchemaFactory("coalescing");
+			const objectSchema = factory.object("Object", { text: factory.string });
+			const objectType = brand<TreeNodeSchemaIdentifier>(objectSchema.identifier);
+			const stringType = brand<TreeNodeSchemaIdentifier>(factory.string.identifier);
+			const chunker = makeTreeChunker(
+				new TreeStoredSchemaRepository(toInitialSchema(objectSchema)),
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const localId = testIdCompressor.generateCompressedId();
+			const expected = ["remote", testIdCompressor.decompress(localId)].map((value) => ({
+				type: objectType,
+				fields: { text: [{ type: stringType, value }] },
+			}));
+			const values = ["remote"];
+			const decoded = decodeField(
+				[
+					{ a: 1 },
+					{ c: { type: objectType, value: false, fields: [["text", 2]] } },
+					{ c: { type: stringType, value: true } },
+				],
+				[0, values],
+			);
+			assert(decoded instanceof UniformChunk);
+			assert.equal(decoded.values, values);
+			const localChunks = chunkField(cursorForJsonableTreeField(expected.slice(1)), {
+				policy: chunker,
+				idCompressor: testIdCompressor,
+			});
+			assert.equal(localChunks.length, 1);
+			const local = localChunks[0];
+			assert(local instanceof UniformChunk);
+			assert.deepEqual(local.values, [localId]);
+			assert(decoded.shape.treeShape.equals(local.shape.treeShape));
+			const merged = tryCoalesceUniformChunks(decoded, local, chunker);
+			assert(merged instanceof UniformChunk);
+			assert.equal(merged.idCompressor, testIdCompressor);
+			assertChunkCursorEquals(merged, expected);
+			assertRefCount(local, 0);
+			merged.referenceRemoved();
+			chunker.dispose();
 		});
 
 		it("decodes empty repetitions of a nonzero-width shape", () => {
