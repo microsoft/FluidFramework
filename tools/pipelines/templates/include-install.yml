@@ -54,11 +54,11 @@ steps:
         workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
         script: |
           set -eu -o pipefail
-          temp_dir="$(mktemp -d)"
+          # Azure Pipelines cleans this directory after the job.
+          temp_dir="$(mktemp -d "$(Agent.TempDirectory)/pnpm-fetch.XXXXXX")"
           cp pnpm-workspace.yaml "$temp_dir/pnpm-workspace.yaml"
           cleanup() {
             cp "$temp_dir/pnpm-workspace.yaml" pnpm-workspace.yaml
-            rm -rf "$temp_dir"
           }
           trap cleanup EXIT
 
