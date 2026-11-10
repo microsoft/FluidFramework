@@ -54,6 +54,9 @@ interface JUnitTestLike {
 	 * The test's fully qualified title: its own title, prefixed by its ancestor `describe` blocks' titles.
 	 */
 	fullTitle(): string;
+
+	state?: string;
+	isPending(): boolean;
 }
 
 /**
@@ -107,6 +110,8 @@ export class FluidXunitReporter extends XUnitReporterCtor {
 		const wrapped = Object.create(test, {
 			title: { value: test.fullTitle(), enumerable: true },
 			parent: { value: wrappedParent, enumerable: true },
+			// Parallel serialization omits ancestor pending state, but retains the test's final state.
+			isPending: { value: () => test.state === "pending" || test.isPending() },
 		}) as JUnitTestLike;
 		super.test(wrapped, options);
 	}

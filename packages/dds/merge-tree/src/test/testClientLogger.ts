@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -357,13 +356,11 @@ export class TestClientLogger {
 	private static getSegString(client: TestClient): { acked: string; local: string } {
 		let acked: string = "";
 		let local: string = "";
-		const nodes = new DoublyLinkedList<IMergeNode>([client.mergeTree.root]);
+		const nodes: IMergeNode[] = [client.mergeTree.root];
 		let parent: IMergeNode | undefined;
 		const { minSeq } = client.getCollabWindow();
-		while (nodes.length > 0) {
-			// Safe due to length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const node = nodes.shift()!.data;
+		// Preserve breadth-first order without allocating a linked-list entry for every node.
+		for (const node of nodes) {
 			if (node.isLeaf()) {
 				if (node.parent !== parent) {
 					if (acked.length > 0) {

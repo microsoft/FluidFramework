@@ -1,0 +1,31 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+steps:
+- task: Bash@3
+  displayName: Use development bundles for private non-profiled examples
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+    script: |
+      set -eu -o pipefail
+      node --input-type=module <<'JS'
+      import { execFileSync } from "node:child_process";
+      import fs from "node:fs";
+      import path from "node:path";
+      const packages = JSON.parse(execFileSync("pnpm", ["list", "-r", "--depth", "-1", "--json"], { encoding: "utf8" }));
+      for (const pkg of packages) {
+        const file = path.join(pkg.path, "package.json");
+        const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+        const scripts = manifest.scripts ?? {};
+        if (manifest.private !== true ||
+            scripts.webpack !== "webpack --env production" ||
+            scripts["webpack:dev"] !== "webpack --env development" ||
+            Object.keys(scripts).some((name) => name.startsWith("webpack:profile"))) {
+          continue;
+        }
+        scripts.webpack = scripts["webpack:dev"];
+        fs.writeFileSync(file, JSON.stringify(manifest, undefined, "\t") + "\n");
+        console.log(`Development-only bundle validation: ${pkg.name}`);
+      }
+      JS
