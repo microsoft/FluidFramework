@@ -2164,7 +2164,7 @@ export class Container
 		let turns = 0;
 		let stoppedBecausePaused = false;
 
-		for (;;) {
+		while (true) {
 			await inbound.waitTillProcessingDone();
 			turns++;
 			if (
