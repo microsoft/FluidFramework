@@ -45,6 +45,7 @@ import type {
 } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -533,6 +534,15 @@ export interface IFluidDataStoreChannel extends IDisposable {
  */
 export interface IFluidDataStoreChannelInternal extends IFluidDataStoreChannel {
 	notifyStagingMode?(staging: boolean): void;
+	/**
+	 * Summarizes with the previous summary's path and sequence numbers when available.
+	 */
+	summarize(
+		fullTree?: boolean,
+		trackState?: boolean,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): Promise<ISummaryTreeWithStats>;
 }
 
 /**

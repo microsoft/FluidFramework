@@ -19,6 +19,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreChannel,
+	IExperimentalIncrementalSummaryContext,
 	IFluidDataStoreContext,
 	FluidDataStoreContextInternal,
 	IGarbageCollectionData,
@@ -287,8 +288,15 @@ export class LeafChannelRuntime
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return summarizeChannelAsync(this.loadedChannel, fullTree, trackState, telemetryContext);
+		return summarizeChannelAsync(
+			this.loadedChannel,
+			fullTree,
+			trackState,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 	}
 
 	public getAttachGCData(): IGarbageCollectionData {

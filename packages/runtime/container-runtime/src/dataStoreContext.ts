@@ -54,6 +54,7 @@ import type {
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreChannelInternal,
+	IExperimentalIncrementalSummaryContext,
 	IFluidDataStoreChannelCollection,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
@@ -500,8 +501,13 @@ export abstract class FluidDataStoreContext
 				: AttachState.Detached;
 
 		this.summarizerNode = props.createSummarizerNodeFn(
-			async (fullTree, trackState, telemetryContext) =>
-				this.summarizeInternal(fullTree, trackState, telemetryContext),
+			async (fullTree, trackState, telemetryContext, incrementalSummaryContext) =>
+				this.summarizeInternal(
+					fullTree,
+					trackState,
+					telemetryContext,
+					incrementalSummaryContext,
+				),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
@@ -852,14 +858,22 @@ export abstract class FluidDataStoreContext
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummarizeInternalResult> {
 		await this.realize();
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const summarizeResult = await this.channel!.summarize(
+		const channel: IFluidDataStoreChannelInternal | undefined = this.channel;
+		assert(channel !== undefined, "Realized data-store context must have a channel");
+		const summarizeResult = await channel.summarize(
 			fullTree,
 			trackState,
 			telemetryContext,
+			incrementalSummaryContext === undefined || this.isSharedObjectChannel
+				? incrementalSummaryContext
+				: {
+						...incrementalSummaryContext,
+						summaryPath: `${incrementalSummaryContext.summaryPath}/${channelsTreeName}`,
+					},
 		);
 
 		// Preserve DDS child slots without adding a .channels subtree or .component blob.
