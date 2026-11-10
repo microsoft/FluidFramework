@@ -9,4 +9,5 @@ A customizable record node (one declared as a class extending `SchemaFactory.rec
 Previously, `Object.keys`, `Reflect.ownKeys`, object spread and similar operations threw a `TypeError` on such a node when one of those properties was non-configurable.
 This occurs, for example, when a subclass of a customizable record with a private field is compiled with Babel's `privateFieldsAsSymbols` assumption.
 
-`Object.keys` and object spread still report only the record's entries, since symbol properties are not enumerable string keys.
+`Object.keys` still reports only the record's entries, since symbol properties are not string keys.
+Object spread copies a node's enumerable own symbol properties as well as its entries, but private fields compiled to symbol properties are not enumerable, so spread still copies only the record's entries in that case.
