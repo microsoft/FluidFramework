@@ -604,9 +604,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// The unknown optional address field permits viewing and is retained by upgrades.
+		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
 
 		// The document is already initialized, and there are no differences that prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
@@ -671,9 +671,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// Unknown optional fields permit viewing and moving people, and upgrades retain address.
+		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
 
 		// The document is already initialized, and the unknown field does not prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);

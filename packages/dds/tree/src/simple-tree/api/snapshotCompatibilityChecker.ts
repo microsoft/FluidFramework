@@ -245,7 +245,7 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * True if and only if the schemas have identical compatibility.
 	 * @remarks
-	 * This includes producing equivalent initial stored schemas,
+	 * This includes producing the equivalent stored schema (which `currentViewOfSnapshotDocument` and `snapshotViewOfCurrentDocument` also measure)
 	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
 	 *
 	 * This includes compatibility with all potential future schema changes.

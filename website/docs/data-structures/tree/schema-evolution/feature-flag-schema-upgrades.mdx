@@ -171,7 +171,7 @@ Once a document's stored schema has been upgraded, it cannot be downgraded.
 However, rolling back a feature flag is safe.
 With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
 No opt-in is needed to preserve permissions in documents that were already upgraded.
-Calling `upgradeSchema()` retains their existing allowed types and optional fields while applying any other compatible additions.
+Calling `upgradeSchema()` retains their already-enabled types and optionality while applying any other compatible additions.
 
 Disabling the feature flag prevents this client's policy from introducing the staged change where it is not already enabled; other clients can still enable it.
 This means:

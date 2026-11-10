@@ -136,7 +136,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	describe("parse and snapshot preserve test schemas", () => {
-		// TODO:AB#82814: Preserve staged optionality in the snapshot format and reconstruction before enabling these cases.
+		// TODO:AB#82814: Fix compatibility logic and enable these staged optional cases, which are currently skipped below.
 		const stagedOptionalTestCases = new Set([
 			"hasStagedOptionalField",
 			"stagedOptionalRoot",
@@ -144,7 +144,7 @@ describe("snapshotCompatibilityChecker", () => {
 		]);
 
 		for (const testCase of testSchema) {
-			// Staged-optional fields currently round-trip as ordinary optional fields, changing initialization and compatibility.
+			// TODO:AB#82814: Fix compatibility logic and enable the staged optional cases.
 			const test = stagedOptionalTestCases.has(testCase.name) ? it.skip : it;
 			test(testCase.name, () => {
 				// Every test schema, including staged optional fields, must equal its snapshot.
@@ -304,151 +304,33 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	/**
-	 * V1 declares optional `notes` on `Task`.
-	 * V2 removes `notes` from its view while allowing unknown optional fields.
+	 * V1 declares numeric `priority` values and stages strings without enabling them.
+	 * V2 completes the rollout by declaring strings as an ordinary allowed type.
 	 *
-	 * Reconstruct V1 from a snapshot and compare it with V2 in both directions.
-	 * V2 can read and preserve notes in V1 documents, but V1 must add the field schema before viewing a fresh V2 document.
-	 * The snapshot checker must reject V2 while V1 remains in the collaboration window, even though V1's runtime upgrade would be safe.
-	 * Once V1 is excluded from that window, both snapshot modes must succeed without rewriting V1's snapshot or adding retained notes to V2's snapshot.
-	 *
-	 * @privateRemarks
-	 * TODO: in a future version, we intend to make removal of optional fields permitted (when unknown optional fields are allowed).
-	 * We will need to update this test once that behavior is implemented.
+	 * Compare both directions and record the versions with V1 either inside or outside the collaboration window.
+	 * V1 must be able to read and preserve V2's strings under its restrictive policy, while V2 must be able to upgrade V1's numeric-only documents.
+	 * Both snapshot modes must accept the rollout.
 	 */
-	it("distinguishes removing an optional field from reopening a fresh document with the old schema", () => {
-		const factory = new SchemaFactory("taskRollback");
+	it("permits historical clients to retain already-enabled staged types in a no-op upgrade", () => {
+		const factory = new SchemaFactoryBeta("taskPriorityRollout");
 
 		class TaskV1 extends factory.object("Task", {
 			title: factory.string,
-			notes: factory.optional(factory.string),
+			priority: factory.types([factory.number, factory.staged(factory.string)]),
 		}) {}
 
-		// Remove the `notes` field.
-		// A client using this schema can still open documents that contain the `notes` field as an unknown optional field.
-		// Documents created with this schema will need to be upgraded before they can be viewed by clients using the `TaskV1` schema.
+		// Finish the priority rollout: newly created documents allow string priorities without an explicit staged policy.
 		class TaskV2 extends factory.object("Task", {
 			title: factory.string,
+			priority: [factory.number, factory.string],
 		}) {}
-
-		const historical = importCompatibilitySchemaSnapshot(
-			exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
-		);
+		const historical = new TreeViewConfiguration({ schema: TaskV1 });
 		const current = new TreeViewConfiguration({ schema: TaskV2 });
 		const result = getCompatibility(current, historical);
 
-		// The current view can open an older document; retaining `notes` makes its proposed upgrade a no-op.
-		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
-		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-		// A fresh document created without `notes` needs an upgrade before the historical view can write that field.
-		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		// The historical view supports strings through staging; the composed candidate preserves them despite the restrictive policy.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-
-		// These views produce different initial schemas, even though removing the field permits a no-op upgrade.
-		assert.equal(result.identicalCompatibility, false);
-
-		// Record the historical version so the snapshot checker can validate collaboration with it.
-		const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "taskRollback",
-		});
-		const historicalSnapshot = snapshots.get("1.0.0.json");
-		assert(historicalSnapshot !== undefined);
-
-		// A safe runtime upgrade does not satisfy the snapshot policy's requirement for immediate historical viewing.
-		for (const mode of ["update", "assert"] as const) {
-			assert.throws(
-				() =>
-					snapshotSchemaCompatibility({
-						schema: current,
-						fileSystem,
-						version: "2.0.0",
-						minVersionForCollaboration: "1.0.0",
-						mode,
-						snapshotDirectory: "taskRollback",
-					}),
-				/Historical version "1.0.0" cannot view documents from "2.0.0"/,
-			);
-
-			// Excluding the historical client permits the release while still requiring upgrades of historical documents.
-			snapshotSchemaCompatibility({
-				schema: current,
-				fileSystem,
-				version: "2.0.0",
-				minVersionForCollaboration: "2.0.0",
-				mode,
-				snapshotDirectory: "taskRollback",
-			});
-
-			// Retention belongs to a document's upgrade target, not to the application schema saved in a snapshot.
-			// Keep the historical snapshot byte-for-byte unchanged and save the current view without `notes`.
-			assert.equal(snapshots.get("1.0.0.json"), historicalSnapshot);
-			const currentSnapshot = snapshots.get("2.0.0.json");
-			assert(currentSnapshot !== undefined);
-			assert.deepEqual(
-				JSON.parse(currentSnapshot),
-				exportCompatibilitySchemaSnapshot(current),
-			);
-		}
-	});
-
-	/**
-	 * V1 declares optional `reminder` containing a `Reminder` node.
-	 * V2 replaces that field with optional `schedule` containing a different `Schedule` node type.
-	 *
-	 * Reconstruct V1 from its snapshot and compare each version's view against documents initialized by the other.
-	 * Each view must be able to add its own field while retaining the other field and its otherwise-unknown node definition.
-	 * Neither view can read the other's fresh document before upgrading.
-	 * Snapshot validation must therefore reject V2 while V1 remains in the collaboration window, and accept it once only V2 clients are required to collaborate.
-	 *
-	 * @privateRemarks
-	 * TODO: in a future version, we intend to make removal of optional fields permitted (when unknown optional fields are allowed).
-	 * We will need to update this test once that behavior is implemented.
-	 */
-	it("permits upgrades in both directions when versions declare different optional node-valued fields", () => {
-		const factory = new SchemaFactory("taskFeatureReplacement");
-
-		class Reminder extends factory.object("Reminder", {
-			message: factory.string,
-		}) {}
-		class TaskV1 extends factory.object("Task", {
-			title: factory.string,
-			reminder: factory.optional(Reminder),
-		}) {}
-
-		// Replace reminders with scheduling; the later view no longer declares `Reminder`.
-		class Schedule extends factory.object("Schedule", {
-			durationMinutes: factory.number,
-		}) {}
-		class TaskV2 extends factory.object("Task", {
-			title: factory.string,
-			schedule: factory.optional(Schedule),
-		}) {}
-
-		const historical = importCompatibilitySchemaSnapshot(
-			structuredClone(
-				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
-			),
-		);
-		const current = new TreeViewConfiguration({ schema: TaskV2 });
-		const result = getCompatibility(current, historical);
-
-		// Each view must add its own optional field while retaining the other field and its otherwise-unknown node definition.
-		// Neither view can write its field yet, and neither proposed upgrade is a no-op.
-		for (const direction of [
-			result.currentViewOfSnapshotDocument,
-			result.snapshotViewOfCurrentDocument,
-		]) {
-			assert.equal(direction.canView, false);
-			assert.equal(direction.canUpgrade, true);
-		}
-		assert.equal(result.identicalCompatibility, false);
 
 		const [fileSystem] = inMemorySnapshotFileSystem();
 		snapshotSchemaCompatibility({
@@ -457,31 +339,25 @@ describe("snapshotCompatibilityChecker", () => {
 			version: "1.0.0",
 			minVersionForCollaboration: "1.0.0",
 			mode: "update",
-			snapshotDirectory: "taskFeatureReplacement",
+			snapshotDirectory: "taskPriorityRollout",
 		});
 
-		// Both runtime upgrades are safe, but the snapshot policy still requires historical clients to view immediately.
-		for (const mode of ["update", "assert"] as const) {
-			assert.throws(
-				() =>
-					snapshotSchemaCompatibility({
-						schema: current,
-						fileSystem,
-						version: "2.0.0",
-						minVersionForCollaboration: "1.0.0",
-						mode,
-						snapshotDirectory: "taskFeatureReplacement",
-					}),
-				/Historical version "1.0.0" cannot view documents from "2.0.0"/,
-			);
-			snapshotSchemaCompatibility({
-				schema: current,
-				fileSystem,
-				version: "2.0.0",
-				minVersionForCollaboration: "2.0.0",
-				mode,
-				snapshotDirectory: "taskFeatureReplacement",
-			});
+		// The later client must add string support to documents created before the rollout completed.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// This forward rollout must pass in both snapshot modes, whether or not the older client is still required to collaborate.
+		for (const minVersionForCollaboration of ["1.0.0", "2.0.0"]) {
+			for (const mode of ["update", "assert"] as const) {
+				snapshotSchemaCompatibility({
+					schema: current,
+					fileSystem,
+					version: "2.0.0",
+					minVersionForCollaboration,
+					mode,
+					snapshotDirectory: "taskPriorityRollout",
+				});
+			}
 		}
 	});
 
@@ -568,187 +444,6 @@ describe("snapshotCompatibilityChecker", () => {
 		}
 	});
 
-	/**
-	 * V1 declares numeric `priority` values and stages strings without enabling them.
-	 * V2 completes the rollout by declaring strings as an ordinary allowed type.
-	 *
-	 * Compare both directions and record the versions with V1 either inside or outside the collaboration window.
-	 * V1 must be able to read and preserve V2's strings under its restrictive policy, while V2 must be able to upgrade V1's numeric-only documents.
-	 * Both snapshot modes must accept the rollout.
-	 */
-	it("permits historical clients to retain already-enabled staged types in a no-op upgrade", () => {
-		const factory = new SchemaFactoryBeta("taskPriorityRollout");
-
-		class TaskV1 extends factory.object("Task", {
-			title: factory.string,
-			priority: factory.types([factory.number, factory.staged(factory.string)]),
-		}) {}
-
-		// Finish the priority rollout: newly created documents allow string priorities without an explicit staged policy.
-		class TaskV2 extends factory.object("Task", {
-			title: factory.string,
-			priority: [factory.number, factory.string],
-		}) {}
-		const historical = new TreeViewConfiguration({ schema: TaskV1 });
-		const current = new TreeViewConfiguration({ schema: TaskV2 });
-		const result = getCompatibility(current, historical);
-
-		// The historical view supports strings through staging; the composed candidate preserves them despite the restrictive policy.
-		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-
-		const [fileSystem] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "taskPriorityRollout",
-		});
-
-		// The later client must add string support to documents created before the rollout completed.
-		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
-		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-		// This forward rollout must pass in both snapshot modes, whether or not the older client is still required to collaborate.
-		for (const minVersionForCollaboration of ["1.0.0", "2.0.0"]) {
-			for (const mode of ["update", "assert"] as const) {
-				snapshotSchemaCompatibility({
-					schema: current,
-					fileSystem,
-					version: "2.0.0",
-					minVersionForCollaboration,
-					mode,
-					snapshotDirectory: "taskPriorityRollout",
-				});
-			}
-		}
-	});
-
-	/**
-	 * V1 permits numeric and string `priority` values.
-	 * V2 removes string support entirely rather than retaining it as a staged alternative.
-	 *
-	 * Record V1's snapshot, then validate V2 with V1 both inside and outside the collaboration window.
-	 * V2 must reject documents whose stored schema permits strings; composition cannot make an unsupported type readable.
-	 * Excluding V1 clients from collaboration must not waive V2's obligation to support documents they already created.
-	 */
-	it("rejects current clients that can neither view nor upgrade historical documents regardless of the collaboration window", () => {
-		const factory = new SchemaFactory("incompatibleTaskPriorityRollback");
-
-		class TaskV1 extends factory.object("Task", {
-			title: factory.string,
-			priority: [factory.number, factory.string],
-		}) {}
-
-		// Remove support for string priorities entirely, rather than leaving them staged for existing documents.
-		class TaskV2 extends factory.object("Task", {
-			title: factory.string,
-			priority: factory.number,
-		}) {}
-		const historical = new TreeViewConfiguration({ schema: TaskV1 });
-		const current = new TreeViewConfiguration({ schema: TaskV2 });
-		const result = getCompatibility(current, historical);
-
-		// Historical documents may contain string priorities that the current view cannot read or preserve through an upgrade.
-		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
-		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, false);
-
-		const [fileSystem] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "incompatibleTaskPriorityRollback",
-		});
-
-		// Dropping older clients from the collaboration window must not drop support for their existing documents.
-		for (const minVersionForCollaboration of ["1.0.0", "2.0.0"]) {
-			assert.throws(
-				() =>
-					snapshotSchemaCompatibility({
-						schema: current,
-						fileSystem,
-						version: "2.0.0",
-						minVersionForCollaboration,
-						mode: "update",
-						snapshotDirectory: "incompatibleTaskPriorityRollback",
-					}),
-				/Current version "2.0.0" cannot upgrade documents from "1.0.0"/,
-			);
-		}
-	});
-
-	/**
-	 * V1 declares only `title` and explicitly disables unknown optional fields.
-	 * V2 adds optional `notes`.
-	 *
-	 * Record V1's snapshot and validate V2 while changing the minimum collaboration version.
-	 * V2 can upgrade V1 documents, but V1 cannot view or safely upgrade V2 documents containing the new field schema.
-	 * Validation must fail while V1 clients are required to collaborate and succeed when the window starts at V2.
-	 * The requirement for V2 to upgrade historical documents remains in force in either case.
-	 */
-	it("rejects incompatible historical clients only within the collaboration window", () => {
-		const factory = new SchemaFactory("strictTask");
-
-		class TaskV1 extends factory.object(
-			"Task",
-			{ title: factory.string },
-			{ allowUnknownOptionalFields: false },
-		) {}
-
-		// Add optional notes. The historical client's explicit opt-out prevents it from tolerating this new field.
-		class TaskV2 extends factory.object("Task", {
-			title: factory.string,
-			notes: factory.optional(factory.string),
-		}) {}
-		const historical = new TreeViewConfiguration({ schema: TaskV1 });
-		const current = new TreeViewConfiguration({ schema: TaskV2 });
-		const result = getCompatibility(current, historical);
-
-		// The new version can upgrade old documents, but the historical version can neither tolerate nor safely remove `notes`.
-		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
-		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
-
-		const [fileSystem] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "strictTask",
-		});
-
-		// Requiring collaboration with the historical client must still reject this schema change.
-		assert.throws(
-			() =>
-				snapshotSchemaCompatibility({
-					schema: current,
-					fileSystem,
-					version: "2.0.0",
-					minVersionForCollaboration: "1.0.0",
-					mode: "update",
-					snapshotDirectory: "strictTask",
-				}),
-			/Historical version "1.0.0" cannot view documents from "2.0.0"/,
-		);
-
-		// Dropping the old client from the collaboration window permits the release; the current client must still be able to view or upgrade old documents.
-		snapshotSchemaCompatibility({
-			schema: current,
-			fileSystem,
-			version: "2.0.0",
-			minVersionForCollaboration: "2.0.0",
-			mode: "update",
-			snapshotDirectory: "strictTask",
-		});
-	});
-
 	it("SnapshotFileSystem", () => {
 		// Validate example for how to use implement SnapshotFileSystem using node fs and path modules works.
 		allowUnused<requireAssignableTo<typeof nodeFileSystem, SnapshotFileSystem>>();
@@ -780,15 +475,6 @@ describe("snapshotCompatibilityChecker", () => {
 			});
 		});
 
-		/**
-		 * The saved V1 snapshot describes a two-dimensional point that rejects unknown optional fields.
-		 * The saved V2 snapshot adds optional `z`.
-		 *
-		 * Validate several declarations as V2 without updating the saved snapshots.
-		 * Reusing V1's declaration or a schema with no allowed root types must report stale or incompatible schema.
-		 * The correct V2 declaration must still be rejected while strict V1 clients remain in the collaboration window.
-		 * It must pass when the window starts at V2 and the declaration matches the saved snapshot.
-		 */
 		it("write current view schema snapshot", () => {
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
 
@@ -833,7 +519,7 @@ Snapshots exist for versions: [
 				() =>
 					snapshotSchemaCompatibility({
 						version: "2.0.0",
-						schema: new TreeViewConfiguration({ schema: [] }), // Cannot view or upgrade historical documents with this schema.
+						schema: new TreeViewConfiguration({ schema: [] }), // Schema invalid for all versions, so should fail
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0",
 						mode: "assert",
@@ -1636,228 +1322,198 @@ Snapshots exist for versions: [
 		});
 	});
 
-	describe("getCompatibility", () => {
-		/**
-		 * V1 declares a two-dimensional point and permits unknown optional fields by default.
-		 * V2 adds optional `z`.
-		 *
-		 * Compare V2 with V1 and with itself.
-		 * V2 must upgrade V1 documents before it can write `z`.
-		 * V1 can read V2 documents while treating `z` as an unknown optional field, and upgrades through V1 must preserve that stored field.
-		 * Identical V2 declarations must permit both viewing and upgrading.
-		 */
-		it("evolving a schema by adding an optional field", () => {
-			const factory = new SchemaFactoryBeta("test");
+	it("getCompatibility", () => {
+		const factory = new SchemaFactoryBeta("test");
 
-			// Initial version of `Point` only has x and y coordinates (2D point).
-			class Point2D extends factory.object("Point", {
+		class Point2D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+		}) {}
+
+		class Point2DAllow extends factory.object(
+			"Point",
+			{
 				x: factory.number,
 				y: factory.number,
-			}) {}
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
 
-			// Updated version of `Point` adds an optional z coordinate (3D point).
-			class Point3D extends factory.object("Point", {
-				x: factory.number,
-				y: factory.number,
-				z: factory.optional(factory.number), // New
-			}) {}
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
 
-			{
-				const result = getCompatibility(
-					/* current */ new TreeViewConfiguration({ schema: Point3D }),
-					/* previous */ new TreeViewConfiguration({ schema: Point2D }),
-				);
-
-				// V2 needs the stored schema to permit writes to `z` before its view can be used, even though `z` is optional.
-				// Adding that optional field is a safe upgrade of a V1 document.
-				assert.equal(result.currentViewOfSnapshotDocument.canView, false);
-				assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-				// V1 can already read and edit V2 documents while treating `z` as an unknown optional field.
-				// Its upgrade remains permitted because composition preserves `z` rather than removing it.
-				assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-				assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-			}
-
-			{
-				const result = getCompatibility(
-					/* current */ new TreeViewConfiguration({ schema: Point3D }),
-					/* previous */ new TreeViewConfiguration({ schema: Point3D }),
-				);
-
-				// Both views declare the same fields, so documents can be viewed in either direction without an upgrade.
-				// Explicit upgrade requests are also permitted and require no stored-schema change.
-				assert.equal(result.currentViewOfSnapshotDocument.canView, true);
-				assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-				assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-				assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-			}
-
-			// TODO: once we add support for removal of optional fields, we should test that scenario here as well.
-		});
-
-		/**
-		 * V1 permits an optional numeric root and stages strings without enabling them.
-		 * V2 removes the staged wrapper so new documents also permit strings.
-		 *
-		 * Compare the two view configurations without applying an upgrade.
-		 * V2 must report that V1 documents need an upgrade before viewing; V1 must report that it can read and preserve V2's strings.
-		 * These supported directions must not make the distinct view-schema snapshots appear identical.
-		 */
-		it("reports directional compatibility for a staged root type", () => {
-			const factory = new SchemaFactoryBeta("test");
-			const stagedString = factory.staged(factory.string);
-			const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
-
-			// The later schema fully enables the string root type that the earlier schema staged.
-			const enabledSchema = factory.optional([factory.number, factory.string]);
-
+		{
 			const result = getCompatibility(
-				/* current: */ new TreeViewConfiguration({ schema: enabledSchema }),
-				/* previous: */ new TreeViewConfiguration({ schema: stagedSchema }),
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point2D }),
 			);
-
-			// The later view must add strings to an earlier document; the earlier view preserves strings in a later document.
 			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-			assert.equal(result.identicalCompatibility, false);
-		});
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+		}
 
-		/**
-		 * Declare `Item.value` as staged optional, then export and reconstruct that same schema from a snapshot.
-		 * Reconstruction currently turns the staged-optional field into an ordinary optional field.
-		 *
-		 * Compare the original and reconstructed configurations.
-		 * The original view can read and preserve optionality in documents created by the reconstructed view.
-		 * The reconstructed view must upgrade the original configuration's required field before viewing.
-		 * Identical exported snapshots must not be used to assume that both directions have the same compatibility.
-		 */
-		it("reports directional compatibility even when snapshots are identical", () => {
-			const factory = new SchemaFactoryAlpha("test");
-			class Item extends factory.object("Item", {
-				value: factory.stagedOptional(factory.string),
-			}) {}
-			const config = new TreeViewConfigurationAlpha({ schema: Item });
-			const snapshot = importCompatibilitySchemaSnapshot(
-				exportCompatibilitySchemaSnapshot(config),
+		{
+			const result = getCompatibility(
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point2DAllow }),
 			);
+			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
+		}
 
-			const result = getCompatibility(config, snapshot);
-
-			// The staged view can read and preserve the snapshot's already-optional field.
+		{
+			const result = getCompatibility(
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point3D }),
+			);
 			assert.equal(result.currentViewOfSnapshotDocument.canView, true);
 			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-			// The imported view needs the current document's field upgraded from required to optional.
-			assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
-			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-
-			// Both views export the same snapshot despite their different staging behavior.
-			assert.equal(result.identicalCompatibility, true);
-		});
-
-		/**
-		 * Use the same staged root schema in two configurations: one restrictive and one that enables strings.
-		 *
-		 * The enabled configuration should need to upgrade numeric-only documents, while the restrictive configuration should read and preserve enabled strings.
-		 * The comparison should distinguish the configurations' initialization behavior despite their identical view declarations.
-		 * This remains skipped because the helpers ignore configured policies and snapshots currently record only the view schema.
-		 *
-		 * @privateRemarks
-		 * TODO:AB#82814: Honor configured policies and distinguish them in snapshots before enabling this test.
-		 */
-		it.skip("distinguishes identical view schema with different staged policies", () => {
-			const factory = new SchemaFactoryBeta("test");
-			const stagedString = factory.staged(factory.string);
-			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
-			assert(stringUpgrade !== undefined);
-			const schema = factory.optional(factory.types([factory.number, stagedString]));
-			const enabledConfig = new TreeViewConfigurationAlpha({
-				schema,
-				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
-			});
-			const restrictiveConfig = new TreeViewConfiguration({ schema });
-
-			const result = getCompatibility(
-				/* current: */ enabledConfig,
-				/* previous: */ restrictiveConfig,
-			);
-
-			// With the policies applied, the current view must upgrade the previous document to enable strings.
-			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
-			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-			// The previous view can read and retain the enabled strings with its restrictive policy.
 			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-			assert.equal(result.identicalCompatibility, false);
-		});
+		}
 	});
 
-	describe("checkCompatibility", () => {
-		/**
-		 * V1 stages string root values and enables them through its configured policy.
-		 * V2 declares the same strings as an ordinary allowed type.
-		 *
-		 * Compare a document created by V1's enabled configuration with the V2 view.
-		 * V2 should already be able to view the document, and upgrading should remain permitted.
-		 * This remains skipped because the helper derives a restrictive document schema instead of honoring V1's configured policy.
-		 *
-		 * @privateRemarks
-		 * TODO:AB#82814: Honor the stored schema configuration's staged upgrade policy before enabling this test.
-		 */
-		it.skip("uses the stored schema configuration's staged upgrade policy", () => {
-			const factory = new SchemaFactoryBeta("test");
-			const stagedString = factory.staged(factory.string);
-			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
-			assert(stringUpgrade !== undefined);
-			const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
-			const enabledSchema = factory.optional([factory.number, factory.string]);
-			const storedSchemaConfig = new TreeViewConfigurationAlpha({
-				schema: stagedSchema,
-				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
-			});
+	/**
+	 * V1 permits an optional numeric root and stages strings without enabling them.
+	 * V2 removes the staged wrapper so new documents also permit strings.
+	 *
+	 * Compare the two view configurations without applying an upgrade.
+	 * V2 must report that V1 documents need an upgrade before viewing; V1 must report that it can read and preserve V2's strings.
+	 * These supported directions must not make the distinct view-schema snapshots appear identical.
+	 */
+	it("getCompatibility reports directional staged schema compatibility", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
 
-			const result = checkCompatibility(
-				storedSchemaConfig,
-				new TreeViewConfiguration({ schema: enabledSchema }),
-			);
+		// The later schema fully enables the string root type that the earlier schema staged.
+		const enabledSchema = factory.optional([factory.number, factory.string]);
 
-			assert.equal(result.canView, true);
-			assert.equal(result.canUpgrade, true);
+		const result = getCompatibility(
+			/* current: */ new TreeViewConfiguration({ schema: enabledSchema }),
+			/* previous: */ new TreeViewConfiguration({ schema: stagedSchema }),
+		);
+
+		// The later view must add strings to an earlier document; the earlier view preserves strings in a later document.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+		assert.equal(result.identicalCompatibility, false);
+	});
+
+	/**
+	 * Declare `Item.value` as staged optional, then export and reconstruct that same schema from a snapshot.
+	 * Reconstruction currently turns the staged-optional field into an ordinary optional field.
+	 *
+	 * Compare the original and reconstructed configurations.
+	 * The original view can read and preserve optionality in documents created by the reconstructed view.
+	 * The reconstructed view must upgrade the original configuration's required field before viewing.
+	 * Identical exported snapshots must not be used to assume that both directions have the same compatibility.
+	 */
+	it("getCompatibility reports directional compatibility even when snapshots are identical", () => {
+		const factory = new SchemaFactoryAlpha("test");
+		class Item extends factory.object("Item", {
+			value: factory.stagedOptional(factory.string),
+		}) {}
+		const config = new TreeViewConfigurationAlpha({ schema: Item });
+		const snapshot = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(config),
+		);
+
+		const result = getCompatibility(config, snapshot);
+
+		// The staged view can read and preserve the snapshot's already-optional field.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// The imported view needs the current document's field upgraded from required to optional.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+
+		// Both views export the same snapshot despite their different staging behavior.
+		assert.equal(result.identicalCompatibility, true);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("getCompatibility distinguishes identical view schema with different staged policies", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const schema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledConfig = new TreeViewConfigurationAlpha({
+			schema,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+		});
+		const restrictiveConfig = new TreeViewConfiguration({ schema });
+
+		const result = getCompatibility(
+			/* current: */ enabledConfig,
+			/* previous: */ restrictiveConfig,
+		);
+
+		// With the policies applied, the current view must upgrade the previous document to enable strings.
+		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// The previous view can read and preserve enabled strings under its restrictive policy.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+
+		// The snapshots should distinguish the enabled and restrictive upgrade policies.
+		assert.equal(result.identicalCompatibility, false);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("checkCompatibility uses the stored schema configuration's staged upgrade policy", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledSchema = factory.optional([factory.number, factory.string]);
+		const storedSchemaConfig = new TreeViewConfigurationAlpha({
+			schema: stagedSchema,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
 		});
 
-		/**
-		 * V1 declares an empty `Task` object.
-		 * V2 adds staged-optional `estimatedHours` and explicitly enables its optionality through the viewing configuration.
-		 *
-		 * Compare a V1 document with the configured V2 view.
-		 * V2 should need an upgrade before viewing, and its policy should make adding the field safe by allowing it to be absent.
-		 * This remains skipped because the helper ignores the viewing policy and instead attempts to add a required field.
-		 *
-		 * @privateRemarks
-		 * TODO:AB#82814: Honor the viewing configuration's staged upgrade policy before enabling this test.
-		 */
-		it.skip("uses the viewing configuration's staged upgrade policy", () => {
-			const factory = new SchemaFactoryAlpha("test");
-			class TaskV1 extends factory.object("Task", {}) {}
-			const estimatedHours = factory.stagedOptional(factory.number);
-			const optionalUpgrade = estimatedHours.isStagedOptional;
-			assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
-			class TaskV2 extends factory.object("Task", { estimatedHours }) {}
+		const result = checkCompatibility(
+			storedSchemaConfig,
+			new TreeViewConfiguration({ schema: enabledSchema }),
+		);
 
-			// Adding a required field is unsafe; enabling its staged optionality makes the upgrade possible.
-			const view = new TreeViewConfigurationAlpha({
-				schema: TaskV2,
-				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
-			});
+		// The document's policy already enables strings, so the fully enabled view can read it.
+		assert.equal(result.canView, true);
 
-			const result = checkCompatibility(new TreeViewConfiguration({ schema: TaskV1 }), view);
+		// Upgrading is permitted because the view does not remove any allowed types.
+		assert.equal(result.canUpgrade, true);
+	});
 
-			assert.equal(result.canView, false);
-			assert.equal(result.canUpgrade, true);
+	// TODO:AB#82814: Honor the viewing configuration's staged upgrade policy before enabling this test.
+	it.skip("checkCompatibility uses the viewing configuration's staged upgrade policy", () => {
+		const factory = new SchemaFactoryAlpha("test");
+		class TaskV1 extends factory.object("Task", {}) {}
+		const estimatedHours = factory.stagedOptional(factory.number);
+		const optionalUpgrade = estimatedHours.isStagedOptional;
+		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
+		class TaskV2 extends factory.object("Task", { estimatedHours }) {}
+
+		// Adding a required field is unsafe; the configured policy should enable its optionality instead.
+		const view = new TreeViewConfigurationAlpha({
+			schema: TaskV2,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
 		});
+
+		const result = checkCompatibility(new TreeViewConfiguration({ schema: TaskV1 }), view);
+
+		assert.equal(result.canView, false);
+		assert.equal(result.canUpgrade, true);
 	});
 });
