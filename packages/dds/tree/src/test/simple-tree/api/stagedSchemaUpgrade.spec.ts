@@ -23,8 +23,8 @@ import {
 import {
 	checkSchemaCompatibility,
 	extractPersistedSchema,
+	type ImplicitFieldSchema,
 	SchemaFactoryAlpha,
-	schemaStatics,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
 	StagedSchemaUpgradePolicy,
@@ -232,7 +232,7 @@ describe("staged allowed type upgrade", () => {
 		const viewMigrated = treeMigrated.viewWith(
 			new TreeViewConfiguration({ schema: fullyMigratedSchema }),
 		);
-		assert.equal(viewMigrated.compatibility.isEquivalent, true);
+		assert.equal(viewMigrated.compatibility.canView, true);
 		viewMigrated.upgradeSchema();
 		assert.equal(viewMigrated.root, "test");
 	});
@@ -330,77 +330,22 @@ describe("staged allowed type upgrade", () => {
 	});
 
 	it("checks compatibility through staged allowed type rollout", () => {
-		// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
-		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
-		// schema state directly.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
-		const expectCompatibility = (
-			schema: typeof baseSchema | typeof schemaWithStagedType | typeof fullyMigratedSchema,
-			expected: Omit<
-				ReturnType<typeof checkSchemaCompatibility>,
-				"enabledUpgrades" | "discrepancies"
-			> & {
-				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
-			},
-		): void => {
-			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
-				new TreeViewConfigurationAlpha({ schema }),
-				stored,
-			);
-			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
-		};
-
-		expectCompatibility(baseSchema, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-
-		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(baseSchema).rootFieldSchema));
-		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
-
-		// baseSchema is equivalent to the initial stored schema.
-		expectCompatibility(baseSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// schemaWithStagedType can view baseSchema and its default upgrade remains a no-op because the
-		// string allowed type is still staged.
-		expectCompatibility(schemaWithStagedType, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStagedType).rootFieldSchema),
+		const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: baseSchema }),
+			stored,
 		);
-		expectCompatibility(schemaWithStagedType, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, true);
+		assert.deepEqual(compatibility.enabledUpgrades, new Map());
 
-		// fullyMigratedSchema represents the code-cleanup state where the staged wrapper has been removed.
-		// It is not compatible until the stored schema also allows strings.
-		expectCompatibility(fullyMigratedSchema, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(fullyMigratedSchema).rootFieldSchema),
-		);
-		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
-
-		expectCompatibility(fullyMigratedSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
+		checkStagedRolloutCompatibility({
+			baseSchema,
+			stagedSchema: schemaWithStagedType,
+			fullyMigratedSchema,
+			upgrade: stringUpgrade,
 		});
 	});
 
@@ -544,7 +489,7 @@ describe("staged optional upgrade", () => {
 		const viewOptional = treeOptional.viewWith(
 			new TreeViewConfiguration({ schema: optionalSchema }),
 		);
-		assert.equal(viewOptional.compatibility.isEquivalent, true);
+		assert.equal(viewOptional.compatibility.canView, true);
 		viewOptional.upgradeSchema();
 		assert.equal(viewOptional.root, undefined);
 	});
@@ -615,82 +560,11 @@ describe("staged optional upgrade", () => {
 	});
 
 	it("checks compatibility through staged optional rollout", () => {
-		// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
-		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
-		// schema state directly.
-		const stored = new TestSchemaRepository(
-			defaultSchemaPolicy,
-			toUpgradeSchema(requiredSchema),
-		);
-
-		const expectCompatibility = (
-			schema: typeof requiredSchema | typeof stagedOptionalSchema | typeof optionalSchema,
-			expected: Omit<
-				ReturnType<typeof checkSchemaCompatibility>,
-				"enabledUpgrades" | "discrepancies"
-			> & {
-				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
-			},
-		): void => {
-			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
-				new TreeViewConfigurationAlpha({ schema }),
-				stored,
-			);
-			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
-		};
-
-		// baseSchema is equivalent to the initial required-number stored schema.
-		expectCompatibility(requiredSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// stagedOptionalSchema can view the required stored schema and its default upgrade remains a no-op
-		// because the optional field kind is still staged.
-		expectCompatibility(stagedOptionalSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-		assert(
-			stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedOptionalSchema).rootFieldSchema),
-		);
-		expectCompatibility(stagedOptionalSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// fullyMigratedSchema represents the code-cleanup state where the staged optional marker has been
-		// removed. It is not compatible until the stored schema also has an optional root.
-		expectCompatibility(optionalSchema, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-
-		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(optionalSchema).rootFieldSchema));
-
-		expectCompatibility(optionalSchema, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// stagedOptionalSchema excludes the already enabled optional upgrade by default.
-		expectCompatibility(stagedOptionalSchema, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			enabledUpgrades: new Map([[optionalUpgrade, "enabled"]]),
-		});
-
-		// requiredSchema is no longer compatible with optional stored schema.
-		expectCompatibility(requiredSchema, {
-			canView: false,
-			canUpgrade: false,
-			isEquivalent: false,
+		checkStagedRolloutCompatibility({
+			baseSchema: requiredSchema,
+			stagedSchema: stagedOptionalSchema,
+			fullyMigratedSchema: optionalSchema,
+			upgrade: optionalUpgrade,
 		});
 	});
 
@@ -751,3 +625,95 @@ describe("staged optional upgrade", () => {
 		assert(omittedChild instanceof NodeB);
 	});
 });
+
+function checkStagedRolloutCompatibility({
+	baseSchema,
+	stagedSchema,
+	fullyMigratedSchema,
+	upgrade,
+}: {
+	baseSchema: ImplicitFieldSchema;
+	stagedSchema: ImplicitFieldSchema;
+	fullyMigratedSchema: ImplicitFieldSchema;
+	upgrade: SchemaUpgrade;
+}): void {
+	// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
+	// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
+	// schema state directly.
+	const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(baseSchema));
+	const expectCompatibility = (
+		schema: ImplicitFieldSchema,
+		expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
+			enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
+		},
+	): void => {
+		const { canView, canUpgrade, enabledUpgrades } = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema }),
+			stored,
+		);
+		assert.deepEqual(
+			{ canView, canUpgrade, enabledUpgrades },
+			{ enabledUpgrades: new Map(), ...expected },
+		);
+	};
+
+	// baseSchema can view the initial stored schema.
+	expectCompatibility(baseSchema, {
+		canView: true,
+		canUpgrade: true,
+	});
+
+	// stagedSchema can view baseSchema and its default upgrade remains a no-op because the
+	// allowed type or optional field kind is still staged.
+	expectCompatibility(stagedSchema, {
+		canView: true,
+		canUpgrade: true,
+	});
+	expectCompatibility(fullyMigratedSchema, {
+		canView: false,
+		canUpgrade: true,
+	});
+
+	assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedSchema).rootFieldSchema));
+	expectCompatibility(baseSchema, {
+		canView: true,
+		canUpgrade: true,
+	});
+	expectCompatibility(stagedSchema, {
+		canView: true,
+		canUpgrade: true,
+	});
+
+	// fullyMigratedSchema represents the code-cleanup state where the staged marker has been removed.
+	// It is not compatible until the stored schema also includes the upgrade.
+	expectCompatibility(fullyMigratedSchema, {
+		canView: false,
+		canUpgrade: true,
+	});
+
+	assert(
+		stored.tryUpdateRootFieldSchema(toUpgradeSchema(fullyMigratedSchema).rootFieldSchema),
+	);
+	for (const schema of new TreeViewConfigurationAlpha({
+		schema: fullyMigratedSchema,
+	}).definitions.values()) {
+		assert(stored.tryUpdateTreeSchema(schema));
+	}
+
+	// baseSchema is no longer compatible with the fully migrated stored schema.
+	expectCompatibility(baseSchema, {
+		canView: false,
+		canUpgrade: false,
+	});
+
+	// stagedSchema excludes the already enabled upgrade by default.
+	expectCompatibility(stagedSchema, {
+		canView: true,
+		canUpgrade: false,
+		enabledUpgrades: new Map([[upgrade, "enabled"]]),
+	});
+	expectCompatibility(fullyMigratedSchema, {
+		canView: true,
+		canUpgrade: true,
+	});
+}

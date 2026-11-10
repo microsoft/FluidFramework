@@ -19,8 +19,10 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type {
@@ -39,6 +41,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedSignalEvents<T>>
 	implements ISharedSignal<T>
 {
@@ -112,6 +115,7 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 			],
 		};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryTreeWithStats = convertToSummaryTreeWithStats(tree);
 
 		return summaryTreeWithStats;

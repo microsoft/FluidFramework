@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { unsafeArrayToTuple } from "../../../index.js";
 import {
 	adaptEnum,
 	enumEntries,
@@ -23,12 +24,11 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
-import {
-	unsafeArrayToTuple,
-	type areSafelyAssignable,
-	type isAssignableTo,
-	type requireFalse,
-	type requireTrue,
+import type {
+	areSafelyAssignable,
+	isAssignableTo,
+	requireFalse,
+	requireTrue,
 } from "../../../util/index.js";
 import { testSchemaCompatibilitySnapshots } from "../../snapshots/index.js";
 import { getView } from "../../utils.js";
@@ -36,6 +36,27 @@ import { getView } from "../../utils.js";
 const schema = new SchemaFactoryBeta("test");
 
 describe("schemaCreationUtilities", () => {
+	it("unsafeArrayToTuple README example", () => {
+		const schemaFactory = new SchemaFactory("com.myApp");
+		class ItemA extends schemaFactory.object("ItemA", { a: schemaFactory.number }) {}
+		class ItemB extends schemaFactory.object("ItemB", { b: schemaFactory.string }) {}
+
+		function makeHolder(itemType: typeof ItemA | typeof ItemB) {
+			const allowedTypes = unsafeArrayToTuple([itemType]);
+			return class extends schemaFactory.object("Holder", { item: allowedTypes }) {};
+		}
+
+		class Holder extends makeHolder(ItemA) {}
+		const holder = new Holder({ item: new ItemA({ a: 42 }) });
+		assert(holder.item instanceof ItemA);
+		assert.throws(
+			() => new Holder({ item: new ItemB({ b: "hello" }) }),
+			validateUsageError(
+				/Expected insertable for one of .*ItemA.*Got node with schema .*ItemB/,
+			),
+		);
+	});
+
 	it("enumFromStrings compatibility", () => {
 		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
 		// Therefore we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings

@@ -12,12 +12,18 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
-import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
+import {
+	jsonableTreeFromFieldCursor,
+	MockNodeIdentifierManager,
+	TreeStatus,
+} from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	Tree,
+	TreeAlpha,
 	createIndependentTreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -25,6 +31,8 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify that hydration reuses completed analysis.
+import { getTreeNodeSchemaPrivateData } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
@@ -43,13 +51,15 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
-	identifySchema,
+	identifySchemaAlpha,
+	FieldKind,
+	isTreeNode,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
-import { testDocumentIndependentView } from "../testTrees.js";
+import { testDocumentIndependentView, testDocuments } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -90,6 +100,46 @@ const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("construction", () => {
+		it("shares lookup definitions without sharing hydrated contexts or walking schema", () => {
+			const sf = new SchemaFactoryAlpha("hydratedLookupReuse");
+			class Child extends sf.object("Child", { value: sf.number }) {}
+			class Root extends sf.object("Root", { child: Child }) {}
+			const viewConfig = new TreeViewConfigurationAlpha({ schema: Root });
+			const firstRoot = new Root({ child: new Child({ value: 1 }) });
+			const secondRoot = new Root({ child: new Child({ value: 2 }) });
+			const unhydrated = getKernel(firstRoot.child).context;
+			assert.notStrictEqual(unhydrated.schema, viewConfig.definitions);
+			let reads = 0;
+			for (const node of [Root, Child]) {
+				const data = getTreeNodeSchemaPrivateData(node);
+				const types = data.childAllowedTypes;
+				Object.defineProperty(data, "childAllowedTypes", {
+					get() {
+						reads++;
+						return types;
+					},
+				});
+			}
+			const first = getView(viewConfig);
+			const second = getView(viewConfig);
+			try {
+				first.initialize(firstRoot);
+				second.initialize(secondRoot);
+				const firstContext = getKernel(first.root).context;
+				const secondContext = getKernel(second.root).context;
+				assert(firstContext.flexContext.isHydrated());
+				assert(secondContext.flexContext.isHydrated());
+				assert.notStrictEqual(firstContext, secondContext);
+				assert.strictEqual(firstContext.schema, viewConfig.definitions);
+				assert.strictEqual(secondContext.schema, viewConfig.definitions);
+				assert.strictEqual(getKernel(first.root.child).context, firstContext);
+				assert.equal(reads, 0);
+			} finally {
+				first.dispose();
+				second.dispose();
+			}
+		});
+
 		describe("schema hash", () => {
 			const root = schema.required(schema.number, {
 				persistedMetadata: { description: "view schema" },
@@ -98,7 +148,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchema({ expectedHash: computeSchemaHash(root) }),
+						schemaIdentity: identifySchemaAlpha({ expectedHash: computeSchemaHash(root) }),
 					}),
 				);
 
@@ -109,7 +159,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchema({
+					schemaIdentity: identifySchemaAlpha({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -135,13 +185,13 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchema(),
+						schemaIdentity: identifySchemaAlpha(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires schema identity to be created with identifySchema", () => {
+			it("requires schema identity to be created with identifySchemaAlpha", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
@@ -149,7 +199,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity must be created with identifySchema/),
+					validateUsageError(/schemaIdentity must be created with identifySchemaAlpha/),
 				);
 			});
 		});
@@ -162,7 +212,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchema(),
+					schemaIdentity: identifySchemaAlpha(),
 				}),
 			);
 
@@ -189,7 +239,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchema(),
+					schemaIdentity: identifySchemaAlpha(),
 				}),
 			);
 
@@ -414,7 +464,9 @@ describe("SchematizingSimpleTreeView", () => {
 			config,
 			new MockNodeIdentifierManager(),
 		);
-		assert.equal(view.compatibility.isEquivalent, true);
+
+		// The stored schema already matches this view, so its root is available.
+		assert.equal(view.compatibility.canView, true);
 		const root = view.root;
 		assert.equal(root, 5);
 		const log: [string, unknown][] = [];
@@ -495,7 +547,8 @@ describe("SchematizingSimpleTreeView", () => {
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
 		]);
 		log.length = 0;
-		assert.equal(view.compatibility.isEquivalent, false);
+
+		// The number-only view cannot read stored strings, and an upgrade cannot remove that allowed type.
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.canView, false);
 
@@ -506,7 +559,8 @@ describe("SchematizingSimpleTreeView", () => {
 		view.breaker.clearError();
 		// Modify schema to be compatible again
 		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
-		assert.equal(view.compatibility.isEquivalent, true);
+
+		// Restoring the number-only schema permits viewing and upgrading again.
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
 
@@ -550,13 +604,13 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
+		assert.equal(viewSpecific.compatibility.canView, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+
+		// The document is already initialized, and there are no differences that prevent viewing.
+		assert.equal(viewSpecific.compatibility.canInitialize, false);
+		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
 		assert.equal(Object.entries(viewSpecific.root).length, 2);
@@ -569,13 +623,14 @@ describe("SchematizingSimpleTreeView", () => {
 			personConfigGeneralied,
 			new MockNodeIdentifierManager(),
 		);
-		assert.deepEqual(viewGeneralized.compatibility, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+
+		// This view includes address, so it can read and upgrade without changing the stored schema.
+		assert.equal(viewGeneralized.compatibility.canView, true);
+		assert.equal(viewGeneralized.compatibility.canUpgrade, true);
+
+		// Reopening the document does not permit initialization or introduce viewing discrepancies.
+		assert.equal(viewGeneralized.compatibility.canInitialize, false);
+		assert.equal(viewGeneralized.compatibility.discrepancies, undefined);
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
 		assert.equal(viewGeneralized.root.name, "Alice");
@@ -616,13 +671,13 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
+		assert.equal(viewSpecific.compatibility.canView, true);
+		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+
+		// The document is already initialized, and the unknown field does not prevent viewing.
+		assert.equal(viewSpecific.compatibility.canInitialize, false);
+		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
 
@@ -638,19 +693,143 @@ describe("SchematizingSimpleTreeView", () => {
 			peopleGeneralizedConfig,
 			new MockNodeIdentifierManager(),
 		);
-		assert.deepEqual(viewGeneralized.compatibility, {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+
+		// The full schema still matches after the move, so viewing and upgrading remain permitted.
+		assert.equal(viewGeneralized.compatibility.canView, true);
+		assert.equal(viewGeneralized.compatibility.canUpgrade, true);
+
+		// The move neither resets initialization nor introduces viewing discrepancies.
+		assert.equal(viewGeneralized.compatibility.canInitialize, false);
+		assert.equal(viewGeneralized.compatibility.discrepancies, undefined);
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
 		assert.equal(Object.keys(viewGeneralized.root[1]).length, 3);
 		assert.equal(viewGeneralized.root[1].name, "Alice");
 		assert.equal(viewGeneralized.root[1].age, 42);
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
+	describe("unknownFieldSchemas", () => {
+		const factoryNew = new SchemaFactoryAlpha("unknownFieldSchemas");
+		class ChildNew extends factoryNew.object("Child", { x: factoryNew.number }) {}
+		class ExtraNew extends factoryNew.object("Extra", { y: factoryNew.number }) {}
+		class ParentNew extends factoryNew.object("Parent", {
+			child: ChildNew,
+			known: factoryNew.optional(factoryNew.string, { key: "knownKey" }),
+			// The stored key of this unknown field matches the property key of a known field.
+			unknownLeaf: factoryNew.optional(factoryNew.string, { key: "known" }),
+			unknownTypeNode: factoryNew.optional(ExtraNew),
+		}) {}
+
+		const factoryOld = new SchemaFactoryAlpha("unknownFieldSchemas");
+		class ChildOld extends factoryOld.object("Child", { x: factoryOld.number }) {}
+		class ParentOld extends factoryOld.object(
+			"Parent",
+			{ child: ChildOld, known: factoryOld.optional(factoryOld.string, { key: "knownKey" }) },
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const configNew = new TreeViewConfiguration({ schema: ParentNew });
+		const configOld = new TreeViewConfiguration({ schema: ParentOld });
+
+		/**
+		 * Gets the expected simple schema of an unknown optional field with `storedKey` that allows `types`.
+		 */
+		function optionalField(storedKey: string, ...types: string[]): unknown {
+			return {
+				kind: FieldKind.Optional,
+				storedKey,
+				simpleAllowedTypes: new Map(types.map((type) => [type, { isStaged: undefined }])),
+				metadata: {},
+				persistedMetadata: undefined,
+			};
+		}
+
+		/**
+		 * Gets a view of a document with `ParentNew` content, using the older schema.
+		 */
+		function viewWithUnknownOptionalFields() {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: ParentOld,
+				schemaData: toInitialSchema(ParentNew),
+				treeFactory: () =>
+					jsonableTreeFromFieldCursor(
+						fieldCursorFromInsertable(
+							ParentNew,
+							new ParentNew({ child: new ChildNew({ x: 1 }), unknownLeaf: "unknown" }),
+						),
+					),
+			});
+			assert.equal(view.compatibility.canView, true);
+			return view;
+		}
+
+		it("is not empty only for test documents with unknown optional field schema", () => {
+			for (const testCase of testDocuments) {
+				const view = testDocumentIndependentView(testCase);
+				assert.equal(
+					(view.unknownFieldSchemas?.size ?? 0) > 0,
+					testCase.hasUnknownOptionalFieldSchema === true,
+					testCase.name,
+				);
+			}
+		});
+
+		it("includes the unknown fields of each object schema, keyed by stored key", () => {
+			// `unknownTypeNode` is included even though it has no content.
+			assert.deepEqual(
+				viewWithUnknownOptionalFields().unknownFieldSchemas,
+				new Map([
+					[
+						ParentOld,
+						new Map([
+							["known", optionalField("known", "com.fluidframework.leaf.string")],
+							[
+								"unknownTypeNode",
+								optionalField("unknownTypeNode", "unknownFieldSchemas.Extra"),
+							],
+						]),
+					],
+				]),
+			);
+		});
+
+		it("is available from the context of a hydrated node", () => {
+			const view = viewWithUnknownOptionalFields();
+			assert(isTreeNode(view.root));
+			const context = TreeAlpha.context(view.root);
+			assert.deepEqual([...(context.unknownFieldSchemas?.keys() ?? [])], [ParentOld]);
+		});
+
+		it("is undefined for unhydrated nodes", () => {
+			const node = new ParentOld({ child: new ChildOld({ x: 1 }) });
+			assert.equal(TreeAlpha.context(node).unknownFieldSchemas, undefined);
+		});
+
+		it("updates when another client adds an optional field", () => {
+			const provider = new TestTreeProviderLite(2);
+			const viewOld = provider.trees[0].viewWith(configOld);
+			viewOld.initialize(new ParentOld({ child: new ChildOld({ x: 1 }) }));
+			provider.synchronizeMessages();
+			const before = asAlpha(viewOld).unknownFieldSchemas;
+			assert.deepEqual(before, new Map());
+			// The value is reused until the stored schema changes.
+			assert.equal(asAlpha(viewOld).unknownFieldSchemas, before);
+
+			const viewNew = provider.trees[1].viewWith(configNew);
+			assert.equal(viewNew.compatibility.canUpgrade, true);
+			viewNew.upgradeSchema();
+			provider.synchronizeMessages();
+
+			assert.equal(viewOld.compatibility.canView, true);
+			const after = asAlpha(viewOld).unknownFieldSchemas;
+			assert.notEqual(after, before);
+			assert.deepEqual(
+				[...(after?.get(ParentOld)?.keys() ?? [])],
+				["known", "unknownTypeNode"],
+			);
+		});
 	});
 
 	describe("upgradeSchema", () => {
@@ -674,7 +853,8 @@ describe("SchematizingSimpleTreeView", () => {
 			view.events.on("rootChanged", () => assert.fail());
 			view.events.on("schemaChanged", () => assert.fail());
 
-			assert(view.compatibility.isEquivalent);
+			// Both schemas permit only an empty root, so viewing is safe and upgrading is a no-op.
+			assert(view.compatibility.canView);
 			assert(view.compatibility.canUpgrade);
 			view.upgradeSchema();
 		});
@@ -703,7 +883,8 @@ describe("SchematizingSimpleTreeView", () => {
 				treeFactory: () => [],
 			});
 
-			assert(!view.compatibility.isEquivalent);
+			// An empty document cannot satisfy a required root, and a schema-only upgrade cannot create one.
+			assert(!view.compatibility.canView);
 			assert(!view.compatibility.canUpgrade);
 
 			// Case which doesn't update due to root being required
@@ -726,7 +907,8 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: fieldJsonCursor([5]),
 			});
 
-			assert(!view.compatibility.isEquivalent);
+			// The view permits strings and an empty root, so the number-only stored schema must first be relaxed.
+			assert(!view.compatibility.canView);
 			assert(view.compatibility.canUpgrade);
 
 			view.upgradeSchema();
@@ -744,9 +926,9 @@ describe("SchematizingSimpleTreeView", () => {
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
+		// The view adds strings to the allowed root types, requiring a schema upgrade before viewing.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
-		assert.equal(view.compatibility.isEquivalent, false);
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
@@ -782,7 +964,8 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
-		assert.equal(view.compatibility.isEquivalent, true);
+		// The upgrade enables strings, making the root available and clearing the viewing discrepancies.
+		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
@@ -795,9 +978,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
+		// The stored schema allows strings that this view cannot read, and upgrading cannot remove that type.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isEquivalent, false);
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
@@ -843,9 +1026,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
+		// The view replaces strings with booleans, so neither viewing nor a non-narrowing upgrade is possible.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isEquivalent, false);
 		const validateIncompatibleSchemaError = (error: unknown): boolean => {
 			assert(error instanceof UsageError);
 			assert.equal(

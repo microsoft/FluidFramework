@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "3.7.0",
+	"version": "3.12.0",
 	"description": "Not intended for use outside the Fluid client repo.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,8 +42,8 @@
 			}
 		},
 		"./internal": {
-			"types": "./lib/internal.d.ts",
-			"default": "./lib/internal.js"
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
@@ -82,7 +82,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor-report.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor-report.legacy.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
-		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -125,7 +125,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@3.5.0",
+		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@3.11.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",

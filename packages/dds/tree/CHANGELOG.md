@@ -1,5 +1,687 @@
 # @fluidframework/tree
 
+## 3.12.0
+
+### Minor Changes
+
+- Array move events now behave consistently before and after hydration ([#28487](https://github.com/microsoft/FluidFramework/pull/28487)) [1038bf6d64d](https://github.com/microsoft/FluidFramework/commit/1038bf6d64d663da816edbe9df299123d7787599)
+
+  Range moves on unhydrated arrays now produce change events and deltas consistent with hydrated arrays, including when the destination is within the source range and the contents remain unchanged.
+  This also makes insertion anchors update consistently before and after hydration.
+
+  Moving an empty range on unhydrated arrays no longer emits change events, matching hydrated arrays.
+
+- Reduce optimized forest memory overhead after loading and receiving inserted content ([#28653](https://github.com/microsoft/FluidFramework/pull/28653)) [8331b103730](https://github.com/microsoft/FluidFramework/commit/8331b1037304a0fe346bf1b4c60b98b68f4b347f)
+
+  SharedTree configured with [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable) now uses compact in-memory storage for eligible content loaded from summaries or received in insertion operations.
+
+  #### Example measurements
+
+  In a local benchmark with 10,000-character documents, the median results before and after this change were:
+
+  | Metric                                       | Formatted text, before to after   | Plain text, before to after      |
+  | -------------------------------------------- | --------------------------------- | -------------------------------- |
+  | Retained tree heap after loading             | 39.9 MiB to 30.6 MiB (23% less)   | 5.12 MiB to 2.79 MiB (46% less)  |
+  | Retained attached-content heap after loading | 19.8 MiB to 10.5 MiB (47% less)   | 2.44 MiB to 0.113 MiB (95% less) |
+  | Summary load time                            | 140 ms to 212 ms (51% slower)     | 28.5 ms to 40.2 ms (41% slower)  |
+  | Receive insertion time                       | 271 ms to 428 ms (58% slower)     | 242 ms to 63.0 ms (74% faster)   |
+  | Local insertion time                         | 1,109 ms to 1,224 ms (10% slower) | 137 ms to 130 ms (5% faster)     |
+
+  These measurements use Node.js 22, in-memory storage, and a mocked runtime, with 18 timed samples per case across two process orders.
+  Heap measurements use six batches of loaded documents after garbage collection and do not measure peak memory.
+  The memory savings can come with additional processing time, particularly when loading summaries or receiving formatted text.
+  Results depend on the document schema, workload, and environment.
+
+- Manage branch state independently of views ([#28520](https://github.com/microsoft/FluidFramework/pull/28520)) [9ea98a15a67](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd)
+
+  You can now create and retain an independent branch without keeping a typed view alive.
+  This lets you separate the lifetime of branch state and history from the schema-configured view used to read and edit it.
+
+  This change is a step toward separating branch management from views and reducing the current one-view-per-branch restriction.
+  It does not enable multiple active views of the same branch: each branch still supports one active view at a time.
+
+  Use the new alpha method `tree.forkBranch()` to create a `TreeBranchHandleAlpha` without a source view or schema configuration.
+  Use `branch.viewWith(config)` when you need to read or edit the branch.
+  Disposing that view preserves the branch so you can create another view later.
+  Edits remain isolated until you merge them into another view.
+
+  ```typescript
+  import {
+    asAlpha,
+    SchemaFactory,
+    TreeViewConfiguration,
+  } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactory("counter");
+  class Counter extends sf.object("Counter", {
+    count: sf.number,
+  }) {}
+
+  const config = new TreeViewConfiguration({ schema: Counter });
+
+  // `tree` is an `ITree` initialized with this schema and { count: 0 }.
+  // It has no active view.
+  const branch = asAlpha(tree).forkBranch();
+  const branchView = branch.viewWith(config);
+  const view = asAlpha(tree.viewWith(config));
+
+  branchView.root.count = 5;
+  console.log(view.root.count); // 0: the branch edit is isolated.
+
+  view.merge(branchView); // Also disposes branch and branchView.
+  console.log(view.root.count); // 5
+  ```
+
+  You own each branch and must dispose it when you no longer need it.
+  Disposing a branch also disposes its active view.
+
+  Use `branch.fork()` to create an independent child branch.
+  Existing `view.fork()` behavior is unchanged: the returned view owns its branch, and disposing that view also disposes its branch.
+
+  See [Indexes and Branches](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/indexes-and-branches.md) for more details.
+
+- Deprecate isEquivalent compatibility flag ([#28655](https://github.com/microsoft/FluidFramework/pull/28655)) [8c51cdeac2d](https://github.com/microsoft/FluidFramework/commit/8c51cdeac2dc2c238a8e97fd61e0a1206a7eb336)
+
+  [`SchemaCompatibilityStatus.isEquivalent`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#isequivalent-propertysignature) is deprecated.
+  Use [`canView`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) to determine whether you can read and edit a document with your view schema.
+  Use [`canUpgrade`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature) to determine whether you can upgrade the document's stored schema.
+  For details about differences that prevent viewing, use [`SchemaCompatibilityStatusBeta.discrepancies`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatusbeta-interface#discrepancies-propertysignature).
+
+  There is no direct replacement for schema equivalence.
+  The property remains available until a future major release.
+
+## 3.11.0
+
+### Minor Changes
+
+- Reduce repeated schema processing in SharedTree ([#28530](https://github.com/microsoft/FluidFramework/pull/28530)) [4890b806f9b](https://github.com/microsoft/FluidFramework/commit/4890b806f9b61176f7d52f29a8b900ac7f49dc9e)
+
+  SharedTree reuses schema analysis and view-schema definitions across overlapping and recursive schemas, reducing repeated work during view configuration, context creation, index setup, and schema export.
+
+  Schema definitions without reachable staged upgrades can also share conversions across upgrade policies.
+
+  Definition map iteration order may change but remains unspecified.
+  Schema hashes and persisted schema encoding are unchanged.
+
+  These changes can reduce startup time and memory use for applications with large schemas.
+
+## 3.10.0
+
+### Minor Changes
+
+- Object schemas support unknown optional fields by default ([#28606](https://github.com/microsoft/FluidFramework/pull/28606)) [5a4b8c2d28c](https://github.com/microsoft/FluidFramework/commit/5a4b8c2d28c107084891a5975048dc44c1623c39)
+
+  Object schemas created by [`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class), [`SchemaFactoryBeta`](https://fluidframework.com/docs/api/fluid-framework/schemafactorybeta-class), and [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class) now allow unknown optional fields by default universally.
+  This makes older application versions forward-compatible with documents whose stored schema has added optional fields, without requiring every object schema to specify `allowUnknownOptionalFields: true`.
+
+  Applications that require an exact match between the object view schema and stored schema can retain the previous behavior by explicitly setting `allowUnknownOptionalFields: false`.
+  The `allowUnknownOptionalFields` option is available on the public [`SchemaFactory.object`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-methodsignature) API:
+
+  ```typescript
+  const schemaFactory = new SchemaFactory("com.example");
+
+  class StrictPerson extends schemaFactory.object(
+    "Person",
+    {
+      name: schemaFactory.string,
+    },
+    {
+      allowUnknownOptionalFields: false,
+    },
+  ) {}
+  ```
+
+  Applications can also set `allowUnknownOptionalFields: false` once on the public [`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) to preserve the previous default for all object schemas created by that factory.
+  Set the factory's [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) property bag when constructing it:
+
+  ```typescript
+  const factory = new SchemaFactory({
+    scope: "com.example",
+    objectOptions: {
+      allowUnknownOptionalFields: false,
+    },
+  });
+  ```
+
+  Individual schemas can still override this factory default.
+
+  #### Behavior to review
+
+  Code that reads only known properties does not observe unknown fields.
+  As a result, application implementations of cloning, equality, serialization, or object reconstruction may omit unknown data even though SharedTree preserves it internally.
+  Spreading a node into a new object also includes only the known view-schema properties.
+  Review any code that round-trips a node by reading its known properties and constructing a replacement, since such code may silently discard unknown fields.
+
+  For example, an older client may define `Person` with only a `name` field:
+
+  ```typescript
+  class Person extends schemaFactory.object("Person", {
+    name: schemaFactory.string,
+  }) {}
+  ```
+
+  After a newer client adds an optional `nickname` field, the older client can still read the document, but this custom clone loses the unknown field:
+
+  ```typescript
+  function clonePerson(person: Person): Person {
+    return new Person({ name: person.name });
+  }
+  ```
+
+  Calling `clonePerson` omits `nickname` because the older view does not expose that property, even though SharedTree preserved it on the original node.
+
+  Use [`TreeBeta.clone`](https://fluidframework.com/docs/api/fluid-framework/treebeta-interface#clone-methodsignature) to clone a hydrated tree, which will preserve unknown fields and the source document's schema context.
+  When exporting, [`TreeAlpha.exportVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#exportverbose-methodsignature) preserves unknown fields only when configured to use all stored keys.
+
+  ```typescript
+  const exported = TreeAlpha.exportVerbose(person, {
+    keys: KeyEncodingOptions.allStoredKeys,
+  });
+  ```
+
+  Using `KeyEncodingOptions.knownStoredKeys` or `KeyEncodingOptions.usePropertyKeys` omits unknown optional fields.
+  Unhydrated nodes created using constructors or insertable content have no source document schema from which unknown fields could be interpreted.
+  [`TreeAlpha.importVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) currently rejects unexpected fields, including when the target schema allows unknown optional fields.
+  Support for preserving these fields through import and export should be added in follow-up work.
+
+  Applications whose code depends on enumerating every field, reconstructs nodes from their known properties, or requires schema equality rather than forward compatibility should set `allowUnknownOptionalFields: false` on the affected object schemas:
+
+  ```typescript
+  class StrictPerson extends schemaFactory.object(
+    "Person",
+    {
+      name: schemaFactory.string,
+    },
+    {
+      allowUnknownOptionalFields: false,
+    },
+  ) {}
+  ```
+
+  #### Schema compatibility snapshots
+
+  Applications using [`snapshotSchemaCompatibility`](https://fluidframework.com/docs/api/fluid-framework/alpha/snapshotschemacompatibility-function) with object schemas from any schema factory will see snapshot-test failures because the serialized view schema changes from `allowUnknownOptionalFields: false` to `allowUnknownOptionalFields: true`.
+  Review the affected schemas, retain historical snapshots unchanged, and generate a current-version snapshot to record the new forward-compatible behavior.
+  Alternatively, explicitly set `allowUnknownOptionalFields: false` to retain the previous behavior and avoid a new snapshot.
+
+  For example, if the snapshot directory contains `3.9.0.json`, leave that file unchanged and regenerate snapshots so a new `3.10.0.json` records `allowUnknownOptionalFields: true`:
+
+  ```text
+  schema-compatibility-snapshots/
+  ├── 3.9.0.json  # Retained with allowUnknownOptionalFields: false
+  └── 3.10.0.json # Added with allowUnknownOptionalFields: true
+  ```
+
+  If the schema must remain strict instead, opt out before rerunning the snapshot test:
+
+  ```typescript
+  class StrictPerson extends schemaFactory.object(
+    "Person",
+    {
+      name: schemaFactory.string,
+    },
+    {
+      allowUnknownOptionalFields: false,
+    },
+  ) {}
+  ```
+
+  Snapshot failures identify schemas whose compatibility contract changed, but do not verify that application cloning, equality, serialization, or reconstruction code safely handles unknown fields.
+
+  Compatibility snapshot files are now written with a trailing newline so regenerating them does not create formatting-only diffs.
+
+- Applications can configure the policy for tolerating unknown optional fields through the public API ([#28603](https://github.com/microsoft/FluidFramework/pull/28603)) [5e94cbfa279](https://github.com/microsoft/FluidFramework/commit/5e94cbfa27965a98428f7d26b69dd5b0a8abeb0d)
+
+  [`SchemaFactory.object`](https://fluidframework.com/docs/api/tree/schemafactory-class#object-method) and [`SchemaFactory.objectRecursive`](https://fluidframework.com/docs/api/tree/schemafactory-class#objectrecursive-method) now accept the [`allowUnknownOptionalFields`](https://fluidframework.com/docs/api/tree/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) option through the public API.
+  The option defaults to `true`.
+
+  This option controls how an object node's view schema handles optional fields that are declared in the document's stored schema but not in the view schema:
+  - Set `allowUnknownOptionalFields` to `true` to let an older application version continue to view and edit a document after a newer version adds new optional fields to the object schema, provided the schemas are otherwise compatible.
+    The older version cannot access those fields through its view.
+    Copying nodes by reading their fields or spreading them into new nodes can drop data in the unknown fields.
+  - Set `allowUnknownOptionalFields` to `false` to prevent viewing documents whose stored schema declares additional optional fields for that object.
+    After a newer application version adds an optional field to the object schema, older versions with this policy cannot view the document until their view schemas include that field.
+
+  ```typescript
+  import { SchemaFactory } from "@fluidframework/tree";
+
+  const factory = new SchemaFactory("com.example");
+
+  class Person extends factory.object(
+    "Person",
+    { name: factory.string },
+    // Reject documents with additional optional fields on Person.
+    { allowUnknownOptionalFields: false },
+  ) {}
+  ```
+
+  The beta `ObjectSchemaOptions` type is renamed to `ObjectSchemaOptionsBeta`.
+  If you reference the beta type directly, update those references to the new name.
+
+- Configure public schema factories with reusable object defaults ([#28604](https://github.com/microsoft/FluidFramework/pull/28604)) [1642d661617](https://github.com/microsoft/FluidFramework/commit/1642d661617465c74ffb6f2d27665d7ea400e254)
+
+  [`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) now accepts an options object with the scope and an [`objectOptions`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryoptions-interface#objectoptions-propertysignature) property bag through the public API.
+  The property bag provides reusable defaults for [`object`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-method) and [`objectRecursive`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method), including the public `allowUnknownOptionalFields` option.
+  Options passed directly to an object schema override factory defaults through a shallow merge.
+
+  ```typescript
+  import { SchemaFactory } from "fluid-framework";
+
+  const sf = new SchemaFactory({
+    scope: "com.example",
+    objectOptions: {
+      allowUnknownOptionalFields: true,
+    },
+  });
+
+  class Person extends sf.object("Person", { name: sf.string }) {}
+
+  // Override the default for one schema.
+  class StrictPerson extends sf.object(
+    "StrictPerson",
+    { name: sf.string },
+    { allowUnknownOptionalFields: false },
+  ) {}
+  ```
+
+  You can read and extend factory settings without changing the original factory:
+  - [`settings`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#settings-property) provides the factory's options without its scope.
+  - [`scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#scopedfactory-method) creates a child factory by merging provided object-option properties with the current settings, without changing the original factory.
+
+  ```typescript
+  const extended = sf.scopedFactory("strict", {
+    objectOptions: {
+      allowUnknownOptionalFields: false,
+    },
+  });
+  ```
+
+  Passing `{}` or `{ objectOptions: {} }` preserves inherited settings.
+  Metadata and persisted metadata, when supported, are replaced as whole objects when provided; they are not deep-merged.
+  To start without inherited settings, construct a new factory with the desired scope.
+
+  The beta and alpha schema factories support their corresponding tier-specific options.
+
+- Fix SharedTree history length tracking during trimming ([#28522](https://github.com/microsoft/FluidFramework/pull/28522)) [77e3f67ccc8](https://github.com/microsoft/FluidFramework/commit/77e3f67ccc8226ec48559a733da8addaa0da44cc)
+
+  Reading branch history no longer causes a commit-count assertion when rebasing a branch triggers history trimming.
+  Branch lengths are now directly computed and cached on the branch itself rather than relying on event listening, which is subject to timing issues and interleaving.
+  Reading a branch's history length after the branch is disposed now throws an error.
+
+- Remove deprecated TreeBranch and TreeBranchAlpha type aliases ([#28284](https://github.com/microsoft/FluidFramework/pull/28284)) [326214df95f](https://github.com/microsoft/FluidFramework/commit/326214df95f8109543075832b248609c89faa395)
+
+  The deprecated `TreeBranch` and `TreeBranchAlpha` compatibility aliases have been removed. Use [`UntypedTreeView`](https://fluidframework.com/docs/api/tree/untypedtreeview-interface) and [`UntypedTreeViewAlpha`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface) instead.
+
+  ```typescript
+  // Before
+  import type { TreeBranch } from "fluid-framework/beta";
+  import type { TreeBranchAlpha } from "fluid-framework/alpha";
+
+  // After
+  import type { UntypedTreeView } from "fluid-framework/beta";
+  import type { UntypedTreeViewAlpha } from "fluid-framework/alpha";
+  ```
+
+- Track annotations across array and formatted text edits ([#27621](https://github.com/microsoft/FluidFramework/pull/27621)) [93bacfe2fb3](https://github.com/microsoft/FluidFramework/commit/93bacfe2fb3e8894a2584eb6ebfe6e98846bf5d5)
+
+  You can now track ranges with application-defined data, such as review comments, through edits to arrays and formatted text.
+  The new alpha APIs `ExtrinsicLocations.createArraySchema` and `FormattedText.createSchemaWithRanges` provide this capability.
+  Both expose ranges and their associated data through a `ranges` property.
+
+  These APIs are early `@alpha` features and are not yet production-ready.
+  Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
+  In this early `@alpha` version, concurrent changes anywhere in the document can reject a content or range edit rather than merge it: this version is intended for API experimentation and feedback, not production use.
+
+  #### Arrays
+
+  Use [`ExtrinsicLocations`](https://fluidframework.com/docs/api/tree/extrinsiclocations-namespace) to create an array schema with tracked ranges.
+  Edit content through `transactOnContent` to maintain ranges across insertions, removals, and moves.
+  You can use synchronous nested `runTransaction` calls inside its callback.
+  If a nested transaction rolls back content edits, the range endpoints are restored before that transaction call returns.
+
+  ```typescript
+  import {
+    ExtrinsicLocations,
+    SchemaFactoryBeta,
+  } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactoryBeta("com.example.review");
+  class Document extends ExtrinsicLocations.createArraySchema({
+    schemaFactory: sf,
+    rangeDataSchema: sf.string,
+    contentSchema: sf.string,
+  }) {}
+
+  const document = Document.create(["Plan", "Build", "Ship"]);
+  const comment = document.ranges.trackRange(
+    "comment",
+    { start: 1, end: 3 },
+    "Check these steps",
+  );
+  document.transactOnContent((content) => content.insertAt(0, "Design"));
+  document.content.slice(comment.start.index, comment.end.index); // ["Build", "Ship"]
+  ```
+
+  #### Formatted text
+
+  Use [`FormattedText.createSchemaWithRanges`](https://fluidframework.com/docs/api/tree/formattedtext-namespace) for text whose existing editing methods maintain ranges automatically.
+  It accepts named options for the schema factory, formatting, additional atom schemas, default formatting, and range data schema.
+
+  Formatted text implementations now reserve the `ranges` property name, including schemas created with the existing `FormattedText.createSchema` Alpha API.
+  If your subclass defines this property, rename it to avoid a collision with the implementation.
+  Assignments to this property can now throw a `TypeError`, even though the existing factory's return type does not prevent the collision.
+
+  ```typescript
+  import {
+    FormattedText,
+    SchemaFactoryBeta,
+    TreeViewConfiguration,
+    createIndependentTreeAlpha,
+  } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactoryBeta("com.example.annotatedText");
+  class Format extends sf.object("Format", { bold: sf.boolean }) {}
+  class Comment extends sf.object("Comment", { message: sf.string }) {}
+  class Text extends FormattedText.createSchemaWithRanges({
+    schemaFactory: sf,
+    formatSchema: Format,
+    extraAtoms: [],
+    defaultFormatInsertable: { bold: false },
+    rangeDataSchema: Comment,
+  }) {}
+
+  const view = createIndependentTreeAlpha({
+    minVersionForCollab: "2.80.0",
+  }).viewWith(new TreeViewConfiguration({ schema: Text }));
+  view.initialize(Text.fromString("Hello world"));
+  const text = view.root;
+  const comment = text.ranges.trackRange(
+    "comment",
+    { start: 6, end: 11 },
+    { message: "Review this word" },
+  );
+  text.insertAt(0, "Say: ");
+  const { start, end } = comment; // start.index === 11, end.index === 16
+  text.getString(start.index, end.index); // "world"
+  ```
+
+  Existing formatted text can be upgraded to support ranges without rewriting its content.
+  See the `FormattedText` namespace documentation for details.
+
+- Preserve array and map node types when accessing alpha APIs ([#28579](https://github.com/microsoft/FluidFramework/pull/28579)) [1c8dc497191](https://github.com/microsoft/FluidFramework/commit/1c8dc497191420e3bdc590520151e160b69ef5a1)
+
+  Calling [`asAlpha`](https://fluidframework.com/docs/api/fluid-framework#asalpha-function) on an array or map node now preserves its read and insertion types, customized subclass members, and schema identity.
+  The additional alpha methods use the node's existing read and insertion types, so valid content remains accepted and invalid content remains rejected.
+
+  Omit the type arguments to preserve the complete node type automatically.
+  If you already specify the allowed types explicitly, that call remains supported, but it does not preserve customized members in the returned type.
+  Specify the node type as the second type argument to preserve those members too.
+
+  ```typescript
+  import { asAlpha, SchemaFactory } from "fluid-framework/alpha";
+
+  const sf = new SchemaFactory("example");
+  class Numbers extends sf.array("Numbers", sf.number) {
+    public label = "numbers";
+  }
+  const numbers = new Numbers([1, 2]);
+
+  // Recommended: infer the element type and preserve the custom label property.
+  const inferred = asAlpha(numbers);
+  inferred.unshift(0);
+  inferred.label; // string
+
+  // An explicit allowed-types argument still supports numeric array operations.
+  const explicit = asAlpha<typeof sf.number>(numbers);
+  explicit.unshift(3);
+
+  // Also specify the node type to preserve the custom label property.
+  const explicitNode = asAlpha<typeof sf.number, Numbers>(numbers);
+  explicitNode.label; // string
+  ```
+
+  The same type-argument guidance applies to map nodes.
+  The conversion still returns the original node without changing runtime behavior.
+
+- Reduce navigation overhead for SharedTree reads and edits ([#28554](https://github.com/microsoft/FluidFramework/pull/28554)) [53f3c89dbfd](https://github.com/microsoft/FluidFramework/commit/53f3c89dbfdbeeae87bdc4ea45d3d825eceefb9e)
+
+  SharedTree reads, edits, and parent/key queries have lower overhead, including in deeply nested trees.
+  No application code or stored document format changes are required.
+
+  #### Performance measurements
+
+  Benchmarks on trees nested ten levels deep measure improvements with both the [reference (default) forest](https://fluidframework.com/docs/api/tree/#foresttypereference-variable) and the [optimized forest](https://fluidframework.com/docs/api/tree/#foresttypeoptimized-variable).
+  Times are microseconds per benchmark iteration.
+
+  | Forest              | Workload               | Before  | After   | Less elapsed time |
+  | ------------------- | ---------------------- | ------- | ------- | ----------------- |
+  | Reference (default) | Object and array reads | 5.349   | 1.626   | 69.6%             |
+  | Reference (default) | Edits                  | 138.518 | 115.525 | 16.6%             |
+  | Reference (default) | Parent/key queries     | 13.577  | 0.728   | 94.6%             |
+  | Optimized           | Object and array reads | 3.610   | 1.593   | 55.9%             |
+  | Optimized           | Edits                  | 112.610 | 97.693  | 13.2%             |
+  | Optimized           | Parent/key queries     | 7.011   | 0.635   | 90.9%             |
+
+  Results are means from two fresh processes per version, run serially in balanced order on Linux x64 with Node.js 22.22.3 and production emulation enabled.
+  These are workload-specific results on a shared host, not whole-application speedups.
+  Edit measurements are noisier, with relative margins of error up to approximately 20%, so treat those differences with caution.
+
+- Preserve alpha capabilities when configuring SharedTree kinds ([#28583](https://github.com/microsoft/FluidFramework/pull/28583)) [742ef2f981f](https://github.com/microsoft/FluidFramework/commit/742ef2f981f305210dada8b52932bbcc49845d5c)
+
+  [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/#configuredsharedtreealpha-function) now returns [`SharedObjectKindAlpha`](https://fluidframework.com/docs/api/shared-object-base/sharedobjectkindalpha-interface), matching the capabilities exposed by [`SharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/#sharedtreealpha-variable).
+  This exposes the [`type`](https://fluidframework.com/docs/api/driver-definitions/registrykey-interface#type-propertysignature) and [`adapt`](https://fluidframework.com/docs/api/driver-definitions/registrykey-interface#adapt-methodsignature) members needed to use configured kinds as registry keys.
+  Existing uses of the returned [`SharedObjectKind`](https://fluidframework.com/docs/api/shared-object-base/sharedobjectkind-interface) remain supported, and runtime behavior is unchanged.
+
+- Add an alpha API to check if a node has content in unknown optional fields ([#28529](https://github.com/microsoft/FluidFramework/pull/28529)) [657114536e8](https://github.com/microsoft/FluidFramework/commit/657114536e84ed307f0dec9bd24325773485b6fb)
+
+  Object nodes whose schema sets [allowUnknownOptionalFields](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) can contain optional fields that are not in the view schema.
+  The content of these fields is not available through the node's properties.
+
+  The new `TreeAlpha.hasUnknownChildren` API returns `true` if a node has content in at least one unknown optional field.
+  To read that content, use `TreeAlpha.exportVerbose` with `KeyEncodingOptions.allStoredKeys`.
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("com.example");
+  class Person extends sf.object(
+    "Person",
+    { name: sf.string },
+    { allowUnknownOptionalFields: true },
+  ) {}
+
+  // ...
+
+  // A newer version of the application added a `nickname` field.
+  if (TreeAlpha.hasUnknownChildren(person)) {
+    const content = TreeAlpha.exportVerbose(person, {
+      keys: KeyEncodingOptions.allStoredKeys,
+    });
+    // { type: "com.example.Person", fields: { name: "Alice", nickname: "Ali" } }
+  }
+  ```
+
+- Fix nodeChanged events for changes to unknown optional fields ([#28577](https://github.com/microsoft/FluidFramework/pull/28577)) [7a49a6eea05](https://github.com/microsoft/FluidFramework/commit/7a49a6eea054b594a0c0dba7a8abd2e6bef35cd7)
+
+  When another client changed an [unknown optional field](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) of an object node, subscribing to `nodeChanged` on that node caused an error to be thrown when the change was applied.
+  This also affected `TreeAlpha.trackObservations`, `TreeAlpha.trackObservationsOnce`, and React components using observation tracking from `@fluidframework/react`, such as `useTreeObservations` and `withTreeObservations`.
+
+  Now `nodeChanged` is emitted for these changes.
+  Unknown optional fields have no property, so they are not included in `changedProperties`.
+  Instead, the new `changedUnknownProperties` property of the event data lists their stored keys.
+  If only unknown optional fields changed, `changedProperties` is empty.
+
+  ```typescript
+  TreeBeta.on(
+    node,
+    "nodeChanged",
+    ({ changedProperties, changedUnknownProperties }) => {
+      // changedProperties: property keys of known fields that changed.
+      // changedUnknownProperties: stored keys of unknown optional fields that changed, or undefined if none changed.
+    },
+  );
+  ```
+
+  Observation tracking is invalidated when an unknown optional field changes if the tracked code observed it, for example by calling `TreeAlpha.hasUnknownChildren`.
+
+- Add an alpha API to get the schema of unknown fields ([#28563](https://github.com/microsoft/FluidFramework/pull/28563)) [35adb671665](https://github.com/microsoft/FluidFramework/commit/35adb671665bfbace1c52ccddc808eb3509c168d)
+
+  The new `TreeContextAlpha.unknownFieldSchemas` property maps each object node schema that has [unknown fields](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) to the schema of those fields, keyed by stored key.
+  The value updates when the document's stored schema changes: listen to the view's [`schemaChanged`](https://fluidframework.com/docs/api/fluid-framework/treeviewevents-interface#schemachanged-methodsignature) event to know when to read it again.
+  It is available on [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface) and on the [context](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#context-methodsignature) of any hydrated node.
+  It is `undefined` for [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) nodes, which have no view schema.
+
+  To read the content of these fields, use [`TreeAlpha.exportVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#exportverbose-methodsignature) with [`KeyEncodingOptions.allStoredKeys`](https://fluidframework.com/docs/api/fluid-framework/keyencodingoptions-enum#allstoredkeys-enummember).
+
+  #### Example
+
+  Version 1 of an application defines a `Person` with a `name` field, and allows unknown optional fields.
+  [`allowUnknownOptionalFields`](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) will be enabled by default in the 3.10 release.
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("com.example");
+  class Person extends sf.object(
+    "Person",
+    { name: sf.string },
+    { allowUnknownOptionalFields: true },
+  ) {}
+  ```
+
+  Version 2 of the application adds an optional `nickname` field:
+
+  ```typescript
+  class Person extends sf.object(
+    "Person",
+    { name: sf.string, nickname: sf.optional(sf.string) },
+    { allowUnknownOptionalFields: true },
+  ) {}
+  ```
+
+  Version 1 can still open a document after version 2 upgrades its schema, but the `nickname` field is unknown to it.
+  Version 1 can use `unknownFieldSchemas` to find the schema of that field, then use `exportVerbose` to read its content:
+
+  ```typescript
+  // In version 1 of the application:
+  const fieldSchemas =
+    TreeAlpha.context(person).unknownFieldSchemas?.get(Person);
+  // Map { "nickname" => { kind: FieldKind.Optional, simpleAllowedTypes: Map { "com.fluidframework.leaf.string" => ... }, ... } }
+
+  const content = TreeAlpha.exportVerbose(person, {
+    keys: KeyEncodingOptions.allStoredKeys,
+  });
+  // { type: "com.example.Person", fields: { name: "Ali", nickname: "Al" } }
+  ```
+
+## 3.7.0
+
+### Minor Changes
+
+- Configure how much SharedTree edit history to retain ([#28511](https://github.com/microsoft/FluidFramework/pull/28511)) [9c5a7ccd293](https://github.com/microsoft/FluidFramework/commit/9c5a7ccd293633c1359e3f572f85e0966aeed8ab)
+
+  The existing alpha SharedTree [`retainHistory`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface#retainhistory-propertysignature) option now accepts a number in addition to a boolean.
+  Pass a nonnegative safe integer to retain the newest specified number of available sequenced main-branch commits, `true` to retain all available history, or `false` or `0` to disable extra retention.
+
+  ```typescript
+  import { configuredSharedTree } from "fluid-framework/alpha";
+
+  const SharedTree = configuredSharedTree({ retainHistory: 20 });
+  ```
+
+  Collaboration and existing branches can require retaining more commits than the configured number.
+  After loading a summary, trimming waits for the collaboration boundary to be reported.
+  The count applies to sequenced commits, not file versions or snapshots.
+  The policy is local to each SharedTree instance and is not persisted or sent to other clients.
+  History that has already been removed cannot be recovered by increasing retention.
+
+  The existing boolean behavior is unchanged, and omitting `retainHistory` still defaults to `false`.
+
+- TreeArrayNodes correctly handle null elements during iteration and removal ([#28519](https://github.com/microsoft/FluidFramework/pull/28519)) [8defa178a08](https://github.com/microsoft/FluidFramework/commit/8defa178a083468b6160508f35fb67026329ec34)
+
+  Null elements in a [`TreeArrayNode`](https://fluidframework.com/docs/api/fluid-framework/treearraynode-interface) are now handled correctly during iteration and by the alpha `splice` method.
+  Previously, encountering a `null` element during iteration or removing one with `splice` incorrectly threw an out-of-bounds error.
+
+- Adds debug-only checks to facilitate root cause analysis of SharedTree bugs ([#28435](https://github.com/microsoft/FluidFramework/pull/28435)) [2e08a3a09ad](https://github.com/microsoft/FluidFramework/commit/2e08a3a09adc8c4765656bb0bcad7ad305f53338)
+
+  This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
+  These checks can be used by application authors when faced with a SharedTree rebasing bug.
+  For example:
+
+  ```typescript
+  import { RebaseValidation } from "@fluidframework/tree/alpha";
+
+  it("repro SharedTree bug", () => {
+    // Reproduce the SharedTree bug under strict rebase validation level.
+    RebaseValidation.runWithLevel(RebaseValidation.Level.Strict, () => {
+      // Buggy scenario
+      // ...
+    });
+  });
+  ```
+
+  Running the test with strict validation is more likely to yield actionable feedback for SharedTree maintainers.
+
+  These checks are tree-shaken out of production builds, so they have no impact on shipped applications.
+
+  There are three levels of checking available:
+  - `RebaseValidation.Level.None`: No rebase validation is performed.
+  - `RebaseValidation.Level.Cheap`: A minimal amount of rebase validation is performed, with minimal performance overhead.
+  - `RebaseValidation.Level.Strict`: Extensive rebase validation is performed, with the highest performance overhead.
+
+  The level is set to `RebaseValidation.Level.Cheap` by default.
+  Debug builds may therefore experience asserts in scenarios where they did not before.
+  The level can be adjusted by calling `RebaseValidation.setLevel` or `RebaseValidation.runWithLevel`.
+
+- Slightly faster SharedTree initialization ([#28527](https://github.com/microsoft/FluidFramework/pull/28527)) [7402252137c](https://github.com/microsoft/FluidFramework/commit/7402252137c5f5177e127b44303e2a2b0bbcc5ae)
+
+  [`TreeView.initialize()`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#initialize-methodsignature) is now slightly faster for large schemas when debug-only checks are disabled or optimized out.
+  See [non-production conditional code](https://fluidframework.com/docs/api/core-utils/#nonproductionconditionalsincluded-function) for details on how bundlers remove these checks from production builds.
+
+  For a synthetic schema with **240 object types and 1,200 fields** (five fields per object type), plus an array root allowing all 240 types, warm initialization took about 7% less time in a local benchmark:
+
+  | Measurement               | Before  | After   |
+  | ------------------------- | ------- | ------- |
+  | `TreeView.initialize([])` | 5.21 ms | 4.83 ms |
+
+  The tree was initialized with an empty array: these numbers measure schema-related initialization work, not loading 240 objects.
+  Measurements used Node.js with debug-only checks disabled and exclude view creation.
+  Results depend on the schema and environment.
+
+- Reduce the bundle size of schema hashing ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  Schema hashing uses a browser-oriented SHA-256 implementation without Node.js Buffer compatibility dependencies.
+  This reduces browser bundle size when using [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+
+- Simplify the alpha schema identity API ([#28496](https://github.com/microsoft/FluidFramework/pull/28496)) [c98cc8b1bde](https://github.com/microsoft/FluidFramework/commit/c98cc8b1bde38af7ead14562e02382e7d4c6a2a2)
+
+  The alpha `identifySchema` function is renamed to [`identifySchemaAlpha`](https://fluidframework.com/docs/api/tree#identifyschemaalpha-function).
+  The alpha `computeSchemaHash` function is no longer exported.
+  To check a schema against an expected hash, pass a schema identity to the view configuration:
+
+  ```typescript
+  const config = new TreeViewConfigurationAlpha({
+    schema: MySchema,
+    schemaIdentity: identifySchemaAlpha({ expectedHash: savedHash }),
+  });
+  ```
+
+  If the expected hash does not match, the view construction error includes the actual hash.
+
+- Use stable definition ordering in schema exports ([#28544](https://github.com/microsoft/FluidFramework/pull/28544)) [30b0ce86b9c](https://github.com/microsoft/FluidFramework/commit/30b0ce86b9cdd8104b7affd25e46a86d8ec693ed)
+
+  SharedTree JSON Schema exports and schema compatibility snapshots now write node definitions in a stable identifier order, independent of definition map insertion order and locale.
+  Field and allowed-type ordering is unchanged.
+
+  Newly generated output may differ in definition ordering from older output.
+  Existing compatibility snapshots remain usable without regeneration, and ordering alone does not change schema compatibility results.
+  Schema hashes and persisted schema encoding are unchanged.
+
+- Unsafe array-to-tuple conversion is available for allowed schemas ([#28502](https://github.com/microsoft/FluidFramework/pull/28502)) [1b8870908cb](https://github.com/microsoft/FluidFramework/commit/1b8870908cb4d93d543f37f8a77f1e4ce492e539)
+
+  The alpha API `unsafeArrayToTuple` is now exported from `@fluidframework/tree/alpha` and `fluid-framework/alpha`.
+  It returns the original array with its type converted using [`UnionToTuple`](https://fluidframework.com/docs/api/fluid-framework/uniontotuple-typealias), allowing insertable content APIs to work when tuple type information has been lost.
+  Prefer preserving the tuple type with `as const` when possible.
+  The helper does not validate the array: if its element type includes a schema that is absent at runtime, TypeScript can accept content that fails at runtime.
+
+  See [Why is my insertable content getting typed as `never`?](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree#why-is-my-insertable-content-getting-typed-as-never) for examples and an explanation of the runtime risks.
+
 ## 3.6.0
 
 ### Minor Changes

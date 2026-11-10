@@ -57,6 +57,9 @@ updateNotifier: false
 # - Apply vulnerability remediations (qs, js-yaml, simple-git, diff, tar,
 #   serialize-javascript, picomatch, and minimatch ranges).
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
   axios@>=1 <1.16: 1.16.0
 
@@ -84,13 +87,13 @@ overrides:
   diff@>=4 <5: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=8 <9: ^8.0.3
-  js-yaml@<4: 3.15.0
+  js-yaml@<4: 3.15.2
   js-yaml@>=4: 4.3.2
   jws: ^3.2.3
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'
   qs: ^6.15.2
-  simple-git: ^3.36.0
+  simple-git: ^4.0.2
   sharp: ^0.33.2
   tar: ^7.5.11
   # tar-fs uses these optional adapters only under the unsupported Bare runtime. Dropping them removes 9 dependency

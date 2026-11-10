@@ -1,0 +1,33 @@
+{
+  "name": "compat-3.7.0",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-version-utils/compat-workspaces/full/3.7.0"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "dependencies": {
+    "@fluid-experimental/sequence-deprecated": "3.7.0",
+    "@fluidframework/agent-scheduler": "3.7.0",
+    "@fluidframework/aqueduct": "3.7.0",
+    "@fluidframework/cell": "3.7.0",
+    "@fluidframework/container-loader": "3.7.0",
+    "@fluidframework/container-runtime": "3.7.0",
+    "@fluidframework/counter": "3.7.0",
+    "@fluidframework/datastore": "3.7.0",
+    "@fluidframework/local-driver": "3.7.0",
+    "@fluidframework/map": "3.7.0",
+    "@fluidframework/matrix": "3.7.0",
+    "@fluidframework/odsp-driver": "3.7.0",
+    "@fluidframework/ordered-collection": "3.7.0",
+    "@fluidframework/register-collection": "3.7.0",
+    "@fluidframework/routerlicious-driver": "3.7.0",
+    "@fluidframework/sequence": "3.7.0",
+    "@fluidframework/test-utils": "3.7.0",
+    "@fluidframework/tree": "3.7.0"
+  }
+}
