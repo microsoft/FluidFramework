@@ -167,6 +167,32 @@ describe("schemaCreationUtilities", () => {
 		assert.equal(parent.mode.value, "Member0");
 	});
 
+	// Members typed as `string[]` rather than as a tuple give a `schema` that is an ordinary array.
+	// Fields using it must still accept nodes from the enum.
+	it("enumFromStrings - widened members", () => {
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
+		const members: string[] = ["A", "B"];
+		const Mode = enumFromStrings(schemaFactory.scopedFactory("Mode"), members);
+
+		type Insertable = InsertableTreeFieldFromImplicitField<typeof Mode.schema>;
+		type _checkNotNever = requireFalse<isAssignableTo<Insertable, never>>;
+
+		class Parent extends schemaFactory.object("Parent", {
+			required: Mode.schema,
+			optional: schemaFactory.optional(Mode.schema),
+			array: schemaFactory.array(Mode.schema),
+		}) {}
+
+		const parent = new Parent({
+			required: Mode("A"),
+			optional: Mode("B"),
+			array: [Mode("A")],
+		});
+		assert.equal(parent.required.value, "A");
+		assert.equal(parent.optional?.value, "B");
+		assert.equal(parent.array[0].value, "A");
+	});
+
 	it("adaptEnum example from docs", () => {
 		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 		// An enum for use in the tree. Must have string keys.
