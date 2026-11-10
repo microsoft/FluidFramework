@@ -30,7 +30,6 @@ import {
 	combineVisitors,
 	detachedFieldAsKey,
 	makeBreakingVisitor,
-	mapCursorField,
 	rootFieldKey,
 	type ChunkedCursor,
 	type TreeChunk,
@@ -110,7 +109,7 @@ export function ensureExclusiveBasicChunk(
 	index: number,
 	compressor: ChunkCompressor,
 ): BasicChunk {
-	const { chunk, indexOfChunk, indexWithinChunk } = locateNodeInChunks(chunks, index);
+	const { chunk, indexOfChunk } = locateNodeInChunks(chunks, index);
 
 	// Normalize to a BasicChunk, splitting the chunk if needed.
 	let finalIndexOfChunk: number;
@@ -119,28 +118,24 @@ export function ensureExclusiveBasicChunk(
 		basicChunk = chunk;
 		finalIndexOfChunk = indexOfChunk;
 	} else {
-		// TODO:Perf: support in place editing of other chunk formats when possible:
-		// 1. Support updating values in uniform chunks.
-		// 2. Support traversing sequence chunks.
-		//
-		// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
-		const newChunks = mapCursorField(chunk.cursor(), (cursor) =>
-			basicChunkTree(cursor, compressor),
-		);
-		// TODO: this could fail for really long chunks being split (due to argument count limits).
-		// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
-		chunks.splice(indexOfChunk, 1, ...newChunks);
-		// We just overwrote the reference to the old chunk in the array, so drop the ref count for it.
-		chunk.referenceRemoved();
-
-		// Sanity check that the chunk indexing is as expected before updating it.
-		debugAssert(
-			() =>
-				newChunks[indexWithinChunk] === chunks[indexOfChunk + indexWithinChunk] ||
-				"bad chunk indexing",
-		);
-		basicChunk = newChunks[indexWithinChunk] ?? oob();
-		finalIndexOfChunk = indexOfChunk + indexWithinChunk;
+		// Isolate the edited node so conversion to BasicChunk is limited to that node.
+		if (chunk.topLevelLength > 1) {
+			// Split the end first so the last call returns the target node's final chunk index.
+			splitFieldAtIndex(chunks, index + 1, compressor);
+			finalIndexOfChunk = splitFieldAtIndex(chunks, index, compressor);
+		} else {
+			finalIndexOfChunk = indexOfChunk;
+		}
+		// Splitting can replace and release the original chunk, so read the current array entry.
+		const isolatedChunk = chunks[finalIndexOfChunk] ?? oob();
+		assert(isolatedChunk.topLevelLength === 1, "expected an isolated node");
+		const cursor = isolatedChunk.cursor();
+		cursor.firstNode();
+		// Acquire the replacement's owned reference before releasing the array's old reference.
+		// basicChunkTree can reuse an existing BasicChunk held by the isolated chunk.
+		basicChunk = basicChunkTree(cursor, compressor);
+		chunks[finalIndexOfChunk] = basicChunk;
+		isolatedChunk.referenceRemoved();
 	}
 
 	debugAssert(() => chunks[finalIndexOfChunk] === basicChunk || "bad child index");
