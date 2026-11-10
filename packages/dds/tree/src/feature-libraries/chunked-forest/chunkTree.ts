@@ -749,8 +749,7 @@ export function splitFieldAtIndex(
 		cursor.firstNode();
 		const before = chunkRange(cursor, policy, splitPoint, false);
 		const after = chunkRange(cursor, policy, total - splitPoint, true);
-		// TODO: this could fail for really long chunks being split (due to argument count limits).
-		chunks.splice(chunkIndex, 1, ...before, ...after);
+		replaceArrayRange(chunks, chunkIndex, chunkIndex + 1, [...before, ...after]);
 		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
 		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
 		chunk.referenceRemoved();
