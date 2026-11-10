@@ -26,7 +26,8 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
-import { isObjectNodeSchema } from "./node-kinds/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Avoid loading node implementations during schema initialization.
+import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
 import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import {
 	resolveStoredSchemaGenerationOptions,
