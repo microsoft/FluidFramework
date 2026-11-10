@@ -75,7 +75,6 @@ export {
 	type GlobalEditDescription,
 	type FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
-	intoDelta,
 	relevantRemovedRoots,
 	updateRefreshers,
 } from "./modularChangeFamily.js";
@@ -91,3 +90,4 @@ export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 export { minimizeModularChangeset } from "./minimizeModularChange.js";
 export { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 export { isChangesetValid as isModularChangesetValid } from "./modularChangeUtils.js";
+export { intoDelta } from "./modularChangeDelta.js";

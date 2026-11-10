@@ -46,7 +46,7 @@ import {
 	ModularChangeFamily,
 	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+} from "../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import {
 	removeAliases,

@@ -18,7 +18,6 @@ import {
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { newFieldIdKeyBTree } from "./modularChangeFamily.js";
 import type {
 	FieldChangeMap,
 	FieldId,
@@ -32,6 +31,7 @@ import {
 	fieldIdKeyFromFieldId,
 	getChangeHandler,
 	isChangesetValid,
+	newFieldIdKeyBTree,
 	nodeChangeFromId,
 	normalizeFieldId,
 	tryRemoveDetachLocation,
