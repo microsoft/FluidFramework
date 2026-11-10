@@ -12,7 +12,14 @@ import {
 	createChildMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { restore, stub, useFakeTimers, type SinonFakeTimers, type SinonStub } from "sinon";
+import {
+	restore,
+	spy,
+	stub,
+	useFakeTimers,
+	type SinonFakeTimers,
+	type SinonStub,
+} from "sinon";
 
 import { createOdspUrl } from "../createOdspUrl.js";
 import { createOdspCacheAndTracker } from "../epochTracker.js";
@@ -248,13 +255,20 @@ describe("join-session throttle coordination", () => {
 				throw createOdspNetworkError("throttle", 429, (maximumTimerDelayMs + 1000) / 1000);
 			}),
 		);
+		const timeoutSpy = spy(globalThis, "setTimeout");
 		let completed = false;
 		const waiting = cache.sessionJoinCache.addOrGet("document", async () => {
 			completed = true;
 			return { entryTime: Date.now(), joinSessionResponse: response };
 		});
+		await clock.tickAsync(0);
+		assert.equal(timeoutSpy.firstCall.args[1], maximumTimerDelayMs);
 		await clock.tickAsync(maximumTimerDelayMs);
 		assert.equal(completed, false);
+		assert.deepEqual(
+			timeoutSpy.getCalls().map((call) => call.args[1]),
+			[maximumTimerDelayMs, 1000],
+		);
 		await clock.tickAsync(1000);
 		await waiting;
 		assert.equal(clock.countTimers(), 0);
@@ -347,8 +361,12 @@ describe("join-session throttle coordination", () => {
 		assert.equal(cache.sessionJoinCache.remove(key), false);
 		clock.setSystemTime(120000);
 		assert.equal(cache.sessionJoinCache.remove(key), false);
-		await join(stream);
-		assert.equal(fetchStub.callCount, 2, "expired throttles do not delay new requests");
+		// Moving the clock back must not resurrect metadata removed at expiration.
+		clock.setSystemTime(0);
+		const next = join(stream);
+		await clock.tickAsync(0);
+		assert.equal(fetchStub.callCount, 2, "removed throttles must not delay new requests");
+		await next;
 		stream.dispose();
 		assert.equal(clock.countTimers(), 0);
 	});
@@ -559,9 +577,20 @@ describe("join-session throttle coordination", () => {
 			true,
 		);
 		assert.equal(cache.sessionJoinCache.addValue(key, cachedResponse), false);
-		const waiting = cache.sessionJoinCache.addValueOrGet(key, cachedResponse);
+		const fallbackResponse = {
+			entryTime: Date.now(),
+			joinSessionResponse: { ...response, id: "fallback-session" },
+		};
+		let settled = false;
+		const waiting = cache.sessionJoinCache
+			.addValueOrGet(key, fallbackResponse)
+			.then((value) => {
+				settled = true;
+				return value;
+			});
 		await clock.tickAsync(119999);
 		assert.equal(requests, 0);
+		assert.equal(settled, false, "addValueOrGet must wait for the existing work");
 		await clock.tickAsync(1);
 		assert.equal(await waiting, cachedResponse);
 		assert.equal(requests, 1);
