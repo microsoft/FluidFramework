@@ -15,11 +15,11 @@ In a local benchmark with 10,000-character documents using [ForestTypeOptimized]
 
 | Metric | Formatted text, before to after | Plain text, before to after |
 | --- | --- | --- |
-| Retained tree heap after loading | 30.6 MiB to 25.4 MiB (17% less) | 2.72 MiB to 0.316 MiB (88% less) |
-| Retained attached-content heap after loading | 10.5 MiB to 10.5 MiB (about the same) | 0.114 MiB to 0.0805 MiB (29% less) |
-| Summary load time | 215 ms to 205 ms (4% faster) | 33.8 ms to 17.6 ms (48% faster) |
-| Receive insertion time | 432 ms to 405 ms (6% faster) | 73.1 ms to 67.3 ms (8% faster) |
-| Local insertion time | 1,343 ms to 1,323 ms (about the same) | 153 ms to 150 ms (about the same) |
+| Retained tree heap after loading | 30.6 MiB to 25.4 MiB (17% less) | 2.72 MiB to 0.315 MiB (88% less) |
+| Retained attached-content heap after loading | 10.5 MiB to 10.5 MiB (about the same) | 0.110 MiB to 0.0777 MiB (29% less) |
+| Summary load time | 214 ms to 209 ms (about the same) | 33.0 ms to 17.3 ms (48% faster) |
+| Receive insertion time | 423 ms to 413 ms (about the same) | 74.3 ms to 67.9 ms (9% faster) |
+| Local insertion time | 1,299 ms to 1,327 ms (about the same) | 151 ms to 152 ms (about the same) |
 
 These measurements use Node.js 22.23.2, in-memory summary storage, and a mocked runtime, with 18 timed samples per case after warmup across two process orders.
 Both variants include the existing optimized-forest compaction; the comparison isolates this decoding change.
@@ -31,7 +31,8 @@ The attached-content measurement retains only the root-field chunks, excluding t
 Shared summary fixtures and their ID compressor are excluded from heap deltas.
 These measurements do not measure peak memory.
 
-Both document schemas use less retained whole-tree heap and load summaries sooner in this workload.
+Both document schemas use less retained whole-tree heap in this workload.
+Plain-text summary loading is faster, while formatted-text timing differences are small and vary between process runs.
 Formatted-text attached-content heap is essentially unchanged because its enclosing polymorphic structures do not use the fixed-shape sequence path.
 Small timing differences can be noise, and preparing a decoder for a custom leaf type can cost more than the general path for a tiny batch.
 Results depend on the document schema, workload, and environment.
