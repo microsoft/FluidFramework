@@ -22,6 +22,7 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -98,13 +99,16 @@ describeCompat("opsBeforeReturn load mode", "NoCompat", (getTestObjectProvider) 
 				const entryPoint = provider.createFluidEntryPoint(testContainerConfig);
 				const innerFactory: FluidObject<IRuntimeFactory> =
 					"fluidExport" in entryPoint ? entryPoint.fluidExport : entryPoint;
-				assert(innerFactory.IRuntimeFactory !== undefined, "entry point is not a runtime factory");
+				assert(
+					innerFactory.IRuntimeFactory !== undefined,
+					"entry point is not a runtime factory",
+				);
 				const runtime = await innerFactory.IRuntimeFactory.instantiateRuntime(
 					context,
 					existing,
 				);
 
-				const queue = context.deltaManager.inbound;
+				const queue = toIDeltaManagerFull(context.deltaManager).inbound;
 				inbound = queue;
 				queue.on("op", () => {
 					if (!enabled) {
@@ -158,7 +162,11 @@ describeCompat("opsBeforeReturn load mode", "NoCompat", (getTestObjectProvider) 
 				deltaManager.lastSequenceNumber >= lastSeqNumber,
 				`expected the loaded container to process up to '${lastSeqNumber}', but it processed up to '${deltaManager.lastSequenceNumber}'`,
 			);
-			assert.strictEqual(deltaManager.inbound.length, 0, "inbound queue should be empty");
+			assert.strictEqual(
+				toIDeltaManagerFull(deltaManager).inbound.length,
+				0,
+				"inbound queue should be empty",
+			);
 		});
 	}
 
@@ -175,7 +183,10 @@ describeCompat("opsBeforeReturn load mode", "NoCompat", (getTestObjectProvider) 
 			deltaManager.lastSequenceNumber < lastSeqNumber,
 			"ops after the hold should not be processed yet",
 		);
-		assert(deltaManager.inbound.length > 0, "held ops should still be queued");
+		assert(
+			toIDeltaManagerFull(deltaManager).inbound.length > 0,
+			"held ops should still be queued",
+		);
 
 		// When the hold is released and the container connects, it catches up.
 		releaseHold();
