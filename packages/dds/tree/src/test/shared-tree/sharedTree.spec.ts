@@ -345,6 +345,48 @@ describe("SharedTree", () => {
 				assert(counts.searched > 0);
 				assert(Tree.is(provider.trees[1].viewWith(config).root, handleSchema));
 			});
+
+			it("searches ops for handles when a merged fork adds handles to the schema", () => {
+				const provider = new TestTreeProviderLite(2);
+				const counts = countSubmissions(provider.trees[0]);
+				const config = new TreeViewConfiguration({ schema: [numberSchema, handleSchema] });
+				const view = asAlpha(provider.trees[0].viewWith(config));
+				const fork = view.fork();
+				fork.initialize(provider.trees[0].handle);
+				view.merge(fork);
+				provider.synchronizeMessages();
+
+				assert.equal(counts.notSearched, 0);
+				assert(counts.searched > 0);
+				assert(Tree.is(provider.trees[1].viewWith(config).root, handleSchema));
+			});
+
+			for (const [encoding, treeEncodeType] of [
+				["compressed", TreeCompressionStrategy.Compressed],
+				["uncompressed", TreeCompressionStrategy.Uncompressed],
+			] as const) {
+				it(`searches ops for handles on a shared branch whose schema allows them (${encoding})`, () => {
+					const provider = new TestTreeProviderLite(
+						2,
+						configuredSharedTree({
+							jsonValidator: FormatValidatorBasic,
+							enableSharedBranches: true,
+							treeEncodeType,
+						}).getFactory(),
+					);
+					const [tree1, tree2] = provider.trees;
+					const counts = countSubmissions(tree1);
+					const config = new TreeViewConfiguration({ schema: [numberSchema, handleSchema] });
+					const branchId = tree1.createSharedBranch();
+					const branchView = tree1.viewSharedBranchWith(branchId, config);
+					branchView.initialize(tree1.handle);
+					provider.synchronizeMessages();
+
+					assert.equal(counts.notSearched, 0);
+					assert(counts.searched > 0);
+					assert(Tree.is(tree2.viewSharedBranchWith(branchId, config).root, handleSchema));
+				});
+			}
 		});
 
 		it("noop upgrade", () => {

@@ -37,6 +37,7 @@ import {
 	EditManagerFormatVersion,
 	messageCodecName,
 	MessageFormatVersion,
+	type BranchId,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import { handleSchema, type ITree } from "./simple-tree/index.js";
@@ -57,10 +58,13 @@ const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.iden
 /**
  * Submits each of a tree's ops through `args`, without searching it for Fluid handles when it can't hold one.
  * @remarks
- * A tree holds Fluid handles only as values of the handle leaf schema, so an op can hold one only if the stored schema
- * it was encoded with (kept in its local metadata) includes that schema. A stored schema can only be upgraded to one
- * that allows all the content it allowed, so content removed under an earlier schema holds no handle either.
- * Ops whose metadata has no schema are searched.
+ * A tree holds Fluid handles only as values of the handle leaf schema.
+ * An op for the main branch is submitted once the main branch has applied it, so the stored schema in its local
+ * metadata includes any schema change the op makes: the op can hold a handle only if that schema includes the handle
+ * leaf schema. A stored schema can only be upgraded to one that allows all the content it allowed, so content removed
+ * under an earlier schema holds no handle either.
+ * The metadata of an op for any other branch holds the main branch's schema rather than that branch's, so such ops are
+ * always searched, as are ops whose metadata has no schema.
  */
 function makeSubmitLocalMessage(
 	args: KernelArgs,
@@ -70,8 +74,15 @@ function makeSubmitLocalMessage(
 		return submitLocalMessage;
 	}
 	return (content, localOpMetadata) => {
-		const schema = (localOpMetadata as Partial<SchemaAndPolicy> | undefined)?.schema;
-		if (schema === undefined || schema.nodeSchema.has(handleSchemaIdentifier)) {
+		const metadata = localOpMetadata as
+			| Partial<SchemaAndPolicy & { readonly branchId: BranchId }>
+			| undefined;
+		const schema = metadata?.schema;
+		if (
+			metadata?.branchId !== "main" ||
+			schema === undefined ||
+			schema.nodeSchema.has(handleSchemaIdentifier)
+		) {
 			submitLocalMessage(content, localOpMetadata);
 		} else {
 			submitLocalMessageWithoutHandles(content, localOpMetadata);
