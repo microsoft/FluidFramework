@@ -10,6 +10,7 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	type IContainerRuntimeOptions,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	IOnDemandSummarizeOptions,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
@@ -30,12 +31,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
-import {
-	// eslint-disable-next-line import-x/no-deprecated
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	// eslint-disable-next-line import-x/no-deprecated
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./containerRuntimeFactories.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
@@ -107,10 +104,12 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType?: new (
-		// eslint-disable-next-line import-x/no-deprecated
-		props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	) => IRuntimeFactory,
+	containerRuntimeFactoryType?: new (props: {
+		defaultFactory: IFluidDataStoreFactory;
+		oldestSupportedClient: typeof defaultTestOldestSupportedClient;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		runtimeOptions?: IContainerRuntimeOptions;
+	}) => IRuntimeFactory,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),

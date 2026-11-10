@@ -499,7 +499,7 @@ describeCompat(
 			assert.equal(callCount, 1, "Should have only called getSnapshot once");
 			assert(loadingSnapshot?.sequenceNumber === summaryRefSeq, "Loaded from wrong snapshot");
 
-			const blobContents = loadingSnapshot.blobContents;
+			const loadingBlobContents = loadingSnapshot.blobContents;
 			// Snapshot validation (a snapshot call with NO loadingGroupIds)
 			const channelsTree = loadingSnapshot.snapshotTree.trees[".channels"];
 			const mainObjectTree = channelsTree.trees[mainObject.id];
@@ -508,29 +508,34 @@ describeCompat(
 			const dataObjectCTree = channelsTree.trees[dataObjectC.id];
 			const dataObjectDTree = channelsTree.trees[dataObjectD.id];
 
-			assertPopulatedTree(mainObjectTree, noId, blobContents, "mainObject tree not right");
+			assertPopulatedTree(
+				mainObjectTree,
+				noId,
+				loadingBlobContents,
+				"mainObject tree not right",
+			);
 			assertOmittedBlobContents(
 				dataObjectATree,
 				loadingGroupId,
-				blobContents,
+				loadingBlobContents,
 				"Wrong tree for A",
 			);
 			assertOmittedBlobContents(
 				dataObjectBTree,
 				loadingGroupId,
-				blobContents,
+				loadingBlobContents,
 				"Wrong tree for B",
 			);
 			assertOmittedBlobContents(
 				dataObjectCTree,
 				loadingGroupId2,
-				blobContents,
+				loadingBlobContents,
 				"Wrong tree for C",
 			);
 			assertOmittedBlobContents(
 				dataObjectDTree,
 				loadingGroupId2,
-				blobContents,
+				loadingBlobContents,
 				"Wrong tree for D",
 			);
 
@@ -573,25 +578,25 @@ describeCompat(
 			assertOmittedBlobContents(
 				contextA.baseSnapshot,
 				loadingGroupId,
-				blobContents,
+				loadingBlobContents,
 				"contextA tree not omitted",
 			);
 			assertOmittedBlobContents(
 				contextB.baseSnapshot,
 				loadingGroupId,
-				blobContents,
+				loadingBlobContents,
 				"contextB tree not omitted",
 			);
 			assertOmittedBlobContents(
 				contextC.baseSnapshot,
 				loadingGroupId2,
-				blobContents,
+				loadingBlobContents,
 				"contextC tree not omitted",
 			);
 			assertOmittedBlobContents(
 				contextD.baseSnapshot,
 				loadingGroupId2,
-				blobContents,
+				loadingBlobContents,
 				"contextD tree not omitted",
 			);
 
@@ -610,50 +615,48 @@ describeCompat(
 			assert.equal(aDataObjectA2, dataObjectA2, "Should be the same object");
 
 			// Testing the get snapshot call with loadingGroupId
-			{
-				const groupSnapshot = snapshotCaptured;
-				assert(groupSnapshot !== undefined, "should have captured group snapshot!");
-				const blobContents = groupSnapshot.blobContents;
-				assert.deepEqual(
-					groupSnapshot.sequenceNumber,
-					summaryRefSeq,
-					"Should be groupId snapshot",
-				);
+			const groupSnapshot = snapshotCaptured;
+			assert(groupSnapshot !== undefined, "should have captured group snapshot!");
+			const groupBlobContents = groupSnapshot.blobContents;
+			assert.deepEqual(
+				groupSnapshot.sequenceNumber,
+				summaryRefSeq,
+				"Should be groupId snapshot",
+			);
 
-				// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
-				const channelsTree2 = groupSnapshot.snapshotTree.trees[".channels"];
-				const mainObjectTree2 = channelsTree2.trees[mainObject.id];
-				const dataObjectATree2 = channelsTree2.trees[dataObjectA.id];
-				const dataObjectBTree2 = channelsTree2.trees[dataObjectB.id];
-				const dataObjectCTree2 = channelsTree2.trees[dataObjectC.id];
-				const dataObjectDTree2 = channelsTree2.trees[dataObjectD.id];
+			// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
+			const channelsTree2 = groupSnapshot.snapshotTree.trees[".channels"];
+			const mainObjectTree2 = channelsTree2.trees[mainObject.id];
+			const dataObjectATree2 = channelsTree2.trees[dataObjectA.id];
+			const dataObjectBTree2 = channelsTree2.trees[dataObjectB.id];
+			const dataObjectCTree2 = channelsTree2.trees[dataObjectC.id];
+			const dataObjectDTree2 = channelsTree2.trees[dataObjectD.id];
 
-				assertOmittedTree(mainObjectTree2, noId, blobContents, "mainObject tree incorrect");
-				assertPopulatedTree(
-					dataObjectATree2,
-					loadingGroupId,
-					blobContents,
-					"Incorrect tree for A2",
-				);
-				assertPopulatedTree(
-					dataObjectBTree2,
-					loadingGroupId,
-					blobContents,
-					"Incorrect tree for B2",
-				);
-				assertOmittedTree(
-					dataObjectCTree2,
-					loadingGroupId2,
-					blobContents,
-					"Incorrect tree for C2",
-				);
-				assertOmittedTree(
-					dataObjectDTree2,
-					loadingGroupId2,
-					blobContents,
-					"Incorrect tree for D2",
-				);
-			}
+			assertOmittedTree(mainObjectTree2, noId, groupBlobContents, "mainObject tree incorrect");
+			assertPopulatedTree(
+				dataObjectATree2,
+				loadingGroupId,
+				groupBlobContents,
+				"Incorrect tree for A2",
+			);
+			assertPopulatedTree(
+				dataObjectBTree2,
+				loadingGroupId,
+				groupBlobContents,
+				"Incorrect tree for B2",
+			);
+			assertOmittedTree(
+				dataObjectCTree2,
+				loadingGroupId2,
+				groupBlobContents,
+				"Incorrect tree for C2",
+			);
+			assertOmittedTree(
+				dataObjectDTree2,
+				loadingGroupId2,
+				groupBlobContents,
+				"Incorrect tree for D2",
+			);
 
 			const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
 			// This call realizes the data object
@@ -665,49 +668,47 @@ describeCompat(
 			await handleD2.get();
 
 			// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
-			{
-				const group2Snapshot = snapshotCaptured;
-				assert(group2Snapshot !== undefined, "should have captured group2 snapshot!");
-				const blobContents = group2Snapshot.blobContents;
-				assert.deepEqual(group2Snapshot.sequenceNumber, summaryRefSeq, "Unexpected snapshot");
-				const channels2Tree2 = group2Snapshot.snapshotTree.trees[".channels"];
-				const mainObject2Tree2 = channels2Tree2.trees[mainObject.id];
-				const dataObjectA2Tree2 = channels2Tree2.trees[dataObjectA.id];
-				const dataObjectB2Tree2 = channels2Tree2.trees[dataObjectB.id];
-				const dataObjectC2Tree2 = channels2Tree2.trees[dataObjectC.id];
-				const dataObjectD2Tree2 = channels2Tree2.trees[dataObjectD.id];
+			const group2Snapshot = snapshotCaptured;
+			assert(group2Snapshot !== undefined, "should have captured group2 snapshot!");
+			const group2BlobContents = group2Snapshot.blobContents;
+			assert.deepEqual(group2Snapshot.sequenceNumber, summaryRefSeq, "Unexpected snapshot");
+			const channels2Tree2 = group2Snapshot.snapshotTree.trees[".channels"];
+			const mainObject2Tree2 = channels2Tree2.trees[mainObject.id];
+			const dataObjectA2Tree2 = channels2Tree2.trees[dataObjectA.id];
+			const dataObjectB2Tree2 = channels2Tree2.trees[dataObjectB.id];
+			const dataObjectC2Tree2 = channels2Tree2.trees[dataObjectC.id];
+			const dataObjectD2Tree2 = channels2Tree2.trees[dataObjectD.id];
 
-				assertOmittedTree(
-					mainObject2Tree2,
-					noId,
-					blobContents,
-					"Not omitted tree for mainObject",
-				);
-				assertOmittedTree(
-					dataObjectA2Tree2,
-					loadingGroupId,
-					blobContents,
-					"Not omitted tree for A2",
-				);
-				assertOmittedTree(
-					dataObjectB2Tree2,
-					loadingGroupId,
-					blobContents,
-					"Not omitted tree for B2",
-				);
-				assertPopulatedTree(
-					dataObjectC2Tree2,
-					loadingGroupId2,
-					blobContents,
-					"Not populated tree for C2",
-				);
-				assertPopulatedTree(
-					dataObjectD2Tree2,
-					loadingGroupId2,
-					blobContents,
-					"Not populated tree for D2",
-				);
-			}
+			assertOmittedTree(
+				mainObject2Tree2,
+				noId,
+				group2BlobContents,
+				"Not omitted tree for mainObject",
+			);
+			assertOmittedTree(
+				dataObjectA2Tree2,
+				loadingGroupId,
+				group2BlobContents,
+				"Not omitted tree for A2",
+			);
+			assertOmittedTree(
+				dataObjectB2Tree2,
+				loadingGroupId,
+				group2BlobContents,
+				"Not omitted tree for B2",
+			);
+			assertPopulatedTree(
+				dataObjectC2Tree2,
+				loadingGroupId2,
+				group2BlobContents,
+				"Not populated tree for C2",
+			);
+			assertPopulatedTree(
+				dataObjectD2Tree2,
+				loadingGroupId2,
+				group2BlobContents,
+				"Not populated tree for D2",
+			);
 		});
 	},
 );
