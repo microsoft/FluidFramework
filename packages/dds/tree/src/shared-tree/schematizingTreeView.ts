@@ -91,8 +91,8 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
+import { exportSimpleSchema } from "./exportSimpleSchema.js";
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import { exportSimpleSchema } from "./sharedTree.js";
 import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
 
 /**

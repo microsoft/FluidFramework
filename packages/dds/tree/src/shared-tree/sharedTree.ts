@@ -4,7 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
@@ -26,18 +26,11 @@ import {
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
-	type FieldKey,
 	type GraphCommit,
 	type JsonableTree,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
 	RevisionTagCodec,
-	type TreeFieldStoredSchema,
-	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeTypeSet,
 	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
@@ -45,7 +38,6 @@ import {
 import {
 	DetachedFieldIndexSummarizer,
 	FieldBatchDecodingContext,
-	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -71,25 +63,17 @@ import {
 	EditManagerFormatVersion,
 	makeEditManagerCodecBuilder,
 } from "../shared-tree-core/index.js";
-import {
-	type ImplicitFieldSchema,
-	NodeKind,
-	type ReadSchema,
-	type SimpleFieldSchema,
-	type SimpleTreeSchema,
-	type TreeView,
-	type TreeViewConfiguration,
-	type UnsafeUnknownSchema,
-	type VerboseTree,
-	tryStoredSchemaAsArray,
-	type SimpleNodeSchema,
-	FieldKind,
-	type ITreeAlpha,
+import type {
+	ImplicitFieldSchema,
+	ReadSchema,
+	SimpleTreeSchema,
+	TreeView,
+	TreeViewConfiguration,
+	UnsafeUnknownSchema,
+	VerboseTree,
+	ITreeAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
-	type ViewableTreeAlpha,
-	type SimpleObjectFieldSchema,
-	type SimpleAllowedTypeAttributes,
-	type SchemaType,
+	ViewableTreeAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -99,6 +83,7 @@ import {
 } from "../util/index.js";
 
 import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { exportSimpleSchema } from "./exportSimpleSchema.js";
 import { buildConfiguredForest, type ForestType } from "./forestType.js";
 import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
@@ -496,19 +481,6 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
-export function exportSimpleSchema(
-	storedSchema: TreeStoredSchema,
-): SimpleTreeSchema<SchemaType.Stored> {
-	return {
-		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
-		definitions: new Map(
-			[...storedSchema.nodeSchema].map(([key, schema]) => {
-				return [key, exportSimpleNodeSchemaStored(schema)];
-			}),
-		),
-	};
-}
-
 /**
  * A way to parse schema in the persisted format from {@link extractPersistedSchema}.
  * @remarks
@@ -766,112 +738,3 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	validateCommitsOnFirstSubmission: false,
 	validateRebasedCommitsBeforeResubmission: false,
 };
-
-/**
- * Build the allowed types for a Stored Schema.
- *
- * @remarks Staged upgrades do not apply to stored schemas, so we omit the {@link SimpleAllowedTypeAttributes.isStaged | staging flag } when building {@link SimpleAllowedTypeAttributes}.
- * @param types - The types to create allowed types for.
- * @returns The allowed types.
- */
-function buildSimpleAllowedTypeAttributesForStoredSchema(
-	types: TreeTypeSet,
-): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.Stored>> {
-	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes<SchemaType.Stored>>();
-	for (const type of types) {
-		// Stored schemas do not have staged upgrades
-		allowedTypesInfo.set(type, { isStaged: undefined });
-	}
-	return allowedTypesInfo;
-}
-
-function exportSimpleFieldSchemaStored(
-	schema: TreeFieldStoredSchema,
-): SimpleFieldSchema<SchemaType.Stored> {
-	let kind: FieldKind;
-	switch (schema.kind) {
-		case FieldKinds.identifier.identifier: {
-			kind = FieldKind.Identifier;
-			break;
-		}
-		case FieldKinds.optional.identifier: {
-			kind = FieldKind.Optional;
-			break;
-		}
-		case FieldKinds.required.identifier: {
-			kind = FieldKind.Required;
-			break;
-		}
-		case FieldKinds.forbidden.identifier: {
-			kind = FieldKind.Optional;
-			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
-			break;
-		}
-		default: {
-			fail(0xaca /* invalid field kind */);
-		}
-	}
-	return {
-		kind,
-		simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(schema.types),
-		metadata: {},
-		persistedMetadata: schema.persistedMetadata,
-	};
-}
-
-/**
- * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
- * @privateRemarks
- * TODO: Persist node metadata once schema FormatV2 is supported.
- * Note on SimpleNodeSchema construction: In the persisted format `persistedMetadata` is just called `metadata` whereas the `metadata`
- * field on SimpleNodeSchema is not persisted.
- */
-function exportSimpleNodeSchemaStored(
-	schema: TreeNodeStoredSchema,
-): SimpleNodeSchema<SchemaType.Stored> {
-	const arrayTypes = tryStoredSchemaAsArray(schema);
-	if (arrayTypes !== undefined) {
-		return {
-			kind: NodeKind.Array,
-			simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(arrayTypes),
-			metadata: {},
-			persistedMetadata: schema.metadata,
-		};
-	}
-	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields = new Map<FieldKey, SimpleObjectFieldSchema<SchemaType.Stored>>();
-		for (const [storedKey, field] of schema.objectNodeFields) {
-			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
-		}
-		return {
-			kind: NodeKind.Object,
-			fields,
-			allowUnknownOptionalFields: undefined,
-			metadata: {},
-			persistedMetadata: schema.metadata,
-		};
-	}
-	if (schema instanceof MapNodeStoredSchema) {
-		assert(
-			schema.mapFields.kind === FieldKinds.optional.identifier,
-			0xa95 /* Invalid map schema */,
-		);
-		return {
-			kind: NodeKind.Map,
-			simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(
-				schema.mapFields.types,
-			),
-			metadata: {},
-			persistedMetadata: schema.metadata,
-		};
-	}
-	if (schema instanceof LeafNodeStoredSchema) {
-		return {
-			kind: NodeKind.Leaf,
-			leafKind: schema.leafValue,
-			metadata: {},
-			persistedMetadata: schema.metadata,
-		};
-	}
-	fail(0xacb /* invalid schema kind */);
-}
