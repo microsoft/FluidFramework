@@ -44,7 +44,8 @@ import {
 	type TreeLocationResolver,
 	type TreeLocationResolution,
 } from "../simple-tree/index.js";
-import { isTextLocationNode, textLocationArray } from "../text/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- The adapter must not load text schemas, which depend on checkouts.
+import { isTextLocationNode, textLocationArray } from "../text/textLocationAdapter.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 
 import {
