@@ -286,6 +286,37 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		assert.equal(entry?.IFluidDataStoreRegistry, registry);
 	});
 
+	it("preserves a legacy .aliases child and rejects metadata that would overwrite it", async () => {
+		const container = await provider.createContainer(new LegacyCreatingFactory());
+		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const runtime = runtimes.get(legacy);
+		assert(runtime !== undefined);
+		const reserved = SharedMap.create(runtime, ".aliases");
+		reserved.set("value", 42);
+		legacy.set("reserved", reserved.handle);
+		await provider.ensureSynchronized();
+
+		const runtimeFactory = await alphaFactory(async () => modernKind, undefined, "3.12.0");
+		const modern = await provider.loadContainer(runtimeFactory);
+		const root = (await modern.getEntryPoint()) as ISharedMap;
+		const collection = collections.get(root);
+		assert(collection !== undefined);
+		const child = await collection.createDataStore(leafFactory);
+		await assert.rejects(child.trySetAlias("named"), /existing .aliases child/);
+		root.set("child", child.entryPoint);
+		await provider.ensureSynchronized();
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const { summarizer } = await createSummarizerCore(modern, loader);
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const reloaded = await provider.loadContainer(legacyFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const reloadedRoot = (await reloaded.getEntryPoint()) as ISharedMap;
+		const handle = reloadedRoot.get<IFluidHandle<ISharedMap>>("reserved");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 42);
+	});
+
 	it("migrates the parent runtime while preserving legacy DDS operations and attachment", async () => {
 		const container = await provider.createContainer(new LegacyCreatingFactory());
 		const legacy = (await container.getEntryPoint()) as ISharedMap;
