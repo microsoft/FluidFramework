@@ -77,14 +77,14 @@
         "properties": {
           "schema": {
             "type": "object",
-            "properties": {
-              "new": {},
-              "old": {}
-            },
             "required": [
               "new",
               "old"
-            ]
+            ],
+            "properties": {
+              "new": {},
+              "old": {}
+            }
           },
           "data": {}
         }
