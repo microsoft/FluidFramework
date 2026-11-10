@@ -14,7 +14,7 @@ FROM ${BASE_IMAGE_REGISTRY}/library/alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6
 
 # Install Git and OpenSSH so we can run a git server
 RUN apk add --no-cache git
-RUN apk add --no-cache openssh
+RUN apk add --no-cache "openssh>=10.2_p1-r1"
 
 # Add git shell to list of approved shells to limit user access
 RUN echo $(which git-shell) >> /etc/shells
