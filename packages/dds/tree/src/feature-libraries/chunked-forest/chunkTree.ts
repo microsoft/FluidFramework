@@ -486,7 +486,12 @@ export interface ChunkPolicy {
 	readonly sequenceChunkInlineThreshold: number;
 
 	/**
-	 * Maximum total nodes to put in a UniformChunk.
+	 * Maximum total nodes in a {@link UniformChunk} newly constructed by {@link chunkRange}.
+	 *
+	 * @remarks
+	 * This is a chunking heuristic, not an invariant on all uniform chunks.
+	 * Existing chunks can be reused without enforcing this limit.
+	 * Uniform decoding can also produce larger chunks by repeating a supported tree shape, deferring splitting until editing requires it.
 	 */
 	readonly uniformChunkNodeCount: number;
 

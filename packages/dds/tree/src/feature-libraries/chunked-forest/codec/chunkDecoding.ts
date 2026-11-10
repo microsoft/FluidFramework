@@ -207,6 +207,15 @@ function resolveOverride<T>(
  * When {@link UniformDecodingPlan.valuesAreVerbatim} is true, {@link decodeUniform} reads the values directly instead of calling
  * {@link UniformDecodingPlan.decodeValuesInto}.
  * Otherwise, that method appends converted values into a caller-provided buffer.
+ *
+ * Uniform decoding deliberately allows a chunk's total node count to exceed the uniform chunk size limit in {@link defaultChunkPolicy}
+ * by repeating a supported tree shape.
+ * The size of an individual tree shape remains bounded during plan construction.
+ *
+ * This favors efficient decoding and compact storage of content that may remain unchanged.
+ * When the encoded representation permits, it also allows reuse of the complete values array.
+ * Splitting is deferred until an edit requires it,
+ * trading lower decoding costs and initial memory overhead for potentially higher first-edit costs and temporary allocations.
  */
 interface UniformDecodingPlan {
 	/**
@@ -334,6 +343,9 @@ function getUniformDecodingPlan(
  * In particular, {@link NestedArrayDecoder} provides a cursor over its nested values array, allowing that array to be reused directly.
  * Otherwise, calls {@link UniformDecodingPlan.decodeValuesInto} for each unit to populate a new flat values array.
  * The plan itself is not modified.
+ *
+ * The resulting chunk can exceed the uniform chunk size limit in {@link defaultChunkPolicy}.
+ * See {@link UniformDecodingPlan} for the size-policy rationale and editing tradeoffs.
  */
 function decodeUniform(
 	plan: UniformDecodingPlan,
@@ -835,6 +847,8 @@ export class NodeDecoder extends UniformShapeDecoder {
 					return undefined;
 				}
 				nodeCount += plan.treeShape.positions.length * plan.topLevelLength;
+				// Bound individual shape metadata, not repetitions of that shape in a chunk.
+				// See UniformDecodingPlan for the size-policy rationale.
 				if (nodeCount > defaultChunkPolicy.uniformChunkNodeCount) {
 					return undefined;
 				}
