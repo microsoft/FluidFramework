@@ -238,6 +238,12 @@ describe("staged allowed type upgrade", () => {
 		assert.equal(viewMigrated.root, "test");
 	});
 
+	/**
+	 * Create a number-only document, then explicitly enable its staged string alternative.
+	 * Open the upgraded document with the same staged view schema and the default restrictive policy.
+	 * Requesting another upgrade must submit no operation, and the client must still be able to write strings.
+	 * Disabling new staged changes in the policy must not remove permissions already stored in the document.
+	 */
 	it("preserves an already enabled allowed type during a default no-op upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeBase, treeEnabled, treeDefault] = provider.trees;
@@ -499,6 +505,12 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewOptional.root, undefined);
 	});
 
+	/**
+	 * Create a document with a required root, then explicitly enable staged root optionality.
+	 * Open the upgraded document with the same staged view schema and the default restrictive policy.
+	 * Requesting another upgrade must submit no operation, and the client must still be able to clear the root.
+	 * Preserving existing optionality must not require the policy to enable it again.
+	 */
 	it("preserves already enabled optionality during a default no-op upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
@@ -632,20 +644,28 @@ describe("staged optional upgrade", () => {
 });
 
 describe("older clients retaining newer document types while enabling staged additions", () => {
+	/**
+	 * V1 permits numeric array entries and stages strings and `null` for named and unassigned priorities.
+	 * V2 fully enables strings but no longer declares the staged `null` alternative.
+	 *
+	 * Create a V2 document containing strings and numbers, then open it with two V1 clients.
+	 * Only one V1 client explicitly enables `null`; its upgrade must retain V2's existing string permission.
+	 * Both clients must read the original entries and synchronize writes using strings and `null`.
+	 */
 	it("preserves array entry types while enabling unassigned priorities", () => {
 		const factory = new SchemaFactoryAlpha("arrayPriorityRollout");
 		const stagedUnassigned = factory.staged(factory.null);
 		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
-		class Before extends factory.array(
+		class PrioritiesV1 extends factory.array(
 			"Priorities",
 			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
 		) {}
 
-		// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
-		class After extends factory.array("Priorities", [factory.number, factory.string]) {}
+		// V2 fully enables string priorities without shipping the staged `null` alternative.
+		class PrioritiesV2 extends factory.array("Priorities", [factory.number, factory.string]) {}
 
-		// The older client selects only the `null` token; its candidate must also retain the newer document's strings.
+		// V1 selects only the `null` token; its candidate must also retain the V2 document's strings.
 		class Expected extends factory.array("Priorities", [
 			factory.number,
 			factory.string,
@@ -653,16 +673,18 @@ describe("older clients retaining newer document types while enabling staged add
 		]) {}
 		const provider = new TestTreeProviderLite(2);
 		const [documentTree, upgradingTree] = provider.trees;
-		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: After }));
+		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: PrioritiesV2 }));
 		creator.initialize(["high", 1]);
 		provider.synchronizeMessages();
 		creator.dispose();
 
-		// Both older clients support the staged types, but only the upgrading client explicitly enables `null`.
-		const observer = documentTree.viewWith(new TreeViewConfiguration({ schema: Before }));
+		// Both V1 clients support the staged types, but only the upgrading client explicitly enables `null`.
+		const observer = documentTree.viewWith(
+			new TreeViewConfiguration({ schema: PrioritiesV1 }),
+		);
 		const older = upgradingTree.viewWith(
 			new TreeViewConfigurationAlpha({
-				schema: Before,
+				schema: PrioritiesV1,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
 			}),
 		);
@@ -684,20 +706,28 @@ describe("older clients retaining newer document types while enabling staged add
 		assert.equal(observer.compatibility.canView, true);
 	});
 
+	/**
+	 * V1 permits numeric map entries and stages strings and `null` for named and unassigned priorities.
+	 * V2 fully enables strings but no longer declares the staged `null` alternative.
+	 *
+	 * Create a V2 document with numeric and string entries, then open it with two V1 clients.
+	 * Enable only V1's `null` token and upgrade without removing the stored string permission.
+	 * Both clients must agree on the combined schema and receive edits to existing entries and a new unassigned entry.
+	 */
 	it("preserves map entry types while enabling unassigned priorities", () => {
 		const factory = new SchemaFactoryAlpha("mapPriorityRollout");
 		const stagedUnassigned = factory.staged(factory.null);
 		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
-		class Before extends factory.map(
+		class PrioritiesV1 extends factory.map(
 			"Priorities",
 			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
 		) {}
 
-		// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
-		class After extends factory.map("Priorities", [factory.number, factory.string]) {}
+		// V2 fully enables string priorities without shipping the staged `null` alternative.
+		class PrioritiesV2 extends factory.map("Priorities", [factory.number, factory.string]) {}
 
-		// The older client selects only the `null` token; its candidate must also retain the newer document's strings.
+		// V1 selects only the `null` token; its candidate must also retain the V2 document's strings.
 		class Expected extends factory.map("Priorities", [
 			factory.number,
 			factory.string,
@@ -705,16 +735,18 @@ describe("older clients retaining newer document types while enabling staged add
 		]) {}
 		const provider = new TestTreeProviderLite(2);
 		const [documentTree, upgradingTree] = provider.trees;
-		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: After }));
+		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: PrioritiesV2 }));
 		creator.initialize({ primary: "high", fallback: 1 });
 		provider.synchronizeMessages();
 		creator.dispose();
 
-		// Both older clients support the staged types, but only the upgrading client explicitly enables `null`.
-		const observer = documentTree.viewWith(new TreeViewConfiguration({ schema: Before }));
+		// Both V1 clients support the staged types, but only the upgrading client explicitly enables `null`.
+		const observer = documentTree.viewWith(
+			new TreeViewConfiguration({ schema: PrioritiesV1 }),
+		);
 		const older = upgradingTree.viewWith(
 			new TreeViewConfigurationAlpha({
-				schema: Before,
+				schema: PrioritiesV1,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
 			}),
 		);
@@ -741,23 +773,31 @@ describe("older clients retaining newer document types while enabling staged add
 });
 
 describe("optional field removal during staged upgrades", () => {
+	/**
+	 * V1 declares optional `isApproved` and stages string `priority` values and optional `estimatedHours`.
+	 * V2 enables those staged changes, removes `isApproved`, and adds optional `notes`.
+	 *
+	 * Create a V2 document, then open it with V1's restrictive policy.
+	 * V1 must add `isApproved` before viewing, while retaining V2's unknown `notes` and already-enabled staged changes.
+	 * After upgrading, V1 must be able to edit its fields without deleting notes still used by V2.
+	 */
 	it("lets an older client restore its optional field while preserving newer fields and permissions", () => {
 		const factory = new SchemaFactoryAlpha("taskRollout");
 
-		class Before extends factory.object("Task", {
+		class TaskV1 extends factory.object("Task", {
 			priority: factory.types([factory.number, factory.staged(factory.string)]),
 			estimatedHours: factory.stagedOptional(factory.number),
 			isApproved: factory.optional(factory.boolean),
 		}) {}
 
-		// Fully enable string priorities and optional effort estimates, retire approval, and add notes in the later schema.
-		class After extends factory.object("Task", {
+		// V2 fully enables string priorities and optional effort estimates, retires approval, and adds notes.
+		class TaskV2 extends factory.object("Task", {
 			notes: factory.optional(factory.string),
 			priority: [factory.number, factory.string],
 			estimatedHours: factory.optional(factory.number),
 		}) {}
 
-		// The older client restores `isApproved` while retaining the newer document's notes and enabled staged permissions.
+		// V1 restores `isApproved` while retaining the V2 document's notes and enabled staged permissions.
 		class Expected extends factory.object("Task", {
 			notes: factory.optional(factory.string),
 			priority: [factory.number, factory.string],
@@ -765,27 +805,27 @@ describe("optional field removal during staged upgrades", () => {
 			isApproved: factory.optional(factory.boolean),
 		}) {}
 		const provider = new TestTreeProviderLite(2);
-		const [treeBefore, treeAfter] = provider.trees;
-		const newer = treeAfter.viewWith(new TreeViewConfiguration({ schema: After }));
+		const [treeV1, treeV2] = provider.trees;
+		const newer = treeV2.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
 		newer.initialize({ notes: "Discuss with the reviewer", priority: "high" });
 		provider.synchronizeMessages();
 
-		const older = treeBefore.viewWith(
+		const older = treeV1.viewWith(
 			new TreeViewConfigurationAlpha({
-				schema: Before,
+				schema: TaskV1,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 			}),
 		);
 
-		// The older view needs approval restored before it can write the field; its unknown notes and staged declarations must not block that upgrade.
+		// V1 needs approval restored before it can write the field; its unknown notes and staged declarations must not block that upgrade.
 		assert.equal(older.compatibility.canView, false);
 		assert.equal(older.compatibility.canUpgrade, true);
 		older.upgradeSchema();
 		provider.synchronizeMessages();
-		expectSchemaEqual(treeBefore.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		expectSchemaEqual(treeV1.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
 		assert.equal(older.compatibility.canView, true);
 
-		// The older client uses the stored permissions and restored approval field; the newer client still sees its notes.
+		// V1 uses the stored permissions and restored approval field; V2 still sees its notes.
 		older.root.priority = "urgent";
 		older.root.estimatedHours = 4;
 		older.root.estimatedHours = undefined;
@@ -797,6 +837,16 @@ describe("optional field removal during staged upgrades", () => {
 		assert.equal(newer.root.notes, "Discuss with the reviewer");
 	});
 
+	/**
+	 * V1 shares a staged string token between two `priority` fields and a staged optionality token between two `hours` fields.
+	 * V2 enables both changes only at the primary fields, removes `isApproved`, and renames `priority` (without changing its stored key to preserve its identity).
+	 *
+	 * Open a V2 document with V1's restrictive policy and upgrade to restore `isApproved`.
+	 * Both tokens must remain "partial": preserving changes at the primary fields must not enable them at the fallback fields.
+	 * Repeated upgrades by either version must be no-ops.
+	 * Then explicitly enable both tokens through V1 while another restrictive V1 client remains open.
+	 * That observer must receive the new permissions, report both tokens as "enabled", and be able to edit the fallback fields.
+	 */
 	it("preserves shared-token upgrades only at their existing locations until explicitly enabled", () => {
 		const factory = new SchemaFactoryAlpha("partialTaskRollout");
 
@@ -807,7 +857,7 @@ describe("optional field removal during staged upgrades", () => {
 		const optionalUpgrade = stagedHours.isStagedOptional;
 		assert(optionalUpgrade !== false);
 
-		class Before extends factory.object("Task", {
+		class TaskV1 extends factory.object("Task", {
 			priority: factory.required(factory.types([factory.number, stagedString]), {
 				key: "primaryPriority",
 			}),
@@ -817,16 +867,16 @@ describe("optional field removal during staged upgrades", () => {
 			isApproved: factory.optional(factory.boolean),
 		}) {}
 
-		// Fully enable the primary fields' staged changes, leave fallback fields numeric and required, and retire approval.
-		// Rename `priority` to its stored key, so the older view must map the field back to its own property name.
-		class After extends factory.object("Task", {
+		// V2 fully enables the primary fields' staged changes, leaves fallback fields numeric and required, and retires approval.
+		// Rename `priority` to its stored key, so V1 must map the field back to its own property name.
+		class TaskV2 extends factory.object("Task", {
 			primaryPriority: [factory.number, factory.string],
 			fallbackPriority: factory.number,
 			primaryHours: factory.optional(factory.number),
 			fallbackHours: factory.number,
 		}) {}
 
-		// The older view restores approval and retains the newer document's primary permissions without changing fallback fields.
+		// V1 restores approval and retains the V2 document's primary permissions without changing fallback fields.
 		class Expected extends factory.object("Task", {
 			primaryPriority: [factory.number, factory.string],
 			fallbackPriority: factory.number,
@@ -835,19 +885,17 @@ describe("optional field removal during staged upgrades", () => {
 			isApproved: factory.optional(factory.boolean),
 		}) {}
 		const provider = new TestTreeProviderLite(3);
-		const [treeBefore, treeAfter, treeObserver] = provider.trees;
-		const newer = treeAfter.viewWith(new TreeViewConfiguration({ schema: After }));
+		const [treeV1, treeV2, treeObserver] = provider.trees;
+		const newer = treeV2.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
 		newer.initialize({ primaryPriority: "high", fallbackPriority: 1, fallbackHours: 2 });
 		provider.synchronizeMessages();
-		const older = asAlpha(
-			treeBefore.viewWith(new TreeViewConfigurationAlpha({ schema: Before })),
-		);
+		const older = asAlpha(treeV1.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })));
 		assert.equal(older.isStagedUpgradeEnabled(stringUpgrade), "partial");
 		assert.equal(older.isStagedUpgradeEnabled(optionalUpgrade), "partial");
 		assert.equal(older.compatibility.canUpgrade, true);
 		older.upgradeSchema();
 		provider.synchronizeMessages();
-		expectSchemaEqual(treeBefore.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		expectSchemaEqual(treeV1.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
 
 		// Preserving one location must not enable the token at another location.
 		assert.equal(older.isStagedUpgradeEnabled(stringUpgrade), "partial");
@@ -883,9 +931,9 @@ describe("optional field removal during staged upgrades", () => {
 			unsubscribe();
 		}
 
-		// Keep another older client open with a restrictive policy while its peer enables the remaining locations.
+		// Keep another V1 client open with a restrictive policy while its peer enables the remaining locations.
 		const observer = asAlpha(
-			treeObserver.viewWith(new TreeViewConfigurationAlpha({ schema: Before })),
+			treeObserver.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })),
 		);
 		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "partial");
 		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "partial");
@@ -893,9 +941,9 @@ describe("optional field removal during staged upgrades", () => {
 		// Enabling the tokens explicitly may introduce the remaining permissions at the fallback fields.
 		older.dispose();
 		const enabled = asAlpha(
-			treeBefore.viewWith(
+			treeV1.viewWith(
 				new TreeViewConfigurationAlpha({
-					schema: Before,
+					schema: TaskV1,
 					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
 						stringUpgrade,
 						optionalUpgrade,
@@ -945,63 +993,71 @@ describe("optional field removal during staged upgrades", () => {
 		}
 	});
 
+	/**
+	 * V1 declares optional `detailedEstimate` containing an `EffortEstimate` node and a separate numeric `estimate`.
+	 * V2 removes `detailedEstimate`, adds optional `isApproved` to `EffortEstimate`, and stages that node type at `estimate`.
+	 *
+	 * Create a V1 document with a populated `detailedEstimate`, then open and upgrade it with V2's restrictive policy.
+	 * The retained field must use V2's compatible `EffortEstimate` definition, preserving the original hours and adding approval.
+	 * Retaining this definition must not enable the staged alternative at `estimate`: writes of nodes there must still fail.
+	 */
 	it("retains a node definition without enabling its staged use by another field", () => {
 		const factory = new SchemaFactoryAlpha("structuredEstimates");
 
-		class OldEstimate extends factory.object("EffortEstimate", {
+		class EstimateV1 extends factory.object("EffortEstimate", {
 			hours: factory.number,
 		}) {}
-		class Before extends factory.object("Task", {
-			detailedEstimate: factory.optional(OldEstimate),
+		class TaskV1 extends factory.object("Task", {
+			detailedEstimate: factory.optional(EstimateV1),
 			estimate: factory.number,
 		}) {}
 
-		// Add an optional approval flag without changing the stored `EffortEstimate` identifier or numeric `hours`.
-		class NewEstimate extends factory.object("EffortEstimate", {
+		// V2 adds an optional approval flag without changing the stored `EffortEstimate` identifier or numeric `hours`.
+		class EstimateV2 extends factory.object("EffortEstimate", {
 			hours: factory.number,
 			isApproved: factory.optional(factory.boolean),
 		}) {}
-		const stagedEstimate = factory.staged(NewEstimate);
+		const stagedEstimate = factory.staged(EstimateV2);
 		const upgrade = stagedEstimate.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
 
-		// Remove `detailedEstimate` and stage structured values for `estimate`, which otherwise remains numeric.
-		class After extends factory.object("Task", {
+		// V2 removes `detailedEstimate` and stages structured values for `estimate`, which otherwise remains numeric.
+		class TaskV2 extends factory.object("Task", {
 			estimate: factory.types([factory.number, stagedEstimate]),
 		}) {}
 
-		// The retained field needs the view's `NewEstimate` definition, but the disabled staged change must leave `estimate` numeric.
+		// The retained field needs the view's `EstimateV2` definition, but the disabled staged change must leave `estimate` numeric.
 		class Expected extends factory.object("Task", {
-			detailedEstimate: factory.optional(NewEstimate),
+			detailedEstimate: factory.optional(EstimateV2),
 			estimate: factory.number,
 		}) {}
 		const provider = new TestTreeProviderLite(2);
-		const [treeBefore, treeAfter] = provider.trees;
-		const before = treeBefore.viewWith(new TreeViewConfiguration({ schema: Before }));
-		before.initialize({ detailedEstimate: { hours: 4 }, estimate: 4 });
+		const [treeV1, treeV2] = provider.trees;
+		const viewV1 = treeV1.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+		viewV1.initialize({ detailedEstimate: { hours: 4 }, estimate: 4 });
 		provider.synchronizeMessages();
 
-		const after = asAlpha(
-			treeAfter.viewWith(
+		const viewV2 = asAlpha(
+			treeV2.viewWith(
 				new TreeViewConfigurationAlpha({
-					schema: After,
+					schema: TaskV2,
 					stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 				}),
 			),
 		);
-		assert.equal(after.compatibility.canUpgrade, true);
-		after.upgradeSchema();
+		assert.equal(viewV2.compatibility.canUpgrade, true);
+		viewV2.upgradeSchema();
 		provider.synchronizeMessages();
 
 		// Applying the candidate must preserve the old estimate while adding the new definition's approval field.
-		expectSchemaEqual(treeAfter.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
-		assert.equal(before.root.detailedEstimate?.hours, 4);
-		assert.equal(after.compatibility.canView, true);
+		expectSchemaEqual(treeV2.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		assert.equal(viewV1.root.detailedEstimate?.hours, 4);
+		assert.equal(viewV2.compatibility.canView, true);
 
 		// Retaining a definition is not permission to use it at the staged location.
-		assert.equal(after.isStagedUpgradeEnabled(upgrade), "disabled");
+		assert.equal(viewV2.isStagedUpgradeEnabled(upgrade), "disabled");
 		assert.throws(() => {
-			after.root.estimate = new NewEstimate({ hours: 6 });
+			viewV2.root.estimate = new EstimateV2({ hours: 6 });
 		});
 	});
 });
