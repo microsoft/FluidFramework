@@ -35,10 +35,10 @@ import sinon from "sinon";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
-	LegacyTypeAwareRegistry,
 	type ISharedObjectRegistry,
 	type ISharedObjectRegistryInternal,
 } from "../dataStoreRuntime.js";
+import { LegacyTypeAwareRegistry } from "../sharedObjectRegistry.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 

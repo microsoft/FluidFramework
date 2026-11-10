@@ -56,7 +56,7 @@ import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
 } from "./dataStoreLayerCompatState.js";
-import { LegacyTypeAwareRegistry } from "./dataStoreRuntime.js";
+import { LegacyTypeAwareRegistry } from "./sharedObjectRegistry.js";
 
 /**
  * Hosts a shared object at a data-store channel's own identity.
@@ -125,6 +125,20 @@ export class LeafChannelRuntime
 		if (context.attachState === AttachState.Attached) {
 			this.attached.resolve();
 		}
+	}
+
+	/**
+	 * Loads the type-erased DDS factory supplied across the runtime layer boundary.
+	 */
+	public static async loadFactory(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+		factory: unknown,
+	): Promise<LeafChannelRuntime> {
+		if (!isChannelFactory(factory)) {
+			throw new UsageError("Invalid native leaf channel factory");
+		}
+		return LeafChannelRuntime.load(context, existing, factory);
 	}
 
 	/**
@@ -427,6 +441,24 @@ export class LeafChannelRuntime
 			throw new UsageError("Leaf runtime is disposed");
 		}
 	}
+}
+
+function isChannelFactory(value: unknown): value is IChannelFactory {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"type" in value &&
+		typeof value.type === "string" &&
+		"create" in value &&
+		typeof value.create === "function" &&
+		"load" in value &&
+		typeof value.load === "function" &&
+		"attributes" in value &&
+		typeof value.attributes === "object" &&
+		value.attributes !== null &&
+		"type" in value.attributes &&
+		value.attributes.type === value.type
+	);
 }
 
 function readLeafMessage(message: unknown): unknown {

@@ -49,6 +49,8 @@ Physical containment is distinct from factory lookup: the legacy child-factory p
 Native collections instead place children beneath their containing data store without adding synthetic hosting stores or pointer objects.
 Storing a descendant's handle attaches the required ancestors.
 Nested aliases are persisted in the collection's `.aliases` blob.
+New explicit child IDs cannot use `.aliases` or the `_` prefix reserved for generated IDs.
+Existing legacy child names remain loadable, but a legacy `.aliases` child prevents adding alias metadata that would overwrite it.
 That blob is omitted when there are no aliases.
 Existing DDS slots have their original `.attributes` and payload, not a synthetic data-store envelope.
 Collections can load those slots and later add native composites after the application's rollout and framework-version target permit them.

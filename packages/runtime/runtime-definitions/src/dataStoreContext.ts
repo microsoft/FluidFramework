@@ -31,6 +31,7 @@ import type { OldestSupportedClientVersion } from "./compatibilityDefinitions.js
 import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
+	IFluidDataStoreFactoryInternal,
 	IProvideFluidDataStoreFactory,
 } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -835,6 +836,13 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
 		ContainerExtensionProvider {
+	/**
+	 * Instantiates a leaf kind using this runtime's native hosting implementation.
+	 */
+	createLeafChannel?(
+		factory: IFluidDataStoreFactoryInternal,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel>;
 	/**
 	 * This context occupies an existing DDS child slot, without a data-store envelope.
 	 */

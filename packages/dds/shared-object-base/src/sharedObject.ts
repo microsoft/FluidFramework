@@ -12,7 +12,6 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { LeafChannelRuntime } from "@fluidframework/datastore/internal";
 import type {
 	IChannelServices,
 	IChannelStorageService,
@@ -1034,9 +1033,6 @@ export function createSharedObjectKindAlpha<TSharedObject>(
 		new DataStoreKindImplementation<TSharedObject>({
 			type: factory.Type,
 			channelFactory: new factory(),
-			async instantiateDataStore(context, existing) {
-				return LeafChannelRuntime.load(context, existing, new factory());
-			},
 		}),
 		{
 			getFactory(): IChannelFactory<TSharedObject> {

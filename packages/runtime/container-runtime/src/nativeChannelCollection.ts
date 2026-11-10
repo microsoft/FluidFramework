@@ -49,6 +49,9 @@ import { ContainerMessageType } from "./messageTypes.js";
 
 const aliasesBlob = ".aliases";
 
+// Keep native hosting in one lazy module rather than adding a separate chunk graph to each DDS.
+export { LeafChannelRuntime } from "@fluidframework/datastore/internal";
+
 /**
  * A collection with an addressable parent and aggregate garbage-collection lifetime.
  * @internal

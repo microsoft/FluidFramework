@@ -23,6 +23,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	FluidDataStoreContextInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -69,8 +70,9 @@ export class DataStoreKindImplementation<T>
 	public constructor(
 		private readonly factory: Pick<
 			DataStoreKindImplementation<T>,
-			"type" | "instantiateDataStore" | "createDataStore"
+			"type" | "createDataStore"
 		> &
+			Partial<Pick<IFluidDataStoreFactory, "instantiateDataStore">> &
 			Partial<Pick<IFluidDataStoreFactory, "IFluidDataStoreFactory">> & {
 				readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
 				readonly channelFactory?: IChannelFactory;
@@ -87,6 +89,16 @@ export class DataStoreKindImplementation<T>
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
+		if (this.factory.channelFactory !== undefined) {
+			const native: FluidDataStoreContextInternal = context as FluidDataStoreContextInternal;
+			if (native.createLeafChannel === undefined) {
+				throw new UsageError("This runtime does not support native leaf hosting");
+			}
+			return native.createLeafChannel(this, existing);
+		}
+		if (this.factory.instantiateDataStore === undefined) {
+			throw new UsageError("The data-store kind has no factory");
+		}
 		return this.factory.instantiateDataStore(context, existing);
 	}
 

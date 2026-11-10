@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
+	FluidDataStoreContextInternal,
+	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
@@ -17,6 +20,38 @@ import {
 import { convertRegistry } from "../serviceClientUtils.js";
 
 describe("dataStoreKindFromFactory", () => {
+	it("delegates native leaf hosting to the owning runtime", async () => {
+		const channelFactory: IChannelFactory = {
+			type: "leaf",
+			attributes: { type: "leaf", snapshotFormatVersion: "1" },
+			create() {
+				throw new Error("Hosting must be delegated");
+			},
+			async load() {
+				throw new Error("Hosting must be delegated");
+			},
+		};
+		const kind = new DataStoreKindImplementation({ type: "leaf", channelFactory });
+		const invoked = new Error("Native host invoked");
+		const context: Partial<FluidDataStoreContextInternal> = {
+			async createLeafChannel(factory, existing) {
+				assert.equal(factory, kind);
+				assert.equal(factory.channelFactory, channelFactory);
+				assert.equal(existing, true);
+				throw invoked;
+			},
+		};
+		await assert.rejects(
+			kind.instantiateDataStore(context as IFluidDataStoreContext, true),
+			(error) => error === invoked,
+		);
+		delete context.createLeafChannel;
+		await assert.rejects(
+			kind.instantiateDataStore(context as IFluidDataStoreContext, false),
+			/This runtime does not support native leaf hosting/,
+		);
+	});
+
 	function makeFactory(type = "legacy"): IFluidDataStoreFactory {
 		return {
 			type,

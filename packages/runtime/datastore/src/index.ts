@@ -10,12 +10,14 @@ export {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	type ISharedObjectRegistryInternal,
-	legacySharedObjectTypeAliases,
-	LegacyTypeAwareRegistry,
 	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime.js";
+export {
+	legacySharedObjectTypeAliases,
+	LegacyTypeAwareRegistry,
+} from "./sharedObjectRegistry.js";
 export {
 	dataStoreCoreCompatDetails,
 	dataStoreCompatDetailsForRuntime,

@@ -87,4 +87,9 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
  */
 export interface IFluidDataStoreFactoryInternal extends IFluidDataStoreFactory {
 	readonly isLeafChannel?: boolean;
+	/**
+	 * The DDS factory, type-erased to avoid a dependency on datastore-definitions.
+	 * Only native leaf kinds provide this; the hosting layer validates it before use.
+	 */
+	readonly channelFactory?: unknown;
 }

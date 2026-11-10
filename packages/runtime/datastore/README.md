@@ -50,6 +50,12 @@ Existing data-store layouts and their named channels are unchanged.
 A leaf runtime cannot create additional child channels.
 Use a collection runtime when the application requires children.
 These hosting implementations are internal APIs.
+Shared-object kinds carry factory metadata without importing the native host.
+The container runtime loads leaf and composite hosting through the same lazy module when needed.
+Legacy DDS entrypoints therefore do not need to bundle native hosting or the data-store runtime.
+
+Native contexts propagate op-free dirty notifications through their containing stores.
+Incremental summary context is forwarded to leaf channels, with `.channels` added to summary paths only when the context introduces that envelope.
 
 # Fluid Handle
 

@@ -68,6 +68,7 @@ import type {
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IFluidDataStoreFactory,
+	IFluidDataStoreFactoryInternal,
 	PackagePath,
 	IRuntimeStorageService,
 	OldestSupportedClientVersion,
@@ -714,6 +715,14 @@ export abstract class FluidDataStoreContext
 			this.parentContext.IFluidDataStoreRegistry,
 			provideEntryPoint,
 		);
+	}
+
+	public async createLeafChannel(
+		factory: IFluidDataStoreFactoryInternal,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const { LeafChannelRuntime } = await import("./nativeChannelCollection.js");
+		return LeafChannelRuntime.loadFactory(this, existing, factory.channelFactory);
 	}
 
 	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {

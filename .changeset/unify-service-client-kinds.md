@@ -21,6 +21,8 @@ Composite children can be added alongside them after framework-version and appli
 
 Application-facing data-store values do not need to expose handles.
 Nested data stores share the garbage-collection lifetime of their container-level ancestor.
+Native hosting preserves incremental SharedTree summaries and propagates summary-only changes through containing stores.
+Leaf and composite hosting are loaded by the runtime when needed, rather than bundled eagerly by stable DDS factory entrypoints.
 
 This changes experimental alpha signatures and removes the separate alpha shared-object creator, registry, and key abstractions.
 The stable shared-object APIs remain unchanged.
