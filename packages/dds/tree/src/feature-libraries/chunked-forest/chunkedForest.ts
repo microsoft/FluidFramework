@@ -41,6 +41,7 @@ import {
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
+	replaceArrayRange,
 	Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
@@ -343,8 +344,12 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					idCompressor: this.forest.idCompressor,
 				});
 				this.forest.roots.fields.delete(source);
-				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
+				replaceArrayRange(
+					destinationField,
+					destinationChunkIndex,
+					destinationChunkIndex,
+					sourceField,
+				);
 				// Coalesce the seams the splice may have created: one chunk to the left of the
 				// insertion, the inserted chunks themselves, and one chunk to the right.
 				const coalesceStart = Math.max(0, destinationChunkIndex - 1);
