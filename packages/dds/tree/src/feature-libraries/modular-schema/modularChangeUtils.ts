@@ -8,7 +8,6 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
-	makeAnonChange,
 	makeChangeAtomId,
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
@@ -23,13 +22,18 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type TreeChunk,
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
 } from "../../core/index.js";
 import {
 	brand,
+	compareStrings,
+	createTupleComparator,
 	hasConflict,
 	hasSome,
 	idAllocatorFromMaxId,
 	merge,
+	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 	type Mutable,
@@ -37,6 +41,7 @@ import {
 	type RangeMapEntry,
 	type RangeQueryResult,
 	type RangeQueryResultFragment,
+	type TupleBTree,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -66,7 +71,7 @@ import {
 	type RebaseVersion,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import { cloneRootTable, intoDelta } from "./modularChangeFamily.js";
+import { makeDummyChunk } from "./chunkUtils.js";
 
 export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
@@ -1281,59 +1286,23 @@ export function areEquivalent(
 	}
 	return true;
 }
-
-export function areDeltaEquivalent(
-	change1: ModularChangeset,
-	change2: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): boolean {
-	const normalized1 = normalizeChangeset(change1, fieldKinds, false, false, (chunk) => chunk);
-	const normalized2 = normalizeChangeset(change2, fieldKinds, false, false, (chunk) => chunk);
-
-	const delta1 = intoDelta(makeAnonChange(normalized1), fieldKinds);
-	if (delta1.build !== undefined) {
-		for (const build of delta1.build) {
-			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
-		}
-	}
-
-	if (delta1.refreshers !== undefined) {
-		for (const build of delta1.refreshers) {
-			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
-		}
-	}
-
-	const delta2 = intoDelta(makeAnonChange(normalized2), fieldKinds);
-	if (delta2.build !== undefined) {
-		for (const build of delta2.build) {
-			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
-		}
-	}
-
-	if (delta2.refreshers !== undefined) {
-		for (const build of delta2.refreshers) {
-			(build as Mutable<typeof build>).trees = makeDummyChunk(build.trees);
-		}
-	}
-
-	const diff = merge(delta1, delta2);
-	if (hasConflict(diff)) {
-		// Breakpoint here to inspect the diff
-		return false;
-	}
-	return true;
-}
-
-const throws = (): never => {
-	throw new Error("Unexpected call inside dummy chunk");
-};
-
-function makeDummyChunk(chunk: TreeChunk): TreeChunk {
+export function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	return {
-		topLevelLength: chunk.topLevelLength,
-		cursor: throws,
-		referenceAdded: throws,
-		referenceRemoved: throws,
-		isShared: throws,
+		oldToNewId: table.oldToNewId.clone(),
+		newToOldId: table.newToOldId.clone(),
+		firstIntermediateRenames: table.firstIntermediateRenames.clone(),
+		nodeChanges: brand(table.nodeChanges.clone()),
+		detachLocations: table.detachLocations.clone(),
+		outputDetachLocations: table.outputDetachLocations.clone(),
 	};
 }
+
+export function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
+	return newTupleBTree(compareFieldIdKeys);
+}
+
+const compareFieldIdKeys = createTupleComparator([
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
+	compareStrings<FieldKey>,
+]);

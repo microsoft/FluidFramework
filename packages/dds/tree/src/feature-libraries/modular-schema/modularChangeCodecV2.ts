@@ -26,13 +26,10 @@ import {
 	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
+import { areDeltaEquivalent } from "./modularChangeDelta.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
-import {
-	areDeltaEquivalent,
-	fieldKindsFromConfiguration,
-	isChangesetValid,
-} from "./modularChangeUtils.js";
+import { fieldKindsFromConfiguration, isChangesetValid } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

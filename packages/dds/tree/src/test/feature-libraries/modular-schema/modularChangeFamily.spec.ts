@@ -54,15 +54,15 @@ import {
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
-import type {
-	EncodedModularChangesetV1,
-	EncodedNodeChangeset,
-	FieldChangeEncodingContext,
-	FieldChangeDecodingContext,
+import {
+	type EncodedModularChangesetV1,
+	type EncodedNodeChangeset,
+	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
+	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	intoDelta,
 	updateRefreshers,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
