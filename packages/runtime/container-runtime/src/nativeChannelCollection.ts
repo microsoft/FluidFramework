@@ -238,7 +238,7 @@ export class NativeChannelCollection
 			handle.attachGraph();
 		}
 		this.boundHandles.clear();
-		this.context.makeLocallyVisible();
+		this.context.makeLocallyVisibleAfterBinding();
 	}
 
 	protected override makeDataStoreLocallyVisible(id: string): void {

@@ -1054,6 +1054,20 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
+	private visibilityRequestedDuringInitialization = false;
+
+	/**
+	 * Retains a native descendant's visibility request until this store finishes initialization.
+	 * Its attachment summary must not be published before the entry point is initialized.
+	 */
+	public makeLocallyVisibleAfterBinding(): void {
+		if (this.channel === undefined) {
+			this.visibilityRequestedDuringInitialization = true;
+		} else {
+			this.makeLocallyVisible();
+		}
+	}
+
 	protected processPendingOps(channel: IFluidDataStoreChannel): void {
 		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
@@ -1094,6 +1108,10 @@ export abstract class FluidDataStoreContext
 		// Freeze the package path to ensure that someone doesn't modify it when it is
 		// returned in packagePath().
 		Object.freeze(this.pkg);
+		if (this.visibilityRequestedDuringInitialization) {
+			this.visibilityRequestedDuringInitialization = false;
+			this.makeLocallyVisible();
+		}
 	}
 
 	protected async bindRuntime(

@@ -27,6 +27,7 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreFactoryInternal,
 	IFluidDataStoreRegistry,
+	IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -179,6 +180,76 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 	async function getRoot(collection: IFluidDataStoreChannelCollection): Promise<ISharedMap> {
 		return (await (await collection.getDataStoreEntryPoint("root")).get()) as ISharedMap;
 	}
+
+	it("aliases a child during initialization before the containing runtime is bound", async () => {
+		let containerRuntime: IContainerRuntimeBase | undefined;
+		const initializingFactory: IFluidDataStoreFactory & {
+			IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+		} = {
+			type: "initializing-alias",
+			IFluidDataStoreRegistry: registry,
+			get IFluidDataStoreFactory() {
+				return this;
+			},
+			async instantiateDataStore(context, existing) {
+				containerRuntime = context.containerRuntime;
+				const native = context as FluidDataStoreContextInternal;
+				assert(native.createChannelCollection !== undefined);
+				return native.createChannelCollection(async (collection) => {
+					if (!existing) {
+						const child = await collection.createDataStore(leafFactory, "root");
+						const map = (await child.entryPoint.get()) as ISharedMap;
+						map.set("value", 42);
+						assert.equal(await child.trySetAlias("named"), "Success");
+					}
+					return collection;
+				});
+			},
+		};
+		const initializingRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: initializingFactory,
+			registryEntries: [[initializingFactory.type, initializingFactory]],
+			oldestSupportedClient: "3.12.0",
+		});
+		const container = await provider.createDetachedContainer(initializingRuntimeFactory);
+		const initializedCollection =
+			(await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const original = (await (
+			await initializedCollection.getDataStoreEntryPoint("named")
+		).get()) as ISharedMap;
+		assert.equal(original.get("value"), 42);
+		await provider.attachDetachedContainer(container);
+		await provider.ensureSynchronized();
+		assert(containerRuntime !== undefined);
+		const additionalStore = await containerRuntime.createDataStore(initializingFactory.type);
+		const additional =
+			(await additionalStore.entryPoint.get()) as IFluidDataStoreChannelCollection;
+		original.set("additional", additionalStore.entryPoint);
+		const additionalRoot = (await (
+			await additional.getDataStoreEntryPoint("named")
+		).get()) as ISharedMap;
+		additionalRoot.set("after-initialization", 44);
+		await provider.ensureSynchronized();
+		const remote = await provider.loadContainer(initializingRuntimeFactory);
+		const remoteCollection =
+			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const restored = (await (
+			await remoteCollection.getDataStoreEntryPoint("named")
+		).get()) as ISharedMap;
+		assert.equal(restored.get("value"), 42);
+		const additionalHandle =
+			restored.get<IFluidHandle<IFluidDataStoreChannelCollection>>("additional");
+		assert(additionalHandle !== undefined);
+		const restoredAdditional = await additionalHandle.get();
+		const restoredAdditionalRoot = (await (
+			await restoredAdditional.getDataStoreEntryPoint("named")
+		).get()) as ISharedMap;
+		assert.equal(restoredAdditionalRoot.get("value"), 42);
+		assert.equal(restoredAdditionalRoot.get("after-initialization"), 44);
+		restored.set("value", 43);
+		await provider.ensureSynchronized();
+		assert.equal(original.get("value"), 43);
+	});
 
 	it("rejects reserved and generated explicit IDs before creating children", async () => {
 		const container = await provider.createContainer(runtimeFactory);
