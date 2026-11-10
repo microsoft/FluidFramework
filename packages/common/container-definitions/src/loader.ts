@@ -741,7 +741,8 @@ export interface IContainerLoadMode {
 	 * If the client is offline, or storage returns errors such as throttling (429) responses,
 	 * the Loader can retry indefinitely, and the caller cannot observe or cancel the retries.
 	 *
-	 * If no load mode is specified, the Loader uses `"cached"`.
+	 * If a load mode is specified but this property is omitted, the value is `undefined`.
+	 * If no load mode is specified at all, the Loader uses `{ opsBeforeReturn: "cached" }`.
 	 * If the container is loaded with pending local state, the Loader ignores this value and uses `undefined`.
 	 *
 	 * For `"cached"` and `"all"`, the Loader gives no guarantee about ops that become known after the fetch completes,
@@ -764,7 +765,7 @@ export interface IContainerLoadMode {
 	 *
 	 * @remarks
 	 * - `"none"`: The container connects to the delta stream only when `IContainer.connect()` is called.
-	 * Op processing stays paused after the container is returned, until `IContainer.connect()` is called.
+	 * Op processing stays paused after the container is returned from `Loader.resolve()`, until `IContainer.connect()` is called.
 	 *
 	 * - `"delayed"`: The container connects to the delta stream only when `IContainer.connect()` is called.
 	 * Ops are fetched from storage and processed as they arrive.
