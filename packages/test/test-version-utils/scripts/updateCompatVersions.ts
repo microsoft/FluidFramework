@@ -57,11 +57,7 @@ import * as semver from "semver";
 
 // Re-use version arithmetic and package list from the main source to keep them in sync.
 // jiti (used to run this script) resolves .js imports to .ts files automatically.
-import {
-	getRequestedVersion,
-	resolveRangeViaRegistry,
-	versionHasMovedSparsedMatrix,
-} from "../src/versionUtils.js";
+import { getRequestedVersion, resolveRangeViaRegistry } from "../src/versionUtils.js";
 import { packageListToInstall } from "../src/compatPackageList.js";
 import {
 	getFullBackCompatVersionDeltas,
@@ -122,9 +118,7 @@ function buildVersionPackageJson(versionDir: string, version: string): string {
 			deps[entry.pkgName] = version;
 		}
 	}
-	if (versionHasMovedSparsedMatrix(version)) {
-		deps["@fluid-experimental/sequence-deprecated"] = version;
-	}
+	deps["@fluid-experimental/sequence-deprecated"] = version;
 	const sortedDeps = Object.fromEntries(
 		Object.entries(deps).sort(([a], [b]) => a.localeCompare(b)),
 	);

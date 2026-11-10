@@ -68,10 +68,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		dataObject: ITestFluidObject,
 		id: string,
 	): Promise<IFluidHandle<FluidObject>> {
-		// Back compat support - older versions of the runtime do not have getAliasedDataStoreEntryPoint
-		// Can be removed once we no longer support ^2.0.0-internal.7.0.0
-		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
-			(runtimeOf(dataObject) as any).getRootDataStore(id, false /* wait */));
+		const dataStore = await runtimeOf(dataObject).getAliasedDataStoreEntryPoint(id);
 		if (dataStore === undefined) {
 			throw new Error("Could not get aliased data store");
 		}

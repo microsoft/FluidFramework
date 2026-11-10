@@ -36,7 +36,6 @@ import {
 	TestFluidObject,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import * as semver from "semver";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
@@ -300,9 +299,7 @@ describeCompat(
 				// These tests only work with the latest version of loader -
 				// they do make certain assumptions that are not valid for older loaders. This check could be relaxed in
 				// the future.
-				apis.loader.version !== pkgVersion ||
-				(semver.compare(provider.driver.version, "0.46.0") === -1 &&
-					(provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious"))
+				apis.loader.version !== pkgVersion
 			) {
 				this.skip();
 			}
@@ -563,43 +560,14 @@ describeCompat(
 				let interval0: SequenceInterval | undefined;
 				let interval1: SequenceInterval | undefined;
 
-				// The interval collection API was changed to uniformize `change`/`changeProperties` and addition of intervals.
-				interface OldIntervalCollection {
-					add(start: number, end: number, intervalType: number): SequenceInterval;
-					change(id: string, start: number, end: number): SequenceInterval | undefined;
-				}
-
-				// Note: "dev" prereleases have to be special-cased since semver orders prerelease tags alphabetically,
-				// so dev builds (i.e. -dev or -dev-rc) sort as before official internal releases.
-				const isCurrentApi =
-					apis.dataRuntime.version.includes("dev") ||
-					semver.gte(apis.dataRuntime.version, "2.0.0-internal.8.0.0");
-
-				if (!isCurrentApi) {
-					// Versions of @fluidframework/sequence before this version had a different `add` API.
-					// See https://github.com/microsoft/FluidFramework/commit/e5b463cc8b24a411581c3e48f62ce1eea68dd639
-					// for the removal of that API.
-					const slideOnRemove = 0x2;
-					interval0 = (intervalsBefore as unknown as OldIntervalCollection).add(
-						0,
-						0,
-						slideOnRemove,
-					);
-					interval1 = (intervalsBefore as unknown as OldIntervalCollection).add(
-						0,
-						1,
-						slideOnRemove,
-					);
-				} else {
-					interval0 = intervalsBefore.add({
-						start: 0,
-						end: 0,
-					});
-					interval1 = intervalsBefore.add({
-						start: 0,
-						end: 1,
-					});
-				}
+				interval0 = intervalsBefore.add({
+					start: 0,
+					end: 0,
+				});
+				interval1 = intervalsBefore.add({
+					start: 0,
+					end: 1,
+				});
 				let id0;
 				let id1;
 
@@ -608,15 +576,8 @@ describeCompat(
 					id1 = interval1.getIntervalId();
 					assert.strictEqual(typeof id0, "string");
 					assert.strictEqual(typeof id1, "string");
-					if (!isCurrentApi) {
-						// Versions of @fluidframework/sequence before this version had a different `change` API.
-						// See https://github.com/microsoft/FluidFramework/commit/12c83d26962a1d76db6eb0ccad31fd6a7976a1af
-						(intervalsBefore as unknown as OldIntervalCollection).change(id0, 2, 3);
-						(intervalsBefore as unknown as OldIntervalCollection).change(id1, 0, 3);
-					} else {
-						intervalsBefore.change(id0, { start: 2, end: 3 });
-						intervalsBefore.change(id1, { start: 0, end: 3 });
-					}
+					intervalsBefore.change(id0, { start: 2, end: 3 });
+					intervalsBefore.change(id1, { start: 0, end: 3 });
 				}
 
 				const snapshotTree = container.serialize();

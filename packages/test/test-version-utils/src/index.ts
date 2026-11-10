@@ -61,5 +61,4 @@ export {
 export {
 	getRequestedVersion,
 	type GetRequestedVersionOptions,
-	versionToComparisonNumber,
 } from "./versionUtils.js";

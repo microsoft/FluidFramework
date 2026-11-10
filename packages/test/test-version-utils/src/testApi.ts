@@ -56,12 +56,7 @@ import {
 export type { PackageToInstall } from "./compatPackageList.js";
 import type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
-import {
-	checkInstalled,
-	getRequestedVersion,
-	loadPackage,
-	versionHasMovedSparsedMatrix,
-} from "./versionUtils.js";
+import { checkInstalled, getRequestedVersion, loadPackage } from "./versionUtils.js";
 
 /**
  * @internal
@@ -282,9 +277,7 @@ async function loadDataRuntime(
 		// Load sequenceDeprecated separately as it has special handling.
 		const sequenceDeprecated = await loadPackage(
 			modulePath,
-			versionHasMovedSparsedMatrix(version)
-				? "@fluid-experimental/sequence-deprecated"
-				: "@fluidframework/sequence",
+			"@fluid-experimental/sequence-deprecated",
 		);
 
 		// Destructure loaded packages

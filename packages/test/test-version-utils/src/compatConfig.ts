@@ -270,20 +270,6 @@ export function isCompatVersionBelowMinVersion(
 	return semver.compare(compatVersion, minVersion) < 0;
 }
 
-/**
- * Excludes explicitly pinned pre-2.0 clients that use dual-commit summaries from ODSP.
- * All supported matrix versions, including OCV, satisfy this requirement.
- */
-export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	const versionIsCompliant = (version: string | number | undefined): boolean =>
-		version === undefined || typeof version !== "string" || semver.gte(version, "2.0.0");
-	return (
-		versionIsCompliant(config.compatVersion) &&
-		versionIsCompliant(config.createVersion) &&
-		versionIsCompliant(config.loadVersion)
-	);
-}
-
 // Helper function for genCrossClientCompatConfig().
 function genCompatConfig(versionDetails: {
 	createVersion: string;

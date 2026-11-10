@@ -18,7 +18,6 @@ import {
 	configList,
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
-	isOdspCompatCompliant,
 } from "./compatConfig.js";
 import {
 	CompatKind,
@@ -66,9 +65,6 @@ function createCompatSuite(
 		for (const config of configs) {
 			if (minVersion && isCompatVersionBelowMinVersion(minVersion, config)) {
 				// skip current config if compat version is below min version supported for test suite
-				continue;
-			}
-			if (driver === "odsp" && !isOdspCompatCompliant(config)) {
 				continue;
 			}
 			describe(config.name, function () {

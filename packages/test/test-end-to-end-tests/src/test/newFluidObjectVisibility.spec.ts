@@ -15,7 +15,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import {
@@ -91,30 +91,6 @@ async function getAndValidateDataObject(
 		`Data object for key ${key} must be visible`,
 	);
 	return dataObject;
-}
-
-/**
- * This function was added to support cross-client back compat scenarios for runtime versions
- * that not have `getAliasedDataStoreEntryPoint`.
- *
- * This function can be removed once we no longer support ^2.0.0-internal.7.0.0.
- */
-async function getAliasedDataStoreBackCompat(
-	containerRuntime: IContainerRuntime,
-	id: string,
-): Promise<IFluidHandle<FluidObject> | undefined> {
-	if (containerRuntime.getAliasedDataStoreEntryPoint !== undefined) {
-		return containerRuntime.getAliasedDataStoreEntryPoint(id);
-	}
-	const request = {
-		url: id,
-		headers: { wait: false },
-	};
-	const response = await (containerRuntime as any).request(request);
-	if (response.status !== 200) {
-		throw responseToException(response, request);
-	}
-	return response.value.handle as IFluidHandle<FluidObject>;
 }
 
 /**
@@ -203,7 +179,7 @@ describeCompat(
 				// dataObject3 should become visible (reachable) from the root since dataObject2 is visible.
 				dataObject2._root.set("dataObject3", dataObject3.handle);
 				await assert.doesNotReject(
-					getAliasedDataStoreBackCompat(containerRuntime1, "rootDataStore"),
+					containerRuntime1.getAliasedDataStoreEntryPoint("rootDataStore"),
 					"Data object 2 must be visible from root",
 				);
 
@@ -217,10 +193,8 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint._context.containerRuntime as IContainerRuntime;
-				const dsEntryPoint = await getAliasedDataStoreBackCompat(
-					containerRuntime2,
-					"rootDataStore",
-				);
+				const dsEntryPoint =
+					await containerRuntime2.getAliasedDataStoreEntryPoint("rootDataStore");
 				const dataObject2C2 = (await dsEntryPoint?.get()) as ITestDataObject;
 				const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
 
@@ -308,7 +282,7 @@ describeCompat(
 				// Adding handle of the non-root data store to a visible DDS should make it visible (reachable)
 				// from the root.
 				await assert.doesNotReject(
-					getAliasedDataStoreBackCompat(containerRuntime1, "rootDataStore"),
+					containerRuntime1.getAliasedDataStoreEntryPoint("rootDataStore"),
 					"Data object 2 must be visible from root after its handle is added",
 				);
 
@@ -326,10 +300,8 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as IContainerRuntime;
-				const dsEntryPoint = await getAliasedDataStoreBackCompat(
-					containerRuntime2,
-					"rootDataStore",
-				);
+				const dsEntryPoint =
+					await containerRuntime2.getAliasedDataStoreEntryPoint("rootDataStore");
 				if (dsEntryPoint === undefined) {
 					throw new Error("rootDataStore must exist");
 				}

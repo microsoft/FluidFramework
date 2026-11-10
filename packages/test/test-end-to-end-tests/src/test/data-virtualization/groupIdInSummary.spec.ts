@@ -28,12 +28,7 @@ import {
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
 
-import {
-	clearCacheIfOdsp,
-	isGroupIdLoaderVersion,
-	isSupportedLoaderVersion,
-	supportsDataVirtualization,
-} from "./utils.js";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -193,10 +188,6 @@ describeCompat(
 			dataObjectB = {} as unknown as TestDataObject;
 			dataObjectC = {} as unknown as TestDataObject;
 			dataObjectD = {} as unknown as TestDataObject;
-
-			if (!isSupportedLoaderVersion(apis.loader.version)) {
-				this.skip();
-			}
 		});
 
 		afterEach("teardown", async () => {
@@ -437,7 +428,6 @@ describeCompat(
 				return;
 			}
 
-			const loaderSupport = isGroupIdLoaderVersion(apis.loader.version);
 			// Load basic container stuff
 			const container = await provider.createContainer(runtimeFactory);
 			const mainObject = (await container.getEntryPoint()) as TestDataObject;
@@ -504,50 +494,45 @@ describeCompat(
 			// Testing the get snapshot call
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 			const runtime2 = mainObject2.containerRuntime;
-			if (loaderSupport) {
-				assert(loadingSnapshot !== undefined, "should have captured loading snapshot!");
-				assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot should be defined");
-				assert.equal(callCount, 1, "Should have only called getSnapshot once");
-				assert(
-					loadingSnapshot?.sequenceNumber === summaryRefSeq,
-					"Loaded from wrong snapshot",
-				);
+			assert(loadingSnapshot !== undefined, "should have captured loading snapshot!");
+			assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot should be defined");
+			assert.equal(callCount, 1, "Should have only called getSnapshot once");
+			assert(loadingSnapshot?.sequenceNumber === summaryRefSeq, "Loaded from wrong snapshot");
 
-				const blobContents = loadingSnapshot.blobContents;
-				// Snapshot validation (a snapshot call with NO loadingGroupIds)
-				const channelsTree = loadingSnapshot.snapshotTree.trees[".channels"];
-				const mainObjectTree = channelsTree.trees[mainObject.id];
-				const dataObjectATree = channelsTree.trees[dataObjectA.id];
-				const dataObjectBTree = channelsTree.trees[dataObjectB.id];
-				const dataObjectCTree = channelsTree.trees[dataObjectC.id];
-				const dataObjectDTree = channelsTree.trees[dataObjectD.id];
+			const blobContents = loadingSnapshot.blobContents;
+			// Snapshot validation (a snapshot call with NO loadingGroupIds)
+			const channelsTree = loadingSnapshot.snapshotTree.trees[".channels"];
+			const mainObjectTree = channelsTree.trees[mainObject.id];
+			const dataObjectATree = channelsTree.trees[dataObjectA.id];
+			const dataObjectBTree = channelsTree.trees[dataObjectB.id];
+			const dataObjectCTree = channelsTree.trees[dataObjectC.id];
+			const dataObjectDTree = channelsTree.trees[dataObjectD.id];
 
-				assertPopulatedTree(mainObjectTree, noId, blobContents, "mainObject tree not right");
-				assertOmittedBlobContents(
-					dataObjectATree,
-					loadingGroupId,
-					blobContents,
-					"Wrong tree for A",
-				);
-				assertOmittedBlobContents(
-					dataObjectBTree,
-					loadingGroupId,
-					blobContents,
-					"Wrong tree for B",
-				);
-				assertOmittedBlobContents(
-					dataObjectCTree,
-					loadingGroupId2,
-					blobContents,
-					"Wrong tree for C",
-				);
-				assertOmittedBlobContents(
-					dataObjectDTree,
-					loadingGroupId2,
-					blobContents,
-					"Wrong tree for D",
-				);
-			}
+			assertPopulatedTree(mainObjectTree, noId, blobContents, "mainObject tree not right");
+			assertOmittedBlobContents(
+				dataObjectATree,
+				loadingGroupId,
+				blobContents,
+				"Wrong tree for A",
+			);
+			assertOmittedBlobContents(
+				dataObjectBTree,
+				loadingGroupId,
+				blobContents,
+				"Wrong tree for B",
+			);
+			assertOmittedBlobContents(
+				dataObjectCTree,
+				loadingGroupId2,
+				blobContents,
+				"Wrong tree for C",
+			);
+			assertOmittedBlobContents(
+				dataObjectDTree,
+				loadingGroupId2,
+				blobContents,
+				"Wrong tree for D",
+			);
 
 			callCount = 0;
 
@@ -585,41 +570,35 @@ describeCompat(
 			assert(contextD.baseSnapshot !== undefined, "contextD should have a baseSnapshot");
 
 			assert.equal(callCount, 0, "Should not have made any network calls");
-			if (loaderSupport) {
-				assert(loadingSnapshot !== undefined, "should have captured loading snapshot!");
-				const blobContents = loadingSnapshot.blobContents;
-				assertOmittedBlobContents(
-					contextA.baseSnapshot,
-					loadingGroupId,
-					blobContents,
-					"contextA tree not omitted",
-				);
-				assertOmittedBlobContents(
-					contextB.baseSnapshot,
-					loadingGroupId,
-					blobContents,
-					"contextB tree not omitted",
-				);
-				assertOmittedBlobContents(
-					contextC.baseSnapshot,
-					loadingGroupId2,
-					blobContents,
-					"contextC tree not omitted",
-				);
-				assertOmittedBlobContents(
-					contextD.baseSnapshot,
-					loadingGroupId2,
-					blobContents,
-					"contextD tree not omitted",
-				);
-			}
+			assertOmittedBlobContents(
+				contextA.baseSnapshot,
+				loadingGroupId,
+				blobContents,
+				"contextA tree not omitted",
+			);
+			assertOmittedBlobContents(
+				contextB.baseSnapshot,
+				loadingGroupId,
+				blobContents,
+				"contextB tree not omitted",
+			);
+			assertOmittedBlobContents(
+				contextC.baseSnapshot,
+				loadingGroupId2,
+				blobContents,
+				"contextC tree not omitted",
+			);
+			assertOmittedBlobContents(
+				contextD.baseSnapshot,
+				loadingGroupId2,
+				blobContents,
+				"contextD tree not omitted",
+			);
 
 			// loading group call
 			assert.equal(callCount, 0, "Should not have made any network calls");
 			const [dataObjectA2, dataObjectB2] = await Promise.all([handleA2.get(), handleB2.get()]);
-			if (loaderSupport) {
-				assert.equal(callCount, 1, "Should have only called getSnapshot once!");
-			}
+			assert.equal(callCount, 1, "Should have only called getSnapshot once!");
 			callCount = 0;
 			assert.equal(dataObjectA2._root.get("A"), "A", "A should be set");
 			assert.equal(dataObjectB2._root.get("B"), "B", "B should be set");
@@ -631,7 +610,7 @@ describeCompat(
 			assert.equal(aDataObjectA2, dataObjectA2, "Should be the same object");
 
 			// Testing the get snapshot call with loadingGroupId
-			if (loaderSupport) {
+			{
 				const groupSnapshot = snapshotCaptured;
 				assert(groupSnapshot !== undefined, "should have captured group snapshot!");
 				const blobContents = groupSnapshot.blobContents;
@@ -686,7 +665,7 @@ describeCompat(
 			await handleD2.get();
 
 			// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
-			if (loaderSupport) {
+			{
 				const group2Snapshot = snapshotCaptured;
 				assert(group2Snapshot !== undefined, "should have captured group2 snapshot!");
 				const blobContents = group2Snapshot.blobContents;
