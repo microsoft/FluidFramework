@@ -19,7 +19,6 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/inter
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
 } from "@fluidframework/test-utils/internal";
 
@@ -59,15 +58,12 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 			summaryConfigOverrides,
 		},
 	};
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataObjectFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			runtimeOptions,
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		runtimeOptions,
+	});
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject;

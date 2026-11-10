@@ -25,7 +25,6 @@ import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -101,15 +100,13 @@ describeCompat(
 				},
 			},
 		};
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-			{
+		const runtimeFactory =
+			new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
 				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 				runtimeOptions,
-			},
-		);
+			});
 
 		let containerRuntime: ContainerRuntime;
 		let mainDataStore: TestDataObject;

@@ -6,6 +6,7 @@
 import {
 	IContainer,
 	IHostLoader,
+	IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -29,13 +30,13 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
-// eslint-disable-next-line import-x/no-deprecated
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
-import { waitForContainerConnection } from "./containerUtils.js";
 import {
-	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+	// eslint-disable-next-line import-x/no-deprecated
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	// eslint-disable-next-line import-x/no-deprecated
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+} from "./containerRuntimeFactories.js";
+import { waitForContainerConnection } from "./containerUtils.js";
 import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
@@ -106,24 +107,26 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType?: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	containerRuntimeFactoryType?: new (
+		// eslint-disable-next-line import-x/no-deprecated
+		props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	) => IRuntimeFactory,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+	const RuntimeFactory =
 		// eslint-disable-next-line import-x/no-deprecated
-		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataStoreFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: registryEntries ?? [
-				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
-			],
-			runtimeOptions: { summaryOptions: defaultSummaryOptions },
-		},
-	);
+		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore;
+	const runtimeFactory = new RuntimeFactory({
+		defaultFactory: dataStoreFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: registryEntries ?? [
+			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+		],
+		runtimeOptions: { summaryOptions: defaultSummaryOptions },
+	});
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
 		configProvider,

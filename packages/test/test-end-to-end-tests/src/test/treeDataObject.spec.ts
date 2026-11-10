@@ -12,10 +12,7 @@ import {
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import {
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	defaultTestOldestSupportedClient,
-} from "@fluidframework/test-utils/internal";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree/internal";
 
 // Note: ideally these tests would live directly in the `aqueduct` package,
@@ -75,15 +72,12 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: "on",
 	};
 
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: TestTreeDataObject.getFactory(),
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
-			runtimeOptions,
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: TestTreeDataObject.getFactory(),
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
+		runtimeOptions,
+	});
 
 	it("First time initialization", async () => {
 		const provider = getTestObjectProvider();

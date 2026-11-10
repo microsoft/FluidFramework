@@ -122,10 +122,6 @@ export const ContainerRuntimeApi = {
 	version: pkgVersion,
 	BaseContainerRuntimeFactory,
 	ContainerRuntime,
-	/**
-	 * @remarks The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
-	 * to construct safely across versions.
-	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 

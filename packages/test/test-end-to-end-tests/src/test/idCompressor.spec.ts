@@ -44,7 +44,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
@@ -187,15 +186,12 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		enableRuntimeIdCompressor: "on",
 	};
 
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions,
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		runtimeOptions,
+	});
 
 	let containerRuntime: IContainerRuntime;
 	let container1: IContainer;

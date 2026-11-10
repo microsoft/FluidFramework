@@ -23,7 +23,6 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
@@ -89,15 +88,13 @@ describeCompat(
 								},
 							},
 			};
-			const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-				{
+			const runtimeFactory =
+				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory: dataObjectFactory,
 					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 					runtimeOptions,
-				},
-			);
+				});
 			return runtimeFactory;
 		}
 
