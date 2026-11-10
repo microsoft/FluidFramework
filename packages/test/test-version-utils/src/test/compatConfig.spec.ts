@@ -151,8 +151,7 @@ describe("compatibility selection", () => {
 		}
 		assert(readVersionsManifest().versions.includes(expectedOldestCompatibleVersion));
 		for (const version of readVersionsManifest().versions) {
-			// Individually pinned suites are independent of the supported matrix floor.
-			if (semver.lt(version, expectedOldestCompatibleVersion)) continue;
+			assert(semver.gte(version, expectedOldestCompatibleVersion));
 			const packagePath = `${fullWorkspaceDir}/${version}/package.json`;
 			assert(existsSync(packagePath));
 			const pkg = JSON.parse(readFileSync(packagePath, "utf8")) as {

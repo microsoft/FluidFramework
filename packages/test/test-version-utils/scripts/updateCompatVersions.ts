@@ -49,7 +49,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
@@ -280,15 +280,10 @@ async function main(): Promise<void> {
 	}
 
 	// allVersions is the single set of versions installed in the workspace and recorded in the manifest.
-	const { explicitVersions } = (await import(
-		pathToFileURL(path.join(compatWorkspacesDir, "explicit-versions.mjs")).href
-	)) as { explicitVersions: string[] };
-
 	const allVersions = new Set([
 		nMinus1,
 		...checkpointVersions,
 		oldestCompatibleVersion,
-		...explicitVersions,
 		...fullAdditional,
 	]);
 
