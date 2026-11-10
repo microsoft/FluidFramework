@@ -12,6 +12,7 @@ import {
 	jsonMinimizingFilter,
 	readStream,
 	readStreamNumber,
+	readStreamValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import { makeArray } from "../../../../util/index.js";
@@ -163,6 +164,25 @@ describe("chunkEncodingUtilities", () => {
 		assert.throws(() => getChecked([], 0));
 		assert.equal(getChecked([1], 0), 1);
 		assert.throws(() => getChecked([1], 1));
+		assert.throws(() => getChecked([undefined], 0));
+		assert.equal(getChecked([null], 0), null);
+	});
+
+	it("reads null values through stream helpers", () => {
+		const data = [null];
+		for (const read of [readStream, readStreamValue]) {
+			const stream = { data, offset: 0 };
+			assert.equal(read(stream), data[0]);
+			assert.equal(stream.offset, 1);
+			assert.throws(() => read(stream));
+			assert.equal(stream.offset, 1);
+		}
+	});
+
+	it("validates streamed values after consuming the item", () => {
+		const stream = { data: [{}], offset: 0 };
+		assert.throws(() => readStreamValue(stream));
+		assert.equal(stream.offset, 1);
 	});
 
 	it("stream", () => {
