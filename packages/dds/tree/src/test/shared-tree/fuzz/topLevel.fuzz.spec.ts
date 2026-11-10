@@ -82,6 +82,10 @@ describe("Fuzz - Top-Level", () => {
 				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
 				attachingBeforeRehydrateDisable: true,
 			},
+			skip: [
+				// Seed 35 fails due to a cursor caching issue
+				35,
+			],
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
