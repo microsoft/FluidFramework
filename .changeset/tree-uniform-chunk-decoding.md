@@ -3,11 +3,10 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Reduce decoding allocations for tree leaves and fixed-shape sequences
+Optimize tree decoding
 
-SharedTree decodes compatible fixed-shape sequences directly into compact uniform chunks instead of allocating a separate chunk for each node.
-Decoding can reuse complete values arrays and retain compressed identifiers, which reduces memory use and improves decoding performance for these sequences.
-Individual fixed-type leaves with a required value also use a direct read and a cached chunk shape, including leaves within polymorphic content.
+SharedTree now better preserves compression when decoding subtrees.
+This improves performance for loads and remote inserts, and additionally saves memory if using [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable).
 
 #### Example measurements
 
@@ -31,7 +30,7 @@ The attached-content measurement retains only the root-field chunks, excluding t
 Shared summary fixtures and their ID compressor are excluded from heap deltas.
 These measurements do not measure peak memory.
 
-Both document schemas use less retained whole-tree heap in this workload.
+Both document types use less memory in these scenarios.
 Plain-text summary loading is faster, while formatted-text timing differences are small and vary between process runs.
 Formatted-text attached-content heap is essentially unchanged because its enclosing polymorphic structures do not use the fixed-shape sequence path.
 Small timing differences can be noise, and preparing a decoder for a custom leaf type can cost more than the general path for a tiny batch.
