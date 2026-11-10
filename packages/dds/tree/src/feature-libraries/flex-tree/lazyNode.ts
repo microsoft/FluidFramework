@@ -97,6 +97,7 @@ export abstract class LazyTreeNode
 	readonly #removeDeleteCallback: () => void;
 	/**
 	 * The node schema captured at construction for field-kind lookup.
+	 * @remarks
 	 * It is not refreshed after schema changes; see {@link Context} for invalidation requirements.
 	 */
 	protected readonly storedSchema: TreeNodeStoredSchema;
@@ -337,6 +338,7 @@ export abstract class LazyTreeNode
 
 /**
  * A hydrated node for stored object schemas that caches declared field instances, including empty fields and array content.
+ * @remarks
  * Each cached field owns its cursor and anchor.
  * Undeclared object fields are forbidden and are not retained.
  * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
@@ -364,6 +366,7 @@ export class LazyObjectNode extends LazyTreeNode {
 
 /**
  * A node for any stored schema with a bounded cache of field instances that borrow its navigation resources.
+ * @remarks
  * Empty fields are not cached, and batch cleanup examines only changed cached keys.
  * Retained fields remain usable after eviction because they navigate through this node.
  */

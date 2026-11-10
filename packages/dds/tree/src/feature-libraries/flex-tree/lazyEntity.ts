@@ -64,6 +64,7 @@ export abstract class LazyEntity {
 
 	/**
 	 * Reports whether this instance's lifetime has ended.
+	 * @remarks
 	 * A freed instance cannot be used to access forest content or edit the tree.
 	 * Removal from the document alone does not end its lifetime.
 	 */
@@ -110,7 +111,7 @@ export abstract class AnchoredEntity<TAnchor = unknown>
 
 	/**
 	 * Frees the cursor, releases the anchor, and unregisters this instance from its context.
-	 * Must be called at most once.
+	 * @remarks Must be called at most once.
 	 */
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
@@ -121,7 +122,7 @@ export abstract class AnchoredEntity<TAnchor = unknown>
 
 	/**
 	 * Clears the live cursor before a forest edit, retaining the anchor for later recovery.
-	 * The instance must not be freed.
+	 * @remarks The instance must not be freed.
 	 */
 	public prepareForEdit(): void {
 		this.#lazyCursor.clear();
@@ -188,7 +189,7 @@ export abstract class AnchoredEntity<TAnchor = unknown>
 
 	/**
 	 * Releases the owned anchor and any subclass state tied to it during disposal.
-	 * Called after the cursor has been freed.
+	 * @remarks Called after the cursor has been freed.
 	 */
 	protected abstract forgetAnchor(): void;
 }

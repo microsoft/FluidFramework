@@ -134,6 +134,7 @@ export function createUnhydratedFlexTreeNode(
 
 /**
  * Base for FlexTree nodes whose content has not been inserted into a forest.
+ * @remarks
  * Subclasses determine whether empty field instances are retained.
  */
 export abstract class UnhydratedFlexTreeNode
@@ -240,6 +241,7 @@ export abstract class UnhydratedFlexTreeNode
 
 	/**
 	 * Gets a retained field or creates an empty one using this node's stored schema.
+	 * @remarks
 	 * Newly created fields are retained only when {@link UnhydratedFlexTreeNode.retainsEmptyField} allows it.
 	 * This does not observe the field or evaluate pending defaults.
 	 */
@@ -259,6 +261,7 @@ export abstract class UnhydratedFlexTreeNode
 
 	/**
 	 * Gets the retained field at `key`, or undefined if none is retained.
+	 * @remarks
 	 * Does not create a field, observe its contents, or evaluate pending defaults.
 	 */
 	public getStoredField(key: FieldKey): UnhydratedFlexTreeField | undefined {

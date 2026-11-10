@@ -68,7 +68,7 @@ export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField
  * Gets a FlexTree field instance, reusing the owning node's cache when appropriate.
  * @param context - Owns the field's lifetime and supplies its forest and schema policy.
  * @param schema - The field kind for the cursor's current field under the context's stored schema.
- * @param cursor - A cursor in the context's forest, positioned in fields mode.
+ * @param cursor - A cursor in the context's forest, positioned in "fields" mode.
  * Remains positioned on the same field; ownership stays with the caller.
  * @remarks
  * Fields without a parent node own their navigation resources and are not cached here.
@@ -170,7 +170,7 @@ export abstract class LazyField extends LazyEntity implements FlexTreeField {
 
 	/**
 	 * Gets an in-document edit path after validating the field's lifetime.
-	 * The path must not be retained across edits.
+	 * @remarks The path must not be retained across edits.
 	 * @throws A usage error if the field is freed or is not in the document.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
@@ -286,7 +286,7 @@ export class UncachedForbiddenField extends NodeBackedField {
  */
 abstract class NodeBackedCursorField extends NodeBackedField {
 	/**
-	 * Reads this field using the parent node's cursor, restoring nodes mode afterward.
+	 * Reads this field using the parent node's cursor, restoring "nodes" mode afterward.
 	 * @param read - A synchronous callback that must leave the cursor on this field,
 	 * must not retain it, and must not edit the tree or access this node through another API while it is borrowed.
 	 */
@@ -632,6 +632,7 @@ export abstract class AnchoredField extends LazyField implements IDisposable {
 
 /**
  * Navigation resources owned by an {@link AnchoredField}.
+ * @remarks
  * Context and parent-destruction cleanup is routed through the field so subclasses also release their state.
  * The field then calls {@link FieldResources.disposeFromOwner} to release this component.
  */
