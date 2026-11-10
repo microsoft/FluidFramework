@@ -1000,6 +1000,14 @@ export abstract class FluidDataStoreContext
 		if (channelSummarizerNode) {
 			channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
 		}
+		this.parentContext.onChildDirty?.(this.id);
+	}
+
+	/**
+	 * Invalidates this containing store when a nested channel changes without submitting an op.
+	 */
+	public onChildDirty(id: string): void {
+		this.setChannelDirty(id);
 	}
 
 	public submitSignal(

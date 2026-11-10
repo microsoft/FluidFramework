@@ -171,6 +171,8 @@ export class NativeChannelCollection
 		if (
 			childId.length === 0 ||
 			childId.includes("/") ||
+			childId === aliasesBlob ||
+			id?.startsWith("_") === true ||
 			this.contexts.has(childId) ||
 			this.aliases.has(childId)
 		) {
@@ -188,6 +190,9 @@ export class NativeChannelCollection
 		return {
 			entryPoint: store.entryPoint,
 			trySetAlias: async (alias) => {
+				if (this.contexts.has(aliasesBlob)) {
+					throw new UsageError("Cannot add alias metadata over an existing .aliases child");
+				}
 				if (!gte(this.context.oldestSupportedClient, "3.12.0")) {
 					throw new UsageError(
 						"Nested channel aliases require oldestSupportedClient >= 3.12.0",
@@ -354,6 +359,7 @@ export class NativeChannelCollection
 	): Promise<ISummaryTreeWithStats> {
 		const summary = await super.summarize(fullTree, trackState, telemetryContext);
 		if (this.aliases.size > 0) {
+			this.validateAliasMetadataSlot();
 			addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
 		}
 		return summary;
@@ -364,6 +370,7 @@ export class NativeChannelCollection
 	): ISummaryTreeWithStats {
 		const summary = super.getAttachSummary(telemetryContext);
 		if (this.aliases.size > 0) {
+			this.validateAliasMetadataSlot();
 			addBlobToSummary(summary, aliasesBlob, JSON.stringify([...this.aliases]));
 		}
 		return summary;
@@ -377,6 +384,12 @@ export class NativeChannelCollection
 		telemetryContext?: ITelemetryContext,
 	): IGarbageCollectionData {
 		return this.withAggregateLifetime(super.getAttachGCData(telemetryContext));
+	}
+
+	private validateAliasMetadataSlot(): void {
+		if (this.contexts.has(aliasesBlob)) {
+			throw new DataCorruptionError("Alias metadata conflicts with an existing child", {});
+		}
 	}
 
 	private withAggregateLifetime(data: IGarbageCollectionData): IGarbageCollectionData {

@@ -159,6 +159,7 @@ export interface IFluidParentContextPrivate
 	 * Omitted outside collections that support these legacy child slots.
 	 */
 	readonly leafChannelPackagePath?: readonly string[] | undefined;
+	readonly onChildDirty?: ((id: string) => void) | undefined;
 	readonly submitSignal: (
 		type: string,
 		content: unknown,
@@ -226,6 +227,7 @@ export function formParentContext<
 	Pick<T, SubmitKeys> {
 	return {
 		leafChannelPackagePath: routing?.leafChannelPackagePath ?? context.leafChannelPackagePath,
+		onChildDirty: context.onChildDirty?.bind(context),
 		get IFluidDataStoreRegistry() {
 			return routing === undefined ? context.IFluidDataStoreRegistry : routing.registry;
 		},

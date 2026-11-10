@@ -12,6 +12,16 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import type {
+	IChannelFactory,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Exercise a summary-only DDS in this current-version runtime suite.
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
 	FluidDataStoreContextInternal,
 	IFluidDataStoreChannelCollection,
 	IFluidDataStoreFactory,
@@ -37,13 +47,62 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the GC suite's summary readers.
 } from "./gc/gcTestSummaryUtils.js";
 
+// eslint-disable-next-line import-x/no-deprecated -- A summary-only DDS must notify its host without submitting an op.
+class SummaryOnlyChannel extends SharedObject {
+	public value = 0;
+	public set(value: number): void {
+		this.value = value;
+		this.dirty();
+	}
+	protected summarizeCore(): ISummaryTreeWithStats {
+		return createSingleBlobSummary("value", JSON.stringify(this.value));
+	}
+	protected async loadCore(storage: IChannelStorageService): Promise<void> {
+		this.value = JSON.parse(
+			new TextDecoder().decode(await storage.readBlob("value")),
+		) as number;
+	}
+	protected onDisconnect(): void {}
+	protected processMessagesCore(): never {
+		throw new Error("Summary-only channel must not receive ops");
+	}
+	protected applyStashedOp(): never {
+		throw new Error("Summary-only channel must not stash ops");
+	}
+}
+
 describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const { LeafChannelRuntime } = apis.dataRuntime.packages.datastore;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { TestFluidObjectFactory } = apis.dataRuntime;
 	const legacyFactory = new TestFluidObjectFactory([], "legacy-child");
+	let summarizerCollection: IFluidDataStoreChannelCollection | undefined;
 	const channelFactory = SharedMap.getFactory();
+	const summaryFactory: IChannelFactory<SummaryOnlyChannel> = {
+		type: "summary-only",
+		attributes: { type: "summary-only", snapshotFormatVersion: "1" },
+		create(runtime, id) {
+			const channel = new SummaryOnlyChannel(id, runtime, this.attributes, "SummaryOnly");
+			channel.initializeLocal();
+			return channel;
+		},
+		async load(runtime, id, services, attributes) {
+			const channel = new SummaryOnlyChannel(id, runtime, attributes, "SummaryOnly");
+			await channel.load(services);
+			return channel;
+		},
+	};
+	const summaryKind: IFluidDataStoreFactoryInternal = {
+		type: summaryFactory.type,
+		isLeafChannel: true,
+		get IFluidDataStoreFactory() {
+			return this;
+		},
+		async instantiateDataStore(context, existing) {
+			return LeafChannelRuntime.load(context, existing, summaryFactory);
+		},
+	};
 	const leafFactory: IFluidDataStoreFactoryInternal = {
 		type: channelFactory.type,
 		isLeafChannel: true,
@@ -59,6 +118,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 			return this;
 		},
 		async get(type) {
+			if (type === summaryKind.type) return summaryKind;
 			return type === leafFactory.type
 				? leafFactory
 				: type === factory.type
@@ -79,13 +139,19 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		async instantiateDataStore(context, existing) {
 			const nativeContext = context as FluidDataStoreContextInternal;
 			assert(nativeContext.createChannelCollection !== undefined);
-			return nativeContext.createChannelCollection(async (collection) => {
-				if (!existing) {
-					const root = await collection.createDataStore(leafFactory, "root");
-					collection.bind(root.entryPoint);
-				}
-				return collection;
-			});
+			const collection = await nativeContext.createChannelCollection(
+				async (collectionInner) => {
+					if (!existing) {
+						const root = await collectionInner.createDataStore(leafFactory, "root");
+						collectionInner.bind(root.entryPoint);
+					}
+					return collectionInner;
+				},
+			);
+			if (context.clientDetails.type === "summarizer" && context.packagePath.length === 1) {
+				summarizerCollection = collection;
+			}
+			return collection;
 		},
 	};
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -107,11 +173,84 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
+		summarizerCollection = undefined;
 	});
 
 	async function getRoot(collection: IFluidDataStoreChannelCollection): Promise<ISharedMap> {
 		return (await (await collection.getDataStoreEntryPoint("root")).get()) as ISharedMap;
 	}
+
+	it("rejects reserved and generated explicit IDs before creating children", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const parent = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		for (const id of [".aliases", "_0", "_4"]) {
+			await assert.rejects(
+				parent.createDataStore(leafFactory, id),
+				/Invalid or duplicate child channel ID/,
+			);
+		}
+		const child = await parent.createDataStore(leafFactory);
+		const map = (await child.entryPoint.get()) as ISharedMap;
+		map.set("value", 42);
+		assert.equal(await child.trySetAlias("named"), "Success");
+		await provider.ensureSynchronized();
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const { summarizer } = await createSummarizerCore(container, loader);
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const reloaded = await provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const collection = (await reloaded.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const restored = (await (
+			await collection.getDataStoreEntryPoint("named")
+		).get()) as ISharedMap;
+		assert.equal(restored.get("value"), 42);
+	});
+
+	it("propagates op-free dirty notifications through every ancestor after an acknowledged summary", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const parent = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const root = await getRoot(parent);
+		const nestedStore = await parent.createDataStore(factory);
+		const nested = (await nestedStore.entryPoint.get()) as IFluidDataStoreChannelCollection;
+		const blockStore = await nested.createDataStore(summaryKind);
+		root.set("block", blockStore.entryPoint);
+		const legacyStore = await parent.createDataStore(legacyFactory);
+		const legacy = (await legacyStore.entryPoint.get()) as ITestFluidObject;
+		const peerStore = await legacy.context.containerRuntime.createDataStore([
+			factory.type,
+			legacyFactory.type,
+		]);
+		const peer = (await peerStore.entryPoint.get()) as ITestFluidObject;
+		root.set("peer", peer.handle);
+		await provider.ensureSynchronized();
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const { summarizer } = await createSummarizerCore(container, loader);
+		await summarizeNow(summarizer);
+		assert(summarizerCollection !== undefined);
+		const summaryRoot = await getRoot(summarizerCollection);
+		const blockHandle = summaryRoot.get<IFluidHandle<SummaryOnlyChannel>>("block");
+		const peerHandle = summaryRoot.get<IFluidHandle<ITestFluidObject>>("peer");
+		assert(blockHandle !== undefined && peerHandle !== undefined);
+		const summaryBlock = await blockHandle.get();
+		const summaryPeer = await peerHandle.get();
+		summaryPeer.root.on("valueChanged", () =>
+			summaryBlock.set(summaryPeer.root.get<number>("value") ?? 0),
+		);
+		peer.root.set("value", 42);
+		await provider.ensureSynchronized();
+		assert.equal(summaryBlock.value, 42);
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const remote = await provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const remoteRoot = await getRoot(
+			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
+		);
+		const restoredHandle = remoteRoot.get<IFluidHandle<SummaryOnlyChannel>>("block");
+		assert(restoredHandle !== undefined);
+		assert.equal((await restoredHandle.get()).value, 42);
+	});
 
 	it("routes handles to genuinely nested leaves and composites", async () => {
 		const container = await provider.createContainer(runtimeFactory);
