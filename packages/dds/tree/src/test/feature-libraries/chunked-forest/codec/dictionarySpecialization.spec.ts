@@ -13,7 +13,7 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { runDictionarySpecialization } from "../../../../feature-libraries/chunked-forest/codec/runDictionarySpecialization.js";
+import { dictionarySpecialization } from "../../../../feature-libraries/chunked-forest/codec/dictionarySpecialization.js";
 import {
 	noSpecialization,
 	schemaCompressedEncodeVTextExperimental,
@@ -87,13 +87,13 @@ function encode(
 	);
 }
 
-/** Encodes `root` with {@link runDictionarySpecialization}, and makes sure that the result decodes to `root`. */
+/** Encodes `root` with {@link dictionarySpecialization}, and makes sure that the result decodes to `root`. */
 function encodeAndCheck(
 	schema: ImplicitFieldSchema,
 	storedSchema: TreeStoredSchema,
 	root: unknown,
 ): EncodedFieldBatchVTextExperimental {
-	const encoded = encode(schema, storedSchema, root, runDictionarySpecialization());
+	const encoded = encode(schema, storedSchema, root, dictionarySpecialization);
 	const decoded = vTextCodec.decode(
 		encoded as JsonCompatibleReadOnly,
 		makeTestFieldBatchContexts({ encodeType: TreeCompressionStrategy.Compressed }).decode,
@@ -113,7 +113,7 @@ function constantLeafValues(encoded: EncodedFieldBatchVTextExperimental): unknow
 	);
 }
 
-describe("runDictionarySpecialization", () => {
+describe("dictionarySpecialization", () => {
 	it("pins the format and writes common characters as shape indexes", () => {
 		const text = FormattedTextTest.Tree.fromString("ab".repeat(200));
 		const encoded = encodeAndCheck(FormattedTextTest.Tree, textSchema, text);
@@ -250,6 +250,18 @@ describe("runDictionarySpecialization", () => {
 		assert.deepEqual(constantLeafValues(encoded), []);
 	});
 
+	it("does not pin a leaf with more values than it counts", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Numbers extends sf.array("Numbers", sf.number) {}
+		const schema = toStoredSchema(Numbers, StagedSchemaUpgradePolicy.restrictive);
+		// 2500 values, each in a run of 8 items. The strategy counts only the first 1000 values.
+		const root = new Numbers(
+			Array.from({ length: 20000 }, (_, index) => Math.floor(index / 8)),
+		);
+		const encoded = encodeAndCheck(Numbers, schema, root);
+		assert.deepEqual(constantLeafValues(encoded), []);
+	});
+
 	it("round-trips recursive items that are deeper than the read depth", () => {
 		const sf = new SchemaFactoryAlpha("test");
 		class Link extends sf.objectRecursive("Link", { next: [() => Link, sf.number] }) {}
@@ -303,7 +315,7 @@ describe("runDictionarySpecialization", () => {
 					},
 				},
 				true /* isSummary */,
-				runDictionarySpecialization(),
+				dictionarySpecialization,
 			);
 			assert(chunks.length > 0);
 			const decoded = vTextCodec.decode(
@@ -334,7 +346,7 @@ describe("runDictionarySpecialization", () => {
 			root = new Link({ next: root });
 		}
 		assert.deepEqual(
-			encode(Link, schema, root, runDictionarySpecialization()),
+			encode(Link, schema, root, dictionarySpecialization),
 			encode(Link, schema, root, noSpecialization),
 		);
 	});

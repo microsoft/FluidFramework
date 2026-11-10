@@ -40,13 +40,12 @@ import {
 	asFieldEncoder,
 	incrementalFieldEncoder,
 } from "./compressedEncode.js";
-import type { FieldBatch } from "./fieldBatch.js";
 import { NodeShapeBasedEncoder, SpecializedNodeShapeEncoder } from "./nodeEncoder.js";
-import { type SpecializedNodeEncoderPolicy, baseNodeEncoders } from "./schemaBasedEncode.js";
+import { baseNodeEncoders } from "./schemaBasedEncode.js";
 import type { SpecializationStrategy } from "./schemaBasedEncodeVText.js";
 
 /**
- * Creates a {@link SpecializationStrategy} that writes the leaves of single-type sequences as pinned, dictionary or raw values.
+ * A {@link SpecializationStrategy} that writes the leaves of single-type sequences as pinned, dictionary or raw values.
  * @remarks
  * Terms:
  *
@@ -55,7 +54,7 @@ import type { SpecializationStrategy } from "./schemaBasedEncodeVText.js";
  * - Item: a node of a single-type sequence, for example an atom of text.
  *
  * - Leaf: a string, number or boolean value in an item, or in its child nodes to a depth of {@link maxReadDepth}.
- * For example, the character and each format property of an atom of text.
+ * For example, the character and each format property of an atom of text. See {@link isSpecializableLeaf}.
  *
  * - Pin: the specialized shape of the node holds the value of the leaf as a constant. The data does not hold the value.
  *
@@ -80,69 +79,101 @@ import type { SpecializationStrategy } from "./schemaBasedEncodeVText.js";
  * The incremental encoder writes each chunk as a separate batch with its own shapes table.
  * The strategy chooses how to write a chunk from the nodes of the chunk only, so other fields do not change the data of a chunk.
  */
-export function runDictionarySpecialization(): SpecializationStrategy {
-	return (
-		_fieldBatch: FieldBatch,
-		schema: StoredSchemaCollection,
-		policy: SchemaPolicy,
-	): SpecializedNodeEncoderPolicy => {
-		const trackedFields = findTrackedFields(schema, policy);
-		const singleTypeSequences = findSingleTypeSequences(schema, policy, trackedFields);
-		if (singleTypeSequences.size === 0) {
-			return baseNodeEncoders;
+export const dictionarySpecialization: SpecializationStrategy = (
+	_fieldBatch,
+	schema,
+	policy,
+) => {
+	const trackedFields = findTrackedFields(schema, policy);
+	const singleTypeSequences = findSingleTypeSequences(schema, policy, trackedFields);
+	if (singleTypeSequences.size === 0) {
+		return baseNodeEncoders;
+	}
+	const sharedEncoders = new SharedEncoders();
+	return (base, schemaName) => {
+		const itemTypes = singleTypeSequences.get(schemaName);
+		if (itemTypes === undefined) {
+			return base;
 		}
-		const sharedEncoders = new SharedEncoders();
-		return (base, schemaName) => {
-			const itemTypes = singleTypeSequences.get(schemaName);
-			if (itemTypes === undefined) {
-				return base;
-			}
-			// A copy of `base`. Each single-type sequence that is not incremental gets a SingleTypeSequenceEncoder.
-			// When the SingleTypeSequenceEncoder writes the sequence, it chooses how to specialize the nodes of the sequence.
-			return new NodeShapeBasedEncoder(
-				base.type,
-				base.value,
-				base.specializedFieldEncoders.map((field) => {
-					const itemType = itemTypes.get(field.key);
-					return itemType === undefined || field.encoder === incrementalFieldEncoder
-						? field
-						: {
-								key: field.key,
-								encoder: new SingleTypeSequenceEncoder(
-									sharedEncoders,
-									trackedFields,
-									itemType,
-								),
-							};
-				}),
-				base.otherFieldsEncoder,
-			);
-		};
+		// A copy of `base`. Each single-type sequence that is not incremental gets a SingleTypeSequenceEncoder.
+		// When the SingleTypeSequenceEncoder writes the sequence, it chooses how to specialize the nodes of the sequence.
+		return new NodeShapeBasedEncoder(
+			base.type,
+			base.value,
+			base.specializedFieldEncoders.map((field) => {
+				const itemType = itemTypes.get(field.key);
+				return itemType === undefined || field.encoder === incrementalFieldEncoder
+					? field
+					: {
+							key: field.key,
+							encoder: new SingleTypeSequenceEncoder(sharedEncoders, trackedFields, itemType),
+						};
+			}),
+			base.otherFieldsEncoder,
+		);
 	};
-}
+};
 
 /**
  * A required field of an object node type that the strategy reads.
- * @remarks
- * A "value" field holds one leaf. A "child" field holds one node, and the strategy reads the fields of that node too.
  */
-type TrackedField =
-	| {
-			readonly kind: "value";
-			readonly key: FieldKey;
-			readonly leafType: TreeNodeSchemaIdentifier;
-	  }
-	| { readonly kind: "child"; readonly key: FieldKey; readonly polymorphic: boolean };
+type TrackedField = LeafTrackedField | ChildTrackedField;
 
 /**
- * Returns true if `nodeSchema` is the schema of a leaf with a string, number or boolean value.
+ * A {@link TrackedField} that holds one leaf. See {@link isSpecializableLeaf}.
  */
-function isValueLeaf(nodeSchema: TreeNodeStoredSchema | undefined): boolean {
+interface LeafTrackedField {
+	readonly kind: "leaf";
+	/**
+	 * The key of the field.
+	 */
+	readonly key: FieldKey;
+	/**
+	 * The type of the leaf.
+	 */
+	readonly leafType: TreeNodeSchemaIdentifier;
+}
+
+/**
+ * A {@link TrackedField} that holds one node. The strategy reads the tracked fields of that node too.
+ */
+interface ChildTrackedField {
+	readonly kind: "child";
+	/**
+	 * The key of the field.
+	 */
+	readonly key: FieldKey;
+	/**
+	 * True if the field allows more than one node type.
+	 * @remarks
+	 * In a polymorphic field, the child encoder puts the child type in the shape, not in the data.
+	 */
+	readonly polymorphic: boolean;
+}
+
+/**
+ * The value schemas of the leaves that the strategy can specialize.
+ */
+const specializableValueSchemas: ReadonlySet<ValueSchema> = new Set([
+	ValueSchema.String,
+	ValueSchema.Number,
+	ValueSchema.Boolean,
+]);
+
+/**
+ * Returns true if `nodeSchema` is the schema of a leaf that the strategy can pin or put in a dictionary.
+ * @remarks
+ * Null and handle leaves are not specializable:
+ *
+ * - The base encoder writes a null value in the shape of the leaf, so the data does not hold it.
+ *
+ * - A handle value is an object. The strategy compares values with `===` and gets their size from `JSON.stringify`.
+ * After a load, two handles to the same object are different objects, and `JSON.stringify` does not give the encoded size of a handle.
+ */
+function isSpecializableLeaf(nodeSchema: TreeNodeStoredSchema | undefined): boolean {
 	return (
 		nodeSchema instanceof LeafNodeStoredSchema &&
-		[ValueSchema.String, ValueSchema.Number, ValueSchema.Boolean].includes(
-			nodeSchema.leafValue,
-		)
+		specializableValueSchemas.has(nodeSchema.leafValue)
 	);
 }
 
@@ -150,7 +181,7 @@ function isValueLeaf(nodeSchema: TreeNodeStoredSchema | undefined): boolean {
  * Gets the {@link TrackedField} for the field `key`, or `undefined` if the strategy does not track the field.
  * @remarks
  * The strategy tracks a required field that is not an identifier field, if the field allows more than one type,
- * or holds an object node, or holds a string, number or boolean leaf.
+ * or holds an object node, or holds a leaf that {@link isSpecializableLeaf} accepts.
  */
 function getTrackedField(
 	key: FieldKey,
@@ -178,8 +209,10 @@ function getTrackedField(
 	if (onlySchema instanceof ObjectNodeStoredSchema) {
 		return { kind: "child", key, polymorphic: false };
 	}
-	// The field allows one string, number or boolean leaf type: a value field.
-	return isValueLeaf(onlySchema) ? { kind: "value", key, leafType: onlyType } : undefined;
+	// The field allows one specializable leaf type: a leaf field.
+	return isSpecializableLeaf(onlySchema)
+		? { kind: "leaf", key, leafType: onlyType }
+		: undefined;
 }
 
 /**
@@ -232,7 +265,7 @@ function findSingleTypeSequences(
 					(trackedFields.has(itemType) ||
 						// The items are leaves, such as the characters of plain text.
 						// The tracked fields do not include leaf types.
-						isValueLeaf(schema.nodeSchema.get(itemType))) &&
+						isSpecializableLeaf(schema.nodeSchema.get(itemType))) &&
 					policy.fieldKinds.get(field.kind)?.multiplicity === Multiplicity.Sequence
 				) {
 					getOrCreate(singleTypeSequences, type, () => new Map()).set(key, itemType);
@@ -365,7 +398,7 @@ class PathNode {
 				} else {
 					const leaf = new LeafStats(trackedField.leafType);
 					leaves.push(leaf);
-					fields.push({ kind: "value", key: trackedField.key, leaf });
+					fields.push({ kind: "leaf", key: trackedField.key, leaf });
 				}
 			}
 		}
@@ -389,7 +422,7 @@ class PathNode {
 	 * Adds the node at `cursor`, which is the one node of `field`.
 	 */
 	private addNode(cursor: ITreeCursorSynchronous, field: FieldPath, trace: Token[]): void {
-		if (field.kind === "value") {
+		if (field.kind === "leaf") {
 			const value = cursor.value;
 			field.leaf.add(value);
 			// The position of a token tells if it is a value or a type, because each node of a type adds its fields in the same order.
@@ -409,18 +442,42 @@ class PathNode {
 
 /**
  * A field of a {@link PathNode}. It has the same kinds as {@link TrackedField}.
- * @remarks
- * A "value" field has the {@link LeafStats} of its leaf.
- * A "child" field has a {@link PathNode} for each type of child node that the encoder finds.
  */
-type FieldPath =
-	| { readonly kind: "value"; readonly key: FieldKey; readonly leaf: LeafStats }
-	| {
-			readonly kind: "child";
-			readonly key: FieldKey;
-			readonly polymorphic: boolean;
-			readonly types: Map<TreeNodeSchemaIdentifier, PathNode>;
-	  };
+type FieldPath = LeafFieldPath | ChildFieldPath;
+
+/**
+ * A {@link FieldPath} for a {@link LeafTrackedField}.
+ */
+interface LeafFieldPath {
+	readonly kind: "leaf";
+	/**
+	 * The key of the field.
+	 */
+	readonly key: FieldKey;
+	/**
+	 * The values of the leaf in the items.
+	 */
+	readonly leaf: LeafStats;
+}
+
+/**
+ * A {@link FieldPath} for a {@link ChildTrackedField}.
+ */
+interface ChildFieldPath {
+	readonly kind: "child";
+	/**
+	 * The key of the field.
+	 */
+	readonly key: FieldKey;
+	/**
+	 * See {@link ChildTrackedField.polymorphic}.
+	 */
+	readonly polymorphic: boolean;
+	/**
+	 * A {@link PathNode} for each type of child node that the encoder finds in the field.
+	 */
+	readonly types: Map<TreeNodeSchemaIdentifier, PathNode>;
+}
 
 /**
  * A node of a trie of the signatures of the items of one single-type sequence. Each edge is a {@link Token}.
@@ -576,7 +633,7 @@ class SharedEncoders {
 			cursor.enterField(field.key);
 			cursor.enterNode(0);
 			let override: NodeEncoder | DictionaryLeafEncoder | undefined;
-			if (field.kind === "value") {
+			if (field.kind === "leaf") {
 				const encoding = field.leaf.encoding;
 				if (encoding === "pinToShape") {
 					override = this.constantLeaf(field.leaf.leafType, cursor.value);
@@ -711,7 +768,7 @@ function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): Le
 	}
 
 	// A dictionary with more values has longer shape indexes.
-	const indexBytes = String(valueCounts.size).length + 1;
+	const indexBytes = String(valueCounts.size).length + 0.5;
 	const admitted: Value[] = [];
 	let admittedTotal = 0;
 	for (const [value, valueCount] of valueCounts) {
