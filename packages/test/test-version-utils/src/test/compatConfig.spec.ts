@@ -46,6 +46,7 @@ function selectConfigs(
 	versions?: string[],
 	driver = "local",
 	backCompat?: string,
+	baseVersion?: string,
 ): CompatConfig[] {
 	const env = { ...process.env };
 	for (const key of ["compatVersion", "compatKind", "backCompat", "baseVersion"]) {
@@ -55,6 +56,7 @@ function selectConfigs(
 	env.fluid__test__driver = driver;
 	if (versions !== undefined) env.fluid__test__compatVersion = JSON.stringify(versions);
 	if (backCompat !== undefined) env.fluid__test__backCompat = backCompat;
+	if (baseVersion !== undefined) env.fluid__test__baseVersion = baseVersion;
 	return JSON.parse(
 		execFileSync(
 			process.execPath,
@@ -69,6 +71,44 @@ function selectConfigs(
 }
 
 describe("compatibility selection", () => {
+	it("includes every supported FULL release band with both loader permutations", () => {
+		const baseVersion = "2.50.0";
+		const expectedDeltas = [-2, -3, -4, -5];
+		assert.deepEqual(getFullBackCompatVersionDeltas(baseVersion), expectedDeltas);
+
+		const configs = selectConfigs(["FULL"], "local", undefined, baseVersion);
+		assert.deepEqual(
+			configs.map(
+				({ kind, compatVersion, loader, driver, containerRuntime, dataRuntime }) => ({
+					kind,
+					compatVersion,
+					loader,
+					driver,
+					containerRuntime,
+					dataRuntime,
+				}),
+			),
+			expectedDeltas.flatMap((delta) => [
+				{
+					kind: CompatKind.Loader,
+					compatVersion: delta,
+					loader: delta,
+					driver: undefined,
+					containerRuntime: undefined,
+					dataRuntime: undefined,
+				},
+				{
+					kind: CompatKind.LoaderDriver,
+					compatVersion: delta,
+					loader: delta,
+					driver: delta,
+					containerRuntime: undefined,
+					dataRuntime: undefined,
+				},
+			]),
+		);
+	});
+
 	it("loads entry-point and factory APIs from the exact boundary package", async () => {
 		await ensureVersionLoaded(
 			expectedOldestCompatibleVersion,
